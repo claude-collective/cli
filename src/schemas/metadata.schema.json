@@ -204,7 +204,8 @@
         "flags",
         "accessibility",
         "frontend/realtime",
-        "frontend/animation"
+        "frontend/animation",
+        "methodology"
       ]
     },
     "SkillReference": {
