@@ -228,3 +228,109 @@ export async function copySkillsToPluginFromSource(
 
   return copiedSkills;
 }
+
+/**
+ * Get the flattened destination path for a skill in .claude/skills/
+ * Uses skill alias or extracts skill name from skill ID
+ */
+function getFlattenedSkillDestPath(
+  skill: ResolvedSkill,
+  localSkillsDir: string,
+): string {
+  // Use alias if available, otherwise extract name from ID
+  // skill.id is like "zustand (@vince)" or skill.alias is "zustand"
+  const skillFolderName = skill.alias || extractSkillNameFromId(skill.id);
+  return path.join(localSkillsDir, skillFolderName);
+}
+
+/**
+ * Extract the skill name from a skill ID
+ * e.g., "zustand (@vince)" -> "zustand"
+ * e.g., "react-query (@vince)" -> "react-query"
+ */
+function extractSkillNameFromId(skillId: string): string {
+  // Remove author suffix: "zustand (@vince)" -> "zustand"
+  const withoutAuthor = skillId.replace(/\s*\(@\w+\)$/, "").trim();
+  return withoutAuthor;
+}
+
+/**
+ * Copy a single skill from source to .claude/skills/ with flattened structure
+ */
+async function copySkillToLocalFlattened(
+  skill: ResolvedSkill,
+  localSkillsDir: string,
+  sourceResult: SourceLoadResult,
+): Promise<CopiedSkill> {
+  const sourcePath = getSkillSourcePathFromSource(skill, sourceResult);
+  const destPath = getFlattenedSkillDestPath(skill, localSkillsDir);
+
+  // Generate content hash before copying
+  const contentHash = await generateSkillHash(sourcePath);
+
+  // Ensure destination directory exists and copy
+  await ensureDir(path.dirname(destPath));
+  await copy(sourcePath, destPath);
+
+  // Inject forked_from provenance tracking into the copied skill's metadata
+  await injectForkedFromMetadata(destPath, skill.id, contentHash);
+
+  return {
+    skillId: skill.id,
+    contentHash,
+    sourcePath,
+    destPath,
+  };
+}
+
+/**
+ * Copy all selected skills to .claude/skills/ with flattened structure
+ * For Local Mode: skills are copied without category hierarchy
+ *
+ * Example:
+ *   src/skills/frontend/client-state-management/zustand (@vince)/
+ *   -> .claude/skills/zustand/
+ *
+ * Local skills (already in .claude/skills/) are NOT copied - they stay in place.
+ */
+export async function copySkillsToLocalFlattened(
+  selectedSkillIds: string[],
+  localSkillsDir: string,
+  matrix: MergedSkillsMatrix,
+  sourceResult: SourceLoadResult,
+): Promise<CopiedSkill[]> {
+  const copiedSkills: CopiedSkill[] = [];
+
+  for (const skillId of selectedSkillIds) {
+    const skill = matrix.skills[skillId];
+    if (!skill) {
+      console.warn(`Warning: Skill not found in matrix: ${skillId}`);
+      continue;
+    }
+
+    // Skip copying local skills - they stay in place
+    if (skill.local && skill.localPath) {
+      // Compute hash from the local skill's SKILL.md in the project directory
+      const localSkillPath = path.join(process.cwd(), skill.localPath);
+      const contentHash = await generateSkillHash(localSkillPath);
+
+      copiedSkills.push({
+        skillId: skill.id,
+        sourcePath: skill.localPath, // Relative path from project root
+        destPath: skill.localPath, // Same - not copied
+        contentHash,
+        local: true,
+      });
+      continue;
+    }
+
+    const copied = await copySkillToLocalFlattened(
+      skill,
+      localSkillsDir,
+      sourceResult,
+    );
+    copiedSkills.push(copied);
+  }
+
+  return copiedSkills;
+}

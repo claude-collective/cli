@@ -6,29 +6,39 @@ import { parse as parseYaml } from "yaml";
 import { setVerbose, verbose } from "../utils/logger";
 import {
   getCollectivePluginDir,
-  getPluginSkillsDir,
   getPluginAgentsDir,
   getPluginManifestPath,
+  getProjectPluginsDir,
 } from "../lib/plugin-finder";
 import { fetchAgentDefinitions } from "../lib/agent-fetcher";
 import { resolveSource } from "../lib/config";
-import { directoryExists, glob, readFile, fileExists } from "../utils/fs";
+import {
+  directoryExists,
+  glob,
+  readFile,
+  fileExists,
+  listDirectories,
+} from "../utils/fs";
 import { recompileAgents } from "../lib/agent-recompiler";
+import { loadPluginSkills } from "../lib/loader";
+import { LOCAL_SKILLS_PATH } from "../consts";
 import type {
-  Skill,
   AgentSourcePaths,
   PluginManifest,
   StackConfig,
+  SkillDefinition,
 } from "../types";
 
 /**
- * Load skills from a plugin's local skills directory
+ * Load skills from a directory containing SKILL.md files
  * Recursively finds all SKILL.md files and parses them
+ * Returns SkillDefinition records for use with recompileAgents
  */
-async function loadLocalSkills(
+async function loadSkillsFromDir(
   skillsDir: string,
-): Promise<Record<string, Skill>> {
-  const skills: Record<string, Skill> = {};
+  pathPrefix: string = "",
+): Promise<Record<string, SkillDefinition>> {
+  const skills: Record<string, SkillDefinition> = {};
 
   if (!(await directoryExists(skillsDir))) {
     return skills;
@@ -40,20 +50,18 @@ async function loadLocalSkills(
   for (const skillFile of skillFiles) {
     const skillPath = path.join(skillsDir, skillFile);
     const skillDir = path.dirname(skillPath);
-    const skillId = path.relative(skillsDir, skillDir);
+    const relativePath = path.relative(skillsDir, skillDir);
 
     try {
       const content = await readFile(skillPath);
 
       // Parse frontmatter if present
       let metadata: Record<string, unknown> = {};
-      let skillContent = content;
 
       if (content.startsWith("---")) {
         const endIndex = content.indexOf("---", 3);
         if (endIndex > 0) {
           const yamlContent = content.slice(3, endIndex).trim();
-          skillContent = content.slice(endIndex + 3).trim();
 
           // Simple YAML parsing for common fields
           const lines = yamlContent.split("\n");
@@ -69,23 +77,94 @@ async function loadLocalSkills(
         }
       }
 
-      const skill: Skill = {
-        id: skillId,
-        path: skillDir,
-        name: (metadata.name as string) || path.basename(skillDir),
+      // Use the frontmatter name as the canonical ID (matches loadPluginSkills behavior)
+      const skillName = (metadata.name as string) || path.basename(skillDir);
+      const canonicalId = skillName;
+
+      const skill: SkillDefinition = {
+        path: pathPrefix
+          ? `${pathPrefix}/${relativePath}/`
+          : `${relativePath}/`,
+        name: skillName,
         description: (metadata.description as string) || "",
-        usage: `When working with ${(metadata.name as string) || path.basename(skillDir)}`,
-        preloaded: false,
+        canonicalId,
       };
 
-      skills[skillId] = skill;
-      verbose(`  Loaded skill: ${skillId}`);
+      // Key by canonical ID for proper merging
+      skills[canonicalId] = skill;
+      verbose(`  Loaded skill: ${canonicalId}`);
     } catch (error) {
       verbose(`  Failed to load skill: ${skillFile} - ${error}`);
     }
   }
 
   return skills;
+}
+
+/**
+ * Discover skills from all installed plugins in .claude/plugins/
+ * Each plugin may have a skills/ subdirectory
+ */
+async function discoverPluginSkills(
+  projectDir: string,
+): Promise<Record<string, SkillDefinition>> {
+  const allSkills: Record<string, SkillDefinition> = {};
+  const pluginsDir = getProjectPluginsDir(projectDir);
+
+  if (!(await directoryExists(pluginsDir))) {
+    verbose(`No plugins directory found at ${pluginsDir}`);
+    return allSkills;
+  }
+
+  // List all plugin directories
+  const pluginDirs = await listDirectories(pluginsDir);
+
+  for (const pluginName of pluginDirs) {
+    const pluginDir = path.join(pluginsDir, pluginName);
+    const pluginSkillsDir = path.join(pluginDir, "skills");
+
+    if (await directoryExists(pluginSkillsDir)) {
+      verbose(`Discovering skills from plugin: ${pluginName}`);
+      const pluginSkills = await loadPluginSkills(pluginDir);
+
+      // Merge plugin skills (later plugins can override earlier ones)
+      for (const [id, skill] of Object.entries(pluginSkills)) {
+        allSkills[id] = skill;
+      }
+    }
+  }
+
+  return allSkills;
+}
+
+/**
+ * Discover skills from local .claude/skills/ directory
+ * These are user-defined skills that override plugin skills
+ */
+async function discoverLocalProjectSkills(
+  projectDir: string,
+): Promise<Record<string, SkillDefinition>> {
+  const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
+  return loadSkillsFromDir(localSkillsDir, LOCAL_SKILLS_PATH);
+}
+
+/**
+ * Merge skills from multiple sources
+ * Later sources take precedence over earlier ones
+ * This allows local skills to override plugin skills
+ */
+function mergeSkills(
+  ...skillSources: Record<string, SkillDefinition>[]
+): Record<string, SkillDefinition> {
+  const merged: Record<string, SkillDefinition> = {};
+
+  for (const source of skillSources) {
+    for (const [id, skill] of Object.entries(source)) {
+      merged[id] = skill;
+    }
+  }
+
+  return merged;
 }
 
 export const compileCommand = new Command("compile")
@@ -171,9 +250,9 @@ async function runPluginModeCompile(
       const configContent = await readFile(configPath);
       const config = parseYaml(configContent) as StackConfig;
       const agentCount = config.agents?.length ?? 0;
-      const skillCount = config.skills?.length ?? 0;
+      const configSkillCount = config.skills?.length ?? 0;
       p.log.info(
-        `Using ${pc.cyan("config.yaml")} (${agentCount} agents, ${skillCount} skills)`,
+        `Using ${pc.cyan("config.yaml")} (${agentCount} agents, ${configSkillCount} skills)`,
       );
       verbose(`  Config: ${configPath}`);
     } catch {
@@ -183,19 +262,42 @@ async function runPluginModeCompile(
     verbose(`  No config.yaml found - using defaults`);
   }
 
-  // 2. Read local skills from the plugin's skills/ directory (do NOT fetch)
-  const skillsDir = getPluginSkillsDir(pluginDir);
-  s.start("Loading local skills...");
-  const skills = await loadLocalSkills(skillsDir);
-  const skillCount = Object.keys(skills).length;
+  // 2. Discover skills from both installed plugins AND local .claude/skills/
+  const projectDir = process.cwd();
+  s.start("Discovering skills...");
 
-  if (skillCount === 0) {
+  // 2a. Discover skills from installed plugins (.claude/plugins/*/skills/)
+  const pluginSkills = await discoverPluginSkills(projectDir);
+  const pluginSkillCount = Object.keys(pluginSkills).length;
+  verbose(`  Found ${pluginSkillCount} skills from installed plugins`);
+
+  // 2b. Discover local skills from .claude/skills/
+  const localSkills = await discoverLocalProjectSkills(projectDir);
+  const localSkillCount = Object.keys(localSkills).length;
+  verbose(`  Found ${localSkillCount} local skills from .claude/skills/`);
+
+  // 2c. Merge skills (local takes precedence over plugin skills)
+  const allSkills = mergeSkills(pluginSkills, localSkills);
+  const totalSkillCount = Object.keys(allSkills).length;
+
+  if (totalSkillCount === 0) {
     s.stop("No skills found");
-    p.log.warn("No skills found in plugin. Add skills with 'cc add <skill>'.");
+    p.log.warn(
+      "No skills found. Add skills with 'cc add <skill>' or create in .claude/skills/.",
+    );
     process.exit(1);
   }
 
-  s.stop(`Loaded ${skillCount} local skills`);
+  // Display skill count breakdown
+  if (localSkillCount > 0 && pluginSkillCount > 0) {
+    s.stop(
+      `Discovered ${totalSkillCount} skills (${pluginSkillCount} from plugins, ${localSkillCount} local)`,
+    );
+  } else if (localSkillCount > 0) {
+    s.stop(`Discovered ${localSkillCount} local skills`);
+  } else {
+    s.stop(`Discovered ${pluginSkillCount} skills from plugins`);
+  }
 
   // 3. Resolve source and fetch agent definitions from marketplace
   s.start("Resolving marketplace source...");
@@ -225,7 +327,9 @@ async function runPluginModeCompile(
   }
 
   if (dryRun) {
-    console.log(pc.yellow(`\n[dry-run] Would compile ${skillCount} skills`));
+    console.log(
+      pc.yellow(`\n[dry-run] Would compile ${totalSkillCount} skills`),
+    );
     console.log(
       pc.yellow(
         `[dry-run] Would use agent definitions from: ${agentDefs.sourcePath}`,
@@ -238,12 +342,13 @@ async function runPluginModeCompile(
     return;
   }
 
-  // 4. Compile agents using local skills + fetched definitions
+  // 4. Compile agents using merged skills + fetched definitions
   s.start("Recompiling agents...");
   try {
     const recompileResult = await recompileAgents({
       pluginDir,
       sourcePath: agentDefs.sourcePath,
+      skills: allSkills,
     });
 
     if (recompileResult.failed.length > 0) {
