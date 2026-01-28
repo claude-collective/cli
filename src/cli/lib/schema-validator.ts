@@ -250,11 +250,14 @@ async function validateFile(
 
 /**
  * Validate all files matching a pattern against a schema
+ * @param target - Validation target definition
+ * @param rootDir - Root directory to search for files (defaults to cwd)
  */
 async function validateTarget(
   target: ValidationTarget,
+  rootDir: string = process.cwd(),
 ): Promise<SchemaValidationResult> {
-  const baseDir = path.join(PROJECT_ROOT, target.baseDir);
+  const baseDir = path.join(rootDir, target.baseDir);
   const pattern = path.join(baseDir, target.pattern);
   const files = await fg(pattern, { absolute: true });
 
@@ -274,7 +277,7 @@ async function validateTarget(
 
   for (const file of files) {
     const validation = await validateFile(file, validate, target.extractor);
-    const relativePath = path.relative(PROJECT_ROOT, file);
+    const relativePath = path.relative(rootDir, file);
 
     if (validation.valid) {
       result.validFiles++;
@@ -292,12 +295,15 @@ async function validateTarget(
 
 /**
  * Validate all schemas
+ * @param rootDir - Root directory to search for files (defaults to cwd)
  */
-export async function validateAllSchemas(): Promise<FullValidationResult> {
+export async function validateAllSchemas(
+  rootDir: string = process.cwd(),
+): Promise<FullValidationResult> {
   const results: SchemaValidationResult[] = [];
 
   for (const target of VALIDATION_TARGETS) {
-    const result = await validateTarget(target);
+    const result = await validateTarget(target, rootDir);
     results.push(result);
   }
 
