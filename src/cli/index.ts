@@ -10,6 +10,7 @@ import { updateCommand } from "./commands/update";
 import { validateCommand } from "./commands/validate";
 import { listCommand } from "./commands/list";
 import { configCommand } from "./commands/config";
+import { ejectCommand } from "./commands/eject";
 import { versionCommand } from "./commands/version";
 import { EXIT_CODES } from "./lib/exit-codes";
 
@@ -43,6 +44,7 @@ async function main() {
   program.addCommand(validateCommand);
   program.addCommand(listCommand);
   program.addCommand(configCommand);
+  program.addCommand(ejectCommand);
   program.addCommand(versionCommand);
 
   // Parse arguments

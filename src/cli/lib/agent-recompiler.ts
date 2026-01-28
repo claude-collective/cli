@@ -1,12 +1,11 @@
 import path from "path";
-import { Liquid } from "liquidjs";
 import { glob, writeFile, ensureDir, readFile, fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import { DIRS, PROJECT_ROOT } from "../consts";
 import { loadAllAgents, loadPluginSkills } from "./loader";
 import { resolveAgents, resolveStackSkills } from "./resolver";
 import { compileAgentForPlugin } from "./stack-plugin-compiler";
 import { getPluginAgentsDir } from "./plugin-finder";
+import { createLiquidEngine } from "./compiler";
 import { parse as parseYaml } from "yaml";
 import type {
   CompileConfig,
@@ -28,6 +27,8 @@ export interface RecompileAgentsOptions {
   agents?: string[];
   /** Optional: pre-loaded skills (if not provided, loads from pluginDir/skills/) */
   skills?: Record<string, SkillDefinition>;
+  /** Optional: project directory for local template resolution */
+  projectDir?: string;
 }
 
 /**
@@ -94,6 +95,7 @@ export async function recompileAgents(
     sourcePath,
     agents: specifiedAgents,
     skills: providedSkills,
+    projectDir,
   } = options;
 
   const result: RecompileAgentsResult = {
@@ -171,13 +173,8 @@ export async function recompileAgents(
     agents: compileAgents,
   };
 
-  // 6. Create Liquid engine - templates are bundled with CLI
-  const engine = new Liquid({
-    root: [path.join(PROJECT_ROOT, DIRS.templates)],
-    extname: ".liquid",
-    strictVariables: false,
-    strictFilters: true,
-  });
+  // 6. Create Liquid engine - checks local templates first, falls back to bundled
+  const engine = await createLiquidEngine(projectDir);
 
   // 7. Resolve and compile agents
   const resolvedAgents = await resolveAgents(
