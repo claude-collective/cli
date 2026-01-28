@@ -29,6 +29,8 @@ export interface SourceLoadOptions {
   projectDir?: string;
   /** Force refresh from remote */
   forceRefresh?: boolean;
+  /** Explicit dev mode flag - when true, uses local skills directory */
+  devMode?: boolean;
 }
 
 /**
@@ -56,7 +58,12 @@ export interface SourceLoadResult {
 export async function loadSkillsMatrixFromSource(
   options: SourceLoadOptions = {},
 ): Promise<SourceLoadResult> {
-  const { sourceFlag, projectDir, forceRefresh = false } = options;
+  const {
+    sourceFlag,
+    projectDir,
+    forceRefresh = false,
+    devMode = false,
+  } = options;
 
   // Resolve which source to use
   const sourceConfig = await resolveSource(sourceFlag, projectDir);
@@ -65,8 +72,8 @@ export async function loadSkillsMatrixFromSource(
   verbose(`Loading skills from source: ${source}`);
 
   // Check if this is local development mode
-  // Local mode: source points to this repo or a local path
-  const isLocal = isLocalSource(source) || (await isDevMode(source));
+  // Local mode: source points to a local path or devMode is explicitly enabled
+  const isLocal = isLocalSource(source) || devMode === true;
 
   let result: SourceLoadResult;
   if (isLocal) {
@@ -93,11 +100,14 @@ export async function loadSkillsMatrixFromSource(
 }
 
 /**
- * Check if we're in development mode (running from within the skills repository itself).
- * This allows local development to use the local skills directory instead of fetching
+ * @deprecated Dev mode is now opt-in via SourceLoadOptions.devMode flag.
+ * This function is kept for reference but no longer used in production.
+ *
+ * Previously checked if we're in development mode (running from within the skills repository itself).
+ * This allowed local development to use the local skills directory instead of fetching
  * from the remote default source.
  *
- * Dev mode is detected when:
+ * Dev mode was detected when:
  * 1. The source contains "claude-collective/skills" (the default source)
  * 2. A local src/skills/ directory exists in PROJECT_ROOT
  */
@@ -120,29 +130,37 @@ async function hasLocalSkills(): Promise<boolean> {
 
 /**
  * Load from a local source (development mode or local path)
+ *
+ * NEW ARCHITECTURE: Matrix is bundled with CLI, skills from source
+ * - Skills matrix: Loaded from CLI repo (PROJECT_ROOT)
+ * - Skills content: Loaded from the provided source path
  */
 async function loadFromLocal(
   source: string,
   sourceConfig: ResolvedConfig,
 ): Promise<SourceLoadResult> {
-  // Determine the root path
-  let rootPath: string;
+  // Determine the skills path (where skill content lives)
+  let skillsPath: string;
 
   if (isLocalSource(source)) {
     // Explicit local path
-    rootPath = path.isAbsolute(source)
+    skillsPath = path.isAbsolute(source)
       ? source
       : path.resolve(process.cwd(), source);
   } else {
-    // Dev mode - use PROJECT_ROOT
-    rootPath = PROJECT_ROOT;
+    // Dev mode - use PROJECT_ROOT for skills too
+    skillsPath = PROJECT_ROOT;
   }
 
-  verbose(`Loading from local path: ${rootPath}`);
+  verbose(`Loading skills from local path: ${skillsPath}`);
 
-  // Load matrix and skills
-  const matrixPath = path.join(rootPath, SKILLS_MATRIX_PATH);
-  const skillsDir = path.join(rootPath, SKILLS_DIR_PATH);
+  // Skills matrix is ALWAYS loaded from CLI repo (bundled)
+  const matrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
+  // Skills content from the source
+  const skillsDir = path.join(skillsPath, SKILLS_DIR_PATH);
+
+  verbose(`Matrix from CLI: ${matrixPath}`);
+  verbose(`Skills from source: ${skillsDir}`);
 
   const matrix = await loadSkillsMatrix(matrixPath);
   const skills = await extractAllSkills(skillsDir);
@@ -151,29 +169,37 @@ async function loadFromLocal(
   return {
     matrix: mergedMatrix,
     sourceConfig,
-    sourcePath: rootPath,
+    sourcePath: skillsPath,
     isLocal: true,
   };
 }
 
 /**
  * Load from a remote source (via giget)
+ *
+ * NEW ARCHITECTURE: Matrix is bundled with CLI, skills from source
+ * - Skills matrix: Loaded from CLI repo (PROJECT_ROOT)
+ * - Skills content: Fetched from remote source
  */
 async function loadFromRemote(
   source: string,
   sourceConfig: ResolvedConfig,
   forceRefresh: boolean,
 ): Promise<SourceLoadResult> {
-  verbose(`Fetching from remote source: ${source}`);
+  verbose(`Fetching skills from remote source: ${source}`);
 
-  // Fetch the entire source repository
+  // Fetch the entire source repository (for skills content)
   const fetchResult = await fetchFromSource(source, { forceRefresh });
 
   verbose(`Fetched to: ${fetchResult.path}`);
 
-  // Load matrix and skills from fetched content
-  const matrixPath = path.join(fetchResult.path, SKILLS_MATRIX_PATH);
+  // Skills matrix is ALWAYS loaded from CLI repo (bundled)
+  const matrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
+  // Skills content from the fetched source
   const skillsDir = path.join(fetchResult.path, SKILLS_DIR_PATH);
+
+  verbose(`Matrix from CLI: ${matrixPath}`);
+  verbose(`Skills from source: ${skillsDir}`);
 
   const matrix = await loadSkillsMatrix(matrixPath);
   const skills = await extractAllSkills(skillsDir);

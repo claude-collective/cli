@@ -31,6 +31,7 @@ import {
 const BACK_VALUE = "__back__";
 const CONTINUE_VALUE = "__continue__";
 const EXPERT_MODE_VALUE = "__expert_mode__";
+const INSTALL_MODE_VALUE = "__install_mode__";
 
 // =============================================================================
 // Types
@@ -57,12 +58,16 @@ interface WizardState {
   lastSelectedSkill: string | null;
   /** When true, disables conflict checking - allows any skill combination */
   expertMode: boolean;
+  /** Installation mode: plugin (native install) or local (copy to .claude/skills/) */
+  installMode: "plugin" | "local";
 }
 
 export interface WizardResult {
   selectedSkills: string[];
   selectedStack: ResolvedStack | null;
   validation: SelectionValidation;
+  /** Installation mode: plugin (native install) or local (copy to .claude/skills/) */
+  installMode: "plugin" | "local";
 }
 
 // =============================================================================
@@ -94,6 +99,8 @@ function createInitialState(options: WizardOptions = {}): WizardState {
     lastSelectedSkill: null,
     // Auto-enable expert mode when local skills exist (dependencies can't be checked)
     expertMode: options.hasLocalSkills ?? false,
+    // Default to plugin mode (native install)
+    installMode: "plugin",
   };
 }
 
@@ -270,21 +277,56 @@ function formatExpertModeOption(expertMode: boolean): {
   };
 }
 
+/**
+ * Create the Install Mode toggle option
+ * Shows current mode and allows switching between plugin and local
+ */
+function formatInstallModeOption(installMode: "plugin" | "local"): {
+  value: string;
+  label: string;
+  hint: string;
+} {
+  if (installMode === "plugin") {
+    return {
+      value: INSTALL_MODE_VALUE,
+      label: pc.cyan("Install Mode: Plugin"),
+      hint: "click to switch - installs as native Claude plugins (recommended)",
+    };
+  }
+  return {
+    value: INSTALL_MODE_VALUE,
+    label: pc.dim("Install Mode: Local"),
+    hint: "click to switch - copies skills to .claude/skills/ for customization",
+  };
+}
+
 // =============================================================================
 // Wizard Steps
 // =============================================================================
 
-async function stepApproach(
-  state: WizardState,
-): Promise<"scratch" | "stack" | "expert_mode" | symbol> {
+async function stepApproach(state: WizardState): Promise<string | symbol> {
   clearTerminal();
 
-  // Show current expert mode status if enabled
+  // Show current mode statuses
+  const statusLines: string[] = [];
   if (state.expertMode) {
-    console.log(
-      pc.yellow("\n  Expert Mode is ON") +
-        pc.dim(" - conflict checking disabled\n"),
+    statusLines.push(
+      pc.yellow("Expert Mode is ON") + pc.dim(" - conflict checking disabled"),
     );
+  }
+  statusLines.push(
+    pc.cyan(
+      `Install Mode: ${state.installMode === "plugin" ? "Plugin" : "Local"}`,
+    ) +
+      pc.dim(
+        state.installMode === "plugin"
+          ? " - native Claude plugins"
+          : " - copy to .claude/skills/",
+      ),
+  );
+
+  if (statusLines.length > 0) {
+    console.log("\n  " + statusLines.join("\n  ") + "\n");
   }
 
   const result = await p.select({
@@ -301,10 +343,11 @@ async function stepApproach(
         hint: "choose each skill yourself",
       },
       formatExpertModeOption(state.expertMode),
+      formatInstallModeOption(state.installMode),
     ],
   });
 
-  return result as "scratch" | "stack" | "expert_mode" | symbol;
+  return result as string | symbol;
 }
 
 async function stepSelectStack(
@@ -608,6 +651,13 @@ export async function runWizard(
           break;
         }
 
+        if (result === INSTALL_MODE_VALUE) {
+          // Toggle install mode and stay on same screen
+          state.installMode =
+            state.installMode === "plugin" ? "local" : "plugin";
+          break;
+        }
+
         if (result === "stack") {
           pushHistory(state);
           state.currentStep = "stack";
@@ -849,6 +899,7 @@ export async function runWizard(
             selectedSkills: state.selectedSkills,
             selectedStack: state.selectedStack,
             validation,
+            installMode: state.installMode,
           };
         }
         break;

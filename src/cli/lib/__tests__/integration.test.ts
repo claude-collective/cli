@@ -17,9 +17,12 @@ import type { Marketplace, PluginManifest } from "../../../types";
 // Constants
 // =============================================================================
 
-const PROJECT_ROOT = path.resolve(__dirname, "../../../..");
-const SKILLS_DIR = path.join(PROJECT_ROOT, "src", "skills");
-const STACKS_DIR = path.join(PROJECT_ROOT, "src", "stacks");
+// Skills, stacks, and agents are in a separate repo - use env var or default to sibling folder
+const SKILLS_REPO =
+  process.env.CC_TEST_SKILLS_SOURCE ||
+  path.resolve(__dirname, "../../../../../claude-subagents");
+const SKILLS_DIR = path.join(SKILLS_REPO, "src", "skills");
+const STACKS_DIR = path.join(SKILLS_REPO, "src", "stacks");
 
 // =============================================================================
 // Test Helpers
@@ -232,7 +235,7 @@ describe("Integration: Full Stack Pipeline", () => {
     const result = await compileStackPlugin({
       stackId,
       outputDir,
-      projectRoot: PROJECT_ROOT,
+      projectRoot: SKILLS_REPO,
     });
 
     // Verify result structure
@@ -265,7 +268,7 @@ describe("Integration: Full Stack Pipeline", () => {
     const result = await compileStackPlugin({
       stackId,
       outputDir,
-      projectRoot: PROJECT_ROOT,
+      projectRoot: SKILLS_REPO,
     });
 
     // Verify result structure
@@ -289,7 +292,7 @@ describe("Integration: Full Stack Pipeline", () => {
     const result = await compileStackPlugin({
       stackId,
       outputDir,
-      projectRoot: PROJECT_ROOT,
+      projectRoot: SKILLS_REPO,
     });
 
     const readmePath = path.join(result.pluginPath, "README.md");
@@ -312,7 +315,7 @@ describe("Integration: Full Stack Pipeline", () => {
     const result = await compileStackPlugin({
       stackId,
       outputDir,
-      projectRoot: PROJECT_ROOT,
+      projectRoot: SKILLS_REPO,
     });
 
     // Should reference skill plugins
@@ -331,7 +334,7 @@ describe("Integration: Full Stack Pipeline", () => {
     await compileStackPlugin({
       stackId,
       outputDir,
-      projectRoot: PROJECT_ROOT,
+      projectRoot: SKILLS_REPO,
     });
 
     const pluginPath = path.join(outputDir, stackId);
@@ -553,7 +556,7 @@ describe("Integration: End-to-End Pipeline", () => {
     const stackResult = await compileStackPlugin({
       stackId: "fullstack-react",
       outputDir: stacksDir,
-      projectRoot: PROJECT_ROOT,
+      projectRoot: SKILLS_REPO,
     });
     expect(stackResult.agents.length).toBeGreaterThan(0);
 
@@ -582,7 +585,7 @@ describe("Integration: End-to-End Pipeline", () => {
     const stackResult = await compileStackPlugin({
       stackId: "fullstack-react",
       outputDir: stacksDir,
-      projectRoot: PROJECT_ROOT,
+      projectRoot: SKILLS_REPO,
     });
 
     // Skill references now use simplified canonical frontmatter names (e.g., "react (@vince)")
@@ -610,7 +613,7 @@ describe("Integration: End-to-End Pipeline", () => {
     const stackResult = await compileStackPlugin({
       stackId: "fullstack-react",
       outputDir: stacksDir,
-      projectRoot: PROJECT_ROOT,
+      projectRoot: SKILLS_REPO,
     });
 
     // Get skill plugin names from compiled plugins (format: "skill-xxx")

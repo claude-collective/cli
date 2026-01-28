@@ -2,7 +2,7 @@ import path from "path";
 import { Liquid } from "liquidjs";
 import { glob, writeFile, ensureDir, readFile, fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import { DIRS } from "../consts";
+import { DIRS, PROJECT_ROOT } from "../consts";
 import { loadAllAgents, loadPluginSkills } from "./loader";
 import { resolveAgents, resolveStackSkills } from "./resolver";
 import { compileAgentForPlugin } from "./stack-plugin-compiler";
@@ -163,9 +163,9 @@ export async function recompileAgents(
     agents: compileAgents,
   };
 
-  // 6. Create Liquid engine
+  // 6. Create Liquid engine - templates are bundled with CLI
   const engine = new Liquid({
-    root: [path.join(sourcePath, DIRS.templates)],
+    root: [path.join(PROJECT_ROOT, DIRS.templates)],
     extname: ".liquid",
     strictVariables: false,
     strictFilters: true,
