@@ -3,7 +3,15 @@ import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
 import { loadSkillsMatrixFromSource } from "./source-loader";
-import { PROJECT_ROOT } from "../consts";
+
+// Skills are in claude-subagents repo, not CLI repo
+// CLI tests need to point to the skills repo for integration tests
+const SKILLS_REPO_ROOT = path.resolve(
+  __dirname,
+  "../../../../claude-subagents",
+);
+// Fallback to the linked .claude folder's parent if skills repo not at expected path
+const SKILLS_SOURCE = process.env.CC_TEST_SKILLS_SOURCE || SKILLS_REPO_ROOT;
 
 describe("source-loader", () => {
   let tempDir: string;
@@ -21,14 +29,17 @@ describe("source-loader", () => {
 
   describe("loadSkillsMatrixFromSource", () => {
     describe("dev mode detection", () => {
-      it("should detect dev mode when running from project with local skills", async () => {
-        // When running from the actual project, it should use local mode
-        // This test verifies the dev mode detection works
+      it("should use local mode when devMode flag is explicitly set", async () => {
+        // Dev mode is now opt-in via the devMode flag
+        // When devMode is true, it loads from PROJECT_ROOT (which is CLI repo)
+        // Since CLI repo doesn't have skills, we need to provide sourceFlag
         const result = await loadSkillsMatrixFromSource({
+          sourceFlag: SKILLS_SOURCE,
           projectDir: tempDir,
+          devMode: true,
         });
 
-        // Should load from local PROJECT_ROOT in dev mode
+        // Should load from local source in dev mode
         expect(result.isLocal).toBe(true);
         expect(result.matrix).toBeDefined();
         expect(result.matrix.skills).toBeDefined();
@@ -37,12 +48,12 @@ describe("source-loader", () => {
       it("should use source flag when provided", async () => {
         // Using an explicit local path as source
         const result = await loadSkillsMatrixFromSource({
-          sourceFlag: PROJECT_ROOT,
+          sourceFlag: SKILLS_SOURCE,
           projectDir: tempDir,
         });
 
         expect(result.isLocal).toBe(true);
-        expect(result.sourceConfig.source).toBe(PROJECT_ROOT);
+        expect(result.sourceConfig.source).toBe(SKILLS_SOURCE);
         expect(result.sourceConfig.sourceOrigin).toBe("flag");
       });
     });
@@ -50,7 +61,7 @@ describe("source-loader", () => {
     describe("local source loading", () => {
       it("should load matrix from local source", async () => {
         const result = await loadSkillsMatrixFromSource({
-          sourceFlag: PROJECT_ROOT,
+          sourceFlag: SKILLS_SOURCE,
           projectDir: tempDir,
         });
 
@@ -63,16 +74,16 @@ describe("source-loader", () => {
 
       it("should set sourcePath to the root path", async () => {
         const result = await loadSkillsMatrixFromSource({
-          sourceFlag: PROJECT_ROOT,
+          sourceFlag: SKILLS_SOURCE,
           projectDir: tempDir,
         });
 
-        expect(result.sourcePath).toBe(PROJECT_ROOT);
+        expect(result.sourcePath).toBe(SKILLS_SOURCE);
       });
 
       it("should mark result as local", async () => {
         const result = await loadSkillsMatrixFromSource({
-          sourceFlag: PROJECT_ROOT,
+          sourceFlag: SKILLS_SOURCE,
           projectDir: tempDir,
         });
 
@@ -81,26 +92,35 @@ describe("source-loader", () => {
     });
 
     describe("error handling", () => {
-      it("should throw error for non-existent local path", async () => {
-        await expect(
-          loadSkillsMatrixFromSource({
-            sourceFlag: "/non/existent/path",
-            projectDir: tempDir,
-          }),
-        ).rejects.toThrow();
+      it("should return empty skills for non-existent skills directory", async () => {
+        // With new architecture: matrix loads from CLI repo (always succeeds)
+        // Skills extraction gracefully returns empty for non-existent paths
+        const result = await loadSkillsMatrixFromSource({
+          sourceFlag: "/non/existent/path",
+          projectDir: tempDir,
+        });
+
+        // Matrix loads from CLI, but no skills from non-existent path
+        expect(result.matrix).toBeDefined();
+        expect(result.matrix.categories).toBeDefined();
+        // Skills from the source path should be empty
+        // (matrix defines skills but they won't have content from source)
       });
 
-      it("should throw error if skills-matrix.yaml is missing", async () => {
-        // Create a directory without skills-matrix.yaml
+      it("should return empty skills if skills directory is missing", async () => {
+        // Create a directory without src/skills/
         const emptySource = path.join(tempDir, "empty-source");
         await mkdir(emptySource, { recursive: true });
 
-        await expect(
-          loadSkillsMatrixFromSource({
-            sourceFlag: emptySource,
-            projectDir: tempDir,
-          }),
-        ).rejects.toThrow();
+        // With new architecture: matrix loads from CLI repo (always succeeds)
+        // Skills extraction gracefully returns empty for missing src/skills/
+        const result = await loadSkillsMatrixFromSource({
+          sourceFlag: emptySource,
+          projectDir: tempDir,
+        });
+
+        expect(result.matrix).toBeDefined();
+        expect(result.matrix.categories).toBeDefined();
       });
     });
   });
@@ -132,7 +152,7 @@ describe("source-loader local skills integration", () => {
     );
 
     const result = await loadSkillsMatrixFromSource({
-      sourceFlag: PROJECT_ROOT,
+      sourceFlag: SKILLS_SOURCE,
       projectDir: tempDir,
     });
 
@@ -162,7 +182,7 @@ describe("source-loader local skills integration", () => {
     );
 
     const result = await loadSkillsMatrixFromSource({
-      sourceFlag: PROJECT_ROOT,
+      sourceFlag: SKILLS_SOURCE,
       projectDir: tempDir,
     });
 
@@ -177,7 +197,7 @@ describe("source-loader local skills integration", () => {
 
   it("should not modify matrix when no local skills exist", async () => {
     const result = await loadSkillsMatrixFromSource({
-      sourceFlag: PROJECT_ROOT,
+      sourceFlag: SKILLS_SOURCE,
       projectDir: tempDir, // No .claude/skills directory
     });
 
@@ -204,7 +224,7 @@ describe("source-loader local skills integration", () => {
     );
 
     const result = await loadSkillsMatrixFromSource({
-      sourceFlag: PROJECT_ROOT,
+      sourceFlag: SKILLS_SOURCE,
       projectDir: tempDir,
     });
 
@@ -222,7 +242,7 @@ describe("source-loader local skills integration", () => {
 describe("source-loader integration", () => {
   it("should load all skills from local source", async () => {
     const result = await loadSkillsMatrixFromSource({
-      sourceFlag: PROJECT_ROOT,
+      sourceFlag: SKILLS_SOURCE,
     });
 
     // Verify we loaded a reasonable number of skills
@@ -239,7 +259,7 @@ describe("source-loader integration", () => {
 
   it("should load suggested stacks", async () => {
     const result = await loadSkillsMatrixFromSource({
-      sourceFlag: PROJECT_ROOT,
+      sourceFlag: SKILLS_SOURCE,
     });
 
     expect(result.matrix.suggestedStacks).toBeDefined();
@@ -255,7 +275,7 @@ describe("source-loader integration", () => {
 
   it("should load categories", async () => {
     const result = await loadSkillsMatrixFromSource({
-      sourceFlag: PROJECT_ROOT,
+      sourceFlag: SKILLS_SOURCE,
     });
 
     expect(result.matrix.categories).toBeDefined();

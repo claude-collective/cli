@@ -11,7 +11,7 @@ import {
   fileExists,
 } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import { DIRS, OUTPUT_DIR } from "../consts";
+import { DIRS, OUTPUT_DIR, PROJECT_ROOT } from "../consts";
 import { resolveClaudeMd } from "./resolver";
 import {
   validateCompiledAgent,
@@ -274,10 +274,11 @@ export async function compileAllCommands(ctx: CompileContext): Promise<void> {
 
 /**
  * Create a configured Liquid engine
+ * Templates are bundled with CLI, not with content source
  */
-export function createLiquidEngine(projectRoot: string): Liquid {
+export function createLiquidEngine(): Liquid {
   return new Liquid({
-    root: [path.join(projectRoot, DIRS.templates)],
+    root: [path.join(PROJECT_ROOT, DIRS.templates)],
     extname: ".liquid",
     strictVariables: false,
     strictFilters: true,

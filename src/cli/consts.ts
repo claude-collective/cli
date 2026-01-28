@@ -24,8 +24,8 @@ export const PLUGIN_MANIFEST_FILE = "plugin.json";
 // Use os.homedir() instead of process.env.HOME for cross-platform
 export const CACHE_DIR = path.join(os.homedir(), ".cache", "claude-collective");
 
-// Skills matrix path within a source repository
-export const SKILLS_MATRIX_PATH = "src/config/skills-matrix.yaml";
+// Skills matrix path within the CLI repository
+export const SKILLS_MATRIX_PATH = "config/skills-matrix.yaml";
 
 // Skills directory within a source repository
 export const SKILLS_DIR_PATH = "src/skills";

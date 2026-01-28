@@ -10,7 +10,7 @@ import {
   directoryExists,
 } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import { DIRS } from "../consts";
+import { DIRS, PROJECT_ROOT } from "../consts";
 import {
   generateStackPluginManifest,
   writePluginManifest,
@@ -427,9 +427,9 @@ export async function compileStackPlugin(
     }
   }
 
-  // 7. Create Liquid engine
+  // 7. Create Liquid engine - templates are bundled with CLI
   const engine = new Liquid({
-    root: [path.join(projectRoot, DIRS.templates)],
+    root: [path.join(PROJECT_ROOT, DIRS.templates)],
     extname: ".liquid",
     strictVariables: false,
     strictFilters: true,

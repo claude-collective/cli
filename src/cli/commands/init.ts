@@ -4,7 +4,12 @@ import pc from "picocolors";
 import path from "path";
 import { Liquid } from "liquidjs";
 import { stringify as stringifyYaml } from "yaml";
-import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE, DIRS } from "../consts";
+import {
+  PLUGIN_MANIFEST_DIR,
+  PLUGIN_MANIFEST_FILE,
+  DIRS,
+  PROJECT_ROOT,
+} from "../consts";
 import { ensureDir, writeFile, directoryExists } from "../utils/fs";
 import {
   runWizard,
@@ -211,6 +216,11 @@ export const initCommand = new Command("init")
       console.log("");
     }
 
+    // Log the selected install mode
+    p.log.info(
+      `Install mode: ${pc.cyan(result.installMode === "plugin" ? "Plugin (native install)" : "Local (copy to .claude/skills/)")}`,
+    );
+
     if (dryRun) {
       p.log.info(pc.yellow(`[dry-run] Would create plugin at: ${pluginDir}`));
       p.log.info(
@@ -304,9 +314,9 @@ export const initCommand = new Command("init")
         agents: compileAgents,
       };
 
-      // Create Liquid engine
+      // Create Liquid engine - templates are bundled with CLI, not fetched from source
       const engine = new Liquid({
-        root: [path.join(sourceResult.sourcePath, DIRS.templates)],
+        root: [path.join(PROJECT_ROOT, DIRS.templates)],
         extname: ".liquid",
         strictVariables: false,
         strictFilters: true,
