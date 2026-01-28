@@ -2,7 +2,10 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
-import { copySkillsToPluginFromSource } from "./skill-copier";
+import {
+  copySkillsToPluginFromSource,
+  copySkillsToLocalFlattened,
+} from "./skill-copier";
 import type { MergedSkillsMatrix, ResolvedSkill } from "../types-matrix";
 import type { SourceLoadResult } from "./source-loader";
 import { PROJECT_ROOT } from "../consts";
@@ -122,11 +125,7 @@ describe("skill-copier", () => {
         expect(result[0].destPath).toBe(localSkillPath);
 
         // Verify skill was NOT copied to plugin dir
-        const copiedSkillDir = path.join(
-          pluginDir,
-          "skills",
-          "my-local-skill",
-        );
+        const copiedSkillDir = path.join(pluginDir, "skills", "my-local-skill");
         let exists = false;
         try {
           await readFile(path.join(copiedSkillDir, "SKILL.md"));
@@ -205,11 +204,7 @@ describe("skill-copier", () => {
 
       // Create remote skill in source location (simulating fetched source)
       const remoteSkillRelPath = "skills/frontend/framework/react (@vince)/";
-      const remoteSkillDir = path.join(
-        projectDir,
-        "src",
-        remoteSkillRelPath,
-      );
+      const remoteSkillDir = path.join(projectDir, "src", remoteSkillRelPath);
       await mkdir(remoteSkillDir, { recursive: true });
       await writeFile(
         path.join(remoteSkillDir, "SKILL.md"),
@@ -277,7 +272,9 @@ describe("skill-copier", () => {
     });
 
     it("warns about unknown skills and skips them", async () => {
-      const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleWarn = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
 
       const matrix = createMockMatrix({});
 
@@ -316,6 +313,262 @@ describe("skill-copier", () => {
       const result = await copySkillsToPluginFromSource(
         [],
         pluginDir,
+        matrix,
+        sourceResult,
+      );
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("copySkillsToLocalFlattened", () => {
+    it("copies skills to flattened structure using alias", async () => {
+      // Create remote skill in source location
+      const remoteSkillRelPath =
+        "skills/frontend/client-state-management/zustand (@vince)/";
+      const remoteSkillDir = path.join(projectDir, "src", remoteSkillRelPath);
+      await mkdir(remoteSkillDir, { recursive: true });
+      await writeFile(
+        path.join(remoteSkillDir, "SKILL.md"),
+        `---\nname: zustand (@vince)\ndescription: Zustand state management\n---\nZustand content`,
+      );
+      await writeFile(
+        path.join(remoteSkillDir, "metadata.yaml"),
+        `cli_name: Zustand\nauthor: "@vince"`,
+      );
+
+      const localSkillsDir = path.join(projectDir, ".claude", "skills");
+      await mkdir(localSkillsDir, { recursive: true });
+
+      const matrix = createMockMatrix({
+        "zustand (@vince)": createMockSkill(
+          "zustand (@vince)",
+          "frontend/state",
+          remoteSkillRelPath,
+          { alias: "zustand" },
+        ),
+      });
+
+      const sourceResult: SourceLoadResult = {
+        matrix,
+        sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
+        sourcePath: projectDir,
+        isLocal: true,
+      };
+
+      const result = await copySkillsToLocalFlattened(
+        ["zustand (@vince)"],
+        localSkillsDir,
+        matrix,
+        sourceResult,
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].skillId).toBe("zustand (@vince)");
+      // Should be flattened to .claude/skills/zustand/ (using alias)
+      expect(result[0].destPath).toBe(path.join(localSkillsDir, "zustand"));
+
+      // Verify skill was copied
+      const copiedSkillMd = await readFile(
+        path.join(localSkillsDir, "zustand", "SKILL.md"),
+        "utf-8",
+      );
+      expect(copiedSkillMd).toContain("Zustand content");
+    });
+
+    it("copies skills using extracted name when no alias", async () => {
+      // Create remote skill without alias
+      const remoteSkillRelPath = "skills/backend/api/hono (@vince)/";
+      const remoteSkillDir = path.join(projectDir, "src", remoteSkillRelPath);
+      await mkdir(remoteSkillDir, { recursive: true });
+      await writeFile(
+        path.join(remoteSkillDir, "SKILL.md"),
+        `---\nname: hono (@vince)\ndescription: Hono API\n---\nHono content`,
+      );
+      await writeFile(
+        path.join(remoteSkillDir, "metadata.yaml"),
+        `cli_name: Hono\nauthor: "@vince"`,
+      );
+
+      const localSkillsDir = path.join(projectDir, ".claude", "skills");
+      await mkdir(localSkillsDir, { recursive: true });
+
+      const matrix = createMockMatrix({
+        "hono (@vince)": createMockSkill(
+          "hono (@vince)",
+          "backend/api",
+          remoteSkillRelPath,
+          // No alias
+        ),
+      });
+
+      const sourceResult: SourceLoadResult = {
+        matrix,
+        sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
+        sourcePath: projectDir,
+        isLocal: true,
+      };
+
+      const result = await copySkillsToLocalFlattened(
+        ["hono (@vince)"],
+        localSkillsDir,
+        matrix,
+        sourceResult,
+      );
+
+      expect(result).toHaveLength(1);
+      // Should extract "hono" from "hono (@vince)"
+      expect(result[0].destPath).toBe(path.join(localSkillsDir, "hono"));
+    });
+
+    it("skips local skills and does not copy them", async () => {
+      // Create a local skill already in .claude/skills/
+      const localSkillPath = ".claude/skills/my-local-skill/";
+      const localSkillDir = path.join(projectDir, localSkillPath);
+      await mkdir(localSkillDir, { recursive: true });
+      await writeFile(
+        path.join(localSkillDir, "SKILL.md"),
+        `---\nname: my-local-skill (@local)\ndescription: Local skill\n---\nLocal content`,
+      );
+
+      const localSkillsDir = path.join(projectDir, ".claude", "skills");
+
+      const matrix = createMockMatrix({
+        "my-local-skill (@local)": createMockSkill(
+          "my-local-skill (@local)",
+          "local/custom",
+          localSkillPath,
+          {
+            local: true,
+            localPath: localSkillPath,
+          },
+        ),
+      });
+
+      const sourceResult: SourceLoadResult = {
+        matrix,
+        sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
+        sourcePath: projectDir,
+        isLocal: true,
+      };
+
+      const originalCwd = process.cwd();
+      process.chdir(projectDir);
+
+      try {
+        const result = await copySkillsToLocalFlattened(
+          ["my-local-skill (@local)"],
+          localSkillsDir,
+          matrix,
+          sourceResult,
+        );
+
+        // Local skill should be returned but marked as local
+        expect(result).toHaveLength(1);
+        expect(result[0].skillId).toBe("my-local-skill (@local)");
+        expect(result[0].local).toBe(true);
+        expect(result[0].sourcePath).toBe(localSkillPath);
+        expect(result[0].destPath).toBe(localSkillPath);
+      } finally {
+        process.chdir(originalCwd);
+      }
+    });
+
+    it("handles mix of local and remote skills", async () => {
+      // Create local skill
+      const localSkillPath = ".claude/skills/my-local/";
+      const localSkillDir = path.join(projectDir, localSkillPath);
+      await mkdir(localSkillDir, { recursive: true });
+      await writeFile(
+        path.join(localSkillDir, "SKILL.md"),
+        `---\nname: my-local (@local)\ndescription: Local\n---\nLocal content`,
+      );
+
+      // Create remote skill
+      const remoteSkillRelPath = "skills/frontend/framework/react (@vince)/";
+      const remoteSkillDir = path.join(projectDir, "src", remoteSkillRelPath);
+      await mkdir(remoteSkillDir, { recursive: true });
+      await writeFile(
+        path.join(remoteSkillDir, "SKILL.md"),
+        `---\nname: react (@vince)\ndescription: React\n---\nReact content`,
+      );
+      await writeFile(
+        path.join(remoteSkillDir, "metadata.yaml"),
+        `cli_name: React\nauthor: "@vince"`,
+      );
+
+      const localSkillsDir = path.join(projectDir, ".claude", "skills");
+
+      const matrix = createMockMatrix({
+        "my-local (@local)": createMockSkill(
+          "my-local (@local)",
+          "local/custom",
+          localSkillPath,
+          {
+            local: true,
+            localPath: localSkillPath,
+          },
+        ),
+        "react (@vince)": createMockSkill(
+          "react (@vince)",
+          "frontend/framework",
+          remoteSkillRelPath,
+          { alias: "react" },
+        ),
+      });
+
+      const sourceResult: SourceLoadResult = {
+        matrix,
+        sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
+        sourcePath: projectDir,
+        isLocal: true,
+      };
+
+      const originalCwd = process.cwd();
+      process.chdir(projectDir);
+
+      try {
+        const result = await copySkillsToLocalFlattened(
+          ["my-local (@local)", "react (@vince)"],
+          localSkillsDir,
+          matrix,
+          sourceResult,
+        );
+
+        expect(result).toHaveLength(2);
+
+        // Find local and remote results
+        const localResult = result.find((r) => r.local === true);
+        const remoteResult = result.find((r) => r.local !== true);
+
+        // Local skill should not be copied
+        expect(localResult?.skillId).toBe("my-local (@local)");
+        expect(localResult?.local).toBe(true);
+
+        // Remote skill should be copied to flattened location
+        expect(remoteResult?.skillId).toBe("react (@vince)");
+        expect(remoteResult?.destPath).toBe(path.join(localSkillsDir, "react"));
+      } finally {
+        process.chdir(originalCwd);
+      }
+    });
+
+    it("handles empty skill selection", async () => {
+      const localSkillsDir = path.join(projectDir, ".claude", "skills");
+      await mkdir(localSkillsDir, { recursive: true });
+
+      const matrix = createMockMatrix({});
+
+      const sourceResult: SourceLoadResult = {
+        matrix,
+        sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
+        sourcePath: projectDir,
+        isLocal: true,
+      };
+
+      const result = await copySkillsToLocalFlattened(
+        [],
+        localSkillsDir,
         matrix,
         sourceResult,
       );

@@ -13,6 +13,7 @@ import type {
   CompileAgentConfig,
   StackConfig,
   SkillReference,
+  SkillDefinition,
 } from "../../types";
 
 /**
@@ -25,6 +26,8 @@ export interface RecompileAgentsOptions {
   sourcePath: string;
   /** Optional: specific agents to recompile (defaults to all existing) */
   agents?: string[];
+  /** Optional: pre-loaded skills (if not provided, loads from pluginDir/skills/) */
+  skills?: Record<string, SkillDefinition>;
 }
 
 /**
@@ -86,7 +89,12 @@ async function loadPluginConfig(
 export async function recompileAgents(
   options: RecompileAgentsOptions,
 ): Promise<RecompileAgentsResult> {
-  const { pluginDir, sourcePath, agents: specifiedAgents } = options;
+  const {
+    pluginDir,
+    sourcePath,
+    agents: specifiedAgents,
+    skills: providedSkills,
+  } = options;
 
   const result: RecompileAgentsResult = {
     compiled: [],
@@ -120,8 +128,8 @@ export async function recompileAgents(
   // 3. Load agent definitions from source
   const allAgents = await loadAllAgents(sourcePath);
 
-  // 4. Load skills from the plugin
-  const pluginSkills = await loadPluginSkills(pluginDir);
+  // 4. Use provided skills or load from the plugin
+  const pluginSkills = providedSkills ?? (await loadPluginSkills(pluginDir));
 
   // 5. Build compile config for the agents
   const compileAgents: Record<string, CompileAgentConfig> = {};
