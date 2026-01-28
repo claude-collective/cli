@@ -2,9 +2,8 @@ import { Command } from "commander";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import path from "path";
-import { Liquid } from "liquidjs";
 import { stringify as stringifyYaml } from "yaml";
-import { DIRS, PROJECT_ROOT, LOCAL_SKILLS_PATH } from "../consts";
+import { LOCAL_SKILLS_PATH } from "../consts";
 import { ensureDir, writeFile, directoryExists } from "../utils/fs";
 import {
   runWizard,
@@ -22,6 +21,7 @@ import { loadAllAgents, loadStack } from "../lib/loader";
 import { resolveAgents, resolveStackSkills } from "../lib/resolver";
 import { compileAgentForPlugin } from "../lib/stack-plugin-compiler";
 import { getCollectivePluginDir } from "../lib/plugin-finder";
+import { createLiquidEngine } from "../lib/compiler";
 import {
   generateConfigFromSkills,
   generateConfigFromStack,
@@ -281,13 +281,8 @@ export const initCommand = new Command("init")
         agents: compileAgents,
       };
 
-      // Create Liquid engine
-      const engine = new Liquid({
-        root: [path.join(PROJECT_ROOT, DIRS.templates)],
-        extname: ".liquid",
-        strictVariables: false,
-        strictFilters: true,
-      });
+      // Create Liquid engine - checks local templates first, falls back to bundled
+      const engine = await createLiquidEngine(projectDir);
 
       // Resolve and compile agents
       const resolvedAgents = await resolveAgents(
@@ -447,13 +442,8 @@ export const initCommand = new Command("init")
         agents: compileAgents,
       };
 
-      // Create Liquid engine - templates are bundled with CLI, not fetched from source
-      const engine = new Liquid({
-        root: [path.join(PROJECT_ROOT, DIRS.templates)],
-        extname: ".liquid",
-        strictVariables: false,
-        strictFilters: true,
-      });
+      // Create Liquid engine - checks local templates first, falls back to bundled
+      const engine = await createLiquidEngine(projectDir);
 
       // Resolve and compile agents
       const resolvedAgents = await resolveAgents(

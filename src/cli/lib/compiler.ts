@@ -9,6 +9,7 @@ import {
   copy,
   glob,
   fileExists,
+  directoryExists,
 } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import { DIRS, OUTPUT_DIR, PROJECT_ROOT } from "../consts";
@@ -273,12 +274,33 @@ export async function compileAllCommands(ctx: CompileContext): Promise<void> {
 }
 
 /**
- * Create a configured Liquid engine
- * Templates are bundled with CLI, not with content source
+ * Create a configured Liquid engine with local template resolution
+ *
+ * Template resolution order:
+ * 1. Local project templates (.claude/templates/) - if provided and exists
+ * 2. Bundled CLI templates (PROJECT_ROOT/templates)
+ *
+ * This allows users to eject and customize templates locally.
+ *
+ * @param projectDir - Optional project directory for local template resolution
  */
-export function createLiquidEngine(): Liquid {
+export async function createLiquidEngine(projectDir?: string): Promise<Liquid> {
+  const roots: string[] = [];
+
+  // Check for local templates first (if projectDir provided)
+  if (projectDir) {
+    const localTemplatesDir = path.join(projectDir, ".claude", "templates");
+    if (await directoryExists(localTemplatesDir)) {
+      roots.push(localTemplatesDir);
+      verbose(`Using local templates from: ${localTemplatesDir}`);
+    }
+  }
+
+  // Always include bundled templates as fallback
+  roots.push(path.join(PROJECT_ROOT, DIRS.templates));
+
   return new Liquid({
-    root: [path.join(PROJECT_ROOT, DIRS.templates)],
+    root: roots,
     extname: ".liquid",
     strictVariables: false,
     strictFilters: true,

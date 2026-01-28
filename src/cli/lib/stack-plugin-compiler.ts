@@ -11,6 +11,7 @@ import {
 } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import { DIRS, PROJECT_ROOT } from "../consts";
+import { createLiquidEngine } from "./compiler";
 import {
   generateStackPluginManifest,
   writePluginManifest,
@@ -427,13 +428,8 @@ export async function compileStackPlugin(
     }
   }
 
-  // 7. Create Liquid engine - templates are bundled with CLI
-  const engine = new Liquid({
-    root: [path.join(PROJECT_ROOT, DIRS.templates)],
-    extname: ".liquid",
-    strictVariables: false,
-    strictFilters: true,
-  });
+  // 7. Create Liquid engine - uses bundled templates (projectRoot for local templates is internal dev)
+  const engine = await createLiquidEngine();
 
   // 8. Compile all agents
   const compiledAgentNames: string[] = [];
