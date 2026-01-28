@@ -2,7 +2,12 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
-import { getCurrentDate, hashString, hashSkillFolder } from "./versioning";
+import {
+  getCurrentDate,
+  hashString,
+  hashFile,
+  hashSkillFolder,
+} from "./versioning";
 
 describe("getCurrentDate", () => {
   it("should return date in YYYY-MM-DD format", () => {
@@ -53,6 +58,48 @@ describe("hashString", () => {
     // First 7 chars: 9f86d08
     const result = hashString("test");
     expect(result).toBe("9f86d08");
+  });
+});
+
+describe("hashFile", () => {
+  let tempDir: string;
+
+  beforeEach(async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "hashfile-test-"));
+  });
+
+  afterEach(async () => {
+    await rm(tempDir, { recursive: true, force: true });
+  });
+
+  it("should hash file content", async () => {
+    const filePath = path.join(tempDir, "test.txt");
+    await writeFile(filePath, "test content");
+
+    const hash = await hashFile(filePath);
+
+    expect(hash).toMatch(/^[a-f0-9]{7}$/);
+  });
+
+  it("should return consistent hash for same file content", async () => {
+    const filePath = path.join(tempDir, "test.txt");
+    await writeFile(filePath, "hello world");
+
+    const hash1 = await hashFile(filePath);
+    const hash2 = await hashFile(filePath);
+
+    expect(hash1).toBe(hash2);
+  });
+
+  it("should match hashString for same content", async () => {
+    const content = "matching content test";
+    const filePath = path.join(tempDir, "test.txt");
+    await writeFile(filePath, content);
+
+    const fileHash = await hashFile(filePath);
+    const stringHash = hashString(content);
+
+    expect(fileHash).toBe(stringHash);
   });
 });
 

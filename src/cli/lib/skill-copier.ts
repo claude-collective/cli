@@ -1,7 +1,7 @@
 import path from "path";
 import { stringify as stringifyYaml, parse as parseYaml } from "yaml";
 import { copy, ensureDir, readFile, writeFile } from "../utils/fs";
-import { hashFile } from "./hash";
+import { hashFile } from "./versioning";
 import type { MergedSkillsMatrix, ResolvedSkill } from "../types-matrix";
 import type { SourceLoadResult } from "./source-loader";
 
