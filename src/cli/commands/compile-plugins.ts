@@ -13,8 +13,8 @@ import { EXIT_CODES } from "../lib/exit-codes";
 
 const DEFAULT_OUTPUT_DIR = "dist/plugins";
 
-export const compilePluginsCommand = new Command("compile-plugins")
-  .description("Compile skills into standalone plugins")
+export const compilePluginsCommand = new Command("build:plugins")
+  .description("Build skills into standalone plugins (requires skills repo)")
   .option("-s, --skills-dir <dir>", "Skills source directory", DIRS.skills)
   .option("-o, --output-dir <dir>", "Output directory", DEFAULT_OUTPUT_DIR)
   .option(

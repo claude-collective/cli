@@ -14,8 +14,8 @@ import { EXIT_CODES } from "../lib/exit-codes";
 
 const DEFAULT_OUTPUT_DIR = "dist/stacks";
 
-export const compileStackCommand = new Command("compile-stack")
-  .description("Compile a stack into a standalone plugin")
+export const compileStackCommand = new Command("build:stack")
+  .description("Build a stack into a standalone plugin (requires skills repo)")
   .option(
     "-s, --stack <id>",
     "Stack ID to compile (directory name in src/stacks/)",

@@ -27,11 +27,26 @@ async function loadSchema(schemaName: string): Promise<object> {
     return schemaCache.get(schemaName)!;
   }
 
-  const schemaPath = path.join(PROJECT_ROOT, "src", "schemas", schemaName);
-  const content = await readFile(schemaPath);
-  const schema = JSON.parse(content);
-  schemaCache.set(schemaName, schema);
-  return schema;
+  // Try multiple locations for schema files:
+  // 1. CLI repo's schemas (for plugin, agent schemas)
+  // 2. Current directory's schemas (for skill schemas in claude-subagents)
+  const locations = [
+    path.join(PROJECT_ROOT, "src", "schemas", schemaName),
+    path.join(process.cwd(), "src", "schemas", schemaName),
+  ];
+
+  for (const schemaPath of locations) {
+    if (await fileExists(schemaPath)) {
+      const content = await readFile(schemaPath);
+      const schema = JSON.parse(content);
+      schemaCache.set(schemaName, schema);
+      return schema;
+    }
+  }
+
+  throw new Error(
+    `Schema not found: ${schemaName}. Searched: ${locations.join(", ")}`,
+  );
 }
 
 async function getValidator(schemaName: string): Promise<ValidateFunction> {
