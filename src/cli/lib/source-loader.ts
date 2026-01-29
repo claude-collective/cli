@@ -108,13 +108,13 @@ export async function loadSkillsMatrixFromSource(
  * from the remote default source.
  *
  * Dev mode was detected when:
- * 1. The source contains "claude-collective-skills" (the default source)
+ * 1. The source contains "claude-collective/skills" (the default source)
  * 2. A local src/skills/ directory exists in PROJECT_ROOT
  */
 async function isDevMode(source: string): Promise<boolean> {
   // If source is the default and we're running from within the project
   // that contains src/skills/, we're in dev mode
-  if (!source.includes("claude-collective-skills")) {
+  if (!source.includes("claude-collective/skills")) {
     return false;
   }
   return hasLocalSkills();

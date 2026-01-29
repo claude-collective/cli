@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://claude-subagents.local/schemas/hooks.schema.json",
+  "$id": "https://claude-collective.local/schemas/hooks.schema.json",
   "title": "Hooks Configuration",
   "description": "Schema for hooks.json files in Claude Code plugins. Defines event handlers for plugin lifecycle events.",
   "type": "object",

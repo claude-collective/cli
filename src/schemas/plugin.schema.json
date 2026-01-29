@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://claude-subagents.local/schemas/plugin.schema.json",
+  "$id": "https://claude-collective.local/schemas/plugin.schema.json",
   "title": "Plugin Manifest",
   "description": "Plugin manifest schema for Claude Code plugins. Defines the structure of plugin.json files.",
   "type": "object",

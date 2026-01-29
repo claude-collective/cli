@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://claude-subagents.local/schemas/agent-frontmatter.schema.json",
+  "$id": "https://claude-collective.local/schemas/agent-frontmatter.schema.json",
   "title": "Agent Frontmatter",
   "description": "Schema for YAML frontmatter in compiled agent.md files. Matches official Claude Code plugin format for agents.",
   "type": "object",

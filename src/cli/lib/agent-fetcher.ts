@@ -10,7 +10,7 @@ import type { AgentSourcePaths } from "../../types";
  * Returns paths to agent components (agents, templates)
  * without loading them into memory.
  *
- * @param source - Source URL (e.g., "github:vincentbollaert/claude-collective-skills")
+ * @param source - Source URL (e.g., "github:claude-collective/skills")
  * @param options - Fetch options
  * @returns Paths to agent definition directories
  */

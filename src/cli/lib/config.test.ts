@@ -36,9 +36,7 @@ describe("config", () => {
 
   describe("DEFAULT_SOURCE", () => {
     it("should be set to the claude-collective skills repo", () => {
-      expect(DEFAULT_SOURCE).toBe(
-        "github:vincentbollaert/claude-collective-skills",
-      );
+      expect(DEFAULT_SOURCE).toBe("github:claude-collective/skills");
     });
   });
 

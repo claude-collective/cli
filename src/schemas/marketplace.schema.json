@@ -150,7 +150,7 @@
         "repo": {
           "type": "string",
           "description": "GitHub repository in owner/repo format",
-          "examples": ["vincentbollaert/claude-collective-skills"]
+          "examples": ["claude-collective/skills"]
         },
         "url": {
           "type": "string",
