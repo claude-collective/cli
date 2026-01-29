@@ -2,209 +2,107 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://claude-collective.local/schemas/plugin.schema.json",
   "title": "Plugin Manifest",
-  "description": "Plugin manifest schema for Claude Code plugins. Defines the structure of plugin.json files.",
+  "description": "Schema for plugin.json in Claude Code plugins.",
   "type": "object",
   "required": ["name"],
   "additionalProperties": false,
   "properties": {
     "name": {
       "type": "string",
-      "description": "Plugin name in kebab-case",
+      "description": "Plugin name (kebab-case)",
       "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
-      "minLength": 1,
-      "examples": ["skill-react", "stack-modern-react"]
+      "minLength": 1
     },
     "version": {
       "type": "string",
-      "description": "Semantic version of the plugin (major.minor.patch)",
-      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
-      "examples": ["1.0.0", "2.1.0", "0.1.0-beta"]
+      "description": "Semantic version",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
     },
     "description": {
       "type": "string",
-      "description": "Brief description of the plugin's purpose",
-      "minLength": 1,
-      "examples": ["React component patterns and best practices"]
+      "minLength": 1
     },
-    "author": {
-      "$ref": "#/$defs/Author",
-      "description": "Plugin author information"
-    },
+    "author": { "$ref": "#/$defs/Author" },
     "homepage": {
       "type": "string",
-      "description": "URL to plugin documentation or homepage",
-      "format": "uri",
-      "examples": ["https://docs.example.com"]
+      "format": "uri"
     },
     "repository": {
       "type": "string",
-      "description": "URL to plugin source repository",
-      "format": "uri",
-      "examples": ["https://github.com/author/repo"]
+      "format": "uri"
     },
     "license": {
       "type": "string",
-      "description": "SPDX license identifier",
-      "examples": ["MIT", "Apache-2.0", "GPL-3.0"]
+      "description": "SPDX license identifier"
     },
     "keywords": {
       "type": "array",
-      "description": "Keywords for discoverability",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      },
-      "uniqueItems": true,
-      "examples": [["react", "frontend", "components"]]
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
     },
     "commands": {
       "oneOf": [
-        {
-          "type": "string",
-          "description": "Path to commands directory"
-        },
-        {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Array of paths to command files or directories"
-        }
-      ],
-      "examples": [
-        "./custom/commands/",
-        ["./commands/build.md", "./commands/deploy.md"]
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
       ]
     },
     "agents": {
       "oneOf": [
-        {
-          "type": "string",
-          "description": "Path to agents directory"
-        },
-        {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Array of paths to agent files or directories"
-        }
-      ],
-      "examples": ["./agents/", ["./agents/frontend.md", "./agents/backend.md"]]
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
     },
     "skills": {
       "oneOf": [
-        {
-          "type": "string",
-          "description": "Path to skills directory"
-        },
-        {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Array of paths to skill files or directories"
-        }
-      ],
-      "examples": ["./skills/", ["./skills/react/", "./skills/typescript/"]]
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
     },
     "hooks": {
-      "oneOf": [
-        {
-          "type": "string",
-          "description": "Path to hooks configuration file"
-        },
-        {
-          "$ref": "#/$defs/HooksConfig",
-          "description": "Inline hooks configuration object"
-        }
-      ],
-      "examples": ["./hooks/hooks.json"]
+      "oneOf": [{ "type": "string" }, { "$ref": "#/$defs/HooksConfig" }]
     },
     "mcpServers": {
       "oneOf": [
-        {
-          "type": "string",
-          "description": "Path to MCP servers configuration file"
-        },
-        {
-          "type": "object",
-          "description": "Inline MCP servers configuration object",
-          "additionalProperties": true
-        }
-      ],
-      "examples": ["./.mcp.json"]
+        { "type": "string" },
+        { "type": "object", "additionalProperties": true }
+      ]
     }
   },
   "$defs": {
     "Author": {
       "type": "object",
-      "description": "Author information",
       "required": ["name"],
       "additionalProperties": false,
       "properties": {
-        "name": {
-          "type": "string",
-          "description": "Author's display name",
-          "minLength": 1,
-          "examples": ["Vincent Bollaert"]
-        },
-        "email": {
-          "type": "string",
-          "description": "Author's email address",
-          "format": "email",
-          "examples": ["author@example.com"]
-        }
+        "name": { "type": "string", "minLength": 1 },
+        "email": { "type": "string", "format": "email" }
       }
     },
     "HooksConfig": {
       "type": "object",
-      "description": "Hooks configuration object",
       "additionalProperties": {
         "type": "array",
-        "items": {
-          "$ref": "#/$defs/HookDefinition"
-        }
+        "items": { "$ref": "#/$defs/HookDefinition" }
       }
     },
     "HookDefinition": {
       "type": "object",
-      "description": "Single hook definition",
       "properties": {
-        "matcher": {
-          "type": "string",
-          "description": "Pattern to match for hook execution"
-        },
+        "matcher": { "type": "string" },
         "hooks": {
           "type": "array",
-          "items": {
-            "$ref": "#/$defs/HookAction"
-          }
+          "items": { "$ref": "#/$defs/HookAction" }
         }
       }
     },
     "HookAction": {
       "type": "object",
-      "description": "Hook action to execute",
       "required": ["type"],
       "properties": {
-        "type": {
-          "type": "string",
-          "enum": ["command", "script", "prompt"],
-          "description": "Type of hook action"
-        },
-        "command": {
-          "type": "string",
-          "description": "Command to execute (for type: command)"
-        },
-        "script": {
-          "type": "string",
-          "description": "Script to run (for type: script)"
-        },
-        "prompt": {
-          "type": "string",
-          "description": "Prompt to display (for type: prompt)"
-        }
+        "type": { "type": "string", "enum": ["command", "script", "prompt"] },
+        "command": { "type": "string" },
+        "script": { "type": "string" },
+        "prompt": { "type": "string" }
       }
     }
   }

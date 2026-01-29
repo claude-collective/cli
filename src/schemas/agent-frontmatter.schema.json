@@ -2,50 +2,41 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://claude-collective.local/schemas/agent-frontmatter.schema.json",
   "title": "Agent Frontmatter",
-  "description": "Schema for YAML frontmatter in compiled agent.md files. Matches official Claude Code plugin format for agents.",
+  "description": "YAML frontmatter for compiled agent.md files.",
   "type": "object",
   "required": ["name", "description"],
   "additionalProperties": false,
   "properties": {
     "name": {
       "type": "string",
-      "description": "Agent identifier in kebab-case (e.g., 'web-developer'). Used as plugin/agent name.",
+      "description": "Agent identifier (kebab-case)",
       "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
       "minLength": 1,
-      "examples": ["web-developer", "api-reviewer", "web-pm"]
+      "examples": ["web-developer"]
     },
     "description": {
       "type": "string",
-      "description": "Brief description of the agent's purpose. Shown in Task tool description.",
-      "minLength": 1,
-      "examples": [
-        "Expert frontend developer. Use for React components and UI work.",
-        "Implements backend features from detailed specs."
-      ]
+      "description": "Agent purpose (shown in Task tool)",
+      "minLength": 1
     },
     "tools": {
       "type": "string",
-      "description": "Comma-separated list of tools available to this agent (e.g., 'Read, Grep, Glob, Bash, Write, Edit')",
-      "examples": [
-        "Read, Grep, Glob, Bash, Write, Edit",
-        "Read, Write, Edit, Grep, Glob, Bash, Task"
-      ]
+      "description": "Comma-separated tools available to agent",
+      "examples": ["Read, Grep, Glob, Bash, Write, Edit"]
     },
     "disallowedTools": {
       "type": "string",
-      "description": "Comma-separated list of tools this agent cannot use. Leave empty or omit to allow all tools.",
-      "examples": ["WebSearch, WebFetch", "Bash"]
+      "description": "Comma-separated tools agent cannot use"
     },
     "model": {
       "type": "string",
-      "description": "AI model to use for this agent. Use 'inherit' to use parent model.",
+      "description": "AI model to use",
       "enum": ["sonnet", "opus", "haiku", "inherit"],
-      "default": "inherit",
-      "examples": ["opus", "sonnet", "inherit"]
+      "default": "inherit"
     },
     "permissionMode": {
       "type": "string",
-      "description": "Permission mode for agent operations. Controls how the agent handles permission requests.",
+      "description": "How agent handles permissions",
       "enum": [
         "default",
         "acceptEdits",
@@ -54,121 +45,51 @@
         "plan",
         "delegate"
       ],
-      "default": "default",
-      "examples": ["default", "acceptEdits", "plan"]
+      "default": "default"
     },
     "skills": {
       "type": "array",
-      "description": "Array of skill names that are preloaded for this agent. Claude Code loads these automatically.",
-      "items": {
-        "type": "string",
-        "description": "Skill name (matches name field in SKILL.md frontmatter)",
-        "minLength": 1
-      },
-      "uniqueItems": true,
-      "examples": [
-        ["react", "zustand"],
-        ["api-hono", "drizzle"]
-      ]
+      "description": "Preloaded skill names",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
     },
     "hooks": {
       "type": "object",
-      "description": "Lifecycle hooks for agent execution. Keys are hook types (PreToolUse, PostToolUse, etc.).",
+      "description": "Lifecycle hooks keyed by event type",
       "additionalProperties": {
         "type": "array",
-        "items": {
-          "$ref": "#/$defs/HookDefinition"
-        }
-      },
-      "examples": [
-        {
-          "PreToolUse": [
-            {
-              "matcher": "Bash",
-              "hooks": [
-                {
-                  "type": "command",
-                  "command": "./validate.sh"
-                }
-              ]
-            }
-          ]
-        }
-      ]
+        "items": { "$ref": "#/$defs/HookDefinition" }
+      }
     }
   },
   "$defs": {
     "HookDefinition": {
       "type": "object",
-      "description": "Hook definition with matcher and hook actions",
+      "description": "Hook with matcher and actions",
       "properties": {
         "matcher": {
           "type": "string",
-          "description": "Tool name or pattern to match for this hook",
-          "examples": ["Bash", "Write", "*"]
+          "description": "Tool/event pattern to match"
         },
         "hooks": {
           "type": "array",
-          "items": {
-            "$ref": "#/$defs/HookAction"
-          }
+          "items": { "$ref": "#/$defs/HookAction" }
         }
       }
     },
     "HookAction": {
       "type": "object",
-      "description": "Individual hook action to execute",
+      "description": "Hook action",
       "required": ["type"],
       "properties": {
         "type": {
           "type": "string",
-          "description": "Type of hook action",
           "enum": ["command", "script", "prompt"]
         },
-        "command": {
-          "type": "string",
-          "description": "Command to execute (for type: command)"
-        },
-        "script": {
-          "type": "string",
-          "description": "Script path to execute (for type: script)"
-        },
-        "prompt": {
-          "type": "string",
-          "description": "Prompt to display (for type: prompt)"
-        }
+        "command": { "type": "string" },
+        "script": { "type": "string" },
+        "prompt": { "type": "string" }
       }
     }
-  },
-  "examples": [
-    {
-      "name": "web-developer",
-      "description": "Expert frontend developer. Use for React components and UI work.",
-      "tools": "Read, Grep, Glob, Bash, Write, Edit",
-      "model": "inherit",
-      "permissionMode": "default",
-      "skills": ["react", "zustand"]
-    },
-    {
-      "name": "api-developer",
-      "description": "Implements backend features from detailed specs.",
-      "tools": "Read, Grep, Glob, Bash, Write, Edit, Task",
-      "model": "opus",
-      "permissionMode": "default",
-      "skills": ["api-hono", "drizzle"],
-      "hooks": {
-        "PreToolUse": [
-          {
-            "matcher": "Bash",
-            "hooks": [
-              {
-                "type": "command",
-                "command": "./validate.sh"
-              }
-            ]
-          }
-        ]
-      }
-    }
-  ]
+  }
 }
