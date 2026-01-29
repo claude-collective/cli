@@ -12,7 +12,7 @@ const PROJECT_CONFIG_DIR = ".claude-collective";
 /**
  * Default skills source repository
  */
-export const DEFAULT_SOURCE = "github:vincentbollaert/claude-collective-skills";
+export const DEFAULT_SOURCE = "github:claude-collective/skills";
 
 /**
  * Environment variable for source override

@@ -43,14 +43,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vincentbollaert/claude-subagents.git"
+    "url": "git+https://github.com/claude-collective/cli.git"
   },
   "author": "Vincent Bollaert",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/vincentbollaert/claude-subagents/issues"
+    "url": "https://github.com/claude-collective/cli/issues"
   },
-  "homepage": "https://github.com/vincentbollaert/claude-subagents#readme",
+  "homepage": "https://github.com/claude-collective/cli#readme",
   "dependencies": {
     "@clack/prompts": "^0.11.0",
     "ajv": "^8.17.1",

@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://claude-subagents.local/schemas/stack.schema.json",
+  "$id": "https://claude-collective.local/schemas/stack.schema.json",
   "title": "Stack Configuration",
   "description": "Complete tech stack definition for Claude Code. Stacks bundle framework, skills, agents, and philosophy into a single configuration that replaces profiles.",
   "type": "object",

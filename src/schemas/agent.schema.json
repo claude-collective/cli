@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://claude-subagents.local/schemas/agent.schema.json",
+  "$id": "https://claude-collective.local/schemas/agent.schema.json",
   "title": "Agent Definition",
   "description": "Schema for agent.yaml files in agents/{category}/{id}/agent.yaml. Supports official Claude Code plugin format.",
   "type": "object",

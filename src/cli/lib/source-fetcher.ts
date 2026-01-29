@@ -197,7 +197,7 @@ function wrapGigetError(error: unknown, source: string): Error {
 /**
  * Fetch marketplace.json from a source
  *
- * @param source - Source URL (e.g., "github:vincentbollaert/claude-collective-skills")
+ * @param source - Source URL (e.g., "github:claude-collective/skills")
  * @param options - Fetch options
  * @returns Marketplace data with metadata
  */

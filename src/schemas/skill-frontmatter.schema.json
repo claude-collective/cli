@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://claude-subagents.local/schemas/skill-frontmatter.schema.json",
+  "$id": "https://claude-collective.local/schemas/skill-frontmatter.schema.json",
   "title": "Skill Frontmatter",
   "description": "Schema for YAML frontmatter at the top of SKILL.md files. Matches official Claude Code plugin format. Contains skill identity and optional runtime behavior.",
   "type": "object",

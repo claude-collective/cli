@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://claude-subagents.local/schemas/metadata.schema.json",
+  "$id": "https://claude-collective.local/schemas/metadata.schema.json",
   "title": "Skill Metadata",
   "description": "Metadata schema for individual metadata.yaml files (Phase 0B). Identity (name, description) comes from SKILL.md frontmatter. This file contains relationship, catalog, and CLI display data.",
   "type": "object",
