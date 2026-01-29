@@ -12,6 +12,7 @@ import {
   validateAllPlugins,
   printPluginValidationResult,
 } from "../lib/plugin-validator";
+import { EXIT_CODES } from "../lib/exit-codes";
 
 export const validateCommand = new Command("validate")
   .description(
@@ -30,11 +31,9 @@ export const validateCommand = new Command("validate")
 
     setVerbose(options.verbose);
 
-    // If path is provided or --plugins flag, validate plugins
     if (pluginPath || options.plugins) {
       await validatePluginsAction(pluginPath, options, s);
     } else {
-      // Default: validate YAML schemas
       await validateSchemasAction(options, s);
     }
   });
@@ -59,13 +58,13 @@ async function validateSchemasAction(
     printValidationResults(result);
 
     if (!result.valid) {
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
   } catch (error) {
     s.stop(pc.red("Validation failed"));
     const message = error instanceof Error ? error.message : String(error);
     console.error(pc.red(`\nError: ${message}\n`));
-    process.exit(1);
+    process.exit(EXIT_CODES.ERROR);
   }
 }
 
@@ -74,11 +73,9 @@ async function validatePluginsAction(
   options: { verbose: boolean; all: boolean },
   s: ReturnType<typeof p.spinner>,
 ): Promise<void> {
-  // Resolve path (default to current directory if --plugins flag but no path)
   const targetPath = pluginPath ? path.resolve(pluginPath) : process.cwd();
 
   if (options.all) {
-    // Validate all plugins in directory
     console.log(`\n${pc.bold("Validating all plugins in:")} ${targetPath}\n`);
 
     try {
@@ -99,7 +96,6 @@ async function validatePluginsAction(
       console.log(`  Invalid: ${result.summary.invalid}`);
       console.log(`  With warnings: ${result.summary.withWarnings}`);
 
-      // Print individual results
       for (const { name, result: pluginResult } of result.results) {
         printPluginValidationResult(name, pluginResult, options.verbose);
       }
@@ -108,16 +104,15 @@ async function validatePluginsAction(
         console.log(`\n  ${pc.green("All plugins validated successfully")}\n`);
       } else {
         console.log(`\n  ${pc.red("Validation failed")}\n`);
-        process.exit(1);
+        process.exit(EXIT_CODES.ERROR);
       }
     } catch (error) {
       s.stop(pc.red("Validation failed"));
       const message = error instanceof Error ? error.message : String(error);
       console.error(pc.red(`\nError: ${message}\n`));
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
   } else {
-    // Validate single plugin
     console.log(`\n${pc.bold("Validating plugin:")} ${targetPath}\n`);
 
     try {
@@ -137,13 +132,13 @@ async function validatePluginsAction(
         console.log(`\n  ${pc.yellow("Plugin valid with warnings")}\n`);
       } else {
         console.log(`\n  ${pc.red("Validation failed")}\n`);
-        process.exit(1);
+        process.exit(EXIT_CODES.ERROR);
       }
     } catch (error) {
       s.stop(pc.red("Validation failed"));
       const message = error instanceof Error ? error.message : String(error);
       console.error(pc.red(`\nError: ${message}\n`));
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
   }
 }

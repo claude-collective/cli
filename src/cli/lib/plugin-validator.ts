@@ -12,20 +12,12 @@ import {
 import { PROJECT_ROOT } from "../consts";
 import type { ValidationResult } from "../../types";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const PLUGIN_DIR = ".claude-plugin";
 const PLUGIN_MANIFEST = "plugin.json";
 const SKILL_FILE = "SKILL.md";
 const KEBAB_CASE_REGEX = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 const SEMVER_REGEX =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
-
-// =============================================================================
-// Schema Loading & Caching
-// =============================================================================
 
 const schemaCache = new Map<string, object>();
 const validatorCache = new Map<string, ValidateFunction>();
@@ -55,13 +47,6 @@ async function getValidator(schemaName: string): Promise<ValidateFunction> {
   return validate;
 }
 
-// =============================================================================
-// Utility Functions
-// =============================================================================
-
-/**
- * Format ajv errors into readable strings
- */
 function formatAjvErrors(errors: ErrorObject[] | null | undefined): string[] {
   if (!errors) return [];
 
@@ -86,7 +71,6 @@ function formatAjvErrors(errors: ErrorObject[] | null | undefined): string[] {
     }
 
     if (err.keyword === "pattern") {
-      // Provide context-appropriate message based on field
       let hint = "";
       if (errorPath === "name") {
         hint = " (must be kebab-case)";
@@ -102,9 +86,6 @@ function formatAjvErrors(errors: ErrorObject[] | null | undefined): string[] {
   });
 }
 
-/**
- * Extract YAML frontmatter from a markdown file
- */
 function extractFrontmatter(content: string): unknown | null {
   const frontmatterRegex = /^---\r?\n([\s\S]*?)\r?\n---/;
   const match = content.match(frontmatterRegex);
@@ -120,35 +101,20 @@ function extractFrontmatter(content: string): unknown | null {
   }
 }
 
-/**
- * Check if a string is valid kebab-case
- */
 function isKebabCase(str: string): boolean {
   return KEBAB_CASE_REGEX.test(str);
 }
 
-/**
- * Check if a string is valid semver
- */
 function isValidSemver(str: string): boolean {
   return SEMVER_REGEX.test(str);
 }
 
-// =============================================================================
-// Validation Functions
-// =============================================================================
-
-/**
- * Validate a plugin directory structure
- * Checks that required files and directories exist
- */
 export async function validatePluginStructure(
   pluginPath: string,
 ): Promise<ValidationResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Check plugin directory exists
   if (!(await directoryExists(pluginPath))) {
     return {
       valid: false,
@@ -157,19 +123,16 @@ export async function validatePluginStructure(
     };
   }
 
-  // Check .claude-plugin directory exists
   const pluginDir = path.join(pluginPath, PLUGIN_DIR);
   if (!(await directoryExists(pluginDir))) {
     errors.push(`Missing ${PLUGIN_DIR}/ directory`);
   }
 
-  // Check plugin.json exists
   const manifestPath = path.join(pluginDir, PLUGIN_MANIFEST);
   if (!(await fileExists(manifestPath))) {
     errors.push(`Missing ${PLUGIN_DIR}/${PLUGIN_MANIFEST}`);
   }
 
-  // Check for README.md (optional but recommended)
   const readmePath = path.join(pluginPath, "README.md");
   if (!(await fileExists(readmePath))) {
     warnings.push("Missing README.md (recommended for documentation)");
@@ -182,16 +145,12 @@ export async function validatePluginStructure(
   };
 }
 
-/**
- * Validate plugin.json against schema
- */
 export async function validatePluginManifest(
   manifestPath: string,
 ): Promise<ValidationResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Check file exists
   if (!(await fileExists(manifestPath))) {
     return {
       valid: false,
@@ -200,7 +159,6 @@ export async function validatePluginManifest(
     };
   }
 
-  // Read and parse JSON
   let manifest: Record<string, unknown>;
   try {
     const content = await readFile(manifestPath);
@@ -214,7 +172,6 @@ export async function validatePluginManifest(
     };
   }
 
-  // Validate against schema
   const validate = await getValidator("plugin.schema.json");
   const isValid = validate(manifest);
 
@@ -222,16 +179,12 @@ export async function validatePluginManifest(
     errors.push(...formatAjvErrors(validate.errors));
   }
 
-  // Additional checks not covered by schema
-
-  // Check name is kebab-case (schema has pattern but provide clearer error)
   if (manifest.name && typeof manifest.name === "string") {
     if (!isKebabCase(manifest.name)) {
       errors.push(`name must be kebab-case: "${manifest.name}"`);
     }
   }
 
-  // Warn if version is present but not valid semver
   if (manifest.version && typeof manifest.version === "string") {
     if (!isValidSemver(manifest.version)) {
       warnings.push(
@@ -240,17 +193,14 @@ export async function validatePluginManifest(
     }
   }
 
-  // Warn if description is missing
   if (!manifest.description) {
     warnings.push(
       "Missing description field (recommended for discoverability)",
     );
   }
 
-  // Check that referenced paths exist
-  const pluginDir = path.dirname(path.dirname(manifestPath)); // Go up from .claude-plugin/plugin.json
+  const pluginDir = path.dirname(path.dirname(manifestPath));
 
-  // Check skills path if specified
   if (manifest.skills && typeof manifest.skills === "string") {
     const skillsPath = path.join(pluginDir, manifest.skills);
     if (!(await directoryExists(skillsPath))) {
@@ -258,7 +208,6 @@ export async function validatePluginManifest(
     }
   }
 
-  // Check agents path if specified
   if (manifest.agents && typeof manifest.agents === "string") {
     const agentsPath = path.join(pluginDir, manifest.agents);
     if (!(await directoryExists(agentsPath))) {
@@ -273,16 +222,12 @@ export async function validatePluginManifest(
   };
 }
 
-/**
- * Validate SKILL.md frontmatter
- */
 export async function validateSkillFrontmatter(
   skillPath: string,
 ): Promise<ValidationResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Check file exists
   if (!(await fileExists(skillPath))) {
     return {
       valid: false,
@@ -291,7 +236,6 @@ export async function validateSkillFrontmatter(
     };
   }
 
-  // Read content and extract frontmatter
   const content = await readFile(skillPath);
   const frontmatter = extractFrontmatter(content);
 
@@ -303,7 +247,6 @@ export async function validateSkillFrontmatter(
     };
   }
 
-  // Validate against schema
   const validate = await getValidator("skill-frontmatter.schema.json");
   const isValid = validate(frontmatter);
 
@@ -311,10 +254,8 @@ export async function validateSkillFrontmatter(
     errors.push(...formatAjvErrors(validate.errors));
   }
 
-  // Additional checks
   const fm = frontmatter as Record<string, unknown>;
 
-  // Check for deprecated fields
   if (fm.category) {
     warnings.push(
       'Deprecated field: "category" - use metadata.yaml for category information',
@@ -338,16 +279,12 @@ export async function validateSkillFrontmatter(
   };
 }
 
-/**
- * Validate agent.md frontmatter
- */
 export async function validateAgentFrontmatter(
   agentPath: string,
 ): Promise<ValidationResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Check file exists
   if (!(await fileExists(agentPath))) {
     return {
       valid: false,
@@ -356,7 +293,6 @@ export async function validateAgentFrontmatter(
     };
   }
 
-  // Read content and extract frontmatter
   const content = await readFile(agentPath);
   const frontmatter = extractFrontmatter(content);
 
@@ -368,7 +304,6 @@ export async function validateAgentFrontmatter(
     };
   }
 
-  // Validate against schema
   const validate = await getValidator("agent-frontmatter.schema.json");
   const isValid = validate(frontmatter);
 
@@ -376,10 +311,8 @@ export async function validateAgentFrontmatter(
     errors.push(...formatAjvErrors(validate.errors));
   }
 
-  // Additional checks
   const fm = frontmatter as Record<string, unknown>;
 
-  // Check name is kebab-case
   if (fm.name && typeof fm.name === "string") {
     if (!isKebabCase(fm.name)) {
       errors.push(`name must be kebab-case: "${fm.name}"`);
@@ -393,46 +326,35 @@ export async function validateAgentFrontmatter(
   };
 }
 
-/**
- * Validate entire plugin (structure + all files)
- */
 export async function validatePlugin(
   pluginPath: string,
 ): Promise<ValidationResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Validate structure first
   const structureResult = await validatePluginStructure(pluginPath);
   errors.push(...structureResult.errors);
   warnings.push(...structureResult.warnings);
 
-  // If structure is invalid, can't continue
   if (!structureResult.valid) {
     return { valid: false, errors, warnings };
   }
 
-  // Validate manifest
   const manifestPath = path.join(pluginPath, PLUGIN_DIR, PLUGIN_MANIFEST);
   const manifestResult = await validatePluginManifest(manifestPath);
   errors.push(...manifestResult.errors);
   warnings.push(...manifestResult.warnings);
 
-  // Get manifest to determine what else to validate
   let manifest: Record<string, unknown> | null = null;
   try {
     const content = await readFile(manifestPath);
     manifest = JSON.parse(content);
-  } catch {
-    // Manifest validation already reported the error
-  }
+  } catch {}
 
   if (manifest) {
-    // Validate skills if specified
     if (manifest.skills && typeof manifest.skills === "string") {
       const skillsDir = path.join(pluginPath, manifest.skills);
       if (await directoryExists(skillsDir)) {
-        // Find all SKILL.md files
         const skillFiles = await fg("**/SKILL.md", {
           cwd: skillsDir,
           absolute: true,
@@ -460,11 +382,9 @@ export async function validatePlugin(
       }
     }
 
-    // Validate agents if specified
     if (manifest.agents && typeof manifest.agents === "string") {
       const agentsDir = path.join(pluginPath, manifest.agents);
       if (await directoryExists(agentsDir)) {
-        // Find all .md files in agents directory
         const agentFiles = await fg("*.md", {
           cwd: agentsDir,
           absolute: true,
@@ -500,9 +420,6 @@ export async function validatePlugin(
   };
 }
 
-/**
- * Validate all plugins in a directory
- */
 export async function validateAllPlugins(pluginsDir: string): Promise<{
   valid: boolean;
   results: Array<{ name: string; result: ValidationResult }>;
@@ -515,7 +432,6 @@ export async function validateAllPlugins(pluginsDir: string): Promise<{
 }> {
   const results: Array<{ name: string; result: ValidationResult }> = [];
 
-  // Check directory exists
   if (!(await directoryExists(pluginsDir))) {
     return {
       valid: false,
@@ -533,7 +449,6 @@ export async function validateAllPlugins(pluginsDir: string): Promise<{
     };
   }
 
-  // List all subdirectories that contain .claude-plugin/ (actual plugins)
   const allDirs = await listDirectories(pluginsDir);
   const pluginDirs: string[] = [];
 
@@ -583,9 +498,6 @@ export async function validateAllPlugins(pluginsDir: string): Promise<{
   };
 }
 
-/**
- * Print validation result to console
- */
 export function printPluginValidationResult(
   name: string,
   result: ValidationResult,
@@ -594,7 +506,6 @@ export function printPluginValidationResult(
   const status = result.valid ? "\u2713" : "\u2717";
 
   if (result.valid && result.warnings.length === 0 && !verbose) {
-    // Skip entirely valid plugins in non-verbose mode
     return;
   }
 

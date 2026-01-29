@@ -1,9 +1,6 @@
-// Re-export all shared types from the main types file
 export * from "../types";
 
 import type { CompileMode } from "./lib/loader";
-
-// CLI-specific types
 
 /** Compilation context passed through the compile pipeline */
 export interface CompileContext {

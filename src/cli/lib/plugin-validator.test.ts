@@ -9,7 +9,7 @@ import {
   validateAgentFrontmatter,
   validatePlugin,
   validateAllPlugins,
-} from "../plugin-validator";
+} from "./plugin-validator";
 
 describe("plugin-validator", () => {
   let tempDir: string;

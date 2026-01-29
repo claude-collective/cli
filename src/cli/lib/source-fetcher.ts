@@ -6,76 +6,43 @@ import { ensureDir, directoryExists, readFile } from "../utils/fs";
 import { isLocalSource } from "./config";
 import type { Marketplace, MarketplaceFetchResult } from "../../types";
 
-/**
- * Options for fetching from a source
- */
 export interface FetchOptions {
-  /** Force fresh download, bypassing cache */
   forceRefresh?: boolean;
-  /** Subdirectory within the repository to fetch */
   subdir?: string;
 }
 
-/**
- * Result of a fetch operation
- */
 export interface FetchResult {
-  /** Path to the fetched content */
   path: string;
-  /** Whether the content was fetched from cache */
   fromCache: boolean;
-  /** The source URL used */
   source: string;
 }
 
-/**
- * Get a sanitized cache key from a source URL
- * Exported for use by other fetchers
- */
 export function sanitizeSourceForCache(source: string): string {
-  // Sanitize source URL for use as directory name
-  // Keep protocol prefix to distinguish github:org/repo from gitlab:org/repo
   return source
-    .replace(/:/g, "-") // github:org/repo -> github-org/repo
-    .replace(/[\/]/g, "-") // github-org/repo -> github-org-repo
+    .replace(/:/g, "-")
+    .replace(/[\/]/g, "-")
     .replace(/--+/g, "-")
     .replace(/^-|-$/g, "");
 }
 
-/**
- * Get the cache directory for a specific source
- * Creates a sanitized directory name from the source URL
- * Preserves protocol prefix to avoid collisions between different platforms
- */
 function getCacheDir(source: string): string {
   const sanitized = sanitizeSourceForCache(source);
   return path.join(CACHE_DIR, "sources", sanitized);
 }
 
-/**
- * Fetch content from a source (local or remote)
- *
- * For local sources: validates the path exists
- * For remote sources: uses giget to download (with caching)
- */
 export async function fetchFromSource(
   source: string,
   options: FetchOptions = {},
 ): Promise<FetchResult> {
   const { forceRefresh = false, subdir } = options;
 
-  // Handle local sources
   if (isLocalSource(source)) {
     return fetchFromLocalSource(source, subdir);
   }
 
-  // Handle remote sources via giget
   return fetchFromRemoteSource(source, { forceRefresh, subdir });
 }
 
-/**
- * Fetch from a local file path
- */
 async function fetchFromLocalSource(
   source: string,
   subdir?: string,
@@ -98,9 +65,6 @@ async function fetchFromLocalSource(
   };
 }
 
-/**
- * Fetch from a remote source using giget
- */
 async function fetchFromRemoteSource(
   source: string,
   options: FetchOptions,
@@ -108,20 +72,17 @@ async function fetchFromRemoteSource(
   const { forceRefresh = false, subdir } = options;
   const cacheDir = getCacheDir(source);
 
-  // Build the full source URL with subdir if specified
   const fullSource = subdir ? `${source}/${subdir}` : source;
 
   verbose(`Fetching from remote: ${fullSource}`);
   verbose(`Cache directory: ${cacheDir}`);
 
-  // Ensure cache directory parent exists
   await ensureDir(path.dirname(cacheDir));
 
   try {
     const result = await downloadTemplate(fullSource, {
       dir: cacheDir,
       force: forceRefresh,
-      // giget options
       offline: false,
       preferOffline: !forceRefresh,
     });
@@ -130,22 +91,17 @@ async function fetchFromRemoteSource(
 
     return {
       path: result.dir,
-      fromCache: false, // giget doesn't tell us, assume fresh
+      fromCache: false,
       source: fullSource,
     };
   } catch (error) {
-    // Provide more helpful error messages
     throw wrapGigetError(error, source);
   }
 }
 
-/**
- * Wrap giget errors with more helpful messages
- */
 function wrapGigetError(error: unknown, source: string): Error {
   const message = error instanceof Error ? error.message : String(error);
 
-  // Check for common error patterns
   if (message.includes("404") || message.includes("Not Found")) {
     return new Error(
       `Repository not found: ${source}\n\n` +
@@ -190,17 +146,9 @@ function wrapGigetError(error: unknown, source: string): Error {
     );
   }
 
-  // Return original error with source context
   return new Error(`Failed to fetch ${source}: ${message}`);
 }
 
-/**
- * Fetch marketplace.json from a source
- *
- * @param source - Source URL (e.g., "github:claude-collective/skills")
- * @param options - Fetch options
- * @returns Marketplace data with metadata
- */
 export async function fetchMarketplace(
   source: string,
   options: FetchOptions = {},

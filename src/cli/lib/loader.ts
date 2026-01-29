@@ -11,26 +11,14 @@ import type {
   StackConfig,
 } from "../types";
 
-/**
- * Compile mode: 'dev' for this repo (src/stacks)
- * Note: 'user' mode is deprecated - plugins are now created directly
- */
 export type CompileMode = "dev";
 
-/**
- * Get directories based on compile mode
- * Note: Only 'dev' mode is supported in simplified architecture
- */
 export function getDirs(_mode: CompileMode) {
-  // Only dev mode is supported now
   return DIRS;
 }
 
 const FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---/;
 
-/**
- * Parse YAML frontmatter from a markdown file
- */
 export function parseFrontmatter(content: string): SkillFrontmatter | null {
   const match = content.match(FRONTMATTER_REGEX);
   if (!match) return null;
@@ -42,10 +30,6 @@ export function parseFrontmatter(content: string): SkillFrontmatter | null {
   return frontmatter;
 }
 
-/**
- * Extract display name from skill ID
- * e.g., "frontend/react (@vince)" -> "React"
- */
 function extractDisplayName(skillId: string): string {
   const withoutCategory = skillId.split("/").pop() || skillId;
   const withoutAuthor = withoutCategory.replace(/\s*\(@\w+\)$/, "").trim();
@@ -55,9 +39,6 @@ function extractDisplayName(skillId: string): string {
     .join(" ");
 }
 
-/**
- * Load all agents by scanning agents/{category}/{agentId}/agent.yaml
- */
 export async function loadAllAgents(
   projectRoot: string,
 ): Promise<Record<string, AgentDefinition>> {
@@ -70,8 +51,6 @@ export async function loadAllAgents(
     const fullPath = path.join(agentSourcesDir, file);
     const content = await readFile(fullPath);
     const config = parseYaml(content) as AgentYamlConfig;
-
-    // Extract relative directory path (e.g., "backend-developer" or "developer/backend-developer")
     const agentPath = path.dirname(file);
 
     agents[config.id] = {
@@ -88,11 +67,7 @@ export async function loadAllAgents(
   return agents;
 }
 
-/**
- * Load skills from a stack template's embedded skills directory
- * Scans stacks/{stackId}/skills/**\/SKILL.md for Phase 1 architecture
- * @deprecated Use loadSkillsByIds instead - stacks no longer embed skills
- */
+/** @deprecated Use loadSkillsByIds instead - stacks no longer embed skills */
 export async function loadStackSkills(
   stackId: string,
   projectRoot: string,
@@ -101,7 +76,6 @@ export async function loadStackSkills(
   const skills: Record<string, SkillDefinition> = {};
   const stackSkillsDir = path.join(projectRoot, DIRS.stacks, stackId, "skills");
 
-  // Check if skills directory exists (backward compatibility)
   if (!(await directoryExists(stackSkillsDir))) {
     verbose(`No embedded skills directory for stack ${stackId}`);
     return skills;
@@ -122,9 +96,7 @@ export async function loadStackSkills(
     }
 
     const folderPath = file.replace("/SKILL.md", "");
-    // Path points to stack's embedded skill location
     const skillPath = `src/stacks/${stackId}/skills/${folderPath}/`;
-    // Use frontmatter name as canonical skill ID
     const skillId = frontmatter.name;
 
     skills[skillId] = {
@@ -140,10 +112,6 @@ export async function loadStackSkills(
   return skills;
 }
 
-/**
- * Build a mapping from frontmatter names (canonical IDs) to directory paths
- * Scans all SKILL.md files and extracts their frontmatter name
- */
 async function buildIdToDirectoryPathMap(
   skillsDir: string,
 ): Promise<Record<string, string>> {
@@ -157,9 +125,7 @@ async function buildIdToDirectoryPathMap(
 
     if (frontmatter?.name) {
       const directoryPath = file.replace("/SKILL.md", "");
-      // Map frontmatter name (canonical ID) to directory path
       map[frontmatter.name] = directoryPath;
-      // Also map directory path to itself for backward compatibility
       map[directoryPath] = directoryPath;
     }
   }
@@ -167,13 +133,6 @@ async function buildIdToDirectoryPathMap(
   return map;
 }
 
-/**
- * Load skills from src/skills/ based on skill IDs from stack config
- * Skill IDs can be either:
- * - Canonical IDs (frontmatter names like "frontend/react (@vince)")
- * - Directory paths (like "frontend/framework/react (@vince)") - for backward compatibility
- * - Directory prefixes (like "methodology/universal") - loads ALL skills under that directory
- */
 export async function loadSkillsByIds(
   skillIds: Array<{ id: string }>,
   projectRoot: string,
@@ -181,23 +140,16 @@ export async function loadSkillsByIds(
   const skills: Record<string, SkillDefinition> = {};
   const skillsDir = path.join(projectRoot, DIRS.skills);
 
-  // Build mapping from skill IDs (including frontmatter names) to directory paths
   const idToDirectoryPath = await buildIdToDirectoryPathMap(skillsDir);
   const allSkillIds = Object.keys(idToDirectoryPath);
-
-  // Expand directory references to individual skills
   const expandedSkillIds: string[] = [];
 
   for (const { id: skillId } of skillIds) {
-    // Try as specific skill first
     if (idToDirectoryPath[skillId]) {
       expandedSkillIds.push(skillId);
     } else {
-      // Try as directory prefix - find all skills that start with this path
-      // Check if any skill path (not canonical ID) starts with the given prefix
       const childSkills = allSkillIds.filter((id) => {
         const dirPath = idToDirectoryPath[id];
-        // Match directory paths that start with the prefix
         return dirPath.startsWith(skillId + "/");
       });
 
@@ -212,11 +164,9 @@ export async function loadSkillsByIds(
     }
   }
 
-  // Deduplicate (in case of overlapping references)
   const uniqueSkillIds = [...new Set(expandedSkillIds)];
 
   for (const skillId of uniqueSkillIds) {
-    // Resolve the skill ID to a directory path
     const directoryPath = idToDirectoryPath[skillId];
     if (!directoryPath) {
       console.warn(
@@ -239,7 +189,6 @@ export async function loadSkillsByIds(
         continue;
       }
 
-      // Use the canonical ID (frontmatter name) as the primary key
       const canonicalId = frontmatter.name;
       const skillDef: SkillDefinition = {
         path: `${DIRS.skills}/${directoryPath}/`,
@@ -248,11 +197,8 @@ export async function loadSkillsByIds(
         canonicalId,
       };
 
-      // Add under canonical ID (frontmatter name)
       skills[canonicalId] = skillDef;
 
-      // Also add under directory path for backward compatibility
-      // This allows stack configs using either format to work
       if (directoryPath !== canonicalId) {
         skills[directoryPath] = skillDef;
       }
@@ -266,17 +212,12 @@ export async function loadSkillsByIds(
   return skills;
 }
 
-/**
- * Load skills from a plugin's skills directory
- * Scans pluginDir/skills/**\/SKILL.md for compiled plugin output
- */
 export async function loadPluginSkills(
   pluginDir: string,
 ): Promise<Record<string, SkillDefinition>> {
   const skills: Record<string, SkillDefinition> = {};
   const pluginSkillsDir = path.join(pluginDir, "skills");
 
-  // Check if skills directory exists
   if (!(await directoryExists(pluginSkillsDir))) {
     return skills;
   }
@@ -296,9 +237,7 @@ export async function loadPluginSkills(
     }
 
     const folderPath = file.replace("/SKILL.md", "");
-    // Path is relative to the plugin directory
     const skillPath = `skills/${folderPath}/`;
-    // Use frontmatter name as canonical skill ID
     const skillId = frontmatter.name;
 
     skills[skillId] = {
@@ -314,12 +253,8 @@ export async function loadPluginSkills(
   return skills;
 }
 
-// Cache for loaded stacks (keyed by mode:stackId)
 const stackCache = new Map<string, StackConfig>();
 
-/**
- * Load a stack configuration from stacks/{stackId}/config.yaml
- */
 export async function loadStack(
   stackId: string,
   projectRoot: string,

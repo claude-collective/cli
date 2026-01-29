@@ -6,10 +6,6 @@ import { parse as parseYaml } from "yaml";
 import fg from "fast-glob";
 import { PROJECT_ROOT } from "../consts";
 
-// =============================================================================
-// Types
-// =============================================================================
-
 export interface FileValidationError {
   file: string;
   errors: string[];
@@ -34,36 +30,16 @@ export interface FullValidationResult {
   };
 }
 
-/**
- * Content extractor function type
- * Returns the content to validate (parsed YAML/JSON) or null if extraction fails
- */
 type ContentExtractor = (content: string) => unknown | null;
 
-/**
- * Schema validation target definition
- */
 interface ValidationTarget {
-  /** Human-readable name */
   name: string;
-  /** Path to the JSON schema file (relative to src/schemas/) */
   schema: string;
-  /** Glob pattern to find files to validate */
   pattern: string;
-  /** Base directory for the pattern */
   baseDir: string;
-  /** Optional content extractor for non-standard file formats (e.g., frontmatter) */
   extractor?: ContentExtractor;
 }
 
-// =============================================================================
-// Content Extractors
-// =============================================================================
-
-/**
- * Extract YAML frontmatter from a markdown file
- * Frontmatter is delimited by --- at the start and end
- */
 function extractFrontmatter(content: string): unknown | null {
   const frontmatterRegex = /^---\r?\n([\s\S]*?)\r?\n---/;
   const match = content.match(frontmatterRegex);
@@ -78,10 +54,6 @@ function extractFrontmatter(content: string): unknown | null {
     return null;
   }
 }
-
-// =============================================================================
-// Validation Targets
-// =============================================================================
 
 const VALIDATION_TARGETS: ValidationTarget[] = [
   {
@@ -130,16 +102,9 @@ const VALIDATION_TARGETS: ValidationTarget[] = [
   },
 ];
 
-// =============================================================================
-// Schema Loading & Caching
-// =============================================================================
-
 const schemaCache = new Map<string, object>();
 const validatorCache = new Map<string, ValidateFunction>();
 
-/**
- * Load a JSON schema from the schemas directory
- */
 async function loadSchema(schemaName: string): Promise<object> {
   if (schemaCache.has(schemaName)) {
     return schemaCache.get(schemaName)!;
@@ -152,29 +117,19 @@ async function loadSchema(schemaName: string): Promise<object> {
   return schema;
 }
 
-/**
- * Get or create a validator for a schema
- */
 async function getValidator(schemaName: string): Promise<ValidateFunction> {
   if (validatorCache.has(schemaName)) {
     return validatorCache.get(schemaName)!;
   }
 
   const ajv = new Ajv({ allErrors: true, strict: false });
-  addFormats(ajv); // Add support for format: "date", "date-time", etc.
+  addFormats(ajv);
   const schema = await loadSchema(schemaName);
   const validate = ajv.compile(schema);
   validatorCache.set(schemaName, validate);
   return validate;
 }
 
-// =============================================================================
-// Error Formatting
-// =============================================================================
-
-/**
- * Format ajv errors into readable strings
- */
 function formatAjvErrors(errors: ErrorObject[] | null | undefined): string[] {
   if (!errors) return [];
 
@@ -202,13 +157,6 @@ function formatAjvErrors(errors: ErrorObject[] | null | undefined): string[] {
   });
 }
 
-// =============================================================================
-// Validation Functions
-// =============================================================================
-
-/**
- * Validate a single file against a schema
- */
 async function validateFile(
   filePath: string,
   validate: ValidateFunction,
@@ -221,7 +169,6 @@ async function validateFile(
 
     const content = await readFile(filePath);
 
-    // Use extractor if provided, otherwise parse as YAML
     let parsed: unknown;
     if (extractor) {
       parsed = extractor(content);
@@ -248,11 +195,6 @@ async function validateFile(
   }
 }
 
-/**
- * Validate all files matching a pattern against a schema
- * @param target - Validation target definition
- * @param rootDir - Root directory to search for files (defaults to cwd)
- */
 async function validateTarget(
   target: ValidationTarget,
   rootDir: string = process.cwd(),
@@ -293,10 +235,6 @@ async function validateTarget(
   return result;
 }
 
-/**
- * Validate all schemas
- * @param rootDir - Root directory to search for files (defaults to cwd)
- */
 export async function validateAllSchemas(
   rootDir: string = process.cwd(),
 ): Promise<FullValidationResult> {
@@ -321,9 +259,6 @@ export async function validateAllSchemas(
   };
 }
 
-/**
- * Print validation results to console
- */
 export function printValidationResults(result: FullValidationResult): void {
   console.log(`\n  Schema Validation Summary:`);
   console.log(`  ─────────────────────────`);

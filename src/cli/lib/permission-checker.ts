@@ -11,11 +11,6 @@ interface SettingsFile {
   permissions?: PermissionConfig;
 }
 
-/**
- * Check for Claude permission configuration and warn if missing or restrictive
- *
- * @param projectRoot - Project root directory to check for .claude/settings.json
- */
 export async function checkPermissions(projectRoot: string): Promise<void> {
   const settingsPath = path.join(projectRoot, ".claude", "settings.json");
   const localSettingsPath = path.join(
@@ -26,7 +21,6 @@ export async function checkPermissions(projectRoot: string): Promise<void> {
 
   let permissions: PermissionConfig | undefined;
 
-  // Check local settings first (higher priority), then project settings
   for (const filePath of [localSettingsPath, settingsPath]) {
     if (await fileExists(filePath)) {
       try {
@@ -36,13 +30,10 @@ export async function checkPermissions(projectRoot: string): Promise<void> {
           permissions = parsed.permissions;
           break;
         }
-      } catch {
-        // Invalid JSON, continue
-      }
+      } catch {}
     }
   }
 
-  // Analyze and warn
   if (!permissions) {
     p.note(
       `No permissions configured in .claude/settings.json
@@ -64,7 +55,6 @@ For autonomous operation, add to .claude/settings.json:
     return;
   }
 
-  // Check if overly restrictive
   const hasRestrictiveBash = permissions.deny?.some(
     (rule) => rule === "Bash(*)" || rule === "Bash",
   );

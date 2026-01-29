@@ -6,8 +6,8 @@ import {
   generateMarketplace,
   writeMarketplace,
   getMarketplaceStats,
-} from "../marketplace-generator";
-import type { Marketplace, MarketplacePlugin } from "../../../types";
+} from "./marketplace-generator";
+import type { Marketplace, MarketplacePlugin } from "../../types";
 
 describe("marketplace-generator", () => {
   let tempDir: string;

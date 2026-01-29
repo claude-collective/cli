@@ -2,38 +2,25 @@ import { Command } from "commander";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import path from "path";
-import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../consts";
+import {
+  PLUGIN_MANIFEST_DIR,
+  PLUGIN_MANIFEST_FILE,
+  DEFAULT_VERSION,
+} from "../consts";
 import { readFile, writeFile, fileExists } from "../utils/fs";
 import { EXIT_CODES } from "../lib/exit-codes";
 import type { PluginManifest } from "../../types";
 
-/**
- * Valid version bump actions
- */
 type VersionAction = "patch" | "minor" | "major" | "set";
 
-/**
- * Semver version parts
- */
 interface SemverParts {
   major: number;
   minor: number;
   patch: number;
 }
 
-/**
- * Default version for new plugins
- */
-const DEFAULT_VERSION = "1.0.0";
-
-/**
- * Semver validation regex
- */
 const SEMVER_REGEX = /^(\d+)\.(\d+)\.(\d+)$/;
 
-/**
- * Parse a semver string into parts
- */
 function parseSemver(version: string): SemverParts | null {
   const match = version.match(SEMVER_REGEX);
   if (!match) {
@@ -46,23 +33,16 @@ function parseSemver(version: string): SemverParts | null {
   };
 }
 
-/**
- * Convert semver parts to string
- */
 function formatSemver(parts: SemverParts): string {
   return `${parts.major}.${parts.minor}.${parts.patch}`;
 }
 
-/**
- * Increment a version by the specified action
- */
 function incrementVersion(
   version: string,
   action: "patch" | "minor" | "major",
 ): string {
   const parts = parseSemver(version);
   if (!parts) {
-    // If invalid version, start from 1.0.0
     return DEFAULT_VERSION;
   }
 
@@ -84,9 +64,6 @@ function incrementVersion(
   }
 }
 
-/**
- * Search upward for a plugin.json file starting from the given directory
- */
 async function findPluginManifest(startDir: string): Promise<string | null> {
   let currentDir = startDir;
   const root = path.parse(currentDir).root;
@@ -106,9 +83,6 @@ async function findPluginManifest(startDir: string): Promise<string | null> {
   return null;
 }
 
-/**
- * Read plugin manifest from file
- */
 async function readPluginManifest(
   manifestPath: string,
 ): Promise<PluginManifest> {
@@ -116,9 +90,6 @@ async function readPluginManifest(
   return JSON.parse(content) as PluginManifest;
 }
 
-/**
- * Write plugin manifest to file
- */
 async function writePluginManifestFile(
   manifestPath: string,
   manifest: PluginManifest,
@@ -136,7 +107,6 @@ export const versionCommand = new Command("version")
   })
   .showHelpAfterError(true)
   .action(async (action: string, version?: string) => {
-    // Validate action
     const validActions: VersionAction[] = ["patch", "minor", "major", "set"];
     if (!validActions.includes(action as VersionAction)) {
       p.log.error(
@@ -147,7 +117,6 @@ export const versionCommand = new Command("version")
 
     const versionAction = action as VersionAction;
 
-    // Validate version argument for "set" action
     if (versionAction === "set") {
       if (!version) {
         p.log.error('Version argument required for "set" action');
@@ -163,7 +132,6 @@ export const versionCommand = new Command("version")
       }
     }
 
-    // Find plugin manifest
     const manifestPath = await findPluginManifest(process.cwd());
     if (!manifestPath) {
       p.log.error("No plugin.json found in current directory or parents");
@@ -173,7 +141,6 @@ export const versionCommand = new Command("version")
       process.exit(EXIT_CODES.ERROR);
     }
 
-    // Read manifest
     let manifest: PluginManifest;
     try {
       manifest = await readPluginManifest(manifestPath);
@@ -184,7 +151,6 @@ export const versionCommand = new Command("version")
 
     const oldVersion = manifest.version || DEFAULT_VERSION;
 
-    // Calculate new version
     let newVersion: string;
     if (versionAction === "set") {
       newVersion = version!;
@@ -192,10 +158,8 @@ export const versionCommand = new Command("version")
       newVersion = incrementVersion(oldVersion, versionAction);
     }
 
-    // Update manifest
     manifest.version = newVersion;
 
-    // Write manifest
     try {
       await writePluginManifestFile(manifestPath, manifest);
     } catch (error) {
@@ -203,7 +167,6 @@ export const versionCommand = new Command("version")
       process.exit(EXIT_CODES.ERROR);
     }
 
-    // Output result
     const pluginName = manifest.name || "unknown";
     console.log(
       `${pc.cyan(pluginName)}: ${pc.dim(oldVersion)} ${pc.yellow("->")} ${pc.green(newVersion)}`,

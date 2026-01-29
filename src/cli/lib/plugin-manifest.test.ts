@@ -8,7 +8,7 @@ import {
   writePluginManifest,
   getPluginDir,
   getPluginManifestPath,
-} from "../plugin-manifest";
+} from "./plugin-manifest";
 
 describe("plugin-manifest", () => {
   let tempDir: string;

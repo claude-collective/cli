@@ -8,11 +8,12 @@ import {
   writeMarketplace,
   getMarketplaceStats,
 } from "../lib/marketplace-generator";
+import { EXIT_CODES } from "../lib/exit-codes";
+import { DEFAULT_VERSION } from "../consts";
 
 const DEFAULT_PLUGINS_DIR = "dist/plugins";
 const DEFAULT_OUTPUT_FILE = ".claude-plugin/marketplace.json";
 const DEFAULT_NAME = "claude-collective";
-const DEFAULT_VERSION = "1.0.0";
 const DEFAULT_DESCRIPTION = "Community skills and stacks for Claude Code";
 const DEFAULT_OWNER_NAME = "Claude Collective";
 const DEFAULT_OWNER_EMAIL = "hello@claude-collective.com";
@@ -37,8 +38,6 @@ export const generateMarketplaceCommand = new Command("generate-marketplace")
   .showHelpAfterError(true)
   .action(async (options) => {
     const s = p.spinner();
-
-    // Set verbose mode globally
     setVerbose(options.verbose);
 
     const projectRoot = process.cwd();
@@ -64,7 +63,6 @@ export const generateMarketplaceCommand = new Command("generate-marketplace")
       const stats = getMarketplaceStats(marketplace);
       s.stop(`Found ${stats.total} plugins`);
 
-      // Print category breakdown
       console.log(`\nCategory breakdown:`);
       const sortedCategories = Object.entries(stats.byCategory).sort(
         ([, a], [, b]) => b - a,
@@ -73,12 +71,10 @@ export const generateMarketplaceCommand = new Command("generate-marketplace")
         console.log(`  ${pc.dim(category)}: ${count}`);
       }
 
-      // Write marketplace file
       s.start("Writing marketplace.json...");
       await writeMarketplace(outputPath, marketplace);
       s.stop(`Wrote ${outputPath}`);
 
-      // Print sample
       console.log(`\nSample plugins:`);
       const sampleSize = 5;
       for (const plugin of marketplace.plugins.slice(0, sampleSize)) {
@@ -99,6 +95,6 @@ export const generateMarketplaceCommand = new Command("generate-marketplace")
     } catch (error) {
       s.stop("Generation failed");
       p.log.error(String(error));
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
   });

@@ -4,10 +4,6 @@ import { DIRS } from "../consts";
 import { resolveClaudeMd } from "./resolver";
 import type { AgentConfig, ValidationResult } from "../types";
 
-/**
- * Validate configuration before compilation
- * Returns errors (fatal) and warnings (non-fatal)
- */
 export async function validate(
   resolvedAgents: Record<string, AgentConfig>,
   stackId: string,
@@ -16,19 +12,15 @@ export async function validate(
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Check CLAUDE.md from stack
   try {
     await resolveClaudeMd(projectRoot, stackId);
   } catch {
     errors.push(`CLAUDE.md not found in stack "${stackId}"`);
   }
 
-  // Check each resolved agent
   for (const [name, agent] of Object.entries(resolvedAgents)) {
-    // Use stored path if available, otherwise fall back to name (for backwards compatibility)
     const agentDir = path.join(projectRoot, DIRS.agents, agent.path || name);
 
-    // Required agent files
     const requiredFiles = ["intro.md", "workflow.md"];
     for (const file of requiredFiles) {
       const filePath = path.join(agentDir, file);
@@ -37,7 +29,6 @@ export async function validate(
       }
     }
 
-    // Optional agent files (warn if missing)
     const optionalFiles = [
       "examples.md",
       "critical-requirements.md",
@@ -50,7 +41,6 @@ export async function validate(
       }
     }
 
-    // Check skill paths
     for (const skill of agent.skills) {
       if (!skill.path) {
         warnings.push(
@@ -86,9 +76,6 @@ export async function validate(
   };
 }
 
-/**
- * Print validation results to console
- */
 export function printValidationResult(result: ValidationResult): void {
   if (result.warnings.length > 0) {
     console.log("\n  Warnings:");

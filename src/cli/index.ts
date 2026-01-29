@@ -14,7 +14,6 @@ import { ejectCommand } from "./commands/eject";
 import { versionCommand } from "./commands/version";
 import { EXIT_CODES } from "./lib/exit-codes";
 
-// Handle Ctrl+C gracefully
 process.on("SIGINT", () => {
   console.log(pc.yellow("\nCancelled"));
   process.exit(EXIT_CODES.CANCELLED);
@@ -33,7 +32,6 @@ async function main() {
     })
     .showHelpAfterError(true);
 
-  // Register commands
   program.addCommand(initCommand);
   program.addCommand(editCommand);
   program.addCommand(updateCommand);
@@ -47,7 +45,6 @@ async function main() {
   program.addCommand(ejectCommand);
   program.addCommand(versionCommand);
 
-  // Parse arguments
   await program.parseAsync(process.argv);
 }
 

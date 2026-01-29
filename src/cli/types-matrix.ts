@@ -1,18 +1,4 @@
-// =============================================================================
-// src/cli/types-matrix.ts
-// =============================================================================
-// Type definitions for the Skills Matrix system
-// Handles: raw config files, extracted metadata, and merged CLI output
-// =============================================================================
-
-// =============================================================================
-// SECTION 1: Raw Input Types (skills-matrix.yaml)
-// =============================================================================
-
-/**
- * Root configuration from skills-matrix.yaml
- * This is the manually-maintained file containing relationships and structure
- */
+/** Root configuration from skills-matrix.yaml */
 export interface SkillsMatrixConfig {
   /** Semantic version of the matrix schema (e.g., "1.0.0") */
   version: string;
@@ -200,19 +186,11 @@ export interface SuggestedStack {
   philosophy: string;
 }
 
-// =============================================================================
-// SECTION 2: Extracted Skill Metadata (from metadata.yaml + SKILL.md)
-// =============================================================================
-
 /**
- * Skill metadata extracted from individual skill directories
- * Combines SKILL.md frontmatter (identity) with metadata.yaml (relationships)
- *
- * This is the raw extraction before merging with skills-matrix.yaml
+ * Skill metadata extracted from individual skill directories.
+ * Combines SKILL.md frontmatter with metadata.yaml before merging with skills-matrix.yaml.
  */
 export interface ExtractedSkillMetadata {
-  // --- Identity (from SKILL.md frontmatter) ---
-
   /**
    * Unique skill identifier (from frontmatter name)
    * Format: "skill-name (@author)"
@@ -239,8 +217,6 @@ export interface ExtractedSkillMetadata {
   /** When an AI agent should invoke this skill (decision criteria) */
   usageGuidance?: string;
 
-  // --- Catalog Data (from metadata.yaml) ---
-
   /**
    * Primary category this skill belongs to
    * @example "state", "styling", "framework", "backend"
@@ -258,8 +234,6 @@ export interface ExtractedSkillMetadata {
 
   /** Tags for search and filtering */
   tags: string[];
-
-  // --- Relationships (from metadata.yaml) ---
 
   /**
    * Skills this works well with (soft recommendation)
@@ -279,8 +253,6 @@ export interface ExtractedSkillMetadata {
    */
   requires: string[];
 
-  // --- Setup Relationships (from metadata.yaml) ---
-
   /**
    * Setup skills that must be completed first
    * Links usage skills to their prerequisites
@@ -295,19 +267,13 @@ export interface ExtractedSkillMetadata {
    */
   providesSetupFor: string[];
 
-  // --- Location ---
-
   /**
    * Relative path from src/ to the skill directory
    * @example "skills/frontend/client-state-management/zustand (@vince)"
    */
   path: string;
 
-  // --- Local Skill Fields ---
-
-  /**
-   * True if this skill is from .claude/skills/ (user-defined local skill)
-   */
+  /** True if this skill is from .claude/skills/ (user-defined local skill) */
   local?: boolean;
 
   /**
@@ -317,18 +283,9 @@ export interface ExtractedSkillMetadata {
   localPath?: string;
 }
 
-// =============================================================================
-// SECTION 3: Merged Output Types (for CLI consumption)
-// =============================================================================
-
 /**
- * Fully merged skills matrix for CLI consumption
- * This is the output of mergeMatrixWithSkills() - combining:
- * - skills-matrix.yaml (structure, relationships, stacks)
- * - All extracted metadata.yaml files (skill data)
- *
- * The CLI reads ONLY this structure - it has no knowledge of
- * React, Zustand, or any specific technology.
+ * Fully merged skills matrix for CLI consumption.
+ * Output of mergeMatrixWithSkills() combining skills-matrix.yaml with extracted metadata.
  */
 export interface MergedSkillsMatrix {
   /** Schema version for compatibility checking */
@@ -362,13 +319,8 @@ export interface MergedSkillsMatrix {
   generatedAt: string;
 }
 
-/**
- * Single skill with ALL computed relationships resolved
- * This is what the CLI uses to render options and compute disabled/recommended state
- */
+/** Single skill with all computed relationships resolved for CLI rendering */
 export interface ResolvedSkill {
-  // --- Identity ---
-
   /** Full unique identifier: "zustand (@vince)" */
   id: string;
 
@@ -387,8 +339,6 @@ export interface ResolvedSkill {
   /** When an AI agent should invoke this skill (decision criteria) */
   usageGuidance?: string;
 
-  // --- Categorization ---
-
   /** Primary category ID (matches key in matrix.categories) */
   category: string;
 
@@ -398,89 +348,43 @@ export interface ResolvedSkill {
   /** Tags for filtering and search */
   tags: string[];
 
-  // --- Authorship ---
-
   /** Author handle */
   author: string;
 
   /** DEPRECATED: Version now lives in plugin.json. Optional for backward compatibility. */
   version?: string;
 
-  // --- Computed Relationships (populated by resolver) ---
-
-  /**
-   * Skills that conflict with this one
-   * Computed from: metadata.yaml conflicts_with + skills-matrix.yaml conflicts
-   * Format: Array of { skillId, reason }
-   */
+  /** Skills that conflict with this one */
   conflictsWith: SkillRelation[];
 
-  /**
-   * Skills that are recommended when this is selected
-   * Computed from: metadata.yaml compatible_with + skills-matrix.yaml recommends
-   * Format: Array of { skillId, reason }
-   */
+  /** Skills that are recommended when this is selected */
   recommends: SkillRelation[];
 
-  /**
-   * Skills that recommend THIS skill when THEY are selected
-   * Inverse of recommends - "who recommends me?"
-   * Format: Array of { skillId, reason }
-   */
+  /** Skills that recommend THIS skill when THEY are selected (inverse of recommends) */
   recommendedBy: SkillRelation[];
 
-  /**
-   * Skills that THIS skill requires (must select first)
-   * Computed from: metadata.yaml requires + skills-matrix.yaml requires
-   * Format: Array of { skillId, reason, needsAny }
-   */
+  /** Skills that THIS skill requires (must select first) */
   requires: SkillRequirement[];
 
-  /**
-   * Skills that require THIS skill (I am their dependency)
-   * Inverse of requires - "who needs me?"
-   * Format: Array of { skillId, reason }
-   */
+  /** Skills that require THIS skill (inverse of requires) */
   requiredBy: SkillRelation[];
 
-  /**
-   * Alternative skills that serve the same purpose
-   * From skills-matrix.yaml alternatives groups
-   * Format: Array of { skillId, purpose }
-   */
+  /** Alternative skills that serve the same purpose */
   alternatives: SkillAlternative[];
 
-  /**
-   * Skills that are discouraged when this is selected (show warning)
-   * Computed from: skills-matrix.yaml discourages
-   * Format: Array of { skillId, reason }
-   */
+  /** Skills that are discouraged when this is selected (show warning) */
   discourages: SkillRelation[];
 
-  // --- Setup Relationships ---
-
-  /**
-   * Setup skills that must be completed before using this
-   * @example ["posthog-setup (@vince)"] for posthog-analytics
-   */
+  /** Setup skills that must be completed before using this */
   requiresSetup: string[];
 
-  /**
-   * Usage skills that this setup skill configures
-   * @example ["posthog-analytics (@vince)"] for posthog-setup
-   */
+  /** Usage skills that this setup skill configures */
   providesSetupFor: string[];
-
-  // --- File Location ---
 
   /** Relative path to skill directory from src/ */
   path: string;
 
-  // --- Local Skill Fields ---
-
-  /**
-   * True if this skill is from .claude/skills/ (user-defined local skill)
-   */
+  /** True if this skill is from .claude/skills/ (user-defined local skill) */
   local?: boolean;
 
   /**
@@ -490,9 +394,6 @@ export interface ResolvedSkill {
   localPath?: string;
 }
 
-/**
- * Relationship to another skill with explanation
- */
 export interface SkillRelation {
   /** Full skill ID of the related skill */
   skillId: string;
@@ -501,9 +402,6 @@ export interface SkillRelation {
   reason: string;
 }
 
-/**
- * Requirement relationship with AND/OR logic
- */
 export interface SkillRequirement {
   /** Full skill IDs that are required */
   skillIds: string[];
@@ -519,9 +417,6 @@ export interface SkillRequirement {
   reason: string;
 }
 
-/**
- * Alternative skill reference
- */
 export interface SkillAlternative {
   /** Full skill ID of the alternative */
   skillId: string;
@@ -530,9 +425,6 @@ export interface SkillAlternative {
   purpose: string;
 }
 
-/**
- * Suggested stack with all skill references resolved to full IDs
- */
 export interface ResolvedStack {
   /** Stack identifier */
   id: string;
@@ -546,32 +438,17 @@ export interface ResolvedStack {
   /** Target audiences */
   audience: string[];
 
-  /**
-   * Skill selections with FULL skill IDs (aliases resolved)
-   * Structure: { category: { subcategory: fullSkillId } }
-   * @example { frontend: { styling: "scss-modules (@vince)" } }
-   */
+  /** Skill selections with resolved full skill IDs by category */
   skills: Record<string, Record<string, string>>;
 
-  /**
-   * Flat list of all skill IDs in this stack
-   * Computed for easy iteration
-   * @example ["react (@vince)", "scss-modules (@vince)", ...]
-   */
+  /** Flat list of all skill IDs in this stack */
   allSkillIds: string[];
 
   /** Guiding principle */
   philosophy: string;
 }
 
-// =============================================================================
-// SECTION 4: Runtime Types (for wizard state)
-// =============================================================================
-
-/**
- * Skill option as displayed in the wizard
- * Computed at runtime based on current selections
- */
+/** Skill option as displayed in the wizard, computed based on current selections */
 export interface SkillOption {
   /** Full skill ID */
   id: string;
@@ -619,9 +496,6 @@ export interface SkillOption {
   alternatives: string[];
 }
 
-/**
- * Current wizard state for computing available options
- */
 export interface WizardState {
   /** Currently selected skill IDs (full IDs, not aliases) */
   selectedSkills: string[];
@@ -633,13 +507,6 @@ export interface WizardState {
   selectedStack?: string;
 }
 
-// =============================================================================
-// SECTION 5: Validation Types
-// =============================================================================
-
-/**
- * Validation result for a skill selection
- */
 export interface SelectionValidation {
   /** Whether the selection is valid */
   valid: boolean;
@@ -651,9 +518,6 @@ export interface SelectionValidation {
   warnings: ValidationWarning[];
 }
 
-/**
- * Validation error detail
- */
 export interface ValidationError {
   /** Type of error */
   type: "conflict" | "missing_requirement" | "category_exclusive";
@@ -665,9 +529,6 @@ export interface ValidationError {
   skills: string[];
 }
 
-/**
- * Validation warning detail
- */
 export interface ValidationWarning {
   /** Type of warning */
   type: "missing_recommendation" | "unused_setup";

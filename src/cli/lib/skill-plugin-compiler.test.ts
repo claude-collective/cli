@@ -9,7 +9,7 @@ import {
   extractSkillName,
   extractAuthor,
   extractCategory,
-} from "../skill-plugin-compiler";
+} from "./skill-plugin-compiler";
 
 describe("skill-plugin-compiler", () => {
   let tempDir: string;
