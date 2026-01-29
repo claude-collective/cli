@@ -7,6 +7,11 @@
   "required": ["id", "title", "description", "tools"],
   "additionalProperties": false,
   "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference for editor validation",
+      "format": "uri"
+    },
     "id": {
       "type": "string",
       "description": "Unique agent identifier (kebab-case)",

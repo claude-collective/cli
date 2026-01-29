@@ -1,3 +1,4 @@
+$schema: https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas/agent.schema.json
 id: cli-reviewer
 title: CLI Reviewer Agent
 description: Reviews CLI code ONLY - Commander.js commands, @clack/prompts interactions, exit codes, SIGINT handling, error messages, user feedback patterns - defers non-CLI code to backend-reviewer
