@@ -14,16 +14,12 @@ import type {
   StackConfig,
 } from "../types";
 
-/**
- * Resolve agent template: Stack -> Default
- */
 export async function resolveTemplate(
   projectRoot: string,
   stackId: string,
   mode: CompileMode = "dev",
 ): Promise<string> {
   const dirs = getDirs(mode);
-  // 1. Stack-specific template
   const stackTemplate = path.join(
     projectRoot,
     dirs.stacks,
@@ -32,13 +28,9 @@ export async function resolveTemplate(
   );
   if (await fileExists(stackTemplate)) return stackTemplate;
 
-  // 2. Default template
   return path.join(projectRoot, dirs.templates, "agent.liquid");
 }
 
-/**
- * Resolve CLAUDE.md from stack
- */
 export async function resolveClaudeMd(
   projectRoot: string,
   stackId: string,
@@ -53,9 +45,6 @@ export async function resolveClaudeMd(
   );
 }
 
-/**
- * Resolve a single skill reference to a full Skill object
- */
 export function resolveSkillReference(
   ref: SkillReference,
   skills: Record<string, SkillDefinition>,
@@ -81,9 +70,6 @@ export function resolveSkillReference(
   };
 }
 
-/**
- * Resolve multiple skill references
- */
 export function resolveSkillReferences(
   skillRefs: SkillReference[],
   skills: Record<string, SkillDefinition>,
@@ -91,17 +77,10 @@ export function resolveSkillReferences(
   return skillRefs.map((ref) => resolveSkillReference(ref, skills));
 }
 
-/**
- * Get skill IDs from stack skills array (for validation)
- */
 function getStackSkillIds(stackSkills: SkillAssignment[]): string[] {
   return stackSkills.map((s) => s.id);
 }
 
-/**
- * Flatten hierarchical agent skills (categorized format) to flat array
- * Format: { framework: [...], styling: [...] } -> [...]
- */
 function flattenAgentSkills(
   categorizedSkills: Record<string, SkillAssignment[]>,
 ): SkillAssignment[] {
@@ -112,21 +91,14 @@ function flattenAgentSkills(
   return assignments;
 }
 
-/**
- * Expand directory references to individual skill IDs
- * If skillId is a directory prefix (like "methodology/universal"), find all skills under it
- * If skillId is a specific skill, return it unchanged
- */
 function expandSkillIdIfDirectory(
   skillId: string,
   skills: Record<string, SkillDefinition>,
 ): string[] {
-  // If exact match exists, use it
   if (skills[skillId]) {
     return [skillId];
   }
 
-  // Try as directory prefix - find all skills whose paths start with this prefix
   // Use path as unique key to deduplicate (both frontmatter name and directory path map to same skill)
   const allSkillIds = Object.keys(skills);
   const seenPaths = new Set<string>();
@@ -134,9 +106,7 @@ function expandSkillIdIfDirectory(
 
   for (const id of allSkillIds) {
     const skillDef = skills[id];
-    // Check if the skill's path starts with the directory prefix
     if (skillDef.path.startsWith(`src/skills/${skillId}/`)) {
-      // Only add if we haven't seen this path before (deduplication)
       if (!seenPaths.has(skillDef.path)) {
         seenPaths.add(skillDef.path);
         matchingSkills.push(id);
@@ -148,15 +118,9 @@ function expandSkillIdIfDirectory(
     return matchingSkills;
   }
 
-  // Return original skillId if no expansion found (will error later)
   return [skillId];
 }
 
-/**
- * Resolve a stack's skills to skill references for a specific agent
- * Handles hierarchical SkillAssignment objects with preloaded flag
- * Supports directory references (e.g., "methodology/universal") that expand to all skills under that directory
- */
 export function resolveStackSkills(
   stack: StackConfig,
   agentName: string,
@@ -164,13 +128,11 @@ export function resolveStackSkills(
 ): SkillReference[] {
   const skillRefs: SkillReference[] = [];
 
-  // Use per-agent skills if defined (hierarchical format), otherwise fall back to all stack skills
   const agentSkillCategories = stack.agent_skills?.[agentName];
   const assignments: SkillAssignment[] = agentSkillCategories
     ? flattenAgentSkills(agentSkillCategories)
     : stack.skills;
 
-  // Get list of all valid skill IDs in this stack (expanded to include directory contents)
   const validSkillIds = new Set<string>();
   for (const s of stack.skills) {
     const expandedIds = expandSkillIdIfDirectory(s.id, skills);
@@ -179,29 +141,23 @@ export function resolveStackSkills(
     }
   }
 
-  // Track already added skills to deduplicate
   const addedSkills = new Set<string>();
 
   for (const assignment of assignments) {
     const skillId = assignment.id;
-
-    // Expand directory references to individual skills
     const expandedSkillIds = expandSkillIdIfDirectory(skillId, skills);
 
     for (const expandedId of expandedSkillIds) {
-      // Skip duplicates
       if (addedSkills.has(expandedId)) {
         continue;
       }
 
-      // Validate skill exists in scanned skills
       if (!skills[expandedId]) {
         throw new Error(
           `Stack "${stack.name}" references skill "${expandedId}" for agent "${agentName}" not found in scanned skills`,
         );
       }
 
-      // Validate skill is in stack's skill list (if using per-agent skills)
       if (agentSkillCategories && !validSkillIds.has(expandedId)) {
         throw new Error(
           `Stack "${stack.name}" agent_skills for "${agentName}" includes skill "${expandedId}" not in stack's skills array`,
@@ -222,9 +178,6 @@ export function resolveStackSkills(
   return skillRefs;
 }
 
-/**
- * Get skills for an agent, preferring explicit skills over stack skills
- */
 export async function getAgentSkills(
   agentName: string,
   agentConfig: CompileAgentConfig,
@@ -232,12 +185,10 @@ export async function getAgentSkills(
   skills: Record<string, SkillDefinition>,
   projectRoot: string,
 ): Promise<SkillReference[]> {
-  // If agent has explicit skills defined, use those
   if (agentConfig.skills && agentConfig.skills.length > 0) {
     return agentConfig.skills;
   }
 
-  // Resolve from stack
   if (compileConfig.stack) {
     console.log(
       `  Resolving skills from stack "${compileConfig.stack}" for ${agentName}`,
@@ -246,13 +197,9 @@ export async function getAgentSkills(
     return resolveStackSkills(stack, agentName, skills);
   }
 
-  // No skills defined
   return [];
 }
 
-/**
- * Resolve agents by merging definitions with compile config
- */
 export async function resolveAgents(
   agents: Record<string, AgentDefinition>,
   skills: Record<string, SkillDefinition>,
@@ -277,7 +224,6 @@ export async function resolveAgents(
 
     const agentConfig = compileConfig.agents[agentName];
 
-    // Get skills (from explicit config or stack)
     const skillRefs = await getAgentSkills(
       agentName,
       agentConfig,
@@ -286,7 +232,6 @@ export async function resolveAgents(
       projectRoot,
     );
 
-    // Resolve skill references to full skill objects
     const resolvedSkills = resolveSkillReferences(skillRefs, skills);
 
     resolved[agentName] = {
@@ -303,9 +248,6 @@ export async function resolveAgents(
   return resolved;
 }
 
-/**
- * Convert a stack config to a compile config
- */
 export function stackToCompileConfig(
   stackId: string,
   stack: StackConfig,

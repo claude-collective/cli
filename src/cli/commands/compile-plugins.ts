@@ -9,6 +9,7 @@ import {
   compileSkillPlugin,
   printCompilationSummary,
 } from "../lib/skill-plugin-compiler";
+import { EXIT_CODES } from "../lib/exit-codes";
 
 const DEFAULT_OUTPUT_DIR = "dist/plugins";
 
@@ -27,8 +28,6 @@ export const compilePluginsCommand = new Command("compile-plugins")
   .showHelpAfterError(true)
   .action(async (options) => {
     const s = p.spinner();
-
-    // Set verbose mode globally
     setVerbose(options.verbose);
 
     const projectRoot = process.cwd();
@@ -41,7 +40,6 @@ export const compilePluginsCommand = new Command("compile-plugins")
 
     try {
       if (options.skill) {
-        // Compile a single skill
         const skillPath = path.resolve(skillsDir, options.skill);
         s.start(`Compiling skill at ${skillPath}...`);
 
@@ -53,7 +51,6 @@ export const compilePluginsCommand = new Command("compile-plugins")
         s.stop(`Compiled skill-${result.skillName}`);
         console.log(`  Plugin path: ${pc.cyan(result.pluginPath)}`);
       } else {
-        // Compile all skills
         s.start("Finding and compiling all skills...");
 
         const results = await compileAllSkillPlugins(skillsDir, outputDir);
@@ -66,6 +63,6 @@ export const compilePluginsCommand = new Command("compile-plugins")
     } catch (error) {
       s.stop("Compilation failed");
       p.log.error(String(error));
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
   });

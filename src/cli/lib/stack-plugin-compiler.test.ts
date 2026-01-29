@@ -6,7 +6,7 @@ import {
   compileStackPlugin,
   printStackCompilationSummary,
   type CompiledStackPlugin,
-} from "../stack-plugin-compiler";
+} from "./stack-plugin-compiler";
 
 describe("stack-plugin-compiler", () => {
   let tempDir: string;

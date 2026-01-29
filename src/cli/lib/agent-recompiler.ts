@@ -15,50 +15,27 @@ import type {
   SkillDefinition,
 } from "../../types";
 
-/**
- * Options for recompiling agents
- */
 export interface RecompileAgentsOptions {
-  /** Path to the plugin directory */
   pluginDir: string;
-  /** Path to the source directory (agents, principles, templates) */
   sourcePath: string;
-  /** Optional: specific agents to recompile (defaults to all existing) */
   agents?: string[];
-  /** Optional: pre-loaded skills (if not provided, loads from pluginDir/skills/) */
   skills?: Record<string, SkillDefinition>;
-  /** Optional: project directory for local template resolution */
   projectDir?: string;
-  /** Optional: custom output directory (overrides pluginDir/agents/) */
   outputDir?: string;
 }
 
-/**
- * Result of recompiling agents
- */
 export interface RecompileAgentsResult {
-  /** List of successfully recompiled agent names */
   compiled: string[];
-  /** List of agents that failed to recompile */
   failed: string[];
-  /** Any warnings during recompilation */
   warnings: string[];
 }
 
-/**
- * Get the list of existing compiled agents in a plugin
- * Returns agent names (without .md extension)
- */
 async function getExistingAgentNames(pluginDir: string): Promise<string[]> {
   const agentsDir = getPluginAgentsDir(pluginDir);
   const files = await glob("*.md", agentsDir);
   return files.map((f) => path.basename(f, ".md"));
 }
 
-/**
- * Load config.yaml from plugin directory
- * Returns null if not found or invalid
- */
 async function loadPluginConfig(
   pluginDir: string,
 ): Promise<StackConfig | null> {
@@ -79,16 +56,6 @@ async function loadPluginConfig(
   }
 }
 
-/**
- * Recompile agents in a plugin
- *
- * This is used after adding/removing skills to update agents with new skill references.
- * It reads existing compiled agents, loads the source definitions, and recompiles them
- * with the updated skill set from the plugin.
- *
- * If a config.yaml exists in the plugin directory, it will be used to determine
- * agent-skill assignments. Otherwise, all skills are given to all agents.
- */
 export async function recompileAgents(
   options: RecompileAgentsOptions,
 ): Promise<RecompileAgentsResult> {
@@ -107,26 +74,19 @@ export async function recompileAgents(
     warnings: [],
   };
 
-  // 1. Try to load config.yaml from plugin directory
   const pluginConfig = await loadPluginConfig(pluginDir);
-
-  // 2. Load agent definitions from source (needed early for fallback)
   const allAgents = await loadAllAgents(sourcePath);
 
-  // 3. Determine which agents to recompile
   let agentNames: string[];
   if (specifiedAgents) {
     agentNames = specifiedAgents;
   } else if (pluginConfig?.agents) {
-    // Use agents from config.yaml
     agentNames = pluginConfig.agents;
     verbose(`Using agents from config.yaml: ${agentNames.join(", ")}`);
   } else if (outputDir) {
-    // Custom output mode: compile all available agents from source
     agentNames = Object.keys(allAgents);
     verbose(`Using all available agents from source: ${agentNames.join(", ")}`);
   } else {
-    // Fall back to existing compiled agents
     agentNames = await getExistingAgentNames(pluginDir);
   }
 
@@ -139,14 +99,11 @@ export async function recompileAgents(
     `Recompiling ${agentNames.length} agents in ${outputDir ?? pluginDir}`,
   );
 
-  // 4. Use provided skills or load from the plugin
   const pluginSkills = providedSkills ?? (await loadPluginSkills(pluginDir));
 
-  // 5. Build compile config for the agents
   const compileAgents: Record<string, CompileAgentConfig> = {};
   for (const agentName of agentNames) {
     if (allAgents[agentName]) {
-      // If we have a config with agent_skills, resolve them
       if (pluginConfig?.agent_skills?.[agentName]) {
         const skillRefs = resolveStackSkills(
           pluginConfig,
@@ -165,7 +122,6 @@ export async function recompileAgents(
         compileAgents[agentName] = { skills: skillRefs };
         verbose(`  Agent ${agentName}: ${skillRefs.length} skills (all)`);
       } else {
-        // No config - agent gets all plugin skills
         compileAgents[agentName] = {};
       }
     } else {
@@ -182,10 +138,7 @@ export async function recompileAgents(
     agents: compileAgents,
   };
 
-  // 6. Create Liquid engine - checks local templates first, falls back to bundled
   const engine = await createLiquidEngine(projectDir);
-
-  // 7. Resolve and compile agents
   const resolvedAgents = await resolveAgents(
     allAgents,
     pluginSkills,
@@ -193,12 +146,9 @@ export async function recompileAgents(
     sourcePath,
   );
 
-  // 8. Ensure agents directory exists
-  // Use custom outputDir if provided, otherwise default to pluginDir/agents/
   const agentsDir = outputDir ?? getPluginAgentsDir(pluginDir);
   await ensureDir(agentsDir);
 
-  // 9. Compile each agent
   for (const [name, agent] of Object.entries(resolvedAgents)) {
     try {
       const output = await compileAgentForPlugin(

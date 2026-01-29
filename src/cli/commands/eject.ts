@@ -10,16 +10,11 @@ import {
   writeFile,
 } from "../utils/fs";
 import { DIRS, PROJECT_ROOT } from "../consts";
+import { EXIT_CODES } from "../lib/exit-codes";
 
-/**
- * Eject types supported by the command
- */
 const EJECT_TYPES = ["templates", "skills", "config", "all"] as const;
 type EjectType = (typeof EJECT_TYPES)[number];
 
-/**
- * Default config.yaml content for eject
- */
 const DEFAULT_CONFIG_CONTENT = `# Claude Collective Configuration
 # Agent-skill mappings for this project
 
@@ -46,9 +41,6 @@ agent_skills:
     - better-auth
 `;
 
-/**
- * Default SKILL.md template content
- */
 const DEFAULT_SKILL_MD_CONTENT = `---
 name: example-skill
 description: Short description of the skill
@@ -68,9 +60,6 @@ Specific instructions for the agent.
 \`\`\`
 `;
 
-/**
- * Default metadata.yaml template content
- */
 const DEFAULT_METADATA_CONTENT = `# yaml-language-server: $schema=../../schemas/metadata.schema.json
 category: custom
 author: "@local"
@@ -78,9 +67,6 @@ cli_name: Example Skill
 cli_description: Short description for CLI
 `;
 
-/**
- * Eject bundled content to local project for customization
- */
 export const ejectCommand = new Command("eject")
   .description("Eject bundled content for local customization")
   .argument("[type]", "What to eject: templates, skills, config, all")
@@ -96,13 +82,13 @@ export const ejectCommand = new Command("eject")
       p.log.error(
         "Please specify what to eject: templates, skills, config, or all",
       );
-      process.exit(1);
+      process.exit(EXIT_CODES.INVALID_ARGS);
     }
 
     if (!EJECT_TYPES.includes(type as EjectType)) {
       p.log.error(`Unknown eject type: ${type}`);
       p.log.info(`Valid types: ${EJECT_TYPES.join(", ")}`);
-      process.exit(1);
+      process.exit(EXIT_CODES.INVALID_ARGS);
     }
 
     p.intro(pc.cyan("Claude Collective Eject"));
@@ -129,9 +115,6 @@ export const ejectCommand = new Command("eject")
     p.outro(pc.green("Eject complete!"));
   });
 
-/**
- * Eject templates to .claude/templates/
- */
 async function ejectTemplates(
   projectDir: string,
   force: boolean,
@@ -139,7 +122,6 @@ async function ejectTemplates(
   const sourceDir = path.join(PROJECT_ROOT, DIRS.templates);
   const destDir = path.join(projectDir, ".claude", "templates");
 
-  // Check if destination exists
   if ((await directoryExists(destDir)) && !force) {
     p.log.warn(
       `Templates already exist at ${destDir}. Use --force to overwrite.`,
@@ -156,9 +138,6 @@ async function ejectTemplates(
   );
 }
 
-/**
- * Eject skill scaffolding templates to .claude/skill-templates/
- */
 async function ejectSkills(projectDir: string, force: boolean): Promise<void> {
   const destDir = path.join(projectDir, ".claude", "skill-templates");
 
@@ -171,17 +150,14 @@ async function ejectSkills(projectDir: string, force: boolean): Promise<void> {
 
   await ensureDir(destDir);
 
-  // Create example skill structure
   const exampleSkillDir = path.join(destDir, "example-skill");
   await ensureDir(exampleSkillDir);
 
-  // Write SKILL.md template
   await writeFile(
     path.join(exampleSkillDir, "SKILL.md"),
     DEFAULT_SKILL_MD_CONTENT,
   );
 
-  // Write metadata.yaml template
   await writeFile(
     path.join(exampleSkillDir, "metadata.yaml"),
     DEFAULT_METADATA_CONTENT,
@@ -191,9 +167,6 @@ async function ejectSkills(projectDir: string, force: boolean): Promise<void> {
   p.log.info(pc.dim("Copy example-skill/ to .claude/skills/ and customize."));
 }
 
-/**
- * Eject default config.yaml to .claude/config.yaml
- */
 async function ejectConfig(projectDir: string, force: boolean): Promise<void> {
   const destPath = path.join(projectDir, ".claude", "config.yaml");
 

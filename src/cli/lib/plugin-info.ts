@@ -6,20 +6,10 @@ import {
   readPluginManifest,
 } from "./plugin-finder";
 import { directoryExists } from "../utils/fs";
+import { DEFAULT_DISPLAY_VERSION } from "../consts";
 
-/**
- * Default version when manifest has none
- */
-const DEFAULT_VERSION = "0.0.0";
-
-/**
- * Default plugin name
- */
 const DEFAULT_NAME = "claude-collective";
 
-/**
- * Plugin information summary
- */
 export interface PluginInfo {
   name: string;
   version: string;
@@ -28,10 +18,6 @@ export interface PluginInfo {
   path: string;
 }
 
-/**
- * Get plugin information for the current project
- * Returns null if no plugin is found
- */
 export async function getPluginInfo(): Promise<PluginInfo | null> {
   const pluginDir = getCollectivePluginDir();
 
@@ -64,16 +50,13 @@ export async function getPluginInfo(): Promise<PluginInfo | null> {
 
   return {
     name: manifest.name || DEFAULT_NAME,
-    version: manifest.version || DEFAULT_VERSION,
+    version: manifest.version || DEFAULT_DISPLAY_VERSION,
     skillCount,
     agentCount,
     path: pluginDir,
   };
 }
 
-/**
- * Format plugin information for display
- */
 export function formatPluginDisplay(info: PluginInfo): string {
   return `Plugin: ${info.name} v${info.version}
   Skills: ${info.skillCount}

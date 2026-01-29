@@ -1,33 +1,19 @@
 import path from "path";
 import { readFile, writeFile } from "../utils/fs";
-import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../consts";
+import {
+  PLUGIN_MANIFEST_DIR,
+  PLUGIN_MANIFEST_FILE,
+  DEFAULT_VERSION,
+} from "../consts";
 import type { PluginManifest } from "../../types";
 
-/**
- * Version bump type
- */
 export type VersionBumpType = "major" | "minor" | "patch";
 
-/**
- * Default version when none is specified
- */
-const DEFAULT_VERSION = "1.0.0";
-
-/**
- * Parse a semantic version string
- */
 function parseVersion(version: string): [number, number, number] {
   const parts = version.split(".").map(Number);
   return [parts[0] || 1, parts[1] || 0, parts[2] || 0];
 }
 
-/**
- * Bump plugin version in manifest
- *
- * @param pluginDir - Plugin directory path
- * @param type - Version bump type (major, minor, patch)
- * @returns New version string
- */
 export async function bumpPluginVersion(
   pluginDir: string,
   type: VersionBumpType,
@@ -63,9 +49,6 @@ export async function bumpPluginVersion(
   return newVersion;
 }
 
-/**
- * Get current plugin version from manifest
- */
 export async function getPluginVersion(pluginDir: string): Promise<string> {
   const manifestPath = path.join(
     pluginDir,

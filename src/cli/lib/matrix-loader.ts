@@ -15,19 +15,13 @@ import type {
   SkillAlternative,
 } from "../types-matrix";
 
-/**
- * Metadata from individual metadata.yaml files
- */
 interface RawMetadata {
   category: string;
   category_exclusive?: boolean;
   author: string;
   version: string;
-  /** Required for skill to load. Short display name for CLI (e.g., "React", "Zustand", "SolidJS") */
   cli_name?: string;
-  /** Short description for CLI display (5-6 words) */
   cli_description?: string;
-  /** When an AI agent should invoke this skill */
   usage_guidance?: string;
   tags?: string[];
   compatible_with?: string[];
@@ -37,26 +31,18 @@ interface RawMetadata {
   provides_setup_for?: string[];
 }
 
-/**
- * Load and parse skills-matrix.yaml
- * Validates basic structure (required fields exist)
- */
 export async function loadSkillsMatrix(
   configPath: string,
 ): Promise<SkillsMatrixConfig> {
   const content = await readFile(configPath);
   const config = parseYaml(content) as SkillsMatrixConfig;
 
-  // Basic structure validation
   validateMatrixStructure(config, configPath);
 
   verbose(`Loaded skills matrix: ${configPath}`);
   return config;
 }
 
-/**
- * Validate that skills-matrix.yaml has required structure
- */
 function validateMatrixStructure(
   config: SkillsMatrixConfig,
   configPath: string,
@@ -76,7 +62,6 @@ function validateMatrixStructure(
     );
   }
 
-  // Validate relationships structure
   const relationshipFields = [
     "conflicts",
     "recommends",
@@ -93,7 +78,6 @@ function validateMatrixStructure(
     );
   }
 
-  // Validate categories have required fields
   for (const [categoryId, category] of Object.entries(config.categories)) {
     const requiredCategoryFields = [
       "id",
@@ -115,16 +99,10 @@ function validateMatrixStructure(
   }
 }
 
-/**
- * Extract skill metadata from all skills directories
- * Combines SKILL.md frontmatter (identity) with metadata.yaml (relationships)
- */
 export async function extractAllSkills(
   skillsDir: string,
 ): Promise<ExtractedSkillMetadata[]> {
   const skills: ExtractedSkillMetadata[] = [];
-
-  // Find all metadata.yaml files
   const metadataFiles = await glob("**/metadata.yaml", skillsDir);
 
   for (const metadataFile of metadataFiles) {
@@ -132,17 +110,13 @@ export async function extractAllSkills(
     const skillMdPath = path.join(skillsDir, skillDir, "SKILL.md");
     const metadataPath = path.join(skillsDir, metadataFile);
 
-    // Check SKILL.md exists
     if (!(await fileExists(skillMdPath))) {
       verbose(`Skipping ${metadataFile}: No SKILL.md found`);
       continue;
     }
 
-    // Read and parse metadata.yaml
     const metadataContent = await readFile(metadataPath);
     const metadata = parseYaml(metadataContent) as RawMetadata;
-
-    // Read and parse SKILL.md frontmatter
     const skillMdContent = await readFile(skillMdPath);
     const frontmatter = parseFrontmatter(skillMdContent);
 
@@ -151,45 +125,29 @@ export async function extractAllSkills(
       continue;
     }
 
-    // cli_name is required in metadata.yaml
     if (!metadata.cli_name) {
       throw new Error(
         `Skill at ${metadataFile} is missing required 'cli_name' field in metadata.yaml`,
       );
     }
 
-    // Use frontmatter name as the canonical skill ID
-    // frontmatter.name is like "frontend/react (@vince)"
     const skillId = frontmatter.name;
 
-    // Build extracted skill metadata
-    // Display name format: "cli_name author" (e.g., "React @vince")
     const extracted: ExtractedSkillMetadata = {
-      // Identity (from SKILL.md frontmatter - this is the canonical ID)
       id: skillId,
-      // Store directory path for resolving old references and filesystem access
-      // skillDir is the path like "frontend/framework/react (@vince)"
       directoryPath: skillDir,
       name: `${metadata.cli_name} ${metadata.author}`,
       description: metadata.cli_description || frontmatter.description,
       usageGuidance: metadata.usage_guidance,
-
-      // Catalog data (from metadata.yaml)
       category: metadata.category,
       categoryExclusive: metadata.category_exclusive ?? true,
       author: metadata.author,
       tags: metadata.tags ?? [],
-
-      // Relationships (from metadata.yaml)
       compatibleWith: metadata.compatible_with ?? [],
       conflictsWith: metadata.conflicts_with ?? [],
       requires: metadata.requires ?? [],
-
-      // Setup relationships
       requiresSetup: metadata.requires_setup ?? [],
       providesSetupFor: metadata.provides_setup_for ?? [],
-
-      // Location
       path: `skills/${skillDir}/`,
     };
 
@@ -200,9 +158,6 @@ export async function extractAllSkills(
   return skills;
 }
 
-/**
- * Build reverse alias lookup map
- */
 function buildReverseAliases(
   aliases: Record<string, string>,
 ): Record<string, string> {
@@ -213,10 +168,6 @@ function buildReverseAliases(
   return reverse;
 }
 
-/**
- * Build a mapping from directory paths to canonical skill IDs (frontmatter names)
- * This allows stack configs and other references using directory paths to be resolved
- */
 function buildDirectoryPathToIdMap(
   skills: ExtractedSkillMetadata[],
 ): Record<string, string> {
@@ -229,42 +180,27 @@ function buildDirectoryPathToIdMap(
   return map;
 }
 
-/**
- * Resolve an alias or directory path to canonical skill ID (frontmatter name)
- * Checks in order: aliases -> directoryPathToId -> returns original
- */
 function resolveToCanonicalId(
   aliasOrId: string,
   aliases: Record<string, string>,
   directoryPathToId: Record<string, string> = {},
 ): string {
-  // Check aliases first (e.g., "react" -> "frontend/react (@vince)")
   if (aliases[aliasOrId]) {
     return aliases[aliasOrId];
   }
-  // Check directory paths (e.g., "frontend/framework/react (@vince)" -> "frontend/react (@vince)")
   if (directoryPathToId[aliasOrId]) {
     return directoryPathToId[aliasOrId];
   }
-  // Return as-is (might already be a canonical ID / frontmatter name)
   return aliasOrId;
 }
 
-/**
- * Merge skills-matrix.yaml with extracted skill metadata
- * Produces the final MergedSkillsMatrix for CLI consumption
- */
 export async function mergeMatrixWithSkills(
   matrix: SkillsMatrixConfig,
   skills: ExtractedSkillMetadata[],
 ): Promise<MergedSkillsMatrix> {
   const aliases = matrix.skill_aliases;
   const aliasesReverse = buildReverseAliases(aliases);
-  // Build mapping from directory paths to canonical IDs (frontmatter names)
-  // This allows stack configs using directory paths to be resolved to canonical IDs
   const directoryPathToId = buildDirectoryPathToIdMap(skills);
-
-  // Build resolved skills
   const resolvedSkills: Record<string, ResolvedSkill> = {};
 
   for (const skill of skills) {
@@ -278,10 +214,7 @@ export async function mergeMatrixWithSkills(
     resolvedSkills[skill.id] = resolved;
   }
 
-  // Compute inverse relationships (recommendedBy, requiredBy)
   computeInverseRelationships(resolvedSkills);
-
-  // Resolve suggested stacks
   const suggestedStacks = resolveSuggestedStacks(matrix, aliases);
 
   const merged: MergedSkillsMatrix = {
@@ -297,9 +230,6 @@ export async function mergeMatrixWithSkills(
   return merged;
 }
 
-/**
- * Build a ResolvedSkill from extracted metadata and matrix relationships
- */
 function buildResolvedSkill(
   skill: ExtractedSkillMetadata,
   matrix: SkillsMatrixConfig,
@@ -313,7 +243,6 @@ function buildResolvedSkill(
   const alternatives: SkillAlternative[] = [];
   const discourages: SkillRelation[] = [];
 
-  // Conflicts from metadata.yaml
   for (const conflictRef of skill.conflictsWith) {
     const canonicalId = resolveToCanonicalId(
       conflictRef,
@@ -326,7 +255,6 @@ function buildResolvedSkill(
     });
   }
 
-  // Conflicts from skills-matrix.yaml
   for (const conflictRule of matrix.relationships.conflicts) {
     const resolvedSkills = conflictRule.skills.map((s) =>
       resolveToCanonicalId(s, aliases, directoryPathToId),
@@ -334,7 +262,6 @@ function buildResolvedSkill(
     if (resolvedSkills.includes(skill.id)) {
       for (const otherSkill of resolvedSkills) {
         if (otherSkill !== skill.id) {
-          // Avoid duplicates
           if (!conflictsWith.some((c) => c.skillId === otherSkill)) {
             conflictsWith.push({
               skillId: otherSkill,
@@ -346,7 +273,6 @@ function buildResolvedSkill(
     }
   }
 
-  // Recommendations from metadata.yaml (compatible_with)
   for (const compatRef of skill.compatibleWith) {
     const canonicalId = resolveToCanonicalId(
       compatRef,
@@ -359,7 +285,6 @@ function buildResolvedSkill(
     });
   }
 
-  // Recommendations from skills-matrix.yaml
   for (const recommendRule of matrix.relationships.recommends) {
     const whenCanonicalId = resolveToCanonicalId(
       recommendRule.when,
@@ -373,7 +298,6 @@ function buildResolvedSkill(
           aliases,
           directoryPathToId,
         );
-        // Avoid duplicates
         if (!recommends.some((r) => r.skillId === canonicalId)) {
           recommends.push({
             skillId: canonicalId,
@@ -384,7 +308,6 @@ function buildResolvedSkill(
     }
   }
 
-  // Requirements from metadata.yaml
   if (skill.requires.length > 0) {
     requires.push({
       skillIds: skill.requires.map((r) =>
@@ -395,7 +318,6 @@ function buildResolvedSkill(
     });
   }
 
-  // Requirements from skills-matrix.yaml
   for (const requireRule of matrix.relationships.requires) {
     const skillCanonicalId = resolveToCanonicalId(
       requireRule.skill,
@@ -413,7 +335,6 @@ function buildResolvedSkill(
     }
   }
 
-  // Alternatives from skills-matrix.yaml
   for (const altGroup of matrix.relationships.alternatives) {
     const resolvedAlts = altGroup.skills.map((s) =>
       resolveToCanonicalId(s, aliases, directoryPathToId),
@@ -430,7 +351,6 @@ function buildResolvedSkill(
     }
   }
 
-  // Discourages from skills-matrix.yaml
   if (matrix.relationships.discourages) {
     for (const discourageRule of matrix.relationships.discourages) {
       const resolvedSkills = discourageRule.skills.map((s) =>
@@ -439,7 +359,6 @@ function buildResolvedSkill(
       if (resolvedSkills.includes(skill.id)) {
         for (const otherSkill of resolvedSkills) {
           if (otherSkill !== skill.id) {
-            // Avoid duplicates
             if (!discourages.some((d) => d.skillId === otherSkill)) {
               discourages.push({
                 skillId: otherSkill,
@@ -453,52 +372,36 @@ function buildResolvedSkill(
   }
 
   return {
-    // Identity
     id: skill.id,
     alias: aliasesReverse[skill.id],
     name: skill.name,
     description: skill.description,
     usageGuidance: skill.usageGuidance,
-
-    // Categorization
     category: skill.category,
     categoryExclusive: skill.categoryExclusive,
     tags: skill.tags,
-
-    // Authorship
     author: skill.author,
-    // version is deprecated and now lives in plugin.json
-
-    // Relationships (forward)
     conflictsWith,
     recommends,
-    recommendedBy: [], // Computed later
+    recommendedBy: [],
     requires,
-    requiredBy: [], // Computed later
+    requiredBy: [],
     alternatives,
     discourages,
-
-    // Setup relationships
     requiresSetup: skill.requiresSetup.map((s) =>
       resolveToCanonicalId(s, aliases, directoryPathToId),
     ),
     providesSetupFor: skill.providesSetupFor.map((s) =>
       resolveToCanonicalId(s, aliases, directoryPathToId),
     ),
-
-    // Location
     path: skill.path,
   };
 }
 
-/**
- * Compute inverse relationships (recommendedBy, requiredBy) across all skills
- */
 function computeInverseRelationships(
   skills: Record<string, ResolvedSkill>,
 ): void {
   for (const skill of Object.values(skills)) {
-    // Build recommendedBy from others' recommends
     for (const recommend of skill.recommends) {
       const targetSkill = skills[recommend.skillId];
       if (targetSkill) {
@@ -509,7 +412,6 @@ function computeInverseRelationships(
       }
     }
 
-    // Build requiredBy from others' requires
     for (const requirement of skill.requires) {
       for (const requiredId of requirement.skillIds) {
         const targetSkill = skills[requiredId];
@@ -524,9 +426,6 @@ function computeInverseRelationships(
   }
 }
 
-/**
- * Resolve suggested stacks, converting aliases to canonical skill IDs
- */
 function resolveSuggestedStacks(
   matrix: SkillsMatrixConfig,
   aliases: Record<string, string>,
@@ -538,7 +437,6 @@ function resolveSuggestedStacks(
     for (const [category, subcategories] of Object.entries(stack.skills)) {
       resolvedSkillsMap[category] = {};
       for (const [subcategory, alias] of Object.entries(subcategories)) {
-        // Aliases now point to canonical IDs (frontmatter names)
         const canonicalId = resolveToCanonicalId(alias, aliases);
         resolvedSkillsMap[category][subcategory] = canonicalId;
         allSkillIds.push(canonicalId);
@@ -557,9 +455,6 @@ function resolveSuggestedStacks(
   });
 }
 
-/**
- * Convenience function to load matrix and extract skills in one call
- */
 export async function loadAndMergeSkillsMatrix(
   matrixPath: string,
   projectRoot: string,

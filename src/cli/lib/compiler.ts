@@ -26,9 +26,6 @@ import type {
   CompileContext,
 } from "../types";
 
-/**
- * Compile a single agent using LiquidJS
- */
 async function compileAgent(
   name: string,
   agent: AgentConfig,
@@ -37,10 +34,8 @@ async function compileAgent(
 ): Promise<string> {
   verbose(`Reading agent files for ${name}...`);
 
-  // Use stored path if available, otherwise fall back to name (for backwards compatibility)
   const agentDir = path.join(projectRoot, DIRS.agents, agent.path || name);
 
-  // Read agent-specific files
   const intro = await readFile(path.join(agentDir, "intro.md"));
   const workflow = await readFile(path.join(agentDir, "workflow.md"));
   const examples = await readFileOptional(
@@ -56,14 +51,10 @@ async function compileAgent(
     "",
   );
 
-  // Extract category from agent path (e.g., "developer" from "developer/backend-developer")
   const agentPath = agent.path || name;
   const category = agentPath.split("/")[0];
   const categoryDir = path.join(projectRoot, DIRS.agents, category);
 
-  // Read output format with cascading resolution:
-  // 1. Try agent-level output-format.md
-  // 2. Fallback to category-level output-format.md
   let outputFormat = await readFileOptional(
     path.join(agentDir, "output-format.md"),
     "",
@@ -75,20 +66,14 @@ async function compileAgent(
     );
   }
 
-  // Partition skills into preloaded vs dynamic
-  // Preloaded skills: listed in frontmatter, Claude Code loads them automatically
-  // Dynamic skills: listed in Available Skills section, loaded via Skill tool
   const preloadedSkills = agent.skills.filter((s) => s.preloaded);
   const dynamicSkills = agent.skills.filter((s) => !s.preloaded);
-
-  // IDs for frontmatter
   const preloadedSkillIds = preloadedSkills.map((s) => s.id);
 
   verbose(
     `Skills for ${name}: ${preloadedSkills.length} preloaded, ${dynamicSkills.length} dynamic`,
   );
 
-  // Prepare template data
   const data: CompiledAgentData = {
     agent,
     intro,
@@ -103,14 +88,10 @@ async function compileAgent(
     preloadedSkillIds,
   };
 
-  // Render with LiquidJS
   verbose(`Rendering template for ${name}...`);
   return engine.renderFile("agent", data);
 }
 
-/**
- * Compile all agents to output directory
- */
 export async function compileAllAgents(
   resolvedAgents: Record<string, AgentConfig>,
   config: CompileConfig,
@@ -128,7 +109,6 @@ export async function compileAllAgents(
       await writeFile(path.join(outDir, `${name}.md`), output);
       console.log(`  ✓ ${name}.md`);
 
-      // Validate compiled output
       const validationResult = validateCompiledAgent(output);
       if (!validationResult.valid || validationResult.warnings.length > 0) {
         hasValidationIssues = true;
@@ -149,14 +129,10 @@ export async function compileAllAgents(
   }
 }
 
-/**
- * Compile all skills to output directory
- */
 export async function compileAllSkills(
   resolvedAgents: Record<string, AgentConfig>,
   ctx: CompileContext,
 ): Promise<void> {
-  // Collect all unique skills with paths
   const allSkills = Object.values(resolvedAgents)
     .flatMap((a) => a.skills)
     .filter((s) => s.path);
@@ -168,18 +144,15 @@ export async function compileAllSkills(
     const outDir = path.join(ctx.outputDir, "skills", id);
     await ensureDir(outDir);
 
-    // skill.path now includes full relative path (e.g., "src/stacks/..." or ".claude-collective/stacks/...")
     const sourcePath = path.join(ctx.projectRoot, skill.path);
     const isFolder = skill.path.endsWith("/");
 
     try {
       if (isFolder) {
-        // Folder-based skill: read SKILL.md and copy
         const mainContent = await readFile(path.join(sourcePath, "SKILL.md"));
         await writeFile(path.join(outDir, "SKILL.md"), mainContent);
         console.log(`  ✓ skills/${id}/SKILL.md`);
 
-        // Copy reference.md if exists
         const referenceContent = await readFileOptional(
           path.join(sourcePath, "reference.md"),
         );
@@ -188,21 +161,18 @@ export async function compileAllSkills(
           console.log(`  ✓ skills/${id}/reference.md`);
         }
 
-        // Copy examples folder if exists
         const examplesDir = path.join(sourcePath, "examples");
         if (await fileExists(examplesDir)) {
           await copy(examplesDir, path.join(outDir, "examples"));
           console.log(`  ✓ skills/${id}/examples/`);
         }
 
-        // Copy scripts directory if exists
         const scriptsDir = path.join(sourcePath, "scripts");
         if (await fileExists(scriptsDir)) {
           await copy(scriptsDir, path.join(outDir, "scripts"));
           console.log(`  ✓ skills/${id}/scripts/`);
         }
       } else {
-        // Legacy: single file skill
         const content = await readFile(sourcePath);
         await writeFile(path.join(outDir, "SKILL.md"), content);
         console.log(`  ✓ skills/${id}/SKILL.md`);
@@ -218,9 +188,6 @@ export async function compileAllSkills(
   }
 }
 
-/**
- * Copy CLAUDE.md to output
- */
 export async function copyClaude(ctx: CompileContext): Promise<void> {
   const claudePath = await resolveClaudeMd(
     ctx.projectRoot,
@@ -234,20 +201,15 @@ export async function copyClaude(ctx: CompileContext): Promise<void> {
   console.log(`  ✓ CLAUDE.md (from stack)`);
 }
 
-/**
- * Compile all commands to output directory
- */
 export async function compileAllCommands(ctx: CompileContext): Promise<void> {
   const commandsDir = path.join(ctx.projectRoot, DIRS.commands);
   const outDir = path.join(ctx.outputDir, "commands");
 
-  // Check if commands directory exists
   if (!(await fileExists(commandsDir))) {
     console.log("  - No commands directory found, skipping...");
     return;
   }
 
-  // Check for .md files
   const files = await glob("*.md", commandsDir);
 
   if (files.length === 0) {
@@ -273,21 +235,9 @@ export async function compileAllCommands(ctx: CompileContext): Promise<void> {
   }
 }
 
-/**
- * Create a configured Liquid engine with local template resolution
- *
- * Template resolution order:
- * 1. Local project templates (.claude/templates/) - if provided and exists
- * 2. Bundled CLI templates (PROJECT_ROOT/templates)
- *
- * This allows users to eject and customize templates locally.
- *
- * @param projectDir - Optional project directory for local template resolution
- */
 export async function createLiquidEngine(projectDir?: string): Promise<Liquid> {
   const roots: string[] = [];
 
-  // Check for local templates first (if projectDir provided)
   if (projectDir) {
     const localTemplatesDir = path.join(projectDir, ".claude", "templates");
     if (await directoryExists(localTemplatesDir)) {
@@ -296,7 +246,6 @@ export async function createLiquidEngine(projectDir?: string): Promise<Liquid> {
     }
   }
 
-  // Always include bundled templates as fallback
   roots.push(path.join(PROJECT_ROOT, DIRS.templates));
 
   return new Liquid({
@@ -307,9 +256,6 @@ export async function createLiquidEngine(projectDir?: string): Promise<Liquid> {
   });
 }
 
-/**
- * Clean output directory (agents, skills, commands)
- */
 export async function cleanOutputDir(outputDir: string): Promise<void> {
   await remove(path.join(outputDir, "agents"));
   await remove(path.join(outputDir, "skills"));

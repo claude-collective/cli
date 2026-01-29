@@ -4,29 +4,14 @@ import { stringify as stringifyYaml, parse as parseYaml } from "yaml";
 import { readFile, writeFile, glob, fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
 
-/**
- * Length of the content hash prefix
- */
 const HASH_PREFIX_LENGTH = 7;
 
-/**
- * Metadata file name
- */
 const METADATA_FILE_NAME = "metadata.yaml";
 
-/**
- * Files to include in the hash calculation (in priority order)
- */
 const HASHABLE_FILES = ["SKILL.md", "reference.md"];
 
-/**
- * Directories to include in the hash calculation
- */
 const HASHABLE_DIRS = ["examples", "scripts"];
 
-/**
- * Metadata structure for versioning
- */
 interface VersionedMetadata {
   version: number;
   content_hash?: string;
@@ -34,9 +19,6 @@ interface VersionedMetadata {
   [key: string]: unknown;
 }
 
-/**
- * Result of version checking a skill
- */
 export interface VersionCheckResult {
   skillPath: string;
   previousVersion: number;
@@ -46,38 +28,24 @@ export interface VersionCheckResult {
   changed: boolean;
 }
 
-/**
- * Get the current date in YYYY-MM-DD format
- */
 export function getCurrentDate(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-/**
- * Hash a string content and return the first 7 characters of SHA-256
- */
 export function hashString(content: string): string {
   const hash = createHash("sha256");
   hash.update(content);
   return hash.digest("hex").slice(0, HASH_PREFIX_LENGTH);
 }
 
-/**
- * Generate a content hash for a file
- */
 export async function hashFile(filePath: string): Promise<string> {
   const content = await readFile(filePath);
   return hashString(content);
 }
 
-/**
- * Calculate a combined hash for all content in a skill folder
- * Includes SKILL.md, reference.md, and all files in examples/ and scripts/
- */
 export async function hashSkillFolder(skillPath: string): Promise<string> {
   const contents: string[] = [];
 
-  // Hash main files
   for (const fileName of HASHABLE_FILES) {
     const filePath = path.join(skillPath, fileName);
     if (await fileExists(filePath)) {
@@ -86,7 +54,6 @@ export async function hashSkillFolder(skillPath: string): Promise<string> {
     }
   }
 
-  // Hash files in subdirectories
   for (const dirName of HASHABLE_DIRS) {
     const dirPath = path.join(skillPath, dirName);
     if (await fileExists(dirPath)) {
@@ -99,21 +66,16 @@ export async function hashSkillFolder(skillPath: string): Promise<string> {
     }
   }
 
-  // Combine all contents and hash
   const combined = contents.join("\n---\n");
   return hashString(combined);
 }
 
-/**
- * Read and parse metadata.yaml, preserving the schema comment
- */
 async function readMetadata(
   skillPath: string,
 ): Promise<{ metadata: VersionedMetadata; schemaComment: string }> {
   const metadataPath = path.join(skillPath, METADATA_FILE_NAME);
   const rawContent = await readFile(metadataPath);
 
-  // Extract the schema comment line if present
   const lines = rawContent.split("\n");
   let schemaComment = "";
   let yamlContent = rawContent;
@@ -127,9 +89,6 @@ async function readMetadata(
   return { metadata, schemaComment };
 }
 
-/**
- * Write metadata.yaml back, preserving the schema comment
- */
 async function writeMetadata(
   skillPath: string,
   metadata: VersionedMetadata,
@@ -140,31 +99,22 @@ async function writeMetadata(
   await writeFile(metadataPath, schemaComment + yamlContent);
 }
 
-/**
- * Check and update version for a single skill if content has changed
- * Returns information about the version check
- */
 export async function versionSkill(
   skillPath: string,
 ): Promise<VersionCheckResult> {
-  // Calculate current content hash
   const newHash = await hashSkillFolder(skillPath);
 
-  // Read existing metadata
   const { metadata, schemaComment } = await readMetadata(skillPath);
   const previousVersion = metadata.version;
   const previousHash = metadata.content_hash;
 
-  // Check if content has changed
   const changed = previousHash !== newHash;
 
   if (changed) {
-    // Update metadata
     metadata.version = previousVersion + 1;
     metadata.content_hash = newHash;
     metadata.updated = getCurrentDate();
 
-    // Write back
     await writeMetadata(skillPath, metadata, schemaComment);
 
     verbose(
@@ -182,16 +132,11 @@ export async function versionSkill(
   };
 }
 
-/**
- * Version all skills in the skills directory
- * Only updates skills where content has changed
- */
 export async function versionAllSkills(
   skillsDir: string,
 ): Promise<VersionCheckResult[]> {
   const results: VersionCheckResult[] = [];
 
-  // Find all metadata.yaml files (each represents a skill)
   const metadataFiles = await glob("**/metadata.yaml", skillsDir);
 
   for (const metadataFile of metadataFiles) {
@@ -210,9 +155,6 @@ export async function versionAllSkills(
   return results;
 }
 
-/**
- * Print version check results summary
- */
 export function printVersionResults(results: VersionCheckResult[]): void {
   const changed = results.filter((r) => r.changed);
   const unchanged = results.filter((r) => !r.changed);

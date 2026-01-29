@@ -1,10 +1,3 @@
-// =============================================================================
-// src/cli/lib/wizard.ts
-// =============================================================================
-// Wizard state machine for skills selection
-// Uses matrix-loader and matrix-resolver for data and logic
-// =============================================================================
-
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import type {
@@ -24,18 +17,10 @@ import {
   type SkillCheckOptions,
 } from "./matrix-resolver";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const BACK_VALUE = "__back__";
 const CONTINUE_VALUE = "__continue__";
 const EXPERT_MODE_VALUE = "__expert_mode__";
 const INSTALL_MODE_VALUE = "__install_mode__";
-
-// =============================================================================
-// Types
-// =============================================================================
 
 type WizardStep =
   | "approach"
@@ -56,9 +41,7 @@ interface WizardState {
   lastSelectedCategory: string | null;
   lastSelectedSubcategory: string | null;
   lastSelectedSkill: string | null;
-  /** When true, disables conflict checking - allows any skill combination */
   expertMode: boolean;
-  /** Installation mode: plugin (native install) or local (copy to .claude/skills/) */
   installMode: "plugin" | "local";
 }
 
@@ -66,18 +49,11 @@ export interface WizardResult {
   selectedSkills: string[];
   selectedStack: ResolvedStack | null;
   validation: SelectionValidation;
-  /** Installation mode: plugin (native install) or local (copy to .claude/skills/) */
   installMode: "plugin" | "local";
 }
 
-// =============================================================================
-// State Machine
-// =============================================================================
-
 interface WizardOptions {
-  /** Pre-selected skill IDs (for update mode) */
   initialSkills?: string[];
-  /** Whether local skills were discovered (auto-enables expert mode) */
   hasLocalSkills?: boolean;
 }
 
@@ -86,7 +62,6 @@ function createInitialState(options: WizardOptions = {}): WizardState {
     options.initialSkills && options.initialSkills.length > 0;
 
   return {
-    // Start at category if we have initial skills (update mode)
     currentStep: hasInitialSkills ? "category" : "approach",
     selectedSkills: options.initialSkills ? [...options.initialSkills] : [],
     history: [],
@@ -97,9 +72,7 @@ function createInitialState(options: WizardOptions = {}): WizardState {
     lastSelectedCategory: null,
     lastSelectedSubcategory: null,
     lastSelectedSkill: null,
-    // Auto-enable expert mode when local skills exist (dependencies can't be checked)
     expertMode: options.hasLocalSkills ?? false,
-    // Default to plugin mode (native install)
     installMode: "plugin",
   };
 }
@@ -112,10 +85,6 @@ function popHistory(state: WizardState): WizardStep | null {
   return state.history.pop() || null;
 }
 
-/**
- * Recursively collect all skills that depend on the given skill
- * If deselecting A removes B, and B has dependents C, also includes C
- */
 function collectAllDependents(
   skillId: string,
   currentSelections: string[],
@@ -130,7 +99,6 @@ function collectAllDependents(
     if (visited.has(current)) continue;
     visited.add(current);
 
-    // Get direct dependents of current skill
     const directDependents = getDependentSkills(
       current,
       currentSelections,
@@ -148,22 +116,10 @@ function collectAllDependents(
   return allDependents;
 }
 
-// =============================================================================
-// Display Helpers
-// =============================================================================
-
-/**
- * Clear terminal and move cursor to top
- * Provides clean display for each wizard step
- */
 export function clearTerminal(): void {
   process.stdout.write("\x1B[2J\x1B[0f");
 }
 
-/**
- * Render selections as a formatted header
- * Exported for use in init.ts final output
- */
 export function renderSelectionsHeader(
   selectedSkills: string[],
   matrix: MergedSkillsMatrix,
@@ -172,14 +128,12 @@ export function renderSelectionsHeader(
     return;
   }
 
-  // Group skills by top-level category
   const byCategory: Record<string, string[]> = {};
 
   for (const skillId of selectedSkills) {
     const skill = matrix.skills[skillId];
     if (!skill) continue;
 
-    // Find top-level category
     const category = matrix.categories[skill.category];
     const topCategory = category?.parent || skill.category;
     const topCategoryDef = matrix.categories[topCategory];
@@ -191,7 +145,6 @@ export function renderSelectionsHeader(
     byCategory[categoryName].push(skill.alias || skill.name);
   }
 
-  // Print header
   console.log("\n" + pc.dim("─".repeat(50)));
   console.log(pc.bold("  Selected:"));
   for (const [category, skills] of Object.entries(byCategory)) {
@@ -200,9 +153,6 @@ export function renderSelectionsHeader(
   console.log(pc.dim("─".repeat(50)) + "\n");
 }
 
-/**
- * Show current selections as a persistent header before each prompt
- */
 function showSelectionsHeader(
   state: WizardState,
   matrix: MergedSkillsMatrix,
@@ -216,15 +166,11 @@ function formatSkillOption(option: SkillOption): {
   hint?: string;
 } {
   let label = option.name;
-  // Hint is always the skill description
   const hint: string | undefined = option.description;
 
-  // Label changes based on state
   if (option.selected) {
     label = pc.green(`✓ ${option.name}`);
   } else if (option.disabled) {
-    // Extract short reason from disabledReason (e.g., "Select a framework first (requires React)")
-    // Take just the part before " (requires"
     const shortReason =
       option.disabledReason?.split(" (")[0]?.toLowerCase() ||
       "requirements not met";
@@ -254,10 +200,6 @@ function formatStackOption(stack: ResolvedStack): {
   };
 }
 
-/**
- * Create the Expert Mode toggle option
- * Shows current state and allows toggling
- */
 function formatExpertModeOption(expertMode: boolean): {
   value: string;
   label: string;
@@ -277,10 +219,6 @@ function formatExpertModeOption(expertMode: boolean): {
   };
 }
 
-/**
- * Create the Install Mode toggle option
- * Shows current mode and allows switching between plugin and local
- */
 function formatInstallModeOption(installMode: "plugin" | "local"): {
   value: string;
   label: string;
@@ -300,14 +238,9 @@ function formatInstallModeOption(installMode: "plugin" | "local"): {
   };
 }
 
-// =============================================================================
-// Wizard Steps
-// =============================================================================
-
 async function stepApproach(state: WizardState): Promise<string | symbol> {
   clearTerminal();
 
-  // Show current mode statuses
   const statusLines: string[] = [];
   if (state.expertMode) {
     statusLines.push(
@@ -402,7 +335,6 @@ async function stepSelectTopCategory(
     (catId) => !state.visitedCategories.has(catId),
   );
 
-  // Build options for categories (no icons, no descriptions)
   const categoryOptions = topCategories.map((catId) => {
     const cat = matrix.categories[catId];
     return {
@@ -411,14 +343,12 @@ async function stepSelectTopCategory(
     };
   });
 
-  // Navigation options - Back at top
   const topNavOptions: Array<{
     value: string;
     label: string;
     hint?: string;
   }> = [{ value: BACK_VALUE, label: pc.dim("Back") }];
 
-  // Continue at bottom (if selections exist)
   const bottomNavOptions: Array<{
     value: string;
     label: string;
@@ -456,7 +386,6 @@ async function stepSelectSubcategory(
   const topCat = matrix.categories[topCategory];
   const checkOptions: SkillCheckOptions = { expertMode: state.expertMode };
 
-  // Build options for subcategories (no descriptions, show selected skill name or disabled state)
   const subcategoryOptions = subcategories.map((subId) => {
     const sub = matrix.categories[subId];
     const skills = getAvailableSkills(
@@ -468,7 +397,6 @@ async function stepSelectSubcategory(
     const selectedInCategory = skills.filter((s) => s.selected);
     const hasSelection = selectedInCategory.length > 0;
 
-    // Check if all skills in this category are disabled
     const categoryDisabled = isCategoryAllDisabled(
       subId,
       state.selectedSkills,
@@ -480,7 +408,6 @@ async function stepSelectSubcategory(
     if (hasSelection) {
       label = `${sub.name} ${pc.green(`(${selectedInCategory[0].name} selected)`)}`;
     } else if (categoryDisabled.disabled) {
-      // All skills are disabled - show the category as disabled with reason
       const shortReason =
         categoryDisabled.reason?.toLowerCase() || "requirements not met";
       label = pc.dim(`${sub.name} (disabled, ${shortReason})`);
@@ -496,7 +423,6 @@ async function stepSelectSubcategory(
     };
   });
 
-  // Navigation options - just Back
   const navigationOptions: Array<{
     value: string;
     label: string;
@@ -532,10 +458,8 @@ async function stepSelectSkill(
     checkOptions,
   );
 
-  // Build skill options - keep original order, don't reorder
   const skillOptions = skills.map(formatSkillOption);
 
-  // Navigation options - just Back
   const navigationOptions: Array<{
     value: string;
     label: string;
@@ -559,7 +483,6 @@ async function stepConfirm(
 ): Promise<string | symbol> {
   clearTerminal();
 
-  // Show selected skills
   console.log("\n" + pc.bold("Selected Skills:"));
 
   if (state.selectedSkills.length === 0) {
@@ -576,7 +499,6 @@ async function stepConfirm(
     }
   }
 
-  // Validate and show warnings/errors
   const validation = validateSelection(state.selectedSkills, matrix);
 
   if (validation.errors.length > 0) {
@@ -610,15 +532,10 @@ async function stepConfirm(
   return result as string | symbol;
 }
 
-// =============================================================================
-// Main Wizard Loop
-// =============================================================================
-
 export async function runWizard(
   matrix: MergedSkillsMatrix,
   options: WizardOptions = {},
 ): Promise<WizardResult | null> {
-  // Check if matrix contains local skills
   const hasLocalSkills = Object.values(matrix.skills).some(
     (skill) => skill.local === true,
   );
@@ -628,7 +545,6 @@ export async function runWizard(
     hasLocalSkills,
   });
 
-  // Show message if expert mode was auto-enabled due to local skills
   if (hasLocalSkills && state.expertMode) {
     console.log(
       pc.yellow("\n  Local skills detected") +
@@ -646,13 +562,11 @@ export async function runWizard(
         }
 
         if (result === EXPERT_MODE_VALUE) {
-          // Toggle expert mode and stay on same screen
           state.expertMode = !state.expertMode;
           break;
         }
 
         if (result === INSTALL_MODE_VALUE) {
-          // Toggle install mode and stay on same screen
           state.installMode =
             state.installMode === "plugin" ? "local" : "plugin";
           break;
@@ -680,13 +594,11 @@ export async function runWizard(
           break;
         }
 
-        // Apply stack selection
         const stack = matrix.suggestedStacks.find((s) => s.id === result);
         if (stack) {
           state.selectedStack = stack;
           state.selectedSkills = [...stack.allSkillIds];
 
-          // Go to stack review
           pushHistory(state);
           state.currentStep = "stack_review";
         }
@@ -701,7 +613,6 @@ export async function runWizard(
         }
 
         if (result === BACK_VALUE) {
-          // Clear stack selection and go back to stack selection
           state.selectedStack = null;
           state.selectedSkills = [];
           state.currentStep = popHistory(state) || "stack";
@@ -709,14 +620,12 @@ export async function runWizard(
         }
 
         if (result === EDIT_VALUE) {
-          // Go to category view to edit selections
           pushHistory(state);
           state.currentStep = "category";
           break;
         }
 
         if (result === CONFIRM_VALUE) {
-          // Go to confirm step
           pushHistory(state);
           state.currentStep = "confirm";
           break;
@@ -732,30 +641,25 @@ export async function runWizard(
         }
 
         if (result === BACK_VALUE) {
-          // Back from category goes to approach
           state.currentStep = popHistory(state) || "approach";
           break;
         }
 
         if (result === CONTINUE_VALUE) {
-          // Continue to confirmation - track for cursor restoration
           state.lastSelectedCategory = CONTINUE_VALUE;
           pushHistory(state);
           state.currentStep = "confirm";
           break;
         }
 
-        // Track last selected category for cursor restoration
         state.lastSelectedCategory = result as string;
 
-        // Check if this category has subcategories
         const subcategories = getSubcategories(result as string, matrix);
         if (subcategories.length > 0) {
           pushHistory(state);
           state.currentTopCategory = result as string;
           state.currentStep = "subcategory";
         } else {
-          // Category has no subcategories, skip
           p.log.info(
             `${matrix.categories[result as string]?.name || result} has no subcategories`,
           );
@@ -771,7 +675,6 @@ export async function runWizard(
         }
 
         if (result === BACK_VALUE) {
-          // Back from subcategory marks category as visited and goes back
           if (state.currentTopCategory) {
             state.visitedCategories.add(state.currentTopCategory);
           }
@@ -781,13 +684,9 @@ export async function runWizard(
           break;
         }
 
-        // Track last selected subcategory for cursor restoration
         state.lastSelectedSubcategory = result as string;
-
-        // Selected a subcategory - go to skill selection
         state.currentSubcategory = result as string;
 
-        // Loop on skill selection until Back is pressed
         while (true) {
           const skillResult = await stepSelectSkill(state, matrix);
 
@@ -798,15 +697,12 @@ export async function runWizard(
           if (skillResult === BACK_VALUE) {
             state.currentSubcategory = null;
             state.lastSelectedSkill = null;
-            // Go back to subcategory list
             break;
           }
 
-          // Selected a skill - check if disabled first
           const selectedSkillId = skillResult as string;
           state.lastSelectedSkill = selectedSkillId;
 
-          // Check if skill is disabled - if so, do nothing (just refresh the view)
           const skillOptions = getAvailableSkills(
             state.currentSubcategory!,
             state.selectedSkills,
@@ -817,7 +713,6 @@ export async function runWizard(
           );
 
           if (selectedOption?.disabled) {
-            // Skill is disabled - can't select it, just continue to refresh view
             continue;
           }
 
@@ -826,7 +721,6 @@ export async function runWizard(
             state.selectedSkills.includes(selectedSkillId);
 
           if (alreadySelected) {
-            // Check for dependent skills before deselecting
             const allDependents = collectAllDependents(
               selectedSkillId,
               state.selectedSkills,
@@ -834,7 +728,6 @@ export async function runWizard(
             );
 
             if (allDependents.length > 0) {
-              // Show confirmation dialog with dependent skill names
               const dependentNames = allDependents
                 .map((id) => matrix.skills[id]?.name || id)
                 .join(", ");
@@ -848,35 +741,28 @@ export async function runWizard(
               });
 
               if (p.isCancel(shouldDeselect) || !shouldDeselect) {
-                // User cancelled or said no - keep skill selected
                 continue;
               }
 
-              // Cascade deselect all dependents
               const toRemove = new Set([selectedSkillId, ...allDependents]);
               state.selectedSkills = state.selectedSkills.filter(
                 (id) => !toRemove.has(id),
               );
             } else {
-              // No dependents - simple deselect
               const index = state.selectedSkills.indexOf(selectedSkillId);
               if (index > -1) {
                 state.selectedSkills.splice(index, 1);
               }
             }
           } else {
-            // Select - if exclusive, remove others from same category first
             if (subcategory?.exclusive) {
               state.selectedSkills = state.selectedSkills.filter((id) => {
                 const skill = matrix.skills[id];
                 return skill?.category !== state.currentSubcategory;
               });
             }
-            // Add the selected skill
             state.selectedSkills.push(selectedSkillId);
           }
-
-          // Stay in skill selection loop - require explicit Back to leave
         }
         break;
       }

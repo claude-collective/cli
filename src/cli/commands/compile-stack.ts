@@ -10,6 +10,7 @@ import {
 } from "../lib/stack-plugin-compiler";
 import { listDirectories } from "../utils/fs";
 import { getAgentDefinitions } from "../lib/agent-fetcher";
+import { EXIT_CODES } from "../lib/exit-codes";
 
 const DEFAULT_OUTPUT_DIR = "dist/stacks";
 
@@ -29,21 +30,18 @@ export const compileStackCommand = new Command("compile-stack")
   .showHelpAfterError(true)
   .action(async (options) => {
     const s = p.spinner();
-
-    // Set verbose mode globally
     setVerbose(options.verbose);
 
     const projectRoot = process.cwd();
     const outputDir = path.resolve(projectRoot, options.outputDir);
     const stacksDir = path.join(projectRoot, DIRS.stacks);
 
-    // If no stack specified, list available stacks and prompt
     let stackId = options.stack;
     if (!stackId) {
       const availableStacks = await listDirectories(stacksDir);
       if (availableStacks.length === 0) {
         p.log.error(`No stacks found in ${stacksDir}`);
-        process.exit(1);
+        process.exit(EXIT_CODES.ERROR);
       }
 
       const selected = await p.select({
@@ -56,7 +54,7 @@ export const compileStackCommand = new Command("compile-stack")
 
       if (p.isCancel(selected)) {
         p.log.warn("Cancelled");
-        process.exit(0);
+        process.exit(EXIT_CODES.CANCELLED);
       }
 
       stackId = selected as string;
@@ -65,7 +63,6 @@ export const compileStackCommand = new Command("compile-stack")
     console.log(`\nCompiling stack plugin: ${pc.cyan(stackId)}`);
     console.log(`  Output directory: ${pc.cyan(outputDir)}\n`);
 
-    // Resolve agent source - local CLI by default, or fetch from remote
     let agentSourcePath: string;
     try {
       s.start(
@@ -85,7 +82,7 @@ export const compileStackCommand = new Command("compile-stack")
     } catch (error) {
       s.stop("Failed to load agent partials");
       p.log.error(String(error));
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
 
     try {
@@ -106,6 +103,6 @@ export const compileStackCommand = new Command("compile-stack")
     } catch (error) {
       s.stop("Compilation failed");
       p.log.error(String(error));
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
   });

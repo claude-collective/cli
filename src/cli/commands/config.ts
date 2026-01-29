@@ -15,6 +15,7 @@ import {
   type GlobalConfig,
   type ProjectConfig,
 } from "../lib/config";
+import { EXIT_CODES } from "../lib/exit-codes";
 
 export const configCommand = new Command("config")
   .description("Manage Claude Collective configuration")
@@ -23,9 +24,6 @@ export const configCommand = new Command("config")
   })
   .showHelpAfterError(true);
 
-/**
- * cc config show - Show effective configuration
- */
 configCommand
   .command("show")
   .description("Show current effective configuration")
@@ -34,7 +32,6 @@ configCommand
 
     console.log(pc.cyan("\nClaude Collective Configuration\n"));
 
-    // Resolve source with full precedence chain
     const resolved = await resolveSource(undefined, projectDir);
 
     console.log(pc.bold("Source:"));
@@ -44,11 +41,9 @@ configCommand
     );
     console.log("");
 
-    // Show all configuration layers
     console.log(pc.bold("Configuration Layers:"));
     console.log("");
 
-    // 1. Environment variable
     const envValue = process.env[SOURCE_ENV_VAR];
     console.log(`  ${pc.dim("1.")} Environment (${SOURCE_ENV_VAR}):`);
     if (envValue) {
@@ -57,7 +52,6 @@ configCommand
       console.log(`     ${pc.dim("(not set)")}`);
     }
 
-    // 2. Project config
     const projectConfig = await loadProjectConfig(projectDir);
     const projectConfigPath = getProjectConfigPath(projectDir);
     console.log(`  ${pc.dim("2.")} Project config:`);
@@ -68,7 +62,6 @@ configCommand
       console.log(`     ${pc.dim("(not configured)")}`);
     }
 
-    // 3. Global config
     const globalConfig = await loadGlobalConfig();
     const globalConfigPath = getGlobalConfigPath();
     console.log(`  ${pc.dim("3.")} Global config:`);
@@ -79,7 +72,6 @@ configCommand
       console.log(`     ${pc.dim("(not configured)")}`);
     }
 
-    // 4. Default
     console.log(`  ${pc.dim("4.")} Default:`);
     console.log(`     ${pc.dim(DEFAULT_SOURCE)}`);
 
@@ -88,9 +80,6 @@ configCommand
     console.log("");
   });
 
-/**
- * cc config set <key> <value> - Set a global configuration value
- */
 configCommand
   .command("set")
   .description("Set a global configuration value")
@@ -102,13 +91,10 @@ configCommand
     if (!validKeys.includes(key)) {
       p.log.error(`Unknown configuration key: ${key}`);
       p.log.info(`Valid keys: ${validKeys.join(", ")}`);
-      process.exit(1);
+      process.exit(EXIT_CODES.INVALID_ARGS);
     }
 
-    // Load existing config
     const existingConfig = (await loadGlobalConfig()) || {};
-
-    // Update the config
     const newConfig: GlobalConfig = {
       ...existingConfig,
       [key]: value,
@@ -120,9 +106,6 @@ configCommand
     p.log.info(`Saved to ${getGlobalConfigPath()}`);
   });
 
-/**
- * cc config get <key> - Get a configuration value
- */
 configCommand
   .command("get")
   .description("Get a configuration value")
@@ -139,13 +122,10 @@ configCommand
     } else {
       p.log.error(`Unknown configuration key: ${key}`);
       p.log.info(`Valid keys: source, author`);
-      process.exit(1);
+      process.exit(EXIT_CODES.INVALID_ARGS);
     }
   });
 
-/**
- * cc config unset <key> - Remove a global configuration value
- */
 configCommand
   .command("unset")
   .description("Remove a global configuration value")
@@ -156,18 +136,15 @@ configCommand
     if (!validKeys.includes(key)) {
       p.log.error(`Unknown configuration key: ${key}`);
       p.log.info(`Valid keys: ${validKeys.join(", ")}`);
-      process.exit(1);
+      process.exit(EXIT_CODES.INVALID_ARGS);
     }
 
-    // Load existing config
     const existingConfig = await loadGlobalConfig();
-
     if (!existingConfig) {
       p.log.info("No global configuration exists.");
       return;
     }
 
-    // Remove the key
     const newConfig: GlobalConfig = { ...existingConfig };
     delete newConfig[key as keyof GlobalConfig];
 
@@ -176,9 +153,6 @@ configCommand
     p.log.success(`Removed ${key} from global configuration`);
   });
 
-/**
- * cc config set-project <key> <value> - Set a project configuration value
- */
 configCommand
   .command("set-project")
   .description("Set a project-level configuration value")
@@ -191,7 +165,7 @@ configCommand
     if (!validKeys.includes(key)) {
       p.log.error(`Unknown configuration key: ${key}`);
       p.log.info(`Valid keys: ${validKeys.join(", ")}`);
-      process.exit(1);
+      process.exit(EXIT_CODES.INVALID_ARGS);
     }
 
     const existingConfig = (await loadProjectConfig(projectDir)) || {};
@@ -207,9 +181,6 @@ configCommand
     p.log.info(`Saved to ${getProjectConfigPath(projectDir)}`);
   });
 
-/**
- * cc config unset-project <key> - Remove a project configuration value
- */
 configCommand
   .command("unset-project")
   .description("Remove a project-level configuration value")
@@ -221,7 +192,7 @@ configCommand
     if (!validKeys.includes(key)) {
       p.log.error(`Unknown configuration key: ${key}`);
       p.log.info(`Valid keys: ${validKeys.join(", ")}`);
-      process.exit(1);
+      process.exit(EXIT_CODES.INVALID_ARGS);
     }
 
     const existingConfig = await loadProjectConfig(projectDir);
@@ -239,9 +210,6 @@ configCommand
     p.log.success(`Removed ${key} from project configuration`);
   });
 
-/**
- * cc config path - Show configuration file paths
- */
 configCommand
   .command("path")
   .description("Show configuration file paths")

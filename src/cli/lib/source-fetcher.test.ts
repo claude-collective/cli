@@ -89,22 +89,3 @@ describe("source-fetcher", () => {
     });
   });
 });
-
-describe("source-fetcher error messages", () => {
-  // Test that error messages are helpful
-
-  it("should provide helpful message for 404 errors", async () => {
-    // We can't easily test this without mocking giget, but we can verify
-    // the error wrapping logic exists by checking the module exports
-    // This is more of a documentation test
-
-    // The wrapGigetError function should transform:
-    // - 404 -> "Repository not found" with auth hint
-    // - 401 -> "Authentication required" with token instructions
-    // - 403 -> "Access denied" with scope hint
-    // - Network errors -> "Network error" with proxy hints
-
-    // These are verified by code inspection, not runtime tests
-    expect(true).toBe(true);
-  });
-});

@@ -7,20 +7,10 @@ import type {
   PluginManifest,
 } from "../../types";
 
-/**
- * Plugin manifest path within a plugin directory
- */
 const PLUGIN_MANIFEST_PATH = ".claude-plugin/plugin.json";
-
-/**
- * Default marketplace schema URL
- */
 const MARKETPLACE_SCHEMA_URL =
   "https://anthropic.com/claude-code/marketplace.schema.json";
 
-/**
- * Category mappings for plugins based on name patterns
- */
 const CATEGORY_PATTERNS: Array<{ pattern: RegExp; category: string }> = [
   { pattern: /^skill-setup-/, category: "setup" },
   { pattern: /^skill-backend-/, category: "backend" },
@@ -73,33 +63,19 @@ const CATEGORY_PATTERNS: Array<{ pattern: RegExp; category: string }> = [
   { pattern: /^skill-(turborepo|storybook|tooling)/, category: "tooling" },
   // Security
   { pattern: /^skill-security/, category: "security" },
-  // Forms/Validation
   { pattern: /^skill-(react-hook-form|vee-validate|zod)/, category: "forms" },
-  // i18n
   { pattern: /^skill-(react-intl|next-intl|vue-i18n)/, category: "i18n" },
 ];
 
-/**
- * Options for generating a marketplace
- */
 export interface MarketplaceOptions {
-  /** Marketplace name in kebab-case */
   name: string;
-  /** Marketplace version (default: "1.0.0") */
   version?: string;
-  /** Brief description of the marketplace */
   description?: string;
-  /** Owner's display name */
   ownerName: string;
-  /** Owner's contact email */
   ownerEmail?: string;
-  /** Root directory for plugin sources (relative path for output) */
   pluginRoot: string;
 }
 
-/**
- * Determine category for a plugin based on its name
- */
 function inferCategory(pluginName: string): string | undefined {
   for (const { pattern, category } of CATEGORY_PATTERNS) {
     if (pattern.test(pluginName)) {
@@ -109,9 +85,6 @@ function inferCategory(pluginName: string): string | undefined {
   return undefined;
 }
 
-/**
- * Read plugin manifest from a plugin directory
- */
 async function readPluginManifest(
   pluginDir: string,
 ): Promise<PluginManifest | null> {
@@ -125,9 +98,6 @@ async function readPluginManifest(
   }
 }
 
-/**
- * Convert a PluginManifest to a MarketplacePlugin entry
- */
 function toMarketplacePlugin(
   manifest: PluginManifest,
   pluginRoot: string,
@@ -151,24 +121,18 @@ function toMarketplacePlugin(
   return plugin;
 }
 
-/**
- * Generate a marketplace from compiled plugins
- */
 export async function generateMarketplace(
   pluginsDir: string,
   options: MarketplaceOptions,
 ): Promise<Marketplace> {
   verbose(`Scanning plugins directory: ${pluginsDir}`);
 
-  // Find all plugin.json files
   const manifestFiles = await glob(`**/${PLUGIN_MANIFEST_PATH}`, pluginsDir);
   verbose(`Found ${manifestFiles.length} plugin manifests`);
 
   const plugins: MarketplacePlugin[] = [];
 
   for (const manifestFile of manifestFiles) {
-    // Extract plugin directory name from path
-    // e.g., "skill-react/.claude-plugin/plugin.json" -> "skill-react"
     const pluginDirName = manifestFile.split("/")[0];
     const pluginDir = path.join(pluginsDir, pluginDirName);
 
@@ -187,7 +151,6 @@ export async function generateMarketplace(
     verbose(`  [OK] ${plugin.name}`);
   }
 
-  // Sort plugins alphabetically by name
   plugins.sort((a, b) => a.name.localeCompare(b.name));
 
   const marketplace: Marketplace = {
@@ -214,9 +177,6 @@ export async function generateMarketplace(
   return marketplace;
 }
 
-/**
- * Write marketplace to a JSON file
- */
 export async function writeMarketplace(
   outputPath: string,
   marketplace: Marketplace,
@@ -226,9 +186,6 @@ export async function writeMarketplace(
   await writeFile(outputPath, content);
 }
 
-/**
- * Get marketplace statistics
- */
 export function getMarketplaceStats(marketplace: Marketplace): {
   total: number;
   byCategory: Record<string, number>;

@@ -18,6 +18,7 @@ import { copySkillsToPluginFromSource } from "../lib/skill-copier";
 import { recompileAgents } from "../lib/agent-recompiler";
 import { bumpPluginVersion } from "../lib/plugin-version";
 import { getAgentDefinitions } from "../lib/agent-fetcher";
+import { EXIT_CODES } from "../lib/exit-codes";
 
 export const editCommand = new Command("edit")
   .description("Edit skills in the plugin")
@@ -35,21 +36,18 @@ export const editCommand = new Command("edit")
   })
   .showHelpAfterError(true)
   .action(async (options) => {
-    // 1. Get plugin directory
     const pluginDir = getCollectivePluginDir();
     const pluginSkillsDir = getPluginSkillsDir(pluginDir);
 
-    // Check if plugin exists
     if (!(await directoryExists(pluginDir))) {
       p.log.error("No plugin found. Run 'cc init' first to set up the plugin.");
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
 
     p.intro(pc.cyan("Edit Plugin Skills"));
 
     const s = p.spinner();
 
-    // 2. Resolve source
     s.start("Resolving marketplace source...");
     let sourceConfig;
     try {
@@ -58,10 +56,9 @@ export const editCommand = new Command("edit")
     } catch (error) {
       s.stop("Failed to resolve source");
       p.log.error(error instanceof Error ? error.message : String(error));
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
 
-    // 3. Load skills matrix
     s.start("Loading skills matrix...");
     let sourceResult;
     try {
@@ -74,10 +71,9 @@ export const editCommand = new Command("edit")
     } catch (error) {
       s.stop("Failed to load skills matrix");
       p.log.error(error instanceof Error ? error.message : String(error));
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
 
-    // 4. Get current plugin's skill IDs
     s.start("Reading current skills...");
     let currentSkillIds: string[];
     try {
@@ -89,33 +85,29 @@ export const editCommand = new Command("edit")
     } catch (error) {
       s.stop("Failed to read current skills");
       p.log.error(error instanceof Error ? error.message : String(error));
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
 
-    // 5. Run wizard with current skills pre-selected
     const result = await runWizard(sourceResult.matrix, {
       initialSkills: currentSkillIds,
     });
 
     if (!result) {
       p.cancel("Edit cancelled");
-      process.exit(0);
+      process.exit(EXIT_CODES.CANCELLED);
     }
 
-    // Validate the result
     if (!result.validation.valid) {
       p.log.error("Selection has validation errors:");
       for (const error of result.validation.errors) {
         p.log.error(`  ${error.message}`);
       }
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
 
-    // Show final summary
     clearTerminal();
     renderSelectionsHeader(result.selectedSkills, sourceResult.matrix);
 
-    // Show warnings if any
     if (result.validation.warnings.length > 0) {
       console.log(pc.yellow("Warnings:"));
       for (const warning of result.validation.warnings) {
@@ -124,7 +116,6 @@ export const editCommand = new Command("edit")
       console.log("");
     }
 
-    // Check if anything changed
     const addedSkills = result.selectedSkills.filter(
       (id) => !currentSkillIds.includes(id),
     );
@@ -138,7 +129,6 @@ export const editCommand = new Command("edit")
       return;
     }
 
-    // Show what changed
     console.log(pc.bold("Changes:"));
     for (const skillId of addedSkills) {
       const skill = sourceResult.matrix.skills[skillId];
@@ -150,16 +140,13 @@ export const editCommand = new Command("edit")
     }
     console.log("");
 
-    // 6. Apply changes directly to plugin
     s.start("Updating plugin skills...");
     try {
-      // Remove existing skills from plugin
       if (await directoryExists(pluginSkillsDir)) {
         await remove(pluginSkillsDir);
       }
       await ensureDir(pluginSkillsDir);
 
-      // Copy new selection directly to plugin
       await copySkillsToPluginFromSource(
         result.selectedSkills,
         pluginDir,
@@ -170,13 +157,10 @@ export const editCommand = new Command("edit")
     } catch (error) {
       s.stop("Failed to update plugin");
       p.log.error(error instanceof Error ? error.message : String(error));
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
 
-    // 7. Get source path for agent definitions
     let sourcePath: string;
-
-    // Agent partials: local by default, remote with --agent-source flag
     s.start(
       options.agentSource
         ? "Fetching agent partials..."
@@ -195,10 +179,9 @@ export const editCommand = new Command("edit")
     } catch (error) {
       s.stop("Failed to load agent partials");
       p.log.error(error instanceof Error ? error.message : String(error));
-      process.exit(1);
+      process.exit(EXIT_CODES.ERROR);
     }
 
-    // 8. Recompile agents with updated skills
     s.start("Recompiling agents...");
     try {
       const recompileResult = await recompileAgents({
@@ -226,7 +209,6 @@ export const editCommand = new Command("edit")
       p.log.info(pc.dim("You can manually recompile with 'cc compile'."));
     }
 
-    // 9. Bump patch version
     s.start("Updating plugin version...");
     try {
       const newVersion = await bumpPluginVersion(pluginDir, "patch");
@@ -234,10 +216,8 @@ export const editCommand = new Command("edit")
     } catch (error) {
       s.stop("Failed to update version");
       p.log.error(error instanceof Error ? error.message : String(error));
-      // Don't exit - skills were updated successfully
     }
 
-    // Success message
     console.log("");
     p.outro(
       pc.green(
