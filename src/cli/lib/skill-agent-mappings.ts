@@ -87,7 +87,22 @@ export const SKILL_TO_AGENTS: Record<string, string[]> = {
   "reviewing/*": [
     "frontend-reviewer",
     "backend-reviewer",
+    "cli-reviewer",
     "pattern-critique",
+    "agent-summoner",
+    "skill-summoner",
+    "documentor",
+  ],
+
+  // CLI skills → CLI agents + backend agents + architecture
+  "cli/*": [
+    "cli-developer",
+    "cli-reviewer",
+    "backend-developer",
+    "backend-reviewer",
+    "backend-researcher",
+    "architecture",
+    "pm",
     "agent-summoner",
     "skill-summoner",
     "documentor",
@@ -142,13 +157,15 @@ export const SKILL_TO_AGENTS: Record<string, string[]> = {
  */
 export const PRELOADED_SKILLS: Record<string, string[]> = {
   "frontend-developer": ["framework", "styling"],
-  "backend-developer": ["api", "database"],
+  "backend-developer": ["api", "database", "cli"],
+  "cli-developer": ["cli"],
   "frontend-reviewer": ["framework", "styling", "reviewing"],
   "backend-reviewer": ["api", "database", "reviewing"],
+  "cli-reviewer": ["cli", "reviewing", "cli-reviewing"],
   "frontend-researcher": ["framework", "research-methodology"],
   "backend-researcher": ["api", "research-methodology"],
   tester: ["testing", "mocks"],
-  architecture: ["monorepo", "turborepo"],
+  architecture: ["monorepo", "turborepo", "cli"],
   pm: ["research-methodology"],
   "pattern-scout": ["research-methodology"],
   "pattern-critique": ["research-methodology", "reviewing"],
@@ -174,6 +191,7 @@ export const SUBCATEGORY_ALIASES: Record<string, string> = {
   reviewing: "reviewing",
   "research-methodology": "research/research-methodology",
   monorepo: "setup/monorepo",
+  cli: "cli",
 };
 
 /**

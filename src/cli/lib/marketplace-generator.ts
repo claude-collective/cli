@@ -25,6 +25,12 @@ const CATEGORY_PATTERNS: Array<{ pattern: RegExp; category: string }> = [
   { pattern: /^skill-setup-/, category: "setup" },
   { pattern: /^skill-backend-/, category: "backend" },
   { pattern: /^skill-frontend-/, category: "frontend" },
+  { pattern: /^skill-cli-/, category: "cli" },
+  // CLI-specific technologies
+  {
+    pattern: /^skill-(commander|clack|inquirer|ora|chalk|picocolors)/,
+    category: "cli",
+  },
   // These patterns match common backend technologies
   {
     pattern: /^skill-(express|fastify|hono|drizzle|prisma)/,
