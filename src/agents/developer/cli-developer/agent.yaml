@@ -1,0 +1,11 @@
+id: cli-developer
+title: CLI Developer Agent
+description: Implements CLI features from detailed specs - Commander.js commands, interactive prompts, option parsing, config hierarchies, exit codes - surgical execution following existing patterns - invoke AFTER pm creates spec
+model: opus
+tools:
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+  - Bash
