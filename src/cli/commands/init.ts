@@ -20,6 +20,7 @@ import { checkPermissions } from "../lib/permission-checker";
 import { loadAllAgents, loadStack } from "../lib/loader";
 import { resolveAgents, resolveStackSkills } from "../lib/resolver";
 import { compileAgentForPlugin } from "../lib/stack-plugin-compiler";
+import { installStackAsPlugin } from "../lib/stack-installer";
 import { getCollectivePluginDir } from "../lib/plugin-finder";
 import { createLiquidEngine } from "../lib/compiler";
 import {
@@ -128,25 +129,33 @@ export const initCommand = new Command("init")
     );
 
     if (dryRun) {
-      if (result.installMode === "plugin") {
+      if (result.installMode === "plugin" && result.selectedStack) {
+        // Plugin Mode with stack: install entire stack as ONE plugin
         p.log.info(
           pc.yellow(
-            `[dry-run] Would install ${result.selectedSkills.length} skills as native plugins`,
+            `[dry-run] Would install stack "${result.selectedStack.id}" as a native plugin`,
           ),
         );
-        for (const skillId of result.selectedSkills) {
-          const skill = matrix.skills[skillId];
-          const pluginName = `skill-${skill?.alias || skillId}`;
-          p.log.info(
-            pc.yellow(
-              `[dry-run]   claude plugin install ${pluginName}@claude-collective --scope project`,
-            ),
-          );
-        }
         p.log.info(
-          pc.yellow(`[dry-run] Would compile agents to .claude/agents/`),
+          pc.yellow(
+            `[dry-run]   claude plugin install ./compiled-stack/${result.selectedStack.id} --scope project`,
+          ),
+        );
+        p.log.info(
+          pc.yellow(
+            `[dry-run] Stack includes ${result.selectedSkills.length} skills and agents bundled together`,
+          ),
         );
       } else {
+        // Local Mode (or Plugin Mode fallback when no stack selected)
+        if (result.installMode === "plugin") {
+          p.log.info(
+            pc.yellow(
+              `[dry-run] Individual skill plugin installation not yet supported`,
+            ),
+          );
+          p.log.info(pc.yellow(`[dry-run] Would fall back to Local Mode...`));
+        }
         const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
         const localAgentsDir = path.join(projectDir, ".claude", "agents");
         p.log.info(
@@ -166,135 +175,63 @@ export const initCommand = new Command("init")
     }
 
     if (result.installMode === "plugin") {
-      s.start("Installing skills as native plugins...");
-
-      for (const skillId of result.selectedSkills) {
-        const skill = matrix.skills[skillId];
-        const pluginName = `skill-${skill?.alias || skillId}`;
-        p.log.info(
-          `Would install: ${pc.cyan(`${pluginName}@claude-collective`)}`,
-        );
-      }
-
-      s.stop(
-        `Simulated installation of ${result.selectedSkills.length} skills`,
-      );
-
-      s.start("Compiling agents...");
-
-      const projectAgentsDir = path.join(projectDir, ".claude", "agents");
-      await ensureDir(projectAgentsDir);
-
-      const agents = await loadAllAgents(sourceResult.sourcePath);
-
-      const skillsForResolution: Record<
-        string,
-        {
-          id: string;
-          name: string;
-          description: string;
-          canonicalId: string;
-          path: string;
-          content: string;
-        }
-      > = {};
-      for (const skillId of result.selectedSkills) {
-        const skill = matrix.skills[skillId];
-        if (skill) {
-          skillsForResolution[skillId] = {
-            id: skillId,
-            name: skill.name,
-            description: skill.description || "",
-            canonicalId: skillId,
-            path: skill.path || "",
-            content: "", // Content not needed for skill references
-          };
-        }
-      }
-
-      let pluginConfig: StackConfig;
+      // Plugin Mode: Install stack as ONE native plugin
       if (result.selectedStack) {
-        const loadedStackConfig = await loadStack(
-          result.selectedStack.id,
-          sourceResult.sourcePath,
-          "dev",
+        s.start(
+          `Compiling and installing stack "${result.selectedStack.id}"...`,
         );
-        pluginConfig = generateConfigFromStack(loadedStackConfig);
-      } else {
-        pluginConfig = generateConfigFromSkills(
-          result.selectedSkills,
-          sourceResult.matrix,
-        );
-      }
 
-      const compileAgents: Record<string, CompileAgentConfig> = {};
-      for (const agentId of pluginConfig.agents) {
-        if (agents[agentId]) {
-          if (pluginConfig.agent_skills?.[agentId]) {
-            const skillRefs = resolveStackSkills(
-              pluginConfig,
-              agentId,
-              skillsForResolution,
-            );
-            compileAgents[agentId] = { skills: skillRefs };
-          } else {
-            compileAgents[agentId] = {};
+        try {
+          const installResult = await installStackAsPlugin({
+            stackId: result.selectedStack.id,
+            projectDir,
+            sourcePath: sourceResult.sourcePath,
+            agentSourcePath: sourceResult.sourcePath,
+          });
+
+          s.stop(`Installed stack plugin: ${installResult.pluginName}`);
+
+          console.log("");
+          console.log(pc.green("Claude Collective initialized successfully!"));
+          console.log("");
+          console.log(
+            `Stack ${pc.cyan(`"${installResult.stackName}"`)} installed as plugin`,
+          );
+          console.log("");
+          console.log(pc.dim("Agents included:"));
+          for (const agentName of installResult.agents) {
+            console.log(`  ${pc.cyan(agentName)}`);
           }
+          console.log("");
+          console.log(pc.dim(`Skills bundled: ${installResult.skills.length}`));
+          console.log("");
+
+          p.outro(pc.green("Claude Collective is ready to use!"));
+
+          await checkPermissions(projectDir);
+          return;
+        } catch (error) {
+          s.stop("Installation failed");
+          p.log.error(error instanceof Error ? error.message : "Unknown error");
+          process.exit(EXIT_CODES.ERROR);
         }
-      }
-
-      const compileConfig: CompileConfig = {
-        name: PLUGIN_NAME,
-        description:
-          pluginConfig.description ||
-          `Plugin with ${result.selectedSkills.length} skills`,
-        claude_md: "",
-        agents: compileAgents,
-      };
-
-      const engine = await createLiquidEngine(projectDir);
-      const resolvedAgents = await resolveAgents(
-        agents,
-        skillsForResolution,
-        compileConfig,
-        sourceResult.sourcePath,
-      );
-
-      const compiledAgentNames: string[] = [];
-      for (const [name, agent] of Object.entries(resolvedAgents)) {
-        const output = await compileAgentForPlugin(
-          name,
-          agent,
-          sourceResult.sourcePath,
-          engine,
+      } else {
+        // No stack selected - individual skill installation not yet supported
+        // TODO: Support installing individual skills as separate plugins
+        p.log.warn(
+          "Individual skill plugin installation not yet supported in Plugin Mode.",
         );
-        await writeFile(path.join(projectAgentsDir, `${name}.md`), output);
-        compiledAgentNames.push(name);
+        p.log.info(
+          `Falling back to Local Mode (copying to ${pc.cyan(".claude/skills/")})...`,
+        );
+        p.log.info(
+          pc.dim(
+            "To use Plugin Mode, select a pre-built stack instead of individual skills.",
+          ),
+        );
+        console.log("");
+        // Fall through to Local Mode below
       }
-
-      s.stop(`Compiled ${compiledAgentNames.length} agents to .claude/agents/`);
-
-      console.log("");
-      console.log(pc.green("Claude Collective initialized successfully!"));
-      console.log("");
-      console.log(pc.dim("Skills to install (when marketplace is ready):"));
-      for (const skillId of result.selectedSkills) {
-        const skill = matrix.skills[skillId];
-        const pluginName = `skill-${skill?.alias || skillId}`;
-        console.log(`  ${pc.cyan(pluginName)}@claude-collective`);
-      }
-      console.log("");
-      console.log(pc.dim("Agents compiled:"));
-      console.log(`  ${pc.cyan(projectAgentsDir)}`);
-      for (const agentName of compiledAgentNames) {
-        console.log(`    ${pc.dim(`${agentName}.md`)}`);
-      }
-      console.log("");
-
-      p.outro(pc.green("Claude Collective is ready to use!"));
-
-      await checkPermissions(projectDir);
-      return;
     }
 
     const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);

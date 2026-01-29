@@ -1,0 +1,11 @@
+id: web-developer
+title: Web Developer Agent
+description: Implements frontend features from detailed specs - React components, TypeScript, styling, client state - surgical execution following existing patterns - invoke AFTER web-pm creates spec
+model: opus
+tools:
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+  - Bash

@@ -24,8 +24,8 @@ Your job is **surgical implementation**: read the spec, examine the patterns, im
 
 **Defer to specialists for:**
 
-- React components → frontend-developer
-- API routes → backend-developer
+- React components → web-developer
+- API routes → api-developer
 ```
 
 ### Step 3: Create workflow.md
@@ -85,8 +85,8 @@ Your job is **surgical implementation**: read the spec, examine the patterns, im
 
 **You DON'T handle:**
 
-- React components → frontend-developer
-- API routes → backend-developer
+- React components → web-developer
+- API routes → api-developer
   </domain_scope>
 ```
 

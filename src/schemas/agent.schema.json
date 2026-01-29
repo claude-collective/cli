@@ -11,7 +11,7 @@
       "type": "string",
       "description": "Unique agent identifier (kebab-case)",
       "minLength": 1,
-      "examples": ["frontend-developer", "backend-reviewer", "pm"]
+      "examples": ["web-developer", "api-reviewer", "web-pm"]
     },
     "title": {
       "type": "string",

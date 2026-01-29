@@ -111,7 +111,9 @@ describe("config-generator", () => {
       );
 
       // Only react should be in skills (no error thrown)
-      expect(config.skills.filter((s) => s.id === "react (@vince)")).toHaveLength(1);
+      expect(
+        config.skills.filter((s) => s.id === "react (@vince)"),
+      ).toHaveLength(1);
     });
 
     it("handles empty skill selection", () => {
@@ -206,7 +208,7 @@ describe("config-generator", () => {
         version: "2.0.0",
         author: "@original",
         description: "Original description",
-        agents: ["frontend-developer"],
+        agents: ["web-developer"],
         skills: [{ id: "react (@vince)" }],
       };
 
@@ -216,7 +218,7 @@ describe("config-generator", () => {
       expect(config.version).toBe("2.0.0");
       expect(config.author).toBe("@original");
       expect(config.description).toBe("Original description");
-      expect(config.agents).toEqual(["frontend-developer"]);
+      expect(config.agents).toEqual(["web-developer"]);
       expect(config.skills).toEqual([{ id: "react (@vince)" }]);
     });
 
@@ -240,9 +242,9 @@ describe("config-generator", () => {
         author: "@test",
         description: "Full description",
         framework: "React",
-        agents: ["frontend-developer"],
+        agents: ["web-developer"],
         skills: [],
-        agent_skills: { "frontend-developer": { framework: [] } },
+        agent_skills: { "web-developer": { framework: [] } },
         hooks: { "pre-commit": [] },
         philosophy: "Test philosophy",
         principles: ["Principle 1"],
@@ -253,7 +255,7 @@ describe("config-generator", () => {
 
       expect(config.framework).toBe("React");
       expect(config.agent_skills).toEqual({
-        "frontend-developer": { framework: [] },
+        "web-developer": { framework: [] },
       });
       expect(config.hooks).toEqual({ "pre-commit": [] });
       expect(config.philosophy).toBe("Test philosophy");
@@ -269,7 +271,7 @@ describe("config-generator", () => {
         version: "1.0.0",
         author: "@test",
         description: "Base description",
-        agents: ["frontend-developer"],
+        agents: ["web-developer"],
         skills: [{ id: "react (@vince)" }],
       };
 
@@ -294,7 +296,7 @@ describe("config-generator", () => {
         name: "Base Stack",
         version: "1.0.0",
         author: "@test",
-        agents: ["frontend-developer"],
+        agents: ["web-developer"],
         skills: [{ id: "react (@vince)" }],
         agent_skills: {},
       };
@@ -335,10 +337,14 @@ describe("config-generator", () => {
           "react (@vince)",
           "frontend/framework",
         ),
-        "local-skill (@local)": createMockSkill("local-skill (@local)", "local/custom", {
-          local: true,
-          localPath: ".claude/skills/local-skill/",
-        }),
+        "local-skill (@local)": createMockSkill(
+          "local-skill (@local)",
+          "local/custom",
+          {
+            local: true,
+            localPath: ".claude/skills/local-skill/",
+          },
+        ),
       });
 
       const config = mergeStackWithSkills(

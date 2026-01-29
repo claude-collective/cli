@@ -1616,8 +1616,8 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 - Creating agents (not skills) → agent-summoner
 - Improving existing agents → agent-summoner
 - Creating new core prompts or patterns → agent-summoner
-- Implementation work → frontend-developer, backend-developer
-- Code review → frontend-reviewer or backend-reviewer
+- Implementation work → web-developer, api-developer
+- Code review → web-reviewer or api-reviewer
 - Testing → tester
 - Architecture planning → pm
 

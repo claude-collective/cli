@@ -81,7 +81,7 @@ describe("eject command", () => {
       const { ensureDir, writeFile } = await import("../utils/fs");
 
       const destPath = path.join(tempDir, ".claude", "config.yaml");
-      const defaultContent = `name: my-project\nagents:\n  - frontend-developer`;
+      const defaultContent = `name: my-project\nagents:\n  - web-developer`;
 
       await ensureDir(path.dirname(destPath));
       await writeFile(destPath, defaultContent);
@@ -90,7 +90,7 @@ describe("eject command", () => {
 
       const content = await readFile(destPath, "utf-8");
       expect(content).toContain("name: my-project");
-      expect(content).toContain("frontend-developer");
+      expect(content).toContain("web-developer");
     });
   });
 

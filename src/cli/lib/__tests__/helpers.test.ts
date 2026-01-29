@@ -62,7 +62,7 @@ describe("test helpers", () => {
 
       expect(config.name).toBe("test-stack");
       expect(config.skills).toEqual(["react", "zustand"]);
-      expect(config.agents).toContain("frontend-developer");
+      expect(config.agents).toContain("web-developer");
     });
   });
 
