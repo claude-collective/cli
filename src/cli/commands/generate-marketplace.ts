@@ -18,8 +18,10 @@ const DEFAULT_DESCRIPTION = "Community skills and stacks for Claude Code";
 const DEFAULT_OWNER_NAME = "Claude Collective";
 const DEFAULT_OWNER_EMAIL = "hello@claude-collective.com";
 
-export const generateMarketplaceCommand = new Command("generate-marketplace")
-  .description("Generate marketplace.json from compiled plugins")
+export const generateMarketplaceCommand = new Command("build:marketplace")
+  .description(
+    "Generate marketplace.json from built plugins (requires skills repo)",
+  )
   .option("-p, --plugins-dir <dir>", "Plugins directory", DEFAULT_PLUGINS_DIR)
   .option("-o, --output <file>", "Output file", DEFAULT_OUTPUT_FILE)
   .option("--name <name>", "Marketplace name", DEFAULT_NAME)

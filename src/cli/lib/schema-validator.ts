@@ -105,28 +105,51 @@ const VALIDATION_TARGETS: ValidationTarget[] = [
 const schemaCache = new Map<string, object>();
 const validatorCache = new Map<string, ValidateFunction>();
 
-async function loadSchema(schemaName: string): Promise<object> {
-  if (schemaCache.has(schemaName)) {
-    return schemaCache.get(schemaName)!;
+async function loadSchema(
+  schemaName: string,
+  rootDir: string = process.cwd(),
+): Promise<object> {
+  const cacheKey = `${rootDir}:${schemaName}`;
+  if (schemaCache.has(cacheKey)) {
+    return schemaCache.get(cacheKey)!;
   }
 
-  const schemaPath = path.join(PROJECT_ROOT, "src", "schemas", schemaName);
-  const content = await readFile(schemaPath);
-  const schema = JSON.parse(content);
-  schemaCache.set(schemaName, schema);
-  return schema;
+  // Try multiple locations for schema files:
+  // 1. CLI repo's schemas (for agent schemas)
+  // 2. Target directory's schemas (for stack/skill schemas in claude-subagents)
+  const locations = [
+    path.join(PROJECT_ROOT, "src", "schemas", schemaName),
+    path.join(rootDir, "src", "schemas", schemaName),
+  ];
+
+  for (const schemaPath of locations) {
+    if (await fileExists(schemaPath)) {
+      const content = await readFile(schemaPath);
+      const schema = JSON.parse(content);
+      schemaCache.set(cacheKey, schema);
+      return schema;
+    }
+  }
+
+  throw new Error(
+    `Schema not found: ${schemaName}. Searched: ${locations.join(", ")}`,
+  );
 }
 
-async function getValidator(schemaName: string): Promise<ValidateFunction> {
-  if (validatorCache.has(schemaName)) {
-    return validatorCache.get(schemaName)!;
+async function getValidator(
+  schemaName: string,
+  rootDir: string = process.cwd(),
+): Promise<ValidateFunction> {
+  const cacheKey = `${rootDir}:${schemaName}`;
+  if (validatorCache.has(cacheKey)) {
+    return validatorCache.get(cacheKey)!;
   }
 
   const ajv = new Ajv({ allErrors: true, strict: false });
   addFormats(ajv);
-  const schema = await loadSchema(schemaName);
+  const schema = await loadSchema(schemaName, rootDir);
   const validate = ajv.compile(schema);
-  validatorCache.set(schemaName, validate);
+  validatorCache.set(cacheKey, validate);
   return validate;
 }
 
@@ -215,7 +238,7 @@ async function validateTarget(
     return result;
   }
 
-  const validate = await getValidator(target.schema);
+  const validate = await getValidator(target.schema, rootDir);
 
   for (const file of files) {
     const validation = await validateFile(file, validate, target.extractor);

@@ -6,7 +6,6 @@ import { compileStackCommand } from "./commands/compile-stack";
 import { generateMarketplaceCommand } from "./commands/generate-marketplace";
 import { initCommand } from "./commands/init";
 import { editCommand } from "./commands/edit";
-import { updateCommand } from "./commands/update";
 import { validateCommand } from "./commands/validate";
 import { listCommand } from "./commands/list";
 import { configCommand } from "./commands/config";
@@ -34,7 +33,6 @@ async function main() {
 
   program.addCommand(initCommand);
   program.addCommand(editCommand);
-  program.addCommand(updateCommand);
   program.addCommand(compileCommand);
   program.addCommand(compilePluginsCommand);
   program.addCommand(compileStackCommand);
