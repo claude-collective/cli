@@ -3,12 +3,13 @@ import * as p from "@clack/prompts";
 import pc from "picocolors";
 import path from "path";
 import { setVerbose } from "../utils/logger";
-import { DIRS } from "../consts";
+import { DIRS, PROJECT_ROOT } from "../consts";
 import {
   compileStackPlugin,
   printStackCompilationSummary,
 } from "../lib/stack-plugin-compiler";
 import { listDirectories } from "../utils/fs";
+import { getAgentDefinitions } from "../lib/agent-fetcher";
 
 const DEFAULT_OUTPUT_DIR = "dist/stacks";
 
@@ -19,6 +20,8 @@ export const compileStackCommand = new Command("compile-stack")
     "Stack ID to compile (directory name in src/stacks/)",
   )
   .option("-o, --output-dir <dir>", "Output directory", DEFAULT_OUTPUT_DIR)
+  .option("--agent-source <url>", "Agent partials source (default: local CLI)")
+  .option("--refresh", "Force refresh remote agent source", false)
   .option("-v, --verbose", "Enable verbose logging", false)
   .configureOutput({
     writeErr: (str) => console.error(pc.red(str)),
@@ -62,6 +65,29 @@ export const compileStackCommand = new Command("compile-stack")
     console.log(`\nCompiling stack plugin: ${pc.cyan(stackId)}`);
     console.log(`  Output directory: ${pc.cyan(outputDir)}\n`);
 
+    // Resolve agent source - local CLI by default, or fetch from remote
+    let agentSourcePath: string;
+    try {
+      s.start(
+        options.agentSource
+          ? "Fetching agent partials..."
+          : "Loading agent partials...",
+      );
+      const agentDefs = await getAgentDefinitions(options.agentSource, {
+        forceRefresh: options.refresh,
+      });
+      agentSourcePath = agentDefs.sourcePath;
+      s.stop(
+        options.agentSource
+          ? `Agent partials fetched from: ${options.agentSource}`
+          : `Agent partials loaded from: ${PROJECT_ROOT}`,
+      );
+    } catch (error) {
+      s.stop("Failed to load agent partials");
+      p.log.error(String(error));
+      process.exit(1);
+    }
+
     try {
       s.start(`Compiling stack "${stackId}"...`);
 
@@ -69,6 +95,7 @@ export const compileStackCommand = new Command("compile-stack")
         stackId,
         outputDir,
         projectRoot,
+        agentSourcePath,
       });
 
       s.stop(`Compiled stack plugin: ${result.stackName}`);

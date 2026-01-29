@@ -17,15 +17,19 @@ import {
 import { copySkillsToPluginFromSource } from "../lib/skill-copier";
 import { recompileAgents } from "../lib/agent-recompiler";
 import { bumpPluginVersion } from "../lib/plugin-version";
-import { fetchAgentDefinitions } from "../lib/agent-fetcher";
+import { getAgentDefinitions } from "../lib/agent-fetcher";
 
 export const editCommand = new Command("edit")
   .description("Edit skills in the plugin")
   .option(
     "--source <url>",
-    "Marketplace source URL (e.g., github:org/repo or local path)",
+    "Skills marketplace source (default: github:claude-collective/skills)",
   )
-  .option("--refresh", "Force refresh from marketplace", false)
+  .option(
+    "--agent-source <url>",
+    "Remote agent partials source (default: local CLI)",
+  )
+  .option("--refresh", "Force refresh from remote sources", false)
   .configureOutput({
     writeErr: (str) => console.error(pc.red(str)),
   })
@@ -172,23 +176,26 @@ export const editCommand = new Command("edit")
     // 7. Get source path for agent definitions
     let sourcePath: string;
 
-    if (sourceResult.isLocal) {
-      // Use local source path directly
-      sourcePath = sourceResult.sourcePath;
-    } else {
-      // Fetch agent definitions from remote
-      s.start("Fetching agent definitions...");
-      try {
-        const agentDefs = await fetchAgentDefinitions(sourceConfig.source, {
-          forceRefresh: options.refresh,
-        });
-        sourcePath = agentDefs.sourcePath;
-        s.stop("Agent definitions fetched");
-      } catch (error) {
-        s.stop("Failed to fetch agent definitions");
-        p.log.error(error instanceof Error ? error.message : String(error));
-        process.exit(1);
-      }
+    // Agent partials: local by default, remote with --agent-source flag
+    s.start(
+      options.agentSource
+        ? "Fetching agent partials..."
+        : "Loading agent partials...",
+    );
+    try {
+      const agentDefs = await getAgentDefinitions(options.agentSource, {
+        forceRefresh: options.refresh,
+      });
+      sourcePath = agentDefs.sourcePath;
+      s.stop(
+        options.agentSource
+          ? "Agent partials fetched"
+          : "Agent partials loaded",
+      );
+    } catch (error) {
+      s.stop("Failed to load agent partials");
+      p.log.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
     }
 
     // 8. Recompile agents with updated skills

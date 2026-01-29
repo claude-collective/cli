@@ -10,7 +10,7 @@ import {
   getPluginManifestPath,
   getProjectPluginsDir,
 } from "../lib/plugin-finder";
-import { fetchAgentDefinitions } from "../lib/agent-fetcher";
+import { getAgentDefinitions } from "../lib/agent-fetcher";
 import { resolveSource } from "../lib/config";
 import {
   directoryExists,
@@ -173,8 +173,15 @@ export const compileCommand = new Command("compile")
     "Compile agents using local skills and fetched agent definitions",
   )
   .option("-v, --verbose", "Enable verbose logging", false)
-  .option("--source <url>", "Marketplace source for agent definitions")
-  .option("--refresh", "Force refresh agent definitions from source", false)
+  .option(
+    "--source <url>",
+    "Skills marketplace source (default: github:claude-collective/skills)",
+  )
+  .option(
+    "--agent-source <url>",
+    "Remote agent partials source (default: local CLI)",
+  )
+  .option("--refresh", "Force refresh from remote sources", false)
   .option(
     "-o, --output <dir>",
     "Output directory for compiled agents (skips plugin mode)",
@@ -227,7 +234,12 @@ async function readPluginManifest(
  */
 async function runPluginModeCompile(
   s: ReturnType<typeof p.spinner>,
-  options: { source?: string; refresh?: boolean; verbose?: boolean },
+  options: {
+    source?: string;
+    agentSource?: string;
+    refresh?: boolean;
+    verbose?: boolean;
+  },
   dryRun: boolean,
 ): Promise<void> {
   console.log(`\n${pc.cyan("Plugin Mode Compile")}\n`);
@@ -320,17 +332,23 @@ async function runPluginModeCompile(
     process.exit(1);
   }
 
-  s.start("Fetching agent definitions...");
+  s.start(
+    options.agentSource
+      ? "Fetching agent partials..."
+      : "Loading agent partials...",
+  );
   let agentDefs: AgentSourcePaths;
   try {
-    agentDefs = await fetchAgentDefinitions(sourceConfig.source, {
+    agentDefs = await getAgentDefinitions(options.agentSource, {
       forceRefresh: options.refresh,
     });
-    s.stop("Agent definitions fetched");
+    s.stop(
+      options.agentSource ? "Agent partials fetched" : "Agent partials loaded",
+    );
     verbose(`  Agents: ${agentDefs.agentsDir}`);
     verbose(`  Templates: ${agentDefs.templatesDir}`);
   } catch (error) {
-    s.stop("Failed to fetch agent definitions");
+    s.stop("Failed to load agent partials");
     p.log.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   }
@@ -341,7 +359,7 @@ async function runPluginModeCompile(
     );
     console.log(
       pc.yellow(
-        `[dry-run] Would use agent definitions from: ${agentDefs.sourcePath}`,
+        `[dry-run] Would use agent partials from: ${agentDefs.sourcePath}`,
       ),
     );
     console.log(
@@ -394,6 +412,7 @@ async function runCustomOutputCompile(
   s: ReturnType<typeof p.spinner>,
   options: {
     source?: string;
+    agentSource?: string;
     refresh?: boolean;
     verbose?: boolean;
     output: string;
@@ -453,17 +472,23 @@ async function runCustomOutputCompile(
     process.exit(1);
   }
 
-  s.start("Fetching agent definitions...");
+  s.start(
+    options.agentSource
+      ? "Fetching agent partials..."
+      : "Loading agent partials...",
+  );
   let agentDefs: AgentSourcePaths;
   try {
-    agentDefs = await fetchAgentDefinitions(sourceConfig.source, {
+    agentDefs = await getAgentDefinitions(options.agentSource, {
       forceRefresh: options.refresh,
     });
-    s.stop("Agent definitions fetched");
+    s.stop(
+      options.agentSource ? "Agent partials fetched" : "Agent partials loaded",
+    );
     verbose(`  Agents: ${agentDefs.agentsDir}`);
     verbose(`  Templates: ${agentDefs.templatesDir}`);
   } catch (error) {
-    s.stop("Failed to fetch agent definitions");
+    s.stop("Failed to load agent partials");
     p.log.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   }

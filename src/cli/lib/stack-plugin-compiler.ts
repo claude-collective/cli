@@ -151,8 +151,10 @@ export interface StackPluginOptions {
   stackId: string;
   /** Base output directory (e.g., dist/stacks) */
   outputDir: string;
-  /** Project root directory */
+  /** Project root directory (for stacks and skills) */
   projectRoot: string;
+  /** Agent source directory (for agent partials, defaults to projectRoot) */
+  agentSourcePath?: string;
 }
 
 /**
@@ -365,15 +367,19 @@ function generateHooksJson(
 export async function compileStackPlugin(
   options: StackPluginOptions,
 ): Promise<CompiledStackPlugin> {
-  const { stackId, outputDir, projectRoot } = options;
+  const { stackId, outputDir, projectRoot, agentSourcePath } = options;
+  // Agent partials can come from a different source than stacks/skills
+  const agentRoot = agentSourcePath || projectRoot;
 
   verbose(`Compiling stack plugin: ${stackId}`);
+  verbose(`  Stack/skills source: ${projectRoot}`);
+  verbose(`  Agent partials source: ${agentRoot}`);
 
   // 1. Load stack configuration
   const stack = await loadStack(stackId, projectRoot, "dev");
 
-  // 2. Load all agents
-  const agents = await loadAllAgents(projectRoot);
+  // 2. Load all agents (from agent source, which may differ from project root)
+  const agents = await loadAllAgents(agentRoot);
 
   // 3. Load skills from src/skills/ based on stack config
   const skills = await loadSkillsByIds(stack.skills || [], projectRoot);
@@ -386,7 +392,7 @@ export async function compileStackPlugin(
     agents,
     skills,
     compileConfig,
-    projectRoot,
+    agentRoot,
   );
 
   // 6. Create plugin directory structure
@@ -436,12 +442,7 @@ export async function compileStackPlugin(
   const allSkillPlugins: string[] = [];
 
   for (const [name, agent] of Object.entries(resolvedAgents)) {
-    const output = await compileAgentForPlugin(
-      name,
-      agent,
-      projectRoot,
-      engine,
-    );
+    const output = await compileAgentForPlugin(name, agent, agentRoot, engine);
     await writeFile(path.join(agentsDir, `${name}.md`), output);
     compiledAgentNames.push(name);
 
