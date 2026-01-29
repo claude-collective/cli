@@ -107,7 +107,7 @@ describe("stackToCompileConfig", () => {
       version: "1.0.0",
       author: "test",
       description: "A test stack",
-      agents: ["frontend-developer", "backend-developer"],
+      agents: ["web-developer", "api-developer"],
       skills: [],
     };
 
@@ -119,8 +119,8 @@ describe("stackToCompileConfig", () => {
       claude_md: "",
       stack: "test-stack",
       agents: {
-        "frontend-developer": {},
-        "backend-developer": {},
+        "web-developer": {},
+        "api-developer": {},
       },
     });
   });

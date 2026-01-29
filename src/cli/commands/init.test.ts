@@ -128,11 +128,11 @@ async function createMockSource(
   }
 
   // Create mock agent definitions
-  const agentDir = path.join(agentsDir, "developer", "frontend-developer");
+  const agentDir = path.join(agentsDir, "developer", "web-developer");
   await mkdir(agentDir, { recursive: true });
   await writeFile(
     path.join(agentDir, "agent.yaml"),
-    "name: frontend-developer\ndescription: Test agent",
+    "name: web-developer\ndescription: Test agent",
   );
 
   return sourceDir;

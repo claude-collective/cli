@@ -139,8 +139,8 @@ This maintains orientation across extended agent creation sessions.
 - Technology-specific skill creation (researching MobX, Tailwind, etc.) → skill-summoner
 - Pattern extraction from codebases → pattern-scout
 - Pattern critique against industry standards → pattern-critique
-- Implementation work → frontend-developer, backend-developer
-- Code review → frontend-reviewer or backend-reviewer
+- Implementation work → web-developer, api-developer
+- Code review → web-reviewer or api-reviewer
 - Testing → tester
 - Architecture planning → pm
 
@@ -1368,7 +1368,7 @@ agents:
 **4. Missing Boundaries**
 
 ❌ Bad: No "Does NOT handle" section
-✅ Good: "Does NOT handle: React components (→ frontend-reviewer), CI/CD configs (→ backend-reviewer)"
+✅ Good: "Does NOT handle: React components (→ web-reviewer), CI/CD configs (→ api-reviewer)"
 
 **5. No Emphatic Repetition**
 
@@ -1503,15 +1503,15 @@ Output formats are now determined by the file system with cascading resolution:
 
 Each agent category has a default format, and individual agents can override with their own:
 
-| Category   | Agents with custom formats                          |
-| ---------- | --------------------------------------------------- |
-| developer  | frontend-developer, backend-developer, architecture |
-| reviewer   | frontend-reviewer, backend-reviewer                 |
-| researcher | frontend-researcher, backend-researcher             |
-| planning   | pm                                                  |
-| tester     | tester-agent                                        |
-| pattern    | pattern-scout, pattern-critique                     |
-| meta       | documentor, agent-summoner, skill-summoner          |
+| Category   | Agents with custom formats                 |
+| ---------- | ------------------------------------------ |
+| developer  | web-developer, api-developer, architecture |
+| reviewer   | web-reviewer, api-reviewer                 |
+| researcher | web-researcher, api-researcher             |
+| planning   | pm                                         |
+| tester     | tester-agent                               |
+| pattern    | pattern-scout, pattern-critique            |
+| meta       | documentor, agent-summoner, skill-summoner |
 
 ---
 

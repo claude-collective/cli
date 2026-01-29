@@ -159,10 +159,10 @@ export function createMockStackConfig(
     description: `Test stack: ${name}`,
     author: "@test",
     skills,
-    agents: ["frontend-developer", "backend-developer"],
+    agents: ["web-developer", "api-developer"],
     agent_skills: {
-      "frontend-developer": skills.filter((s) => !s.includes("backend")),
-      "backend-developer": skills.filter((s) => !s.includes("frontend")),
+      "web-developer": skills.filter((s) => !s.includes("backend")),
+      "api-developer": skills.filter((s) => !s.includes("frontend")),
     },
     ...overrides,
   };

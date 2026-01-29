@@ -9,10 +9,10 @@
   "properties": {
     "name": {
       "type": "string",
-      "description": "Agent identifier in kebab-case (e.g., 'frontend-developer'). Used as plugin/agent name.",
+      "description": "Agent identifier in kebab-case (e.g., 'web-developer'). Used as plugin/agent name.",
       "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
       "minLength": 1,
-      "examples": ["frontend-developer", "backend-reviewer", "pm"]
+      "examples": ["web-developer", "api-reviewer", "web-pm"]
     },
     "description": {
       "type": "string",
@@ -142,7 +142,7 @@
   },
   "examples": [
     {
-      "name": "frontend-developer",
+      "name": "web-developer",
       "description": "Expert frontend developer. Use for React components and UI work.",
       "tools": "Read, Grep, Glob, Bash, Write, Edit",
       "model": "inherit",
@@ -150,7 +150,7 @@
       "skills": ["react", "zustand"]
     },
     {
-      "name": "backend-developer",
+      "name": "api-developer",
       "description": "Implements backend features from detailed specs.",
       "tools": "Read, Grep, Glob, Bash, Write, Edit, Task",
       "model": "opus",

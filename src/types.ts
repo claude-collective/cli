@@ -89,7 +89,7 @@ export interface AgentDefinition {
   permission_mode?: string; // Permission mode for agent operations
   hooks?: Record<string, AgentHookDefinition[]>; // Lifecycle hooks
   output_format?: string; // Which output format file to use
-  path?: string; // Relative path to agent directory (e.g., "developer/backend-developer")
+  path?: string; // Relative path to agent directory (e.g., "developer/api-developer")
 }
 
 /**
@@ -143,7 +143,7 @@ export interface AgentConfig {
   hooks?: Record<string, AgentHookDefinition[]>; // Lifecycle hooks
   output_format?: string;
   skills: Skill[]; // Unified skills list (loaded dynamically via Skill tool)
-  path?: string; // Relative path to agent directory (e.g., "developer/backend-developer")
+  path?: string; // Relative path to agent directory (e.g., "developer/api-developer")
 }
 
 export interface CompiledAgentData {
@@ -308,7 +308,7 @@ export interface AgentHookDefinition {
  * Used in compiled agent.md files
  */
 export interface AgentFrontmatter {
-  /** Agent identifier in kebab-case (e.g., "frontend-developer"). Used as plugin name. */
+  /** Agent identifier in kebab-case (e.g., "web-developer"). Used as plugin name. */
   name: string;
   /** Brief description of the agent's purpose. Shown in Task tool description. */
   description: string;

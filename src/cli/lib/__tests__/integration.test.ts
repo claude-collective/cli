@@ -17,12 +17,15 @@ import type { Marketplace, PluginManifest } from "../../../types";
 // Constants
 // =============================================================================
 
-// Skills, stacks, and agents are in a separate repo - use env var or default to sibling folder
+// Skills and stacks are in claude-subagents repo
 const SKILLS_REPO =
   process.env.CC_TEST_SKILLS_SOURCE ||
   path.resolve(__dirname, "../../../../../claude-subagents");
 const SKILLS_DIR = path.join(SKILLS_REPO, "src", "skills");
 const STACKS_DIR = path.join(SKILLS_REPO, "src", "stacks");
+
+// Agents are in the CLI repo
+const CLI_REPO = path.resolve(__dirname, "../../../..");
 
 // =============================================================================
 // Test Helpers
@@ -236,6 +239,7 @@ describe("Integration: Full Stack Pipeline", () => {
       stackId,
       outputDir,
       projectRoot: SKILLS_REPO,
+      agentSourcePath: CLI_REPO,
     });
 
     // Verify result structure
@@ -269,6 +273,7 @@ describe("Integration: Full Stack Pipeline", () => {
       stackId,
       outputDir,
       projectRoot: SKILLS_REPO,
+      agentSourcePath: CLI_REPO,
     });
 
     // Verify result structure
@@ -293,6 +298,7 @@ describe("Integration: Full Stack Pipeline", () => {
       stackId,
       outputDir,
       projectRoot: SKILLS_REPO,
+      agentSourcePath: CLI_REPO,
     });
 
     const readmePath = path.join(result.pluginPath, "README.md");
@@ -316,6 +322,7 @@ describe("Integration: Full Stack Pipeline", () => {
       stackId,
       outputDir,
       projectRoot: SKILLS_REPO,
+      agentSourcePath: CLI_REPO,
     });
 
     // Should reference skill plugins
@@ -335,6 +342,7 @@ describe("Integration: Full Stack Pipeline", () => {
       stackId,
       outputDir,
       projectRoot: SKILLS_REPO,
+      agentSourcePath: CLI_REPO,
     });
 
     const pluginPath = path.join(outputDir, stackId);
@@ -557,6 +565,7 @@ describe("Integration: End-to-End Pipeline", () => {
       stackId: "fullstack-react",
       outputDir: stacksDir,
       projectRoot: SKILLS_REPO,
+      agentSourcePath: CLI_REPO,
     });
     expect(stackResult.agents.length).toBeGreaterThan(0);
 
@@ -586,6 +595,7 @@ describe("Integration: End-to-End Pipeline", () => {
       stackId: "fullstack-react",
       outputDir: stacksDir,
       projectRoot: SKILLS_REPO,
+      agentSourcePath: CLI_REPO,
     });
 
     // Skill references now use simplified canonical frontmatter names (e.g., "react (@vince)")
@@ -614,6 +624,7 @@ describe("Integration: End-to-End Pipeline", () => {
       stackId: "fullstack-react",
       outputDir: stacksDir,
       projectRoot: SKILLS_REPO,
+      agentSourcePath: CLI_REPO,
     });
 
     // Get skill plugin names from compiled plugins (format: "skill-xxx")
@@ -627,10 +638,13 @@ describe("Integration: End-to-End Pipeline", () => {
     // - Stack: "react (@vince)" -> "react"
     // - Plugin: "skill-react" -> "react"
     const extractBaseName = (id: string) => {
-      // For canonical IDs like "react (@vince)"
-      // Remove " (@author)" suffix
+      // For canonical IDs like "web/framework/react (@vince)"
+      // Remove " (@author)" suffix and extract just the leaf name
       if (id.includes("(@")) {
-        return id.replace(/\s*\(@\w+\)$/, "").trim();
+        const withoutAuthor = id.replace(/\s*\(@\w+\)$/, "").trim();
+        // Extract leaf name from path like "web/framework/react"
+        const parts = withoutAuthor.split("/");
+        return parts[parts.length - 1];
       }
       // For plugin names like "skill-react"
       return id.replace(/^skill-/, "");

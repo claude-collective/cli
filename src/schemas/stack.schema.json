@@ -87,7 +87,7 @@
         "type": "string",
         "description": "Agent ID (must exist in registry)",
         "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
-        "examples": ["frontend-developer", "frontend-reviewer", "tester", "pm"]
+        "examples": ["web-developer", "web-reviewer", "web-tester", "web-pm"]
       }
     },
     "agent_skills": {
@@ -109,7 +109,7 @@
       },
       "examples": [
         {
-          "frontend-developer": {
+          "web-developer": {
             "framework": [{ "id": "react (@vince)", "preloaded": true }],
             "styling": [
               {
@@ -119,7 +119,7 @@
             ],
             "state-management": [{ "id": "zustand (@vince)" }]
           },
-          "backend-developer": {
+          "api-developer": {
             "api": [{ "id": "hono (@vince)", "preloaded": true }],
             "database": [{ "id": "drizzle (@vince)", "preloaded": true }]
           }

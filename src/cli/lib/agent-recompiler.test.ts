@@ -10,9 +10,9 @@ import {
 } from "./__tests__/helpers";
 import type { TestDirs } from "./__tests__/helpers";
 
-// Path to skills repo (agents, skills, templates)
-// The CLI repo lives at /home/vince/dev/cli, skills repo at /home/vince/dev/claude-subagents
-const SKILLS_REPO_PATH = path.resolve("/home/vince/dev/claude-subagents");
+// Path to CLI repo (agents, templates live here)
+// Skills repo (claude-subagents) only contains skills and stacks
+const CLI_REPO_PATH = path.resolve(__dirname, "../../..");
 
 describe("agent-recompiler", () => {
   let testDirs: TestDirs;
@@ -29,7 +29,7 @@ describe("agent-recompiler", () => {
     it("returns empty compiled list when no agents exist", async () => {
       const result = await recompileAgents({
         pluginDir: testDirs.pluginDir,
-        sourcePath: SKILLS_REPO_PATH,
+        sourcePath: CLI_REPO_PATH,
       });
 
       expect(result.compiled).toEqual([]);
@@ -42,22 +42,22 @@ describe("agent-recompiler", () => {
 
       const result = await recompileAgents({
         pluginDir: testDirs.pluginDir,
-        sourcePath: SKILLS_REPO_PATH,
-        agents: ["pm"], // PM is a simple agent likely to succeed
+        sourcePath: CLI_REPO_PATH,
+        agents: ["web-pm"], // PM is a simple agent likely to succeed
       });
 
-      expect(result.compiled).toContain("pm");
+      expect(result.compiled).toContain("web-pm");
       expect(result.failed).toEqual([]);
 
       // Verify the agent file was created
-      const agentPath = path.join(testDirs.agentsDir, "pm.md");
+      const agentPath = path.join(testDirs.agentsDir, "web-pm.md");
       expect(await fileExists(agentPath)).toBe(true);
     });
 
     it("handles missing agent definitions gracefully", async () => {
       const result = await recompileAgents({
         pluginDir: testDirs.pluginDir,
-        sourcePath: SKILLS_REPO_PATH,
+        sourcePath: CLI_REPO_PATH,
         agents: ["non-existent-agent-xyz"],
       });
 
@@ -74,7 +74,7 @@ name: test-plugin
 version: 1.0.0
 description: Test plugin
 agents:
-  - pm
+  - web-pm
 `;
       await writeFile(
         path.join(testDirs.pluginDir, "config.yaml"),
@@ -84,26 +84,26 @@ agents:
 
       const result = await recompileAgents({
         pluginDir: testDirs.pluginDir,
-        sourcePath: SKILLS_REPO_PATH,
+        sourcePath: CLI_REPO_PATH,
       });
 
-      expect(result.compiled).toContain("pm");
+      expect(result.compiled).toContain("web-pm");
     });
 
     it("uses existing compiled agents when no config exists", async () => {
       // Create an existing agent file
       await writeFile(
-        path.join(testDirs.agentsDir, "pm.md"),
+        path.join(testDirs.agentsDir, "web-pm.md"),
         "# Existing PM Agent\n",
       );
 
       const result = await recompileAgents({
         pluginDir: testDirs.pluginDir,
-        sourcePath: SKILLS_REPO_PATH,
+        sourcePath: CLI_REPO_PATH,
       });
 
       // Should detect and recompile the existing agent
-      expect(result.compiled).toContain("pm");
+      expect(result.compiled).toContain("web-pm");
     });
 
     it("compiles multiple agents", async () => {
@@ -112,14 +112,14 @@ agents:
 
       const result = await recompileAgents({
         pluginDir: testDirs.pluginDir,
-        sourcePath: SKILLS_REPO_PATH,
-        agents: ["frontend-developer", "backend-developer", "pm"],
+        sourcePath: CLI_REPO_PATH,
+        agents: ["web-developer", "api-developer", "web-pm"],
       });
 
       expect(result.compiled.length).toBeGreaterThanOrEqual(3);
-      expect(result.compiled).toContain("frontend-developer");
-      expect(result.compiled).toContain("backend-developer");
-      expect(result.compiled).toContain("pm");
+      expect(result.compiled).toContain("web-developer");
+      expect(result.compiled).toContain("api-developer");
+      expect(result.compiled).toContain("web-pm");
     });
 
     it("uses provided skills instead of loading from plugin", async () => {
@@ -140,12 +140,12 @@ agents:
 
       const result = await recompileAgents({
         pluginDir: testDirs.pluginDir,
-        sourcePath: SKILLS_REPO_PATH,
-        agents: ["pm"],
+        sourcePath: CLI_REPO_PATH,
+        agents: ["web-pm"],
         skills: providedSkills,
       });
 
-      expect(result.compiled).toContain("pm");
+      expect(result.compiled).toContain("web-pm");
     });
 
     it("generates valid agent markdown with frontmatter", async () => {
@@ -153,16 +153,16 @@ agents:
 
       await recompileAgents({
         pluginDir: testDirs.pluginDir,
-        sourcePath: SKILLS_REPO_PATH,
-        agents: ["frontend-developer"],
+        sourcePath: CLI_REPO_PATH,
+        agents: ["web-developer"],
       });
 
-      const agentPath = path.join(testDirs.agentsDir, "frontend-developer.md");
+      const agentPath = path.join(testDirs.agentsDir, "web-developer.md");
       const content = await readFile(agentPath, "utf-8");
 
       // Should have YAML frontmatter
       expect(content).toMatch(/^---\n/);
-      expect(content).toContain("name: frontend-developer");
+      expect(content).toContain("name: web-developer");
       expect(content).toContain("description:");
 
       // Should have core principles section
@@ -181,13 +181,13 @@ agents:
 
       const result = await recompileAgents({
         pluginDir: testDirs.pluginDir,
-        sourcePath: SKILLS_REPO_PATH,
-        agents: ["pm"],
+        sourcePath: CLI_REPO_PATH,
+        agents: ["web-pm"],
         projectDir: testDirs.projectDir,
       });
 
       // Should still compile (falls back to bundled templates)
-      expect(result.compiled).toContain("pm");
+      expect(result.compiled).toContain("web-pm");
     });
   });
 });

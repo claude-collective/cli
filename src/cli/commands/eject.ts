@@ -23,19 +23,19 @@ description: Project description
 
 # Agents to compile
 agents:
-  - frontend-developer
-  - backend-developer
-  - tester
-  - pm
+  - web-developer
+  - api-developer
+  - web-tester
+  - web-pm
 
 # Agent-specific skill assignments (optional)
 # If not specified, all available skills are given to all agents
 agent_skills:
-  frontend-developer:
+  web-developer:
     - react
     - zustand
     - scss-modules
-  backend-developer:
+  api-developer:
     - hono
     - drizzle
     - better-auth

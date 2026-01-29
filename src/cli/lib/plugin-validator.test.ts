@@ -384,7 +384,7 @@ user-invocable: true
       await writeFile(
         agentPath,
         `---
-name: frontend-developer
+name: web-developer
 description: Expert frontend developer
 tools: Read, Write, Edit, Grep, Glob
 ---
@@ -432,7 +432,7 @@ description: Expert frontend developer
       await writeFile(
         agentPath,
         `---
-name: frontend-developer
+name: web-developer
 ---
 
 # Agent
@@ -450,7 +450,7 @@ name: frontend-developer
       await writeFile(
         agentPath,
         `---
-name: frontend-developer
+name: web-developer
 description: Expert frontend developer
 tools: Read, Write, Edit
 skills:
@@ -472,7 +472,7 @@ skills:
       await writeFile(
         agentPath,
         `---
-name: frontend-developer
+name: web-developer
 description: Expert frontend developer
 permissionMode: acceptEdits
 ---
