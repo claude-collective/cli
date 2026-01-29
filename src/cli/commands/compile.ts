@@ -14,6 +14,7 @@ import { fetchAgentDefinitions } from "../lib/agent-fetcher";
 import { resolveSource } from "../lib/config";
 import {
   directoryExists,
+  ensureDir,
   glob,
   readFile,
   fileExists,
@@ -174,6 +175,10 @@ export const compileCommand = new Command("compile")
   .option("-v, --verbose", "Enable verbose logging", false)
   .option("--source <url>", "Marketplace source for agent definitions")
   .option("--refresh", "Force refresh agent definitions from source", false)
+  .option(
+    "-o, --output <dir>",
+    "Output directory for compiled agents (skips plugin mode)",
+  )
   .configureOutput({
     writeErr: (str) => console.error(pc.red(str)),
   })
@@ -187,8 +192,12 @@ export const compileCommand = new Command("compile")
     // Set verbose mode globally
     setVerbose(options.verbose);
 
-    // Always run in plugin mode
-    await runPluginModeCompile(s, options, dryRun);
+    // Custom output mode or plugin mode
+    if (options.output) {
+      await runCustomOutputCompile(s, options, dryRun);
+    } else {
+      await runPluginModeCompile(s, options, dryRun);
+    }
   });
 
 /**
@@ -375,4 +384,149 @@ async function runPluginModeCompile(
   }
 
   p.outro(pc.green("Plugin compile complete!"));
+}
+
+/**
+ * Run compilation with custom output directory
+ * Compiles agents directly to the specified directory without plugin structure
+ */
+async function runCustomOutputCompile(
+  s: ReturnType<typeof p.spinner>,
+  options: {
+    source?: string;
+    refresh?: boolean;
+    verbose?: boolean;
+    output: string;
+  },
+  dryRun: boolean,
+): Promise<void> {
+  const outputDir = path.resolve(process.cwd(), options.output);
+  console.log(`\n${pc.cyan("Custom Output Compile")}\n`);
+  console.log(`Output directory: ${pc.cyan(outputDir)}\n`);
+
+  // 1. Discover skills from both installed plugins AND local .claude/skills/
+  const projectDir = process.cwd();
+  s.start("Discovering skills...");
+
+  // 1a. Discover skills from installed plugins (.claude/plugins/*/skills/)
+  const pluginSkills = await discoverPluginSkills(projectDir);
+  const pluginSkillCount = Object.keys(pluginSkills).length;
+  verbose(`  Found ${pluginSkillCount} skills from installed plugins`);
+
+  // 1b. Discover local skills from .claude/skills/
+  const localSkills = await discoverLocalProjectSkills(projectDir);
+  const localSkillCount = Object.keys(localSkills).length;
+  verbose(`  Found ${localSkillCount} local skills from .claude/skills/`);
+
+  // 1c. Merge skills (local takes precedence over plugin skills)
+  const allSkills = mergeSkills(pluginSkills, localSkills);
+  const totalSkillCount = Object.keys(allSkills).length;
+
+  if (totalSkillCount === 0) {
+    s.stop("No skills found");
+    p.log.warn(
+      "No skills found. Add skills with 'cc add <skill>' or create in .claude/skills/.",
+    );
+    process.exit(1);
+  }
+
+  // Display skill count breakdown
+  if (localSkillCount > 0 && pluginSkillCount > 0) {
+    s.stop(
+      `Discovered ${totalSkillCount} skills (${pluginSkillCount} from plugins, ${localSkillCount} local)`,
+    );
+  } else if (localSkillCount > 0) {
+    s.stop(`Discovered ${localSkillCount} local skills`);
+  } else {
+    s.stop(`Discovered ${pluginSkillCount} skills from plugins`);
+  }
+
+  // 2. Resolve source and fetch agent definitions
+  s.start("Resolving source...");
+  let sourceConfig;
+  try {
+    sourceConfig = await resolveSource(options.source);
+    s.stop(`Source: ${sourceConfig.sourceOrigin}`);
+  } catch (error) {
+    s.stop("Failed to resolve source");
+    p.log.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
+
+  s.start("Fetching agent definitions...");
+  let agentDefs: AgentSourcePaths;
+  try {
+    agentDefs = await fetchAgentDefinitions(sourceConfig.source, {
+      forceRefresh: options.refresh,
+    });
+    s.stop("Agent definitions fetched");
+    verbose(`  Agents: ${agentDefs.agentsDir}`);
+    verbose(`  Templates: ${agentDefs.templatesDir}`);
+  } catch (error) {
+    s.stop("Failed to fetch agent definitions");
+    p.log.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
+
+  if (dryRun) {
+    console.log(
+      pc.yellow(
+        `\n[dry-run] Would compile agents with ${totalSkillCount} skills`,
+      ),
+    );
+    console.log(
+      pc.yellow(
+        `[dry-run] Would use agent definitions from: ${agentDefs.sourcePath}`,
+      ),
+    );
+    console.log(pc.yellow(`[dry-run] Would output to: ${outputDir}`));
+    p.outro(pc.green("[dry-run] Preview complete - no files were written"));
+    return;
+  }
+
+  // 3. Compile agents to custom output directory
+  // Use .claude/plugins/claude-collective/ as pluginDir for config, but output to custom dir
+  const pluginDir = getCollectivePluginDir();
+
+  s.start("Compiling agents...");
+  try {
+    // Ensure output directory exists
+    await ensureDir(outputDir);
+
+    const recompileResult = await recompileAgents({
+      pluginDir,
+      sourcePath: agentDefs.sourcePath,
+      skills: allSkills,
+      outputDir,
+    });
+
+    if (recompileResult.failed.length > 0) {
+      s.stop(
+        `Compiled ${recompileResult.compiled.length} agents (${recompileResult.failed.length} failed)`,
+      );
+      for (const warning of recompileResult.warnings) {
+        p.log.warn(warning);
+      }
+    } else if (recompileResult.compiled.length > 0) {
+      s.stop(`Compiled ${recompileResult.compiled.length} agents`);
+    } else {
+      s.stop("No agents to compile");
+    }
+
+    // Show compiled agents
+    if (recompileResult.compiled.length > 0) {
+      verbose(`  Compiled: ${recompileResult.compiled.join(", ")}`);
+      console.log(`\n${pc.dim("Agents compiled to:")}`);
+      console.log(`  ${pc.cyan(outputDir)}`);
+      for (const agentName of recompileResult.compiled) {
+        console.log(`    ${pc.dim(`${agentName}.md`)}`);
+      }
+    }
+  } catch (error) {
+    s.stop("Failed to compile agents");
+    p.log.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
+
+  p.outro(pc.green("Custom output compile complete!"));
 }

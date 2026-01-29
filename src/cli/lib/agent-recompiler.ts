@@ -29,6 +29,8 @@ export interface RecompileAgentsOptions {
   skills?: Record<string, SkillDefinition>;
   /** Optional: project directory for local template resolution */
   projectDir?: string;
+  /** Optional: custom output directory (overrides pluginDir/agents/) */
+  outputDir?: string;
 }
 
 /**
@@ -96,6 +98,7 @@ export async function recompileAgents(
     agents: specifiedAgents,
     skills: providedSkills,
     projectDir,
+    outputDir,
   } = options;
 
   const result: RecompileAgentsResult = {
@@ -107,7 +110,10 @@ export async function recompileAgents(
   // 1. Try to load config.yaml from plugin directory
   const pluginConfig = await loadPluginConfig(pluginDir);
 
-  // 2. Determine which agents to recompile
+  // 2. Load agent definitions from source (needed early for fallback)
+  const allAgents = await loadAllAgents(sourcePath);
+
+  // 3. Determine which agents to recompile
   let agentNames: string[];
   if (specifiedAgents) {
     agentNames = specifiedAgents;
@@ -115,6 +121,10 @@ export async function recompileAgents(
     // Use agents from config.yaml
     agentNames = pluginConfig.agents;
     verbose(`Using agents from config.yaml: ${agentNames.join(", ")}`);
+  } else if (outputDir) {
+    // Custom output mode: compile all available agents from source
+    agentNames = Object.keys(allAgents);
+    verbose(`Using all available agents from source: ${agentNames.join(", ")}`);
   } else {
     // Fall back to existing compiled agents
     agentNames = await getExistingAgentNames(pluginDir);
@@ -125,10 +135,9 @@ export async function recompileAgents(
     return result;
   }
 
-  verbose(`Recompiling ${agentNames.length} agents in ${pluginDir}`);
-
-  // 3. Load agent definitions from source
-  const allAgents = await loadAllAgents(sourcePath);
+  verbose(
+    `Recompiling ${agentNames.length} agents in ${outputDir ?? pluginDir}`,
+  );
 
   // 4. Use provided skills or load from the plugin
   const pluginSkills = providedSkills ?? (await loadPluginSkills(pluginDir));
@@ -185,7 +194,8 @@ export async function recompileAgents(
   );
 
   // 8. Ensure agents directory exists
-  const agentsDir = getPluginAgentsDir(pluginDir);
+  // Use custom outputDir if provided, otherwise default to pluginDir/agents/
+  const agentsDir = outputDir ?? getPluginAgentsDir(pluginDir);
   await ensureDir(agentsDir);
 
   // 9. Compile each agent
