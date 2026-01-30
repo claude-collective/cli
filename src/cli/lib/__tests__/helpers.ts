@@ -158,11 +158,19 @@ export function createMockStackConfig(
     version: "1.0.0",
     description: `Test stack: ${name}`,
     author: "@test",
-    skills,
+    skills: skills.map((s) => ({ id: s })),
     agents: ["web-developer", "api-developer"],
     agent_skills: {
-      "web-developer": skills.filter((s) => !s.includes("backend")),
-      "api-developer": skills.filter((s) => !s.includes("frontend")),
+      "web-developer": {
+        default: skills
+          .filter((s) => !s.includes("backend"))
+          .map((s) => ({ id: s })),
+      },
+      "api-developer": {
+        default: skills
+          .filter((s) => !s.includes("frontend"))
+          .map((s) => ({ id: s })),
+      },
     },
     ...overrides,
   };
@@ -176,11 +184,11 @@ export function createMockAgent(
   overrides?: Partial<AgentDefinition>,
 ): AgentDefinition {
   return {
-    name,
+    title: name,
     description: `${name} agent`,
-    tools: "Read, Write, Edit, Grep, Glob, Bash",
+    tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"],
     model: "opus",
-    permissionMode: "default",
+    permission_mode: "default",
     ...overrides,
   };
 }
