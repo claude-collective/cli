@@ -1,4 +1,4 @@
-import pc from 'picocolors';
+import pc from "picocolors";
 
 let verboseMode = false;
 
