@@ -2,6 +2,7 @@ import { Command } from "commander";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import path from "path";
+import os from "os";
 import {
   copy,
   ensureDir,
@@ -71,56 +72,95 @@ export const ejectCommand = new Command("eject")
   .description("Eject bundled content for local customization")
   .argument("[type]", "What to eject: templates, skills, config, all")
   .option("-f, --force", "Overwrite existing files", false)
+  .option(
+    "-o, --output <dir>",
+    "Output directory (default: .claude/ in current directory)",
+  )
   .configureOutput({
     writeErr: (str) => console.error(pc.red(str)),
   })
   .showHelpAfterError(true)
-  .action(async (type: string | undefined, options: { force: boolean }) => {
-    const projectDir = process.cwd();
+  .action(
+    async (
+      type: string | undefined,
+      options: { force: boolean; output?: string },
+    ) => {
+      const projectDir = process.cwd();
 
-    if (!type) {
-      p.log.error(
-        "Please specify what to eject: templates, skills, config, or all",
-      );
-      process.exit(EXIT_CODES.INVALID_ARGS);
-    }
+      if (!type) {
+        p.log.error(
+          "Please specify what to eject: templates, skills, config, or all",
+        );
+        process.exit(EXIT_CODES.INVALID_ARGS);
+      }
 
-    if (!EJECT_TYPES.includes(type as EjectType)) {
-      p.log.error(`Unknown eject type: ${type}`);
-      p.log.info(`Valid types: ${EJECT_TYPES.join(", ")}`);
-      process.exit(EXIT_CODES.INVALID_ARGS);
-    }
+      if (!EJECT_TYPES.includes(type as EjectType)) {
+        p.log.error(`Unknown eject type: ${type}`);
+        p.log.info(`Valid types: ${EJECT_TYPES.join(", ")}`);
+        process.exit(EXIT_CODES.INVALID_ARGS);
+      }
 
-    p.intro(pc.cyan("Claude Collective Eject"));
+      // Resolve output base directory
+      let outputBase: string;
+      if (options.output) {
+        // Expand ~ to home directory if present
+        const expandedPath = options.output.startsWith("~")
+          ? path.join(os.homedir(), options.output.slice(1))
+          : options.output;
+        outputBase = path.resolve(projectDir, expandedPath);
 
-    const ejectType = type as EjectType;
+        // Validate output path is not an existing file
+        if (await fileExists(outputBase)) {
+          p.log.error(`Output path exists as a file: ${outputBase}`);
+          p.log.info("Please specify a directory path, not a file.");
+          process.exit(EXIT_CODES.INVALID_ARGS);
+        }
+      } else {
+        outputBase = path.join(projectDir, ".claude");
+      }
 
-    switch (ejectType) {
-      case "templates":
-        await ejectTemplates(projectDir, options.force);
-        break;
-      case "skills":
-        await ejectSkills(projectDir, options.force);
-        break;
-      case "config":
-        await ejectConfig(projectDir, options.force);
-        break;
-      case "all":
-        await ejectTemplates(projectDir, options.force);
-        await ejectSkills(projectDir, options.force);
-        await ejectConfig(projectDir, options.force);
-        break;
-    }
+      p.intro(pc.cyan("Claude Collective Eject"));
 
-    p.outro(pc.green("Eject complete!"));
-  });
+      // Show output directory when using custom path
+      if (options.output) {
+        p.log.info(`Output directory: ${pc.cyan(outputBase)}`);
+      }
+
+      const ejectType = type as EjectType;
+      const directOutput = !!options.output;
+
+      switch (ejectType) {
+        case "templates":
+          await ejectTemplates(outputBase, options.force, directOutput);
+          break;
+        case "skills":
+          await ejectSkills(outputBase, options.force, directOutput);
+          break;
+        case "config":
+          await ejectConfig(outputBase, options.force, directOutput);
+          break;
+        case "all":
+          await ejectTemplates(outputBase, options.force, directOutput);
+          await ejectSkills(outputBase, options.force, directOutput);
+          await ejectConfig(outputBase, options.force, directOutput);
+          break;
+      }
+
+      p.outro(pc.green("Eject complete!"));
+    },
+  );
 
 async function ejectTemplates(
-  projectDir: string,
+  outputBase: string,
   force: boolean,
+  directOutput: boolean = false,
 ): Promise<void> {
   const sourceDir = path.join(PROJECT_ROOT, DIRS.templates);
-  const destDir = path.join(projectDir, ".claude", "templates");
+  // When directOutput is true (--output used), write directly to outputBase
+  // When false (default), add "templates" subdirectory for backward compatibility
+  const destDir = directOutput
+    ? outputBase
+    : path.join(outputBase, "templates");
 
   if ((await directoryExists(destDir)) && !force) {
     p.log.warn(
@@ -138,8 +178,16 @@ async function ejectTemplates(
   );
 }
 
-async function ejectSkills(projectDir: string, force: boolean): Promise<void> {
-  const destDir = path.join(projectDir, ".claude", "skill-templates");
+async function ejectSkills(
+  outputBase: string,
+  force: boolean,
+  directOutput: boolean = false,
+): Promise<void> {
+  // When directOutput is true (--output used), write directly to outputBase
+  // When false (default), add "skill-templates" subdirectory
+  const destDir = directOutput
+    ? outputBase
+    : path.join(outputBase, "skill-templates");
 
   if ((await directoryExists(destDir)) && !force) {
     p.log.warn(
@@ -164,11 +212,18 @@ async function ejectSkills(projectDir: string, force: boolean): Promise<void> {
   );
 
   p.log.success(`Skill templates ejected to ${pc.cyan(destDir)}`);
-  p.log.info(pc.dim("Copy example-skill/ to .claude/skills/ and customize."));
+  p.log.info(
+    pc.dim("Copy example-skill/ to your skills/ directory and customize."),
+  );
 }
 
-async function ejectConfig(projectDir: string, force: boolean): Promise<void> {
-  const destPath = path.join(projectDir, ".claude", "config.yaml");
+async function ejectConfig(
+  outputBase: string,
+  force: boolean,
+  directOutput: boolean = false,
+): Promise<void> {
+  // Config always outputs to config.yaml in the specified location
+  const destPath = path.join(outputBase, "config.yaml");
 
   if ((await fileExists(destPath)) && !force) {
     p.log.warn(
