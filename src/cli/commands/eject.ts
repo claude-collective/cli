@@ -13,7 +13,7 @@ import {
 import { DIRS, PROJECT_ROOT } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
 
-const EJECT_TYPES = ["templates", "skills", "config", "all"] as const;
+const EJECT_TYPES = ["templates", "config", "all"] as const;
 type EjectType = (typeof EJECT_TYPES)[number];
 
 const DEFAULT_CONFIG_CONTENT = `# Claude Collective Configuration
@@ -42,35 +42,9 @@ agent_skills:
     - better-auth
 `;
 
-const DEFAULT_SKILL_MD_CONTENT = `---
-name: example-skill
-description: Short description of the skill
----
-
-# Example Skill
-
-## Overview
-Describe what this skill teaches the agent.
-
-## Instructions
-Specific instructions for the agent.
-
-## Examples
-\`\`\`typescript
-// Example code
-\`\`\`
-`;
-
-const DEFAULT_METADATA_CONTENT = `# yaml-language-server: $schema=../../schemas/metadata.schema.json
-category: custom
-author: "@local"
-cli_name: Example Skill
-cli_description: Short description for CLI
-`;
-
 export const ejectCommand = new Command("eject")
   .description("Eject bundled content for local customization")
-  .argument("[type]", "What to eject: templates, skills, config, all")
+  .argument("[type]", "What to eject: templates, config, all")
   .option("-f, --force", "Overwrite existing files", false)
   .option(
     "-o, --output <dir>",
@@ -88,9 +62,7 @@ export const ejectCommand = new Command("eject")
       const projectDir = process.cwd();
 
       if (!type) {
-        p.log.error(
-          "Please specify what to eject: templates, skills, config, or all",
-        );
+        p.log.error("Please specify what to eject: templates, config, or all");
         process.exit(EXIT_CODES.INVALID_ARGS);
       }
 
@@ -133,15 +105,11 @@ export const ejectCommand = new Command("eject")
         case "templates":
           await ejectTemplates(outputBase, options.force, directOutput);
           break;
-        case "skills":
-          await ejectSkills(outputBase, options.force, directOutput);
-          break;
         case "config":
           await ejectConfig(outputBase, options.force, directOutput);
           break;
         case "all":
           await ejectTemplates(outputBase, options.force, directOutput);
-          await ejectSkills(outputBase, options.force, directOutput);
           await ejectConfig(outputBase, options.force, directOutput);
           break;
       }
@@ -175,45 +143,6 @@ async function ejectTemplates(
   p.log.success(`Templates ejected to ${pc.cyan(destDir)}`);
   p.log.info(
     pc.dim("You can now customize agent.liquid and partials locally."),
-  );
-}
-
-async function ejectSkills(
-  outputBase: string,
-  force: boolean,
-  directOutput: boolean = false,
-): Promise<void> {
-  // When directOutput is true (--output used), write directly to outputBase
-  // When false (default), add "skill-templates" subdirectory
-  const destDir = directOutput
-    ? outputBase
-    : path.join(outputBase, "skill-templates");
-
-  if ((await directoryExists(destDir)) && !force) {
-    p.log.warn(
-      `Skill templates already exist at ${destDir}. Use --force to overwrite.`,
-    );
-    return;
-  }
-
-  await ensureDir(destDir);
-
-  const exampleSkillDir = path.join(destDir, "example-skill");
-  await ensureDir(exampleSkillDir);
-
-  await writeFile(
-    path.join(exampleSkillDir, "SKILL.md"),
-    DEFAULT_SKILL_MD_CONTENT,
-  );
-
-  await writeFile(
-    path.join(exampleSkillDir, "metadata.yaml"),
-    DEFAULT_METADATA_CONTENT,
-  );
-
-  p.log.success(`Skill templates ejected to ${pc.cyan(destDir)}`);
-  p.log.info(
-    pc.dim("Copy example-skill/ to your skills/ directory and customize."),
   );
 }
 
