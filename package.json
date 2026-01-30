@@ -10,7 +10,7 @@
     }
   },
   "bin": {
-    "cc": "./dist/cli/index.js"
+    "cc": "dist/cli/index.js"
   },
   "files": [
     "dist/",
