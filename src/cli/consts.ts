@@ -9,7 +9,7 @@ export const CLI_ROOT = path.resolve(__dirname, "..");
 export const PROJECT_ROOT = path.resolve(__dirname, "../..");
 
 export const OUTPUT_DIR = ".claude";
-export const GITHUB_REPO = "claude-collective/claude-collective";
+export const GITHUB_REPO = "claude-collective/skills";
 export const DEFAULT_MATRIX_PATH = "src/config/skills-matrix.yaml";
 
 export const PLUGIN_NAME = "claude-collective";
