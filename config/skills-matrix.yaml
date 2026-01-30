@@ -599,34 +599,7 @@ relationships:
 # =============================================================================
 
 suggested_stacks:
-  - id: modern-react
-    name: Modern React Stack
-    description: Fast, modern React for startups and MVPs with SCSS Modules
-    audience: [startups, mvp, personal]
-    skills:
-      frontend:
-        framework: react
-        meta-framework: nextjs-app-router
-        styling: scss-modules
-        client-state: zustand
-        server-state: react-query
-        forms: react-hook-form
-        validation: zod-validation
-        testing: vitest
-        component-testing: react-testing-library
-        e2e: playwright-e2e
-        mocking: msw
-      backend:
-        api: hono
-        database: drizzle
-        auth: better-auth
-      reviewing:
-        reviewing: reviewing
-      research:
-        research: research-methodology
-    philosophy: "Ship fast, iterate faster"
-
-  - id: fullstack-react
+  - id: nextjs-fullstack
     name: Fullstack React
     description: Production-ready React with complete backend infrastructure
     audience: [production, startups, fullstack]
@@ -668,28 +641,6 @@ suggested_stacks:
         research: research-methodology
     philosophy: "Production-ready from day one"
 
-  - id: modern-react-tailwind
-    name: Modern React + Tailwind Stack
-    description: React with Tailwind CSS and shadcn/ui for beautiful UIs
-    audience: [startups, mvp, design-systems]
-    skills:
-      frontend:
-        framework: react
-        meta-framework: nextjs-app-router
-        styling: tailwind
-        ui-components: shadcn-ui
-        client-state: zustand
-        server-state: react-query
-        forms: react-hook-form
-        validation: zod-validation
-        testing: vitest
-        mocking: msw
-      backend:
-        api: hono
-        database: drizzle
-        auth: better-auth
-    philosophy: "Beautiful UIs with utility-first CSS"
-
   - id: vue-stack
     name: Modern Vue Stack
     description: Vue 3 with Composition API, Pinia, and Tailwind
@@ -721,17 +672,7 @@ suggested_stacks:
         database: drizzle
     philosophy: "Enterprise-grade and type-safe"
 
-  - id: minimal-backend
-    name: Minimal Backend
-    description: Lightweight API without frontend - just Hono and Drizzle
-    audience: [api-only, microservices]
-    skills:
-      backend:
-        api: hono
-        database: drizzle
-    philosophy: "Just the essentials"
-
-  - id: mobile-stack
+  - id: react-native-stack
     name: React Native Mobile Stack
     description: Cross-platform mobile with React Native and Expo
     audience: [mobile, startups]
@@ -744,48 +685,6 @@ suggested_stacks:
         forms: react-hook-form
         validation: zod-validation
     philosophy: "One codebase, iOS and Android"
-
-  - id: full-observability
-    name: Full Observability Stack
-    description: Complete observability with logging, monitoring, and analytics
-    audience: [production, enterprise]
-    skills:
-      frontend:
-        framework: react
-        meta-framework: nextjs-app-router
-        styling: scss-modules
-        client-state: zustand
-        server-state: react-query
-      backend:
-        api: hono
-        database: drizzle
-        auth: better-auth
-        observability: axiom-pino-sentry
-        analytics: posthog
-    philosophy: "Know what's happening in production"
-
-  - id: enterprise-react
-    name: Enterprise React Stack
-    description: React with Redux Toolkit for large enterprise applications
-    audience: [enterprise, large-teams]
-    skills:
-      frontend:
-        framework: react
-        meta-framework: nextjs-app-router
-        styling: scss-modules
-        client-state: redux-toolkit
-        server-state: react-query
-        forms: react-hook-form
-        validation: zod-validation
-        testing: vitest
-        component-testing: react-testing-library
-        e2e: playwright-e2e
-        mocking: msw
-      backend:
-        api: hono
-        database: drizzle
-        auth: better-auth
-    philosophy: "Strict patterns for large teams"
 
   - id: solidjs-stack
     name: SolidJS Stack
