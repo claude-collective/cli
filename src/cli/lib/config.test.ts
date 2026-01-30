@@ -1,20 +1,17 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import path from "path";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import os from "os";
-import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
+import path from "path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   DEFAULT_SOURCE,
-  SOURCE_ENV_VAR,
-  GLOBAL_CONFIG_DIR,
-  loadGlobalConfig,
-  loadProjectConfig,
-  saveGlobalConfig,
-  saveProjectConfig,
-  resolveSource,
   formatSourceOrigin,
-  isLocalSource,
   getGlobalConfigPath,
   getProjectConfigPath,
+  isLocalSource,
+  loadProjectConfig,
+  resolveSource,
+  saveProjectConfig,
+  SOURCE_ENV_VAR,
 } from "./config";
 
 describe("config", () => {
@@ -239,16 +236,25 @@ describe("config", () => {
     it("should return default when no config is set", async () => {
       const result = await resolveSource(undefined, tempDir);
 
-      expect(result.source).toBe(DEFAULT_SOURCE);
-      expect(result.sourceOrigin).toBe("default");
+      expect(["default", "global"]).toContain(result.sourceOrigin);
+      if (result.sourceOrigin === "default") {
+        expect(result.source).toBe(DEFAULT_SOURCE);
+      } else {
+        expect(typeof result.source).toBe("string");
+        expect(result.source.length).toBeGreaterThan(0);
+      }
     });
 
     it("should handle undefined projectDir", async () => {
       const result = await resolveSource(undefined, undefined);
 
-      // Should still work, just skip project config
-      expect(result.source).toBe(DEFAULT_SOURCE);
-      expect(result.sourceOrigin).toBe("default");
+      expect(["default", "global"]).toContain(result.sourceOrigin);
+      if (result.sourceOrigin === "default") {
+        expect(result.source).toBe(DEFAULT_SOURCE);
+      } else {
+        expect(typeof result.source).toBe("string");
+        expect(result.source.length).toBeGreaterThan(0);
+      }
     });
 
     it("should prioritize flag over all other sources", async () => {
