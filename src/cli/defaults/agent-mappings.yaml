@@ -1,0 +1,185 @@
+# Default agent-skill mappings for Claude Collective CLI
+# Users can override these in .claude/config.yaml via agent_skills
+#
+# This file is bundled with the CLI and provides sensible defaults
+# for which agents should receive which skills based on skill category.
+
+# Mapping from skill path patterns to agent lists
+# Pattern "frontend/*" matches skills like frontend/framework/react, frontend/styling/tailwind, etc.
+skill_to_agents:
+  "frontend/*":
+    - web-developer
+    - web-reviewer
+    - web-researcher
+    - web-pm
+    - web-pattern-scout
+    - web-pattern-critique
+    - agent-summoner
+    - skill-summoner
+    - documentor
+
+  "backend/*":
+    - api-developer
+    - api-reviewer
+    - api-researcher
+    - web-architecture
+    - web-pm
+    - web-pattern-scout
+    - web-pattern-critique
+    - agent-summoner
+    - skill-summoner
+    - documentor
+
+  "mobile/*":
+    - web-developer
+    - web-reviewer
+    - web-researcher
+    - web-pm
+    - agent-summoner
+    - skill-summoner
+    - documentor
+
+  "setup/*":
+    - web-architecture
+    - web-developer
+    - api-developer
+    - agent-summoner
+    - skill-summoner
+    - documentor
+
+  "security/*":
+    - web-developer
+    - api-developer
+    - web-reviewer
+    - api-reviewer
+    - web-architecture
+    - web-pm
+    - agent-summoner
+    - skill-summoner
+    - documentor
+
+  "reviewing/*":
+    - web-reviewer
+    - api-reviewer
+    - cli-reviewer
+    - web-pattern-critique
+    - agent-summoner
+    - skill-summoner
+    - documentor
+
+  "cli/*":
+    - cli-developer
+    - cli-reviewer
+    - api-developer
+    - api-reviewer
+    - api-researcher
+    - web-architecture
+    - web-pm
+    - agent-summoner
+    - skill-summoner
+    - documentor
+
+  "research/*":
+    - web-researcher
+    - api-researcher
+    - web-pm
+    - web-pattern-scout
+    - web-pattern-critique
+    - documentor
+    - agent-summoner
+    - skill-summoner
+
+  "methodology/*":
+    - web-developer
+    - api-developer
+    - web-reviewer
+    - api-reviewer
+    - web-researcher
+    - api-researcher
+    - web-tester
+    - web-pm
+    - web-architecture
+    - web-pattern-scout
+    - web-pattern-critique
+    - agent-summoner
+    - skill-summoner
+    - documentor
+
+  # Specific patterns (more specific than wildcards)
+  "frontend/testing":
+    - web-tester
+    - web-developer
+    - web-reviewer
+
+  "backend/testing":
+    - web-tester
+    - api-developer
+    - api-reviewer
+
+  "frontend/mocks":
+    - web-tester
+    - web-developer
+    - web-reviewer
+
+# Skills that should be preloaded (embedded) for each agent
+# Maps agent name to categories/patterns that trigger preloading
+preloaded_skills:
+  web-developer:
+    - framework
+    - styling
+  api-developer:
+    - api
+    - database
+    - cli
+  cli-developer:
+    - cli
+  web-reviewer:
+    - framework
+    - styling
+    - reviewing
+  api-reviewer:
+    - api
+    - database
+    - reviewing
+  cli-reviewer:
+    - cli
+    - reviewing
+    - cli-reviewing
+  web-researcher:
+    - framework
+    - research-methodology
+  api-researcher:
+    - api
+    - research-methodology
+  web-tester:
+    - testing
+    - mocks
+  web-architecture:
+    - monorepo
+    - turborepo
+    - cli
+  web-pm:
+    - research-methodology
+  web-pattern-scout:
+    - research-methodology
+  web-pattern-critique:
+    - research-methodology
+    - reviewing
+  documentor:
+    - research-methodology
+  agent-summoner: []
+  skill-summoner: []
+
+# Aliases for subcategory resolution
+# Maps short names to full paths for convenience
+subcategory_aliases:
+  framework: frontend/framework
+  styling: frontend/styling
+  api: backend/api
+  database: backend/database
+  mocks: frontend/mocks
+  testing: testing
+  reviewing: reviewing
+  research-methodology: research/research-methodology
+  monorepo: setup/monorepo
+  cli: cli

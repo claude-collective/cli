@@ -13,7 +13,6 @@ import type { ExtractedSkillMetadata } from "../types-matrix";
 
 const LOCAL_CATEGORY = "local";
 const LOCAL_AUTHOR = "@local";
-const TEST_SKILL_PREFIX = "test-";
 
 interface LocalRawMetadata {
   cli_name: string;
@@ -39,13 +38,6 @@ export async function discoverLocalSkills(
   const skillDirs = await listDirectories(localSkillsPath);
 
   for (const skillDirName of skillDirs) {
-    if (!skillDirName.startsWith(TEST_SKILL_PREFIX)) {
-      verbose(
-        `Skipping local skill '${skillDirName}': Does not have test- prefix (temporary filter)`,
-      );
-      continue;
-    }
-
     const skill = await extractLocalSkill(localSkillsPath, skillDirName);
     if (skill) {
       skills.push(skill);
