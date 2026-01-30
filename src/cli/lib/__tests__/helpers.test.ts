@@ -61,7 +61,7 @@ describe("test helpers", () => {
       const config = createMockStackConfig("test-stack", ["react", "zustand"]);
 
       expect(config.name).toBe("test-stack");
-      expect(config.skills).toEqual(["react", "zustand"]);
+      expect(config.skills).toEqual([{ id: "react" }, { id: "zustand" }]);
       expect(config.agents).toContain("web-developer");
     });
   });
@@ -70,7 +70,7 @@ describe("test helpers", () => {
     it("creates a valid agent definition", () => {
       const agent = createMockAgent("test-agent");
 
-      expect(agent.name).toBe("test-agent");
+      expect(agent.title).toBe("test-agent");
       expect(agent.model).toBe("opus");
     });
   });
