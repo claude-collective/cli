@@ -74,3 +74,62 @@ export async function isClaudeCLIAvailable(): Promise<boolean> {
     return false;
   }
 }
+
+export interface MarketplaceInfo {
+  name: string;
+  source: string;
+  repo?: string;
+  path?: string;
+}
+
+/**
+ * List configured marketplaces in Claude Code
+ */
+export async function claudePluginMarketplaceList(): Promise<
+  MarketplaceInfo[]
+> {
+  const result = await execCommand(
+    "claude",
+    ["plugin", "marketplace", "list", "--json"],
+    {},
+  );
+
+  if (result.exitCode !== 0) {
+    return [];
+  }
+
+  try {
+    return JSON.parse(result.stdout);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Check if a marketplace with the given name exists
+ */
+export async function claudePluginMarketplaceExists(
+  name: string,
+): Promise<boolean> {
+  const marketplaces = await claudePluginMarketplaceList();
+  return marketplaces.some((m) => m.name === name);
+}
+
+/**
+ * Add a marketplace to Claude Code from a GitHub repository
+ */
+export async function claudePluginMarketplaceAdd(
+  githubRepo: string,
+  name: string,
+): Promise<void> {
+  const args = ["plugin", "marketplace", "add", githubRepo, "--name", name];
+  const result = await execCommand("claude", args, {});
+
+  if (result.exitCode !== 0) {
+    const errorMessage = result.stderr || result.stdout || "Unknown error";
+    if (errorMessage.includes("already installed")) {
+      return;
+    }
+    throw new Error(`Failed to add marketplace: ${errorMessage.trim()}`);
+  }
+}
