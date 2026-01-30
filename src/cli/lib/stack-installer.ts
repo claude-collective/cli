@@ -3,6 +3,7 @@ import path from "path";
 import { compileStackPlugin } from "./stack-plugin-compiler";
 import { claudePluginInstall, isClaudeCLIAvailable } from "../utils/exec";
 import { remove, ensureDir } from "../utils/fs";
+import { verbose } from "../utils/logger";
 import type { CompiledStackPlugin } from "./stack-plugin-compiler";
 
 export interface StackInstallOptions {
@@ -10,6 +11,7 @@ export interface StackInstallOptions {
   projectDir: string;
   sourcePath: string;
   agentSourcePath: string;
+  marketplace?: string;
 }
 
 export interface StackInstallResult {
@@ -18,6 +20,7 @@ export interface StackInstallResult {
   agents: string[];
   skills: string[];
   pluginPath: string;
+  fromMarketplace: boolean;
 }
 
 /**
@@ -46,20 +49,12 @@ export async function compileStackToTemp(options: {
   };
 }
 
-/**
- * Install a stack as a single native plugin using `claude plugin install`
- *
- * Flow:
- * 1. Compile stack to temp directory
- * 2. Run `claude plugin install ./temp/stack-id --scope project`
- * 3. Clean up temp directory
- */
 export async function installStackAsPlugin(
   options: StackInstallOptions,
 ): Promise<StackInstallResult> {
-  const { stackId, projectDir, sourcePath, agentSourcePath } = options;
+  const { stackId, projectDir, sourcePath, agentSourcePath, marketplace } =
+    options;
 
-  // Check if claude CLI is available
   const claudeAvailable = await isClaudeCLIAvailable();
   if (!claudeAvailable) {
     throw new Error(
@@ -67,7 +62,23 @@ export async function installStackAsPlugin(
     );
   }
 
-  // Compile stack to temp directory
+  if (marketplace) {
+    verbose(`Installing from marketplace: ${stackId}@${marketplace}`);
+    const pluginRef = `${stackId}@${marketplace}`;
+
+    await claudePluginInstall(pluginRef, "project", projectDir);
+
+    return {
+      pluginName: stackId,
+      stackName: stackId,
+      agents: [],
+      skills: [],
+      pluginPath: pluginRef,
+      fromMarketplace: true,
+    };
+  }
+
+  verbose(`Compiling stack locally: ${stackId}`);
   const { result, cleanup } = await compileStackToTemp({
     stackId,
     projectRoot: sourcePath,
@@ -84,6 +95,7 @@ export async function installStackAsPlugin(
       agents: result.agents,
       skills: result.skillPlugins,
       pluginPath: result.pluginPath,
+      fromMarketplace: false,
     };
   } finally {
     // Clean up temp directory

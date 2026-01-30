@@ -3,8 +3,12 @@ import * as p from "@clack/prompts";
 import pc from "picocolors";
 import path from "path";
 import { stringify as stringifyYaml } from "yaml";
-import { LOCAL_SKILLS_PATH } from "../consts";
+import { LOCAL_SKILLS_PATH, PROJECT_ROOT } from "../consts";
 import { ensureDir, writeFile, directoryExists } from "../utils/fs";
+import {
+  claudePluginMarketplaceExists,
+  claudePluginMarketplaceAdd,
+} from "../utils/exec";
 import {
   runWizard,
   clearTerminal,
@@ -131,21 +135,35 @@ export const initCommand = new Command("init")
     if (dryRun) {
       if (result.installMode === "plugin" && result.selectedStack) {
         // Plugin Mode with stack: install entire stack as ONE plugin
-        p.log.info(
-          pc.yellow(
-            `[dry-run] Would install stack "${result.selectedStack.id}" as a native plugin`,
-          ),
-        );
-        p.log.info(
-          pc.yellow(
-            `[dry-run]   claude plugin install ./compiled-stack/${result.selectedStack.id} --scope project`,
-          ),
-        );
-        p.log.info(
-          pc.yellow(
-            `[dry-run] Stack includes ${result.selectedSkills.length} skills and agents bundled together`,
-          ),
-        );
+        const useMarketplace = !!sourceResult.marketplace;
+        if (useMarketplace) {
+          p.log.info(
+            pc.yellow(
+              `[dry-run] Would install stack "${result.selectedStack.id}" from marketplace "${sourceResult.marketplace}"`,
+            ),
+          );
+          p.log.info(
+            pc.yellow(
+              `[dry-run]   claude plugin install ${result.selectedStack.id}@${sourceResult.marketplace} --scope project`,
+            ),
+          );
+        } else {
+          p.log.info(
+            pc.yellow(
+              `[dry-run] Would compile and install stack "${result.selectedStack.id}" as a native plugin`,
+            ),
+          );
+          p.log.info(
+            pc.yellow(
+              `[dry-run]   claude plugin install ./compiled-stack/${result.selectedStack.id} --scope project`,
+            ),
+          );
+          p.log.info(
+            pc.yellow(
+              `[dry-run] Stack includes ${result.selectedSkills.length} skills and agents bundled together`,
+            ),
+          );
+        }
       } else {
         // Local Mode (or Plugin Mode fallback when no stack selected)
         if (result.installMode === "plugin") {
@@ -177,9 +195,34 @@ export const initCommand = new Command("init")
     if (result.installMode === "plugin") {
       // Plugin Mode: Install stack as ONE native plugin
       if (result.selectedStack) {
-        s.start(
-          `Compiling and installing stack "${result.selectedStack.id}"...`,
-        );
+        // Register marketplace if needed
+        if (sourceResult.marketplace) {
+          const marketplaceExists = await claudePluginMarketplaceExists(
+            sourceResult.marketplace,
+          );
+
+          if (!marketplaceExists) {
+            s.start(`Registering marketplace "${sourceResult.marketplace}"...`);
+            try {
+              await claudePluginMarketplaceAdd(
+                sourceResult.sourceConfig.source,
+                sourceResult.marketplace,
+              );
+              s.stop(`Registered marketplace: ${sourceResult.marketplace}`);
+            } catch (error) {
+              s.stop("Failed to register marketplace");
+              p.log.error(
+                error instanceof Error ? error.message : "Unknown error",
+              );
+              process.exit(EXIT_CODES.ERROR);
+            }
+          }
+        }
+
+        const installMethod = sourceResult.marketplace
+          ? `Installing from marketplace "${sourceResult.marketplace}"`
+          : "Compiling and installing";
+        s.start(`${installMethod} stack "${result.selectedStack.id}"...`);
 
         try {
           const installResult = await installStackAsPlugin({
@@ -187,9 +230,15 @@ export const initCommand = new Command("init")
             projectDir,
             sourcePath: sourceResult.sourcePath,
             agentSourcePath: sourceResult.sourcePath,
+            marketplace: sourceResult.marketplace,
           });
 
-          s.stop(`Installed stack plugin: ${installResult.pluginName}`);
+          const installedFrom = installResult.fromMarketplace
+            ? `from marketplace`
+            : `(compiled locally)`;
+          s.stop(
+            `Installed stack plugin: ${installResult.pluginName} ${installedFrom}`,
+          );
 
           console.log("");
           console.log(pc.green("Claude Collective initialized successfully!"));
@@ -197,13 +246,18 @@ export const initCommand = new Command("init")
           console.log(
             `Stack ${pc.cyan(`"${installResult.stackName}"`)} installed as plugin`,
           );
-          console.log("");
-          console.log(pc.dim("Agents included:"));
-          for (const agentName of installResult.agents) {
-            console.log(`  ${pc.cyan(agentName)}`);
+
+          if (installResult.agents.length > 0) {
+            console.log("");
+            console.log(pc.dim("Agents included:"));
+            for (const agentName of installResult.agents) {
+              console.log(`  ${pc.cyan(agentName)}`);
+            }
+            console.log("");
+            console.log(
+              pc.dim(`Skills bundled: ${installResult.skills.length}`),
+            );
           }
-          console.log("");
-          console.log(pc.dim(`Skills bundled: ${installResult.skills.length}`));
           console.log("");
 
           p.outro(pc.green("Claude Collective is ready to use!"));
@@ -254,7 +308,10 @@ export const initCommand = new Command("init")
 
       s.start("Generating configuration...");
 
-      const agents = await loadAllAgents(sourceResult.sourcePath);
+      // Load agents from both CLI and source, with source taking precedence
+      const cliAgents = await loadAllAgents(PROJECT_ROOT);
+      const localAgents = await loadAllAgents(sourceResult.sourcePath);
+      const agents = { ...cliAgents, ...localAgents };
 
       const localSkillsForResolution: Record<
         string,

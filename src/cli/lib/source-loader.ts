@@ -31,6 +31,7 @@ export interface SourceLoadResult {
   sourceConfig: ResolvedConfig;
   sourcePath: string;
   isLocal: boolean;
+  marketplace?: string;
 }
 
 export async function loadSkillsMatrixFromSource(
@@ -114,6 +115,7 @@ async function loadFromLocal(
     sourceConfig,
     sourcePath: skillsPath,
     isLocal: true,
+    marketplace: sourceConfig.marketplace,
   };
 }
 
@@ -153,6 +155,7 @@ async function loadFromRemote(
     sourceConfig,
     sourcePath: fetchResult.path,
     isLocal: false,
+    marketplace: sourceConfig.marketplace,
   };
 }
 
