@@ -12,6 +12,7 @@
 | 6   | Implement plugin-to-local mode                    | Low      | Pending  |
 | 7   | Individual skill plugin installation              | Low      | Deferred |
 | 8   | Remote stack installation from marketplace        | Low      | Deferred |
+| 9   | `cc new skill` scaffolding command                | Medium   | Pending  |
 
 ---
 
@@ -91,3 +92,29 @@ claude plugin install stack-nextjs-fullstack@claude-collective --scope project
 - Publish compiled stacks to marketplace (GitHub releases or npm)
 - Stack versioning and update mechanism
 - Dependency resolution for skills bundled in stacks
+
+### 9. `cc new skill` scaffolding command
+
+Scaffold a new skill with the correct directory structure and boilerplate files:
+
+```bash
+cc new skill my-custom-skill
+```
+
+Should create:
+
+```
+.claude/skills/my-custom-skill (@username)/
+  SKILL.md          # main skill content with frontmatter
+  reference.md      # API reference (optional)
+  examples/         # example files
+    core.md
+  metadata.yaml     # skill metadata
+```
+
+Features:
+
+- Interactive prompts for skill name, category, description
+- Auto-detect username from git config or prompt
+- Generate valid frontmatter and metadata
+- Option to add to existing config.yaml
