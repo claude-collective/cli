@@ -5,11 +5,13 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   DEFAULT_SOURCE,
   formatSourceOrigin,
+  formatAgentsSourceOrigin,
   getGlobalConfigPath,
   getProjectConfigPath,
   isLocalSource,
   loadProjectConfig,
   resolveSource,
+  resolveAgentsSource,
   saveProjectConfig,
   SOURCE_ENV_VAR,
 } from "./config";
@@ -165,6 +167,18 @@ describe("config", () => {
       // Current implementation catches errors and returns null
       expect(config).toBeNull();
     });
+
+    it("should load marketplace from project config", async () => {
+      const configDir = path.join(tempDir, ".claude-collective");
+      await mkdir(configDir, { recursive: true });
+      await writeFile(
+        path.join(configDir, "config.yaml"),
+        "marketplace: https://custom-marketplace.io\n",
+      );
+
+      const config = await loadProjectConfig(tempDir);
+      expect(config?.marketplace).toBe("https://custom-marketplace.io");
+    });
   });
 
   describe("saveProjectConfig", () => {
@@ -195,6 +209,38 @@ describe("config", () => {
       const content = await readFile(configPath, "utf-8");
       expect(content).toContain("github:second/repo");
       expect(content).not.toContain("github:first/repo");
+    });
+
+    it("should save marketplace to project config", async () => {
+      await saveProjectConfig(tempDir, {
+        marketplace: "https://my-marketplace.com/plugins",
+      });
+
+      const configPath = path.join(
+        tempDir,
+        ".claude-collective",
+        "config.yaml",
+      );
+      const content = await readFile(configPath, "utf-8");
+      expect(content).toContain(
+        "marketplace: https://my-marketplace.com/plugins",
+      );
+    });
+
+    it("should save both source and marketplace", async () => {
+      await saveProjectConfig(tempDir, {
+        source: "github:myorg/skills",
+        marketplace: "https://enterprise.example.com",
+      });
+
+      const configPath = path.join(
+        tempDir,
+        ".claude-collective",
+        "config.yaml",
+      );
+      const content = await readFile(configPath, "utf-8");
+      expect(content).toContain("source: github:myorg/skills");
+      expect(content).toContain("marketplace: https://enterprise.example.com");
     });
   });
 
@@ -297,6 +343,188 @@ describe("config", () => {
     it("should throw error for whitespace-only source flag", async () => {
       await expect(resolveSource("   ", tempDir)).rejects.toThrow(
         /--source flag cannot be empty/,
+      );
+    });
+
+    describe("marketplace resolution", () => {
+      it("should return marketplace from project config", async () => {
+        const configDir = path.join(tempDir, ".claude-collective");
+        await mkdir(configDir, { recursive: true });
+        await writeFile(
+          path.join(configDir, "config.yaml"),
+          "marketplace: https://my-company.com/plugins\n",
+        );
+
+        const result = await resolveSource(undefined, tempDir);
+
+        expect(result.marketplace).toBe("https://my-company.com/plugins");
+      });
+
+      it("should return marketplace alongside source from project config", async () => {
+        const configDir = path.join(tempDir, ".claude-collective");
+        await mkdir(configDir, { recursive: true });
+        await writeFile(
+          path.join(configDir, "config.yaml"),
+          "source: github:mycompany/skills\nmarketplace: https://enterprise.example.com/plugins\n",
+        );
+
+        const result = await resolveSource(undefined, tempDir);
+
+        expect(result.source).toBe("github:mycompany/skills");
+        expect(result.sourceOrigin).toBe("project");
+        expect(result.marketplace).toBe(
+          "https://enterprise.example.com/plugins",
+        );
+      });
+
+      it("should return undefined marketplace when not configured", async () => {
+        const result = await resolveSource(undefined, tempDir);
+
+        expect(result.marketplace).toBeUndefined();
+      });
+    });
+  });
+
+  describe("formatAgentsSourceOrigin", () => {
+    it("should format flag origin", () => {
+      expect(formatAgentsSourceOrigin("flag")).toBe("--agent-source flag");
+    });
+
+    it("should format project origin", () => {
+      expect(formatAgentsSourceOrigin("project")).toContain("project config");
+    });
+
+    it("should format global origin", () => {
+      expect(formatAgentsSourceOrigin("global")).toContain("global config");
+    });
+
+    it("should format default origin", () => {
+      expect(formatAgentsSourceOrigin("default")).toBe("default (local CLI)");
+    });
+  });
+
+  describe("resolveAgentsSource", () => {
+    it("should return flag value with highest priority", async () => {
+      // Create project config with agents_source
+      const configDir = path.join(tempDir, ".claude-collective");
+      await mkdir(configDir, { recursive: true });
+      await writeFile(
+        path.join(configDir, "config.yaml"),
+        "agents_source: https://project.example.com/agents\n",
+      );
+
+      const result = await resolveAgentsSource(
+        "https://flag.example.com/agents",
+        tempDir,
+      );
+
+      expect(result.agentsSource).toBe("https://flag.example.com/agents");
+      expect(result.agentsSourceOrigin).toBe("flag");
+    });
+
+    it("should return project config when no flag is provided", async () => {
+      const configDir = path.join(tempDir, ".claude-collective");
+      await mkdir(configDir, { recursive: true });
+      await writeFile(
+        path.join(configDir, "config.yaml"),
+        "agents_source: https://project.example.com/agents\n",
+      );
+
+      const result = await resolveAgentsSource(undefined, tempDir);
+
+      expect(result.agentsSource).toBe("https://project.example.com/agents");
+      expect(result.agentsSourceOrigin).toBe("project");
+    });
+
+    it("should return default when no config is set", async () => {
+      const result = await resolveAgentsSource(undefined, tempDir);
+
+      // Default is undefined (local CLI)
+      expect(["default", "global"]).toContain(result.agentsSourceOrigin);
+      if (result.agentsSourceOrigin === "default") {
+        expect(result.agentsSource).toBeUndefined();
+      }
+    });
+
+    it("should handle undefined projectDir", async () => {
+      const result = await resolveAgentsSource(undefined, undefined);
+
+      expect(["default", "global"]).toContain(result.agentsSourceOrigin);
+    });
+
+    it("should throw error for empty agent-source flag", async () => {
+      await expect(resolveAgentsSource("", tempDir)).rejects.toThrow(
+        /--agent-source flag cannot be empty/,
+      );
+    });
+
+    it("should throw error for whitespace-only agent-source flag", async () => {
+      await expect(resolveAgentsSource("   ", tempDir)).rejects.toThrow(
+        /--agent-source flag cannot be empty/,
+      );
+    });
+  });
+
+  describe("loadProjectConfig with agents_source", () => {
+    it("should load agents_source from project config", async () => {
+      const configDir = path.join(tempDir, ".claude-collective");
+      await mkdir(configDir, { recursive: true });
+      await writeFile(
+        path.join(configDir, "config.yaml"),
+        "agents_source: https://my-company.com/agents\n",
+      );
+
+      const config = await loadProjectConfig(tempDir);
+      expect(config?.agents_source).toBe("https://my-company.com/agents");
+    });
+
+    it("should load all config fields together", async () => {
+      const configDir = path.join(tempDir, ".claude-collective");
+      await mkdir(configDir, { recursive: true });
+      await writeFile(
+        path.join(configDir, "config.yaml"),
+        "source: github:myorg/skills\nmarketplace: https://market.example.com\nagents_source: https://agents.example.com\n",
+      );
+
+      const config = await loadProjectConfig(tempDir);
+      expect(config?.source).toBe("github:myorg/skills");
+      expect(config?.marketplace).toBe("https://market.example.com");
+      expect(config?.agents_source).toBe("https://agents.example.com");
+    });
+  });
+
+  describe("saveProjectConfig with agents_source", () => {
+    it("should save agents_source to project config", async () => {
+      await saveProjectConfig(tempDir, {
+        agents_source: "https://my-agents.example.com",
+      });
+
+      const configPath = path.join(
+        tempDir,
+        ".claude-collective",
+        "config.yaml",
+      );
+      const content = await readFile(configPath, "utf-8");
+      expect(content).toContain("agents_source: https://my-agents.example.com");
+    });
+
+    it("should save all config fields together", async () => {
+      await saveProjectConfig(tempDir, {
+        source: "github:myorg/skills",
+        marketplace: "https://enterprise.example.com",
+        agents_source: "https://agents.enterprise.example.com",
+      });
+
+      const configPath = path.join(
+        tempDir,
+        ".claude-collective",
+        "config.yaml",
+      );
+      const content = await readFile(configPath, "utf-8");
+      expect(content).toContain("source: github:myorg/skills");
+      expect(content).toContain("marketplace: https://enterprise.example.com");
+      expect(content).toContain(
+        "agents_source: https://agents.enterprise.example.com",
       );
     });
   });

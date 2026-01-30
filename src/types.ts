@@ -203,6 +203,146 @@ export interface StackConfig {
 }
 
 // =============================================================================
+// Custom Agent Types (for custom_agents in config.yaml)
+// =============================================================================
+
+/**
+ * Custom agent definition in config.yaml
+ * Can extend a built-in agent or be completely custom
+ */
+export interface CustomAgentConfig {
+  /** Display title for the agent */
+  title: string;
+  /** Brief description for Task tool */
+  description: string;
+  /** Optional built-in agent to extend (inherits tools, model, permission_mode) */
+  extends?: string;
+  /** Optional model override */
+  model?: "sonnet" | "opus" | "haiku" | "inherit";
+  /** Tools available to this agent (overrides inherited) */
+  tools?: string[];
+  /** Tools this agent cannot use */
+  disallowed_tools?: string[];
+  /** Permission mode for agent operations */
+  permission_mode?:
+    | "default"
+    | "acceptEdits"
+    | "dontAsk"
+    | "bypassPermissions"
+    | "plan"
+    | "delegate";
+  /** Agent-specific skill assignments */
+  skills?: SkillAssignment[];
+  /** Lifecycle hooks */
+  hooks?: Record<string, AgentHookDefinition[]>;
+}
+
+// =============================================================================
+// Unified Project Config Types (for .claude/config.yaml)
+// =============================================================================
+
+/**
+ * Skill entry - can be a string (ID only) or full assignment
+ */
+export type SkillEntry = string | SkillAssignment;
+
+/**
+ * Per-agent skill configuration
+ * Supports both simple list and categorized structure
+ */
+export type AgentSkillConfig = SkillEntry[] | Record<string, SkillEntry[]>;
+
+/**
+ * Unified project configuration for Claude Collective
+ * Stored at .claude/config.yaml
+ * Backward compatible with StackConfig
+ */
+export interface ProjectConfig {
+  /**
+   * Schema version for migration support
+   * @default "1"
+   */
+  version?: "1";
+
+  /**
+   * Project/plugin name (kebab-case)
+   * @example "my-project"
+   */
+  name: string;
+
+  /**
+   * Brief description of the project
+   */
+  description?: string;
+
+  /**
+   * Skills available to agents
+   * Can be skill IDs or SkillAssignment objects
+   */
+  skills?: SkillEntry[];
+
+  /**
+   * Agents to compile
+   * List of agent names from the agent registry
+   */
+  agents: string[];
+
+  /**
+   * Per-agent skill assignments
+   * Overrides default mappings from SKILL_TO_AGENTS
+   * If not specified for an agent, uses intelligent defaults
+   * Supports both simple list format and categorized structure
+   */
+  agent_skills?: Record<string, AgentSkillConfig>;
+
+  /**
+   * Default preload patterns per agent
+   * Overrides default mappings from PRELOADED_SKILLS
+   * Maps agent name to skill categories/patterns that should be preloaded
+   */
+  preload_patterns?: Record<string, string[]>;
+
+  /**
+   * Lifecycle hooks for the plugin
+   */
+  hooks?: Record<string, AgentHookDefinition[]>;
+
+  // --- Optional metadata (for marketplace/publishing) ---
+
+  /**
+   * Author handle (e.g., "@vince")
+   */
+  author?: string;
+
+  /**
+   * Framework hint for agent behavior
+   * @example "nextjs", "remix", "express"
+   */
+  framework?: string;
+
+  /**
+   * Guiding philosophy for the project
+   */
+  philosophy?: string;
+
+  /**
+   * Design principles
+   */
+  principles?: string[];
+
+  /**
+   * Tags for discoverability
+   */
+  tags?: string[];
+
+  /**
+   * Custom agent definitions
+   * Maps custom agent ID to its definition
+   */
+  custom_agents?: Record<string, CustomAgentConfig>;
+}
+
+// =============================================================================
 // Co-located Config Types (Phase 0A - replaces registry.yaml)
 // =============================================================================
 
