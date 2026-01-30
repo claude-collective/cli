@@ -15,15 +15,18 @@ export const PROJECT_CONFIG_FILE = "config.yaml";
 export interface GlobalConfig {
   source?: string;
   author?: string;
+  marketplace?: string;
 }
 
 export interface ProjectConfig {
   source?: string;
+  marketplace?: string;
 }
 
 export interface ResolvedConfig {
   source: string;
   sourceOrigin: "flag" | "env" | "project" | "global" | "default";
+  marketplace?: string;
 }
 
 function isValidGlobalConfig(obj: unknown): obj is GlobalConfig {
@@ -33,6 +36,11 @@ function isValidGlobalConfig(obj: unknown): obj is GlobalConfig {
     return false;
   if (config.author !== undefined && typeof config.author !== "string")
     return false;
+  if (
+    config.marketplace !== undefined &&
+    typeof config.marketplace !== "string"
+  )
+    return false;
   return true;
 }
 
@@ -40,6 +48,11 @@ function isValidProjectConfig(obj: unknown): obj is ProjectConfig {
   if (typeof obj !== "object" || obj === null) return false;
   const config = obj as Record<string, unknown>;
   if (config.source !== undefined && typeof config.source !== "string")
+    return false;
+  if (
+    config.marketplace !== undefined &&
+    typeof config.marketplace !== "string"
+  )
     return false;
   return true;
 }
@@ -124,36 +137,43 @@ export async function resolveSource(
   flagValue?: string,
   projectDir?: string,
 ): Promise<ResolvedConfig> {
+  // Load configs to get marketplace (marketplace is resolved separately from source)
+  const projectConfig = projectDir ? await loadProjectConfig(projectDir) : null;
+  const globalConfig = await loadGlobalConfig();
+
+  // Resolve marketplace: project > global (no flag/env support for marketplace)
+  const marketplace = projectConfig?.marketplace || globalConfig?.marketplace;
+
   if (flagValue !== undefined) {
     if (flagValue === "" || flagValue.trim() === "") {
       throw new Error("--source flag cannot be empty");
     }
     verbose(`Source from --source flag: ${flagValue}`);
-    return { source: flagValue, sourceOrigin: "flag" };
+    return { source: flagValue, sourceOrigin: "flag", marketplace };
   }
 
   const envValue = process.env[SOURCE_ENV_VAR];
   if (envValue) {
     verbose(`Source from ${SOURCE_ENV_VAR} env var: ${envValue}`);
-    return { source: envValue, sourceOrigin: "env" };
+    return { source: envValue, sourceOrigin: "env", marketplace };
   }
 
-  if (projectDir) {
-    const projectConfig = await loadProjectConfig(projectDir);
-    if (projectConfig?.source) {
-      verbose(`Source from project config: ${projectConfig.source}`);
-      return { source: projectConfig.source, sourceOrigin: "project" };
-    }
+  if (projectConfig?.source) {
+    verbose(`Source from project config: ${projectConfig.source}`);
+    return {
+      source: projectConfig.source,
+      sourceOrigin: "project",
+      marketplace,
+    };
   }
 
-  const globalConfig = await loadGlobalConfig();
   if (globalConfig?.source) {
     verbose(`Source from global config: ${globalConfig.source}`);
-    return { source: globalConfig.source, sourceOrigin: "global" };
+    return { source: globalConfig.source, sourceOrigin: "global", marketplace };
   }
 
   verbose(`Using default source: ${DEFAULT_SOURCE}`);
-  return { source: DEFAULT_SOURCE, sourceOrigin: "default" };
+  return { source: DEFAULT_SOURCE, sourceOrigin: "default", marketplace };
 }
 
 export function formatSourceOrigin(
