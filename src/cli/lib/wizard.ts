@@ -17,20 +17,19 @@ import {
   type SkillCheckOptions,
 } from "./matrix-resolver";
 
-const BACK_VALUE = "__back__";
-const CONTINUE_VALUE = "__continue__";
-const EXPERT_MODE_VALUE = "__expert_mode__";
-const INSTALL_MODE_VALUE = "__install_mode__";
+export const BACK_VALUE = "__back__";
+export const CONTINUE_VALUE = "__continue__";
+export const EXPERT_MODE_VALUE = "__expert_mode__";
+export const INSTALL_MODE_VALUE = "__install_mode__";
 
-type WizardStep =
+export type WizardStep =
   | "approach"
   | "stack"
-  | "stack_review"
   | "category"
   | "subcategory"
   | "confirm";
 
-interface WizardState {
+export interface WizardState {
   currentStep: WizardStep;
   selectedSkills: string[];
   history: WizardStep[];
@@ -53,12 +52,12 @@ export interface WizardResult {
   installMode: "plugin" | "local";
 }
 
-interface WizardOptions {
+export interface WizardOptions {
   initialSkills?: string[];
   hasLocalSkills?: boolean;
 }
 
-function createInitialState(options: WizardOptions = {}): WizardState {
+export function createInitialState(options: WizardOptions = {}): WizardState {
   const hasInitialSkills =
     options.initialSkills && options.initialSkills.length > 0;
 
@@ -75,15 +74,15 @@ function createInitialState(options: WizardOptions = {}): WizardState {
     lastSelectedSkill: null,
     lastSelectedApproach: null,
     expertMode: options.hasLocalSkills ?? false,
-    installMode: "plugin",
+    installMode: "local",
   };
 }
 
-function pushHistory(state: WizardState): void {
+export function pushHistory(state: WizardState): void {
   state.history.push(state.currentStep);
 }
 
-function popHistory(state: WizardState): WizardStep | null {
+export function popHistory(state: WizardState): WizardStep | null {
   return state.history.pop() || null;
 }
 
@@ -162,7 +161,7 @@ function showSelectionsHeader(
   renderSelectionsHeader(state.selectedSkills, matrix);
 }
 
-function formatSkillOption(option: SkillOption): {
+export function formatSkillOption(option: SkillOption): {
   value: string;
   label: string;
   hint?: string;
@@ -190,7 +189,7 @@ function formatSkillOption(option: SkillOption): {
   };
 }
 
-function formatStackOption(stack: ResolvedStack): {
+export function formatStackOption(stack: ResolvedStack): {
   value: string;
   label: string;
   hint: string;
@@ -202,7 +201,7 @@ function formatStackOption(stack: ResolvedStack): {
   };
 }
 
-function formatExpertModeOption(expertMode: boolean): {
+export function formatExpertModeOption(expertMode: boolean): {
   value: string;
   label: string;
   hint: string;
@@ -221,22 +220,22 @@ function formatExpertModeOption(expertMode: boolean): {
   };
 }
 
-function formatInstallModeOption(installMode: "plugin" | "local"): {
+export function formatInstallModeOption(installMode: "plugin" | "local"): {
   value: string;
   label: string;
   hint: string;
 } {
-  if (installMode === "plugin") {
+  if (installMode === "local") {
     return {
       value: INSTALL_MODE_VALUE,
-      label: pc.cyan("Install Mode: Plugin"),
-      hint: "click to switch - installs as native Claude plugins (recommended)",
+      label: pc.cyan("Install Mode: Local"),
+      hint: "click to switch - copies skills to .claude/skills/ for customization (recommended)",
     };
   }
   return {
     value: INSTALL_MODE_VALUE,
-    label: pc.dim("Install Mode: Local"),
-    hint: "click to switch - copies skills to .claude/skills/ for customization",
+    label: pc.dim("Install Mode: Plugin"),
+    hint: "click to switch - installs as native Claude plugins",
   };
 }
 
@@ -297,31 +296,6 @@ async function stepSelectStack(
   const result = await p.select({
     message: "Select a stack:",
     options: [{ value: BACK_VALUE, label: pc.dim("Back") }, ...options],
-  });
-
-  return result as string | symbol;
-}
-
-const EDIT_VALUE = "__edit__";
-const CONFIRM_VALUE = "__confirm__";
-
-async function stepStackReview(
-  state: WizardState,
-  matrix: MergedSkillsMatrix,
-): Promise<string | symbol> {
-  clearTerminal();
-  showSelectionsHeader(state, matrix);
-
-  const result = await p.select({
-    message: "What would you like to do?",
-    options: [
-      { value: BACK_VALUE, label: pc.dim("Back") },
-      { value: EDIT_VALUE, label: "Edit selections" },
-      {
-        value: CONFIRM_VALUE,
-        label: pc.green("Confirm and continue (recommended)"),
-      },
-    ],
   });
 
   return result as string | symbol;
@@ -608,35 +582,8 @@ export async function runWizard(
           state.selectedSkills = [...stack.allSkillIds];
 
           pushHistory(state);
-          state.currentStep = "stack_review";
-        }
-        break;
-      }
-
-      case "stack_review": {
-        const result = await stepStackReview(state, matrix);
-
-        if (p.isCancel(result)) {
-          return null;
-        }
-
-        if (result === BACK_VALUE) {
-          state.selectedStack = null;
-          state.selectedSkills = [];
-          state.currentStep = popHistory(state) || "stack";
-          break;
-        }
-
-        if (result === EDIT_VALUE) {
-          pushHistory(state);
+          // Go directly to category view - skills are pre-selected and visible
           state.currentStep = "category";
-          break;
-        }
-
-        if (result === CONFIRM_VALUE) {
-          pushHistory(state);
-          state.currentStep = "confirm";
-          break;
         }
         break;
       }
