@@ -92,9 +92,8 @@ export function generateStackPluginManifest(
     manifest.keywords = options.keywords;
   }
 
-  if (options.hasAgents) {
-    manifest.agents = "./agents/";
-  }
+  // Note: Claude Code plugins don't support agents field in manifest
+  // Agents are discovered from ./agents/ directory automatically
 
   if (options.hasHooks) {
     manifest.hooks = "./hooks/hooks.json";
