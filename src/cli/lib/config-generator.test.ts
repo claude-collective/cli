@@ -223,11 +223,12 @@ describe("config-generator", () => {
     });
 
     it("uses defaults when version/author missing", () => {
-      const stackConfig: StackConfig = {
+      // Cast through unknown to test handling of incomplete config
+      const stackConfig = {
         name: "Minimal Stack",
         agents: [],
         skills: [],
-      };
+      } as unknown as StackConfig;
 
       const config = generateConfigFromStack(stackConfig);
 
