@@ -140,13 +140,15 @@ describe("plugin-manifest", () => {
       expect(manifest.name).toBe("nextjs-fullstack");
     });
 
-    it("should include agents path when hasAgents is true", () => {
+    it("should not include agents even when hasAgents is true (Claude Code discovers agents automatically)", () => {
       const manifest = generateStackPluginManifest({
         stackName: "nextjs-fullstack",
         hasAgents: true,
       });
 
-      expect(manifest.agents).toBe("./agents/");
+      // Claude Code plugins don't support agents field in manifest
+      // Agents are discovered from ./agents/ directory automatically
+      expect(manifest.agents).toBeUndefined();
     });
 
     it("should not include agents when hasAgents is false", () => {

@@ -329,7 +329,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       // content_hash and updated are no longer in manifest - stored internally
       expect(manifest.content_hash).toBeUndefined();
       expect(manifest.updated).toBeUndefined();
-      expect(manifest.agents).toBe("./agents/");
+      // Claude Code discovers agents automatically from ./agents/ directory
+      expect(manifest.agents).toBeUndefined();
     });
 
     it("should compile agent markdown files to agents directory", async () => {

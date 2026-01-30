@@ -263,7 +263,8 @@ describe("Integration: Full Stack Pipeline", () => {
     const manifest = await readPluginManifest(result.pluginPath);
     expect(manifest).not.toBeNull();
     expect(manifest!.name).toBe(stackId);
-    expect(manifest!.agents).toBe("./agents/");
+    // Claude Code discovers agents automatically from ./agents/ directory
+    expect(manifest!.agents).toBeUndefined();
   });
 
   it("should compile angular-stack successfully", async () => {
