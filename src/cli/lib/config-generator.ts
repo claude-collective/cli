@@ -1,5 +1,11 @@
-import type { StackConfig, SkillAssignment } from "../../types";
-import type { ResolvedSkill, MergedSkillsMatrix } from "../types-matrix";
+import type {
+  StackConfig,
+  SkillAssignment,
+  ProjectConfig,
+  SkillEntry,
+  AgentSkillConfig,
+} from "../../types";
+import type { MergedSkillsMatrix } from "../types-matrix";
 import {
   getAgentsForSkill,
   shouldPreloadSkill,
@@ -9,6 +15,20 @@ import { DEFAULT_VERSION } from "../consts";
 
 const PLUGIN_NAME = "claude-collective";
 const DEFAULT_AUTHOR = "@user";
+
+/**
+ * Options for generating a ProjectConfig
+ */
+export interface ProjectConfigOptions {
+  /** Brief description of the project */
+  description?: string;
+  /** Framework hint for agent behavior */
+  framework?: string;
+  /** Author handle */
+  author?: string;
+  /** Include agent_skills customizations (default: false - use defaults) */
+  includeAgentSkills?: boolean;
+}
 
 export function generateConfigFromSkills(
   selectedSkillIds: string[],
@@ -179,6 +199,214 @@ export function mergeStackWithSkills(
   }
 
   config.description = `Custom plugin based on ${baseStackConfig.name} with ${selectedSkillIds.length} skills`;
+
+  return config;
+}
+
+/**
+ * Generate a minimal ProjectConfig from selected skills.
+ * Returns a config with just the essentials:
+ * - name
+ * - skills array (string IDs for remote, objects for local)
+ * - agents array (derived from skills via getAgentsForSkill)
+ * - Optionally agent_skills if includeAgentSkills is true
+ *
+ * Does NOT include preload_patterns (rely on defaults)
+ */
+export function generateProjectConfigFromSkills(
+  name: string,
+  selectedSkillIds: string[],
+  matrix: MergedSkillsMatrix,
+  options?: ProjectConfigOptions,
+): ProjectConfig {
+  const neededAgents = new Set<string>();
+
+  // Derive agents from skills
+  for (const skillId of selectedSkillIds) {
+    const skill = matrix.skills[skillId];
+    if (!skill) {
+      continue;
+    }
+
+    const skillPath = skill.path;
+    const category = skill.category;
+    const agents = getAgentsForSkill(skillPath, category);
+
+    for (const agentId of agents) {
+      neededAgents.add(agentId);
+    }
+  }
+
+  // Build minimal skills array
+  const skills: SkillEntry[] = selectedSkillIds.map((id) => {
+    const skill = matrix.skills[id];
+    if (skill?.local && skill?.localPath) {
+      return {
+        id,
+        local: true,
+        path: skill.localPath,
+      };
+    }
+    // For remote skills, just use string ID (minimal format)
+    return id;
+  });
+
+  // Build minimal config
+  const config: ProjectConfig = {
+    name,
+    agents: Array.from(neededAgents).sort(),
+  };
+
+  // Only include skills if there are any
+  if (skills.length > 0) {
+    config.skills = skills;
+  }
+
+  // Add optional fields only if provided
+  if (options?.description) {
+    config.description = options.description;
+  }
+
+  if (options?.framework) {
+    config.framework = options.framework;
+  }
+
+  if (options?.author) {
+    config.author = options.author;
+  }
+
+  // Only include agent_skills if explicitly requested
+  if (options?.includeAgentSkills) {
+    const agentSkills = buildAgentSkills(
+      selectedSkillIds,
+      matrix,
+      neededAgents,
+    );
+    if (Object.keys(agentSkills).length > 0) {
+      config.agent_skills = agentSkills;
+    }
+  }
+
+  return config;
+}
+
+/**
+ * Build agent_skills mapping for ProjectConfig.
+ * Uses simple list format for each agent (not categorized).
+ */
+function buildAgentSkills(
+  selectedSkillIds: string[],
+  matrix: MergedSkillsMatrix,
+  neededAgents: Set<string>,
+): Record<string, AgentSkillConfig> {
+  const agentSkills: Record<string, SkillEntry[]> = {};
+
+  for (const skillId of selectedSkillIds) {
+    const skill = matrix.skills[skillId];
+    if (!skill) {
+      continue;
+    }
+
+    const skillPath = skill.path;
+    const category = skill.category;
+    const agents = getAgentsForSkill(skillPath, category);
+
+    for (const agentId of agents) {
+      if (!neededAgents.has(agentId)) continue;
+
+      if (!agentSkills[agentId]) {
+        agentSkills[agentId] = [];
+      }
+
+      const isPreloaded = shouldPreloadSkill(
+        skillPath,
+        skillId,
+        category,
+        agentId,
+      );
+
+      // Use minimal format: string for non-preloaded, object only if preloaded
+      if (isPreloaded) {
+        agentSkills[agentId].push({ id: skillId, preloaded: true });
+      } else {
+        agentSkills[agentId].push(skillId);
+      }
+    }
+  }
+
+  return agentSkills;
+}
+
+/**
+ * Generate a ProjectConfig from an existing StackConfig.
+ * Converts legacy StackConfig format to new ProjectConfig format.
+ */
+export function generateProjectConfigFromStack(
+  stackConfig: StackConfig,
+): ProjectConfig {
+  const config: ProjectConfig = {
+    name: stackConfig.name,
+    agents: stackConfig.agents,
+  };
+
+  // Convert skills array to SkillEntry[] format
+  if (stackConfig.skills && stackConfig.skills.length > 0) {
+    config.skills = stackConfig.skills.map((skill) => {
+      // If skill has local flag, preserve full object
+      if (skill.local && skill.path) {
+        return {
+          id: skill.id,
+          local: true,
+          path: skill.path,
+        };
+      }
+      // If skill has preloaded flag, preserve object format
+      if (skill.preloaded) {
+        return {
+          id: skill.id,
+          preloaded: true,
+        };
+      }
+      // Otherwise, use minimal string format
+      return skill.id;
+    });
+  }
+
+  // Copy optional fields only if present
+  if (stackConfig.description) {
+    config.description = stackConfig.description;
+  }
+
+  if (stackConfig.framework) {
+    config.framework = stackConfig.framework;
+  }
+
+  if (stackConfig.author) {
+    config.author = stackConfig.author;
+  }
+
+  // Convert agent_skills (StackConfig uses categorized format)
+  if (stackConfig.agent_skills) {
+    // Keep the categorized format as-is for ProjectConfig
+    // (ProjectConfig supports both simple list and categorized)
+    config.agent_skills = stackConfig.agent_skills;
+  }
+
+  if (stackConfig.hooks) {
+    config.hooks = stackConfig.hooks;
+  }
+
+  if (stackConfig.philosophy) {
+    config.philosophy = stackConfig.philosophy;
+  }
+
+  if (stackConfig.principles && stackConfig.principles.length > 0) {
+    config.principles = stackConfig.principles;
+  }
+
+  if (stackConfig.tags && stackConfig.tags.length > 0) {
+    config.tags = stackConfig.tags;
+  }
 
   return config;
 }

@@ -575,5 +575,226 @@ describe("skill-copier", () => {
 
       expect(result).toEqual([]);
     });
+
+    it("P1-20: flattens deeply nested directory structures", async () => {
+      // Create a skill with a deeply nested path like:
+      // skills/web/framework/react (@vince)/
+      // This should be flattened to: .claude/skills/react/
+      const deeplyNestedPath =
+        "skills/web/framework/client-rendering/react (@vince)/";
+      const remoteSkillDir = path.join(projectDir, "src", deeplyNestedPath);
+      await mkdir(remoteSkillDir, { recursive: true });
+      await writeFile(
+        path.join(remoteSkillDir, "SKILL.md"),
+        `---\nname: react (@vince)\ndescription: React framework\n---\nReact content from deeply nested dir`,
+      );
+      await writeFile(
+        path.join(remoteSkillDir, "metadata.yaml"),
+        `cli_name: React\nauthor: "@vince"`,
+      );
+
+      const localSkillsDir = path.join(projectDir, ".claude", "skills");
+      await mkdir(localSkillsDir, { recursive: true });
+
+      const matrix = createMockMatrix({
+        "react (@vince)": createMockSkill(
+          "react (@vince)",
+          "web/framework/client-rendering",
+          deeplyNestedPath,
+          { alias: "react" },
+        ),
+      });
+
+      const sourceResult: SourceLoadResult = {
+        matrix,
+        sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
+        sourcePath: projectDir,
+        isLocal: true,
+      };
+
+      const result = await copySkillsToLocalFlattened(
+        ["react (@vince)"],
+        localSkillsDir,
+        matrix,
+        sourceResult,
+      );
+
+      expect(result).toHaveLength(1);
+      // Key assertion: destPath should be FLAT, not nested
+      // The path should be ".claude/skills/react", NOT ".claude/skills/web/framework/client-rendering/react (@vince)/"
+      expect(result[0].destPath).toBe(path.join(localSkillsDir, "react"));
+
+      // Verify the skill was actually copied to the flat location
+      const copiedSkillMd = await readFile(
+        path.join(localSkillsDir, "react", "SKILL.md"),
+        "utf-8",
+      );
+      expect(copiedSkillMd).toContain("React content from deeply nested dir");
+
+      // Verify the nested structure was NOT created
+      const nestedPath = path.join(
+        localSkillsDir,
+        "web",
+        "framework",
+        "client-rendering",
+        "react (@vince)",
+      );
+      let nestedExists = false;
+      try {
+        await readFile(path.join(nestedPath, "SKILL.md"));
+        nestedExists = true;
+      } catch {
+        nestedExists = false;
+      }
+      expect(nestedExists).toBe(false);
+    });
+
+    it("P1-20: flattens multiple skills from different nested directories", async () => {
+      // Create skills from different nested paths
+      const reactPath = "skills/frontend/framework/react (@vince)/";
+      const reactDir = path.join(projectDir, "src", reactPath);
+      await mkdir(reactDir, { recursive: true });
+      await writeFile(
+        path.join(reactDir, "SKILL.md"),
+        `---\nname: react (@vince)\ndescription: React\n---\nReact`,
+      );
+      await writeFile(
+        path.join(reactDir, "metadata.yaml"),
+        `cli_name: React\nauthor: "@vince"`,
+      );
+
+      const honoPath = "skills/backend/api/hono (@vince)/";
+      const honoDir = path.join(projectDir, "src", honoPath);
+      await mkdir(honoDir, { recursive: true });
+      await writeFile(
+        path.join(honoDir, "SKILL.md"),
+        `---\nname: hono (@vince)\ndescription: Hono\n---\nHono`,
+      );
+      await writeFile(
+        path.join(honoDir, "metadata.yaml"),
+        `cli_name: Hono\nauthor: "@vince"`,
+      );
+
+      const vitestPath = "skills/testing/unit/vitest (@vince)/";
+      const vitestDir = path.join(projectDir, "src", vitestPath);
+      await mkdir(vitestDir, { recursive: true });
+      await writeFile(
+        path.join(vitestDir, "SKILL.md"),
+        `---\nname: vitest (@vince)\ndescription: Vitest\n---\nVitest`,
+      );
+      await writeFile(
+        path.join(vitestDir, "metadata.yaml"),
+        `cli_name: Vitest\nauthor: "@vince"`,
+      );
+
+      const localSkillsDir = path.join(projectDir, ".claude", "skills");
+      await mkdir(localSkillsDir, { recursive: true });
+
+      const matrix = createMockMatrix({
+        "react (@vince)": createMockSkill(
+          "react (@vince)",
+          "frontend/framework",
+          reactPath,
+          { alias: "react" },
+        ),
+        "hono (@vince)": createMockSkill(
+          "hono (@vince)",
+          "backend/api",
+          honoPath,
+          { alias: "hono" },
+        ),
+        "vitest (@vince)": createMockSkill(
+          "vitest (@vince)",
+          "testing/unit",
+          vitestPath,
+          { alias: "vitest" },
+        ),
+      });
+
+      const sourceResult: SourceLoadResult = {
+        matrix,
+        sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
+        sourcePath: projectDir,
+        isLocal: true,
+      };
+
+      const result = await copySkillsToLocalFlattened(
+        ["react (@vince)", "hono (@vince)", "vitest (@vince)"],
+        localSkillsDir,
+        matrix,
+        sourceResult,
+      );
+
+      expect(result).toHaveLength(3);
+
+      // All skills should be at the same flat level
+      const destPaths = result.map((r) => r.destPath);
+      expect(destPaths).toContain(path.join(localSkillsDir, "react"));
+      expect(destPaths).toContain(path.join(localSkillsDir, "hono"));
+      expect(destPaths).toContain(path.join(localSkillsDir, "vitest"));
+
+      // Verify all skills exist at their flat locations
+      const reactContent = await readFile(
+        path.join(localSkillsDir, "react", "SKILL.md"),
+        "utf-8",
+      );
+      const honoContent = await readFile(
+        path.join(localSkillsDir, "hono", "SKILL.md"),
+        "utf-8",
+      );
+      const vitestContent = await readFile(
+        path.join(localSkillsDir, "vitest", "SKILL.md"),
+        "utf-8",
+      );
+
+      expect(reactContent).toContain("React");
+      expect(honoContent).toContain("Hono");
+      expect(vitestContent).toContain("Vitest");
+    });
+
+    it("P1-20: uses skill ID name when no alias is provided", async () => {
+      // Create a skill without an alias - should extract name from skill ID
+      const nestedPath = "skills/tooling/bundler/vite (@vince)/";
+      const skillDir = path.join(projectDir, "src", nestedPath);
+      await mkdir(skillDir, { recursive: true });
+      await writeFile(
+        path.join(skillDir, "SKILL.md"),
+        `---\nname: vite (@vince)\ndescription: Vite bundler\n---\nVite`,
+      );
+      await writeFile(
+        path.join(skillDir, "metadata.yaml"),
+        `cli_name: Vite\nauthor: "@vince"`,
+      );
+
+      const localSkillsDir = path.join(projectDir, ".claude", "skills");
+      await mkdir(localSkillsDir, { recursive: true });
+
+      const matrix = createMockMatrix({
+        "vite (@vince)": createMockSkill(
+          "vite (@vince)",
+          "tooling/bundler",
+          nestedPath,
+          // No alias!
+        ),
+      });
+
+      const sourceResult: SourceLoadResult = {
+        matrix,
+        sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
+        sourcePath: projectDir,
+        isLocal: true,
+      };
+
+      const result = await copySkillsToLocalFlattened(
+        ["vite (@vince)"],
+        localSkillsDir,
+        matrix,
+        sourceResult,
+      );
+
+      expect(result).toHaveLength(1);
+      // Should extract "vite" from "vite (@vince)" since no alias
+      expect(result[0].destPath).toBe(path.join(localSkillsDir, "vite"));
+    });
   });
 });
