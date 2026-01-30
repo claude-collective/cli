@@ -41,6 +41,7 @@ interface WizardState {
   lastSelectedCategory: string | null;
   lastSelectedSubcategory: string | null;
   lastSelectedSkill: string | null;
+  lastSelectedApproach: string | null;
   expertMode: boolean;
   installMode: "plugin" | "local";
 }
@@ -72,6 +73,7 @@ function createInitialState(options: WizardOptions = {}): WizardState {
     lastSelectedCategory: null,
     lastSelectedSubcategory: null,
     lastSelectedSkill: null,
+    lastSelectedApproach: null,
     expertMode: options.hasLocalSkills ?? false,
     installMode: "plugin",
   };
@@ -278,6 +280,7 @@ async function stepApproach(state: WizardState): Promise<string | symbol> {
       formatExpertModeOption(state.expertMode),
       formatInstallModeOption(state.installMode),
     ],
+    initialValue: state.lastSelectedApproach || undefined,
   });
 
   return result as string | symbol;
@@ -562,15 +565,20 @@ export async function runWizard(
         }
 
         if (result === EXPERT_MODE_VALUE) {
+          state.lastSelectedApproach = EXPERT_MODE_VALUE;
           state.expertMode = !state.expertMode;
           break;
         }
 
         if (result === INSTALL_MODE_VALUE) {
+          state.lastSelectedApproach = INSTALL_MODE_VALUE;
           state.installMode =
             state.installMode === "plugin" ? "local" : "plugin";
           break;
         }
+
+        // Clear lastSelectedApproach when moving to a new step
+        state.lastSelectedApproach = null;
 
         if (result === "stack") {
           pushHistory(state);
