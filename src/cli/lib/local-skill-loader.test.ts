@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
@@ -33,7 +33,7 @@ describe("local-skill-loader", () => {
       );
     });
 
-    it("skips skills without test- prefix (temporary filter)", async () => {
+    it("discovers skills regardless of name prefix", async () => {
       const skillsDir = path.join(tempDir, ".claude", "skills");
       const normalSkillDir = path.join(skillsDir, "my-normal-skill");
       await mkdir(normalSkillDir, { recursive: true });
@@ -51,43 +51,25 @@ describe("local-skill-loader", () => {
       const result = await discoverLocalSkills(tempDir);
 
       expect(result).not.toBeNull();
-      expect(result?.skills).toEqual([]);
-    });
-
-    it("discovers skills with test- prefix", async () => {
-      const skillsDir = path.join(tempDir, ".claude", "skills");
-      const testSkillDir = path.join(skillsDir, "test-my-skill");
-      await mkdir(testSkillDir, { recursive: true });
-
-      await writeFile(
-        path.join(testSkillDir, "metadata.yaml"),
-        `cli_name: My Test Skill\ncli_description: A test skill`,
-      );
-      await writeFile(
-        path.join(testSkillDir, "SKILL.md"),
-        `---\nname: my-test-skill (@local)\ndescription: A test skill\n---\nContent`,
-      );
-
-      const result = await discoverLocalSkills(tempDir);
-
-      expect(result).not.toBeNull();
       expect(result?.skills).toHaveLength(1);
-      expect(result?.skills[0].id).toBe("my-test-skill (@local)");
-      expect(result?.skills[0].name).toBe("My Test Skill @local");
+      expect(result?.skills[0].id).toBe("my-normal-skill (@local)");
+      expect(result?.skills[0].name).toBe("My Normal Skill @local");
       expect(result?.skills[0].category).toBe("local");
       expect(result?.skills[0].author).toBe("@local");
       expect(result?.skills[0].local).toBe(true);
-      expect(result?.skills[0].localPath).toBe(".claude/skills/test-my-skill/");
+      expect(result?.skills[0].localPath).toBe(
+        ".claude/skills/my-normal-skill/",
+      );
     });
 
     it("skips skill without metadata.yaml", async () => {
       const skillsDir = path.join(tempDir, ".claude", "skills");
-      const testSkillDir = path.join(skillsDir, "test-no-metadata");
-      await mkdir(testSkillDir, { recursive: true });
+      const skillDir = path.join(skillsDir, "no-metadata");
+      await mkdir(skillDir, { recursive: true });
 
       // Only create SKILL.md, no metadata.yaml
       await writeFile(
-        path.join(testSkillDir, "SKILL.md"),
+        path.join(skillDir, "SKILL.md"),
         `---\nname: no-metadata (@local)\ndescription: Missing metadata\n---\nContent`,
       );
 
@@ -98,12 +80,12 @@ describe("local-skill-loader", () => {
 
     it("skips skill without SKILL.md", async () => {
       const skillsDir = path.join(tempDir, ".claude", "skills");
-      const testSkillDir = path.join(skillsDir, "test-no-skillmd");
-      await mkdir(testSkillDir, { recursive: true });
+      const skillDir = path.join(skillsDir, "no-skillmd");
+      await mkdir(skillDir, { recursive: true });
 
       // Only create metadata.yaml, no SKILL.md
       await writeFile(
-        path.join(testSkillDir, "metadata.yaml"),
+        path.join(skillDir, "metadata.yaml"),
         `cli_name: No Skill MD`,
       );
 
@@ -114,16 +96,16 @@ describe("local-skill-loader", () => {
 
     it("skips skill with metadata.yaml missing cli_name", async () => {
       const skillsDir = path.join(tempDir, ".claude", "skills");
-      const testSkillDir = path.join(skillsDir, "test-no-cli-name");
-      await mkdir(testSkillDir, { recursive: true });
+      const skillDir = path.join(skillsDir, "no-cli-name");
+      await mkdir(skillDir, { recursive: true });
 
       // Create metadata.yaml without cli_name
       await writeFile(
-        path.join(testSkillDir, "metadata.yaml"),
+        path.join(skillDir, "metadata.yaml"),
         `cli_description: Just a description`,
       );
       await writeFile(
-        path.join(testSkillDir, "SKILL.md"),
+        path.join(skillDir, "SKILL.md"),
         `---\nname: no-cli-name (@local)\ndescription: Missing cli_name\n---\nContent`,
       );
 
@@ -134,16 +116,16 @@ describe("local-skill-loader", () => {
 
     it("skips skill with invalid SKILL.md frontmatter", async () => {
       const skillsDir = path.join(tempDir, ".claude", "skills");
-      const testSkillDir = path.join(skillsDir, "test-bad-frontmatter");
-      await mkdir(testSkillDir, { recursive: true });
+      const skillDir = path.join(skillsDir, "bad-frontmatter");
+      await mkdir(skillDir, { recursive: true });
 
       await writeFile(
-        path.join(testSkillDir, "metadata.yaml"),
+        path.join(skillDir, "metadata.yaml"),
         `cli_name: Bad Frontmatter Skill`,
       );
       // SKILL.md without proper frontmatter (missing name)
       await writeFile(
-        path.join(testSkillDir, "SKILL.md"),
+        path.join(skillDir, "SKILL.md"),
         `---\ndescription: Only description, no name\n---\nContent`,
       );
 
@@ -154,15 +136,15 @@ describe("local-skill-loader", () => {
 
     it("uses cli_description from metadata.yaml when provided", async () => {
       const skillsDir = path.join(tempDir, ".claude", "skills");
-      const testSkillDir = path.join(skillsDir, "test-with-desc");
-      await mkdir(testSkillDir, { recursive: true });
+      const skillDir = path.join(skillsDir, "with-desc");
+      await mkdir(skillDir, { recursive: true });
 
       await writeFile(
-        path.join(testSkillDir, "metadata.yaml"),
+        path.join(skillDir, "metadata.yaml"),
         `cli_name: Desc Skill\ncli_description: Custom CLI description`,
       );
       await writeFile(
-        path.join(testSkillDir, "SKILL.md"),
+        path.join(skillDir, "SKILL.md"),
         `---\nname: desc-skill (@local)\ndescription: Frontmatter description\n---\nContent`,
       );
 
@@ -173,15 +155,15 @@ describe("local-skill-loader", () => {
 
     it("falls back to frontmatter description when cli_description not provided", async () => {
       const skillsDir = path.join(tempDir, ".claude", "skills");
-      const testSkillDir = path.join(skillsDir, "test-fallback-desc");
-      await mkdir(testSkillDir, { recursive: true });
+      const skillDir = path.join(skillsDir, "fallback-desc");
+      await mkdir(skillDir, { recursive: true });
 
       await writeFile(
-        path.join(testSkillDir, "metadata.yaml"),
+        path.join(skillDir, "metadata.yaml"),
         `cli_name: Fallback Skill`,
       );
       await writeFile(
-        path.join(testSkillDir, "SKILL.md"),
+        path.join(skillDir, "SKILL.md"),
         `---\nname: fallback-skill (@local)\ndescription: Frontmatter description\n---\nContent`,
       );
 
@@ -194,8 +176,8 @@ describe("local-skill-loader", () => {
       const skillsDir = path.join(tempDir, ".claude", "skills");
 
       // Create two valid skills
-      const skill1Dir = path.join(skillsDir, "test-skill-one");
-      const skill2Dir = path.join(skillsDir, "test-skill-two");
+      const skill1Dir = path.join(skillsDir, "skill-one");
+      const skill2Dir = path.join(skillsDir, "skill-two");
       await mkdir(skill1Dir, { recursive: true });
       await mkdir(skill2Dir, { recursive: true });
 
@@ -226,15 +208,15 @@ describe("local-skill-loader", () => {
 
     it("sets correct extracted metadata properties", async () => {
       const skillsDir = path.join(tempDir, ".claude", "skills");
-      const testSkillDir = path.join(skillsDir, "test-full-skill");
-      await mkdir(testSkillDir, { recursive: true });
+      const skillDir = path.join(skillsDir, "full-skill");
+      await mkdir(skillDir, { recursive: true });
 
       await writeFile(
-        path.join(testSkillDir, "metadata.yaml"),
+        path.join(skillDir, "metadata.yaml"),
         `cli_name: Full Skill\ncli_description: Complete skill for testing`,
       );
       await writeFile(
-        path.join(testSkillDir, "SKILL.md"),
+        path.join(skillDir, "SKILL.md"),
         `---\nname: full-skill (@local)\ndescription: Complete skill\n---\nContent`,
       );
 
@@ -243,7 +225,7 @@ describe("local-skill-loader", () => {
 
       // Identity
       expect(skill?.id).toBe("full-skill (@local)");
-      expect(skill?.directoryPath).toBe("test-full-skill");
+      expect(skill?.directoryPath).toBe("full-skill");
       expect(skill?.name).toBe("Full Skill @local");
       expect(skill?.description).toBe("Complete skill for testing");
 
@@ -261,9 +243,9 @@ describe("local-skill-loader", () => {
       expect(skill?.providesSetupFor).toEqual([]);
 
       // Location
-      expect(skill?.path).toBe(".claude/skills/test-full-skill/");
+      expect(skill?.path).toBe(".claude/skills/full-skill/");
       expect(skill?.local).toBe(true);
-      expect(skill?.localPath).toBe(".claude/skills/test-full-skill/");
+      expect(skill?.localPath).toBe(".claude/skills/full-skill/");
     });
   });
 });
