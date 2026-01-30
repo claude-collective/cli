@@ -22,14 +22,18 @@ const SEMVER_REGEX =
 const schemaCache = new Map<string, object>();
 const validatorCache = new Map<string, ValidateFunction>();
 
+// Remote schemas hosted on GitHub (source of truth for skill schemas)
+const REMOTE_SCHEMAS: Record<string, string> = {
+  "skill-frontmatter.schema.json":
+    "https://raw.githubusercontent.com/claude-collective/skills/main/src/schemas/skill-frontmatter.schema.json",
+};
+
 async function loadSchema(schemaName: string): Promise<object> {
   if (schemaCache.has(schemaName)) {
     return schemaCache.get(schemaName)!;
   }
 
-  // Try multiple locations for schema files:
-  // 1. CLI repo's schemas (for plugin, agent schemas)
-  // 2. Current directory's schemas (for skill schemas in claude-subagents)
+  // Try local locations first for CLI-owned schemas
   const locations = [
     path.join(PROJECT_ROOT, "src", "schemas", schemaName),
     path.join(process.cwd(), "src", "schemas", schemaName),
@@ -44,8 +48,23 @@ async function loadSchema(schemaName: string): Promise<object> {
     }
   }
 
+  // Fall back to remote schema from GitHub (for skill schemas)
+  const remoteUrl = REMOTE_SCHEMAS[schemaName];
+  if (remoteUrl) {
+    try {
+      const response = await fetch(remoteUrl);
+      if (response.ok) {
+        const schema = await response.json();
+        schemaCache.set(schemaName, schema);
+        return schema;
+      }
+    } catch {
+      // Fall through to error
+    }
+  }
+
   throw new Error(
-    `Schema not found: ${schemaName}. Searched: ${locations.join(", ")}`,
+    `Schema not found: ${schemaName}. Searched: ${locations.join(", ")}${remoteUrl ? ` and ${remoteUrl}` : ""}`,
   );
 }
 
