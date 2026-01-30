@@ -134,15 +134,15 @@ describe("plugin-manifest", () => {
   describe("generateStackPluginManifest", () => {
     it("should generate manifest without skill- prefix", () => {
       const manifest = generateStackPluginManifest({
-        stackName: "modern-react",
+        stackName: "nextjs-fullstack",
       });
 
-      expect(manifest.name).toBe("modern-react");
+      expect(manifest.name).toBe("nextjs-fullstack");
     });
 
     it("should include agents path when hasAgents is true", () => {
       const manifest = generateStackPluginManifest({
-        stackName: "modern-react",
+        stackName: "nextjs-fullstack",
         hasAgents: true,
       });
 
@@ -151,7 +151,7 @@ describe("plugin-manifest", () => {
 
     it("should not include agents when hasAgents is false", () => {
       const manifest = generateStackPluginManifest({
-        stackName: "modern-react",
+        stackName: "nextjs-fullstack",
         hasAgents: false,
       });
 
@@ -160,7 +160,7 @@ describe("plugin-manifest", () => {
 
     it("should not include agents when hasAgents is undefined", () => {
       const manifest = generateStackPluginManifest({
-        stackName: "modern-react",
+        stackName: "nextjs-fullstack",
       });
 
       expect(manifest.agents).toBeUndefined();
@@ -168,7 +168,7 @@ describe("plugin-manifest", () => {
 
     it("should include hooks when hasHooks is true", () => {
       const manifest = generateStackPluginManifest({
-        stackName: "modern-react",
+        stackName: "nextjs-fullstack",
         hasHooks: true,
       });
 
@@ -177,7 +177,7 @@ describe("plugin-manifest", () => {
 
     it("should not include hooks when hasHooks is false", () => {
       const manifest = generateStackPluginManifest({
-        stackName: "modern-react",
+        stackName: "nextjs-fullstack",
         hasHooks: false,
       });
 
@@ -186,7 +186,7 @@ describe("plugin-manifest", () => {
 
     it("should not include skills when hasSkills is undefined", () => {
       const manifest = generateStackPluginManifest({
-        stackName: "modern-react",
+        stackName: "nextjs-fullstack",
       });
 
       expect(manifest.skills).toBeUndefined();
@@ -194,7 +194,7 @@ describe("plugin-manifest", () => {
 
     it("should include skills path when hasSkills is true", () => {
       const manifest = generateStackPluginManifest({
-        stackName: "modern-react",
+        stackName: "nextjs-fullstack",
         hasSkills: true,
       });
 
@@ -203,7 +203,7 @@ describe("plugin-manifest", () => {
 
     it("should not include skills when hasSkills is false", () => {
       const manifest = generateStackPluginManifest({
-        stackName: "modern-react",
+        stackName: "nextjs-fullstack",
         hasSkills: false,
       });
 
@@ -212,7 +212,7 @@ describe("plugin-manifest", () => {
 
     it("should include author when provided", () => {
       const manifest = generateStackPluginManifest({
-        stackName: "modern-react",
+        stackName: "nextjs-fullstack",
         author: "@claude",
         authorEmail: "claude@example.com",
       });
@@ -225,7 +225,7 @@ describe("plugin-manifest", () => {
 
     it("should include keywords when provided", () => {
       const manifest = generateStackPluginManifest({
-        stackName: "modern-react",
+        stackName: "nextjs-fullstack",
         keywords: ["frontend", "react", "stack"],
       });
 
@@ -234,7 +234,7 @@ describe("plugin-manifest", () => {
 
     it("should default to version 1.0.0", () => {
       const manifest = generateStackPluginManifest({
-        stackName: "modern-react",
+        stackName: "nextjs-fullstack",
       });
 
       expect(manifest.version).toBe("1.0.0");
@@ -242,7 +242,7 @@ describe("plugin-manifest", () => {
 
     it("should use custom version when provided", () => {
       const manifest = generateStackPluginManifest({
-        stackName: "modern-react",
+        stackName: "nextjs-fullstack",
         version: "3.2.1",
       });
 
