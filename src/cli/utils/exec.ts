@@ -133,3 +133,27 @@ export async function claudePluginMarketplaceAdd(
     throw new Error(`Failed to add marketplace: ${errorMessage.trim()}`);
   }
 }
+
+/**
+ * Uninstall a plugin using the native claude CLI
+ */
+export async function claudePluginUninstall(
+  pluginName: string,
+  scope: "project" | "user",
+  projectDir: string,
+): Promise<void> {
+  const args = ["plugin", "uninstall", pluginName, "--scope", scope];
+  const result = await execCommand("claude", args, { cwd: projectDir });
+
+  if (result.exitCode !== 0) {
+    const errorMessage = result.stderr || result.stdout || "Unknown error";
+    // Ignore "not installed" errors - plugin may already be removed
+    if (
+      errorMessage.includes("not installed") ||
+      errorMessage.includes("not found")
+    ) {
+      return;
+    }
+    throw new Error(`Plugin uninstall failed: ${errorMessage.trim()}`);
+  }
+}

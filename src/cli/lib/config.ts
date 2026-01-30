@@ -16,11 +16,13 @@ export interface GlobalConfig {
   source?: string;
   author?: string;
   marketplace?: string;
+  agents_source?: string;
 }
 
 export interface ProjectConfig {
   source?: string;
   marketplace?: string;
+  agents_source?: string;
 }
 
 export interface ResolvedConfig {
@@ -41,6 +43,11 @@ function isValidGlobalConfig(obj: unknown): obj is GlobalConfig {
     typeof config.marketplace !== "string"
   )
     return false;
+  if (
+    config.agents_source !== undefined &&
+    typeof config.agents_source !== "string"
+  )
+    return false;
   return true;
 }
 
@@ -52,6 +59,11 @@ function isValidProjectConfig(obj: unknown): obj is ProjectConfig {
   if (
     config.marketplace !== undefined &&
     typeof config.marketplace !== "string"
+  )
+    return false;
+  if (
+    config.agents_source !== undefined &&
+    typeof config.agents_source !== "string"
   )
     return false;
   return true;
@@ -174,6 +186,63 @@ export async function resolveSource(
 
   verbose(`Using default source: ${DEFAULT_SOURCE}`);
   return { source: DEFAULT_SOURCE, sourceOrigin: "default", marketplace };
+}
+
+export type AgentsSourceOrigin = "flag" | "project" | "global" | "default";
+
+export interface ResolvedAgentsSource {
+  agentsSource?: string;
+  agentsSourceOrigin: AgentsSourceOrigin;
+}
+
+/** Resolve agents_source with precedence: flag > project > global > default (undefined) */
+export async function resolveAgentsSource(
+  flagValue?: string,
+  projectDir?: string,
+): Promise<ResolvedAgentsSource> {
+  if (flagValue !== undefined) {
+    if (flagValue === "" || flagValue.trim() === "") {
+      throw new Error("--agent-source flag cannot be empty");
+    }
+    verbose(`Agents source from --agent-source flag: ${flagValue}`);
+    return { agentsSource: flagValue, agentsSourceOrigin: "flag" };
+  }
+
+  const projectConfig = projectDir ? await loadProjectConfig(projectDir) : null;
+  if (projectConfig?.agents_source) {
+    verbose(
+      `Agents source from project config: ${projectConfig.agents_source}`,
+    );
+    return {
+      agentsSource: projectConfig.agents_source,
+      agentsSourceOrigin: "project",
+    };
+  }
+
+  const globalConfig = await loadGlobalConfig();
+  if (globalConfig?.agents_source) {
+    verbose(`Agents source from global config: ${globalConfig.agents_source}`);
+    return {
+      agentsSource: globalConfig.agents_source,
+      agentsSourceOrigin: "global",
+    };
+  }
+
+  verbose("Using default agents source (local CLI)");
+  return { agentsSource: undefined, agentsSourceOrigin: "default" };
+}
+
+export function formatAgentsSourceOrigin(origin: AgentsSourceOrigin): string {
+  switch (origin) {
+    case "flag":
+      return "--agent-source flag";
+    case "project":
+      return "project config (.claude-collective/config.yaml)";
+    case "global":
+      return "global config (~/.claude-collective/config.yaml)";
+    case "default":
+      return "default (local CLI)";
+  }
 }
 
 export function formatSourceOrigin(
