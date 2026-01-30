@@ -242,6 +242,7 @@ export async function resolveAgents(
       tools: definition.tools,
       skills: resolvedSkills,
       path: definition.path,
+      sourceRoot: definition.sourceRoot,
     };
   }
 

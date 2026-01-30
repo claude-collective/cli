@@ -90,6 +90,7 @@ export interface AgentDefinition {
   hooks?: Record<string, AgentHookDefinition[]>; // Lifecycle hooks
   output_format?: string; // Which output format file to use
   path?: string; // Relative path to agent directory (e.g., "developer/api-developer")
+  sourceRoot?: string; // Root path where this agent was loaded from (for template resolution)
 }
 
 /**
@@ -144,6 +145,7 @@ export interface AgentConfig {
   output_format?: string;
   skills: Skill[]; // Unified skills list (loaded dynamically via Skill tool)
   path?: string; // Relative path to agent directory (e.g., "developer/api-developer")
+  sourceRoot?: string; // Root path where this agent was loaded from (for template resolution)
 }
 
 export interface CompiledAgentData {
