@@ -226,14 +226,14 @@ describe("Integration: Full Stack Pipeline", () => {
     expect(stacks.length).toBeGreaterThan(0);
 
     // Known stacks that should exist
-    const expectedStacks = ["fullstack-react", "work-stack"];
+    const expectedStacks = ["nextjs-fullstack", "angular-stack"];
     for (const expected of expectedStacks) {
       expect(stacks).toContain(expected);
     }
   });
 
-  it("should compile fullstack-react stack successfully", async () => {
-    const stackId = "fullstack-react";
+  it("should compile nextjs-fullstack stack successfully", async () => {
+    const stackId = "nextjs-fullstack";
 
     const result = await compileStackPlugin({
       stackId,
@@ -266,8 +266,8 @@ describe("Integration: Full Stack Pipeline", () => {
     expect(manifest!.agents).toBe("./agents/");
   });
 
-  it("should compile work-stack successfully", async () => {
-    const stackId = "work-stack";
+  it("should compile angular-stack successfully", async () => {
+    const stackId = "angular-stack";
 
     const result = await compileStackPlugin({
       stackId,
@@ -292,7 +292,7 @@ describe("Integration: Full Stack Pipeline", () => {
   });
 
   it("should generate README with agent list", async () => {
-    const stackId = "fullstack-react";
+    const stackId = "nextjs-fullstack";
 
     const result = await compileStackPlugin({
       stackId,
@@ -316,7 +316,7 @@ describe("Integration: Full Stack Pipeline", () => {
   });
 
   it("should include skill plugin references in manifest", async () => {
-    const stackId = "fullstack-react";
+    const stackId = "nextjs-fullstack";
 
     const result = await compileStackPlugin({
       stackId,
@@ -336,7 +336,7 @@ describe("Integration: Full Stack Pipeline", () => {
   });
 
   it("should validate compiled stack plugins", async () => {
-    const stackId = "fullstack-react";
+    const stackId = "nextjs-fullstack";
 
     await compileStackPlugin({
       stackId,
@@ -562,7 +562,7 @@ describe("Integration: End-to-End Pipeline", () => {
 
     // Step 3: Compile a stack
     const stackResult = await compileStackPlugin({
-      stackId: "fullstack-react",
+      stackId: "nextjs-fullstack",
       outputDir: stacksDir,
       projectRoot: SKILLS_REPO,
       agentSourcePath: CLI_REPO,
@@ -592,7 +592,7 @@ describe("Integration: End-to-End Pipeline", () => {
 
     // Compile stack
     const stackResult = await compileStackPlugin({
-      stackId: "fullstack-react",
+      stackId: "nextjs-fullstack",
       outputDir: stacksDir,
       projectRoot: SKILLS_REPO,
       agentSourcePath: CLI_REPO,
@@ -621,7 +621,7 @@ describe("Integration: End-to-End Pipeline", () => {
 
     // Compile stack
     const stackResult = await compileStackPlugin({
-      stackId: "fullstack-react",
+      stackId: "nextjs-fullstack",
       outputDir: stacksDir,
       projectRoot: SKILLS_REPO,
       agentSourcePath: CLI_REPO,
