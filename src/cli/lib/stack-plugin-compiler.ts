@@ -130,12 +130,14 @@ export interface CompiledStackPlugin {
 export async function compileAgentForPlugin(
   name: string,
   agent: AgentConfig,
-  projectRoot: string,
+  fallbackRoot: string,
   engine: Liquid,
 ): Promise<string> {
   verbose(`Compiling agent: ${name}`);
 
-  const agentDir = path.join(projectRoot, DIRS.agents, agent.path || name);
+  // Use agent's sourceRoot if available (for multi-source loading), otherwise fallback
+  const agentSourceRoot = agent.sourceRoot || fallbackRoot;
+  const agentDir = path.join(agentSourceRoot, DIRS.agents, agent.path || name);
 
   const intro = await readFile(path.join(agentDir, "intro.md"));
   const workflow = await readFile(path.join(agentDir, "workflow.md"));
@@ -154,7 +156,7 @@ export async function compileAgentForPlugin(
 
   const agentPath = agent.path || name;
   const category = agentPath.split("/")[0];
-  const categoryDir = path.join(projectRoot, DIRS.agents, category);
+  const categoryDir = path.join(agentSourceRoot, DIRS.agents, category);
 
   let outputFormat = await readFileOptional(
     path.join(agentDir, "output-format.md"),
@@ -288,15 +290,23 @@ export async function compileStackPlugin(
   options: StackPluginOptions,
 ): Promise<CompiledStackPlugin> {
   const { stackId, outputDir, projectRoot, agentSourcePath } = options;
-  const agentRoot = agentSourcePath || projectRoot;
+  const localAgentRoot = agentSourcePath || projectRoot;
 
   verbose(`Compiling stack plugin: ${stackId}`);
   verbose(`  Stack/skills source: ${projectRoot}`);
-  verbose(`  Agent partials source: ${agentRoot}`);
+  verbose(`  Local agent source: ${localAgentRoot}`);
+  verbose(`  CLI agent source: ${PROJECT_ROOT}`);
 
   const stack = await loadStack(stackId, projectRoot, "dev");
 
-  const agents = await loadAllAgents(agentRoot);
+  // Load agents from both local project and CLI, with local taking precedence
+  const cliAgents = await loadAllAgents(PROJECT_ROOT);
+  const localAgents = await loadAllAgents(localAgentRoot);
+  const agents = { ...cliAgents, ...localAgents };
+
+  verbose(
+    `  Loaded ${Object.keys(localAgents).length} local agents, ${Object.keys(cliAgents).length} CLI agents`,
+  );
 
   const skills = await loadSkillsByIds(stack.skills || [], projectRoot);
 
@@ -306,7 +316,7 @@ export async function compileStackPlugin(
     agents,
     skills,
     compileConfig,
-    agentRoot,
+    projectRoot,
   );
 
   const pluginDir = path.join(outputDir, stackId);
@@ -344,7 +354,12 @@ export async function compileStackPlugin(
   const allSkillPlugins: string[] = [];
 
   for (const [name, agent] of Object.entries(resolvedAgents)) {
-    const output = await compileAgentForPlugin(name, agent, agentRoot, engine);
+    const output = await compileAgentForPlugin(
+      name,
+      agent,
+      PROJECT_ROOT,
+      engine,
+    );
     await writeFile(path.join(agentsDir, `${name}.md`), output);
     compiledAgentNames.push(name);
 

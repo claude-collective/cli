@@ -59,6 +59,7 @@ export async function loadAllAgents(
       model: config.model,
       tools: config.tools,
       path: agentPath,
+      sourceRoot: projectRoot,
     };
 
     verbose(`Loaded agent: ${config.id} from ${file}`);
