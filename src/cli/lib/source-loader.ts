@@ -1,23 +1,23 @@
 import path from "path";
+import { PROJECT_ROOT, SKILLS_DIR_PATH, SKILLS_MATRIX_PATH } from "../consts";
+import type {
+  CategoryDefinition,
+  MergedSkillsMatrix,
+  ResolvedSkill,
+} from "../types-matrix";
+import { fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import { directoryExists } from "../utils/fs";
-import { SKILLS_MATRIX_PATH, SKILLS_DIR_PATH, PROJECT_ROOT } from "../consts";
-import { resolveSource, isLocalSource, type ResolvedConfig } from "./config";
-import { fetchFromSource } from "./source-fetcher";
-import {
-  loadSkillsMatrix,
-  extractAllSkills,
-  mergeMatrixWithSkills,
-} from "./matrix-loader";
+import { isLocalSource, resolveSource, type ResolvedConfig } from "./config";
 import {
   discoverLocalSkills,
   type LocalSkillDiscoveryResult,
 } from "./local-skill-loader";
-import type {
-  MergedSkillsMatrix,
-  ResolvedSkill,
-  CategoryDefinition,
-} from "../types-matrix";
+import {
+  extractAllSkills,
+  loadSkillsMatrix,
+  mergeMatrixWithSkills,
+} from "./matrix-loader";
+import { fetchFromSource } from "./source-fetcher";
 
 export interface SourceLoadOptions {
   sourceFlag?: string;
@@ -89,10 +89,20 @@ async function loadFromLocal(
 
   verbose(`Loading skills from local path: ${skillsPath}`);
 
-  const matrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
-  const skillsDir = path.join(skillsPath, SKILLS_DIR_PATH);
+  // Check if source has its own matrix, otherwise fallback to CLI matrix
+  const sourceMatrixPath = path.join(skillsPath, SKILLS_MATRIX_PATH);
+  const cliMatrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
 
-  verbose(`Matrix from CLI: ${matrixPath}`);
+  let matrixPath: string;
+  if (await fileExists(sourceMatrixPath)) {
+    matrixPath = sourceMatrixPath;
+    verbose(`Matrix from source: ${matrixPath}`);
+  } else {
+    matrixPath = cliMatrixPath;
+    verbose(`Matrix from CLI (source has no matrix): ${matrixPath}`);
+  }
+
+  const skillsDir = path.join(skillsPath, SKILLS_DIR_PATH);
   verbose(`Skills from source: ${skillsDir}`);
 
   const matrix = await loadSkillsMatrix(matrixPath);
@@ -118,10 +128,20 @@ async function loadFromRemote(
 
   verbose(`Fetched to: ${fetchResult.path}`);
 
-  const matrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
-  const skillsDir = path.join(fetchResult.path, SKILLS_DIR_PATH);
+  // Check if source has its own matrix, otherwise fallback to CLI matrix
+  const sourceMatrixPath = path.join(fetchResult.path, SKILLS_MATRIX_PATH);
+  const cliMatrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
 
-  verbose(`Matrix from CLI: ${matrixPath}`);
+  let matrixPath: string;
+  if (await fileExists(sourceMatrixPath)) {
+    matrixPath = sourceMatrixPath;
+    verbose(`Matrix from source: ${matrixPath}`);
+  } else {
+    matrixPath = cliMatrixPath;
+    verbose(`Matrix from CLI (source has no matrix): ${matrixPath}`);
+  }
+
+  const skillsDir = path.join(fetchResult.path, SKILLS_DIR_PATH);
   verbose(`Skills from source: ${skillsDir}`);
 
   const matrix = await loadSkillsMatrix(matrixPath);
