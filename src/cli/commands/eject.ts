@@ -11,9 +11,13 @@ import {
   writeFile,
 } from "../utils/fs";
 import { DIRS, PROJECT_ROOT } from "../consts";
+import {
+  getCollectivePluginDir,
+  getPluginSkillsDir,
+} from "../lib/plugin-finder";
 import { EXIT_CODES } from "../lib/exit-codes";
 
-const EJECT_TYPES = ["templates", "config", "all"] as const;
+const EJECT_TYPES = ["templates", "config", "skills", "agents", "all"] as const;
 type EjectType = (typeof EJECT_TYPES)[number];
 
 const DEFAULT_CONFIG_CONTENT = `# Claude Collective Configuration
@@ -44,7 +48,7 @@ agent_skills:
 
 export const ejectCommand = new Command("eject")
   .description("Eject bundled content for local customization")
-  .argument("[type]", "What to eject: templates, config, all")
+  .argument("[type]", "What to eject: templates, config, skills, agents, all")
   .option("-f, --force", "Overwrite existing files", false)
   .option(
     "-o, --output <dir>",
@@ -62,7 +66,9 @@ export const ejectCommand = new Command("eject")
       const projectDir = process.cwd();
 
       if (!type) {
-        p.log.error("Please specify what to eject: templates, config, or all");
+        p.log.error(
+          "Please specify what to eject: templates, config, skills, agents, or all",
+        );
         process.exit(EXIT_CODES.INVALID_ARGS);
       }
 
@@ -108,9 +114,17 @@ export const ejectCommand = new Command("eject")
         case "config":
           await ejectConfig(outputBase, options.force, directOutput);
           break;
+        case "skills":
+          await ejectSkills(outputBase, options.force, directOutput);
+          break;
+        case "agents":
+          await ejectAgents(outputBase, options.force, directOutput);
+          break;
         case "all":
           await ejectTemplates(outputBase, options.force, directOutput);
           await ejectConfig(outputBase, options.force, directOutput);
+          await ejectSkills(outputBase, options.force, directOutput);
+          await ejectAgents(outputBase, options.force, directOutput);
           break;
       }
 
@@ -166,4 +180,74 @@ async function ejectConfig(
 
   p.log.success(`Config template ejected to ${pc.cyan(destPath)}`);
   p.log.info(pc.dim("Customize agent-skill mappings for your project."));
+}
+
+async function ejectSkills(
+  outputBase: string,
+  force: boolean,
+  directOutput: boolean = false,
+): Promise<void> {
+  // Find skills from installed plugin
+  const pluginDir = getCollectivePluginDir();
+  const sourceDir = getPluginSkillsDir(pluginDir);
+
+  if (!(await directoryExists(sourceDir))) {
+    p.log.warn("No skills found in installed plugin.");
+    p.log.info(
+      pc.dim("Install skills with 'cc add <skill>' first, then try again."),
+    );
+    return;
+  }
+
+  // When directOutput is true (--output used), write directly to outputBase
+  // When false (default), add "skills" subdirectory
+  const destDir = directOutput ? outputBase : path.join(outputBase, "skills");
+
+  if ((await directoryExists(destDir)) && !force) {
+    p.log.warn(`Skills already exist at ${destDir}. Use --force to overwrite.`);
+    return;
+  }
+
+  await ensureDir(destDir);
+  await copy(sourceDir, destDir);
+
+  p.log.success(`Skills ejected to ${pc.cyan(destDir)}`);
+  p.log.info(pc.dim("You can now customize skill content locally."));
+}
+
+async function ejectAgents(
+  outputBase: string,
+  force: boolean,
+  directOutput: boolean = false,
+): Promise<void> {
+  // Source is the agents directory from PROJECT_ROOT (excluding _templates)
+  const sourceDir = path.join(PROJECT_ROOT, DIRS.agents);
+
+  if (!(await directoryExists(sourceDir))) {
+    p.log.warn("No agent partials found.");
+    return;
+  }
+
+  // When directOutput is true (--output used), write directly to outputBase
+  // When false (default), add "agents/_partials" subdirectory
+  const destDir = directOutput
+    ? outputBase
+    : path.join(outputBase, "agents", "_partials");
+
+  if ((await directoryExists(destDir)) && !force) {
+    p.log.warn(
+      `Agent partials already exist at ${destDir}. Use --force to overwrite.`,
+    );
+    return;
+  }
+
+  await ensureDir(destDir);
+  await copy(sourceDir, destDir);
+
+  p.log.success(`Agent partials ejected to ${pc.cyan(destDir)}`);
+  p.log.info(
+    pc.dim(
+      "You can now customize agent intro, workflow, and examples locally.",
+    ),
+  );
 }
