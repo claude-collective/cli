@@ -351,7 +351,7 @@ export interface PluginAuthor {
  * Defines the structure and content of a plugin package
  */
 export interface PluginManifest {
-  /** Plugin name in kebab-case (e.g., "skill-react", "stack-modern-react") */
+  /** Plugin name in kebab-case (e.g., "skill-react", "stack-nextjs-fullstack") */
   name: string;
   /** Plugin version in semver format (e.g., "1.0.0") */
   version?: string;
@@ -467,7 +467,7 @@ export interface Marketplace {
 export interface Config {
   /** Source URL for fetching skills/agents (e.g., "github:claude-collective/skills") */
   source?: string;
-  /** Name of the currently active stack (e.g., "work-stack"). Used by cc add and cc switch. */
+  /** Name of the currently active stack (e.g., "nextjs-fullstack"). Used by cc add and cc switch. */
   active_stack?: string;
 }
 

@@ -81,7 +81,7 @@ claude plugin install skill-zustand@claude-collective --scope project
 Support installing pre-compiled stacks directly from a remote marketplace:
 
 ```bash
-claude plugin install stack-modern-react@claude-collective --scope project
+claude plugin install stack-nextjs-fullstack@claude-collective --scope project
 ```
 
 **Current behavior**: Compiles stack locally to temp directory, then installs.

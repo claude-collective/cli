@@ -1,11 +1,43 @@
 {
   "name": "@claude-collective/cli",
   "version": "0.1.0",
-  "description": "CLI for managing Claude Collective skills, stacks, and agents",
+  "description": "CLI for managing Claude Collective skills, stacks, and agents for Claude Code",
   "type": "module",
-  "main": "index.js",
+  "main": "dist/cli/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/cli/index.js"
+    }
+  },
   "bin": {
     "cc": "./dist/cli/index.js"
+  },
+  "files": [
+    "dist/",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "cli",
+    "claude",
+    "claude-code",
+    "skills",
+    "composable skills",
+    "agents",
+    "stacks",
+    "plugins",
+    "ai",
+    "anthropic",
+    "developer-tools",
+    "productivity",
+    "prompt-engineering",
+    "ai-tools"
+  ],
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
     "build:agents": "node src/compile.mjs",
@@ -19,12 +51,11 @@
     "cc:init": "bun src/cli/index.ts init",
     "cc:edit": "bun src/cli/index.ts edit",
     "cc:compile": "bun src/cli/index.ts compile",
-    "cc:compile:fullstack": "bun src/cli/index.ts compile -s fullstack-react",
-    "cc:compile:work": "bun src/cli/index.ts compile -s work-stack",
-    "cc:compile:mobx": "bun src/cli/index.ts compile -s mobx-tailwind",
+    "cc:compile:fullstack": "bun src/cli/index.ts compile -s nextjs-fullstack",
+    "cc:compile:angular": "bun src/cli/index.ts compile -s angular-stack",
     "cc:validate": "bun src/cli/index.ts validate",
     "cc:validate:plugins": "bun src/cli/index.ts validate dist/plugins --all",
-    "cc:validate:stacks": "bun src/cli/index.ts validate dist/stacks/fullstack-react && bun src/cli/index.ts validate dist/stacks/work-stack",
+    "cc:validate:stacks": "bun src/cli/index.ts validate dist/stacks/nextjs-fullstack && bun src/cli/index.ts validate dist/stacks/angular-stack",
     "cc:config": "bun src/cli/index.ts config",
     "cc:list": "bun src/cli/index.ts list",
     "cc:build:plugins": "bun src/cli/index.ts build:plugins",
@@ -33,7 +64,8 @@
     "cc:build:all": "bun src/cli/index.ts build:plugins && bun src/cli/index.ts build:marketplace",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "prepublishOnly": "npm run format:check && npm run build && npm run test"
   },
   "lint-staged": {
     "*.{ts,js,json,yaml,yml,md}": "prettier --write"
