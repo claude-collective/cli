@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-01-31
+
+### Changed
+
+- **CLI Framework Migration** - migrated from Commander.js + @clack/prompts to oclif + Ink for improved maintainability and extensibility
+- All commands now use oclif's class-based command structure
+- Interactive components now use Ink (React-based terminal UI)
+- Wizard state management now uses Zustand
+- Removed dependencies: commander, @clack/prompts, @clack/core, picocolors
+- Added dependencies: @oclif/core, @oclif/plugin-\*, ink, react, @inkjs/ui, zustand
+
+[0.3.0]: https://github.com/claude-collective/cli/releases/tag/v0.3.0
+
 ## [0.2.0] - 2026-01-30
 
 ### Added
