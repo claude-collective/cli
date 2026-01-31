@@ -8,9 +8,25 @@ const PROJECT_CONFIG_DIR = ".claude-collective";
 
 export const DEFAULT_SOURCE = "github:claude-collective/skills";
 export const SOURCE_ENV_VAR = "CC_SOURCE";
-export const GLOBAL_CONFIG_DIR = path.join(os.homedir(), ".claude-collective");
+/** Environment variable to override global config directory (used for testing) */
+export const CONFIG_HOME_ENV_VAR = "CC_CONFIG_HOME";
 export const GLOBAL_CONFIG_FILE = "config.yaml";
 export const PROJECT_CONFIG_FILE = "config.yaml";
+
+/**
+ * Get global config directory path.
+ * Can be overridden via CC_CONFIG_HOME environment variable for testing isolation.
+ * This is a function (not constant) to allow tests to set the env var after module load.
+ */
+export function getGlobalConfigDir(): string {
+  return process.env[CONFIG_HOME_ENV_VAR] || path.join(os.homedir(), ".claude-collective");
+}
+
+/**
+ * @deprecated Use getGlobalConfigDir() instead. This constant is kept for backwards compatibility
+ * but won't respect CC_CONFIG_HOME set after module load.
+ */
+export const GLOBAL_CONFIG_DIR = path.join(os.homedir(), ".claude-collective");
 
 export interface GlobalConfig {
   source?: string;
@@ -70,7 +86,7 @@ function isValidProjectConfig(obj: unknown): obj is ProjectConfig {
 }
 
 export function getGlobalConfigPath(): string {
-  return path.join(GLOBAL_CONFIG_DIR, GLOBAL_CONFIG_FILE);
+  return path.join(getGlobalConfigDir(), GLOBAL_CONFIG_FILE);
 }
 
 export function getProjectConfigPath(projectDir: string): string {
@@ -127,7 +143,7 @@ export async function loadProjectConfig(
 
 export async function saveGlobalConfig(config: GlobalConfig): Promise<void> {
   const configPath = getGlobalConfigPath();
-  await ensureDir(GLOBAL_CONFIG_DIR);
+  await ensureDir(getGlobalConfigDir());
   const content = stringifyYaml(config, { lineWidth: 0 });
   await writeFile(configPath, content);
   verbose(`Saved global config to ${configPath}`);
