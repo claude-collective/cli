@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { ResolvedStack } from "../types-matrix";
+import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
 
 export type WizardStep =
   | "approach"
@@ -59,9 +60,14 @@ const createInitialState = (options?: {
   const hasInitialSkills =
     options?.initialSkills && options.initialSkills.length > 0;
 
+  // Start with default preselected skills (methodology), then add any initial skills
+  const baseSkills = [...DEFAULT_PRESELECTED_SKILLS];
+  const initialSkills = options?.initialSkills ?? [];
+  const combinedSkills = [...new Set([...baseSkills, ...initialSkills])];
+
   return {
     step: (hasInitialSkills ? "category" : "approach") as WizardStep,
-    selectedSkills: options?.initialSkills ? [...options.initialSkills] : [],
+    selectedSkills: combinedSkills,
     selectedStack: null,
     expertMode: options?.hasLocalSkills ?? false,
     installMode: "local" as "plugin" | "local",
@@ -98,7 +104,10 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   selectStack: (stack) =>
     set({
       selectedStack: stack,
-      selectedSkills: stack ? [...stack.allSkillIds] : [],
+      // Include preselected skills (methodology) plus stack skills
+      selectedSkills: stack
+        ? [...new Set([...DEFAULT_PRESELECTED_SKILLS, ...stack.allSkillIds])]
+        : [...DEFAULT_PRESELECTED_SKILLS],
     }),
 
   toggleExpertMode: () =>
