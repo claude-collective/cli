@@ -169,29 +169,44 @@ function buildReverseAliases(
 }
 
 /**
- * Build a map from alias targets (e.g., "react (@vince)") to actual skill IDs
- * (e.g., "web/framework/react (@vince)").
+ * Build a map from short names to actual skill IDs.
  *
- * This handles the case where alias targets in skills-matrix.yaml use short names
- * but skill IDs from SKILL.md frontmatter include the full directory path.
+ * This handles multiple formats used in skill metadata:
+ * - "react (@vince)" -> "web/framework/react (@vince)"
+ * - "react" -> "web/framework/react (@vince)"
+ * - Old alias targets that may still exist in metadata files
  */
 function buildAliasTargetToSkillIdMap(
   aliases: Record<string, string>,
   skills: ExtractedSkillMetadata[],
 ): Record<string, string> {
   const map: Record<string, string> = {};
-  const aliasTargets = new Set(Object.values(aliases));
 
   for (const skill of skills) {
-    // If the skill ID exactly matches an alias target, no mapping needed
-    if (aliasTargets.has(skill.id)) {
-      continue;
+    // Extract the "short author" form: last path segment with author
+    // e.g., "web/framework/react (@vince)" -> "react (@vince)"
+    const parts = skill.id.split("/");
+    const shortForm = parts[parts.length - 1];
+
+    if (shortForm && shortForm !== skill.id) {
+      map[shortForm] = skill.id;
     }
 
-    // Check if any alias target is a suffix of this skill ID
-    // e.g., skill.id = "web/framework/react (@vince)", aliasTarget = "react (@vince)"
+    // Also map directory name without author if different
+    // e.g., "web/framework/react" -> "web/framework/react (@vince)"
+    if (skill.directoryPath && skill.directoryPath !== skill.id) {
+      map[skill.directoryPath] = skill.id;
+    }
+  }
+
+  // Also include any old-style alias targets that might still be referenced
+  const aliasTargets = new Set(Object.values(aliases));
+  for (const skill of skills) {
     for (const aliasTarget of aliasTargets) {
-      if (skill.id.endsWith(`/${aliasTarget}`) || skill.id === aliasTarget) {
+      if (
+        aliasTarget !== skill.id &&
+        (skill.id.endsWith(`/${aliasTarget}`) || skill.id === aliasTarget)
+      ) {
         map[aliasTarget] = skill.id;
       }
     }
@@ -216,12 +231,17 @@ function resolveToCanonicalId(
   aliasOrId: string,
   aliases: Record<string, string>,
   directoryPathToId: Record<string, string> = {},
+  aliasTargetToSkillId: Record<string, string> = {},
 ): string {
   if (aliases[aliasOrId]) {
     return aliases[aliasOrId];
   }
   if (directoryPathToId[aliasOrId]) {
     return directoryPathToId[aliasOrId];
+  }
+  // Handle "short author" format like "react (@vince)" that maps to full ID
+  if (aliasTargetToSkillId[aliasOrId]) {
+    return aliasTargetToSkillId[aliasOrId];
   }
   return aliasOrId;
 }
@@ -243,6 +263,7 @@ export async function mergeMatrixWithSkills(
       aliases,
       aliasesReverse,
       directoryPathToId,
+      aliasTargetToSkillId,
     );
     resolvedSkills[skill.id] = resolved;
   }
@@ -273,6 +294,7 @@ function buildResolvedSkill(
   aliases: Record<string, string>,
   aliasesReverse: Record<string, string>,
   directoryPathToId: Record<string, string>,
+  aliasTargetToSkillId: Record<string, string>,
 ): ResolvedSkill {
   const conflictsWith: SkillRelation[] = [];
   const recommends: SkillRelation[] = [];
@@ -280,12 +302,12 @@ function buildResolvedSkill(
   const alternatives: SkillAlternative[] = [];
   const discourages: SkillRelation[] = [];
 
+  // Helper to resolve with all maps
+  const resolve = (id: string) =>
+    resolveToCanonicalId(id, aliases, directoryPathToId, aliasTargetToSkillId);
+
   for (const conflictRef of skill.conflictsWith) {
-    const canonicalId = resolveToCanonicalId(
-      conflictRef,
-      aliases,
-      directoryPathToId,
-    );
+    const canonicalId = resolve(conflictRef);
     conflictsWith.push({
       skillId: canonicalId,
       reason: "Defined in skill metadata",
@@ -293,9 +315,7 @@ function buildResolvedSkill(
   }
 
   for (const conflictRule of matrix.relationships.conflicts) {
-    const resolvedSkills = conflictRule.skills.map((s) =>
-      resolveToCanonicalId(s, aliases, directoryPathToId),
-    );
+    const resolvedSkills = conflictRule.skills.map(resolve);
     if (resolvedSkills.includes(skill.id)) {
       for (const otherSkill of resolvedSkills) {
         if (otherSkill !== skill.id) {
@@ -311,11 +331,7 @@ function buildResolvedSkill(
   }
 
   for (const compatRef of skill.compatibleWith) {
-    const canonicalId = resolveToCanonicalId(
-      compatRef,
-      aliases,
-      directoryPathToId,
-    );
+    const canonicalId = resolve(compatRef);
     recommends.push({
       skillId: canonicalId,
       reason: "Compatible with this skill",
@@ -323,18 +339,10 @@ function buildResolvedSkill(
   }
 
   for (const recommendRule of matrix.relationships.recommends) {
-    const whenCanonicalId = resolveToCanonicalId(
-      recommendRule.when,
-      aliases,
-      directoryPathToId,
-    );
+    const whenCanonicalId = resolve(recommendRule.when);
     if (whenCanonicalId === skill.id) {
       for (const suggested of recommendRule.suggest) {
-        const canonicalId = resolveToCanonicalId(
-          suggested,
-          aliases,
-          directoryPathToId,
-        );
+        const canonicalId = resolve(suggested);
         if (!recommends.some((r) => r.skillId === canonicalId)) {
           recommends.push({
             skillId: canonicalId,
@@ -347,25 +355,17 @@ function buildResolvedSkill(
 
   if (skill.requires.length > 0) {
     requires.push({
-      skillIds: skill.requires.map((r) =>
-        resolveToCanonicalId(r, aliases, directoryPathToId),
-      ),
+      skillIds: skill.requires.map(resolve),
       needsAny: false,
       reason: "Defined in skill metadata",
     });
   }
 
   for (const requireRule of matrix.relationships.requires) {
-    const skillCanonicalId = resolveToCanonicalId(
-      requireRule.skill,
-      aliases,
-      directoryPathToId,
-    );
+    const skillCanonicalId = resolve(requireRule.skill);
     if (skillCanonicalId === skill.id) {
       requires.push({
-        skillIds: requireRule.needs.map((n) =>
-          resolveToCanonicalId(n, aliases, directoryPathToId),
-        ),
+        skillIds: requireRule.needs.map(resolve),
         needsAny: requireRule.needs_any ?? false,
         reason: requireRule.reason,
       });
@@ -373,9 +373,7 @@ function buildResolvedSkill(
   }
 
   for (const altGroup of matrix.relationships.alternatives) {
-    const resolvedAlts = altGroup.skills.map((s) =>
-      resolveToCanonicalId(s, aliases, directoryPathToId),
-    );
+    const resolvedAlts = altGroup.skills.map(resolve);
     if (resolvedAlts.includes(skill.id)) {
       for (const altSkill of resolvedAlts) {
         if (altSkill !== skill.id) {
@@ -390,9 +388,7 @@ function buildResolvedSkill(
 
   if (matrix.relationships.discourages) {
     for (const discourageRule of matrix.relationships.discourages) {
-      const resolvedSkills = discourageRule.skills.map((s) =>
-        resolveToCanonicalId(s, aliases, directoryPathToId),
-      );
+      const resolvedSkills = discourageRule.skills.map(resolve);
       if (resolvedSkills.includes(skill.id)) {
         for (const otherSkill of resolvedSkills) {
           if (otherSkill !== skill.id) {
@@ -425,12 +421,8 @@ function buildResolvedSkill(
     requiredBy: [],
     alternatives,
     discourages,
-    requiresSetup: skill.requiresSetup.map((s) =>
-      resolveToCanonicalId(s, aliases, directoryPathToId),
-    ),
-    providesSetupFor: skill.providesSetupFor.map((s) =>
-      resolveToCanonicalId(s, aliases, directoryPathToId),
-    ),
+    requiresSetup: skill.requiresSetup.map(resolve),
+    providesSetupFor: skill.providesSetupFor.map(resolve),
     path: skill.path,
   };
 }
