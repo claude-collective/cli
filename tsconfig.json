@@ -6,7 +6,9 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
   },
   "include": ["src/**/*"]
 }

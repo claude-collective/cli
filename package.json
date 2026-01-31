@@ -3,14 +3,14 @@
   "version": "0.2.0",
   "description": "CLI for managing Claude Collective skills, stacks, and agents for Claude Code",
   "type": "module",
-  "main": "dist/cli/index.js",
+  "main": "dist/index.js",
   "exports": {
     ".": {
-      "import": "./dist/cli/index.js"
+      "import": "./dist/index.js"
     }
   },
   "bin": {
-    "cc": "dist/cli/index.js"
+    "cc": "dist/index.js"
   },
   "files": [
     "dist/",
@@ -39,12 +39,34 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
+  "oclif": {
+    "bin": "cc",
+    "dirname": "claude-collective",
+    "commands": {
+      "strategy": "pattern",
+      "target": "./dist/commands"
+    },
+    "plugins": [
+      "@oclif/plugin-help",
+      "@oclif/plugin-autocomplete",
+      "@oclif/plugin-not-found",
+      "@oclif/plugin-warn-if-update-available"
+    ],
+    "hooks": {
+      "init": [
+        "./dist/hooks/init"
+      ]
+    },
+    "topicSeparator": " "
+  },
   "scripts": {
     "build:agents": "node src/compile.mjs",
     "build": "tsup",
     "dev": "tsup --watch",
     "cli": "node dist/cli/index.js",
     "cli:dev": "bun src/cli/index.ts",
+    "cli-v2": "node dist/cli-v2/index.js",
+    "cli-v2:dev": "bun src/cli-v2/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -81,25 +103,37 @@
   },
   "homepage": "https://github.com/claude-collective/cli#readme",
   "dependencies": {
-    "@clack/prompts": "^0.11.0",
+    "@inkjs/ui": "^2.0.0",
+    "@oclif/core": "^4.0.0",
+    "@oclif/plugin-autocomplete": "^3.0.0",
+    "@oclif/plugin-help": "^6.0.0",
+    "@oclif/plugin-not-found": "^3.0.0",
+    "@oclif/plugin-warn-if-update-available": "^3.0.0",
+    "@oclif/table": "^0.5.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
-    "commander": "^12.1.0",
+    "conf": "^13.0.0",
     "diff": "^8.0.3",
+    "execa": "^9.0.0",
     "fast-glob": "^3.3.0",
     "fs-extra": "^11.2.0",
     "giget": "^1.2.0",
     "gray-matter": "^4.0.3",
+    "ink": "^5.0.0",
     "liquidjs": "^10.24.0",
-    "picocolors": "^1.1.0",
-    "yaml": "^2.8.2"
+    "react": "^18.2.0",
+    "yaml": "^2.8.2",
+    "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@oclif/test": "^4.0.0",
     "@types/diff": "^8.0.0",
     "@types/fs-extra": "^11.0.0",
     "@types/node": "^22.0.0",
+    "@types/react": "^18.2.0",
     "@vitest/coverage-v8": "^4.0.18",
     "husky": "^9.1.7",
+    "ink-testing-library": "^4.0.0",
     "lint-staged": "^15.2.0",
     "prettier": "^3.2.0",
     "tsup": "^8.0.0",

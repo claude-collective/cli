@@ -1,0 +1,281 @@
+import { Args, Flags } from "@oclif/core";
+import path from "path";
+import { BaseCommand } from "../base-command.js";
+import { loadSkillsMatrixFromSource } from "../lib/source-loader.js";
+import { discoverLocalSkills } from "../lib/local-skill-loader.js";
+import { fileExists, readFile } from "../utils/fs.js";
+import type {
+  ResolvedSkill,
+  SkillRelation,
+  SkillRequirement,
+} from "../types-matrix.js";
+
+/**
+ * Maximum number of lines to show in content preview
+ */
+const CONTENT_PREVIEW_LINES = 10;
+
+/**
+ * Maximum line length before truncation
+ */
+const MAX_LINE_LENGTH = 80;
+
+/**
+ * Maximum number of suggestions to show when skill not found
+ */
+const MAX_SUGGESTIONS = 5;
+
+/**
+ * Strip frontmatter from SKILL.md content and return body
+ */
+function stripFrontmatter(content: string): string {
+  const lines = content.split("\n");
+  let inFrontmatter = false;
+  let frontmatterEndIndex = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line === "---") {
+      if (!inFrontmatter) {
+        inFrontmatter = true;
+      } else {
+        frontmatterEndIndex = i + 1;
+        break;
+      }
+    }
+  }
+
+  return lines.slice(frontmatterEndIndex).join("\n");
+}
+
+/**
+ * Get first N non-empty lines from content
+ */
+function getPreviewLines(content: string, maxLines: number): string[] {
+  const body = stripFrontmatter(content);
+  const lines = body.split("\n");
+  const result: string[] = [];
+
+  for (const line of lines) {
+    if (result.length >= maxLines) break;
+    // Include non-empty lines or blank lines after content has started
+    if (line.trim() || result.length > 0) {
+      const truncated =
+        line.length > MAX_LINE_LENGTH
+          ? line.slice(0, MAX_LINE_LENGTH - 3) + "..."
+          : line;
+      result.push(truncated);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Format an array of skill relations for display
+ */
+function formatRelations(relations: SkillRelation[]): string {
+  if (relations.length === 0) {
+    return "(none)";
+  }
+  return relations.map((r) => r.skillId).join(", ");
+}
+
+/**
+ * Format an array of skill requirements for display
+ */
+function formatRequirements(requirements: SkillRequirement[]): string {
+  if (requirements.length === 0) {
+    return "(none)";
+  }
+  return requirements
+    .map((req) => {
+      const prefix = req.needsAny ? "any of: " : "";
+      return prefix + req.skillIds.join(", ");
+    })
+    .join("; ");
+}
+
+/**
+ * Format tags array for display
+ */
+function formatTags(tags: string[]): string {
+  if (tags.length === 0) {
+    return "(none)";
+  }
+  return tags.join(", ");
+}
+
+/**
+ * Find skills that match a partial query for suggestions
+ */
+function findSuggestions(
+  skills: Record<string, ResolvedSkill>,
+  query: string,
+  maxSuggestions: number,
+): string[] {
+  const lowerQuery = query.toLowerCase();
+  const matches: string[] = [];
+
+  for (const skill of Object.values(skills)) {
+    if (matches.length >= maxSuggestions) break;
+    if (
+      skill.id.toLowerCase().includes(lowerQuery) ||
+      skill.alias?.toLowerCase().includes(lowerQuery) ||
+      skill.name.toLowerCase().includes(lowerQuery)
+    ) {
+      matches.push(skill.id);
+    }
+  }
+
+  return matches;
+}
+
+/**
+ * Format skill info for display
+ */
+function formatSkillInfo(skill: ResolvedSkill, isInstalled: boolean): string {
+  const lines: string[] = [];
+
+  lines.push(`Skill: ${skill.id}`);
+  if (skill.alias) {
+    lines.push(`Alias: ${skill.alias}`);
+  }
+  lines.push(`Author: ${skill.author}`);
+  lines.push(`Category: ${skill.category}`);
+  lines.push("");
+  lines.push("Description:");
+  lines.push(`  ${skill.description}`);
+  lines.push("");
+  lines.push(`Tags: ${formatTags(skill.tags)}`);
+  lines.push("");
+  lines.push(`Requires: ${formatRequirements(skill.requires)}`);
+  lines.push(`Conflicts with: ${formatRelations(skill.conflictsWith)}`);
+  lines.push(`Recommends: ${formatRelations(skill.recommends)}`);
+
+  if (skill.usageGuidance) {
+    lines.push("");
+    lines.push("Usage Guidance:");
+    lines.push(`  ${skill.usageGuidance}`);
+  }
+
+  lines.push("");
+  lines.push(`Local Status: ${isInstalled ? "Installed" : "Not installed"}`);
+
+  return lines.join("\n");
+}
+
+export default class Info extends BaseCommand {
+  static summary = "Show detailed information about a skill";
+  static description =
+    "Display comprehensive information about a skill including metadata, relationships, and content preview";
+
+  static args = {
+    skill: Args.string({
+      description: "Skill ID or alias to look up",
+      required: true,
+    }),
+  };
+
+  static flags = {
+    ...BaseCommand.baseFlags,
+    preview: Flags.boolean({
+      description: "Show content preview from SKILL.md",
+      default: true,
+      allowNo: true,
+    }),
+  };
+
+  async run(): Promise<void> {
+    const { args, flags } = await this.parse(Info);
+
+    try {
+      this.log("Loading skills...");
+
+      const { matrix, sourcePath, isLocal } = await loadSkillsMatrixFromSource({
+        sourceFlag: flags.source,
+      });
+
+      this.log(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`);
+
+      // Look up skill by ID or alias
+      let skill: ResolvedSkill | undefined = matrix.skills[args.skill];
+
+      if (!skill) {
+        // Try alias lookup
+        const fullId = matrix.aliases[args.skill];
+        if (fullId) {
+          skill = matrix.skills[fullId];
+        }
+      }
+
+      if (!skill) {
+        // Skill not found - show error with suggestions
+        const suggestions = findSuggestions(
+          matrix.skills,
+          args.skill,
+          MAX_SUGGESTIONS,
+        );
+
+        this.log("");
+        this.error(`Skill "${args.skill}" not found.`, { exit: false });
+
+        if (suggestions.length > 0) {
+          this.log("");
+          this.log("Did you mean one of these?");
+          for (const suggestion of suggestions) {
+            this.log(`  - ${suggestion}`);
+          }
+        }
+
+        this.log("");
+        this.logInfo("Use 'cc search <query>' to find available skills.");
+        this.log("");
+        this.exit(1);
+      }
+
+      // Check local installation status
+      const localSkillsResult = await discoverLocalSkills(process.cwd());
+      const localSkillIds = localSkillsResult?.skills.map((s) => s.id) || [];
+      const isInstalled = localSkillIds.includes(skill.id);
+
+      // Display skill info
+      this.log("");
+      this.log(formatSkillInfo(skill, isInstalled));
+
+      // Show content preview if enabled
+      if (flags.preview) {
+        // Determine source path for SKILL.md
+        let skillMdPath: string;
+
+        if (skill.local && skill.localPath) {
+          // Local skill - path is relative to cwd
+          skillMdPath = path.join(process.cwd(), skill.localPath, "SKILL.md");
+        } else {
+          // Remote skill - path is relative to source
+          const sourceDir = isLocal ? sourcePath : path.dirname(sourcePath);
+          skillMdPath = path.join(sourceDir, skill.path, "SKILL.md");
+        }
+
+        if (await fileExists(skillMdPath)) {
+          const content = await readFile(skillMdPath);
+          const previewLines = getPreviewLines(content, CONTENT_PREVIEW_LINES);
+
+          if (previewLines.length > 0) {
+            this.log("");
+            this.log(
+              `--- Content Preview (first ${CONTENT_PREVIEW_LINES} lines) ---`,
+            );
+            for (const line of previewLines) {
+              this.log(line);
+            }
+          }
+        }
+      }
+
+      this.log("");
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+}

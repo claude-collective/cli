@@ -1,0 +1,232 @@
+import { Args, Flags } from "@oclif/core";
+import path from "path";
+import { BaseCommand } from "../../base-command.js";
+import { loadGlobalConfig } from "../../lib/config.js";
+import { writeFile, directoryExists } from "../../utils/fs.js";
+import { LOCAL_SKILLS_PATH } from "../../consts.js";
+import { EXIT_CODES } from "../../lib/exit-codes.js";
+
+const DEFAULT_AUTHOR = "@local";
+const DEFAULT_CATEGORY = "local";
+const KEBAB_CASE_PATTERN = /^[a-z][a-z0-9-]*$/;
+
+/**
+ * Validates that a skill name follows kebab-case convention.
+ * Must start with lowercase letter, followed by lowercase letters, numbers, or hyphens.
+ */
+export function validateSkillName(name: string): string | null {
+  if (!name || name.trim() === "") {
+    return "Skill name is required";
+  }
+
+  if (!KEBAB_CASE_PATTERN.test(name)) {
+    return "Skill name must be kebab-case (lowercase letters, numbers, and hyphens, starting with a letter)";
+  }
+
+  return null;
+}
+
+/**
+ * Converts kebab-case to Title Case.
+ * e.g., "my-patterns" -> "My Patterns"
+ */
+export function toTitleCase(kebabCase: string): string {
+  return kebabCase
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+/**
+ * Generates the SKILL.md content with frontmatter.
+ */
+export function generateSkillMd(name: string, author: string): string {
+  const titleName = toTitleCase(name);
+  const skillId = `${name} (${author})`;
+
+  return `---
+name: ${skillId}
+description: Brief description of this skill
+---
+
+# ${titleName}
+
+> **Quick Guide:** Add a brief summary of what this skill teaches.
+
+---
+
+<critical_requirements>
+
+## CRITICAL: Before Using This Skill
+
+**(Add critical requirements here)**
+
+</critical_requirements>
+
+---
+
+**When to use:**
+
+- Add use cases here
+
+**Key patterns covered:**
+
+- Add patterns here
+
+---
+
+<patterns>
+
+## Core Patterns
+
+### Pattern 1: Example Pattern
+
+Add your patterns here.
+
+</patterns>
+
+---
+
+<critical_reminders>
+
+## CRITICAL REMINDERS
+
+**(Repeat critical requirements here)**
+
+</critical_reminders>
+`;
+}
+
+/**
+ * Generates the metadata.yaml content.
+ */
+export function generateMetadataYaml(
+  name: string,
+  author: string,
+  category: string,
+): string {
+  const titleName = toTitleCase(name);
+
+  return `# yaml-language-server: $schema=https://raw.githubusercontent.com/claude-collective/skills/main/schemas/metadata.schema.json
+category: ${category}
+category_exclusive: false
+author: "${author}"
+version: 1
+cli_name: ${titleName}
+cli_description: Brief description
+usage_guidance: Use when <guidance>.
+tags:
+  - local
+  - custom
+`;
+}
+
+export default class NewSkill extends BaseCommand {
+  static summary = "Create a new local skill with proper structure";
+  static description =
+    "Create a new local skill scaffold with SKILL.md and metadata.yaml files";
+
+  static args = {
+    name: Args.string({
+      description: "Name of the skill to create (kebab-case)",
+      required: true,
+    }),
+  };
+
+  static flags = {
+    ...BaseCommand.baseFlags,
+    author: Flags.string({
+      char: "a",
+      description: "Author identifier (e.g., @myhandle)",
+      required: false,
+    }),
+    category: Flags.string({
+      char: "c",
+      description: "Skill category",
+      default: DEFAULT_CATEGORY,
+    }),
+    force: Flags.boolean({
+      char: "f",
+      description: "Overwrite existing skill directory",
+      default: false,
+    }),
+  };
+
+  async run(): Promise<void> {
+    const { args, flags } = await this.parse(NewSkill);
+    const projectDir = process.cwd();
+
+    this.log("");
+    this.log("Create New Skill");
+    this.log("");
+
+    // Validate skill name
+    const validationError = validateSkillName(args.name);
+    if (validationError) {
+      this.error(validationError, { exit: EXIT_CODES.INVALID_ARGS });
+    }
+
+    // Determine author: flag > global config > default
+    let author = flags.author;
+    if (!author) {
+      const globalConfig = await loadGlobalConfig();
+      author = globalConfig?.author || DEFAULT_AUTHOR;
+    }
+
+    const category = flags.category;
+
+    // Determine skill directory path
+    const skillDir = path.join(projectDir, LOCAL_SKILLS_PATH, args.name);
+
+    // Check if directory already exists
+    if (await directoryExists(skillDir)) {
+      if (!flags.force) {
+        this.error(
+          `Skill directory already exists: ${skillDir}\nUse --force to overwrite.`,
+          { exit: EXIT_CODES.ERROR },
+        );
+      }
+      this.warn(`Overwriting existing skill at ${skillDir}`);
+    }
+
+    this.log(`Skill name: ${args.name}`);
+    this.log(`Author: ${author}`);
+    this.log(`Category: ${category}`);
+    this.log(`Directory: ${skillDir}`);
+    this.log("");
+
+    if (flags["dry-run"]) {
+      this.log("[DRY RUN] Would create skill files");
+      return;
+    }
+
+    this.log("Creating skill files...");
+
+    try {
+      // Generate file contents
+      const skillMdContent = generateSkillMd(args.name, author);
+      const metadataContent = generateMetadataYaml(args.name, author, category);
+
+      // Write files (writeFile automatically creates parent directories)
+      const skillMdPath = path.join(skillDir, "SKILL.md");
+      const metadataPath = path.join(skillDir, "metadata.yaml");
+
+      await writeFile(skillMdPath, skillMdContent);
+      await writeFile(metadataPath, metadataContent);
+
+      this.log("");
+      this.logSuccess(`Created SKILL.md at ${skillMdPath}`);
+      this.logSuccess(`Created metadata.yaml at ${metadataPath}`);
+      this.log("");
+      this.log(
+        "Skill created successfully! Run 'cc compile' to include it in your agents.",
+      );
+      this.log("");
+    } catch (error) {
+      this.error(
+        error instanceof Error ? error.message : "Unknown error occurred",
+        { exit: EXIT_CODES.ERROR },
+      );
+    }
+  }
+}
