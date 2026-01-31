@@ -11,6 +11,8 @@ import {
   getSkillsByCategory,
   getTopLevelCategories,
   getSubcategories,
+  getAvailableSkills,
+  isCategoryAllDisabled,
 } from "./matrix-resolver";
 import type { MergedSkillsMatrix, ResolvedSkill } from "../types-matrix";
 
@@ -832,9 +834,6 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
         },
       );
 
-      // Import getAvailableSkills for this test
-      const { getAvailableSkills } = require("./matrix-resolver");
-
       // skill-b is already selected
       const options = getAvailableSkills("framework", ["skill-b"], matrix);
 
@@ -940,8 +939,6 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
         },
       );
 
-      const { getAvailableSkills } = require("./matrix-resolver");
-
       // skill-b is already selected, but expert mode allows selecting skill-a
       const options = getAvailableSkills("framework", ["skill-b"], matrix, {
         expertMode: true,
@@ -977,8 +974,6 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
           },
         },
       );
-
-      const { getAvailableSkills } = require("./matrix-resolver");
 
       const options = getAvailableSkills("framework", ["skill-b"], matrix, {
         expertMode: true,
@@ -1030,8 +1025,6 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
           },
         },
       );
-
-      const { isCategoryAllDisabled } = require("./matrix-resolver");
 
       // skill-x is selected, which conflicts with all skills in styling category
       // Without expert mode, category should be disabled
