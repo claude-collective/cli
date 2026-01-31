@@ -635,10 +635,16 @@ suggested_stacks:
         monorepo: turborepo
         env: env
         tooling: tooling
+        posthog-setup: posthog-setup
+        email-setup: email-setup
+        observability-setup: observability-setup
       reviewing:
         reviewing: reviewing
+        cli-reviewing: cli-reviewing
       research:
         research: research-methodology
+      cli:
+        cli-commander: cli-commander
     philosophy: "Production-ready from day one"
 
   - id: vue-stack
@@ -875,6 +881,11 @@ skill_aliases:
 
   # Security
   security: "security/auth/security (@vince)"
+
+  # ─────────────────────────────────────────────────────────────────
+  # CLI
+  # ─────────────────────────────────────────────────────────────────
+  cli-commander: "cli/framework/cli-commander (@vince)"
 
   # ─────────────────────────────────────────────────────────────────
   # Reviewing / Meta
