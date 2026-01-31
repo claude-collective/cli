@@ -44,24 +44,35 @@ All Phase 3 tasks completed except P3-14 (deferred).
 
 ---
 
-## Phase 4: Essential CLI Features (IN PROGRESS)
+## Phase 4: Essential CLI Features (COMPLETE - Tier 1 & 2)
 
 ### Completed Tasks
 
-| Task ID | Task                        | Completed  | Tests Added         |
-| ------- | --------------------------- | ---------- | ------------------- |
-| P4-01   | `cc search <query>` command | 2026-01-31 | 34                  |
-| P4-02   | `cc info <skill>` command   | 2026-01-31 | 56                  |
-| P4-03   | Search tests                | 2026-01-31 | (included in P4-01) |
-| P4-04   | Info tests                  | 2026-01-31 | (included in P4-02) |
-| P4-05   | `cc outdated` command       | 2026-01-31 | 35                  |
-| P4-07   | Outdated tests              | 2026-01-31 | (included in P4-05) |
-| P4-09   | `cc doctor` command         | 2026-01-31 | 22                  |
-| P4-10   | Doctor tests                | 2026-01-31 | (included in P4-09) |
-| P4-11   | `cc new skill` command      | 2026-01-31 | 22                  |
-| P4-13   | New skill tests             | 2026-01-31 | (included in P4-11) |
-| P4-15   | Test fixtures consolidation | 2026-01-31 | -                   |
-| P4-19   | Web UI research             | 2026-01-31 | -                   |
+| Task ID | Task                           | Completed  | Tests Added         |
+| ------- | ------------------------------ | ---------- | ------------------- |
+| P4-01   | `cc search <query>` command    | 2026-01-31 | 34                  |
+| P4-02   | `cc info <skill>` command      | 2026-01-31 | 56                  |
+| P4-03   | Search tests                   | 2026-01-31 | (included in P4-01) |
+| P4-04   | Info tests                     | 2026-01-31 | (included in P4-02) |
+| P4-05   | `cc outdated` command          | 2026-01-31 | 35                  |
+| P4-06   | `cc update [skill]` command    | 2026-01-31 | 43                  |
+| P4-07   | Outdated tests                 | 2026-01-31 | (included in P4-05) |
+| P4-08   | Update tests                   | 2026-01-31 | (included in P4-06) |
+| P4-09   | `cc doctor` command            | 2026-01-31 | 22                  |
+| P4-10   | Doctor tests                   | 2026-01-31 | (included in P4-09) |
+| P4-11   | `cc new skill` command         | 2026-01-31 | 22                  |
+| P4-12   | `cc diff` command              | 2026-01-31 | 37                  |
+| P4-13   | New skill tests                | 2026-01-31 | (included in P4-11) |
+| P4-14   | Diff tests                     | 2026-01-31 | (included in P4-12) |
+| P4-15   | Test fixtures consolidation    | 2026-01-31 | -                   |
+| P4-19   | Web UI research                | 2026-01-31 | -                   |
+| R0      | oclif + Ink framework research | 2026-01-31 | -                   |
+
+**Summary:**
+
+- All Tier 1 and Tier 2 tasks completed
+- 1160 tests passing
+- New commands: search, info, outdated, update, doctor, diff, new skill
 
 ---
 
@@ -73,7 +84,8 @@ Detailed specifications for completed tasks are preserved in TODO.md under "Deta
 
 ## Research Documents
 
-| Document                                                                    | Topic                          | Date       |
-| --------------------------------------------------------------------------- | ------------------------------ | ---------- |
-| [web-ui-research.md](./docs/web-ui-research.md)                             | Web UI for private marketplace | 2026-01-31 |
-| [cli-agent-invocation-research.md](./docs/cli-agent-invocation-research.md) | Meta-agent invocation via CLI  | 2026-01-22 |
+| Document                                                                    | Topic                            | Date       |
+| --------------------------------------------------------------------------- | -------------------------------- | ---------- |
+| [oclif-ink-research.md](./docs/oclif-ink-research.md)                       | oclif + Ink framework evaluation | 2026-01-31 |
+| [web-ui-research.md](./docs/web-ui-research.md)                             | Web UI for private marketplace   | 2026-01-31 |
+| [cli-agent-invocation-research.md](./docs/cli-agent-invocation-research.md) | Meta-agent invocation via CLI    | 2026-01-22 |
