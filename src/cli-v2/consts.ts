@@ -42,3 +42,16 @@ export const DEFAULT_VERSION = "1.0.0";
 
 /** Uses "0.0.0" to clearly indicate "no version was explicitly set" */
 export const DEFAULT_DISPLAY_VERSION = "0.0.0";
+
+/**
+ * Skills that are preselected by default in the wizard.
+ * These are foundational methodology skills that apply to all projects.
+ */
+export const DEFAULT_PRESELECTED_SKILLS = [
+  "meta/methodology/anti-over-engineering (@vince)",
+  "meta/methodology/context-management (@vince)",
+  "meta/methodology/improvement-protocol (@vince)",
+  "meta/methodology/investigation-requirements (@vince)",
+  "meta/methodology/success-criteria (@vince)",
+  "meta/methodology/write-verification (@vince)",
+] as const;
