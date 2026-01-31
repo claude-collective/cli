@@ -3,6 +3,7 @@ import * as p from "@clack/prompts";
 import pc from "picocolors";
 import {
   resolveSource,
+  resolveAgentsSource,
   loadGlobalConfig,
   saveGlobalConfig,
   loadProjectConfig,
@@ -10,6 +11,7 @@ import {
   getGlobalConfigPath,
   getProjectConfigPath,
   formatSourceOrigin,
+  formatAgentsSourceOrigin,
   DEFAULT_SOURCE,
   SOURCE_ENV_VAR,
   type GlobalConfig,
@@ -41,6 +43,26 @@ configCommand
     );
     console.log("");
 
+    console.log(pc.bold("Marketplace:"));
+    if (resolved.marketplace) {
+      console.log(`  ${pc.green(resolved.marketplace)}`);
+    } else {
+      console.log(`  ${pc.dim("(not configured)")}`);
+    }
+    console.log("");
+
+    const agentsResolved = await resolveAgentsSource(undefined, projectDir);
+    console.log(pc.bold("Agents Source:"));
+    if (agentsResolved.agentsSource) {
+      console.log(`  ${pc.green(agentsResolved.agentsSource)}`);
+      console.log(
+        `  ${pc.dim(`(from ${formatAgentsSourceOrigin(agentsResolved.agentsSourceOrigin)})`)}`,
+      );
+    } else {
+      console.log(`  ${pc.dim("(not configured - using local CLI)")}`);
+    }
+    console.log("");
+
     console.log(pc.bold("Configuration Layers:"));
     console.log("");
 
@@ -56,8 +78,22 @@ configCommand
     const projectConfigPath = getProjectConfigPath(projectDir);
     console.log(`  ${pc.dim("2.")} Project config:`);
     console.log(`     ${pc.dim(projectConfigPath)}`);
-    if (projectConfig?.source) {
-      console.log(`     source: ${pc.green(projectConfig.source)}`);
+    if (
+      projectConfig?.source ||
+      projectConfig?.marketplace ||
+      projectConfig?.agents_source
+    ) {
+      if (projectConfig?.source) {
+        console.log(`     source: ${pc.green(projectConfig.source)}`);
+      }
+      if (projectConfig?.marketplace) {
+        console.log(`     marketplace: ${pc.green(projectConfig.marketplace)}`);
+      }
+      if (projectConfig?.agents_source) {
+        console.log(
+          `     agents_source: ${pc.green(projectConfig.agents_source)}`,
+        );
+      }
     } else {
       console.log(`     ${pc.dim("(not configured)")}`);
     }
@@ -66,8 +102,22 @@ configCommand
     const globalConfigPath = getGlobalConfigPath();
     console.log(`  ${pc.dim("3.")} Global config:`);
     console.log(`     ${pc.dim(globalConfigPath)}`);
-    if (globalConfig?.source) {
-      console.log(`     source: ${pc.green(globalConfig.source)}`);
+    if (
+      globalConfig?.source ||
+      globalConfig?.marketplace ||
+      globalConfig?.agents_source
+    ) {
+      if (globalConfig?.source) {
+        console.log(`     source: ${pc.green(globalConfig.source)}`);
+      }
+      if (globalConfig?.marketplace) {
+        console.log(`     marketplace: ${pc.green(globalConfig.marketplace)}`);
+      }
+      if (globalConfig?.agents_source) {
+        console.log(
+          `     agents_source: ${pc.green(globalConfig.agents_source)}`,
+        );
+      }
     } else {
       console.log(`     ${pc.dim("(not configured)")}`);
     }
@@ -83,10 +133,13 @@ configCommand
 configCommand
   .command("set")
   .description("Set a global configuration value")
-  .argument("<key>", "Configuration key (source, author)")
+  .argument(
+    "<key>",
+    "Configuration key (source, author, marketplace, agents_source)",
+  )
   .argument("<value>", "Configuration value")
   .action(async (key: string, value: string) => {
-    const validKeys = ["source", "author"];
+    const validKeys = ["source", "author", "marketplace", "agents_source"];
 
     if (!validKeys.includes(key)) {
       p.log.error(`Unknown configuration key: ${key}`);
@@ -109,7 +162,10 @@ configCommand
 configCommand
   .command("get")
   .description("Get a configuration value")
-  .argument("<key>", "Configuration key (source, author)")
+  .argument(
+    "<key>",
+    "Configuration key (source, author, marketplace, agents_source)",
+  )
   .action(async (key: string) => {
     const projectDir = process.cwd();
 
@@ -119,9 +175,15 @@ configCommand
     } else if (key === "author") {
       const globalConfig = await loadGlobalConfig();
       console.log(globalConfig?.author || "");
+    } else if (key === "marketplace") {
+      const resolved = await resolveSource(undefined, projectDir);
+      console.log(resolved.marketplace || "");
+    } else if (key === "agents_source") {
+      const resolved = await resolveAgentsSource(undefined, projectDir);
+      console.log(resolved.agentsSource || "");
     } else {
       p.log.error(`Unknown configuration key: ${key}`);
-      p.log.info(`Valid keys: source, author`);
+      p.log.info(`Valid keys: source, author, marketplace, agents_source`);
       process.exit(EXIT_CODES.INVALID_ARGS);
     }
   });
@@ -131,7 +193,7 @@ configCommand
   .description("Remove a global configuration value")
   .argument("<key>", "Configuration key to remove")
   .action(async (key: string) => {
-    const validKeys = ["source", "author"];
+    const validKeys = ["source", "author", "marketplace", "agents_source"];
 
     if (!validKeys.includes(key)) {
       p.log.error(`Unknown configuration key: ${key}`);
@@ -156,11 +218,11 @@ configCommand
 configCommand
   .command("set-project")
   .description("Set a project-level configuration value")
-  .argument("<key>", "Configuration key (source)")
+  .argument("<key>", "Configuration key (source, marketplace, agents_source)")
   .argument("<value>", "Configuration value")
   .action(async (key: string, value: string) => {
     const projectDir = process.cwd();
-    const validKeys = ["source"];
+    const validKeys = ["source", "marketplace", "agents_source"];
 
     if (!validKeys.includes(key)) {
       p.log.error(`Unknown configuration key: ${key}`);
@@ -187,7 +249,7 @@ configCommand
   .argument("<key>", "Configuration key to remove")
   .action(async (key: string) => {
     const projectDir = process.cwd();
-    const validKeys = ["source"];
+    const validKeys = ["source", "marketplace", "agents_source"];
 
     if (!validKeys.includes(key)) {
       p.log.error(`Unknown configuration key: ${key}`);
