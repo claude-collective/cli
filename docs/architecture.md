@@ -8,7 +8,7 @@ Source Resolution -> Skill Loading -> Matrix Merging -> Wizard Selection -> Conf
 
 ## Module Map
 
-### Commands (`src/cli/commands/`)
+### Commands (`src/cli-v2/commands/`)
 
 | Command             | File                      | Purpose                               |
 | ------------------- | ------------------------- | ------------------------------------- |
@@ -34,7 +34,7 @@ Source Resolution -> Skill Loading -> Matrix Merging -> Wizard Selection -> Conf
 | `compiler.ts`              | Compile agents via Liquid templates   |
 | `source-loader.ts`         | Multi-source loading (local/remote)   |
 | `stack-installer.ts`       | Install stacks as Claude plugins      |
-| `wizard.ts`                | Interactive selection wizard          |
+| `wizard/` components       | Interactive selection wizard (Ink)    |
 | `skill-copier.ts`          | Copy skills with metadata             |
 | `config-generator.ts`      | Generate configs from selections      |
 | `plugin-finder.ts`         | Find plugin directories               |

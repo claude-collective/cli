@@ -1,0 +1,105 @@
+/**
+ * Set plugin version to a specific value.
+ */
+import { BaseCommand } from "../../base-command.js";
+import { Args, Flags } from "@oclif/core";
+import { EXIT_CODES } from "../../lib/exit-codes.js";
+import path from "path";
+import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts.js";
+import { fileExists, readFile, writeFile } from "../../utils/fs.js";
+import type { PluginManifest } from "../../../types.js";
+
+const SEMVER_REGEX = /^(\d+)\.(\d+)\.(\d+)$/;
+
+async function findPluginManifest(startDir: string): Promise<string | null> {
+  let currentDir = startDir;
+  const root = path.parse(currentDir).root;
+
+  while (currentDir !== root) {
+    const manifestPath = path.join(
+      currentDir,
+      PLUGIN_MANIFEST_DIR,
+      PLUGIN_MANIFEST_FILE,
+    );
+    if (await fileExists(manifestPath)) {
+      return manifestPath;
+    }
+    currentDir = path.dirname(currentDir);
+  }
+
+  return null;
+}
+
+function isValidSemver(version: string): boolean {
+  return SEMVER_REGEX.test(version);
+}
+
+export default class VersionSet extends BaseCommand {
+  static summary = "Set plugin version to a specific value";
+  static description =
+    "Set the plugin version to an explicit semantic version (e.g., 1.2.3).";
+
+  static args = {
+    version: Args.string({
+      description: "Version to set (semantic version format: X.Y.Z)",
+      required: true,
+    }),
+  };
+
+  static flags = {
+    ...BaseCommand.baseFlags,
+  };
+
+  static examples = [
+    "<%= config.bin %> <%= command.id %> 1.0.0",
+    "<%= config.bin %> <%= command.id %> 2.1.3",
+    "<%= config.bin %> <%= command.id %> 1.0.0 --dry-run",
+  ];
+
+  async run(): Promise<void> {
+    const { args, flags } = await this.parse(VersionSet);
+    const newVersion = args.version;
+
+    // Validate semver format
+    if (!isValidSemver(newVersion)) {
+      this.error(
+        `Invalid version format: "${newVersion}". Must be semantic version (e.g., 1.0.0)`,
+        { exit: EXIT_CODES.INVALID_ARGS },
+      );
+    }
+
+    const manifestPath = await findPluginManifest(process.cwd());
+
+    if (!manifestPath) {
+      this.error(
+        `No plugin.json found in current directory or parents\nExpected location: ${PLUGIN_MANIFEST_DIR}/${PLUGIN_MANIFEST_FILE}`,
+        { exit: EXIT_CODES.ERROR },
+      );
+    }
+
+    try {
+      // Read current manifest
+      const content = await readFile(manifestPath);
+      const manifest = JSON.parse(content) as PluginManifest;
+      const oldVersion = manifest.version || "1.0.0";
+      const pluginName = manifest.name || "unknown";
+
+      if (flags["dry-run"]) {
+        this.log(
+          `[DRY RUN] Would set ${pluginName} version: ${oldVersion} -> ${newVersion}`,
+        );
+        return;
+      }
+
+      // Update and write manifest
+      manifest.version = newVersion;
+      await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
+
+      this.log(`${pluginName}: ${oldVersion} -> ${newVersion}`);
+    } catch (error) {
+      this.error(`Failed to set plugin version: ${error}`, {
+        exit: EXIT_CODES.ERROR,
+      });
+    }
+  }
+}
