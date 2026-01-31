@@ -1,0 +1,275 @@
+/**
+ * Tests for the Confirm component.
+ *
+ * Tests keyboard interaction with ConfirmInput from @inkjs/ui.
+ *
+ * Note: Keyboard interaction tests for ConfirmInput require careful timing
+ * and may need longer delays than other components due to how useInput
+ * processes stdin events.
+ */
+import React from "react";
+import { render } from "ink-testing-library";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { Confirm } from "../../../components/common/confirm";
+import {
+  KEY_Y,
+  KEY_N,
+  ENTER,
+  RENDER_DELAY_MS,
+  delay,
+} from "../test-constants";
+
+// Longer delay for ConfirmInput key processing
+const CONFIRM_INPUT_DELAY_MS = 100;
+
+// =============================================================================
+// Tests
+// =============================================================================
+
+describe("Confirm component", () => {
+  let cleanup: (() => void) | undefined;
+
+  afterEach(() => {
+    cleanup?.();
+    cleanup = undefined;
+  });
+
+  // ===========================================================================
+  // Rendering
+  // ===========================================================================
+
+  describe("rendering", () => {
+    it("should render the message", () => {
+      const { lastFrame, unmount } = render(
+        <Confirm
+          message="Do you want to proceed?"
+          onConfirm={() => {}}
+          onCancel={() => {}}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Do you want to proceed?");
+    });
+
+    it("should show y/n prompt", () => {
+      const { lastFrame, unmount } = render(
+        <Confirm
+          message="Continue?"
+          onConfirm={() => {}}
+          onCancel={() => {}}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // ConfirmInput shows (Y/n) or (y/N) depending on default
+      expect(output?.toLowerCase()).toMatch(/[yn]/);
+    });
+
+    it("should show Y/n when default is confirm (true)", () => {
+      const { lastFrame, unmount } = render(
+        <Confirm
+          message="Confirm?"
+          onConfirm={() => {}}
+          onCancel={() => {}}
+          defaultValue={true}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Y/n");
+    });
+
+    it("should show y/N when default is cancel (false)", () => {
+      const { lastFrame, unmount } = render(
+        <Confirm
+          message="Confirm?"
+          onConfirm={() => {}}
+          onCancel={() => {}}
+          defaultValue={false}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("y/N");
+    });
+  });
+
+  // ===========================================================================
+  // Keyboard Interactions
+  // ===========================================================================
+
+  describe("keyboard interactions", () => {
+    it("should call onConfirm when pressing y", async () => {
+      const onConfirm = vi.fn();
+      const onCancel = vi.fn();
+
+      const { stdin, unmount } = render(
+        <Confirm
+          message="Confirm?"
+          onConfirm={onConfirm}
+          onCancel={onCancel}
+        />,
+      );
+      cleanup = unmount;
+
+      // Wait for component to mount and set up input handler
+      await delay(RENDER_DELAY_MS);
+
+      await stdin.write(KEY_Y);
+      await delay(CONFIRM_INPUT_DELAY_MS);
+
+      expect(onConfirm).toHaveBeenCalled();
+      expect(onCancel).not.toHaveBeenCalled();
+    });
+
+    it("should call onCancel when pressing n", async () => {
+      const onConfirm = vi.fn();
+      const onCancel = vi.fn();
+
+      const { stdin, unmount } = render(
+        <Confirm
+          message="Confirm?"
+          onConfirm={onConfirm}
+          onCancel={onCancel}
+        />,
+      );
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+
+      await stdin.write(KEY_N);
+      await delay(CONFIRM_INPUT_DELAY_MS);
+
+      expect(onCancel).toHaveBeenCalled();
+      expect(onConfirm).not.toHaveBeenCalled();
+    });
+
+    it("should call onConfirm when default is true and enter pressed", async () => {
+      const onConfirm = vi.fn();
+      const onCancel = vi.fn();
+
+      const { stdin, unmount } = render(
+        <Confirm
+          message="Confirm?"
+          onConfirm={onConfirm}
+          onCancel={onCancel}
+          defaultValue={true}
+        />,
+      );
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+
+      await stdin.write(ENTER);
+      await delay(CONFIRM_INPUT_DELAY_MS);
+
+      expect(onConfirm).toHaveBeenCalled();
+      expect(onCancel).not.toHaveBeenCalled();
+    });
+
+    it("should call onCancel when default is false and enter pressed", async () => {
+      const onConfirm = vi.fn();
+      const onCancel = vi.fn();
+
+      const { stdin, unmount } = render(
+        <Confirm
+          message="Confirm?"
+          onConfirm={onConfirm}
+          onCancel={onCancel}
+          defaultValue={false}
+        />,
+      );
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+
+      await stdin.write(ENTER);
+      await delay(CONFIRM_INPUT_DELAY_MS);
+
+      expect(onCancel).toHaveBeenCalled();
+      expect(onConfirm).not.toHaveBeenCalled();
+    });
+
+    it("should handle uppercase Y", async () => {
+      const onConfirm = vi.fn();
+
+      const { stdin, unmount } = render(
+        <Confirm
+          message="Confirm?"
+          onConfirm={onConfirm}
+          onCancel={() => {}}
+        />,
+      );
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+
+      await stdin.write("Y");
+      await delay(CONFIRM_INPUT_DELAY_MS);
+
+      expect(onConfirm).toHaveBeenCalled();
+    });
+
+    it("should handle uppercase N", async () => {
+      const onCancel = vi.fn();
+
+      const { stdin, unmount } = render(
+        <Confirm
+          message="Confirm?"
+          onConfirm={() => {}}
+          onCancel={onCancel}
+        />,
+      );
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+
+      await stdin.write("N");
+      await delay(CONFIRM_INPUT_DELAY_MS);
+
+      expect(onCancel).toHaveBeenCalled();
+    });
+  });
+
+  // ===========================================================================
+  // Default Value Behavior
+  // ===========================================================================
+
+  describe("default value", () => {
+    it("should default to false when not specified", () => {
+      const { lastFrame, unmount } = render(
+        <Confirm
+          message="Confirm?"
+          onConfirm={() => {}}
+          onCancel={() => {}}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // When default is false, N is capitalized (y/N)
+      expect(output).toContain("y/N");
+    });
+
+    it("should render with specified default value of true", () => {
+      const { lastFrame, unmount } = render(
+        <Confirm
+          message="Confirm?"
+          onConfirm={() => {}}
+          onCancel={() => {}}
+          defaultValue={true}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // When default is true, Y is capitalized (Y/n)
+      expect(output).toContain("Y/n");
+    });
+  });
+});

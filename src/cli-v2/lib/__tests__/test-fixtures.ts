@@ -19,6 +19,8 @@ export const TEST_SKILLS = {
   SCSS_MODULES: "scss-modules (@vince)",
   BETTER_AUTH: "better-auth+drizzle+hono (@vince)",
   AUTH_PATTERNS: "auth-patterns (@vince)",
+  // One methodology skill for testing preselection (matches first in DEFAULT_PRESELECTED_SKILLS)
+  ANTI_OVER_ENGINEERING: "meta/methodology/anti-over-engineering (@vince)",
 } as const;
 
 export const TEST_AUTHOR = "@vince";
@@ -46,6 +48,7 @@ export const TEST_CATEGORIES = {
   DATABASE: "backend/database",
   TESTING: "testing",
   SECURITY: "backend/security",
+  METHODOLOGY: "meta/methodology",
 } as const;
 
 // =============================================================================
@@ -134,4 +137,27 @@ export function createTestDrizzleSkill(
     tags: ["database", "orm", "sql"],
     ...overrides,
   });
+}
+
+// =============================================================================
+// Methodology Skills (Preselected by Default)
+// =============================================================================
+
+/**
+ * Creates one methodology skill for testing preselection behavior.
+ * Use createMockMatrixWithMethodology() helper which includes this automatically.
+ */
+export function createTestMethodologySkill(
+  overrides?: Partial<ResolvedSkill>,
+): ResolvedSkill {
+  return createMockSkill(
+    TEST_SKILLS.ANTI_OVER_ENGINEERING,
+    TEST_CATEGORIES.METHODOLOGY,
+    {
+      name: "Anti-Over-Engineering",
+      description: "Surgical implementation, not architectural innovation",
+      tags: ["methodology", "foundational"],
+      ...overrides,
+    },
+  );
 }
