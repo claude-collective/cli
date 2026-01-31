@@ -51,7 +51,7 @@ skills live in the [claude-collective/skills](https://github.com/claude-collecti
 | web      | react 19, next.js, remix, vue, angular, solidjs, scss-modules, zustand, react-query |
 | api      | hono, drizzle, better-auth, posthog, resend, axiom+pino+sentry                      |
 | mobile   | react-native, expo                                                                  |
-| cli      | commander.js, clack prompts                                                         |
+| cli      | oclif, ink                                                                          |
 | infra    | turborepo, github-actions, env config                                               |
 | security | auth patterns, xss prevention, secrets                                              |
 | meta     | code reviewing, research methodology                                                |
