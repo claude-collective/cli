@@ -88,19 +88,20 @@ export interface MarketplaceInfo {
 export async function claudePluginMarketplaceList(): Promise<
   MarketplaceInfo[]
 > {
-  const result = await execCommand(
-    "claude",
-    ["plugin", "marketplace", "list", "--json"],
-    {},
-  );
-
-  if (result.exitCode !== 0) {
-    return [];
-  }
-
   try {
+    const result = await execCommand(
+      "claude",
+      ["plugin", "marketplace", "list", "--json"],
+      {},
+    );
+
+    if (result.exitCode !== 0) {
+      return [];
+    }
+
     return JSON.parse(result.stdout);
   } catch {
+    // Returns empty array if claude CLI is not available or parsing fails
     return [];
   }
 }
@@ -123,7 +124,14 @@ export async function claudePluginMarketplaceAdd(
   name: string,
 ): Promise<void> {
   const args = ["plugin", "marketplace", "add", githubRepo, "--name", name];
-  const result = await execCommand("claude", args, {});
+  let result;
+  try {
+    result = await execCommand("claude", args, {});
+  } catch (err) {
+    throw new Error(
+      `Failed to add marketplace: ${err instanceof Error ? err.message : "Unknown error"}`,
+    );
+  }
 
   if (result.exitCode !== 0) {
     const errorMessage = result.stderr || result.stdout || "Unknown error";

@@ -168,6 +168,38 @@ function buildReverseAliases(
   return reverse;
 }
 
+/**
+ * Build a map from alias targets (e.g., "react (@vince)") to actual skill IDs
+ * (e.g., "web/framework/react (@vince)").
+ *
+ * This handles the case where alias targets in skills-matrix.yaml use short names
+ * but skill IDs from SKILL.md frontmatter include the full directory path.
+ */
+function buildAliasTargetToSkillIdMap(
+  aliases: Record<string, string>,
+  skills: ExtractedSkillMetadata[],
+): Record<string, string> {
+  const map: Record<string, string> = {};
+  const aliasTargets = new Set(Object.values(aliases));
+
+  for (const skill of skills) {
+    // If the skill ID exactly matches an alias target, no mapping needed
+    if (aliasTargets.has(skill.id)) {
+      continue;
+    }
+
+    // Check if any alias target is a suffix of this skill ID
+    // e.g., skill.id = "web/framework/react (@vince)", aliasTarget = "react (@vince)"
+    for (const aliasTarget of aliasTargets) {
+      if (skill.id.endsWith(`/${aliasTarget}`) || skill.id === aliasTarget) {
+        map[aliasTarget] = skill.id;
+      }
+    }
+  }
+
+  return map;
+}
+
 function buildDirectoryPathToIdMap(
   skills: ExtractedSkillMetadata[],
 ): Record<string, string> {
@@ -201,6 +233,7 @@ export async function mergeMatrixWithSkills(
   const aliases = matrix.skill_aliases;
   const aliasesReverse = buildReverseAliases(aliases);
   const directoryPathToId = buildDirectoryPathToIdMap(skills);
+  const aliasTargetToSkillId = buildAliasTargetToSkillIdMap(aliases, skills);
   const resolvedSkills: Record<string, ResolvedSkill> = {};
 
   for (const skill of skills) {
@@ -215,7 +248,11 @@ export async function mergeMatrixWithSkills(
   }
 
   computeInverseRelationships(resolvedSkills);
-  const suggestedStacks = resolveSuggestedStacks(matrix, aliases);
+  const suggestedStacks = resolveSuggestedStacks(
+    matrix,
+    aliases,
+    aliasTargetToSkillId,
+  );
 
   const merged: MergedSkillsMatrix = {
     version: matrix.version,
@@ -429,6 +466,7 @@ function computeInverseRelationships(
 function resolveSuggestedStacks(
   matrix: SkillsMatrixConfig,
   aliases: Record<string, string>,
+  aliasTargetToSkillId: Record<string, string>,
 ): ResolvedStack[] {
   return matrix.suggested_stacks.map((stack) => {
     const resolvedSkillsMap: Record<string, Record<string, string>> = {};
@@ -437,7 +475,11 @@ function resolveSuggestedStacks(
     for (const [category, subcategories] of Object.entries(stack.skills)) {
       resolvedSkillsMap[category] = {};
       for (const [subcategory, alias] of Object.entries(subcategories)) {
-        const canonicalId = resolveToCanonicalId(alias, aliases);
+        // First resolve the alias to its target (e.g., "react" -> "react (@vince)")
+        const aliasTarget = resolveToCanonicalId(alias, aliases);
+        // Then check if the alias target needs to be mapped to a full skill ID
+        // (e.g., "react (@vince)" -> "web/framework/react (@vince)")
+        const canonicalId = aliasTargetToSkillId[aliasTarget] || aliasTarget;
         resolvedSkillsMap[category][subcategory] = canonicalId;
         allSkillIds.push(canonicalId);
       }
