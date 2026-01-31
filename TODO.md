@@ -16,24 +16,22 @@ For completed tasks, see [TODO-completed.md](./TODO-completed.md).
 
 ## High Priority Research
 
-### R1: oclif + Ink Ecosystem Libraries (HIGHEST PRIORITY)
+### R1: oclif + Ink Ecosystem Libraries (COMPLETE)
 
 **Question:** What complementary libraries reduce complexity when building with oclif + Ink?
 
-**Context:** Decision made to migrate to oclif + Ink. Need to identify libraries that reduce boilerplate and increase reusability (similar to Zustand for React).
+**Recommended Starter Kit:**
 
-**Research Areas:**
-
-- State management for CLIs
-- Pre-built Ink component libraries
-- Plugin architecture patterns
-- Testing utilities
-- Configuration management (cosmiconfig, etc.)
-- Build and distribution
+- **State:** `conf` (persistent), `zustand` (runtime with Ink)
+- **UI Components:** `@inkjs/ui`, `@oclif/table`
+- **Config:** `cosmiconfig`, `zod` validation
+- **Plugins:** `@oclif/plugin-help`, `autocomplete`, `not-found`, `warn-if-update-available`
+- **Testing:** `@oclif/test`, `ink-testing-library`
+- **Utilities:** `execa`, `listr2`
 
 **Output:** [docs/oclif-ink-ecosystem.md](./docs/oclif-ink-ecosystem.md)
 
-**Status:** In Progress
+**Status:** Complete
 
 ---
 
@@ -96,14 +94,14 @@ Once your task is done, move it to [TODO-completed.md](./TODO-completed.md). Kee
 - Document current command structure
 - Create migration strategy
 
-| Task ID | Task                                         | Complexity | Status      |
-| ------- | -------------------------------------------- | ---------- | ----------- |
-| P5-01   | Research: oclif + Ink ecosystem libraries    | M          | In Progress |
-| P5-02   | Design: Migration strategy and phases        | L          | Pending     |
-| P5-03   | Scaffold: New oclif project structure        | M          | Pending     |
-| P5-04   | Migrate: Core infrastructure (config, utils) | L          | Pending     |
-| P5-05   | Migrate: Commands one-by-one                 | XL         | Pending     |
-| P5-06   | Test: Verify all functionality preserved     | L          | Pending     |
+| Task ID | Task                                         | Complexity | Status  |
+| ------- | -------------------------------------------- | ---------- | ------- |
+| P5-01   | Research: oclif + Ink ecosystem libraries    | M          | Done    |
+| P5-02   | Design: Migration strategy and phases        | L          | Pending |
+| P5-03   | Scaffold: New oclif project structure        | M          | Pending |
+| P5-04   | Migrate: Core infrastructure (config, utils) | L          | Pending |
+| P5-05   | Migrate: Commands one-by-one                 | XL         | Pending |
+| P5-06   | Test: Verify all functionality preserved     | L          | Pending |
 
 ---
 
