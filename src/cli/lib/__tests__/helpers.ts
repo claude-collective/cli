@@ -282,3 +282,21 @@ export async function writeTestAgent(
 
   return agentDir;
 }
+
+// =============================================================================
+// Re-export from test-fixtures for convenience
+// =============================================================================
+
+export {
+  TEST_SKILLS,
+  TEST_AUTHOR,
+  TEST_CATEGORIES,
+  PLACEHOLDER_SKILLS,
+  createTestReactSkill,
+  createTestZustandSkill,
+  createTestHonoSkill,
+  createTestVitestSkill,
+  createTestVueSkill,
+  createTestAuthPatternsSkill,
+  createTestDrizzleSkill,
+} from "./test-fixtures";
