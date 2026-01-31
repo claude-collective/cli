@@ -10,7 +10,15 @@ import { validateCommand } from "./commands/validate";
 import { listCommand } from "./commands/list";
 import { configCommand } from "./commands/config";
 import { ejectCommand } from "./commands/eject";
+import { uninstallCommand } from "./commands/uninstall";
 import { versionCommand } from "./commands/version";
+import { newCommand } from "./commands/new-agent";
+import { searchCommand } from "./commands/search";
+import { infoCommand } from "./commands/info";
+import { outdatedCommand } from "./commands/outdated";
+import { updateCommand } from "./commands/update";
+import { diffCommand } from "./commands/diff";
+import { doctorCommand } from "./commands/doctor";
 import { EXIT_CODES } from "./lib/exit-codes";
 
 process.on("SIGINT", () => {
@@ -41,7 +49,15 @@ async function main() {
   program.addCommand(listCommand);
   program.addCommand(configCommand);
   program.addCommand(ejectCommand);
+  program.addCommand(uninstallCommand);
   program.addCommand(versionCommand);
+  program.addCommand(newCommand);
+  program.addCommand(searchCommand);
+  program.addCommand(infoCommand);
+  program.addCommand(outdatedCommand);
+  program.addCommand(updateCommand);
+  program.addCommand(diffCommand);
+  program.addCommand(doctorCommand);
 
   await program.parseAsync(process.argv);
 }
