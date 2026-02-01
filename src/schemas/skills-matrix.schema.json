@@ -5,12 +5,7 @@
   "description": "Categories, relationships, stacks, and aliases for CLI wizard.",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "version",
-    "categories",
-    "relationships",
-    "skill_aliases"
-  ],
+  "required": ["version", "categories", "relationships", "skill_aliases"],
   "properties": {
     "version": {
       "type": "string",

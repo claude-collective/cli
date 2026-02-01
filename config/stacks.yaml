@@ -1,145 +1,233 @@
 # yaml-language-server: $schema=../src/schemas/stacks.schema.json
-# Stack definitions - agent groupings for different workflows
-# Skills are defined in individual agent.yaml files, not here
+# Stack definitions - agent groupings with technology mappings for different workflows
 
 stacks:
   - id: nextjs-fullstack
     name: Next.js Fullstack
     description: Production-ready Next.js with complete backend infrastructure
     agents:
-      - web-developer
-      - api-developer
-      - cli-developer
-      - web-reviewer
-      - api-reviewer
-      - cli-reviewer
-      - web-tester
-      - cli-tester
-      - web-pm
-      - skill-summoner
-      - agent-summoner
-      - pattern-scout
-      - web-pattern-critique
-      - documentor
-      - web-architecture
-      - web-researcher
-      - api-researcher
-      - cli-migrator
+      web-developer:
+        framework: react
+        styling: scss-modules
+        client-state: zustand
+        server-state: react-query
+        testing: vitest
+        mocks: msw
+        accessibility: accessibility
+      api-developer:
+        api: hono
+        database: drizzle
+        auth: better-auth
+        observability: axiom-pino-sentry
+        analytics: posthog
+        email: resend
+        ci-cd: github-actions
+        testing: backend-testing
+      cli-developer:
+        cli: cli-commander
+      web-reviewer:
+        reviewing: reviewing
+      api-reviewer:
+        reviewing: reviewing
+      cli-reviewer:
+        reviewing: cli-reviewing
+      web-tester:
+        testing: vitest
+        e2e: playwright-e2e
+      cli-tester: {}
+      web-pm: {}
+      skill-summoner: {}
+      agent-summoner: {}
+      pattern-scout: {}
+      web-pattern-critique: {}
+      documentor: {}
+      web-architecture: {}
+      web-researcher: {}
+      api-researcher: {}
+      cli-migrator: {}
     philosophy: Ship fast, iterate faster
 
   - id: angular-stack
     name: Modern Angular Stack
     description: Angular 19 with Signals and NgRx SignalStore
     agents:
-      - web-developer
-      - api-developer
-      - web-architecture
-      - web-reviewer
-      - api-reviewer
-      - web-researcher
-      - api-researcher
-      - web-pm
-      - pattern-scout
-      - web-pattern-critique
-      - agent-summoner
-      - skill-summoner
-      - documentor
-      - web-tester
+      web-developer:
+        framework: angular
+        client-state: ngrx-signalstore
+        testing: vitest
+      api-developer:
+        api: hono
+        database: drizzle
+        auth: better-auth
+        observability: axiom-pino-sentry
+        testing: backend-testing
+      web-architecture: {}
+      web-reviewer:
+        reviewing: reviewing
+      api-reviewer:
+        reviewing: reviewing
+      web-researcher: {}
+      api-researcher: {}
+      web-pm: {}
+      pattern-scout: {}
+      web-pattern-critique: {}
+      agent-summoner: {}
+      skill-summoner: {}
+      documentor: {}
+      web-tester:
+        testing: vitest
+        e2e: playwright-e2e
     philosophy: Enterprise-grade and type-safe
 
   - id: nuxt-stack
     name: Nuxt Full-Stack
     description: Vue 3 with Nuxt for full-stack Vue development
     agents:
-      - web-developer
-      - api-developer
-      - web-architecture
-      - web-reviewer
-      - api-reviewer
-      - web-researcher
-      - api-researcher
-      - web-pm
-      - pattern-scout
-      - web-pattern-critique
-      - agent-summoner
-      - skill-summoner
-      - documentor
-      - web-tester
+      web-developer:
+        framework: nuxt
+        meta-framework: vue
+        client-state: pinia
+        testing: vitest
+      api-developer:
+        api: hono
+        database: drizzle
+        auth: better-auth
+        observability: axiom-pino-sentry
+        testing: backend-testing
+      web-architecture: {}
+      web-reviewer:
+        reviewing: reviewing
+      api-reviewer:
+        reviewing: reviewing
+      web-researcher: {}
+      api-researcher: {}
+      web-pm: {}
+      pattern-scout: {}
+      web-pattern-critique: {}
+      agent-summoner: {}
+      skill-summoner: {}
+      documentor: {}
+      web-tester:
+        testing: vitest
+        e2e: playwright-e2e
     philosophy: Progressive Vue with Nuxt power
 
   - id: remix-stack
     name: Remix Full-Stack
     description: Remix for form-heavy applications with excellent DX
     agents:
-      - web-developer
-      - api-developer
-      - web-architecture
-      - web-reviewer
-      - api-reviewer
-      - web-researcher
-      - api-researcher
-      - web-pm
-      - pattern-scout
-      - web-pattern-critique
-      - agent-summoner
-      - skill-summoner
-      - documentor
-      - web-tester
+      web-developer:
+        framework: remix
+        base-framework: react
+        testing: vitest
+      api-developer:
+        api: hono
+        database: drizzle
+        auth: better-auth
+        observability: axiom-pino-sentry
+        testing: backend-testing
+      web-architecture: {}
+      web-reviewer:
+        reviewing: reviewing
+      api-reviewer:
+        reviewing: reviewing
+      web-researcher: {}
+      api-researcher: {}
+      web-pm: {}
+      pattern-scout: {}
+      web-pattern-critique: {}
+      agent-summoner: {}
+      skill-summoner: {}
+      documentor: {}
+      web-tester:
+        testing: vitest
+        e2e: playwright-e2e
     philosophy: Web standards and excellent forms handling
 
   - id: vue-stack
     name: Modern Vue Stack
     description: Vue 3 with Composition API, Pinia, and Tailwind
     agents:
-      - web-developer
-      - api-developer
-      - web-architecture
-      - web-reviewer
-      - api-reviewer
-      - web-researcher
-      - api-researcher
-      - web-pm
-      - pattern-scout
-      - web-pattern-critique
-      - agent-summoner
-      - skill-summoner
-      - documentor
-      - web-tester
+      web-developer:
+        framework: vue
+        client-state: pinia
+        testing: vitest
+      api-developer:
+        api: hono
+        database: drizzle
+        auth: better-auth
+        observability: axiom-pino-sentry
+        testing: backend-testing
+      web-architecture: {}
+      web-reviewer:
+        reviewing: reviewing
+      api-reviewer:
+        reviewing: reviewing
+      web-researcher: {}
+      api-researcher: {}
+      web-pm: {}
+      pattern-scout: {}
+      web-pattern-critique: {}
+      agent-summoner: {}
+      skill-summoner: {}
+      documentor: {}
+      web-tester:
+        testing: vitest
+        e2e: playwright-e2e
     philosophy: Progressive and approachable
 
   - id: solidjs-stack
     name: SolidJS Stack
     description: High-performance SolidJS with Tailwind and Hono backend
     agents:
-      - web-developer
-      - api-developer
-      - web-architecture
-      - web-reviewer
-      - api-reviewer
-      - web-researcher
-      - api-researcher
-      - web-pm
-      - pattern-scout
-      - web-pattern-critique
-      - agent-summoner
-      - skill-summoner
-      - documentor
-      - web-tester
+      web-developer:
+        framework: solidjs
+        testing: vitest
+      api-developer:
+        api: hono
+        database: drizzle
+        auth: better-auth
+        observability: axiom-pino-sentry
+        testing: backend-testing
+      web-architecture: {}
+      web-reviewer:
+        reviewing: reviewing
+      api-reviewer:
+        reviewing: reviewing
+      web-researcher: {}
+      api-researcher: {}
+      web-pm: {}
+      pattern-scout: {}
+      web-pattern-critique: {}
+      agent-summoner: {}
+      skill-summoner: {}
+      documentor: {}
+      web-tester:
+        testing: vitest
+        e2e: playwright-e2e
     philosophy: Maximum performance with minimal overhead
 
   - id: react-native-stack
     name: React Native Stack
     description: Cross-platform mobile with React Native and Expo
     agents:
-      - web-developer
-      - web-architecture
-      - web-reviewer
-      - web-researcher
-      - web-pm
-      - pattern-scout
-      - web-pattern-critique
-      - agent-summoner
-      - skill-summoner
-      - documentor
-      - web-tester
+      web-developer:
+        framework: react-native
+        platform: expo
+        base-framework: react
+        client-state: zustand
+        server-state: react-query
+        testing: vitest
+      web-architecture: {}
+      web-reviewer:
+        reviewing: reviewing
+      web-researcher: {}
+      web-pm: {}
+      pattern-scout: {}
+      web-pattern-critique: {}
+      agent-summoner: {}
+      skill-summoner: {}
+      documentor: {}
+      web-tester:
+        testing: vitest
     philosophy: One codebase, iOS and Android

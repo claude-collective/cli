@@ -68,7 +68,9 @@ export default class Edit extends BaseCommand {
       const sourceInfo = sourceResult.isLocal
         ? "local"
         : sourceResult.sourceConfig.sourceOrigin;
-      this.log(`✓ Loaded ${Object.keys(sourceResult.matrix.skills).length} skills (${sourceInfo})\n`);
+      this.log(
+        `✓ Loaded ${Object.keys(sourceResult.matrix.skills).length} skills (${sourceInfo})\n`,
+      );
     } catch (error) {
       this.handleError(error);
     }

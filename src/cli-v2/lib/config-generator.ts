@@ -6,6 +6,7 @@ import type {
   AgentSkillConfig,
 } from "../../types";
 import type { MergedSkillsMatrix } from "../types-matrix";
+import type { Stack, StackAgentConfig } from "../types-stacks";
 import {
   getAgentsForSkill,
   shouldPreloadSkill,
@@ -409,4 +410,59 @@ export function generateProjectConfigFromStack(
   }
 
   return config;
+}
+
+/**
+ * Build resolved stack property for ProjectConfig.
+ * Maps each agent to its subcategory->skill ID mappings.
+ *
+ * @param stack - The Stack with agent technology mappings
+ * @param skillAliases - Alias->skill ID mappings from skills-matrix.yaml
+ * @returns Record<agentId, Record<subcategoryId, skillId>>
+ *
+ * @example
+ * Input stack.agents:
+ *   web-developer:
+ *     framework: react
+ *     styling: scss-modules
+ *
+ * Output:
+ *   web-developer:
+ *     framework: web/framework/react (@vince)
+ *     styling: web/styling/scss-modules (@vince)
+ */
+export function buildStackProperty(
+  stack: Stack,
+  skillAliases: Record<string, string>,
+): Record<string, Record<string, string>> {
+  const result: Record<string, Record<string, string>> = {};
+
+  for (const [agentId, agentConfig] of Object.entries(stack.agents)) {
+    // Skip agents with empty config
+    if (!agentConfig || Object.keys(agentConfig).length === 0) {
+      continue;
+    }
+
+    const resolvedMappings: Record<string, string> = {};
+
+    for (const [subcategoryId, alias] of Object.entries(
+      agentConfig as StackAgentConfig,
+    )) {
+      // Resolve alias to full skill ID using skill_aliases from matrix
+      const skillId = skillAliases[alias];
+      if (skillId) {
+        resolvedMappings[subcategoryId] = skillId;
+      } else {
+        // If alias not found, use the alias as-is (might be a full skill ID already)
+        resolvedMappings[subcategoryId] = alias;
+      }
+    }
+
+    // Only add agent if it has resolved mappings
+    if (Object.keys(resolvedMappings).length > 0) {
+      result[agentId] = resolvedMappings;
+    }
+  }
+
+  return result;
 }

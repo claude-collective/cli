@@ -78,7 +78,7 @@ export interface Skill {
 
 /**
  * Base agent definition from agents.yaml
- * Now includes skills field for agent-centric configuration (Phase 6)
+ * Skills are now defined in stacks, not agents (Phase 7)
  */
 export interface AgentDefinition {
   title: string;
@@ -91,8 +91,6 @@ export interface AgentDefinition {
   output_format?: string; // Which output format file to use
   path?: string; // Relative path to agent directory (e.g., "developer/api-developer")
   sourceRoot?: string; // Root path where this agent was loaded from (for template resolution)
-  /** Skills available to this agent with inline preloaded flag */
-  skills?: Record<string, AgentSkillEntry>;
 }
 
 /**
@@ -368,6 +366,24 @@ export interface ProjectConfig {
    * @default 'local'
    */
   installMode?: "local" | "plugin";
+
+  /**
+   * Resolved stack configuration with agent->skill mappings.
+   * Keys are agent IDs, values are subcategory->skill ID mappings.
+   * Generated during `cc init` when a stack is selected.
+   *
+   * @example
+   * ```yaml
+   * stack:
+   *   web-developer:
+   *     framework: web/framework/react (@vince)
+   *     styling: web/styling/scss-modules (@vince)
+   *   api-developer:
+   *     api: api/framework/hono (@vince)
+   *     database: api/database/drizzle (@vince)
+   * ```
+   */
+  stack?: Record<string, Record<string, string>>;
 }
 
 // =============================================================================
@@ -377,6 +393,10 @@ export interface ProjectConfig {
 /**
  * Skill entry in agent YAML configuration
  * Specifies skill ID and whether it should be preloaded (embedded in compiled agent)
+ *
+ * @deprecated Skills are now defined in stacks (config/stacks.yaml), not agent YAMLs.
+ * This interface is kept for backwards compatibility during Phase 7 migration.
+ * Use stack-based skill configuration instead.
  */
 export interface AgentSkillEntry {
   /** Full skill ID (e.g., "react (@vince)") */

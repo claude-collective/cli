@@ -16,7 +16,9 @@ interface SettingsFile {
  * Check permissions configuration and return warning component if needed.
  * Returns null if permissions are properly configured.
  */
-export async function checkPermissions(projectRoot: string): Promise<React.ReactElement | null> {
+export async function checkPermissions(
+  projectRoot: string,
+): Promise<React.ReactElement | null> {
   const settingsPath = path.join(projectRoot, ".claude", "settings.json");
   const localSettingsPath = path.join(
     projectRoot,
@@ -41,19 +43,26 @@ export async function checkPermissions(projectRoot: string): Promise<React.React
 
   if (!permissions) {
     return (
-      <Box flexDirection="column" borderStyle="round" borderColor="yellow" padding={1}>
-        <Text bold color="yellow">Permission Notice</Text>
+      <Box
+        flexDirection="column"
+        borderStyle="round"
+        borderColor="yellow"
+        padding={1}
+      >
+        <Text bold color="yellow">
+          Permission Notice
+        </Text>
         <Text>No permissions configured in .claude/settings.json</Text>
         <Text>Agents will prompt for approval on each tool use.</Text>
         <Text> </Text>
         <Text>For autonomous operation, add to .claude/settings.json:</Text>
         <Text> </Text>
         <Text color="dim">{"{"}</Text>
-        <Text color="dim">{"  \"permissions\": {"}</Text>
-        <Text color="dim">{"    \"allow\": ["}</Text>
-        <Text color="dim">{"      \"Read(*)\","}</Text>
-        <Text color="dim">{"      \"Bash(git *)\","}</Text>
-        <Text color="dim">{"      \"Bash(bun *)\""}</Text>
+        <Text color="dim">{'  "permissions": {'}</Text>
+        <Text color="dim">{'    "allow": ['}</Text>
+        <Text color="dim">{'      "Read(*)",'}</Text>
+        <Text color="dim">{'      "Bash(git *)",'}</Text>
+        <Text color="dim">{'      "Bash(bun *)"'}</Text>
         <Text color="dim">{"    ]"}</Text>
         <Text color="dim">{"  }"}</Text>
         <Text color="dim">{"}"}</Text>
@@ -68,13 +77,25 @@ export async function checkPermissions(projectRoot: string): Promise<React.React
 
   if (hasRestrictiveBash || hasNoAllows) {
     return (
-      <Box flexDirection="column" borderStyle="round" borderColor="yellow" padding={1}>
-        <Text bold color="yellow">Permission Warnings</Text>
+      <Box
+        flexDirection="column"
+        borderStyle="round"
+        borderColor="yellow"
+        padding={1}
+      >
+        <Text bold color="yellow">
+          Permission Warnings
+        </Text>
         {hasRestrictiveBash && (
-          <Text>⚠ Bash is denied in permissions. Some agents require Bash for git, testing, and build commands.</Text>
+          <Text>
+            ⚠ Bash is denied in permissions. Some agents require Bash for git,
+            testing, and build commands.
+          </Text>
         )}
         {hasNoAllows && (
-          <Text>⚠ No allow rules configured. Agents will prompt for each tool use.</Text>
+          <Text>
+            ⚠ No allow rules configured. Agents will prompt for each tool use.
+          </Text>
         )}
       </Box>
     );

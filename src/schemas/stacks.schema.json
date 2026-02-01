@@ -22,6 +22,22 @@
     }
   },
   "$defs": {
+    "StackAgentConfig": {
+      "type": "object",
+      "description": "Technology selections for a specific agent, mapping subcategory IDs to technology aliases",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Technology alias (e.g., 'react', 'scss-modules', 'zustand')"
+      },
+      "examples": [
+        {
+          "framework": "react",
+          "styling": "scss-modules",
+          "client-state": "zustand"
+        }
+      ]
+    },
     "Stack": {
       "type": "object",
       "description": "Stack definition grouping agents for a specific workflow",
@@ -47,14 +63,12 @@
           "minLength": 1
         },
         "agents": {
-          "type": "array",
-          "description": "List of agent IDs included in this stack",
-          "items": {
-            "type": "string",
-            "minLength": 1
+          "type": "object",
+          "description": "Agent configurations mapping agent IDs to their technology selections",
+          "additionalProperties": {
+            "$ref": "#/$defs/StackAgentConfig"
           },
-          "minItems": 1,
-          "uniqueItems": true
+          "minProperties": 1
         },
         "philosophy": {
           "type": "string",
