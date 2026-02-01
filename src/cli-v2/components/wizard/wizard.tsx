@@ -38,7 +38,15 @@ export const Wizard: React.FC<WizardProps> = ({
   onCancel,
   initialSkills = [],
 }) => {
-  const { step, goBack, reset, selectedSkills, selectedStack, expertMode, installMode } = useWizardStore();
+  const {
+    step,
+    goBack,
+    reset,
+    selectedSkills,
+    selectedStack,
+    expertMode,
+    installMode,
+  } = useWizardStore();
   const { exit } = useApp();
 
   // Initialize store with initial skills if provided
@@ -71,7 +79,15 @@ export const Wizard: React.FC<WizardProps> = ({
       validation,
     });
     exit();
-  }, [selectedSkills, selectedStack, expertMode, installMode, matrix, onComplete, exit]);
+  }, [
+    selectedSkills,
+    selectedStack,
+    expertMode,
+    installMode,
+    matrix,
+    onComplete,
+    exit,
+  ]);
 
   const renderStep = () => {
     switch (step) {

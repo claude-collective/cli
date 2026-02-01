@@ -45,7 +45,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
       <Text bold>Selected Skills:</Text>
       <Box flexDirection="column" marginTop={1} marginBottom={1}>
         {selectedSkills.length === 0 ? (
-          <Text dimColor>  No skills selected</Text>
+          <Text dimColor> No skills selected</Text>
         ) : (
           selectedSkills.map((skillId) => {
             const skill = matrix.skills[skillId];

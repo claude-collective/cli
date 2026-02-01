@@ -59,18 +59,16 @@ function collectAllDependents(
 /**
  * Formats a skill option for display in the Select component.
  */
-function formatSkillOption(
-  skill: {
-    id: string;
-    name: string;
-    description?: string;
-    selected: boolean;
-    disabled: boolean;
-    disabledReason?: string;
-    discouraged?: boolean;
-    recommended?: boolean;
-  },
-): {
+function formatSkillOption(skill: {
+  id: string;
+  name: string;
+  description?: string;
+  selected: boolean;
+  disabled: boolean;
+  disabledReason?: string;
+  discouraged?: boolean;
+  recommended?: boolean;
+}): {
   value: string;
   label: string;
 } {
