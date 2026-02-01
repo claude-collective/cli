@@ -32,10 +32,11 @@ export const SelectionHeader: React.FC<SelectionHeaderProps> = ({ matrix }) => {
   return (
     <Box flexDirection="column" marginY={1}>
       <Text dimColor>{"─".repeat(50)}</Text>
-      <Text bold>  Selected:</Text>
+      <Text bold> Selected:</Text>
       {Object.entries(byCategory).map(([category, skills]) => (
         <Text key={category}>
-          {"  "}<Text color="cyan">{category}</Text>: {skills.join(", ")}
+          {"  "}
+          <Text color="cyan">{category}</Text>: {skills.join(", ")}
         </Text>
       ))}
       <Text dimColor>{"─".repeat(50)}</Text>

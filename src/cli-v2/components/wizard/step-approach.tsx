@@ -33,7 +33,10 @@ export const StepApproach: React.FC = () => {
     },
     {
       value: INSTALL_MODE_VALUE,
-      label: installMode === "local" ? "Install Mode: Local" : "Install Mode: Plugin",
+      label:
+        installMode === "local"
+          ? "Install Mode: Local"
+          : "Install Mode: Plugin",
     },
   ];
 
