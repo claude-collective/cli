@@ -57,9 +57,7 @@ const PurposeInput: React.FC<PurposeInputProps> = ({ onSubmit, onCancel }) => {
   return (
     <Box flexDirection="column">
       <Text bold>Create New Agent</Text>
-      <Text>
-        What should this agent do?
-      </Text>
+      <Text>What should this agent do?</Text>
       <Text dimColor>
         e.g., Manages database migrations with rollback support
       </Text>

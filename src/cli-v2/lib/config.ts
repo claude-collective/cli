@@ -19,7 +19,10 @@ export const PROJECT_CONFIG_FILE = "config.yaml";
  * This is a function (not constant) to allow tests to set the env var after module load.
  */
 export function getGlobalConfigDir(): string {
-  return process.env[CONFIG_HOME_ENV_VAR] || path.join(os.homedir(), ".claude-collective");
+  return (
+    process.env[CONFIG_HOME_ENV_VAR] ||
+    path.join(os.homedir(), ".claude-collective")
+  );
 }
 
 /**

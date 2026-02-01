@@ -18,7 +18,9 @@ import {
   getPluginManifestPath,
 } from "./plugin-manifest";
 import { loadSkillsByIds, loadAllAgents } from "./loader";
-import { loadStackById } from "./stacks-loader";
+import { loadStackById, resolveAgentConfigToSkills } from "./stacks-loader";
+import { loadSkillsMatrix } from "./matrix-loader";
+import { SKILLS_MATRIX_PATH } from "../consts";
 import { resolveAgents, stackToCompileConfig } from "./resolver";
 import type { Stack } from "../types-stacks";
 import { hashString, getCurrentDate } from "./versioning";
@@ -80,7 +82,9 @@ function hashStackConfig(stack: StackConfig): string {
       .map((s) => s.id)
       .sort()
       .join(",")}`,
-    `agents:${(stack.agents || []).sort().join(",")}`,
+    `agents:${Object.keys(stack.agents || {})
+      .sort()
+      .join(",")}`,
   ];
   return hashString(parts.join("\n"));
 }
@@ -311,20 +315,26 @@ export async function compileStackPlugin(
   );
 
   // Use provided stack or load from CLI's config/stacks.yaml
-  const newStack = options.stack || (await loadStackById(stackId, PROJECT_ROOT));
+  const newStack =
+    options.stack || (await loadStackById(stackId, PROJECT_ROOT));
+
+  // Load skill aliases from the matrix to resolve technology aliases to skill IDs
+  // This is needed for Phase 7 skill resolution in resolveAgents
+  const matrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
+  const matrix = await loadSkillsMatrix(matrixPath);
+  const skillAliases = matrix.skill_aliases || {};
 
   let stack: StackConfig;
   if (newStack) {
     verbose(`  Found stack: ${newStack.name}`);
 
-    // Extract skills from agent definitions
+    // Extract skills from stack's agent configurations (Phase 7: skills in stacks, not agents)
     const agentSkillIds = new Set<string>();
-    for (const agentName of newStack.agents) {
-      const agent = agents[agentName];
-      if (agent?.skills) {
-        for (const entry of Object.values(agent.skills)) {
-          agentSkillIds.add(entry.id);
-        }
+    for (const agentName of Object.keys(newStack.agents)) {
+      const agentConfig = newStack.agents[agentName];
+      const skillRefs = resolveAgentConfigToSkills(agentConfig, skillAliases);
+      for (const ref of skillRefs) {
+        agentSkillIds.add(ref.id);
       }
     }
 
@@ -335,7 +345,7 @@ export async function compileStackPlugin(
       author: "",
       description: newStack.description,
       skills: Array.from(agentSkillIds).map((id) => ({ id })),
-      agents: newStack.agents,
+      agents: Object.keys(newStack.agents),
       philosophy: newStack.philosophy,
     };
   } else {
@@ -346,11 +356,14 @@ export async function compileStackPlugin(
 
   const compileConfig: CompileConfig = stackToCompileConfig(stackId, stack);
 
+  // Pass newStack and skillAliases for Phase 7 skill resolution
   const resolvedAgents = await resolveAgents(
     agents,
     skills,
     compileConfig,
     projectRoot,
+    newStack,
+    skillAliases,
   );
 
   const pluginDir = path.join(outputDir, stackId);

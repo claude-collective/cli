@@ -20,12 +20,19 @@ import { copySkillsToLocalFlattened } from "../lib/skill-copier.js";
 import { checkPermissions } from "../lib/permission-checker.js";
 import { loadAllAgents } from "../lib/loader.js";
 import { loadStackById } from "../lib/stacks-loader.js";
-import { resolveAgents, resolveStackSkills } from "../lib/resolver.js";
+import {
+  resolveAgents,
+  resolveStackSkills,
+  resolveAgentSkillsFromStack,
+} from "../lib/resolver.js";
 import { compileAgentForPlugin } from "../lib/stack-plugin-compiler.js";
 import { installStackAsPlugin } from "../lib/stack-installer.js";
 import { getCollectivePluginDir } from "../lib/plugin-finder.js";
 import { createLiquidEngine } from "../lib/compiler.js";
-import { generateConfigFromSkills } from "../lib/config-generator.js";
+import {
+  generateProjectConfigFromSkills,
+  buildStackProperty,
+} from "../lib/config-generator.js";
 import {
   claudePluginMarketplaceExists,
   claudePluginMarketplaceAdd,
@@ -33,7 +40,12 @@ import {
 import { ensureDir, writeFile, directoryExists } from "../utils/fs.js";
 import { LOCAL_SKILLS_PATH, PROJECT_ROOT } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
-import type { CompileConfig, CompileAgentConfig, StackConfig } from "../../types.js";
+import type {
+  CompileConfig,
+  CompileAgentConfig,
+  StackConfig,
+  ProjectConfig,
+} from "../../types.js";
 
 const PLUGIN_NAME = "claude-collective";
 
@@ -65,9 +77,7 @@ export default class Init extends BaseCommand {
     const pluginExists = await directoryExists(pluginDir);
 
     if (pluginExists) {
-      this.warn(
-        `Claude Collective is already initialized at ${pluginDir}`,
-      );
+      this.warn(`Claude Collective is already initialized at ${pluginDir}`);
       this.log(`Use 'cc edit' to modify skills.`);
       this.log("No changes made.");
       return;
@@ -202,9 +212,7 @@ export default class Init extends BaseCommand {
         this.warn(
           "Individual skill plugin installation not yet supported in Plugin Mode.",
         );
-        this.log(
-          `Falling back to Local Mode (copying to .claude/skills/)...`,
-        );
+        this.log(`Falling back to Local Mode (copying to .claude/skills/)...`);
         this.log(
           "To use Plugin Mode, select a pre-built stack instead of individual skills.\n",
         );
@@ -244,10 +252,9 @@ export default class Init extends BaseCommand {
           );
           this.log(`Registered marketplace: ${sourceResult.marketplace}`);
         } catch (error) {
-          this.error(
-            error instanceof Error ? error.message : "Unknown error",
-            { exit: EXIT_CODES.ERROR },
-          );
+          this.error(error instanceof Error ? error.message : "Unknown error", {
+            exit: EXIT_CODES.ERROR,
+          });
         }
       }
     }
@@ -291,10 +298,9 @@ export default class Init extends BaseCommand {
         await waitUntilExit();
       }
     } catch (error) {
-      this.error(
-        error instanceof Error ? error.message : "Unknown error",
-        { exit: EXIT_CODES.ERROR },
-      );
+      this.error(error instanceof Error ? error.message : "Unknown error", {
+        exit: EXIT_CODES.ERROR,
+      });
     }
   }
 
@@ -357,35 +363,43 @@ export default class Init extends BaseCommand {
         }
       }
 
-      let localConfig: StackConfig;
-      if (result.selectedStack) {
-        // Load stack from CLI's config/stacks.yaml (Phase 6: agent-centric config)
-        const newStack = await loadStackById(
-          result.selectedStack.id,
-          PROJECT_ROOT,
-        );
+      // Get skill aliases from the loaded matrix for Phase 7 skill resolution
+      const skillAliases = matrix.aliases || {};
 
-        if (newStack) {
-          // New format: Stack only has agents, skills come from agent YAMLs
+      let localConfig: ProjectConfig;
+      // Load stack once if selected (used for both config and skill resolution)
+      const loadedStack = result.selectedStack
+        ? await loadStackById(result.selectedStack.id, PROJECT_ROOT)
+        : null;
+
+      if (result.selectedStack) {
+        if (loadedStack) {
+          // Phase 7 format: Stack agents are Record<string, StackAgentConfig>
+          // Extract agent IDs as string[] for config
+          const agentIds = Object.keys(loadedStack.agents);
+
+          // Build resolved stack property with agent->skill mappings
+          const stackProperty = buildStackProperty(loadedStack, skillAliases);
+
           localConfig = {
             name: PLUGIN_NAME,
-            version: "1.0.0",
-            author: "@user",
             installMode: result.installMode,
-            description: newStack.description,
-            skills: result.selectedSkills.map((id) => ({ id })),
-            agents: newStack.agents,
-            philosophy: newStack.philosophy,
+            description: loadedStack.description,
+            skills: result.selectedSkills.map((id) => id),
+            agents: agentIds,
+            philosophy: loadedStack.philosophy,
+            stack: stackProperty,
           };
         } else {
           // Stack not found in CLI's config/stacks.yaml
           throw new Error(
             `Stack '${result.selectedStack.id}' not found in config/stacks.yaml. ` +
-            `Available stacks are defined in the CLI's config/stacks.yaml file.`,
+              `Available stacks are defined in the CLI's config/stacks.yaml file.`,
           );
         }
       } else {
-        localConfig = generateConfigFromSkills(
+        localConfig = generateProjectConfigFromSkills(
+          PLUGIN_NAME,
           result.selectedSkills,
           sourceResult.matrix,
         );
@@ -407,17 +421,25 @@ export default class Init extends BaseCommand {
       const compileAgents: Record<string, CompileAgentConfig> = {};
       for (const agentId of localConfig.agents) {
         if (agents[agentId]) {
-          // In agent-centric mode, skills come from agent definitions
-          // Only use stack-based skills if agent_skills is explicitly set (legacy)
-          if (localConfig.agent_skills?.[agentId]) {
+          // Phase 7: Skills come from stack's technology mappings
+          if (loadedStack) {
+            const skillRefs = resolveAgentSkillsFromStack(
+              agentId,
+              loadedStack,
+              skillAliases,
+            );
+            compileAgents[agentId] = { skills: skillRefs };
+          } else if (localConfig.agent_skills?.[agentId]) {
+            // Legacy: stack-based skills from agent_skills config
+            // Cast to StackConfig since agent_skills format is compatible
             const skillRefs = resolveStackSkills(
-              localConfig,
+              localConfig as unknown as StackConfig,
               agentId,
               localSkillsForResolution,
             );
             compileAgents[agentId] = { skills: skillRefs };
           } else {
-            // Agent-centric: let resolveAgents get skills from agent YAMLs
+            // No stack, no agent_skills: empty skills
             compileAgents[agentId] = {};
           }
         }
@@ -486,10 +508,9 @@ export default class Init extends BaseCommand {
         await waitUntilExit();
       }
     } catch (error) {
-      this.error(
-        error instanceof Error ? error.message : String(error),
-        { exit: EXIT_CODES.ERROR },
-      );
+      this.error(error instanceof Error ? error.message : String(error), {
+        exit: EXIT_CODES.ERROR,
+      });
     }
   }
 }

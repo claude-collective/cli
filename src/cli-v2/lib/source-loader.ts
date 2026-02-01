@@ -1,6 +1,5 @@
 import path from "path";
 import { PROJECT_ROOT, SKILLS_DIR_PATH, SKILLS_MATRIX_PATH } from "../consts";
-import type { AgentDefinition } from "../types";
 import type {
   CategoryDefinition,
   MergedSkillsMatrix,
@@ -11,7 +10,6 @@ import type { Stack } from "../types-stacks";
 import { fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import { isLocalSource, resolveSource, type ResolvedConfig } from "./config";
-import { loadAllAgents } from "./loader";
 import {
   discoverLocalSkills,
   type LocalSkillDiscoveryResult,
@@ -22,7 +20,7 @@ import {
   mergeMatrixWithSkills,
 } from "./matrix-loader";
 import { fetchFromSource } from "./source-fetcher";
-import { loadStacks } from "./stacks-loader";
+import { loadStacks, resolveAgentConfigToSkills } from "./stacks-loader";
 
 export interface SourceLoadOptions {
   sourceFlag?: string;
@@ -118,10 +116,10 @@ async function loadFromLocal(
   // Load stacks from CLI's config/stacks.yaml (Phase 6: agent-centric config)
   const stacks = await loadStacks(PROJECT_ROOT);
   if (stacks.length > 0) {
-    // Load agents to extract skills for each stack
-    const agents = await loadAllAgents(PROJECT_ROOT);
+    // Phase 7: Skills are defined in stacks (per agent, per subcategory), not in agent YAMLs
+    // Use skill_aliases from the matrix to resolve technology aliases to full skill IDs
     mergedMatrix.suggestedStacks = stacks.map((stack) =>
-      stackToResolvedStack(stack, agents),
+      stackToResolvedStack(stack, mergedMatrix.aliases),
     );
     verbose(`Loaded ${stacks.length} stacks from config/stacks.yaml`);
   }
@@ -169,10 +167,10 @@ async function loadFromRemote(
   // Load stacks from CLI's config/stacks.yaml (Phase 6: agent-centric config)
   const stacks = await loadStacks(PROJECT_ROOT);
   if (stacks.length > 0) {
-    // Load agents to extract skills for each stack
-    const agents = await loadAllAgents(PROJECT_ROOT);
+    // Phase 7: Skills are defined in stacks (per agent, per subcategory), not in agent YAMLs
+    // Use skill_aliases from the matrix to resolve technology aliases to full skill IDs
     mergedMatrix.suggestedStacks = stacks.map((stack) =>
-      stackToResolvedStack(stack, agents),
+      stackToResolvedStack(stack, mergedMatrix.aliases),
     );
     verbose(`Loaded ${stacks.length} stacks from config/stacks.yaml`);
   }
@@ -189,30 +187,36 @@ async function loadFromRemote(
 /**
  * Convert a Stack (from config/stacks.yaml) to ResolvedStack format
  * for compatibility with the wizard.
- * Extracts skills from agent definitions to populate allSkillIds.
+ *
+ * Phase 7: Skills are defined in stacks per agent (subcategory -> technology alias).
+ * Uses skill_aliases from the matrix to resolve aliases to full skill IDs.
  */
 function stackToResolvedStack(
   stack: Stack,
-  agents: Record<string, AgentDefinition>,
+  skillAliases: Record<string, string>,
 ): ResolvedStack {
-  // Collect all unique skill IDs from agents in this stack
+  // Collect all unique skill IDs from agent configs in this stack
   const allSkillIds: string[] = [];
   const seenSkillIds = new Set<string>();
 
-  for (const agentId of stack.agents) {
-    const agent = agents[agentId];
-    if (agent?.skills) {
-      for (const entry of Object.values(agent.skills)) {
-        if (!seenSkillIds.has(entry.id)) {
-          seenSkillIds.add(entry.id);
-          allSkillIds.push(entry.id);
-        }
+  // stack.agents is Record<string, StackAgentConfig> - iterate over agent IDs
+  for (const agentId of Object.keys(stack.agents)) {
+    const agentConfig = stack.agents[agentId];
+
+    // Resolve this agent's technology selections to skill IDs
+    const skillRefs = resolveAgentConfigToSkills(agentConfig, skillAliases);
+
+    for (const ref of skillRefs) {
+      if (!seenSkillIds.has(ref.id)) {
+        seenSkillIds.add(ref.id);
+        allSkillIds.push(ref.id);
       }
     }
   }
 
+  const agentCount = Object.keys(stack.agents).length;
   verbose(
-    `Stack '${stack.id}' has ${allSkillIds.length} skills from ${stack.agents.length} agents`,
+    `Stack '${stack.id}' has ${allSkillIds.length} skills from ${agentCount} agents`,
   );
 
   return {
@@ -220,7 +224,7 @@ function stackToResolvedStack(
     name: stack.name,
     description: stack.description,
     audience: [], // Not used in new format
-    skills: {}, // Skills come from agents, not stack config
+    skills: {}, // Skills come from stack agent configs, resolved at runtime
     allSkillIds,
     philosophy: stack.philosophy || "",
   };

@@ -50,18 +50,18 @@ Compilation Process:
 
 ```typescript
 interface StackConfig {
-  id?: string
-  name: string
-  version: string
-  author: string
-  description?: string
-  skills: SkillAssignment[] // All skills for this stack
-  agents: string[] // Which agents to compile
-  agent_skills?: Record<string, Record<string, SkillAssignment[]>> // Per-agent overrides
-  hooks?: Record<string, AgentHookDefinition[]>
-  philosophy?: string
-  principles?: string[]
-  tags?: string[]
+  id?: string;
+  name: string;
+  version: string;
+  author: string;
+  description?: string;
+  skills: SkillAssignment[]; // All skills for this stack
+  agents: string[]; // Which agents to compile
+  agent_skills?: Record<string, Record<string, SkillAssignment[]>>; // Per-agent overrides
+  hooks?: Record<string, AgentHookDefinition[]>;
+  philosophy?: string;
+  principles?: string[];
+  tags?: string[];
 }
 ```
 
@@ -69,11 +69,11 @@ interface StackConfig {
 
 ```typescript
 interface CompileConfig {
-  name: string
-  description: string
-  claude_md: string
-  stack?: string // Reference back to stack ID
-  agents: Record<string, CompileAgentConfig>
+  name: string;
+  description: string;
+  claude_md: string;
+  stack?: string; // Reference back to stack ID
+  agents: Record<string, CompileAgentConfig>;
 }
 ```
 
@@ -81,11 +81,11 @@ interface CompileConfig {
 
 ```typescript
 interface AgentDefinition {
-  id: string // Agent ID (e.g., "web-developer")
-  title: string
-  description: string
-  model?: string
-  tools: string[]
+  id: string; // Agent ID (e.g., "web-developer")
+  title: string;
+  description: string;
+  model?: string;
+  tools: string[];
   // NO SKILL INFORMATION - skills come from stack
 }
 ```
@@ -314,7 +314,7 @@ belongs_to_stacks:
 
 ```yaml
 # src/manifest.yaml
-version: '1.0'
+version: "1.0"
 
 agents:
   web-developer:
@@ -325,7 +325,7 @@ agents:
 stacks:
   nextjs-fullstack:
     agents: [web-developer, api-developer, web-reviewer]
-    philosophy: 'Ship fast with type safety'
+    philosophy: "Ship fast with type safety"
 ```
 
 **Advantages:**
@@ -377,8 +377,8 @@ skill_hints:
 ```yaml
 # src/cli-v2/defaults/agent-mappings.yaml
 skill_to_agents:
-  'frontend/*': [web-developer, web-reviewer, ...]
-  'backend/*': [api-developer, api-reviewer, ...]
+  "frontend/*": [web-developer, web-reviewer, ...]
+  "backend/*": [api-developer, api-reviewer, ...]
 ```
 
 **Advantages:**

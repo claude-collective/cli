@@ -5,10 +5,7 @@ import path from "path";
 import { BaseCommand } from "../base-command";
 import { Confirm } from "../components/common/confirm";
 import { directoryExists, fileExists, remove } from "../utils/fs";
-import {
-  claudePluginUninstall,
-  isClaudeCLIAvailable,
-} from "../utils/exec";
+import { claudePluginUninstall, isClaudeCLIAvailable } from "../utils/exec";
 import { getCollectivePluginDir } from "../lib/plugin-finder";
 import { CLAUDE_DIR } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
@@ -83,30 +80,26 @@ const UninstallConfirm: React.FC<UninstallConfirmProps> = ({
 
       {hasPluginToRemove && (
         <Box flexDirection="column">
-          <Text color="red">  Plugin:</Text>
-          <Text dimColor>    {target.pluginDir}</Text>
+          <Text color="red"> Plugin:</Text>
+          <Text dimColor> {target.pluginDir}</Text>
         </Box>
       )}
 
       {hasLocalToRemove && (
         <Box flexDirection="column">
-          <Text color="red">  Local files:</Text>
-          {target.hasLocalSkills && (
-            <Text dimColor>    {target.skillsDir}</Text>
-          )}
-          {target.hasLocalAgents && (
-            <Text dimColor>    {target.agentsDir}</Text>
-          )}
+          <Text color="red"> Local files:</Text>
+          {target.hasLocalSkills && <Text dimColor> {target.skillsDir}</Text>}
+          {target.hasLocalAgents && <Text dimColor> {target.agentsDir}</Text>}
           {target.hasLocalConfig && !keepConfig && (
-            <Text dimColor>    {target.configPath}</Text>
+            <Text dimColor> {target.configPath}</Text>
           )}
         </Box>
       )}
 
       {keepConfig && target.hasLocalConfig && (
         <Box flexDirection="column" marginTop={1}>
-          <Text color="yellow">  Keeping:</Text>
-          <Text dimColor>    {target.configPath}</Text>
+          <Text color="yellow"> Keeping:</Text>
+          <Text dimColor> {target.configPath}</Text>
         </Box>
       )}
 
@@ -181,9 +174,7 @@ export default class Uninstall extends BaseCommand {
     const hasPluginToRemove = uninstallPlugin && target.hasPlugin;
     const hasLocalToRemove =
       uninstallLocal &&
-      (target.hasLocalSkills ||
-        target.hasLocalAgents ||
-        target.hasLocalConfig);
+      (target.hasLocalSkills || target.hasLocalAgents || target.hasLocalConfig);
 
     if (!hasPluginToRemove && !hasLocalToRemove) {
       this.warn("Nothing to uninstall.");
@@ -192,11 +183,7 @@ export default class Uninstall extends BaseCommand {
       if (flags.plugin && !target.hasPlugin) {
         this.log("No plugin installation found.");
       }
-      if (
-        flags.local &&
-        !target.hasLocalSkills &&
-        !target.hasLocalAgents
-      ) {
+      if (flags.local && !target.hasLocalSkills && !target.hasLocalAgents) {
         this.log("No local installation found.");
       }
       if (!flags.plugin && !flags.local) {
@@ -349,9 +336,7 @@ export default class Uninstall extends BaseCommand {
     if (flags["keep-config"]) {
       this.log("");
       this.log("Configuration preserved at .claude/config.yaml");
-      this.log(
-        "Run `cc init` to reinstall with your existing configuration.",
-      );
+      this.log("Run `cc init` to reinstall with your existing configuration.");
     }
 
     this.log("");
