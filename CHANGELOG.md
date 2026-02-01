@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-02-01
+
+### Breaking Changes
+
+- **Skills now defined in stacks, not agents** - Previously, each agent YAML contained a `skills` field. Now, stacks define technology selections per agent in `config/stacks.yaml`. Skills are resolved via `skill_aliases` in the skills matrix. This fixes the bug where stacks got wrong skills (e.g., angular-stack getting React skills).
+- **stacks.yaml schema changed** - Agents are now objects with subcategory→technology mappings (e.g., `web-developer: { framework: react, styling: scss-modules }`) instead of simple string lists.
+- **Removed `skills` field from agent schema** - Agent YAMLs no longer contain skill definitions.
+
+### Added
+
+- **`stack` property in consumer config.yaml** - When a stack is selected, the resolved agent→skill mappings are stored in the project config for reproducibility.
+- **`resolveAgentSkillsFromStack()`** - New function in resolver.ts to extract skills from stack configurations.
+- **`resolveStackSkillsFromAliases()`** - New function in stacks-loader.ts to resolve technology selections to skill IDs via the matrix.
+- **Phase 7 UX specification** - Comprehensive documentation for upcoming wizard UX redesign with domain-based navigation and grid-based skill selection.
+
+### Changed
+
+- `loadStackById()` now reads technology selections per agent from the new stacks.yaml format
+- `getAgentSkills()` now accepts optional `stack` and `skillAliases` parameters for Phase 7 skill resolution
+- `stackToResolvedStack()` extracts skills from stack configurations instead of agent YAMLs
+- Stack plugin compiler now extracts skills via matrix aliases
+
+### Removed
+
+- `skills` field from all 18 agent YAMLs - skills now come from stacks
+- `skills` property from agent.schema.json
+
+[0.6.0]: https://github.com/claude-collective/cli/releases/tag/v0.6.0
+
 ## [0.5.1] - 2026-02-01
 
 ### Added
