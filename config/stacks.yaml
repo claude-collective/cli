@@ -1,0 +1,143 @@
+# yaml-language-server: $schema=../src/schemas/stacks.schema.json
+# Stack definitions - agent groupings for different workflows
+# Skills are defined in individual agent.yaml files, not here
+
+stacks:
+  - id: nextjs-fullstack
+    name: Next.js Fullstack
+    description: Production-ready Next.js with complete backend infrastructure
+    agents:
+      - web-developer
+      - api-developer
+      - cli-developer
+      - web-reviewer
+      - api-reviewer
+      - cli-reviewer
+      - web-tester
+      - web-pm
+      - skill-summoner
+      - agent-summoner
+      - pattern-scout
+      - web-pattern-critique
+      - documentor
+      - web-architecture
+      - web-researcher
+      - api-researcher
+    philosophy: Ship fast, iterate faster
+
+  - id: angular-stack
+    name: Modern Angular Stack
+    description: Angular 19 with Signals and NgRx SignalStore
+    agents:
+      - web-developer
+      - api-developer
+      - web-architecture
+      - web-reviewer
+      - api-reviewer
+      - web-researcher
+      - api-researcher
+      - web-pm
+      - pattern-scout
+      - web-pattern-critique
+      - agent-summoner
+      - skill-summoner
+      - documentor
+      - web-tester
+    philosophy: Enterprise-grade and type-safe
+
+  - id: nuxt-stack
+    name: Nuxt Full-Stack
+    description: Vue 3 with Nuxt for full-stack Vue development
+    agents:
+      - web-developer
+      - api-developer
+      - web-architecture
+      - web-reviewer
+      - api-reviewer
+      - web-researcher
+      - api-researcher
+      - web-pm
+      - pattern-scout
+      - web-pattern-critique
+      - agent-summoner
+      - skill-summoner
+      - documentor
+      - web-tester
+    philosophy: Progressive Vue with Nuxt power
+
+  - id: remix-stack
+    name: Remix Full-Stack
+    description: Remix for form-heavy applications with excellent DX
+    agents:
+      - web-developer
+      - api-developer
+      - web-architecture
+      - web-reviewer
+      - api-reviewer
+      - web-researcher
+      - api-researcher
+      - web-pm
+      - pattern-scout
+      - web-pattern-critique
+      - agent-summoner
+      - skill-summoner
+      - documentor
+      - web-tester
+    philosophy: Web standards and excellent forms handling
+
+  - id: vue-stack
+    name: Modern Vue Stack
+    description: Vue 3 with Composition API, Pinia, and Tailwind
+    agents:
+      - web-developer
+      - api-developer
+      - web-architecture
+      - web-reviewer
+      - api-reviewer
+      - web-researcher
+      - api-researcher
+      - web-pm
+      - pattern-scout
+      - web-pattern-critique
+      - agent-summoner
+      - skill-summoner
+      - documentor
+      - web-tester
+    philosophy: Progressive and approachable
+
+  - id: solidjs-stack
+    name: SolidJS Stack
+    description: High-performance SolidJS with Tailwind and Hono backend
+    agents:
+      - web-developer
+      - api-developer
+      - web-architecture
+      - web-reviewer
+      - api-reviewer
+      - web-researcher
+      - api-researcher
+      - web-pm
+      - pattern-scout
+      - web-pattern-critique
+      - agent-summoner
+      - skill-summoner
+      - documentor
+      - web-tester
+    philosophy: Maximum performance with minimal overhead
+
+  - id: react-native-stack
+    name: React Native Stack
+    description: Cross-platform mobile with React Native and Expo
+    agents:
+      - web-developer
+      - web-architecture
+      - web-reviewer
+      - web-researcher
+      - web-pm
+      - pattern-scout
+      - web-pattern-critique
+      - agent-summoner
+      - skill-summoner
+      - documentor
+      - web-tester
+    philosophy: One codebase, iOS and Android

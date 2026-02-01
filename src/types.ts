@@ -78,7 +78,7 @@ export interface Skill {
 
 /**
  * Base agent definition from agents.yaml
- * Does NOT include skills or prompts - those are profile-specific
+ * Now includes skills field for agent-centric configuration (Phase 6)
  */
 export interface AgentDefinition {
   title: string;
@@ -91,6 +91,8 @@ export interface AgentDefinition {
   output_format?: string; // Which output format file to use
   path?: string; // Relative path to agent directory (e.g., "developer/api-developer")
   sourceRoot?: string; // Root path where this agent was loaded from (for template resolution)
+  /** Skills available to this agent with inline preloaded flag */
+  skills?: Record<string, AgentSkillEntry>;
 }
 
 /**
@@ -179,6 +181,17 @@ export interface ValidationResult {
 /**
  * Stack configuration from stacks/{stack-id}/config.yaml
  * Bundles framework, skills, agents, and philosophy into a single config
+ *
+ * @deprecated Use `Stack` from types-stacks.ts instead.
+ * The new agent-centric configuration (Phase 6) moves skills into agent YAMLs.
+ * Stacks are now simple agent groupings defined in config/stacks.yaml.
+ *
+ * Migration path:
+ * - Stack metadata: Use `Stack` from src/cli-v2/types-stacks.ts
+ * - Agent skills: Defined in each agent's agent.yaml file
+ * - Stack loading: Use loadStackById() from src/cli-v2/lib/stacks-loader.ts
+ *
+ * This interface is kept for backwards compatibility with legacy stack configs.
  */
 export interface StackConfig {
   id?: string;
@@ -347,6 +360,17 @@ export interface ProjectConfig {
 // =============================================================================
 
 /**
+ * Skill entry in agent YAML configuration
+ * Specifies skill ID and whether it should be preloaded (embedded in compiled agent)
+ */
+export interface AgentSkillEntry {
+  /** Full skill ID (e.g., "react (@vince)") */
+  id: string;
+  /** Whether to embed skill content in compiled agent. Default: false */
+  preloaded: boolean;
+}
+
+/**
  * Agent configuration from agent.yaml (co-located in each agent folder)
  * Supports official Claude Code plugin format fields
  */
@@ -360,6 +384,8 @@ export interface AgentYamlConfig {
   permission_mode?: string; // Permission mode for agent operations
   hooks?: Record<string, AgentHookDefinition[]>; // Lifecycle hooks
   output_format?: string;
+  /** Skills available to this agent with inline preloaded flag */
+  skills?: Record<string, AgentSkillEntry>;
 }
 
 /**

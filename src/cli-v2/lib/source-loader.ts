@@ -1,13 +1,17 @@
 import path from "path";
 import { PROJECT_ROOT, SKILLS_DIR_PATH, SKILLS_MATRIX_PATH } from "../consts";
+import type { AgentDefinition } from "../types";
 import type {
   CategoryDefinition,
   MergedSkillsMatrix,
   ResolvedSkill,
+  ResolvedStack,
 } from "../types-matrix";
+import type { Stack } from "../types-stacks";
 import { fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import { isLocalSource, resolveSource, type ResolvedConfig } from "./config";
+import { loadAllAgents } from "./loader";
 import {
   discoverLocalSkills,
   type LocalSkillDiscoveryResult,
@@ -18,6 +22,7 @@ import {
   mergeMatrixWithSkills,
 } from "./matrix-loader";
 import { fetchFromSource } from "./source-fetcher";
+import { loadStacks } from "./stacks-loader";
 
 export interface SourceLoadOptions {
   sourceFlag?: string;
@@ -110,6 +115,17 @@ async function loadFromLocal(
   const skills = await extractAllSkills(skillsDir);
   const mergedMatrix = await mergeMatrixWithSkills(matrix, skills);
 
+  // Load stacks from CLI's config/stacks.yaml (Phase 6: agent-centric config)
+  const stacks = await loadStacks(PROJECT_ROOT);
+  if (stacks.length > 0) {
+    // Load agents to extract skills for each stack
+    const agents = await loadAllAgents(PROJECT_ROOT);
+    mergedMatrix.suggestedStacks = stacks.map((stack) =>
+      stackToResolvedStack(stack, agents),
+    );
+    verbose(`Loaded ${stacks.length} stacks from config/stacks.yaml`);
+  }
+
   return {
     matrix: mergedMatrix,
     sourceConfig,
@@ -150,12 +166,63 @@ async function loadFromRemote(
   const skills = await extractAllSkills(skillsDir);
   const mergedMatrix = await mergeMatrixWithSkills(matrix, skills);
 
+  // Load stacks from CLI's config/stacks.yaml (Phase 6: agent-centric config)
+  const stacks = await loadStacks(PROJECT_ROOT);
+  if (stacks.length > 0) {
+    // Load agents to extract skills for each stack
+    const agents = await loadAllAgents(PROJECT_ROOT);
+    mergedMatrix.suggestedStacks = stacks.map((stack) =>
+      stackToResolvedStack(stack, agents),
+    );
+    verbose(`Loaded ${stacks.length} stacks from config/stacks.yaml`);
+  }
+
   return {
     matrix: mergedMatrix,
     sourceConfig,
     sourcePath: fetchResult.path,
     isLocal: false,
     marketplace: sourceConfig.marketplace,
+  };
+}
+
+/**
+ * Convert a Stack (from config/stacks.yaml) to ResolvedStack format
+ * for compatibility with the wizard.
+ * Extracts skills from agent definitions to populate allSkillIds.
+ */
+function stackToResolvedStack(
+  stack: Stack,
+  agents: Record<string, AgentDefinition>,
+): ResolvedStack {
+  // Collect all unique skill IDs from agents in this stack
+  const allSkillIds: string[] = [];
+  const seenSkillIds = new Set<string>();
+
+  for (const agentId of stack.agents) {
+    const agent = agents[agentId];
+    if (agent?.skills) {
+      for (const entry of Object.values(agent.skills)) {
+        if (!seenSkillIds.has(entry.id)) {
+          seenSkillIds.add(entry.id);
+          allSkillIds.push(entry.id);
+        }
+      }
+    }
+  }
+
+  verbose(
+    `Stack '${stack.id}' has ${allSkillIds.length} skills from ${stack.agents.length} agents`,
+  );
+
+  return {
+    id: stack.id,
+    name: stack.name,
+    description: stack.description,
+    audience: [], // Not used in new format
+    skills: {}, // Skills come from agents, not stack config
+    allSkillIds,
+    philosophy: stack.philosophy || "",
   };
 }
 

@@ -60,6 +60,7 @@ export async function loadAllAgents(
       tools: config.tools,
       path: agentPath,
       sourceRoot: projectRoot,
+      skills: config.skills,
     };
 
     verbose(`Loaded agent: ${config.id} from ${file}`);
@@ -256,6 +257,18 @@ export async function loadPluginSkills(
 
 const stackCache = new Map<string, StackConfig>();
 
+/**
+ * @deprecated Use loadStackById from stacks-loader.ts instead.
+ * This function loads legacy stack configs from src/stacks/{stackId}/config.yaml.
+ * The new system uses config/stacks.yaml with agent-centric configuration
+ * where skills are defined in each agent's agent.yaml file.
+ *
+ * Migration path:
+ * 1. Use loadStackById() to get stack metadata (agents list)
+ * 2. Skills come from agent.yaml files, not stack config
+ *
+ * @see src/cli-v2/lib/stacks-loader.ts
+ */
 export async function loadStack(
   stackId: string,
   projectRoot: string,

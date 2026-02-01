@@ -18,16 +18,14 @@ import {
 import { formatSourceOrigin } from "../lib/config.js";
 import { copySkillsToLocalFlattened } from "../lib/skill-copier.js";
 import { checkPermissions } from "../lib/permission-checker.js";
-import { loadAllAgents, loadStack } from "../lib/loader.js";
+import { loadAllAgents } from "../lib/loader.js";
+import { loadStackById } from "../lib/stacks-loader.js";
 import { resolveAgents, resolveStackSkills } from "../lib/resolver.js";
 import { compileAgentForPlugin } from "../lib/stack-plugin-compiler.js";
 import { installStackAsPlugin } from "../lib/stack-installer.js";
 import { getCollectivePluginDir } from "../lib/plugin-finder.js";
 import { createLiquidEngine } from "../lib/compiler.js";
-import {
-  generateConfigFromSkills,
-  generateConfigFromStack,
-} from "../lib/config-generator.js";
+import { generateConfigFromSkills } from "../lib/config-generator.js";
 import {
   claudePluginMarketplaceExists,
   claudePluginMarketplaceAdd,
@@ -361,12 +359,30 @@ export default class Init extends BaseCommand {
 
       let localConfig: StackConfig;
       if (result.selectedStack) {
-        const loadedStackConfig = await loadStack(
+        // Load stack from CLI's config/stacks.yaml (Phase 6: agent-centric config)
+        const newStack = await loadStackById(
           result.selectedStack.id,
-          sourceResult.sourcePath,
-          "dev",
+          PROJECT_ROOT,
         );
-        localConfig = generateConfigFromStack(loadedStackConfig);
+
+        if (newStack) {
+          // New format: Stack only has agents, skills come from agent YAMLs
+          localConfig = {
+            name: PLUGIN_NAME,
+            version: "1.0.0",
+            author: "@user",
+            description: newStack.description,
+            skills: result.selectedSkills.map((id) => ({ id })),
+            agents: newStack.agents,
+            philosophy: newStack.philosophy,
+          };
+        } else {
+          // Stack not found in CLI's config/stacks.yaml
+          throw new Error(
+            `Stack '${result.selectedStack.id}' not found in config/stacks.yaml. ` +
+            `Available stacks are defined in the CLI's config/stacks.yaml file.`,
+          );
+        }
       } else {
         localConfig = generateConfigFromSkills(
           result.selectedSkills,
@@ -387,6 +403,8 @@ export default class Init extends BaseCommand {
       const compileAgents: Record<string, CompileAgentConfig> = {};
       for (const agentId of localConfig.agents) {
         if (agents[agentId]) {
+          // In agent-centric mode, skills come from agent definitions
+          // Only use stack-based skills if agent_skills is explicitly set (legacy)
           if (localConfig.agent_skills?.[agentId]) {
             const skillRefs = resolveStackSkills(
               localConfig,
@@ -395,6 +413,7 @@ export default class Init extends BaseCommand {
             );
             compileAgents[agentId] = { skills: skillRefs };
           } else {
+            // Agent-centric: let resolveAgents get skills from agent YAMLs
             compileAgents[agentId] = {};
           }
         }

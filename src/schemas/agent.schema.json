@@ -98,9 +98,33 @@
           "$ref": "#/$defs/HookDefinition"
         }
       }
+    },
+    "skills": {
+      "type": "object",
+      "description": "Skills available to this agent with preload configuration",
+      "additionalProperties": {
+        "$ref": "#/$defs/AgentSkillEntry"
+      }
     }
   },
   "$defs": {
+    "AgentSkillEntry": {
+      "type": "object",
+      "description": "Skill entry specifying ID and preload behavior",
+      "required": ["id", "preloaded"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Full skill ID (e.g., 'react (@vince)')",
+          "minLength": 1
+        },
+        "preloaded": {
+          "type": "boolean",
+          "description": "Whether to embed skill content in compiled agent"
+        }
+      }
+    },
     "HookDefinition": {
       "type": "object",
       "description": "Hook definition with matcher and hook actions",

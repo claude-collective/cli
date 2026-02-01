@@ -47,11 +47,11 @@ function validateMatrixStructure(
   config: SkillsMatrixConfig,
   configPath: string,
 ): void {
+  // Note: suggested_stacks removed from required - stacks now defined in config/stacks.yaml (Phase 6)
   const requiredFields = [
     "version",
     "categories",
     "relationships",
-    "suggested_stacks",
     "skill_aliases",
   ];
   const missing = requiredFields.filter((field) => !(field in config));
@@ -460,6 +460,10 @@ function resolveSuggestedStacks(
   aliases: Record<string, string>,
   aliasTargetToSkillId: Record<string, string>,
 ): ResolvedStack[] {
+  // Phase 6: suggested_stacks is now optional (stacks moved to config/stacks.yaml)
+  if (!matrix.suggested_stacks) {
+    return [];
+  }
   return matrix.suggested_stacks.map((stack) => {
     const resolvedSkillsMap: Record<string, Record<string, string>> = {};
     const allSkillIds: string[] = [];

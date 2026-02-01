@@ -17,8 +17,10 @@ import {
   writePluginManifest,
   getPluginManifestPath,
 } from "./plugin-manifest";
-import { loadStack, loadSkillsByIds, loadAllAgents } from "./loader";
+import { loadSkillsByIds, loadAllAgents } from "./loader";
+import { loadStackById } from "./stacks-loader";
 import { resolveAgents, stackToCompileConfig } from "./resolver";
+import type { Stack } from "../types-stacks";
 import { hashString, getCurrentDate } from "./versioning";
 import type {
   PluginManifest,
@@ -116,6 +118,8 @@ export interface StackPluginOptions {
   outputDir: string;
   projectRoot: string;
   agentSourcePath?: string;
+  /** Optional stack configuration - if provided, bypasses loading from config/stacks.yaml */
+  stack?: Stack;
 }
 
 export interface CompiledStackPlugin {
@@ -297,8 +301,6 @@ export async function compileStackPlugin(
   verbose(`  Local agent source: ${localAgentRoot}`);
   verbose(`  CLI agent source: ${PROJECT_ROOT}`);
 
-  const stack = await loadStack(stackId, projectRoot, "dev");
-
   // Load agents from both local project and CLI, with local taking precedence
   const cliAgents = await loadAllAgents(PROJECT_ROOT);
   const localAgents = await loadAllAgents(localAgentRoot);
@@ -307,6 +309,38 @@ export async function compileStackPlugin(
   verbose(
     `  Loaded ${Object.keys(localAgents).length} local agents, ${Object.keys(cliAgents).length} CLI agents`,
   );
+
+  // Use provided stack or load from CLI's config/stacks.yaml
+  const newStack = options.stack || (await loadStackById(stackId, PROJECT_ROOT));
+
+  let stack: StackConfig;
+  if (newStack) {
+    verbose(`  Found stack: ${newStack.name}`);
+
+    // Extract skills from agent definitions
+    const agentSkillIds = new Set<string>();
+    for (const agentName of newStack.agents) {
+      const agent = agents[agentName];
+      if (agent?.skills) {
+        for (const entry of Object.values(agent.skills)) {
+          agentSkillIds.add(entry.id);
+        }
+      }
+    }
+
+    // Build StackConfig for compatibility with rest of function
+    stack = {
+      name: newStack.name,
+      version: "1.0.0",
+      author: "",
+      description: newStack.description,
+      skills: Array.from(agentSkillIds).map((id) => ({ id })),
+      agents: newStack.agents,
+      philosophy: newStack.philosophy,
+    };
+  } else {
+    throw new Error(`Stack '${stackId}' not found in config/stacks.yaml`);
+  }
 
   const skills = await loadSkillsByIds(stack.skills || [], projectRoot);
 

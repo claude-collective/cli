@@ -1,9 +1,23 @@
+/**
+ * @deprecated This module is deprecated. Skills are now defined directly in agent YAMLs.
+ * Use agent's `skills` field in agent.yaml instead of these mappings.
+ * See: src/cli-v2/lib/resolver.ts -> resolveAgentSkills()
+ *
+ * This file is kept for backwards compatibility with:
+ * - config-generator.ts (wizard flow for generating configs from skills)
+ * - Legacy stack-based configurations
+ *
+ * Will be removed in a future version once config-generator is updated
+ * to use the new agent-centric approach.
+ */
+
 import type { ProjectConfig } from "../../types";
 import { getCachedDefaults } from "./defaults-loader";
 
 // =============================================================================
-// Hardcoded Fallback Defaults
+// Hardcoded Fallback Defaults (DEPRECATED)
 // These are used when YAML defaults cannot be loaded (bundled fallback)
+// Skills should now be defined in agent.yaml files directly.
 // =============================================================================
 
 export const SKILL_TO_AGENTS: Record<string, string[]> = {
