@@ -4,68 +4,124 @@
 
 ## Executive Summary
 
-**Current State:** 1019 CLI tests passing across 43 test files. Phase 1-5 Complete. oclif + Ink migration done.
+**Current State:** Phase 7A Complete. Skills now defined in stacks, not agents.
+
+**Recent (Phase 7A):**
+
+- Skills moved from agent YAMLs to stack definitions in `config/stacks.yaml`
+- Stacks define technology selections per agent (e.g., `web-developer: { framework: react }`)
+- Skill aliases resolved via `skill_aliases` in `config/skills-matrix.yaml`
+- 1000 tests passing (18 pre-existing failures unrelated to Phase 7A)
 
 **Next Steps:**
 
-1. Implement Phase 6: Agent-Centric Configuration (5-7 days)
+1. Implement Phase 7B: Wizard UX Redesign (14-20 days)
 2. Address deferred tasks as needed
 
 For completed tasks, see [TODO-completed.md](./TODO-completed.md).
 
 ---
 
-## Ongoing Reminders
+## Blockers
 
-### R1: Use cli-migrator Subagent for Migration
+_None currently. Add serious blockers here immediately when discovered._
 
-**ALL migration work MUST be done using the cli-migrator subagent.** This agent has the oclif + Ink and Commander.js + @clack/prompts skills preloaded and understands the conversion patterns.
-
-Invoke via: `Task tool with subagent_type="general-purpose"` and prompt it to act as the CLI Migration Specialist.
-
-### R2: Do NOT Commit At All
-
-**Keep all changes uncommitted.** Do not commit even after the migration is complete. The user will handle committing when ready.
-
-### R3: No Backwards Compatibility
-
-**This is a FULL migration.** We are NOT maintaining backwards compatibility with the old Commander.js + @clack/prompts implementation. The acceptance criteria for "done" is that the CLI **100% uses oclif + Ink** with zero remnants of the old ecosystem.
-
-### R4: Test Management During Migration
-
-Try to keep tests passing throughout migration. Refactor and update tests as commands are migrated. If tests MUST be temporarily disabled to make progress, that is acceptable, but prefer updating tests to match new patterns.
-
-### R5: Write Tests for New Features
-
-After completing a task, ask yourself: "Can tests be written for this new functionality?"
-If yes, write tests. Test-driven development is preferred when feasible.
-
-### R6: Move Completed Tasks to Archive
-
-Once your task is done, move it to [TODO-completed.md](./TODO-completed.md). Keep TODO.md lean by archiving all completed tasks immediately.
-
-### R7: Update Task Status in TODO.md
-
-**CRITICAL:** When starting a task, update its status to `[IN PROGRESS]`. When completing a task, update its status to `[DONE]`. This provides visibility into migration progress.
-
-Format: `**[STATUS] | ID | Description**`
-
-- `[DONE]` - Task completed
-- `[IN PROGRESS]` - Currently being worked on
-- No prefix - Pending/not started
-
-### R8: Compact at 70% Context
-
-**CRITICAL:** When context usage reaches 70%, immediately run `/compact` to summarize and reduce context. This prevents running out of context mid-task.
+_If a blocker is added, note whether tests should be deferred until it's resolved._
 
 ---
 
-## Planning Documents
+## Ongoing Reminders
 
-- [docs/migration-research.md](./docs/migration-research.md) - Current architecture analysis
-- [docs/oclif-ink-ecosystem.md](./docs/oclif-ink-ecosystem.md) - Ecosystem libraries research
-- [docs/migration-plan.md](./docs/migration-plan.md) - Detailed migration plan with phases
-- [docs/solution-a-migration-tasks.md](./docs/solution-a-migration-tasks.md) - Agent-centric configuration migration
+### R1: Read Docs Before Starting
+
+**CRITICAL:** Before starting any Phase 7 task, read these documents:
+
+- [TODO.md](./TODO.md) - This file, task list and status
+- [docs/wizard-ux-redesign.md](./docs/wizard-ux-redesign.md) - UX specification with mockups
+- [docs/wizard-ux-redesign-concerns.md](./docs/wizard-ux-redesign-concerns.md) - Architectural decisions
+- [docs/phase-7-implementation-plan.md](./docs/phase-7-implementation-plan.md) - Detailed subtasks and dependencies
+
+### R2: Use Specialized Agents
+
+- **CLI Developer** (`cli-developer`) - All feature implementation work
+- **CLI Tester** (`web-tester`) - All test writing
+- **API Researcher** (`api-researcher`) - Backend/resolver research
+- **Web Researcher** (`web-researcher`) - Frontend/component research
+
+Do NOT implement features or write tests directly. Always delegate to the appropriate agent.
+
+### R3: Handle Uncertainties
+
+When encountering unknowns or uncertainties:
+
+1. Spawn research subagents to investigate
+2. Use CLI Developer to prototype if needed
+3. **Create TODO tasks in this file** with findings
+4. Document decisions in `docs/wizard-ux-redesign-concerns.md`
+
+### R4: Blockers Go to Top
+
+If a serious blocker is discovered, add it to the **Blockers** section at the top of this file immediately. Do not continue work that depends on the blocked item.
+
+### R5: Do NOT Commit
+
+**Keep all changes uncommitted.** The user will handle committing when ready.
+
+### R6: No Backwards Compatibility
+
+Once Phase 7 is complete, the wizard should use **only v2 store and components**. No legacy code paths, no v1 fallbacks. Delete old code, don't deprecate it.
+
+### R7: Move Completed Tasks to Archive
+
+Once a task is done, move it to [TODO-completed.md](./TODO-completed.md).
+
+### R8: Update Task Status
+
+When starting a task: `[IN PROGRESS]`. When completing: `[DONE]`.
+
+**IMPORTANT:** Sub-agents MUST update this TODO.md file when starting and completing subtasks. This is not optional - it ensures proper progress tracking across sessions.
+
+### R9: Compact at 70% Context
+
+When context usage reaches 70%, run `/compact`.
+
+### R10: Cross-Repository Changes Allowed
+
+You should feel free to make changes in the claude-subagents directory (`/home/vince/dev/claude-subagents`) as well, if needed. This is the source marketplace for skills and agents.
+
+---
+
+## Phase 7 Documents
+
+- [docs/wizard-ux-redesign.md](./docs/wizard-ux-redesign.md) - UX specification with mockups
+- [docs/wizard-ux-redesign-concerns.md](./docs/wizard-ux-redesign-concerns.md) - Architectural decisions
+- [docs/phase-7-implementation-plan.md](./docs/phase-7-implementation-plan.md) - Detailed subtasks, dependencies, file inventory
+- [docs/phase-7a-pre-test-plan.md](./docs/phase-7a-pre-test-plan.md) - Test plan for Phase 7A checkpoint
+
+## Key Files
+
+**Configuration:**
+
+- `config/stacks.yaml` - Stack definitions (agents per stack)
+- `config/skills-matrix.yaml` - Skills, categories, relationships, aliases
+
+**Wizard (to be migrated to v2):**
+
+- `src/cli-v2/stores/wizard-store.ts` - Current wizard state (becomes v2)
+- `src/cli-v2/components/wizard/` - Wizard step components
+- `src/cli-v2/components/wizard/wizard.tsx` - Main wizard orchestrator
+
+**Resolution:**
+
+- `src/cli-v2/lib/stacks-loader.ts` - Load stacks from config
+- `src/cli-v2/lib/resolver.ts` - Resolve agent skills
+- `src/cli-v2/lib/matrix-resolver.ts` - Skill relationships (recommends, conflicts)
+
+**Types:**
+
+- `src/cli-v2/types-stacks.ts` - Stack types
+- `src/cli-v2/types-matrix.ts` - Matrix types
+- `src/types.ts` - Core types (AgentDefinition, ProjectConfig)
 
 ---
 
@@ -76,24 +132,11 @@ Format: `**[STATUS] | ID | Description**`
 All Phase 5 tasks completed. See [TODO-completed.md](./TODO-completed.md) for full details.
 
 **Summary:**
+
 - Migrated from Commander.js + @clack/prompts to oclif + Ink
 - 398 tests passing across 24 test files
 - All commands migrated including interactive wizard
 - Old dependencies removed (commander, @clack/prompts, picocolors)
-
-### Remaining Enhancement Tasks (Optional)
-
-**M | P5-4-7 | Create multi-column skill layout**
-Use Ink Flexbox for responsive multi-column skill display (1/2/3 columns based on terminal width)
-
-**M | P5-4-8 | Create horizontal tab navigation**
-Display wizard steps as horizontal tabs showing progress
-
-**M | P5-4-9 | Create persistent search field**
-Always-visible search input for filtering skills
-
-**M | P5-4-10 | Create category skills table**
-Multi-column table view with web/api/cli categories as columns, skills as rows
 
 ---
 
@@ -104,6 +147,7 @@ Multi-column table view with web/api/cli categories as columns, skills as rows
 **Goal:** Move skill mappings INTO agent YAMLs. Stacks become simple agent groupings. Eliminates stack config files.
 
 **Key Changes:**
+
 - Agents define their own skills (with inline `preloaded` flag)
 - New `config/stacks.yaml` lists stacks with agent groupings
 - Delete `skill-agent-mappings.ts` entirely
@@ -214,6 +258,148 @@ Allow consumers to define custom stacks in their own `config/stacks.yaml` file. 
 
 **M | D-09 | Fix agent-recompiler tests for Phase 6**
 7 tests in `src/cli-v2/lib/agent-recompiler.test.ts` are skipped because agents now have skills in their YAMLs (Phase 6). Tests need to either provide the skills that agents reference, use test agents without skills, or bypass skill resolution.
+**Note:** Phase 7 will remove skills from agent YAMLs entirely (P7-0-1). This task may become obsolete.
+
+---
+
+## Phase 7: Wizard UX Redesign
+
+**Status:** Phase 7A COMPLETE. Phase 7B (UX components) not started.
+
+**Goal:** Redesign the wizard flow to be more intuitive with domain-based navigation, grid-based skill selection, and optional skill source refinement.
+
+**Estimated Effort:** 19-27 days (Phase 7A: 4-5 days, Checkpoint: 1-2 days, Phase 7B: 14-20 days)
+
+**Key Documents:**
+
+- [docs/phase-7-implementation-plan.md](./docs/phase-7-implementation-plan.md) - **Detailed implementation plan with subtasks, dependencies, and file inventory**
+- [docs/wizard-ux-redesign.md](./docs/wizard-ux-redesign.md) - Full UX specification with mockups
+- [docs/wizard-ux-redesign-concerns.md](./docs/wizard-ux-redesign-concerns.md) - Concerns and architectural decisions
+- [docs/phase-7a-pre-test-plan.md](./docs/phase-7a-pre-test-plan.md) - Test plan for Phase 7A checkpoint
+
+**v0.5.1 Foundation:** `installMode` and `detectInstallation()` already implemented - reuse in wizard.
+
+---
+
+### Phase 7A: Architecture Fix (COMPLETE)
+
+**Status:** COMPLETE. All tasks done, 1000 tests passing.
+
+Fixes the critical bug where stacks get wrong skills (e.g., `angular-stack` gets React skills).
+
+**[DONE] XL | P7-0-1 | Move skills from agents to stacks**
+Stacks should define technologies by subcategory per agent, not agents defining their own skills.
+
+Changes completed:
+
+1. Updated `config/stacks.yaml` schema - agents become objects with subcategory→technology mappings
+2. Removed `skills` field from all agent YAMLs (18 files)
+3. Updated `stackToResolvedStack()` to read skills from stacks, not agents
+4. Updated `resolveAgentSkills()` signature to accept stack parameter
+
+<details>
+<summary>All subtasks completed (click to expand)</summary>
+
+- **P7-0-1a**: Added `StackAgentConfig` interface to `src/cli-v2/types-stacks.ts`
+- **P7-0-1b**: Updated `src/schemas/stacks.schema.json` with new agents object format
+- **P7-0-1c**: Transformed all 7 stacks in `config/stacks.yaml` to new format
+- **P7-0-1d**: Added `resolveStackSkillsFromAliases()` and `resolveAgentConfigToSkills()` to stacks-loader.ts
+- **P7-0-1e**: Updated `loadStackById()` to work with new stack format
+- **P7-0-1f**: Removed `skills` field from all 18 agent YAMLs
+- **P7-0-1g**: Added `resolveAgentSkillsFromStack()` to resolver.ts
+- **P7-0-1h**: Updated init.tsx to use new stack format
+- **P7-0-1i**: Removed `skills` field from `AgentDefinition` type
+- **P7-0-1j**: Removed `skills` property from agent.schema.json
+- **P7-0-1k**: Updated source-loader.ts, stack-plugin-compiler.ts, and tests for new format
+- **P7-0-1l**: Fixed skill extraction in stack-plugin-compiler.ts to use matrix aliases
+- **P7-0-1m**: Updated `resolveAgents()` in resolver.ts to accept and pass `stack` and `skillAliases` to `getAgentSkills()` for Phase 7 skill resolution
+
+</details>
+
+**[DONE] S | P7-0-2 | Add `stack` property to consumer config.yaml**
+When a stack is selected, store resolved agent→skill mappings in `.claude/config.yaml`.
+Note: `installMode` property already exists (added in v0.5.1) - no changes needed for it.
+
+Changes completed:
+
+1. Added `stack?: Record<string, Record<string, string>>` to `ProjectConfig` in `src/types.ts`
+2. Created `buildStackProperty()` function in `src/cli-v2/lib/config-generator.ts`
+3. Updated `installLocalMode()` in `src/cli-v2/commands/init.tsx` to include `stack` property when a stack is selected
+4. Added 4 tests for `buildStackProperty()` in `src/cli-v2/lib/config-generator.test.ts`
+
+---
+
+### Phase 7B: UX Redesign (14-20 days)
+
+#### Phase 7.1: Data Model Updates
+
+**S | P7-1-1 | Add `domain` field to subcategories in skills-matrix.yaml**
+Add `domain: web|api|cli|mobile` to each subcategory to support domain-based navigation in the wizard.
+
+**M | P7-1-2 | Add CLI domain to skills-matrix.yaml**
+Add CLI as a full domain with:
+
+- New `cli` top-level category
+- Subcategories: `cli-framework`, `cli-prompts`, `cli-testing` (all with `domain: cli`)
+- Skills: commander, oclif, yargs, clack, inquirer, ink, etc.
+- Corresponding `skill_aliases` entries
+
+**S | P7-1-3 | Update stacks.yaml schema for agent→technology mappings**
+Add domain validation to schema (basic schema update done in P7-0-1).
+
+#### Phase 7.2: Wizard Store Migration
+
+**M | P7-2-1 | Create wizard-store-v2.ts with new WizardStateV2 type**
+New store with fields: approach, selectedDomains, currentDomainIndex, domainSelections, currentRefineIndex, skillSources, showDescriptions. Keep expertMode and installMode.
+
+**L | P7-2-2 | Migrate wizard components to use v2 store**
+Update all components in `src/cli-v2/components/wizard/` to use the new store.
+
+**S | P7-2-3 | Remove wizard-store.ts (v1) after migration**
+Once all references migrated and tests pass, remove the old store and rename v2.
+
+#### Phase 7.3: Wizard Components
+
+**XL | P7-3-1 | Create CategoryGrid component**
+Grid-based category/technology selection with:
+
+- 2D navigation (←/→ for options, ↑/↓ for categories)
+- Multi-column layout with Ink Box/Flexbox
+- Toggle selection (SPACE to select/deselect)
+- Visual states: selected (●), recommended (⭐), discouraged (⚠), disabled (✗)
+- Expert mode toggle
+- Show descriptions toggle
+
+**M | P7-3-2 | Create WizardTabs component**
+Horizontal progress tabs showing all 5 steps. Use Ink Box with flexbox for responsive layout.
+
+**S | P7-3-3 | Create SectionProgress component**
+Sub-step progress indicator for multi-domain Build and Refine steps.
+Start WITHOUT borders - add later if needed via Box `borderStyle` prop.
+
+**L | P7-3-4 | Create StepBuild component**
+New Build step using CategoryGrid, replacing category/subcategory linear flow.
+Depends on: P7-3-1, P7-3-3, P7-1-1
+
+**M | P7-3-5 | Create StepRefine component**
+New Refine step for skill source selection (verified skills first, skills.sh integration deferred).
+
+**S | P7-3-6 | Update StepConfirm to match Phase 7 design**
+Update confirm step to display summary matching wizard-ux-redesign.md mockups:
+
+- Stack name (if selected)
+- Technologies count
+- Skills count (with verification status)
+- Install mode (Plugin/Local) - uses existing `installMode` from store
+- Domain breakdown (Web: X skills, API: Y skills)
+
+#### Phase 7.4: Integration and Polish
+
+**L | P7-4-1 | Integration testing**
+End-to-end testing of all wizard flows (stack path, scratch single-domain, scratch multi-domain, back navigation).
+
+**M | P7-4-2 | Polish and edge cases**
+Handle edge cases, improve UX, add keyboard shortcuts help text, handle narrow terminals gracefully
 
 ---
 
@@ -245,6 +431,7 @@ Measure and validate startup time is within acceptable range
 
 **M | D-04 | Create missing skills referenced in stack configs**
 The following skills are referenced in stack configs but don't exist in the marketplace:
+
 - `web/styling/tailwind (@vince)` - referenced by: nuxt-stack, remix-stack, solidjs-stack, vue-stack
 
 These stacks will fail to build until the missing skills are created.
@@ -253,6 +440,7 @@ These stacks will fail to build until the missing skills are created.
 Currently, running `cc init` a second time just warns "already initialized" and suggests `cc edit`. This is not discoverable.
 
 **Suggested approach:** When `cc init` detects an existing installation, show a "home screen" menu instead of just warning. Options could include:
+
 - Reconfigure installation (change mode, stack, skills)
 - Add/remove skills
 - View current configuration
@@ -266,9 +454,6 @@ This follows the pattern of CLIs like `npm init` (asks about overwriting) and pr
 
 **M | D-07 | Use full skill path as folder name when compiling**
 When skills are copied locally, use the full path as the folder name instead of the short name. For example, `react (@vince)` should become `web/framework/react (@vince)`. This provides better organization and avoids potential naming conflicts between skills with the same short name in different categories.
-
-**L | D-03 | Agent-centric configuration migration**
-See Phase 6 below for implementation tasks. Research: [docs/solution-a-migration-tasks.md](./docs/solution-a-migration-tasks.md)
 
 ---
 

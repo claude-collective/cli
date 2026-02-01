@@ -86,32 +86,32 @@ Detailed specifications for completed tasks are preserved in TODO.md under "Deta
 
 ### Phase 5.6: Polish and Testing
 
-| Task ID   | Task                                      | Completed  | Tests Added |
-| --------- | ----------------------------------------- | ---------- | ----------- |
-| P5-6-0    | CLI Integration Test Strategy (research)  | 2026-01-31 | -           |
-| P5-6-1    | Add @oclif/test command tests             | 2026-01-31 | 210         |
-| P5-6-1a   | Research test code sharing patterns       | 2026-01-31 | -           |
-| P5-6-1b   | Extract shared CLI_ROOT constant          | 2026-01-31 | -           |
-| P5-6-1c   | Create shared runCliCommand helper        | 2026-01-31 | -           |
-| P5-6-1d   | Add output string constants               | 2026-01-31 | -           |
-| P5-6-1e   | Document test helper usage (JSDoc)        | 2026-01-31 | -           |
-| P5-6-2    | Add ink-testing-library component tests   | 2026-01-31 | 114         |
-| P5-6-3    | Update vitest config for test patterns    | 2026-01-31 | -           |
+| Task ID | Task                                     | Completed  | Tests Added |
+| ------- | ---------------------------------------- | ---------- | ----------- |
+| P5-6-0  | CLI Integration Test Strategy (research) | 2026-01-31 | -           |
+| P5-6-1  | Add @oclif/test command tests            | 2026-01-31 | 210         |
+| P5-6-1a | Research test code sharing patterns      | 2026-01-31 | -           |
+| P5-6-1b | Extract shared CLI_ROOT constant         | 2026-01-31 | -           |
+| P5-6-1c | Create shared runCliCommand helper       | 2026-01-31 | -           |
+| P5-6-1d | Add output string constants              | 2026-01-31 | -           |
+| P5-6-1e | Document test helper usage (JSDoc)       | 2026-01-31 | -           |
+| P5-6-2  | Add ink-testing-library component tests  | 2026-01-31 | 114         |
+| P5-6-3  | Update vitest config for test patterns   | 2026-01-31 | -           |
 
 ### Phase 5.7: Cleanup
 
-| Task ID   | Task                                      | Completed  |
-| --------- | ----------------------------------------- | ---------- |
-| P5-7-1    | Remove @clack/prompts dependency          | 2026-01-31 |
-| P5-7-2    | Remove commander dependency               | 2026-01-31 |
-| P5-7-3    | Remove picocolors dependency              | 2026-01-31 |
-| P5-7-4    | Delete old src/cli/commands/ files        | 2026-01-31 |
-| P5-7-5    | Delete src/cli/lib/wizard.ts              | 2026-01-31 |
-| P5-7-6    | Move lib/ and utils/ to cli-v2            | 2026-01-31 |
-| P5-7-7    | Update package.json entry points          | 2026-01-31 |
-| P5-7-8    | Final validation (all commands work)      | 2026-01-31 |
-| P5-7-9    | Update documentation                      | 2026-01-31 |
-| P5-7-10   | Stash all changes                         | 2026-01-31 |
+| Task ID | Task                                 | Completed  |
+| ------- | ------------------------------------ | ---------- |
+| P5-7-1  | Remove @clack/prompts dependency     | 2026-01-31 |
+| P5-7-2  | Remove commander dependency          | 2026-01-31 |
+| P5-7-3  | Remove picocolors dependency         | 2026-01-31 |
+| P5-7-4  | Delete old src/cli/commands/ files   | 2026-01-31 |
+| P5-7-5  | Delete src/cli/lib/wizard.ts         | 2026-01-31 |
+| P5-7-6  | Move lib/ and utils/ to cli-v2       | 2026-01-31 |
+| P5-7-7  | Update package.json entry points     | 2026-01-31 |
+| P5-7-8  | Final validation (all commands work) | 2026-01-31 |
+| P5-7-9  | Update documentation                 | 2026-01-31 |
+| P5-7-10 | Stash all changes                    | 2026-01-31 |
 
 **Summary:**
 
@@ -124,10 +124,10 @@ Detailed specifications for completed tasks are preserved in TODO.md under "Deta
 
 ## Research Documents
 
-| Document                                                                    | Topic                            | Date       |
-| --------------------------------------------------------------------------- | -------------------------------- | ---------- |
-| [oclif-ink-research.md](./docs/oclif-ink-research.md)                       | oclif + Ink framework evaluation | 2026-01-31 |
-| [web-ui-research.md](./docs/web-ui-research.md)                             | Web UI for private marketplace   | 2026-01-31 |
-| [cli-agent-invocation-research.md](./docs/cli-agent-invocation-research.md) | Meta-agent invocation via CLI    | 2026-01-22 |
-| [cli-testing-research.md](./docs/cli-testing-research.md)                   | CLI integration test strategy    | 2026-01-31 |
-| [stack-simplification-research.md](./docs/stack-simplification-research.md) | Stack architecture simplification| 2026-01-31 |
+| Document                                                                    | Topic                             | Date       |
+| --------------------------------------------------------------------------- | --------------------------------- | ---------- |
+| [oclif-ink-research.md](./docs/oclif-ink-research.md)                       | oclif + Ink framework evaluation  | 2026-01-31 |
+| [web-ui-research.md](./docs/web-ui-research.md)                             | Web UI for private marketplace    | 2026-01-31 |
+| [cli-agent-invocation-research.md](./docs/cli-agent-invocation-research.md) | Meta-agent invocation via CLI     | 2026-01-22 |
+| [cli-testing-research.md](./docs/cli-testing-research.md)                   | CLI integration test strategy     | 2026-01-31 |
+| [stack-simplification-research.md](./docs/stack-simplification-research.md) | Stack architecture simplification | 2026-01-31 |
