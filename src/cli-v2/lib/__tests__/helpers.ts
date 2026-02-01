@@ -115,6 +115,8 @@ export const OUTPUT_STRINGS = {
   // Plugin/installation outputs
   /** No plugin installed message */
   NO_PLUGIN_FOUND: "No plugin found",
+  /** No installation found message (local or plugin) */
+  NO_INSTALLATION_FOUND: "No installation found",
   /** No plugin installation found */
   NO_PLUGIN_INSTALLATION: "No plugin installation found",
   /** Not installed message */

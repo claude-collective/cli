@@ -23,6 +23,7 @@ import { recompileAgents } from "../lib/agent-recompiler";
 import { loadPluginSkills } from "../lib/loader";
 import { LOCAL_SKILLS_PATH } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
+import { detectInstallation } from "../lib/installation";
 import type {
   AgentSourcePaths,
   PluginManifest,
@@ -197,12 +198,36 @@ export default class Compile extends BaseCommand {
 
     setVerbose(flags.verbose);
 
+    // If --output provided explicitly, use custom output mode
     if (flags.output) {
       await this.runCustomOutputCompile({
         ...flags,
         output: flags.output,
       });
+      return;
+    }
+
+    // Auto-detect installation mode
+    const installation = await detectInstallation();
+
+    if (!installation) {
+      this.error(
+        "No installation found. Run 'cc init' first to set up Claude Collective.",
+        { exit: EXIT_CODES.ERROR },
+      );
+    }
+
+    if (installation.mode === "local") {
+      // Use local mode - output to .claude/agents
+      this.log("");
+      this.log("Local Mode Compile (auto-detected)");
+      this.log("");
+      await this.runCustomOutputCompile({
+        ...flags,
+        output: installation.agentsDir,
+      });
     } else {
+      // Use plugin mode
       await this.runPluginModeCompile(flags);
     }
   }
@@ -308,6 +333,7 @@ export default class Compile extends BaseCommand {
     try {
       agentDefs = await getAgentDefinitions(flags["agent-source"], {
         forceRefresh: flags.refresh,
+        projectDir,
       });
       this.log(
         flags["agent-source"]
@@ -341,6 +367,7 @@ export default class Compile extends BaseCommand {
         pluginDir,
         sourcePath: agentDefs.sourcePath,
         skills: allSkills,
+        projectDir,
       });
 
       if (recompileResult.failed.length > 0) {
@@ -439,6 +466,7 @@ export default class Compile extends BaseCommand {
     try {
       agentDefs = await getAgentDefinitions(flags["agent-source"], {
         forceRefresh: flags.refresh,
+        projectDir,
       });
       this.log(
         flags["agent-source"]
@@ -477,6 +505,7 @@ export default class Compile extends BaseCommand {
         sourcePath: agentDefs.sourcePath,
         skills: allSkills,
         outputDir,
+        projectDir,
       });
 
       if (recompileResult.failed.length > 0) {

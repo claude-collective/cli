@@ -1,23 +1,30 @@
 import path from "path";
 import { directoryExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import { PROJECT_ROOT, DIRS } from "../consts";
+import { PROJECT_ROOT, DIRS, CLAUDE_DIR } from "../consts";
 import { fetchFromSource, type FetchOptions } from "./source-fetcher";
 import type { AgentSourcePaths } from "../../types";
 
+export interface AgentDefinitionOptions extends FetchOptions {
+  /** Project directory to check for local templates */
+  projectDir?: string;
+}
+
 export async function getAgentDefinitions(
   remoteSource?: string,
-  options: FetchOptions = {},
+  options: AgentDefinitionOptions = {},
 ): Promise<AgentSourcePaths> {
   if (remoteSource) {
     return fetchAgentDefinitionsFromRemote(remoteSource, options);
   }
-  return getLocalAgentDefinitions();
+  return getLocalAgentDefinitions(options);
 }
 
-export async function getLocalAgentDefinitions(): Promise<AgentSourcePaths> {
+export async function getLocalAgentDefinitions(
+  options: AgentDefinitionOptions = {},
+): Promise<AgentSourcePaths> {
   const agentsDir = path.join(PROJECT_ROOT, DIRS.agents);
-  const templatesDir = path.join(PROJECT_ROOT, DIRS.templates);
+  let templatesDir = path.join(PROJECT_ROOT, DIRS.templates);
 
   if (!(await directoryExists(agentsDir))) {
     throw new Error(
@@ -26,11 +33,25 @@ export async function getLocalAgentDefinitions(): Promise<AgentSourcePaths> {
     );
   }
 
+  // Check for local templates first (from eject templates)
+  if (options.projectDir) {
+    const localTemplatesDir = path.join(
+      options.projectDir,
+      CLAUDE_DIR,
+      "templates",
+    );
+    if (await directoryExists(localTemplatesDir)) {
+      verbose(`Using local templates from: ${localTemplatesDir}`);
+      templatesDir = localTemplatesDir;
+    }
+  }
+
   if (!(await directoryExists(templatesDir))) {
     verbose(`Templates directory not found: ${templatesDir}`);
   }
 
   verbose(`Agent partials loaded from CLI: ${agentsDir}`);
+  verbose(`Templates directory: ${templatesDir}`);
 
   return {
     agentsDir,

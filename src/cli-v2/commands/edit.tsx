@@ -15,6 +15,7 @@ import { recompileAgents } from "../lib/agent-recompiler.js";
 import { bumpPluginVersion } from "../lib/plugin-version.js";
 import { getAgentDefinitions } from "../lib/agent-fetcher.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
+import { detectInstallation } from "../lib/installation.js";
 
 export default class Edit extends BaseCommand {
   static summary = "Edit skills in the plugin";
@@ -35,17 +36,24 @@ export default class Edit extends BaseCommand {
   async run(): Promise<void> {
     const { flags } = await this.parse(Edit);
 
-    const pluginDir = getCollectivePluginDir();
-    const pluginSkillsDir = getPluginSkillsDir(pluginDir);
+    // Detect installation mode
+    const installation = await detectInstallation();
 
-    // Check if plugin exists
-    if (!(await directoryExists(pluginDir))) {
-      this.error("No plugin found. Run 'cc init' first to set up the plugin.", {
-        exit: EXIT_CODES.ERROR,
-      });
+    if (!installation) {
+      this.error(
+        "No installation found. Run 'cc init' first to set up Claude Collective.",
+        { exit: EXIT_CODES.ERROR },
+      );
     }
 
-    this.log("Edit Plugin Skills\n");
+    const pluginDir = getCollectivePluginDir();
+    const pluginSkillsDir =
+      installation.mode === "local"
+        ? installation.skillsDir
+        : getPluginSkillsDir(pluginDir);
+
+    const modeLabel = installation.mode === "local" ? "Local" : "Plugin";
+    this.log(`Edit ${modeLabel} Skills\n`);
 
     // Load skills matrix
     this.log("Resolving marketplace source...");
