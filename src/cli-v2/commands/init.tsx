@@ -371,6 +371,7 @@ export default class Init extends BaseCommand {
             name: PLUGIN_NAME,
             version: "1.0.0",
             author: "@user",
+            installMode: result.installMode,
             description: newStack.description,
             skills: result.selectedSkills.map((id) => ({ id })),
             agents: newStack.agents,
@@ -389,6 +390,9 @@ export default class Init extends BaseCommand {
           sourceResult.matrix,
         );
       }
+
+      // Add installMode to config
+      localConfig.installMode = result.installMode;
 
       const configYaml = stringifyYaml(localConfig, {
         indent: 2,

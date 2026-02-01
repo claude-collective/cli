@@ -213,6 +213,13 @@ export interface StackConfig {
   philosophy?: string;
   principles?: string[];
   tags?: string[];
+  /**
+   * Installation mode for this project
+   * - 'local': Agents compiled to .claude/agents (committed to repo)
+   * - 'plugin': Agents compiled to .claude/plugins/claude-collective
+   * @default 'local'
+   */
+  installMode?: "local" | "plugin";
 }
 
 // =============================================================================
@@ -353,6 +360,14 @@ export interface ProjectConfig {
    * Maps custom agent ID to its definition
    */
   custom_agents?: Record<string, CustomAgentConfig>;
+
+  /**
+   * Installation mode for this project
+   * - 'local': Agents compiled to .claude/agents (committed to repo)
+   * - 'plugin': Agents compiled to .claude/plugins/claude-collective
+   * @default 'local'
+   */
+  installMode?: "local" | "plugin";
 }
 
 // =============================================================================

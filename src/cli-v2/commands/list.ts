@@ -1,11 +1,13 @@
-import { Flags } from "@oclif/core";
 import { BaseCommand } from "../base-command.js";
-import { getPluginInfo, formatPluginDisplay } from "../lib/plugin-info.js";
+import {
+  getInstallationInfo,
+  formatInstallationDisplay,
+} from "../lib/plugin-info.js";
 
 export default class List extends BaseCommand {
-  static summary = "Show plugin information";
+  static summary = "Show installation information";
   static description =
-    "Display details about the installed Claude Collective plugin";
+    "Display details about the Claude Collective installation (local or plugin mode)";
   static aliases = ["ls"];
 
   static flags = {
@@ -15,16 +17,16 @@ export default class List extends BaseCommand {
   async run(): Promise<void> {
     await this.parse(List);
 
-    const info = await getPluginInfo();
+    const info = await getInstallationInfo();
 
     if (!info) {
-      this.warn("No plugin found.");
+      this.log("No installation found.");
       this.log("Run 'cc init' to create one.");
       return;
     }
 
     this.log("");
-    this.log(formatPluginDisplay(info));
+    this.log(formatInstallationDisplay(info));
     this.log("");
   }
 }
