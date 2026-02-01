@@ -12,8 +12,11 @@ export interface SkillsMatrixConfig {
   /** Relationship rules between skills */
   relationships: RelationshipDefinitions;
 
-  /** Pre-configured technology combinations for quick setup */
-  suggested_stacks: SuggestedStack[];
+  /**
+   * Pre-configured technology combinations for quick setup
+   * @deprecated Use config/stacks.yaml instead (Phase 6). Optional for backwards compatibility.
+   */
+  suggested_stacks?: SuggestedStack[];
 
   /**
    * Maps short alias names to full skill IDs

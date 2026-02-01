@@ -1,4 +1,6 @@
 import { create } from "zustand";
+// Note: ResolvedStack is from skills-matrix.yaml's suggested_stacks (for wizard skill selection)
+// This is different from Stack in types-stacks.ts (for agent groupings in config/stacks.yaml)
 import type { ResolvedStack } from "../types-matrix";
 import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
 

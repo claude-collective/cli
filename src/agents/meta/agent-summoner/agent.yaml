@@ -10,3 +10,103 @@ tools:
   - Grep
   - Glob
   - Bash
+skills:
+  methodology-anti-over-engineering:
+    id: meta/methodology/anti-over-engineering (@vince)
+    preloaded: true
+  methodology-context-management:
+    id: meta/methodology/context-management (@vince)
+    preloaded: true
+  methodology-improvement-protocol:
+    id: meta/methodology/improvement-protocol (@vince)
+    preloaded: true
+  methodology-investigation-requirements:
+    id: meta/methodology/investigation-requirements (@vince)
+    preloaded: true
+  methodology-success-criteria:
+    id: meta/methodology/success-criteria (@vince)
+    preloaded: true
+  methodology-write-verification:
+    id: meta/methodology/write-verification (@vince)
+    preloaded: true
+  framework:
+    id: web/framework/react (@vince)
+    preloaded: false
+  styling:
+    id: web/styling/scss-modules (@vince)
+    preloaded: false
+  server-state:
+    id: web/server-state/react-query (@vince)
+    preloaded: false
+  state:
+    id: web/state/zustand (@vince)
+    preloaded: false
+  accessibility:
+    id: web/accessibility/web-accessibility (@vince)
+    preloaded: false
+  performance-web:
+    id: web/performance/web-performance (@vince)
+    preloaded: false
+  performance-api:
+    id: api/performance/api-performance (@vince)
+    preloaded: false
+  testing-vitest:
+    id: web/testing/vitest (@vince)
+    preloaded: false
+  testing-api:
+    id: api/testing/api-testing (@vince)
+    preloaded: false
+  mocks:
+    id: web/mocks/msw (@vince)
+    preloaded: false
+  api:
+    id: api/framework/hono (@vince)
+    preloaded: false
+  database:
+    id: api/database/drizzle (@vince)
+    preloaded: false
+  auth:
+    id: api/auth/better-auth+drizzle+hono (@vince)
+    preloaded: false
+  analytics:
+    id: api/analytics/posthog-analytics (@vince)
+    preloaded: false
+  flags:
+    id: api/flags/posthog-flags (@vince)
+    preloaded: false
+  email:
+    id: api/email/resend+react-email (@vince)
+    preloaded: false
+  observability:
+    id: api/observability/axiom+pino+sentry (@vince)
+    preloaded: false
+  ci-cd:
+    id: api/ci-cd/github-actions (@vince)
+    preloaded: false
+  security:
+    id: security/auth/security (@vince)
+    preloaded: false
+  reviewing:
+    id: meta/reviewing/reviewing (@vince)
+    preloaded: false
+  setup-monorepo:
+    id: infra/monorepo/turborepo (@vince)
+    preloaded: false
+  setup-env:
+    id: infra/env/setup-env (@vince)
+    preloaded: false
+  setup-tooling:
+    id: infra/tooling/setup-tooling (@vince)
+    preloaded: false
+  setup-posthog:
+    id: api/analytics/setup-posthog (@vince)
+    preloaded: false
+  setup-resend:
+    id: api/email/setup-resend (@vince)
+    preloaded: false
+  setup-observability:
+    id: api/observability/setup-axiom+pino+sentry (@vince)
+    preloaded: false
+  research:
+    id: meta/research/research-methodology (@vince)
+    preloaded: false

@@ -1,7 +1,6 @@
 import path from "path";
 import { fileExists } from "../utils/fs";
-import { DIRS } from "../consts";
-import { loadStack, getDirs, type CompileMode } from "./loader";
+import { getDirs, type CompileMode } from "./loader";
 import type {
   AgentConfig,
   AgentDefinition,
@@ -121,6 +120,22 @@ function expandSkillIdIfDirectory(
   return [skillId];
 }
 
+/**
+ * Resolve skills from agent's skills field (Phase 6: agent-centric configuration)
+ * Converts agent's skills Record to SkillReference array
+ */
+export function resolveAgentSkills(
+  agentDef: AgentDefinition,
+): SkillReference[] {
+  if (!agentDef.skills) return [];
+
+  return Object.entries(agentDef.skills).map(([category, entry]) => ({
+    id: entry.id,
+    usage: `when working with ${category}`,
+    preloaded: entry.preloaded,
+  }));
+}
+
 export function resolveStackSkills(
   stack: StackConfig,
   agentName: string,
@@ -181,22 +196,23 @@ export function resolveStackSkills(
 export async function getAgentSkills(
   agentName: string,
   agentConfig: CompileAgentConfig,
-  compileConfig: CompileConfig,
-  skills: Record<string, SkillDefinition>,
-  projectRoot: string,
+  _compileConfig: CompileConfig,
+  _skills: Record<string, SkillDefinition>,
+  _projectRoot: string,
+  agentDef?: AgentDefinition,
 ): Promise<SkillReference[]> {
+  // Priority 1: Explicit skills in compile config
   if (agentConfig.skills && agentConfig.skills.length > 0) {
     return agentConfig.skills;
   }
 
-  if (compileConfig.stack) {
-    console.log(
-      `  Resolving skills from stack "${compileConfig.stack}" for ${agentName}`,
-    );
-    const stack = await loadStack(compileConfig.stack, projectRoot);
-    return resolveStackSkills(stack, agentName, skills);
+  // Priority 2: Agent's own skills field (Phase 6: agent-centric configuration)
+  if (agentDef?.skills && Object.keys(agentDef.skills).length > 0) {
+    console.log(`  Resolving skills from agent definition for ${agentName}`);
+    return resolveAgentSkills(agentDef);
   }
 
+  // No skills defined for this agent
   return [];
 }
 
@@ -230,6 +246,7 @@ export async function resolveAgents(
       compileConfig,
       skills,
       projectRoot,
+      definition,
     );
 
     const resolvedSkills = resolveSkillReferences(skillRefs, skills);

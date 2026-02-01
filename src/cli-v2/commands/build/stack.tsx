@@ -1,31 +1,29 @@
-import React, { useState } from "react";
+import React from "react";
 import { Flags } from "@oclif/core";
 import { render, Box, Text } from "ink";
 import { Select } from "@inkjs/ui";
 import path from "path";
 import { BaseCommand } from "../../base-command";
 import { setVerbose } from "../../utils/logger";
-import { DIRS, PROJECT_ROOT } from "../../consts";
+import { PROJECT_ROOT } from "../../consts";
 import {
   compileStackPlugin,
   printStackCompilationSummary,
 } from "../../lib/stack-plugin-compiler";
-import { listDirectories } from "../../utils/fs";
 import { getAgentDefinitions } from "../../lib/agent-fetcher";
 import { EXIT_CODES } from "../../lib/exit-codes";
+import { loadStacks } from "../../lib/stacks-loader";
 
 const DEFAULT_OUTPUT_DIR = "dist/stacks";
 
 interface StackSelectorProps {
   availableStacks: string[];
   onSelect: (stackId: string) => void;
-  onCancel: () => void;
 }
 
 const StackSelector: React.FC<StackSelectorProps> = ({
   availableStacks,
   onSelect,
-  onCancel,
 }) => {
   return (
     <Box flexDirection="column">
@@ -37,9 +35,6 @@ const StackSelector: React.FC<StackSelectorProps> = ({
         }))}
         onChange={(value) => {
           onSelect(value);
-        }}
-        onExit={() => {
-          onCancel();
         }}
       />
     </Box>
@@ -90,15 +85,16 @@ export default class BuildStack extends BaseCommand {
 
     const projectRoot = process.cwd();
     const outputDir = path.resolve(projectRoot, flags["output-dir"]);
-    const stacksDir = path.join(projectRoot, DIRS.stacks);
 
     let stackId = flags.stack;
 
     // If no stack specified, prompt for selection
     if (!stackId) {
-      const availableStacks = await listDirectories(stacksDir);
+      const stacks = await loadStacks(projectRoot);
+      const availableStacks = stacks.map((s) => s.id).sort();
+
       if (availableStacks.length === 0) {
-        this.error(`No stacks found in ${stacksDir}`, {
+        this.error(`No stacks found in config/stacks.yaml`, {
           exit: EXIT_CODES.ERROR,
         });
       }
@@ -110,9 +106,6 @@ export default class BuildStack extends BaseCommand {
             availableStacks={availableStacks}
             onSelect={(selected) => {
               resolve(selected);
-            }}
-            onCancel={() => {
-              reject(new Error("Cancelled"));
             }}
           />,
         );

@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude-collective.local/schemas/stacks.schema.json",
+  "title": "Stacks Configuration",
+  "description": "Schema for config/stacks.yaml defining agent groupings.",
+  "type": "object",
+  "required": ["stacks"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference for editor validation",
+      "format": "uri"
+    },
+    "stacks": {
+      "type": "array",
+      "description": "List of stack definitions",
+      "items": {
+        "$ref": "#/$defs/Stack"
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "Stack": {
+      "type": "object",
+      "description": "Stack definition grouping agents for a specific workflow",
+      "required": ["id", "name", "description", "agents"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique stack identifier (kebab-case)",
+          "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+          "minLength": 1,
+          "examples": ["nextjs-fullstack", "api-only", "web-frontend"]
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable stack name",
+          "minLength": 1,
+          "examples": ["Next.js Full-Stack", "API Only", "Web Frontend"]
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief description of the stack's purpose",
+          "minLength": 1
+        },
+        "agents": {
+          "type": "array",
+          "description": "List of agent IDs included in this stack",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "philosophy": {
+          "type": "string",
+          "description": "Optional guiding philosophy for the stack"
+        }
+      }
+    }
+  }
+}
