@@ -308,68 +308,29 @@ describe("source-loader integration", () => {
       sourceFlag: SKILLS_SOURCE,
     });
 
+    // Phase 6: stacks loaded from config/stacks.yaml
     expect(result.matrix.suggestedStacks).toBeDefined();
+    // Stacks should be loaded from CLI's config/stacks.yaml
     expect(result.matrix.suggestedStacks.length).toBeGreaterThan(0);
 
     // Verify stack structure
     const firstStack = result.matrix.suggestedStacks[0];
     expect(firstStack.id).toBeDefined();
     expect(firstStack.name).toBeDefined();
+    // Note: allSkillIds is empty in new format - skills come from agents at compile time
     expect(firstStack.allSkillIds).toBeDefined();
-    expect(firstStack.allSkillIds.length).toBeGreaterThan(0);
   });
 
-  it("should resolve stack skill IDs to actual skill IDs in matrix", async () => {
-    // This tests the fix for the bug where alias targets like "react (@vince)"
-    // didn't match actual skill IDs like "web/framework/react (@vince)"
-    const result = await loadSkillsMatrixFromSource({
-      sourceFlag: SKILLS_SOURCE,
-    });
-
-    // For every stack, verify all skill IDs exist in the skills map
-    for (const stack of result.matrix.suggestedStacks) {
-      for (const skillId of stack.allSkillIds) {
-        const skill = result.matrix.skills[skillId];
-        expect(
-          skill,
-          `Stack "${stack.id}" references skill "${skillId}" which doesn't exist in matrix.skills`,
-        ).toBeDefined();
-
-        // Verify the skill's ID matches what the stack references
-        expect(skill.id).toBe(skillId);
-      }
-    }
+  // Skip: In Phase 6 agent-centric config, stacks no longer have allSkillIds.
+  // Skills come from agents at compile time, not from stack config.
+  it.skip("should resolve stack skill IDs to actual skill IDs in matrix", async () => {
+    // Test skipped - stacks no longer contain skill references
   });
 
-  it("should resolve stack skill IDs that can be used for selection tracking", async () => {
-    // This tests that when a stack is selected, getAvailableSkills will correctly
-    // show those skills as selected (verifies the skill ID format matches)
-    const result = await loadSkillsMatrixFromSource({
-      sourceFlag: SKILLS_SOURCE,
-    });
-
-    // Get the first stack with skills
-    const stack = result.matrix.suggestedStacks.find(
-      (s) => s.allSkillIds.length > 0,
-    );
-    expect(stack).toBeDefined();
-
-    // Simulate what the wizard does: use stack.allSkillIds as the selected skills
-    const selectedSkills = [...stack!.allSkillIds];
-
-    // For each skill in the matrix that's in a stack, verify it would show as selected
-    for (const skillId of selectedSkills) {
-      const skill = result.matrix.skills[skillId];
-      expect(skill).toBeDefined();
-
-      // The key check: the skill's id should be in the selectedSkills array
-      // This is exactly what getAvailableSkills checks with:
-      // `selected: resolvedSelections.includes(skill.id)`
-      expect(
-        selectedSkills.includes(skill.id),
-        `Skill "${skillId}" in stack would not show as selected because skill.id="${skill.id}" is not in selectedSkills`,
-      ).toBe(true);
-    }
+  // Skip: In Phase 6 agent-centric config, stacks no longer have allSkillIds.
+  // Skills come from agents at compile time, not from stack config.
+  it.skip("should resolve stack skill IDs that can be used for selection tracking", async () => {
+    // Test skipped - stacks no longer contain skill references
   });
 
   it("should load categories", async () => {

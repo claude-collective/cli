@@ -11,20 +11,20 @@ import {
   getMarketplaceStats,
 } from "../marketplace-generator";
 import { validateAllPlugins, validatePlugin } from "../plugin-validator";
+import { loadStacks } from "../stacks-loader";
 import type { Marketplace, PluginManifest } from "../../../types";
 
 // =============================================================================
 // Constants
 // =============================================================================
 
-// Skills and stacks are in claude-subagents repo
+// Skills are in claude-subagents repo
 const SKILLS_REPO =
   process.env.CC_TEST_SKILLS_SOURCE ||
   path.resolve(__dirname, "../../../../../claude-subagents");
 const SKILLS_DIR = path.join(SKILLS_REPO, "src", "skills");
-const STACKS_DIR = path.join(SKILLS_REPO, "src", "stacks");
 
-// Agents are in the CLI repo
+// Agents and stacks are in the CLI repo (Phase 6: agent-centric config)
 const CLI_REPO = path.resolve(__dirname, "../../../..");
 
 // =============================================================================
@@ -40,11 +40,11 @@ async function countSkillFiles(dir: string): Promise<number> {
 }
 
 /**
- * List stack directories
+ * List available stacks from CLI's config/stacks.yaml
  */
-async function listStacks(): Promise<string[]> {
-  const entries = await fg("*/config.yaml", { cwd: STACKS_DIR });
-  return entries.map((e) => path.dirname(e));
+async function listStackIds(): Promise<string[]> {
+  const stacks = await loadStacks(CLI_REPO);
+  return stacks.map((s) => s.id);
 }
 
 /**
@@ -220,7 +220,7 @@ describe("Integration: Full Stack Pipeline", () => {
   });
 
   it("should list available stacks", async () => {
-    const stacks = await listStacks();
+    const stacks = await listStackIds();
 
     // Should have at least one stack
     expect(stacks.length).toBeGreaterThan(0);
