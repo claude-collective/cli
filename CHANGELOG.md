@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-02-01
+
+### Breaking Changes
+
+- **Agent-centric configuration** - skills are now defined in agent YAMLs instead of stack config files. Stacks are now simple agent groupings in `config/stacks.yaml`. This is a significant architectural change that simplifies configuration but requires migration for custom stacks.
+
+### Added
+
+- **Skills in agent YAMLs** - each agent now defines its own skills with a `preloaded` flag to control what's included in the agent prompt
+- **Centralized stacks.yaml** - all 7 stacks (nextjs-fullstack, angular, nuxt, remix, vue, solidjs, react-native) are now defined in `config/stacks.yaml` with agent lists and philosophy
+- **stacks-loader** - new module to load stacks from config/stacks.yaml
+- **resolveAgentSkills()** - function to extract skills from agent definitions
+
+### Changed
+
+- `loadStackById()` now loads from `config/stacks.yaml` (new format) instead of `src/stacks/*/config.yaml`
+- `getAgentSkills()` priority order: compile config > agent skills > stack-based (legacy)
+- `stackToResolvedStack()` now extracts skill IDs from agent definitions
+- `build:stack` command deprecated (shows warning and exits)
+
+### Removed
+
+- Stack config files (`src/stacks/*/config.yaml`) - skills now come from agent YAMLs
+- `suggested_stacks` section from `skills-matrix.yaml` - moved to `stacks.yaml`
+
+### Internal
+
+- Updated all 17 agent YAMLs with skills fields
+- Deprecated `skill-agent-mappings.ts` (kept for wizard fallback)
+- Updated tests to work with new stack format (passing Stack objects instead of writing config files)
+
+[0.5.0]: https://github.com/claude-collective/cli/releases/tag/v0.5.0
+
 ## [0.4.0] - 2026-01-31
 
 ### Added
