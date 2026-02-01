@@ -5,9 +5,11 @@ import {
   mergeStackWithSkills,
   generateProjectConfigFromSkills,
   generateProjectConfigFromStack,
+  buildStackProperty,
 } from "./config-generator";
 import type { MergedSkillsMatrix, ResolvedSkill } from "../types-matrix";
 import type { StackConfig, ProjectConfig } from "../../types";
+import type { Stack } from "../types-stacks";
 
 /**
  * Helper to create a minimal resolved skill for testing
@@ -782,6 +784,115 @@ describe("config-generator", () => {
       expect(config.philosophy).toBe("Ship fast");
       expect(config.principles).toEqual(["Keep it simple"]);
       expect(config.tags).toEqual(["nextjs"]);
+    });
+  });
+
+  describe("buildStackProperty", () => {
+    it("resolves aliases to full skill IDs", () => {
+      const stack: Stack = {
+        id: "test-stack",
+        name: "Test Stack",
+        description: "Test stack for unit tests",
+        agents: {
+          "web-developer": {
+            framework: "react",
+            styling: "scss-modules",
+          },
+          "api-developer": {
+            api: "hono",
+            database: "drizzle",
+          },
+        },
+      };
+
+      const skillAliases: Record<string, string> = {
+        react: "web/framework/react (@vince)",
+        "scss-modules": "web/styling/scss-modules (@vince)",
+        hono: "api/framework/hono (@vince)",
+        drizzle: "api/database/drizzle (@vince)",
+      };
+
+      const result = buildStackProperty(stack, skillAliases);
+
+      expect(result).toEqual({
+        "web-developer": {
+          framework: "web/framework/react (@vince)",
+          styling: "web/styling/scss-modules (@vince)",
+        },
+        "api-developer": {
+          api: "api/framework/hono (@vince)",
+          database: "api/database/drizzle (@vince)",
+        },
+      });
+    });
+
+    it("skips agents with empty config", () => {
+      const stack: Stack = {
+        id: "test-stack",
+        name: "Test Stack",
+        description: "Test stack",
+        agents: {
+          "web-developer": {
+            framework: "react",
+          },
+          "cli-tester": {},
+          "web-pm": {},
+        },
+      };
+
+      const skillAliases: Record<string, string> = {
+        react: "web/framework/react (@vince)",
+      };
+
+      const result = buildStackProperty(stack, skillAliases);
+
+      expect(result).toEqual({
+        "web-developer": {
+          framework: "web/framework/react (@vince)",
+        },
+      });
+      expect(result["cli-tester"]).toBeUndefined();
+      expect(result["web-pm"]).toBeUndefined();
+    });
+
+    it("uses alias as-is when not found in skillAliases", () => {
+      const stack: Stack = {
+        id: "test-stack",
+        name: "Test Stack",
+        description: "Test stack",
+        agents: {
+          "web-developer": {
+            framework: "react",
+            custom: "some-unknown-alias",
+          },
+        },
+      };
+
+      const skillAliases: Record<string, string> = {
+        react: "web/framework/react (@vince)",
+      };
+
+      const result = buildStackProperty(stack, skillAliases);
+
+      expect(result).toEqual({
+        "web-developer": {
+          framework: "web/framework/react (@vince)",
+          custom: "some-unknown-alias",
+        },
+      });
+    });
+
+    it("handles stack with no agents", () => {
+      const stack: Stack = {
+        id: "empty-stack",
+        name: "Empty Stack",
+        description: "No agents",
+        agents: {},
+      };
+
+      const result = buildStackProperty(stack, {});
+
+      expect(result).toEqual({});
     });
   });
 });

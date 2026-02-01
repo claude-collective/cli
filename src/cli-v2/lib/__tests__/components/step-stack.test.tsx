@@ -11,10 +11,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { StepStack } from "../../../components/wizard/step-stack";
 import { useWizardStore } from "../../../stores/wizard-store";
 import { DEFAULT_PRESELECTED_SKILLS } from "../../../consts";
-import {
-  createMockMatrix,
-  createMockSkill,
-} from "../helpers";
+import { createMockMatrix, createMockSkill } from "../helpers";
 import { TEST_SKILLS, TEST_CATEGORIES } from "../test-fixtures";
 import type { MergedSkillsMatrix, ResolvedStack } from "../../../types-matrix";
 import {
@@ -333,7 +330,9 @@ describe("StepStack component", () => {
       useWizardStore.getState().selectStack(firstStack);
 
       // Verify initial selection
-      expect(useWizardStore.getState().selectedSkills).toContain(TEST_SKILLS.ZUSTAND);
+      expect(useWizardStore.getState().selectedSkills).toContain(
+        TEST_SKILLS.ZUSTAND,
+      );
 
       // Now select second stack
       const secondStack = mockMatrix.suggestedStacks[1];

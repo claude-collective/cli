@@ -17,12 +17,7 @@ import {
 } from "../helpers";
 import { TEST_SKILLS, TEST_CATEGORIES } from "../test-fixtures";
 import type { MergedSkillsMatrix } from "../../../types-matrix";
-import {
-  ARROW_DOWN,
-  ENTER,
-  RENDER_DELAY_MS,
-  delay,
-} from "../test-constants";
+import { ARROW_DOWN, ENTER, RENDER_DELAY_MS, delay } from "../test-constants";
 
 // Delay between arrow key presses for Select component
 const SELECT_NAV_DELAY_MS = 100;
