@@ -11,13 +11,7 @@ import React from "react";
 import { render } from "ink-testing-library";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Confirm } from "../../../components/common/confirm";
-import {
-  KEY_Y,
-  KEY_N,
-  ENTER,
-  RENDER_DELAY_MS,
-  delay,
-} from "../test-constants";
+import { KEY_Y, KEY_N, ENTER, RENDER_DELAY_MS, delay } from "../test-constants";
 
 // Longer delay for ConfirmInput key processing
 const CONFIRM_INPUT_DELAY_MS = 100;
@@ -219,11 +213,7 @@ describe("Confirm component", () => {
       const onCancel = vi.fn();
 
       const { stdin, unmount } = render(
-        <Confirm
-          message="Confirm?"
-          onConfirm={() => {}}
-          onCancel={onCancel}
-        />,
+        <Confirm message="Confirm?" onConfirm={() => {}} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -243,11 +233,7 @@ describe("Confirm component", () => {
   describe("default value", () => {
     it("should default to false when not specified", () => {
       const { lastFrame, unmount } = render(
-        <Confirm
-          message="Confirm?"
-          onConfirm={() => {}}
-          onCancel={() => {}}
-        />,
+        <Confirm message="Confirm?" onConfirm={() => {}} onCancel={() => {}} />,
       );
       cleanup = unmount;
 

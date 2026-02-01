@@ -10,10 +10,7 @@ import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Wizard } from "../../../components/wizard/wizard";
 import { useWizardStore } from "../../../stores/wizard-store";
-import {
-  createMockMatrix,
-  createMockSkill,
-} from "../helpers";
+import { createMockMatrix, createMockSkill } from "../helpers";
 import { TEST_SKILLS, TEST_CATEGORIES } from "../test-fixtures";
 import type { MergedSkillsMatrix, ResolvedStack } from "../../../types-matrix";
 import {
