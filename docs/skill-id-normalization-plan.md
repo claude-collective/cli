@@ -5,11 +5,13 @@
 Normalize skill IDs from path-based format with author to simple kebab-case format.
 
 **Current format:**
+
 - Skill IDs: `web/framework/react (@vince)` or `react (@vince)`
 - Output folders: `react (@vince)` or just `react`
 - Aliases: `react` → `react (@vince)`
 
 **Desired format:**
+
 - Skill IDs: `web-framework-react` (kebab-case, no author, no slashes)
 - Output folders: `web-framework-react`
 - Author becomes metadata only (already exists in `metadata.yaml`)
@@ -20,21 +22,21 @@ Normalize skill IDs from path-based format with author to simple kebab-case form
 
 ### Critical (Must Change)
 
-| File | Change Required |
-|------|-----------------|
-| `src/cli-v2/lib/matrix-loader.ts` | Add normalization to `extractAllSkills()` at line 134 |
-| `src/cli-v2/lib/local-skill-loader.ts` | Add normalization to `extractLocalSkill()` at line 94 |
-| `config/skills-matrix.yaml` | Update all `skill_aliases` values (~150 entries) |
-| `src/cli-v2/consts.ts` | Update `DEFAULT_PRESELECTED_SKILLS` array (6 entries) |
-| `src/cli-v2/lib/skill-copier.ts` | Simplify `getFlattenedSkillDestPath()`, remove `extractSkillNameFromId()` |
+| File                                   | Change Required                                                           |
+| -------------------------------------- | ------------------------------------------------------------------------- |
+| `src/cli-v2/lib/matrix-loader.ts`      | Add normalization to `extractAllSkills()` at line 134                     |
+| `src/cli-v2/lib/local-skill-loader.ts` | Add normalization to `extractLocalSkill()` at line 94                     |
+| `config/skills-matrix.yaml`            | Update all `skill_aliases` values (~150 entries)                          |
+| `src/cli-v2/consts.ts`                 | Update `DEFAULT_PRESELECTED_SKILLS` array (6 entries)                     |
+| `src/cli-v2/lib/skill-copier.ts`       | Simplify `getFlattenedSkillDestPath()`, remove `extractSkillNameFromId()` |
 
 ### High Priority
 
-| File | Change Required |
-|------|-----------------|
-| NEW: `src/cli-v2/lib/skill-id-normalizer.ts` | Create normalization utility function |
-| `src/cli-v2/types-matrix.ts` | Update JSDoc comments for ID format |
-| Skill directories | Rename from `web/framework/react (@vince)/` to `web-framework-react/` |
+| File                                         | Change Required                                                       |
+| -------------------------------------------- | --------------------------------------------------------------------- |
+| NEW: `src/cli-v2/lib/skill-id-normalizer.ts` | Create normalization utility function                                 |
+| `src/cli-v2/types-matrix.ts`                 | Update JSDoc comments for ID format                                   |
+| Skill directories                            | Rename from `web/framework/react (@vince)/` to `web-framework-react/` |
 
 ### Test Files (50+ references)
 
@@ -73,6 +75,7 @@ export function normalizeSkillId(rawId: string): string {
 ### Step 2: Update Skill Extraction
 
 **matrix-loader.ts** (line 134):
+
 ```typescript
 // Before
 const skillId = frontmatter.name;
@@ -82,6 +85,7 @@ const skillId = normalizeSkillId(frontmatter.name);
 ```
 
 **local-skill-loader.ts** (line 94):
+
 ```typescript
 // Before
 const skillId = frontmatter.name;
@@ -93,6 +97,7 @@ const skillId = normalizeSkillId(frontmatter.name);
 ### Step 3: Update Configuration Files
 
 **config/skills-matrix.yaml** - Update skill_aliases:
+
 ```yaml
 # Before
 skill_aliases:
@@ -106,6 +111,7 @@ skill_aliases:
 ```
 
 **src/cli-v2/consts.ts** - Update DEFAULT_PRESELECTED_SKILLS:
+
 ```typescript
 // Before
 export const DEFAULT_PRESELECTED_SKILLS = [
@@ -123,6 +129,7 @@ export const DEFAULT_PRESELECTED_SKILLS = [
 ### Step 4: Simplify Skill Copier
 
 **skill-copier.ts** - Remove parsing complexity:
+
 ```typescript
 // Before (line 167-178)
 export function getFlattenedSkillDestPath(skill: ResolvedSkill): string {
@@ -145,6 +152,7 @@ export function getFlattenedSkillDestPath(skill: ResolvedSkill): string {
 ### Step 5: Rename Skill Directories
 
 In the marketplace (`/home/vince/dev/claude-subagents`):
+
 ```
 # Before
 src/skills/web/framework/react (@vince)/
@@ -158,6 +166,7 @@ src/skills/web-state-zustand/
 ### Step 6: Update Tests
 
 Search and replace in test files:
+
 - `"react (@vince)"` → `"react"` or `"web-framework-react"`
 - `"web/framework/react (@vince)"` → `"web-framework-react"`
 
@@ -181,11 +190,12 @@ Search and replace in test files:
 ### Backwards Compatibility Option
 
 Keep old aliases as secondary keys temporarily:
+
 ```yaml
 skill_aliases:
   react: "web-framework-react"
-  "react (@vince)": "web-framework-react"  # Legacy support
-  "web/framework/react (@vince)": "web-framework-react"  # Legacy support
+  "react (@vince)": "web-framework-react" # Legacy support
+  "web/framework/react (@vince)": "web-framework-react" # Legacy support
 ```
 
 ---

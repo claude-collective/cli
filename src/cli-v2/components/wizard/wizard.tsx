@@ -91,7 +91,9 @@ function getDomainDisplayName(domain: string): string {
     mobile: "Mobile",
     shared: "Shared",
   };
-  return displayNames[domain] || domain.charAt(0).toUpperCase() + domain.slice(1);
+  return (
+    displayNames[domain] || domain.charAt(0).toUpperCase() + domain.slice(1)
+  );
 }
 
 /**
@@ -241,13 +243,14 @@ export const Wizard: React.FC<WizardProps> = ({
         return <StepStack matrix={matrix} />;
 
       case "stack-options": {
-        const stackName = getStackName(store.selectedStackId, matrix) || "Selected Stack";
-        const techCount = getStackTechnologyCount(store.selectedStackId, matrix);
+        const stackName =
+          getStackName(store.selectedStackId, matrix) || "Selected Stack";
+        const techCount = getStackTechnologyCount(
+          store.selectedStackId,
+          matrix,
+        );
         return (
-          <StepStackOptions
-            stackName={stackName}
-            technologyCount={techCount}
-          />
+          <StepStackOptions stackName={stackName} technologyCount={techCount} />
         );
       }
 
@@ -256,9 +259,7 @@ export const Wizard: React.FC<WizardProps> = ({
         // For stack path with customize, use all domains from stack
         // For scratch path, use selectedDomains
         const effectiveDomains =
-          store.selectedDomains.length > 0
-            ? store.selectedDomains
-            : ["web"]; // Default to web if no domains selected
+          store.selectedDomains.length > 0 ? store.selectedDomains : ["web"]; // Default to web if no domains selected
 
         return (
           <StepBuild
@@ -338,7 +339,8 @@ export const Wizard: React.FC<WizardProps> = ({
       <ThemeProvider theme={cliTheme}>
         <Box flexDirection="column" padding={1}>
           <Text color="yellow">
-            Terminal too narrow ({terminalWidth} columns). Please resize to at least {MIN_TERMINAL_WIDTH} columns.
+            Terminal too narrow ({terminalWidth} columns). Please resize to at
+            least {MIN_TERMINAL_WIDTH} columns.
           </Text>
           <Box marginTop={1}>
             <Text dimColor>Current width: {terminalWidth} columns</Text>

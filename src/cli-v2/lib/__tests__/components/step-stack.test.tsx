@@ -108,7 +108,9 @@ describe("StepStack component", () => {
 
     describe("rendering", () => {
       it("should render stack options", () => {
-        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { lastFrame, unmount } = render(
+          <StepStack matrix={mockMatrix} />,
+        );
         cleanup = unmount;
 
         const output = lastFrame();
@@ -117,7 +119,9 @@ describe("StepStack component", () => {
       });
 
       it("should render stack descriptions", () => {
-        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { lastFrame, unmount } = render(
+          <StepStack matrix={mockMatrix} />,
+        );
         cleanup = unmount;
 
         const output = lastFrame();
@@ -126,7 +130,9 @@ describe("StepStack component", () => {
       });
 
       it("should render back option", () => {
-        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { lastFrame, unmount } = render(
+          <StepStack matrix={mockMatrix} />,
+        );
         cleanup = unmount;
 
         const output = lastFrame();
@@ -134,7 +140,9 @@ describe("StepStack component", () => {
       });
 
       it("should render header text", () => {
-        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { lastFrame, unmount } = render(
+          <StepStack matrix={mockMatrix} />,
+        );
         cleanup = unmount;
 
         const output = lastFrame();
@@ -261,7 +269,9 @@ describe("StepStack component", () => {
       it("should render with no stacks available", () => {
         const emptyMatrix = createMockMatrix({}, { suggestedStacks: [] });
 
-        const { lastFrame, unmount } = render(<StepStack matrix={emptyMatrix} />);
+        const { lastFrame, unmount } = render(
+          <StepStack matrix={emptyMatrix} />,
+        );
         cleanup = unmount;
 
         const output = lastFrame();
@@ -301,7 +311,9 @@ describe("StepStack component", () => {
 
     describe("rendering", () => {
       it("should render domain options", () => {
-        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { lastFrame, unmount } = render(
+          <StepStack matrix={mockMatrix} />,
+        );
         cleanup = unmount;
 
         const output = lastFrame();
@@ -312,7 +324,9 @@ describe("StepStack component", () => {
       });
 
       it("should render header text for domain selection", () => {
-        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { lastFrame, unmount } = render(
+          <StepStack matrix={mockMatrix} />,
+        );
         cleanup = unmount;
 
         const output = lastFrame();
@@ -320,7 +334,9 @@ describe("StepStack component", () => {
       });
 
       it("should show domain descriptions", () => {
-        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { lastFrame, unmount } = render(
+          <StepStack matrix={mockMatrix} />,
+        );
         cleanup = unmount;
 
         const output = lastFrame();
@@ -374,7 +390,9 @@ describe("StepStack component", () => {
         // Pre-select a domain
         useWizardStore.getState().toggleDomain("web");
 
-        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        const { lastFrame, unmount } = render(
+          <StepStack matrix={mockMatrix} />,
+        );
         cleanup = unmount;
 
         const output = lastFrame();

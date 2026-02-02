@@ -86,7 +86,7 @@ export const StepApproach: React.FC = () => {
       </Box>
       <Box marginTop={1}>
         <Text dimColor>
-          {"\u2191"}/{"\u2193"} navigate   ENTER select   ESC cancel
+          {"\u2191"}/{"\u2193"} navigate ENTER select ESC cancel
         </Text>
       </Box>
     </Box>

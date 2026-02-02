@@ -84,7 +84,7 @@ const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
       </Box>
       <Box marginTop={1}>
         <Text dimColor>
-          {"\u2191"}/{"\u2193"} navigate   ENTER select   ESC back
+          {"\u2191"}/{"\u2193"} navigate ENTER select ESC back
         </Text>
       </Box>
     </Box>
@@ -112,7 +112,12 @@ const DomainSelection: React.FC = () => {
     { value: BACK_VALUE, label: "\u2190 Back" },
     ...domainOptions,
     ...(selectedDomains.length > 0
-      ? [{ value: CONTINUE_VALUE, label: `\u2192 Continue with ${selectedDomains.length} domain(s)` }]
+      ? [
+          {
+            value: CONTINUE_VALUE,
+            label: `\u2192 Continue with ${selectedDomains.length} domain(s)`,
+          },
+        ]
       : []),
   ];
 
@@ -143,8 +148,7 @@ const DomainSelection: React.FC = () => {
       {selectedDomains.length > 0 ? (
         <Box marginTop={1}>
           <Text>
-            Selected:{" "}
-            <Text color="cyan">{selectedDomains.join(", ")}</Text>
+            Selected: <Text color="cyan">{selectedDomains.join(", ")}</Text>
           </Text>
         </Box>
       ) : (
@@ -154,7 +158,7 @@ const DomainSelection: React.FC = () => {
       )}
       <Box marginTop={1}>
         <Text dimColor>
-          {"\u2191"}/{"\u2193"} navigate   ENTER toggle/select   ESC back
+          {"\u2191"}/{"\u2193"} navigate ENTER toggle/select ESC back
         </Text>
       </Box>
     </Box>

@@ -117,7 +117,10 @@ function computeOptionState(skill: {
  * Uses name with author suffix stripped for accurate display.
  * e.g., "React (@vince)" -> "React", "SCSS Modules (@vince)" -> "SCSS Modules"
  */
-export function getDisplayLabel(skill: { alias?: string; name: string }): string {
+export function getDisplayLabel(skill: {
+  alias?: string;
+  name: string;
+}): string {
   // Strip author suffix like " (@vince)" from name
   // This preserves the original capitalization (e.g., "SCSS Modules" stays as-is)
   const authorPattern = /\s*\(@[^)]+\)\s*$/;
@@ -202,13 +205,18 @@ function getDomainDisplayName(domain: string): string {
     mobile: "Mobile",
     shared: "Shared",
   };
-  return displayNames[domain] || domain.charAt(0).toUpperCase() + domain.slice(1);
+  return (
+    displayNames[domain] || domain.charAt(0).toUpperCase() + domain.slice(1)
+  );
 }
 
 /**
  * Count selected options across categories.
  */
-function countSelections(categories: CategoryRow[]): { selected: number; total: number } {
+function countSelections(categories: CategoryRow[]): {
+  selected: number;
+  total: number;
+} {
   let selected = 0;
   let total = 0;
   for (const category of categories) {
@@ -237,7 +245,8 @@ const Header: React.FC<HeaderProps> = ({ domain, selectionCount }) => {
   return (
     <Box justifyContent="space-between" marginBottom={1}>
       <Text bold>
-        Configure your <Text color="cyan">{getDomainDisplayName(domain)}</Text> stack:
+        Configure your <Text color="cyan">{getDomainDisplayName(domain)}</Text>{" "}
+        stack:
       </Text>
       <Text dimColor>
         {selectionCount.selected}/{selectionCount.total} selected
@@ -255,7 +264,10 @@ interface FooterProps {
   validationError?: string;
 }
 
-const Footer: React.FC<FooterProps> = ({ showContinueHint, validationError }) => {
+const Footer: React.FC<FooterProps> = ({
+  showContinueHint,
+  validationError,
+}) => {
   return (
     <Box flexDirection="column" marginTop={1}>
       {/* Validation error message */}
@@ -267,7 +279,8 @@ const Footer: React.FC<FooterProps> = ({ showContinueHint, validationError }) =>
 
       {/* Keyboard shortcuts help */}
       <Text dimColor>
-        {"\u2190"}/{"\u2192"} options   {"\u2191"}/{"\u2193"} categories   SPACE select   TAB descriptions   E expert   ENTER continue   ESC back
+        {"\u2190"}/{"\u2192"} options {"\u2191"}/{"\u2193"} categories SPACE
+        select TAB descriptions E expert ENTER continue ESC back
       </Text>
     </Box>
   );
@@ -296,7 +309,9 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   onBack,
 }) => {
   // Validation state for showing error messages
-  const [validationError, setValidationError] = useState<string | undefined>(undefined);
+  const [validationError, setValidationError] = useState<string | undefined>(
+    undefined,
+  );
 
   // Build categories for the current domain
   const categories = buildCategoriesForDomain(

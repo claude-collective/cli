@@ -93,7 +93,8 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
       <Box flexDirection="column" marginY={1}>
         {technologyCount !== undefined && (
           <Text>
-            <Text dimColor>Technologies:</Text> <Text bold>{technologyCount}</Text>
+            <Text dimColor>Technologies:</Text>{" "}
+            <Text bold>{technologyCount}</Text>
           </Text>
         )}
         {skillCount !== undefined && (
@@ -111,9 +112,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
       </Box>
 
       <Text> </Text>
-      <Text dimColor>
-        ENTER confirm   ESC back
-      </Text>
+      <Text dimColor>ENTER confirm ESC back</Text>
     </Box>
   );
 };

@@ -75,8 +75,7 @@ export const StepStackOptions: React.FC<StepStackOptionsProps> = ({
   return (
     <Box flexDirection="column">
       <Text bold>
-        You selected:{" "}
-        <Text color="cyan">{stackName}</Text>
+        You selected: <Text color="cyan">{stackName}</Text>
       </Text>
       <Text> </Text>
       <Text>What would you like to do?</Text>
@@ -85,7 +84,7 @@ export const StepStackOptions: React.FC<StepStackOptionsProps> = ({
       </Box>
       <Box marginTop={1}>
         <Text dimColor>
-          {"\u2191"}/{"\u2193"} navigate   ENTER select   ESC back
+          {"\u2191"}/{"\u2193"} navigate ENTER select ESC back
         </Text>
       </Box>
     </Box>

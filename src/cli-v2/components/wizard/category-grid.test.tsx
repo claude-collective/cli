@@ -54,22 +54,38 @@ const createCategory = (
 });
 
 const defaultCategories: CategoryRow[] = [
-  createCategory("framework", "Framework", [
-    createOption("react", "react", { state: "recommended", stateReason: "Popular choice" }),
-    createOption("vue", "vue"),
-    createOption("angular", "angular"),
-    createOption("svelte", "svelte"),
-  ], { required: true }),
-  createCategory("styling", "Styling", [
-    createOption("scss-mod", "scss-mod", { selected: true }),
-    createOption("tailwind", "tailwind", { state: "recommended" }),
-    createOption("styled", "styled"),
-    createOption("vanilla", "vanilla"),
-  ], { required: true }),
+  createCategory(
+    "framework",
+    "Framework",
+    [
+      createOption("react", "react", {
+        state: "recommended",
+        stateReason: "Popular choice",
+      }),
+      createOption("vue", "vue"),
+      createOption("angular", "angular"),
+      createOption("svelte", "svelte"),
+    ],
+    { required: true },
+  ),
+  createCategory(
+    "styling",
+    "Styling",
+    [
+      createOption("scss-mod", "scss-mod", { selected: true }),
+      createOption("tailwind", "tailwind", { state: "recommended" }),
+      createOption("styled", "styled"),
+      createOption("vanilla", "vanilla"),
+    ],
+    { required: true },
+  ),
   createCategory("client-state", "Client State", [
     createOption("zustand", "zustand", { state: "recommended" }),
     createOption("jotai", "jotai"),
-    createOption("redux", "redux", { state: "discouraged", stateReason: "Complex for most apps" }),
+    createOption("redux", "redux", {
+      state: "discouraged",
+      stateReason: "Complex for most apps",
+    }),
     createOption("mobx", "mobx"),
   ]),
   createCategory("server-state", "Server State", [
@@ -256,7 +272,10 @@ describe("CategoryGrid component", () => {
 
   describe("focus indicator", () => {
     it("should show focus indicator (>) on focused option", () => {
-      const { lastFrame, unmount } = renderGrid({ focusedRow: 0, focusedCol: 0 });
+      const { lastFrame, unmount } = renderGrid({
+        focusedRow: 0,
+        focusedCol: 0,
+      });
       cleanup = unmount;
 
       const output = lastFrame();
@@ -284,7 +303,10 @@ describe("CategoryGrid component", () => {
     });
 
     it("should highlight focused category name", () => {
-      const { lastFrame, unmount } = renderGrid({ focusedRow: 1, focusedCol: 0 });
+      const { lastFrame, unmount } = renderGrid({
+        focusedRow: 1,
+        focusedCol: 0,
+      });
       cleanup = unmount;
 
       const output = lastFrame();

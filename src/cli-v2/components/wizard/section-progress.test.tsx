@@ -29,7 +29,7 @@ describe("SectionProgress component", () => {
           index={1}
           total={2}
           next="API"
-        />
+        />,
       );
       cleanup = unmount;
 
@@ -46,7 +46,7 @@ describe("SectionProgress component", () => {
           index={1}
           total={8}
           next="zustand"
-        />
+        />,
       );
       cleanup = unmount;
 
@@ -62,7 +62,7 @@ describe("SectionProgress component", () => {
           index={3}
           total={4}
           next="Mobile"
-        />
+        />,
       );
       cleanup = unmount;
 
@@ -84,7 +84,7 @@ describe("SectionProgress component", () => {
           index={1}
           total={2}
           next="API"
-        />
+        />,
       );
       cleanup = unmount;
 
@@ -94,12 +94,7 @@ describe("SectionProgress component", () => {
 
     it("should show 'Last step' when on final item", () => {
       const { lastFrame, unmount } = render(
-        <SectionProgress
-          label="Domain"
-          current="API"
-          index={2}
-          total={2}
-        />
+        <SectionProgress label="Domain" current="API" index={2} total={2} />,
       );
       cleanup = unmount;
 
@@ -110,12 +105,7 @@ describe("SectionProgress component", () => {
 
     it("should show 'Last step' for single item (1/1)", () => {
       const { lastFrame, unmount } = render(
-        <SectionProgress
-          label="Domain"
-          current="Web"
-          index={1}
-          total={1}
-        />
+        <SectionProgress label="Domain" current="Web" index={1} total={1} />,
       );
       cleanup = unmount;
 
@@ -140,7 +130,7 @@ describe("SectionProgress component", () => {
           index={1}
           total={2}
           next="API"
-        />
+        />,
       );
       cleanup = unmount;
 
@@ -157,7 +147,7 @@ describe("SectionProgress component", () => {
           index={1}
           total={3}
           next="vue"
-        />
+        />,
       );
       cleanup = unmount;
 
@@ -174,7 +164,7 @@ describe("SectionProgress component", () => {
           index={2}
           total={3}
           next="Mobile"
-        />
+        />,
       );
       cleanup = unmount;
 
@@ -197,7 +187,7 @@ describe("SectionProgress component", () => {
           index={1}
           total={5}
           next="emotion"
-        />
+        />,
       );
       cleanup = unmount;
 
@@ -214,7 +204,7 @@ describe("SectionProgress component", () => {
           index={99}
           total={100}
           next="last-skill"
-        />
+        />,
       );
       cleanup = unmount;
 
@@ -232,7 +222,7 @@ describe("SectionProgress component", () => {
           index={4}
           total={4}
           next={undefined}
-        />
+        />,
       );
       cleanup = unmount;
 
@@ -256,7 +246,7 @@ describe("SectionProgress component", () => {
           index={1}
           total={2}
           next="API"
-        />
+        />,
       );
       cleanup = unmount;
 
@@ -276,7 +266,7 @@ describe("SectionProgress component", () => {
           index={1}
           total={8}
           next="zustand"
-        />
+        />,
       );
       cleanup = unmount;
 
@@ -290,12 +280,7 @@ describe("SectionProgress component", () => {
     it("should match last item format", () => {
       // Domain: API                                         [2/2] Last step
       const { lastFrame, unmount } = render(
-        <SectionProgress
-          label="Domain"
-          current="API"
-          index={2}
-          total={2}
-        />
+        <SectionProgress label="Domain" current="API" index={2} total={2} />,
       );
       cleanup = unmount;
 

@@ -84,7 +84,9 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
         name: "Zustand",
         description: "State management",
         alias: "zustand",
-        recommends: [{ skillId: TEST_SKILLS.REACT, reason: "Works great with React" }],
+        recommends: [
+          { skillId: TEST_SKILLS.REACT, reason: "Works great with React" },
+        ],
       },
     ),
     [TEST_SKILLS.SCSS_MODULES]: createMockSkill(
@@ -97,15 +99,11 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
       },
     ),
     // API domain skills
-    [TEST_SKILLS.HONO]: createMockSkill(
-      TEST_SKILLS.HONO,
-      "backend/framework",
-      {
-        name: "Hono",
-        description: "Web framework for the edge",
-        alias: "hono",
-      },
-    ),
+    [TEST_SKILLS.HONO]: createMockSkill(TEST_SKILLS.HONO, "backend/framework", {
+      name: "Hono",
+      description: "Web framework for the edge",
+      alias: "hono",
+    }),
     [TEST_SKILLS.DRIZZLE]: createMockSkill(
       TEST_SKILLS.DRIZZLE,
       "backend/database",
@@ -889,7 +887,9 @@ describe("Wizard integration", () => {
       expect(state.currentDomainIndex).toBe(0);
 
       // Web selections should be preserved
-      expect(state.domainSelections.web?.["frontend/framework"]).toContain("react");
+      expect(state.domainSelections.web?.["frontend/framework"]).toContain(
+        "react",
+      );
     });
   });
 
