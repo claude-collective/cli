@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-02-02
+
+### Breaking Changes
+
+- **Wizard flow redesigned** - New 5-step flow: Approach → Stack → Build → Refine → Confirm. The old category → subcategory linear flow is replaced with domain-based grid selection.
+
+### Added
+
+- **Domain-based navigation** - Categories now have a `domain` field (web, api, cli, mobile, shared) for filtering in the Build step
+- **CategoryGrid component** - 2D grid selection with keyboard navigation (arrows, vim keys h/j/k/l), visual states (selected, recommended, discouraged, disabled)
+- **WizardTabs component** - Horizontal 5-step progress indicator with completed/current/pending/skipped states
+- **SectionProgress component** - Sub-step progress for multi-domain flows
+- **StepBuild component** - Grid-based technology selection per domain, replaces linear category/subcategory flow
+- **StepRefine component** - Skill source selection (verified skills, customize coming soon)
+- **StepStackOptions component** - Options after stack selection (continue defaults or customize)
+- **CLI domain support** - New `cli` category in skills-matrix with framework, prompts, testing subcategories
+- **Wizard store v2** - Complete rewrite with history-based navigation, domain selections, grid focus state
+
+### Changed
+
+- `wizard.tsx` - Complete rewrite as orchestrator for new 5-step flow
+- `step-approach.tsx` - Updated for v2 store
+- `step-stack.tsx` - Now dual-purpose: stack selection (stack path) or domain selection (scratch path)
+- `step-confirm.tsx` - Updated to show domain breakdown, technology/skill counts
+- `wizard-store.ts` - Migrated to v2 state shape with approach, selectedDomains, domainSelections, stackAction, focusedRow/Col
+
+### Removed
+
+- `step-category.tsx` - Replaced by StepBuild with CategoryGrid
+- `step-subcategory.tsx` - Replaced by StepBuild with CategoryGrid
+- `selection-header.tsx` - No longer needed
+
+### Fixed
+
+- **Skill resolution for stack defaults** - Selecting a stack with "Continue with defaults" now correctly includes all stack skills (was only including methodology skills)
+- **Display names in Build step** - Technologies now show clean names ("React") instead of full IDs ("React (@vince)")
+
+[0.7.0]: https://github.com/claude-collective/cli/releases/tag/v0.7.0
+
 ## [0.6.0] - 2026-02-01
 
 ### Breaking Changes
