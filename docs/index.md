@@ -19,7 +19,15 @@ Three directories work together:
 | [data-models.md](./data-models.md)   | Type definitions, schemas, data structures           |
 | [workflows.md](./workflows.md)       | Common workflows and use cases                       |
 | [known-issues.md](./known-issues.md) | Incomplete features, TODOs, limitations              |
-| [wizard-index.md](./wizard-index.md) | **Phase 7 Wizard UX** - architecture, components, flows |
+| [wizard-index.md](./wizard-index.md) | Wizard UX - architecture, components, flows          |
+
+## Task Tracking
+
+| Document                                  | Content                       |
+| ----------------------------------------- | ----------------------------- |
+| [TODO.md](../TODO.md)                     | Active tasks and blockers     |
+| [TODO-completed.md](../TODO-completed.md) | Archive of completed tasks    |
+| [TODO-deferred.md](../TODO-deferred.md)   | Deprioritized tasks for later |
 
 ## Quick Reference
 
