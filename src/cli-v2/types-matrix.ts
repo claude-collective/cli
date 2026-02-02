@@ -47,6 +47,13 @@ export interface CategoryDefinition {
   parent?: string;
 
   /**
+   * Domain this subcategory belongs to, for wizard domain filtering
+   * Only applicable to subcategories (those with a parent)
+   * @example "web" for frontend subcategories, "api" for backend subcategories
+   */
+  domain?: "web" | "api" | "cli" | "mobile" | "shared";
+
+  /**
    * If true, only one skill from this category can be selected
    * @default true
    * @example true for framework (can't have React AND Vue)

@@ -61,6 +61,15 @@ categories:
     order: 5
     icon: "👀"
 
+  cli:
+    id: cli
+    name: CLI
+    description: Command-line tool development
+    exclusive: false
+    required: false
+    order: 6
+    icon: ">"
+
   # ─────────────────────────────────────────────────────────────────
   # Frontend subcategories
   # ─────────────────────────────────────────────────────────────────
@@ -69,6 +78,7 @@ categories:
     name: Framework
     description: Core UI framework (React, Vue, Angular, SolidJS)
     parent: frontend
+    domain: web
     exclusive: true
     required: true
     order: 1
@@ -78,6 +88,7 @@ categories:
     name: Meta-Framework
     description: Full-stack framework (Next.js, Remix, Nuxt)
     parent: frontend
+    domain: web
     exclusive: true
     required: false
     order: 2
@@ -87,6 +98,7 @@ categories:
     name: Styling
     description: CSS approach (SCSS Modules, Tailwind)
     parent: frontend
+    domain: web
     exclusive: true
     required: true
     order: 3
@@ -96,6 +108,7 @@ categories:
     name: Client State Management
     description: UI state, forms, local data (Zustand, Redux, MobX)
     parent: frontend
+    domain: web
     exclusive: true
     required: false
     order: 4
@@ -105,6 +118,7 @@ categories:
     name: Server State / Data Fetching
     description: API data caching (React Query, SWR)
     parent: frontend
+    domain: web
     exclusive: true
     required: false
     order: 5
@@ -114,6 +128,7 @@ categories:
     name: Forms & Validation
     description: Form handling and schema validation
     parent: frontend
+    domain: web
     exclusive: false
     required: false
     order: 6
@@ -123,6 +138,7 @@ categories:
     name: Testing
     description: Unit, integration, and E2E testing
     parent: frontend
+    domain: web
     exclusive: false
     required: false
     order: 7
@@ -132,6 +148,7 @@ categories:
     name: UI Component Library
     description: Pre-built component systems (Radix, shadcn)
     parent: frontend
+    domain: web
     exclusive: false
     required: false
     order: 8
@@ -141,6 +158,7 @@ categories:
     name: API Mocking
     description: Mock Service Worker for development and testing
     parent: frontend
+    domain: web
     exclusive: false
     required: false
     order: 10
@@ -153,6 +171,7 @@ categories:
     name: API Framework
     description: Backend framework (Hono, Express, Fastify)
     parent: backend
+    domain: api
     exclusive: true
     required: true
     order: 1
@@ -162,6 +181,7 @@ categories:
     name: Database ORM
     description: Database access layer (Drizzle, Prisma)
     parent: backend
+    domain: api
     exclusive: true
     required: false
     order: 2
@@ -171,6 +191,7 @@ categories:
     name: Authentication
     description: Auth solution (Better Auth, Auth.js)
     parent: backend
+    domain: api
     exclusive: true
     required: false
     order: 3
@@ -180,6 +201,7 @@ categories:
     name: Observability
     description: Logging, monitoring, error tracking
     parent: backend
+    domain: api
     exclusive: false
     required: false
     order: 4
@@ -189,6 +211,7 @@ categories:
     name: Analytics
     description: Product analytics and tracking
     parent: backend
+    domain: api
     exclusive: false
     required: false
     order: 5
@@ -198,6 +221,7 @@ categories:
     name: Email
     description: Transactional email (Resend, Sendgrid)
     parent: backend
+    domain: api
     exclusive: true
     required: false
     order: 6
@@ -210,6 +234,7 @@ categories:
     name: Mobile Framework
     description: Native mobile framework (React Native, Expo)
     parent: mobile
+    domain: mobile
     exclusive: true
     required: true
     order: 1
@@ -222,6 +247,7 @@ categories:
     name: Monorepo
     description: Monorepo tooling (Turborepo, Nx)
     parent: setup
+    domain: shared
     exclusive: true
     required: false
     order: 1
@@ -231,9 +257,43 @@ categories:
     name: Build Tooling
     description: ESLint, Prettier, TypeScript, Vite
     parent: setup
+    domain: shared
     exclusive: false
     required: false
     order: 2
+
+  # ─────────────────────────────────────────────────────────────────
+  # CLI subcategories
+  # ─────────────────────────────────────────────────────────────────
+  cli-framework:
+    id: cli-framework
+    name: CLI Framework
+    description: CLI application framework (Commander, oclif, yargs)
+    parent: cli
+    domain: cli
+    exclusive: true
+    required: true
+    order: 1
+
+  cli-prompts:
+    id: cli-prompts
+    name: CLI Prompts
+    description: Interactive prompts and UI (Clack, Inquirer, Ink)
+    parent: cli
+    domain: cli
+    exclusive: true
+    required: false
+    order: 2
+
+  cli-testing:
+    id: cli-testing
+    name: CLI Testing
+    description: CLI testing utilities
+    parent: cli
+    domain: cli
+    exclusive: false
+    required: false
+    order: 3
 
 # =============================================================================
 # Relationships (The Intelligence)
@@ -290,6 +350,14 @@ relationships:
     # Database ORM conflicts
     - skills: [drizzle, prisma]
       reason: "Both are ORMs serving similar purposes. Choose one per service; migration scenarios and multi-service architectures may involve both."
+
+    # CLI framework conflicts
+    - skills: [commander, oclif, yargs]
+      reason: "CLI frameworks are mutually exclusive"
+
+    # CLI prompt library conflicts
+    - skills: [clack, inquirer, ink]
+      reason: "CLI prompt libraries - choose one primary approach"
 
   # ─────────────────────────────────────────────────────────────────
   # DISCOURAGES (Soft warnings - selecting A shows warning for B but doesn't disable)
@@ -439,6 +507,19 @@ relationships:
     - when: cypress-e2e
       suggest: [vitest]
       reason: "Cypress for E2E, Vitest for unit tests"
+
+    # CLI recommendations
+    - when: oclif
+      suggest: [ink, vitest]
+      reason: "oclif + Ink is a powerful combo for rich CLI UIs"
+
+    - when: commander
+      suggest: [clack, vitest]
+      reason: "Commander + Clack is lightweight and elegant"
+
+    - when: yargs
+      suggest: [inquirer, vitest]
+      reason: "Yargs + Inquirer is a classic CLI combination"
 
   # ─────────────────────────────────────────────────────────────────
   # REQUIRES (Hard dependencies - A requires B to be selected first)
@@ -594,6 +675,12 @@ relationships:
     - purpose: "Mobile"
       skills: [react-native]
 
+    - purpose: "CLI Framework"
+      skills: [commander, oclif, yargs]
+
+    - purpose: "CLI Prompts"
+      skills: [clack, inquirer, ink]
+
 # =============================================================================
 # Skill Aliases (Map short names to full IDs)
 # =============================================================================
@@ -736,7 +823,16 @@ skill_aliases:
   # ─────────────────────────────────────────────────────────────────
   # CLI
   # ─────────────────────────────────────────────────────────────────
+  # CLI Framework
+  commander: "cli/framework/cli-commander (@vince)"
   cli-commander: "cli/framework/cli-commander (@vince)"
+  oclif: "cli/framework/cli-oclif (@vince)"
+  yargs: "cli/framework/cli-yargs (@vince)"
+
+  # CLI Prompts
+  clack: "cli/prompts/cli-clack (@vince)"
+  inquirer: "cli/prompts/cli-inquirer (@vince)"
+  ink: "cli/prompts/cli-ink (@vince)"
 
   # ─────────────────────────────────────────────────────────────────
   # Reviewing / Meta

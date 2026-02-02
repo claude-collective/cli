@@ -53,6 +53,11 @@
           "type": "string",
           "pattern": "^[a-z][a-z0-9-]*$"
         },
+        "domain": {
+          "type": "string",
+          "description": "Domain grouping for wizard navigation (web, api, cli, mobile, shared). Only for subcategories.",
+          "enum": ["web", "api", "cli", "mobile", "shared"]
+        },
         "exclusive": {
           "type": "boolean",
           "description": "Only one skill can be selected",

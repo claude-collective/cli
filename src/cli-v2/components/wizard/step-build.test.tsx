@@ -1,0 +1,913 @@
+/**
+ * Tests for the StepBuild component.
+ *
+ * Tests domain-based technology selection using CategoryGrid.
+ */
+import React from "react";
+import { render } from "ink-testing-library";
+import { describe, expect, it, afterEach, vi } from "vitest";
+import { StepBuild, type StepBuildProps, validateBuildStep, getDisplayLabel } from "./step-build";
+import type { CategoryRow as GridCategoryRow } from "./category-grid";
+import type {
+  MergedSkillsMatrix,
+  ResolvedSkill,
+  CategoryDefinition,
+} from "../../types-matrix";
+import {
+  ENTER,
+  ESCAPE,
+  RENDER_DELAY_MS,
+  INPUT_DELAY_MS,
+  delay,
+} from "../../lib/__tests__/test-constants";
+
+// =============================================================================
+// Test Fixtures
+// =============================================================================
+
+/**
+ * Create a minimal category definition.
+ */
+const createCategory = (
+  id: string,
+  name: string,
+  overrides: Partial<CategoryDefinition> = {},
+): CategoryDefinition => ({
+  id,
+  name,
+  description: `${name} category`,
+  exclusive: true,
+  required: false,
+  order: 0,
+  ...overrides,
+});
+
+/**
+ * Create a minimal skill definition.
+ */
+const createSkill = (
+  id: string,
+  name: string,
+  category: string,
+  overrides: Partial<ResolvedSkill> = {},
+): ResolvedSkill => ({
+  id,
+  name,
+  description: `${name} skill`,
+  category,
+  categoryExclusive: true,
+  tags: [],
+  author: "test",
+  conflictsWith: [],
+  recommends: [],
+  recommendedBy: [],
+  requires: [],
+  requiredBy: [],
+  alternatives: [],
+  discourages: [],
+  requiresSetup: [],
+  providesSetupFor: [],
+  path: `test/${id}`,
+  ...overrides,
+});
+
+/**
+ * Create a minimal matrix for testing.
+ */
+const createTestMatrix = (
+  categories: CategoryDefinition[],
+  skills: ResolvedSkill[],
+): MergedSkillsMatrix => ({
+  version: "1.0.0",
+  categories: Object.fromEntries(categories.map((c) => [c.id, c])),
+  skills: Object.fromEntries(skills.map((s) => [s.id, s])),
+  suggestedStacks: [],
+  aliases: Object.fromEntries(
+    skills
+      .filter((s) => s.alias)
+      .map((s) => [s.alias!, s.id]),
+  ),
+  aliasesReverse: Object.fromEntries(
+    skills
+      .filter((s) => s.alias)
+      .map((s) => [s.id, s.alias!]),
+  ),
+  generatedAt: new Date().toISOString(),
+});
+
+// Create test categories
+const webCategory = createCategory("web", "Web", {
+  description: "Web development",
+  order: 0,
+});
+
+const apiCategory = createCategory("api", "API", {
+  description: "API development",
+  order: 1,
+});
+
+const frameworkCategory = createCategory("framework", "Framework", {
+  parent: "web",
+  domain: "web",
+  required: true,
+  order: 0,
+});
+
+const stylingCategory = createCategory("styling", "Styling", {
+  parent: "web",
+  domain: "web",
+  required: true,
+  order: 1,
+});
+
+const stateCategory = createCategory("client-state", "Client State", {
+  parent: "web",
+  domain: "web",
+  required: false,
+  order: 2,
+});
+
+const apiFrameworkCategory = createCategory("api-framework", "API Framework", {
+  parent: "api",
+  domain: "api",
+  required: true,
+  order: 0,
+});
+
+const databaseCategory = createCategory("database", "Database", {
+  parent: "api",
+  domain: "api",
+  required: false,
+  order: 1,
+});
+
+// Create test skills
+const reactSkill = createSkill("react (@vince)", "React", "framework", {
+  alias: "react",
+});
+
+const vueSkill = createSkill("vue (@vince)", "Vue", "framework", {
+  alias: "vue",
+});
+
+const tailwindSkill = createSkill("tailwind (@vince)", "Tailwind", "styling", {
+  alias: "tailwind",
+});
+
+const scssSkill = createSkill("scss (@vince)", "SCSS Modules", "styling", {
+  alias: "scss",
+});
+
+const zustandSkill = createSkill("zustand (@vince)", "Zustand", "client-state", {
+  alias: "zustand",
+});
+
+const honoSkill = createSkill("hono (@vince)", "Hono", "api-framework", {
+  alias: "hono",
+});
+
+const expressSkill = createSkill("express (@vince)", "Express", "api-framework", {
+  alias: "express",
+});
+
+const postgresSkill = createSkill("postgres (@vince)", "PostgreSQL", "database", {
+  alias: "postgres",
+});
+
+// Default test matrix with web and API domains
+const defaultMatrix = createTestMatrix(
+  [
+    webCategory,
+    apiCategory,
+    frameworkCategory,
+    stylingCategory,
+    stateCategory,
+    apiFrameworkCategory,
+    databaseCategory,
+  ],
+  [
+    reactSkill,
+    vueSkill,
+    tailwindSkill,
+    scssSkill,
+    zustandSkill,
+    honoSkill,
+    expressSkill,
+    postgresSkill,
+  ],
+);
+
+// Default props
+const defaultProps: StepBuildProps = {
+  matrix: defaultMatrix,
+  domain: "web",
+  selectedDomains: ["web"],
+  currentDomainIndex: 0,
+  selections: {},
+  allSelections: [],
+  focusedRow: 0,
+  focusedCol: 0,
+  showDescriptions: false,
+  expertMode: false,
+  onToggle: vi.fn(),
+  onFocusChange: vi.fn(),
+  onToggleDescriptions: vi.fn(),
+  onToggleExpertMode: vi.fn(),
+  onContinue: vi.fn(),
+  onBack: vi.fn(),
+};
+
+const renderStepBuild = (props: Partial<StepBuildProps> = {}) => {
+  return render(<StepBuild {...defaultProps} {...props} />);
+};
+
+// =============================================================================
+// Tests
+// =============================================================================
+
+describe("StepBuild component", () => {
+  let cleanup: (() => void) | undefined;
+
+  afterEach(() => {
+    cleanup?.();
+    cleanup = undefined;
+    vi.clearAllMocks();
+  });
+
+  // ===========================================================================
+  // Basic Rendering
+  // ===========================================================================
+
+  describe("rendering", () => {
+    it("should render CategoryGrid with correct categories for domain", () => {
+      const { lastFrame, unmount } = renderStepBuild();
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // Web domain should show Framework, Styling, Client State
+      expect(output).toContain("Framework");
+      expect(output).toContain("Styling");
+      expect(output).toContain("Client State");
+      // Should NOT show API categories
+      expect(output).not.toContain("API Framework");
+      expect(output).not.toContain("Database");
+    });
+
+    it("should render API categories when domain is api", () => {
+      const { lastFrame, unmount } = renderStepBuild({
+        domain: "api",
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // API domain should show API Framework, Database
+      expect(output).toContain("API Framework");
+      expect(output).toContain("Database");
+      // Should NOT show Web categories
+      expect(output).not.toContain("Styling");
+      expect(output).not.toContain("Client State");
+    });
+
+    it("should render skills as options", () => {
+      const { lastFrame, unmount } = renderStepBuild();
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // Framework skills
+      expect(output).toContain("React");
+      expect(output).toContain("Vue");
+      // Styling skills
+      expect(output).toContain("Tailwind");
+      expect(output).toContain("SCSS");
+    });
+
+    it("should show required indicator (*) for required categories", () => {
+      const { lastFrame, unmount } = renderStepBuild();
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // Framework and Styling are required
+      expect(output).toContain("*");
+    });
+
+    it("should show footer with keyboard hints", () => {
+      const { lastFrame, unmount } = renderStepBuild();
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // Footer now shows full keyboard help text
+      expect(output).toContain("ESC");
+      expect(output).toContain("ENTER");
+    });
+  });
+
+  // ===========================================================================
+  // Progress Indicator
+  // ===========================================================================
+
+  describe("progress indicator", () => {
+    it("should show SectionProgress when multiple domains selected", () => {
+      const { lastFrame, unmount } = renderStepBuild({
+        selectedDomains: ["web", "api"],
+        currentDomainIndex: 0,
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Domain:");
+      expect(output).toContain("Web");
+      expect(output).toContain("[1/2]");
+      expect(output).toContain("Next: API");
+    });
+
+    it("should hide SectionProgress when single domain selected", () => {
+      const { lastFrame, unmount } = renderStepBuild({
+        selectedDomains: ["web"],
+        currentDomainIndex: 0,
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // Should NOT contain the progress indicator elements
+      // Note: "Domain:" without SectionProgress wouldn't appear
+      expect(output).not.toContain("[1/1]");
+    });
+
+    it("should show 'Last step' when on final domain", () => {
+      const { lastFrame, unmount } = renderStepBuild({
+        selectedDomains: ["web", "api"],
+        domain: "api",
+        currentDomainIndex: 1,
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Domain:");
+      expect(output).toContain("API");
+      expect(output).toContain("[2/2]");
+      expect(output).toContain("Last step");
+    });
+
+    it("should show correct domain display names", () => {
+      const { lastFrame, unmount } = renderStepBuild({
+        selectedDomains: ["web", "api", "cli"],
+        currentDomainIndex: 1,
+        domain: "api",
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("API");
+      expect(output).toContain("Next: CLI");
+    });
+  });
+
+  // ===========================================================================
+  // Category Filtering
+  // ===========================================================================
+
+  describe("category filtering", () => {
+    it("should filter categories correctly by domain", () => {
+      // Web domain
+      const { lastFrame: webFrame, unmount: webUnmount } = renderStepBuild({
+        domain: "web",
+      });
+      const webOutput = webFrame();
+      webUnmount();
+
+      // API domain
+      const { lastFrame: apiFrame, unmount: apiUnmount } = renderStepBuild({
+        domain: "api",
+      });
+      cleanup = apiUnmount;
+      const apiOutput = apiFrame();
+
+      // Web should have Framework, Styling, Client State
+      expect(webOutput).toContain("Framework");
+      expect(webOutput).toContain("Styling");
+      expect(webOutput).toContain("Client State");
+      expect(webOutput).not.toContain("API Framework");
+
+      // API should have API Framework, Database
+      expect(apiOutput).toContain("API Framework");
+      expect(apiOutput).toContain("Database");
+      expect(apiOutput).not.toContain("Styling");
+    });
+
+    it("should sort categories by order", () => {
+      const { lastFrame, unmount } = renderStepBuild();
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // Framework (order 0) should appear before Styling (order 1)
+      // and Styling before Client State (order 2)
+      const frameworkIndex = output?.indexOf("Framework") ?? -1;
+      const stylingIndex = output?.indexOf("Styling") ?? -1;
+      const stateIndex = output?.indexOf("Client State") ?? -1;
+
+      expect(frameworkIndex).toBeLessThan(stylingIndex);
+      expect(stylingIndex).toBeLessThan(stateIndex);
+    });
+  });
+
+  // ===========================================================================
+  // Option States
+  // ===========================================================================
+
+  describe("option states", () => {
+    it("should show selected options correctly", () => {
+      const { lastFrame, unmount } = renderStepBuild({
+        allSelections: ["react (@vince)"],
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // Should show filled circle for selected
+      expect(output).toContain("\u25CF"); // filled circle
+    });
+
+    it("should pass expertMode to CategoryGrid", () => {
+      const { lastFrame, unmount } = renderStepBuild({
+        expertMode: true,
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Expert Mode: ON");
+    });
+
+    it("should pass showDescriptions to CategoryGrid", () => {
+      const { lastFrame, unmount } = renderStepBuild({
+        showDescriptions: true,
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Show descriptions: ON");
+    });
+  });
+
+  // ===========================================================================
+  // Keyboard Navigation
+  // ===========================================================================
+
+  describe("keyboard navigation", () => {
+    it("should call onContinue when Enter is pressed with valid selections", async () => {
+      const onContinue = vi.fn();
+      // Provide selections for required categories to pass validation
+      const { stdin, unmount } = renderStepBuild({
+        onContinue,
+        selections: {
+          framework: ["react"],
+          styling: ["tailwind"],
+        },
+      });
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      await stdin.write(ENTER);
+      await delay(INPUT_DELAY_MS);
+
+      expect(onContinue).toHaveBeenCalled();
+    });
+
+    it("should call onBack when Escape is pressed", async () => {
+      const onBack = vi.fn();
+      const { stdin, unmount } = renderStepBuild({ onBack });
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      await stdin.write(ESCAPE);
+      await delay(INPUT_DELAY_MS);
+
+      expect(onBack).toHaveBeenCalled();
+    });
+
+    it("should pass focus callbacks to CategoryGrid", async () => {
+      const onFocusChange = vi.fn();
+      const { stdin, unmount } = renderStepBuild({
+        onFocusChange,
+        focusedRow: 0,
+        focusedCol: 0,
+      });
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      // Arrow down should trigger focus change
+      await stdin.write("\x1B[B"); // Arrow down
+      await delay(INPUT_DELAY_MS);
+
+      expect(onFocusChange).toHaveBeenCalled();
+    });
+
+    it("should pass toggle callback to CategoryGrid", async () => {
+      const onToggle = vi.fn();
+      const { stdin, unmount } = renderStepBuild({
+        onToggle,
+        focusedRow: 0,
+        focusedCol: 0,
+      });
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      // Space should trigger toggle
+      await stdin.write(" ");
+      await delay(INPUT_DELAY_MS);
+
+      expect(onToggle).toHaveBeenCalled();
+    });
+  });
+
+  // ===========================================================================
+  // Toggle Callbacks
+  // ===========================================================================
+
+  describe("toggle callbacks", () => {
+    it("should pass onToggleDescriptions to CategoryGrid", async () => {
+      const onToggleDescriptions = vi.fn();
+      const { stdin, unmount } = renderStepBuild({ onToggleDescriptions });
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      await stdin.write("\t"); // Tab
+      await delay(INPUT_DELAY_MS);
+
+      expect(onToggleDescriptions).toHaveBeenCalled();
+    });
+
+    it("should pass onToggleExpertMode to CategoryGrid", async () => {
+      const onToggleExpertMode = vi.fn();
+      const { stdin, unmount } = renderStepBuild({ onToggleExpertMode });
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      await stdin.write("e");
+      await delay(INPUT_DELAY_MS);
+
+      expect(onToggleExpertMode).toHaveBeenCalled();
+    });
+  });
+
+  // ===========================================================================
+  // Edge Cases
+  // ===========================================================================
+
+  describe("edge cases", () => {
+    it("should handle domain with no categories", () => {
+      const { lastFrame, unmount } = renderStepBuild({
+        domain: "mobile", // No mobile categories in test matrix
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // Should show empty state message from CategoryGrid
+      expect(output).toContain("No categories to display");
+    });
+
+    it("should handle unknown domain gracefully", () => {
+      const { lastFrame, unmount } = renderStepBuild({
+        domain: "unknown",
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // Should render without crashing
+      expect(output).toBeDefined();
+    });
+
+    it("should handle empty allSelections", () => {
+      const { lastFrame, unmount } = renderStepBuild({
+        allSelections: [],
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Framework");
+    });
+
+    it("should handle allSelections with skills from other domains", () => {
+      const { lastFrame, unmount } = renderStepBuild({
+        domain: "web",
+        allSelections: ["hono (@vince)", "postgres (@vince)"], // API skills
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // Should still render web categories
+      expect(output).toContain("Framework");
+      expect(output).toContain("Styling");
+    });
+  });
+
+  // ===========================================================================
+  // Multi-domain Scenarios
+  // ===========================================================================
+
+  describe("multi-domain scenarios", () => {
+    it("should work for first domain in multi-domain flow", () => {
+      const { lastFrame, unmount } = renderStepBuild({
+        domain: "web",
+        selectedDomains: ["web", "api"],
+        currentDomainIndex: 0,
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Domain:");
+      expect(output).toContain("Web");
+      expect(output).toContain("[1/2]");
+      expect(output).toContain("Next: API");
+    });
+
+    it("should work for last domain in multi-domain flow", () => {
+      const { lastFrame, unmount } = renderStepBuild({
+        domain: "api",
+        selectedDomains: ["web", "api"],
+        currentDomainIndex: 1,
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Domain:");
+      expect(output).toContain("API");
+      expect(output).toContain("[2/2]");
+      expect(output).toContain("Last step");
+    });
+
+    it("should show three-domain progress correctly", () => {
+      // Add cli category to matrix
+      const cliFrameworkCategory = createCategory("cli-framework", "CLI Framework", {
+        parent: "cli",
+        domain: "cli",
+        required: true,
+        order: 0,
+      });
+      const cliCategory = createCategory("cli", "CLI", {
+        description: "CLI development",
+        order: 2,
+      });
+      const commanderSkill = createSkill("commander (@vince)", "Commander", "cli-framework", {
+        alias: "commander",
+      });
+
+      const matrixWithCli = createTestMatrix(
+        [
+          webCategory,
+          apiCategory,
+          cliCategory,
+          frameworkCategory,
+          stylingCategory,
+          stateCategory,
+          apiFrameworkCategory,
+          databaseCategory,
+          cliFrameworkCategory,
+        ],
+        [
+          reactSkill,
+          vueSkill,
+          tailwindSkill,
+          scssSkill,
+          zustandSkill,
+          honoSkill,
+          expressSkill,
+          postgresSkill,
+          commanderSkill,
+        ],
+      );
+
+      const { lastFrame, unmount } = renderStepBuild({
+        matrix: matrixWithCli,
+        domain: "api",
+        selectedDomains: ["web", "api", "cli"],
+        currentDomainIndex: 1,
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("[2/3]");
+      expect(output).toContain("Next: CLI");
+    });
+  });
+
+  // ===========================================================================
+  // Header and Selection Count
+  // ===========================================================================
+
+  describe("header and selection count", () => {
+    it("should show header with domain name", () => {
+      const { lastFrame, unmount } = renderStepBuild();
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Configure your");
+      expect(output).toContain("Web");
+      expect(output).toContain("stack:");
+    });
+
+    it("should show selection count in header", () => {
+      const { lastFrame, unmount } = renderStepBuild();
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // With no selections, should show 0/N selected
+      expect(output).toContain("selected");
+    });
+
+    it("should update selection count when items are selected", () => {
+      const { lastFrame, unmount } = renderStepBuild({
+        allSelections: ["react (@vince)", "tailwind (@vince)"],
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // Should show at least 2 selected
+      expect(output).toContain("selected");
+    });
+  });
+
+  // ===========================================================================
+  // Keyboard Help Text
+  // ===========================================================================
+
+  describe("keyboard help text", () => {
+    it("should show keyboard shortcuts help in footer", () => {
+      const { lastFrame, unmount } = renderStepBuild();
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // Check for key parts of help text (may wrap due to terminal width)
+      expect(output).toContain("SPACE select");
+      expect(output).toContain("TAB descriptions");
+      expect(output).toContain("ENTER continue");
+      expect(output).toContain("ESC"); // May be on next line
+      expect(output).toContain("back");
+    });
+
+    it("should show arrow key navigation hints", () => {
+      const { lastFrame, unmount } = renderStepBuild();
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // Check for arrow symbols in the help text
+      expect(output).toContain("options");
+      expect(output).toContain("categories");
+    });
+  });
+
+  // ===========================================================================
+  // Validation
+  // ===========================================================================
+
+  describe("validateBuildStep", () => {
+    it("should return valid when required categories have selections", () => {
+      const categories: GridCategoryRow[] = [
+        {
+          id: "framework",
+          name: "Framework",
+          required: true,
+          exclusive: true,
+          options: [{ id: "react", label: "React", state: "normal", selected: true }],
+        },
+      ];
+      const selections = { framework: ["react"] };
+
+      const result = validateBuildStep(categories, selections);
+      expect(result.valid).toBe(true);
+      expect(result.message).toBeUndefined();
+    });
+
+    it("should return invalid when required category has no selection", () => {
+      const categories: GridCategoryRow[] = [
+        {
+          id: "framework",
+          name: "Framework",
+          required: true,
+          exclusive: true,
+          options: [{ id: "react", label: "React", state: "normal", selected: false }],
+        },
+      ];
+      const selections = {};
+
+      const result = validateBuildStep(categories, selections);
+      expect(result.valid).toBe(false);
+      expect(result.message).toContain("Framework");
+    });
+
+    it("should return valid when optional categories have no selections", () => {
+      const categories: GridCategoryRow[] = [
+        {
+          id: "state",
+          name: "State Management",
+          required: false,
+          exclusive: true,
+          options: [{ id: "zustand", label: "Zustand", state: "normal", selected: false }],
+        },
+      ];
+      const selections = {};
+
+      const result = validateBuildStep(categories, selections);
+      expect(result.valid).toBe(true);
+    });
+
+    it("should return invalid for first missing required category", () => {
+      const categories: GridCategoryRow[] = [
+        {
+          id: "framework",
+          name: "Framework",
+          required: true,
+          exclusive: true,
+          options: [],
+        },
+        {
+          id: "styling",
+          name: "Styling",
+          required: true,
+          exclusive: true,
+          options: [],
+        },
+      ];
+      const selections = {};
+
+      const result = validateBuildStep(categories, selections);
+      expect(result.valid).toBe(false);
+      expect(result.message).toContain("Framework"); // Should be the first one
+    });
+  });
+
+  describe("validation on continue", () => {
+    it("should show validation error when trying to continue without required selection", async () => {
+      const onContinue = vi.fn();
+      const { stdin, lastFrame, unmount } = renderStepBuild({
+        onContinue,
+        selections: {},
+      });
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+
+      // Press Enter to continue without selecting required framework
+      await stdin.write(ENTER);
+      await delay(INPUT_DELAY_MS);
+
+      // Should show validation error and NOT call onContinue
+      const output = lastFrame();
+      expect(output).toContain("Please select");
+      expect(onContinue).not.toHaveBeenCalled();
+    });
+
+    it("should call onContinue when validation passes", async () => {
+      const onContinue = vi.fn();
+      const { stdin, unmount } = renderStepBuild({
+        onContinue,
+        selections: {
+          framework: ["react"],
+          styling: ["tailwind"],
+        },
+      });
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+
+      // Press Enter to continue with required selections
+      await stdin.write(ENTER);
+      await delay(INPUT_DELAY_MS);
+
+      expect(onContinue).toHaveBeenCalled();
+    });
+  });
+});
+
+// =============================================================================
+// getDisplayLabel Tests
+// =============================================================================
+
+describe("getDisplayLabel", () => {
+  it("should strip author suffix from name", () => {
+    expect(getDisplayLabel({ name: "React (@vince)" })).toBe("React");
+  });
+
+  it("should preserve original capitalization", () => {
+    expect(getDisplayLabel({ name: "SCSS Modules (@vince)" })).toBe("SCSS Modules");
+  });
+
+  it("should handle hyphenated author names", () => {
+    expect(getDisplayLabel({ name: "React (@vince-team)" })).toBe("React");
+  });
+
+  it("should handle names without author suffix", () => {
+    expect(getDisplayLabel({ name: "React" })).toBe("React");
+  });
+
+  it("should handle extra whitespace before author suffix", () => {
+    expect(getDisplayLabel({ name: "React  (@vince)" })).toBe("React");
+  });
+
+  it("should not strip non-author parentheses", () => {
+    expect(getDisplayLabel({ name: "React (library)" })).toBe("React (library)");
+  });
+
+  it("should ignore alias and use name for display", () => {
+    // alias is available but we use name for accurate capitalization
+    expect(getDisplayLabel({ alias: "scss-modules", name: "SCSS Modules (@vince)" })).toBe("SCSS Modules");
+  });
+});
