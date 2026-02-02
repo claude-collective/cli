@@ -134,41 +134,136 @@ Detailed specifications for completed tasks are preserved in TODO.md under "Deta
 
 ---
 
+## Phase 6: Agent-Centric Configuration (COMPLETE)
+
+### Phase 6.1: Types and Schema
+
+| Task ID | Task                                       | Completed  |
+| ------- | ------------------------------------------ | ---------- |
+| A1-1    | Add `skills` field to AgentYamlConfig type | 2026-02-01 |
+| A1-2    | Add `skills` field to AgentDefinition type | 2026-02-01 |
+| A1-3    | Update agent.schema.json                   | 2026-02-01 |
+| A1-4    | Create Stack type                          | 2026-02-01 |
+| A1-5    | Create stacks.schema.json                  | 2026-02-01 |
+
+### Phase 6.2: Loaders
+
+| Task ID | Task                                   | Completed  |
+| ------- | -------------------------------------- | ---------- |
+| A2-1    | Update loadAllAgents to extract skills | 2026-02-01 |
+| A2-2    | Create stacks loader                   | 2026-02-01 |
+
+### Phase 6.3: Resolution Logic
+
+| Task ID | Task                                        | Completed  |
+| ------- | ------------------------------------------- | ---------- |
+| A3-1    | Create resolveAgentSkills function          | 2026-02-01 |
+| A3-2    | Update getAgentSkills to use agent's skills | 2026-02-01 |
+| A3-3    | Deprecate skill-agent-mappings.ts           | 2026-02-01 |
+
+### Phase 6.4: Command Updates
+
+| Task ID | Task                                       | Completed  |
+| ------- | ------------------------------------------ | ---------- |
+| A4-1    | Update init command for new flow           | 2026-02-01 |
+| A4-2    | Update compile command                     | 2026-02-01 |
+| A4-3    | Remove build:stack command                 | 2026-02-01 |
+| A4-4    | Update wizard store for agent-based stacks | 2026-02-01 |
+
+### Phase 6.5: Agent YAML Updates
+
+| Task ID | Task                                     | Completed  |
+| ------- | ---------------------------------------- | ---------- |
+| A5-1    | Add skills to web-developer agent        | 2026-02-01 |
+| A5-2    | Add skills to api-developer agent        | 2026-02-01 |
+| A5-3    | Add skills to remaining developer agents | 2026-02-01 |
+| A5-4    | Add skills to reviewer agents            | 2026-02-01 |
+| A5-5    | Add skills to researcher agents          | 2026-02-01 |
+| A5-6    | Add skills to tester and planning agents | 2026-02-01 |
+| A5-7    | Add skills to pattern and meta agents    | 2026-02-01 |
+
+### Phase 6.6: Cleanup
+
+| Task ID | Task                                            | Completed  |
+| ------- | ----------------------------------------------- | ---------- |
+| A6-1    | Create stacks.yaml with all stacks              | 2026-02-01 |
+| A6-2    | Delete all stack config files                   | 2026-02-01 |
+| A6-3    | Deprecate stack loading code                    | 2026-02-01 |
+| A6-4    | Remove suggested_stacks from skills-matrix.yaml | 2026-02-01 |
+| A6-5    | Deprecate StackConfig type                      | 2026-02-01 |
+
+**Summary:**
+
+- 25 tasks completed
+- Skills are now defined in agent YAMLs, stacks are in config/stacks.yaml
+- New `config/stacks.yaml` lists stacks with agent groupings
+- Deleted all `src/stacks/*/config.yaml` files from claude-subagents
+
+---
+
+## Phase 7A: Architecture Fix (COMPLETE)
+
+| Task ID | Task                                          | Completed  |
+| ------- | --------------------------------------------- | ---------- |
+| P7-0-1  | Move skills from agents to stacks             | 2026-02-02 |
+| P7-0-1a | Add StackAgentConfig interface                | 2026-02-02 |
+| P7-0-1b | Update stacks.schema.json                     | 2026-02-02 |
+| P7-0-1c | Transform stacks in config/stacks.yaml        | 2026-02-02 |
+| P7-0-1d | Add resolveStackSkillsFromAliases             | 2026-02-02 |
+| P7-0-1e | Update loadStackById                          | 2026-02-02 |
+| P7-0-1f | Remove skills from agent YAMLs                | 2026-02-02 |
+| P7-0-1g | Add resolveAgentSkillsFromStack               | 2026-02-02 |
+| P7-0-1h | Update init.tsx                               | 2026-02-02 |
+| P7-0-1i | Remove skills from AgentDefinition type       | 2026-02-02 |
+| P7-0-1j | Remove skills from agent.schema.json          | 2026-02-02 |
+| P7-0-1k | Update source-loader, stack-plugin-compiler   | 2026-02-02 |
+| P7-0-1l | Fix skill extraction in stack-plugin-compiler | 2026-02-02 |
+| P7-0-1m | Update resolveAgents in resolver.ts           | 2026-02-02 |
+| P7-0-2  | Add stack property to consumer config.yaml    | 2026-02-02 |
+
+**Summary:**
+
+- Fixed critical bug where stacks get wrong skills
+- Stacks now define technologies by subcategory per agent
+- Added `stack` property to consumer config.yaml
+
+---
+
 ## Phase 7B: Wizard UX Redesign (COMPLETE)
 
 ### Phase 7.1: Data Model Updates
 
-| Task ID | Task | Completed |
-|---------|------|-----------|
-| P7-1-1 | Add `domain` field to subcategories in skills-matrix.yaml | 2026-02-02 |
-| P7-1-2 | Add CLI domain to skills-matrix.yaml | 2026-02-02 |
-| P7-1-3 | Update skills-matrix.schema.json for domain field | 2026-02-02 |
+| Task ID | Task                                                      | Completed  |
+| ------- | --------------------------------------------------------- | ---------- |
+| P7-1-1  | Add `domain` field to subcategories in skills-matrix.yaml | 2026-02-02 |
+| P7-1-2  | Add CLI domain to skills-matrix.yaml                      | 2026-02-02 |
+| P7-1-3  | Update skills-matrix.schema.json for domain field         | 2026-02-02 |
 
 ### Phase 7.2: Wizard Store Migration
 
-| Task ID | Task | Completed |
-|---------|------|-----------|
-| P7-2-1 | Create wizard-store-v2.ts with new WizardStateV2 type | 2026-02-02 |
-| P7-2-2 | Migrate wizard components to use v2 store | 2026-02-02 |
-| P7-2-3 | Remove wizard-store.ts (v1) after migration | 2026-02-02 |
+| Task ID | Task                                                  | Completed  |
+| ------- | ----------------------------------------------------- | ---------- |
+| P7-2-1  | Create wizard-store-v2.ts with new WizardStateV2 type | 2026-02-02 |
+| P7-2-2  | Migrate wizard components to use v2 store             | 2026-02-02 |
+| P7-2-3  | Remove wizard-store.ts (v1) after migration           | 2026-02-02 |
 
 ### Phase 7.3: Wizard Components
 
-| Task ID | Task | Tests | Completed |
-|---------|------|-------|-----------|
-| P7-3-1 | Create CategoryGrid component | 49 | 2026-02-02 |
-| P7-3-2 | Create WizardTabs component | 23 | 2026-02-02 |
-| P7-3-3 | Create SectionProgress component | 15 | 2026-02-02 |
-| P7-3-4 | Create StepBuild component | 27 | 2026-02-02 |
-| P7-3-5 | Create StepRefine component | 22 | 2026-02-02 |
-| P7-3-6 | Update StepConfirm to match Phase 7 design | 32 | 2026-02-02 |
+| Task ID | Task                                       | Tests | Completed  |
+| ------- | ------------------------------------------ | ----- | ---------- |
+| P7-3-1  | Create CategoryGrid component              | 49    | 2026-02-02 |
+| P7-3-2  | Create WizardTabs component                | 23    | 2026-02-02 |
+| P7-3-3  | Create SectionProgress component           | 15    | 2026-02-02 |
+| P7-3-4  | Create StepBuild component                 | 27    | 2026-02-02 |
+| P7-3-5  | Create StepRefine component                | 22    | 2026-02-02 |
+| P7-3-6  | Update StepConfirm to match Phase 7 design | 32    | 2026-02-02 |
 
 ### Phase 7.4: Integration and Polish
 
-| Task ID | Task | Tests | Completed |
-|---------|------|-------|-----------|
-| P7-4-1 | Integration testing (all wizard flows) | 28 | 2026-02-02 |
-| P7-4-2 | Polish and edge cases | - | 2026-02-02 |
+| Task ID | Task                                   | Tests | Completed  |
+| ------- | -------------------------------------- | ----- | ---------- |
+| P7-4-1  | Integration testing (all wizard flows) | 28    | 2026-02-02 |
+| P7-4-2  | Polish and edge cases                  | -     | 2026-02-02 |
 
 **Summary:**
 
@@ -179,3 +274,31 @@ Detailed specifications for completed tasks are preserved in TODO.md under "Deta
 - Domain-based filtering (web, api, cli, mobile, shared)
 - 2D grid navigation with vim keys support
 - 1000 tests passing
+
+---
+
+## Bug Fixes
+
+| Task ID | Task                                     | Completed  |
+| ------- | ---------------------------------------- | ---------- |
+| D-11    | Fix uninstall command not clearing input | 2026-02-02 |
+| D-10    | Create meta-stack for meta agents        | 2026-02-02 |
+
+**D-11 Details:** Added `useApp()` hook and `exit()` calls to `UninstallConfirm` component in `src/cli-v2/commands/uninstall.tsx` to properly restore terminal state after command completion.
+
+**D-10 Details:** Added `meta-stack` to `config/stacks.yaml` with 5 agents (skill-summoner, agent-summoner, documentor, pattern-scout, web-pattern-critique) mapped to methodology and research skills (improvement-protocol, research-methodology, context-management, investigation-requirements, anti-over-engineering, reviewing).
+
+| D-12 | Normalize skill IDs and output folder names | 2026-02-02 |
+
+**D-12 Details:** Large refactoring to normalize skill IDs from path-based format with author (e.g., `web/framework/react (@vince)`) to kebab-case format (e.g., `web-framework-react`). Changes:
+
+- Updated ~150 `skill_aliases` entries in `config/skills-matrix.yaml`
+- Updated `DEFAULT_PRESELECTED_SKILLS` in `src/cli-v2/consts.ts`
+- Simplified `skill-copier.ts` and `skill-plugin-compiler.ts`
+- Updated `marketplace-generator.ts` category patterns for new format
+- Updated ~10 test files with new skill ID format
+- Renamed 85 skill directories in `claude-subagents/src/skills/` from nested format to flat kebab-case
+- Updated SKILL.md frontmatter `name` fields to normalized format (no author suffix, no slashes)
+- Replaced `+` with `-` in multi-tool skill names (e.g., `better-auth+drizzle+hono` → `better-auth-drizzle-hono`)
+- Removed `normalizeSkillId()` function since frontmatter now contains canonical IDs
+- All 1182 tests pass
