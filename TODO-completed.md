@@ -131,3 +131,51 @@ Detailed specifications for completed tasks are preserved in TODO.md under "Deta
 | [cli-agent-invocation-research.md](./docs/cli-agent-invocation-research.md) | Meta-agent invocation via CLI     | 2026-01-22 |
 | [cli-testing-research.md](./docs/cli-testing-research.md)                   | CLI integration test strategy     | 2026-01-31 |
 | [stack-simplification-research.md](./docs/stack-simplification-research.md) | Stack architecture simplification | 2026-01-31 |
+
+---
+
+## Phase 7B: Wizard UX Redesign (COMPLETE)
+
+### Phase 7.1: Data Model Updates
+
+| Task ID | Task | Completed |
+|---------|------|-----------|
+| P7-1-1 | Add `domain` field to subcategories in skills-matrix.yaml | 2026-02-02 |
+| P7-1-2 | Add CLI domain to skills-matrix.yaml | 2026-02-02 |
+| P7-1-3 | Update skills-matrix.schema.json for domain field | 2026-02-02 |
+
+### Phase 7.2: Wizard Store Migration
+
+| Task ID | Task | Completed |
+|---------|------|-----------|
+| P7-2-1 | Create wizard-store-v2.ts with new WizardStateV2 type | 2026-02-02 |
+| P7-2-2 | Migrate wizard components to use v2 store | 2026-02-02 |
+| P7-2-3 | Remove wizard-store.ts (v1) after migration | 2026-02-02 |
+
+### Phase 7.3: Wizard Components
+
+| Task ID | Task | Tests | Completed |
+|---------|------|-------|-----------|
+| P7-3-1 | Create CategoryGrid component | 49 | 2026-02-02 |
+| P7-3-2 | Create WizardTabs component | 23 | 2026-02-02 |
+| P7-3-3 | Create SectionProgress component | 15 | 2026-02-02 |
+| P7-3-4 | Create StepBuild component | 27 | 2026-02-02 |
+| P7-3-5 | Create StepRefine component | 22 | 2026-02-02 |
+| P7-3-6 | Update StepConfirm to match Phase 7 design | 32 | 2026-02-02 |
+
+### Phase 7.4: Integration and Polish
+
+| Task ID | Task | Tests | Completed |
+|---------|------|-------|-----------|
+| P7-4-1 | Integration testing (all wizard flows) | 28 | 2026-02-02 |
+| P7-4-2 | Polish and edge cases | - | 2026-02-02 |
+
+**Summary:**
+
+- 14 tasks completed
+- New components: CategoryGrid, WizardTabs, SectionProgress, StepBuild, StepRefine, StepStackOptions
+- Deleted components: step-category.tsx, step-subcategory.tsx, selection-header.tsx
+- Full V2 store migration with history-based back navigation
+- Domain-based filtering (web, api, cli, mobile, shared)
+- 2D grid navigation with vim keys support
+- 1000 tests passing

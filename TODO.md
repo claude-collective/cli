@@ -4,19 +4,23 @@
 
 ## Executive Summary
 
-**Current State:** Phase 7A Complete. Skills now defined in stacks, not agents.
+**Current State:** Phase 7B Complete. Ready for user testing.
 
-**Recent (Phase 7A):**
+**Recent (Phase 7B):**
 
-- Skills moved from agent YAMLs to stack definitions in `config/stacks.yaml`
-- Stacks define technology selections per agent (e.g., `web-developer: { framework: react }`)
-- Skill aliases resolved via `skill_aliases` in `config/skills-matrix.yaml`
-- 1000 tests passing (18 pre-existing failures unrelated to Phase 7A)
+- New wizard flow: approach → stack → [stack-options] → build → refine → confirm
+- New components: CategoryGrid, WizardTabs, SectionProgress, StepBuild, StepRefine
+- Domain-based filtering (web, api, cli, mobile, shared)
+- 2D grid navigation with vim keys support
+- Fixed: Skill resolution for both stack and scratch paths
+- Fixed: Build step now shows clean technology names (not "React (@vince)")
+- 1000 tests passing
 
 **Next Steps:**
 
-1. Implement Phase 7B: Wizard UX Redesign (14-20 days)
-2. Address deferred tasks as needed
+1. User testing to verify wizard flows work correctly
+2. Create meta-stack for meta agents (D-10)
+3. Address deferred tasks as needed
 
 For completed tasks, see [TODO-completed.md](./TODO-completed.md).
 
@@ -27,6 +31,24 @@ For completed tasks, see [TODO-completed.md](./TODO-completed.md).
 _None currently. Add serious blockers here immediately when discovered._
 
 _If a blocker is added, note whether tests should be deferred until it's resolved._
+
+---
+
+## Recently Fixed
+
+### [FIXED] BUG-01: Stack defaults path only includes methodology skills
+
+**Fixed in:** `wizard.tsx:handleComplete()` and `step-build.tsx`
+
+**Changes:**
+1. `wizard.tsx:handleComplete()` now properly resolves skills:
+   - Stack + defaults path: uses `stack.allSkillIds` directly
+   - Scratch / Customize path: resolves `domainSelections` via `matrix.aliases`
+   - Always includes methodology skills from `getSelectedSkills()`
+
+2. `step-build.tsx:getDisplayLabel()` now shows clean technology names:
+   - Uses alias if available (capitalized)
+   - Strips author suffix like " (@vince)" from display
 
 ---
 
@@ -329,77 +351,58 @@ Changes completed:
 
 ---
 
-### Phase 7B: UX Redesign (14-20 days)
+### Phase 7B: UX Redesign (COMPLETE)
 
-#### Phase 7.1: Data Model Updates
+All Phase 7B tasks completed. See [TODO-completed.md](./TODO-completed.md) for details.
 
-**S | P7-1-1 | Add `domain` field to subcategories in skills-matrix.yaml**
-Add `domain: web|api|cli|mobile` to each subcategory to support domain-based navigation in the wizard.
+**Summary:**
 
-**M | P7-1-2 | Add CLI domain to skills-matrix.yaml**
-Add CLI as a full domain with:
+- 14 tasks completed
+- New components: CategoryGrid, WizardTabs, SectionProgress, StepBuild, StepRefine, StepStackOptions
+- Full V2 store migration with history-based back navigation
+- Domain-based filtering (web, api, cli, mobile, shared)
+- 1000 tests passing
 
-- New `cli` top-level category
-- Subcategories: `cli-framework`, `cli-prompts`, `cli-testing` (all with `domain: cli`)
-- Skills: commander, oclif, yargs, clack, inquirer, ink, etc.
-- Corresponding `skill_aliases` entries
+---
 
-**S | P7-1-3 | Update stacks.yaml schema for agent→technology mappings**
-Add domain validation to schema (basic schema update done in P7-0-1).
+## New Tasks
 
-#### Phase 7.2: Wizard Store Migration
+**S | D-11 | Fix uninstall command not clearing input**
+After running `cc uninstall`, the terminal input is not cleared properly. The command completes but leaves residual input state.
 
-**M | P7-2-1 | Create wizard-store-v2.ts with new WizardStateV2 type**
-New store with fields: approach, selectedDomains, currentDomainIndex, domainSelections, currentRefineIndex, skillSources, showDescriptions. Keep expertMode and installMode.
+**L | D-12 | Normalize skill IDs and output folder names**
+Change how skills are identified and stored. See **[docs/skill-id-normalization-plan.md](./docs/skill-id-normalization-plan.md)** for full implementation plan.
 
-**L | P7-2-2 | Migrate wizard components to use v2 store**
-Update all components in `src/cli-v2/components/wizard/` to use the new store.
+**Format change:**
+- Current: `web/framework/react (@vince)` → New: `web-framework-react`
+- Author becomes metadata only, not part of the ID
 
-**S | P7-2-3 | Remove wizard-store.ts (v1) after migration**
-Once all references migrated and tests pass, remove the old store and rename v2.
+**Critical files to change:**
+1. `src/cli-v2/lib/matrix-loader.ts` - Add normalization to `extractAllSkills()`
+2. `src/cli-v2/lib/local-skill-loader.ts` - Add normalization to `extractLocalSkill()`
+3. `config/skills-matrix.yaml` - Update ~150 `skill_aliases` entries
+4. `src/cli-v2/consts.ts` - Update `DEFAULT_PRESELECTED_SKILLS`
+5. `src/cli-v2/lib/skill-copier.ts` - Simplify folder path logic
 
-#### Phase 7.3: Wizard Components
+**New file needed:** `src/cli-v2/lib/skill-id-normalizer.ts` - Normalization utility
 
-**XL | P7-3-1 | Create CategoryGrid component**
-Grid-based category/technology selection with:
+**Scope:** ~20 source files, 50+ test file references, directory renames in marketplace.
 
-- 2D navigation (←/→ for options, ↑/↓ for categories)
-- Multi-column layout with Ink Box/Flexbox
-- Toggle selection (SPACE to select/deselect)
-- Visual states: selected (●), recommended (⭐), discouraged (⚠), disabled (✗)
-- Expert mode toggle
-- Show descriptions toggle
+**M | D-10 | Create meta-stack for meta agents**
+Create a new stack in `config/stacks.yaml` that includes the meta agents (skill-summoner, agent-summoner, documentor, pattern-scout, web-pattern-critique) and their related skills.
 
-**M | P7-3-2 | Create WizardTabs component**
-Horizontal progress tabs showing all 5 steps. Use Ink Box with flexbox for responsive layout.
+Steps:
+1. Research which skills are preloaded vs dynamically loaded in each meta agent
+2. Identify shared skills across meta agents (likely: research-methodology, improvement-protocol, context-management)
+3. Create `meta-stack` definition in `config/stacks.yaml` with appropriate agent→technology mappings
+4. Add corresponding `skill_aliases` entries if missing
 
-**S | P7-3-3 | Create SectionProgress component**
-Sub-step progress indicator for multi-domain Build and Refine steps.
-Start WITHOUT borders - add later if needed via Box `borderStyle` prop.
-
-**L | P7-3-4 | Create StepBuild component**
-New Build step using CategoryGrid, replacing category/subcategory linear flow.
-Depends on: P7-3-1, P7-3-3, P7-1-1
-
-**M | P7-3-5 | Create StepRefine component**
-New Refine step for skill source selection (verified skills first, skills.sh integration deferred).
-
-**S | P7-3-6 | Update StepConfirm to match Phase 7 design**
-Update confirm step to display summary matching wizard-ux-redesign.md mockups:
-
-- Stack name (if selected)
-- Technologies count
-- Skills count (with verification status)
-- Install mode (Plugin/Local) - uses existing `installMode` from store
-- Domain breakdown (Web: X skills, API: Y skills)
-
-#### Phase 7.4: Integration and Polish
-
-**L | P7-4-1 | Integration testing**
-End-to-end testing of all wizard flows (stack path, scratch single-domain, scratch multi-domain, back navigation).
-
-**M | P7-4-2 | Polish and edge cases**
-Handle edge cases, improve UX, add keyboard shortcuts help text, handle narrow terminals gracefully
+Meta agents to include:
+- `src/agents/meta/skill-summoner/agent.yaml`
+- `src/agents/meta/agent-summoner/agent.yaml`
+- `src/agents/meta/documentor/agent.yaml`
+- `src/agents/pattern/pattern-scout/agent.yaml`
+- `src/agents/pattern/web-pattern-critique/agent.yaml`
 
 ---
 
