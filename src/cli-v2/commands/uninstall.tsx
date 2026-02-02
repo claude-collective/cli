@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import { Flags } from "@oclif/core";
-import { render, Box, Text } from "ink";
+import { render, Box, Text, useApp } from "ink";
 import path from "path";
 import { BaseCommand } from "../base-command";
 import { Confirm } from "../components/common/confirm";
@@ -68,6 +68,7 @@ const UninstallConfirm: React.FC<UninstallConfirmProps> = ({
   onConfirm,
   onCancel,
 }) => {
+  const { exit } = useApp();
   const hasPluginToRemove = uninstallPlugin && target.hasPlugin;
   const hasLocalToRemove =
     uninstallLocal &&
@@ -106,8 +107,14 @@ const UninstallConfirm: React.FC<UninstallConfirmProps> = ({
       <Text> </Text>
       <Confirm
         message="Are you sure you want to uninstall?"
-        onConfirm={onConfirm}
-        onCancel={onCancel}
+        onConfirm={() => {
+          onConfirm();
+          exit();
+        }}
+        onCancel={() => {
+          onCancel();
+          exit();
+        }}
         defaultValue={false}
       />
     </Box>
