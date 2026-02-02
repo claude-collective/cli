@@ -329,10 +329,10 @@ describe("Integration: Full Stack Pipeline", () => {
     // Should reference skill plugins
     expect(result.skillPlugins.length).toBeGreaterThan(0);
 
-    // Skill references now use canonical frontmatter names (e.g., "react (@vince)")
+    // Skill references now use normalized kebab-case format (e.g., "web-framework-react")
     for (const skillPlugin of result.skillPlugins) {
-      // Should be in format: name (@author) - simplified IDs, generic terms may have category prefix with /
-      expect(skillPlugin).toMatch(/^[a-z0-9+\-\/]+ \(@\w+\)$/i);
+      // Should be in normalized kebab-case format: lowercase with dashes, no author suffix
+      expect(skillPlugin).toMatch(/^[a-z0-9-]+$/);
     }
   });
 
@@ -599,13 +599,13 @@ describe("Integration: End-to-End Pipeline", () => {
       agentSourcePath: CLI_REPO,
     });
 
-    // Skill references now use simplified canonical frontmatter names (e.g., "react (@vince)")
+    // Skill references now use normalized kebab-case format (e.g., "web-framework-react")
     expect(stackResult.skillPlugins.length).toBeGreaterThan(0);
 
     for (const skillPlugin of stackResult.skillPlugins) {
-      // Should be in format: name (@author) - simplified IDs, generic terms may have category prefix with /
-      // Examples: "react (@vince)", "hono (@vince)", "frontend/accessibility (@vince)"
-      expect(skillPlugin).toMatch(/^[a-z0-9+\-\/]+ \(@\w+\)$/i);
+      // Should be in normalized kebab-case format: lowercase with dashes, no author suffix
+      // Examples: "web-framework-react", "api-framework-hono", "web-accessibility-web-accessibility"
+      expect(skillPlugin).toMatch(/^[a-z0-9-]+$/);
     }
 
     consoleSpy.mockRestore();
@@ -633,22 +633,18 @@ describe("Integration: End-to-End Pipeline", () => {
       skillResults.map((r) => r.manifest.name),
     );
 
-    // Stack skill references now use simplified canonical frontmatter names (e.g., "react (@vince)")
-    // Compiled plugins use "skill-xxx" format (e.g., "skill-react")
+    // Stack skill references now use normalized kebab-case format (e.g., "web-framework-react")
+    // Compiled plugins use "skill-xxx" format (e.g., "skill-web-framework-react")
     // To compare, extract the base name from both:
-    // - Stack: "react (@vince)" -> "react"
-    // - Plugin: "skill-react" -> "react"
+    // - Stack: "web-framework-react" (already normalized)
+    // - Plugin: "skill-web-framework-react" -> "web-framework-react"
     const extractBaseName = (id: string) => {
-      // For canonical IDs like "web/framework/react (@vince)"
-      // Remove " (@author)" suffix and extract just the leaf name
-      if (id.includes("(@")) {
-        const withoutAuthor = id.replace(/\s*\(@\w+\)$/, "").trim();
-        // Extract leaf name from path like "web/framework/react"
-        const parts = withoutAuthor.split("/");
-        return parts[parts.length - 1];
+      // For plugin names like "skill-web-framework-react"
+      if (id.startsWith("skill-")) {
+        return id.replace(/^skill-/, "");
       }
-      // For plugin names like "skill-react"
-      return id.replace(/^skill-/, "");
+      // For normalized IDs - already in correct format
+      return id;
     };
 
     const stackBaseNames = new Set(
@@ -659,7 +655,7 @@ describe("Integration: End-to-End Pipeline", () => {
     );
 
     // There should be SOME overlap between stack skill references and compiled skills
-    // (e.g., both should have "react", "zustand", "vitest", etc.)
+    // (e.g., both should have "web-framework-react", "web-state-zustand", etc.)
     const commonSkills = [...stackBaseNames].filter((name) =>
       compiledBaseNames.has(name),
     );

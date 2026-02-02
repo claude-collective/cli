@@ -11,60 +11,32 @@ const PLUGIN_MANIFEST_PATH = ".claude-plugin/plugin.json";
 const MARKETPLACE_SCHEMA_URL =
   "https://anthropic.com/claude-code/marketplace.schema.json";
 
+/**
+ * Category patterns for marketplace plugins.
+ *
+ * With normalized skill IDs (e.g., "web-framework-react"), the category
+ * is typically the first segment of the normalized ID:
+ * - skill-web-* -> frontend (web skills)
+ * - skill-api-* -> backend (api skills)
+ * - skill-cli-* -> cli
+ * - skill-meta-* -> methodology
+ * - skill-infra-* -> infrastructure
+ * - skill-mobile-* -> mobile
+ * - skill-security-* -> security
+ */
 const CATEGORY_PATTERNS: Array<{ pattern: RegExp; category: string }> = [
+  // Primary patterns based on normalized ID category prefix
+  { pattern: /^skill-web-/, category: "frontend" },
+  { pattern: /^skill-api-/, category: "backend" },
+  { pattern: /^skill-cli-/, category: "cli" },
+  { pattern: /^skill-meta-/, category: "methodology" },
+  { pattern: /^skill-infra-/, category: "infrastructure" },
+  { pattern: /^skill-mobile-/, category: "mobile" },
+  { pattern: /^skill-security-/, category: "security" },
+  // Fallback patterns for non-prefixed skills
   { pattern: /^skill-setup-/, category: "setup" },
   { pattern: /^skill-backend-/, category: "backend" },
   { pattern: /^skill-frontend-/, category: "frontend" },
-  { pattern: /^skill-cli-/, category: "cli" },
-  // CLI-specific technologies
-  {
-    pattern: /^skill-(commander|clack|inquirer|ora|chalk|picocolors)/,
-    category: "cli",
-  },
-  // These patterns match common backend technologies
-  {
-    pattern: /^skill-(express|fastify|hono|drizzle|prisma)/,
-    category: "backend",
-  },
-  { pattern: /^skill-better-auth/, category: "backend" },
-  // Frontend frameworks and libraries
-  {
-    pattern: /^skill-(react|vue|angular|solid|next|nuxt|remix)/,
-    category: "frontend",
-  },
-  { pattern: /^skill-(tailwind|scss|cva|shadcn|radix)/, category: "frontend" },
-  {
-    pattern: /^skill-(framer-motion|css-animations|view-transitions)/,
-    category: "frontend",
-  },
-  {
-    pattern: /^skill-(zustand|mobx|redux|jotai|pinia|ngrx)/,
-    category: "frontend",
-  },
-  // Testing
-  {
-    pattern: /^skill-(vitest|cypress|playwright|jest|testing)/,
-    category: "testing",
-  },
-  { pattern: /^skill-(react-testing|vue-test|karma)/, category: "testing" },
-  // API/Data
-  {
-    pattern: /^skill-(react-query|swr|trpc|graphql|msw|mocks)/,
-    category: "api",
-  },
-  { pattern: /^skill-(websockets|socket-io|sse)/, category: "api" },
-  // Observability
-  { pattern: /^skill-(posthog|axiom|pino|sentry)/, category: "observability" },
-  // Mobile
-  { pattern: /^skill-(expo|react-native)/, category: "mobile" },
-  // DevOps/CI
-  { pattern: /^skill-github-actions/, category: "devops" },
-  // Tooling
-  { pattern: /^skill-(turborepo|storybook|tooling)/, category: "tooling" },
-  // Security
-  { pattern: /^skill-security/, category: "security" },
-  { pattern: /^skill-(react-hook-form|vee-validate|zod)/, category: "forms" },
-  { pattern: /^skill-(react-intl|next-intl|vue-i18n)/, category: "i18n" },
 ];
 
 export interface MarketplaceOptions {

@@ -171,10 +171,10 @@ const KEY_SUBCATEGORIES = new Set([
  *   }
  * };
  *
- * const aliases = { react: 'web/framework/react (@vince)', ... };
+ * const aliases = { react: 'web-framework-react', ... };
  *
  * const skills = resolveAgentSkillsFromStack('web-developer', stack, aliases);
- * // Returns: [{ id: 'web/framework/react (@vince)', usage: '...', preloaded: true }, ...]
+ * // Returns: [{ id: 'web-framework-react', usage: '...', preloaded: true }, ...]
  * ```
  */
 export function resolveAgentSkillsFromStack(

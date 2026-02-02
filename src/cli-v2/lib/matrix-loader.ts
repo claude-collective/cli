@@ -136,7 +136,7 @@ export async function extractAllSkills(
     const extracted: ExtractedSkillMetadata = {
       id: skillId,
       directoryPath: skillDir,
-      name: `${metadata.cli_name} ${metadata.author}`,
+      name: metadata.cli_name,
       description: metadata.cli_description || frontmatter.description,
       usageGuidance: metadata.usage_guidance,
       category: metadata.category,

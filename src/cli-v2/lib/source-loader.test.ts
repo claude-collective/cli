@@ -148,7 +148,7 @@ describe("source-loader local skills integration", () => {
     );
     await writeFile(
       path.join(skillsDir, "SKILL.md"),
-      `---\nname: my-local-skill (@local)\ndescription: A local skill\n---\nContent`,
+      `---\nname: my-local-skill\ndescription: A local skill\n---\nContent`,
     );
 
     const result = await loadSkillsMatrixFromSource({
@@ -156,11 +156,11 @@ describe("source-loader local skills integration", () => {
       projectDir: tempDir,
     });
 
-    // Local skill should be in the matrix
-    expect(result.matrix.skills["my-local-skill (@local)"]).toBeDefined();
-    const localSkill = result.matrix.skills["my-local-skill (@local)"];
+    // Local skill should be in the matrix with normalized ID
+    expect(result.matrix.skills["my-local-skill"]).toBeDefined();
+    const localSkill = result.matrix.skills["my-local-skill"];
 
-    expect(localSkill.id).toBe("my-local-skill (@local)");
+    expect(localSkill.id).toBe("my-local-skill");
     expect(localSkill.name).toBe("My Local Skill @local");
     expect(localSkill.category).toBe("local/custom");
     expect(localSkill.author).toBe("@local");
@@ -220,7 +220,7 @@ describe("source-loader local skills integration", () => {
     );
     await writeFile(
       path.join(skillsDir, "SKILL.md"),
-      `---\nname: preserve-skill (@local)\ndescription: Preserve test\n---\nContent`,
+      `---\nname: preserve-skill\ndescription: Preserve test\n---\nContent`,
     );
 
     const result = await loadSkillsMatrixFromSource({
@@ -234,8 +234,8 @@ describe("source-loader local skills integration", () => {
     );
     expect(marketplaceSkills.length).toBeGreaterThan(50);
 
-    // Local skill should also be present
-    expect(result.matrix.skills["preserve-skill (@local)"]).toBeDefined();
+    // Local skill should also be present with normalized ID
+    expect(result.matrix.skills["preserve-skill"]).toBeDefined();
   });
 
   it("P1-19: local skill takes precedence over plugin skill with same ID", async () => {
@@ -246,14 +246,14 @@ describe("source-loader local skills integration", () => {
     });
 
     // Pick an existing skill from the marketplace to override
-    // Skill IDs include the full path: web/testing/vitest (@vince)
-    const existingSkillId = "web/testing/vitest (@vince)";
+    // Skill IDs are now normalized: web-testing-vitest
+    const existingSkillId = "web-testing-vitest";
     const existingSkill = initialResult.matrix.skills[existingSkillId];
     expect(existingSkill).toBeDefined();
     expect(existingSkill.local).toBeUndefined(); // Should be a marketplace skill
     const originalDescription = existingSkill.description;
 
-    // Create a local skill with the SAME ID to override it
+    // Create a local skill with the SAME normalized ID to override it
     const skillsDir = path.join(tempDir, ".claude", "skills", "local-vitest");
     await mkdir(skillsDir, { recursive: true });
 
@@ -263,7 +263,7 @@ describe("source-loader local skills integration", () => {
     );
     await writeFile(
       path.join(skillsDir, "SKILL.md"),
-      `---\nname: ${existingSkillId}\ndescription: My custom vitest configuration\n---\nThis is my local override of the vitest skill.`,
+      `---\nname: web-testing-vitest\ndescription: My custom vitest configuration\n---\nThis is my local override of the vitest skill.`,
     );
 
     // Load again with the local skill in place

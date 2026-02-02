@@ -14,7 +14,7 @@ import {
   writePluginManifest,
   getPluginManifestPath,
 } from "./plugin-manifest";
-import { hashSkillFolder, getCurrentDate } from "./versioning";
+import { hashSkillFolder } from "./versioning";
 import { DEFAULT_VERSION } from "../consts";
 import type {
   PluginManifest,
@@ -123,25 +123,32 @@ async function determineVersion(
   };
 }
 
+/**
+ * @deprecated Legacy function - skill names now come from SKILL.md frontmatter.name
+ * Keeping for backwards compatibility with any external callers.
+ */
 export function extractSkillName(skillPath: string): string {
   const dirName = path.basename(skillPath);
-  const withoutAuthor = dirName.replace(/\s*\(@\w+\)$/, "").trim();
-  return sanitizeSkillName(withoutAuthor);
+  return sanitizeSkillName(dirName);
 }
 
+/**
+ * @deprecated Legacy function - categories no longer used with flat directory structure.
+ * Always returns undefined.
+ */
 export function extractCategory(
-  skillPath: string,
-  skillsRoot: string,
+  _skillPath: string,
+  _skillsRoot: string,
 ): string | undefined {
-  const relativePath = path.relative(skillsRoot, skillPath);
-  const parts = relativePath.split(path.sep);
-  return parts.length > 1 ? parts[0] : undefined;
+  return undefined;
 }
 
-export function extractAuthor(skillPath: string): string | undefined {
-  const dirName = path.basename(skillPath);
-  const match = dirName.match(/\(@(\w+)\)$/);
-  return match ? match[1] : undefined;
+/**
+ * @deprecated Legacy function - author info now comes from metadata.yaml.
+ * Always returns undefined.
+ */
+export function extractAuthor(_skillPath: string): string | undefined {
+  return undefined;
 }
 
 async function readSkillMetadata(
@@ -218,15 +225,13 @@ export async function compileSkillPlugin(
 ): Promise<CompiledSkillPlugin> {
   const { skillPath, outputDir, skillName: overrideName } = options;
 
-  const skillName = overrideName ?? extractSkillName(skillPath);
-  const author = extractAuthor(skillPath);
-
-  verbose(`Compiling skill plugin: ${skillName} from ${skillPath}`);
+  // Use directory basename for initial error messages before frontmatter is parsed
+  const dirBasename = path.basename(skillPath);
 
   const skillMdPath = path.join(skillPath, "SKILL.md");
   if (!(await fileExists(skillMdPath))) {
     throw new Error(
-      `Skill '${skillName}' is missing required SKILL.md file. Expected at: ${skillMdPath}`,
+      `Skill '${dirBasename}' is missing required SKILL.md file. Expected at: ${skillMdPath}`,
     );
   }
 
@@ -235,10 +240,16 @@ export async function compileSkillPlugin(
 
   if (!frontmatter) {
     throw new Error(
-      `Skill '${skillName}' has invalid or missing YAML frontmatter in SKILL.md. ` +
+      `Skill '${dirBasename}' has invalid or missing YAML frontmatter in SKILL.md. ` +
         `Required fields: 'name' and 'description'. File: ${skillMdPath}`,
     );
   }
+
+  // Use frontmatter.name as the canonical skill name (source of truth)
+  // Override name takes precedence if explicitly provided
+  const skillName = overrideName ?? sanitizeSkillName(frontmatter.name);
+
+  verbose(`Compiling skill plugin: ${skillName} from ${skillPath}`);
 
   const metadata = await readSkillMetadata(skillPath);
 
@@ -253,7 +264,7 @@ export async function compileSkillPlugin(
   const manifest = generateSkillPluginManifest({
     skillName,
     description: frontmatter.description,
-    author: author ? `@${author}` : metadata?.author,
+    author: metadata?.author,
     version,
     keywords: metadata?.tags,
   });
@@ -309,48 +320,23 @@ export async function compileAllSkillPlugins(
 
   const skillMdFiles = await glob("**/SKILL.md", skillsDir);
 
-  const skillNameMap = new Map<string, string[]>();
   for (const skillMdFile of skillMdFiles) {
     const skillPath = path.join(skillsDir, path.dirname(skillMdFile));
-    const baseName = extractSkillName(skillPath);
-    const existing = skillNameMap.get(baseName) ?? [];
-    existing.push(skillPath);
-    skillNameMap.set(baseName, existing);
-  }
-
-  const collidingNames = new Set<string>();
-  for (const [name, paths] of skillNameMap.entries()) {
-    if (paths.length > 1) {
-      collidingNames.add(name);
-      verbose(`Name collision detected for "${name}": ${paths.length} skills`);
-    }
-  }
-
-  for (const skillMdFile of skillMdFiles) {
-    const skillPath = path.join(skillsDir, path.dirname(skillMdFile));
-    const baseName = extractSkillName(skillPath);
-
-    let skillName = baseName;
-    if (collidingNames.has(baseName)) {
-      const category = extractCategory(skillPath, skillsDir);
-      if (category) {
-        skillName = `${category}-${baseName}`;
-      }
-    }
 
     try {
+      // compileSkillPlugin uses frontmatter.name as the canonical skill name
       const result = await compileSkillPlugin({
         skillPath,
         outputDir,
-        skillName,
       });
       results.push(result);
       console.log(`  [OK] skill-${result.skillName}`);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
+      const dirBasename = path.basename(skillPath);
       console.warn(
-        `  [WARN] Failed to compile skill 'skill-${skillName}' from ${skillPath}: ${errorMessage}`,
+        `  [WARN] Failed to compile skill from ${dirBasename}: ${errorMessage}`,
       );
     }
   }

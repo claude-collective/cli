@@ -46,12 +46,14 @@ export const DEFAULT_DISPLAY_VERSION = "0.0.0";
 /**
  * Skills that are preselected by default in the wizard.
  * These are foundational methodology skills that apply to all projects.
+ *
+ * Note: Skill IDs are in normalized kebab-case format (no author suffix, slashes replaced with dashes).
  */
 export const DEFAULT_PRESELECTED_SKILLS = [
-  "meta/methodology/anti-over-engineering (@vince)",
-  "meta/methodology/context-management (@vince)",
-  "meta/methodology/improvement-protocol (@vince)",
-  "meta/methodology/investigation-requirements (@vince)",
-  "meta/methodology/success-criteria (@vince)",
-  "meta/methodology/write-verification (@vince)",
+  "meta-methodology-anti-over-engineering",
+  "meta-methodology-context-management",
+  "meta-methodology-improvement-protocol",
+  "meta-methodology-investigation-requirements",
+  "meta-methodology-success-criteria",
+  "meta-methodology-write-verification",
 ] as const;

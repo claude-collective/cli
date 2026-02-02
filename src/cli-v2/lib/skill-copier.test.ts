@@ -203,12 +203,13 @@ describe("skill-copier", () => {
       );
 
       // Create remote skill in source location (simulating fetched source)
-      const remoteSkillRelPath = "skills/frontend/framework/react (@vince)/";
+      const remoteSkillRelPath =
+        "skills/frontend/framework/web-framework-react/";
       const remoteSkillDir = path.join(projectDir, "src", remoteSkillRelPath);
       await mkdir(remoteSkillDir, { recursive: true });
       await writeFile(
         path.join(remoteSkillDir, "SKILL.md"),
-        `---\nname: react (@vince)\ndescription: React\n---\nReact content`,
+        `---\nname: web-framework-react\ndescription: React\n---\nReact content`,
       );
       await writeFile(
         path.join(remoteSkillDir, "metadata.yaml"),
@@ -225,8 +226,8 @@ describe("skill-copier", () => {
             localPath: localSkillPath,
           },
         ),
-        "react (@vince)": createMockSkill(
-          "react (@vince)",
+        "web-framework-react": createMockSkill(
+          "web-framework-react",
           "frontend/framework",
           remoteSkillRelPath,
         ),
@@ -244,7 +245,7 @@ describe("skill-copier", () => {
 
       try {
         const result = await copySkillsToPluginFromSource(
-          ["my-local (@local)", "react (@vince)"],
+          ["my-local (@local)", "web-framework-react"],
           pluginDir,
           matrix,
           sourceResult,
@@ -263,7 +264,7 @@ describe("skill-copier", () => {
         expect(localResult?.destPath).toBe(localSkillPath);
 
         // Remote skill should be copied
-        expect(remoteResult?.skillId).toBe("react (@vince)");
+        expect(remoteResult?.skillId).toBe("web-framework-react");
         expect(remoteResult?.local).toBeUndefined();
         expect(remoteResult?.destPath).toContain(pluginDir);
       } finally {
@@ -322,15 +323,15 @@ describe("skill-copier", () => {
   });
 
   describe("copySkillsToLocalFlattened", () => {
-    it("copies skills to flattened structure using alias", async () => {
+    it("copies skills to flattened structure using normalized ID", async () => {
       // Create remote skill in source location
       const remoteSkillRelPath =
-        "skills/frontend/client-state-management/zustand (@vince)/";
+        "skills/frontend/client-state-management/web-state-zustand/";
       const remoteSkillDir = path.join(projectDir, "src", remoteSkillRelPath);
       await mkdir(remoteSkillDir, { recursive: true });
       await writeFile(
         path.join(remoteSkillDir, "SKILL.md"),
-        `---\nname: zustand (@vince)\ndescription: Zustand state management\n---\nZustand content`,
+        `---\nname: web-state-zustand\ndescription: Zustand state management\n---\nZustand content`,
       );
       await writeFile(
         path.join(remoteSkillDir, "metadata.yaml"),
@@ -341,8 +342,8 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        "zustand (@vince)": createMockSkill(
-          "zustand (@vince)",
+        "web-state-zustand": createMockSkill(
+          "web-state-zustand",
           "frontend/state",
           remoteSkillRelPath,
           { alias: "zustand" },
@@ -357,20 +358,22 @@ describe("skill-copier", () => {
       };
 
       const result = await copySkillsToLocalFlattened(
-        ["zustand (@vince)"],
+        ["web-state-zustand"],
         localSkillsDir,
         matrix,
         sourceResult,
       );
 
       expect(result).toHaveLength(1);
-      expect(result[0].skillId).toBe("zustand (@vince)");
-      // Should be flattened to .claude/skills/zustand/ (using alias)
-      expect(result[0].destPath).toBe(path.join(localSkillsDir, "zustand"));
+      expect(result[0].skillId).toBe("web-state-zustand");
+      // Should be flattened to .claude/skills/web-state-zustand/ (using normalized ID)
+      expect(result[0].destPath).toBe(
+        path.join(localSkillsDir, "web-state-zustand"),
+      );
 
       // Verify skill was copied
       const copiedSkillMd = await readFile(
-        path.join(localSkillsDir, "zustand", "SKILL.md"),
+        path.join(localSkillsDir, "web-state-zustand", "SKILL.md"),
         "utf-8",
       );
       expect(copiedSkillMd).toContain("Zustand content");
@@ -378,12 +381,12 @@ describe("skill-copier", () => {
 
     it("copies skills using extracted name when no alias", async () => {
       // Create remote skill without alias
-      const remoteSkillRelPath = "skills/backend/api/hono (@vince)/";
+      const remoteSkillRelPath = "skills/backend/api/api-framework-hono/";
       const remoteSkillDir = path.join(projectDir, "src", remoteSkillRelPath);
       await mkdir(remoteSkillDir, { recursive: true });
       await writeFile(
         path.join(remoteSkillDir, "SKILL.md"),
-        `---\nname: hono (@vince)\ndescription: Hono API\n---\nHono content`,
+        `---\nname: api-framework-hono\ndescription: Hono API\n---\nHono content`,
       );
       await writeFile(
         path.join(remoteSkillDir, "metadata.yaml"),
@@ -394,8 +397,8 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        "hono (@vince)": createMockSkill(
-          "hono (@vince)",
+        "api-framework-hono": createMockSkill(
+          "api-framework-hono",
           "backend/api",
           remoteSkillRelPath,
           // No alias
@@ -410,15 +413,17 @@ describe("skill-copier", () => {
       };
 
       const result = await copySkillsToLocalFlattened(
-        ["hono (@vince)"],
+        ["api-framework-hono"],
         localSkillsDir,
         matrix,
         sourceResult,
       );
 
       expect(result).toHaveLength(1);
-      // Should extract "hono" from "hono (@vince)"
-      expect(result[0].destPath).toBe(path.join(localSkillsDir, "hono"));
+      // With normalized IDs, the full ID is used as the folder name when no alias
+      expect(result[0].destPath).toBe(
+        path.join(localSkillsDir, "api-framework-hono"),
+      );
     });
 
     it("skips local skills and does not copy them", async () => {
@@ -485,12 +490,13 @@ describe("skill-copier", () => {
       );
 
       // Create remote skill
-      const remoteSkillRelPath = "skills/frontend/framework/react (@vince)/";
+      const remoteSkillRelPath =
+        "skills/frontend/framework/web-framework-react/";
       const remoteSkillDir = path.join(projectDir, "src", remoteSkillRelPath);
       await mkdir(remoteSkillDir, { recursive: true });
       await writeFile(
         path.join(remoteSkillDir, "SKILL.md"),
-        `---\nname: react (@vince)\ndescription: React\n---\nReact content`,
+        `---\nname: web-framework-react\ndescription: React\n---\nReact content`,
       );
       await writeFile(
         path.join(remoteSkillDir, "metadata.yaml"),
@@ -509,8 +515,8 @@ describe("skill-copier", () => {
             localPath: localSkillPath,
           },
         ),
-        "react (@vince)": createMockSkill(
-          "react (@vince)",
+        "web-framework-react": createMockSkill(
+          "web-framework-react",
           "frontend/framework",
           remoteSkillRelPath,
           { alias: "react" },
@@ -529,7 +535,7 @@ describe("skill-copier", () => {
 
       try {
         const result = await copySkillsToLocalFlattened(
-          ["my-local (@local)", "react (@vince)"],
+          ["my-local (@local)", "web-framework-react"],
           localSkillsDir,
           matrix,
           sourceResult,
@@ -545,9 +551,11 @@ describe("skill-copier", () => {
         expect(localResult?.skillId).toBe("my-local (@local)");
         expect(localResult?.local).toBe(true);
 
-        // Remote skill should be copied to flattened location
-        expect(remoteResult?.skillId).toBe("react (@vince)");
-        expect(remoteResult?.destPath).toBe(path.join(localSkillsDir, "react"));
+        // Remote skill should be copied to flattened location using normalized ID
+        expect(remoteResult?.skillId).toBe("web-framework-react");
+        expect(remoteResult?.destPath).toBe(
+          path.join(localSkillsDir, "web-framework-react"),
+        );
       } finally {
         process.chdir(originalCwd);
       }
@@ -578,15 +586,15 @@ describe("skill-copier", () => {
 
     it("P1-20: flattens deeply nested directory structures", async () => {
       // Create a skill with a deeply nested path like:
-      // skills/web/framework/react (@vince)/
-      // This should be flattened to: .claude/skills/react/
+      // skills/web/framework/web-framework-react/
+      // This should be flattened to: .claude/skills/web-framework-react/
       const deeplyNestedPath =
-        "skills/web/framework/client-rendering/react (@vince)/";
+        "skills/web/framework/client-rendering/web-framework-react/";
       const remoteSkillDir = path.join(projectDir, "src", deeplyNestedPath);
       await mkdir(remoteSkillDir, { recursive: true });
       await writeFile(
         path.join(remoteSkillDir, "SKILL.md"),
-        `---\nname: react (@vince)\ndescription: React framework\n---\nReact content from deeply nested dir`,
+        `---\nname: web-framework-react\ndescription: React framework\n---\nReact content from deeply nested dir`,
       );
       await writeFile(
         path.join(remoteSkillDir, "metadata.yaml"),
@@ -597,11 +605,10 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        "react (@vince)": createMockSkill(
-          "react (@vince)",
+        "web-framework-react": createMockSkill(
+          "web-framework-react",
           "web/framework/client-rendering",
           deeplyNestedPath,
-          { alias: "react" },
         ),
       });
 
@@ -613,20 +620,22 @@ describe("skill-copier", () => {
       };
 
       const result = await copySkillsToLocalFlattened(
-        ["react (@vince)"],
+        ["web-framework-react"],
         localSkillsDir,
         matrix,
         sourceResult,
       );
 
       expect(result).toHaveLength(1);
-      // Key assertion: destPath should be FLAT, not nested
-      // The path should be ".claude/skills/react", NOT ".claude/skills/web/framework/client-rendering/react (@vince)/"
-      expect(result[0].destPath).toBe(path.join(localSkillsDir, "react"));
+      // Key assertion: destPath should be FLAT using normalized ID, not nested
+      // The path should be ".claude/skills/web-framework-react", NOT ".claude/skills/web/framework/client-rendering/web-framework-react/"
+      expect(result[0].destPath).toBe(
+        path.join(localSkillsDir, "web-framework-react"),
+      );
 
       // Verify the skill was actually copied to the flat location
       const copiedSkillMd = await readFile(
-        path.join(localSkillsDir, "react", "SKILL.md"),
+        path.join(localSkillsDir, "web-framework-react", "SKILL.md"),
         "utf-8",
       );
       expect(copiedSkillMd).toContain("React content from deeply nested dir");
@@ -637,7 +646,7 @@ describe("skill-copier", () => {
         "web",
         "framework",
         "client-rendering",
-        "react (@vince)",
+        "web-framework-react",
       );
       let nestedExists = false;
       try {
@@ -651,36 +660,36 @@ describe("skill-copier", () => {
 
     it("P1-20: flattens multiple skills from different nested directories", async () => {
       // Create skills from different nested paths
-      const reactPath = "skills/frontend/framework/react (@vince)/";
+      const reactPath = "skills/frontend/framework/web-framework-react/";
       const reactDir = path.join(projectDir, "src", reactPath);
       await mkdir(reactDir, { recursive: true });
       await writeFile(
         path.join(reactDir, "SKILL.md"),
-        `---\nname: react (@vince)\ndescription: React\n---\nReact`,
+        `---\nname: web-framework-react\ndescription: React\n---\nReact`,
       );
       await writeFile(
         path.join(reactDir, "metadata.yaml"),
         `cli_name: React\nauthor: "@vince"`,
       );
 
-      const honoPath = "skills/backend/api/hono (@vince)/";
+      const honoPath = "skills/backend/api/api-framework-hono/";
       const honoDir = path.join(projectDir, "src", honoPath);
       await mkdir(honoDir, { recursive: true });
       await writeFile(
         path.join(honoDir, "SKILL.md"),
-        `---\nname: hono (@vince)\ndescription: Hono\n---\nHono`,
+        `---\nname: api-framework-hono\ndescription: Hono\n---\nHono`,
       );
       await writeFile(
         path.join(honoDir, "metadata.yaml"),
         `cli_name: Hono\nauthor: "@vince"`,
       );
 
-      const vitestPath = "skills/testing/unit/vitest (@vince)/";
+      const vitestPath = "skills/testing/unit/web-testing-vitest/";
       const vitestDir = path.join(projectDir, "src", vitestPath);
       await mkdir(vitestDir, { recursive: true });
       await writeFile(
         path.join(vitestDir, "SKILL.md"),
-        `---\nname: vitest (@vince)\ndescription: Vitest\n---\nVitest`,
+        `---\nname: web-testing-vitest\ndescription: Vitest\n---\nVitest`,
       );
       await writeFile(
         path.join(vitestDir, "metadata.yaml"),
@@ -691,20 +700,20 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        "react (@vince)": createMockSkill(
-          "react (@vince)",
+        "web-framework-react": createMockSkill(
+          "web-framework-react",
           "frontend/framework",
           reactPath,
           { alias: "react" },
         ),
-        "hono (@vince)": createMockSkill(
-          "hono (@vince)",
+        "api-framework-hono": createMockSkill(
+          "api-framework-hono",
           "backend/api",
           honoPath,
           { alias: "hono" },
         ),
-        "vitest (@vince)": createMockSkill(
-          "vitest (@vince)",
+        "web-testing-vitest": createMockSkill(
+          "web-testing-vitest",
           "testing/unit",
           vitestPath,
           { alias: "vitest" },
@@ -719,7 +728,7 @@ describe("skill-copier", () => {
       };
 
       const result = await copySkillsToLocalFlattened(
-        ["react (@vince)", "hono (@vince)", "vitest (@vince)"],
+        ["web-framework-react", "api-framework-hono", "web-testing-vitest"],
         localSkillsDir,
         matrix,
         sourceResult,
@@ -727,23 +736,29 @@ describe("skill-copier", () => {
 
       expect(result).toHaveLength(3);
 
-      // All skills should be at the same flat level
+      // All skills should be at the same flat level using normalized IDs
       const destPaths = result.map((r) => r.destPath);
-      expect(destPaths).toContain(path.join(localSkillsDir, "react"));
-      expect(destPaths).toContain(path.join(localSkillsDir, "hono"));
-      expect(destPaths).toContain(path.join(localSkillsDir, "vitest"));
+      expect(destPaths).toContain(
+        path.join(localSkillsDir, "web-framework-react"),
+      );
+      expect(destPaths).toContain(
+        path.join(localSkillsDir, "api-framework-hono"),
+      );
+      expect(destPaths).toContain(
+        path.join(localSkillsDir, "web-testing-vitest"),
+      );
 
       // Verify all skills exist at their flat locations
       const reactContent = await readFile(
-        path.join(localSkillsDir, "react", "SKILL.md"),
+        path.join(localSkillsDir, "web-framework-react", "SKILL.md"),
         "utf-8",
       );
       const honoContent = await readFile(
-        path.join(localSkillsDir, "hono", "SKILL.md"),
+        path.join(localSkillsDir, "api-framework-hono", "SKILL.md"),
         "utf-8",
       );
       const vitestContent = await readFile(
-        path.join(localSkillsDir, "vitest", "SKILL.md"),
+        path.join(localSkillsDir, "web-testing-vitest", "SKILL.md"),
         "utf-8",
       );
 
@@ -754,12 +769,12 @@ describe("skill-copier", () => {
 
     it("P1-20: uses skill ID name when no alias is provided", async () => {
       // Create a skill without an alias - should extract name from skill ID
-      const nestedPath = "skills/tooling/bundler/vite (@vince)/";
+      const nestedPath = "skills/tooling/bundler/web-tooling-vite/";
       const skillDir = path.join(projectDir, "src", nestedPath);
       await mkdir(skillDir, { recursive: true });
       await writeFile(
         path.join(skillDir, "SKILL.md"),
-        `---\nname: vite (@vince)\ndescription: Vite bundler\n---\nVite`,
+        `---\nname: web-tooling-vite\ndescription: Vite bundler\n---\nVite`,
       );
       await writeFile(
         path.join(skillDir, "metadata.yaml"),
@@ -770,8 +785,8 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        "vite (@vince)": createMockSkill(
-          "vite (@vince)",
+        "web-tooling-vite": createMockSkill(
+          "web-tooling-vite",
           "tooling/bundler",
           nestedPath,
           // No alias!
@@ -786,15 +801,17 @@ describe("skill-copier", () => {
       };
 
       const result = await copySkillsToLocalFlattened(
-        ["vite (@vince)"],
+        ["web-tooling-vite"],
         localSkillsDir,
         matrix,
         sourceResult,
       );
 
       expect(result).toHaveLength(1);
-      // Should extract "vite" from "vite (@vince)" since no alias
-      expect(result[0].destPath).toBe(path.join(localSkillsDir, "vite"));
+      // With normalized IDs, the full ID is used as the folder name when no alias
+      expect(result[0].destPath).toBe(
+        path.join(localSkillsDir, "web-tooling-vite"),
+      );
     });
   });
 });

@@ -76,7 +76,11 @@ const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
     <Box flexDirection="column">
       <Text bold>Select a pre-built template:</Text>
       <Box marginTop={1}>
-        <Select options={options} onChange={handleSelect} />
+        <Select
+          options={options}
+          onChange={handleSelect}
+          visibleOptionCount={options.length}
+        />
       </Box>
       <Box marginTop={1}>
         <Text dimColor>

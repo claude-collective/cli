@@ -14,7 +14,7 @@ export interface SkillDefinition {
   path: string;
   name: string;
   description: string;
-  /** Canonical skill ID from frontmatter (e.g., "frontend/react (@vince)") */
+  /** Canonical skill ID from frontmatter (e.g., "web-framework-react") */
   canonicalId: string;
 }
 
@@ -376,11 +376,11 @@ export interface ProjectConfig {
    * ```yaml
    * stack:
    *   web-developer:
-   *     framework: web/framework/react (@vince)
-   *     styling: web/styling/scss-modules (@vince)
+   *     framework: web-framework-react
+   *     styling: web-styling-scss-modules
    *   api-developer:
-   *     api: api/framework/hono (@vince)
-   *     database: api/database/drizzle (@vince)
+   *     api: api-framework-hono
+   *     database: api-database-drizzle
    * ```
    */
   stack?: Record<string, Record<string, string>>;
@@ -399,7 +399,7 @@ export interface ProjectConfig {
  * Use stack-based skill configuration instead.
  */
 export interface AgentSkillEntry {
-  /** Full skill ID (e.g., "react (@vince)") */
+  /** Full skill ID (e.g., "web-framework-react") */
   id: string;
   /** Whether to embed skill content in compiled agent. Default: false */
   preloaded: boolean;

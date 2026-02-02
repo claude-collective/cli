@@ -19,8 +19,8 @@ export interface SkillsMatrixConfig {
   suggested_stacks?: SuggestedStack[];
 
   /**
-   * Maps short alias names to full skill IDs
-   * @example { "react": "react (@vince)", "zustand": "zustand (@vince)" }
+   * Maps short alias names to normalized skill IDs
+   * @example { "react": "web-framework-react", "zustand": "web-state-zustand" }
    */
   skill_aliases: Record<string, string>;
 }
@@ -202,9 +202,9 @@ export interface SuggestedStack {
  */
 export interface ExtractedSkillMetadata {
   /**
-   * Unique skill identifier (from frontmatter name)
-   * Format: "skill-name (@author)"
-   * @example "react (@vince)"
+   * Unique skill identifier (normalized from frontmatter name)
+   * Format: "category-subcategory-name" (kebab-case, no author suffix)
+   * @example "web-framework-react"
    */
   id: string;
 
@@ -314,14 +314,14 @@ export interface MergedSkillsMatrix {
   suggestedStacks: ResolvedStack[];
 
   /**
-   * Alias lookup map (alias -> full skill ID)
-   * @example { "react": "react (@vince)" }
+   * Alias lookup map (alias -> normalized skill ID)
+   * @example { "react": "web-framework-react" }
    */
   aliases: Record<string, string>;
 
   /**
-   * Reverse alias lookup (full skill ID -> alias)
-   * @example { "react (@vince)": "react" }
+   * Reverse alias lookup (normalized skill ID -> alias)
+   * @example { "web-framework-react": "react" }
    */
   aliasesReverse: Record<string, string>;
 
@@ -331,12 +331,12 @@ export interface MergedSkillsMatrix {
 
 /** Single skill with all computed relationships resolved for CLI rendering */
 export interface ResolvedSkill {
-  /** Full unique identifier: "zustand (@vince)" */
+  /** Full unique identifier in normalized format: "web-state-zustand" */
   id: string;
 
   /**
    * Short alias if defined in skill_aliases
-   * @example "zustand" for "zustand (@vince)"
+   * @example "zustand" for "web-state-zustand"
    */
   alias?: string;
 
