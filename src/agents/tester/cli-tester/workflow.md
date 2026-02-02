@@ -164,10 +164,10 @@ describe("WizardStore", () => {
   it("should track navigation history", () => {
     const store = useWizardStore.getState();
 
-    store.setStep("category");
+    store.setStep("stack");
     store.setStep("confirm");
 
-    expect(useWizardStore.getState().history).toEqual(["approach", "category"]);
+    expect(useWizardStore.getState().history).toEqual(["approach", "stack"]);
   });
 });
 ```

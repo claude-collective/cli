@@ -19,6 +19,7 @@ Three directories work together:
 | [data-models.md](./data-models.md)   | Type definitions, schemas, data structures           |
 | [workflows.md](./workflows.md)       | Common workflows and use cases                       |
 | [known-issues.md](./known-issues.md) | Incomplete features, TODOs, limitations              |
+| [wizard-index.md](./wizard-index.md) | **Phase 7 Wizard UX** - architecture, components, flows |
 
 ## Quick Reference
 
