@@ -13,8 +13,7 @@ export const StepApproach: React.FC = () => {
     toggleExpertMode,
     toggleInstallMode,
     setStep,
-    setLastSelectedApproach,
-    lastSelectedApproach,
+    setApproach,
   } = useWizardStore();
 
   // Build options matching the original wizard
@@ -43,25 +42,22 @@ export const StepApproach: React.FC = () => {
   const handleSelect = (value: string) => {
     // Handle mode toggles - stay on this step
     if (value === EXPERT_MODE_VALUE) {
-      setLastSelectedApproach(EXPERT_MODE_VALUE);
       toggleExpertMode();
       return;
     }
 
     if (value === INSTALL_MODE_VALUE) {
-      setLastSelectedApproach(INSTALL_MODE_VALUE);
       toggleInstallMode();
       return;
     }
 
-    // Clear lastSelectedApproach when moving to a new step
-    setLastSelectedApproach(null);
-
-    // Navigate to next step
+    // Navigate to next step based on approach
     if (value === "stack") {
+      setApproach("stack");
       setStep("stack");
     } else if (value === "scratch") {
-      setStep("category");
+      setApproach("scratch");
+      setStep("stack"); // Goes to domain selection in scratch mode
     }
   };
 
@@ -86,11 +82,12 @@ export const StepApproach: React.FC = () => {
 
       <Text>How would you like to set up your stack?</Text>
       <Box marginTop={1}>
-        <Select
-          options={options}
-          defaultValue={lastSelectedApproach || undefined}
-          onChange={handleSelect}
-        />
+        <Select options={options} onChange={handleSelect} />
+      </Box>
+      <Box marginTop={1}>
+        <Text dimColor>
+          {"\u2191"}/{"\u2193"} navigate   ENTER select   ESC cancel
+        </Text>
       </Box>
     </Box>
   );

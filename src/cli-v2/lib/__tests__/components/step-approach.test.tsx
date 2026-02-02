@@ -101,11 +101,12 @@ describe("StepApproach component", () => {
       await stdin.write(ENTER);
       await delay(SELECT_NAV_DELAY_MS);
 
-      const { step } = useWizardStore.getState();
+      const { step, approach } = useWizardStore.getState();
       expect(step).toBe("stack");
+      expect(approach).toBe("stack");
     });
 
-    it("should navigate to category step when selecting scratch", async () => {
+    it("should navigate to stack step (domain selection) when selecting scratch", async () => {
       const { stdin, unmount } = render(<StepApproach />);
       cleanup = unmount;
 
@@ -118,8 +119,9 @@ describe("StepApproach component", () => {
       await stdin.write(ENTER);
       await delay(SELECT_NAV_DELAY_MS);
 
-      const { step } = useWizardStore.getState();
-      expect(step).toBe("category");
+      const { step, approach } = useWizardStore.getState();
+      expect(step).toBe("stack"); // Goes to stack step for domain selection
+      expect(approach).toBe("scratch");
     });
   });
 
@@ -252,8 +254,9 @@ describe("StepApproach component", () => {
       await stdin.write(ENTER);
       await delay(SELECT_NAV_DELAY_MS);
 
-      const { step } = useWizardStore.getState();
-      expect(step).toBe("category");
+      const { step, approach } = useWizardStore.getState();
+      expect(step).toBe("stack"); // Goes to stack step for domain selection
+      expect(approach).toBe("scratch");
     });
 
     it("should navigate up through options", async () => {
@@ -274,46 +277,9 @@ describe("StepApproach component", () => {
       await stdin.write(ENTER);
       await delay(SELECT_NAV_DELAY_MS);
 
-      const { step } = useWizardStore.getState();
-      expect(step).toBe("category");
-    });
-  });
-
-  // ===========================================================================
-  // State Persistence
-  // ===========================================================================
-
-  describe("state persistence", () => {
-    it("should remember last selected approach for toggles", async () => {
-      const { stdin, unmount } = render(<StepApproach />);
-      cleanup = unmount;
-
-      await delay(RENDER_DELAY_MS);
-
-      // Select expert mode (stays on page)
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ENTER);
-      await delay(RENDER_DELAY_MS);
-
-      const { lastSelectedApproach } = useWizardStore.getState();
-      expect(lastSelectedApproach).toBe("__expert_mode__");
-    });
-
-    it("should clear last selected approach when navigating to stack", async () => {
-      const { stdin, unmount } = render(<StepApproach />);
-      cleanup = unmount;
-
-      await delay(RENDER_DELAY_MS);
-
-      // Select template (navigates away)
-      await stdin.write(ENTER);
-      await delay(SELECT_NAV_DELAY_MS);
-
-      const { lastSelectedApproach } = useWizardStore.getState();
-      expect(lastSelectedApproach).toBeNull();
+      const { step, approach } = useWizardStore.getState();
+      expect(step).toBe("stack"); // Goes to stack step for domain selection
+      expect(approach).toBe("scratch");
     });
   });
 });

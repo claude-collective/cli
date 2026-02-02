@@ -1,26 +1,17 @@
 /**
  * Tests for the StepConfirm wizard component.
  *
- * Tests rendering of selected skills and validation display.
- *
- * Note: Select component requires initial render delay before accepting input.
+ * Tests rendering and keyboard navigation for the confirm step.
  */
 import React from "react";
 import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StepConfirm } from "../../../components/wizard/step-confirm";
 import { useWizardStore } from "../../../stores/wizard-store";
-import {
-  createMockMatrix,
-  createMockMatrixWithMethodology,
-  createMockSkill,
-} from "../helpers";
+import { createMockMatrix, createMockSkill } from "../helpers";
 import { TEST_SKILLS, TEST_CATEGORIES } from "../test-fixtures";
 import type { MergedSkillsMatrix } from "../../../types-matrix";
-import { ARROW_DOWN, ENTER, RENDER_DELAY_MS, delay } from "../test-constants";
-
-// Delay between arrow key presses for Select component
-const SELECT_NAV_DELAY_MS = 100;
+import { ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../test-constants";
 
 // =============================================================================
 // Mock Data
@@ -45,7 +36,7 @@ const createTestMatrix = (): MergedSkillsMatrix => {
     ),
   };
 
-  return createMockMatrixWithMethodology(skills, {
+  return createMockMatrix(skills, {
     categories: {
       [TEST_CATEGORIES.FRAMEWORK]: {
         id: TEST_CATEGORIES.FRAMEWORK,
@@ -94,284 +85,372 @@ describe("StepConfirm component", () => {
   });
 
   // ===========================================================================
-  // Rendering
+  // Stack Path
   // ===========================================================================
 
-  describe("rendering", () => {
-    it("should render selected skills header", () => {
+  describe("stack path", () => {
+    it("should render stack name in title", () => {
       const onComplete = vi.fn();
+      const onBack = vi.fn();
+
       const { lastFrame, unmount } = render(
-        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
+        <StepConfirm
+          matrix={mockMatrix}
+          onComplete={onComplete}
+          stackName="nextjs-fullstack"
+          technologyCount={12}
+          skillCount={12}
+          installMode="plugin"
+          onBack={onBack}
+        />,
       );
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Selected Skills");
+      expect(output).toContain("Ready to install nextjs-fullstack");
     });
 
-    it("should render preselected methodology skills", () => {
-      // Methodology skills are preselected by default and should render
+    it("should show technology count", () => {
       const onComplete = vi.fn();
+      const onBack = vi.fn();
+
       const { lastFrame, unmount } = render(
-        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
+        <StepConfirm
+          matrix={mockMatrix}
+          onComplete={onComplete}
+          stackName="nextjs-fullstack"
+          technologyCount={12}
+          skillCount={12}
+          installMode="plugin"
+          onBack={onBack}
+        />,
       );
       cleanup = unmount;
 
       const output = lastFrame();
-      // Preselected methodology skills should render
-      expect(output).toContain("Selected Skills");
-      expect(output).toContain("Anti-Over-Engineering"); // Skill name
-      expect(output).not.toContain("No skills selected");
+      expect(output).toContain("Technologies:");
+      expect(output).toContain("12");
     });
 
-    it("should render selected skill names", () => {
-      // Select some skills first
-      const store = useWizardStore.getState();
-      store.toggleSkill(TEST_SKILLS.REACT);
-      store.toggleSkill(TEST_SKILLS.ZUSTAND);
-
+    it("should show skill count with verified label", () => {
       const onComplete = vi.fn();
+      const onBack = vi.fn();
+
       const { lastFrame, unmount } = render(
-        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
+        <StepConfirm
+          matrix={mockMatrix}
+          onComplete={onComplete}
+          stackName="nextjs-fullstack"
+          technologyCount={12}
+          skillCount={12}
+          installMode="plugin"
+          onBack={onBack}
+        />,
       );
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("React");
-      expect(output).toContain("Zustand");
+      expect(output).toContain("Skills:");
+      expect(output).toContain("(all verified)");
     });
 
-    it("should render category info for skills", () => {
-      const store = useWizardStore.getState();
-      store.toggleSkill(TEST_SKILLS.REACT);
-
+    it("should show install mode as Plugin", () => {
       const onComplete = vi.fn();
+      const onBack = vi.fn();
+
       const { lastFrame, unmount } = render(
-        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
+        <StepConfirm
+          matrix={mockMatrix}
+          onComplete={onComplete}
+          stackName="nextjs-fullstack"
+          technologyCount={12}
+          skillCount={12}
+          installMode="plugin"
+          onBack={onBack}
+        />,
       );
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Framework");
+      expect(output).toContain("Install mode:");
+      expect(output).toContain("Plugin");
     });
 
-    it("should render back option", () => {
+    it("should show install mode as Local", () => {
       const onComplete = vi.fn();
+      const onBack = vi.fn();
+
       const { lastFrame, unmount } = render(
-        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
+        <StepConfirm
+          matrix={mockMatrix}
+          onComplete={onComplete}
+          stackName="nextjs-fullstack"
+          technologyCount={12}
+          skillCount={12}
+          installMode="local"
+          onBack={onBack}
+        />,
       );
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Back");
+      expect(output).toContain("Install mode:");
+      expect(output).toContain("Local");
+    });
+
+    it("should show keyboard hints", () => {
+      const onComplete = vi.fn();
+      const onBack = vi.fn();
+
+      const { lastFrame, unmount } = render(
+        <StepConfirm
+          matrix={mockMatrix}
+          onComplete={onComplete}
+          stackName="nextjs-fullstack"
+          technologyCount={12}
+          skillCount={12}
+          installMode="plugin"
+          onBack={onBack}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("ENTER confirm");
+      expect(output).toContain("ESC back");
     });
   });
 
   // ===========================================================================
-  // Confirmation Flow
+  // Scratch Path
   // ===========================================================================
 
-  describe("confirmation flow", () => {
-    it("should show confirm option when selection is valid", () => {
-      const store = useWizardStore.getState();
-      store.toggleSkill(TEST_SKILLS.REACT);
-
+  describe("scratch path", () => {
+    it("should render custom stack title with domain names", () => {
       const onComplete = vi.fn();
+      const onBack = vi.fn();
+
       const { lastFrame, unmount } = render(
-        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
+        <StepConfirm
+          matrix={mockMatrix}
+          onComplete={onComplete}
+          selectedDomains={["web", "api"]}
+          domainSelections={{
+            web: { framework: ["react"], styling: ["scss-modules"] },
+            api: { "api-framework": ["hono"] },
+          }}
+          technologyCount={3}
+          skillCount={3}
+          installMode="local"
+          onBack={onBack}
+        />,
       );
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Confirm");
+      expect(output).toContain("Ready to install your custom stack");
+      expect(output).toContain("Web + API");
     });
 
-    it("should call onComplete when confirm is selected", async () => {
-      const store = useWizardStore.getState();
-      store.toggleSkill(TEST_SKILLS.REACT);
-
+    it("should show domain breakdown with technologies", () => {
       const onComplete = vi.fn();
+      const onBack = vi.fn();
+
+      const { lastFrame, unmount } = render(
+        <StepConfirm
+          matrix={mockMatrix}
+          onComplete={onComplete}
+          selectedDomains={["web", "api"]}
+          domainSelections={{
+            web: { framework: ["react"], styling: ["scss-modules"] },
+            api: { "api-framework": ["hono"] },
+          }}
+          technologyCount={3}
+          skillCount={3}
+          installMode="local"
+          onBack={onBack}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Web:");
+      expect(output).toContain("react");
+      expect(output).toContain("scss-modules");
+      expect(output).toContain("API:");
+      expect(output).toContain("hono");
+    });
+
+    it("should handle single domain without plus sign", () => {
+      const onComplete = vi.fn();
+      const onBack = vi.fn();
+
+      const { lastFrame, unmount } = render(
+        <StepConfirm
+          matrix={mockMatrix}
+          onComplete={onComplete}
+          selectedDomains={["web"]}
+          domainSelections={{
+            web: { framework: ["react"] },
+          }}
+          technologyCount={1}
+          skillCount={1}
+          installMode="local"
+          onBack={onBack}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("(Web)");
+      expect(output).not.toContain("+");
+    });
+
+    it("should skip domains with no selections", () => {
+      const onComplete = vi.fn();
+      const onBack = vi.fn();
+
+      const { lastFrame, unmount } = render(
+        <StepConfirm
+          matrix={mockMatrix}
+          onComplete={onComplete}
+          selectedDomains={["web", "api"]}
+          domainSelections={{
+            web: { framework: ["react"] },
+            api: {}, // Empty selections
+          }}
+          technologyCount={1}
+          skillCount={1}
+          installMode="local"
+          onBack={onBack}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Web:");
+      expect(output).toContain("react");
+      // API section should not appear since no technologies selected
+      const lines = output?.split("\n") || [];
+      const apiLine = lines.find((line) => line.includes("API:") && line.includes("hono"));
+      expect(apiLine).toBeUndefined();
+    });
+  });
+
+  // ===========================================================================
+  // Keyboard Navigation
+  // ===========================================================================
+
+  describe("keyboard navigation", () => {
+    it("should call onComplete when Enter is pressed", async () => {
+      const onComplete = vi.fn();
+      const onBack = vi.fn();
+
       const { stdin, unmount } = render(
-        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
+        <StepConfirm
+          matrix={mockMatrix}
+          onComplete={onComplete}
+          stackName="nextjs-fullstack"
+          technologyCount={12}
+          skillCount={12}
+          installMode="plugin"
+          onBack={onBack}
+        />,
       );
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
-
-      // Navigate to confirm (skip back)
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
       await stdin.write(ENTER);
-      await delay(SELECT_NAV_DELAY_MS);
+      await delay(RENDER_DELAY_MS);
 
       expect(onComplete).toHaveBeenCalled();
     });
 
-    it("should show confirmation question text", () => {
-      const store = useWizardStore.getState();
-      store.toggleSkill(TEST_SKILLS.REACT);
-
+    it("should call onBack when Escape is pressed", async () => {
       const onComplete = vi.fn();
-      const { lastFrame, unmount } = render(
-        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
-      );
-      cleanup = unmount;
+      const onBack = vi.fn();
 
-      const output = lastFrame();
-      expect(output).toContain("Confirm your selection");
-    });
-  });
-
-  // ===========================================================================
-  // Back Navigation
-  // ===========================================================================
-
-  describe("back navigation", () => {
-    it("should call goBack when back option is first in list", () => {
-      // Test that the back option renders first
-      const store = useWizardStore.getState();
-      store.toggleSkill(TEST_SKILLS.REACT);
-
-      const onComplete = vi.fn();
-      const { lastFrame, unmount } = render(
-        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
-      );
-      cleanup = unmount;
-
-      const output = lastFrame();
-      // Verify back is the first option (indicated by cursor ">")
-      const lines = output?.split("\n") || [];
-      const backLine = lines.find((line) => line.includes("Back"));
-      expect(backLine).toBeDefined();
-    });
-
-    it("should not call onComplete when going back", async () => {
-      const store = useWizardStore.getState();
-      store.setStep("confirm");
-
-      const onComplete = vi.fn();
       const { stdin, unmount } = render(
-        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
+        <StepConfirm
+          matrix={mockMatrix}
+          onComplete={onComplete}
+          stackName="nextjs-fullstack"
+          technologyCount={12}
+          skillCount={12}
+          installMode="plugin"
+          onBack={onBack}
+        />,
       );
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
+      await stdin.write(ESCAPE);
+      await delay(RENDER_DELAY_MS);
 
-      await stdin.write(ENTER);
-      await delay(SELECT_NAV_DELAY_MS);
+      expect(onBack).toHaveBeenCalled();
+      expect(onComplete).not.toHaveBeenCalled();
+    });
 
+    it("should not call onBack when Escape is pressed but onBack is not provided", async () => {
+      const onComplete = vi.fn();
+
+      const { stdin, unmount } = render(
+        <StepConfirm
+          matrix={mockMatrix}
+          onComplete={onComplete}
+          stackName="nextjs-fullstack"
+          technologyCount={12}
+          skillCount={12}
+          installMode="plugin"
+          // No onBack provided
+        />,
+      );
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      await stdin.write(ESCAPE);
+      await delay(RENDER_DELAY_MS);
+
+      // Should not crash and onComplete should not be called
       expect(onComplete).not.toHaveBeenCalled();
     });
   });
 
   // ===========================================================================
-  // Multiple Skills Display
+  // Default Props
   // ===========================================================================
 
-  describe("multiple skills display", () => {
-    it("should display all selected skills", () => {
-      const store = useWizardStore.getState();
-      store.toggleSkill(TEST_SKILLS.REACT);
-      store.toggleSkill(TEST_SKILLS.ZUSTAND);
-      store.toggleSkill(TEST_SKILLS.VITEST);
-
+  describe("default props", () => {
+    it("should render custom stack title when no stack name provided", () => {
       const onComplete = vi.fn();
+
       const { lastFrame, unmount } = render(
-        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
+        <StepConfirm
+          matrix={mockMatrix}
+          onComplete={onComplete}
+        />,
       );
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("React");
-      expect(output).toContain("Zustand");
-      expect(output).toContain("Vitest");
+      expect(output).toContain("Ready to install your custom stack");
     });
 
-    it("should show green plus indicator for each skill", () => {
-      const store = useWizardStore.getState();
-      store.toggleSkill(TEST_SKILLS.REACT);
-
+    it("should not show stats when not provided", () => {
       const onComplete = vi.fn();
+
       const { lastFrame, unmount } = render(
-        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
+        <StepConfirm
+          matrix={mockMatrix}
+          onComplete={onComplete}
+        />,
       );
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("+");
-    });
-  });
-
-  // ===========================================================================
-  // Validation Display
-  // ===========================================================================
-
-  describe("validation display", () => {
-    it("should show valid state when preselected skills exist", () => {
-      // With preselected skills, validation passes even if they're not in matrix
-      const onComplete = vi.fn();
-      const { lastFrame, unmount } = render(
-        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
-      );
-      cleanup = unmount;
-
-      const output = lastFrame();
-      // Preselected skills are selected, so validation should pass
-      // and confirm option should appear
-      expect(output).toContain("Confirm");
-    });
-
-    it("should show confirm option since preselected skills are valid", () => {
-      // With preselected skills, validation passes so confirm appears
-      const onComplete = vi.fn();
-      const { lastFrame, unmount } = render(
-        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
-      );
-      cleanup = unmount;
-
-      const output = lastFrame();
-      // Confirm option appears because preselected skills are valid
-      expect(output).toContain("Confirm");
-      expect(output).toContain("Back");
-    });
-  });
-
-  // ===========================================================================
-  // Edge Cases
-  // ===========================================================================
-
-  describe("edge cases", () => {
-    it("should handle skills not in matrix gracefully", () => {
-      const store = useWizardStore.getState();
-      store.toggleSkill("nonexistent-skill (@test)");
-
-      const onComplete = vi.fn();
-      const { lastFrame, unmount } = render(
-        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
-      );
-      cleanup = unmount;
-
-      // Should not crash
-      const output = lastFrame();
-      expect(output).toBeDefined();
-    });
-
-    it("should handle empty matrix with preselected skills not rendering", () => {
-      // Empty matrix doesn't contain preselected skills, so they won't render
-      // but they're still selected (validation should pass)
-      const emptyMatrix = createMockMatrix({});
-
-      const onComplete = vi.fn();
-      const { lastFrame, unmount } = render(
-        <StepConfirm matrix={emptyMatrix} onComplete={onComplete} />,
-      );
-      cleanup = unmount;
-
-      const output = lastFrame();
-      // Skills are selected (preselected) but don't render because not in matrix
-      // So "No skills selected" won't appear, but no visible skill names either
-      expect(output).toContain("Selected Skills");
-      expect(output).not.toContain("No skills selected");
+      expect(output).not.toContain("Technologies:");
+      expect(output).not.toContain("Skills:");
+      expect(output).not.toContain("Install mode:");
     });
   });
 });

@@ -6,23 +6,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { useWizardStore } from "./wizard-store";
 import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
-import type { ResolvedStack } from "../types-matrix";
-
-const PRESELECTED_COUNT = DEFAULT_PRESELECTED_SKILLS.length;
-
-// =============================================================================
-// Mock Data
-// =============================================================================
-
-const createMockStack = (id: string, skillIds: string[]): ResolvedStack => ({
-  id,
-  name: `Stack ${id}`,
-  description: `Test stack ${id}`,
-  allSkillIds: skillIds,
-  requiredSkillIds: [],
-  optionalSkillIds: skillIds,
-  suggestedAgents: [],
-});
 
 // =============================================================================
 // Tests
@@ -44,17 +27,14 @@ describe("WizardStore", () => {
       expect(step).toBe("approach");
     });
 
-    it("should have preselected methodology skills", () => {
-      const { selectedSkills } = useWizardStore.getState();
-      expect(selectedSkills).toHaveLength(PRESELECTED_COUNT);
-      for (const skill of DEFAULT_PRESELECTED_SKILLS) {
-        expect(selectedSkills).toContain(skill);
-      }
+    it("should have no approach selected", () => {
+      const { approach } = useWizardStore.getState();
+      expect(approach).toBeNull();
     });
 
     it("should have no selected stack", () => {
-      const { selectedStack } = useWizardStore.getState();
-      expect(selectedStack).toBeNull();
+      const { selectedStackId } = useWizardStore.getState();
+      expect(selectedStackId).toBeNull();
     });
 
     it("should have expert mode off", () => {
@@ -72,9 +52,14 @@ describe("WizardStore", () => {
       expect(history).toEqual([]);
     });
 
-    it("should have empty visited categories", () => {
-      const { visitedCategories } = useWizardStore.getState();
-      expect(visitedCategories.size).toBe(0);
+    it("should have empty selected domains", () => {
+      const { selectedDomains } = useWizardStore.getState();
+      expect(selectedDomains).toEqual([]);
+    });
+
+    it("should have empty domain selections", () => {
+      const { domainSelections } = useWizardStore.getState();
+      expect(domainSelections).toEqual({});
     });
   });
 
@@ -124,105 +109,36 @@ describe("WizardStore", () => {
       expect(step).toBe("approach");
     });
 
-    it("should navigate through full wizard flow", () => {
+    it("should reset focus when changing steps", () => {
       const store = useWizardStore.getState();
-
-      // Simulate stack approach flow
+      store.setFocus(2, 3);
       store.setStep("stack");
-      expect(useWizardStore.getState().step).toBe("stack");
 
-      store.setStep("confirm");
-      expect(useWizardStore.getState().step).toBe("confirm");
-
-      const { history } = useWizardStore.getState();
-      expect(history).toEqual(["approach", "stack"]);
-    });
-
-    it("should navigate through browse approach flow", () => {
-      const store = useWizardStore.getState();
-
-      // Simulate browse by category flow
-      store.setStep("category");
-      expect(useWizardStore.getState().step).toBe("category");
-
-      store.setStep("subcategory");
-      expect(useWizardStore.getState().step).toBe("subcategory");
-
-      store.setStep("confirm");
-      expect(useWizardStore.getState().step).toBe("confirm");
-
-      const { history } = useWizardStore.getState();
-      expect(history).toEqual(["approach", "category", "subcategory"]);
+      const { focusedRow, focusedCol } = useWizardStore.getState();
+      expect(focusedRow).toBe(0);
+      expect(focusedCol).toBe(0);
     });
   });
 
   // ===========================================================================
-  // Skill Selection
+  // Approach Selection
   // ===========================================================================
 
-  describe("skill selection", () => {
-    it("should toggle skill on", () => {
+  describe("approach selection", () => {
+    it("should set approach to stack", () => {
       const store = useWizardStore.getState();
+      store.setApproach("stack");
 
-      store.toggleSkill("react (@vince)");
-
-      const { selectedSkills } = useWizardStore.getState();
-      expect(selectedSkills).toContain("react (@vince)");
+      const { approach } = useWizardStore.getState();
+      expect(approach).toBe("stack");
     });
 
-    it("should toggle skill off", () => {
+    it("should set approach to scratch", () => {
       const store = useWizardStore.getState();
+      store.setApproach("scratch");
 
-      store.toggleSkill("react (@vince)");
-      store.toggleSkill("react (@vince)");
-
-      const { selectedSkills } = useWizardStore.getState();
-      expect(selectedSkills).not.toContain("react (@vince)");
-    });
-
-    it("should allow multiple skill selection", () => {
-      const store = useWizardStore.getState();
-
-      store.toggleSkill("react (@vince)");
-      store.toggleSkill("zustand (@vince)");
-      store.toggleSkill("vitest (@vince)");
-
-      const { selectedSkills } = useWizardStore.getState();
-      // 3 new skills + preselected methodology skills
-      expect(selectedSkills).toHaveLength(PRESELECTED_COUNT + 3);
-      expect(selectedSkills).toContain("react (@vince)");
-      expect(selectedSkills).toContain("zustand (@vince)");
-      expect(selectedSkills).toContain("vitest (@vince)");
-    });
-
-    it("should remove only the toggled skill", () => {
-      const store = useWizardStore.getState();
-
-      store.toggleSkill("react (@vince)");
-      store.toggleSkill("zustand (@vince)");
-      store.toggleSkill("vitest (@vince)");
-      store.toggleSkill("zustand (@vince)"); // Toggle off
-
-      const { selectedSkills } = useWizardStore.getState();
-      // 2 remaining + preselected methodology skills
-      expect(selectedSkills).toHaveLength(PRESELECTED_COUNT + 2);
-      expect(selectedSkills).toContain("react (@vince)");
-      expect(selectedSkills).not.toContain("zustand (@vince)");
-      expect(selectedSkills).toContain("vitest (@vince)");
-    });
-
-    it("should maintain skill order with preselected first", () => {
-      const store = useWizardStore.getState();
-
-      store.toggleSkill("react (@vince)");
-      store.toggleSkill("zustand (@vince)");
-      store.toggleSkill("vitest (@vince)");
-
-      const { selectedSkills } = useWizardStore.getState();
-      // Preselected skills come first, then toggled skills in order
-      expect(selectedSkills[PRESELECTED_COUNT]).toBe("react (@vince)");
-      expect(selectedSkills[PRESELECTED_COUNT + 1]).toBe("zustand (@vince)");
-      expect(selectedSkills[PRESELECTED_COUNT + 2]).toBe("vitest (@vince)");
+      const { approach } = useWizardStore.getState();
+      expect(approach).toBe("scratch");
     });
   });
 
@@ -231,64 +147,190 @@ describe("WizardStore", () => {
   // ===========================================================================
 
   describe("stack selection", () => {
-    it("should select stack and populate skills with preselected", () => {
+    it("should select stack by id", () => {
       const store = useWizardStore.getState();
-      const mockStack = createMockStack("nextjs-fullstack", [
-        "react (@vince)",
-        "zustand (@vince)",
-        "hono (@vince)",
-      ]);
+      store.selectStack("nextjs-fullstack");
 
-      store.selectStack(mockStack);
-
-      const { selectedStack, selectedSkills } = useWizardStore.getState();
-      expect(selectedStack?.id).toBe("nextjs-fullstack");
-      // Should include preselected methodology skills + stack skills
-      expect(selectedSkills).toContain("react (@vince)");
-      expect(selectedSkills).toContain("zustand (@vince)");
-      expect(selectedSkills).toContain("hono (@vince)");
-      for (const skill of DEFAULT_PRESELECTED_SKILLS) {
-        expect(selectedSkills).toContain(skill);
-      }
+      const { selectedStackId } = useWizardStore.getState();
+      expect(selectedStackId).toBe("nextjs-fullstack");
     });
 
-    it("should replace stack skills when changing stack but keep preselected", () => {
+    it("should clear stack when null is passed", () => {
       const store = useWizardStore.getState();
-
-      const stack1 = createMockStack("stack1", ["react (@vince)"]);
-      const stack2 = createMockStack("stack2", ["vue (@vince)"]);
-
-      store.selectStack(stack1);
-      const skills1 = useWizardStore.getState().selectedSkills;
-      expect(skills1).toContain("react (@vince)");
-      expect(skills1).not.toContain("vue (@vince)");
-
-      store.selectStack(stack2);
-      const skills2 = useWizardStore.getState().selectedSkills;
-      expect(skills2).toContain("vue (@vince)");
-      expect(skills2).not.toContain("react (@vince)");
-      // Preselected skills should still be there
-      for (const skill of DEFAULT_PRESELECTED_SKILLS) {
-        expect(skills2).toContain(skill);
-      }
-    });
-
-    it("should keep preselected skills when stack is deselected", () => {
-      const store = useWizardStore.getState();
-      const mockStack = createMockStack("test", ["skill1", "skill2"]);
-
-      store.selectStack(mockStack);
+      store.selectStack("nextjs-fullstack");
       store.selectStack(null);
 
-      const { selectedStack, selectedSkills } = useWizardStore.getState();
-      expect(selectedStack).toBeNull();
-      // Stack skills are cleared but preselected methodology skills remain
-      expect(selectedSkills).not.toContain("skill1");
-      expect(selectedSkills).not.toContain("skill2");
-      expect(selectedSkills).toHaveLength(PRESELECTED_COUNT);
-      for (const skill of DEFAULT_PRESELECTED_SKILLS) {
-        expect(selectedSkills).toContain(skill);
-      }
+      const { selectedStackId } = useWizardStore.getState();
+      expect(selectedStackId).toBeNull();
+    });
+  });
+
+  // ===========================================================================
+  // Domain Selection
+  // ===========================================================================
+
+  describe("domain selection", () => {
+    it("should toggle domain on", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+
+      const { selectedDomains } = useWizardStore.getState();
+      expect(selectedDomains).toContain("web");
+    });
+
+    it("should toggle domain off", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+      store.toggleDomain("web");
+
+      const { selectedDomains } = useWizardStore.getState();
+      expect(selectedDomains).not.toContain("web");
+    });
+
+    it("should allow multiple domain selection", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+      store.toggleDomain("api");
+      store.toggleDomain("cli");
+
+      const { selectedDomains } = useWizardStore.getState();
+      expect(selectedDomains).toEqual(["web", "api", "cli"]);
+    });
+  });
+
+  // ===========================================================================
+  // Technology Selection
+  // ===========================================================================
+
+  describe("technology selection", () => {
+    it("should toggle technology in exclusive mode", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "framework", "react", true);
+
+      const { domainSelections } = useWizardStore.getState();
+      expect(domainSelections.web.framework).toEqual(["react"]);
+    });
+
+    it("should replace technology in exclusive mode", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "framework", "react", true);
+      store.toggleTechnology("web", "framework", "vue", true);
+
+      const { domainSelections } = useWizardStore.getState();
+      expect(domainSelections.web.framework).toEqual(["vue"]);
+    });
+
+    it("should toggle off technology in exclusive mode", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "framework", "react", true);
+      store.toggleTechnology("web", "framework", "react", true);
+
+      const { domainSelections } = useWizardStore.getState();
+      expect(domainSelections.web.framework).toEqual([]);
+    });
+
+    it("should allow multiple selections in non-exclusive mode", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "testing", "vitest", false);
+      store.toggleTechnology("web", "testing", "jest", false);
+
+      const { domainSelections } = useWizardStore.getState();
+      expect(domainSelections.web.testing).toEqual(["vitest", "jest"]);
+    });
+
+    it("should toggle off technology in non-exclusive mode", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "testing", "vitest", false);
+      store.toggleTechnology("web", "testing", "jest", false);
+      store.toggleTechnology("web", "testing", "vitest", false);
+
+      const { domainSelections } = useWizardStore.getState();
+      expect(domainSelections.web.testing).toEqual(["jest"]);
+    });
+  });
+
+  // ===========================================================================
+  // Domain Navigation
+  // ===========================================================================
+
+  describe("domain navigation", () => {
+    it("should set current domain index", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+      store.toggleDomain("api");
+      store.setCurrentDomainIndex(1);
+
+      const { currentDomainIndex } = useWizardStore.getState();
+      expect(currentDomainIndex).toBe(1);
+    });
+
+    it("should reset focus when changing domain index", () => {
+      const store = useWizardStore.getState();
+      store.setFocus(2, 3);
+      store.setCurrentDomainIndex(1);
+
+      const { focusedRow, focusedCol } = useWizardStore.getState();
+      expect(focusedRow).toBe(0);
+      expect(focusedCol).toBe(0);
+    });
+
+    it("should move to next domain", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+      store.toggleDomain("api");
+
+      const result = store.nextDomain();
+
+      const { currentDomainIndex } = useWizardStore.getState();
+      expect(result).toBe(true);
+      expect(currentDomainIndex).toBe(1);
+    });
+
+    it("should return false when at last domain", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+
+      const result = store.nextDomain();
+
+      expect(result).toBe(false);
+    });
+
+    it("should move to previous domain", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+      store.toggleDomain("api");
+      store.setCurrentDomainIndex(1);
+
+      const result = store.prevDomain();
+
+      const { currentDomainIndex } = useWizardStore.getState();
+      expect(result).toBe(true);
+      expect(currentDomainIndex).toBe(0);
+    });
+
+    it("should return false when at first domain", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+
+      const result = store.prevDomain();
+
+      expect(result).toBe(false);
+    });
+
+    it("should get current domain", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+      store.toggleDomain("api");
+      store.setCurrentDomainIndex(1);
+
+      const domain = store.getCurrentDomain();
+      expect(domain).toBe("api");
+    });
+
+    it("should return null when no domains selected", () => {
+      const store = useWizardStore.getState();
+      const domain = store.getCurrentDomain();
+      expect(domain).toBeNull();
     });
   });
 
@@ -334,103 +376,78 @@ describe("WizardStore", () => {
       const { installMode } = useWizardStore.getState();
       expect(installMode).toBe("local");
     });
-  });
 
-  // ===========================================================================
-  // Category Navigation
-  // ===========================================================================
-
-  describe("category navigation", () => {
-    it("should set current category", () => {
+    it("should toggle show descriptions", () => {
       const store = useWizardStore.getState();
 
-      store.setCategory("frontend");
+      store.toggleShowDescriptions();
 
-      const { currentTopCategory } = useWizardStore.getState();
-      expect(currentTopCategory).toBe("frontend");
-    });
-
-    it("should set current subcategory", () => {
-      const store = useWizardStore.getState();
-
-      store.setSubcategory("frontend/framework");
-
-      const { currentSubcategory } = useWizardStore.getState();
-      expect(currentSubcategory).toBe("frontend/framework");
-    });
-
-    it("should mark category as visited", () => {
-      const store = useWizardStore.getState();
-
-      store.markCategoryVisited("frontend");
-      store.markCategoryVisited("backend");
-
-      const { visitedCategories } = useWizardStore.getState();
-      expect(visitedCategories.has("frontend")).toBe(true);
-      expect(visitedCategories.has("backend")).toBe(true);
-      expect(visitedCategories.size).toBe(2);
-    });
-
-    it("should not duplicate visited categories", () => {
-      const store = useWizardStore.getState();
-
-      store.markCategoryVisited("frontend");
-      store.markCategoryVisited("frontend");
-
-      const { visitedCategories } = useWizardStore.getState();
-      expect(visitedCategories.size).toBe(1);
+      const { showDescriptions } = useWizardStore.getState();
+      expect(showDescriptions).toBe(true);
     });
   });
 
   // ===========================================================================
-  // Last Selected Values
+  // Refine Step
   // ===========================================================================
 
-  describe("last selected values", () => {
-    it("should track last selected category", () => {
+  describe("refine step", () => {
+    it("should set refine action", () => {
       const store = useWizardStore.getState();
+      store.setRefineAction("all-recommended");
 
-      store.setLastSelectedCategory("frontend");
-
-      const { lastSelectedCategory } = useWizardStore.getState();
-      expect(lastSelectedCategory).toBe("frontend");
+      const { refineAction } = useWizardStore.getState();
+      expect(refineAction).toBe("all-recommended");
     });
 
-    it("should track last selected subcategory", () => {
+    it("should set skill source", () => {
       const store = useWizardStore.getState();
+      store.setSkillSource("react", "react (@vince)");
 
-      store.setLastSelectedSubcategory("frontend/framework");
-
-      const { lastSelectedSubcategory } = useWizardStore.getState();
-      expect(lastSelectedSubcategory).toBe("frontend/framework");
+      const { skillSources } = useWizardStore.getState();
+      expect(skillSources.react).toBe("react (@vince)");
     });
 
-    it("should track last selected skill", () => {
+    it("should set current refine index", () => {
       const store = useWizardStore.getState();
+      store.setCurrentRefineIndex(3);
 
-      store.setLastSelectedSkill("react (@vince)");
+      const { currentRefineIndex } = useWizardStore.getState();
+      expect(currentRefineIndex).toBe(3);
+    });
+  });
 
-      const { lastSelectedSkill } = useWizardStore.getState();
-      expect(lastSelectedSkill).toBe("react (@vince)");
+  // ===========================================================================
+  // Computed Getters
+  // ===========================================================================
+
+  describe("computed getters", () => {
+    it("should get all selected technologies", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "framework", "react", true);
+      store.toggleTechnology("web", "styling", "scss", true);
+      store.toggleTechnology("api", "api-framework", "hono", true);
+
+      const technologies = store.getAllSelectedTechnologies();
+      expect(technologies).toContain("react");
+      expect(technologies).toContain("scss");
+      expect(technologies).toContain("hono");
     });
 
-    it("should track last selected approach", () => {
+    it("should get selected skills including preselected", () => {
       const store = useWizardStore.getState();
+      store.setSkillSource("react", "react (@vince)");
+      store.setSkillSource("scss", "scss-modules (@vince)");
 
-      store.setLastSelectedApproach("stack");
+      const skills = store.getSelectedSkills();
 
-      const { lastSelectedApproach } = useWizardStore.getState();
-      expect(lastSelectedApproach).toBe("stack");
-    });
-
-    it("should allow clearing last selected values", () => {
-      const store = useWizardStore.getState();
-
-      store.setLastSelectedCategory("frontend");
-      store.setLastSelectedCategory(null);
-
-      const { lastSelectedCategory } = useWizardStore.getState();
-      expect(lastSelectedCategory).toBeNull();
+      // Should include preselected skills
+      for (const skill of DEFAULT_PRESELECTED_SKILLS) {
+        expect(skills).toContain(skill);
+      }
+      // Should include user selected skills
+      expect(skills).toContain("react (@vince)");
+      expect(skills).toContain("scss-modules (@vince)");
     });
   });
 
@@ -439,74 +456,27 @@ describe("WizardStore", () => {
   // ===========================================================================
 
   describe("reset", () => {
-    it("should reset to initial state with preselected skills", () => {
+    it("should reset to initial state", () => {
       const store = useWizardStore.getState();
 
       // Make some changes
-      store.setStep("category");
-      store.toggleSkill("react (@vince)");
+      store.setStep("stack");
+      store.setApproach("scratch");
+      store.selectStack("nextjs-fullstack");
+      store.toggleDomain("web");
       store.toggleExpertMode();
-      store.markCategoryVisited("frontend");
-      store.setLastSelectedCategory("frontend");
 
       // Reset
       store.reset();
 
       const state = useWizardStore.getState();
       expect(state.step).toBe("approach");
-      // Should have preselected skills after reset
-      expect(state.selectedSkills).toHaveLength(PRESELECTED_COUNT);
-      for (const skill of DEFAULT_PRESELECTED_SKILLS) {
-        expect(state.selectedSkills).toContain(skill);
-      }
+      expect(state.approach).toBeNull();
+      expect(state.selectedStackId).toBeNull();
+      expect(state.selectedDomains).toEqual([]);
       expect(state.expertMode).toBe(false);
-      expect(state.visitedCategories.size).toBe(0);
-      expect(state.lastSelectedCategory).toBeNull();
-    });
-
-    it("should accept initial skills on reset combined with preselected", () => {
-      const store = useWizardStore.getState();
-
-      store.reset({
-        initialSkills: ["react (@vince)", "zustand (@vince)"],
-      });
-
-      const { step, selectedSkills } = useWizardStore.getState();
-      expect(step).toBe("category"); // Skips approach when skills provided
-      // Should have preselected + initial skills
-      expect(selectedSkills).toContain("react (@vince)");
-      expect(selectedSkills).toContain("zustand (@vince)");
-      for (const skill of DEFAULT_PRESELECTED_SKILLS) {
-        expect(selectedSkills).toContain(skill);
-      }
-    });
-
-    it("should accept hasLocalSkills option", () => {
-      const store = useWizardStore.getState();
-
-      store.reset({ hasLocalSkills: true });
-
-      const { expertMode } = useWizardStore.getState();
-      expect(expertMode).toBe(true);
-    });
-
-    it("should skip approach step when initial skills provided", () => {
-      const store = useWizardStore.getState();
-
-      store.reset({ initialSkills: ["react (@vince)"] });
-
-      const { step } = useWizardStore.getState();
-      expect(step).toBe("category");
-    });
-
-    it("should preserve install mode as local on reset", () => {
-      const store = useWizardStore.getState();
-
-      store.toggleInstallMode(); // Switch to plugin
-      store.reset();
-
-      const { installMode } = useWizardStore.getState();
-      expect(installMode).toBe("local");
+      expect(state.installMode).toBe("local");
+      expect(state.history).toEqual([]);
     });
   });
 
@@ -517,77 +487,88 @@ describe("WizardStore", () => {
   describe("complex flows", () => {
     it("should handle complete stack selection flow", () => {
       const store = useWizardStore.getState();
-      const mockStack = createMockStack("fullstack", [
-        "react (@vince)",
-        "zustand (@vince)",
-        "hono (@vince)",
-      ]);
 
       // Step 1: Choose stack approach
+      store.setApproach("stack");
       store.setStep("stack");
 
       // Step 2: Select stack
-      store.selectStack(mockStack);
+      store.selectStack("nextjs-fullstack");
+      store.setStep("stack-options");
+
+      // Step 3: Choose defaults
+      store.setStackAction("defaults");
+      store.setStep("refine");
+
+      // Step 4: Refine
+      store.setRefineAction("all-recommended");
       store.setStep("confirm");
 
       // Verify final state
       const state = useWizardStore.getState();
       expect(state.step).toBe("confirm");
-      expect(state.selectedStack?.id).toBe("fullstack");
-      // 3 stack skills + preselected methodology skills
-      expect(state.selectedSkills).toHaveLength(PRESELECTED_COUNT + 3);
-      expect(state.history).toEqual(["approach", "stack"]);
+      expect(state.approach).toBe("stack");
+      expect(state.selectedStackId).toBe("nextjs-fullstack");
+      expect(state.stackAction).toBe("defaults");
+      expect(state.refineAction).toBe("all-recommended");
+      expect(state.history).toEqual([
+        "approach",
+        "stack",
+        "stack-options",
+        "refine",
+      ]);
     });
 
-    it("should handle complete browse flow with navigation", () => {
+    it("should handle complete scratch flow", () => {
       const store = useWizardStore.getState();
 
-      // Navigate forward
-      store.setStep("category");
-      store.setCategory("frontend");
-      store.markCategoryVisited("frontend");
+      // Step 1: Choose scratch approach
+      store.setApproach("scratch");
+      store.setStep("stack"); // Domain selection
 
-      store.setStep("subcategory");
-      store.setSubcategory("frontend/framework");
+      // Step 2: Select domains
+      store.toggleDomain("web");
+      store.toggleDomain("api");
+      store.setStep("build");
 
-      // Select skill
-      store.toggleSkill("react (@vince)");
+      // Step 3: Select technologies
+      store.toggleTechnology("web", "framework", "react", true);
+      store.toggleTechnology("web", "styling", "scss", true);
+      store.toggleTechnology("api", "api-framework", "hono", true);
+      store.setStep("refine");
 
-      // Navigate back and select another
-      store.goBack();
-      store.setCategory("backend");
-      store.markCategoryVisited("backend");
-      store.setStep("subcategory");
-      store.setSubcategory("backend/api");
-      store.toggleSkill("hono (@vince)");
-
-      // Proceed to confirm
+      // Step 4: Refine
+      store.setRefineAction("all-recommended");
       store.setStep("confirm");
 
       // Verify final state
       const state = useWizardStore.getState();
       expect(state.step).toBe("confirm");
-      expect(state.selectedSkills).toContain("react (@vince)");
-      expect(state.selectedSkills).toContain("hono (@vince)");
-      expect(state.visitedCategories.has("frontend")).toBe(true);
-      expect(state.visitedCategories.has("backend")).toBe(true);
+      expect(state.approach).toBe("scratch");
+      expect(state.selectedDomains).toEqual(["web", "api"]);
+      expect(state.domainSelections.web.framework).toEqual(["react"]);
+      expect(state.domainSelections.web.styling).toEqual(["scss"]);
+      expect(state.domainSelections.api["api-framework"]).toEqual(["hono"]);
     });
 
     it("should preserve selections when going back", () => {
       const store = useWizardStore.getState();
 
       // Make selections
-      store.toggleSkill("react (@vince)");
-      store.setStep("category");
-      store.setStep("subcategory");
+      store.setApproach("scratch");
+      store.setStep("stack");
+      store.toggleDomain("web");
+      store.setStep("build");
+      store.toggleTechnology("web", "framework", "react", true);
 
       // Go back
       store.goBack();
       store.goBack();
 
       // Selections should be preserved
-      const { selectedSkills } = useWizardStore.getState();
-      expect(selectedSkills).toContain("react (@vince)");
+      const state = useWizardStore.getState();
+      expect(state.selectedDomains).toContain("web");
+      expect(state.domainSelections.web.framework).toEqual(["react"]);
     });
   });
 });

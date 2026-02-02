@@ -1,7 +1,8 @@
 /**
  * Tests for the StepStack wizard component.
  *
- * Tests rendering and keyboard navigation for stack selection.
+ * Tests rendering and keyboard navigation for stack selection (stack path)
+ * and domain selection (scratch path).
  *
  * Note: Select component requires initial render delay before accepting input.
  */
@@ -10,7 +11,6 @@ import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { StepStack } from "../../../components/wizard/step-stack";
 import { useWizardStore } from "../../../stores/wizard-store";
-import { DEFAULT_PRESELECTED_SKILLS } from "../../../consts";
 import { createMockMatrix, createMockSkill } from "../helpers";
 import { TEST_SKILLS, TEST_CATEGORIES } from "../test-fixtures";
 import type { MergedSkillsMatrix, ResolvedStack } from "../../../types-matrix";
@@ -97,251 +97,330 @@ describe("StepStack component", () => {
   });
 
   // ===========================================================================
-  // Rendering
+  // Stack Selection Mode (approach === "stack")
   // ===========================================================================
 
-  describe("rendering", () => {
-    it("should render stack options", () => {
-      const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
-      cleanup = unmount;
-
-      const output = lastFrame();
-      expect(output).toContain("React Fullstack");
-      expect(output).toContain("React Minimal");
+  describe("stack selection mode", () => {
+    beforeEach(() => {
+      // Set approach to "stack" for stack selection mode
+      useWizardStore.getState().setApproach("stack");
     });
 
-    it("should render stack descriptions", () => {
-      const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
-      cleanup = unmount;
+    describe("rendering", () => {
+      it("should render stack options", () => {
+        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
 
-      const output = lastFrame();
-      expect(output).toContain("Full React stack");
-      expect(output).toContain("Minimal React setup");
+        const output = lastFrame();
+        expect(output).toContain("React Fullstack");
+        expect(output).toContain("React Minimal");
+      });
+
+      it("should render stack descriptions", () => {
+        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
+
+        const output = lastFrame();
+        expect(output).toContain("Full React stack");
+        expect(output).toContain("Minimal React setup");
+      });
+
+      it("should render back option", () => {
+        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
+
+        const output = lastFrame();
+        expect(output).toContain("Back");
+      });
+
+      it("should render header text", () => {
+        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
+
+        const output = lastFrame();
+        expect(output).toContain("Select a pre-built template");
+      });
     });
 
-    it("should render back option", () => {
-      const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
-      cleanup = unmount;
+    describe("stack selection", () => {
+      it("should select stack and navigate to stack-options", async () => {
+        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
 
-      const output = lastFrame();
-      expect(output).toContain("Back");
+        await delay(RENDER_DELAY_MS);
+
+        // First option after back is the first stack
+        await stdin.write(ARROW_DOWN);
+        await delay(SELECT_NAV_DELAY_MS);
+        await stdin.write(ENTER);
+        await delay(SELECT_NAV_DELAY_MS);
+
+        const { step, selectedStackId } = useWizardStore.getState();
+        expect(step).toBe("stack-options");
+        expect(selectedStackId).toBe("react-fullstack");
+      });
+
+      it("should select second stack when navigated to", async () => {
+        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
+
+        await delay(RENDER_DELAY_MS);
+
+        // Navigate to second stack (skip back, skip first stack)
+        await stdin.write(ARROW_DOWN);
+        await delay(SELECT_NAV_DELAY_MS);
+        await stdin.write(ARROW_DOWN);
+        await delay(SELECT_NAV_DELAY_MS);
+        await stdin.write(ENTER);
+        await delay(SELECT_NAV_DELAY_MS);
+
+        const { selectedStackId } = useWizardStore.getState();
+        expect(selectedStackId).toBe("react-minimal");
+      });
     });
 
-    it("should render header text", () => {
-      const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
-      cleanup = unmount;
+    describe("back navigation", () => {
+      it("should go back when selecting back option", async () => {
+        // First set up history by setting step to stack
+        useWizardStore.getState().setStep("stack");
 
-      const output = lastFrame();
-      expect(output).toContain("Select a pre-built template");
+        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
+
+        await delay(RENDER_DELAY_MS);
+
+        // First option is back
+        await stdin.write(ENTER);
+        await delay(SELECT_NAV_DELAY_MS);
+
+        const { step } = useWizardStore.getState();
+        expect(step).toBe("approach");
+      });
+
+      it("should maintain history when going back", async () => {
+        // Set up proper history
+        const store = useWizardStore.getState();
+        store.setApproach("stack");
+        store.setStep("stack"); // This adds "approach" to history
+
+        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
+
+        await delay(RENDER_DELAY_MS);
+
+        await stdin.write(ENTER); // Select back
+        await delay(SELECT_NAV_DELAY_MS);
+
+        const { step, history } = useWizardStore.getState();
+        expect(step).toBe("approach");
+        expect(history).toEqual([]);
+      });
+    });
+
+    describe("arrow key navigation", () => {
+      it("should navigate through options with arrow keys", async () => {
+        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
+
+        await delay(RENDER_DELAY_MS);
+
+        // Navigate down twice to get to second stack
+        await stdin.write(ARROW_DOWN);
+        await delay(SELECT_NAV_DELAY_MS);
+        await stdin.write(ARROW_DOWN);
+        await delay(SELECT_NAV_DELAY_MS);
+        await stdin.write(ENTER);
+        await delay(SELECT_NAV_DELAY_MS);
+
+        const { selectedStackId } = useWizardStore.getState();
+        expect(selectedStackId).toBe("react-minimal");
+      });
+
+      it("should navigate up through options", async () => {
+        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
+
+        await delay(RENDER_DELAY_MS);
+
+        // Go down to last option, then up
+        await stdin.write(ARROW_DOWN);
+        await delay(SELECT_NAV_DELAY_MS);
+        await stdin.write(ARROW_DOWN);
+        await delay(SELECT_NAV_DELAY_MS);
+        await stdin.write(ARROW_UP);
+        await delay(SELECT_NAV_DELAY_MS);
+        await stdin.write(ENTER);
+        await delay(SELECT_NAV_DELAY_MS);
+
+        const { selectedStackId } = useWizardStore.getState();
+        expect(selectedStackId).toBe("react-fullstack");
+      });
+    });
+
+    describe("empty state", () => {
+      it("should render with no stacks available", () => {
+        const emptyMatrix = createMockMatrix({}, { suggestedStacks: [] });
+
+        const { lastFrame, unmount } = render(<StepStack matrix={emptyMatrix} />);
+        cleanup = unmount;
+
+        const output = lastFrame();
+        // Should still render back option
+        expect(output).toContain("Back");
+      });
+
+      it("should only show back option when no stacks", async () => {
+        const emptyMatrix = createMockMatrix({}, { suggestedStacks: [] });
+
+        // Set up history
+        useWizardStore.getState().setStep("stack");
+
+        const { stdin, unmount } = render(<StepStack matrix={emptyMatrix} />);
+        cleanup = unmount;
+
+        await delay(RENDER_DELAY_MS);
+
+        await stdin.write(ENTER);
+        await delay(SELECT_NAV_DELAY_MS);
+
+        const { step } = useWizardStore.getState();
+        expect(step).toBe("approach");
+      });
     });
   });
 
   // ===========================================================================
-  // Stack Selection
+  // Domain Selection Mode (approach === "scratch")
   // ===========================================================================
 
-  describe("stack selection", () => {
-    it("should select stack and navigate to confirm", async () => {
-      const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
-      cleanup = unmount;
-
-      await delay(RENDER_DELAY_MS);
-
-      // First option after back is the first stack
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ENTER);
-      await delay(SELECT_NAV_DELAY_MS);
-
-      const { step, selectedStack } = useWizardStore.getState();
-      expect(step).toBe("confirm");
-      expect(selectedStack?.id).toBe("react-fullstack");
+  describe("domain selection mode", () => {
+    beforeEach(() => {
+      // Set approach to "scratch" for domain selection mode
+      useWizardStore.getState().setApproach("scratch");
     });
 
-    it("should populate skills when stack is selected", async () => {
-      const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
-      cleanup = unmount;
+    describe("rendering", () => {
+      it("should render domain options", () => {
+        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
 
-      await delay(RENDER_DELAY_MS);
+        const output = lastFrame();
+        expect(output).toContain("Web");
+        expect(output).toContain("API");
+        expect(output).toContain("CLI");
+        expect(output).toContain("Mobile");
+      });
 
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ENTER);
-      await delay(SELECT_NAV_DELAY_MS);
+      it("should render header text for domain selection", () => {
+        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
 
-      const { selectedSkills } = useWizardStore.getState();
-      expect(selectedSkills).toContain(TEST_SKILLS.REACT);
-      expect(selectedSkills).toContain(TEST_SKILLS.ZUSTAND);
-      expect(selectedSkills).toContain(TEST_SKILLS.HONO);
+        const output = lastFrame();
+        expect(output).toContain("Select domains to configure");
+      });
+
+      it("should show domain descriptions", () => {
+        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
+
+        const output = lastFrame();
+        expect(output).toContain("Frontend web applications");
+        expect(output).toContain("Backend APIs");
+      });
     });
 
-    it("should select second stack when navigated to", async () => {
-      const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
-      cleanup = unmount;
+    describe("domain selection", () => {
+      it("should toggle domain when selected", async () => {
+        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
 
-      await delay(RENDER_DELAY_MS);
+        await delay(RENDER_DELAY_MS);
 
-      // Navigate to second stack (skip back, skip first stack)
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ENTER);
-      await delay(SELECT_NAV_DELAY_MS);
+        // Navigate down to first domain (Web) and select
+        await stdin.write(ARROW_DOWN);
+        await delay(SELECT_NAV_DELAY_MS);
+        await stdin.write(ENTER);
+        await delay(SELECT_NAV_DELAY_MS);
 
-      const { selectedStack, selectedSkills } = useWizardStore.getState();
-      expect(selectedStack?.id).toBe("react-minimal");
-      // Stack skills + preselected methodology skills
-      expect(selectedSkills).toContain(TEST_SKILLS.REACT);
-      for (const skill of DEFAULT_PRESELECTED_SKILLS) {
-        expect(selectedSkills).toContain(skill);
-      }
-    });
-  });
+        const { selectedDomains } = useWizardStore.getState();
+        expect(selectedDomains).toContain("web");
+      });
 
-  // ===========================================================================
-  // Back Navigation
-  // ===========================================================================
+      it("should allow multiple domain selection", async () => {
+        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
 
-  describe("back navigation", () => {
-    it("should go back when selecting back option", async () => {
-      // First set up history by setting step to stack
-      useWizardStore.getState().setStep("stack");
+        await delay(RENDER_DELAY_MS);
 
-      const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
-      cleanup = unmount;
+        // Select Web - toggle domains are tracked in store even if UI doesn't refresh
+        await stdin.write(ARROW_DOWN);
+        await delay(SELECT_NAV_DELAY_MS);
+        await stdin.write(ENTER);
+        await delay(SELECT_NAV_DELAY_MS);
 
-      await delay(RENDER_DELAY_MS);
+        // Check first domain selected
+        expect(useWizardStore.getState().selectedDomains).toContain("web");
 
-      // First option is back
-      await stdin.write(ENTER);
-      await delay(SELECT_NAV_DELAY_MS);
+        // Note: The second selection would need the Select to re-render
+        // For now, verify the store correctly updates by toggling directly
+        useWizardStore.getState().toggleDomain("api");
 
-      const { step } = useWizardStore.getState();
-      expect(step).toBe("approach");
-    });
+        const { selectedDomains } = useWizardStore.getState();
+        expect(selectedDomains).toContain("web");
+        expect(selectedDomains).toContain("api");
+      });
 
-    it("should maintain history when going back", async () => {
-      // Set up proper history
-      const store = useWizardStore.getState();
-      store.setStep("stack"); // This adds "approach" to history
+      it("should show selected domains summary when domains selected", async () => {
+        // Pre-select a domain
+        useWizardStore.getState().toggleDomain("web");
 
-      const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
-      cleanup = unmount;
+        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
 
-      await delay(RENDER_DELAY_MS);
+        const output = lastFrame();
+        // The selected summary should show at the bottom
+        expect(output).toContain("Selected:");
+        expect(output).toContain("web");
+      });
 
-      await stdin.write(ENTER); // Select back
-      await delay(SELECT_NAV_DELAY_MS);
+      it("should navigate to build step when continuing", async () => {
+        // Pre-select a domain
+        useWizardStore.getState().toggleDomain("web");
 
-      const { step, history } = useWizardStore.getState();
-      expect(step).toBe("approach");
-      expect(history).toEqual([]);
-    });
-  });
+        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
 
-  // ===========================================================================
-  // Arrow Key Navigation
-  // ===========================================================================
+        await delay(RENDER_DELAY_MS);
 
-  describe("arrow key navigation", () => {
-    it("should navigate through options with arrow keys", async () => {
-      const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
-      cleanup = unmount;
+        // Navigate to continue option (last option)
+        for (let i = 0; i < 5; i++) {
+          await stdin.write(ARROW_DOWN);
+          await delay(SELECT_NAV_DELAY_MS);
+        }
+        await stdin.write(ENTER);
+        await delay(SELECT_NAV_DELAY_MS);
 
-      await delay(RENDER_DELAY_MS);
-
-      // Navigate down twice to get to second stack
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ENTER);
-      await delay(SELECT_NAV_DELAY_MS);
-
-      const { selectedStack } = useWizardStore.getState();
-      expect(selectedStack?.id).toBe("react-minimal");
+        const { step } = useWizardStore.getState();
+        expect(step).toBe("build");
+      });
     });
 
-    it("should navigate up through options", async () => {
-      const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
-      cleanup = unmount;
+    describe("back navigation", () => {
+      it("should go back when selecting back option", async () => {
+        useWizardStore.getState().setStep("stack");
 
-      await delay(RENDER_DELAY_MS);
+        const { stdin, unmount } = render(<StepStack matrix={mockMatrix} />);
+        cleanup = unmount;
 
-      // Go down to last option, then up
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ARROW_UP);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ENTER);
-      await delay(SELECT_NAV_DELAY_MS);
+        await delay(RENDER_DELAY_MS);
 
-      const { selectedStack } = useWizardStore.getState();
-      expect(selectedStack?.id).toBe("react-fullstack");
-    });
-  });
+        // First option is back
+        await stdin.write(ENTER);
+        await delay(SELECT_NAV_DELAY_MS);
 
-  // ===========================================================================
-  // Empty State
-  // ===========================================================================
-
-  describe("empty state", () => {
-    it("should render with no stacks available", () => {
-      const emptyMatrix = createMockMatrix({}, { suggestedStacks: [] });
-
-      const { lastFrame, unmount } = render(<StepStack matrix={emptyMatrix} />);
-      cleanup = unmount;
-
-      const output = lastFrame();
-      // Should still render back option
-      expect(output).toContain("Back");
-    });
-
-    it("should only show back option when no stacks", async () => {
-      const emptyMatrix = createMockMatrix({}, { suggestedStacks: [] });
-
-      // Set up history
-      useWizardStore.getState().setStep("stack");
-
-      const { stdin, unmount } = render(<StepStack matrix={emptyMatrix} />);
-      cleanup = unmount;
-
-      await delay(RENDER_DELAY_MS);
-
-      await stdin.write(ENTER);
-      await delay(SELECT_NAV_DELAY_MS);
-
-      const { step } = useWizardStore.getState();
-      expect(step).toBe("approach");
-    });
-  });
-
-  // ===========================================================================
-  // Multiple Stack Selection
-  // ===========================================================================
-
-  describe("stack switching", () => {
-    it("should replace skills when selecting different stack", () => {
-      // Simulate selecting first stack then going back
-      const firstStack = mockMatrix.suggestedStacks[0];
-      useWizardStore.getState().selectStack(firstStack);
-
-      // Verify initial selection
-      expect(useWizardStore.getState().selectedSkills).toContain(
-        TEST_SKILLS.ZUSTAND,
-      );
-
-      // Now select second stack
-      const secondStack = mockMatrix.suggestedStacks[1];
-      useWizardStore.getState().selectStack(secondStack);
-
-      // Skills should be replaced
-      const { selectedSkills } = useWizardStore.getState();
-      expect(selectedSkills).not.toContain(TEST_SKILLS.ZUSTAND);
-      expect(selectedSkills).toContain(TEST_SKILLS.REACT);
+        const { step } = useWizardStore.getState();
+        expect(step).toBe("approach");
+      });
     });
   });
 });
