@@ -231,3 +231,24 @@ stacks:
       web-tester:
         testing: vitest
     philosophy: One codebase, iOS and Android
+
+  - id: meta-stack
+    name: Meta Agent Stack
+    description: Agents for creating agents, skills, documentation, and extracting patterns - invoke for meta-level development work
+    agents:
+      skill-summoner:
+        methodology: improvement-protocol
+        research: research-methodology
+      agent-summoner:
+        methodology: improvement-protocol
+        research: research-methodology
+      documentor:
+        methodology: context-management
+        research: research-methodology
+      pattern-scout:
+        methodology: investigation-requirements
+        research: research-methodology
+      web-pattern-critique:
+        methodology: anti-over-engineering
+        reviewing: reviewing
+    philosophy: Build tools that build tools
