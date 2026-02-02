@@ -29,115 +29,63 @@ describe("skill-plugin-compiler", () => {
   });
 
   // =============================================================================
-  // extractSkillName
+  // extractSkillName (deprecated - now just returns sanitized directory basename)
   // =============================================================================
 
   describe("extractSkillName", () => {
-    it("should extract name from path with author", () => {
-      const result = extractSkillName("/skills/frontend/react (@vince)");
-      expect(result).toBe("react");
+    it("should return directory basename", () => {
+      const result = extractSkillName("/skills/frontend/web-framework-react");
+      expect(result).toBe("web-framework-react");
     });
 
-    it("should extract name from nested path with author", () => {
-      const result = extractSkillName(
-        "/skills/frontend/framework/react (@vince)",
-      );
-      expect(result).toBe("react");
-    });
-
-    it("should handle plus signs in name", () => {
-      const result = extractSkillName("/skills/frontend/c++ (@dev)");
+    it("should handle plus signs in name by converting to hyphens", () => {
+      const result = extractSkillName("/skills/frontend/c++");
       expect(result).toBe("c--");
     });
 
     it("should handle multiple plus signs", () => {
-      const result = extractSkillName("/skills/tools/boost++ (@lib)");
+      const result = extractSkillName("/skills/tools/boost++");
       expect(result).toBe("boost--");
     });
 
-    it("should handle path without author", () => {
-      const result = extractSkillName("/skills/frontend/react");
-      expect(result).toBe("react");
-    });
-
     it("should handle simple directory name", () => {
-      const result = extractSkillName("react");
-      expect(result).toBe("react");
+      const result = extractSkillName("web-framework-react");
+      expect(result).toBe("web-framework-react");
     });
 
     it("should handle kebab-case names", () => {
-      const result = extractSkillName("/skills/backend/api-hono (@vince)");
-      expect(result).toBe("api-hono");
-    });
-
-    it("should trim whitespace around name", () => {
-      const result = extractSkillName("/skills/frontend/react  (@vince)");
-      expect(result).toBe("react");
+      const result = extractSkillName("/skills/backend/backend-api-hono");
+      expect(result).toBe("backend-api-hono");
     });
   });
 
   // =============================================================================
-  // extractAuthor
+  // extractAuthor (deprecated - always returns undefined)
   // =============================================================================
 
   describe("extractAuthor", () => {
-    it("should extract author from parentheses", () => {
-      const result = extractAuthor("/skills/frontend/react (@vince)");
-      expect(result).toBe("vince");
-    });
-
-    it("should return undefined when no author", () => {
-      const result = extractAuthor("/skills/frontend/react");
-      expect(result).toBeUndefined();
-    });
-
-    it("should handle author at end of path", () => {
-      const result = extractAuthor("react (@claude)");
-      expect(result).toBe("claude");
-    });
-
-    it("should handle underscores in author name", () => {
-      const result = extractAuthor("/skills/frontend/react (@user_name)");
-      expect(result).toBe("user_name");
-    });
-
-    it("should return undefined for malformed author syntax", () => {
-      const result = extractAuthor("/skills/frontend/react (vince)");
-      expect(result).toBeUndefined();
-    });
-
-    it("should extract author from deeply nested path", () => {
-      const result = extractAuthor(
-        "/home/user/projects/skills/frontend/framework/react (@dev)",
-      );
-      expect(result).toBe("dev");
+    it("should always return undefined (author now comes from metadata.yaml)", () => {
+      expect(extractAuthor("/skills/frontend/react")).toBeUndefined();
+      expect(extractAuthor("/skills/frontend/react (@vince)")).toBeUndefined();
+      expect(extractAuthor("any-path")).toBeUndefined();
     });
   });
 
   // =============================================================================
-  // extractCategory
+  // extractCategory (deprecated - always returns undefined)
   // =============================================================================
 
   describe("extractCategory", () => {
-    it("should extract category from relative path", () => {
-      const skillPath = "/home/skills/frontend/react (@vince)";
-      const skillsRoot = "/home/skills";
-      const result = extractCategory(skillPath, skillsRoot);
-      expect(result).toBe("frontend");
-    });
-
-    it("should return undefined for skill at root level", () => {
-      const skillPath = "/home/skills/react";
-      const skillsRoot = "/home/skills";
-      const result = extractCategory(skillPath, skillsRoot);
-      expect(result).toBeUndefined();
-    });
-
-    it("should extract first directory as category", () => {
-      const skillPath = "/home/skills/backend/api/hono (@vince)";
-      const skillsRoot = "/home/skills";
-      const result = extractCategory(skillPath, skillsRoot);
-      expect(result).toBe("backend");
+    it("should always return undefined (directories are now flat)", () => {
+      expect(
+        extractCategory("/home/skills/frontend/react", "/home/skills"),
+      ).toBeUndefined();
+      expect(
+        extractCategory("/home/skills/react", "/home/skills"),
+      ).toBeUndefined();
+      expect(
+        extractCategory("/home/skills/backend/api/hono", "/home/skills"),
+      ).toBeUndefined();
     });
   });
 
@@ -147,12 +95,13 @@ describe("skill-plugin-compiler", () => {
 
   describe("compileSkillPlugin", () => {
     async function createTestSkill(
-      skillName: string,
+      dirName: string,
       frontmatter: Record<string, string>,
       content = "# Skill Content",
       metadata?: Record<string, unknown>,
     ): Promise<string> {
-      const skillPath = path.join(skillsDir, `${skillName} (@test)`);
+      // Use flat directory structure (no (@author) suffix)
+      const skillPath = path.join(skillsDir, dirName);
       await mkdir(skillPath, { recursive: true });
 
       // Create SKILL.md with frontmatter
@@ -169,7 +118,12 @@ describe("skill-plugin-compiler", () => {
             if (Array.isArray(value)) {
               return `${key}:\n${value.map((v) => `  - ${v}`).join("\n")}`;
             }
-            return `${key}: ${value}`;
+            // Quote strings that start with @ to avoid YAML parsing issues
+            const stringValue =
+              typeof value === "string" && value.startsWith("@")
+                ? `"${value}"`
+                : String(value);
+            return `${key}: ${stringValue}`;
           })
           .join("\n");
         await writeFile(path.join(skillPath, "metadata.yaml"), metadataYaml);
@@ -374,10 +328,30 @@ describe("skill-plugin-compiler", () => {
       ).rejects.toThrow(/has invalid or missing YAML frontmatter/);
     });
 
-    it("should extract author from directory name", async () => {
-      const skillPath = await createTestSkill("react", {
-        name: "react",
-        description: "React skills",
+    it("should get author from metadata.yaml", async () => {
+      const skillPath = await createTestSkill(
+        "web-framework-react",
+        {
+          name: "web-framework-react",
+          description: "React skills",
+        },
+        "# React Content",
+        { author: "@vince" },
+      );
+
+      const result = await compileSkillPlugin({
+        skillPath,
+        outputDir,
+      });
+
+      // Author should come from metadata.yaml
+      expect(result.manifest.author?.name).toBe("@vince");
+    });
+
+    it("should have undefined author when no metadata.yaml", async () => {
+      const skillPath = await createTestSkill("web-framework-vue", {
+        name: "web-framework-vue",
+        description: "Vue skills",
       });
 
       const result = await compileSkillPlugin({
@@ -385,8 +359,8 @@ describe("skill-plugin-compiler", () => {
         outputDir,
       });
 
-      // Author should be @test (from (@test) in path)
-      expect(result.manifest.author?.name).toBe("@test");
+      // No author when metadata.yaml doesn't exist
+      expect(result.manifest.author).toBeUndefined();
     });
 
     it("should use hash-based versioning on recompile", async () => {
@@ -442,13 +416,12 @@ description: Simple skill
 
   describe("compileAllSkillPlugins", () => {
     async function createTestSkill(
-      skillName: string,
+      dirName: string,
       frontmatter: Record<string, string>,
       content = "# Skill Content",
-      subDir = "",
     ): Promise<string> {
-      const basePath = subDir ? path.join(skillsDir, subDir) : skillsDir;
-      const skillPath = path.join(basePath, `${skillName} (@test)`);
+      // Use flat directory structure (no subDir or (@author) suffix)
+      const skillPath = path.join(skillsDir, dirName);
       await mkdir(skillPath, { recursive: true });
 
       const frontmatterYaml = Object.entries(frontmatter)
@@ -461,46 +434,42 @@ description: Simple skill
     }
 
     it("should compile multiple skills from directory", async () => {
+      // Use flat directory structure with frontmatter.name as source of truth
       await createTestSkill(
-        "react",
-        { name: "react", description: "React skills" },
+        "web-framework-react",
+        { name: "web-framework-react", description: "React skills" },
         "# React",
-        "frontend",
       );
       await createTestSkill(
-        "zustand",
-        { name: "zustand", description: "State management" },
+        "state-zustand",
+        { name: "state-zustand", description: "State management" },
         "# Zustand",
-        "frontend",
       );
       await createTestSkill(
-        "hono",
-        { name: "hono", description: "API framework" },
+        "backend-api-hono",
+        { name: "backend-api-hono", description: "API framework" },
         "# Hono",
-        "backend",
       );
 
       const results = await compileAllSkillPlugins(skillsDir, outputDir);
 
       expect(results).toHaveLength(3);
       const skillNames = results.map((r) => r.skillName);
-      expect(skillNames).toContain("react");
-      expect(skillNames).toContain("zustand");
-      expect(skillNames).toContain("hono");
+      expect(skillNames).toContain("web-framework-react");
+      expect(skillNames).toContain("state-zustand");
+      expect(skillNames).toContain("backend-api-hono");
     });
 
     it("should create plugin directories for each skill", async () => {
       await createTestSkill(
-        "react",
-        { name: "react", description: "React skills" },
+        "web-framework-react",
+        { name: "web-framework-react", description: "React skills" },
         "# React",
-        "frontend",
       );
       await createTestSkill(
-        "hono",
-        { name: "hono", description: "API framework" },
+        "backend-api-hono",
+        { name: "backend-api-hono", description: "API framework" },
         "# Hono",
-        "backend",
       );
 
       const results = await compileAllSkillPlugins(skillsDir, outputDir);
@@ -516,49 +485,39 @@ description: Simple skill
       expect(results).toHaveLength(0);
     });
 
-    it("should prefix skill names with category when name collision detected", async () => {
-      // Create two skills with same name in different categories
+    it("should use frontmatter.name as skill name (not directory name)", async () => {
+      // Directory name and frontmatter.name are different
       await createTestSkill(
-        "utils",
-        { name: "utils", description: "Frontend utils" },
-        "# Frontend Utils",
-        "frontend",
-      );
-      await createTestSkill(
-        "utils",
-        { name: "utils", description: "Backend utils" },
-        "# Backend Utils",
-        "backend",
+        "some-directory-name",
+        { name: "actual-skill-name", description: "Skill description" },
+        "# Content",
       );
 
       const results = await compileAllSkillPlugins(skillsDir, outputDir);
 
-      expect(results).toHaveLength(2);
-      const skillNames = results.map((r) => r.skillName).sort();
-      expect(skillNames).toContain("backend-utils");
-      expect(skillNames).toContain("frontend-utils");
+      expect(results).toHaveLength(1);
+      // Should use frontmatter.name, not directory name
+      expect(results[0].skillName).toBe("actual-skill-name");
     });
 
     it("should continue compiling other skills when one fails", async () => {
       // Create valid skill
       await createTestSkill(
-        "react",
-        { name: "react", description: "React skills" },
+        "web-framework-react",
+        { name: "web-framework-react", description: "React skills" },
         "# React",
-        "frontend",
       );
 
       // Create invalid skill (no frontmatter)
-      const badSkillPath = path.join(skillsDir, "backend", "bad-skill");
+      const badSkillPath = path.join(skillsDir, "bad-skill");
       await mkdir(badSkillPath, { recursive: true });
       await writeFile(path.join(badSkillPath, "SKILL.md"), "# No frontmatter");
 
       // Create another valid skill
       await createTestSkill(
-        "zustand",
-        { name: "zustand", description: "State" },
+        "state-zustand",
+        { name: "state-zustand", description: "State" },
         "# Zustand",
-        "frontend",
       );
 
       const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -568,8 +527,8 @@ description: Simple skill
       // Should have compiled the valid skills
       expect(results).toHaveLength(2);
       const skillNames = results.map((r) => r.skillName);
-      expect(skillNames).toContain("react");
-      expect(skillNames).toContain("zustand");
+      expect(skillNames).toContain("web-framework-react");
+      expect(skillNames).toContain("state-zustand");
 
       // Should have warned about the failed skill
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -581,10 +540,9 @@ description: Simple skill
 
     it("should log success messages for compiled skills", async () => {
       await createTestSkill(
-        "react",
-        { name: "react", description: "React skills" },
+        "web-framework-react",
+        { name: "web-framework-react", description: "React skills" },
         "# React",
-        "frontend",
       );
 
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
@@ -593,7 +551,7 @@ description: Simple skill
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("[OK]"));
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("skill-react"),
+        expect.stringContaining("skill-web-framework-react"),
       );
 
       consoleSpy.mockRestore();
@@ -601,16 +559,14 @@ description: Simple skill
 
     it("should return correct manifest for each compiled skill", async () => {
       await createTestSkill(
-        "react",
-        { name: "react", description: "React skills" },
+        "web-framework-react",
+        { name: "web-framework-react", description: "React skills" },
         "# React",
-        "frontend",
       );
       await createTestSkill(
-        "hono",
-        { name: "hono", description: "API framework" },
+        "backend-api-hono",
+        { name: "backend-api-hono", description: "API framework" },
         "# Hono",
-        "backend",
       );
 
       const results = await compileAllSkillPlugins(skillsDir, outputDir);

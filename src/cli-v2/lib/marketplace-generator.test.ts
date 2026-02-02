@@ -66,9 +66,12 @@ describe("marketplace-generator", () => {
       expect(names).toContain("skill-vue");
     });
 
-    it("should extract category from keywords", async () => {
-      await createPlugin("skill-react", {
-        name: "skill-react",
+    it("should extract category from normalized skill ID", async () => {
+      // With normalized skill IDs, category is inferred from the ID prefix
+      // skill-web-* -> frontend
+      // skill-api-* -> backend
+      await createPlugin("skill-web-framework-react", {
+        name: "skill-web-framework-react",
         description: "React framework",
         version: "1.0.0",
       });
@@ -79,9 +82,9 @@ describe("marketplace-generator", () => {
         pluginRoot: "./plugins",
       });
 
-      // skill-react should match frontend category pattern
+      // skill-web-* should match frontend category pattern
       const reactPlugin = marketplace.plugins.find(
-        (p) => p.name === "skill-react",
+        (p) => p.name === "skill-web-framework-react",
       );
       expect(reactPlugin?.category).toBe("frontend");
     });

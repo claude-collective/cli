@@ -1,38 +1,40 @@
 /**
  * Shared test fixtures for consistent skill IDs across all tests.
  * Import these constants instead of hardcoding skill IDs.
+ *
+ * Note: Skill IDs are in normalized kebab-case format (no author suffix, slashes replaced with dashes).
  */
 import type { ResolvedSkill } from "../../types-matrix";
 import { createMockSkill } from "./helpers";
 
 // =============================================================================
-// Primary Test Skills - Use these everywhere
+// Primary Test Skills - Use these everywhere (normalized format)
 // =============================================================================
 
 export const TEST_SKILLS = {
-  REACT: "react (@vince)",
-  ZUSTAND: "zustand (@vince)",
-  HONO: "hono (@vince)",
-  VITEST: "vitest (@vince)",
-  VUE: "vue (@vince)",
-  DRIZZLE: "drizzle (@vince)",
-  SCSS_MODULES: "scss-modules (@vince)",
-  BETTER_AUTH: "better-auth+drizzle+hono (@vince)",
-  AUTH_PATTERNS: "auth-patterns (@vince)",
+  REACT: "web-framework-react",
+  ZUSTAND: "web-state-zustand",
+  HONO: "api-framework-hono",
+  VITEST: "web-testing-vitest",
+  VUE: "web-framework-vue",
+  DRIZZLE: "api-database-drizzle",
+  SCSS_MODULES: "web-styling-scss-modules",
+  BETTER_AUTH: "api-auth-better-auth-drizzle-hono",
+  AUTH_PATTERNS: "api-security-auth-patterns",
   // One methodology skill for testing preselection (matches first in DEFAULT_PRESELECTED_SKILLS)
-  ANTI_OVER_ENGINEERING: "meta/methodology/anti-over-engineering (@vince)",
+  ANTI_OVER_ENGINEERING: "meta-methodology-anti-over-engineering",
 } as const;
 
 export const TEST_AUTHOR = "@vince";
 
 // =============================================================================
-// Placeholder Skills for Generic Tests
+// Placeholder Skills for Generic Tests (normalized format)
 // =============================================================================
 
 export const PLACEHOLDER_SKILLS = {
-  SKILL_A: "skill-a (@vince)",
-  SKILL_B: "skill-b (@vince)",
-  SKILL_C: "skill-c (@vince)",
+  SKILL_A: "test-skill-a",
+  SKILL_B: "test-skill-b",
+  SKILL_C: "test-skill-c",
 } as const;
 
 // =============================================================================

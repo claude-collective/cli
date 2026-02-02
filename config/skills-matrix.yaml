@@ -682,171 +682,177 @@ relationships:
       skills: [clack, inquirer, ink]
 
 # =============================================================================
-# Skill Aliases (Map short names to full IDs)
+# Skill Aliases (Map short names to normalized skill IDs)
+# =============================================================================
+# Skill IDs are now in normalized kebab-case format:
+# - No author suffix (author is metadata only)
+# - Slashes replaced with dashes
+# - Plus signs replaced with dashes
+# - Lowercase
 # =============================================================================
 
 skill_aliases:
   # ─────────────────────────────────────────────────────────────────
-  # Frameworks - full skill IDs with directory paths
+  # Frameworks - normalized skill IDs
   # ─────────────────────────────────────────────────────────────────
-  react: "web/framework/react (@vince)"
-  vue: "web/framework/vue-composition-api (@vince)"
-  angular: "web/framework/angular-standalone (@vince)"
-  solidjs: "web/framework/solidjs (@vince)"
+  react: "web-framework-react"
+  vue: "web-framework-vue-composition-api"
+  angular: "web-framework-angular-standalone"
+  solidjs: "web-framework-solidjs"
 
   # Meta-frameworks
-  nextjs-app-router: "web/framework/nextjs-app-router (@vince)"
-  nextjs-server-actions: "web/framework/nextjs-server-actions (@vince)"
-  remix: "web/framework/remix (@vince)"
-  nuxt: "web/framework/nuxt (@vince)"
+  nextjs-app-router: "web-framework-nextjs-app-router"
+  nextjs-server-actions: "web-framework-nextjs-server-actions"
+  remix: "web-framework-remix"
+  nuxt: "web-framework-nuxt"
 
   # ─────────────────────────────────────────────────────────────────
   # Styling
   # ─────────────────────────────────────────────────────────────────
-  scss-modules: "web/styling/scss-modules (@vince)"
-  cva: "web/styling/cva (@vince)"
+  scss-modules: "web-styling-scss-modules"
+  cva: "web-styling-cva"
   # tailwind: skill not yet created
 
   # ─────────────────────────────────────────────────────────────────
   # Client State
   # ─────────────────────────────────────────────────────────────────
-  zustand: "web/state/zustand (@vince)"
-  redux-toolkit: "web/state/redux-toolkit (@vince)"
-  pinia: "web/state/pinia (@vince)"
-  ngrx-signalstore: "web/state/ngrx-signalstore (@vince)"
-  jotai: "web/state/jotai (@vince)"
+  zustand: "web-state-zustand"
+  redux-toolkit: "web-state-redux-toolkit"
+  pinia: "web-state-pinia"
+  ngrx-signalstore: "web-state-ngrx-signalstore"
+  jotai: "web-state-jotai"
   # mobx: skill not yet created
 
   # ─────────────────────────────────────────────────────────────────
   # Server State / Data Fetching
   # ─────────────────────────────────────────────────────────────────
-  react-query: "web/server-state/react-query (@vince)"
-  swr: "web/data-fetching/swr (@vince)"
-  graphql-apollo: "web/data-fetching/graphql-apollo (@vince)"
-  graphql-urql: "web/data-fetching/graphql-urql (@vince)"
-  trpc: "web/data-fetching/trpc (@vince)"
+  react-query: "web-server-state-react-query"
+  swr: "web-data-fetching-swr"
+  graphql-apollo: "web-data-fetching-graphql-apollo"
+  graphql-urql: "web-data-fetching-graphql-urql"
+  trpc: "web-data-fetching-trpc"
 
   # ─────────────────────────────────────────────────────────────────
   # Forms & Validation
   # ─────────────────────────────────────────────────────────────────
-  react-hook-form: "web/forms/react-hook-form (@vince)"
-  vee-validate: "web/forms/vee-validate (@vince)"
-  zod-validation: "web/forms/zod-validation (@vince)"
+  react-hook-form: "web-forms-react-hook-form"
+  vee-validate: "web-forms-vee-validate"
+  zod-validation: "web-forms-zod-validation"
 
   # ─────────────────────────────────────────────────────────────────
   # Testing
   # ─────────────────────────────────────────────────────────────────
-  vitest: "web/testing/vitest (@vince)"
-  playwright-e2e: "web/testing/playwright-e2e (@vince)"
-  cypress-e2e: "web/testing/cypress-e2e (@vince)"
-  react-testing-library: "web/testing/react-testing-library (@vince)"
-  vue-test-utils: "web/testing/vue-test-utils (@vince)"
-  msw: "web/mocks/msw (@vince)"
+  vitest: "web-testing-vitest"
+  playwright-e2e: "web-testing-playwright-e2e"
+  cypress-e2e: "web-testing-cypress-e2e"
+  react-testing-library: "web-testing-react-testing-library"
+  vue-test-utils: "web-testing-vue-test-utils"
+  msw: "web-mocks-msw"
 
   # ─────────────────────────────────────────────────────────────────
   # UI Components
   # ─────────────────────────────────────────────────────────────────
-  shadcn-ui: "web/ui/shadcn-ui (@vince)"
-  tanstack-table: "web/ui/tanstack-table (@vince)"
-  radix-ui: "web/ui/radix-ui (@vince)"
+  shadcn-ui: "web-ui-shadcn-ui"
+  tanstack-table: "web-ui-tanstack-table"
+  radix-ui: "web-ui-radix-ui"
 
   # ─────────────────────────────────────────────────────────────────
   # Backend - API Framework
   # ─────────────────────────────────────────────────────────────────
-  hono: "api/framework/hono (@vince)"
-  express: "api/framework/express (@vince)"
-  fastify: "api/framework/fastify (@vince)"
+  hono: "api-framework-hono"
+  express: "api-framework-express"
+  fastify: "api-framework-fastify"
 
   # Backend - Database
-  drizzle: "api/database/drizzle (@vince)"
-  prisma: "api/database/prisma (@vince)"
+  drizzle: "api-database-drizzle"
+  prisma: "api-database-prisma"
 
   # Backend - Auth (composite skill)
-  better-auth: "api/auth/better-auth+drizzle+hono (@vince)"
+  better-auth: "api-auth-better-auth-drizzle-hono"
 
   # Backend - Observability (composite skill)
-  axiom-pino-sentry: "api/observability/axiom+pino+sentry (@vince)"
+  axiom-pino-sentry: "api-observability-axiom-pino-sentry"
 
   # Backend - Analytics
-  posthog: "api/analytics/posthog-analytics (@vince)"
-  posthog-flags: "api/flags/posthog-flags (@vince)"
+  posthog: "api-analytics-posthog-analytics"
+  posthog-flags: "api-flags-posthog-flags"
 
   # Backend - Email (composite skill)
-  resend: "api/email/resend+react-email (@vince)"
+  resend: "api-email-resend-react-email"
 
   # Backend - CI/CD
-  github-actions: "api/ci-cd/github-actions (@vince)"
+  github-actions: "api-ci-cd-github-actions"
 
   # ─────────────────────────────────────────────────────────────────
   # Mobile
   # ─────────────────────────────────────────────────────────────────
-  react-native: "mobile/framework/react-native (@vince)"
-  expo: "mobile/framework/expo (@vince)"
+  react-native: "mobile-framework-react-native"
+  expo: "mobile-framework-expo"
 
   # ─────────────────────────────────────────────────────────────────
   # Setup / Infrastructure
   # ─────────────────────────────────────────────────────────────────
-  turborepo: "infra/monorepo/turborepo (@vince)"
-  tooling: "infra/tooling/setup-tooling (@vince)"
-  posthog-setup: "api/analytics/setup-posthog (@vince)"
-  env: "infra/env/setup-env (@vince)"
-  observability-setup: "api/observability/setup-axiom+pino+sentry (@vince)"
-  email-setup: "api/email/setup-resend (@vince)"
+  turborepo: "infra-monorepo-turborepo"
+  tooling: "infra-tooling-setup-tooling"
+  posthog-setup: "api-analytics-setup-posthog"
+  env: "infra-env-setup-env"
+  observability-setup: "api-observability-setup-axiom-pino-sentry"
+  email-setup: "api-email-setup-resend"
 
   # ─────────────────────────────────────────────────────────────────
   # Additional Skills (Animation, PWA, Realtime, etc.)
   # ─────────────────────────────────────────────────────────────────
-  framer-motion: "web/animation/framer-motion (@vince)"
-  css-animations: "web/animation/css-animations (@vince)"
-  view-transitions: "web/animation/view-transitions (@vince)"
-  storybook: "web/tooling/storybook (@vince)"
-  error-boundaries: "web/error-handling/error-boundaries (@vince)"
-  accessibility: "web/accessibility/web-accessibility (@vince)"
-  websockets: "web/realtime/websockets (@vince)"
-  sse: "web/realtime/sse (@vince)"
-  socket-io: "web/realtime/socket-io (@vince)"
-  service-workers: "web/pwa/service-workers (@vince)"
-  file-upload: "web/files/file-upload-patterns (@vince)"
-  image-handling: "web/files/image-handling (@vince)"
-  date-fns: "web/utilities/date-fns (@vince)"
+  framer-motion: "web-animation-framer-motion"
+  css-animations: "web-animation-css-animations"
+  view-transitions: "web-animation-view-transitions"
+  storybook: "web-tooling-storybook"
+  error-boundaries: "web-error-handling-error-boundaries"
+  accessibility: "web-accessibility-web-accessibility"
+  websockets: "web-realtime-websockets"
+  sse: "web-realtime-sse"
+  socket-io: "web-realtime-socket-io"
+  service-workers: "web-pwa-service-workers"
+  file-upload: "web-files-file-upload-patterns"
+  image-handling: "web-files-image-handling"
+  date-fns: "web-utilities-date-fns"
 
   # ─────────────────────────────────────────────────────────────────
   # Backend-specific category skills
   # ─────────────────────────────────────────────────────────────────
-  backend-testing: "api/testing/api-testing (@vince)"
-  backend-performance: "api/performance/api-performance (@vince)"
-  frontend-performance: "web/performance/web-performance (@vince)"
+  backend-testing: "api-testing-api-testing"
+  backend-performance: "api-performance-api-performance"
+  frontend-performance: "web-performance-web-performance"
 
   # Security
-  security: "security/auth/security (@vince)"
+  security: "security-auth-security"
 
   # ─────────────────────────────────────────────────────────────────
   # CLI
   # ─────────────────────────────────────────────────────────────────
   # CLI Framework
-  commander: "cli/framework/cli-commander (@vince)"
-  cli-commander: "cli/framework/cli-commander (@vince)"
-  oclif: "cli/framework/cli-oclif (@vince)"
-  yargs: "cli/framework/cli-yargs (@vince)"
+  commander: "cli-framework-cli-commander"
+  cli-commander: "cli-framework-cli-commander"
+  oclif: "cli-framework-cli-oclif"
+  yargs: "cli-framework-cli-yargs"
 
   # CLI Prompts
-  clack: "cli/prompts/cli-clack (@vince)"
-  inquirer: "cli/prompts/cli-inquirer (@vince)"
-  ink: "cli/prompts/cli-ink (@vince)"
+  clack: "cli-prompts-cli-clack"
+  inquirer: "cli-prompts-cli-inquirer"
+  ink: "cli-prompts-cli-ink"
 
   # ─────────────────────────────────────────────────────────────────
   # Reviewing / Meta
   # ─────────────────────────────────────────────────────────────────
-  reviewing: "meta/reviewing/reviewing (@vince)"
-  cli-reviewing: "meta/reviewing/cli-reviewing (@vince)"
-  research-methodology: "meta/research/research-methodology (@vince)"
+  reviewing: "meta-reviewing-reviewing"
+  cli-reviewing: "meta-reviewing-cli-reviewing"
+  research-methodology: "meta-research-research-methodology"
 
   # ─────────────────────────────────────────────────────────────────
   # Methodology (Universal principles + Implementation + Extended session)
   # ─────────────────────────────────────────────────────────────────
-  investigation-requirements: "meta/methodology/investigation-requirements (@vince)"
-  anti-over-engineering: "meta/methodology/anti-over-engineering (@vince)"
-  success-criteria: "meta/methodology/success-criteria (@vince)"
-  write-verification: "meta/methodology/write-verification (@vince)"
-  improvement-protocol: "meta/methodology/improvement-protocol (@vince)"
-  context-management: "meta/methodology/context-management (@vince)"
+  investigation-requirements: "meta-methodology-investigation-requirements"
+  anti-over-engineering: "meta-methodology-anti-over-engineering"
+  success-criteria: "meta-methodology-success-criteria"
+  write-verification: "meta-methodology-write-verification"
+  improvement-protocol: "meta-methodology-improvement-protocol"
+  context-management: "meta-methodology-context-management"

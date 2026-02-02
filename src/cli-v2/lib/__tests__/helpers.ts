@@ -29,7 +29,7 @@
  * ```typescript
  * import { createMockSkill, createMockMatrix } from './helpers';
  *
- * const skill = createMockSkill('react (@vince)', 'frontend/framework');
+ * const skill = createMockSkill('web-framework-react', 'frontend/framework');
  * const matrix = createMockMatrix({ [skill.id]: skill });
  * ```
  */
@@ -408,24 +408,24 @@ export async function cleanupTestDirs(dirs: TestDirs): Promise<void> {
  * used in matrix and skill selection tests. Override any property
  * as needed.
  *
- * @param id - Full skill ID including author (e.g., "react (@vince)")
+ * @param id - Normalized skill ID (e.g., "web-framework-react")
  * @param category - Skill category path (e.g., "frontend/framework")
  * @param overrides - Optional partial skill to override defaults
  * @returns Complete ResolvedSkill object
  *
  * @example Basic usage
  * ```typescript
- * const skill = createMockSkill('react (@vince)', 'frontend/framework');
- * expect(skill.name).toBe('react');
+ * const skill = createMockSkill('web-framework-react', 'frontend/framework');
+ * expect(skill.name).toBe('web-framework-react');
  * expect(skill.author).toBe('@test');
  * ```
  *
  * @example With overrides
  * ```typescript
- * const skill = createMockSkill('react (@vince)', 'frontend', {
+ * const skill = createMockSkill('web-framework-react', 'frontend', {
  *   author: '@custom',
  *   tags: ['popular', 'frontend'],
- *   recommends: ['zustand (@vince)'],
+ *   recommends: [{ skillId: 'web-state-zustand', reason: 'Works well with React' }],
  * });
  * ```
  *
@@ -439,7 +439,8 @@ export function createMockSkill(
 ): ResolvedSkill {
   return {
     id,
-    name: id.replace(/ \(@.*\)$/, ""),
+    // For normalized IDs, use the ID itself as the name (unless overridden)
+    name: id,
     description: `${id} skill`,
     category,
     categoryExclusive: false,
@@ -482,7 +483,7 @@ export function createMockSkill(
  *     frontend: { name: 'Frontend', description: 'Frontend skills' },
  *   },
  *   suggestedStacks: [
- *     { id: 'react-stack', name: 'React Stack', allSkillIds: ['react (@vince)'] },
+ *     { id: 'react-stack', name: 'React Stack', allSkillIds: ['web-framework-react'] },
  *   ],
  * });
  * ```
@@ -521,8 +522,9 @@ export function createMockMatrixWithMethodology(
 ): MergedSkillsMatrix {
   const METHODOLOGY_CATEGORY = "meta/methodology";
   // Just one methodology skill is enough to test preselection
+  // Using normalized skill ID format
   const methodologySkill = createMockSkill(
-    "meta/methodology/anti-over-engineering (@vince)",
+    "meta-methodology-anti-over-engineering",
     METHODOLOGY_CATEGORY,
     { name: "Anti-Over-Engineering", description: "Surgical implementation" },
   );
@@ -560,8 +562,8 @@ export function createMockMatrixWithMethodology(
  * @example
  * ```typescript
  * const stack = createMockStackConfig('react-stack', [
- *   'react (@vince)',
- *   'zustand (@vince)',
+ *   'web-framework-react',
+ *   'web-state-zustand',
  * ]);
  * expect(stack.agents).toContain('web-developer');
  * ```
