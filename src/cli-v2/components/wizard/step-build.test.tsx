@@ -6,7 +6,12 @@
 import React from "react";
 import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, vi } from "vitest";
-import { StepBuild, type StepBuildProps, validateBuildStep, getDisplayLabel } from "./step-build";
+import {
+  StepBuild,
+  type StepBuildProps,
+  validateBuildStep,
+  getDisplayLabel,
+} from "./step-build";
 import type { CategoryRow as GridCategoryRow } from "./category-grid";
 import type {
   MergedSkillsMatrix,
@@ -83,14 +88,10 @@ const createTestMatrix = (
   skills: Object.fromEntries(skills.map((s) => [s.id, s])),
   suggestedStacks: [],
   aliases: Object.fromEntries(
-    skills
-      .filter((s) => s.alias)
-      .map((s) => [s.alias!, s.id]),
+    skills.filter((s) => s.alias).map((s) => [s.alias!, s.id]),
   ),
   aliasesReverse: Object.fromEntries(
-    skills
-      .filter((s) => s.alias)
-      .map((s) => [s.id, s.alias!]),
+    skills.filter((s) => s.alias).map((s) => [s.id, s.alias!]),
   ),
   generatedAt: new Date().toISOString(),
 });
@@ -158,21 +159,36 @@ const scssSkill = createSkill("scss (@vince)", "SCSS Modules", "styling", {
   alias: "scss",
 });
 
-const zustandSkill = createSkill("zustand (@vince)", "Zustand", "client-state", {
-  alias: "zustand",
-});
+const zustandSkill = createSkill(
+  "zustand (@vince)",
+  "Zustand",
+  "client-state",
+  {
+    alias: "zustand",
+  },
+);
 
 const honoSkill = createSkill("hono (@vince)", "Hono", "api-framework", {
   alias: "hono",
 });
 
-const expressSkill = createSkill("express (@vince)", "Express", "api-framework", {
-  alias: "express",
-});
+const expressSkill = createSkill(
+  "express (@vince)",
+  "Express",
+  "api-framework",
+  {
+    alias: "express",
+  },
+);
 
-const postgresSkill = createSkill("postgres (@vince)", "PostgreSQL", "database", {
-  alias: "postgres",
-});
+const postgresSkill = createSkill(
+  "postgres (@vince)",
+  "PostgreSQL",
+  "database",
+  {
+    alias: "postgres",
+  },
+);
 
 // Default test matrix with web and API domains
 const defaultMatrix = createTestMatrix(
@@ -636,19 +652,28 @@ describe("StepBuild component", () => {
 
     it("should show three-domain progress correctly", () => {
       // Add cli category to matrix
-      const cliFrameworkCategory = createCategory("cli-framework", "CLI Framework", {
-        parent: "cli",
-        domain: "cli",
-        required: true,
-        order: 0,
-      });
+      const cliFrameworkCategory = createCategory(
+        "cli-framework",
+        "CLI Framework",
+        {
+          parent: "cli",
+          domain: "cli",
+          required: true,
+          order: 0,
+        },
+      );
       const cliCategory = createCategory("cli", "CLI", {
         description: "CLI development",
         order: 2,
       });
-      const commanderSkill = createSkill("commander (@vince)", "Commander", "cli-framework", {
-        alias: "commander",
-      });
+      const commanderSkill = createSkill(
+        "commander (@vince)",
+        "Commander",
+        "cli-framework",
+        {
+          alias: "commander",
+        },
+      );
 
       const matrixWithCli = createTestMatrix(
         [
@@ -766,7 +791,9 @@ describe("StepBuild component", () => {
           name: "Framework",
           required: true,
           exclusive: true,
-          options: [{ id: "react", label: "React", state: "normal", selected: true }],
+          options: [
+            { id: "react", label: "React", state: "normal", selected: true },
+          ],
         },
       ];
       const selections = { framework: ["react"] };
@@ -783,7 +810,9 @@ describe("StepBuild component", () => {
           name: "Framework",
           required: true,
           exclusive: true,
-          options: [{ id: "react", label: "React", state: "normal", selected: false }],
+          options: [
+            { id: "react", label: "React", state: "normal", selected: false },
+          ],
         },
       ];
       const selections = {};
@@ -800,7 +829,14 @@ describe("StepBuild component", () => {
           name: "State Management",
           required: false,
           exclusive: true,
-          options: [{ id: "zustand", label: "Zustand", state: "normal", selected: false }],
+          options: [
+            {
+              id: "zustand",
+              label: "Zustand",
+              state: "normal",
+              selected: false,
+            },
+          ],
         },
       ];
       const selections = {};
@@ -887,7 +923,9 @@ describe("getDisplayLabel", () => {
   });
 
   it("should preserve original capitalization", () => {
-    expect(getDisplayLabel({ name: "SCSS Modules (@vince)" })).toBe("SCSS Modules");
+    expect(getDisplayLabel({ name: "SCSS Modules (@vince)" })).toBe(
+      "SCSS Modules",
+    );
   });
 
   it("should handle hyphenated author names", () => {
@@ -903,11 +941,15 @@ describe("getDisplayLabel", () => {
   });
 
   it("should not strip non-author parentheses", () => {
-    expect(getDisplayLabel({ name: "React (library)" })).toBe("React (library)");
+    expect(getDisplayLabel({ name: "React (library)" })).toBe(
+      "React (library)",
+    );
   });
 
   it("should ignore alias and use name for display", () => {
     // alias is available but we use name for accurate capitalization
-    expect(getDisplayLabel({ alias: "scss-modules", name: "SCSS Modules (@vince)" })).toBe("SCSS Modules");
+    expect(
+      getDisplayLabel({ alias: "scss-modules", name: "SCSS Modules (@vince)" }),
+    ).toBe("SCSS Modules");
   });
 });

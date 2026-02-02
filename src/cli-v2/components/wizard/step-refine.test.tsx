@@ -7,7 +7,11 @@
 import React from "react";
 import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, vi } from "vitest";
-import { StepRefine, type StepRefineProps, type RefineAction } from "./step-refine";
+import {
+  StepRefine,
+  type StepRefineProps,
+  type RefineAction,
+} from "./step-refine";
 import {
   ENTER,
   ESCAPE,
@@ -79,7 +83,9 @@ describe("StepRefine component", () => {
     });
 
     it("should show 'Use all recommended' option as highlighted", () => {
-      const { lastFrame, unmount } = renderStepRefine({ refineAction: "all-recommended" });
+      const { lastFrame, unmount } = renderStepRefine({
+        refineAction: "all-recommended",
+      });
       cleanup = unmount;
 
       const output = lastFrame();
@@ -223,7 +229,9 @@ describe("StepRefine component", () => {
     });
 
     it("should handle 'all-recommended' refineAction", () => {
-      const { lastFrame, unmount } = renderStepRefine({ refineAction: "all-recommended" });
+      const { lastFrame, unmount } = renderStepRefine({
+        refineAction: "all-recommended",
+      });
       cleanup = unmount;
 
       const output = lastFrame();
@@ -231,7 +239,9 @@ describe("StepRefine component", () => {
     });
 
     it("should handle 'customize' refineAction (even though disabled)", () => {
-      const { lastFrame, unmount } = renderStepRefine({ refineAction: "customize" });
+      const { lastFrame, unmount } = renderStepRefine({
+        refineAction: "customize",
+      });
       cleanup = unmount;
 
       const output = lastFrame();

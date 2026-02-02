@@ -332,7 +332,9 @@ describe("StepConfirm component", () => {
       expect(output).toContain("react");
       // API section should not appear since no technologies selected
       const lines = output?.split("\n") || [];
-      const apiLine = lines.find((line) => line.includes("API:") && line.includes("hono"));
+      const apiLine = lines.find(
+        (line) => line.includes("API:") && line.includes("hono"),
+      );
       expect(apiLine).toBeUndefined();
     });
   });
@@ -425,10 +427,7 @@ describe("StepConfirm component", () => {
       const onComplete = vi.fn();
 
       const { lastFrame, unmount } = render(
-        <StepConfirm
-          matrix={mockMatrix}
-          onComplete={onComplete}
-        />,
+        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
       );
       cleanup = unmount;
 
@@ -440,10 +439,7 @@ describe("StepConfirm component", () => {
       const onComplete = vi.fn();
 
       const { lastFrame, unmount } = render(
-        <StepConfirm
-          matrix={mockMatrix}
-          onComplete={onComplete}
-        />,
+        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
       );
       cleanup = unmount;
 

@@ -58,7 +58,8 @@ export const StepRefine: React.FC<StepRefineProps> = ({
 
   // Determine if "all-recommended" is the current selection
   // Default to "all-recommended" if nothing selected
-  const isRecommendedSelected = refineAction === "all-recommended" || refineAction === null;
+  const isRecommendedSelected =
+    refineAction === "all-recommended" || refineAction === null;
 
   return (
     <Box flexDirection="column" paddingX={2}>
@@ -105,7 +106,7 @@ export const StepRefine: React.FC<StepRefineProps> = ({
       {/* Footer with keyboard shortcuts */}
       <Text> </Text>
       <Text dimColor>
-        {"\u2191"}/{"\u2193"} navigate   ENTER continue   ESC back
+        {"\u2191"}/{"\u2193"} navigate ENTER continue ESC back
       </Text>
     </Box>
   );

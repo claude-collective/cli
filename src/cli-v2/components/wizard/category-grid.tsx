@@ -116,9 +116,7 @@ const getStateIndicator = (option: CategoryOption): string | null => {
 /**
  * Get the color for the option symbol based on state and selection.
  */
-const getSymbolColor = (
-  option: CategoryOption,
-): string | undefined => {
+const getSymbolColor = (option: CategoryOption): string | undefined => {
   if (option.state === "disabled") {
     return "gray";
   }
@@ -241,18 +239,11 @@ const HeaderRow: React.FC<HeaderRowProps> = ({
   expertMode,
 }) => {
   return (
-    <Box
-      flexDirection="row"
-      justifyContent="flex-end"
-      marginBottom={1}
-      gap={2}
-    >
+    <Box flexDirection="row" justifyContent="flex-end" marginBottom={1} gap={2}>
       <Text dimColor>
         [Tab] Show descriptions: {showDescriptions ? "ON" : "OFF"}
       </Text>
-      <Text dimColor>
-        [e] Expert Mode: {expertMode ? "ON" : "OFF"}
-      </Text>
+      <Text dimColor>[e] Expert Mode: {expertMode ? "ON" : "OFF"}</Text>
     </Box>
   );
 };
@@ -272,7 +263,8 @@ const OptionCell: React.FC<OptionCellProps> = ({
   const symbolColor = getSymbolColor(option);
   const labelColor = getLabelColor(option, isFocused);
   const stateIndicator = getStateIndicator(option);
-  const isDimmed = option.state === "disabled" || option.state === "discouraged";
+  const isDimmed =
+    option.state === "disabled" || option.state === "discouraged";
 
   return (
     <Box flexDirection="column" minWidth={MIN_OPTION_WIDTH} marginRight={1}>
@@ -284,7 +276,10 @@ const OptionCell: React.FC<OptionCellProps> = ({
         <Text> </Text>
 
         {/* Selection symbol */}
-        <Text color={symbolColor} dimColor={isDimmed && option.state === "discouraged"}>
+        <Text
+          color={symbolColor}
+          dimColor={isDimmed && option.state === "discouraged"}
+        >
           {symbol}
         </Text>
         <Text> </Text>
@@ -303,9 +298,7 @@ const OptionCell: React.FC<OptionCellProps> = ({
         {stateIndicator && (
           <>
             <Text> </Text>
-            <Text
-              color={option.state === "recommended" ? "green" : "yellow"}
-            >
+            <Text color={option.state === "recommended" ? "green" : "yellow"}>
               {stateIndicator}
             </Text>
           </>
@@ -340,14 +333,16 @@ const CategoryRowComponent: React.FC<CategoryRowComponentProps> = ({
   showDescriptions,
 }) => {
   return (
-    <Box flexDirection="row" alignItems="flex-start" marginBottom={showDescriptions ? 1 : 0}>
+    <Box
+      flexDirection="row"
+      alignItems="flex-start"
+      marginBottom={showDescriptions ? 1 : 0}
+    >
       {/* Category name column */}
       <Box minWidth={16} marginRight={2}>
         <Text bold={isRowFocused} color={isRowFocused ? "cyan" : undefined}>
           {category.name}
-          {category.required && (
-            <Text color="red"> {SYMBOL_REQUIRED}</Text>
-          )}
+          {category.required && <Text color="red"> {SYMBOL_REQUIRED}</Text>}
         </Text>
       </Box>
 
@@ -377,8 +372,7 @@ const LegendRow: React.FC = () => {
   return (
     <Box marginTop={1}>
       <Text dimColor>
-        Legend:{" "}
-        <Text color="green">{SYMBOL_SELECTED}</Text> selected{"   "}
+        Legend: <Text color="green">{SYMBOL_SELECTED}</Text> selected{"   "}
         <Text color="green">{SYMBOL_RECOMMENDED}</Text> recommended{"   "}
         <Text color="yellow">{SYMBOL_DISCOURAGED}</Text> discouraged{"   "}
         <Text color="gray">{SYMBOL_DISABLED}</Text> disabled
@@ -433,7 +427,16 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
   // Handle keyboard navigation
   useInput(
     useCallback(
-      (input: string, key: { leftArrow: boolean; rightArrow: boolean; upArrow: boolean; downArrow: boolean; tab: boolean }) => {
+      (
+        input: string,
+        key: {
+          leftArrow: boolean;
+          rightArrow: boolean;
+          upArrow: boolean;
+          downArrow: boolean;
+          tab: boolean;
+        },
+      ) => {
         // Toggle descriptions with Tab
         if (key.tab) {
           onToggleDescriptions();
@@ -462,15 +465,27 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
         const isDown = key.downArrow || input === "j";
 
         if (isLeft) {
-          const newCol = findNextValidOption(currentOptions, focusedCol, -1, true);
+          const newCol = findNextValidOption(
+            currentOptions,
+            focusedCol,
+            -1,
+            true,
+          );
           onFocusChange(focusedRow, newCol);
         } else if (isRight) {
-          const newCol = findNextValidOption(currentOptions, focusedCol, 1, true);
+          const newCol = findNextValidOption(
+            currentOptions,
+            focusedCol,
+            1,
+            true,
+          );
           onFocusChange(focusedRow, newCol);
         } else if (isUp) {
           // Move to previous row
-          const newRow = focusedRow <= 0 ? processedCategories.length - 1 : focusedRow - 1;
-          const newRowOptions = processedCategories[newRow]?.sortedOptions || [];
+          const newRow =
+            focusedRow <= 0 ? processedCategories.length - 1 : focusedRow - 1;
+          const newRowOptions =
+            processedCategories[newRow]?.sortedOptions || [];
           // Try to keep same column, or find valid one
           let newCol = Math.min(focusedCol, newRowOptions.length - 1);
           if (newRowOptions[newCol]?.state === "disabled") {
@@ -479,8 +494,10 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
           onFocusChange(newRow, newCol);
         } else if (isDown) {
           // Move to next row
-          const newRow = focusedRow >= processedCategories.length - 1 ? 0 : focusedRow + 1;
-          const newRowOptions = processedCategories[newRow]?.sortedOptions || [];
+          const newRow =
+            focusedRow >= processedCategories.length - 1 ? 0 : focusedRow + 1;
+          const newRowOptions =
+            processedCategories[newRow]?.sortedOptions || [];
           // Try to keep same column, or find valid one
           let newCol = Math.min(focusedCol, newRowOptions.length - 1);
           if (newRowOptions[newCol]?.state === "disabled") {
