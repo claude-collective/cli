@@ -48,15 +48,15 @@ describe("config", () => {
   describe("getGlobalConfigPath", () => {
     it("should return path in home directory", () => {
       const configPath = getGlobalConfigPath();
-      expect(configPath).toContain(".claude-collective");
+      expect(configPath).toContain(".claude");
       expect(configPath).toContain("config.yaml");
     });
   });
 
   describe("getProjectConfigPath", () => {
-    it("should return path in project .claude-collective directory", () => {
+    it("should return path in project .claude directory", () => {
       const configPath = getProjectConfigPath("/my/project");
-      expect(configPath).toBe("/my/project/.claude-collective/config.yaml");
+      expect(configPath).toBe("/my/project/.claude/config.yaml");
     });
   });
 
@@ -141,9 +141,9 @@ describe("config", () => {
       expect(config).toBeNull();
     });
 
-    it("should load config from .claude-collective/config.yaml", async () => {
+    it("should load config from .claude/config.yaml", async () => {
       // Create config file
-      const configDir = path.join(tempDir, ".claude-collective");
+      const configDir = path.join(tempDir, ".claude");
       await mkdir(configDir, { recursive: true });
       await writeFile(
         path.join(configDir, "config.yaml"),
@@ -155,7 +155,7 @@ describe("config", () => {
     });
 
     it("should return null for invalid YAML", async () => {
-      const configDir = path.join(tempDir, ".claude-collective");
+      const configDir = path.join(tempDir, ".claude");
       await mkdir(configDir, { recursive: true });
       await writeFile(
         path.join(configDir, "config.yaml"),
@@ -169,7 +169,7 @@ describe("config", () => {
     });
 
     it("should load marketplace from project config", async () => {
-      const configDir = path.join(tempDir, ".claude-collective");
+      const configDir = path.join(tempDir, ".claude");
       await mkdir(configDir, { recursive: true });
       await writeFile(
         path.join(configDir, "config.yaml"),
@@ -185,11 +185,7 @@ describe("config", () => {
     it("should create config directory if it does not exist", async () => {
       await saveProjectConfig(tempDir, { source: "github:test/repo" });
 
-      const configPath = path.join(
-        tempDir,
-        ".claude-collective",
-        "config.yaml",
-      );
+      const configPath = path.join(tempDir, ".claude", "config.yaml");
       const content = await readFile(configPath, "utf-8");
       expect(content).toContain("source: github:test/repo");
     });
@@ -201,11 +197,7 @@ describe("config", () => {
       // Save new config
       await saveProjectConfig(tempDir, { source: "github:second/repo" });
 
-      const configPath = path.join(
-        tempDir,
-        ".claude-collective",
-        "config.yaml",
-      );
+      const configPath = path.join(tempDir, ".claude", "config.yaml");
       const content = await readFile(configPath, "utf-8");
       expect(content).toContain("github:second/repo");
       expect(content).not.toContain("github:first/repo");
@@ -216,11 +208,7 @@ describe("config", () => {
         marketplace: "https://my-marketplace.com/plugins",
       });
 
-      const configPath = path.join(
-        tempDir,
-        ".claude-collective",
-        "config.yaml",
-      );
+      const configPath = path.join(tempDir, ".claude", "config.yaml");
       const content = await readFile(configPath, "utf-8");
       expect(content).toContain(
         "marketplace: https://my-marketplace.com/plugins",
@@ -233,11 +221,7 @@ describe("config", () => {
         marketplace: "https://enterprise.example.com",
       });
 
-      const configPath = path.join(
-        tempDir,
-        ".claude-collective",
-        "config.yaml",
-      );
+      const configPath = path.join(tempDir, ".claude", "config.yaml");
       const content = await readFile(configPath, "utf-8");
       expect(content).toContain("source: github:myorg/skills");
       expect(content).toContain("marketplace: https://enterprise.example.com");
@@ -266,7 +250,7 @@ describe("config", () => {
 
     it("should return project config when no flag or env", async () => {
       // Create project config
-      const configDir = path.join(tempDir, ".claude-collective");
+      const configDir = path.join(tempDir, ".claude");
       await mkdir(configDir, { recursive: true });
       await writeFile(
         path.join(configDir, "config.yaml"),
@@ -306,7 +290,7 @@ describe("config", () => {
     it("should prioritize flag over all other sources", async () => {
       // Set everything
       process.env[SOURCE_ENV_VAR] = "github:env/repo";
-      const configDir = path.join(tempDir, ".claude-collective");
+      const configDir = path.join(tempDir, ".claude");
       await mkdir(configDir, { recursive: true });
       await writeFile(
         path.join(configDir, "config.yaml"),
@@ -321,7 +305,7 @@ describe("config", () => {
 
     it("should prioritize env over project config", async () => {
       process.env[SOURCE_ENV_VAR] = "github:env/repo";
-      const configDir = path.join(tempDir, ".claude-collective");
+      const configDir = path.join(tempDir, ".claude");
       await mkdir(configDir, { recursive: true });
       await writeFile(
         path.join(configDir, "config.yaml"),
@@ -348,7 +332,7 @@ describe("config", () => {
 
     describe("marketplace resolution", () => {
       it("should return marketplace from project config", async () => {
-        const configDir = path.join(tempDir, ".claude-collective");
+        const configDir = path.join(tempDir, ".claude");
         await mkdir(configDir, { recursive: true });
         await writeFile(
           path.join(configDir, "config.yaml"),
@@ -361,7 +345,7 @@ describe("config", () => {
       });
 
       it("should return marketplace alongside source from project config", async () => {
-        const configDir = path.join(tempDir, ".claude-collective");
+        const configDir = path.join(tempDir, ".claude");
         await mkdir(configDir, { recursive: true });
         await writeFile(
           path.join(configDir, "config.yaml"),
@@ -406,7 +390,7 @@ describe("config", () => {
   describe("resolveAgentsSource", () => {
     it("should return flag value with highest priority", async () => {
       // Create project config with agents_source
-      const configDir = path.join(tempDir, ".claude-collective");
+      const configDir = path.join(tempDir, ".claude");
       await mkdir(configDir, { recursive: true });
       await writeFile(
         path.join(configDir, "config.yaml"),
@@ -423,7 +407,7 @@ describe("config", () => {
     });
 
     it("should return project config when no flag is provided", async () => {
-      const configDir = path.join(tempDir, ".claude-collective");
+      const configDir = path.join(tempDir, ".claude");
       await mkdir(configDir, { recursive: true });
       await writeFile(
         path.join(configDir, "config.yaml"),
@@ -467,7 +451,7 @@ describe("config", () => {
 
   describe("loadProjectConfig with agents_source", () => {
     it("should load agents_source from project config", async () => {
-      const configDir = path.join(tempDir, ".claude-collective");
+      const configDir = path.join(tempDir, ".claude");
       await mkdir(configDir, { recursive: true });
       await writeFile(
         path.join(configDir, "config.yaml"),
@@ -479,7 +463,7 @@ describe("config", () => {
     });
 
     it("should load all config fields together", async () => {
-      const configDir = path.join(tempDir, ".claude-collective");
+      const configDir = path.join(tempDir, ".claude");
       await mkdir(configDir, { recursive: true });
       await writeFile(
         path.join(configDir, "config.yaml"),
@@ -499,11 +483,7 @@ describe("config", () => {
         agents_source: "https://my-agents.example.com",
       });
 
-      const configPath = path.join(
-        tempDir,
-        ".claude-collective",
-        "config.yaml",
-      );
+      const configPath = path.join(tempDir, ".claude", "config.yaml");
       const content = await readFile(configPath, "utf-8");
       expect(content).toContain("agents_source: https://my-agents.example.com");
     });
@@ -515,11 +495,7 @@ describe("config", () => {
         agents_source: "https://agents.enterprise.example.com",
       });
 
-      const configPath = path.join(
-        tempDir,
-        ".claude-collective",
-        "config.yaml",
-      );
+      const configPath = path.join(tempDir, ".claude", "config.yaml");
       const content = await readFile(configPath, "utf-8");
       expect(content).toContain("source: github:myorg/skills");
       expect(content).toContain("marketplace: https://enterprise.example.com");

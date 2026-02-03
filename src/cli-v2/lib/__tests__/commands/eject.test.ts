@@ -1,18 +1,16 @@
 /**
  * Integration tests for eject command.
  *
- * Tests: cc eject templates, cc eject config, cc eject skills, cc eject agents, cc eject all
+ * Tests: cc eject agent-partials, cc eject skills, cc eject all
  *
  * The eject command copies bundled content to the project for local customization:
- * - templates: Copy template files (agent.liquid, partials)
- * - config: Copy default config.yaml template
- * - skills: Copy installed skills from plugin
- * - agents: Copy agent partials (intro, workflow, examples)
+ * - agent-partials: Copy agent partials and templates from CLI
+ * - skills: Copy skills from source marketplace
  * - all: Copy all of the above
  *
  * Note: stdout capture is limited in oclif test environment, so tests focus on:
  * - Argument validation (type is required)
- * - Flag validation (--force, --output)
+ * - Flag validation (--force, --output, --refresh)
  * - Error handling for invalid types
  * - Exit codes
  */
@@ -76,16 +74,8 @@ describe("eject command", () => {
       expect(error?.oclif?.exit).toBeDefined();
     });
 
-    it("should accept 'templates' as type", async () => {
-      const { error } = await runCliCommand(["eject", "templates"]);
-
-      // Should not error on argument parsing
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unexpected argument");
-    });
-
-    it("should accept 'config' as type", async () => {
-      const { error } = await runCliCommand(["eject", "config"]);
+    it("should accept 'agent-partials' as type", async () => {
+      const { error } = await runCliCommand(["eject", "agent-partials"]);
 
       // Should not error on argument parsing
       const output = error?.message || "";
@@ -95,17 +85,9 @@ describe("eject command", () => {
     it("should accept 'skills' as type", async () => {
       const { error } = await runCliCommand(["eject", "skills"]);
 
-      // Should not error on argument parsing (may warn about no plugin)
+      // Should not error on argument parsing (may warn about no source)
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown eject type");
-    });
-
-    it("should accept 'agents' as type", async () => {
-      const { error } = await runCliCommand(["eject", "agents"]);
-
-      // Should not error on argument parsing
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unexpected argument");
     });
 
     it("should accept 'all' as type", async () => {
@@ -115,6 +97,27 @@ describe("eject command", () => {
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unexpected argument");
     });
+
+    it("should reject old type 'templates'", async () => {
+      const { error } = await runCliCommand(["eject", "templates"]);
+
+      // Should error - templates is no longer a valid type
+      expect(error?.oclif?.exit).toBeDefined();
+    });
+
+    it("should reject old type 'config'", async () => {
+      const { error } = await runCliCommand(["eject", "config"]);
+
+      // Should error - config is no longer a valid type
+      expect(error?.oclif?.exit).toBeDefined();
+    });
+
+    it("should reject old type 'agents'", async () => {
+      const { error } = await runCliCommand(["eject", "agents"]);
+
+      // Should error - agents is no longer a valid type (use agent-partials)
+      expect(error?.oclif?.exit).toBeDefined();
+    });
   });
 
   // ===========================================================================
@@ -123,7 +126,11 @@ describe("eject command", () => {
 
   describe("flag validation", () => {
     it("should accept --force flag", async () => {
-      const { error } = await runCliCommand(["eject", "config", "--force"]);
+      const { error } = await runCliCommand([
+        "eject",
+        "agent-partials",
+        "--force",
+      ]);
 
       // Should not error on --force flag
       const output = error?.message || "";
@@ -131,7 +138,7 @@ describe("eject command", () => {
     });
 
     it("should accept -f shorthand for force", async () => {
-      const { error } = await runCliCommand(["eject", "config", "-f"]);
+      const { error } = await runCliCommand(["eject", "agent-partials", "-f"]);
 
       // Should accept -f shorthand
       const output = error?.message || "";
@@ -143,7 +150,7 @@ describe("eject command", () => {
 
       const { error } = await runCliCommand([
         "eject",
-        "config",
+        "agent-partials",
         "--output",
         outputDir,
       ]);
@@ -158,7 +165,7 @@ describe("eject command", () => {
 
       const { error } = await runCliCommand([
         "eject",
-        "config",
+        "agent-partials",
         "-o",
         outputDir,
       ]);
@@ -167,33 +174,46 @@ describe("eject command", () => {
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
+
+    it("should accept --refresh flag", async () => {
+      const { error } = await runCliCommand(["eject", "skills", "--refresh"]);
+
+      // Should not error on --refresh flag
+      const output = error?.message || "";
+      expect(output.toLowerCase()).not.toContain("unknown flag");
+    });
   });
 
   // ===========================================================================
-  // Eject Templates
+  // Eject Agent Partials
   // ===========================================================================
 
-  describe("eject templates", () => {
-    it("should eject templates to .claude/templates by default", async () => {
-      const { error } = await runCliCommand(["eject", "templates"]);
+  describe("eject agent-partials", () => {
+    it("should eject agent partials to .claude/agents/_partials by default", async () => {
+      const { error } = await runCliCommand(["eject", "agent-partials"]);
 
-      // Command should complete (templates should exist in source)
+      // Command should complete (partials should exist in CLI source)
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unexpected argument");
 
-      // Check if templates directory was created
-      const templatesDir = path.join(projectDir, ".claude", "templates");
-      const exists = await pathExists(templatesDir);
-      // May not exist if source templates don't exist, but command shouldn't error
-      expect(typeof exists).toBe("boolean");
+      // Check if partials directory was created
+      const partialsDir = path.join(
+        projectDir,
+        ".claude",
+        "agents",
+        "_partials",
+      );
+      const exists = await pathExists(partialsDir);
+      // Should exist since CLI has agent partials
+      expect(exists).toBe(true);
     });
 
-    it("should eject templates to custom output with --output", async () => {
-      const outputDir = path.join(tempDir, "custom-templates");
+    it("should eject agent partials to custom output with --output", async () => {
+      const outputDir = path.join(tempDir, "custom-partials");
 
       const { error } = await runCliCommand([
         "eject",
-        "templates",
+        "agent-partials",
         "--output",
         outputDir,
       ]);
@@ -202,64 +222,29 @@ describe("eject command", () => {
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
-  });
 
-  // ===========================================================================
-  // Eject Config
-  // ===========================================================================
-
-  describe("eject config", () => {
-    it("should eject config.yaml to .claude/ by default", async () => {
-      const { error } = await runCliCommand(["eject", "config"]);
-
-      // Command should complete
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unexpected argument");
-
-      // Check if config was created
-      const configPath = path.join(projectDir, ".claude", "config.yaml");
-      const exists = await pathExists(configPath);
-      expect(exists).toBe(true);
-    });
-
-    it("should eject config to custom output with --output", async () => {
-      const outputDir = path.join(tempDir, "custom-config");
-
-      const { error } = await runCliCommand([
-        "eject",
-        "config",
-        "--output",
-        outputDir,
-      ]);
-
-      // Should not error on flag usage
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-
-      // Check if config was created in custom location
-      const configPath = path.join(outputDir, "config.yaml");
-      const exists = await pathExists(configPath);
-      expect(exists).toBe(true);
-    });
-
-    it("should warn when config already exists without --force", async () => {
+    it("should warn when partials already exist without --force", async () => {
       // First eject
-      await runCliCommand(["eject", "config"]);
+      await runCliCommand(["eject", "agent-partials"]);
 
       // Second eject without --force should warn (not error)
-      const { error } = await runCliCommand(["eject", "config"]);
+      const { error } = await runCliCommand(["eject", "agent-partials"]);
 
       // Should not crash, may warn
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("crash");
     });
 
-    it("should overwrite config when --force is used", async () => {
+    it("should overwrite partials when --force is used", async () => {
       // First eject
-      await runCliCommand(["eject", "config"]);
+      await runCliCommand(["eject", "agent-partials"]);
 
       // Second eject with --force
-      const { error } = await runCliCommand(["eject", "config", "--force"]);
+      const { error } = await runCliCommand([
+        "eject",
+        "agent-partials",
+        "--force",
+      ]);
 
       // Should not error
       const output = error?.message || "";
@@ -272,10 +257,10 @@ describe("eject command", () => {
   // ===========================================================================
 
   describe("eject skills", () => {
-    it("should warn when no plugin installed", async () => {
+    it("should load skills from source", async () => {
       const { error } = await runCliCommand(["eject", "skills"]);
 
-      // May warn about no skills found, but should not crash
+      // May warn about no skills found if source not configured, but should not crash
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("crash");
       expect(output.toLowerCase()).not.toContain("unexpected argument");
@@ -295,32 +280,16 @@ describe("eject command", () => {
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
-  });
 
-  // ===========================================================================
-  // Eject Agents
-  // ===========================================================================
-
-  describe("eject agents", () => {
-    it("should eject agent partials", async () => {
-      const { error } = await runCliCommand(["eject", "agents"]);
-
-      // Command should attempt to eject (may warn if no partials)
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unexpected argument");
-    });
-
-    it("should accept --output flag for agents", async () => {
-      const outputDir = path.join(tempDir, "custom-agents");
-
+    it("should accept --source flag for custom source", async () => {
       const { error } = await runCliCommand([
         "eject",
-        "agents",
-        "--output",
-        outputDir,
+        "skills",
+        "--source",
+        "/nonexistent/path",
       ]);
 
-      // Should not error on flag usage
+      // May error on nonexistent path, but should accept the flag
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
@@ -376,7 +345,7 @@ describe("eject command", () => {
 
       const { error } = await runCliCommand([
         "eject",
-        "config",
+        "agent-partials",
         "--output",
         outputPath,
       ]);
@@ -388,7 +357,7 @@ describe("eject command", () => {
     it("should expand tilde in output path", async () => {
       const { error } = await runCliCommand([
         "eject",
-        "config",
+        "agent-partials",
         "--output",
         "~/test-eject",
       ]);

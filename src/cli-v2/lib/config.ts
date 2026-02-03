@@ -4,7 +4,7 @@ import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { readFile, writeFile, fileExists, ensureDir } from "../utils/fs";
 import { verbose } from "../utils/logger";
 
-const PROJECT_CONFIG_DIR = ".claude-collective";
+const PROJECT_CONFIG_DIR = ".claude";
 
 export const DEFAULT_SOURCE = "github:claude-collective/skills";
 export const SOURCE_ENV_VAR = "CC_SOURCE";
@@ -40,6 +40,7 @@ export interface GlobalConfig {
 
 export interface ProjectConfig {
   source?: string;
+  author?: string;
   marketplace?: string;
   agents_source?: string;
 }
@@ -75,6 +76,8 @@ function isValidProjectConfig(obj: unknown): obj is ProjectConfig {
   const config = obj as Record<string, unknown>;
   if (config.source !== undefined && typeof config.source !== "string")
     return false;
+  if (config.author !== undefined && typeof config.author !== "string")
+    return false;
   if (
     config.marketplace !== undefined &&
     typeof config.marketplace !== "string"
@@ -96,6 +99,10 @@ export function getProjectConfigPath(projectDir: string): string {
   return path.join(projectDir, PROJECT_CONFIG_DIR, PROJECT_CONFIG_FILE);
 }
 
+/**
+ * @deprecated Global config is deprecated. Use project-level config at .claude/config.yaml instead.
+ * This function is kept for backwards compatibility during migration.
+ */
 export async function loadGlobalConfig(): Promise<GlobalConfig | null> {
   const configPath = getGlobalConfigPath();
 
@@ -144,6 +151,10 @@ export async function loadProjectConfig(
   }
 }
 
+/**
+ * @deprecated Global config is deprecated. Use project-level config at .claude/config.yaml instead.
+ * This function is kept for backwards compatibility during migration.
+ */
 export async function saveGlobalConfig(config: GlobalConfig): Promise<void> {
   const configPath = getGlobalConfigPath();
   await ensureDir(getGlobalConfigDir());
@@ -163,17 +174,16 @@ export async function saveProjectConfig(
   verbose(`Saved project config to ${configPath}`);
 }
 
-/** Resolve source with precedence: flag > env > project > global > default */
+/** Resolve source with precedence: flag > env > project > default */
 export async function resolveSource(
   flagValue?: string,
   projectDir?: string,
 ): Promise<ResolvedConfig> {
-  // Load configs to get marketplace (marketplace is resolved separately from source)
+  // Load project config for marketplace (marketplace is resolved separately from source)
   const projectConfig = projectDir ? await loadProjectConfig(projectDir) : null;
-  const globalConfig = await loadGlobalConfig();
 
-  // Resolve marketplace: project > global (no flag/env support for marketplace)
-  const marketplace = projectConfig?.marketplace || globalConfig?.marketplace;
+  // Resolve marketplace: project config only (no flag/env support for marketplace)
+  const marketplace = projectConfig?.marketplace;
 
   if (flagValue !== undefined) {
     if (flagValue === "" || flagValue.trim() === "") {
@@ -198,11 +208,6 @@ export async function resolveSource(
     };
   }
 
-  if (globalConfig?.source) {
-    verbose(`Source from global config: ${globalConfig.source}`);
-    return { source: globalConfig.source, sourceOrigin: "global", marketplace };
-  }
-
   verbose(`Using default source: ${DEFAULT_SOURCE}`);
   return { source: DEFAULT_SOURCE, sourceOrigin: "default", marketplace };
 }
@@ -214,7 +219,7 @@ export interface ResolvedAgentsSource {
   agentsSourceOrigin: AgentsSourceOrigin;
 }
 
-/** Resolve agents_source with precedence: flag > project > global > default (undefined) */
+/** Resolve agents_source with precedence: flag > project > default (undefined) */
 export async function resolveAgentsSource(
   flagValue?: string,
   projectDir?: string,
@@ -238,15 +243,6 @@ export async function resolveAgentsSource(
     };
   }
 
-  const globalConfig = await loadGlobalConfig();
-  if (globalConfig?.agents_source) {
-    verbose(`Agents source from global config: ${globalConfig.agents_source}`);
-    return {
-      agentsSource: globalConfig.agents_source,
-      agentsSourceOrigin: "global",
-    };
-  }
-
   verbose("Using default agents source (local CLI)");
   return { agentsSource: undefined, agentsSourceOrigin: "default" };
 }
@@ -256,12 +252,20 @@ export function formatAgentsSourceOrigin(origin: AgentsSourceOrigin): string {
     case "flag":
       return "--agent-source flag";
     case "project":
-      return "project config (.claude-collective/config.yaml)";
+      return "project config (.claude/config.yaml)";
     case "global":
       return "global config (~/.claude-collective/config.yaml)";
     case "default":
       return "default (local CLI)";
   }
+}
+
+/** Resolve author from project config */
+export async function resolveAuthor(
+  projectDir?: string,
+): Promise<string | undefined> {
+  const projectConfig = projectDir ? await loadProjectConfig(projectDir) : null;
+  return projectConfig?.author;
 }
 
 export function formatSourceOrigin(
@@ -273,7 +277,7 @@ export function formatSourceOrigin(
     case "env":
       return `${SOURCE_ENV_VAR} environment variable`;
     case "project":
-      return "project config (.claude-collective/config.yaml)";
+      return "project config (.claude/config.yaml)";
     case "global":
       return "global config (~/.claude-collective/config.yaml)";
     case "default":

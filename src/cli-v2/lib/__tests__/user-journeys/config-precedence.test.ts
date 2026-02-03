@@ -42,7 +42,7 @@ import {
 // Constants
 // =============================================================================
 
-const PROJECT_CONFIG_DIR = ".claude-collective";
+const PROJECT_CONFIG_DIR = ".claude";
 
 // =============================================================================
 // Test Helpers
@@ -55,7 +55,7 @@ async function createMockGlobalConfig(
   tempDir: string,
   config: GlobalConfig,
 ): Promise<string> {
-  const globalDir = path.join(tempDir, ".claude-collective");
+  const globalDir = path.join(tempDir, ".claude");
   await mkdir(globalDir, { recursive: true });
   const configPath = path.join(globalDir, "config.yaml");
   await writeFile(configPath, stringifyYaml(config));
@@ -214,7 +214,7 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
       expect(result.sourceOrigin).toBe("project");
     });
 
-    it("should load project config from .claude-collective/config.yaml", async () => {
+    it("should load project config from .claude/config.yaml", async () => {
       const configPath = await createProjectConfig(projectDir, {
         source: "github:my-company/internal-skills",
       });
@@ -514,7 +514,7 @@ describe("User Journey: Config Precedence with CLI", () => {
     dirs = await createTestSource({
       projectConfig: {
         name: "test-project",
-        // Note: source is in .claude-collective/config.yaml, not plugin config
+        // Note: source is in .claude/config.yaml, not plugin config
       },
     });
 

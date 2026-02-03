@@ -388,7 +388,7 @@ function formatTips(results: CheckResult[]): string[] {
 // Command
 // =============================================================================
 
-export default class Doctor extends BaseCommand<typeof Doctor> {
+export default class Doctor extends BaseCommand {
   static summary = "Diagnose common configuration issues";
 
   static description =

@@ -2,7 +2,7 @@ import { Flags } from "@oclif/core";
 import { render } from "ink";
 import React from "react";
 import { BaseCommand } from "../base-command.js";
-import { Wizard, WizardResult } from "../components/wizard/wizard.js";
+import { Wizard, WizardResultV2 } from "../components/wizard/wizard.js";
 import { loadSkillsMatrixFromSource } from "../lib/source-loader.js";
 import { directoryExists, ensureDir, remove } from "../utils/fs.js";
 import {
@@ -89,14 +89,15 @@ export default class Edit extends BaseCommand {
     }
 
     // Run wizard with initial skills
-    let wizardResult: WizardResult | null = null;
+    let wizardResult: WizardResultV2 | null = null;
 
     const { waitUntilExit } = render(
       <Wizard
         matrix={sourceResult.matrix}
         initialSkills={currentSkillIds}
         onComplete={(result) => {
-          wizardResult = result;
+          // Wizard always returns WizardResultV2 in the current implementation
+          wizardResult = result as WizardResultV2;
         }}
         onCancel={() => {
           this.log("\nEdit cancelled");
@@ -106,32 +107,37 @@ export default class Edit extends BaseCommand {
 
     await waitUntilExit();
 
-    // Handle cancellation
-    if (!wizardResult || wizardResult.cancelled) {
-      this.exit(EXIT_CODES.CANCELLED);
+    // Cast to WizardResultV2 since that's what the current wizard implementation returns
+    // Use non-null assertion here since we know the wizard has completed
+    const result = wizardResult as WizardResultV2 | null;
+
+    // Handle cancellation - use error() which throws and TypeScript understands
+    if (!result || result.cancelled) {
+      this.error("Cancelled", { exit: EXIT_CODES.CANCELLED });
     }
 
-    // Validate selection
-    if (!wizardResult.validation.valid) {
-      this.error("Selection has validation errors:");
-      for (const error of wizardResult.validation.errors) {
-        this.log(`  ${error.message}`);
-      }
-      this.exit(EXIT_CODES.ERROR);
+    // Validate selection - use error() which throws and TypeScript understands
+    if (!result.validation.valid) {
+      const errorMessages = result.validation.errors
+        .map((e) => e.message)
+        .join("\n  ");
+      this.error(`Selection has validation errors:\n  ${errorMessages}`, {
+        exit: EXIT_CODES.ERROR,
+      });
     }
 
     // Calculate changes
-    const addedSkills = wizardResult.selectedSkills.filter(
-      (id) => !currentSkillIds.includes(id),
+    const addedSkills = result.selectedSkills.filter(
+      (id: string) => !currentSkillIds.includes(id),
     );
     const removedSkills = currentSkillIds.filter(
-      (id) => !wizardResult.selectedSkills.includes(id),
+      (id) => !result.selectedSkills.includes(id),
     );
 
     // Show warnings if any
-    if (wizardResult.validation.warnings.length > 0) {
+    if (result.validation.warnings.length > 0) {
       this.log("\nWarnings:");
-      for (const warning of wizardResult.validation.warnings) {
+      for (const warning of result.validation.warnings) {
         this.warn(`  ! ${warning.message}`);
       }
       this.log("");
@@ -165,13 +171,13 @@ export default class Edit extends BaseCommand {
       await ensureDir(pluginSkillsDir);
 
       await copySkillsToPluginFromSource(
-        wizardResult.selectedSkills,
+        result.selectedSkills,
         pluginDir,
         sourceResult.matrix,
         sourceResult,
       );
       this.log(
-        `✓ Plugin updated with ${wizardResult.selectedSkills.length} skills\n`,
+        `✓ Plugin updated with ${result.selectedSkills.length} skills\n`,
       );
     } catch (error) {
       this.handleError(error);

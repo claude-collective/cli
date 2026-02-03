@@ -76,7 +76,7 @@ describe("config commands", () => {
 
       // Project path should include the project directory
       expect(stdout).toContain(projectDir);
-      expect(stdout).toContain(".claude-collective/config.yaml");
+      expect(stdout).toContain(".claude/config.yaml");
     });
   });
 
@@ -116,7 +116,7 @@ describe("config commands", () => {
     });
 
     it.skip("should show project config values when configured", async () => {
-      const projectConfigDir = path.join(projectDir, ".claude-collective");
+      const projectConfigDir = path.join(projectDir, ".claude");
       await mkdir(projectConfigDir, { recursive: true });
       await writeFile(
         path.join(projectConfigDir, "config.yaml"),

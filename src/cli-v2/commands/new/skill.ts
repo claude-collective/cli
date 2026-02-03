@@ -1,7 +1,7 @@
 import { Args, Flags } from "@oclif/core";
 import path from "path";
 import { BaseCommand } from "../../base-command.js";
-import { loadGlobalConfig } from "../../lib/config.js";
+import { resolveAuthor } from "../../lib/config.js";
 import { writeFile, directoryExists } from "../../utils/fs.js";
 import { LOCAL_SKILLS_PATH } from "../../consts.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
@@ -166,11 +166,10 @@ export default class NewSkill extends BaseCommand {
       this.error(validationError, { exit: EXIT_CODES.INVALID_ARGS });
     }
 
-    // Determine author: flag > global config > default
+    // Determine author: flag > project config > default
     let author = flags.author;
     if (!author) {
-      const globalConfig = await loadGlobalConfig();
-      author = globalConfig?.author || DEFAULT_AUTHOR;
+      author = (await resolveAuthor(projectDir)) || DEFAULT_AUTHOR;
     }
 
     const category = flags.category;
