@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-02-03
+
+### Breaking Changes
+
+- **Directory structure changed** - Source files now in `.claude-src/`, runtime output in `.claude/`. Config moved from `.claude/config.yaml` to `.claude-src/config.yaml`. Backward compatible reads from both locations.
+- **Uninstall removes directories** - `cc uninstall` now removes entire `.claude/` and `.claude-src/` directories. The `--keep-config` flag is removed.
+
+### Added
+
+- `CLAUDE_SRC_DIR` constant for `.claude-src/` directory
+- `loadProjectAgents()` function to load agents from `.claude-src/agents/`
+- `agentBaseDir` field on AgentDefinition/AgentConfig types
+- `marketplace` and `agents_source` fields on ProjectConfig type
+- Eject creates minimal `config.yaml` with example stack blueprint if it doesn't exist
+- Init merges with existing config instead of overwriting
+
+### Changed
+
+- Eject agent-partials go to `.claude-src/agents/` (was `.claude/agents/_partials/`)
+- Init writes config to `.claude-src/config.yaml`
+- Compiler checks `.claude-src/agents/_templates/` first for templates
+- Config readers check `.claude-src/` first, fall back to `.claude/`
+
+[0.10.0]: https://github.com/claude-collective/cli/releases/tag/v0.10.0
+
 ## [0.9.0] - 2026-02-03
 
 ### Breaking Changes
