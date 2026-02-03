@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
-import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
+import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
 import { Liquid } from "liquidjs";
 import {
   resolveSkillReference,
@@ -522,5 +522,504 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
       expect(body).toContain("<skills_note>");
       expect(body).not.toContain("<skill_activation_protocol>");
     });
+  });
+});
+
+// =============================================================================
+// Phase 7: Stack-based skill resolution tests
+// Bug: cc init compiles agents without preloaded_skills in frontmatter
+// =============================================================================
+
+import {
+  resolveAgentSkillsFromStack,
+  getAgentSkills,
+  resolveAgents,
+} from "./resolver";
+import type {
+  CompileAgentConfig,
+  CompileConfig,
+  AgentDefinition,
+} from "../types";
+import type { Stack } from "../types-stacks";
+
+describe("resolveAgentSkillsFromStack", () => {
+  it("should return skill references from stack agent config", () => {
+    const stack: Stack = {
+      id: "test-stack",
+      name: "Test Stack",
+      description: "A test stack",
+      agents: {
+        "web-developer": {
+          framework: "react",
+          styling: "scss-modules",
+        },
+      },
+    };
+
+    const skillAliases: Record<string, string> = {
+      react: "web-framework-react",
+      "scss-modules": "web-styling-scss-modules",
+    };
+
+    const result = resolveAgentSkillsFromStack(
+      "web-developer",
+      stack,
+      skillAliases,
+    );
+
+    expect(result).toHaveLength(2);
+    expect(result.find((s) => s.id === "web-framework-react")).toBeDefined();
+    expect(
+      result.find((s) => s.id === "web-styling-scss-modules"),
+    ).toBeDefined();
+  });
+
+  it("should mark framework subcategory skills as preloaded", () => {
+    const stack: Stack = {
+      id: "test-stack",
+      name: "Test Stack",
+      description: "A test stack",
+      agents: {
+        "web-developer": {
+          framework: "react",
+        },
+      },
+    };
+
+    const skillAliases: Record<string, string> = {
+      react: "web-framework-react",
+    };
+
+    const result = resolveAgentSkillsFromStack(
+      "web-developer",
+      stack,
+      skillAliases,
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("web-framework-react");
+    expect(result[0].preloaded).toBe(true);
+  });
+
+  it("should NOT mark non-key subcategory skills as preloaded", () => {
+    const stack: Stack = {
+      id: "test-stack",
+      name: "Test Stack",
+      description: "A test stack",
+      agents: {
+        "web-developer": {
+          styling: "scss-modules",
+        },
+      },
+    };
+
+    const skillAliases: Record<string, string> = {
+      "scss-modules": "web-styling-scss-modules",
+    };
+
+    const result = resolveAgentSkillsFromStack(
+      "web-developer",
+      stack,
+      skillAliases,
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("web-styling-scss-modules");
+    expect(result[0].preloaded).toBe(false);
+  });
+
+  it("should return empty array for agent not in stack", () => {
+    const stack: Stack = {
+      id: "test-stack",
+      name: "Test Stack",
+      description: "A test stack",
+      agents: {
+        "api-developer": { api: "hono" },
+      },
+    };
+
+    const skillAliases: Record<string, string> = {
+      hono: "api-framework-hono",
+    };
+
+    const result = resolveAgentSkillsFromStack(
+      "web-developer",
+      stack,
+      skillAliases,
+    );
+
+    expect(result).toEqual([]);
+  });
+
+  it("should return empty array for agent with empty config", () => {
+    const stack: Stack = {
+      id: "test-stack",
+      name: "Test Stack",
+      description: "A test stack",
+      agents: {
+        "web-developer": {},
+      },
+    };
+
+    const skillAliases: Record<string, string> = {};
+
+    const result = resolveAgentSkillsFromStack(
+      "web-developer",
+      stack,
+      skillAliases,
+    );
+
+    expect(result).toEqual([]);
+  });
+
+  it("should skip unknown skill aliases with warning (not throw)", () => {
+    const stack: Stack = {
+      id: "test-stack",
+      name: "Test Stack",
+      description: "A test stack",
+      agents: {
+        "web-developer": {
+          framework: "react",
+          styling: "unknown-style-lib",
+        },
+      },
+    };
+
+    const skillAliases: Record<string, string> = {
+      react: "web-framework-react",
+      // "unknown-style-lib" is NOT in aliases
+    };
+
+    const result = resolveAgentSkillsFromStack(
+      "web-developer",
+      stack,
+      skillAliases,
+    );
+
+    // Should only include the resolved skill, not the unknown one
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("web-framework-react");
+  });
+});
+
+describe("getAgentSkills", () => {
+  const mockSkillDefinitions: Record<string, SkillDefinition> = {
+    "web-framework-react": {
+      path: "skills/frontend/framework/react/",
+      name: "React",
+      description: "React framework",
+      canonicalId: "web-framework-react",
+    },
+    "web-styling-scss-modules": {
+      path: "skills/frontend/styling/scss-modules/",
+      name: "SCSS Modules",
+      description: "SCSS Modules styling",
+      canonicalId: "web-styling-scss-modules",
+    },
+  };
+
+  it("should return skills from stack when stack and skillAliases provided", async () => {
+    const agentConfig: CompileAgentConfig = {};
+    const compileConfig: CompileConfig = {
+      name: "test",
+      description: "test",
+      claude_md: "",
+      agents: { "web-developer": {} },
+    };
+
+    const stack: Stack = {
+      id: "test-stack",
+      name: "Test Stack",
+      description: "A test stack",
+      agents: {
+        "web-developer": {
+          framework: "react",
+        },
+      },
+    };
+
+    const skillAliases: Record<string, string> = {
+      react: "web-framework-react",
+    };
+
+    const result = await getAgentSkills(
+      "web-developer",
+      agentConfig,
+      compileConfig,
+      mockSkillDefinitions,
+      "/test/path",
+      undefined, // agentDef
+      stack,
+      skillAliases,
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("web-framework-react");
+    expect(result[0].preloaded).toBe(true);
+  });
+
+  it("should prioritize explicit agentConfig.skills over stack skills", async () => {
+    const agentConfig: CompileAgentConfig = {
+      skills: [
+        {
+          id: "web-styling-scss-modules",
+          usage: "when styling",
+          preloaded: true,
+        },
+      ],
+    };
+    const compileConfig: CompileConfig = {
+      name: "test",
+      description: "test",
+      claude_md: "",
+      agents: { "web-developer": agentConfig },
+    };
+
+    const stack: Stack = {
+      id: "test-stack",
+      name: "Test Stack",
+      description: "A test stack",
+      agents: {
+        "web-developer": {
+          framework: "react",
+        },
+      },
+    };
+
+    const skillAliases: Record<string, string> = {
+      react: "web-framework-react",
+    };
+
+    const result = await getAgentSkills(
+      "web-developer",
+      agentConfig,
+      compileConfig,
+      mockSkillDefinitions,
+      "/test/path",
+      undefined,
+      stack,
+      skillAliases,
+    );
+
+    // Should use explicit skills, not stack skills
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("web-styling-scss-modules");
+  });
+
+  it("should return empty array when no stack or skillAliases provided", async () => {
+    const agentConfig: CompileAgentConfig = {};
+    const compileConfig: CompileConfig = {
+      name: "test",
+      description: "test",
+      claude_md: "",
+      agents: { "web-developer": {} },
+    };
+
+    const result = await getAgentSkills(
+      "web-developer",
+      agentConfig,
+      compileConfig,
+      mockSkillDefinitions,
+      "/test/path",
+      undefined,
+      undefined, // no stack
+      undefined, // no skillAliases
+    );
+
+    expect(result).toEqual([]);
+  });
+});
+
+describe("resolveAgents with stack and skillAliases", () => {
+  const mockAgentDefinitions: Record<string, AgentDefinition> = {
+    "web-developer": {
+      title: "Web Developer",
+      description: "Frontend web developer",
+      tools: ["Read", "Write", "Edit"],
+      model: "opus",
+      path: "web/web-developer",
+    },
+    "api-developer": {
+      title: "API Developer",
+      description: "Backend API developer",
+      tools: ["Read", "Write", "Edit", "Bash"],
+      model: "opus",
+      path: "api/api-developer",
+    },
+  };
+
+  const mockSkillDefinitions: Record<string, SkillDefinition> = {
+    "web-framework-react": {
+      path: "skills/frontend/framework/react/",
+      name: "React",
+      description: "React framework",
+      canonicalId: "web-framework-react",
+    },
+    "web-styling-scss-modules": {
+      path: "skills/frontend/styling/scss-modules/",
+      name: "SCSS Modules",
+      description: "SCSS Modules styling",
+      canonicalId: "web-styling-scss-modules",
+    },
+    "api-framework-hono": {
+      path: "skills/backend/api/hono/",
+      name: "Hono",
+      description: "Hono API framework",
+      canonicalId: "api-framework-hono",
+    },
+    "api-database-drizzle": {
+      path: "skills/backend/database/drizzle/",
+      name: "Drizzle",
+      description: "Drizzle ORM",
+      canonicalId: "api-database-drizzle",
+    },
+  };
+
+  it("should resolve agents with skills from stack configuration", async () => {
+    const compileConfig: CompileConfig = {
+      name: "Test Plugin",
+      description: "Test description",
+      claude_md: "",
+      agents: {
+        "web-developer": {},
+        "api-developer": {},
+      },
+    };
+
+    const stack: Stack = {
+      id: "fullstack",
+      name: "Fullstack Stack",
+      description: "A fullstack development stack",
+      agents: {
+        "web-developer": {
+          framework: "react",
+          styling: "scss-modules",
+        },
+        "api-developer": {
+          api: "hono",
+          database: "drizzle",
+        },
+      },
+    };
+
+    const skillAliases: Record<string, string> = {
+      react: "web-framework-react",
+      "scss-modules": "web-styling-scss-modules",
+      hono: "api-framework-hono",
+      drizzle: "api-database-drizzle",
+    };
+
+    const result = await resolveAgents(
+      mockAgentDefinitions,
+      mockSkillDefinitions,
+      compileConfig,
+      "/test/path",
+      stack,
+      skillAliases,
+    );
+
+    // Check web-developer has correct skills
+    expect(result["web-developer"]).toBeDefined();
+    expect(result["web-developer"].skills).toHaveLength(2);
+
+    const webSkillIds = result["web-developer"].skills.map((s) => s.id);
+    expect(webSkillIds).toContain("web-framework-react");
+    expect(webSkillIds).toContain("web-styling-scss-modules");
+
+    // React (framework) should be preloaded, scss-modules (styling) should not
+    const reactSkill = result["web-developer"].skills.find(
+      (s) => s.id === "web-framework-react",
+    );
+    expect(reactSkill?.preloaded).toBe(true);
+
+    const scssSkill = result["web-developer"].skills.find(
+      (s) => s.id === "web-styling-scss-modules",
+    );
+    expect(scssSkill?.preloaded).toBe(false);
+
+    // Check api-developer has correct skills
+    expect(result["api-developer"]).toBeDefined();
+    expect(result["api-developer"].skills).toHaveLength(2);
+
+    const apiSkillIds = result["api-developer"].skills.map((s) => s.id);
+    expect(apiSkillIds).toContain("api-framework-hono");
+    expect(apiSkillIds).toContain("api-database-drizzle");
+
+    // Hono (api) should be preloaded, drizzle (database) should be preloaded
+    const honoSkill = result["api-developer"].skills.find(
+      (s) => s.id === "api-framework-hono",
+    );
+    expect(honoSkill?.preloaded).toBe(true);
+
+    const drizzleSkill = result["api-developer"].skills.find(
+      (s) => s.id === "api-database-drizzle",
+    );
+    expect(drizzleSkill?.preloaded).toBe(true);
+  });
+
+  it("should return agents without skills when stack/skillAliases not provided", async () => {
+    const compileConfig: CompileConfig = {
+      name: "Test Plugin",
+      description: "Test description",
+      claude_md: "",
+      agents: {
+        "web-developer": {},
+      },
+    };
+
+    const result = await resolveAgents(
+      mockAgentDefinitions,
+      mockSkillDefinitions,
+      compileConfig,
+      "/test/path",
+      // NOT passing stack and skillAliases
+    );
+
+    expect(result["web-developer"]).toBeDefined();
+    expect(result["web-developer"].skills).toEqual([]);
+  });
+
+  it("should handle agent in compileConfig but not in stack", async () => {
+    const compileConfig: CompileConfig = {
+      name: "Test Plugin",
+      description: "Test description",
+      claude_md: "",
+      agents: {
+        "web-developer": {},
+        "api-developer": {},
+      },
+    };
+
+    // Stack only has web-developer
+    const stack: Stack = {
+      id: "frontend-only",
+      name: "Frontend Stack",
+      description: "A frontend-only stack",
+      agents: {
+        "web-developer": {
+          framework: "react",
+        },
+      },
+    };
+
+    const skillAliases: Record<string, string> = {
+      react: "web-framework-react",
+    };
+
+    const result = await resolveAgents(
+      mockAgentDefinitions,
+      mockSkillDefinitions,
+      compileConfig,
+      "/test/path",
+      stack,
+      skillAliases,
+    );
+
+    // web-developer should have skills from stack
+    expect(result["web-developer"].skills).toHaveLength(1);
+    expect(result["web-developer"].skills[0].id).toBe("web-framework-react");
+
+    // api-developer should have no skills (not in stack)
+    expect(result["api-developer"].skills).toEqual([]);
   });
 });

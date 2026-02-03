@@ -23,8 +23,8 @@ export interface StepRefineProps {
   technologyCount: number;
   /** Current selection: use all recommended or customize */
   refineAction: RefineAction;
-  /** Callback when action is selected */
-  onSelectAction: (action: RefineAction) => void;
+  /** Callback when action is selected (only non-null values) */
+  onSelectAction: (action: "all-recommended" | "customize") => void;
   /** Continue to confirm step */
   onContinue: () => void;
   /** Go back to build step */

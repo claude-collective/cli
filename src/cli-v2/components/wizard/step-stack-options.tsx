@@ -11,6 +11,7 @@ import React from "react";
 import { Box, Text, useInput } from "ink";
 import { Select } from "@inkjs/ui";
 import { useWizardStore } from "../../stores/wizard-store.js";
+import type { MergedSkillsMatrix } from "../../types-matrix.js";
 
 // =============================================================================
 // Constants
@@ -29,6 +30,8 @@ export interface StepStackOptionsProps {
   stackName: string;
   /** Number of technologies in the stack */
   technologyCount: number;
+  /** Skills matrix for looking up stack configuration */
+  matrix: MergedSkillsMatrix;
 }
 
 // =============================================================================
@@ -38,8 +41,15 @@ export interface StepStackOptionsProps {
 export const StepStackOptions: React.FC<StepStackOptionsProps> = ({
   stackName,
   technologyCount,
+  matrix,
 }) => {
-  const { setStep, setStackAction, goBack } = useWizardStore();
+  const {
+    setStep,
+    setStackAction,
+    populateFromStack,
+    selectedStackId,
+    goBack,
+  } = useWizardStore();
 
   const options = [
     { value: BACK_VALUE, label: "\u2190 Back" },
@@ -67,6 +77,37 @@ export const StepStackOptions: React.FC<StepStackOptionsProps> = ({
 
     if (value === CUSTOMIZE_VALUE) {
       setStackAction("customize");
+
+      // Pre-populate domainSelections with stack's default technology selections
+      const stack = matrix.suggestedStacks.find(
+        (s) => s.id === selectedStackId,
+      );
+      if (stack) {
+        // Build a stack-like structure from the resolved stack's skills
+        // The resolved stack has allSkillIds, but we need the technology aliases
+        // from the original stack definition. Use the matrix's aliasesReverse.
+        const stackAgents: Record<string, Record<string, string>> = {};
+
+        // For each skill in the stack, find its category and add to the structure
+        for (const skillId of stack.allSkillIds) {
+          const skill = matrix.skills[skillId];
+          if (skill?.category && skill.alias) {
+            // Find which agent this skill belongs to based on skill category
+            // Map category to a default agent (web-developer for web skills, etc.)
+            const domain = matrix.categories[skill.category]?.domain;
+            if (domain) {
+              if (!stackAgents[domain]) {
+                stackAgents[domain] = {};
+              }
+              // Use alias as the technology value
+              stackAgents[domain][skill.category] = skill.alias;
+            }
+          }
+        }
+
+        populateFromStack({ agents: stackAgents }, matrix.categories);
+      }
+
       setStep("build");
       return;
     }

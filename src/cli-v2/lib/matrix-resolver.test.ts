@@ -841,8 +841,8 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
         (o: { id: string }) => o.id === "skill-a",
       );
       expect(skillAOption).toBeDefined();
-      expect(skillAOption.disabled).toBe(true);
-      expect(skillAOption.disabledReason).toContain("Different paradigms");
+      expect(skillAOption!.disabled).toBe(true);
+      expect(skillAOption!.disabledReason).toContain("Different paradigms");
     });
   });
 });
@@ -948,7 +948,7 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
         (o: { id: string }) => o.id === "skill-a",
       );
       expect(skillAOption).toBeDefined();
-      expect(skillAOption.disabled).toBe(false);
+      expect(skillAOption!.disabled).toBe(false);
     });
 
     it("should still show selection status correctly in expert mode", () => {
@@ -983,7 +983,7 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
         (o: { id: string }) => o.id === "skill-b",
       );
       expect(skillBOption).toBeDefined();
-      expect(skillBOption.selected).toBe(true);
+      expect(skillBOption!.selected).toBe(true);
     });
   });
 

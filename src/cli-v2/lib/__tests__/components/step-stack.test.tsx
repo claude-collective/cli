@@ -53,27 +53,41 @@ const createMockStackWithSkills = (): MergedSkillsMatrix => {
       id: "react-fullstack",
       name: "React Fullstack",
       description: "Full React stack with Zustand and Hono",
+      audience: [],
+      skills: {},
       allSkillIds: [TEST_SKILLS.REACT, TEST_SKILLS.ZUSTAND, TEST_SKILLS.HONO],
-      requiredSkillIds: [TEST_SKILLS.REACT],
-      optionalSkillIds: [TEST_SKILLS.ZUSTAND, TEST_SKILLS.HONO],
-      suggestedAgents: ["web-developer"],
+      philosophy: "",
     },
     {
       id: "react-minimal",
       name: "React Minimal",
       description: "Minimal React setup",
+      audience: [],
+      skills: {},
       allSkillIds: [TEST_SKILLS.REACT],
-      requiredSkillIds: [TEST_SKILLS.REACT],
-      optionalSkillIds: [],
-      suggestedAgents: ["web-developer"],
+      philosophy: "",
     },
   ];
 
   return createMockMatrix(skills, {
     suggestedStacks,
     categories: {
-      frontend: { name: "Frontend", description: "Frontend skills" },
-      backend: { name: "Backend", description: "Backend skills" },
+      frontend: {
+        id: "frontend",
+        name: "Frontend",
+        description: "Frontend skills",
+        exclusive: false,
+        required: false,
+        order: 0,
+      },
+      backend: {
+        id: "backend",
+        name: "Backend",
+        description: "Backend skills",
+        exclusive: false,
+        required: false,
+        order: 1,
+      },
     },
   });
 };

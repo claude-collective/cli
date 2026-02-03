@@ -72,6 +72,11 @@ export interface WizardState {
   setApproach: (approach: "stack" | "scratch") => void;
   selectStack: (stackId: string | null) => void;
   setStackAction: (action: "defaults" | "customize") => void;
+  /** Pre-populate domainSelections from a stack's technology mappings */
+  populateFromStack: (
+    stack: { agents: Record<string, Record<string, string>> },
+    categories: Record<string, { domain?: string }>,
+  ) => void;
   toggleDomain: (domain: string) => void;
   setDomainSelection: (
     domain: string,
@@ -141,6 +146,52 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   selectStack: (stackId) => set({ selectedStackId: stackId }),
 
   setStackAction: (action) => set({ stackAction: action }),
+
+  populateFromStack: (stack, categories) =>
+    set(() => {
+      const domainSelections: Record<string, Record<string, string[]>> = {};
+      const domains = new Set<string>();
+
+      // Iterate through all agents in the stack
+      for (const agentConfig of Object.values(stack.agents)) {
+        // Each agent has subcategory -> technology alias mappings
+        for (const [subcategoryId, technologyAlias] of Object.entries(
+          agentConfig,
+        )) {
+          const category = categories[subcategoryId];
+          const domain = category?.domain;
+
+          if (!domain) {
+            // Skip if subcategory doesn't have a domain (top-level categories)
+            continue;
+          }
+
+          domains.add(domain);
+
+          // Initialize domain if needed
+          if (!domainSelections[domain]) {
+            domainSelections[domain] = {};
+          }
+
+          // Initialize subcategory array if needed
+          if (!domainSelections[domain][subcategoryId]) {
+            domainSelections[domain][subcategoryId] = [];
+          }
+
+          // Add technology if not already present
+          if (
+            !domainSelections[domain][subcategoryId].includes(technologyAlias)
+          ) {
+            domainSelections[domain][subcategoryId].push(technologyAlias);
+          }
+        }
+      }
+
+      return {
+        domainSelections,
+        selectedDomains: Array.from(domains),
+      };
+    }),
 
   toggleDomain: (domain) =>
     set((state) => {
