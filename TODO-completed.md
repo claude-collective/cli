@@ -302,3 +302,94 @@ Detailed specifications for completed tasks are preserved in TODO.md under "Deta
 - Replaced `+` with `-` in multi-tool skill names (e.g., `better-auth+drizzle+hono` → `better-auth-drizzle-hono`)
 - Removed `normalizeSkillId()` function since frontmatter now contains canonical IDs
 - All 1182 tests pass
+
+---
+
+## Post-Phase 7B: Architecture Refinements (COMPLETE)
+
+### Directory Structure Migration
+
+| Task | Description                                                  | Completed  |
+| ---- | ------------------------------------------------------------ | ---------- |
+| D-13 | Migrate to `.claude-src/` for source files                   | 2026-02-03 |
+| D-14 | Move all config to project-level `.claude/config.yaml`       | 2026-02-03 |
+| D-15 | Refactor `cc eject` command                                  | 2026-02-03 |
+| D-16 | BUG: Compiled agents missing preloaded_skills in frontmatter | 2026-02-03 |
+
+**D-13 Details:** Separated source files from Claude Code's runtime directory.
+
+**New architecture:**
+
+```
+project/
+├── .claude/                      # Claude Code's directory (runtime/output)
+│   ├── agents/                   # Compiled agents (OUTPUT)
+│   └── skills/                   # Skills (directly here)
+│
+├── .claude-src/                  # Source files for customization (INPUT)
+│   ├── agents/                   # Agent partials + templates (INPUT)
+│   │   ├── _templates/
+│   │   └── {agent-name}/
+│   └── config.yaml               # THE config file
+```
+
+**Files modified:**
+
+- `src/cli-v2/consts.ts`: Added `CLAUDE_SRC_DIR = ".claude-src"` constant
+- `src/cli-v2/lib/config.ts`: Updated to read from `.claude-src/config.yaml` first, falls back to `.claude/config.yaml`
+- `src/cli-v2/commands/eject.ts`: Agent-partials eject to `.claude-src/agents/`, config saves to `.claude-src/config.yaml`
+- `src/cli-v2/commands/init.tsx`: Config writes to `.claude-src/config.yaml`, agents output to `.claude/agents/`
+- `src/cli-v2/lib/compiler.ts`: `createLiquidEngine()` checks `.claude-src/agents/_templates/` first
+- `src/cli-v2/lib/loader.ts`: Added `loadProjectAgents()` to load from `.claude-src/agents/`
+- `src/cli-v2/lib/project-config.ts`: Updated to use constants, checks `.claude-src/` first with `.claude/` fallback
+- `src/cli-v2/lib/installation.ts`: `detectInstallation()` checks `.claude-src/config.yaml` first
+- `src/cli-v2/lib/agent-recompiler.ts`: Merges project agents with built-in agents
+
+**Key design decisions:**
+
+- Backward compatibility maintained: all readers check `.claude-src/` first, then fall back to `.claude/`
+- Skills remain in `.claude/skills/` (runtime files, not source)
+- Compiled agents output to `.claude/agents/` (runtime output)
+- All path construction uses `CLAUDE_DIR` and `CLAUDE_SRC_DIR` constants from `consts.ts`
+
+**D-14 Details:** Eliminated global config at `~/.claude-collective/config.yaml`. All config now visible in project's `.claude-src/config.yaml`.
+
+**Properties moved:**
+
+- `source` - Skills source path/URL
+- `author` - Default author for new skills/agents
+- `marketplace` - Marketplace identifier
+- `agents_source` - Separate source for agents
+
+**Resolution priority:**
+
+1. `--source` flag (ephemeral, highest priority)
+2. `CC_SOURCE` env var
+3. `.claude-src/config.yaml` in project
+4. Default (`github:claude-collective/skills`)
+
+**D-15 Details:** Fixed `eject skills` to load from source marketplace, consolidated templates+agents into `agent-partials`, removed config eject.
+
+**New eject types:**
+
+- `agent-partials` - CLI's `_templates/*.liquid` + agent partials (always from CLI)
+- `skills` - All skills from source (default: public marketplace, or custom via `--source`)
+- `all` - Both of the above
+
+**D-16 Details:** Fixed bug where agents compiled by `cc init` did not have `preloaded_skills` in frontmatter.
+
+**Root causes fixed:**
+
+1. Type mismatch: `init.tsx` used deprecated `WizardResult` type instead of `WizardResultV2`
+2. Missing parameters: `resolveAgents()` called without `stack` and `skillAliases` parameters
+3. "Customize" path not pre-populated: wizard didn't pre-populate `domainSelections` with stack's defaults
+
+**Files fixed:**
+
+- `src/cli-v2/commands/init.tsx`: Changed to `WizardResultV2`, passes `loadedStack` and `skillAliases` to `resolveAgents()`
+- `src/cli-v2/stores/wizard-store.ts`: Added `populateFromStack()` action
+- `src/cli-v2/components/wizard/step-stack-options.tsx`: Calls `populateFromStack()` when "customize" selected
+
+**Tests added:** Unit tests for `resolveAgentSkillsFromStack`, `getAgentSkills`, and `resolveAgents` in `resolver.test.ts`
+
+**All 1186 tests pass.**
