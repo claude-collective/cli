@@ -42,7 +42,7 @@ import {
 // Constants
 // =============================================================================
 
-const PROJECT_CONFIG_DIR = ".claude";
+const PROJECT_CONFIG_DIR = ".claude-src";
 
 // =============================================================================
 // Test Helpers
@@ -214,7 +214,7 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
       expect(result.sourceOrigin).toBe("project");
     });
 
-    it("should load project config from .claude/config.yaml", async () => {
+    it("should load project config from .claude-src/config.yaml", async () => {
       const configPath = await createProjectConfig(projectDir, {
         source: "github:my-company/internal-skills",
       });

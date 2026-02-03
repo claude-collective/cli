@@ -196,15 +196,53 @@ describe("eject command", () => {
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unexpected argument");
 
-      // Check if partials directory was created
-      const partialsDir = path.join(
-        projectDir,
-        ".claude",
-        "agents",
-        "_partials",
-      );
+      // Check if partials directory was created (now goes to .claude-src/agents/)
+      const partialsDir = path.join(projectDir, ".claude-src", "agents");
       const exists = await pathExists(partialsDir);
       // Should exist since CLI has agent partials
+      expect(exists).toBe(true);
+    });
+
+    it("should create config.yaml if it does not exist", async () => {
+      await runCliCommand(["eject", "agent-partials"]);
+
+      // Config should be created
+      const configPath = path.join(projectDir, ".claude-src", "config.yaml");
+      const exists = await pathExists(configPath);
+      expect(exists).toBe(true);
+
+      // Verify minimal config content
+      const fs = await import("fs/promises");
+      const content = await fs.readFile(configPath, "utf-8");
+      expect(content).toContain("name:");
+      expect(content).toContain("installMode: local");
+    });
+
+    it("should not overwrite existing config.yaml", async () => {
+      // Create existing config with custom content
+      const configDir = path.join(projectDir, ".claude-src");
+      await mkdir(configDir, { recursive: true });
+      const configPath = path.join(configDir, "config.yaml");
+      const fs = await import("fs/promises");
+      const customContent = "name: my-custom-project\nauthor: test-author\n";
+      await fs.writeFile(configPath, customContent);
+
+      // Eject should not overwrite
+      await runCliCommand(["eject", "agent-partials"]);
+
+      // Verify original content is preserved
+      const content = await fs.readFile(configPath, "utf-8");
+      expect(content).toBe(customContent);
+    });
+
+    it("should still create config.yaml when using --output flag", async () => {
+      const outputDir = path.join(tempDir, "custom-output");
+
+      await runCliCommand(["eject", "agent-partials", "--output", outputDir]);
+
+      // Config should ALWAYS be created in the project directory
+      const configPath = path.join(projectDir, ".claude-src", "config.yaml");
+      const exists = await pathExists(configPath);
       expect(exists).toBe(true);
     });
 

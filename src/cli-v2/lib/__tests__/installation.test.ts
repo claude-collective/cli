@@ -25,8 +25,29 @@ describe("installation", () => {
   // ===========================================================================
 
   describe("detectInstallation - local mode", () => {
-    it("should return local installation when .claude/config.yaml exists", async () => {
-      // Create local config
+    it("should return local installation when .claude-src/config.yaml exists", async () => {
+      // Create local config in new location
+      const claudeSrcDir = path.join(tempDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
+      await writeFile(
+        path.join(claudeSrcDir, "config.yaml"),
+        `name: test-project
+agents:
+  - web-developer
+installMode: local
+`,
+      );
+
+      const result = await detectInstallation(tempDir);
+
+      expect(result).not.toBeNull();
+      expect(result?.mode).toBe("local");
+      expect(result?.configPath).toBe(path.join(claudeSrcDir, "config.yaml"));
+      expect(result?.projectDir).toBe(tempDir);
+    });
+
+    it("should fall back to .claude/config.yaml for legacy projects", async () => {
+      // Create local config in legacy location
       const claudeDir = path.join(tempDir, ".claude");
       await mkdir(claudeDir, { recursive: true });
       await writeFile(
@@ -48,10 +69,10 @@ installMode: local
 
     it("should default to local mode when installMode is not in config", async () => {
       // Create local config without installMode field
-      const claudeDir = path.join(tempDir, ".claude");
-      await mkdir(claudeDir, { recursive: true });
+      const claudeSrcDir = path.join(tempDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeDir, "config.yaml"),
+        path.join(claudeSrcDir, "config.yaml"),
         `name: test-project
 agents:
   - web-developer
@@ -65,11 +86,12 @@ agents:
     });
 
     it("should use correct paths for agentsDir and skillsDir in local mode", async () => {
-      // Create local config
+      // Create local config - agents/skills still go to .claude/ (runtime directory)
+      const claudeSrcDir = path.join(tempDir, ".claude-src");
       const claudeDir = path.join(tempDir, ".claude");
-      await mkdir(claudeDir, { recursive: true });
+      await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeDir, "config.yaml"),
+        path.join(claudeSrcDir, "config.yaml"),
         `name: test-project
 agents:
   - web-developer
@@ -79,6 +101,7 @@ agents:
       const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
+      // Agents and skills go to .claude/ (runtime output directory)
       expect(result?.agentsDir).toBe(path.join(claudeDir, "agents"));
       expect(result?.skillsDir).toBe(path.join(claudeDir, "skills"));
     });
@@ -155,10 +178,11 @@ agents:
   describe("detectInstallation - priority", () => {
     it("should prioritize local installation over plugin when both exist", async () => {
       // Create both local config and plugin directory
+      const claudeSrcDir = path.join(tempDir, ".claude-src");
       const claudeDir = path.join(tempDir, ".claude");
-      await mkdir(claudeDir, { recursive: true });
+      await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeDir, "config.yaml"),
+        path.join(claudeSrcDir, "config.yaml"),
         `name: test-project
 agents:
   - web-developer
@@ -194,10 +218,10 @@ agents:
 
     it("should return installation when found (local)", async () => {
       // Create local config
-      const claudeDir = path.join(tempDir, ".claude");
-      await mkdir(claudeDir, { recursive: true });
+      const claudeSrcDir = path.join(tempDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeDir, "config.yaml"),
+        path.join(claudeSrcDir, "config.yaml"),
         `name: test-project
 agents:
   - web-developer
@@ -237,10 +261,10 @@ agents:
     it("should handle config with explicit installMode: plugin but no plugin dir", async () => {
       // Create local config with installMode: plugin (unusual but possible)
       // This should not return local installation since mode is explicitly plugin
-      const claudeDir = path.join(tempDir, ".claude");
-      await mkdir(claudeDir, { recursive: true });
+      const claudeSrcDir = path.join(tempDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeDir, "config.yaml"),
+        path.join(claudeSrcDir, "config.yaml"),
         `name: test-project
 agents:
   - web-developer
@@ -257,10 +281,10 @@ installMode: plugin
 
     it("should treat invalid YAML config file as local mode (file exists)", async () => {
       // Create invalid config
-      const claudeDir = path.join(tempDir, ".claude");
-      await mkdir(claudeDir, { recursive: true });
+      const claudeSrcDir = path.join(tempDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeDir, "config.yaml"),
+        path.join(claudeSrcDir, "config.yaml"),
         "invalid: yaml: content: :",
       );
 
@@ -282,10 +306,10 @@ installMode: plugin
         process.chdir(tempDir);
 
         // Create local config in temp directory
-        const claudeDir = path.join(tempDir, ".claude");
-        await mkdir(claudeDir, { recursive: true });
+        const claudeSrcDir = path.join(tempDir, ".claude-src");
+        await mkdir(claudeSrcDir, { recursive: true });
         await writeFile(
-          path.join(claudeDir, "config.yaml"),
+          path.join(claudeSrcDir, "config.yaml"),
           `name: test-project
 agents:
   - web-developer
