@@ -69,6 +69,7 @@
     "test:coverage": "vitest run --coverage",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit && echo '✓ No TypeScript errors'",
     "prepare": "husky",
     "prepublishOnly": "npm run format:check && npm run build && npm run test"
   },

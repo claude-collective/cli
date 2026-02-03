@@ -79,3 +79,310 @@ This follows the pattern of CLIs like `npm init` (asks about overwriting) and pr
 
 **M | D-07 | Use full skill path as folder name when compiling**
 When skills are copied locally, use the full path as the folder name instead of the short name. For example, `react (@vince)` should become `web/framework/react (@vince)`. This provides better organization and avoids potential naming conflicts between skills with the same short name in different categories.
+
+---
+
+## Phase 7C - Build Step UX Improvements
+
+**M | D-10 | Build Step UX Improvements**
+
+Improve the wizard Build step with:
+
+1. Vertical column alignment for skill options (max 5 columns)
+2. Framework-first selection flow - only show framework row until one is selected
+3. Rename "Expert Mode" to "Show All" (`[a]` key) - hide conflicting items instead of disabling
+
+### Design Decisions
+
+- **Framework UI**: Show only framework row initially; other subcategories appear after framework is selected
+- **Column alignment**: Fixed at 5 columns maximum
+- **Keyboard shortcut**: `[a]` for "Show All" toggle
+
+### Implementation Tasks
+
+1. **Column Alignment in CategoryGrid** (`src/cli-v2/components/wizard/category-grid.tsx`)
+   - Calculate consistent column width based on longest option label
+   - Cap at 5 columns per row
+   - Align all option cells to same width
+   - Update `OptionCell` component with fixed width instead of `minWidth`
+
+2. **Framework-First Flow in StepBuild** (`src/cli-v2/components/wizard/step-build.tsx`)
+   - Add logic to detect if framework is selected for current domain
+   - When no framework selected: only show "framework" subcategory row
+   - When framework selected: show all subcategories
+   - Add empty state or guidance message when awaiting framework selection
+
+3. **Hide vs Disable Conflicting Options** (`src/cli-v2/lib/matrix-resolver.ts`, `step-build.tsx`)
+   - When `showAll=false`: Filter out conflicting options entirely (don't return them)
+   - When `showAll=true`: Return all options with appropriate state indicators
+   - Update `getAvailableSkills()` to accept `filterConflicts: boolean` option
+
+4. **Rename expertMode → showAll**
+   - `src/cli-v2/stores/wizard-store.ts`: Rename state and action
+   - `src/cli-v2/components/wizard/category-grid.tsx`: Update key handler and UI text
+   - `src/cli-v2/components/wizard/step-build.tsx`: Update prop name
+   - Tests: Update all references
+   - Key binding: `e` → `a`
+   - UI text: `[e] Expert Mode: ON/OFF` → `[a] Show All: ON/OFF`
+
+5. **Verify Framework Order** (`config/skills-matrix.yaml`)
+   - Verify all `framework` subcategories have `order: 0` (or lowest in their domain)
+
+### Verification
+
+1. Run `bun test` - all tests pass
+2. Manual test: `bun run dev init` in `/home/vince/dev/cv-launch`
+   - Verify only framework row shows initially
+   - Select a framework, verify other rows appear
+   - Verify columns are vertically aligned (5 max)
+   - Press `[a]` to toggle Show All
+   - Verify hidden conflicting options appear/disappear
+
+**Note:** Partial implementation exists in `category-grid.tsx` (5-column layout started but not complete). Revert or complete as needed.
+
+---
+
+## D-11: Development Hooks for Type Checking
+
+**M | D-11 | Enable hooks to run tsc after changes**
+
+Add configurable development hooks that can run commands like `tsc --noEmit` after file changes. This should:
+
+1. **Be opt-in/configurable** - Users should be able to enable/disable and configure which commands run
+2. **Work in this repo by default** - The CLI repo itself should have hooks pre-configured
+3. **Support multiple hook types:**
+   - Post-edit hooks (after file modifications)
+   - Pre-commit hooks (before git commits)
+   - On-demand validation
+
+### Implementation Ideas
+
+- Use existing Claude Code hooks system if available
+- Add `.claude/hooks.yaml` or similar config file
+- Example config:
+  ```yaml
+  hooks:
+    post_edit:
+      - command: "bun tsc --noEmit"
+        enabled: true
+        on_failure: warn # or "block"
+    pre_commit:
+      - command: "bun run format:check"
+        enabled: true
+  ```
+
+### Acceptance Criteria
+
+- [ ] Hooks are configurable per-project
+- [ ] This repo has tsc hook enabled by default
+- [ ] Hook failures can either warn or block the action
+- [ ] Easy to disable hooks temporarily (env var or flag)
+
+---
+
+## D-17: Config YAML Merging Strategy
+
+**S | D-17 | Determine simplest way to merge config.yaml updates**
+
+When `eject` or other commands need to update `.claude-src/config.yaml`, we need a strategy for merging new values with existing config without losing user customizations.
+
+**Current approach (simple):**
+Append new values to the end of the file with a comment marker:
+
+```yaml
+# Existing user config above...
+source: /path/to/marketplace
+agents:
+  - web-developer
+
+# --- New values added by cc (merge with above) ---
+installMode: local
+agent_skills:
+  web-developer:
+    framework: web-framework-react
+```
+
+User is expected to manually merge and remove the comment.
+
+**Future improvements to investigate:**
+
+- YAML library that preserves comments for proper merge
+- Deep merge of objects/arrays
+- Interactive merge prompt
+
+---
+
+## D-16: Init Should Populate Config Options with Defaults
+
+**S | D-16 | Show all config options in generated config.yaml with defaults**
+
+When `cc init` creates `.claude/config.yaml`, it should include all available config options with their default values (commented out if not explicitly set). This makes the options discoverable.
+
+**Current behavior:**
+
+```yaml
+name: claude-collective
+installMode: local
+skills:
+  - web-framework-react
+# ... no source/marketplace/agents_source shown
+```
+
+**Desired behavior:**
+
+```yaml
+name: claude-collective
+installMode: local
+
+# Source for skills (default: public marketplace)
+source: github:claude-collective/skills
+
+# Marketplace identifier for plugin installation
+# marketplace: claude-collective
+
+# Source for agents (default: CLI bundled)
+# agents_source: /path/to/cli
+
+skills:
+  - web-framework-react
+```
+
+### Implementation Notes
+
+- Show `source` with default value (`github:claude-collective/skills`)
+- Show `marketplace` commented out (optional)
+- Show `agents_source` commented out (defaults to CLI)
+- Users can uncomment and modify to use custom sources
+- Makes configuration discoverable without reading docs
+
+### Files to Modify
+
+- `src/cli-v2/commands/init.tsx` - Update config generation in `installLocalMode()` and `installPluginMode()`
+- `src/cli-v2/lib/config-generator.ts` - May need to add source fields to generated config
+
+---
+
+## D-15: Investigate TypeScript for Config Files
+
+**M | D-15 | Replace YAML config with TypeScript for better skill alias resolution**
+
+Investigate whether `config/stacks.yaml` and `config/skills-matrix.yaml` would be better as TypeScript files. This could enable:
+
+1. **Function-based alias mapping** - Instead of maintaining a static `skill_aliases` map, use a function to resolve aliases to full skill IDs:
+
+   ```typescript
+   export function resolveSkillAlias(alias: string): string {
+     // Could include fuzzy matching, validation, etc.
+     return skillAliasMap[alias] ?? alias;
+   }
+   ```
+
+2. **Type safety** - TypeScript would catch invalid skill references at build time
+
+3. **Computed values** - Stacks could dynamically compose skills based on logic:
+
+   ```typescript
+   export const stacks: Stack[] = [
+     {
+       id: "nextjs-fullstack",
+       skills: getFrameworkSkills("nextjs").concat(getCommonSkills()),
+     },
+   ];
+   ```
+
+4. **IDE support** - Better autocomplete and refactoring for skill IDs
+
+### Questions to Investigate
+
+- How would this affect the marketplace distribution? (TypeScript would need compilation)
+- Should the matrix be generated from TypeScript → YAML for distribution?
+- Would this complicate the `cc new skill` workflow?
+- How to handle remote sources that may not have TypeScript?
+
+### Files Affected
+
+- `config/stacks.yaml` → `config/stacks.ts`
+- `config/skills-matrix.yaml` → `config/skills-matrix.ts`
+- `src/cli-v2/lib/stacks-loader.ts`
+- `src/cli-v2/lib/matrix-loader.ts`
+
+---
+
+## D-12: Eject Full Agents from Custom Sources
+
+**M | D-12 | Support ejecting full compiled agents from custom sources**
+
+Add support for ejecting complete agent markdown files from custom sources/marketplaces.
+
+```bash
+cc eject agents --source /path/to/marketplace
+```
+
+Currently `eject agent-partials` only ejects the CLI's bundled partials and templates (the building blocks). This future feature would allow ejecting fully-compiled agent files from third-party sources.
+
+### Implementation Notes
+
+- Different from `agent-partials` which are building blocks
+- Would copy compiled `.md` agent files from `<source>/agents/`
+- Useful for forking/customizing agents from other marketplaces
+- When implemented, update `EJECT_TYPES` to include `agents` as separate option
+
+---
+
+## D-13: Eject Skills by Domain/Category
+
+**S | D-13 | Filter ejected skills by domain or category**
+
+Add `--domain` and `--category` flags to `cc eject skills` to selectively eject skills from specific areas instead of all skills.
+
+```bash
+# Eject only frontend skills
+cc eject skills --domain frontend
+
+# Eject only framework skills across all domains
+cc eject skills --category framework
+
+# Combine filters
+cc eject skills --domain backend --category api
+```
+
+### Implementation Notes
+
+- Use `matrix.categories` to filter skills by their category paths
+- Domain = top-level category (e.g., `frontend`, `backend`, `tooling`)
+- Category = subcategory (e.g., `framework`, `state-management`, `testing`)
+- Skills have `category` field with format `domain/subcategory`
+
+---
+
+## D-14: Consume Third-Party Marketplace Skills
+
+**M | D-14 | Command to import skills from third-party marketplaces**
+
+Create a command to download skills from external marketplaces and integrate them into the local skill library using an AI agent (skill summoner).
+
+```bash
+# Download and integrate a skill from another marketplace
+cc import skill https://example.com/marketplace/my-skill
+
+# Or from a git repo
+cc import skill github:someuser/their-skills --skill react-patterns
+```
+
+### Workflow
+
+1. **Download**: Fetch the skill from the third-party source
+2. **Analyze**: Run skill summoner agent to understand the skill's purpose and patterns
+3. **Adapt**: Agent adapts the skill to match local conventions and format
+4. **Integrate**: Place adapted skill in `.claude/skills/` or source marketplace
+5. **Validate**: Run validation to ensure skill is properly formatted
+
+### Implementation Notes
+
+- Reuse `source-fetcher.ts` for downloading from git sources
+- Create new agent: `skill-summoner` or `skill-importer`
+- Agent prompt should include:
+  - Local skill format/conventions
+  - How to extract key patterns from external skill
+  - How to handle conflicts with existing skills
+- Consider licensing/attribution requirements
