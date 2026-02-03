@@ -91,6 +91,10 @@ export interface AgentDefinition {
   output_format?: string; // Which output format file to use
   path?: string; // Relative path to agent directory (e.g., "developer/api-developer")
   sourceRoot?: string; // Root path where this agent was loaded from (for template resolution)
+  /**
+   * @deprecated Skills are now defined in stacks (Phase 7). This field is kept for backward compatibility.
+   */
+  skills?: Record<string, AgentSkillEntry>;
 }
 
 /**
@@ -384,6 +388,14 @@ export interface ProjectConfig {
    * ```
    */
   stack?: Record<string, Record<string, string>>;
+
+  /**
+   * Skills source path or URL.
+   * Saved when --source is provided during init/eject.
+   * Used to persist the source for future commands.
+   * @example "/home/user/my-skills" or "github:my-org/skills"
+   */
+  source?: string;
 }
 
 // =============================================================================

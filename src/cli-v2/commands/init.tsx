@@ -5,12 +5,11 @@
  * Supports both Plugin Mode (native install) and Local Mode (copy to .claude/).
  */
 import { Flags } from "@oclif/core";
-import { render, Text } from "ink";
-import React from "react";
+import { render } from "ink";
 import path from "path";
-import { stringify as stringifyYaml } from "yaml";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { BaseCommand } from "../base-command.js";
-import { Wizard, type WizardResult } from "../components/wizard/wizard.js";
+import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
 import {
   loadSkillsMatrixFromSource,
   type SourceLoadResult,
@@ -37,7 +36,13 @@ import {
   claudePluginMarketplaceExists,
   claudePluginMarketplaceAdd,
 } from "../utils/exec.js";
-import { ensureDir, writeFile, directoryExists } from "../utils/fs.js";
+import {
+  ensureDir,
+  writeFile,
+  readFile,
+  directoryExists,
+  fileExists,
+} from "../utils/fs.js";
 import { LOCAL_SKILLS_PATH, PROJECT_ROOT } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import type {
@@ -107,14 +112,14 @@ export default class Init extends BaseCommand {
     }
 
     // Store result from wizard
-    let wizardResult: WizardResult | null = null;
+    let wizardResult: WizardResultV2 | null = null;
 
     // Render wizard and wait for completion
     const { waitUntilExit } = render(
       <Wizard
         matrix={sourceResult.matrix}
         onComplete={(result) => {
-          wizardResult = result;
+          wizardResult = result as WizardResultV2;
         }}
         onCancel={() => {
           this.log("Setup cancelled");
@@ -125,17 +130,19 @@ export default class Init extends BaseCommand {
     await waitUntilExit();
 
     // Handle cancellation or no result
-    if (!wizardResult || wizardResult.cancelled) {
-      this.exit(EXIT_CODES.CANCELLED);
+    // Use non-null assertion since waitUntilExit() ensures the callback has been invoked
+    const result = wizardResult as WizardResultV2 | null;
+    if (!result || result.cancelled) {
+      return this.exit(EXIT_CODES.CANCELLED);
     }
 
     // Validate selection
-    if (wizardResult.selectedSkills.length === 0) {
-      this.error("No skills selected", { exit: EXIT_CODES.ERROR });
+    if (result.selectedSkills.length === 0) {
+      return this.error("No skills selected", { exit: EXIT_CODES.ERROR });
     }
 
     // Handle installation based on mode
-    await this.handleInstallation(wizardResult, sourceResult, flags);
+    await this.handleInstallation(result, sourceResult, flags);
   }
 
   /**
@@ -143,12 +150,11 @@ export default class Init extends BaseCommand {
    * Supports Plugin Mode (with stack) and Local Mode (copy to .claude/).
    */
   private async handleInstallation(
-    result: WizardResult,
+    result: WizardResultV2,
     sourceResult: SourceLoadResult,
     flags: any,
   ): Promise<void> {
     const projectDir = process.cwd();
-    const matrix = sourceResult.matrix;
     const dryRun = flags["dry-run"];
 
     // Show summary
@@ -161,22 +167,22 @@ export default class Init extends BaseCommand {
 
     // Dry run preview
     if (dryRun) {
-      if (result.installMode === "plugin" && result.selectedStack) {
+      if (result.installMode === "plugin" && result.selectedStackId) {
         // Plugin Mode with stack: install entire stack as ONE plugin
         const useMarketplace = !!sourceResult.marketplace;
         if (useMarketplace) {
           this.log(
-            `[dry-run] Would install stack "${result.selectedStack.id}" from marketplace "${sourceResult.marketplace}"`,
+            `[dry-run] Would install stack "${result.selectedStackId}" from marketplace "${sourceResult.marketplace}"`,
           );
           this.log(
-            `[dry-run]   claude plugin install ${result.selectedStack.id}@${sourceResult.marketplace} --scope project`,
+            `[dry-run]   claude plugin install ${result.selectedStackId}@${sourceResult.marketplace} --scope project`,
           );
         } else {
           this.log(
-            `[dry-run] Would compile and install stack "${result.selectedStack.id}" as a native plugin`,
+            `[dry-run] Would compile and install stack "${result.selectedStackId}" as a native plugin`,
           );
           this.log(
-            `[dry-run]   claude plugin install ./compiled-stack/${result.selectedStack.id} --scope project`,
+            `[dry-run]   claude plugin install ./compiled-stack/${result.selectedStackId} --scope project`,
           );
           this.log(
             `[dry-run] Stack includes ${result.selectedSkills.length} skills and agents bundled together`,
@@ -204,8 +210,8 @@ export default class Init extends BaseCommand {
 
     // Plugin Mode: Install stack as ONE native plugin
     if (result.installMode === "plugin") {
-      if (result.selectedStack) {
-        await this.installPluginMode(result, sourceResult);
+      if (result.selectedStackId) {
+        await this.installPluginMode(result, sourceResult, flags);
         return;
       } else {
         // No stack selected - individual skill installation not yet supported
@@ -221,17 +227,18 @@ export default class Init extends BaseCommand {
     }
 
     // Local Mode: Copy skills and compile agents
-    await this.installLocalMode(result, sourceResult);
+    await this.installLocalMode(result, sourceResult, flags);
   }
 
   /**
    * Install in Plugin Mode: install stack as native plugin.
    */
   private async installPluginMode(
-    result: WizardResult,
+    result: WizardResultV2,
     sourceResult: SourceLoadResult,
+    flags: { source?: string },
   ): Promise<void> {
-    if (!result.selectedStack) {
+    if (!result.selectedStackId) {
       throw new Error("No stack selected for plugin mode");
     }
 
@@ -262,11 +269,11 @@ export default class Init extends BaseCommand {
     const installMethod = sourceResult.marketplace
       ? `Installing from marketplace "${sourceResult.marketplace}"`
       : "Compiling and installing";
-    this.log(`${installMethod} stack "${result.selectedStack.id}"...`);
+    this.log(`${installMethod} stack "${result.selectedStackId}"...`);
 
     try {
       const installResult = await installStackAsPlugin({
-        stackId: result.selectedStack.id,
+        stackId: result.selectedStackId,
         projectDir,
         sourcePath: sourceResult.sourcePath,
         agentSourcePath: sourceResult.sourcePath,
@@ -292,6 +299,11 @@ export default class Init extends BaseCommand {
       }
       this.log("");
 
+      // Save source to project config if provided via --source flag
+      if (flags.source) {
+        await this.saveSourceToProjectConfig(projectDir, flags.source);
+      }
+
       const permissionWarning = await checkPermissions(projectDir);
       if (permissionWarning) {
         const { waitUntilExit } = render(permissionWarning);
@@ -305,11 +317,36 @@ export default class Init extends BaseCommand {
   }
 
   /**
+   * Save source to project-level .claude/config.yaml.
+   */
+  private async saveSourceToProjectConfig(
+    projectDir: string,
+    source: string,
+  ): Promise<void> {
+    const configPath = path.join(projectDir, ".claude", "config.yaml");
+
+    let config: Record<string, unknown> = {};
+    if (await fileExists(configPath)) {
+      const content = await readFile(configPath);
+      config = (parseYaml(content) as Record<string, unknown>) || {};
+    }
+
+    config.source = source;
+
+    await ensureDir(path.join(projectDir, ".claude"));
+    const configYaml = stringifyYaml(config, { indent: 2 });
+    await writeFile(configPath, configYaml);
+
+    this.log(`Source saved to .claude/config.yaml`);
+  }
+
+  /**
    * Install in Local Mode: copy skills and compile agents to .claude/.
    */
   private async installLocalMode(
-    result: WizardResult,
+    result: WizardResultV2,
     sourceResult: SourceLoadResult,
+    flags: { source?: string },
   ): Promise<void> {
     const projectDir = process.cwd();
     const matrix = sourceResult.matrix;
@@ -368,11 +405,11 @@ export default class Init extends BaseCommand {
 
       let localConfig: ProjectConfig;
       // Load stack once if selected (used for both config and skill resolution)
-      const loadedStack = result.selectedStack
-        ? await loadStackById(result.selectedStack.id, PROJECT_ROOT)
+      const loadedStack = result.selectedStackId
+        ? await loadStackById(result.selectedStackId, PROJECT_ROOT)
         : null;
 
-      if (result.selectedStack) {
+      if (result.selectedStackId) {
         if (loadedStack) {
           // Phase 7 format: Stack agents are Record<string, StackAgentConfig>
           // Extract agent IDs as string[] for config
@@ -393,7 +430,7 @@ export default class Init extends BaseCommand {
         } else {
           // Stack not found in CLI's config/stacks.yaml
           throw new Error(
-            `Stack '${result.selectedStack.id}' not found in config/stacks.yaml. ` +
+            `Stack '${result.selectedStackId}' not found in config/stacks.yaml. ` +
               `Available stacks are defined in the CLI's config/stacks.yaml file.`,
           );
         }
@@ -407,6 +444,11 @@ export default class Init extends BaseCommand {
 
       // Add installMode to config
       localConfig.installMode = result.installMode;
+
+      // Add source to config if provided via --source flag
+      if (flags.source) {
+        localConfig.source = flags.source;
+      }
 
       const configYaml = stringifyYaml(localConfig, {
         indent: 2,
@@ -460,6 +502,8 @@ export default class Init extends BaseCommand {
         localSkillsForResolution,
         compileConfig,
         sourceResult.sourcePath,
+        loadedStack ?? undefined,
+        skillAliases,
       );
 
       const compiledAgentNames: string[] = [];

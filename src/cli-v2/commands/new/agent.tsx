@@ -5,7 +5,7 @@
  * a new agent scaffold with proper structure and documentation.
  */
 import { Args, Flags } from "@oclif/core";
-import { render, Box, Text } from "ink";
+import { render, Box, Text, useInput } from "ink";
 import { TextInput } from "@inkjs/ui";
 import React, { useState } from "react";
 import path from "path";
@@ -45,6 +45,13 @@ interface PurposeInputProps {
 const PurposeInput: React.FC<PurposeInputProps> = ({ onSubmit, onCancel }) => {
   const [error, setError] = useState<string | null>(null);
 
+  // Handle escape key for cancel
+  useInput((_input, key) => {
+    if (key.escape) {
+      onCancel();
+    }
+  });
+
   const handleSubmit = (value: string) => {
     const trimmed = value.trim();
     if (!trimmed) {
@@ -62,11 +69,7 @@ const PurposeInput: React.FC<PurposeInputProps> = ({ onSubmit, onCancel }) => {
         e.g., Manages database migrations with rollback support
       </Text>
       <Text> </Text>
-      <TextInput
-        placeholder="Enter agent purpose..."
-        onSubmit={handleSubmit}
-        onCancel={onCancel}
-      />
+      <TextInput placeholder="Enter agent purpose..." onSubmit={handleSubmit} />
       {error && (
         <Box marginTop={1}>
           <Text color="red">{error}</Text>
