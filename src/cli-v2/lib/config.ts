@@ -3,8 +3,7 @@ import os from "os";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { readFile, writeFile, fileExists, ensureDir } from "../utils/fs";
 import { verbose } from "../utils/logger";
-
-const PROJECT_CONFIG_DIR = ".claude";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../consts";
 
 export const DEFAULT_SOURCE = "github:claude-collective/skills";
 export const SOURCE_ENV_VAR = "CC_SOURCE";
@@ -96,7 +95,7 @@ export function getGlobalConfigPath(): string {
 }
 
 export function getProjectConfigPath(projectDir: string): string {
-  return path.join(projectDir, PROJECT_CONFIG_DIR, PROJECT_CONFIG_FILE);
+  return path.join(projectDir, CLAUDE_SRC_DIR, PROJECT_CONFIG_FILE);
 }
 
 /**
@@ -129,11 +128,22 @@ export async function loadGlobalConfig(): Promise<GlobalConfig | null> {
 export async function loadProjectConfig(
   projectDir: string,
 ): Promise<ProjectConfig | null> {
-  const configPath = getProjectConfigPath(projectDir);
+  // Check .claude-src/config.yaml first (new location)
+  const srcConfigPath = getProjectConfigPath(projectDir);
+  // Fall back to .claude/config.yaml (legacy location)
+  const legacyConfigPath = path.join(projectDir, CLAUDE_DIR, "config.yaml");
 
-  if (!(await fileExists(configPath))) {
-    verbose(`Project config not found at ${configPath}`);
-    return null;
+  let configPath = srcConfigPath;
+  if (!(await fileExists(srcConfigPath))) {
+    if (await fileExists(legacyConfigPath)) {
+      configPath = legacyConfigPath;
+      verbose(`Using legacy config location: ${legacyConfigPath}`);
+    } else {
+      verbose(
+        `Project config not found at ${srcConfigPath} or ${legacyConfigPath}`,
+      );
+      return null;
+    }
   }
 
   try {
@@ -168,7 +178,7 @@ export async function saveProjectConfig(
   config: ProjectConfig,
 ): Promise<void> {
   const configPath = getProjectConfigPath(projectDir);
-  await ensureDir(path.join(projectDir, PROJECT_CONFIG_DIR));
+  await ensureDir(path.join(projectDir, CLAUDE_SRC_DIR));
   const content = stringifyYaml(config, { lineWidth: 0 });
   await writeFile(configPath, content);
   verbose(`Saved project config to ${configPath}`);
@@ -252,7 +262,7 @@ export function formatAgentsSourceOrigin(origin: AgentsSourceOrigin): string {
     case "flag":
       return "--agent-source flag";
     case "project":
-      return "project config (.claude/config.yaml)";
+      return "project config (.claude-src/config.yaml)";
     case "global":
       return "global config (~/.claude-collective/config.yaml)";
     case "default":
@@ -277,7 +287,7 @@ export function formatSourceOrigin(
     case "env":
       return `${SOURCE_ENV_VAR} environment variable`;
     case "project":
-      return "project config (.claude/config.yaml)";
+      return "project config (.claude-src/config.yaml)";
     case "global":
       return "global config (~/.claude-collective/config.yaml)";
     case "default":

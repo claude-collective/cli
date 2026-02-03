@@ -2,6 +2,7 @@ import path from "path";
 import { parse as parseYaml } from "yaml";
 import { readFile, fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../consts";
 import type {
   ProjectConfig,
   StackConfig,
@@ -12,7 +13,8 @@ import type {
   CustomAgentConfig,
 } from "../../types";
 
-const CONFIG_PATH = ".claude/config.yaml";
+const CONFIG_PATH = `${CLAUDE_SRC_DIR}/config.yaml`;
+const LEGACY_CONFIG_PATH = `${CLAUDE_DIR}/config.yaml`;
 
 export interface LoadedProjectConfig {
   config: ProjectConfig;
@@ -22,16 +24,27 @@ export interface LoadedProjectConfig {
 }
 
 /**
- * Load project config from .claude/config.yaml
+ * Load project config from .claude-src/config.yaml (with fallback to .claude/config.yaml)
  */
 export async function loadProjectConfig(
   projectDir: string,
 ): Promise<LoadedProjectConfig | null> {
-  const configPath = path.join(projectDir, CONFIG_PATH);
+  // Check .claude-src/config.yaml first (new location)
+  const srcConfigPath = path.join(projectDir, CONFIG_PATH);
+  // Fall back to .claude/config.yaml (legacy location)
+  const legacyConfigPath = path.join(projectDir, LEGACY_CONFIG_PATH);
 
-  if (!(await fileExists(configPath))) {
-    verbose(`Project config not found at ${configPath}`);
-    return null;
+  let configPath = srcConfigPath;
+  if (!(await fileExists(srcConfigPath))) {
+    if (await fileExists(legacyConfigPath)) {
+      configPath = legacyConfigPath;
+      verbose(`Using legacy config location: ${legacyConfigPath}`);
+    } else {
+      verbose(
+        `Project config not found at ${srcConfigPath} or ${legacyConfigPath}`,
+      );
+      return null;
+    }
   }
 
   try {

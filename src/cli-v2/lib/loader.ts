@@ -2,7 +2,7 @@ import { parse as parseYaml } from "yaml";
 import path from "path";
 import { glob, readFile, directoryExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import { DIRS } from "../consts";
+import { CLAUDE_SRC_DIR, DIRS } from "../consts";
 import type {
   AgentDefinition,
   AgentYamlConfig,
@@ -64,6 +64,46 @@ export async function loadAllAgents(
     };
 
     verbose(`Loaded agent: ${config.id} from ${file}`);
+  }
+
+  return agents;
+}
+
+/**
+ * Load agents from project's .claude-src/agents/ directory.
+ * Returns empty object if directory doesn't exist.
+ */
+export async function loadProjectAgents(
+  projectRoot: string,
+): Promise<Record<string, AgentDefinition>> {
+  const agents: Record<string, AgentDefinition> = {};
+  const projectAgentsDir = path.join(projectRoot, CLAUDE_SRC_DIR, "agents");
+
+  if (!(await directoryExists(projectAgentsDir))) {
+    verbose(`No project agents directory at ${projectAgentsDir}`);
+    return agents;
+  }
+
+  const files = await glob("**/agent.yaml", projectAgentsDir);
+
+  for (const file of files) {
+    const fullPath = path.join(projectAgentsDir, file);
+    const content = await readFile(fullPath);
+    const config = parseYaml(content) as AgentYamlConfig;
+    const agentPath = path.dirname(file);
+
+    agents[config.id] = {
+      title: config.title,
+      description: config.description,
+      model: config.model,
+      tools: config.tools,
+      path: agentPath,
+      sourceRoot: projectRoot,
+      agentBaseDir: `${CLAUDE_SRC_DIR}/agents`, // Project agents are in .claude-src/agents/
+      skills: config.skills,
+    };
+
+    verbose(`Loaded project agent: ${config.id} from ${file}`);
   }
 
   return agents;

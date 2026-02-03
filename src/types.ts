@@ -91,6 +91,7 @@ export interface AgentDefinition {
   output_format?: string; // Which output format file to use
   path?: string; // Relative path to agent directory (e.g., "developer/api-developer")
   sourceRoot?: string; // Root path where this agent was loaded from (for template resolution)
+  agentBaseDir?: string; // Base directory for agent files relative to sourceRoot (e.g., "src/agents" or ".claude-src/agents")
   /**
    * @deprecated Skills are now defined in stacks (Phase 7). This field is kept for backward compatibility.
    */
@@ -150,6 +151,7 @@ export interface AgentConfig {
   skills: Skill[]; // Unified skills list (loaded dynamically via Skill tool)
   path?: string; // Relative path to agent directory (e.g., "developer/api-developer")
   sourceRoot?: string; // Root path where this agent was loaded from (for template resolution)
+  agentBaseDir?: string; // Base directory for agent files relative to sourceRoot (e.g., "src/agents" or ".claude-src/agents")
 }
 
 export interface CompiledAgentData {
@@ -396,6 +398,21 @@ export interface ProjectConfig {
    * @example "/home/user/my-skills" or "github:my-org/skills"
    */
   source?: string;
+
+  /**
+   * Marketplace identifier for plugin installation.
+   * Used when installing stacks from a marketplace source.
+   * @example "claude-collective"
+   */
+  marketplace?: string;
+
+  /**
+   * Agents source path or URL.
+   * Used when agents come from a different source than skills.
+   * If not specified, uses the same source as skills.
+   * @example "/home/user/my-agents" or "github:my-org/agents"
+   */
+  agents_source?: string;
 }
 
 // =============================================================================

@@ -12,7 +12,13 @@ import {
   directoryExists,
 } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import { DIRS, OUTPUT_DIR, PROJECT_ROOT } from "../consts";
+import {
+  CLAUDE_DIR,
+  CLAUDE_SRC_DIR,
+  DIRS,
+  OUTPUT_DIR,
+  PROJECT_ROOT,
+} from "../consts";
 import { resolveClaudeMd } from "./resolver";
 import {
   validateCompiledAgent,
@@ -34,7 +40,10 @@ async function compileAgent(
 ): Promise<string> {
   verbose(`Reading agent files for ${name}...`);
 
-  const agentDir = path.join(projectRoot, DIRS.agents, agent.path || name);
+  // Use agent's sourceRoot and agentBaseDir if available (for project agents in .claude-src/agents/)
+  const agentSourceRoot = agent.sourceRoot || projectRoot;
+  const agentBaseDir = agent.agentBaseDir || DIRS.agents;
+  const agentDir = path.join(agentSourceRoot, agentBaseDir, agent.path || name);
 
   const intro = await readFile(path.join(agentDir, "intro.md"));
   const workflow = await readFile(path.join(agentDir, "workflow.md"));
@@ -53,7 +62,7 @@ async function compileAgent(
 
   const agentPath = agent.path || name;
   const category = agentPath.split("/")[0];
-  const categoryDir = path.join(projectRoot, DIRS.agents, category);
+  const categoryDir = path.join(agentSourceRoot, agentBaseDir, category);
 
   let outputFormat = await readFileOptional(
     path.join(agentDir, "output-format.md"),
@@ -239,10 +248,23 @@ export async function createLiquidEngine(projectDir?: string): Promise<Liquid> {
   const roots: string[] = [];
 
   if (projectDir) {
-    const localTemplatesDir = path.join(projectDir, ".claude", "templates");
-    if (await directoryExists(localTemplatesDir)) {
-      roots.push(localTemplatesDir);
-      verbose(`Using local templates from: ${localTemplatesDir}`);
+    // Check .claude-src/agents/_templates/ FIRST (new location)
+    const srcTemplatesDir = path.join(
+      projectDir,
+      CLAUDE_SRC_DIR,
+      "agents",
+      "_templates",
+    );
+    if (await directoryExists(srcTemplatesDir)) {
+      roots.push(srcTemplatesDir);
+      verbose(`Using local templates from: ${srcTemplatesDir}`);
+    }
+
+    // Then check .claude/templates/ as fallback (legacy location)
+    const legacyTemplatesDir = path.join(projectDir, CLAUDE_DIR, "templates");
+    if (await directoryExists(legacyTemplatesDir)) {
+      roots.push(legacyTemplatesDir);
+      verbose(`Using legacy templates from: ${legacyTemplatesDir}`);
     }
   }
 
