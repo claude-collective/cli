@@ -14,7 +14,8 @@ import {
   loadSkillsMatrixFromSource,
   type SourceLoadResult,
 } from "../lib/source-loader.js";
-import { formatSourceOrigin } from "../lib/config.js";
+import { formatSourceOrigin, loadProjectConfig } from "../lib/config.js";
+import { loadProjectConfig as loadFullProjectConfig } from "../lib/project-config.js";
 import { copySkillsToLocalFlattened } from "../lib/skill-copier.js";
 import { checkPermissions } from "../lib/permission-checker.js";
 import { loadAllAgents } from "../lib/loader.js";
@@ -43,7 +44,7 @@ import {
   directoryExists,
   fileExists,
 } from "../utils/fs.js";
-import { LOCAL_SKILLS_PATH, PROJECT_ROOT } from "../consts.js";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, LOCAL_SKILLS_PATH, PROJECT_ROOT } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import type {
   CompileConfig,
@@ -197,12 +198,12 @@ export default class Init extends BaseCommand {
           this.log(`[dry-run] Would fall back to Local Mode...`);
         }
         const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
-        const localAgentsDir = path.join(projectDir, ".claude", "agents");
+        const localAgentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
         this.log(
           `[dry-run] Would copy ${result.selectedSkills.length} skills to ${localSkillsDir}`,
         );
         this.log(`[dry-run] Would compile agents to ${localAgentsDir}`);
-        this.log(`[dry-run] Would save config to .claude/config.yaml`);
+        this.log(`[dry-run] Would save config to .claude-src/config.yaml`);
       }
       this.log("\n[dry-run] Preview complete - no files were created");
       return;
@@ -317,13 +318,13 @@ export default class Init extends BaseCommand {
   }
 
   /**
-   * Save source to project-level .claude/config.yaml.
+   * Save source to project-level .claude-src/config.yaml.
    */
   private async saveSourceToProjectConfig(
     projectDir: string,
     source: string,
   ): Promise<void> {
-    const configPath = path.join(projectDir, ".claude", "config.yaml");
+    const configPath = path.join(projectDir, CLAUDE_SRC_DIR, "config.yaml");
 
     let config: Record<string, unknown> = {};
     if (await fileExists(configPath)) {
@@ -333,11 +334,11 @@ export default class Init extends BaseCommand {
 
     config.source = source;
 
-    await ensureDir(path.join(projectDir, ".claude"));
+    await ensureDir(path.join(projectDir, CLAUDE_SRC_DIR));
     const configYaml = stringifyYaml(config, { indent: 2 });
     await writeFile(configPath, configYaml);
 
-    this.log(`Source saved to .claude/config.yaml`);
+    this.log(`Source saved to .claude-src/config.yaml`);
   }
 
   /**
@@ -351,13 +352,14 @@ export default class Init extends BaseCommand {
     const projectDir = process.cwd();
     const matrix = sourceResult.matrix;
     const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
-    const localAgentsDir = path.join(projectDir, ".claude", "agents");
-    const localConfigPath = path.join(projectDir, ".claude", "config.yaml");
+    const localAgentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+    const localConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, "config.yaml");
 
     this.log("Copying skills to local directory...");
     try {
       await ensureDir(localSkillsDir);
       await ensureDir(localAgentsDir);
+      await ensureDir(path.dirname(localConfigPath));
 
       const copiedSkills = await copySkillsToLocalFlattened(
         result.selectedSkills,
@@ -445,9 +447,119 @@ export default class Init extends BaseCommand {
       // Add installMode to config
       localConfig.installMode = result.installMode;
 
-      // Add source to config if provided via --source flag
+      // Add source to config (flag overrides resolved source, but always include it)
       if (flags.source) {
         localConfig.source = flags.source;
+      } else if (sourceResult.sourceConfig.source) {
+        localConfig.source = sourceResult.sourceConfig.source;
+      }
+
+      // Add marketplace if available from resolved config
+      if (sourceResult.marketplace) {
+        localConfig.marketplace = sourceResult.marketplace;
+      }
+
+      // Merge with existing config if it exists
+      const existingFullConfig = await loadFullProjectConfig(projectDir);
+      if (existingFullConfig) {
+        // Merge strategy: existing values take precedence for most fields
+        const existingConfig = existingFullConfig.config;
+
+        // Keep existing name if present
+        if (existingConfig.name) {
+          localConfig.name = existingConfig.name;
+        }
+
+        // Keep existing description if present
+        if (existingConfig.description) {
+          localConfig.description = existingConfig.description;
+        }
+
+        // Keep existing source if present (don't overwrite user's source)
+        if (existingConfig.source) {
+          localConfig.source = existingConfig.source;
+        }
+
+        // Merge skills arrays (union of existing + new)
+        if (existingConfig.skills && existingConfig.skills.length > 0) {
+          const existingSkillIds = new Set(
+            existingConfig.skills.map((s) => (typeof s === "string" ? s : s.id)),
+          );
+          const newSkillIds = localConfig.skills?.filter(
+            (s) => !existingSkillIds.has(typeof s === "string" ? s : s.id),
+          ) || [];
+          localConfig.skills = [...existingConfig.skills, ...newSkillIds];
+        }
+
+        // Merge agents arrays (union of existing + new)
+        if (existingConfig.agents && existingConfig.agents.length > 0) {
+          const existingAgentIds = new Set(existingConfig.agents);
+          const newAgentIds = localConfig.agents.filter(
+            (a) => !existingAgentIds.has(a),
+          );
+          localConfig.agents = [...existingConfig.agents, ...newAgentIds];
+        }
+
+        // Deep merge stack (existing agent configs take precedence)
+        if (existingConfig.stack) {
+          const mergedStack = { ...localConfig.stack };
+          for (const [agentId, agentConfig] of Object.entries(existingConfig.stack)) {
+            mergedStack[agentId] = { ...mergedStack[agentId], ...agentConfig };
+          }
+          localConfig.stack = mergedStack;
+        }
+
+        // Keep existing author if present
+        if (existingConfig.author) {
+          localConfig.author = existingConfig.author;
+        }
+
+        // Keep existing agents_source if present
+        if (existingConfig.agents_source) {
+          localConfig.agents_source = existingConfig.agents_source;
+        }
+
+        // Keep existing marketplace if present
+        if (existingConfig.marketplace) {
+          localConfig.marketplace = existingConfig.marketplace;
+        }
+
+        // Keep other existing fields
+        if (existingConfig.philosophy) {
+          localConfig.philosophy = existingConfig.philosophy;
+        }
+        if (existingConfig.framework) {
+          localConfig.framework = existingConfig.framework;
+        }
+        if (existingConfig.principles) {
+          localConfig.principles = existingConfig.principles;
+        }
+        if (existingConfig.tags) {
+          localConfig.tags = existingConfig.tags;
+        }
+        if (existingConfig.agent_skills) {
+          localConfig.agent_skills = existingConfig.agent_skills;
+        }
+        if (existingConfig.preload_patterns) {
+          localConfig.preload_patterns = existingConfig.preload_patterns;
+        }
+        if (existingConfig.custom_agents) {
+          localConfig.custom_agents = existingConfig.custom_agents;
+        }
+        if (existingConfig.hooks) {
+          localConfig.hooks = existingConfig.hooks;
+        }
+
+        this.log(`Merged with existing config at ${existingFullConfig.configPath}`);
+      } else {
+        // No existing config, add author and agents_source from simple project config if available
+        const existingProjectConfig = await loadProjectConfig(projectDir);
+        if (existingProjectConfig?.author) {
+          localConfig.author = existingProjectConfig.author;
+        }
+        if (existingProjectConfig?.agents_source) {
+          localConfig.agents_source = existingProjectConfig.agents_source;
+        }
       }
 
       const configYaml = stringifyYaml(localConfig, {
@@ -542,7 +654,7 @@ export default class Init extends BaseCommand {
       this.log(`  ${localConfigPath}`);
       this.log("");
       this.log("To customize agent-skill assignments:");
-      this.log(`  1. Edit .claude/config.yaml`);
+      this.log(`  1. Edit .claude-src/config.yaml`);
       this.log(`  2. Run 'cc compile' to regenerate agents`);
       this.log("");
 
