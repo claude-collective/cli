@@ -77,14 +77,23 @@ async function fetchFromRemoteSource(
   verbose(`Fetching from remote: ${fullSource}`);
   verbose(`Cache directory: ${cacheDir}`);
 
+  // If cache exists and not forcing refresh, use it directly
+  if (!forceRefresh && (await directoryExists(cacheDir))) {
+    verbose(`Using cached source: ${cacheDir}`);
+    return {
+      path: cacheDir,
+      fromCache: true,
+      source: fullSource,
+    };
+  }
+
   await ensureDir(path.dirname(cacheDir));
 
   try {
     const result = await downloadTemplate(fullSource, {
       dir: cacheDir,
-      force: forceRefresh,
+      force: true, // Always force when downloading to avoid "already exists" error
       offline: false,
-      preferOffline: !forceRefresh,
     });
 
     verbose(`Downloaded to: ${result.dir}`);
