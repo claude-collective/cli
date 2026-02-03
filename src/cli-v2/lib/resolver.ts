@@ -423,6 +423,7 @@ export async function resolveAgents(
       skills: resolvedSkills,
       path: definition.path,
       sourceRoot: definition.sourceRoot,
+      agentBaseDir: definition.agentBaseDir,
     };
   }
 

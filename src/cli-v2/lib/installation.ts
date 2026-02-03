@@ -1,14 +1,14 @@
 /**
  * Installation detection utilities for Claude Collective.
  *
- * Detects whether a project uses local mode (.claude/config.yaml) or
+ * Detects whether a project uses local mode (.claude-src/config.yaml) or
  * plugin mode (.claude/plugins/claude-collective/).
  */
 import path from "path";
 import { directoryExists, fileExists } from "../utils/fs";
 import { loadProjectConfig } from "./project-config";
 import { getCollectivePluginDir } from "./plugin-finder";
-import { CLAUDE_DIR } from "../consts";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../consts";
 
 export type InstallMode = "local" | "plugin";
 
@@ -22,15 +22,24 @@ export interface Installation {
 
 /**
  * Detect the current installation mode by checking for local config first.
- * Priority: Local (.claude/config.yaml with installMode: local) > Plugin
+ * Priority: Local (.claude-src/config.yaml with installMode: local) > Plugin
  */
 export async function detectInstallation(
   projectDir: string = process.cwd(),
 ): Promise<Installation | null> {
   // 1. Check for local installation first
-  const localConfigPath = path.join(projectDir, CLAUDE_DIR, "config.yaml");
+  // Check .claude-src/config.yaml first (new location)
+  const srcConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, "config.yaml");
+  // Fall back to .claude/config.yaml (legacy location)
+  const legacyConfigPath = path.join(projectDir, CLAUDE_DIR, "config.yaml");
 
-  if (await fileExists(localConfigPath)) {
+  const localConfigPath = (await fileExists(srcConfigPath))
+    ? srcConfigPath
+    : (await fileExists(legacyConfigPath))
+      ? legacyConfigPath
+      : null;
+
+  if (localConfigPath) {
     const loaded = await loadProjectConfig(projectDir);
 
     // If config exists and has installMode: local (or no installMode, defaults to local)

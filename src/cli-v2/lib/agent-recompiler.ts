@@ -1,7 +1,7 @@
 import path from "path";
 import { glob, writeFile, ensureDir, readFile, fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import { loadAllAgents, loadPluginSkills } from "./loader";
+import { loadAllAgents, loadPluginSkills, loadProjectAgents } from "./loader";
 import { resolveAgents, resolveStackSkills } from "./resolver";
 import { compileAgentForPlugin } from "./stack-plugin-compiler";
 import { getPluginAgentsDir } from "./plugin-finder";
@@ -140,8 +140,15 @@ export async function recompileAgents(
   // Load built-in agents from source
   const builtinAgents = await loadAllAgents(sourcePath);
 
+  // Load project agents from .claude-src/agents/ (if projectDir provided)
+  const projectAgents = projectDir ? await loadProjectAgents(projectDir) : {};
+
   // Resolve custom agents and merge with built-in agents
-  let allAgents: Record<string, AgentDefinition> = { ...builtinAgents };
+  // Priority: custom_agents > project agents > built-in agents
+  let allAgents: Record<string, AgentDefinition> = {
+    ...builtinAgents,
+    ...projectAgents,
+  };
   if (projectConfig?.custom_agents) {
     // Validate custom agent IDs don't conflict with built-in agents
     const idConflicts = validateCustomAgentIds(

@@ -20,6 +20,7 @@ export const DEFAULT_MATRIX_PATH = "src/config/skills-matrix.yaml";
 export const PLUGIN_NAME = "claude-collective";
 
 export const CLAUDE_DIR = ".claude";
+export const CLAUDE_SRC_DIR = ".claude-src";
 export const PLUGINS_SUBDIR = "plugins";
 export const PLUGIN_MANIFEST_DIR = ".claude-plugin";
 export const PLUGIN_MANIFEST_FILE = "plugin.json";

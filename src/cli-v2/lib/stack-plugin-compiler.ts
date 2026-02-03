@@ -145,7 +145,9 @@ export async function compileAgentForPlugin(
 
   // Use agent's sourceRoot if available (for multi-source loading), otherwise fallback
   const agentSourceRoot = agent.sourceRoot || fallbackRoot;
-  const agentDir = path.join(agentSourceRoot, DIRS.agents, agent.path || name);
+  // Use agent's agentBaseDir if available (for project agents in .claude-src/agents/)
+  const agentBaseDir = agent.agentBaseDir || DIRS.agents;
+  const agentDir = path.join(agentSourceRoot, agentBaseDir, agent.path || name);
 
   const intro = await readFile(path.join(agentDir, "intro.md"));
   const workflow = await readFile(path.join(agentDir, "workflow.md"));
@@ -164,7 +166,7 @@ export async function compileAgentForPlugin(
 
   const agentPath = agent.path || name;
   const category = agentPath.split("/")[0];
-  const categoryDir = path.join(agentSourceRoot, DIRS.agents, category);
+  const categoryDir = path.join(agentSourceRoot, agentBaseDir, category);
 
   let outputFormat = await readFileOptional(
     path.join(agentDir, "output-format.md"),
