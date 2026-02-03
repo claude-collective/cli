@@ -131,6 +131,13 @@ ${skillsYaml}`,
       description?: string;
       agents: string[];
       philosophy?: string;
+      // Allow additional properties for backwards compatibility but ignore them
+      version?: string;
+      author?: string;
+      skills?: Array<{ id: string; preloaded?: boolean }>;
+      tags?: string[];
+      principles?: string[];
+      hooks?: Record<string, unknown[]>;
     },
   ): Stack {
     // Convert agents array to Record<string, StackAgentConfig>

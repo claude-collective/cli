@@ -369,8 +369,8 @@ const createBasicMatrix = (): MergedSkillsMatrix => {
         required: true,
         order: 0,
       },
-      testing: {
-        id: "testing",
+      "testing-parent": {
+        id: "testing-parent",
         name: "Testing",
         description: "Testing tools",
         domain: "shared",
@@ -382,7 +382,7 @@ const createBasicMatrix = (): MergedSkillsMatrix => {
         id: TEST_CATEGORIES.TESTING,
         name: "Testing Framework",
         description: "Testing frameworks",
-        parent: "testing",
+        parent: "testing-parent",
         domain: "shared",
         exclusive: false,
         required: false,

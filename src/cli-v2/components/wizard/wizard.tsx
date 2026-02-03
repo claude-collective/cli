@@ -250,7 +250,11 @@ export const Wizard: React.FC<WizardProps> = ({
           matrix,
         );
         return (
-          <StepStackOptions stackName={stackName} technologyCount={techCount} />
+          <StepStackOptions
+            stackName={stackName}
+            technologyCount={techCount}
+            matrix={matrix}
+          />
         );
       }
 
