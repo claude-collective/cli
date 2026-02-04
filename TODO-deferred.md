@@ -11,7 +11,7 @@
 Allow consumers to define custom stacks in their own `config/stacks.yaml` file. The stack loader should merge user stacks with CLI built-in stacks, with user stacks taking precedence (following the pattern used for agent loading in `stack-plugin-compiler.ts:301-308`). Currently only CLI built-in stacks from `/home/vince/dev/cli/config/stacks.yaml` are supported.
 
 **M | D-09 | Fix agent-recompiler tests for Phase 6**
-7 tests in `src/cli-v2/lib/agent-recompiler.test.ts` are skipped because agents now have skills in their YAMLs (Phase 6). Tests need to either provide the skills that agents reference, use test agents without skills, or bypass skill resolution.
+7 tests in `src/cli/lib/agent-recompiler.test.ts` are skipped because agents now have skills in their YAMLs (Phase 6). Tests need to either provide the skills that agents reference, use test agents without skills, or bypass skill resolution.
 **Note:** Phase 7 will remove skills from agent YAMLs entirely (P7-0-1). This task may become obsolete.
 
 ---
@@ -51,9 +51,6 @@ Measure and validate startup time is within acceptable range
 **M | D-01 | Update skill documentation conventions**
 Replace `examples-*.md` files with folder structure. Split examples vs patterns. Namespace files (e.g., `examples/core.md`, `patterns/testing.md`). Update `docs/skill-extraction-criteria.md` accordingly.
 
-**M | D-02 | Fix skill ID mismatch between local and marketplace**
-Local skills use short IDs (e.g., `cli-commander (@vince)`) while marketplace skills use full paths (e.g., `cli/framework/cli-commander (@vince)`). This causes `preloaded_skills` in agent.yaml to fail resolution during compile. Either normalize IDs during installation or support both formats in the resolver.
-
 **M | D-04 | Create missing skills referenced in stack configs**
 The following skills are referenced in stack configs but don't exist in the marketplace:
 
@@ -73,9 +70,6 @@ Currently, running `cc init` a second time just warns "already initialized" and 
 - Uninstall
 
 This follows the pattern of CLIs like `npm init` (asks about overwriting) and provides better discoverability of available actions. The current behavior requires users to know about `cc edit`, `cc compile`, etc.
-
-**S | D-06 | Fix require() syntax in matrix-resolver.test.ts**
-4 tests in `src/cli-v2/lib/matrix-resolver.test.ts` use CommonJS `require('./matrix-resolver')` which fails with ESM modules. Convert to proper ESM imports or use dynamic `import()`.
 
 **M | D-07 | Use full skill path as folder name when compiling**
 When skills are copied locally, use the full path as the folder name instead of the short name. For example, `react (@vince)` should become `web/framework/react (@vince)`. This provides better organization and avoids potential naming conflicts between skills with the same short name in different categories.
@@ -100,27 +94,27 @@ Improve the wizard Build step with:
 
 ### Implementation Tasks
 
-1. **Column Alignment in CategoryGrid** (`src/cli-v2/components/wizard/category-grid.tsx`)
+1. **Column Alignment in CategoryGrid** (`src/cli/components/wizard/category-grid.tsx`)
    - Calculate consistent column width based on longest option label
    - Cap at 5 columns per row
    - Align all option cells to same width
    - Update `OptionCell` component with fixed width instead of `minWidth`
 
-2. **Framework-First Flow in StepBuild** (`src/cli-v2/components/wizard/step-build.tsx`)
+2. **Framework-First Flow in StepBuild** (`src/cli/components/wizard/step-build.tsx`)
    - Add logic to detect if framework is selected for current domain
    - When no framework selected: only show "framework" subcategory row
    - When framework selected: show all subcategories
    - Add empty state or guidance message when awaiting framework selection
 
-3. **Hide vs Disable Conflicting Options** (`src/cli-v2/lib/matrix-resolver.ts`, `step-build.tsx`)
+3. **Hide vs Disable Conflicting Options** (`src/cli/lib/matrix-resolver.ts`, `step-build.tsx`)
    - When `showAll=false`: Filter out conflicting options entirely (don't return them)
    - When `showAll=true`: Return all options with appropriate state indicators
    - Update `getAvailableSkills()` to accept `filterConflicts: boolean` option
 
 4. **Rename expertMode → showAll**
-   - `src/cli-v2/stores/wizard-store.ts`: Rename state and action
-   - `src/cli-v2/components/wizard/category-grid.tsx`: Update key handler and UI text
-   - `src/cli-v2/components/wizard/step-build.tsx`: Update prop name
+   - `src/cli/stores/wizard-store.ts`: Rename state and action
+   - `src/cli/components/wizard/category-grid.tsx`: Update key handler and UI text
+   - `src/cli/components/wizard/step-build.tsx`: Update prop name
    - Tests: Update all references
    - Key binding: `e` → `a`
    - UI text: `[e] Expert Mode: ON/OFF` → `[a] Show All: ON/OFF`
@@ -257,8 +251,8 @@ skills:
 
 ### Files to Modify
 
-- `src/cli-v2/commands/init.tsx` - Update config generation in `installLocalMode()` and `installPluginMode()`
-- `src/cli-v2/lib/config-generator.ts` - May need to add source fields to generated config
+- `src/cli/commands/init.tsx` - Update config generation in `installLocalMode()` and `installPluginMode()`
+- `src/cli/lib/config-generator.ts` - May need to add source fields to generated config
 
 ---
 
@@ -303,8 +297,8 @@ Investigate whether `config/stacks.yaml` and `config/skills-matrix.yaml` would b
 
 - `config/stacks.yaml` → `config/stacks.ts`
 - `config/skills-matrix.yaml` → `config/skills-matrix.ts`
-- `src/cli-v2/lib/stacks-loader.ts`
-- `src/cli-v2/lib/matrix-loader.ts`
+- `src/cli/lib/stacks-loader.ts`
+- `src/cli/lib/matrix-loader.ts`
 
 ---
 
@@ -352,6 +346,42 @@ cc eject skills --domain backend --category api
 - Domain = top-level category (e.g., `frontend`, `backend`, `tooling`)
 - Category = subcategory (e.g., `framework`, `state-management`, `testing`)
 - Skills have `category` field with format `domain/subcategory`
+
+---
+
+## D-18: Template System Documentation Improvements
+
+**S | D-18 | Add inline documentation to agent.liquid template**
+
+From agent architecture research:
+1. Add comments in `agent.liquid` explaining each section's variables and purpose
+2. Document which variables are required vs optional
+3. Document where each variable comes from in the source files
+4. Document cascading resolution order in agent-summoner
+
+**S | D-19 | Improve template error messages**
+When template compilation fails, show which variables are missing and suggest which source files should be created.
+
+---
+
+## D-20: Agent Tool Consistency
+
+**S | D-20 | Add Edit tool to documentor agent**
+
+The documentor agent has Write but no Edit tool, breaking the pattern where writers have Edit. This is a minor inconsistency to address later.
+
+---
+
+## D-21: Agent Naming Prefix Alignment
+
+**S | D-21 | Prefix tester and planning agents with domain**
+
+- `tester` references should be `web-tester`, `cli-tester`
+- `pm` should be `web-pm`
+- `architecture` should be `web-architecture`
+- `pattern-critique` should be `web-pattern-critique`
+
+This is for documentation alignment - the actual agents are already correctly named.
 
 ---
 

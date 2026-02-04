@@ -190,7 +190,7 @@ Test content for integration tests.
 ## Test Organization
 
 ```
-src/cli-v2/lib/__tests__/
+src/cli/lib/__tests__/
 ├── fixtures/
 │   ├── create-test-source.ts    # Helper to create temp source
 │   ├── mock-matrix.ts           # Matrix fixture data
@@ -215,9 +215,9 @@ src/cli-v2/lib/__tests__/
 
 ## Related Files
 
-- `src/cli-v2/lib/source-loader.ts` - Source loading logic
-- `src/cli-v2/lib/matrix-loader.ts` - Matrix merging
-- `src/cli-v2/lib/compiler.ts` - Agent compilation
-- `src/cli-v2/lib/config-generator.ts` - Config generation
-- `src/cli-v2/commands/init.tsx` - Init command
-- `src/cli-v2/commands/compile.ts` - Compile command
+- `src/cli/lib/source-loader.ts` - Source loading logic
+- `src/cli/lib/matrix-loader.ts` - Matrix merging
+- `src/cli/lib/compiler.ts` - Agent compilation
+- `src/cli/lib/config-generator.ts` - Config generation
+- `src/cli/commands/init.tsx` - Init command
+- `src/cli/commands/compile.ts` - Compile command

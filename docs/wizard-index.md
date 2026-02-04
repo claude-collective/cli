@@ -58,27 +58,27 @@ approach → stack (domain selection) → build → refine → confirm
 
 | File                                                     | Purpose                                                                 |
 | -------------------------------------------------------- | ----------------------------------------------------------------------- |
-| [wizard.tsx](../src/cli-v2/components/wizard/wizard.tsx) | Main orchestrator - renders steps, handles navigation, computes results |
-| [wizard-store.ts](../src/cli-v2/stores/wizard-store.ts)  | Zustand store with V2 state shape and actions                           |
+| [wizard.tsx](../src/cli/components/wizard/wizard.tsx) | Main orchestrator - renders steps, handles navigation, computes results |
+| [wizard-store.ts](../src/cli/stores/wizard-store.ts)  | Zustand store with V2 state shape and actions                           |
 
 ### Wizard Steps
 
 | File                                                                             | Step          | Purpose                                          |
 | -------------------------------------------------------------------------------- | ------------- | ------------------------------------------------ |
-| [step-approach.tsx](../src/cli-v2/components/wizard/step-approach.tsx)           | Approach      | Choose stack template or build from scratch      |
-| [step-stack.tsx](../src/cli-v2/components/wizard/step-stack.tsx)                 | Stack         | Select pre-built stack OR domains (dual-purpose) |
-| [step-stack-options.tsx](../src/cli-v2/components/wizard/step-stack-options.tsx) | Stack Options | Continue with defaults or customize (stack path) |
-| [step-build.tsx](../src/cli-v2/components/wizard/step-build.tsx)                 | Build         | Grid-based technology selection per domain       |
-| [step-refine.tsx](../src/cli-v2/components/wizard/step-refine.tsx)               | Refine        | Skill source selection (verified vs custom)      |
-| [step-confirm.tsx](../src/cli-v2/components/wizard/step-confirm.tsx)             | Confirm       | Final summary before installation                |
+| [step-approach.tsx](../src/cli/components/wizard/step-approach.tsx)           | Approach      | Choose stack template or build from scratch      |
+| [step-stack.tsx](../src/cli/components/wizard/step-stack.tsx)                 | Stack         | Select pre-built stack OR domains (dual-purpose) |
+| [step-stack-options.tsx](../src/cli/components/wizard/step-stack-options.tsx) | Stack Options | Continue with defaults or customize (stack path) |
+| [step-build.tsx](../src/cli/components/wizard/step-build.tsx)                 | Build         | Grid-based technology selection per domain       |
+| [step-refine.tsx](../src/cli/components/wizard/step-refine.tsx)               | Refine        | Skill source selection (verified vs custom)      |
+| [step-confirm.tsx](../src/cli/components/wizard/step-confirm.tsx)             | Confirm       | Final summary before installation                |
 
 ### UI Components
 
 | File                                                                         | Purpose                                    |
 | ---------------------------------------------------------------------------- | ------------------------------------------ |
-| [wizard-tabs.tsx](../src/cli-v2/components/wizard/wizard-tabs.tsx)           | Horizontal 5-step progress indicator       |
-| [category-grid.tsx](../src/cli-v2/components/wizard/category-grid.tsx)       | 2D grid selection with keyboard navigation |
-| [section-progress.tsx](../src/cli-v2/components/wizard/section-progress.tsx) | Sub-step progress for multi-domain flows   |
+| [wizard-tabs.tsx](../src/cli/components/wizard/wizard-tabs.tsx)           | Horizontal 5-step progress indicator       |
+| [category-grid.tsx](../src/cli/components/wizard/category-grid.tsx)       | 2D grid selection with keyboard navigation |
+| [section-progress.tsx](../src/cli/components/wizard/section-progress.tsx) | Sub-step progress for multi-domain flows   |
 
 ---
 
@@ -97,9 +97,9 @@ approach → stack (domain selection) → build → refine → confirm
 
 | File                                                    | Key Types                                                                    |
 | ------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| [types-matrix.ts](../src/cli-v2/types-matrix.ts)        | `MergedSkillsMatrix`, `CategoryDefinition`, `ResolvedSkill`, `ResolvedStack` |
-| [types-stacks.ts](../src/cli-v2/types-stacks.ts)        | `Stack`, `StacksConfig`, `StackAgentConfig`                                  |
-| [wizard-store.ts](../src/cli-v2/stores/wizard-store.ts) | `WizardStep`, `WizardState`                                                  |
+| [types-matrix.ts](../src/cli/types-matrix.ts)        | `MergedSkillsMatrix`, `CategoryDefinition`, `ResolvedSkill`, `ResolvedStack` |
+| [types-stacks.ts](../src/cli/types-stacks.ts)        | `Stack`, `StacksConfig`, `StackAgentConfig`                                  |
+| [wizard-store.ts](../src/cli/stores/wizard-store.ts) | `WizardStep`, `WizardState`                                                  |
 
 ---
 
@@ -150,13 +150,13 @@ Options in CategoryGrid display with visual indicators:
 
 | File                                                                                              | Coverage                           |
 | ------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| [wizard-store.test.ts](../src/cli-v2/stores/wizard-store.test.ts)                                 | Store actions and computed getters |
-| [wizard.integration.test.tsx](../src/cli-v2/lib/__tests__/components/wizard.integration.test.tsx) | End-to-end wizard flows            |
-| [category-grid.test.tsx](../src/cli-v2/components/wizard/category-grid.test.tsx)                  | Grid navigation and selection      |
-| [wizard-tabs.test.tsx](../src/cli-v2/lib/__tests__/components/wizard-tabs.test.tsx)               | Progress indicator states          |
-| [step-build.test.tsx](../src/cli-v2/components/wizard/step-build.test.tsx)                        | Build step with domain filtering   |
-| [step-refine.test.tsx](../src/cli-v2/components/wizard/step-refine.test.tsx)                      | Refine step options                |
-| [step-confirm.test.tsx](../src/cli-v2/lib/__tests__/components/step-confirm.test.tsx)             | Confirm step display               |
+| [wizard-store.test.ts](../src/cli/stores/wizard-store.test.ts)                                 | Store actions and computed getters |
+| [wizard.integration.test.tsx](../src/cli/lib/__tests__/components/wizard.integration.test.tsx) | End-to-end wizard flows            |
+| [category-grid.test.tsx](../src/cli/components/wizard/category-grid.test.tsx)                  | Grid navigation and selection      |
+| [wizard-tabs.test.tsx](../src/cli/lib/__tests__/components/wizard-tabs.test.tsx)               | Progress indicator states          |
+| [step-build.test.tsx](../src/cli/components/wizard/step-build.test.tsx)                        | Build step with domain filtering   |
+| [step-refine.test.tsx](../src/cli/components/wizard/step-refine.test.tsx)                      | Refine step options                |
+| [step-confirm.test.tsx](../src/cli/lib/__tests__/components/step-confirm.test.tsx)             | Confirm step display               |
 
 ---
 
@@ -164,9 +164,9 @@ Options in CategoryGrid display with visual indicators:
 
 | File                                                       | Purpose                                                                |
 | ---------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [matrix-resolver.ts](../src/cli-v2/lib/matrix-resolver.ts) | `getAvailableSkills()`, `validateSelection()` - computes option states |
-| [stacks-loader.ts](../src/cli-v2/lib/stacks-loader.ts)     | `loadStackById()`, `resolveStackSkillsFromAliases()`                   |
-| [resolver.ts](../src/cli-v2/lib/resolver.ts)               | `resolveAgentSkillsFromStack()`, `getAgentSkills()`                    |
+| [matrix-resolver.ts](../src/cli/lib/matrix-resolver.ts) | `getAvailableSkills()`, `validateSelection()` - computes option states |
+| [stacks-loader.ts](../src/cli/lib/stacks-loader.ts)     | `loadStackById()`, `resolveStackSkillsFromAliases()`                   |
+| [resolver.ts](../src/cli/lib/resolver.ts)               | `resolveAgentSkillsFromStack()`, `getAgentSkills()`                    |
 
 ---
 

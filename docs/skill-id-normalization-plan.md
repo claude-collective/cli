@@ -24,25 +24,25 @@ Normalize skill IDs from path-based format with author to simple kebab-case form
 
 | File                                   | Change Required                                                           |
 | -------------------------------------- | ------------------------------------------------------------------------- |
-| `src/cli-v2/lib/matrix-loader.ts`      | Add normalization to `extractAllSkills()` at line 134                     |
-| `src/cli-v2/lib/local-skill-loader.ts` | Add normalization to `extractLocalSkill()` at line 94                     |
+| `src/cli/lib/matrix-loader.ts`      | Add normalization to `extractAllSkills()` at line 134                     |
+| `src/cli/lib/local-skill-loader.ts` | Add normalization to `extractLocalSkill()` at line 94                     |
 | `config/skills-matrix.yaml`            | Update all `skill_aliases` values (~150 entries)                          |
-| `src/cli-v2/consts.ts`                 | Update `DEFAULT_PRESELECTED_SKILLS` array (6 entries)                     |
-| `src/cli-v2/lib/skill-copier.ts`       | Simplify `getFlattenedSkillDestPath()`, remove `extractSkillNameFromId()` |
+| `src/cli/consts.ts`                 | Update `DEFAULT_PRESELECTED_SKILLS` array (6 entries)                     |
+| `src/cli/lib/skill-copier.ts`       | Simplify `getFlattenedSkillDestPath()`, remove `extractSkillNameFromId()` |
 
 ### High Priority
 
 | File                                         | Change Required                                                       |
 | -------------------------------------------- | --------------------------------------------------------------------- |
-| NEW: `src/cli-v2/lib/skill-id-normalizer.ts` | Create normalization utility function                                 |
-| `src/cli-v2/types-matrix.ts`                 | Update JSDoc comments for ID format                                   |
+| NEW: `src/cli/lib/skill-id-normalizer.ts` | Create normalization utility function                                 |
+| `src/cli/types-matrix.ts`                 | Update JSDoc comments for ID format                                   |
 | Skill directories                            | Rename from `web/framework/react (@vince)/` to `web-framework-react/` |
 
 ### Test Files (50+ references)
 
-- `src/cli-v2/lib/project-config.test.ts`
-- `src/cli-v2/lib/stack-plugin-compiler.test.ts`
-- `src/cli-v2/lib/__tests__/fixtures/create-test-source.ts`
+- `src/cli/lib/project-config.test.ts`
+- `src/cli/lib/stack-plugin-compiler.test.ts`
+- `src/cli/lib/__tests__/fixtures/create-test-source.ts`
 - Multiple other test files with hardcoded skill IDs
 
 ---
@@ -51,7 +51,7 @@ Normalize skill IDs from path-based format with author to simple kebab-case form
 
 ### Step 1: Create Normalization Utility
 
-Create `src/cli-v2/lib/skill-id-normalizer.ts`:
+Create `src/cli/lib/skill-id-normalizer.ts`:
 
 ```typescript
 /**
@@ -110,7 +110,7 @@ skill_aliases:
   zustand: "web-state-zustand"
 ```
 
-**src/cli-v2/consts.ts** - Update DEFAULT_PRESELECTED_SKILLS:
+**src/cli/consts.ts** - Update DEFAULT_PRESELECTED_SKILLS:
 
 ```typescript
 // Before
