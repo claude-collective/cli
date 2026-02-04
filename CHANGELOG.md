@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2026-02-04
+
+### Added
+
+- **Agent Compliance Bible** - 30-test compliance suite in `docs/bibles/AGENT-COMPLIANCE-BIBLE.md` for verifying agent alignment with PROMPT_BIBLE and architecture standards
+- **Claude Code Research** - Documentation of 176 Claude Code updates (Oct 2025 - Jan 2026) covering subagents, hooks, plugins, and async execution patterns
+- **cli-tester examples** - Example test output for CLI component testing
+
+### Changed
+
+- **Agent partials improved** - Major conciseness pass on 15+ examples.md files, removed ~800 lines of filler, N/A sections, and verbose examples
+- **Workflow quality** - Standardized workflows across all agents, removed time estimates, improved clarity
+- **Bible index updated** - Fixed paths from `src/docs/` to `docs/bibles/`, corrected agent naming conventions
+
+[0.12.0]: https://github.com/claude-collective/cli/releases/tag/v0.12.0
+
 ## [0.11.0] - 2026-02-04
 
 ### Breaking Changes
