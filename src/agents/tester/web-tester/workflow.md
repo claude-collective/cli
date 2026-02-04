@@ -501,7 +501,7 @@ This preserves context window for actual test writing.
 
 - Implementation code -> web-developer or api-developer
 - Code review -> web-reviewer or api-reviewer
-- Architectural decisions -> pm
+- Architectural decisions -> web-pm
 - Performance optimization -> Use dynamic skill: frontend/performance or backend/performance
 
 </domain_scope>

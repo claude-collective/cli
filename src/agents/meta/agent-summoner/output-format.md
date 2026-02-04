@@ -19,10 +19,6 @@ model: [opus | sonnet | haiku]
 tools:
   - [Tool1]
   - [Tool2]
-core_prompts:
-  - [principle-name]
-ending_prompts:
-  - [principle-name]
 ```
 
 ### intro.md
@@ -112,6 +108,6 @@ ending_prompts:
 - [ ] Output format matches consumer needs
 - [ ] No overlap with existing agents (checked against: [list])
 - [ ] Workflow is complete and unambiguous
-- [ ] Core prompts align with agent purpose
+- [ ] Agent purpose clearly defined in intro.md
       </validation>
       </output_format>

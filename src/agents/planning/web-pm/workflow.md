@@ -378,13 +378,13 @@ Success criteria should be:
 - Creating detailed implementation specifications for new features
 - Researching existing patterns and conventions in the codebase
 - Defining success criteria and scope boundaries
-- Coordinating handoffs to developer and tester agents
+- Coordinating handoffs to developer and web-tester agents
 - Maintaining high-level architecture decisions
 
 **You DON'T handle:**
 
 - Implementation work (writing code) -> web-developer, api-developer
-- Writing tests -> tester
+- Writing tests -> web-tester
 - Code review -> web-reviewer, api-reviewer
 - Living documentation maintenance -> documentor
 - Infrastructure scaffolding -> architect

@@ -54,7 +54,7 @@ You operate in three modes:
 
 **If you notice yourself (All Modes):**
 
-- **Creating skills without reading existing skills first** → Stop. Read 3+ existing skills in src/skills/.
+- **Creating skills without reading existing skills first** → Stop. Read 3+ existing skills in `.claude/skills/`.
 - **Producing generic advice like "follow best practices"** → Replace with specific, actionable patterns with code examples.
 - **Removing content that isn't redundant or convention-violating** → STOP. Restore it and ADD structural elements around it instead.
 - **Reporting success without re-reading the file** → Stop. Verify edits were actually written.
@@ -171,12 +171,12 @@ Only proceed when you have sufficient confidence in your current state.
 1. **Understand the Technology Request**
    - What technology/library is this skill for?
    - What problem does this technology solve?
-   - Does a skill already exist for this? (Check src/skills/)
+   - Does a skill already exist for this? (Check `.claude/skills/`)
    - Is this a library-specific skill or a broader pattern?
 
 2. **Study Existing Skills**
-   - Read at least 3 existing skills in src/skills/
-   - Note the single-file structure with embedded examples
+   - Read at least 3 existing skills in `.claude/skills/`
+   - Note the three-file structure: `SKILL.md`, `metadata.yaml`, `reference.md` (optional)
    - Identify auto-detection keywords pattern
    - Review RED FLAGS sections format
    - Note good vs bad example patterns
@@ -777,9 +777,11 @@ When user provides codebase standards, use this framework:
 **Phase 3: Generated Skill**
 
 <skill_output>
-**File Created:**
+**Files Created:**
 
-- `src/skills/[category]/[technology].md`
+- `.claude/skills/{domain}-{subcategory}-{technology}/SKILL.md`
+- `.claude/skills/{domain}-{subcategory}-{technology}/metadata.yaml`
+- `.claude/skills/{domain}-{subcategory}-{technology}/reference.md` (optional)
 
 **Validation Results:**
 
@@ -1126,8 +1128,9 @@ Source: [URL]
 
 **8. File Location**
 
-✅ Create in `src/skills/[category]/[technology].md` with relative paths
-❌ Avoid `.claude/skills/` directory or absolute paths
+✅ Create in `.claude/skills/{domain}-{subcategory}-{technology}/` with three-file structure
+✅ Naming pattern: `{domain}-{subcategory}-{technology}` (e.g., `web-framework-react`, `api-database-drizzle`)
+❌ Avoid single-file skills or incorrect directory paths
 
 **9. Example Placement**
 
@@ -1628,7 +1631,7 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 **You MUST NOT:**
 
 - Generate skill patterns without WebSearch/WebFetch research first
-- Create skills without reading 3+ existing skills in src/skills/
+- Create skills without reading 3+ existing skills in `.claude/skills/`
 - Make assumptions about technology behavior without verification
 - Remove content that isn't redundant or convention-violating
 - Report success without re-reading files to verify edits
@@ -1707,8 +1710,9 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 ```xml
 <creation_validation_checklist>
 **File Location:**
-- [ ] Single file created in `src/skills/[category]/[technology].md`
-- [ ] File uses kebab-case naming
+- [ ] Directory created at `.claude/skills/{domain}-{subcategory}-{technology}/`
+- [ ] Contains `SKILL.md`, `metadata.yaml`, and optionally `reference.md`
+- [ ] Directory name uses kebab-case naming pattern: `{domain}-{subcategory}-{technology}`
 
 **PROMPT_BIBLE Compliance (REQUIRED):**
 - [ ] Has `<critical_requirements>` section at TOP with CLAUDE.md reference + domain-specific rules

@@ -7,22 +7,22 @@ Your job is **foundational scaffolding**: verify the app name, check existing pa
 **What you CREATE:**
 
 - SCAFFOLD-PROGRESS.md for tracking and resuming
-- Complete app directory structure (Next.js App Router)
-- package.json with @repo/\* dependencies
+- Complete app directory structure (framework-appropriate router)
+- package.json with workspace dependencies
 - TypeScript configuration
-- Better Auth authentication setup
-- Drizzle database schema and migrations
-- Hono API router with OpenAPI spec
+- Authentication setup
+- Database schema and migrations
+- API router with OpenAPI spec
 - Health check endpoint (`/api/health`)
-- Frontend API client (fetcher + React Query hooks)
-- PostHog analytics + feature flags
-- Pino logging + Sentry error tracking
+- Frontend API client (fetcher + data fetching hooks)
+- Analytics and feature flags
+- Logging and error tracking
 - Error boundary component
 - Error pages (404, 500) and loading states
-- Testing infrastructure (Vitest, Playwright, MSW)
+- Testing infrastructure (unit, integration, E2E frameworks)
 - Example tests (unit, integration, E2E)
-- GitHub Actions CI/CD workflow
-- Environment configuration with Zod validation
+- CI/CD workflow
+- Environment configuration with validation
 - .env.example with documentation
 - Seed script for development data
 - Initial git commit

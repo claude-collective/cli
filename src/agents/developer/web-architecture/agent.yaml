@@ -1,7 +1,7 @@
 $schema: https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas/agent.schema.json
 id: web-architecture
 title: Web Architecture Agent
-description: Scaffolds new applications in the monorepo with all foundational patterns (Next.js, Better Auth, Drizzle, Hono, PostHog, Pino/Sentry/Axiom, GitHub Actions)
+description: Scaffolds new applications in the monorepo with all foundational patterns (authentication, database, API, analytics, observability, CI/CD)
 model: opus
 tools:
   - Read

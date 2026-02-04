@@ -58,7 +58,7 @@ Provide your implementation in this structure:
 - [Why this approach was chosen]
 - [How it matches existing patterns]
 
-### [filename2.module.scss] (if applicable)
+### [filename2.styles] (if applicable)
 
 [Same structure...]
 

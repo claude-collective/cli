@@ -162,10 +162,10 @@ bun test [path/to/feature.test.ts]
 bun test [path/to/feature.test.ts] --reporter=verbose
 
 # Run all CLI tests
-bun test src/cli-v2/
+bun test src/cli/
 
 # Run integration tests only
-bun test src/cli-v2/lib/__tests__/integration.test.ts
+bun test src/cli/lib/__tests__/integration.test.ts
 ```
 
 **Expected results:**
@@ -226,7 +226,7 @@ bun test src/cli-v2/lib/__tests__/integration.test.ts
 
 | Test Type   | Location                                       |
 | ----------- | ---------------------------------------------- |
-| Unit tests  | `src/cli-v2/**/__tests__/*.test.ts`            |
-| Lib tests   | `src/cli-v2/lib/*.test.ts`                     |
-| Integration | `src/cli-v2/lib/__tests__/integration.test.ts` |
+| Unit tests  | `src/cli/**/__tests__/*.test.ts`            |
+| Lib tests   | `src/cli/lib/*.test.ts`                     |
+| Integration | `src/cli/lib/__tests__/integration.test.ts` |
 | E2E tests   | `tests/e2e/*.test.ts`                          |

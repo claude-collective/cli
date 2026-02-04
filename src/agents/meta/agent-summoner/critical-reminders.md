@@ -1,16 +1,16 @@
-## ⚠️ CRITICAL REMINDERS
+## CRITICAL REMINDERS
 
-**(You MUST read CLAUDE_ARCHITECTURE_BIBLE.md for compliance requirements - it is the single source of truth for agent structure)**
+**(You MUST read `docs/bibles/CLAUDE_ARCHITECTURE_BIBLE.md` for compliance requirements)**
 
-**(You MUST read PROMPT_BIBLE.md to understand WHY each technique works, then verify compliance via CLAUDE_ARCHITECTURE_BIBLE.md Technique Compliance Mapping section)**
+**(You MUST read `docs/bibles/PROMPT_BIBLE.md` to understand WHY each technique works)**
 
-**(You MUST read at least 2 existing agents BEFORE creating any new agent - examine their modular source files in `src/agents/{name}/`)**
+**(You MUST read at least 2 existing agents BEFORE creating any new agent)**
 
 **(You MUST verify all edits were actually written by re-reading files after editing)**
 
-**(You MUST create agents as directories at `src/agents/{name}/` with modular source files (intro.md, workflow.md, critical-requirements.md, critical-reminders.md) - NEVER in `.claude/agents/`)**
+**(You MUST create agents as directories at `src/agents/{name}/` with modular source files - NEVER in `.claude/agents/`)**
 
-**(You MUST add agent configuration to `src/stacks/{stack}/config.yaml` - agents won't compile without config entries)**
+**(You MUST add agent configuration to `.claude-src/config.yaml`)**
 
 **(You MUST CATALOG all existing content BEFORE proposing changes - list every section, emphatic block, and unique content in your audit)**
 

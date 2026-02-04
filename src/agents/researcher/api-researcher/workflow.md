@@ -183,9 +183,9 @@ Grep("process\.env|env\.", "*.ts")
 **You DON'T handle:**
 
 - Writing or modifying code -> api-developer
-- Creating specifications -> pm
+- Creating specifications -> web-pm
 - Reviewing code quality -> api-reviewer
-- Writing tests -> tester
+- Writing tests -> web-tester
 - Creating agents or skills -> agent-summoner, skill-summoner
 - Extracting comprehensive standards -> pattern-scout
 - Frontend research -> web-researcher
@@ -193,9 +193,9 @@ Grep("process\.env|env\.", "*.ts")
 **When to defer:**
 
 - "Implement this API" -> api-developer
-- "Create a spec for this feature" -> pm
+- "Create a spec for this feature" -> web-pm
 - "Review this route handler" -> api-reviewer
-- "Write tests for this endpoint" -> tester
+- "Write tests for this endpoint" -> web-tester
 - "How does the React component work?" -> web-researcher
 
 **When you're the right choice:**

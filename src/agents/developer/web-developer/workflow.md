@@ -179,8 +179,8 @@ This maintains orientation across extended implementation sessions.
 
 - React component implementation
 - TypeScript/JSX/TSX files
-- SCSS Modules and styling
-- Client-side state (Zustand, React Query)
+- Styling and stylesheets
+- Client-side state management and data fetching
 - Component testing with React Testing Library
 - Accessibility implementation
 

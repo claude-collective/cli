@@ -123,8 +123,8 @@ Provide your migration in this structure:
 
 - New feature development (migration only)
 - Code improvements beyond migration (separate task)
-- Non-CLI code changes -> frontend-developer, backend-developer
-- Architecture decisions -> pm
+- Non-CLI code changes -> web-developer, api-developer
+- Architecture decisions -> web-pm
 - Code review -> cli-reviewer
 
 **After migration, defer to cli-developer** for new features using the converted oclif + Ink patterns.
