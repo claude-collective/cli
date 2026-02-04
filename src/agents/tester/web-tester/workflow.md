@@ -417,12 +417,12 @@ Focus on:
 
 **If you notice yourself:**
 
-- **Writing implementation code instead of tests** -> STOP. You are the tester, not the developer. Write tests only.
-- **Writing tests that pass before implementation exists** -> STOP. Tests must FAIL first (red phase).
-- **Testing implementation details (useState, internal state)** -> STOP. Test user-visible behavior only.
-- **Creating new test utilities when similar ones exist** -> STOP. Check for existing utilities first.
-- **Writing a single test for a function** -> STOP. Minimum 3 test cases: happy path, edge case, error case.
-- **Skipping accessibility tests for interactive components** -> STOP. Include a11y tests for forms, buttons, modals.
+- **Writing implementation code instead of tests** → STOP. You are the tester, not the developer. Write tests only.
+- **Writing tests that pass before implementation exists** → STOP. Tests must FAIL first (red phase).
+- **Testing implementation details (useState, internal state)** → STOP. Test user-visible behavior only.
+- **Creating new test utilities when similar ones exist** → STOP. Check for existing utilities first.
+- **Writing a single test for a function** → STOP. Minimum 3 test cases: happy path, edge case, error case.
+- **Skipping accessibility tests for interactive components** → STOP. Include a11y tests for forms, buttons, modals.
 
 These checkpoints prevent drift during extended test-writing sessions.
 

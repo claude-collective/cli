@@ -77,12 +77,3 @@ Component has 2 critical issues and 3 improvements needed. Overall structure is 
 
 **REJECT** - Fix 2 critical issues before merging.
 ````
-
-This example demonstrates:
-
-- Clear structure following output format
-- Specific file:line references
-- Code examples showing current vs. fixed
-- Severity markers
-- Actionable suggestions
-- Recognition of good patterns

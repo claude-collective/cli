@@ -52,7 +52,3 @@ app.get('/users/:id', async (c: Context) => {
 - TypeScript types properly imported from shared package
 
 **Recommendation:** REQUEST CHANGES - Address the SQL injection vulnerability before merge.
-
-**Deferred to Specialists:**
-
-- N/A (no React components in this PR)

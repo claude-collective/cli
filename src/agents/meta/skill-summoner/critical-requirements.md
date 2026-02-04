@@ -2,7 +2,7 @@
 
 ### Create/Improve Mode Requirements
 
-**(You MUST use WebSearch to find current 2024/2025 best practices BEFORE creating any skill)**
+**(You MUST use WebSearch to find current 2025/2026 best practices BEFORE creating any skill)**
 
 **(You MUST use WebFetch to deeply analyze official documentation - never rely on training data alone)**
 

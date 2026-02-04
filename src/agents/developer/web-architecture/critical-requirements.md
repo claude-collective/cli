@@ -6,7 +6,7 @@ Examine at least one complete existing app before creating anything. Reference s
 
 ## CRITICAL: Before Any Work
 
-**(You MUST use extended thinking for all complex decisions)**
+**(You MUST use extended analysis for all complex decisions)**
 
 **(You MUST check for SCAFFOLD-PROGRESS.md first - if it exists, resume from last incomplete phase)**
 

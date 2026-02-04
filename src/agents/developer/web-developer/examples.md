@@ -1,90 +1,110 @@
 ## Example Implementation Output
 
-Here's what a complete, high-quality developer output looks like:
+Here's what a complete, high-quality frontend developer output looks like:
 
 ```markdown
-# Implementation: Add Dark Mode Toggle
+# Implementation: Add Dark Mode Toggle to Settings Panel
 
 ## Investigation Notes
 
 **Files Read:**
 
-- src/components/SettingsPanel.tsx:67 - Existing settings structure
-- src/styles/theme.scss:12 - Theme token definitions
-- src/stores/ThemeStore.ts:45 - Current theme management
+- src/components/SettingsPanel.tsx:67-134 - Settings use controlled inputs with Zustand store
+- src/styles/theme.scss:12-45 - Theme tokens use CSS custom properties with cascade layers
+- src/stores/ThemeStore.ts:1-89 - Store uses persist middleware for localStorage
 
-**Pattern Found:**
-Settings use controlled inputs with Zustand store pattern (SettingsPanel.tsx:89-134)
+**Patterns Found:**
+
+- Settings items use Switch component with label prop (SettingsPanel.tsx:112)
+- Zustand with persist middleware, actions defined inline (ThemeStore.ts:45-67)
+- CSS custom properties scoped to `[data-theme]` selector (theme.scss:12)
+
+**Existing Code Reused:**
+
+- Switch component from `@repo/ui/switch` - handles accessibility and styling
+- useThemeStore hook - consistent with other settings
 
 ## Implementation Plan
 
-1. Add `darkMode` boolean to ThemeStore
-2. Create DarkModeToggle component following SettingsPanel pattern
-3. Apply theme class to document root
-4. Update theme.scss with dark mode variables
+1. Add darkMode state and toggleDarkMode action to ThemeStore.ts
+2. Create DarkModeToggle component following Switch pattern
+3. Add toggle to SettingsPanel
+4. Add dark mode color tokens to theme.scss
+5. Apply data-theme attribute in App.tsx
 
 ## Changes Made
 
-### 1. Updated ThemeStore (src/stores/ThemeStore.ts)
+### 1. ThemeStore.ts (+12 lines)
 
-- Added `darkMode: boolean` state
-- Added `toggleDarkMode()` action
-- Persists to localStorage
+Added to existing store:
 
-### 2. Created DarkModeToggle Component (src/components/DarkModeToggle.tsx)
-
-- Follows existing toggle pattern from SettingsPanel.tsx:112
-- Uses design system Switch component
-- TypeScript interface matches project conventions
-
-### 3. Updated Theme Styles (src/styles/theme.scss)
-
-- Added `[data-theme="dark"]` selector
-- Dark mode color tokens defined
-- Maintains existing cascade layer structure
-
-### 4. Applied Theme to Root (src/App.tsx)
-
-- Added `data-theme` attribute based on store state
-- Effect updates on theme change
-
-## Verification Checklist
-
-✅ **Success Criteria Met:**
-
-- [x] Toggle appears in settings panel (verified visually)
-- [x] Clicking toggle changes theme (tested manually)
-- [x] Theme persists across page reload (tested in browser)
-- [x] All colors update correctly (verified in DevTools)
-
-✅ **Code Quality:**
-
-- [x] TypeScript types defined for all new code
-- [x] Follows existing patterns (Switch component, Zustand store)
-- [x] Uses design system tokens (no hard-coded colors)
-- [x] Styling follows project conventions
-
-✅ **Testing:**
-
-- [x] No existing tests broken (ran `npm test`)
-- [x] Build succeeds (ran `npm run build`)
-
-## Files Modified
-
-- src/stores/ThemeStore.ts (+12 lines)
-- src/components/DarkModeToggle.tsx (+34 lines, new file)
-- src/components/SettingsPanel.tsx (+3 lines)
-- src/styles/theme.scss (+28 lines)
-- src/App.tsx (+8 lines)
-
-**Total:** 5 files changed, 85 insertions(+)
+```tsx
+darkMode: false,
+toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
 ```
 
-This example demonstrates:
+### 2. dark-mode-toggle.tsx (new file, 18 lines)
 
-- Investigation notes with specific file:line references
-- Clear implementation plan
-- Changes organized by file
-- Complete verification checklist with evidence
-- No over-engineering (followed existing patterns)
-- Concrete file modification summary
+```tsx
+import { Switch } from "@repo/ui/switch";
+import { useThemeStore } from "../stores/ThemeStore";
+
+export function DarkModeToggle({ className }: { className?: string }) {
+  const { darkMode, toggleDarkMode } = useThemeStore();
+  return (
+    <Switch
+      label="Dark mode"
+      checked={darkMode}
+      onChange={toggleDarkMode}
+      className={className}
+    />
+  );
+}
+```
+
+### 3. theme.scss (+8 lines)
+
+```scss
+[data-theme="dark"] {
+  --color-background: var(--gray-900);
+  --color-surface: var(--gray-800);
+  --color-text-primary: var(--gray-50);
+  --color-border: var(--gray-700);
+}
+```
+
+### 4. SettingsPanel.tsx (+2 lines)
+
+- Imported DarkModeToggle
+- Added `<DarkModeToggle />` to settings list
+
+### 5. App.tsx (+3 lines)
+
+- Applied `data-theme={darkMode ? "dark" : "light"}` to root
+
+## Verification
+
+**Success Criteria:**
+
+- [x] Toggle appears in settings panel (visually verified)
+- [x] Clicking toggle changes theme (tested)
+- [x] Theme persists across reload (localStorage verified)
+
+**Quality Checks:**
+
+- [x] Keyboard accessible (Switch handles this)
+- [x] No new dependencies
+- [x] Follows existing patterns
+
+**Build Status:**
+
+- [x] `bun test` passes
+- [x] `bun build` succeeds
+- [x] No type/lint errors
+
+## Summary
+
+**Files:** 5 changed (+43 lines)
+**Scope:** Added only toggle + persistence. Did NOT add system preference detection or transition animations (not in spec).
+**For Reviewer:** Verify theme.scss color choices match design system.
+```

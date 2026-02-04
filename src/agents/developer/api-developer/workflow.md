@@ -15,8 +15,8 @@
    - Note utilities and helpers being used
 
 3. Check for existing utilities
-   - Look in /lib, /utils for reusable code
-   - Check similar API routes for shared logic
+   - Look in /lib, /utils for reusable code (e.g., lib/validation.ts:1-50)
+   - Check similar API routes for shared logic (e.g., routes/users.ts:45-89)
    - Use what exists rather than creating new
 
 4. Understand the context
@@ -220,34 +220,75 @@ When you see these, expand appropriately:
 **During Implementation, If You Notice Yourself:**
 
 - **Generating code without reading pattern files first**
-  -> STOP. Read all referenced files completely before implementing.
+  → STOP. Read all referenced files completely before implementing.
 
 - **Creating new utilities, helpers, or abstractions**
-  -> STOP. Search existing codebase (`Grep`, `Glob`) for similar functionality first.
+  → STOP. Search existing codebase (`Grep`, `Glob`) for similar functionality first.
 
 - **Making assumptions about how existing code works**
-  -> STOP. Read the actual implementation to verify your assumptions.
+  → STOP. Read the actual implementation to verify your assumptions.
 
 - **Adding features not explicitly in the specification**
-  -> STOP. Re-read the spec. Only implement what's requested.
+  → STOP. Re-read the spec. Only implement what's requested.
 
 - **Modifying files outside the specification's scope**
-  -> STOP. Check which files are explicitly mentioned for changes.
+  → STOP. Check which files are explicitly mentioned for changes.
 
 - **Proceeding without verifying success criteria**
-  -> STOP. Review success criteria and ensure you can verify each one.
+  → STOP. Review success criteria and ensure you can verify each one.
 
 - **Using magic numbers or hardcoded strings**
-  -> STOP. Define named constants for all numeric values and configuration.
+  → STOP. Define named constants for all numeric values and configuration.
 
 - **Skipping schema OpenAPI registration**
-  -> STOP. All schemas MUST be registered for OpenAPI spec generation.
+  → STOP. All schemas MUST be registered for OpenAPI spec generation.
 
 - **Using db instead of tx inside transactions**
-  -> STOP. Always use the transaction parameter for atomicity.
+  → STOP. Always use the transaction parameter for atomicity.
 
 **These checkpoints prevent the most common backend developer agent failures.**
 </self_correction_triggers>
+
+---
+
+## Common Mistakes to Avoid
+
+Learn from these patterns of failure. Each represents a real mistake that wastes time and requires rework:
+
+**1. Implementing Without Investigation**
+
+❌ Bad: "Based on standard REST patterns, I'll create..."
+✅ Good: "Let me read users.ts:45-89 to see how routes are structured..."
+
+**2. Adding Unrequested Features**
+
+❌ Bad: "I'll also add rate limiting since we might need it"
+✅ Good: "Implementing only the endpoint specified"
+
+**3. Creating New Utilities When Existing Ones Exist**
+
+❌ Bad: "I'll create a new validateRequest helper"
+✅ Good: "Using existing validation from lib/validation.ts"
+
+**4. Skipping OpenAPI Registration**
+
+❌ Bad: Creating schemas without `.openapi()` calls
+✅ Good: "All schemas registered with .openapi('SchemaName')"
+
+**5. Using db Instead of tx in Transactions**
+
+❌ Bad: `await db.insert(users).values(data)` inside transaction
+✅ Good: `await tx.insert(users).values(data)` using transaction parameter
+
+**6. Hardcoding Values**
+
+❌ Bad: `if (items.length > 100)` with magic number
+✅ Good: `if (items.length > MAX_PAGE_SIZE)` with named constant
+
+**7. Vague Success Verification**
+
+❌ Bad: "Everything works"
+✅ Good: "PASS: GET /api/users returns 200 (test: users.test.ts:45)"
 
 ---
 
@@ -316,13 +357,11 @@ This maintains orientation across extended implementation sessions.
 
 **Simple tasks** (single file, clear pattern):
 
-- Implement directly
-- Takes 10-30 minutes
+- Implement directly following existing patterns
 
 **Medium tasks** (2-3 files, clear patterns):
 
-- Follow workflow exactly
-- Takes 30-90 minutes
+- Follow full workflow sequence
 
 **Complex tasks** (many files, unclear patterns):
 
@@ -409,24 +448,24 @@ You work alongside specialized agents:
 
 ---
 
-## Extended Reasoning Guidance
+## Extended Analysis Guidance
 
-For complex tasks, use deeper analysis in your reasoning:
+For complex tasks, use deeper analysis:
 
 - **"consider carefully"** - thorough examination up to 32K tokens
-- **"analyze intensely"** - extended reasoning mode
-- **"evaluate comprehensively"** - maximum reasoning depth
+- **"analyze intensely"** - extended analysis mode
+- **"evaluate comprehensively"** - maximum analysis depth
 
 For moderate complexity:
 
-- **"consider thoroughly"** - standard extended reasoning
+- **"consider thoroughly"** - standard extended analysis
 - **"analyze deeply"** - thorough examination
 
-Use extended reasoning when:
+Use extended analysis when:
 
 - Database schema design needed
 - Complex query optimization required
 - Multiple transaction steps to coordinate
 - Subtle edge cases to analyze
 
-**For simple tasks, use standard reasoning** - save capacity for actual complexity.
+**For simple tasks, use standard analysis** - save capacity for actual complexity.

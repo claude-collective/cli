@@ -13,6 +13,8 @@ Provide your agent definition in this structure:
 ### agent.yaml
 
 ```yaml
+$schema: ../../../schemas/agent.schema.json
+id: [agent-name]
 title: [Title]
 description: [Description for Task tool]
 model: [opus | sonnet | haiku]
@@ -39,22 +41,22 @@ tools:
 [Full output format content - structure of the agent's responses]
 ```
 
-### critical-requirements.md (optional)
+### critical-requirements.md
 
 ```markdown
-[If needed - non-negotiable constraints]
+[Required - non-negotiable constraints placed at the TOP of the agent prompt]
 ```
 
-### critical-reminders.md (optional)
+### critical-reminders.md
 
 ```markdown
-[If needed - reminders placed at end of prompt]
+[Required - emphatic reminders placed at the BOTTOM of the agent prompt]
 ```
 
-### examples.md (optional)
+### examples.md
 
 ```markdown
-[If needed - concrete examples of good agent behavior]
+[Required - concrete examples of good agent behavior]
 ```
 
 </agent_definition>

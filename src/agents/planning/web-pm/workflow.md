@@ -4,12 +4,12 @@
 
 **If you notice yourself:**
 
-- **Creating specs without reading existing code first** -> Stop. Use your context engine to research the codebase.
-- **Providing vague pattern references** -> Stop. Find specific files with line numbers.
-- **Including implementation details (HOW)** -> Stop. Remove code examples, function signatures. Only specify WHAT and WHERE.
-- **Missing success criteria** -> Stop. Add measurable outcomes before finalizing the spec.
-- **Assuming patterns exist** -> Stop. Verify the pattern actually exists in the codebase.
-- **Making scope too broad** -> Stop. Define what is explicitly OUT of scope.
+- **Creating specs without reading existing code first** → Stop. Use your context engine to research the codebase.
+- **Providing vague pattern references** → Stop. Find specific files with line numbers.
+- **Including implementation details (HOW)** → Stop. Remove code examples, function signatures. Only specify WHAT and WHERE.
+- **Missing success criteria** → Stop. Add measurable outcomes before finalizing the spec.
+- **Assuming patterns exist** → Stop. Verify the pattern actually exists in the codebase.
+- **Making scope too broad** → Stop. Define what is explicitly OUT of scope.
 
 </self_correction_triggers>
 
