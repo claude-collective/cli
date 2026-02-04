@@ -396,3 +396,61 @@ project/
 **Tests added:** Unit tests for `resolveAgentSkillsFromStack`, `getAgentSkills`, and `resolveAgents` in `resolver.test.ts`
 
 **All 1186 tests pass.**
+
+---
+
+## Agent Architecture Alignment & Documentation Updates (COMPLETE)
+
+Completed as part of post-research alignment work.
+
+**Summary:**
+
+- 6 tasks completed (T3, T4, T6, T7, T8, T9)
+- Created AGENT-COMPLIANCE-BIBLE.md with 30 runnable tests
+- Updated 15+ examples.md files for conciseness
+- Recompiled all 18 agents
+- Added conciseness standards to agent-summoner
+
+### T3: Align Claude Subagents Documentation [DONE]
+
+- [x] Review `.claude/agents/` compiled bibles
+- [x] Bible references are CORRECT (files exist at `docs/bibles/`)
+- [x] Update `src/stacks/` references → source files now use `.claude-src/config.yaml`
+- [x] Fix skills architecture documentation - source files use `.claude/skills/{domain}-{subcategory}-{technology}/`
+- [x] Recompile agents to update `.claude/agents/` with fixed source content (`cc compile --output .claude/agents`)
+
+### T4: Update Agent-Summoner and Skill-Summoner [DONE]
+
+- [x] Fix agent-summoner to reference correct architecture (`src/agents/{category}/{agent-name}/`)
+- [x] Remove references to non-existent `src/docs/` files
+- [x] Update skill creation workflow for directory-based skills
+- [x] Align naming convention documentation with actual `{domain}-{subcategory}-{technology}` pattern
+- [x] Add conciseness standards to agent-summoner/workflow.md (60-100 lines, no N/A, no meta-commentary)
+- [x] Update examples.md to be concise (341→173 lines)
+- [x] Recompiled all 18 agents with `cc compile`
+
+### T6: Bible Path References [DONE]
+
+- [x] Fix INDEX.md bible paths (`src/docs/` → `docs/bibles/`)
+- [x] Fix agent names in INDEX.md (frontend→web, backend→api, add cli variants)
+- [x] Add migration agent category
+- [x] Mark missing plugin docs as TODO
+
+### T7: SKILL-ATOMICITY-BIBLE Updates [DONE]
+
+- [x] Add skill directory structure section
+- [x] Document examples/ folder pattern with separate files
+- [x] Add TOC guidance for SKILL.md files
+
+### T8: Convert Bibles to Skills [RESEARCH COMPLETE]
+
+Research findings: Converting Bibles to skills is **technically possible but strategically problematic**.
+
+**Recommendation:** Keep Bibles as standalone reference documents. Create complementary **narrow reference skills** for specific use cases instead.
+
+### T9: Update Skill-Summoner Documentation [DONE]
+
+- [x] Fix `src/skills/` → `.claude/skills/` path references
+- [x] Document 3-part naming pattern `{domain}-{subcategory}-{technology}`
+- [x] Document examples/ folder structure
+- [x] Add TOC guidance to skill creation workflow

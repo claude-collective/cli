@@ -1,5 +1,8 @@
 # Claude Collective CLI - Task Tracking
 
+> **Agent Compliance Tests**: Moved to [docs/bibles/AGENT-COMPLIANCE-BIBLE.md](./docs/bibles/AGENT-COMPLIANCE-BIBLE.md)
+> Run these 30 tests periodically to verify agent alignment.
+
 ## Current Focus
 
 Phase 7B complete. Ready for user testing.
@@ -71,6 +74,7 @@ You may make changes in the claude-subagents directory (`/home/vince/dev/claude-
 Based on research findings from agent-summoner-research-findings.md:
 
 #### T1: Review Agent Definitions for Alignment
+
 - [ ] Comb through all agent definitions in `src/agents/`
 - [ ] Verify YAML configs match documented schema
 - [ ] Fix outdated references (e.g., `tester-agent` → `web-tester/cli-tester`)
@@ -78,66 +82,19 @@ Based on research findings from agent-summoner-research-findings.md:
 - [ ] Update agent descriptions that reference non-existent agents
 
 #### T2: Generalize Agent Specificity
+
 - [ ] Review agents for over-specific technology references
 - [ ] Frontend agents should mention "styling" not "CSS/SCSS"
 - [ ] Backend agents should mention "database" not specific ORMs
 - [ ] Ensure agents focus on patterns, not implementations
 - [ ] Keep technology details in SKILLS, not agent prompts
 
-#### T3: Align Claude Subagents Documentation
-- [ ] Review `.claude/agents/` compiled bibles
-- [ ] Remove references to non-existent files (`CLAUDE_ARCHITECTURE_BIBLE.md`, `PROMPT_BIBLE.md`)
-- [ ] Update `src/stacks/` references (directory doesn't exist)
-- [ ] Fix skills architecture documentation (`.claude/skills/` is directories, not files)
-- [ ] Ensure compiled bibles match actual codebase structure
-
-#### T4: Update Agent-Summoner and Skill-Summoner
-- [ ] Fix agent-summoner to reference correct architecture
-- [ ] Remove references to non-existent `src/docs/` files
-- [ ] Update skill creation workflow for directory-based skills
-- [ ] Align naming convention documentation with actual `{domain}-{subcategory}-{technology}` pattern
-- [ ] Re-run agent-summoner on itself for self-improvement
-
 #### T5: Create Work-Related Agents and Skills
+
 - [ ] Identify gaps in current agent ecosystem for work use cases
 - [ ] Create specialized agents for common work patterns
 - [ ] Create skills for work-specific technologies
 - [ ] Ensure new agents follow corrected architecture patterns
-
-### Bible Documentation Updates
-
-#### T6: Bible Path References [DONE]
-- [x] Fix INDEX.md bible paths (`src/docs/` → `docs/bibles/`)
-- [x] Fix agent names in INDEX.md (frontend→web, backend→api, add cli variants)
-- [x] Add migration agent category
-- [x] Mark missing plugin docs as TODO
-
-#### T7: SKILL-ATOMICITY-BIBLE Updates [DONE]
-- [x] Add skill directory structure section
-- [x] Document examples/ folder pattern with separate files
-- [x] Add TOC guidance for SKILL.md files
-
-#### T8: Convert Bibles to Skills [RESEARCH COMPLETE]
-Research findings: Converting Bibles to skills is **technically possible but strategically problematic**.
-
-**Recommendation:** Keep Bibles as standalone reference documents. Create complementary **narrow reference skills** for specific use cases instead.
-
-**Rationale:**
-- Bibles serve as comprehensive reference docs (500-1000+ lines)
-- Skills should be atomic, focused (atomicity principle)
-- Converting would violate skill atomicity and bloat context
-- Better approach: create small "reference skills" that link to relevant bible sections
-
-**Alternative Implementation (if desired):**
-- `meta-reference-architecture` - Quick patterns from ARCHITECTURE_BIBLE
-- `meta-reference-prompts` - Essential techniques from PROMPT_BIBLE
-- Keep full Bibles as docs/ references for deep dives
-
-#### T9: Update Skill-Summoner Documentation
-- [ ] Fix `src/skills/` → `.claude/skills/` path references
-- [ ] Document 3-part naming pattern `{domain}-{subcategory}-{technology}`
-- [ ] Document examples/ folder structure (not single file)
-- [ ] Add TOC guidance to skill creation workflow
 
 ---
 

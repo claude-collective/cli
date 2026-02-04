@@ -385,6 +385,89 @@ This is for documentation alignment - the actual agents are already correctly na
 
 ---
 
+## D-22: Agent Tester - Automated Quality Assurance
+
+**M | D-22 | Create automated agent-tester for quality assurance**
+
+Based on comprehensive testing performed in the Ralph Loop session (TESTER 51+), create an automated agent-tester that validates all agents against agent-summoner standards.
+
+### Test Categories (from Ralph Loop)
+
+1. **PROMPT_BIBLE Essential Techniques (13 tests)**
+   - Self-reminder loop, investigation-first, emphatic repetition
+   - XML semantic tags, expansion modifiers, self-correction triggers
+   - Post-action reflection, progress tracking, positive framing
+   - "Think" alternatives, just-in-time loading, write verification, doc-first ordering
+
+2. **Canonical Agent Structure (7 tests)**
+   - Required files: agent.yaml, intro.md, workflow.md, critical-requirements.md, critical-reminders.md, output-format.md, examples.md
+   - Template integration, XML nesting, compilation verification
+
+3. **Domain Scope and Boundaries (6 tests)**
+   - Handles vs deferrals, agent cross-references, integration documentation
+
+4. **Output Format and Examples Quality (7 tests)**
+   - Section alignment, XML tag matching, code blocks, tables, checklists
+
+5. **Tonality and Style (7 tests)**
+   - Sentence length, imperative mood, hedging language, specificity, positive framing
+
+6. **Anti-Over-Engineering (6 tests)**
+   - Minimal changes rule, scope control, self-correction triggers
+
+7. **Verbosity and Context Constraints (3 tests)**
+   - Filler words, redundancy, time estimates removal
+
+8. **Investigation-First Compliance (3 tests)**
+   - Enforcement points, self-correction trigger quality
+
+9. **Post-Action Reflection (3 tests)**
+   - Structure, integration with workflow
+
+10. **Write Verification (3 tests)**
+    - Rule quality, gate conditions
+
+11. **Progress Tracking (3 tests)**
+    - Structure, complexity protocol integration
+
+12. **Just-In-Time Loading (3 tests)**
+    - Retrieval strategy, tool guidance
+
+13. **Emphatic Repetition (3 tests)**
+    - Rule matching, template placement
+
+14. **XML Semantic Tags (3 tests)**
+    - Tag inventory, closure verification
+
+15. **Common Mistakes Documentation (3 tests)**
+    - Contrast format, coverage alignment
+
+16. **Agent Integration (3 tests)**
+    - Cross-references, help-seeking guidance
+
+17. **Extended Reasoning Guidance (3 tests)**
+    - Tiered complexity, "think" alternatives
+
+### Implementation Approach
+
+- Create `agent-tester` agent in `src/agents/meta/agent-tester/`
+- Use agent-summoner as the validation authority
+- Run automated checks via Grep, file comparison, pattern matching
+- Generate compliance report with pass/fail per test
+- Identify specific line numbers for failures
+- Suggest fixes based on patterns from compliant agents
+
+### Acceptance Criteria
+
+- [ ] Runs all 17 test categories against any agent
+- [ ] Produces detailed compliance report
+- [ ] Identifies specific violations with file:line references
+- [ ] Suggests fixes based on PROMPT_BIBLE and canonical structure
+- [ ] Can run incrementally (single category) or full suite
+- [ ] Integrates with `cc compile` to validate before compilation
+
+---
+
 ## D-14: Consume Third-Party Marketplace Skills
 
 **M | D-14 | Command to import skills from third-party marketplaces**
