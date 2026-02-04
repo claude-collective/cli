@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-02-04
+
+### Breaking Changes
+
+- **CLI source directory renamed** - `src/cli-v2/` renamed to `src/cli/`. The v2 suffix was removed as this is now the primary CLI implementation.
+
+### Added
+
+- **Bible documentation** - Added comprehensive documentation standards in `docs/bibles/`:
+  - `CLAUDE_ARCHITECTURE_BIBLE.md` - System architecture and agent structure
+  - `PROMPT_BIBLE.md` - Prompt engineering techniques
+  - `DOCUMENTATION_BIBLE.md` - Documentation standards
+  - `FRONTEND_BIBLE.md` - Frontend development standards
+  - `SKILL-ATOMICITY-BIBLE.md` - Skill design principles
+  - `INDEX.md` - Bible index and reference guide
+- **Missing command documentation** - Added docs for: `doctor`, `search`, `outdated`, `info`, `diff`, `update`, `new skill`, `new agent`, and all config/version subcommands
+- **skills-matrix.yaml schema documentation** - Full schema with categories, relationships, and skill aliases documented in `data-models.md`
+
+### Changed
+
+- **Agents genericized** - Developer agents no longer reference specific technologies (SCSS, Drizzle, Commander.js, etc.). Skills provide implementation details.
+- **Agent references fixed** - Updated all agent references to use correct names: `frontend-*` → `web-*`, `backend-*` → `api-*`, `tester` → `web-tester`/`cli-tester`
+- **Documentation paths fixed** - Fixed skill paths from `src/skills/` to `.claude/skills/`, Bible paths to `docs/bibles/`
+- **cc eject options corrected** - Changed from `templates/config/agents` to `agent-partials/skills/all`
+- **README install paths fixed** - Changed `~/.claude/` to `./.claude/` (relative to project)
+- **Command naming convention** - Updated docs to use space-separated format (`build plugins`) instead of colon notation (`build:plugins`)
+
+### Removed
+
+- **Deprecated documentation** - Deleted outdated files that referenced non-existent architecture:
+  - `docs/workflows.md` - Referenced non-existent `src/stacks/`
+  - `docs/stacks-as-visual-hierarchy.md` - Design proposal never implemented
+  - `docs/solution-a-migration-tasks.md` - Outdated migration document
+
+[0.11.0]: https://github.com/claude-collective/cli/releases/tag/v0.11.0
+
 ## [0.10.0] - 2026-02-03
 
 ### Breaking Changes
