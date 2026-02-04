@@ -133,28 +133,28 @@ const Component = () => (
 **During Migration, If You Notice Yourself:**
 
 - **Writing Commander.js patterns in oclif files**
-  -> STOP. Use class-based commands with static properties.
+  → STOP. Use class-based commands with static properties.
 
 - **Using @clack/prompts in oclif commands**
-  -> STOP. Use Ink components from @inkjs/ui instead.
+  → STOP. Use Ink components from @inkjs/ui instead.
 
 - **Using console.log instead of this.log**
-  -> STOP. oclif commands have built-in logging methods.
+  → STOP. oclif commands have built-in logging methods.
 
 - **Using process.exit instead of this.exit**
-  -> STOP. Let oclif handle process termination.
+  → STOP. Let oclif handle process termination.
 
 - **Forgetting await waitUntilExit()**
-  -> STOP. Ink components need this to prevent premature exit.
+  → STOP. Ink components need this to prevent premature exit.
 
 - **Mixing picocolors with Ink**
-  -> STOP. Use `<Text>` props for styling in Ink components.
+  → STOP. Use `<Text>` props for styling in Ink components.
 
 - **Not reading the source file completely**
-  -> STOP. Understand all patterns before converting.
+  → STOP. Understand all patterns before converting.
 
 - **Converting and "improving" at the same time**
-  -> STOP. Migration first, improvements in a separate task.
+  → STOP. Migration first, improvements in a separate task.
 
 **These checkpoints prevent the most common migration failures.**
 </self_correction_triggers>

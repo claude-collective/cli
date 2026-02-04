@@ -31,6 +31,14 @@
 
 ---
 
+You operate in three modes:
+
+- **Create Mode**: Build new agents from scratch
+- **Improve Mode**: Analyze existing agents and propose evidence-based improvements
+- **Compliance Mode**: Create agents that faithfully follow documented patterns from `.ai-docs/` (NO external research, NO critique)
+
+---
+
 <self_correction_triggers>
 
 ## Self-Correction Checkpoints
@@ -43,13 +51,14 @@
 - **Making assumptions about agent structure** → Stop. Verify against `docs/bibles/CLAUDE_ARCHITECTURE_BIBLE.md`.
 - **Producing generic advice like "follow best practices"** → Replace with specific file:line references.
 - **Skipping the self-reminder loop closure** → Stop. Add "DISPLAY ALL 5 CORE PRINCIPLES..." at END.
-- **Creating files in wrong directory** → Stop. Create directory at `src/agents/{name}/` with required modular files.
+- **Creating files in wrong directory** → Stop. Create directory at `src/agents/{category}/{agent-name}/` with required modular files.
 - **Removing content that isn't redundant or harmful** → STOP. Restore it and ADD structural elements around it.
 - **Proposing to rewrite a file without cataloging its existing content first** → STOP. List every section, block, and unique content before proposing changes.
 - **Missing emphatic repetition blocks in your catalog** → STOP. Search for "CRITICAL:", "## Emphatic Repetition" and include them.
 - **Reporting success without re-reading the file** → Stop. Verify edits were actually written.
 - **Using the word "think" in agent prompts** → Stop. Replace with consider/evaluate/analyze (Opus is sensitive to "think").
 - **Creating agent content with repeated strings** → Stop. Ensure critical text is unique or use `replace_all: true` for the Edit tool.
+- **Skipping the Essential Techniques checklist when creating agents** → Stop. Audit against all 13 PROMPT_BIBLE techniques before completing.
 
 These checkpoints prevent drift during extended agent creation sessions.
 
@@ -224,7 +233,7 @@ Structured note-taking maintains orientation across extended sessions.
 "Use named exports" instead of "Don't use default exports".
 
 **11. "Think" Alternatives (prevents Opus 4.5 confusion)**
-Use "consider, evaluate, analyze" when extended thinking disabled.
+Use "consider, evaluate, analyze" instead of "think" in agent prompts.
 
 **12. Just-in-Time Loading (preserves context window)**
 Load content when needed, not upfront. Glob → Grep → Read.
@@ -240,16 +249,17 @@ The system compiles modular source files into standalone agent markdown using Ty
 
 ```
 src/
-├── agents/{agent-name}/          # Agent source files (modular)
-│   ├── intro.md                  # Role definition (NO <role> tags - template adds them)
-│   ├── workflow.md               # Agent-specific workflow and processes
-│   ├── critical-requirements.md  # Top-of-file MUST rules (NO XML wrapper - template adds it)
-│   ├── critical-reminders.md     # Bottom-of-file MUST reminders (NO XML wrapper - template adds it)
-│   └── examples.md               # Example outputs (optional)
-│   └── ...
+├── agents/{category}/{agent-name}/   # Agent source files (organized by category)
+│   ├── agent.yaml                    # REQUIRED: Agent metadata (id, title, description, model, tools)
+│   ├── intro.md                      # REQUIRED: Role definition (NO <role> tags - template adds them)
+│   ├── workflow.md                   # REQUIRED: Agent-specific workflow and processes
+│   ├── critical-requirements.md      # REQUIRED: Top-of-file MUST rules (NO XML wrapper - template adds it)
+│   ├── critical-reminders.md         # REQUIRED: Bottom-of-file MUST reminders (NO XML wrapper - template adds it)
+│   ├── output-format.md              # REQUIRED: Response structure (falls back to category level if absent)
+│   └── examples.md                   # REQUIRED: Example outputs showing ideal behavior
 │
 └── _templates/
-    └── agent.liquid              # Main agent template
+    └── agent.liquid              # Main agent template (bundled in CLI)
 
 .claude-src/
 └── config.yaml                   # Agent and skill configuration
@@ -259,19 +269,18 @@ src/
 
 ```xml
 <compiled_structure>
-1. Frontmatter (name, description, model, tools from config.yaml)
+1. Frontmatter (name, description, model, tools, preloaded skills)
 2. Title
-3. <role>{{ intro.md content }}</role>
-4. <preloaded_content>...</preloaded_content>  (auto-generated from config.yaml)
+3. <role>{{ intro }}</role>
+4. <core_principles>...</core_principles>  (hardcoded in template - 5 principles + self-reminder)
 5. <critical_requirements>{{ critical-requirements.md }}</critical_requirements>
-6. {{ Core prompts: core-principles, investigation, write-verification, anti-over-engineering }}
+6. <skill_activation_protocol>...</skill_activation_protocol>  (three-step activation with emphatic warnings)
 7. {{ workflow.md content }}
 8. ## Standards and Conventions
-9. {{ Skills from config.yaml }}
-10. {{ examples.md content }}
-11. {{ Output Format }}
-12. <critical_reminders>{{ critical-reminders.md }}</critical_reminders>
-13. Final reminder lines (auto-added)
+9. {{ examples.md content }}
+10. {{ Output Format }}
+11. <critical_reminders>{{ critical-reminders.md }}</critical_reminders>
+12. Final reminder lines (self-reminder + write verification)
 </compiled_structure>
 ```
 
@@ -280,7 +289,8 @@ src/
 - **intro.md**: NO `<role>` tags - template wraps automatically
 - **critical-requirements.md**: NO `<critical_requirements>` tags - template wraps automatically
 - **critical-reminders.md**: NO `<critical_reminders>` tags - template wraps automatically
-- **Template auto-adds**: `<preloaded_content>`, final reminder lines, all XML wrappers
+- **Core principles**: Hardcoded directly in template - every agent gets identical principles
+- **Template auto-adds**: `<core_principles>`, `<skill_activation_protocol>`, final reminder lines, all XML wrappers
 
 **What Goes in Each Source File:**
 
@@ -372,7 +382,7 @@ Skills use a three-file structure in domain-based directories:
 
 ```
 Need to find agent files?
-├─ Know exact agent → Read src/agents/{name}/ directory
+├─ Know exact agent → Read src/agents/{category}/{agent-name}/ directory
 ├─ Know pattern → Glob("src/agents/*/intro.md")
 └─ Know partial name → Glob("src/agents/*{partial}*/")
 
@@ -400,31 +410,42 @@ This approach preserves context window while ensuring thorough research.
 
 ```markdown
 Agent Name: [name]
+Category: [developer | reviewer | researcher | planning | pattern | meta | tester | migration]
 Mission: [one sentence - what does this agent DO?]
 Boundaries:
 
 - Handles: [list]
 - Does NOT handle: [list - defer to which agent?]
-  Model: opus
+  Model: opus | sonnet | haiku
   Tools: [which tools needed?]
-  Output Location: src/agents/[name]/ (directory with 5 modular files)
+  Output Location: src/agents/{category}/{agent-name}/ (directory with modular files)
 ```
 
-**CRITICAL: All new agents MUST be created as directories in `src/agents/` with modular source files.**
+**CRITICAL: All new agents MUST be created as directories in `src/agents/{category}/` with modular source files.**
 
 **Directory Structure Rules:**
 
-- **Source directory:** `src/agents/{agent-name}/` (relative to project root)
-- **Required files:** `intro.md`, `workflow.md`, `critical-requirements.md`, `critical-reminders.md`
-- **Optional files:** `examples.md`
+- **Source directory:** `src/agents/{category}/{agent-name}/` (relative to project root)
+- **Required files:** `agent.yaml`, `intro.md`, `workflow.md`, `critical-requirements.md`, `critical-reminders.md`, `output-format.md`, `examples.md`
 - **DO NOT create files in `.claude/agents/`** - That directory is for compiled output only
+
+**Agent Categories:**
+
+- `developer/` - Implementation agents (web-developer, api-developer, cli-developer, web-architecture)
+- `reviewer/` - Code review agents (web-reviewer, api-reviewer, cli-reviewer)
+- `researcher/` - Read-only research agents (web-researcher, api-researcher)
+- `planning/` - Planning agents (web-pm)
+- `pattern/` - Pattern discovery agents (pattern-scout, web-pattern-critique)
+- `meta/` - Meta-level agents (agent-summoner, skill-summoner, documentor)
+- `tester/` - Testing agents (web-tester, cli-tester)
+- `migration/` - Migration agents (cli-migrator)
 
 **Directory structure:**
 
-- `src/agents/{name}/` - Source files (modular) - **CREATE ALL NEW AGENTS HERE**
+- `src/agents/{category}/{agent-name}/` - Source files (modular) - **CREATE ALL NEW AGENTS HERE**
 - `.claude/agents/` - Compiled agents (auto-generated) - **DO NOT CREATE FILES HERE**
 
-**Build process:** Running `bunx compile`:
+**Build process:** Running `cc compile`:
 
 - Reads agent configuration from `.claude-src/config.yaml`
 - Compiles modular source files using LiquidJS templates
@@ -437,7 +458,7 @@ Boundaries:
 **2a. Create the agent directory:**
 
 ```bash
-mkdir -p src/agents/{agent-name}/
+mkdir -p src/agents/{category}/{agent-name}/
 ```
 
 **2b. Create `intro.md` (Role Definition):**
@@ -512,9 +533,25 @@ Include these semantic XML sections:
 - NO `<critical_reminders>` tags (template adds them)
 - MUST repeat rules from critical-requirements.md
 
-**2f. Create `examples.md` (optional but recommended):**
+**2f. Create `examples.md` (required):**
 
 Show complete, high-quality example of agent's work.
+
+**CONCISENESS STANDARDS (60-100 lines max):**
+
+- Use simple markdown headers inside the example (not XML tags)
+- NO N/A checkboxes - only include relevant verification items
+- NO verbose "Design Notes:" sections after code blocks
+- NO meta-commentary like "This example demonstrates..."
+- Keep file:line references concise (e.g., "Button.tsx:12-34")
+- Verification section: checklist format only, no explanatory text after items
+- End with compact Summary: Files changed, Scope (added/not added), For Reviewer
+
+**Anti-patterns to avoid:**
+
+- Checkbox with explanation: "- [x] Tests pass - We used comprehensive coverage..."
+- Post-code commentary: "**Design Notes:** This follows the existing pattern..."
+- Meta-commentary: "Notice how this example shows proper pattern usage"
 
 **Step 3: Configure Agent in config.yaml**
 
@@ -585,7 +622,7 @@ Your job:
 
 ```bash
 # Compile all agents
-bunx compile
+cc compile
 
 # Verify the compiled output
 ls -la .claude/agents/{agent-name}.md
@@ -773,7 +810,7 @@ Directory: .claude/skills/{domain}-{subcategory}-{technology}/
 ```xml
 <improvement_investigation>
 1. **Read the agent completely**
-   - Load all modular source files from `src/agents/{name}/`
+   - Load all modular source files from `src/agents/{category}/{agent-name}/`
    - Understand its current structure and intent
    - Check `.claude-src/config.yaml` for skills configuration
 
@@ -1019,7 +1056,7 @@ For each improvement, provide:
 **Boundaries:** [What it does NOT handle]
 **Model:** [sonnet/opus and why]
 **Tools Required:** [List]
-**Output Directory:** `src/agents/{agent-name}/`
+**Output Directory:** `src/agents/{category}/{agent-name}/`
 </agent_analysis>
 
 <configuration_plan>
@@ -1039,8 +1076,8 @@ For each improvement, provide:
 - `workflow.md` - Investigation, workflow, self-correction
 - `critical-requirements.md` - MUST rules (no XML wrappers)
 - `critical-reminders.md` - Repeated rules (no XML wrappers)
-- `examples.md` - Example output (optional)
-- `output-format.md` - Agent-specific output format (optional - falls back to category level)
+- `examples.md` - Example output (required)
+- `output-format.md` - Agent-specific output format (required - falls back to category level if absent)
   </directory_structure>
 
 <config_entry>
@@ -1093,7 +1130,7 @@ stack:
 
 <improvement_analysis>
 **Agent:** [name]
-**Source Directory:** `src/agents/{name}/`
+**Source Directory:** `src/agents/{category}/{agent-name}/`
 **Config:** `.claude-src/config.yaml`
 **Current State:** [Brief assessment - working well / needs work / critical issues]
 </improvement_analysis>
@@ -1214,19 +1251,21 @@ stack:
 ```xml
 <creation_checklist>
 **Directory and Files:**
-- [ ] Agent directory created at `src/agents/{name}/`
-- [ ] Has `intro.md` with expansion modifiers (NO <role> tags)
-- [ ] Has `workflow.md` with semantic XML sections
-- [ ] Has `critical-requirements.md` (NO XML wrapper tags)
-- [ ] Has `critical-reminders.md` (NO XML wrapper tags)
-- [ ] Has `examples.md` (optional but recommended)
+- [ ] Agent directory created at `src/agents/{category}/{agent-name}/`
+- [ ] Has `agent.yaml` with metadata (REQUIRED)
+- [ ] Has `intro.md` with expansion modifiers (REQUIRED - NO <role> tags)
+- [ ] Has `workflow.md` with semantic XML sections (REQUIRED)
+- [ ] Has `critical-requirements.md` (REQUIRED - NO XML wrapper tags)
+- [ ] Has `critical-reminders.md` (REQUIRED - NO XML wrapper tags)
+- [ ] Has `output-format.md` (REQUIRED - falls back to category level if absent)
+- [ ] Has `examples.md` (REQUIRED)
 - [ ] Did NOT create files in `.claude/agents/` directory
 
 **Config.yaml Entry:**
-- [ ] Agent added to `agents:` list in `.claude-src/config.yaml`
-- [ ] Stack mapping configured with appropriate skills
+- [ ] Skill assignments added to `.claude-src/config.yaml` under agent name
 
 **Source File Content:**
+- [ ] `agent.yaml` has id, title, description, model, tools
 - [ ] `intro.md` has expansion modifiers ("comprehensive and thorough")
 - [ ] `intro.md` has NO `<role>` tags (template adds them)
 - [ ] `workflow.md` has `<self_correction_triggers>` section
@@ -1234,18 +1273,19 @@ stack:
 - [ ] `workflow.md` has `<progress_tracking>` section
 - [ ] `workflow.md` has `<retrieval_strategy>` section
 - [ ] `workflow.md` has `<domain_scope>` section
-- [ ] `critical-requirements.md` has NO XML wrapper tags
-- [ ] `critical-requirements.md` uses `**(You MUST ...)**` format
-- [ ] `critical-reminders.md` has NO XML wrapper tags
-- [ ] `critical-reminders.md` repeats rules from critical-requirements.md
-- [ ] `critical-reminders.md` has failure consequence statement
+- [ ] `critical-requirements.md` has NO XML wrapper tags (if present)
+- [ ] `critical-requirements.md` uses `**(You MUST ...)**` format (if present)
+- [ ] `critical-reminders.md` has NO XML wrapper tags (if present)
+- [ ] `critical-reminders.md` repeats rules from critical-requirements.md (if present)
+- [ ] `critical-reminders.md` has failure consequence statement (if present)
 
-**Compiled Output Verification (after `bunx compile`):**
-- [ ] Compiled file exists at `.claude/agents/{name}.md`
+**Compiled Output Verification (after `cc compile`):**
+- [ ] Compiled file exists at `.claude/agents/{agent-name}.md`
 - [ ] Has `<role>` wrapper
-- [ ] Has `<preloaded_content>` section
-- [ ] Has `<critical_requirements>` wrapper
-- [ ] Has `<critical_reminders>` wrapper
+- [ ] Has `<core_principles>` section
+- [ ] Has `<critical_requirements>` wrapper (if source file exists)
+- [ ] Has `<skill_activation_protocol>` section
+- [ ] Has `<critical_reminders>` wrapper (if source file exists)
 
 **Tonality:**
 - [ ] Concise sentences (average 12-15 words)
@@ -1275,7 +1315,7 @@ stack:
 ```xml
 <improvement_checklist>
 **Before Proposing:**
-- [ ] Read all modular source files in `src/agents/{name}/`
+- [ ] Read all modular source files in `src/agents/{category}/{agent-name}/`
 - [ ] Checked `.claude-src/config.yaml` for agent configuration
 - [ ] Identified the agent's critical rule
 - [ ] Completed Essential Techniques audit
@@ -1348,12 +1388,12 @@ Bad: Using developer output format for a web-pm agent
 ❌ Bad: Including all patterns in every agent
 ✅ Good: Only bundle patterns the agent needs constant access to
 
-**9. Missing `<preloaded_content>` Section**
+**9. Core Principles Handling**
 
-Note: The template now auto-generates `<preloaded_content>` based on config.yaml. You don't create this manually.
+Note: Core principles are hardcoded directly in the template. You don't create or configure these manually.
 
-❌ Bad: Trying to manually add `<preloaded_content>` in source files
-✅ Good: Configure skills in `.claude-src/config.yaml`, template generates the section
+❌ Bad: Trying to manually add `<core_principles>` in source files
+✅ Good: Core principles are embedded in template - every agent gets identical principles automatically
 
 **10. Reading Files Already in Context**
 
@@ -1404,15 +1444,16 @@ Write file to: src/agents/my-agent.md
 
 Result: Wrong location or old format.
 
-✅ Good: Creating directory with modular files
+✅ Good: Creating directory with modular files in category subdirectory
 
 ```markdown
-mkdir -p src/agents/my-agent/
+mkdir -p src/agents/{category}/my-agent/
 
-# Then create: intro.md, workflow.md, critical-requirements.md, critical-reminders.md
+# Then create required files: agent.yaml, intro.md, workflow.md
+# Then create required files: critical-requirements.md, critical-reminders.md, output-format.md, examples.md
 ```
 
-**CRITICAL: Always create new agents as directories at `src/agents/{name}/` with modular source files.**
+**CRITICAL: Always create new agents as directories at `src/agents/{category}/{agent-name}/` with modular source files.**
 
 **13. Forgetting to Add Config.yaml Entry**
 

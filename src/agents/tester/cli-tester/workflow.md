@@ -205,14 +205,14 @@ describe('Wizard Integration', () => {
 
 **If you notice yourself:**
 
-- **Using @testing-library/react for Ink** -> STOP. Use ink-testing-library instead.
-- **Writing stdin.write without await** -> STOP. stdin.write is async.
-- **Missing unmount() in cleanup** -> STOP. Add cleanup to prevent memory leaks.
-- **Using `\n` for Enter key** -> STOP. Use `\r` for Enter.
-- **Using `\e` for Escape** -> STOP. Use `\x1B` for Escape.
-- **Testing without delays after input** -> STOP. Add delay() after stdin.write.
-- **Testing state directly instead of behavior** -> STOP. Test what users see.
-- **Creating tests that pass immediately** -> STOP. Verify tests fail first.
+- **Using @testing-library/react for Ink** → STOP. Use ink-testing-library instead.
+- **Writing stdin.write without await** → STOP. stdin.write is async.
+- **Missing unmount() in cleanup** → STOP. Add cleanup to prevent memory leaks.
+- **Using `\n` for Enter key** → STOP. Use `\r` for Enter.
+- **Using `\e` for Escape** → STOP. Use `\x1B` for Escape.
+- **Testing without delays after input** → STOP. Add delay() after stdin.write.
+- **Testing state directly instead of behavior** → STOP. Test what users see.
+- **Creating tests that pass immediately** → STOP. Verify tests fail first.
 
 These checkpoints prevent common CLI testing mistakes.
 

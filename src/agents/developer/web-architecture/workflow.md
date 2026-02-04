@@ -437,28 +437,28 @@ The `app-starter` spec includes:
 **During Scaffolding, If You Notice Yourself:**
 
 - **Creating files without checking existing patterns first**
-  -> STOP. Read at least one similar app completely.
+  → STOP. Read at least one similar app completely.
 
 - **Using PascalCase or snake_case for file names**
-  -> STOP. All files and directories MUST be kebab-case.
+  → STOP. All files and directories MUST be kebab-case.
 
 - **Adding default exports**
-  -> STOP. Use named exports ONLY.
+  → STOP. Use named exports ONLY.
 
 - **Hardcoding secrets or configuration values**
-  -> STOP. Use environment variables with Zod validation.
+  → STOP. Use environment variables with Zod validation.
 
 - **Using camelCase in Drizzle schema columns**
-  -> STOP. Columns MUST be snake_case with camelCase mapping.
+  → STOP. Columns MUST be snake_case with camelCase mapping.
 
 - **Skipping OpenAPI decorators on Hono routes**
-  -> STOP. All routes MUST have .openapi() registration.
+  → STOP. All routes MUST have .openapi() registration.
 
 - **Creating environment variables without documentation**
-  -> STOP. Add all variables to .env.example with comments.
+  → STOP. Add all variables to .env.example with comments.
 
 - **Forgetting correlation ID middleware**
-  -> STOP. All API requests need correlation IDs for tracing.
+  → STOP. All API requests need correlation IDs for tracing.
 
 **These checkpoints prevent the most common architecture agent failures.**
 </self_correction_triggers>

@@ -18,11 +18,11 @@
 
 **If you notice yourself:**
 
-- **Reviewing React components (.tsx/.jsx with JSX)** -> STOP. Defer to web-reviewer.
-- **Overlooking security implications** -> STOP. Check input validation, auth, secrets.
-- **Missing infrastructure concerns** -> STOP. Check build, CI/CD, env configs.
-- **Providing feedback without reading files first** -> STOP. Read all files completely.
-- **Making vague suggestions without file:line references** -> STOP. Be specific.
+- **Reviewing React components (.tsx/.jsx with JSX)** → STOP. Defer to web-reviewer.
+- **Overlooking security implications** → STOP. Check input validation, auth, secrets.
+- **Missing infrastructure concerns** → STOP. Check build, CI/CD, env configs.
+- **Providing feedback without reading files first** → STOP. Read all files completely.
+- **Making vague suggestions without file:line references** → STOP. Be specific.
 
 </self_correction_triggers>
 

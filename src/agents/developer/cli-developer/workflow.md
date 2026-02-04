@@ -223,34 +223,34 @@ When you see these, expand appropriately:
 **During Implementation, If You Notice Yourself:**
 
 - **Generating code without reading pattern files first**
-  -> STOP. Read all referenced files completely before implementing.
+  → STOP. Read all referenced files completely before implementing.
 
 - **Creating new utilities, helpers, or abstractions**
-  -> STOP. Search existing codebase (`Grep`, `Glob`) for similar functionality first.
+  → STOP. Search existing codebase (`Grep`, `Glob`) for similar functionality first.
 
 - **Making assumptions about how existing code works**
-  -> STOP. Read the actual implementation to verify your assumptions.
+  → STOP. Read the actual implementation to verify your assumptions.
 
 - **Adding features not explicitly in the specification**
-  -> STOP. Re-read the spec. Only implement what's requested.
+  → STOP. Re-read the spec. Only implement what's requested.
 
 - **Modifying files outside the specification's scope**
-  -> STOP. Check which files are explicitly mentioned for changes.
+  → STOP. Check which files are explicitly mentioned for changes.
 
 - **Proceeding without verifying success criteria**
-  -> STOP. Review success criteria and ensure you can verify each one.
+  → STOP. Review success criteria and ensure you can verify each one.
 
 - **Using magic numbers for exit codes**
-  -> STOP. Use EXIT_CODES.\* named constants. Never `process.exit(1)`.
+  → STOP. Use EXIT_CODES.\* named constants. Never `process.exit(1)`.
 
 - **Forgetting p.isCancel() after prompts**
-  -> STOP. ALL @clack/prompts MUST check for cancellation.
+  → STOP. ALL @clack/prompts MUST check for cancellation.
 
 - **Using console.log instead of picocolors**
-  -> STOP. Use pc.green(), pc.red(), pc.dim() for consistent styling.
+  → STOP. Use pc.green(), pc.red(), pc.dim() for consistent styling.
 
 - **Not handling SIGINT in entry point**
-  -> STOP. Add SIGINT handler that exits with EXIT_CODES.CANCELLED.
+  → STOP. Add SIGINT handler that exits with EXIT_CODES.CANCELLED.
 
 **These checkpoints prevent the most common CLI developer agent failures.**
 </self_correction_triggers>
@@ -323,13 +323,11 @@ This maintains orientation across extended implementation sessions.
 
 **Simple tasks** (single command, clear pattern):
 
-- Implement directly
-- Takes 10-30 minutes
+- Implement directly following existing patterns
 
 **Medium tasks** (2-3 commands, clear patterns):
 
-- Follow workflow exactly
-- Takes 30-90 minutes
+- Follow full workflow sequence
 
 **Complex tasks** (wizard flows, config systems):
 
@@ -488,24 +486,24 @@ await program.parseAsync(process.argv);
 
 ---
 
-## Extended Reasoning Guidance
+## Extended Analysis Guidance
 
-For complex tasks, use deeper analysis in your reasoning:
+For complex tasks, use deeper analysis:
 
 - **"consider carefully"** - thorough examination up to 32K tokens
-- **"analyze intensely"** - extended reasoning mode
-- **"evaluate comprehensively"** - maximum reasoning depth
+- **"analyze intensely"** - extended analysis mode
+- **"evaluate comprehensively"** - maximum analysis depth
 
 For moderate complexity:
 
-- **"consider thoroughly"** - standard extended reasoning
+- **"consider thoroughly"** - standard extended analysis
 - **"analyze deeply"** - thorough examination
 
-Use extended reasoning when:
+Use extended analysis when:
 
 - Complex wizard state machine design
 - Config hierarchy resolution logic
 - Multiple command interactions
 - Subtle edge cases to analyze
 
-**For simple tasks, use standard reasoning** - save capacity for actual complexity.
+**For simple tasks, use standard analysis** - save capacity for actual complexity.
