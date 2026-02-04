@@ -191,9 +191,9 @@ export interface ValidationResult {
  * Stacks are now simple agent groupings defined in config/stacks.yaml.
  *
  * Migration path:
- * - Stack metadata: Use `Stack` from src/cli-v2/types-stacks.ts
+ * - Stack metadata: Use `Stack` from src/cli/types-stacks.ts
  * - Agent skills: Defined in each agent's agent.yaml file
- * - Stack loading: Use loadStackById() from src/cli-v2/lib/stacks-loader.ts
+ * - Stack loading: Use loadStackById() from src/cli/lib/stacks-loader.ts
  *
  * This interface is kept for backwards compatibility with legacy stack configs.
  */

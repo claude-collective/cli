@@ -1,7 +1,7 @@
 /**
  * @deprecated This module is deprecated. Skills are now defined directly in agent YAMLs.
  * Use agent's `skills` field in agent.yaml instead of these mappings.
- * See: src/cli-v2/lib/resolver.ts -> resolveAgentSkills()
+ * See: src/cli/lib/resolver.ts -> resolveAgentSkills()
  *
  * This file is kept for backwards compatibility with:
  * - config-generator.ts (wizard flow for generating configs from skills)
