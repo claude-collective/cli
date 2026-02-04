@@ -107,7 +107,7 @@ Detailed specifications for completed tasks are preserved in TODO.md under "Deta
 | P5-7-3  | Remove picocolors dependency         | 2026-01-31 |
 | P5-7-4  | Delete old src/cli/commands/ files   | 2026-01-31 |
 | P5-7-5  | Delete src/cli/lib/wizard.ts         | 2026-01-31 |
-| P5-7-6  | Move lib/ and utils/ to cli-v2       | 2026-01-31 |
+| P5-7-6  | Move lib/ and utils/ to cli       | 2026-01-31 |
 | P5-7-7  | Update package.json entry points     | 2026-01-31 |
 | P5-7-8  | Final validation (all commands work) | 2026-01-31 |
 | P5-7-9  | Update documentation                 | 2026-01-31 |
@@ -284,16 +284,17 @@ Detailed specifications for completed tasks are preserved in TODO.md under "Deta
 | D-11    | Fix uninstall command not clearing input | 2026-02-02 |
 | D-10    | Create meta-stack for meta agents        | 2026-02-02 |
 
-**D-11 Details:** Added `useApp()` hook and `exit()` calls to `UninstallConfirm` component in `src/cli-v2/commands/uninstall.tsx` to properly restore terminal state after command completion.
+**D-11 Details:** Added `useApp()` hook and `exit()` calls to `UninstallConfirm` component in `src/cli/commands/uninstall.tsx` to properly restore terminal state after command completion.
 
 **D-10 Details:** Added `meta-stack` to `config/stacks.yaml` with 5 agents (skill-summoner, agent-summoner, documentor, pattern-scout, web-pattern-critique) mapped to methodology and research skills (improvement-protocol, research-methodology, context-management, investigation-requirements, anti-over-engineering, reviewing).
 
 | D-12 | Normalize skill IDs and output folder names | 2026-02-02 |
+| D-06 | Fix require() syntax in matrix-resolver.test.ts | 2026-02-03 |
 
 **D-12 Details:** Large refactoring to normalize skill IDs from path-based format with author (e.g., `web/framework/react (@vince)`) to kebab-case format (e.g., `web-framework-react`). Changes:
 
 - Updated ~150 `skill_aliases` entries in `config/skills-matrix.yaml`
-- Updated `DEFAULT_PRESELECTED_SKILLS` in `src/cli-v2/consts.ts`
+- Updated `DEFAULT_PRESELECTED_SKILLS` in `src/cli/consts.ts`
 - Simplified `skill-copier.ts` and `skill-plugin-compiler.ts`
 - Updated `marketplace-generator.ts` category patterns for new format
 - Updated ~10 test files with new skill ID format
@@ -302,6 +303,8 @@ Detailed specifications for completed tasks are preserved in TODO.md under "Deta
 - Replaced `+` with `-` in multi-tool skill names (e.g., `better-auth+drizzle+hono` → `better-auth-drizzle-hono`)
 - Removed `normalizeSkillId()` function since frontmatter now contains canonical IDs
 - All 1182 tests pass
+
+**D-06 Details:** Fixed CommonJS `require()` calls in `matrix-resolver.test.ts` by converting to ESM imports.
 
 ---
 
@@ -335,15 +338,15 @@ project/
 
 **Files modified:**
 
-- `src/cli-v2/consts.ts`: Added `CLAUDE_SRC_DIR = ".claude-src"` constant
-- `src/cli-v2/lib/config.ts`: Updated to read from `.claude-src/config.yaml` first, falls back to `.claude/config.yaml`
-- `src/cli-v2/commands/eject.ts`: Agent-partials eject to `.claude-src/agents/`, config saves to `.claude-src/config.yaml`
-- `src/cli-v2/commands/init.tsx`: Config writes to `.claude-src/config.yaml`, agents output to `.claude/agents/`
-- `src/cli-v2/lib/compiler.ts`: `createLiquidEngine()` checks `.claude-src/agents/_templates/` first
-- `src/cli-v2/lib/loader.ts`: Added `loadProjectAgents()` to load from `.claude-src/agents/`
-- `src/cli-v2/lib/project-config.ts`: Updated to use constants, checks `.claude-src/` first with `.claude/` fallback
-- `src/cli-v2/lib/installation.ts`: `detectInstallation()` checks `.claude-src/config.yaml` first
-- `src/cli-v2/lib/agent-recompiler.ts`: Merges project agents with built-in agents
+- `src/cli/consts.ts`: Added `CLAUDE_SRC_DIR = ".claude-src"` constant
+- `src/cli/lib/config.ts`: Updated to read from `.claude-src/config.yaml` first, falls back to `.claude/config.yaml`
+- `src/cli/commands/eject.ts`: Agent-partials eject to `.claude-src/agents/`, config saves to `.claude-src/config.yaml`
+- `src/cli/commands/init.tsx`: Config writes to `.claude-src/config.yaml`, agents output to `.claude/agents/`
+- `src/cli/lib/compiler.ts`: `createLiquidEngine()` checks `.claude-src/agents/_templates/` first
+- `src/cli/lib/loader.ts`: Added `loadProjectAgents()` to load from `.claude-src/agents/`
+- `src/cli/lib/project-config.ts`: Updated to use constants, checks `.claude-src/` first with `.claude/` fallback
+- `src/cli/lib/installation.ts`: `detectInstallation()` checks `.claude-src/config.yaml` first
+- `src/cli/lib/agent-recompiler.ts`: Merges project agents with built-in agents
 
 **Key design decisions:**
 
@@ -386,9 +389,9 @@ project/
 
 **Files fixed:**
 
-- `src/cli-v2/commands/init.tsx`: Changed to `WizardResultV2`, passes `loadedStack` and `skillAliases` to `resolveAgents()`
-- `src/cli-v2/stores/wizard-store.ts`: Added `populateFromStack()` action
-- `src/cli-v2/components/wizard/step-stack-options.tsx`: Calls `populateFromStack()` when "customize" selected
+- `src/cli/commands/init.tsx`: Changed to `WizardResultV2`, passes `loadedStack` and `skillAliases` to `resolveAgents()`
+- `src/cli/stores/wizard-store.ts`: Added `populateFromStack()` action
+- `src/cli/components/wizard/step-stack-options.tsx`: Calls `populateFromStack()` when "customize" selected
 
 **Tests added:** Unit tests for `resolveAgentSkillsFromStack`, `getAgentSkills`, and `resolveAgents` in `resolver.test.ts`
 

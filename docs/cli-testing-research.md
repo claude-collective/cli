@@ -723,7 +723,7 @@ Verify:
 ## 10. Recommended Test File Organization
 
 ```
-src/cli-v2/lib/__tests__/
+src/cli/lib/__tests__/
 ├─ fixtures/
 │  ├─ create-test-source.ts       # Helper to create temp source
 │  ├─ mock-matrix.ts              # Matrix fixture data
@@ -983,7 +983,7 @@ export const TEMP_DIR_PREFIX = "cc-test-";
 **Current Structure:**
 
 ```
-src/cli-v2/lib/__tests__/
+src/cli/lib/__tests__/
 ├── fixtures/
 │   └── create-test-source.ts    # Full source directory creation
 ├── helpers.ts                    # Mock creators + FS helpers
@@ -1002,7 +1002,7 @@ oclif projects typically use:
 **Recommended Organization (minor refinement):**
 
 ```
-src/cli-v2/lib/__tests__/
+src/cli/lib/__tests__/
 ├── helpers/                      # (rename from just helpers.ts)
 │   ├── index.ts                  # Re-export all helpers
 │   ├── mock-creators.ts          # createMock* functions

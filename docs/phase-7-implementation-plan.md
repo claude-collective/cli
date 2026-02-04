@@ -154,7 +154,7 @@ Move skill definitions from agent YAMLs to stacks.yaml. Agents become generic (j
 | -------------------------------------------------- | ------------------------------------------------------------------------- |
 | `config/stacks.yaml`                               | Transform `agents` array to object with subcategory->technology mappings  |
 | `src/schemas/stacks.schema.json`                   | Update schema for new stack format                                        |
-| `src/cli-v2/types-stacks.ts`                       | Update `Stack` interface for agent->technology mappings                   |
+| `src/cli/types-stacks.ts`                       | Update `Stack` interface for agent->technology mappings                   |
 | `src/agents/developer/web-developer/agent.yaml`    | Remove `skills` field entirely                                            |
 | `src/agents/developer/api-developer/agent.yaml`    | Remove `skills` field entirely                                            |
 | `src/agents/developer/cli-developer/agent.yaml`    | Remove `skills` field entirely                                            |
@@ -168,9 +168,9 @@ Move skill definitions from agent YAMLs to stacks.yaml. Agents become generic (j
 | `src/agents/planning/web-pm/agent.yaml`            | Remove `skills` field entirely                                            |
 | `src/agents/pattern/*/agent.yaml`                  | Remove `skills` field entirely                                            |
 | `src/agents/meta/*/agent.yaml`                     | Remove `skills` field entirely                                            |
-| `src/cli-v2/lib/stacks-loader.ts`                  | Add `loadStackWithResolvedSkills()` function                              |
-| `src/cli-v2/lib/resolver.ts`                       | Update `resolveAgentSkills()` to read from stack                          |
-| `src/cli-v2/commands/init.tsx`                     | Update to use new stack format                                            |
+| `src/cli/lib/stacks-loader.ts`                  | Add `loadStackWithResolvedSkills()` function                              |
+| `src/cli/lib/resolver.ts`                       | Update `resolveAgentSkills()` to read from stack                          |
+| `src/cli/commands/init.tsx`                     | Update to use new stack format                                            |
 | `src/types.ts`                                     | Remove `skills` field from `AgentDefinition`, deprecate `AgentSkillEntry` |
 | `src/schemas/agent.schema.json`                    | Remove `skills` property from schema                                      |
 
@@ -277,7 +277,7 @@ When a user selects a stack, their `.claude/config.yaml` needs a `stack` propert
 | ---------------------------------------- | ------------------------------------------------- |
 | `src/types.ts`                           | Add `stack` property to `ProjectConfig` interface |
 | `src/schemas/project-config.schema.json` | Add `stack` property schema (if exists)           |
-| `src/cli-v2/lib/config-generator.ts`     | Generate `stack` property from wizard selection   |
+| `src/cli/lib/config-generator.ts`     | Generate `stack` property from wizard selection   |
 
 **New config.yaml Format:**
 
@@ -380,8 +380,8 @@ Enable domain-based filtering in the wizard. Each subcategory needs a `domain` f
 | File                              | Change                                             |
 | --------------------------------- | -------------------------------------------------- |
 | `config/skills-matrix.yaml`       | Add `domain` field to each subcategory             |
-| `src/cli-v2/types-matrix.ts`      | Add `domain` field to `CategoryDefinition`         |
-| `src/cli-v2/lib/matrix-loader.ts` | Validate `domain` field presence for subcategories |
+| `src/cli/types-matrix.ts`      | Add `domain` field to `CategoryDefinition`         |
+| `src/cli/lib/matrix-loader.ts` | Validate `domain` field presence for subcategories |
 
 **Domain Mappings:**
 
@@ -575,7 +575,7 @@ The new wizard flow requires a different state shape. Create a v2 store incremen
 
 | File                                   | Purpose                                   |
 | -------------------------------------- | ----------------------------------------- |
-| `src/cli-v2/stores/wizard-store-v2.ts` | New Zustand store with domain-based state |
+| `src/cli/stores/wizard-store-v2.ts` | New Zustand store with domain-based state |
 
 **New State Shape:**
 
@@ -679,18 +679,18 @@ Update existing wizard components to use the v2 store. Create new components as 
 
 | File                                                | Change                               |
 | --------------------------------------------------- | ------------------------------------ |
-| `src/cli-v2/components/wizard/wizard.tsx`           | Import v2 store, update step routing |
-| `src/cli-v2/components/wizard/step-approach.tsx`    | Use v2 store actions                 |
-| `src/cli-v2/components/wizard/step-stack.tsx`       | Refactor for new flow                |
-| `src/cli-v2/components/wizard/step-confirm.tsx`     | Read from v2 store                   |
-| `src/cli-v2/components/wizard/selection-header.tsx` | Update for domain-based display      |
+| `src/cli/components/wizard/wizard.tsx`           | Import v2 store, update step routing |
+| `src/cli/components/wizard/step-approach.tsx`    | Use v2 store actions                 |
+| `src/cli/components/wizard/step-stack.tsx`       | Refactor for new flow                |
+| `src/cli/components/wizard/step-confirm.tsx`     | Read from v2 store                   |
+| `src/cli/components/wizard/selection-header.tsx` | Update for domain-based display      |
 
 **Files to Remove (after migration):**
 
 | File                                                | Reason                |
 | --------------------------------------------------- | --------------------- |
-| `src/cli-v2/components/wizard/step-category.tsx`    | Replaced by StepBuild |
-| `src/cli-v2/components/wizard/step-subcategory.tsx` | Replaced by StepBuild |
+| `src/cli/components/wizard/step-category.tsx`    | Replaced by StepBuild |
+| `src/cli/components/wizard/step-subcategory.tsx` | Replaced by StepBuild |
 
 **Migration Strategy:**
 
@@ -722,8 +722,8 @@ Once all components use v2 store, remove v1 and rename v2.
 
 | File                                   | Change                      |
 | -------------------------------------- | --------------------------- |
-| `src/cli-v2/stores/wizard-store-v2.ts` | Rename to `wizard-store.ts` |
-| `src/cli-v2/stores/wizard-store.ts`    | Delete                      |
+| `src/cli/stores/wizard-store-v2.ts` | Rename to `wizard-store.ts` |
+| `src/cli/stores/wizard-store.ts`    | Delete                      |
 | All wizard components                  | Update imports              |
 
 **Acceptance Criteria:**
@@ -750,8 +750,8 @@ Grid-based category/technology selection with 2D keyboard navigation. This is th
 
 | File                                                  | Purpose             |
 | ----------------------------------------------------- | ------------------- |
-| `src/cli-v2/components/wizard/category-grid.tsx`      | Main grid component |
-| `src/cli-v2/components/wizard/category-grid.test.tsx` | Unit tests          |
+| `src/cli/components/wizard/category-grid.tsx`      | Main grid component |
+| `src/cli/components/wizard/category-grid.test.tsx` | Unit tests          |
 
 **Visual Design:**
 
@@ -863,8 +863,8 @@ Horizontal progress tabs showing all 5 wizard steps with visual states.
 
 | File                                                | Purpose                 |
 | --------------------------------------------------- | ----------------------- |
-| `src/cli-v2/components/wizard/wizard-tabs.tsx`      | Progress tabs component |
-| `src/cli-v2/components/wizard/wizard-tabs.test.tsx` | Unit tests              |
+| `src/cli/components/wizard/wizard-tabs.tsx`      | Progress tabs component |
+| `src/cli/components/wizard/wizard-tabs.test.tsx` | Unit tests              |
 
 **Visual Design:**
 
@@ -931,8 +931,8 @@ Sub-step progress indicator for multi-domain Build and Refine steps.
 
 | File                                                     | Purpose                    |
 | -------------------------------------------------------- | -------------------------- |
-| `src/cli-v2/components/wizard/section-progress.tsx`      | Section progress component |
-| `src/cli-v2/components/wizard/section-progress.test.tsx` | Unit tests                 |
+| `src/cli/components/wizard/section-progress.tsx`      | Section progress component |
+| `src/cli/components/wizard/section-progress.test.tsx` | Unit tests                 |
 
 **Visual Design:**
 
@@ -991,8 +991,8 @@ New Build step that uses CategoryGrid, replacing the linear category->subcategor
 
 | File                                               | Purpose              |
 | -------------------------------------------------- | -------------------- |
-| `src/cli-v2/components/wizard/step-build.tsx`      | Build step component |
-| `src/cli-v2/components/wizard/step-build.test.tsx` | Unit tests           |
+| `src/cli/components/wizard/step-build.tsx`      | Build step component |
+| `src/cli/components/wizard/step-build.test.tsx` | Unit tests           |
 
 **Component Responsibilities:**
 
@@ -1049,8 +1049,8 @@ New Refine step for skill source selection. Default is "Use all recommended" (ve
 
 | File                                                | Purpose               |
 | --------------------------------------------------- | --------------------- |
-| `src/cli-v2/components/wizard/step-refine.tsx`      | Refine step component |
-| `src/cli-v2/components/wizard/step-refine.test.tsx` | Unit tests            |
+| `src/cli/components/wizard/step-refine.tsx`      | Refine step component |
+| `src/cli/components/wizard/step-refine.test.tsx` | Unit tests            |
 
 **Visual Design (Default View):**
 
@@ -1137,7 +1137,7 @@ End-to-end testing of all wizard flows.
 
 | File                                                       | Purpose           |
 | ---------------------------------------------------------- | ----------------- |
-| `src/cli-v2/components/wizard/wizard.integration.test.tsx` | Integration tests |
+| `src/cli/components/wizard/wizard.integration.test.tsx` | Integration tests |
 
 **Acceptance Criteria:**
 
@@ -1333,8 +1333,8 @@ The Phase 7 implementation plan is **technically sound**. The architecture chang
 
 | File                              | Change                                       |
 | --------------------------------- | -------------------------------------------- |
-| `src/cli-v2/lib/source-loader.ts` | May need stack loading integration           |
-| `src/cli-v2/consts.ts`            | Potential DEFAULT_PRESELECTED_SKILLS updates |
+| `src/cli/lib/source-loader.ts` | May need stack loading integration           |
+| `src/cli/consts.ts`            | Potential DEFAULT_PRESELECTED_SKILLS updates |
 
 ### Additional Acceptance Criteria
 
@@ -1400,11 +1400,11 @@ These task pairs can run in parallel:
 | `src/schemas/stacks.schema.json`     | P7-0-1         |
 | `src/schemas/agent.schema.json`      | P7-0-1         |
 | `src/types.ts`                       | P7-0-1, P7-0-2 |
-| `src/cli-v2/types-stacks.ts`         | P7-0-1         |
-| `src/cli-v2/lib/stacks-loader.ts`    | P7-0-1         |
-| `src/cli-v2/lib/resolver.ts`         | P7-0-1         |
-| `src/cli-v2/lib/config-generator.ts` | P7-0-2         |
-| `src/cli-v2/commands/init.tsx`       | P7-0-1         |
+| `src/cli/types-stacks.ts`         | P7-0-1         |
+| `src/cli/lib/stacks-loader.ts`    | P7-0-1         |
+| `src/cli/lib/resolver.ts`         | P7-0-1         |
+| `src/cli/lib/config-generator.ts` | P7-0-2         |
+| `src/cli/commands/init.tsx`       | P7-0-1         |
 | `src/agents/**/*.yaml` (15+ files)   | P7-0-1         |
 
 ### Phase 7B Files
@@ -1413,30 +1413,30 @@ These task pairs can run in parallel:
 
 | File                                                | Task   |
 | --------------------------------------------------- | ------ |
-| `src/cli-v2/stores/wizard-store-v2.ts`              | P7-2-1 |
-| `src/cli-v2/components/wizard/category-grid.tsx`    | P7-3-1 |
-| `src/cli-v2/components/wizard/wizard-tabs.tsx`      | P7-3-2 |
-| `src/cli-v2/components/wizard/section-progress.tsx` | P7-3-3 |
-| `src/cli-v2/components/wizard/step-build.tsx`       | P7-3-4 |
-| `src/cli-v2/components/wizard/step-refine.tsx`      | P7-3-5 |
+| `src/cli/stores/wizard-store-v2.ts`              | P7-2-1 |
+| `src/cli/components/wizard/category-grid.tsx`    | P7-3-1 |
+| `src/cli/components/wizard/wizard-tabs.tsx`      | P7-3-2 |
+| `src/cli/components/wizard/section-progress.tsx` | P7-3-3 |
+| `src/cli/components/wizard/step-build.tsx`       | P7-3-4 |
+| `src/cli/components/wizard/step-refine.tsx`      | P7-3-5 |
 
 **Files to Modify:**
 
 | File                                                | Task           |
 | --------------------------------------------------- | -------------- |
 | `config/skills-matrix.yaml`                         | P7-1-1, P7-1-2 |
-| `src/cli-v2/types-matrix.ts`                        | P7-1-1         |
-| `src/cli-v2/lib/matrix-loader.ts`                   | P7-1-1         |
-| `src/cli-v2/components/wizard/wizard.tsx`           | P7-2-2         |
-| `src/cli-v2/components/wizard/step-approach.tsx`    | P7-2-2         |
-| `src/cli-v2/components/wizard/step-stack.tsx`       | P7-2-2         |
-| `src/cli-v2/components/wizard/step-confirm.tsx`     | P7-2-2         |
-| `src/cli-v2/components/wizard/selection-header.tsx` | P7-2-2         |
+| `src/cli/types-matrix.ts`                        | P7-1-1         |
+| `src/cli/lib/matrix-loader.ts`                   | P7-1-1         |
+| `src/cli/components/wizard/wizard.tsx`           | P7-2-2         |
+| `src/cli/components/wizard/step-approach.tsx`    | P7-2-2         |
+| `src/cli/components/wizard/step-stack.tsx`       | P7-2-2         |
+| `src/cli/components/wizard/step-confirm.tsx`     | P7-2-2         |
+| `src/cli/components/wizard/selection-header.tsx` | P7-2-2         |
 
 **Files to Delete:**
 
 | File                                                | Task   |
 | --------------------------------------------------- | ------ |
-| `src/cli-v2/stores/wizard-store.ts`                 | P7-2-3 |
-| `src/cli-v2/components/wizard/step-category.tsx`    | P7-2-2 |
-| `src/cli-v2/components/wizard/step-subcategory.tsx` | P7-2-2 |
+| `src/cli/stores/wizard-store.ts`                 | P7-2-3 |
+| `src/cli/components/wizard/step-category.tsx`    | P7-2-2 |
+| `src/cli/components/wizard/step-subcategory.tsx` | P7-2-2 |

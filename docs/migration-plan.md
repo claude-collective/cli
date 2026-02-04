@@ -189,8 +189,8 @@ The migration plan is comprehensive and well-structured. The following correctio
 export default defineConfig({
   entry: [
     "src/cli/index.ts", // Keep existing for backward compatibility
-    "src/cli-v2/index.ts", // New oclif entry point
-    "src/cli-v2/commands/**/*.ts", // Command classes
+    "src/cli/index.ts", // New oclif entry point
+    "src/cli/commands/**/*.ts", // Command classes
   ],
   format: ["esm"],
   dts: true,
@@ -218,7 +218,7 @@ export default defineConfig({
     "dirname": "claude-collective",
     "commands": {
       "strategy": "pattern",
-      "target": "./dist/cli-v2/commands"
+      "target": "./dist/cli/commands"
     },
     "plugins": [
       "@oclif/plugin-help",
@@ -227,7 +227,7 @@ export default defineConfig({
       "@oclif/plugin-warn-if-update-available"
     ],
     "hooks": {
-      "init": "./dist/cli-v2/hooks/init"
+      "init": "./dist/cli/hooks/init"
     },
     "topicSeparator": " "
   }
@@ -240,14 +240,14 @@ export default defineConfig({
 
 **Acceptance Criteria:**
 - [ ] oclif can discover commands
-- [ ] Help command works: `bun cli-v2 --help`
+- [ ] Help command works: `bun cli --help`
 
 ### 2.5 Create Directory Structure
 
 **Create new directories:**
 ```
 
-src/cli-v2/
+src/cli/
 ├── index.ts # oclif entry point
 ├── base-command.ts # Base command class
 ├── commands/
@@ -285,7 +285,7 @@ src/cli-v2/
 
 ### 3.1 Create Base Command Class
 
-**File:** `src/cli-v2/base-command.ts`
+**File:** `src/cli/base-command.ts`
 
 **Purpose:** Shared functionality for all commands (config loading, error handling, output formatting).
 
@@ -323,7 +323,7 @@ export abstract class BaseCommand extends Command {
 
 ### 3.2 Create oclif Entry Point
 
-**File:** `src/cli-v2/index.ts`
+**File:** `src/cli/index.ts`
 
 **Implementation Notes:**
 
@@ -368,7 +368,7 @@ await execute({ development: true, dir: import.meta.url });
 
 ### 3.3 Create Init Hook
 
-**File:** `src/cli-v2/hooks/init.ts`
+**File:** `src/cli/hooks/init.ts`
 
 **Purpose:** Load configuration before command execution.
 
@@ -396,7 +396,7 @@ await execute({ development: true, dir: import.meta.url });
 
 **Acceptance Criteria:**
 
-- [ ] All lib/\* modules importable from `cli-v2/commands/`
+- [ ] All lib/\* modules importable from `cli/commands/`
 - [ ] No runtime errors when accessing utilities
 
 ---
@@ -436,7 +436,7 @@ import pc from "picocolors";
 // ... 26 lines
 ```
 
-**Target:** `src/cli-v2/commands/list.ts`
+**Target:** `src/cli/commands/list.ts`
 
 ```typescript
 import { Command } from "@oclif/core";
@@ -469,7 +469,7 @@ export class List extends Command {
 ```
 
 **Acceptance Criteria per Command:**
-- [ ] Command runs via oclif: `bun cli-v2 <command>`
+- [ ] Command runs via oclif: `bun cli <command>`
 - [ ] Output matches existing command
 - [ ] Flags work identically
 - [ ] Exit codes match existing behavior
@@ -483,7 +483,7 @@ export class List extends Command {
 **Target:** Topic directory structure
 ```
 
-src/cli-v2/commands/config/
+src/cli/commands/config/
 ├── show.ts
 ├── get.ts
 ├── set.ts
@@ -496,7 +496,7 @@ src/cli-v2/commands/config/
 
 **Each subcommand is a separate file:**
 ```typescript
-// src/cli-v2/commands/config/show.ts
+// src/cli/commands/config/show.ts
 import { Command } from "@oclif/core";
 
 export class ConfigShow extends Command {
@@ -551,7 +551,7 @@ printTable({
 **Commands:** `build:plugins`, `build:stack`, `build:marketplace`
 
 **Current:** Separate command files
-**Target:** Topic directory `src/cli-v2/commands/build/`
+**Target:** Topic directory `src/cli/commands/build/`
 
 **Acceptance Criteria:**
 
@@ -567,7 +567,7 @@ printTable({
 
 ### 5.1 Create Zustand Wizard Store
 
-**File:** `src/cli-v2/stores/wizard-store.ts`
+**File:** `src/cli/stores/wizard-store.ts`
 
 **Migrate from:** `src/cli/lib/wizard.ts` (WizardState interface, lines 32-46)
 
@@ -661,11 +661,11 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
 ### 5.2 Create Common Ink Components
 
-**Directory:** `src/cli-v2/components/common/`
+**Directory:** `src/cli/components/common/`
 
 #### 5.2.1 Spinner Component
 
-**File:** `src/cli-v2/components/common/spinner.tsx`
+**File:** `src/cli/components/common/spinner.tsx`
 
 **Purpose:** Replace `p.spinner()` from @clack/prompts
 
@@ -681,7 +681,7 @@ export const Spinner: React.FC<{ label: string }> = ({ label }) => (
 
 #### 5.2.2 Alert/Message Components
 
-**File:** `src/cli-v2/components/common/message.tsx`
+**File:** `src/cli/components/common/message.tsx`
 
 **Purpose:** Replace `p.log.info()`, `p.log.warn()`, `p.log.error()`, `p.log.success()`
 
@@ -707,7 +707,7 @@ export const SuccessMessage: React.FC<{ children: string }> = ({ children }) => 
 
 #### 5.2.3 Confirm Component
 
-**File:** `src/cli-v2/components/common/confirm.tsx`
+**File:** `src/cli/components/common/confirm.tsx`
 
 **Purpose:** Replace `p.confirm()`
 
@@ -750,7 +750,7 @@ export const Confirm: React.FC<ConfirmProps> = ({
 
 ### 5.3 Create Selection Header Component
 
-**File:** `src/cli-v2/components/wizard/selection-header.tsx`
+**File:** `src/cli/components/wizard/selection-header.tsx`
 
 **Migrate from:** `renderSelectionsHeader()` in `wizard.ts` (lines 124-155)
 
@@ -810,7 +810,7 @@ export const SelectionHeader: React.FC<SelectionHeaderProps> = ({ matrix }) => {
 
 ### 5.4 Set Up @inkjs/ui Theme
 
-**File:** `src/cli-v2/components/themes/default.ts`
+**File:** `src/cli/components/themes/default.ts`
 
 **Purpose:** Configure colors to match existing picocolors usage
 
@@ -870,7 +870,7 @@ export const cliTheme = extendTheme(defaultTheme, {
 ### 6.1 Wizard Component Architecture
 
 ```
-src/cli-v2/components/wizard/
+src/cli/components/wizard/
 ├── wizard.tsx              # Main wizard container
 ├── step-approach.tsx       # Approach selection step
 ├── step-stack.tsx          # Stack selection step
@@ -893,7 +893,7 @@ Option 1 is recommended to match current behavior. The skill selection component
 
 ### 6.2 Main Wizard Container
 
-**File:** `src/cli-v2/components/wizard/wizard.tsx`
+**File:** `src/cli/components/wizard/wizard.tsx`
 
 **Migrate from:** `runWizard()` in `wizard.ts` (lines 512-750)
 
@@ -993,7 +993,7 @@ export const Wizard: React.FC<WizardProps> = ({
 
 #### 6.3.1 Approach Step
 
-**File:** `src/cli-v2/components/wizard/step-approach.tsx`
+**File:** `src/cli/components/wizard/step-approach.tsx`
 
 **Migrate from:** `stepApproach()` in `wizard.ts` (lines 242-286)
 
@@ -1090,13 +1090,13 @@ export const StepApproach: React.FC = () => {
 
 #### 6.3.2 Stack Selection Step
 
-**File:** `src/cli-v2/components/wizard/step-stack.tsx`
+**File:** `src/cli/components/wizard/step-stack.tsx`
 
 **Migrate from:** `stepSelectStack()` in `wizard.ts` (lines 288-302)
 
 #### 6.3.3 Category Selection Step
 
-**File:** `src/cli-v2/components/wizard/step-category.tsx`
+**File:** `src/cli/components/wizard/step-category.tsx`
 
 **Migrate from:** `stepSelectTopCategory()` in `wizard.ts` (lines 304-349)
 
@@ -1109,7 +1109,7 @@ export const StepApproach: React.FC = () => {
 
 #### 6.3.4 Subcategory Selection Step
 
-**File:** `src/cli-v2/components/wizard/step-subcategory.tsx`
+**File:** `src/cli/components/wizard/step-subcategory.tsx`
 
 **Migrate from:** `stepSelectSubcategory()` in `wizard.ts` (lines 351-416)
 
@@ -1121,7 +1121,7 @@ export const StepApproach: React.FC = () => {
 
 #### 6.3.5 Skill Selection Step
 
-**File:** `src/cli-v2/components/wizard/step-skill.tsx`
+**File:** `src/cli/components/wizard/step-skill.tsx`
 
 **Migrate from:** `stepSelectSkill()` in `wizard.ts` (lines 418-455)
 
@@ -1134,7 +1134,7 @@ export const StepApproach: React.FC = () => {
 
 #### 6.3.6 Confirmation Step
 
-**File:** `src/cli-v2/components/wizard/step-confirm.tsx`
+**File:** `src/cli/components/wizard/step-confirm.tsx`
 
 **Migrate from:** `stepConfirm()` in `wizard.ts` (lines 457-510)
 
@@ -1157,7 +1157,7 @@ These address the specific user requirements beyond @clack/prompts capabilities.
 
 #### 6.4.1 Multi-Column Skill Layout
 
-**File:** `src/cli-v2/components/wizard/skill-table.tsx`
+**File:** `src/cli/components/wizard/skill-table.tsx`
 
 **Purpose:** Display skills in a multi-column table layout.
 
@@ -1205,7 +1205,7 @@ export const SkillTable: React.FC<SkillTableProps> = ({
 
 #### 6.4.2 Horizontal Tab Navigation
 
-**File:** `src/cli-v2/components/wizard/tab-navigation.tsx`
+**File:** `src/cli/components/wizard/tab-navigation.tsx`
 
 **Purpose:** Display wizard steps as horizontal tabs.
 
@@ -1250,7 +1250,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
 
 #### 6.4.3 Persistent Search Field
 
-**File:** `src/cli-v2/components/wizard/search-input.tsx`
+**File:** `src/cli/components/wizard/search-input.tsx`
 
 **Purpose:** Always-visible search field for filtering skills.
 
@@ -1295,7 +1295,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
 #### 6.4.4 Category Skills Table
 
-**File:** `src/cli-v2/components/wizard/category-table.tsx`
+**File:** `src/cli/components/wizard/category-table.tsx`
 
 **Purpose:** Display skills by subcategory in a table format (web/api/cli with subsections).
 
@@ -1350,7 +1350,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
 
 ### 6.5 Integrate Wizard with init/edit Commands
 
-**File:** `src/cli-v2/commands/init.ts`
+**File:** `src/cli/commands/init.ts`
 
 **Migrate from:** `src/cli/commands/init.ts`
 
@@ -1448,7 +1448,7 @@ export class Init extends Command {
 
 ### 7.2 Command Testing Pattern
 
-**File:** `src/cli-v2/commands/list.test.ts`
+**File:** `src/cli/commands/list.test.ts`
 
 ```typescript
 import { runCommand } from "@oclif/test";
@@ -1485,7 +1485,7 @@ describe("list command", () => {
 
 ### 7.3 Component Testing Pattern
 
-**File:** `src/cli-v2/components/wizard/wizard.test.tsx`
+**File:** `src/cli/components/wizard/wizard.test.tsx`
 
 ```typescript
 import { render } from "ink-testing-library";
@@ -1624,11 +1624,11 @@ export default defineConfig({
 
 **Files to Delete:**
 
-- `src/cli/index.ts` (replaced by `src/cli-v2/index.ts`)
+- `src/cli/index.ts` (replaced by `src/cli/index.ts`)
 - `src/cli/commands/*.ts` (all migrated)
 - `src/cli/lib/wizard.ts` (replaced by Ink components)
 
-**Files to Keep (move to cli-v2):**
+**Files to Keep (move to cli):**
 
 - `src/cli/lib/*.ts` (except wizard.ts)
 - `src/cli/utils/*.ts`
@@ -1641,9 +1641,9 @@ export default defineConfig({
 
 ```json
 {
-  "main": "dist/cli-v2/index.js",
+  "main": "dist/cli/index.js",
   "bin": {
-    "cc": "dist/cli-v2/index.js"
+    "cc": "dist/cli/index.js"
   }
 }
 ```
@@ -1673,32 +1673,32 @@ export default defineConfig({
 
 | Command                | Current File                       | Target File                               | Interactive | Status  |
 | ---------------------- | ---------------------------------- | ----------------------------------------- | ----------- | ------- |
-| `init`                 | `commands/init.ts`                 | `cli-v2/commands/init.ts`                 | Full wizard | Pending |
-| `edit`                 | `commands/edit.ts`                 | `cli-v2/commands/edit.ts`                 | Full wizard | Pending |
-| `compile`              | `commands/compile.ts`              | `cli-v2/commands/compile.ts`              | No          | Pending |
-| `update`               | `commands/update.ts`               | `cli-v2/commands/update.ts`               | Confirm     | Pending |
-| `uninstall`            | `commands/uninstall.ts`            | `cli-v2/commands/uninstall.ts`            | Confirm     | Pending |
-| `list`                 | `commands/list.ts`                 | `cli-v2/commands/list.ts`                 | No          | Pending |
-| `search`               | `commands/search.ts`               | `cli-v2/commands/search.ts`               | No          | Pending |
-| `info`                 | `commands/info.ts`                 | `cli-v2/commands/info.ts`                 | No          | Pending |
-| `outdated`             | `commands/outdated.ts`             | `cli-v2/commands/outdated.ts`             | No          | Pending |
-| `diff`                 | `commands/diff.ts`                 | `cli-v2/commands/diff.ts`                 | No          | Pending |
-| `doctor`               | `commands/doctor.ts`               | `cli-v2/commands/doctor.ts`               | No          | Pending |
-| `validate`             | `commands/validate.ts`             | `cli-v2/commands/validate.ts`             | No          | Pending |
-| `config show`          | `commands/config.ts`               | `cli-v2/commands/config/show.ts`          | No          | Pending |
-| `config get`           | `commands/config.ts`               | `cli-v2/commands/config/get.ts`           | No          | Pending |
-| `config set`           | `commands/config.ts`               | `cli-v2/commands/config/set.ts`           | No          | Pending |
-| `config unset`         | `commands/config.ts`               | `cli-v2/commands/config/unset.ts`         | No          | Pending |
-| `config set-project`   | `commands/config.ts`               | `cli-v2/commands/config/set-project.ts`   | No          | Pending |
-| `config unset-project` | `commands/config.ts`               | `cli-v2/commands/config/unset-project.ts` | No          | Pending |
-| `config path`          | `commands/config.ts`               | `cli-v2/commands/config/path.ts`          | No          | Pending |
-| `new agent`            | `commands/new-agent.ts`            | `cli-v2/commands/new/agent.ts`            | Text input  | Pending |
-| `new skill`            | `commands/new-skill.ts`            | `cli-v2/commands/new/skill.ts`            | No          | Pending |
-| `eject`                | `commands/eject.ts`                | `cli-v2/commands/eject.ts`                | No          | Pending |
-| `version`              | `commands/version.ts`              | `cli-v2/commands/version.ts`              | No          | Pending |
-| `build:plugins`        | `commands/compile-plugins.ts`      | `cli-v2/commands/build/plugins.ts`        | No          | Pending |
-| `build:stack`          | `commands/compile-stack.ts`        | `cli-v2/commands/build/stack.ts`          | Select      | Pending |
-| `build:marketplace`    | `commands/generate-marketplace.ts` | `cli-v2/commands/build/marketplace.ts`    | No          | Pending |
+| `init`                 | `commands/init.ts`                 | `cli/commands/init.ts`                 | Full wizard | Pending |
+| `edit`                 | `commands/edit.ts`                 | `cli/commands/edit.ts`                 | Full wizard | Pending |
+| `compile`              | `commands/compile.ts`              | `cli/commands/compile.ts`              | No          | Pending |
+| `update`               | `commands/update.ts`               | `cli/commands/update.ts`               | Confirm     | Pending |
+| `uninstall`            | `commands/uninstall.ts`            | `cli/commands/uninstall.ts`            | Confirm     | Pending |
+| `list`                 | `commands/list.ts`                 | `cli/commands/list.ts`                 | No          | Pending |
+| `search`               | `commands/search.ts`               | `cli/commands/search.ts`               | No          | Pending |
+| `info`                 | `commands/info.ts`                 | `cli/commands/info.ts`                 | No          | Pending |
+| `outdated`             | `commands/outdated.ts`             | `cli/commands/outdated.ts`             | No          | Pending |
+| `diff`                 | `commands/diff.ts`                 | `cli/commands/diff.ts`                 | No          | Pending |
+| `doctor`               | `commands/doctor.ts`               | `cli/commands/doctor.ts`               | No          | Pending |
+| `validate`             | `commands/validate.ts`             | `cli/commands/validate.ts`             | No          | Pending |
+| `config show`          | `commands/config.ts`               | `cli/commands/config/show.ts`          | No          | Pending |
+| `config get`           | `commands/config.ts`               | `cli/commands/config/get.ts`           | No          | Pending |
+| `config set`           | `commands/config.ts`               | `cli/commands/config/set.ts`           | No          | Pending |
+| `config unset`         | `commands/config.ts`               | `cli/commands/config/unset.ts`         | No          | Pending |
+| `config set-project`   | `commands/config.ts`               | `cli/commands/config/set-project.ts`   | No          | Pending |
+| `config unset-project` | `commands/config.ts`               | `cli/commands/config/unset-project.ts` | No          | Pending |
+| `config path`          | `commands/config.ts`               | `cli/commands/config/path.ts`          | No          | Pending |
+| `new agent`            | `commands/new-agent.ts`            | `cli/commands/new/agent.ts`            | Text input  | Pending |
+| `new skill`            | `commands/new-skill.ts`            | `cli/commands/new/skill.ts`            | No          | Pending |
+| `eject`                | `commands/eject.ts`                | `cli/commands/eject.ts`                | No          | Pending |
+| `version`              | `commands/version.ts`              | `cli/commands/version.ts`              | No          | Pending |
+| `build:plugins`        | `commands/compile-plugins.ts`      | `cli/commands/build/plugins.ts`        | No          | Pending |
+| `build:stack`          | `commands/compile-stack.ts`        | `cli/commands/build/stack.ts`          | Select      | Pending |
+| `build:marketplace`    | `commands/generate-marketplace.ts` | `cli/commands/build/marketplace.ts`    | No          | Pending |
 
 ### Command Migration Notes
 

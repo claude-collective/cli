@@ -3,7 +3,7 @@
 **Purpose:** Validate the current CLI works correctly with nextjs-fullstack before making Phase 7A changes.
 
 **Test Directory:** `/home/vince/dev/cv-launch`
-**CLI Command:** `bun run /home/vince/dev/cli/src/cli-v2/index.ts`
+**CLI Command:** `bun run /home/vince/dev/cli/src/cli/index.ts`
 
 ---
 
@@ -52,7 +52,7 @@ rm -rf /home/vince/dev/cv-launch/.claude
 
 ```bash
 cd /home/vince/dev/cv-launch
-bun run /home/vince/dev/cli/src/cli-v2/index.ts init
+bun run /home/vince/dev/cli/src/cli/index.ts init
 ```
 
 **Interactive Steps:**
@@ -88,7 +88,7 @@ bun run /home/vince/dev/cli/src/cli-v2/index.ts init
 
 ```bash
 cd /home/vince/dev/cv-launch
-bun run /home/vince/dev/cli/src/cli-v2/index.ts list
+bun run /home/vince/dev/cli/src/cli/index.ts list
 ```
 
 **Expected Output:**
@@ -118,7 +118,7 @@ Installation: claude-collective (local mode)
 
 ```bash
 cd /home/vince/dev/cv-launch
-bun run /home/vince/dev/cli/src/cli-v2/index.ts compile
+bun run /home/vince/dev/cli/src/cli/index.ts compile
 ```
 
 **Expected Output:**
@@ -153,7 +153,7 @@ Discovered 35 local skills
 
 ```bash
 cd /home/vince/dev/cv-launch
-bun run /home/vince/dev/cli/src/cli-v2/index.ts doctor
+bun run /home/vince/dev/cli/src/cli/index.ts doctor
 ```
 
 **Expected Output:**
@@ -178,7 +178,7 @@ bun run /home/vince/dev/cli/src/cli-v2/index.ts doctor
 
 ```bash
 cd /home/vince/dev/cv-launch
-bun run /home/vince/dev/cli/src/cli-v2/index.ts eject skills
+bun run /home/vince/dev/cli/src/cli/index.ts eject skills
 ```
 
 **Expected Output:**
@@ -201,7 +201,7 @@ bun run /home/vince/dev/cli/src/cli-v2/index.ts eject skills
 
 ```bash
 cd /home/vince/dev/cv-launch
-bun run /home/vince/dev/cli/src/cli-v2/index.ts eject agents
+bun run /home/vince/dev/cli/src/cli/index.ts eject agents
 ```
 
 **Expected Output:**
@@ -224,7 +224,7 @@ bun run /home/vince/dev/cli/src/cli-v2/index.ts eject agents
 
 ```bash
 cd /home/vince/dev/cv-launch
-bun run /home/vince/dev/cli/src/cli-v2/index.ts eject templates
+bun run /home/vince/dev/cli/src/cli/index.ts eject templates
 ```
 
 **Expected Output:**
@@ -247,7 +247,7 @@ bun run /home/vince/dev/cli/src/cli-v2/index.ts eject templates
 
 ```bash
 cd /home/vince/dev/cv-launch
-bun run /home/vince/dev/cli/src/cli-v2/index.ts edit
+bun run /home/vince/dev/cli/src/cli/index.ts edit
 ```
 
 **Interactive Steps:**
@@ -274,7 +274,7 @@ bun run /home/vince/dev/cli/src/cli-v2/index.ts edit
 
 ```bash
 cd /home/vince/dev/cv-launch
-bun run /home/vince/dev/cli/src/cli-v2/index.ts uninstall
+bun run /home/vince/dev/cli/src/cli/index.ts uninstall
 ```
 
 **Interactive Steps:**
@@ -298,7 +298,7 @@ bun run /home/vince/dev/cli/src/cli-v2/index.ts uninstall
 
 ```bash
 cd /home/vince/dev/cv-launch
-bun run /home/vince/dev/cli/src/cli-v2/index.ts init
+bun run /home/vince/dev/cli/src/cli/index.ts init
 ```
 
 **Interactive Steps:**
@@ -425,7 +425,7 @@ grep -q "React" /home/vince/dev/cv-launch/.claude/agents/web-developer.md && ech
 
 # Test auto-detection
 cd /home/vince/dev/cv-launch
-bun run /home/vince/dev/cli/src/cli-v2/index.ts compile --dry-run
+bun run /home/vince/dev/cli/src/cli/index.ts compile --dry-run
 # Should show: "Local Mode Compile (auto-detected)"
 ```
 

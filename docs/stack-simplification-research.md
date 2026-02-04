@@ -36,12 +36,12 @@ Compilation Process:
 
 | File                                      | Responsibility                                                                |
 | ----------------------------------------- | ----------------------------------------------------------------------------- |
-| `src/cli-v2/lib/stack-plugin-compiler.ts` | Main compilation engine - loads stack, skills, resolves agents, writes output |
-| `src/cli-v2/lib/stack-installer.ts`       | Stack installation to Claude Code plugin directory                            |
-| `src/cli-v2/commands/build/stack.tsx`     | CLI command to build standalone stack plugins                                 |
-| `src/cli-v2/lib/loader.ts`                | `loadStack()`, `loadSkillsByIds()`, `loadAllAgents()` - file loading          |
-| `src/cli-v2/lib/resolver.ts`              | `resolveStackSkills()`, `stackToCompileConfig()` - skill-agent mapping        |
-| `src/cli-v2/lib/skill-agent-mappings.ts`  | Hardcoded `SKILL_TO_AGENTS`, `PRELOADED_SKILLS` mappings                      |
+| `src/cli/lib/stack-plugin-compiler.ts` | Main compilation engine - loads stack, skills, resolves agents, writes output |
+| `src/cli/lib/stack-installer.ts`       | Stack installation to Claude Code plugin directory                            |
+| `src/cli/commands/build/stack.tsx`     | CLI command to build standalone stack plugins                                 |
+| `src/cli/lib/loader.ts`                | `loadStack()`, `loadSkillsByIds()`, `loadAllAgents()` - file loading          |
+| `src/cli/lib/resolver.ts`              | `resolveStackSkills()`, `stackToCompileConfig()` - skill-agent mapping        |
+| `src/cli/lib/skill-agent-mappings.ts`  | Hardcoded `SKILL_TO_AGENTS`, `PRELOADED_SKILLS` mappings                      |
 | `src/types.ts`                            | `StackConfig`, `CompileConfig`, `AgentConfig` type definitions                |
 
 ### 1.2 Current Data Structures
@@ -375,7 +375,7 @@ skill_hints:
 **Core Idea:** Replace hardcoded SKILL_TO_AGENTS with bundled YAML that can be overridden.
 
 ```yaml
-# src/cli-v2/defaults/agent-mappings.yaml
+# src/cli/defaults/agent-mappings.yaml
 skill_to_agents:
   "frontend/*": [web-developer, web-reviewer, ...]
   "backend/*": [api-developer, api-reviewer, ...]
@@ -503,6 +503,6 @@ skill_to_agents:
 ## 10. References
 
 - D-03 in TODO.md: Original deferred task for stack simplification
-- `src/cli-v2/lib/stack-plugin-compiler.ts`: Current stack compilation
-- `src/cli-v2/lib/skill-agent-mappings.ts`: Hardcoded mappings
-- `src/cli-v2/commands/compile.ts`: Current compile command
+- `src/cli/lib/stack-plugin-compiler.ts`: Current stack compilation
+- `src/cli/lib/skill-agent-mappings.ts`: Hardcoded mappings
+- `src/cli/commands/compile.ts`: Current compile command
