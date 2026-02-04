@@ -263,11 +263,11 @@ react (1/8)
 
 **Status:** RESOLVED - Hybrid approach, reuse existing code
 
-`docs/stacks-as-visual-hierarchy.md` was **not fully implemented**. Phase 6 took a different path (skills in agents).
+The `stacks-as-visual-hierarchy.md` design document was **not fully implemented** and has been deleted. Phase 6 took a different path (skills in agents).
 
 **Our decision (Concern 1) is a hybrid that:**
 
-- Aligns with stacks-as-visual-hierarchy goal (stacks define skills, not agents)
+- Aligns with the original goal (stacks define skills, not agents)
 - Keeps structure (technologies by subcategory per agent, not flat list)
 - Works with the wizard UX redesign's Build grid
 
@@ -277,8 +277,6 @@ react (1/8)
 - `ResolvedStack` type - Keep, just populated differently
 - Wizard flow - Already has approach/stack/category structure
 - `skill_aliases` - Already maps technology → skill
-
-**No need to implement stacks-as-visual-hierarchy.md separately** - our Concern 1 decision supersedes it.
 
 ---
 
@@ -310,7 +308,7 @@ Migration strategy:
 3. Once all references migrated and tests pass, remove v1
 4. Rename v2 to just `wizard-store.ts`
 
-This follows the same pattern used for the `cli-v2` oclif migration - safe, incremental, testable.
+This follows the same pattern used for the `cli` oclif migration - safe, incremental, testable.
 
 ---
 

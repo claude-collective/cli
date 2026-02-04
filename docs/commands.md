@@ -67,21 +67,17 @@ cc compile --agent-source github:org/repo  # Remote agent definitions
 Export bundled content for customization.
 
 ```bash
-cc eject templates              # Export Liquid templates
-cc eject config                 # Export starter config.yaml
+cc eject agent-partials         # Export agent partial templates
 cc eject skills                 # Export skills from plugin
-cc eject agents                 # Export agent partials
 cc eject all                    # Export everything
-cc eject templates -o ./custom  # Custom output dir
-cc eject templates -f           # Force overwrite
+cc eject agent-partials -o ./custom  # Custom output dir
+cc eject agent-partials -f           # Force overwrite
 ```
 
 **Output locations:**
 
-- `templates` -> `.claude/templates/`
-- `config` -> `.claude/config.yaml`
+- `agent-partials` -> `.claude/agents/_partials/`
 - `skills` -> `.claude/skills/`
-- `agents` -> `.claude/agents/_partials/`
 
 ---
 
@@ -99,6 +95,81 @@ cc uninstall --local            # Only remove local files (not plugin)
 
 **Plugin Mode:** Calls `claude plugin uninstall`
 **Local Mode:** Removes `.claude/skills/`, `.claude/agents/`, optionally `.claude/config.yaml`
+
+---
+
+## `cc doctor`
+
+Diagnose configuration issues and installation problems.
+
+```bash
+cc doctor
+```
+
+**Checks:**
+
+- Configuration file validity
+- Plugin installation status
+- Skills directory structure
+- Agent compilation state
+
+---
+
+## `cc search`
+
+Search available skills by name, description, category, or tags.
+
+```bash
+cc search <query>
+cc search react
+cc search "state management"
+```
+
+---
+
+## `cc outdated`
+
+Check which local skills are outdated compared to source.
+
+```bash
+cc outdated
+cc outdated --source /path/to/marketplace
+```
+
+---
+
+## `cc info`
+
+Display detailed information about a specific skill.
+
+```bash
+cc info <skill-id>
+cc info web/framework/react
+```
+
+---
+
+## `cc diff`
+
+Show differences between local and source skills.
+
+```bash
+cc diff
+cc diff <skill-id>
+cc diff --source /path/to/marketplace
+```
+
+---
+
+## `cc update`
+
+Update local skills from source.
+
+```bash
+cc update
+cc update <skill-id>
+cc update --source /path/to/marketplace
+```
 
 ---
 
@@ -121,7 +192,7 @@ Build a stack into a standalone plugin.
 
 ```bash
 cc build:stack --stack nextjs-fullstack
-cc build:stack -s nextjs-fullstack -o dist/stacks
+cc build:stack --stack nextjs-fullstack -o dist/stacks
 cc build:stack --agent-source github:org/repo
 cc build:stack -v
 ```
@@ -218,6 +289,19 @@ cc new agent my-agent -r                 # Force refresh source
 - `-n, --non-interactive` - Run without user interaction
 
 **Output:** Creates agent files in `.claude/agents/_custom/<name>/`
+
+---
+
+## `cc new skill`
+
+Create a new local skill with proper structure.
+
+```bash
+cc new skill <name>
+cc new skill my-custom-skill
+```
+
+**Output:** Creates skill files in `.claude/skills/<name>/`
 
 ---
 
