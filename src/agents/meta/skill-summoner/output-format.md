@@ -5,17 +5,18 @@ Provide your skill definition in this structure:
 
 <skill_definition>
 
-## Skill: {domain}-{subcategory}-{technology} (@[author])
+## Skill: {domain}-{subcategory}-{technology}
 
-**Directory:** `.claude/skills/{domain}-{subcategory}-{technology}/`
+### Directory Location
+
+`.claude/skills/{domain}-{subcategory}-{technology}/`
 
 ### metadata.yaml
 
 ```yaml
-# yaml-language-server: $schema=../../../schemas/metadata.schema.json
+# yaml-language-server: $schema=../../schemas/metadata.schema.json
 category: [category]
-category_exclusive: true
-author: "@[author]"
+author: [@author]
 version: 1
 cli_name: [Display Name]
 cli_description: [5-6 words max]
@@ -25,19 +26,19 @@ requires: []
 compatible_with: []
 conflicts_with: []
 tags:
-  - [tag1-kebab-case]
-  - [tag2-kebab-case]
+  - [tag1]
+  - [tag2]
 ```
 
 ### SKILL.md
 
 ````markdown
 ---
-name: [name] (@[author])
+name: [Name]
 description: [One-line description]
 ---
 
-# [Technology] Patterns
+# [Name] Patterns
 
 > **Quick Guide:** [1-2 sentence summary of when/why to use this technology]
 
@@ -47,13 +48,13 @@ description: [One-line description]
 
 ## ⚠️ CRITICAL: Before Using This Skill
 
-> **All code must follow project conventions in CLAUDE.md**
+> **All code must follow project conventions in CLAUDE.md** (kebab-case, named exports, import ordering, `import type`, named constants)
 
-**(You MUST [domain-specific critical rule 1])**
+**(You MUST [domain-specific critical rule 1 - most important thing to remember])**
 
-**(You MUST [domain-specific critical rule 2])**
+**(You MUST [domain-specific critical rule 2 - second most important])**
 
-**(You MUST [domain-specific critical rule 3])**
+**(You MUST [domain-specific critical rule 3 - third most important])**
 
 </critical_requirements>
 
@@ -103,27 +104,44 @@ description: [One-line description]
 
 [Detailed explanation]
 
+[Use `#### SubsectionName` markdown headers to organize content within patterns as needed. Common subsections include: Constants, Implementation, Usage, Hooks, Configuration - but only include what's relevant for this pattern.]
+
 ```[language]
 // ✅ Good Example
-[code]
+// Complete, runnable code with explanatory comments
 ```
 
-**Why good:** [Concise reasoning]
+**Why good:** [Concise reasoning as comma-separated list - explain the consequence/benefit, not just facts]
 
 ```[language]
-// ❌ Bad Example
-[code]
+// ❌ Bad Example - Anti-pattern
+// Code showing what NOT to do
 ```
 
-**Why bad:** [Concise reasoning]
+**Why bad:** [Concise reasoning as comma-separated list - explain what breaks/fails, not just "missing X"]
+
+[OPTIONAL - only include if not obvious from context:]
+**When to use:** [Concise scenario - only when the choice isn't self-evident]
+
+**When not to use:** [Concise anti-pattern - only when helpful to clarify boundaries]
 
 ---
 
 ### Pattern 2: [Name]
 
-[Continue with all major patterns...]
+[Continue for all major patterns with embedded good/bad examples...]
 
 </patterns>
+
+---
+
+<performance>
+
+## Performance Optimization (OPTIONAL)
+
+[Include only if performance is a significant concern. Cover: optimization patterns, caching strategies, etc.]
+
+</performance>
 
 ---
 
@@ -131,9 +149,28 @@ description: [One-line description]
 
 ## Decision Framework
 
-[Decision tree or flowchart for choosing between approaches]
+[Decision tree or flow chart for choosing between approaches]
 
 </decision_framework>
+
+---
+
+<integration>
+
+## Integration Guide (OPTIONAL)
+
+[How this technology integrates with the rest of the stack. Include only when the technology has meaningful interactions with other tools/libraries in your stack.]
+
+**Works with:**
+
+- [Technology X]: [How they integrate]
+- [Technology Y]: [How they integrate]
+
+**Replaces / Conflicts with:**
+
+- [Technology Z]: [Why you wouldn't use both]
+
+</integration>
 
 ---
 
@@ -154,10 +191,12 @@ description: [One-line description]
 **Common Mistakes:**
 
 - [Mistake 1 and how to avoid]
+- [Mistake 2 and how to avoid]
 
 **Gotchas & Edge Cases:**
 
-- [Quirk or surprising behavior]
+- [Quirk or surprising behavior 1 - not necessarily wrong, just tricky]
+- [Edge case 2 that might trip people up]
 
 </red_flags>
 
@@ -167,7 +206,7 @@ description: [One-line description]
 
 ## ⚠️ CRITICAL REMINDERS
 
-> **All code must follow project conventions in CLAUDE.md**
+> **All code must follow project conventions in CLAUDE.md** (kebab-case, named exports, import ordering, `import type`, named constants)
 
 **(You MUST [domain-specific critical rule 1 - repeat from top])**
 
@@ -175,11 +214,22 @@ description: [One-line description]
 
 **(You MUST [domain-specific critical rule 3 - repeat from top])**
 
-**Failure to follow these rules will [consequence].**
+**Failure to follow these rules will [consequence - e.g., break functionality].**
 
 </critical_reminders>
 ````
 
+### reference.md (optional)
+
+```markdown
+# [Name] Quick Reference
+
+[Condensed reference for quick lookups]
+```
+
+### examples/ (optional)
+
+[List any example files needed]
 </skill_definition>
 
 <research_sources>
@@ -211,33 +261,19 @@ description: [One-line description]
 - [skill-id] - [why conflicts]
 
 **Category:** [category]
-**Category exclusive:** [true/false] - [reasoning]
 </skill_relationships>
 
 <validation>
 ## Skill Quality Checks
 
-**PROMPT_BIBLE Compliance:**
-- [ ] Has `<critical_requirements>` section at TOP
-- [ ] Has `<critical_reminders>` section at BOTTOM
-- [ ] Critical rules use `**(You MUST ...)**` format
-- [ ] Major sections wrapped in semantic XML tags
-- [ ] Has `---` horizontal rules between major patterns
-
-**Structure:**
-- [ ] Has Quick Guide summary at top
-- [ ] Has Auto-detection keywords
-- [ ] Has `<philosophy>` section
-- [ ] Has `<patterns>` section with good/bad examples
-- [ ] Has `<decision_framework>` section
-- [ ] Has `<red_flags>` section with Gotchas subsection
-
-**Quality:**
+- [ ] Skill directory follows 3-part naming: `{domain}-{subcategory}-{technology}`
+- [ ] SKILL.md exists with complete structure
+- [ ] metadata.yaml exists with required fields
 - [ ] All code examples are syntactically correct
 - [ ] Examples follow the patterns described (no contradictions)
 - [ ] Usage guidance is specific (not vague "use when needed")
+- [ ] SKILL.md has TOC if > 100 lines
+- [ ] No overlap with existing skills (checked against: [list])
 - [ ] Tags are lowercase kebab-case
-- [ ] Author handle starts with @
-- [ ] cli_description is 5-6 words max
-</validation>
-</output_format>
+      </validation>
+      </output_format>

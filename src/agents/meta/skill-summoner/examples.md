@@ -1,133 +1,116 @@
-## Example: Complete Skill Structure
+## Example: Complete Skill Package
 
-**File: `mobx.md`**
+### Directory Structure
 
-```markdown
+```
+.claude/skills/web-state-mobx/
+├── SKILL.md
+├── metadata.yaml
+└── examples/async-actions.md (optional)
+```
+
+### metadata.yaml
+
+```yaml
+category: web-state
+author: "@skill-summoner"
+version: 1
+cli_name: MobX State
+cli_description: Observable state management patterns
+usage_guidance: >-
+  Use when implementing client-side state with MobX observables,
+  computed values, or reactions. Not for server state (use React Query).
+requires: []
+compatible_with: [web-framework-react]
+conflicts_with: [web-state-redux-toolkit]
+tags: [state-management, observables]
+```
+
+### SKILL.md (condensed)
+
+````markdown
 # MobX State Management Patterns
 
 > **Quick Guide:** Use MobX for complex client state needing computed values and automatic dependency tracking.
 
----
+<critical_requirements>
 
-## CRITICAL: Before Using This Skill
+## ⚠️ CRITICAL: Before Using This Skill
 
 > **All code must follow project conventions in CLAUDE.md**
 
 **(You MUST call `makeAutoObservable(this)` in EVERY store constructor)**
-
 **(You MUST wrap ALL async state updates in `runInAction()`)**
-
 **(You MUST use React Query for server state - NOT MobX)**
+</critical_requirements>
 
----
-
-**Auto-detection:** MobX observable, makeAutoObservable, runInAction
-
-**When to use:**
-
-- Managing complex client state with computed values
-- Building stores with automatic dependency tracking
-- Class-based state management (OOP approach)
-
----
-
+<philosophy>
 ## Philosophy
+MobX: "anything that can be derived, should be derived automatically."
+**When to use:** Complex client state, computed values, class-based architecture
+**When NOT to use:** Server state (React Query), simple UI state (useState/Zustand)
+</philosophy>
 
-MobX follows "anything derivable from state should be derived automatically." Uses observables and reactions for automatic dependency tracking.
-
-**When NOT to use:**
-
-- Server state (use React Query)
-- Simple UI state (use Zustand or useState)
-
----
-
+<patterns>
 ## Core Patterns
 
-### Store with makeAutoObservable
+### Pattern 1: Store with makeAutoObservable
 
-```typescript
-import { makeAutoObservable, runInAction } from "mobx";
-
+​`typescript
+// ✅ Good Example
 const ACTIVE_STATUS = "active";
-
 class UserStore {
   users: User[] = [];
-  isLoading = false;
+  constructor() { makeAutoObservable(this); }
+  get activeUsers() { return this.users.filter((u) => u.status === ACTIVE_STATUS); }
+}
+export { UserStore };
+​`
+**Why good:** makeAutoObservable enables tracking, named constants, named exports
 
-  constructor() {
-    makeAutoObservable(this);
-  }
-
-  get activeUsers() {
-    return this.users.filter((u) => u.status === ACTIVE_STATUS);
-  }
-
+​`typescript
+// ❌ Bad Example
+class UserStore {
+  users = [];
   async fetchUsers() {
-    this.isLoading = true;
-    try {
-      const response = await apiClient.getUsers();
-      runInAction(() => {
-        this.users = response.data;
-        this.isLoading = false;
-      });
-    } catch (err) {
-      runInAction(() => {
-        this.isLoading = false;
-      });
-    }
+    const response = await apiClient.getUsers();
+    this.users = response.data; // BAD: Outside action after await
   }
 }
+export default UserStore; // BAD: Default export
+​`
+**Why bad:** State mutation after await breaks reactivity, default export violates conventions
+</patterns>
 
-export { UserStore };
-```
-
-**Why:** makeAutoObservable enables automatic tracking, runInAction prevents warnings after await
-
----
-
-## Decision Framework
-
-```
-Need client state management?
-├─ Is it server/remote data?
-│   └─ YES → React Query (not MobX)
-└─ NO → Do you need computed values?
-    ├─ YES → MobX
-    └─ NO → Zustand (simpler)
-```
-
----
+<red_flags>
 
 ## RED FLAGS
 
-- Mutating observables outside actions (breaks reactivity)
-- Not using runInAction for async updates
-- Using MobX for server state
+- ❌ Mutating observables outside actions (breaks reactivity)
+- ❌ Using MobX for server state (use React Query)
+- ⚠️ Not using `observer()` HOC on React components
+  **Gotchas:** Code after `await` is NOT part of the action - wrap in `runInAction()`
+  </red_flags>
 
-**Gotchas:**
+<critical_reminders>
 
-- Code after `await` is NOT part of the action
-- Destructuring observables breaks reactivity
+## ⚠️ CRITICAL REMINDERS
+
+**(You MUST call `makeAutoObservable(this)` in EVERY store constructor)**
+**(You MUST wrap ALL async state updates in `runInAction()`)**
+**(You MUST use React Query for server state - NOT MobX)**
+**Failure to follow these rules will break MobX reactivity.**
+</critical_reminders>
+````
 
 ---
 
-## CRITICAL REMINDERS
+## Common Mistakes
 
-**(You MUST call `makeAutoObservable(this)` in EVERY store constructor)**
-
-**(You MUST wrap ALL async state updates in `runInAction()`)**
-
-**(You MUST use React Query for server state - NOT MobX)**
-
-**Failure to follow these rules will break MobX reactivity.**
-```
-
-Key elements shown:
-
-- Single file with all content
-- Critical requirements at TOP, reminders at BOTTOM
-- References CLAUDE.md for generic conventions
-- Domain-specific rules only
-- Good/bad examples within patterns
-- Decision framework for when to use
+| Mistake            | Wrong                | Correct                               |
+| ------------------ | -------------------- | ------------------------------------- |
+| Directory location | `src/skills/mobx.md` | `.claude/skills/web-state-mobx/`      |
+| Naming pattern     | `mobx`, `state-mobx` | `web-state-mobx`                      |
+| File structure     | Single file          | Directory + SKILL.md + metadata.yaml  |
+| Auto-detection     | "state management"   | "MobX observable, makeAutoObservable" |
+| Examples           | Separate section     | Embedded in each pattern              |
