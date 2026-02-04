@@ -8,22 +8,40 @@ Source Resolution -> Skill Loading -> Matrix Merging -> Wizard Selection -> Conf
 
 ## Module Map
 
-### Commands (`src/cli-v2/commands/`)
+### Commands (`src/cli/commands/`)
 
-| Command             | File                      | Purpose                               |
-| ------------------- | ------------------------- | ------------------------------------- |
-| `init`              | `init.ts`                 | Initialize project with wizard        |
-| `edit`              | `edit.ts`                 | Modify existing installation          |
-| `compile`           | `compile.ts`              | Recompile agents from skills          |
-| `eject`             | `eject.ts`                | Export templates/config/skills/agents |
-| `uninstall`         | `uninstall.ts`            | Remove plugin or local installation   |
-| `build:plugins`     | `compile-plugins.ts`      | Build individual skill plugins        |
-| `build:stack`       | `compile-stack.ts`        | Build stack into plugin               |
-| `build:marketplace` | `generate-marketplace.ts` | Generate marketplace.json             |
-| `validate`          | `validate.ts`             | Validate YAML/plugins                 |
-| `list`              | `list.ts`                 | Show plugin info                      |
-| `config`            | `config.ts`               | Manage configuration                  |
-| `version`           | `version.ts`              | Bump plugin version                   |
+| Command             | File                       | Purpose                               |
+| ------------------- | -------------------------- | ------------------------------------- |
+| `init`              | `init.tsx`                 | Initialize project with wizard        |
+| `edit`              | `edit.tsx`                 | Modify existing installation          |
+| `compile`           | `compile.ts`               | Recompile agents from skills          |
+| `eject`             | `eject.ts`                 | Export templates/config/skills/agents |
+| `uninstall`         | `uninstall.tsx`            | Remove plugin or local installation   |
+| `update`            | `update.tsx`               | Update installed skills/agents        |
+| `build plugins`     | `build/plugins.ts`         | Build individual skill plugins        |
+| `build stack`       | `build/stack.tsx`          | Build stack into plugin               |
+| `build marketplace` | `build/marketplace.ts`     | Generate marketplace.json             |
+| `validate`          | `validate.ts`              | Validate YAML/plugins                 |
+| `list`              | `list.ts`                  | Show plugin info                      |
+| `info`              | `info.ts`                  | Display skill/agent information       |
+| `search`            | `search.ts`                | Search skills in marketplace          |
+| `outdated`          | `outdated.ts`              | Check for outdated skills             |
+| `diff`              | `diff.ts`                  | Show differences in configurations    |
+| `doctor`            | `doctor.ts`                | Diagnose installation issues          |
+| `new agent`         | `new/agent.tsx`            | Create a new custom agent             |
+| `new skill`         | `new/skill.ts`             | Create a new custom skill             |
+| `config`            | `config/index.ts`          | Configuration management (parent)     |
+| `config show`       | `config/show.ts`           | Show current configuration            |
+| `config get`        | `config/get.ts`            | Get a specific config value           |
+| `config set`        | `config/set.ts`            | Set a global config value             |
+| `config unset`      | `config/unset.ts`          | Remove a global config value          |
+| `config set-project`| `config/set-project.ts`    | Set a project-level config value      |
+| `config unset-project`| `config/unset-project.ts`| Remove a project-level config value   |
+| `config path`       | `config/path.ts`           | Show config file paths                |
+| `version`           | `version/index.ts`         | Version management (parent)           |
+| `version show`      | `version/show.ts`          | Show current version                  |
+| `version bump`      | `version/bump.ts`          | Bump plugin version                   |
+| `version set`       | `version/set.ts`           | Set specific version                  |
 
 ### Library Modules (`src/cli/lib/`)
 
@@ -46,6 +64,33 @@ Source Resolution -> Skill Loading -> Matrix Merging -> Wizard Selection -> Conf
 | `defaults-loader.ts`       | Load YAML defaults for mappings       |
 | `skill-agent-mappings.ts`  | Agent-skill mappings resolution       |
 
+## Project Structure
+
+```
+src/
+├── agents/           # Agent source files (partials)
+│   ├── developer/
+│   ├── planning/
+│   ├── researcher/
+│   ├── reviewer/
+│   └── tester/
+├── cli/              # CLI commands and utilities
+│   ├── commands/     # oclif commands
+│   ├── components/   # Ink React components
+│   ├── lib/          # Core library modules
+│   ├── stores/       # Wizard state (MobX)
+│   └── utils/        # Helper utilities
+├── schemas/          # JSON schemas for validation
+│   ├── agent.schema.json
+│   ├── plugin.schema.json
+│   └── ...
+└── types.ts          # Shared TypeScript types
+
+config/
+├── skills-matrix.yaml  # Skills configuration matrix
+└── stacks.yaml         # Stack definitions
+```
+
 ## Marketplace Structure (`claude-subagents`)
 
 ```
@@ -57,15 +102,10 @@ src/
 │   ├── meta/
 │   ├── security/
 │   └── web/
-├── stacks/           # Pre-built bundles
-│   ├── nextjs-fullstack/
-│   ├── vue-stack/
-│   └── ...
-└── schemas/          # JSON schemas
-
-.claude/
-├── agents/           # Compiled agent markdown
-└── skills/           # Deployed skills (flat)
+└── stacks/           # Pre-built bundles
+    ├── nextjs-fullstack/
+    ├── vue-stack/
+    └── ...
 ```
 
 ## Skill Structure
@@ -104,9 +144,17 @@ src/
 
 ## Local Installation Structure
 
+The CLI supports two configuration locations:
+
+### Primary: `.claude-src/` (Recommended)
+
 ```
+.claude-src/
+├── config.yaml       # Project config (primary location)
+├── agents/           # Custom agent overrides (optional)
+└── skills/           # Custom local skills (optional)
+
 .claude/
-├── config.yaml       # Project config
 ├── agents/
 │   ├── {agent}.md    # Compiled agents
 │   └── _partials/    # Ejected agent partials (optional)
@@ -120,10 +168,14 @@ src/
     └── agent.liquid
 ```
 
+### Legacy: `.claude/config.yaml`
+
+The CLI also supports configuration in `.claude/config.yaml` for backward compatibility.
+
 ## Config Resolution Precedence
 
 ```
---source flag > CC_SOURCE env > project .claude/config.yaml > global ~/.claude-collective/config.yaml > default
+--source flag > CC_SOURCE env > project .claude-src/config.yaml > project .claude/config.yaml > global ~/.claude-collective/config.yaml > default
 ```
 
 For agents_source:

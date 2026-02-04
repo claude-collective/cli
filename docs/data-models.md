@@ -32,11 +32,16 @@ interface ProjectConfig {
   hooks?: Record<string, AgentHookDefinition[]>;
   philosophy?: string;
   principles?: string[];
+
+  // Stack (resolved configuration)
+  stack?: Record<string, Record<string, string>>;
 }
 
 type SkillEntry = string | SkillAssignment;
 type AgentSkillConfig = SkillEntry[] | Record<string, SkillEntry[]>;
 ```
+
+> **Note**: The `stack:` field stores **resolved** stack configuration (agent -> subcategory -> skill ID mappings) generated during `cc init`. It is NOT a reference to a stack ID. Stack definitions themselves are loaded from `config/stacks.yaml` via `stacks-loader.ts`. See [Stack Types](#stack-types-configstacksyaml) for the source format.
 
 ### CustomAgentConfig
 
@@ -176,6 +181,234 @@ interface MarketplacePlugin {
 }
 ```
 
+## Stack Types (`config/stacks.yaml`)
+
+Stack definitions loaded from `config/stacks.yaml` via `src/cli/lib/stacks-loader.ts`.
+
+```typescript
+// From src/cli/types-stacks.ts
+interface Stack {
+  id: string; // Unique identifier (kebab-case)
+  name: string; // Human-readable name
+  description: string;
+  agents: Record<string, StackAgentConfig>; // Agent -> technology mappings
+  philosophy?: string;
+}
+
+interface StackAgentConfig {
+  [subcategoryId: string]: string; // Maps subcategory to technology alias
+}
+
+interface StacksConfig {
+  stacks: Stack[];
+}
+```
+
+**Example stack definition:**
+
+```yaml
+stacks:
+  - id: nextjs-fullstack
+    name: Next.js Fullstack
+    description: Production-ready Next.js with complete backend infrastructure
+    agents:
+      web-developer:
+        framework: react
+        styling: scss-modules
+        client-state: zustand
+        server-state: react-query
+        testing: vitest
+      api-developer:
+        api: hono
+        database: drizzle
+        auth: better-auth
+      web-reviewer:
+        reviewing: reviewing
+      cli-tester: {} # Empty config = no technology-specific skills
+    philosophy: Ship fast, iterate faster
+```
+
+## Skills Matrix (`config/skills-matrix.yaml`)
+
+The skills matrix is the central configuration for skill relationships, categories, and aliases. Loaded via `src/cli/lib/matrix-loader.ts`.
+
+Schema: `src/schemas/skills-matrix.schema.json`
+
+### Structure Overview
+
+```yaml
+version: "1.0.0"
+
+categories:
+  # Hierarchical category definitions
+  # ...
+
+relationships:
+  conflicts: [] # Mutually exclusive skills
+  discourages: [] # Soft warnings
+  recommends: [] # Suggestions
+  requires: [] # Hard dependencies
+  alternatives: [] # Interchangeable options
+
+skill_aliases:
+  # Short name -> full skill ID mappings
+  # ...
+```
+
+### Categories
+
+Categories define the hierarchical organization of skills. Top-level categories contain subcategories.
+
+```yaml
+categories:
+  # Top-level category
+  frontend:
+    id: frontend
+    name: Frontend
+    description: UI and client-side development
+    exclusive: false # Multiple skills allowed
+    required: false
+    order: 1
+    icon: "..."
+
+  # Subcategory (has parent)
+  framework:
+    id: framework
+    name: Framework
+    description: Core UI framework (React, Vue, Angular, SolidJS)
+    parent: frontend # Links to parent category
+    domain: web # Domain for agent mapping
+    exclusive: true # Only one framework allowed
+    required: true # Must select one
+    order: 1
+```
+
+**Category Fields:**
+
+| Field       | Type    | Description                                      |
+| ----------- | ------- | ------------------------------------------------ |
+| `id`        | string  | Unique identifier (kebab-case)                   |
+| `name`      | string  | Human-readable display name                      |
+| `description` | string | Brief description                                |
+| `parent`    | string  | Parent category ID (subcategories only)          |
+| `domain`    | string  | Domain for agent mapping (web, api, cli, shared) |
+| `exclusive` | boolean | If true, only one skill from category allowed    |
+| `required`  | boolean | If true, must select a skill from category       |
+| `order`     | number  | Display order in UI                              |
+| `icon`      | string  | Optional emoji/icon for UI                       |
+
+### Relationships
+
+#### Conflicts (Mutually Exclusive)
+
+Selecting one skill disables the others.
+
+```yaml
+conflicts:
+  - skills: [react, vue, angular, solidjs]
+    reason: "Core frameworks are mutually exclusive within a single application"
+
+  - skills: [drizzle, prisma]
+    reason: "Both are ORMs serving similar purposes"
+```
+
+#### Discourages (Soft Warnings)
+
+Selecting one skill shows a warning for the others but doesn't disable them.
+
+```yaml
+discourages:
+  - skills: [scss-modules, tailwind]
+    reason: "Mixing CSS paradigms causes slower builds and inconsistent patterns"
+
+  - skills: [zustand, redux-toolkit, mobx]
+    reason: "Using multiple React state libraries adds complexity"
+```
+
+#### Recommends (Suggestions)
+
+Selecting a skill highlights recommended companions.
+
+```yaml
+recommends:
+  - when: react
+    suggest: [zustand, react-query, vitest, react-hook-form]
+    reason: "Best-in-class React libraries"
+
+  - when: hono
+    suggest: [drizzle, better-auth, zod-validation]
+    reason: "Hono + Drizzle + Better Auth is a powerful combo"
+```
+
+#### Requires (Hard Dependencies)
+
+A skill cannot be selected unless its dependencies are met.
+
+```yaml
+requires:
+  - skill: zustand
+    needs: [react, react-native]
+    needs_any: true # Only one of the dependencies required
+    reason: "Our Zustand skill covers React/React Native patterns"
+
+  - skill: shadcn-ui
+    needs: [react, tailwind]
+    # needs_any defaults to false (all dependencies required)
+    reason: "shadcn/ui requires React and Tailwind"
+```
+
+#### Alternatives (Interchangeable Options)
+
+Groups skills that serve the same purpose.
+
+```yaml
+alternatives:
+  - purpose: "Frontend Framework"
+    skills: [react, vue, angular, solidjs]
+
+  - purpose: "Database ORM"
+    skills: [drizzle, prisma]
+
+  - purpose: "E2E Testing"
+    skills: [playwright-e2e, cypress-e2e]
+```
+
+### Skill Aliases
+
+Maps short technology names to normalized full skill IDs.
+
+```yaml
+skill_aliases:
+  # Frameworks
+  react: "web-framework-react"
+  vue: "web-framework-vue-composition-api"
+  angular: "web-framework-angular-standalone"
+
+  # Styling
+  scss-modules: "web-styling-scss-modules"
+  tailwind: "web-styling-tailwind" # Note: skill not yet created
+
+  # State management
+  zustand: "web-state-zustand"
+  redux-toolkit: "web-state-redux-toolkit"
+
+  # Backend
+  hono: "api-framework-hono"
+  drizzle: "api-database-drizzle"
+  prisma: "api-database-prisma"
+
+  # CLI
+  commander: "cli-framework-cli-commander"
+  clack: "cli-prompts-cli-clack"
+```
+
+**Alias Normalization Rules:**
+
+- No author suffix (author is metadata only)
+- Slashes replaced with dashes
+- Plus signs replaced with dashes
+- All lowercase
+
 ## Skill Metadata (`metadata.yaml`)
 
 Schema: `claude-subagents/src/schemas/metadata.schema.json`
@@ -277,6 +510,15 @@ hooks:
       hooks:
         - type: prompt
           prompt: "Verify the write succeeded"
+
+# Resolved stack configuration (generated by cc init)
+stack:
+  web-developer:
+    framework: web-framework-react
+    styling: web-styling-scss-modules
+  api-developer:
+    api: api-framework-hono
+    database: api-database-drizzle
 ```
 
 ## YAML Defaults
@@ -312,6 +554,7 @@ subcategory_aliases:
 | Schema            | Location                                                     |
 | ----------------- | ------------------------------------------------------------ |
 | skills-matrix     | `src/schemas/skills-matrix.schema.json`                      |
+| stacks            | `src/schemas/stacks.schema.json`                             |
 | plugin manifest   | `src/schemas/plugin.schema.json`                             |
 | marketplace       | `src/schemas/marketplace.schema.json`                        |
 | agent definition  | `src/schemas/agent.schema.json`                              |

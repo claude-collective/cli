@@ -32,12 +32,26 @@ requires node 18+ and [Claude Code](https://docs.anthropic.com/en/docs/claude-co
 ## commands
 
 ```bash
-cc init          # interactive setup - pick skills, configure agents
-cc edit          # modify your skill selection
-cc compile       # recompile agents after changes
-cc list          # show what's installed
-cc config        # manage settings
-cc validate      # check your setup is correct
+cc init              # interactive setup - pick skills, configure agents
+cc edit              # modify your skill selection
+cc compile           # recompile agents after changes
+cc list              # show what's installed
+cc config            # manage settings
+cc validate          # check your setup is correct
+cc new skill         # create a custom skill
+cc new agent         # create a custom agent
+cc update            # update local skills from source
+cc uninstall         # remove Claude Collective from project
+cc doctor            # diagnose setup issues
+cc eject             # eject skills/agent partials for customization
+cc build marketplace # generate marketplace.json
+cc build plugins     # build plugins
+cc build stack       # build stacks
+cc version           # show/manage versions
+cc diff              # show skill differences
+cc search            # search for skills
+cc info              # show skill information
+cc outdated          # check outdated skills
 ```
 
 ## how skills work
@@ -76,20 +90,23 @@ each stack includes agents like `web-developer`, `api-reviewer`, `web-tester` - 
 
 ```bash
 cc init
-# installs to ~/.claude/plugins/claude-collective/
+# interactive wizard lets you choose: plugin mode, local mode, or marketplace setup
+# plugin mode installs to ./.claude/plugins/claude-collective/
 ```
 
 **locally in your project** (for team sharing):
 
 ```bash
-cc init --local
+cc init
+# select "local" mode in the wizard
 # installs to ./.claude/ in your repo
 ```
 
 **your own marketplace** (for orgs):
 
 ```bash
-cc init --marketplace
+cc init
+# select "marketplace" mode in the wizard
 # scaffolds a marketplace you can customize and host
 ```
 
