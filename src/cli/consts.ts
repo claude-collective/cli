@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // After tsup build, dist/ is flat, so we go up one level from dist/ to get CLI root
-// In development (src/cli-v2/consts.ts), we go up two levels
+// In development (src/cli/consts.ts), we go up two levels
 const isInDist = __dirname.includes("/dist");
 export const CLI_ROOT = isInDist
   ? path.resolve(__dirname, "..")

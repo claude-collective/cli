@@ -63,7 +63,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "cc": "node dist/index.js",
-    "cc:dev": "bun src/cli-v2/index.ts",
+    "cc:dev": "bun src/cli/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

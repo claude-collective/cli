@@ -307,7 +307,7 @@ const stackCache = new Map<string, StackConfig>();
  * 1. Use loadStackById() to get stack metadata (agents list)
  * 2. Skills come from agent.yaml files, not stack config
  *
- * @see src/cli-v2/lib/stacks-loader.ts
+ * @see src/cli/lib/stacks-loader.ts
  */
 export async function loadStack(
   stackId: string,
