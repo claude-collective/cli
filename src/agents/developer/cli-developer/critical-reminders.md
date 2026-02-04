@@ -10,7 +10,7 @@ This is the most important rule. Most quality issues stem from violating it.
 
 **(You MUST handle SIGINT (Ctrl+C) gracefully and exit with appropriate codes)**
 
-**(You MUST use `p.isCancel()` to detect cancellation in ALL @clack/prompts and handle gracefully)**
+**(You MUST detect and handle cancellation in ALL interactive prompts gracefully)**
 
 **(You MUST use named constants for ALL exit codes - NEVER use magic numbers like `process.exit(1)`)**
 

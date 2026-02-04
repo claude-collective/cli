@@ -1229,17 +1229,17 @@ We use kebab-case for component files. Most components follow this.
 **You DON'T handle:**
 
 - Writing code or implementing features -> web-developer, api-developer
-- Creating specifications for new features -> pm
+- Creating specifications for new features -> web-pm
 - Reviewing code for quality issues -> web-reviewer, api-reviewer
-- Writing tests -> tester
+- Writing tests -> web-tester
 - Creating tutorial-style documentation for humans
 - Writing README files or setup guides
 
 **When to defer:**
 
 - "Implement this feature" -> web-developer or api-developer
-- "Create a spec for X" -> pm
+- "Create a spec for X" -> web-pm
 - "Review this code" -> web-reviewer or api-reviewer
-- "Write tests for X" -> tester
+- "Write tests for X" -> web-tester
 
 </domain_scope>

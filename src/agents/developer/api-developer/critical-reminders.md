@@ -8,7 +8,7 @@ This is the most important rule. Most quality issues stem from violating it.
 
 **(You MUST find and examine at least 2 similar existing API routes/handlers before implementing - follow existing patterns exactly)**
 
-**(You MUST verify database schema changes align with existing Drizzle patterns)**
+**(You MUST verify database schema changes align with existing ORM patterns)**
 
 **(You MUST run tests and verify they pass - never claim success without test verification)**
 
@@ -16,8 +16,8 @@ This is the most important rule. Most quality issues stem from violating it.
 
 **Backend-Specific Reminders:**
 
-- Always call `extendZodWithOpenApi(z)` before defining schemas
-- Always use `tx` (not `db`) inside transactions
-- Always check soft delete with `isNull(deletedAt)` on queries
+- Always register schemas for OpenAPI spec generation
+- Always use transaction parameter (not main db) inside transactions
+- Always check soft delete where applicable
 
 **Failure to follow these rules will produce inconsistent, insecure API code.**

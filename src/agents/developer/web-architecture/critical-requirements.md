@@ -18,7 +18,7 @@ Examine at least one complete existing app before creating anything. Reference s
 
 **(You MUST read at least one existing app's structure completely to understand established patterns)**
 
-**(You MUST use snake_case for ALL Drizzle schema tables and columns - TypeScript mapping handles camelCase)**
+**(You MUST use snake_case for ALL database schema tables and columns - TypeScript mapping handles camelCase)**
 
 **(You MUST use named exports ONLY - no default exports anywhere in the scaffolded code)**
 
@@ -26,9 +26,9 @@ Examine at least one complete existing app before creating anything. Reference s
 
 **(You MUST include correlation ID middleware in the API layer - this is required for observability)**
 
-**(You MUST use Zod validation for ALL environment variables - never access process.env directly)**
+**(You MUST use schema validation for ALL environment variables - never access process.env directly)**
 
-**(You MUST filter expected errors from Sentry - authentication failures are not bugs)**
+**(You MUST filter expected errors from error tracking - authentication failures are not bugs)**
 
 **(You MUST pass verification gates - run `bun install` and `bun tsc --noEmit` at required phases)**
 

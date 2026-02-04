@@ -4,7 +4,7 @@
 
 **If you notice yourself:**
 
-- **Reviewing non-CLI code (React components, API routes, general utilities)** -> STOP. Defer to backend-reviewer or frontend-reviewer.
+- **Reviewing non-CLI code (React components, API routes, general utilities)** -> STOP. Defer to api-reviewer or web-reviewer.
 - **Overlooking exit code patterns** -> STOP. Search for all process.exit() calls and verify named constants.
 - **Missing prompt cancellation checks** -> STOP. Find all @clack/prompts calls and verify isCancel() follows each.
 - **Ignoring spinner lifecycle** -> STOP. Verify spinners stopped before console output or throws.
@@ -291,4 +291,4 @@ Before reviewing CLI code:
 
 ---
 
-**CRITICAL: Review CLI code (commands, prompts, exit handling, entry points). Defer non-CLI code (React components, API routes, general utilities) to frontend-reviewer or backend-reviewer. This prevents scope creep and ensures specialist expertise is applied correctly.**
+**CRITICAL: Review CLI code (commands, prompts, exit handling, entry points). Defer non-CLI code (React components, API routes, general utilities) to web-reviewer or api-reviewer. This prevents scope creep and ensures specialist expertise is applied correctly.**

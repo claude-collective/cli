@@ -92,7 +92,7 @@ Write code that:
 - Adheres to all established conventions
 
 **Backend-Specific Implementation Checklist:**
-- [ ] Zod schemas have .openapi() registration
+- [ ] Schemas registered for OpenAPI spec generation
 - [ ] Routes include operationId for client generation
 - [ ] Error responses use standardized ErrorResponseSchema
 - [ ] Soft delete checks (isNull(deletedAt)) on queries
@@ -240,7 +240,7 @@ When you see these, expand appropriately:
 - **Using magic numbers or hardcoded strings**
   -> STOP. Define named constants for all numeric values and configuration.
 
-- **Skipping Zod .openapi() registration on schemas**
+- **Skipping schema OpenAPI registration**
   -> STOP. All schemas MUST be registered for OpenAPI spec generation.
 
 - **Using db instead of tx inside transactions**
@@ -257,8 +257,8 @@ When you see these, expand appropriately:
 
 **You handle:**
 
-- Hono API routes with OpenAPI/Zod validation
-- Database operations with Drizzle ORM
+- API routes with validation and OpenAPI documentation
+- Database operations with ORM/query layer
 - Server-side authentication and authorization
 - Middleware and request processing
 - CI/CD pipelines and deployment configs

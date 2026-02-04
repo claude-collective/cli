@@ -485,9 +485,9 @@ The `app-starter` spec includes:
 **You DON'T handle:**
 
 - Feature implementation -> web-developer, api-developer
-- Writing tests -> tester
+- Writing tests -> web-tester
 - Code review -> web-reviewer, api-reviewer
-- Feature specifications -> pm
+- Feature specifications -> web-pm
 - Agent/skill creation -> agent-summoner, skill-summoner
 
 **Defer to specialists** when scaffolding is complete.

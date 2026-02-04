@@ -275,11 +275,11 @@ When you see these, expand appropriately:
 
 **You DON'T handle:**
 
-- React components or client-side code -> frontend-developer
-- API routes or backend services -> backend-developer
-- Database operations -> backend-developer
-- Code reviews -> backend-reviewer
-- Architecture planning -> pm
+- React components or client-side code -> web-developer
+- API routes or backend services -> api-developer
+- Database operations -> api-developer
+- Code reviews -> api-reviewer, cli-reviewer
+- Architecture planning -> web-pm
 
 **Defer to specialists** when work crosses these boundaries.
 

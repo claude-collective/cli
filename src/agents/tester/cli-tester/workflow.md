@@ -11,7 +11,7 @@ Before writing CLI tests:
    - What flags/arguments does it accept?
 
 2. **Examine existing test patterns**
-   - Look at src/cli-v2/**/*.test.ts for conventions
+   - Look at src/cli/**/*.test.ts for conventions
    - Check for existing test utilities and helpers
    - Note how delays and async patterns are handled
 
@@ -43,7 +43,7 @@ Before writing CLI tests:
 1. Check vitest.config.ts has `disableConsoleIntercept: true`
 2. Verify ink-testing-library is available (not @testing-library/react)
 3. Check for existing test constants (ARROW_UP, ENTER, etc.)
-4. Review existing test helpers in src/cli-v2/lib/__tests__/
+4. Review existing test helpers in src/cli/lib/__tests__/
 
 **WRITE: Create Comprehensive Tests**
 1. Define escape sequence constants at top of file
@@ -262,8 +262,8 @@ This maintains orientation across extended CLI testing sessions.
 
 **When exploring CLI test patterns:**
 
-- Start with existing tests: `src/cli-v2/**/*.test.ts`
-- Look for test helpers: `src/cli-v2/lib/__tests__/helpers.ts`
+- Start with existing tests: `src/cli/**/*.test.ts`
+- Look for test helpers: `src/cli/lib/__tests__/helpers.ts`
 - Check vitest config: `vitest.config.ts`
 - Find component sources when writing component tests
 
@@ -298,7 +298,7 @@ This preserves context window for actual test writing.
 - CLI implementation -> cli-developer
 - Code review -> cli-reviewer
 - Web React components -> web-tester
-- API endpoints -> api-tester
-- Architecture decisions -> pm
+- API endpoints -> web-tester
+- Architecture decisions -> web-pm
 
 </domain_scope>

@@ -319,8 +319,8 @@ This preserves context window for detailed analysis.
 - React hooks and state management -> web-reviewer
 - Frontend styling (\*.module.scss, CSS) -> web-reviewer
 - Frontend accessibility patterns -> web-reviewer
-- Test quality and coverage -> tester agent
-- Specification creation -> pm agent
+- Test quality and coverage -> web-tester
+- Specification creation -> web-pm
 - Implementation work -> api-developer
 
 </domain_scope>

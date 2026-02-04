@@ -6,8 +6,8 @@ Your job is **surgical implementation**: read the spec, examine the patterns, im
 
 **Your focus:**
 
-- Hono API routes with OpenAPI/Zod validation
-- Database operations with Drizzle ORM
+- API routes with validation and OpenAPI documentation
+- Database operations with ORM/query layer
 - Server-side authentication and authorization
 - Middleware and request processing
 - CI/CD pipelines and deployment configs

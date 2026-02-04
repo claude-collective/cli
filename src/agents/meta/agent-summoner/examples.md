@@ -24,8 +24,9 @@ Your job is **surgical implementation**: read the spec, examine the patterns, im
 
 **Defer to specialists for:**
 
-- React components → web-developer
-- API routes → api-developer
+- React components -> web-developer
+- API routes -> api-developer
+- CLI commands -> cli-developer
 ```
 
 ### Step 3: Create workflow.md
@@ -85,8 +86,9 @@ Your job is **surgical implementation**: read the spec, examine the patterns, im
 
 **You DON'T handle:**
 
-- React components → web-developer
-- API routes → api-developer
+- React components -> web-developer
+- API routes -> api-developer
+- CLI commands -> cli-developer
   </domain_scope>
 ```
 
@@ -118,57 +120,29 @@ Your job is **surgical implementation**: read the spec, examine the patterns, im
 
 ### Step 6: Add to config.yaml
 
+Add the agent to `.claude-src/config.yaml`:
+
 ```yaml
 agents:
+  - example-developer
+
+stack:
   example-developer:
-    name: example-developer
-    title: Example Developer Agent
-    description: Implements example features from detailed specs
-    model: opus
-    tools:
-      - Read
-      - Write
-      - Edit
-      - Grep
-      - Glob
-      - Bash
-    # Output format: create output-format.md in agent directory (or use category fallback)
-    skills:
-      precompiled: []
-      dynamic: []
+    # Add skill mappings as needed
 ```
 
 ### Step 7: Compile and Verify
 
 ```bash
-# Compile all agents for current stack
-bunx compile -s <stack-name>
+# Compile all agents
+bunx compile
 
 # Verify output
 AGENT="example-developer"
-echo "=== Verification for $AGENT ==="
-grep -c "<role>" .claude/agents/$AGENT.md && echo "✅ <role>"
-grep -c "<critical_requirements>" .claude/agents/$AGENT.md && echo "✅ <critical_requirements>"
-grep -c "<critical_reminders>" .claude/agents/$AGENT.md && echo "✅ <critical_reminders>"
-grep -q "DISPLAY ALL 5 CORE PRINCIPLES" .claude/agents/$AGENT.md && echo "✅ Self-reminder loop closure"
-grep -q "ALWAYS RE-READ FILES AFTER EDITING" .claude/agents/$AGENT.md && echo "✅ Write verification line"
+grep -c "<role>" .claude/agents/$AGENT.md && echo "[check] <role>"
+grep -c "<critical_requirements>" .claude/agents/$AGENT.md && echo "[check] <critical_requirements>"
+grep -c "<critical_reminders>" .claude/agents/$AGENT.md && echo "[check] <critical_reminders>"
 ```
-
-**Expected final lines in compiled output (template adds automatically):**
-
-```markdown
-**DISPLAY ALL 5 CORE PRINCIPLES AT THE START OF EVERY RESPONSE TO MAINTAIN INSTRUCTION CONTINUITY.**
-
-**ALWAYS RE-READ FILES AFTER EDITING TO VERIFY CHANGES WERE WRITTEN. NEVER REPORT SUCCESS WITHOUT VERIFICATION.**
-```
-
-**Note on core_prompts configuration:**
-
-- Implementation agents (developers, testers) should use `core_prompts: developer` which includes anti-over-engineering
-- Review agents should use `core_prompts: reviewer`
-- PM/architect agents should use `core_prompts: pm`
-
-Check `src/stacks/{stack}/config.yaml` for available `core_prompt_sets`.
 
 ---
 
@@ -180,34 +154,32 @@ Here's what a complete improvement proposal looks like:
 <improvement_analysis>
 **Agent:** example-agent
 **Source Directory:** src/agents/example-agent/
-**Config:** src/stacks/{stack}/config.yaml
-**Current State:** Needs work - missing critical techniques, tonality issues
+**Config:** .claude-src/config.yaml
+**Current State:** Needs work - missing critical techniques
 </improvement_analysis>
 
 <technique_audit>
 | Technique | Present? | Correct? | Notes |
 |-----------|----------|----------|-------|
 | Self-reminder loop | ✅ | ✅ | Template auto-adds final reminder lines |
-| Investigation-first | ✅ | ✅ | Properly configured via core_prompts |
+| Investigation-first | ✅ | ✅ | Included in template |
 | Expansion modifiers | ❌ | N/A | Missing in intro.md |
 | Self-correction triggers | ❌ | N/A | Missing in workflow.md |
 | Post-action reflection | ❌ | N/A | Missing in workflow.md |
-| Anti-over-engineering | ✅ | ✅ | Included via core_prompts: developer |
+| Anti-over-engineering | ✅ | ✅ | Included in template |
 </technique_audit>
 
 <structure_audit>
 **Source Files Present:**
-- ✅ intro.md
-- ✅ workflow.md
-- ✅ critical-requirements.md
-- ✅ critical-reminders.md
-- ❌ examples.md (optional but recommended)
+- [check] intro.md
+- [check] workflow.md
+- [check] critical-requirements.md
+- [check] critical-reminders.md
+- [missing] examples.md (optional)
 
 **Config.yaml Entry:**
-- ✅ Has name, title, description
-- ✅ Has core_prompts: developer
-- ✅ Has ending_prompts
-- ✅ Has output_format
+- [check] Agent in agents list
+- [check] Stack mapping configured
 </structure_audit>
 
 <tonality_audit>
@@ -324,7 +296,7 @@ Follow the pattern
 
 **Deferred: Low impact, high effort**
 
-- Finding #4: Tighten sentence length throughout (22 → 15 words average) - Would require restructuring multiple sections
+- Finding #4: Tighten sentence length throughout
 
 </improvement_proposal>
 
@@ -334,9 +306,8 @@ Follow the pattern
 - Model capability: Unlocked (expansion modifiers)
 - Mid-session drift: Reduced (self-correction triggers)
 - Long-horizon reasoning: Improved (post-action reflection)
-- Instruction clarity: Improved (tonality fixes)
 
-**Recommendation:** Apply all priority 1-3 changes, then recompile with `bunx compile -s <stack-name>`
+**Recommendation:** Apply all priority 1-3 changes, then recompile with `bunx compile`
 </summary>
 ````
 

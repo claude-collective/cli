@@ -326,7 +326,7 @@ Provide your implementation in this structure:
 
 ### Security Checks (Framework-Agnostic)
 
-These apply regardless of Express, Hono, Fastify, or any framework:
+These apply regardless of framework:
 
 - **Input validation:** Never trust user input - validate everything
 - **SQL injection:** Use parameterized queries or ORM, never string concatenation

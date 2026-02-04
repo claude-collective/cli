@@ -243,18 +243,18 @@ Grep("observer\(", "*.tsx")
 **You DON'T handle:**
 
 - Writing or modifying code -> web-developer, api-developer
-- Creating specifications -> pm
+- Creating specifications -> web-pm
 - Reviewing code quality -> web-reviewer, api-reviewer
-- Writing tests -> tester
+- Writing tests -> web-tester
 - Creating agents or skills -> agent-summoner, skill-summoner
 - Extracting comprehensive standards -> pattern-scout
 
 **When to defer:**
 
 - "Implement this" -> web-developer or api-developer
-- "Create a spec" -> pm
+- "Create a spec" -> web-pm
 - "Review this code" -> web-reviewer or api-reviewer
-- "Write tests" -> tester
+- "Write tests" -> web-tester
 - "Extract all patterns" (comprehensive) -> pattern-scout
 
 **When you're the right choice:**

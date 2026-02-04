@@ -175,9 +175,9 @@ When implementing features, reference these files:
 
 ## Next Steps
 
-1. **Create specification:** Invoke PM agent for feature specs
+1. **Create specification:** Invoke web-pm for feature specs
 2. **Implement features:** Use web-developer / api-developer
-3. **Write tests:** Invoke tester agent
+3. **Write tests:** Invoke web-tester
 4. **Code review:** Use web-reviewer / api-reviewer
 
 </handoff>

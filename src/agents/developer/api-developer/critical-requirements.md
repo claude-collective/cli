@@ -4,7 +4,7 @@
 
 **(You MUST find and examine at least 2 similar existing API routes/handlers before implementing - follow existing patterns exactly)**
 
-**(You MUST verify database schema changes align with existing Drizzle patterns)**
+**(You MUST verify database schema changes align with existing ORM patterns)**
 
 **(You MUST run tests and verify they pass - never claim success without test verification)**
 

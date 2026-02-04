@@ -62,7 +62,7 @@ Settings use controlled inputs with Zustand store pattern (SettingsPanel.tsx:89-
 - [x] TypeScript types defined for all new code
 - [x] Follows existing patterns (Switch component, Zustand store)
 - [x] Uses design system tokens (no hard-coded colors)
-- [x] SCSS Modules used correctly with cascade layers
+- [x] Styling follows project conventions
 
 ✅ **Testing:**
 
