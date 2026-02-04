@@ -6,23 +6,24 @@
 
 ## Quick Navigation
 
-| Need to...                                 | Read This                                                    |
-| ------------------------------------------ | ------------------------------------------------------------ |
-| **Understand new simplified architecture** | [SIMPLIFIED-PLUGIN-ARCHITECTURE.md](#architecture-research)  |
-| Understand how agents/skills compile       | [CLAUDE_ARCHITECTURE_BIBLE.md](#1-claude-architecture-bible) |
-| Write effective prompts                    | [PROMPT_BIBLE.md](#2-prompt-bible)                           |
-| Create AI-optimized documentation          | [DOCUMENTATION_BIBLE.md](#3-documentation-bible)             |
-| Design atomic, portable skills             | [SKILL-ATOMICITY-BIBLE.md](#4-skill-atomicity-bible)         |
-| **Build or extend the CLI**                | [CLI Documentation](#cli-documentation)                      |
-| Create or distribute plugins               | [PLUGIN-DEVELOPMENT.md](#5-plugin-development)               |
-| See all CLI commands                       | [CLI-REFERENCE.md](#cli-reference)                           |
-| Find core principles used by all agents    | [Core Principles](#core-principles-embedded-in-all-agents)   |
-| See compiled agent prompts                 | [Agent Definitions](#agent-definitions)                      |
-| Review architecture research & decisions   | [Research & Findings](#research--findings)                   |
+| Need to...                                 | Read This                                                      |
+| ------------------------------------------ | -------------------------------------------------------------- |
+| **Understand new simplified architecture** | [SIMPLIFIED-PLUGIN-ARCHITECTURE.md](#architecture-research)    |
+| Understand how agents/skills compile       | [CLAUDE_ARCHITECTURE_BIBLE.md](#1-claude-architecture-bible)   |
+| Write effective prompts                    | [PROMPT_BIBLE.md](#2-prompt-bible)                             |
+| Create AI-optimized documentation          | [DOCUMENTATION_BIBLE.md](#3-documentation-bible)               |
+| Design atomic, portable skills             | [SKILL-ATOMICITY-BIBLE.md](#4-skill-atomicity-bible)           |
+| **Create or review agents**                | [AGENT-COMPLIANCE-BIBLE.md](#5-agent-compliance-bible)         |
+| **Build or extend the CLI**                | [CLI Documentation](#cli-documentation)                        |
+| Create or distribute plugins               | [PLUGIN-DEVELOPMENT.md](#plugin-system)                        |
+| See all CLI commands                       | [CLI-REFERENCE.md](#cli-reference)                             |
+| Find core principles used by all agents    | [Core Principles](#core-principles-embedded-in-all-agents)     |
+| See compiled agent prompts                 | [Agent Definitions](#agent-definitions)                        |
+| Review architecture research & decisions   | [Research & Findings](#research--findings)                     |
 
 ---
 
-## The Four Bibles
+## The Five Bibles
 
 ### 1. CLAUDE_ARCHITECTURE_BIBLE
 
@@ -103,6 +104,31 @@ The core principle: A skill should ONLY discuss its own domain.
 - Bridge pattern exception (when cross-domain is allowed)
 
 **Use when:** Creating or reviewing skills, ensuring portability across tech stacks.
+
+---
+
+### 5. AGENT-COMPLIANCE-BIBLE
+
+**Path:** `docs/bibles/AGENT-COMPLIANCE-BIBLE.md`
+
+The core principle: Every agent must be self-contained, investigation-first, and anti-over-engineering.
+
+**Covers:**
+
+- Required file structure (7 files: agent.yaml, intro.md, workflow.md, etc.)
+- YAML configuration requirements
+- Critical files (requirements/reminders) with emphatic repetition
+- Workflow structure with XML semantic tags
+- Output format and examples quality
+- Investigation-first enforcement (9+ touchpoints)
+- Anti-over-engineering enforcement (13+ prohibitions)
+- Domain scope and agent boundaries
+- Agent integration documentation
+- Tonality, verbosity, and extended reasoning rules
+- PROMPT_BIBLE technique compliance
+- Quality gate checklist
+
+**Use when:** Creating or reviewing agents, ensuring compliance with system standards.
 
 ---
 
