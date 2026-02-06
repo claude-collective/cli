@@ -17,6 +17,16 @@ const LOCAL_AUTHOR = "@local";
 interface LocalRawMetadata {
   cli_name: string;
   cli_description?: string;
+  /** Original skill category from source (e.g., "framework", "styling", "api") */
+  category?: string;
+  category_exclusive?: boolean;
+  usage_guidance?: string;
+  tags?: string[];
+  compatible_with?: string[];
+  conflicts_with?: string[];
+  requires?: string[];
+  requires_setup?: string[];
+  provides_setup_for?: string[];
 }
 
 export interface LocalSkillDiscoveryResult {
@@ -93,21 +103,25 @@ async function extractLocalSkill(
   const relativePath = `${LOCAL_SKILLS_PATH}/${skillDirName}/`;
   const skillId = frontmatter.name;
 
+  // Use category from metadata.yaml if available (preserved from source skill),
+  // otherwise fall back to generic "local" category
+  const category = metadata.category || LOCAL_CATEGORY;
+
   const extracted: ExtractedSkillMetadata = {
     id: skillId,
     directoryPath: skillDirName,
     name: `${metadata.cli_name} ${LOCAL_AUTHOR}`,
     description: metadata.cli_description || frontmatter.description,
-    usageGuidance: undefined,
-    category: LOCAL_CATEGORY,
-    categoryExclusive: false,
+    usageGuidance: metadata.usage_guidance,
+    category,
+    categoryExclusive: metadata.category_exclusive ?? false,
     author: LOCAL_AUTHOR,
-    tags: [],
-    compatibleWith: [],
-    conflictsWith: [],
-    requires: [],
-    requiresSetup: [],
-    providesSetupFor: [],
+    tags: metadata.tags ?? [],
+    compatibleWith: metadata.compatible_with ?? [],
+    conflictsWith: metadata.conflicts_with ?? [],
+    requires: metadata.requires ?? [],
+    requiresSetup: metadata.requires_setup ?? [],
+    providesSetupFor: metadata.provides_setup_for ?? [],
     path: relativePath,
     local: true,
     localPath: relativePath,
