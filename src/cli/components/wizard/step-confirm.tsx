@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
 import type { MergedSkillsMatrix } from "../../types-matrix.js";
+import { WizardFooter } from "./wizard-footer.js";
 
 // =============================================================================
 // Types
@@ -112,7 +113,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
       </Box>
 
       <Text> </Text>
-      <Text dimColor>ENTER confirm ESC back</Text>
+      <WizardFooter navigation="ENTER confirm" action="ESC back" />
     </Box>
   );
 };
