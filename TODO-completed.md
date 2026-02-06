@@ -454,3 +454,30 @@ Research findings: Converting Bibles to skills is **technically possible but str
 - [x] Document 3-part naming pattern `{domain}-{subcategory}-{technology}`
 - [x] Document examples/ folder structure
 - [x] Add TOC guidance to skill creation workflow
+
+### T1: Review Agent Definitions for Alignment [DONE]
+
+- [x] Comb through all agent definitions in `src/agents/`
+- [x] Verify YAML configs match documented schema
+- [x] Fix outdated references (e.g., `tester-agent` → `web-tester/cli-tester`)
+  - Fixed `pattern-critique` → `web-pattern-critique` in pattern-scout/workflow.md and web-pattern-critique/workflow.md
+  - Fixed `web-pattern-scout` → `pattern-scout` in agent-mappings.yaml and skill-agent-mappings.ts
+- [x] Add missing agents to documentation (e.g., `cli-migrator`)
+  - cli-migrator already exists in src/agents/migration/cli-migrator/ and stacks.yaml
+- [x] Update agent descriptions that reference non-existent agents
+
+### T2: Generalize Agent Specificity [DONE]
+
+- [x] Review agents for over-specific technology references
+- [x] Frontend agents should mention "styling" not "CSS/SCSS"
+  - Updated web-researcher intro.md and agent.yaml
+  - Updated web-reviewer intro.md and agent.yaml
+  - Updated web-pattern-critique intro.md and agent.yaml
+- [x] Backend agents should mention "database" not specific ORMs
+  - Updated api-researcher intro.md (removed Hono, Drizzle, Better Auth, etc.)
+  - Updated api-reviewer intro.md
+- [x] Ensure agents focus on patterns, not implementations
+  - Generalized all agent.yaml descriptions to use generic terms (UI components, styling methodology, database, etc.)
+  - Updated intro.md files to use generic language
+- [x] Keep technology details in SKILLS, not agent prompts
+  - Agent prompts now use generic terms; specific tech is in skills config

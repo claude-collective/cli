@@ -39,6 +39,7 @@ function createSkill(
     requiredBy: [],
     alternatives: [],
     discourages: [],
+    compatibleWith: [],
     requiresSetup: [],
     providesSetupFor: [],
     path: `skills/${id}/`,

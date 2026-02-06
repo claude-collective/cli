@@ -1276,8 +1276,8 @@ describe("Wizard integration", () => {
     });
   });
 
-  describe("selection header", () => {
-    it("should display ESC hint", async () => {
+  describe("step footer hints", () => {
+    it("should display ESC hint in step footer", async () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -1292,10 +1292,11 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      expect(lastFrame()).toContain("ESC to go back");
+      // Each step now has its own footer with ESC hint
+      expect(lastFrame()).toContain("ESC cancel");
     });
 
-    it("should display cancel hint", async () => {
+    it("should display navigation hints in step footer", async () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -1310,7 +1311,9 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      expect(lastFrame()).toContain("Ctrl+C");
+      // Step approach shows navigation hints
+      expect(lastFrame()).toContain("navigate");
+      expect(lastFrame()).toContain("ENTER select");
     });
   });
 
