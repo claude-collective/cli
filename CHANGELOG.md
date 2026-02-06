@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.1] - 2026-02-06
+
+### Fixed
+
+- **npx eject fails with ENOENT** - `config/` directory (skills-matrix.yaml, stacks.yaml) was missing from the published npm package, causing `npx @claude-collective/cli eject all` to fail
+- **Build copies config to dist** - `config/` is now copied to `dist/config/` during build for correct runtime path resolution
+- **Test suite portability** - Integration tests that depend on the external claude-subagents repo are now gated behind `CC_TEST_SKILLS_SOURCE` env var
+- **macOS temp path mismatch** - Fixed `/private/var` vs `/var` symlink issue in installation test
+- **Pre-commit hook** - Changed `bun test` to `bun run test` to use vitest instead of bun's built-in test runner
+
 ## [0.13.0] - 2026-02-06
 
 ### Added
@@ -26,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Old `search.ts` command - Replaced with dual-mode `search.tsx` (static + interactive)
 
+[0.13.1]: https://github.com/claude-collective/cli/releases/tag/v0.13.1
 [0.13.0]: https://github.com/claude-collective/cli/releases/tag/v0.13.0
 
 ## [0.12.0] - 2026-02-04
