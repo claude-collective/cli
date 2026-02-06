@@ -40,6 +40,7 @@ cc config            # manage settings
 cc validate          # check your setup is correct
 cc new skill         # create a custom skill
 cc new agent         # create a custom agent
+cc import skill      # import a skill from a remote source
 cc update            # update local skills from source
 cc uninstall         # remove Claude Collective from project
 cc doctor            # diagnose setup issues
@@ -60,29 +61,29 @@ a skill is focused knowledge for one technology. not surface-level docs but actu
 
 skills live in the [claude-collective/skills](https://github.com/claude-collective/skills) repository, organized by category:
 
-| category | what's there                                                                        |
-| -------- | ----------------------------------------------------------------------------------- |
-| web      | react 19, next.js, remix, vue, angular, solidjs, scss-modules, zustand, react-query |
-| api      | hono, drizzle, better-auth, posthog, resend, axiom+pino+sentry                      |
-| mobile   | react-native, expo                                                                  |
-| cli      | oclif, ink                                                                          |
-| infra    | turborepo, github-actions, env config                                               |
-| security | auth patterns, xss prevention, secrets                                              |
-| meta     | code reviewing, research methodology                                                |
+| category | what's there                                                                                                                                                                                                                                                                          |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| web      | react, vue, angular, solidjs, next.js, remix, nuxt, scss-modules, cva, zustand, pinia, ngrx-signalstore, jotai, react-query, swr, trpc, graphql, react-hook-form, zod, shadcn-ui, radix-ui, tanstack-table, vitest, playwright, cypress, msw, framer-motion, storybook, accessibility |
+| api      | hono, express, fastify, drizzle, prisma, better-auth, posthog, resend, axiom+pino+sentry, github-actions                                                                                                                                                                              |
+| mobile   | react-native, expo                                                                                                                                                                                                                                                                    |
+| cli      | commander, oclif, yargs, clack, inquirer, ink                                                                                                                                                                                                                                         |
+| infra    | turborepo, tooling, env config                                                                                                                                                                                                                                                        |
+| meta     | code reviewing, research methodology, investigation requirements, anti-over-engineering, context management                                                                                                                                                                           |
 
 ## stacks
 
 stacks bundle skills together with pre-configured agents. instead of picking 20 skills individually, grab a stack that matches your setup:
 
-- **nextjs-fullstack** - next.js app router + hono + drizzle + posthog
-- **react-native-stack** - react native with expo
-- **vue-stack** - vue 3 + nuxt
-- **angular-stack** - angular 17+ standalone
-- **remix-stack** - remix with loaders/actions
-- **solidjs-stack** - solidjs fine-grained reactivity
-- **nuxt-stack** - nuxt 3 with nitro
+- **nextjs-fullstack** - next.js + react + hono + drizzle + posthog + zustand + react-query
+- **angular-stack** - angular 19 + signals + ngrx signalstore + hono + drizzle
+- **vue-stack** - vue 3 composition API + pinia + hono + drizzle
+- **nuxt-stack** - nuxt + vue 3 full-stack + pinia + hono + drizzle
+- **remix-stack** - remix + react + hono + drizzle
+- **solidjs-stack** - solidjs + hono + drizzle
+- **react-native-stack** - react native + expo + zustand + react-query
+- **meta-stack** - agents for creating agents, skills, docs, and extracting patterns
 
-each stack includes agents like `web-developer`, `api-reviewer`, `web-tester` - roles that use the right skills for the job.
+each stack includes agents like `web-developer`, `api-developer`, `web-reviewer`, `web-tester`, `web-researcher`, `pattern-scout`, `documentor` - roles that use the right skills for the job.
 
 ## installation options
 

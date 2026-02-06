@@ -166,6 +166,17 @@ See [docs/CLI-IMPROVEMENTS-RESEARCH.md#4](./docs/CLI-IMPROVEMENTS-RESEARCH.md) f
 
 ---
 
+#### U7: Align Skills Matrix Categories with Domains
+
+- [ ] Rename top-level categories in `config/skills-matrix.yaml` to match domain names (`web`, `api`, `mobile`, `cli`, `shared`) instead of `frontend`, `backend`, `setup`, `reviewing`
+- [ ] Update `src/schemas/skills-matrix.schema.json` if category names are validated
+- [ ] Update any code that references the old category names
+- [ ] Update docs to reflect the change
+
+**Files:** `config/skills-matrix.yaml`, `src/schemas/skills-matrix.schema.json`, docs
+
+---
+
 #### U6: Interactive Skill Search Command [IN PROGRESS]
 
 - [x] Add `SourceEntry` interface to config types
