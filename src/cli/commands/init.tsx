@@ -119,6 +119,7 @@ export default class Init extends BaseCommand {
     const { waitUntilExit } = render(
       <Wizard
         matrix={sourceResult.matrix}
+        version={this.config.version}
         onComplete={(result) => {
           wizardResult = result as WizardResultV2;
         }}

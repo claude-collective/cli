@@ -65,6 +65,8 @@ interface WizardProps {
   matrix: MergedSkillsMatrix;
   onComplete: (result: WizardResultV2 | WizardResult) => void;
   onCancel: () => void;
+  /** CLI version string to display in header */
+  version?: string;
   /** @deprecated Initial skills no longer skip to category */
   initialSkills?: string[];
 }
@@ -129,6 +131,7 @@ export const Wizard: React.FC<WizardProps> = ({
   matrix,
   onComplete,
   onCancel,
+  version,
 }) => {
   const store = useWizardStore();
   const { exit } = useApp();
@@ -265,6 +268,11 @@ export const Wizard: React.FC<WizardProps> = ({
         const effectiveDomains =
           store.selectedDomains.length > 0 ? store.selectedDomains : ["web"]; // Default to web if no domains selected
 
+        // DEBUG: trace data flow for pre-selection bug
+        const allSelections = store.getAllSelectedTechnologies();
+        console.log("DEBUG allSelections for Build step:", allSelections);
+        console.log("DEBUG store.domainSelections:", JSON.stringify(store.domainSelections, null, 2));
+
         return (
           <StepBuild
             matrix={matrix}
@@ -272,7 +280,7 @@ export const Wizard: React.FC<WizardProps> = ({
             selectedDomains={effectiveDomains}
             currentDomainIndex={store.currentDomainIndex}
             selections={store.domainSelections[currentDomain || "web"] || {}}
-            allSelections={store.getAllSelectedTechnologies()}
+            allSelections={allSelections}
             focusedRow={store.focusedRow}
             focusedCol={store.focusedCol}
             showDescriptions={store.showDescriptions}
@@ -357,6 +365,12 @@ export const Wizard: React.FC<WizardProps> = ({
   return (
     <ThemeProvider theme={cliTheme}>
       <Box flexDirection="column" padding={1}>
+        {/* Header with version */}
+        {version && (
+          <Box marginBottom={1}>
+            <Text dimColor>Claude Collective v{version}</Text>
+          </Box>
+        )}
         <WizardTabs
           steps={WIZARD_STEPS}
           currentStep={store.step}
@@ -364,9 +378,6 @@ export const Wizard: React.FC<WizardProps> = ({
           skippedSteps={skippedSteps}
         />
         {renderStep()}
-        <Box marginTop={1}>
-          <Text dimColor>ESC to go back, Ctrl+C to cancel</Text>
-        </Box>
       </Box>
     </ThemeProvider>
   );
