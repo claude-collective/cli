@@ -385,6 +385,13 @@ export interface ResolvedSkill {
   /** Skills that are discouraged when this is selected (show warning) */
   discourages: SkillRelation[];
 
+  /**
+   * Framework skill IDs this skill is compatible with.
+   * Used for framework-first filtering in the Build step.
+   * @example ["web-framework-react", "web-framework-vue-composition-api"]
+   */
+  compatibleWith: string[];
+
   /** Setup skills that must be completed before using this */
   requiresSetup: string[];
 
