@@ -1,6 +1,6 @@
 {
   "name": "@claude-collective/cli",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "description": "CLI for managing Claude Collective skills, stacks, and agents for Claude Code",
   "type": "module",
   "main": "dist/index.js",
@@ -15,6 +15,7 @@
   "files": [
     "dist/",
     "config/",
+    "src/agents/",
     "LICENSE",
     "README.md",
     "CHANGELOG.md"

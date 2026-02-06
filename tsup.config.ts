@@ -41,5 +41,15 @@ export default defineConfig({
       await fs.copy(srcConfig, destConfig);
       console.log("Copied config/ to dist/config/");
     }
+
+    // Copy src/agents/ (agent partials + templates) to dist/src/agents/
+    // so eject command can find them regardless of how PROJECT_ROOT resolves
+    const srcAgents = path.join("src", "agents");
+    const destAgents = path.join("dist", "src", "agents");
+
+    if (await fs.pathExists(srcAgents)) {
+      await fs.copy(srcAgents, destAgents);
+      console.log("Copied src/agents/ to dist/src/agents/");
+    }
   },
 });
