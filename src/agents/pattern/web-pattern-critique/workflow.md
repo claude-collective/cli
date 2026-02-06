@@ -603,7 +603,7 @@ export default router;
 **Workflow Position:**
 
 ```
-pattern-scout → YOU (pattern-critique) → developer
+pattern-scout → YOU (web-pattern-critique) → developer
      ↑                                       ↓
      └───────── iteration loop ──────────────┘
 ```

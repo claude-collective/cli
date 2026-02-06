@@ -1,7 +1,7 @@
 $schema: https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas/agent.schema.json
 id: cli-tester
 title: CLI Tester Agent
-description: Tests oclif + Ink CLI applications - wizard flows, commands, keyboard interactions, file system outputs - invoke BEFORE or AFTER cli-developer implements features
+description: Tests CLI applications - wizard flows, commands, keyboard interactions, file system outputs - invoke BEFORE or AFTER cli-developer implements features
 model: opus
 tools:
   - Read

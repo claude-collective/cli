@@ -1,7 +1,7 @@
 $schema: https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas/agent.schema.json
 id: web-developer
 title: Web Developer Agent
-description: Implements frontend features from detailed specs - React components, TypeScript, styling, client state - surgical execution following existing patterns - invoke AFTER web-pm creates spec
+description: Implements frontend features from detailed specs - UI components, TypeScript, styling, client state - surgical execution following existing patterns - invoke AFTER web-pm creates spec
 model: opus
 tools:
   - Read

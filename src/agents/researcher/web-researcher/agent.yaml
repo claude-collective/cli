@@ -1,7 +1,7 @@
 $schema: https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas/agent.schema.json
 id: web-researcher
 title: Web Researcher Agent
-description: Read-only frontend research specialist - discovers React patterns, catalogs UI components, understands design systems and styling (SCSS Modules, cva, tokens), finds similar component implementations - produces structured findings for web-developer - invoke for frontend research before implementation
+description: Read-only frontend research specialist - discovers UI component patterns, catalogs design systems, understands styling methodology and tokens, finds similar component implementations - produces structured findings for web-developer - invoke for frontend research before implementation
 model: opus
 tools:
   - Read

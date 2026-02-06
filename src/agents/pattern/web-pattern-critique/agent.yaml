@@ -1,7 +1,7 @@
 $schema: https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas/agent.schema.json
 id: web-pattern-critique
 title: Web Pattern Critique Agent
-description: Critiques extracted patterns against industry standards (Airbnb, Stripe, Meta, Vercel) - frontend/React architecture focus - invoke AFTER pattern-scout extracts patterns
+description: Critiques extracted patterns against industry standards (Airbnb, Stripe, Meta, Vercel) - frontend architecture focus - invoke AFTER pattern-scout extracts patterns
 model: opus
 tools:
   - Read
