@@ -30,11 +30,28 @@ export function getGlobalConfigDir(): string {
  */
 export const GLOBAL_CONFIG_DIR = path.join(os.homedir(), ".claude-collective");
 
+/**
+ * Extra source entry for third-party skill repositories.
+ * Used in both global and project configs.
+ */
+export interface SourceEntry {
+  /** Short name for the source (e.g., "company", "team") */
+  name: string;
+  /** GitHub URL or path (e.g., "github:owner/repo") */
+  url: string;
+  /** Optional description */
+  description?: string;
+  /** Optional ref to pin to (branch, tag, or commit) */
+  ref?: string;
+}
+
 export interface GlobalConfig {
   source?: string;
   author?: string;
   marketplace?: string;
   agents_source?: string;
+  /** Extra sources for third-party skills */
+  sources?: SourceEntry[];
 }
 
 export interface ProjectConfig {
@@ -42,12 +59,29 @@ export interface ProjectConfig {
   author?: string;
   marketplace?: string;
   agents_source?: string;
+  /** Extra sources for third-party skills */
+  sources?: SourceEntry[];
 }
 
 export interface ResolvedConfig {
   source: string;
   sourceOrigin: "flag" | "env" | "project" | "global" | "default";
   marketplace?: string;
+}
+
+function isValidSourceEntry(entry: unknown): entry is SourceEntry {
+  if (typeof entry !== "object" || entry === null) return false;
+  const e = entry as Record<string, unknown>;
+  if (typeof e.name !== "string" || typeof e.url !== "string") return false;
+  if (e.description !== undefined && typeof e.description !== "string")
+    return false;
+  if (e.ref !== undefined && typeof e.ref !== "string") return false;
+  return true;
+}
+
+function isValidSourcesArray(arr: unknown): arr is SourceEntry[] {
+  if (!Array.isArray(arr)) return false;
+  return arr.every(isValidSourceEntry);
 }
 
 function isValidGlobalConfig(obj: unknown): obj is GlobalConfig {
@@ -66,6 +100,8 @@ function isValidGlobalConfig(obj: unknown): obj is GlobalConfig {
     config.agents_source !== undefined &&
     typeof config.agents_source !== "string"
   )
+    return false;
+  if (config.sources !== undefined && !isValidSourcesArray(config.sources))
     return false;
   return true;
 }
@@ -86,6 +122,8 @@ function isValidProjectConfig(obj: unknown): obj is ProjectConfig {
     config.agents_source !== undefined &&
     typeof config.agents_source !== "string"
   )
+    return false;
+  if (config.sources !== undefined && !isValidSourcesArray(config.sources))
     return false;
   return true;
 }
@@ -293,6 +331,51 @@ export function formatSourceOrigin(
     case "default":
       return "default";
   }
+}
+
+/**
+ * Resolve all configured sources for skill search.
+ * Returns primary source plus any extra sources from project/global config.
+ */
+export async function resolveAllSources(
+  projectDir?: string
+): Promise<{ primary: SourceEntry; extras: SourceEntry[] }> {
+  const projectConfig = projectDir ? await loadProjectConfig(projectDir) : null;
+  const globalConfig = await loadGlobalConfig();
+
+  // Get primary source
+  const resolvedConfig = await resolveSource(undefined, projectDir);
+  const primary: SourceEntry = {
+    name: "marketplace",
+    url: resolvedConfig.source,
+    description: "Primary skills marketplace",
+  };
+
+  // Merge extra sources: project takes precedence, then global
+  const extras: SourceEntry[] = [];
+  const seenNames = new Set<string>();
+
+  // Add project sources first (higher priority)
+  if (projectConfig?.sources) {
+    for (const source of projectConfig.sources) {
+      if (!seenNames.has(source.name)) {
+        seenNames.add(source.name);
+        extras.push(source);
+      }
+    }
+  }
+
+  // Add global sources (lower priority, skip duplicates)
+  if (globalConfig?.sources) {
+    for (const source of globalConfig.sources) {
+      if (!seenNames.has(source.name)) {
+        seenNames.add(source.name);
+        extras.push(source);
+      }
+    }
+  }
+
+  return { primary, extras };
 }
 
 export function isLocalSource(source: string): boolean {
