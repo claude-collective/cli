@@ -564,7 +564,7 @@ agents:
   - web-developer
   - api-developer
   - cli-developer
-  - { agent-name }  # Add new agent here
+  - { agent-name } # Add new agent here
 
 stack:
   { agent-name }:
@@ -1450,6 +1450,7 @@ Result: Wrong location or old format.
 mkdir -p src/agents/{category}/my-agent/
 
 # Then create required files: agent.yaml, intro.md, workflow.md
+
 # Then create required files: critical-requirements.md, critical-reminders.md, output-format.md, examples.md
 ```
 
@@ -1493,16 +1494,16 @@ Output formats are determined by the file system with cascading resolution:
 1. **Agent-level**: `src/agents/{category}/{agent-name}/output-format.md`
 2. **Category fallback**: `src/agents/{category}/output-format.md`
 
-| Category   | Example Agents                                             |
-| ---------- | ---------------------------------------------------------- |
-| developer  | web-developer, api-developer, cli-developer                |
-| reviewer   | web-reviewer, api-reviewer, cli-reviewer                   |
-| researcher | web-researcher, api-researcher                             |
-| planning   | web-pm, web-architecture                                   |
-| tester     | web-tester, cli-tester                                     |
-| pattern    | pattern-scout, web-pattern-critique                        |
-| meta       | documentor, agent-summoner, skill-summoner                 |
-| migration  | cli-migrator                                               |
+| Category   | Example Agents                              |
+| ---------- | ------------------------------------------- |
+| developer  | web-developer, api-developer, cli-developer |
+| reviewer   | web-reviewer, api-reviewer, cli-reviewer    |
+| researcher | web-researcher, api-researcher              |
+| planning   | web-pm, web-architecture                    |
+| tester     | web-tester, cli-tester                      |
+| pattern    | pattern-scout, web-pattern-critique         |
+| meta       | documentor, agent-summoner, skill-summoner  |
+| migration  | cli-migrator                                |
 
 ---
 

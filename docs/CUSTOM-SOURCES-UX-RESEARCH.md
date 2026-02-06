@@ -5,6 +5,7 @@ Research into UX patterns for managing custom skill sources in the CLI.
 ## Context
 
 The CLI currently has:
+
 - `cc import skill github:owner/repo --list` to import skills from third-party repos
 - Single `source` config (global/project) for the primary skills marketplace
 - `agents_source` config for remote agent definitions
@@ -18,6 +19,7 @@ The user wants to explore adding **persistent custom sources** that users can co
 ### 1.1 npm (Custom Registries)
 
 **Configuration approach:**
+
 ```bash
 # Global config
 npm config set registry https://registry.company.com
@@ -30,12 +32,14 @@ registry=https://registry.company.com
 ```
 
 **UX patterns:**
+
 - Single primary registry (not multiple)
 - Scope-based routing (`@org/package` -> specific registry)
 - Fallback to default registry
 - Config in `.npmrc` file (flat key=value format)
 
 **Relevant takeaways:**
+
 - Scoped sources are powerful for organization separation
 - Simple flat config files work well
 - Single primary source with optional scopes
@@ -45,6 +49,7 @@ registry=https://registry.company.com
 ### 1.2 pip (Extra Index URLs)
 
 **Configuration approach:**
+
 ```bash
 # CLI flags
 pip install --index-url https://private.pypi.org/simple/
@@ -62,12 +67,14 @@ url = "https://private.pypi.org/simple/"
 ```
 
 **UX patterns:**
+
 - Primary index + extra indexes
 - CLI flag overrides config
 - Named sources in newer tooling (Poetry, PDM)
 - Search checks all sources in order
 
 **Relevant takeaways:**
+
 - "Extra" sources concept is intuitive
 - Named sources with URLs improve UX over raw URLs everywhere
 - Priority/ordering matters for search
@@ -77,6 +84,7 @@ url = "https://private.pypi.org/simple/"
 ### 1.3 Homebrew (Taps)
 
 **Configuration approach:**
+
 ```bash
 # Add a tap (persistent)
 brew tap user/repo
@@ -95,6 +103,7 @@ brew search term
 ```
 
 **UX patterns:**
+
 - `tap` command to add persistent sources
 - Implicit GitHub prefix (`user/repo` = `github.com/user/homebrew-repo`)
 - Unified search across core + all taps
@@ -102,6 +111,7 @@ brew search term
 - Taps stored in ~/.homebrew/Library/Taps/
 
 **Relevant takeaways:**
+
 - "tap" metaphor is memorable
 - Implicit GitHub handling reduces friction
 - Unified search is critical UX
@@ -112,6 +122,7 @@ brew search term
 ### 1.4 Cargo (Registries) - Rust
 
 **Configuration approach:**
+
 ```toml
 # .cargo/config.toml
 [registries]
@@ -126,12 +137,14 @@ my-package = { version = "1.0", registry = "my-registry" }
 ```
 
 **UX patterns:**
+
 - Named registries defined once
 - Default registry configurable
 - Per-dependency registry override
 - CLI: `cargo search --registry=my-registry term`
 
 **Relevant takeaways:**
+
 - Named registries with one definition, many uses
 - Per-item source override is powerful
 - Registry flag on commands for explicit source selection
@@ -141,6 +154,7 @@ my-package = { version = "1.0", registry = "my-registry" }
 ### 1.5 Go Modules (GOPROXY)
 
 **Configuration approach:**
+
 ```bash
 # Comma-separated proxy list
 export GOPROXY="https://proxy.company.com,https://proxy.golang.org,direct"
@@ -151,12 +165,14 @@ replace example.com/old => example.com/new v1.0.0
 ```
 
 **UX patterns:**
+
 - Ordered list of sources to try
 - "direct" keyword means "fetch from source"
 - Fallback chain: try source1, if 404 try source2, etc.
 - Environment variable based
 
 **Relevant takeaways:**
+
 - Ordered fallback is a good UX pattern
 - "direct" concept useful for development
 
@@ -166,11 +182,11 @@ replace example.com/old => example.com/new v1.0.0
 
 ### Current CLI Config Locations
 
-| Config Type | Location | Purpose |
-|-------------|----------|---------|
-| Global | `~/.claude-collective/config.yaml` | User-wide defaults |
-| Project | `.claude-src/config.yaml` | Project-specific settings |
-| Project (legacy) | `.claude/config.yaml` | Legacy location |
+| Config Type      | Location                           | Purpose                   |
+| ---------------- | ---------------------------------- | ------------------------- |
+| Global           | `~/.claude-collective/config.yaml` | User-wide defaults        |
+| Project          | `.claude-src/config.yaml`          | Project-specific settings |
+| Project (legacy) | `.claude/config.yaml`              | Legacy location           |
 
 ### Options for Custom Sources
 
@@ -178,7 +194,7 @@ replace example.com/old => example.com/new v1.0.0
 
 ```yaml
 # ~/.claude-collective/config.yaml
-source: github:claude-collective/skills  # primary
+source: github:claude-collective/skills # primary
 extra_sources:
   - name: company
     url: github:mycompany/skills
@@ -187,10 +203,12 @@ extra_sources:
 ```
 
 **Pros:**
+
 - Simple - one place to configure
 - User's sources follow them across projects
 
 **Cons:**
+
 - Can't have project-specific sources
 - Team sharing requires out-of-band communication
 
@@ -207,10 +225,12 @@ extra_sources:
 ```
 
 **Pros:**
+
 - Sources committed with project
 - Team sharing via version control
 
 **Cons:**
+
 - Repetitive across projects
 - Can't easily add personal sources
 
@@ -232,16 +252,19 @@ extra_sources:
 ```
 
 **Resolution order:**
+
 1. Project sources (highest priority)
 2. Global extra sources
 3. Primary source (from project, env, global, or default)
 
 **Pros:**
+
 - Flexible - personal + team sources
 - Project sources version controlled
 - Matches existing config precedence pattern
 
 **Cons:**
+
 - More complex mental model
 - Potential naming conflicts (solvable with warning)
 
@@ -278,6 +301,7 @@ cc sources refresh --all
 ```
 
 **Why "sources" over "taps" or "registries":**
+
 - "Sources" aligns with existing `--source` flag terminology
 - More intuitive than "tap" for non-Homebrew users
 - Less formal than "registry" which implies infrastructure
@@ -287,6 +311,7 @@ cc sources refresh --all
 ### 3.2 Search/Browse Integration
 
 **Unified search (recommended):**
+
 ```bash
 # Search all sources
 cc search react
@@ -303,6 +328,7 @@ cc search react --sources company,personal
 ```
 
 **List with source filter:**
+
 ```bash
 # List skills from all sources
 cc list --skills
@@ -316,11 +342,13 @@ cc list --skills --source company
 ### 3.3 Import Integration
 
 **Current (works well):**
+
 ```bash
 cc import skill github:owner/repo --skill react-patterns
 ```
 
 **With sources (cleaner for repeated use):**
+
 ```bash
 # After: cc sources add github:owner/repo --name team
 cc import skill team:react-patterns
@@ -329,6 +357,7 @@ cc import skill team --all
 ```
 
 **Disambiguation when skill exists in multiple sources:**
+
 ```bash
 cc import skill react-patterns
 # Error: 'react-patterns' found in multiple sources:
@@ -345,6 +374,7 @@ cc import skill react-patterns --from company
 ### 3.4 Config File Examples
 
 **Global config with extra sources:**
+
 ```yaml
 # ~/.claude-collective/config.yaml
 author: "@myhandle"
@@ -357,10 +387,11 @@ extra_sources:
 
   - name: work
     url: github:mycompany/skills
-    auth_required: true  # hint that GIGET_AUTH needed
+    auth_required: true # hint that GIGET_AUTH needed
 ```
 
 **Project config with sources:**
+
 ```yaml
 # .claude-src/config.yaml
 source: github:claude-collective/skills
@@ -369,14 +400,15 @@ source: github:claude-collective/skills
 extra_sources:
   - name: team
     url: github:team/shared-skills
-    refresh: daily  # optional: auto-refresh hint
+    refresh: daily # optional: auto-refresh hint
 
   - name: vendor
     url: github:vendor/sdk-skills
-    ref: v2.0.0  # pin to specific ref
+    ref: v2.0.0 # pin to specific ref
 ```
 
 **Combined effective sources (what cc sources list shows):**
+
 ```
 Primary Sources:
   default    github:claude-collective/skills  (project config)
@@ -393,6 +425,7 @@ Extra Sources:
 ### 3.5 Source Reference Syntax
 
 **Supported formats (leverage existing parsing):**
+
 ```
 github:owner/repo           # GitHub shorthand
 gh:owner/repo               # GitHub shorthand (alt)
@@ -403,6 +436,7 @@ owner/repo                  # Assumed GitHub
 ```
 
 **With ref pinning:**
+
 ```
 github:owner/repo#branch
 github:owner/repo#v1.0.0
@@ -416,6 +450,7 @@ github:owner/repo#abc123
 ### Phase 1: Basic Source Management
 
 **New commands:**
+
 ```bash
 cc sources add <url> [--name <name>] [--global]
 cc sources list
@@ -423,12 +458,13 @@ cc sources remove <name> [--global]
 ```
 
 **Config schema addition:**
+
 ```typescript
 interface SourceEntry {
   name: string;
   url: string;
   description?: string;
-  ref?: string;  // optional: pin to branch/tag/commit
+  ref?: string; // optional: pin to branch/tag/commit
 }
 
 interface GlobalConfig {
@@ -436,7 +472,7 @@ interface GlobalConfig {
   author?: string;
   marketplace?: string;
   agents_source?: string;
-  extra_sources?: SourceEntry[];  // NEW
+  extra_sources?: SourceEntry[]; // NEW
 }
 
 interface ProjectConfig {
@@ -444,7 +480,7 @@ interface ProjectConfig {
   author?: string;
   marketplace?: string;
   agents_source?: string;
-  extra_sources?: SourceEntry[];  // NEW
+  extra_sources?: SourceEntry[]; // NEW
 }
 ```
 
@@ -453,6 +489,7 @@ interface ProjectConfig {
 ### Phase 2: Search Integration
 
 **Update search to query all sources:**
+
 ```bash
 cc search react
 # Searches: primary source + all extra_sources
@@ -460,6 +497,7 @@ cc search react
 ```
 
 **Add source filter:**
+
 ```bash
 cc search react --source team
 cc search react --sources team,personal
@@ -470,6 +508,7 @@ cc search react --sources team,personal
 ### Phase 3: Import Integration
 
 **Shorthand syntax:**
+
 ```bash
 cc import skill team:react-patterns
 # Equivalent to: cc import skill github:team/shared-skills --skill react-patterns
@@ -612,12 +651,12 @@ Run 'cc compile' to include in your agents.
 
 ### Files to Modify for Implementation
 
-| File | Changes |
-|------|---------|
-| `/src/cli/lib/config.ts` | Add `extra_sources` to interfaces |
-| `/src/cli/commands/sources/add.ts` | New command |
-| `/src/cli/commands/sources/list.ts` | New command |
-| `/src/cli/commands/sources/remove.ts` | New command |
-| `/src/cli/commands/search.ts` | Add multi-source support |
-| `/src/cli/commands/import/skill.ts` | Add source prefix parsing |
-| `/docs/commands.md` | Document new commands |
+| File                                  | Changes                           |
+| ------------------------------------- | --------------------------------- |
+| `/src/cli/lib/config.ts`              | Add `extra_sources` to interfaces |
+| `/src/cli/commands/sources/add.ts`    | New command                       |
+| `/src/cli/commands/sources/list.ts`   | New command                       |
+| `/src/cli/commands/sources/remove.ts` | New command                       |
+| `/src/cli/commands/search.ts`         | Add multi-source support          |
+| `/src/cli/commands/import/skill.ts`   | Add source prefix parsing         |
+| `/docs/commands.md`                   | Document new commands             |

@@ -37,15 +37,21 @@ async function detectInstallation(
   const claudeDir = path.join(projectDir, CLAUDE_DIR);
   const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
 
-  const [hasPlugin, hasLocalSkills, hasLocalAgents, hasLocalConfig, hasClaudeDir, hasClaudeSrcDir] =
-    await Promise.all([
-      directoryExists(pluginDir),
-      directoryExists(skillsDir),
-      directoryExists(agentsDir),
-      fileExists(configPath),
-      directoryExists(claudeDir),
-      directoryExists(claudeSrcDir),
-    ]);
+  const [
+    hasPlugin,
+    hasLocalSkills,
+    hasLocalAgents,
+    hasLocalConfig,
+    hasClaudeDir,
+    hasClaudeSrcDir,
+  ] = await Promise.all([
+    directoryExists(pluginDir),
+    directoryExists(skillsDir),
+    directoryExists(agentsDir),
+    fileExists(configPath),
+    directoryExists(claudeDir),
+    directoryExists(claudeSrcDir),
+  ]);
 
   return {
     hasPlugin,
@@ -99,7 +105,9 @@ const UninstallConfirm: React.FC<UninstallConfirmProps> = ({
         <Box flexDirection="column">
           <Text color="red"> Local directories:</Text>
           {target.hasClaudeDir && <Text dimColor> {target.claudeDir}/</Text>}
-          {target.hasClaudeSrcDir && <Text dimColor> {target.claudeSrcDir}/</Text>}
+          {target.hasClaudeSrcDir && (
+            <Text dimColor> {target.claudeSrcDir}/</Text>
+          )}
         </Box>
       )}
 

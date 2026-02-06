@@ -1,6 +1,6 @@
 ## Example Review Output
 
-```markdown
+````markdown
 # CLI Review: init command
 
 ## Files Reviewed
@@ -16,6 +16,7 @@
 ## Must Fix
 
 **Issue #1: Missing p.isCancel() check**
+
 - Location: src/cli/commands/init.ts:45
 - Problem: p.select() result not checked for cancellation
 - Current:
@@ -23,6 +24,8 @@
   const framework = await p.select({ message: "Select framework:", options: [...] });
   const name = await p.text({ message: "Project name:" });
   ```
+````
+
 - Fix:
   ```typescript
   const framework = await p.select({ message: "Select framework:", options: [...] });
@@ -33,11 +36,13 @@
   ```
 
 **Issue #2: Magic number exit code**
+
 - Location: src/cli/commands/init.ts:78
 - Problem: `process.exit(1)` instead of named constant
 - Fix: Use `process.exit(EXIT_CODES.ERROR)`
 
 **Issue #3: Using parse() instead of parseAsync()**
+
 - Location: src/cli/index.ts:42
 - Problem: Errors in async handlers silently swallowed
 - Fix: Change `program.parse()` to `await program.parseAsync()`
@@ -45,11 +50,13 @@
 ## Should Fix
 
 **Missing spinner for network call**
+
 - Location: src/cli/commands/init.ts:52
 - Issue: fetchTemplates() has no visual feedback
 - Suggestion: Wrap with p.spinner()
 
 **Error message not actionable**
+
 - Location: src/cli/commands/init.ts:67
 - Issue: "Config invalid" doesn't explain how to fix
 - Suggestion: Include validation error and remediation command
@@ -70,4 +77,7 @@
 ## Verdict: REQUEST CHANGES
 
 Fix 3 blocking CLI safety issues before merge.
+
+```
+
 ```

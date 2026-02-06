@@ -14,14 +14,15 @@ Create `./extracted-standards.md` with this structure:
 ## Package Architecture
 
 ### Workspace Structure
+```
 
-```
 packages/
-├── ui/           # Shared components
-├── utils/        # Pure functions
+├── ui/ # Shared components
+├── utils/ # Pure functions
 apps/
-├── web/          # Next.js application
-```
+├── web/ # Next.js application
+
+````
 
 ### Package Naming
 
@@ -39,15 +40,15 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@repo/ui";
 import { Shell } from "./shell";
 import styles from "./page.module.scss";
-```
+````
 
 ### Query Hooks
 
 ```typescript
 export const usePost = (id: number) => {
   return useQuery({
-    queryKey: ['posts', 'detail', id],
-    queryFn: () => fetchPost(id)
+    queryKey: ["posts", "detail", id],
+    queryFn: () => fetchPost(id),
   });
 };
 ```
@@ -86,4 +87,7 @@ pnpm vitest run path/to/file.test.ts  # Test
 **High Confidence:** Patterns seen 5+ times
 **Medium Confidence:** Patterns seen 3-4 times
 **Low Confidence:** Patterns seen 2 times - needs verification
+
+```
+
 ```

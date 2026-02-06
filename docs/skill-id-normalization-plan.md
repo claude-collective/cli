@@ -22,21 +22,21 @@ Normalize skill IDs from path-based format with author to simple kebab-case form
 
 ### Critical (Must Change)
 
-| File                                   | Change Required                                                           |
-| -------------------------------------- | ------------------------------------------------------------------------- |
+| File                                | Change Required                                                           |
+| ----------------------------------- | ------------------------------------------------------------------------- |
 | `src/cli/lib/matrix-loader.ts`      | Add normalization to `extractAllSkills()` at line 134                     |
 | `src/cli/lib/local-skill-loader.ts` | Add normalization to `extractLocalSkill()` at line 94                     |
-| `config/skills-matrix.yaml`            | Update all `skill_aliases` values (~150 entries)                          |
+| `config/skills-matrix.yaml`         | Update all `skill_aliases` values (~150 entries)                          |
 | `src/cli/consts.ts`                 | Update `DEFAULT_PRESELECTED_SKILLS` array (6 entries)                     |
 | `src/cli/lib/skill-copier.ts`       | Simplify `getFlattenedSkillDestPath()`, remove `extractSkillNameFromId()` |
 
 ### High Priority
 
-| File                                         | Change Required                                                       |
-| -------------------------------------------- | --------------------------------------------------------------------- |
+| File                                      | Change Required                                                       |
+| ----------------------------------------- | --------------------------------------------------------------------- |
 | NEW: `src/cli/lib/skill-id-normalizer.ts` | Create normalization utility function                                 |
 | `src/cli/types-matrix.ts`                 | Update JSDoc comments for ID format                                   |
-| Skill directories                            | Rename from `web/framework/react (@vince)/` to `web-framework-react/` |
+| Skill directories                         | Rename from `web/framework/react (@vince)/` to `web-framework-react/` |
 
 ### Test Files (50+ references)
 

@@ -123,21 +123,21 @@ cc compile
 
 ### Technique Audit
 
-| Technique              | Present | Notes                       |
-| ---------------------- | ------- | --------------------------- |
-| Self-reminder loop     | Yes     | Template auto-adds          |
-| Investigation-first    | Yes     | Included in template        |
-| Expansion modifiers    | No      | Missing in intro.md         |
-| Self-correction        | No      | Missing in workflow.md      |
-| Post-action reflection | No      | Missing in workflow.md      |
+| Technique              | Present | Notes                  |
+| ---------------------- | ------- | ---------------------- |
+| Self-reminder loop     | Yes     | Template auto-adds     |
+| Investigation-first    | Yes     | Included in template   |
+| Expansion modifiers    | No      | Missing in intro.md    |
+| Self-correction        | No      | Missing in workflow.md |
+| Post-action reflection | No      | Missing in workflow.md |
 
 ### Findings
 
-| # | Finding                        | Impact | Effort |
-| - | ------------------------------ | ------ | ------ |
-| 1 | Missing expansion modifiers    | High   | Low    |
-| 2 | No self-correction triggers    | High   | Low    |
-| 3 | No post-action reflection      | Medium | Low    |
+| #   | Finding                     | Impact | Effort |
+| --- | --------------------------- | ------ | ------ |
+| 1   | Missing expansion modifiers | High   | Low    |
+| 2   | No self-correction triggers | High   | Low    |
+| 3   | No post-action reflection   | Medium | Low    |
 
 ### Proposed Changes
 
@@ -145,9 +145,11 @@ cc compile
 
 ```markdown
 # Current
+
 You are an expert example developer.
 
 # Proposed
+
 You are an expert example developer.
 
 **When implementing features, be comprehensive and thorough. Include all necessary edge cases and error handling.**
@@ -157,6 +159,7 @@ You are an expert example developer.
 
 ```markdown
 **If you notice yourself:**
+
 - **Generating code without reading files first** → STOP. Read the files.
 - **Creating new utilities** → STOP. Check for existing ones first.
 ```
@@ -165,6 +168,7 @@ You are an expert example developer.
 
 ```markdown
 **After each major action, evaluate:**
+
 1. Did this achieve the intended goal?
 2. Should I verify changes were written?
 ```

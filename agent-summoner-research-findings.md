@@ -1198,54 +1198,55 @@ All 13 Essential Techniques are implemented correctly:
 
 ### R3-1. docs/architecture.md - CRITICAL
 
-| Issue | Details |
-|-------|---------|
-| Wrong module path | References `src/cli/lib/` - path is correct after rename |
-| Missing commands | `doctor`, `search`, `outdated`, `info`, `diff`, `update`, `new skill` undocumented |
-| Wrong directory structure | Documents `src/skills/` (doesn't exist) |
-| Missing `.claude-src/` | Primary config location not documented |
-| Outdated marketplace structure | Confuses skills repo with this codebase |
+| Issue                          | Details                                                                            |
+| ------------------------------ | ---------------------------------------------------------------------------------- |
+| Wrong module path              | References `src/cli/lib/` - path is correct after rename                           |
+| Missing commands               | `doctor`, `search`, `outdated`, `info`, `diff`, `update`, `new skill` undocumented |
+| Wrong directory structure      | Documents `src/skills/` (doesn't exist)                                            |
+| Missing `.claude-src/`         | Primary config location not documented                                             |
+| Outdated marketplace structure | Confuses skills repo with this codebase                                            |
 
 ### R3-2. docs/commands.md - HIGH
 
-| Issue | Details |
-|-------|---------|
-| 7 undocumented commands | `doctor`, `search`, `outdated`, `info`, `diff`, `update`, `new skill` |
+| Issue                    | Details                                                                   |
+| ------------------------ | ------------------------------------------------------------------------- |
+| 7 undocumented commands  | `doctor`, `search`, `outdated`, `info`, `diff`, `update`, `new skill`     |
 | `cc eject` wrong options | Docs: `templates, config, agents` → Actual: `agent-partials, skills, all` |
 
 ### R3-3. README.md - HIGH
 
-| Issue | Line | Details |
-|-------|------|---------|
-| Wrong install path | 79 | Says `~/.claude/` but actual is `./.claude/` |
-| Non-existent flags | 85, 92 | `--local` and `--marketplace` don't exist |
-| Incomplete commands | 35-40 | Missing 9+ commands |
+| Issue               | Line   | Details                                      |
+| ------------------- | ------ | -------------------------------------------- |
+| Wrong install path  | 79     | Says `~/.claude/` but actual is `./.claude/` |
+| Non-existent flags  | 85, 92 | `--local` and `--marketplace` don't exist    |
+| Incomplete commands | 35-40  | Missing 9+ commands                          |
 
 ### R3-4. docs/custom-agents-schema.md - MEDIUM
 
-| Issue | Details |
-|-------|---------|
+| Issue                       | Details                                            |
+| --------------------------- | -------------------------------------------------- |
 | Missing `_custom` directory | `src/agents/_custom/` documented but doesn't exist |
-| Phase status unclear | Documented as "proposal" but already implemented |
+| Phase status unclear        | Documented as "proposal" but already implemented   |
 
 ### R3-5. Config Documentation - MEDIUM
 
-| Issue | Details |
-|-------|---------|
-| `stack:` field | Documented in CLAUDE_ARCHITECTURE_BIBLE.md but not implemented |
-| skills-matrix.yaml | Schema not documented in `docs/data-models.md` |
+| Issue              | Details                                                        |
+| ------------------ | -------------------------------------------------------------- |
+| `stack:` field     | Documented in CLAUDE_ARCHITECTURE_BIBLE.md but not implemented |
+| skills-matrix.yaml | Schema not documented in `docs/data-models.md`                 |
 
 ### R3-6. Orphaned/Outdated Documents - CRITICAL
 
-| File | Issue |
-|------|-------|
-| `docs/solution-a-migration-tasks.md` | References deprecated `src/stacks/` |
-| `docs/workflows.md` | References `src/stacks/` which doesn't exist |
-| `docs/stacks-as-visual-hierarchy.md` | Entire doc based on deprecated architecture |
+| File                                 | Issue                                        |
+| ------------------------------------ | -------------------------------------------- |
+| `docs/solution-a-migration-tasks.md` | References deprecated `src/stacks/`          |
+| `docs/workflows.md`                  | References `src/stacks/` which doesn't exist |
+| `docs/stacks-as-visual-hierarchy.md` | Entire doc based on deprecated architecture  |
 
 ### R3-7. Fixes Applied (2026-02-04)
 
 **Agent References Fixed:**
+
 - All `frontend-developer` → `web-developer`
 - All `backend-developer` → `api-developer`
 - All `frontend-reviewer`/`backend-reviewer` → `web-reviewer`/`api-reviewer`
@@ -1254,34 +1255,37 @@ All 13 Essential Techniques are implemented correctly:
 - All `api-tester` → `web-tester` (api-tester doesn't exist)
 
 **Skill Paths Fixed:**
+
 - All `src/skills/` → `.claude/skills/` in skill-summoner and agent-summoner
 
 **Developer Agents Genericized:**
+
 - Removed specific tech names from Tier 1 files (intro.md, critical-requirements.md, agent.yaml)
 - Commander.js, @clack/prompts, picocolors, Drizzle, Zod, Sentry, Better Auth, PostHog, Pino, Axiom → generic terms
 
 **Bible Paths Fixed:**
+
 - INDEX.md: `src/skills/` → `.claude/skills/`
 - DOCUMENTATION_BIBLE.md: `src/docs/PROMPT_BIBLE.md` → `docs/bibles/PROMPT_BIBLE.md`
 
 ### R3-8. Outstanding Tasks
 
-| Priority | Task |
-|----------|------|
-| HIGH | Update `docs/commands.md` with 7 missing commands |
-| HIGH | Fix `cc eject` documentation (wrong options) |
-| HIGH | Fix README.md install path and non-existent flags |
-| HIGH | Mark `docs/workflows.md` and `docs/stacks-as-visual-hierarchy.md` as deprecated |
-| MEDIUM | Create `src/agents/_custom/` directory with templates |
-| MEDIUM | Document `skills-matrix.yaml` schema in `docs/data-models.md` |
-| LOW | Create task #5: repo-specific agent-summoner |
+| Priority | Task                                                                            |
+| -------- | ------------------------------------------------------------------------------- |
+| HIGH     | Update `docs/commands.md` with 7 missing commands                               |
+| HIGH     | Fix `cc eject` documentation (wrong options)                                    |
+| HIGH     | Fix README.md install path and non-existent flags                               |
+| HIGH     | Mark `docs/workflows.md` and `docs/stacks-as-visual-hierarchy.md` as deprecated |
+| MEDIUM   | Create `src/agents/_custom/` directory with templates                           |
+| MEDIUM   | Document `skills-matrix.yaml` schema in `docs/data-models.md`                   |
+| LOW      | Create task #5: repo-specific agent-summoner                                    |
 
 ---
 
 ## Status Summary
 
-| Round | Focus | Issues Found | Issues Fixed |
-|-------|-------|--------------|--------------|
-| 1 | Agent-summoner source files | 12+ | Documented |
-| 2 | Bible alignment, developer specificity | 10+ | Most fixed |
-| 3 | Documentation verification | 15+ | Some fixed, tasks created |
+| Round | Focus                                  | Issues Found | Issues Fixed              |
+| ----- | -------------------------------------- | ------------ | ------------------------- |
+| 1     | Agent-summoner source files            | 12+          | Documented                |
+| 2     | Bible alignment, developer specificity | 10+          | Most fixed                |
+| 3     | Documentation verification             | 15+          | Some fixed, tasks created |

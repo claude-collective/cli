@@ -12,6 +12,7 @@ Add profile editing so users can update their name, email, and bio.
 **Why:** Top customer request (Issue #123). Users can't modify profile after signup.
 
 **Current State:**
+
 - Profile display: `components/profile/UserProfile.tsx`
 - Profile data: `stores/UserStore.ts`
 - API endpoint: `PUT /api/users/:id`
@@ -30,6 +31,7 @@ Developer agent MUST read these files before implementation:
 ## Requirements
 
 **Must Have:**
+
 1. "Edit Profile" button in UserProfile component
 2. Modal with fields: name, email, bio
 3. Validation: email format, required fields
@@ -38,6 +40,7 @@ Developer agent MUST read these files before implementation:
 6. Profile refreshes after save
 
 **Must NOT:**
+
 - Modify authentication system
 - Change UserStore structure
 - Add new dependencies
@@ -45,31 +48,37 @@ Developer agent MUST read these files before implementation:
 ## Files
 
 **Modify:**
+
 - `components/profile/UserProfile.tsx` - Add button and modal state
 - `stores/UserStore.ts` - Add updateProfile action
 
 **Create:**
+
 - `components/profile/ProfileEditModal.tsx`
 
 **Do NOT Modify:**
+
 - Authentication system
 - Shared components outside profile/
 
 ## Success Criteria
 
 **Functional:**
+
 1. Modal opens with current values on "Edit Profile" click
 2. Save updates profile within 2 seconds
 3. Invalid email shows error message
 4. Network errors show retry message
 
 **Technical:**
+
 1. All tests in profile/ pass
 2. New tests cover: happy path, validation, network errors
 3. Code follows SettingsForm.tsx pattern
 4. No changes outside profile/ directory
 
 **Verify:**
+
 - Manual test: Edit and verify persistence
 - Run: `npm test components/profile/`
 - Check: `git diff main -- auth.py` (should be empty)

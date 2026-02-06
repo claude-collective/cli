@@ -56,15 +56,15 @@ approach → stack (domain selection) → build → refine → confirm
 
 ### Wizard Orchestration
 
-| File                                                     | Purpose                                                                 |
-| -------------------------------------------------------- | ----------------------------------------------------------------------- |
+| File                                                  | Purpose                                                                 |
+| ----------------------------------------------------- | ----------------------------------------------------------------------- |
 | [wizard.tsx](../src/cli/components/wizard/wizard.tsx) | Main orchestrator - renders steps, handles navigation, computes results |
 | [wizard-store.ts](../src/cli/stores/wizard-store.ts)  | Zustand store with V2 state shape and actions                           |
 
 ### Wizard Steps
 
-| File                                                                             | Step          | Purpose                                          |
-| -------------------------------------------------------------------------------- | ------------- | ------------------------------------------------ |
+| File                                                                          | Step          | Purpose                                          |
+| ----------------------------------------------------------------------------- | ------------- | ------------------------------------------------ |
 | [step-approach.tsx](../src/cli/components/wizard/step-approach.tsx)           | Approach      | Choose stack template or build from scratch      |
 | [step-stack.tsx](../src/cli/components/wizard/step-stack.tsx)                 | Stack         | Select pre-built stack OR domains (dual-purpose) |
 | [step-stack-options.tsx](../src/cli/components/wizard/step-stack-options.tsx) | Stack Options | Continue with defaults or customize (stack path) |
@@ -74,8 +74,8 @@ approach → stack (domain selection) → build → refine → confirm
 
 ### UI Components
 
-| File                                                                         | Purpose                                    |
-| ---------------------------------------------------------------------------- | ------------------------------------------ |
+| File                                                                      | Purpose                                    |
+| ------------------------------------------------------------------------- | ------------------------------------------ |
 | [wizard-tabs.tsx](../src/cli/components/wizard/wizard-tabs.tsx)           | Horizontal 5-step progress indicator       |
 | [category-grid.tsx](../src/cli/components/wizard/category-grid.tsx)       | 2D grid selection with keyboard navigation |
 | [section-progress.tsx](../src/cli/components/wizard/section-progress.tsx) | Sub-step progress for multi-domain flows   |
@@ -95,8 +95,8 @@ approach → stack (domain selection) → build → refine → confirm
 
 ## Type Definitions
 
-| File                                                    | Key Types                                                                    |
-| ------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| File                                                 | Key Types                                                                    |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------- |
 | [types-matrix.ts](../src/cli/types-matrix.ts)        | `MergedSkillsMatrix`, `CategoryDefinition`, `ResolvedSkill`, `ResolvedStack` |
 | [types-stacks.ts](../src/cli/types-stacks.ts)        | `Stack`, `StacksConfig`, `StackAgentConfig`                                  |
 | [wizard-store.ts](../src/cli/stores/wizard-store.ts) | `WizardStep`, `WizardState`                                                  |
@@ -148,8 +148,8 @@ Options in CategoryGrid display with visual indicators:
 
 ## Test Files
 
-| File                                                                                              | Coverage                           |
-| ------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| File                                                                                           | Coverage                           |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------- |
 | [wizard-store.test.ts](../src/cli/stores/wizard-store.test.ts)                                 | Store actions and computed getters |
 | [wizard.integration.test.tsx](../src/cli/lib/__tests__/components/wizard.integration.test.tsx) | End-to-end wizard flows            |
 | [category-grid.test.tsx](../src/cli/components/wizard/category-grid.test.tsx)                  | Grid navigation and selection      |
@@ -162,8 +162,8 @@ Options in CategoryGrid display with visual indicators:
 
 ## Resolution Logic
 
-| File                                                       | Purpose                                                                |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------- |
+| File                                                    | Purpose                                                                |
+| ------------------------------------------------------- | ---------------------------------------------------------------------- |
 | [matrix-resolver.ts](../src/cli/lib/matrix-resolver.ts) | `getAvailableSkills()`, `validateSelection()` - computes option states |
 | [stacks-loader.ts](../src/cli/lib/stacks-loader.ts)     | `loadStackById()`, `resolveStackSkillsFromAliases()`                   |
 | [resolver.ts](../src/cli/lib/resolver.ts)               | `resolveAgentSkillsFromStack()`, `getAgentSkills()`                    |

@@ -11,6 +11,7 @@
 This document researches UX patterns for skill search and discovery in the Claude Collective CLI. With 150+ skills in the marketplace and third-party import capabilities, users need an effective way to discover and select skills.
 
 **Key Recommendations:**
+
 1. Dual-mode search: static results for scripting, interactive for discovery
 2. Searchable fields: name, alias, description, tags, category
 3. Grouped results by category with compatibility indicators
@@ -60,12 +61,14 @@ function matchesQuery(skill: ResolvedSkill, query: string): boolean {
 ```
 
 **Current Features:**
+
 - Case-insensitive substring matching
 - Searches: name, id, alias, description, category, tags
 - Category filter via `--category` flag
 - Table output via `@oclif/table`
 
 **Current Limitations:**
+
 - No fuzzy matching (typos not tolerated)
 - No interactive mode
 - No relevance ranking
@@ -78,17 +81,17 @@ function matchesQuery(skill: ResolvedSkill, query: string): boolean {
 
 ```typescript
 interface ResolvedSkill {
-  id: string;           // Full ID: "web-state-zustand"
-  alias?: string;       // Short name: "zustand"
-  name: string;         // Display: "Zustand"
+  id: string; // Full ID: "web-state-zustand"
+  alias?: string; // Short name: "zustand"
+  name: string; // Display: "Zustand"
   description: string;
-  category: string;     // Category ID
+  category: string; // Category ID
   tags: string[];
   author: string;
   conflictsWith: SkillRelation[];
   recommends: SkillRelation[];
   requires: SkillRequirement[];
-  compatibleWith: string[];  // Framework compatibility
+  compatibleWith: string[]; // Framework compatibility
   // ... more fields
 }
 ```
@@ -98,11 +101,13 @@ interface ResolvedSkill {
 **Location:** `/home/vince/dev/cli/src/cli/components/wizard/`
 
 The CLI already has Ink-based interactive components:
+
 - `CategoryGrid` - 2D keyboard navigation grid
 - `WizardTabs` - Step-based navigation
 - Keyboard support: arrows, vim keys (h/j/k/l), space, enter
 
 **Dependencies available:**
+
 - `ink` v5.0.0 - Terminal UI framework
 - `@inkjs/ui` v2.0.0 - UI component library
 - `@oclif/table` v0.5.0 - Table formatting
@@ -124,11 +129,13 @@ other/react-helper      Helper utilities                     567
 ```
 
 **Strengths:**
+
 - Clean table output
 - Star count as quality signal
 - Pagination support
 
 **Weaknesses:**
+
 - No interactive mode
 - No filtering in results
 
@@ -142,10 +149,12 @@ zustand   Bear necessities for state     pmndrs      2024-01-15  4.5.0
 ```
 
 **Strengths:**
+
 - Shows metadata (author, date, version)
 - Relevance-ranked results
 
 **Weaknesses:**
+
 - Slow (API-based)
 - No interactive mode
 
@@ -162,10 +171,12 @@ node-red      nodebox
 ```
 
 **Strengths:**
+
 - Grouped results by type
 - Fast local search
 
 **Weaknesses:**
+
 - No descriptions inline
 - No interactive selection
 
@@ -176,6 +187,7 @@ $ cc list | fzf --preview 'cc info {}'
 ```
 
 **Strengths:**
+
 - Real-time fuzzy filtering
 - Preview pane
 - Vim-style navigation
@@ -185,13 +197,13 @@ $ cc list | fzf --preview 'cc info {}'
 
 ### 2.2 Key UX Principles
 
-| Principle | Description | Implementation |
-|-----------|-------------|----------------|
-| **Fast feedback** | Results should appear instantly | Local search, no network |
-| **Typo tolerance** | Minor errors shouldn't block | Fuzzy matching |
-| **Context visibility** | Show why a result matched | Highlight match location |
-| **Progressive disclosure** | Basic → detailed info | Table → detail view |
-| **Composability** | Work with pipes/scripts | JSON output, clean stdout |
+| Principle                  | Description                     | Implementation            |
+| -------------------------- | ------------------------------- | ------------------------- |
+| **Fast feedback**          | Results should appear instantly | Local search, no network  |
+| **Typo tolerance**         | Minor errors shouldn't block    | Fuzzy matching            |
+| **Context visibility**     | Show why a result matched       | Highlight match location  |
+| **Progressive disclosure** | Basic → detailed info           | Table → detail view       |
+| **Composability**          | Work with pipes/scripts         | JSON output, clean stdout |
 
 ---
 
@@ -211,14 +223,14 @@ cc search -i react      → Interactive with pre-filled query
 
 ### 3.2 Searchable Fields Priority
 
-| Priority | Field | Weight | Rationale |
-|----------|-------|--------|-----------|
-| 1 | `alias` | 3x | Most common user input |
-| 2 | `name` | 2x | Human-readable identifier |
-| 3 | `tags` | 2x | Curated search terms |
-| 4 | `category` | 1.5x | Structural grouping |
-| 5 | `description` | 1x | Full-text fallback |
-| 6 | `id` | 0.5x | Technical, rarely searched |
+| Priority | Field         | Weight | Rationale                  |
+| -------- | ------------- | ------ | -------------------------- |
+| 1        | `alias`       | 3x     | Most common user input     |
+| 2        | `name`        | 2x     | Human-readable identifier  |
+| 3        | `tags`        | 2x     | Curated search terms       |
+| 4        | `category`    | 1.5x   | Structural grouping        |
+| 5        | `description` | 1x     | Full-text fallback         |
+| 6        | `id`          | 0.5x   | Technical, rarely searched |
 
 ### 3.3 Fuzzy Matching Algorithm
 
@@ -229,21 +241,22 @@ Recommended: **Levenshtein distance with prefix boost**
 function scoreMatch(query: string, target: string): number {
   const exactMatch = target.toLowerCase() === query.toLowerCase();
   if (exactMatch) return 100;
-  
+
   const prefixMatch = target.toLowerCase().startsWith(query.toLowerCase());
   if (prefixMatch) return 80;
-  
+
   const containsMatch = target.toLowerCase().includes(query.toLowerCase());
   if (containsMatch) return 60;
-  
+
   const fuzzyDistance = levenshtein(query, target);
   const fuzzyScore = Math.max(0, 40 - fuzzyDistance * 5);
-  
+
   return fuzzyScore;
 }
 ```
 
 **Libraries to consider:**
+
 - `fuse.js` - Lightweight fuzzy search
 - `match-sorter` - Sorting by match quality
 - Native implementation (no deps, simpler)
@@ -301,7 +314,7 @@ static flags = {
     description: 'Launch interactive fuzzy finder',
     default: false,
   }),
-  
+
   // Filtering
   category: Flags.string({
     char: 'c',
@@ -315,7 +328,7 @@ static flags = {
     description: 'Show only locally installed skills',
     default: false,
   }),
-  
+
   // Output control
   json: Flags.boolean({
     description: 'Output results as JSON',
@@ -331,7 +344,7 @@ static flags = {
     description: 'Maximum results to show',
     default: 20,
   }),
-  
+
   // Sorting
   sort: Flags.string({
     options: ['relevance', 'name', 'category'],
@@ -458,16 +471,16 @@ $ cc search zustand --format list | xargs -I {} cc info {}
 
 ### 6.3 Keyboard Controls
 
-| Key | Action |
-|-----|--------|
-| `↑`/`k` | Move selection up |
-| `↓`/`j` | Move selection down |
-| `Enter` | Select skill (output to stdout) |
-| `Tab` | Toggle detail preview |
-| `Esc` | Cancel/exit |
-| `Ctrl+C` | Force quit |
-| Type | Filter results |
-| `Backspace` | Delete character |
+| Key         | Action                          |
+| ----------- | ------------------------------- |
+| `↑`/`k`     | Move selection up               |
+| `↓`/`j`     | Move selection down             |
+| `Enter`     | Select skill (output to stdout) |
+| `Tab`       | Toggle detail preview           |
+| `Esc`       | Cancel/exit                     |
+| `Ctrl+C`    | Force quit                      |
+| Type        | Filter results                  |
+| `Backspace` | Delete character                |
 
 ### 6.4 Ink Component Structure
 
@@ -495,6 +508,7 @@ $ cc search zustand --format list | xargs -I {} cc info {}
 **Scope:** Improve existing `cc search` command
 
 **Tasks:**
+
 1. Add `--json` output flag
 2. Add `--format list|table|wide` flag
 3. Add `--compatible-with` filter
@@ -503,6 +517,7 @@ $ cc search zustand --format list | xargs -I {} cc info {}
 6. Add match highlighting in output
 
 **Files to modify:**
+
 - `/home/vince/dev/cli/src/cli/commands/search.ts`
 
 **Estimated effort:** 1-2 days
@@ -512,12 +527,14 @@ $ cc search zustand --format list | xargs -I {} cc info {}
 **Scope:** Add typo-tolerant search
 
 **Tasks:**
+
 1. Implement fuzzy matching algorithm (or add `fuse.js`)
 2. Weight fields by priority
 3. Score and rank results
 4. Show "Did you mean...?" suggestions
 
 **Files to modify:**
+
 - `/home/vince/dev/cli/src/cli/commands/search.ts`
 - New: `/home/vince/dev/cli/src/cli/lib/fuzzy-search.ts`
 
@@ -528,6 +545,7 @@ $ cc search zustand --format list | xargs -I {} cc info {}
 **Scope:** Add `cc search -i` fuzzy finder
 
 **Tasks:**
+
 1. Create `SearchApp` Ink component
 2. Create `ResultsList` with keyboard nav
 3. Create `SkillPreview` panel
@@ -535,6 +553,7 @@ $ cc search zustand --format list | xargs -I {} cc info {}
 5. Add real-time filtering
 
 **New files:**
+
 - `/home/vince/dev/cli/src/cli/components/search/search-app.tsx`
 - `/home/vince/dev/cli/src/cli/components/search/results-list.tsx`
 - `/home/vince/dev/cli/src/cli/components/search/skill-preview.tsx`
@@ -547,6 +566,7 @@ $ cc search zustand --format list | xargs -I {} cc info {}
 **Scope:** Integrate with other commands
 
 **Tasks:**
+
 1. `cc import skill <source> --search` - search before importing
 2. `cc add <skill>` - search + add workflow
 3. `cc init --search` - search during wizard
@@ -611,11 +631,11 @@ $ cc import skill github:vercel-labs/skills --search
 
 ### Performance Targets
 
-| Metric | Target | Rationale |
-|--------|--------|-----------|
-| Search latency | < 50ms | Local data, instant feedback |
-| Interactive render | 60fps | Smooth typing experience |
-| Memory usage | < 50MB | Reasonable for CLI tool |
+| Metric             | Target | Rationale                    |
+| ------------------ | ------ | ---------------------------- |
+| Search latency     | < 50ms | Local data, instant feedback |
+| Interactive render | 60fps  | Smooth typing experience     |
+| Memory usage       | < 50MB | Reasonable for CLI tool      |
 
 ### Compatibility Requirements
 
@@ -627,16 +647,19 @@ $ cc import skill github:vercel-labs/skills --search
 ### Testing Strategy
 
 **Unit tests:**
+
 - Fuzzy matching algorithm
 - Scoring/ranking logic
 - Field weighting
 
 **Integration tests:**
+
 - Command flag parsing
 - Output format validation
 - JSON schema compliance
 
 **E2E tests (if interactive):**
+
 - ink-testing-library for Ink components
 - Keyboard navigation
 - Selection behavior
@@ -645,25 +668,25 @@ $ cc import skill github:vercel-labs/skills --search
 
 ## Appendix C: Related Files Reference
 
-| Purpose | File Path |
-|---------|-----------|
-| Current search command | `/home/vince/dev/cli/src/cli/commands/search.ts` |
-| Skill types | `/home/vince/dev/cli/src/cli/types-matrix.ts` |
-| Skills matrix | `/home/vince/dev/cli/config/skills-matrix.yaml` |
+| Purpose                 | File Path                                                         |
+| ----------------------- | ----------------------------------------------------------------- |
+| Current search command  | `/home/vince/dev/cli/src/cli/commands/search.ts`                  |
+| Skill types             | `/home/vince/dev/cli/src/cli/types-matrix.ts`                     |
+| Skills matrix           | `/home/vince/dev/cli/config/skills-matrix.yaml`                   |
 | Wizard grid (reference) | `/home/vince/dev/cli/src/cli/components/wizard/category-grid.tsx` |
-| Ink theme | `/home/vince/dev/cli/src/cli/components/themes/default.ts` |
-| Table output | `@oclif/table` (already used in search.ts) |
-| Import command | `/home/vince/dev/cli/src/cli/commands/import/skill.ts` |
+| Ink theme               | `/home/vince/dev/cli/src/cli/components/themes/default.ts`        |
+| Table output            | `@oclif/table` (already used in search.ts)                        |
+| Import command          | `/home/vince/dev/cli/src/cli/commands/import/skill.ts`            |
 
 ---
 
 ## Decision Summary
 
-| Question | Recommendation |
-|----------|----------------|
-| Interactive vs non-interactive? | **Both** - Static by default, `-i` for interactive |
-| Fuzzy matching library? | **Native implementation** - Keep deps minimal |
-| Search fields? | **All 6** - name, alias, tags, category, description, id |
-| Grouping strategy? | **By category** with flat list option |
-| Output default? | **Table** with JSON and list alternatives |
-| Compatibility indicators? | **Yes** - Show framework compatibility |
+| Question                        | Recommendation                                           |
+| ------------------------------- | -------------------------------------------------------- |
+| Interactive vs non-interactive? | **Both** - Static by default, `-i` for interactive       |
+| Fuzzy matching library?         | **Native implementation** - Keep deps minimal            |
+| Search fields?                  | **All 6** - name, alias, tags, category, description, id |
+| Grouping strategy?              | **By category** with flat list option                    |
+| Output default?                 | **Table** with JSON and list alternatives                |
+| Compatibility indicators?       | **Yes** - Show framework compatibility                   |

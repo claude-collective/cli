@@ -165,9 +165,7 @@ function getStateReason(skill: {
  * Check if a framework is selected in the current selections.
  * Framework skills are in the "framework" subcategory.
  */
-function isFrameworkSelected(
-  selections: Record<string, string[]>,
-): boolean {
+function isFrameworkSelected(selections: Record<string, string[]>): boolean {
   const frameworkSelections = selections[FRAMEWORK_SUBCATEGORY_ID] ?? [];
   return frameworkSelections.length > 0;
 }
@@ -384,7 +382,9 @@ const Footer: React.FC<FooterProps> = ({ validationError }) => {
 
       {/* Keyboard shortcuts help - split layout */}
       <WizardFooter
-        navigation={"\u2190/\u2192 options  \u2191/\u2193 categories  SPACE select  TAB desc  E expert"}
+        navigation={
+          "\u2190/\u2192 options  \u2191/\u2193 categories  SPACE select  TAB desc  E expert"
+        }
         action="ENTER continue  ESC back"
       />
     </Box>

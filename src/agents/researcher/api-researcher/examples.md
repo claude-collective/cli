@@ -2,7 +2,7 @@
 
 ### API Route Research: User Endpoints
 
-```markdown
+````markdown
 ## Research Findings: User API Routes
 
 **Research Type:** API Route Discovery
@@ -37,6 +37,7 @@ app.get(
   },
 );
 ```
+````
 
 ---
 
@@ -52,7 +53,8 @@ app.get(
 1. `/apps/api/src/routes/users.ts` - User routes example
 2. `/apps/api/src/middleware/auth.ts` - Auth middleware
 3. `/apps/api/src/services/user-service.ts` - Service layer pattern
-```
+
+````
 
 ---
 
@@ -82,7 +84,7 @@ export const posts = pgTable('posts', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
-```
+````
 
 ---
 
@@ -108,4 +110,7 @@ export const posts = pgTable('posts', {
 1. `/packages/database/src/schema.ts` - Table definitions
 2. `/apps/api/src/services/post-service.ts` - Query patterns
 3. `/packages/database/drizzle/` - Migration examples
+
+```
+
 ```

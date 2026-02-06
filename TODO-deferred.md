@@ -365,6 +365,7 @@ cc eject skills --domain backend --category api
 **S | D-18 | Add inline documentation to agent.liquid template**
 
 From agent architecture research:
+
 1. Add comments in `agent.liquid` explaining each section's variables and purpose
 2. Document which variables are required vs optional
 3. Document where each variable comes from in the source files

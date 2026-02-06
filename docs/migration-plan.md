@@ -1671,8 +1671,8 @@ export default defineConfig({
 
 ## 9. Appendix: Command Migration Matrix
 
-| Command                | Current File                       | Target File                               | Interactive | Status  |
-| ---------------------- | ---------------------------------- | ----------------------------------------- | ----------- | ------- |
+| Command                | Current File                       | Target File                            | Interactive | Status  |
+| ---------------------- | ---------------------------------- | -------------------------------------- | ----------- | ------- |
 | `init`                 | `commands/init.ts`                 | `cli/commands/init.ts`                 | Full wizard | Pending |
 | `edit`                 | `commands/edit.ts`                 | `cli/commands/edit.ts`                 | Full wizard | Pending |
 | `compile`              | `commands/compile.ts`              | `cli/commands/compile.ts`              | No          | Pending |

@@ -27,10 +27,12 @@ Pattern 1: Advanced Setup with Error Handling
 ```
 
 **Pros:**
+
 - Familiar to developers
 - Deterministic, traceable
 
 **Cons:**
+
 - Skills are prose/knowledge, not code - line conflicts make no sense
 - Merging "Pattern 1: X" with "Pattern 1: Y" shouldn't create a conflict
 - Would require manual resolution for almost every merge
@@ -56,11 +58,13 @@ After consume:
 ```
 
 **Pros:**
+
 - Simple, predictable
 - No data loss
 - Easy to implement
 
 **Cons:**
+
 - Creates duplicates when patterns overlap
 - Doesn't handle conflicting advice
 - No intelligent synthesis
@@ -72,17 +76,20 @@ After consume:
 ### Model C: AI-Assisted Synthesis (Recommended)
 
 **Concept:** Use AI to intelligently merge skills, identifying:
+
 - Complementary patterns (add them)
 - Overlapping patterns (synthesize best of both)
 - Conflicting patterns (prefer local, flag external as alternative)
 - Redundant content (deduplicate)
 
 **Pros:**
+
 - Produces truly comprehensive skills
 - Handles semantic overlap intelligently
 - Can improve existing patterns with new insights
 
 **Cons:**
+
 - Requires AI call (cost, latency)
 - Less predictable output
 - Needs review step
@@ -97,19 +104,21 @@ After consume:
 
 ```yaml
 consume_strategy:
-  philosophy: prefer_local    # Keep local philosophy
-  patterns: merge_all         # Combine all unique patterns
-  examples: merge_unique      # Add non-duplicate examples
-  anti_patterns: merge_all    # More anti-patterns = better
+  philosophy: prefer_local # Keep local philosophy
+  patterns: merge_all # Combine all unique patterns
+  examples: merge_unique # Add non-duplicate examples
+  anti_patterns: merge_all # More anti-patterns = better
   critical_requirements: union # All requirements preserved
 ```
 
 **Pros:**
+
 - Structured, predictable
 - Respects skill anatomy
 - Fast (no AI needed)
 
 **Cons:**
+
 - Can't detect semantic duplicates within sections
 - May still need manual cleanup
 
@@ -127,6 +136,7 @@ cc consume vercel-labs/react-best-practices --into web-framework-react
 ```
 
 **Flow:**
+
 1. Fetch external skill
 2. AI analyzes both skills
 3. Generate merged skill (in temp location)
@@ -155,18 +165,21 @@ cc consume vercel-labs/react-best-practices --into web-framework-react --append
 ### Syntax Options
 
 **Option A: Source-first (like git pull)**
+
 ```bash
 cc consume <external-skill> --into <local-skill>
 cc consume github:vercel-labs/agent-skills/react-best-practices --into web-framework-react
 ```
 
 **Option B: Target-first (like import)**
+
 ```bash
 cc consume <local-skill> --from <external-skill>
 cc consume web-framework-react --from github:vercel-labs/agent-skills/react-best-practices
 ```
 
 **Option C: Interactive (no args)**
+
 ```bash
 cc consume
 # Prompts: Which local skill? Which external source? Which patterns?
@@ -340,28 +353,31 @@ How would you like to merge?
 
 ### Conflict Types
 
-| Type | Example | Resolution Strategy |
-|------|---------|---------------------|
-| **Same pattern, different advice** | Local: "Always use useActionState", External: "Prefer useTransition" | Keep both as alternatives with context |
-| **Overlapping patterns** | Both have "Error Handling" section | Synthesize into one comprehensive pattern |
-| **Contradicting requirements** | Local: "No default exports", External: "Use default exports" | Prefer local, note external as "alternative approach" |
-| **Duplicate examples** | Same code pattern in both | Deduplicate, keep the more complete version |
+| Type                               | Example                                                              | Resolution Strategy                                   |
+| ---------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------- |
+| **Same pattern, different advice** | Local: "Always use useActionState", External: "Prefer useTransition" | Keep both as alternatives with context                |
+| **Overlapping patterns**           | Both have "Error Handling" section                                   | Synthesize into one comprehensive pattern             |
+| **Contradicting requirements**     | Local: "No default exports", External: "Use default exports"         | Prefer local, note external as "alternative approach" |
+| **Duplicate examples**             | Same code pattern in both                                            | Deduplicate, keep the more complete version           |
 
 ### Resolution Strategies
 
 #### AI-Assisted (Default)
+
 - AI identifies semantic overlap
 - Synthesizes complementary content
 - Flags contradictions for user review
 - Generates unified, coherent output
 
 #### Structured (--structured)
+
 - Section-by-section merge
 - Local always wins for conflicts
 - External appended where no overlap
 - No semantic understanding
 
 #### Append (--append)
+
 - No conflict resolution
 - Simply concatenates
 - User handles cleanup manually
@@ -392,7 +408,7 @@ consumed_from:
     skill_name: react-best-practices
     content_hash: 61860fd
     date: 2026-02-04
-    mode: ai-synthesis           # or "structured" or "append"
+    mode: ai-synthesis # or "structured" or "append"
     patterns_added: 35
     patterns_synthesized: 2
 
@@ -429,26 +445,31 @@ cc info web-framework-react --consumed
 ## 7. Similar Patterns in Other Tools
 
 ### Git Merge/Rebase
+
 - **Similarity:** Combining changes from different sources
 - **Difference:** Git works on lines, skills work on knowledge
 - **Learning:** Preview (diff) before applying is essential
 
 ### Obsidian Note Merging
+
 - **Similarity:** Combining knowledge documents
 - **Difference:** Obsidian links notes, doesn't merge content
 - **Learning:** Linked references work well for attribution
 
 ### Wikipedia Merge
+
 - **Similarity:** Merging overlapping encyclopedia articles
 - **Difference:** Human editors, not automated
 - **Learning:** Keep "main" article identity, merge sections
 
 ### Documentation Aggregation (Docusaurus, GitBook)
+
 - **Similarity:** Pulling docs from multiple sources
 - **Difference:** Usually just includes, doesn't merge
 - **Learning:** Version/source tracking is critical
 
 ### AI Knowledge Distillation (Emerging)
+
 - **Similarity:** Using AI to synthesize knowledge
 - **Difference:** Typically for training, not user-facing docs
 - **Learning:** Quality depends on AI prompt engineering
@@ -470,7 +491,9 @@ description: Brief description
 # Title
 
 <critical_requirements>
+
 ## CRITICAL: ...
+
 </critical_requirements>
 
 <philosophy>
@@ -490,12 +513,15 @@ description: Brief description
 </integration>
 
 <critical_reminders>
+
 ## CRITICAL REMINDERS
+
 ...
 </critical_reminders>
 ```
 
 **Parser approach:**
+
 1. Extract frontmatter (YAML)
 2. Split by custom tags (`<philosophy>`, `<patterns>`, etc.)
 3. Parse patterns by `### Pattern N:` headers
@@ -512,6 +538,7 @@ EXTERNAL SKILL (source to consume):
 {external_skill_content}
 
 Instructions:
+
 1. Identify complementary patterns in EXTERNAL not in LOCAL → Add as new patterns
 2. Identify overlapping patterns → Synthesize best of both
 3. Identify conflicting advice → Keep LOCAL approach, note EXTERNAL as alternative
@@ -546,26 +573,31 @@ After consume:
 ## 9. Edge Cases
 
 ### Case 1: No Overlap
+
 External skill is entirely complementary (different technology/patterns).
 
 **Resolution:** Append all patterns, warn user that skills may not integrate well.
 
-### Case 2: Complete Overlap  
+### Case 2: Complete Overlap
+
 External skill covers same ground as local with different examples.
 
 **Resolution:** AI synthesizes, or structured mode skips (already covered).
 
 ### Case 3: External Has Better Content
+
 User realizes external skill is superior overall.
 
 **Resolution:** Offer `--replace` flag to replace rather than merge.
 
 ### Case 4: Large External Skill
+
 External has 100+ patterns, would bloat local skill.
 
 **Resolution:** Offer `--sections` to pick specific sections, or `--max-patterns` limit.
 
 ### Case 5: Incompatible Structures
+
 External skill doesn't follow standard skill structure.
 
 **Resolution:** Fall back to append mode with warning, or fail with helpful error.
@@ -575,17 +607,20 @@ External skill doesn't follow standard skill structure.
 ## 10. Recommended MVP
 
 ### Phase 1: Basic Consume
+
 - `cc consume <source> --into <skill> --append`
 - Simple append mode only
 - Basic metadata tracking (`consumed_from`)
 - Preview before apply
 
 ### Phase 2: Structured Merge
+
 - Section-based parsing
 - `--structured` flag
 - Per-section merge strategies
 
 ### Phase 3: AI-Assisted
+
 - AI synthesis as default
 - Conflict detection and resolution
 - Sophisticated preview with explanations

@@ -18,10 +18,7 @@ import { printTable } from "@oclif/table";
 import path from "path";
 import { BaseCommand } from "../base-command.js";
 import { loadSkillsMatrixFromSource } from "../lib/source-loader.js";
-import {
-  resolveAllSources,
-  type SourceEntry,
-} from "../lib/config.js";
+import { resolveAllSources, type SourceEntry } from "../lib/config.js";
 import { fetchFromSource } from "../lib/source-fetcher.js";
 import { listDirectories, fileExists, copy, ensureDir } from "../utils/fs.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
@@ -92,7 +89,7 @@ function matchesCategory(skill: ResolvedSkill, category: string): boolean {
 function toSourcedSkill(
   skill: ResolvedSkill,
   sourceName: string,
-  sourceUrl?: string
+  sourceUrl?: string,
 ): SourcedSkill {
   return {
     ...skill,
@@ -107,7 +104,7 @@ function toSourcedSkill(
  */
 async function fetchSkillsFromSource(
   source: SourceEntry,
-  forceRefresh: boolean
+  forceRefresh: boolean,
 ): Promise<SourcedSkill[]> {
   try {
     const result = await fetchFromSource(source.url, { forceRefresh });
@@ -128,7 +125,10 @@ async function fetchSkillsFromSource(
         // Create a minimal skill entry
         skills.push({
           id: skillDir,
-          name: skillDir.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
+          name: skillDir
+            .split("-")
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(" "),
           description: `Skill from ${source.name}`,
           category: "imported",
           categoryExclusive: false,
@@ -228,7 +228,7 @@ export default class Search extends BaseCommand {
   private async runInteractive(
     initialQuery: string | undefined,
     forceRefresh: boolean,
-    projectDir: string
+    projectDir: string,
   ): Promise<void> {
     this.log("Loading skills from all sources...");
 
@@ -242,7 +242,7 @@ export default class Search extends BaseCommand {
 
       // Convert to SourcedSkills
       const primarySkills = Object.values(matrix.skills).map((skill) =>
-        toSourcedSkill(skill, "marketplace", sourcePath)
+        toSourcedSkill(skill, "marketplace", sourcePath),
       );
 
       // Get configured extra sources
@@ -250,7 +250,7 @@ export default class Search extends BaseCommand {
 
       // Fetch skills from extra sources
       const extraSkillArrays = await Promise.all(
-        extras.map((source) => fetchSkillsFromSource(source, forceRefresh))
+        extras.map((source) => fetchSkillsFromSource(source, forceRefresh)),
       );
 
       // Merge all skills (primary first, then extras)
@@ -262,7 +262,9 @@ export default class Search extends BaseCommand {
       // Total source count
       const sourceCount = 1 + extras.length;
 
-      this.log(`Loaded ${allSkills.length} skills from ${sourceCount} source(s)`);
+      this.log(
+        `Loaded ${allSkills.length} skills from ${sourceCount} source(s)`,
+      );
       this.log("");
 
       // Render interactive search
@@ -278,7 +280,7 @@ export default class Search extends BaseCommand {
             onCancel={() => {
               resolve({ selectedSkills: [], cancelled: true });
             }}
-          />
+          />,
         );
 
         // Also resolve on app exit
@@ -331,7 +333,7 @@ export default class Search extends BaseCommand {
    */
   private async runStatic(
     query: string,
-    flags: { source?: string; category?: string }
+    flags: { source?: string; category?: string },
   ): Promise<void> {
     try {
       this.log("Loading skills...");
@@ -351,7 +353,7 @@ export default class Search extends BaseCommand {
       // Apply category filter if provided
       if (flags.category) {
         results = results.filter((skill) =>
-          matchesCategory(skill, flags.category as string)
+          matchesCategory(skill, flags.category as string),
         );
       }
 
@@ -367,7 +369,7 @@ export default class Search extends BaseCommand {
         }
       } else {
         this.logInfo(
-          `Found ${results.length} skill${results.length === 1 ? "" : "s"} matching "${query}"`
+          `Found ${results.length} skill${results.length === 1 ? "" : "s"} matching "${query}"`,
         );
         if (flags.category) {
           this.logInfo(`Category filter: ${flags.category}`);
