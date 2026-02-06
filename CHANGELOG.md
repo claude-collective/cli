@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2026-02-06
+
+### Added
+
+- **Import skill command** (`cc import skill`) - Import skills from GitHub repos with `--list`, `--skill`, `--all`, `--force`, `--dry-run` options
+- **Interactive skill search** (`cc search -i`) - Live filtering, multi-select, batch import from configured sources
+- **Sources config** - Configure multiple skill registries in `config.yaml` with `sources` array
+- **Wizard footer component** - Split-layout footer with navigation hints on left, actions on right
+- **Framework-first build flow** - Web domain hides other categories until framework is selected
+
+### Changed
+
+- **Wizard tabs** - Tab-style navigation with background colors (cyan active, white completed) instead of circle indicators
+- **Wizard header** - Now displays CLI version
+- **Category grid styling** - Background colors instead of circles/strikethrough for selection states
+- **Agent definitions generalized** - 16 agents updated to use generic terms (styling, database) instead of specific tech (SCSS, Drizzle)
+
+### Removed
+
+- Old `search.ts` command - Replaced with dual-mode `search.tsx` (static + interactive)
+
+[0.13.0]: https://github.com/claude-collective/cli/releases/tag/v0.13.0
+
 ## [0.12.0] - 2026-02-04
 
 ### Added
