@@ -5,6 +5,17 @@
 
 ---
 
+## Work-Related Agents and Skills
+
+**M | T5 | Create Work-Related Agents and Skills**
+
+- [ ] Identify gaps in current agent ecosystem for work use cases
+- [ ] Create specialized agents for common work patterns
+- [ ] Create skills for work-specific technologies
+- [ ] Ensure new agents follow corrected architecture patterns
+
+---
+
 ## Phase 6 Future Work
 
 **M | D-08 | Support user-defined stacks in consumer projects**

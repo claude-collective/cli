@@ -983,6 +983,7 @@ function createMockSkill(
     requiredBy: [],
     alternatives: [],
     discourages: [],
+    compatibleWith: [],
     requiresSetup: [],
     providesSetupFor: [],
     path: `skills/${category}/${id}/`,
