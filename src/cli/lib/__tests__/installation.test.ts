@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import fs from "fs";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
@@ -321,7 +322,7 @@ agents:
 
         expect(result).not.toBeNull();
         expect(result?.mode).toBe("local");
-        expect(result?.projectDir).toBe(tempDir);
+        expect(result?.projectDir).toBe(fs.realpathSync(tempDir));
       } finally {
         // Restore original cwd
         process.chdir(originalCwd);

@@ -27,6 +27,12 @@ const SKILLS_DIR = path.join(SKILLS_REPO, "src", "skills");
 // Agents and stacks are in the CLI repo (Phase 6: agent-centric config)
 const CLI_REPO = path.resolve(__dirname, "../../../..");
 
+// These are true integration tests that require the external claude-subagents
+// repo. Opt in by setting CC_TEST_SKILLS_SOURCE=/path/to/skills-repo
+const describeIntegration = process.env.CC_TEST_SKILLS_SOURCE
+  ? describe
+  : describe.skip;
+
 // =============================================================================
 // Test Helpers
 // =============================================================================
@@ -78,7 +84,7 @@ async function pathExists(p: string): Promise<boolean> {
 // Test 1: Full Skill Pipeline
 // =============================================================================
 
-describe("Integration: Full Skill Pipeline", () => {
+describeIntegration("Integration: Full Skill Pipeline", () => {
   let tempDir: string;
   let outputDir: string;
 
@@ -205,7 +211,7 @@ describe("Integration: Full Skill Pipeline", () => {
 // Test 2: Full Stack Pipeline
 // =============================================================================
 
-describe("Integration: Full Stack Pipeline", () => {
+describeIntegration("Integration: Full Stack Pipeline", () => {
   let tempDir: string;
   let outputDir: string;
 
@@ -359,7 +365,7 @@ describe("Integration: Full Stack Pipeline", () => {
 // Test 3: Marketplace Integrity
 // =============================================================================
 
-describe("Integration: Marketplace Integrity", () => {
+describeIntegration("Integration: Marketplace Integrity", () => {
   let tempDir: string;
   let pluginsDir: string;
   let marketplacePath: string;
@@ -531,7 +537,7 @@ describe("Integration: Marketplace Integrity", () => {
 // Test 4: End-to-End Pipeline (Skills + Stacks + Marketplace)
 // =============================================================================
 
-describe("Integration: End-to-End Pipeline", () => {
+describeIntegration("Integration: End-to-End Pipeline", () => {
   let tempDir: string;
   let pluginsDir: string;
   let stacksDir: string;

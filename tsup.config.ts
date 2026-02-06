@@ -31,5 +31,15 @@ export default defineConfig({
       await fs.copy(srcDefaults, destDefaults);
       console.log("Copied defaults/ to dist/cli/defaults/");
     }
+
+    // Copy config/ (skills-matrix.yaml, stacks.yaml) to dist/config/
+    // so it's available regardless of how PROJECT_ROOT resolves at runtime
+    const srcConfig = "config";
+    const destConfig = path.join("dist", "config");
+
+    if (await fs.pathExists(srcConfig)) {
+      await fs.copy(srcConfig, destConfig);
+      console.log("Copied config/ to dist/config/");
+    }
   },
 });
