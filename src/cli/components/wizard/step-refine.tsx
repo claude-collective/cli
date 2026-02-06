@@ -11,6 +11,7 @@
  */
 import React from "react";
 import { Box, Text, useInput } from "ink";
+import { WizardFooter } from "./wizard-footer.js";
 
 // =============================================================================
 // Types
@@ -105,9 +106,10 @@ export const StepRefine: React.FC<StepRefineProps> = ({
 
       {/* Footer with keyboard shortcuts */}
       <Text> </Text>
-      <Text dimColor>
-        {"\u2191"}/{"\u2193"} navigate ENTER continue ESC back
-      </Text>
+      <WizardFooter
+        navigation={"\u2191/\u2193 navigate"}
+        action="ENTER continue  ESC back"
+      />
     </Box>
   );
 };

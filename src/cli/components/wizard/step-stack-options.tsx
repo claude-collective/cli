@@ -91,7 +91,7 @@ export const StepStackOptions: React.FC<StepStackOptionsProps> = ({
         // For each skill in the stack, find its category and add to the structure
         for (const skillId of stack.allSkillIds) {
           const skill = matrix.skills[skillId];
-          if (skill?.category && skill.alias) {
+          if (skill?.category) {
             // Find which agent this skill belongs to based on skill category
             // Map category to a default agent (web-developer for web skills, etc.)
             const domain = matrix.categories[skill.category]?.domain;
@@ -99,8 +99,8 @@ export const StepStackOptions: React.FC<StepStackOptionsProps> = ({
               if (!stackAgents[domain]) {
                 stackAgents[domain] = {};
               }
-              // Use alias as the technology value
-              stackAgents[domain][skill.category] = skill.alias;
+              // Use alias if available, otherwise fall back to skill id
+              stackAgents[domain][skill.category] = skill.alias || skill.id;
             }
           }
         }
