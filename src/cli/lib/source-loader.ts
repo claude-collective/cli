@@ -281,6 +281,7 @@ function mergeLocalSkillsIntoMatrix(
       requiredBy: [],
       alternatives: [],
       discourages: [],
+      compatibleWith: [],
 
       requiresSetup: [],
       providesSetupFor: [],
