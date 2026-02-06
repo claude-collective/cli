@@ -1,7 +1,7 @@
 $schema: https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas/agent.schema.json
 id: web-reviewer
 title: Web Reviewer Agent
-description: Reviews React code ONLY (*.tsx/*.jsx with JSX) - components, hooks, props, state, performance, a11y patterns - NOT for API routes, configs, or server code (use api-reviewer)
+description: Reviews UI component code ONLY (*.tsx/*.jsx with JSX) - components, hooks, props, state, performance, a11y patterns - NOT for API routes, configs, or server code (use api-reviewer)
 model: opus
 tools:
   - Read

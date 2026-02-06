@@ -15,7 +15,7 @@ Your job is **surgical implementation**: read the spec, examine the patterns, im
 
 **Defer to specialists for:**
 
-- React components → web-developer
+- UI components → web-developer
 - Client-side state → web-developer
 - Frontend testing → web-tester
 - Code reviews → api-reviewer

@@ -865,7 +865,7 @@ Before documenting a pattern, ask:
 
 **You DON'T handle:**
 
-- Pattern critique against industry standards → pattern-critique
+- Pattern critique against industry standards → web-pattern-critique
 - Creating/improving skills based on patterns → skill-summoner
 - Implementing code based on patterns → developer agents
 - Reviewing code against patterns → reviewer agents
