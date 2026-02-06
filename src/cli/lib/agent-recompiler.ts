@@ -10,6 +10,7 @@ import {
   loadProjectConfig,
   isLegacyStackConfig,
   normalizeStackConfig,
+  normalizeAgentSkills,
   type LoadedProjectConfig,
 } from "./project-config";
 import {
@@ -106,7 +107,9 @@ function projectConfigToStackLike(config: ProjectConfig): StackConfig {
     skills:
       config.skills?.map((s) => (typeof s === "string" ? { id: s } : s)) ?? [],
     agents: config.agents,
-    agent_skills: config.agent_skills as StackConfig["agent_skills"],
+    agent_skills: config.agent_skills
+      ? normalizeAgentSkills(config.agent_skills)
+      : undefined,
     hooks: config.hooks,
     framework: config.framework,
     philosophy: config.philosophy,
@@ -134,7 +137,11 @@ export async function recompileAgents(
   };
 
   // Load project config (handles both legacy plugin config and new ProjectConfig)
-  const loadedConfig = await loadConfigWithFallback(pluginDir);
+  // Try plugin dir first, then fall back to project dir for local mode
+  let loadedConfig = await loadConfigWithFallback(pluginDir);
+  if (!loadedConfig && projectDir) {
+    loadedConfig = await loadConfigWithFallback(projectDir);
+  }
   const projectConfig = loadedConfig?.config ?? null;
 
   // Load built-in agents from source
