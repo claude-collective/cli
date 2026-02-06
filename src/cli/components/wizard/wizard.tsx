@@ -268,13 +268,7 @@ export const Wizard: React.FC<WizardProps> = ({
         const effectiveDomains =
           store.selectedDomains.length > 0 ? store.selectedDomains : ["web"]; // Default to web if no domains selected
 
-        // DEBUG: trace data flow for pre-selection bug
         const allSelections = store.getAllSelectedTechnologies();
-        console.log("DEBUG allSelections for Build step:", allSelections);
-        console.log(
-          "DEBUG store.domainSelections:",
-          JSON.stringify(store.domainSelections, null, 2),
-        );
 
         return (
           <StepBuild

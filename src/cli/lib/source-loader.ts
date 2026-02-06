@@ -261,30 +261,40 @@ function mergeLocalSkillsIntoMatrix(
   }
 
   for (const metadata of localResult.skills) {
+    // Use the skill's original category from metadata.yaml when available,
+    // falling back to "local/custom" for truly new local skills
+    const hasOriginalCategory =
+      metadata.category !== "local" && matrix.categories[metadata.category];
+    const category = hasOriginalCategory ? metadata.category : "local/custom";
+
+    // Preserve alias from existing matrix entry (if skill was in source)
+    const existingSkill = matrix.skills[metadata.id];
+    const alias = existingSkill?.alias ?? matrix.aliasesReverse[metadata.id];
+
     const resolvedSkill: ResolvedSkill = {
       id: metadata.id,
-      alias: undefined,
+      alias,
       name: metadata.name,
       description: metadata.description,
       usageGuidance: metadata.usageGuidance,
 
-      category: "local/custom",
-      categoryExclusive: false,
+      category,
+      categoryExclusive: metadata.categoryExclusive,
       tags: metadata.tags ?? [],
 
       author: "@local",
 
-      conflictsWith: [],
-      recommends: [],
-      recommendedBy: [],
-      requires: [],
-      requiredBy: [],
-      alternatives: [],
-      discourages: [],
-      compatibleWith: [],
+      conflictsWith: existingSkill?.conflictsWith ?? [],
+      recommends: existingSkill?.recommends ?? [],
+      recommendedBy: existingSkill?.recommendedBy ?? [],
+      requires: existingSkill?.requires ?? [],
+      requiredBy: existingSkill?.requiredBy ?? [],
+      alternatives: existingSkill?.alternatives ?? [],
+      discourages: existingSkill?.discourages ?? [],
+      compatibleWith: existingSkill?.compatibleWith ?? [],
 
-      requiresSetup: [],
-      providesSetupFor: [],
+      requiresSetup: existingSkill?.requiresSetup ?? [],
+      providesSetupFor: existingSkill?.providesSetupFor ?? [],
 
       path: metadata.path,
 
@@ -293,7 +303,7 @@ function mergeLocalSkillsIntoMatrix(
     };
 
     matrix.skills[metadata.id] = resolvedSkill;
-    verbose(`Added local skill: ${metadata.id}`);
+    verbose(`Added local skill: ${metadata.id} (category: ${category})`);
   }
 
   return matrix;

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.4] - 2026-02-06
+
+### Fixed
+
+- **local skills lose category metadata** - Local skills from `.claude/skills/` were hardcoded to `category: "local/custom"`, destroying their original category (e.g., `"framework"`, `"styling"`). This broke framework pre-selection in the wizard's Build step and domain filtering. Now preserves the original category from `metadata.yaml` when it matches a matrix category, and carries forward aliases and relationships from source skills.
+
 ## [0.13.3] - 2026-02-06
 
 ### Fixed
@@ -49,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Old `search.ts` command - Replaced with dual-mode `search.tsx` (static + interactive)
 
+[0.13.4]: https://github.com/claude-collective/cli/releases/tag/v0.13.4
 [0.13.3]: https://github.com/claude-collective/cli/releases/tag/v0.13.3
 [0.13.2]: https://github.com/claude-collective/cli/releases/tag/v0.13.2
 [0.13.1]: https://github.com/claude-collective/cli/releases/tag/v0.13.1
