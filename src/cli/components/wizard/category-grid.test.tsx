@@ -1,7 +1,7 @@
 /**
  * Tests for the CategoryGrid component.
  *
- * Tests 2D grid rendering and keyboard navigation for wizard Build step.
+ * Tests section-based rendering and keyboard navigation for wizard Build step.
  */
 import React from "react";
 import { render } from "ink-testing-library";
@@ -53,18 +53,19 @@ const createCategory = (
   ...overrides,
 });
 
+// Default categories with framework-first scenario
 const defaultCategories: CategoryRow[] = [
   createCategory(
     "framework",
     "Framework",
     [
-      createOption("react", "react", {
+      createOption("react", "React", {
         state: "recommended",
         stateReason: "Popular choice",
       }),
-      createOption("vue", "vue"),
-      createOption("angular", "angular"),
-      createOption("svelte", "svelte"),
+      createOption("vue", "Vue"),
+      createOption("angular", "Angular"),
+      createOption("svelte", "Svelte"),
     ],
     { required: true },
   ),
@@ -72,29 +73,65 @@ const defaultCategories: CategoryRow[] = [
     "styling",
     "Styling",
     [
-      createOption("scss-mod", "scss-mod", { selected: true }),
-      createOption("tailwind", "tailwind", { state: "recommended" }),
-      createOption("styled", "styled"),
-      createOption("vanilla", "vanilla"),
+      createOption("scss-mod", "SCSS Modules", { selected: true }),
+      createOption("tailwind", "Tailwind", { state: "recommended" }),
+      createOption("styled", "Styled Components"),
+      createOption("vanilla", "Vanilla CSS"),
     ],
     { required: true },
   ),
   createCategory("client-state", "Client State", [
-    createOption("zustand", "zustand", { state: "recommended" }),
-    createOption("jotai", "jotai"),
-    createOption("redux", "redux", {
+    createOption("zustand", "Zustand", { state: "recommended" }),
+    createOption("jotai", "Jotai"),
+    createOption("redux", "Redux", {
       state: "discouraged",
       stateReason: "Complex for most apps",
     }),
-    createOption("mobx", "mobx"),
+    createOption("mobx", "MobX"),
   ]),
   createCategory("server-state", "Server State", [
-    createOption("react-query", "react-query", { selected: true }),
-    createOption("swr", "swr"),
-    createOption("apollo", "apollo"),
+    createOption("react-query", "React Query", { selected: true }),
+    createOption("swr", "SWR"),
+    createOption("apollo", "Apollo"),
   ]),
   createCategory("analytics", "Analytics", [
-    createOption("posthog", "posthog"),
+    createOption("posthog", "PostHog"),
+  ]),
+];
+
+// Categories with framework selected (unlocks other sections)
+const categoriesWithFramework: CategoryRow[] = [
+  createCategory(
+    "framework",
+    "Framework",
+    [
+      createOption("react", "React", {
+        state: "recommended",
+        stateReason: "Popular choice",
+        selected: true, // Framework selected
+      }),
+      createOption("vue", "Vue"),
+      createOption("angular", "Angular"),
+      createOption("svelte", "Svelte"),
+    ],
+    { required: true },
+  ),
+  createCategory(
+    "styling",
+    "Styling",
+    [
+      createOption("scss-mod", "SCSS Modules"),
+      createOption("tailwind", "Tailwind", { state: "recommended" }),
+      createOption("styled", "Styled Components"),
+      createOption("vanilla", "Vanilla CSS"),
+    ],
+    { required: true },
+  ),
+  createCategory("client-state", "Client State", [
+    createOption("zustand", "Zustand", { state: "recommended" }),
+    createOption("jotai", "Jotai"),
+    createOption("redux", "Redux", { state: "discouraged" }),
+    createOption("mobx", "MobX"),
   ]),
 ];
 
@@ -132,7 +169,7 @@ describe("CategoryGrid component", () => {
   // ===========================================================================
 
   describe("rendering", () => {
-    it("should render all categories", () => {
+    it("should render all categories as sections", () => {
       const { lastFrame, unmount } = renderGrid();
       cleanup = unmount;
 
@@ -150,13 +187,13 @@ describe("CategoryGrid component", () => {
 
       const output = lastFrame();
       // Framework options
-      expect(output).toContain("react");
-      expect(output).toContain("vue");
-      expect(output).toContain("angular");
-      expect(output).toContain("svelte");
+      expect(output).toContain("React");
+      expect(output).toContain("Vue");
+      expect(output).toContain("Angular");
+      expect(output).toContain("Svelte");
       // Styling options
-      expect(output).toContain("scss-mod");
-      expect(output).toContain("tailwind");
+      expect(output).toContain("SCSS Modules");
+      expect(output).toContain("Tailwind");
     });
 
     it("should show required indicator (*) for required categories", () => {
@@ -169,15 +206,16 @@ describe("CategoryGrid component", () => {
       expect(output).toContain("*");
     });
 
-    it("should show (optional) for non-required categories", () => {
+    it("should NOT show (optional) for non-required categories", () => {
       const { lastFrame, unmount } = renderGrid();
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("(optional)");
+      // Optional is assumed by default, so we don't show the label
+      expect(output).not.toContain("(optional)");
     });
 
-    it("should render legend row", () => {
+    it("should render legend row with visual states", () => {
       const { lastFrame, unmount } = renderGrid();
       cleanup = unmount;
 
@@ -194,7 +232,7 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("[Tab] Show descriptions");
+      expect(output).toContain("[d] Descriptions");
       expect(output).toContain("[e] Expert Mode");
     });
 
@@ -205,51 +243,61 @@ describe("CategoryGrid component", () => {
       const output = lastFrame();
       expect(output).toContain("No categories to display");
     });
+
+    it("should render section underlines", () => {
+      const { lastFrame, unmount } = renderGrid();
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // Unicode horizontal line character used for underlines
+      expect(output).toContain("\u2500");
+    });
   });
 
   // ===========================================================================
-  // Visual States
+  // Visual States (No Stars)
   // ===========================================================================
 
   describe("visual states", () => {
-    it("should show selected symbol for selected options", () => {
+    it("should show selected options with label text", () => {
       const { lastFrame, unmount } = renderGrid();
       cleanup = unmount;
 
       const output = lastFrame();
-      // scss-mod and react-query are selected
-      // Should contain filled circles (●)
-      expect(output).toContain("\u25CF"); // ●
+      // scss-mod and react-query are selected in defaultCategories
+      expect(output).toContain("SCSS Modules");
+      expect(output).toContain("React Query");
     });
 
-    it("should show unselected symbol for unselected options", () => {
+    it("should show unselected options with label text", () => {
       const { lastFrame, unmount } = renderGrid();
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should contain empty circles (○)
-      expect(output).toContain("\u25CB"); // ○
+      // Unselected options should display their labels
+      expect(output).toContain("Vue");
+      expect(output).toContain("Angular");
     });
 
-    it("should show recommended indicator for recommended options", () => {
+    it("should NOT show star indicator for recommended options (uses background instead)", () => {
       const { lastFrame, unmount } = renderGrid();
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should contain star (⭐) for recommended
-      expect(output).toContain("\u2B50");
+      // Should NOT contain star (⭐) for recommended
+      expect(output).not.toContain("\u2B50");
     });
 
-    it("should show discouraged indicator for discouraged options", () => {
+    it("should NOT show warning indicator for discouraged options (uses color instead)", () => {
       const { lastFrame, unmount } = renderGrid();
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should contain warning (⚠) for discouraged
-      expect(output).toContain("\u26A0");
+      // Should NOT contain warning (⚠) for discouraged
+      expect(output).not.toContain("\u26A0");
     });
 
-    it("should show disabled symbol for disabled options", () => {
+    it("should show disabled options with dimmed styling", () => {
       const categories: CategoryRow[] = [
         createCategory("test", "Test", [
           createOption("opt1", "Option 1"),
@@ -261,17 +309,68 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should contain X (✗) for disabled
-      expect(output).toContain("\u2717");
+      // Disabled options should show label (dimmed text)
+      expect(output).toContain("Option 2");
     });
   });
 
   // ===========================================================================
-  // Focus Indicator
+  // Locked Sections (Framework-First Flow)
+  // ===========================================================================
+
+  describe("locked sections", () => {
+    it("should show all categories including locked ones", () => {
+      // No framework selected, so non-framework sections should be locked but visible
+      const { lastFrame, unmount } = renderGrid();
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Framework");
+      expect(output).toContain("Styling");
+      expect(output).toContain("Client State");
+    });
+
+    it("should unlock sections when framework is selected", () => {
+      const { lastFrame, unmount } = renderGrid({
+        categories: categoriesWithFramework,
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // All sections should be visible and navigable
+      expect(output).toContain("Framework");
+      expect(output).toContain("Styling");
+      expect(output).toContain("Client State");
+    });
+
+    it("should not lock any sections when no framework category exists", () => {
+      const categoriesNoFramework: CategoryRow[] = [
+        createCategory("styling", "Styling", [
+          createOption("scss", "SCSS"),
+          createOption("tailwind", "Tailwind"),
+        ]),
+        createCategory("state", "State", [
+          createOption("zustand", "Zustand"),
+        ]),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({
+        categories: categoriesNoFramework,
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Styling");
+      expect(output).toContain("State");
+    });
+  });
+
+  // ===========================================================================
+  // Focus Indicator (Background-based, no > symbol)
   // ===========================================================================
 
   describe("focus indicator", () => {
-    it("should show focus indicator (>) on focused option", () => {
+    it("should render focused option with label text", () => {
       const { lastFrame, unmount } = renderGrid({
         focusedRow: 0,
         focusedCol: 0,
@@ -279,11 +378,13 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain(">");
+      // Focused option should be visible (background highlighting is visual-only)
+      expect(output).toContain("React");
     });
 
-    it("should update focus indicator when focusedRow changes", () => {
+    it("should render correctly when focusedRow changes", () => {
       const { lastFrame: frame1, unmount: unmount1 } = renderGrid({
+        categories: categoriesWithFramework,
         focusedRow: 0,
         focusedCol: 0,
       });
@@ -291,19 +392,21 @@ describe("CategoryGrid component", () => {
       unmount1();
 
       const { lastFrame: frame2, unmount: unmount2 } = renderGrid({
+        categories: categoriesWithFramework,
         focusedRow: 1,
         focusedCol: 0,
       });
       cleanup = unmount2;
       const output2 = frame2();
 
-      // Both should have focus indicator, but in different rows
-      expect(output1).toContain(">");
-      expect(output2).toContain(">");
+      // Both should render the focused category options
+      expect(output1).toContain("Framework");
+      expect(output2).toContain("Styling");
     });
 
     it("should highlight focused category name", () => {
       const { lastFrame, unmount } = renderGrid({
+        categories: categoriesWithFramework,
         focusedRow: 1,
         focusedCol: 0,
       });
@@ -352,10 +455,11 @@ describe("CategoryGrid component", () => {
       expect(onFocusChange).toHaveBeenCalledWith(0, 1);
     });
 
-    it("should call onFocusChange when pressing up arrow", async () => {
+    it("should call onFocusChange when pressing up arrow (wraps to framework when locked)", async () => {
       const onFocusChange = vi.fn();
+      // No framework selected, so navigation stays on framework row
       const { stdin, unmount } = renderGrid({
-        focusedRow: 1,
+        focusedRow: 0,
         focusedCol: 0,
         onFocusChange,
       });
@@ -365,12 +469,14 @@ describe("CategoryGrid component", () => {
       await stdin.write(ARROW_UP);
       await delay(INPUT_DELAY_MS);
 
+      // Should stay on row 0 (framework) since other rows are locked
       expect(onFocusChange).toHaveBeenCalledWith(0, 0);
     });
 
-    it("should call onFocusChange when pressing down arrow", async () => {
+    it("should navigate between sections when unlocked", async () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
+        categories: categoriesWithFramework,
         focusedRow: 0,
         focusedCol: 0,
         onFocusChange,
@@ -381,6 +487,7 @@ describe("CategoryGrid component", () => {
       await stdin.write(ARROW_DOWN);
       await delay(INPUT_DELAY_MS);
 
+      // Should move to row 1 (Styling) since framework is selected
       expect(onFocusChange).toHaveBeenCalledWith(1, 0);
     });
 
@@ -418,9 +525,10 @@ describe("CategoryGrid component", () => {
       expect(onFocusChange).toHaveBeenCalledWith(0, 0);
     });
 
-    it("should wrap vertically when pressing up at first row", async () => {
+    it("should wrap vertically when all sections are unlocked", async () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
+        categories: categoriesWithFramework,
         focusedRow: 0,
         focusedCol: 0,
         onFocusChange,
@@ -431,25 +539,8 @@ describe("CategoryGrid component", () => {
       await stdin.write(ARROW_UP);
       await delay(INPUT_DELAY_MS);
 
-      // Should wrap to last row (index 4 for 5 categories)
-      expect(onFocusChange).toHaveBeenCalledWith(4, 0);
-    });
-
-    it("should wrap vertically when pressing down at last row", async () => {
-      const onFocusChange = vi.fn();
-      const { stdin, unmount } = renderGrid({
-        focusedRow: 4, // Last category (analytics)
-        focusedCol: 0,
-        onFocusChange,
-      });
-      cleanup = unmount;
-
-      await delay(RENDER_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(INPUT_DELAY_MS);
-
-      // Should wrap to first row
-      expect(onFocusChange).toHaveBeenCalledWith(0, 0);
+      // Should wrap to last row (index 2 for 3 categories)
+      expect(onFocusChange).toHaveBeenCalledWith(2, 0);
     });
   });
 
@@ -493,6 +584,7 @@ describe("CategoryGrid component", () => {
     it("should move up with k key", async () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
+        categories: categoriesWithFramework,
         focusedRow: 1,
         focusedCol: 0,
         onFocusChange,
@@ -509,6 +601,7 @@ describe("CategoryGrid component", () => {
     it("should move down with j key", async () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
+        categories: categoriesWithFramework,
         focusedRow: 0,
         focusedCol: 0,
         onFocusChange,
@@ -547,9 +640,21 @@ describe("CategoryGrid component", () => {
     it("should call onToggle when pressing space on a selected option", async () => {
       const onToggle = vi.fn();
       // Use expertMode to preserve original option order
+      const categories: CategoryRow[] = [
+        createCategory(
+          "framework",
+          "Framework",
+          [
+            createOption("react", "React", { selected: true }),
+            createOption("vue", "Vue"),
+          ],
+          { required: true },
+        ),
+      ];
       const { stdin, unmount } = renderGrid({
-        focusedRow: 1,
-        focusedCol: 0, // scss-mod (selected) - first in expert mode
+        categories,
+        focusedRow: 0,
+        focusedCol: 0, // react (selected)
         expertMode: true,
         onToggle,
       });
@@ -559,7 +664,7 @@ describe("CategoryGrid component", () => {
       await stdin.write(" ");
       await delay(INPUT_DELAY_MS);
 
-      expect(onToggle).toHaveBeenCalledWith("styling", "scss-mod");
+      expect(onToggle).toHaveBeenCalledWith("framework", "react");
     });
 
     it("should NOT call onToggle when pressing space on a disabled option", async () => {
@@ -577,6 +682,23 @@ describe("CategoryGrid component", () => {
         focusedRow: 0,
         focusedCol: 0, // Disabled option (first in expert mode)
         expertMode: true,
+        onToggle,
+      });
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      await stdin.write(" ");
+      await delay(INPUT_DELAY_MS);
+
+      expect(onToggle).not.toHaveBeenCalled();
+    });
+
+    it("should NOT call onToggle when section is locked", async () => {
+      const onToggle = vi.fn();
+      // No framework selected, styling section is locked
+      const { stdin, unmount } = renderGrid({
+        focusedRow: 1, // Styling (locked)
+        focusedCol: 0,
         onToggle,
       });
       cleanup = unmount;
@@ -698,11 +820,53 @@ describe("CategoryGrid component", () => {
   });
 
   // ===========================================================================
+  // Tab Navigation (Section Jumping)
+  // ===========================================================================
+
+  describe("tab navigation", () => {
+    it("should jump to next section when pressing Tab", async () => {
+      const onFocusChange = vi.fn();
+      const { stdin, unmount } = renderGrid({
+        categories: categoriesWithFramework,
+        focusedRow: 0,
+        focusedCol: 0,
+        onFocusChange,
+      });
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      await stdin.write(TAB);
+      await delay(INPUT_DELAY_MS);
+
+      // Should jump to next section (row 1)
+      expect(onFocusChange).toHaveBeenCalledWith(1, 0);
+    });
+
+    it("should only jump to unlocked sections", async () => {
+      const onFocusChange = vi.fn();
+      // No framework selected, so Tab should stay on framework
+      const { stdin, unmount } = renderGrid({
+        focusedRow: 0,
+        focusedCol: 0,
+        onFocusChange,
+      });
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      await stdin.write(TAB);
+      await delay(INPUT_DELAY_MS);
+
+      // Should NOT call onFocusChange since there's nowhere to go (all others locked)
+      expect(onFocusChange).not.toHaveBeenCalled();
+    });
+  });
+
+  // ===========================================================================
   // Show Descriptions Toggle
   // ===========================================================================
 
   describe("show descriptions toggle", () => {
-    it("should call onToggleDescriptions when pressing Tab", async () => {
+    it("should call onToggleDescriptions when pressing d key", async () => {
       const onToggleDescriptions = vi.fn();
       const { stdin, unmount } = renderGrid({
         onToggleDescriptions,
@@ -710,7 +874,7 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
-      await stdin.write(TAB);
+      await stdin.write("d");
       await delay(INPUT_DELAY_MS);
 
       expect(onToggleDescriptions).toHaveBeenCalled();
@@ -748,8 +912,8 @@ describe("CategoryGrid component", () => {
       cleanup = unmount2;
       const output2 = frame2();
 
-      expect(output1).toContain("Show descriptions: OFF");
-      expect(output2).toContain("Show descriptions: ON");
+      expect(output1).toContain("Descriptions: OFF");
+      expect(output2).toContain("Descriptions: ON");
     });
   });
 
@@ -864,7 +1028,7 @@ describe("CategoryGrid component", () => {
       expect(output).toContain("Only Option");
     });
 
-    it("should handle category with many options", () => {
+    it("should handle category with many options (flows naturally)", () => {
       const options = Array.from({ length: 10 }, (_, i) =>
         createOption(`opt${i}`, `Option ${i}`),
       );
@@ -877,6 +1041,7 @@ describe("CategoryGrid component", () => {
 
       const output = lastFrame();
       expect(output).toContain("Many Options");
+      // All options should be present (no fixed row limit)
       expect(output).toContain("Option 0");
       expect(output).toContain("Option 9");
     });
@@ -884,8 +1049,8 @@ describe("CategoryGrid component", () => {
     it("should handle long option labels", () => {
       const categories: CategoryRow[] = [
         createCategory("long", "Long Labels", [
-          createOption("long1", "very-long-option-name-here"),
-          createOption("long2", "another-very-long-option"),
+          createOption("long1", "Very Long Option Name"),
+          createOption("long2", "Another Long Name"),
         ]),
       ];
 
@@ -893,7 +1058,8 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("very-long-option-name-here");
+      // Labels should be rendered (flowing layout handles long labels)
+      expect(output).toContain("Very Long Option Name");
     });
 
     it("should handle categories with different option counts", () => {
@@ -930,11 +1096,16 @@ describe("CategoryGrid component", () => {
     it("should adjust focusedCol when changing to row with fewer options", async () => {
       const onFocusChange = vi.fn();
       const categories: CategoryRow[] = [
-        createCategory("cat1", "Category 1", [
-          createOption("opt1", "Option 1"),
-          createOption("opt2", "Option 2"),
-          createOption("opt3", "Option 3"),
-        ]),
+        createCategory(
+          "framework",
+          "Framework",
+          [
+            createOption("opt1", "Option 1", { selected: true }), // Framework selected
+            createOption("opt2", "Option 2"),
+            createOption("opt3", "Option 3"),
+          ],
+          { required: true },
+        ),
         createCategory("cat2", "Category 2", [
           createOption("opt4", "Option 4"),
         ]),

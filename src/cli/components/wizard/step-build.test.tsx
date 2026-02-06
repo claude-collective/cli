@@ -70,6 +70,7 @@ const createSkill = (
   requiredBy: [],
   alternatives: [],
   discourages: [],
+  compatibleWith: [],
   requiresSetup: [],
   providesSetupFor: [],
   path: `test/${id}`,
@@ -256,11 +257,15 @@ describe("StepBuild component", () => {
 
   describe("rendering", () => {
     it("should render CategoryGrid with correct categories for domain", () => {
-      const { lastFrame, unmount } = renderStepBuild();
+      // For web domain with framework-first flow, initially only shows Framework
+      // To see other categories, need a framework selection
+      const { lastFrame, unmount } = renderStepBuild({
+        selections: { framework: ["react"] }, // Framework selected to show other categories
+      });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Web domain should show Framework, Styling, Client State
+      // Web domain should show Framework, Styling, Client State (when framework selected)
       expect(output).toContain("Framework");
       expect(output).toContain("Styling");
       expect(output).toContain("Client State");
@@ -285,14 +290,17 @@ describe("StepBuild component", () => {
     });
 
     it("should render skills as options", () => {
-      const { lastFrame, unmount } = renderStepBuild();
+      // Need framework selected to see other categories in web domain
+      const { lastFrame, unmount } = renderStepBuild({
+        selections: { framework: ["react"] },
+      });
       cleanup = unmount;
 
       const output = lastFrame();
       // Framework skills
       expect(output).toContain("React");
       expect(output).toContain("Vue");
-      // Styling skills
+      // Styling skills (visible after framework selected)
       expect(output).toContain("Tailwind");
       expect(output).toContain("SCSS");
     });
@@ -384,21 +392,22 @@ describe("StepBuild component", () => {
 
   describe("category filtering", () => {
     it("should filter categories correctly by domain", () => {
-      // Web domain
+      // Web domain with framework selected (to bypass framework-first filter)
       const { lastFrame: webFrame, unmount: webUnmount } = renderStepBuild({
         domain: "web",
+        selections: { framework: ["react"] },
       });
       const webOutput = webFrame();
       webUnmount();
 
-      // API domain
+      // API domain (no framework-first filter for API)
       const { lastFrame: apiFrame, unmount: apiUnmount } = renderStepBuild({
         domain: "api",
       });
       cleanup = apiUnmount;
       const apiOutput = apiFrame();
 
-      // Web should have Framework, Styling, Client State
+      // Web should have Framework, Styling, Client State (with framework selected)
       expect(webOutput).toContain("Framework");
       expect(webOutput).toContain("Styling");
       expect(webOutput).toContain("Client State");
@@ -411,7 +420,10 @@ describe("StepBuild component", () => {
     });
 
     it("should sort categories by order", () => {
-      const { lastFrame, unmount } = renderStepBuild();
+      // Need framework selected to see all categories
+      const { lastFrame, unmount } = renderStepBuild({
+        selections: { framework: ["react"] },
+      });
       cleanup = unmount;
 
       const output = lastFrame();
@@ -434,12 +446,14 @@ describe("StepBuild component", () => {
     it("should show selected options correctly", () => {
       const { lastFrame, unmount } = renderStepBuild({
         allSelections: ["react (@vince)"],
+        selections: { framework: ["react"] },
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should show filled circle for selected
-      expect(output).toContain("\u25CF"); // filled circle
+      // Should show selected option (no circle symbol anymore, uses background)
+      // Just verify the selected label is present
+      expect(output).toContain("React");
     });
 
     it("should pass expertMode to CategoryGrid", () => {
@@ -459,7 +473,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Show descriptions: ON");
+      expect(output).toContain("Descriptions: ON");
     });
   });
 
@@ -545,7 +559,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
-      await stdin.write("\t"); // Tab
+      await stdin.write("d"); // 'd' key toggles descriptions
       await delay(INPUT_DELAY_MS);
 
       expect(onToggleDescriptions).toHaveBeenCalled();
@@ -605,6 +619,7 @@ describe("StepBuild component", () => {
       const { lastFrame, unmount } = renderStepBuild({
         domain: "web",
         allSelections: ["hono (@vince)", "postgres (@vince)"], // API skills
+        selections: { framework: ["react"] }, // Need framework to see other categories
       });
       cleanup = unmount;
 
@@ -760,12 +775,11 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      // Check for key parts of help text (may wrap due to terminal width)
+      // Check for key parts of help text in split footer (may be abbreviated)
       expect(output).toContain("SPACE select");
-      expect(output).toContain("TAB descriptions");
+      expect(output).toContain("desc"); // TAB desc (abbreviated)
       expect(output).toContain("ENTER continue");
-      expect(output).toContain("ESC"); // May be on next line
-      expect(output).toContain("back");
+      expect(output).toContain("ESC back");
     });
 
     it("should show arrow key navigation hints", () => {
@@ -773,7 +787,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      // Check for arrow symbols in the help text
+      // Check for navigation hints in the help text
       expect(output).toContain("options");
       expect(output).toContain("categories");
     });

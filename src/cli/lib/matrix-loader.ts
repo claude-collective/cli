@@ -404,6 +404,9 @@ function buildResolvedSkill(
     }
   }
 
+  // Preserve compatibleWith as resolved skill IDs for framework-first filtering
+  const compatibleWith = skill.compatibleWith.map(resolve);
+
   return {
     id: skill.id,
     alias: aliasesReverse[skill.id],
@@ -421,6 +424,7 @@ function buildResolvedSkill(
     requiredBy: [],
     alternatives,
     discourages,
+    compatibleWith,
     requiresSetup: skill.requiresSetup.map(resolve),
     providesSetupFor: skill.providesSetupFor.map(resolve),
     path: skill.path,

@@ -18,6 +18,7 @@ import {
   type OptionState,
 } from "./category-grid.js";
 import { SectionProgress } from "./section-progress.js";
+import { WizardFooter } from "./wizard-footer.js";
 
 // =============================================================================
 // Types
@@ -57,6 +58,12 @@ export interface StepBuildProps {
 
 /** Minimum number of domains to show progress indicator */
 const MIN_DOMAINS_FOR_PROGRESS = 2;
+
+/** Framework subcategory ID for web domain (framework-first filtering) */
+const FRAMEWORK_SUBCATEGORY_ID = "framework";
+
+/** Web domain ID where framework-first flow applies */
+const WEB_DOMAIN_ID = "web";
 
 // =============================================================================
 // Validation
@@ -150,31 +157,132 @@ function getStateReason(skill: {
   return undefined;
 }
 
+// =============================================================================
+// Framework-First Flow (Web Domain)
+// =============================================================================
+
+/**
+ * Check if a framework is selected in the current selections.
+ * Framework skills are in the "framework" subcategory.
+ */
+function isFrameworkSelected(
+  selections: Record<string, string[]>,
+): boolean {
+  const frameworkSelections = selections[FRAMEWORK_SUBCATEGORY_ID] ?? [];
+  return frameworkSelections.length > 0;
+}
+
+/**
+ * Get the selected framework skill ID(s) from selections.
+ * Returns the full skill IDs (e.g., "web-framework-react").
+ */
+function getSelectedFrameworks(
+  selections: Record<string, string[]>,
+  matrix: MergedSkillsMatrix,
+): string[] {
+  const frameworkSelections = selections[FRAMEWORK_SUBCATEGORY_ID] ?? [];
+  // Resolve aliases to full skill IDs
+  return frameworkSelections.map((alias) => {
+    return matrix.aliases[alias] ?? alias;
+  });
+}
+
+/**
+ * Check if a skill is compatible with any of the selected frameworks.
+ * Uses the skill's compatibleWith field from metadata.
+ */
+function isCompatibleWithSelectedFrameworks(
+  skillId: string,
+  selectedFrameworkIds: string[],
+  matrix: MergedSkillsMatrix,
+): boolean {
+  const skill = matrix.skills[skillId];
+  if (!skill) return false;
+
+  // If skill has no compatibleWith defined, assume it's compatible with all
+  // (this allows legacy skills without metadata to still appear)
+  if (skill.compatibleWith.length === 0) {
+    return true;
+  }
+
+  // Check if any selected framework is in the skill's compatibleWith list
+  return selectedFrameworkIds.some((frameworkId) =>
+    skill.compatibleWith.includes(frameworkId),
+  );
+}
+
+/**
+ * Determine if a subcategory should be shown based on framework-first flow.
+ *
+ * IMPORTANT: All sections are ALWAYS visible. The "locked" state in CategoryGrid
+ * handles dimming and preventing navigation until a framework is selected.
+ * We do NOT hide sections.
+ */
+function shouldShowSubcategory(
+  _subcategoryId: string,
+  _domain: string,
+  _frameworkSelected: boolean,
+): boolean {
+  // All sections are always visible
+  // Locking (dimming + preventing navigation) is handled by CategoryGrid
+  return true;
+}
+
 /**
  * Build CategoryRow[] from matrix for a specific domain.
  *
  * Filters subcategories by domain and builds options using getAvailableSkills.
+ * For web domain, implements framework-first flow:
+ * - Initially shows only "framework" subcategory
+ * - After framework selection, shows skills compatible with selected framework
  */
 function buildCategoriesForDomain(
   domain: string,
   allSelections: string[],
   matrix: MergedSkillsMatrix,
   expertMode: boolean,
+  selections: Record<string, string[]>,
 ): CategoryRow[] {
+  // Check framework selection for framework-first flow
+  const frameworkSelected = isFrameworkSelected(selections);
+  const selectedFrameworkIds = frameworkSelected
+    ? getSelectedFrameworks(selections, matrix)
+    : [];
+
   // Get subcategories for the current domain (categories with parent and matching domain)
   const subcategories = Object.values(matrix.categories)
     .filter((cat) => cat.domain === domain && cat.parent)
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-  // Build CategoryRow for each subcategory
-  const categoryRows: CategoryRow[] = subcategories.map((cat) => {
+  // Filter subcategories based on framework-first flow
+  const visibleSubcategories = subcategories.filter((cat) =>
+    shouldShowSubcategory(cat.id, domain, frameworkSelected),
+  );
+
+  // Build CategoryRow for each visible subcategory
+  const categoryRows: CategoryRow[] = visibleSubcategories.map((cat) => {
     // Get available skills with computed states
     const skillOptions = getAvailableSkills(cat.id, allSelections, matrix, {
       expertMode,
     });
 
+    // For web domain (non-framework categories), filter by compatibility
+    // Framework category itself doesn't need filtering
+    const filteredSkillOptions =
+      domain === WEB_DOMAIN_ID &&
+      cat.id !== FRAMEWORK_SUBCATEGORY_ID &&
+      frameworkSelected
+        ? skillOptions.filter((skill) =>
+            isCompatibleWithSelectedFrameworks(
+              skill.id,
+              selectedFrameworkIds,
+              matrix,
+            ),
+          )
+        : skillOptions;
+
     // Map skills to CategoryOption[]
-    const options: CategoryOption[] = skillOptions.map((skill) => ({
+    const options: CategoryOption[] = filteredSkillOptions.map((skill) => ({
       id: skill.alias || skill.id, // Use alias for selection tracking
       label: getDisplayLabel(skill), // Clean display name without author
       state: computeOptionState(skill),
@@ -191,7 +299,8 @@ function buildCategoriesForDomain(
     };
   });
 
-  return categoryRows;
+  // Filter out categories with no options (after compatibility filtering)
+  return categoryRows.filter((row) => row.options.length > 0);
 }
 
 /**
@@ -260,14 +369,10 @@ const Header: React.FC<HeaderProps> = ({ domain, selectionCount }) => {
 // =============================================================================
 
 interface FooterProps {
-  showContinueHint: boolean;
   validationError?: string;
 }
 
-const Footer: React.FC<FooterProps> = ({
-  showContinueHint,
-  validationError,
-}) => {
+const Footer: React.FC<FooterProps> = ({ validationError }) => {
   return (
     <Box flexDirection="column" marginTop={1}>
       {/* Validation error message */}
@@ -277,11 +382,11 @@ const Footer: React.FC<FooterProps> = ({
         </Box>
       )}
 
-      {/* Keyboard shortcuts help */}
-      <Text dimColor>
-        {"\u2190"}/{"\u2192"} options {"\u2191"}/{"\u2193"} categories SPACE
-        select TAB descriptions E expert ENTER continue ESC back
-      </Text>
+      {/* Keyboard shortcuts help - split layout */}
+      <WizardFooter
+        navigation={"\u2190/\u2192 options  \u2191/\u2193 categories  SPACE select  TAB desc  E expert"}
+        action="ENTER continue  ESC back"
+      />
     </Box>
   );
 };
@@ -313,12 +418,13 @@ export const StepBuild: React.FC<StepBuildProps> = ({
     undefined,
   );
 
-  // Build categories for the current domain
+  // Build categories for the current domain (with framework-first filtering)
   const categories = buildCategoriesForDomain(
     domain,
     allSelections,
     matrix,
     expertMode,
+    selections,
   );
 
   // Selection count for header
@@ -378,7 +484,7 @@ export const StepBuild: React.FC<StepBuildProps> = ({
       />
 
       {/* Footer with keyboard hints */}
-      <Footer showContinueHint validationError={validationError} />
+      <Footer validationError={validationError} />
     </Box>
   );
 };
