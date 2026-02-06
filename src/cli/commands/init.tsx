@@ -44,7 +44,12 @@ import {
   directoryExists,
   fileExists,
 } from "../utils/fs.js";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, LOCAL_SKILLS_PATH, PROJECT_ROOT } from "../consts.js";
+import {
+  CLAUDE_DIR,
+  CLAUDE_SRC_DIR,
+  LOCAL_SKILLS_PATH,
+  PROJECT_ROOT,
+} from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import type {
   CompileConfig,
@@ -354,7 +359,11 @@ export default class Init extends BaseCommand {
     const matrix = sourceResult.matrix;
     const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
     const localAgentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-    const localConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, "config.yaml");
+    const localConfigPath = path.join(
+      projectDir,
+      CLAUDE_SRC_DIR,
+      "config.yaml",
+    );
 
     this.log("Copying skills to local directory...");
     try {
@@ -484,11 +493,14 @@ export default class Init extends BaseCommand {
         // Merge skills arrays (union of existing + new)
         if (existingConfig.skills && existingConfig.skills.length > 0) {
           const existingSkillIds = new Set(
-            existingConfig.skills.map((s) => (typeof s === "string" ? s : s.id)),
+            existingConfig.skills.map((s) =>
+              typeof s === "string" ? s : s.id,
+            ),
           );
-          const newSkillIds = localConfig.skills?.filter(
-            (s) => !existingSkillIds.has(typeof s === "string" ? s : s.id),
-          ) || [];
+          const newSkillIds =
+            localConfig.skills?.filter(
+              (s) => !existingSkillIds.has(typeof s === "string" ? s : s.id),
+            ) || [];
           localConfig.skills = [...existingConfig.skills, ...newSkillIds];
         }
 
@@ -504,7 +516,9 @@ export default class Init extends BaseCommand {
         // Deep merge stack (existing agent configs take precedence)
         if (existingConfig.stack) {
           const mergedStack = { ...localConfig.stack };
-          for (const [agentId, agentConfig] of Object.entries(existingConfig.stack)) {
+          for (const [agentId, agentConfig] of Object.entries(
+            existingConfig.stack,
+          )) {
             mergedStack[agentId] = { ...mergedStack[agentId], ...agentConfig };
           }
           localConfig.stack = mergedStack;
@@ -551,7 +565,9 @@ export default class Init extends BaseCommand {
           localConfig.hooks = existingConfig.hooks;
         }
 
-        this.log(`Merged with existing config at ${existingFullConfig.configPath}`);
+        this.log(
+          `Merged with existing config at ${existingFullConfig.configPath}`,
+        );
       } else {
         // No existing config, add author and agents_source from simple project config if available
         const existingProjectConfig = await loadProjectConfig(projectDir);

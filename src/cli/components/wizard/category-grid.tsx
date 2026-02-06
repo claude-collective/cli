@@ -238,9 +238,7 @@ const HeaderRow: React.FC<HeaderRowProps> = ({
 }) => {
   return (
     <Box flexDirection="row" justifyContent="flex-end" marginBottom={1} gap={2}>
-      <Text dimColor>
-        [d] Descriptions: {showDescriptions ? "ON" : "OFF"}
-      </Text>
+      <Text dimColor>[d] Descriptions: {showDescriptions ? "ON" : "OFF"}</Text>
       <Text dimColor>[e] Expert Mode: {expertMode ? "ON" : "OFF"}</Text>
     </Box>
   );
@@ -309,7 +307,9 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   showDescriptions,
 }) => {
   // Generate underline matching header length
-  const underline = "\u2500".repeat(category.name.length + (category.required ? 2 : 0));
+  const underline = "\u2500".repeat(
+    category.name.length + (category.required ? 2 : 0),
+  );
 
   return (
     <Box flexDirection="column" marginBottom={1}>

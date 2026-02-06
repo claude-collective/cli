@@ -2,7 +2,7 @@
 
 Here's what a complete, high-quality frontend developer output looks like:
 
-```markdown
+````markdown
 # Implementation: Add Dark Mode Toggle to Settings Panel
 
 ## Investigation Notes
@@ -42,6 +42,7 @@ Added to existing store:
 darkMode: false,
 toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
 ```
+````
 
 ### 2. dark-mode-toggle.tsx (new file, 18 lines)
 
@@ -107,4 +108,7 @@ export function DarkModeToggle({ className }: { className?: string }) {
 **Files:** 5 changed (+43 lines)
 **Scope:** Added only toggle + persistence. Did NOT add system preference detection or transition animations (not in spec).
 **For Reviewer:** Verify theme.scss color choices match design system.
+
+```
+
 ```

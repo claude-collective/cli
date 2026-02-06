@@ -285,17 +285,17 @@ categories:
 
 **Category Fields:**
 
-| Field       | Type    | Description                                      |
-| ----------- | ------- | ------------------------------------------------ |
-| `id`        | string  | Unique identifier (kebab-case)                   |
-| `name`      | string  | Human-readable display name                      |
-| `description` | string | Brief description                                |
-| `parent`    | string  | Parent category ID (subcategories only)          |
-| `domain`    | string  | Domain for agent mapping (web, api, cli, shared) |
-| `exclusive` | boolean | If true, only one skill from category allowed    |
-| `required`  | boolean | If true, must select a skill from category       |
-| `order`     | number  | Display order in UI                              |
-| `icon`      | string  | Optional emoji/icon for UI                       |
+| Field         | Type    | Description                                      |
+| ------------- | ------- | ------------------------------------------------ |
+| `id`          | string  | Unique identifier (kebab-case)                   |
+| `name`        | string  | Human-readable display name                      |
+| `description` | string  | Brief description                                |
+| `parent`      | string  | Parent category ID (subcategories only)          |
+| `domain`      | string  | Domain for agent mapping (web, api, cli, shared) |
+| `exclusive`   | boolean | If true, only one skill from category allowed    |
+| `required`    | boolean | If true, must select a skill from category       |
+| `order`       | number  | Display order in UI                              |
+| `icon`        | string  | Optional emoji/icon for UI                       |
 
 ### Relationships
 

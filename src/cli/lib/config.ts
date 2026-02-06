@@ -338,7 +338,7 @@ export function formatSourceOrigin(
  * Returns primary source plus any extra sources from project/global config.
  */
 export async function resolveAllSources(
-  projectDir?: string
+  projectDir?: string,
 ): Promise<{ primary: SourceEntry; extras: SourceEntry[] }> {
   const projectConfig = projectDir ? await loadProjectConfig(projectDir) : null;
   const globalConfig = await loadGlobalConfig();

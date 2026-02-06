@@ -13,6 +13,7 @@
 **Server State in Redux**
 
 Current pattern (patterns.md:45):
+
 ```typescript
 const usersSlice = createSlice({
   name: "users",
@@ -24,8 +25,13 @@ const usersSlice = createSlice({
 **Problem:** Redux lacks caching, background refetching, request deduplication. Leads to stale data and race conditions.
 
 **Fix:**
+
 ```typescript
-const { data: users, isLoading, error } = useQuery({
+const {
+  data: users,
+  isLoading,
+  error,
+} = useQuery({
   queryKey: ["users"],
   queryFn: fetchUsers,
   staleTime: 5 * 60 * 1000,

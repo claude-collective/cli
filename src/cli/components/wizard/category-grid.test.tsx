@@ -349,9 +349,7 @@ describe("CategoryGrid component", () => {
           createOption("scss", "SCSS"),
           createOption("tailwind", "Tailwind"),
         ]),
-        createCategory("state", "State", [
-          createOption("zustand", "Zustand"),
-        ]),
+        createCategory("state", "State", [createOption("zustand", "Zustand")]),
       ];
 
       const { lastFrame, unmount } = renderGrid({

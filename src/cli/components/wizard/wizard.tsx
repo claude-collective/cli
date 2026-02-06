@@ -271,7 +271,10 @@ export const Wizard: React.FC<WizardProps> = ({
         // DEBUG: trace data flow for pre-selection bug
         const allSelections = store.getAllSelectedTechnologies();
         console.log("DEBUG allSelections for Build step:", allSelections);
-        console.log("DEBUG store.domainSelections:", JSON.stringify(store.domainSelections, null, 2));
+        console.log(
+          "DEBUG store.domainSelections:",
+          JSON.stringify(store.domainSelections, null, 2),
+        );
 
         return (
           <StepBuild

@@ -10,38 +10,38 @@ Source Resolution -> Skill Loading -> Matrix Merging -> Wizard Selection -> Conf
 
 ### Commands (`src/cli/commands/`)
 
-| Command             | File                       | Purpose                               |
-| ------------------- | -------------------------- | ------------------------------------- |
-| `init`              | `init.tsx`                 | Initialize project with wizard        |
-| `edit`              | `edit.tsx`                 | Modify existing installation          |
-| `compile`           | `compile.ts`               | Recompile agents from skills          |
-| `eject`             | `eject.ts`                 | Export templates/config/skills/agents |
-| `uninstall`         | `uninstall.tsx`            | Remove plugin or local installation   |
-| `update`            | `update.tsx`               | Update installed skills/agents        |
-| `build plugins`     | `build/plugins.ts`         | Build individual skill plugins        |
-| `build stack`       | `build/stack.tsx`          | Build stack into plugin               |
-| `build marketplace` | `build/marketplace.ts`     | Generate marketplace.json             |
-| `validate`          | `validate.ts`              | Validate YAML/plugins                 |
-| `list`              | `list.ts`                  | Show plugin info                      |
-| `info`              | `info.ts`                  | Display skill/agent information       |
-| `search`            | `search.ts`                | Search skills in marketplace          |
-| `outdated`          | `outdated.ts`              | Check for outdated skills             |
-| `diff`              | `diff.ts`                  | Show differences in configurations    |
-| `doctor`            | `doctor.ts`                | Diagnose installation issues          |
-| `new agent`         | `new/agent.tsx`            | Create a new custom agent             |
-| `new skill`         | `new/skill.ts`             | Create a new custom skill             |
-| `config`            | `config/index.ts`          | Configuration management (parent)     |
-| `config show`       | `config/show.ts`           | Show current configuration            |
-| `config get`        | `config/get.ts`            | Get a specific config value           |
-| `config set`        | `config/set.ts`            | Set a global config value             |
-| `config unset`      | `config/unset.ts`          | Remove a global config value          |
-| `config set-project`| `config/set-project.ts`    | Set a project-level config value      |
-| `config unset-project`| `config/unset-project.ts`| Remove a project-level config value   |
-| `config path`       | `config/path.ts`           | Show config file paths                |
-| `version`           | `version/index.ts`         | Version management (parent)           |
-| `version show`      | `version/show.ts`          | Show current version                  |
-| `version bump`      | `version/bump.ts`          | Bump plugin version                   |
-| `version set`       | `version/set.ts`           | Set specific version                  |
+| Command                | File                      | Purpose                               |
+| ---------------------- | ------------------------- | ------------------------------------- |
+| `init`                 | `init.tsx`                | Initialize project with wizard        |
+| `edit`                 | `edit.tsx`                | Modify existing installation          |
+| `compile`              | `compile.ts`              | Recompile agents from skills          |
+| `eject`                | `eject.ts`                | Export templates/config/skills/agents |
+| `uninstall`            | `uninstall.tsx`           | Remove plugin or local installation   |
+| `update`               | `update.tsx`              | Update installed skills/agents        |
+| `build plugins`        | `build/plugins.ts`        | Build individual skill plugins        |
+| `build stack`          | `build/stack.tsx`         | Build stack into plugin               |
+| `build marketplace`    | `build/marketplace.ts`    | Generate marketplace.json             |
+| `validate`             | `validate.ts`             | Validate YAML/plugins                 |
+| `list`                 | `list.ts`                 | Show plugin info                      |
+| `info`                 | `info.ts`                 | Display skill/agent information       |
+| `search`               | `search.ts`               | Search skills in marketplace          |
+| `outdated`             | `outdated.ts`             | Check for outdated skills             |
+| `diff`                 | `diff.ts`                 | Show differences in configurations    |
+| `doctor`               | `doctor.ts`               | Diagnose installation issues          |
+| `new agent`            | `new/agent.tsx`           | Create a new custom agent             |
+| `new skill`            | `new/skill.ts`            | Create a new custom skill             |
+| `config`               | `config/index.ts`         | Configuration management (parent)     |
+| `config show`          | `config/show.ts`          | Show current configuration            |
+| `config get`           | `config/get.ts`           | Get a specific config value           |
+| `config set`           | `config/set.ts`           | Set a global config value             |
+| `config unset`         | `config/unset.ts`         | Remove a global config value          |
+| `config set-project`   | `config/set-project.ts`   | Set a project-level config value      |
+| `config unset-project` | `config/unset-project.ts` | Remove a project-level config value   |
+| `config path`          | `config/path.ts`          | Show config file paths                |
+| `version`              | `version/index.ts`        | Version management (parent)           |
+| `version show`         | `version/show.ts`         | Show current version                  |
+| `version bump`         | `version/bump.ts`         | Bump plugin version                   |
+| `version set`          | `version/set.ts`          | Set specific version                  |
 
 ### Library Modules (`src/cli/lib/`)
 

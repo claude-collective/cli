@@ -107,7 +107,7 @@ Detailed specifications for completed tasks are preserved in TODO.md under "Deta
 | P5-7-3  | Remove picocolors dependency         | 2026-01-31 |
 | P5-7-4  | Delete old src/cli/commands/ files   | 2026-01-31 |
 | P5-7-5  | Delete src/cli/lib/wizard.ts         | 2026-01-31 |
-| P5-7-6  | Move lib/ and utils/ to cli       | 2026-01-31 |
+| P5-7-6  | Move lib/ and utils/ to cli          | 2026-01-31 |
 | P5-7-7  | Update package.json entry points     | 2026-01-31 |
 | P5-7-8  | Final validation (all commands work) | 2026-01-31 |
 | P5-7-9  | Update documentation                 | 2026-01-31 |

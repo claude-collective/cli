@@ -221,7 +221,7 @@ const ResultsList: React.FC<ResultsListProps> = ({
 }) => {
   const visibleResults = results.slice(
     scrollOffset,
-    scrollOffset + MAX_VISIBLE_RESULTS
+    scrollOffset + MAX_VISIBLE_RESULTS,
   );
 
   if (results.length === 0) {
@@ -260,7 +260,10 @@ interface StatusBarProps {
   selectedCount: number;
 }
 
-const StatusBar: React.FC<StatusBarProps> = ({ resultCount, selectedCount }) => {
+const StatusBar: React.FC<StatusBarProps> = ({
+  resultCount,
+  selectedCount,
+}) => {
   return (
     <Box paddingX={1}>
       <Text dimColor>
@@ -339,7 +342,7 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
   // Ensure focus stays in bounds when results change
   const safeFocusedIndex = Math.min(
     focusedIndex,
-    Math.max(0, filteredResults.length - 1)
+    Math.max(0, filteredResults.length - 1),
   );
 
   // Get the currently focused skill
@@ -367,9 +370,7 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
 
   // Copy skill link to clipboard
   const copySkillLink = useCallback(async (skill: SourcedSkill) => {
-    const link = skill.sourceUrl
-      ? `${skill.sourceUrl}/${skill.id}`
-      : skill.id;
+    const link = skill.sourceUrl ? `${skill.sourceUrl}/${skill.id}` : skill.id;
 
     try {
       // Use native clipboard API via process.stdout.write with OSC 52
@@ -397,7 +398,7 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
     if (key.return) {
       if (selectedIds.size > 0) {
         const selectedSkills = filteredResults.filter((s) =>
-          selectedIds.has(s.id)
+          selectedIds.has(s.id),
         );
         onComplete({
           selectedSkills,

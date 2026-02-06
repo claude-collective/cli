@@ -34,15 +34,15 @@ Compilation Process:
 
 **Key Files Involved:**
 
-| File                                      | Responsibility                                                                |
-| ----------------------------------------- | ----------------------------------------------------------------------------- |
+| File                                   | Responsibility                                                                |
+| -------------------------------------- | ----------------------------------------------------------------------------- |
 | `src/cli/lib/stack-plugin-compiler.ts` | Main compilation engine - loads stack, skills, resolves agents, writes output |
 | `src/cli/lib/stack-installer.ts`       | Stack installation to Claude Code plugin directory                            |
 | `src/cli/commands/build/stack.tsx`     | CLI command to build standalone stack plugins                                 |
 | `src/cli/lib/loader.ts`                | `loadStack()`, `loadSkillsByIds()`, `loadAllAgents()` - file loading          |
 | `src/cli/lib/resolver.ts`              | `resolveStackSkills()`, `stackToCompileConfig()` - skill-agent mapping        |
 | `src/cli/lib/skill-agent-mappings.ts`  | Hardcoded `SKILL_TO_AGENTS`, `PRELOADED_SKILLS` mappings                      |
-| `src/types.ts`                            | `StackConfig`, `CompileConfig`, `AgentConfig` type definitions                |
+| `src/types.ts`                         | `StackConfig`, `CompileConfig`, `AgentConfig` type definitions                |
 
 ### 1.2 Current Data Structures
 

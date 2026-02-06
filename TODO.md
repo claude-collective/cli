@@ -118,6 +118,7 @@ See [docs/CLI-IMPROVEMENTS-RESEARCH.md#4](./docs/CLI-IMPROVEMENTS-RESEARCH.md) f
 - [x] Update tests in `category-grid.test.tsx` and `step-build.test.tsx`
 
 **Files modified:**
+
 - `src/cli/components/wizard/step-build.tsx` - Framework-first filtering logic
 - `src/cli/components/wizard/category-grid.tsx` - Visual styling (backgrounds instead of circles)
 - `src/cli/types-matrix.ts` - Added `compatibleWith` field to `ResolvedSkill`
@@ -126,6 +127,7 @@ See [docs/CLI-IMPROVEMENTS-RESEARCH.md#4](./docs/CLI-IMPROVEMENTS-RESEARCH.md) f
 - `src/cli/components/wizard/step-build.test.tsx` - Updated tests for framework-first flow
 
 **Implementation notes:**
+
 - Web domain only: Framework-first flow hides other categories until framework selected
 - Skills with empty `compatibleWith` array are shown (backwards compatible)
 - Visual styling: selected = cyan background (black text), focused = gray background (white text), disabled = dimmed text
@@ -149,6 +151,7 @@ See [docs/CLI-IMPROVEMENTS-RESEARCH.md#4](./docs/CLI-IMPROVEMENTS-RESEARCH.md) f
 **Files:** `src/cli/commands/import/skill.ts` (NEW)
 
 **Features implemented:**
+
 - Multiple source formats: `github:owner/repo`, `https://github.com/...`, `owner/repo`
 - `--list` to discover available skills
 - `--skill <name>` to import specific skill
@@ -181,12 +184,14 @@ See [docs/CLI-IMPROVEMENTS-RESEARCH.md#4](./docs/CLI-IMPROVEMENTS-RESEARCH.md) f
 - [ ] Add tests for interactive component
 
 **Files modified:**
+
 - `src/cli/lib/config.ts` - Added SourceEntry interface, sources array, resolveAllSources()
 - `src/cli/commands/search.tsx` - Dual-mode search (static + interactive)
 - `src/cli/components/skill-search/skill-search.tsx` - Interactive UI component
 - `src/cli/components/skill-search/index.ts` - Exports
 
 **UX Features:**
+
 - No args = interactive mode
 - With args = static table mode (scripting-friendly)
 - `-i` flag forces interactive with pre-filled query

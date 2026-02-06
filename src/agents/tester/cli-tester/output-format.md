@@ -224,9 +224,9 @@ bun test src/cli/lib/__tests__/integration.test.ts
 
 ### Test File Location Convention
 
-| Test Type   | Location                                       |
-| ----------- | ---------------------------------------------- |
+| Test Type   | Location                                    |
+| ----------- | ------------------------------------------- |
 | Unit tests  | `src/cli/**/__tests__/*.test.ts`            |
 | Lib tests   | `src/cli/lib/*.test.ts`                     |
 | Integration | `src/cli/lib/__tests__/integration.test.ts` |
-| E2E tests   | `tests/e2e/*.test.ts`                          |
+| E2E tests   | `tests/e2e/*.test.ts`                       |

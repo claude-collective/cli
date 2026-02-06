@@ -28,7 +28,7 @@ tags: [state-management, observables]
 
 ### SKILL.md (condensed)
 
-````markdown
+```markdown
 # MobX State Management Patterns
 
 > **Quick Guide:** Use MobX for complex client state needing computed values and automatic dependency tracking.
@@ -101,7 +101,7 @@ export default UserStore; // BAD: Default export
 **(You MUST use React Query for server state - NOT MobX)**
 **Failure to follow these rules will break MobX reactivity.**
 </critical_reminders>
-````
+```
 
 ---
 

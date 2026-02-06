@@ -45,7 +45,7 @@
 
 ## Example Output: Store/State Map
 
-```markdown
+````markdown
 # Store/State Map
 
 **Last Updated:** 2025-01-24
@@ -57,10 +57,10 @@
 
 ## Stores
 
-| Store       | File Path                    | Purpose        | Key Actions               |
-| ----------- | ---------------------------- | -------------- | ------------------------- |
-| EditorStore | `/src/stores/EditorStore.ts` | Editor state   | `addLayer()`, `undo()`    |
-| UserStore   | `/src/stores/UserStore.ts`   | User session   | `login()`, `logout()`     |
+| Store       | File Path                    | Purpose      | Key Actions            |
+| ----------- | ---------------------------- | ------------ | ---------------------- |
+| EditorStore | `/src/stores/EditorStore.ts` | Editor state | `addLayer()`, `undo()` |
+| UserStore   | `/src/stores/UserStore.ts`   | User session | `login()`, `logout()`  |
 
 ## Store Relationships
 
@@ -73,9 +73,11 @@
 import { useStore } from "@/contexts/StoreContext";
 const { editorStore } = useStore();
 ```
+````
 
 **Example files:** `/src/components/Editor/EditorCanvas.tsx:15`
-```
+
+````
 
 ---
 
@@ -99,10 +101,11 @@ const { editorStore } = useStore();
 **Do instead:**
 ```typescript
 editorStore.addLayer(newLayer)  // Use store actions
-```
+````
 
 **Correct pattern:** `/src/components/Editor/EditorCanvas.tsx`
-```
+
+````
 
 ---
 
@@ -121,15 +124,17 @@ editorStore.addLayer(newLayer)  // Use store actions
 
 ## File Structure
 
-```
+````
+
 src/features/editor/
 ├── components/
-│   ├── EditorCanvas.tsx    # Main canvas
-│   └── Toolbar.tsx         # Tool selection
+│ ├── EditorCanvas.tsx # Main canvas
+│ └── Toolbar.tsx # Tool selection
 ├── hooks/
-│   └── useEditorState.ts   # State management
+│ └── useEditorState.ts # State management
 └── stores/
-    └── EditorStore.ts      # MobX store
+└── EditorStore.ts # MobX store
+
 ```
 
 ## Key Files
