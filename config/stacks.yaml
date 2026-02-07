@@ -22,7 +22,7 @@ stacks:
         analytics: posthog
         email: resend
         ci-cd: github-actions
-        testing: backend-testing
+        testing: api-testing
       cli-developer:
         cli: cli-commander
       web-reviewer:
@@ -60,7 +60,7 @@ stacks:
         database: drizzle
         auth: better-auth
         observability: axiom-pino-sentry
-        testing: backend-testing
+        testing: api-testing
       web-architecture: {}
       web-reviewer:
         reviewing: reviewing
@@ -93,7 +93,7 @@ stacks:
         database: drizzle
         auth: better-auth
         observability: axiom-pino-sentry
-        testing: backend-testing
+        testing: api-testing
       web-architecture: {}
       web-reviewer:
         reviewing: reviewing
@@ -125,7 +125,7 @@ stacks:
         database: drizzle
         auth: better-auth
         observability: axiom-pino-sentry
-        testing: backend-testing
+        testing: api-testing
       web-architecture: {}
       web-reviewer:
         reviewing: reviewing
@@ -157,7 +157,7 @@ stacks:
         database: drizzle
         auth: better-auth
         observability: axiom-pino-sentry
-        testing: backend-testing
+        testing: api-testing
       web-architecture: {}
       web-reviewer:
         reviewing: reviewing
@@ -188,7 +188,7 @@ stacks:
         database: drizzle
         auth: better-auth
         observability: axiom-pino-sentry
-        testing: backend-testing
+        testing: api-testing
       web-architecture: {}
       web-reviewer:
         reviewing: reviewing

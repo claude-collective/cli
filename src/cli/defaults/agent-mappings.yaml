@@ -5,9 +5,9 @@
 # for which agents should receive which skills based on skill category.
 
 # Mapping from skill path patterns to agent lists
-# Pattern "frontend/*" matches skills like frontend/framework/react, frontend/styling/tailwind, etc.
+# Pattern "web/*" matches skills like web/framework/react, web/styling/tailwind, etc.
 skill_to_agents:
-  "frontend/*":
+  "web/*":
     - web-developer
     - web-reviewer
     - web-researcher
@@ -18,7 +18,7 @@ skill_to_agents:
     - skill-summoner
     - documentor
 
-  "backend/*":
+  "api/*":
     - api-developer
     - api-reviewer
     - api-researcher
@@ -39,7 +39,7 @@ skill_to_agents:
     - skill-summoner
     - documentor
 
-  "setup/*":
+  "infra/*":
     - web-architecture
     - web-developer
     - api-developer
@@ -106,17 +106,17 @@ skill_to_agents:
     - documentor
 
   # Specific patterns (more specific than wildcards)
-  "frontend/testing":
+  "web/testing":
     - web-tester
     - web-developer
     - web-reviewer
 
-  "backend/testing":
+  "api/testing":
     - web-tester
     - api-developer
     - api-reviewer
 
-  "frontend/mocks":
+  "web/mocks":
     - web-tester
     - web-developer
     - web-reviewer
@@ -173,13 +173,13 @@ preloaded_skills:
 # Aliases for subcategory resolution
 # Maps short names to full paths for convenience
 subcategory_aliases:
-  framework: frontend/framework
-  styling: frontend/styling
-  api: backend/api
-  database: backend/database
-  mocks: frontend/mocks
+  framework: web/framework
+  styling: web/styling
+  api: api/api
+  database: api/database
+  mocks: web/mocks
   testing: testing
   reviewing: reviewing
   research-methodology: research/research-methodology
-  monorepo: setup/monorepo
+  monorepo: infra/monorepo
   cli: cli

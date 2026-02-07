@@ -1,42 +1,33 @@
 import path from "path";
 import { readFile, writeFile, glob, ensureDir } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import type {
-  Marketplace,
-  MarketplacePlugin,
-  PluginManifest,
-} from "../../types";
+import type { Marketplace, MarketplacePlugin, PluginManifest } from "../../types";
 
 const PLUGIN_MANIFEST_PATH = ".claude-plugin/plugin.json";
-const MARKETPLACE_SCHEMA_URL =
-  "https://anthropic.com/claude-code/marketplace.schema.json";
+const MARKETPLACE_SCHEMA_URL = "https://anthropic.com/claude-code/marketplace.schema.json";
 
 /**
  * Category patterns for marketplace plugins.
  *
  * With normalized skill IDs (e.g., "web-framework-react"), the category
  * is typically the first segment of the normalized ID:
- * - skill-web-* -> frontend (web skills)
- * - skill-api-* -> backend (api skills)
+ * - skill-web-* -> web
+ * - skill-api-* -> api
  * - skill-cli-* -> cli
  * - skill-meta-* -> methodology
- * - skill-infra-* -> infrastructure
+ * - skill-infra-* -> infra
  * - skill-mobile-* -> mobile
  * - skill-security-* -> security
  */
 const CATEGORY_PATTERNS: Array<{ pattern: RegExp; category: string }> = [
   // Primary patterns based on normalized ID category prefix
-  { pattern: /^skill-web-/, category: "frontend" },
-  { pattern: /^skill-api-/, category: "backend" },
+  { pattern: /^skill-web-/, category: "web" },
+  { pattern: /^skill-api-/, category: "api" },
   { pattern: /^skill-cli-/, category: "cli" },
   { pattern: /^skill-meta-/, category: "methodology" },
-  { pattern: /^skill-infra-/, category: "infrastructure" },
+  { pattern: /^skill-infra-/, category: "infra" },
   { pattern: /^skill-mobile-/, category: "mobile" },
   { pattern: /^skill-security-/, category: "security" },
-  // Fallback patterns for non-prefixed skills
-  { pattern: /^skill-setup-/, category: "setup" },
-  { pattern: /^skill-backend-/, category: "backend" },
-  { pattern: /^skill-frontend-/, category: "frontend" },
 ];
 
 export interface MarketplaceOptions {
@@ -57,9 +48,7 @@ function inferCategory(pluginName: string): string | undefined {
   return undefined;
 }
 
-async function readPluginManifest(
-  pluginDir: string,
-): Promise<PluginManifest | null> {
+async function readPluginManifest(pluginDir: string): Promise<PluginManifest | null> {
   const manifestPath = path.join(pluginDir, PLUGIN_MANIFEST_PATH);
 
   try {

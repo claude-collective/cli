@@ -21,7 +21,7 @@ import { getCachedDefaults } from "./defaults-loader";
 // =============================================================================
 
 export const SKILL_TO_AGENTS: Record<string, string[]> = {
-  "frontend/*": [
+  "web/*": [
     "web-developer",
     "web-reviewer",
     "web-researcher",
@@ -33,7 +33,7 @@ export const SKILL_TO_AGENTS: Record<string, string[]> = {
     "documentor",
   ],
 
-  "backend/*": [
+  "api/*": [
     "api-developer",
     "api-reviewer",
     "api-researcher",
@@ -56,7 +56,7 @@ export const SKILL_TO_AGENTS: Record<string, string[]> = {
     "documentor",
   ],
 
-  "setup/*": [
+  "infra/*": [
     "web-architecture",
     "web-developer",
     "api-developer",
@@ -128,10 +128,10 @@ export const SKILL_TO_AGENTS: Record<string, string[]> = {
     "documentor",
   ],
 
-  "frontend/testing": ["web-tester", "web-developer", "web-reviewer"],
-  "backend/testing": ["web-tester", "api-developer", "api-reviewer"],
+  "web/testing": ["web-tester", "web-developer", "web-reviewer"],
+  "api/testing": ["web-tester", "api-developer", "api-reviewer"],
 
-  "frontend/mocks": ["web-tester", "web-developer", "web-reviewer"],
+  "web/mocks": ["web-tester", "web-developer", "web-reviewer"],
 };
 
 export const PRELOADED_SKILLS: Record<string, string[]> = {
@@ -154,15 +154,15 @@ export const PRELOADED_SKILLS: Record<string, string[]> = {
 };
 
 export const SUBCATEGORY_ALIASES: Record<string, string> = {
-  framework: "frontend/framework",
-  styling: "frontend/styling",
-  api: "backend/api",
-  database: "backend/database",
-  mocks: "frontend/mocks",
+  framework: "web/framework",
+  styling: "web/styling",
+  api: "api/api",
+  database: "api/database",
+  mocks: "web/mocks",
   testing: "testing",
   reviewing: "reviewing",
   "research-methodology": "research/research-methodology",
-  monorepo: "setup/monorepo",
+  monorepo: "infra/monorepo",
   cli: "cli",
 };
 
@@ -192,9 +192,7 @@ function getEffectiveSkillToAgents(): Record<string, string[]> {
  * Get the effective preloaded_skills mappings.
  * Priority: Project config preload_patterns > YAML defaults > hardcoded fallback
  */
-function getEffectivePreloadedSkills(
-  projectConfig?: ProjectConfig,
-): Record<string, string[]> {
+function getEffectivePreloadedSkills(projectConfig?: ProjectConfig): Record<string, string[]> {
   // Project config preload_patterns take priority
   if (projectConfig?.preload_patterns) {
     return projectConfig.preload_patterns;
@@ -234,8 +232,8 @@ function getEffectiveSubcategoryAliases(): Record<string, string> {
  * 2. YAML defaults (if loaded)
  * 3. Hardcoded fallback
  *
- * @param skillPath - Full path to the skill (e.g., "skills/frontend/framework/react")
- * @param category - Skill category (e.g., "frontend/*" or "frontend/testing")
+ * @param skillPath - Full path to the skill (e.g., "skills/web/framework/react")
+ * @param category - Skill category (e.g., "web/*" or "web/testing")
  * @param projectConfig - Optional project config for overrides
  * @returns Array of agent IDs that should receive this skill
  */
@@ -256,10 +254,7 @@ export function getAgentsForSkill(
 
   // Check exact path match or path prefix match
   for (const [pattern, agents] of Object.entries(skillToAgents)) {
-    if (
-      normalizedPath === pattern ||
-      normalizedPath.startsWith(`${pattern}/`)
-    ) {
+    if (normalizedPath === pattern || normalizedPath.startsWith(`${pattern}/`)) {
       return agents;
     }
   }
@@ -340,7 +335,7 @@ export function shouldPreloadSkill(
  * Used for categorizing skills by their subdirectory.
  *
  * @param skillPath - Full path to the skill
- * @returns Category key (e.g., "framework" from "skills/frontend/framework/react")
+ * @returns Category key (e.g., "framework" from "skills/web/framework/react")
  */
 export function extractCategoryKey(skillPath: string): string {
   const normalizedPath = skillPath.replace(/^skills\//, "").replace(/\/$/, "");
@@ -355,10 +350,7 @@ export function extractCategoryKey(skillPath: string): string {
  * @param projectConfig - Project config to check
  * @returns true if config has agent_skills for this agent
  */
-export function hasAgentSkillsOverride(
-  agentId: string,
-  projectConfig?: ProjectConfig,
-): boolean {
+export function hasAgentSkillsOverride(agentId: string, projectConfig?: ProjectConfig): boolean {
   if (!projectConfig?.agent_skills) {
     return false;
   }
@@ -420,8 +412,8 @@ export function isSkillAssignedToAgent(
  *    Use default mappings (YAML > hardcoded)
  *
  * @param skillId - Skill identifier (e.g., "react (@vince)")
- * @param skillPath - Full path to the skill (e.g., "skills/frontend/framework/react")
- * @param category - Skill category (e.g., "frontend/*" or "frontend/testing")
+ * @param skillPath - Full path to the skill (e.g., "skills/web/framework/react")
+ * @param category - Skill category (e.g., "web/*" or "web/testing")
  * @param projectConfig - Optional project config for overrides
  * @returns Array of agent IDs that should receive this skill
  */
@@ -436,9 +428,7 @@ export function resolveAgentsForSkill(
     const matchingAgents: string[] = [];
 
     for (const agentId of Object.keys(projectConfig.agent_skills)) {
-      if (
-        isSkillAssignedToAgent(skillId, agentId, projectConfig.agent_skills)
-      ) {
+      if (isSkillAssignedToAgent(skillId, agentId, projectConfig.agent_skills)) {
         matchingAgents.push(agentId);
       }
     }
