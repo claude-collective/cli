@@ -88,6 +88,30 @@ The wizard defaults to **Local Mode** (not Plugin Mode). This gives users owners
 
 ---
 
+### Build Step Skips Uncovered Domains (UX-11)
+
+After selecting a stack, the build step only cycles through domains that the stack covers. For example, selecting a frontend-only stack only shows "web". Users cannot add technologies in uncovered domains (api, cli, mobile, shared).
+
+**Root cause:** `populateFromStack()` sets `selectedDomains` to only domains found in the stack's skills. The build step iterates only `selectedDomains`.
+
+**Workaround:** Use "Build from scratch" approach and manually select all desired domains.
+
+**Status:** Tracked as UX-11. See investigation notes in [TODO-cli-ux.md](../TODO-cli-ux.md).
+
+---
+
+### Missing Subcategories After Stack Selection (UX-12)
+
+When selecting a stack (e.g., "Next.js Fullstack") with local skills present, many subcategories (client state management, server state, etc.) may not appear in the build view's CategoryGrid.
+
+**Root cause:** Multiple factors: skill ID resolution mismatches between `allSkillIds` and `matrix.skills` keys; local skills placed in `local/custom` category which has no `domain` field; stack agent configs referencing subcategory IDs not defined in `skills-matrix.yaml`.
+
+**Workaround:** Use "Build from scratch" approach where all categories for selected domains are shown.
+
+**Status:** Tracked as UX-12. See investigation notes in [TODO-cli-ux.md](../TODO-cli-ux.md).
+
+---
+
 ## Plugin Installation
 
 ### Scope
