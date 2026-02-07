@@ -100,31 +100,6 @@ async function determineVersion(
   };
 }
 
-/**
- * @deprecated Legacy function - skill names now come from SKILL.md frontmatter.name
- * Keeping for backwards compatibility with any external callers.
- */
-export function extractSkillName(skillPath: string): string {
-  const dirName = path.basename(skillPath);
-  return sanitizeSkillName(dirName);
-}
-
-/**
- * @deprecated Legacy function - categories no longer used with flat directory structure.
- * Always returns undefined.
- */
-export function extractCategory(_skillPath: string, _skillsRoot: string): string | undefined {
-  return undefined;
-}
-
-/**
- * @deprecated Legacy function - author info now comes from metadata.yaml.
- * Always returns undefined.
- */
-export function extractAuthor(_skillPath: string): string | undefined {
-  return undefined;
-}
-
 async function readSkillMetadata(skillPath: string): Promise<SkillMetadataConfig | null> {
   const metadataPath = path.join(skillPath, "metadata.yaml");
 

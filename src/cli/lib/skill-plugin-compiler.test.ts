@@ -6,9 +6,6 @@ import {
   compileSkillPlugin,
   compileAllSkillPlugins,
   printCompilationSummary,
-  extractSkillName,
-  extractAuthor,
-  extractCategory,
 } from "./skill-plugin-compiler";
 
 describe("skill-plugin-compiler", () => {
@@ -26,61 +23,6 @@ describe("skill-plugin-compiler", () => {
 
   afterEach(async () => {
     await rm(tempDir, { recursive: true, force: true });
-  });
-
-  // =============================================================================
-  // extractSkillName (deprecated - now just returns sanitized directory basename)
-  // =============================================================================
-
-  describe("extractSkillName", () => {
-    it("should return directory basename", () => {
-      const result = extractSkillName("/skills/web/web-framework-react");
-      expect(result).toBe("web-framework-react");
-    });
-
-    it("should handle plus signs in name by converting to hyphens", () => {
-      const result = extractSkillName("/skills/web/c++");
-      expect(result).toBe("c--");
-    });
-
-    it("should handle multiple plus signs", () => {
-      const result = extractSkillName("/skills/tools/boost++");
-      expect(result).toBe("boost--");
-    });
-
-    it("should handle simple directory name", () => {
-      const result = extractSkillName("web-framework-react");
-      expect(result).toBe("web-framework-react");
-    });
-
-    it("should handle kebab-case names", () => {
-      const result = extractSkillName("/skills/api/backend-api-hono");
-      expect(result).toBe("backend-api-hono");
-    });
-  });
-
-  // =============================================================================
-  // extractAuthor (deprecated - always returns undefined)
-  // =============================================================================
-
-  describe("extractAuthor", () => {
-    it("should always return undefined (author now comes from metadata.yaml)", () => {
-      expect(extractAuthor("/skills/web/react")).toBeUndefined();
-      expect(extractAuthor("/skills/web/react (@vince)")).toBeUndefined();
-      expect(extractAuthor("any-path")).toBeUndefined();
-    });
-  });
-
-  // =============================================================================
-  // extractCategory (deprecated - always returns undefined)
-  // =============================================================================
-
-  describe("extractCategory", () => {
-    it("should always return undefined (directories are now flat)", () => {
-      expect(extractCategory("/home/skills/web/react", "/home/skills")).toBeUndefined();
-      expect(extractCategory("/home/skills/react", "/home/skills")).toBeUndefined();
-      expect(extractCategory("/home/skills/api/api/hono", "/home/skills")).toBeUndefined();
-    });
   });
 
   // =============================================================================
