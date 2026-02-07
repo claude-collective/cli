@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.20.0] - 2026-02-07
+
+### Changed
+
+- **Removed `StackConfig` type** - All consumers (compile, agent-recompiler, resolver, stack-plugin-compiler, loader) now operate directly on `ProjectConfig`. The `StackConfig` interface, `loadStack()`, `loadStackSkills()`, `projectConfigToStackLike()`, `resolveAgentSkills()`, and related conversion helpers have been removed.
+- **Removed global config layer** - The `~/.claude-collective/config.yaml` global config is no longer supported. Config resolution simplifies from `flag > env > project > global > default` to `flag > env > project > default`. The `config:set` and `config:unset` commands (which wrote to global config) have been deleted.
+- **Removed legacy StackConfig detection** - `isLegacyStackConfig()`, `normalizeStackConfig()`, and the legacy format migration branch in `loadProjectConfig()` have been removed. `ProjectConfig` is the only supported format.
+- **Removed StackConfig-based generator functions** - `generateConfigFromSkills`, `generateConfigFromStack`, `mergeStackWithSkills`, and `generateProjectConfigFromStack` removed from config-generator.
+- **Removed `suggested_stacks` from skills matrix** - The field on `SkillsMatrixConfig` and the alias-resolution logic in `resolveSuggestedStacks()` have been removed; stacks are defined in `stacks.yaml`.
+- **Removed deprecated frontmatter field warnings** - `category`, `author`, and `version` warnings in skill frontmatter validation removed (metadata comes from `metadata.yaml`).
+- **Removed deprecated skill extraction functions** - `extractSkillName`, `extractCategory`, `extractAuthor` stubs removed from skill-plugin-compiler.
+- **Removed deprecated `skills` field from `AgentDefinition`** - Skills come from stacks, not agent definitions.
+
+### Removed
+
+- **`config:set` command** - Wrote to removed global config.
+- **`config:unset` command** - Wrote to removed global config.
+- **`test-imports` command** - Hidden debug command no longer needed.
+- **`GlobalConfig` type and helpers** - `loadGlobalConfig`, `saveGlobalConfig`, `getGlobalConfigPath`, `getGlobalConfigDir`.
+- **`"global"` source origin** - Removed from `sourceOrigin` and `AgentsSourceOrigin` union types.
+
 ## [0.19.0] - 2026-02-07
 
 ### Changed
@@ -195,6 +216,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Old `search.ts` command - Replaced with dual-mode `search.tsx` (static + interactive)
 
+[0.20.0]: https://github.com/claude-collective/cli/releases/tag/v0.20.0
+[0.19.0]: https://github.com/claude-collective/cli/releases/tag/v0.19.0
+[0.18.0]: https://github.com/claude-collective/cli/releases/tag/v0.18.0
 [0.17.0]: https://github.com/claude-collective/cli/releases/tag/v0.17.0
 [0.16.0]: https://github.com/claude-collective/cli/releases/tag/v0.16.0
 [0.15.0]: https://github.com/claude-collective/cli/releases/tag/v0.15.0
