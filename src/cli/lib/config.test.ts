@@ -6,7 +6,6 @@ import {
   DEFAULT_SOURCE,
   formatSourceOrigin,
   formatAgentsSourceOrigin,
-  getGlobalConfigPath,
   getProjectConfigPath,
   isLocalSource,
   loadProjectConfig,
@@ -42,14 +41,6 @@ describe("config", () => {
   describe("SOURCE_ENV_VAR", () => {
     it("should be CC_SOURCE", () => {
       expect(SOURCE_ENV_VAR).toBe("CC_SOURCE");
-    });
-  });
-
-  describe("getGlobalConfigPath", () => {
-    it("should return path in home directory", () => {
-      const configPath = getGlobalConfigPath();
-      expect(configPath).toContain(".claude");
-      expect(configPath).toContain("config.yaml");
     });
   });
 
@@ -126,10 +117,6 @@ describe("config", () => {
       expect(formatSourceOrigin("project")).toContain("project config");
     });
 
-    it("should format global origin", () => {
-      expect(formatSourceOrigin("global")).toContain("global config");
-    });
-
     it("should format default origin", () => {
       expect(formatSourceOrigin("default")).toBe("default");
     });
@@ -145,10 +132,7 @@ describe("config", () => {
       // Create config file in new location
       const configDir = path.join(tempDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, "config.yaml"),
-        "source: github:mycompany/skills\n",
-      );
+      await writeFile(path.join(configDir, "config.yaml"), "source: github:mycompany/skills\n");
 
       const config = await loadProjectConfig(tempDir);
       expect(config).toEqual({ source: "github:mycompany/skills" });
@@ -158,10 +142,7 @@ describe("config", () => {
       // Create config file in legacy location
       const configDir = path.join(tempDir, ".claude");
       await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, "config.yaml"),
-        "source: github:legacy/skills\n",
-      );
+      await writeFile(path.join(configDir, "config.yaml"), "source: github:legacy/skills\n");
 
       const config = await loadProjectConfig(tempDir);
       expect(config).toEqual({ source: "github:legacy/skills" });
@@ -170,10 +151,7 @@ describe("config", () => {
     it("should return null for invalid YAML", async () => {
       const configDir = path.join(tempDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, "config.yaml"),
-        "invalid: yaml: content: :",
-      );
+      await writeFile(path.join(configDir, "config.yaml"), "invalid: yaml: content: :");
 
       const config = await loadProjectConfig(tempDir);
       // Should return null or throw - implementation dependent
@@ -223,9 +201,7 @@ describe("config", () => {
 
       const configPath = path.join(tempDir, ".claude-src", "config.yaml");
       const content = await readFile(configPath, "utf-8");
-      expect(content).toContain(
-        "marketplace: https://my-marketplace.com/plugins",
-      );
+      expect(content).toContain("marketplace: https://my-marketplace.com/plugins");
     });
 
     it("should save both source and marketplace", async () => {
@@ -265,10 +241,7 @@ describe("config", () => {
       // Create project config
       const configDir = path.join(tempDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, "config.yaml"),
-        "source: github:project/repo\n",
-      );
+      await writeFile(path.join(configDir, "config.yaml"), "source: github:project/repo\n");
 
       const result = await resolveSource(undefined, tempDir);
 
@@ -279,25 +252,15 @@ describe("config", () => {
     it("should return default when no config is set", async () => {
       const result = await resolveSource(undefined, tempDir);
 
-      expect(["default", "global"]).toContain(result.sourceOrigin);
-      if (result.sourceOrigin === "default") {
-        expect(result.source).toBe(DEFAULT_SOURCE);
-      } else {
-        expect(typeof result.source).toBe("string");
-        expect(result.source.length).toBeGreaterThan(0);
-      }
+      expect(result.sourceOrigin).toBe("default");
+      expect(result.source).toBe(DEFAULT_SOURCE);
     });
 
     it("should handle undefined projectDir", async () => {
       const result = await resolveSource(undefined, undefined);
 
-      expect(["default", "global"]).toContain(result.sourceOrigin);
-      if (result.sourceOrigin === "default") {
-        expect(result.source).toBe(DEFAULT_SOURCE);
-      } else {
-        expect(typeof result.source).toBe("string");
-        expect(result.source.length).toBeGreaterThan(0);
-      }
+      expect(result.sourceOrigin).toBe("default");
+      expect(result.source).toBe(DEFAULT_SOURCE);
     });
 
     it("should prioritize flag over all other sources", async () => {
@@ -305,10 +268,7 @@ describe("config", () => {
       process.env[SOURCE_ENV_VAR] = "github:env/repo";
       const configDir = path.join(tempDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, "config.yaml"),
-        "source: github:project/repo\n",
-      );
+      await writeFile(path.join(configDir, "config.yaml"), "source: github:project/repo\n");
 
       const result = await resolveSource("github:flag/repo", tempDir);
 
@@ -320,10 +280,7 @@ describe("config", () => {
       process.env[SOURCE_ENV_VAR] = "github:env/repo";
       const configDir = path.join(tempDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, "config.yaml"),
-        "source: github:project/repo\n",
-      );
+      await writeFile(path.join(configDir, "config.yaml"), "source: github:project/repo\n");
 
       const result = await resolveSource(undefined, tempDir);
 
@@ -332,15 +289,11 @@ describe("config", () => {
     });
 
     it("should throw error for empty source flag", async () => {
-      await expect(resolveSource("", tempDir)).rejects.toThrow(
-        /--source flag cannot be empty/,
-      );
+      await expect(resolveSource("", tempDir)).rejects.toThrow(/--source flag cannot be empty/);
     });
 
     it("should throw error for whitespace-only source flag", async () => {
-      await expect(resolveSource("   ", tempDir)).rejects.toThrow(
-        /--source flag cannot be empty/,
-      );
+      await expect(resolveSource("   ", tempDir)).rejects.toThrow(/--source flag cannot be empty/);
     });
 
     describe("marketplace resolution", () => {
@@ -369,9 +322,7 @@ describe("config", () => {
 
         expect(result.source).toBe("github:mycompany/skills");
         expect(result.sourceOrigin).toBe("project");
-        expect(result.marketplace).toBe(
-          "https://enterprise.example.com/plugins",
-        );
+        expect(result.marketplace).toBe("https://enterprise.example.com/plugins");
       });
 
       it("should return undefined marketplace when not configured", async () => {
@@ -391,10 +342,6 @@ describe("config", () => {
       expect(formatAgentsSourceOrigin("project")).toContain("project config");
     });
 
-    it("should format global origin", () => {
-      expect(formatAgentsSourceOrigin("global")).toContain("global config");
-    });
-
     it("should format default origin", () => {
       expect(formatAgentsSourceOrigin("default")).toBe("default (local CLI)");
     });
@@ -410,10 +357,7 @@ describe("config", () => {
         "agents_source: https://project.example.com/agents\n",
       );
 
-      const result = await resolveAgentsSource(
-        "https://flag.example.com/agents",
-        tempDir,
-      );
+      const result = await resolveAgentsSource("https://flag.example.com/agents", tempDir);
 
       expect(result.agentsSource).toBe("https://flag.example.com/agents");
       expect(result.agentsSourceOrigin).toBe("flag");
@@ -436,17 +380,15 @@ describe("config", () => {
     it("should return default when no config is set", async () => {
       const result = await resolveAgentsSource(undefined, tempDir);
 
-      // Default is undefined (local CLI)
-      expect(["default", "global"]).toContain(result.agentsSourceOrigin);
-      if (result.agentsSourceOrigin === "default") {
-        expect(result.agentsSource).toBeUndefined();
-      }
+      expect(result.agentsSourceOrigin).toBe("default");
+      expect(result.agentsSource).toBeUndefined();
     });
 
     it("should handle undefined projectDir", async () => {
       const result = await resolveAgentsSource(undefined, undefined);
 
-      expect(["default", "global"]).toContain(result.agentsSourceOrigin);
+      expect(result.agentsSourceOrigin).toBe("default");
+      expect(result.agentsSource).toBeUndefined();
     });
 
     it("should throw error for empty agent-source flag", async () => {
@@ -512,9 +454,7 @@ describe("config", () => {
       const content = await readFile(configPath, "utf-8");
       expect(content).toContain("source: github:myorg/skills");
       expect(content).toContain("marketplace: https://enterprise.example.com");
-      expect(content).toContain(
-        "agents_source: https://agents.enterprise.example.com",
-      );
+      expect(content).toContain("agents_source: https://agents.enterprise.example.com");
     });
   });
 });

@@ -3,11 +3,11 @@
  *
  * Tests the configuration layer hierarchy:
  * - Flag overrides everything
- * - Environment variable overrides project/global config
- * - Project config overrides global config
- * - Global config provides defaults
+ * - Environment variable overrides project config
+ * - Project config provides project-level settings
+ * - Default is the fallback
  *
- * Precedence order: flag > env > project > global > default
+ * Precedence order: flag > env > project > default
  */
 import path from "path";
 import os from "os";
@@ -18,15 +18,10 @@ import {
   resolveSource,
   resolveAgentsSource,
   loadProjectConfig,
-  loadGlobalConfig,
   saveProjectConfig,
-  saveGlobalConfig,
   getProjectConfigPath,
-  getGlobalConfigPath,
   SOURCE_ENV_VAR,
   DEFAULT_SOURCE,
-  GLOBAL_CONFIG_DIR,
-  type GlobalConfig,
   type ProjectSourceConfig,
 } from "../../config";
 import {
@@ -47,17 +42,6 @@ const PROJECT_CONFIG_DIR = ".claude-src";
 // =============================================================================
 // Test Helpers
 // =============================================================================
-
-/**
- * Create a mock global config file in a temp directory
- */
-async function createMockGlobalConfig(tempDir: string, config: GlobalConfig): Promise<string> {
-  const globalDir = path.join(tempDir, ".claude");
-  await mkdir(globalDir, { recursive: true });
-  const configPath = path.join(globalDir, "config.yaml");
-  await writeFile(configPath, stringifyYaml(config));
-  return configPath;
-}
 
 /**
  * Create a project config in the specified directory
@@ -260,18 +244,15 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
       // No flag, no env, no project config
       const result = await resolveSource(undefined, projectDir);
 
-      // Should be default or global (if user has global config)
-      expect(["default", "global"]).toContain(result.sourceOrigin);
-
-      if (result.sourceOrigin === "default") {
-        expect(result.source).toBe(DEFAULT_SOURCE);
-      }
+      expect(result.sourceOrigin).toBe("default");
+      expect(result.source).toBe(DEFAULT_SOURCE);
     });
 
     it("should handle undefined project directory", async () => {
       const result = await resolveSource(undefined, undefined);
 
-      expect(["default", "global"]).toContain(result.sourceOrigin);
+      expect(result.sourceOrigin).toBe("default");
+      expect(result.source).toBe(DEFAULT_SOURCE);
     });
   });
 
@@ -304,17 +285,9 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
     });
 
     it("should return undefined marketplace when not configured in project", async () => {
-      // Note: Global config may have marketplace configured on the user's machine
-      // This test verifies project-level behavior - that an empty project config
-      // does not add a marketplace value
-      // We resolve with project dir to ensure project config is checked
       const result = await resolveSource(undefined, projectDir);
 
-      // If there's a global config with marketplace, result.marketplace will be set
-      // This is correct behavior - we're testing that project config doesn't
-      // unexpectedly add a marketplace when none is configured there
-      // The test should pass regardless of global config state
-      expect(typeof result.marketplace === "string" || result.marketplace === undefined).toBe(true);
+      expect(result.marketplace).toBeUndefined();
     });
 
     it("should preserve marketplace when using flag source", async () => {
@@ -378,11 +351,8 @@ describe("User Journey: Config Precedence - Agent Source Resolution", () => {
     it("should use default when no config exists", async () => {
       const result = await resolveAgentsSource(undefined, projectDir);
 
-      // Default is undefined (uses local CLI)
-      expect(["default", "global"]).toContain(result.agentsSourceOrigin);
-      if (result.agentsSourceOrigin === "default") {
-        expect(result.agentsSource).toBeUndefined();
-      }
+      expect(result.agentsSourceOrigin).toBe("default");
+      expect(result.agentsSource).toBeUndefined();
     });
 
     it("should reject empty flag value", async () => {
@@ -569,7 +539,7 @@ describe("User Journey: Config Edge Cases", () => {
 
     // Resolve should fall back to default for source
     const result = await resolveSource(undefined, projectDir);
-    expect(["default", "global"]).toContain(result.sourceOrigin);
+    expect(result.sourceOrigin).toBe("default");
     // But should still have marketplace
     expect(result.marketplace).toBe("https://marketplace.example.com");
   });

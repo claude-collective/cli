@@ -1,10 +1,7 @@
 /**
  * Integration tests for config commands.
  *
- * Tests: cc config, cc config:show, cc config:get, cc config:set, cc config:path
- *
- * IMPORTANT: config:set tests use CC_CONFIG_HOME environment variable to isolate
- * the global config to a temp directory, preventing pollution of the user's config.
+ * Tests: cc config, cc config:show, cc config:get, cc config:path
  *
  * NOTE: Many tests are skipped because stdout capture is limited in the oclif/bun
  * test environment. The commands work correctly (output visible in test logs),
@@ -17,7 +14,6 @@ import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
 import { runCliCommand } from "../../helpers";
-import { CONFIG_HOME_ENV_VAR } from "../../../config";
 
 // =============================================================================
 // Test Setup
@@ -63,11 +59,10 @@ describe("config commands", () => {
 
   // Skip: stdout capture limited in oclif/bun test environment
   describe("config:path", () => {
-    it.skip("should display global and project config paths", async () => {
+    it.skip("should display project config path", async () => {
       const { stdout } = await runCliCommand(["config:path"]);
 
       expect(stdout).toContain("Configuration File Paths");
-      expect(stdout).toContain("Global:");
       expect(stdout).toContain("Project:");
     });
 
@@ -97,13 +92,11 @@ describe("config commands", () => {
     it.skip("should show source value and origin", async () => {
       const { stdout } = await runCliCommand(["config:show"]);
 
-      // Should show some source - may be default or from global config
+      // Should show some source - may be default or from project config
       // Just verify the output format shows source info
       expect(stdout).toContain("Source:");
-      // Origin formats: "default", "global config (~/.claude-collective/config.yaml)", etc.
-      expect(stdout).toMatch(
-        /\(from (default|global|project|--source|CC_SOURCE)/,
-      );
+      // Origin formats: "default", "project config", etc.
+      expect(stdout).toMatch(/\(from (default|project|--source|CC_SOURCE)/);
     });
 
     it.skip("should show environment variable when CC_SOURCE is set", async () => {
@@ -131,9 +124,7 @@ describe("config commands", () => {
     it.skip("should show precedence order", async () => {
       const { stdout } = await runCliCommand(["config:show"]);
 
-      expect(stdout).toContain(
-        "Precedence: flag > env > project > global > default",
-      );
+      expect(stdout).toContain("Precedence: flag > env > project > default");
     });
 
     it.skip("should show marketplace section", async () => {
@@ -158,8 +149,7 @@ describe("config commands", () => {
     it.skip("should get source value", async () => {
       const { stdout } = await runCliCommand(["config:get", "source"]);
 
-      // Should return some source (either default, global, or env)
-      // Can't guarantee it's the default due to global config pollution
+      // Should return some source (either default or from project config)
       expect(stdout.trim().length).toBeGreaterThan(0);
     });
 
@@ -172,12 +162,12 @@ describe("config commands", () => {
       expect(stdout.trim()).toBe("/env/source/path");
     });
 
-    it("should return author value (may be empty or set from global config)", async () => {
+    it("should return author value (may be empty or set from project config)", async () => {
       const { stdout, error } = await runCliCommand(["config:get", "author"]);
 
       // Should not error - author is a valid key
       expect(error?.oclif?.exit).toBeUndefined();
-      // May be empty or set depending on global config state
+      // May be empty or set depending on project config state
       expect(typeof stdout).toBe("string");
     });
 
@@ -195,93 +185,6 @@ describe("config commands", () => {
         // Should not error (error should be undefined or exit code 0)
         expect(error?.oclif?.exit).toBeUndefined();
       }
-    });
-  });
-
-  // ===========================================================================
-  // config:set
-  // ===========================================================================
-
-  describe("config:set", () => {
-    // Use isolated config directory to prevent test pollution
-    let configTempDir: string;
-    let originalConfigHome: string | undefined;
-
-    beforeEach(async () => {
-      // Save original CC_CONFIG_HOME and set to temp directory
-      originalConfigHome = process.env[CONFIG_HOME_ENV_VAR];
-      configTempDir = await mkdtemp(
-        path.join(os.tmpdir(), "cc-config-set-test-"),
-      );
-      process.env[CONFIG_HOME_ENV_VAR] = configTempDir;
-    });
-
-    afterEach(async () => {
-      // Restore original CC_CONFIG_HOME
-      if (originalConfigHome !== undefined) {
-        process.env[CONFIG_HOME_ENV_VAR] = originalConfigHome;
-      } else {
-        delete process.env[CONFIG_HOME_ENV_VAR];
-      }
-      // Clean up temp directory
-      await rm(configTempDir, { recursive: true, force: true });
-    });
-
-    // Skip: stdout capture limited in oclif/bun test environment
-    it.skip("should report successful set for source", async () => {
-      const { stdout } = await runCliCommand([
-        "config:set",
-        "source",
-        "/new/source/path",
-      ]);
-
-      expect(stdout).toContain("Set source = /new/source/path");
-      expect(stdout).toContain("Saved to");
-    });
-
-    // Skip: stdout capture limited in oclif/bun test environment
-    it.skip("should report successful set for author", async () => {
-      const { stdout } = await runCliCommand([
-        "config:set",
-        "author",
-        "@newauthor",
-      ]);
-
-      expect(stdout).toContain("Set author = @newauthor");
-    });
-
-    // Skip: stdout capture limited in oclif/bun test environment
-    it.skip("should report successful set for marketplace", async () => {
-      const { stdout } = await runCliCommand([
-        "config:set",
-        "marketplace",
-        "https://example.com/marketplace.json",
-      ]);
-
-      expect(stdout).toContain(
-        "Set marketplace = https://example.com/marketplace.json",
-      );
-    });
-
-    // Skip: stdout capture limited in oclif/bun test environment
-    it.skip("should report successful set for agents_source", async () => {
-      const { stdout } = await runCliCommand([
-        "config:set",
-        "agents_source",
-        "github:my-org/my-agents",
-      ]);
-
-      expect(stdout).toContain("Set agents_source = github:my-org/my-agents");
-    });
-
-    it("should error on invalid key", async () => {
-      const { error } = await runCliCommand([
-        "config:set",
-        "invalid-key",
-        "value",
-      ]);
-
-      expect(error?.oclif?.exit).toBe(2); // INVALID_ARGS
     });
   });
 
