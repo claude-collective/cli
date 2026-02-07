@@ -21,12 +21,7 @@ export async function resolveTemplate(
   mode: CompileMode = "dev",
 ): Promise<string> {
   const dirs = getDirs(mode);
-  const stackTemplate = path.join(
-    projectRoot,
-    dirs.stacks,
-    stackId,
-    "agent.liquid",
-  );
+  const stackTemplate = path.join(projectRoot, dirs.stacks, stackId, "agent.liquid");
   if (await fileExists(stackTemplate)) return stackTemplate;
 
   return path.join(projectRoot, dirs.templates, "agent.liquid");
@@ -49,17 +44,11 @@ export async function resolveClaudeMd(
 export function resolveSkillReference(
   ref: SkillReference,
   skills: Record<string, SkillDefinition>,
-): Skill {
+): Skill | null {
   const definition = skills[ref.id];
   if (!definition) {
-    const availableSkills = Object.keys(skills);
-    const skillList =
-      availableSkills.length > 0
-        ? `Available skills: ${availableSkills.slice(0, 5).join(", ")}${availableSkills.length > 5 ? ` (and ${availableSkills.length - 5} more)` : ""}`
-        : "No skills found in scanned directories";
-    throw new Error(
-      `Skill '${ref.id}' not found in scanned skills. ${skillList}`,
-    );
+    verbose(`Skill '${ref.id}' not found in available skills, skipping`);
+    return null;
   }
   return {
     id: ref.id,
@@ -75,7 +64,9 @@ export function resolveSkillReferences(
   skillRefs: SkillReference[],
   skills: Record<string, SkillDefinition>,
 ): Skill[] {
-  return skillRefs.map((ref) => resolveSkillReference(ref, skills));
+  return skillRefs
+    .map((ref) => resolveSkillReference(ref, skills))
+    .filter((skill): skill is Skill => skill !== null);
 }
 
 function getStackSkillIds(stackSkills: SkillAssignment[]): string[] {
@@ -128,9 +119,7 @@ function expandSkillIdIfDirectory(
  *
  * @deprecated Use resolveAgentSkillsFromStack for Phase 7 agent-centric configuration
  */
-export function resolveAgentSkills(
-  agentDef: AgentDefinition,
-): SkillReference[] {
+export function resolveAgentSkills(agentDef: AgentDefinition): SkillReference[] {
   if (!agentDef.skills) return [];
 
   return Object.entries(agentDef.skills).map(([category, entry]) => ({
@@ -192,9 +181,7 @@ export function resolveAgentSkillsFromStack(
 
   // Empty config {} means agent has no technology-specific skills
   if (Object.keys(agentConfig).length === 0) {
-    verbose(
-      `Agent '${agentName}' has no technology config in stack '${stack.id}'`,
-    );
+    verbose(`Agent '${agentName}' has no technology config in stack '${stack.id}'`);
     return [];
   }
 
@@ -219,9 +206,7 @@ export function resolveAgentSkillsFromStack(
     });
   }
 
-  verbose(
-    `Resolved ${skillRefs.length} skills for agent '${agentName}' from stack '${stack.id}'`,
-  );
+  verbose(`Resolved ${skillRefs.length} skills for agent '${agentName}' from stack '${stack.id}'`);
 
   return skillRefs;
 }
@@ -334,15 +319,9 @@ export async function getAgentSkills(
 
   // Priority 2: Stack-based skills (Phase 7)
   if (stack && skillAliases) {
-    const stackSkills = resolveAgentSkillsFromStack(
-      agentName,
-      stack,
-      skillAliases,
-    );
+    const stackSkills = resolveAgentSkillsFromStack(agentName, stack, skillAliases);
     if (stackSkills.length > 0) {
-      verbose(
-        `Resolved ${stackSkills.length} skills from stack for ${agentName}`,
-      );
+      verbose(`Resolved ${stackSkills.length} skills from stack for ${agentName}`);
       return stackSkills;
     }
   }
@@ -430,10 +409,7 @@ export async function resolveAgents(
   return resolved;
 }
 
-export function stackToCompileConfig(
-  stackId: string,
-  stack: StackConfig,
-): CompileConfig {
+export function stackToCompileConfig(stackId: string, stack: StackConfig): CompileConfig {
   const agents: Record<string, CompileAgentConfig> = {};
 
   for (const agentId of stack.agents) {
