@@ -27,6 +27,7 @@ export interface CategoryOption {
   state: OptionState;
   stateReason?: string;
   selected: boolean;
+  local?: boolean;
 }
 
 export interface CategoryRow {
@@ -253,6 +254,11 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked }) => {
     >
       <Text color={getColor()?.text} bold={isBold} dimColor={false}>
         {" "}
+        {option.local && (
+          <>
+            <Text backgroundColor="gray"> L </Text>{" "}
+          </>
+        )}
         {option.label}{" "}
       </Text>
     </Box>
