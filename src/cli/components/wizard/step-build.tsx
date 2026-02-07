@@ -224,9 +224,9 @@ function buildCategoriesForDomain(
   const frameworkSelected = isFrameworkSelected(selections);
   const selectedFrameworkIds = frameworkSelected ? getSelectedFrameworks(selections, matrix) : [];
 
-  // Get subcategories for the current domain (categories with parent and matching domain)
+  // Get categories for the current domain
   const subcategories = Object.values(matrix.categories)
-    .filter((cat) => cat.domain === domain && cat.parent)
+    .filter((cat) => cat.domain === domain)
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   // Filter subcategories based on framework-first flow

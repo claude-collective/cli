@@ -34,14 +34,7 @@
     "CategoryDefinition": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "id",
-        "name",
-        "description",
-        "exclusive",
-        "required",
-        "order"
-      ],
+      "required": ["id", "name", "description", "exclusive", "required", "order"],
       "properties": {
         "id": {
           "type": "string",
@@ -49,10 +42,6 @@
         },
         "name": { "type": "string", "minLength": 1 },
         "description": { "type": "string", "minLength": 1 },
-        "parent": {
-          "type": "string",
-          "pattern": "^[a-z][a-z0-9-]*$"
-        },
         "domain": {
           "type": "string",
           "description": "Domain grouping for wizard navigation (web, api, cli, mobile, shared). Only for subcategories.",
@@ -181,14 +170,7 @@
     "SuggestedStack": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "id",
-        "name",
-        "description",
-        "audience",
-        "skills",
-        "philosophy"
-      ],
+      "required": ["id", "name", "description", "audience", "skills", "philosophy"],
       "properties": {
         "id": {
           "type": "string",

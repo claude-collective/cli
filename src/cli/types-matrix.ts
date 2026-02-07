@@ -5,7 +5,7 @@ export interface SkillsMatrixConfig {
 
   /**
    * Category definitions indexed by category ID
-   * Includes both top-level (frontend, backend) and subcategories (styling, state)
+   * Each category belongs to a domain (web, api, cli, mobile, shared)
    */
   categories: Record<string, CategoryDefinition>;
 
@@ -27,7 +27,7 @@ export interface SkillsMatrixConfig {
 
 /**
  * Category definition from skills-matrix.yaml
- * Categories can be top-level (frontend, backend) or subcategories (styling, state)
+ * Each category belongs to a domain (web, api, cli, mobile, shared) for wizard grouping
  */
 export interface CategoryDefinition {
   /** Unique identifier (e.g., "styling", "state-management") */
@@ -40,16 +40,8 @@ export interface CategoryDefinition {
   description: string;
 
   /**
-   * Parent category ID for subcategories
-   * If undefined, this is a top-level category
-   * @example "frontend" for styling, state-management subcategories
-   */
-  parent?: string;
-
-  /**
-   * Domain this subcategory belongs to, for wizard domain filtering
-   * Only applicable to subcategories (those with a parent)
-   * @example "web" for frontend subcategories, "api" for backend subcategories
+   * Domain this category belongs to, for wizard domain filtering
+   * @example "web" for web categories, "api" for api categories
    */
   domain?: "web" | "api" | "cli" | "mobile" | "shared";
 
@@ -67,7 +59,7 @@ export interface CategoryDefinition {
    */
   required: boolean;
 
-  /** Display order within parent category (lower = earlier) */
+  /** Display order within domain (lower = earlier) */
   order: number;
 
   /** Optional emoji icon for display */
@@ -211,7 +203,7 @@ export interface ExtractedSkillMetadata {
   /**
    * Directory path for filesystem access
    * Used for loading skill files from the filesystem
-   * @example "frontend/framework/react (@vince)"
+   * @example "web/framework/react (@vince)"
    */
   directoryPath: string;
 
@@ -229,7 +221,7 @@ export interface ExtractedSkillMetadata {
 
   /**
    * Primary category this skill belongs to
-   * @example "state", "styling", "framework", "backend"
+   * @example "state", "styling", "framework", "api"
    */
   category: string;
 
@@ -279,7 +271,7 @@ export interface ExtractedSkillMetadata {
 
   /**
    * Relative path from src/ to the skill directory
-   * @example "skills/frontend/client-state-management/zustand (@vince)"
+   * @example "skills/web/client-state-management/zustand (@vince)"
    */
   path: string;
 

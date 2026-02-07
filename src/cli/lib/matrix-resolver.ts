@@ -7,10 +7,7 @@ import type {
   ValidationWarning,
 } from "../types-matrix";
 
-export function resolveAlias(
-  aliasOrId: string,
-  matrix: MergedSkillsMatrix,
-): string {
+export function resolveAlias(aliasOrId: string, matrix: MergedSkillsMatrix): string {
   return matrix.aliases[aliasOrId] || aliasOrId;
 }
 
@@ -24,9 +21,7 @@ export function getDependentSkills(
 
   if (!skill) return [];
 
-  const resolvedSelections = currentSelections.map((s) =>
-    resolveAlias(s, matrix),
-  );
+  const resolvedSelections = currentSelections.map((s) => resolveAlias(s, matrix));
   const dependents: string[] = [];
 
   for (const selectedId of resolvedSelections) {
@@ -83,30 +78,21 @@ export function isDisabled(
     }
 
     const selectedSkill = matrix.skills[selectedFullId];
-    if (
-      selectedSkill &&
-      selectedSkill.conflictsWith.some((c) => c.skillId === fullId)
-    ) {
+    if (selectedSkill && selectedSkill.conflictsWith.some((c) => c.skillId === fullId)) {
       return true;
     }
   }
 
-  const resolvedSelections = currentSelections.map((s) =>
-    resolveAlias(s, matrix),
-  );
+  const resolvedSelections = currentSelections.map((s) => resolveAlias(s, matrix));
 
   for (const requirement of skill.requires) {
     if (requirement.needsAny) {
-      const hasAny = requirement.skillIds.some((reqId) =>
-        resolvedSelections.includes(reqId),
-      );
+      const hasAny = requirement.skillIds.some((reqId) => resolvedSelections.includes(reqId));
       if (!hasAny) {
         return true;
       }
     } else {
-      const hasAll = requirement.skillIds.every((reqId) =>
-        resolvedSelections.includes(reqId),
-      );
+      const hasAll = requirement.skillIds.every((reqId) => resolvedSelections.includes(reqId));
       if (!hasAll) {
         return true;
       }
@@ -128,9 +114,7 @@ export function getDisableReason(
     return undefined;
   }
 
-  const resolvedSelections = currentSelections.map((s) =>
-    resolveAlias(s, matrix),
-  );
+  const resolvedSelections = currentSelections.map((s) => resolveAlias(s, matrix));
 
   for (const selectedId of resolvedSelections) {
     const conflict = skill.conflictsWith.find((c) => c.skillId === selectedId);
@@ -142,9 +126,7 @@ export function getDisableReason(
 
     const selectedSkill = matrix.skills[selectedId];
     if (selectedSkill) {
-      const reverseConflict = selectedSkill.conflictsWith.find(
-        (c) => c.skillId === fullId,
-      );
+      const reverseConflict = selectedSkill.conflictsWith.find((c) => c.skillId === fullId);
       if (reverseConflict) {
         const selectedName = selectedSkill.name;
         return `${reverseConflict.reason} (conflicts with ${selectedName})`;
@@ -154,9 +136,7 @@ export function getDisableReason(
 
   for (const requirement of skill.requires) {
     if (requirement.needsAny) {
-      const hasAny = requirement.skillIds.some((reqId) =>
-        resolvedSelections.includes(reqId),
-      );
+      const hasAny = requirement.skillIds.some((reqId) => resolvedSelections.includes(reqId));
       if (!hasAny) {
         const requiredNames = requirement.skillIds
           .map((id) => matrix.skills[id]?.name || id)
@@ -168,9 +148,7 @@ export function getDisableReason(
         (reqId) => !resolvedSelections.includes(reqId),
       );
       if (missingIds.length > 0) {
-        const missingNames = missingIds
-          .map((id) => matrix.skills[id]?.name || id)
-          .join(", ");
+        const missingNames = missingIds.map((id) => matrix.skills[id]?.name || id).join(", ");
         return `${requirement.reason} (requires ${missingNames})`;
       }
     }
@@ -191,16 +169,11 @@ export function isDiscouraged(
     return false;
   }
 
-  const resolvedSelections = currentSelections.map((s) =>
-    resolveAlias(s, matrix),
-  );
+  const resolvedSelections = currentSelections.map((s) => resolveAlias(s, matrix));
 
   for (const selectedId of resolvedSelections) {
     const selectedSkill = matrix.skills[selectedId];
-    if (
-      selectedSkill &&
-      selectedSkill.discourages.some((d) => d.skillId === fullId)
-    ) {
+    if (selectedSkill && selectedSkill.discourages.some((d) => d.skillId === fullId)) {
       return true;
     }
 
@@ -224,24 +197,18 @@ export function getDiscourageReason(
     return undefined;
   }
 
-  const resolvedSelections = currentSelections.map((s) =>
-    resolveAlias(s, matrix),
-  );
+  const resolvedSelections = currentSelections.map((s) => resolveAlias(s, matrix));
 
   for (const selectedId of resolvedSelections) {
     const selectedSkill = matrix.skills[selectedId];
     if (selectedSkill) {
-      const discourage = selectedSkill.discourages.find(
-        (d) => d.skillId === fullId,
-      );
+      const discourage = selectedSkill.discourages.find((d) => d.skillId === fullId);
       if (discourage) {
         return discourage.reason;
       }
     }
 
-    const reverseDiscourage = skill.discourages.find(
-      (d) => d.skillId === selectedId,
-    );
+    const reverseDiscourage = skill.discourages.find((d) => d.skillId === selectedId);
     if (reverseDiscourage) {
       return reverseDiscourage.reason;
     }
@@ -262,16 +229,11 @@ export function isRecommended(
     return false;
   }
 
-  const resolvedSelections = currentSelections.map((s) =>
-    resolveAlias(s, matrix),
-  );
+  const resolvedSelections = currentSelections.map((s) => resolveAlias(s, matrix));
 
   for (const selectedId of resolvedSelections) {
     const selectedSkill = matrix.skills[selectedId];
-    if (
-      selectedSkill &&
-      selectedSkill.recommends.some((r) => r.skillId === fullId)
-    ) {
+    if (selectedSkill && selectedSkill.recommends.some((r) => r.skillId === fullId)) {
       return true;
     }
   }
@@ -291,16 +253,12 @@ export function getRecommendReason(
     return undefined;
   }
 
-  const resolvedSelections = currentSelections.map((s) =>
-    resolveAlias(s, matrix),
-  );
+  const resolvedSelections = currentSelections.map((s) => resolveAlias(s, matrix));
 
   for (const selectedId of resolvedSelections) {
     const selectedSkill = matrix.skills[selectedId];
     if (selectedSkill) {
-      const recommendation = selectedSkill.recommends.find(
-        (r) => r.skillId === fullId,
-      );
+      const recommendation = selectedSkill.recommends.find((r) => r.skillId === fullId);
       if (recommendation) {
         return `${recommendation.reason} (recommended by ${selectedSkill.name})`;
       }
@@ -341,9 +299,7 @@ export function validateSelection(
 
     for (const requirement of skill.requires) {
       if (requirement.needsAny) {
-        const hasAny = requirement.skillIds.some((reqId) =>
-          resolvedSelections.includes(reqId),
-        );
+        const hasAny = requirement.skillIds.some((reqId) => resolvedSelections.includes(reqId));
         if (!hasAny) {
           errors.push({
             type: "missing_requirement",
@@ -442,9 +398,7 @@ export function getAvailableSkills(
   options?: SkillCheckOptions,
 ): SkillOption[] {
   const skillOptions: SkillOption[] = [];
-  const resolvedSelections = currentSelections.map((s) =>
-    resolveAlias(s, matrix),
-  );
+  const resolvedSelections = currentSelections.map((s) => resolveAlias(s, matrix));
 
   for (const skill of Object.values(matrix.skills)) {
     if (skill.category !== categoryId) {
@@ -452,12 +406,9 @@ export function getAvailableSkills(
     }
 
     const disabled = isDisabled(skill.id, currentSelections, matrix, options);
-    const discouraged =
-      !disabled && isDiscouraged(skill.id, currentSelections, matrix);
+    const discouraged = !disabled && isDiscouraged(skill.id, currentSelections, matrix);
     const recommended =
-      !disabled &&
-      !discouraged &&
-      isRecommended(skill.id, currentSelections, matrix);
+      !disabled && !discouraged && isRecommended(skill.id, currentSelections, matrix);
 
     skillOptions.push({
       id: skill.id,
@@ -465,9 +416,7 @@ export function getAvailableSkills(
       name: skill.name,
       description: skill.description,
       disabled,
-      disabledReason: disabled
-        ? getDisableReason(skill.id, currentSelections, matrix)
-        : undefined,
+      disabledReason: disabled ? getDisableReason(skill.id, currentSelections, matrix) : undefined,
       discouraged,
       discouragedReason: discouraged
         ? getDiscourageReason(skill.id, currentSelections, matrix)
@@ -515,8 +464,7 @@ export function isCategoryAllDisabled(
     return { disabled: false };
   }
 
-  const disabledSkills: Array<{ skillId: string; reason: string | undefined }> =
-    [];
+  const disabledSkills: Array<{ skillId: string; reason: string | undefined }> = [];
 
   for (const skill of skills) {
     if (isDisabled(skill.id, currentSelections, matrix, options)) {
@@ -534,43 +482,4 @@ export function isCategoryAllDisabled(
   }
 
   return { disabled: false };
-}
-
-export function getSubcategories(
-  parentCategoryId: string,
-  matrix: MergedSkillsMatrix,
-): string[] {
-  const subcategories: string[] = [];
-
-  for (const category of Object.values(matrix.categories)) {
-    if (category.parent === parentCategoryId) {
-      subcategories.push(category.id);
-    }
-  }
-
-  subcategories.sort((a, b) => {
-    const catA = matrix.categories[a];
-    const catB = matrix.categories[b];
-    return (catA?.order ?? 0) - (catB?.order ?? 0);
-  });
-
-  return subcategories;
-}
-
-export function getTopLevelCategories(matrix: MergedSkillsMatrix): string[] {
-  const topLevel: string[] = [];
-
-  for (const category of Object.values(matrix.categories)) {
-    if (!category.parent) {
-      topLevel.push(category.id);
-    }
-  }
-
-  topLevel.sort((a, b) => {
-    const catA = matrix.categories[a];
-    const catB = matrix.categories[b];
-    return (catA?.order ?? 0) - (catB?.order ?? 0);
-  });
-
-  return topLevel;
 }

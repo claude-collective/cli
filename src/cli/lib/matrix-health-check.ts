@@ -12,7 +12,7 @@ export interface MatrixHealthIssue {
  *
  * Checks for:
  * - Skill IDs in relationships that don't resolve to existing skills (ghost IDs)
- * - Subcategories missing a `domain` field (invisible in wizard)
+ * - Categories missing a `domain` field (invisible in wizard)
  * - Skills referencing categories that don't exist in the matrix
  * - `compatibleWith` entries that reference non-existent skill IDs
  * - Stack `allSkillIds` entries that reference non-existent skill IDs
@@ -120,16 +120,16 @@ function checkRelationshipTargets(
 }
 
 /**
- * Check that all subcategories (categories with a parent) have a domain field.
+ * Check that all categories have a domain field.
  * Categories without a domain won't appear in any wizard domain view.
  */
 function checkSubcategoryDomains(matrix: MergedSkillsMatrix, issues: MatrixHealthIssue[]): void {
   for (const [catId, cat] of Object.entries(matrix.categories)) {
-    if (cat.parent && !cat.domain) {
+    if (!cat.domain) {
       issues.push({
         severity: "warning",
-        finding: "subcategory-missing-domain",
-        details: `Subcategory '${catId}' has parent '${cat.parent}' but no domain — it won't appear in any wizard domain view`,
+        finding: "category-missing-domain",
+        details: `Category '${catId}' has no domain — it won't appear in any wizard domain view`,
       });
     }
   }
