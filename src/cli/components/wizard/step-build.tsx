@@ -17,8 +17,6 @@ import {
   type CategoryOption,
   type OptionState,
 } from "./category-grid.js";
-import { SectionProgress } from "./section-progress.js";
-import { DefinitionItem } from "./wizard-layout.js";
 
 // =============================================================================
 // Types
@@ -31,8 +29,6 @@ export interface StepBuildProps {
   domain: string;
   /** All selected domains (for progress indicator) */
   selectedDomains: string[];
-  /** Current domain index (0-based) */
-  currentDomainIndex: number;
   /** Current selections by subcategory */
   selections: Record<string, string[]>;
   /** All current selections (for state calculation across domains) */
@@ -55,9 +51,6 @@ export interface StepBuildProps {
 // =============================================================================
 // Constants
 // =============================================================================
-
-/** Minimum number of domains to show progress indicator */
-const MIN_DOMAINS_FOR_PROGRESS = 2;
 
 /** Framework subcategory ID for web domain (framework-first filtering) */
 const FRAMEWORK_SUBCATEGORY_ID = "framework";
@@ -302,39 +295,12 @@ function getDomainDisplayName(domain: string): string {
   return displayNames[domain] || domain.charAt(0).toUpperCase() + domain.slice(1);
 }
 
-/**
- * Count selected options across categories.
- */
-function countSelections(categories: CategoryRow[]): {
-  selected: number;
-  total: number;
-} {
-  let selected = 0;
-  let total = 0;
-  for (const category of categories) {
-    for (const option of category.options) {
-      if (option.state !== "disabled") {
-        total++;
-        if (option.selected) {
-          selected++;
-        }
-      }
-    }
-  }
-  return { selected, total };
-}
-
-// =============================================================================
-// DefinitionItem - imported from wizard-layout.tsx
-// =============================================================================
-
 // =============================================================================
 // Header Component (Domain info with selection count)
 // =============================================================================
 
 interface HeaderProps {
   currentDomain: string;
-  index: number;
   selectedDomains: string[];
   showDescriptions: boolean;
   expertMode: boolean;
@@ -342,7 +308,6 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({
   currentDomain,
-  index,
   selectedDomains,
   showDescriptions,
   expertMode,
@@ -421,7 +386,6 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   matrix,
   domain,
   selectedDomains,
-  currentDomainIndex,
   selections,
   allSelections,
   focusedRow,
@@ -447,16 +411,8 @@ export const StepBuild: React.FC<StepBuildProps> = ({
     selections,
   );
 
-  // Selection count for header
-  const selectionCount = countSelections(categories);
-
-  // Multi-domain progress
-  const showProgress = selectedDomains.length >= MIN_DOMAINS_FOR_PROGRESS;
-  const isLastDomain = currentDomainIndex === selectedDomains.length - 1;
-  const nextDomain = isLastDomain ? undefined : selectedDomains[currentDomainIndex + 1];
-
   // Handle keyboard input for Enter and Escape
-  useInput((input, key) => {
+  useInput((_input, key) => {
     if (key.return) {
       // Validate before continuing
       const validation = validateBuildStep(categories, selections);
@@ -476,7 +432,6 @@ export const StepBuild: React.FC<StepBuildProps> = ({
     <Box flexDirection="column">
       <Header
         currentDomain={domain}
-        index={currentDomainIndex + 1}
         selectedDomains={selectedDomains}
         showDescriptions={showDescriptions}
         expertMode={expertMode}

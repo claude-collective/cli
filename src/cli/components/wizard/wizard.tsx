@@ -234,7 +234,6 @@ export const Wizard: React.FC<WizardProps> = ({
             matrix={matrix}
             domain={currentDomain || effectiveDomains[0] || "web"}
             selectedDomains={effectiveDomains}
-            currentDomainIndex={store.currentDomainIndex}
             selections={store.domainSelections[currentDomain || "web"] || {}}
             allSelections={allSelections}
             focusedRow={store.focusedRow}

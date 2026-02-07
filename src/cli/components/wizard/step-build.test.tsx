@@ -219,7 +219,6 @@ const defaultProps: StepBuildProps = {
   matrix: defaultMatrix,
   domain: "web",
   selectedDomains: ["web"],
-  currentDomainIndex: 0,
   selections: {},
   allSelections: [],
   focusedRow: 0,
@@ -332,7 +331,6 @@ describe("StepBuild component", () => {
     it("should show domain tabs when multiple domains selected", () => {
       const { lastFrame, unmount } = renderStepBuild({
         selectedDomains: ["web", "api"],
-        currentDomainIndex: 0,
       });
       cleanup = unmount;
 
@@ -345,7 +343,6 @@ describe("StepBuild component", () => {
     it("should show single domain when only one selected", () => {
       const { lastFrame, unmount } = renderStepBuild({
         selectedDomains: ["web"],
-        currentDomainIndex: 0,
       });
       cleanup = unmount;
 
@@ -358,7 +355,6 @@ describe("StepBuild component", () => {
       const { lastFrame, unmount } = renderStepBuild({
         selectedDomains: ["web", "api"],
         domain: "api",
-        currentDomainIndex: 1,
       });
       cleanup = unmount;
 
@@ -371,7 +367,6 @@ describe("StepBuild component", () => {
     it("should show correct domain display names", () => {
       const { lastFrame, unmount } = renderStepBuild({
         selectedDomains: ["web", "api", "cli"],
-        currentDomainIndex: 1,
         domain: "api",
       });
       cleanup = unmount;
@@ -636,7 +631,6 @@ describe("StepBuild component", () => {
       const { lastFrame, unmount } = renderStepBuild({
         domain: "web",
         selectedDomains: ["web", "api"],
-        currentDomainIndex: 0,
       });
       cleanup = unmount;
 
@@ -650,7 +644,6 @@ describe("StepBuild component", () => {
       const { lastFrame, unmount } = renderStepBuild({
         domain: "api",
         selectedDomains: ["web", "api"],
-        currentDomainIndex: 1,
       });
       cleanup = unmount;
 
@@ -714,7 +707,6 @@ describe("StepBuild component", () => {
         matrix: matrixWithCli,
         domain: "api",
         selectedDomains: ["web", "api", "cli"],
-        currentDomainIndex: 1,
       });
       cleanup = unmount;
 
