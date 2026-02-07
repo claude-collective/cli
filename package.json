@@ -1,6 +1,6 @@
 {
   "name": "@claude-collective/cli",
-  "version": "0.13.4",
+  "version": "0.14.0",
   "description": "CLI for managing Claude Collective skills, stacks, and agents for Claude Code",
   "type": "module",
   "main": "dist/index.js",

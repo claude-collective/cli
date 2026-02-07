@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2026-02-07
+
+### Changed
+
+- **WizardLayout component** - Extracted layout wrapper that renders WizardTabs (header), children, and WizardFooter consistently across all wizard steps
+- **Wizard tabs** - Simplified to text-only styling (cyan current, dimmed skipped) with horizontal border lines; renamed "Approach" step to "Intro"; version displayed in tab bar
+- **Build step header** - Redesigned with domain tab navigation and inline toggle indicators for descriptions and expert mode
+- **Wizard footer** - Unified keyboard shortcut hints (navigate, select, continue, back, export) displayed on all steps, replacing per-step footer strings
+
+### Added
+
+- **ASCII art banner** - Init command displays stylized banner on startup
+- **Prettier config** - Added `prettier.config.mjs` for consistent code formatting (printWidth 100)
+
+### Removed
+
+- **Old WizardFooter component** (`wizard-footer.tsx`) - Replaced by centralized footer in WizardLayout
+- **SectionProgress in build step** - Domain progress replaced by domain tab navigation in header
+
+### Fixed
+
+- **Version display** - Fixed broken `import { config } from "process"` (Node's build config, not CLI version); version now prop-drilled from oclif `this.config.version`
+
 ## [0.13.4] - 2026-02-06
 
 ### Fixed
@@ -55,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Old `search.ts` command - Replaced with dual-mode `search.tsx` (static + interactive)
 
+[0.14.0]: https://github.com/claude-collective/cli/releases/tag/v0.14.0
 [0.13.4]: https://github.com/claude-collective/cli/releases/tag/v0.13.4
 [0.13.3]: https://github.com/claude-collective/cli/releases/tag/v0.13.3
 [0.13.2]: https://github.com/claude-collective/cli/releases/tag/v0.13.2
