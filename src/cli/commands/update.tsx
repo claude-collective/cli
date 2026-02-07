@@ -15,6 +15,7 @@ import {
   compareSkills,
   type SkillComparisonResult,
 } from "../lib/skill-metadata.js";
+import { getCurrentDate } from "../lib/versioning.js";
 import {
   fileExists,
   readFile,
@@ -35,13 +36,6 @@ interface LocalSkillMetadata {
     date: string;
   };
   [key: string]: unknown;
-}
-
-/**
- * Get the current date in ISO format (YYYY-MM-DD)
- */
-function getCurrentDate(): string {
-  return new Date().toISOString().split("T")[0];
 }
 
 /**

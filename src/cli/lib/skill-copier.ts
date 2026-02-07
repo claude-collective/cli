@@ -1,7 +1,7 @@
 import path from "path";
 import { stringify as stringifyYaml, parse as parseYaml } from "yaml";
 import { copy, ensureDir, readFile, writeFile } from "../utils/fs";
-import { hashFile } from "./versioning";
+import { getCurrentDate, hashFile } from "./versioning";
 import type { MergedSkillsMatrix, ResolvedSkill } from "../types-matrix";
 import type { SourceLoadResult } from "./source-loader";
 
@@ -27,10 +27,7 @@ export interface CopiedSkill {
   local?: boolean;
 }
 
-function getSkillSourcePath(
-  skill: ResolvedSkill,
-  registryRoot: string,
-): string {
+function getSkillSourcePath(skill: ResolvedSkill, registryRoot: string): string {
   return path.join(registryRoot, "src", skill.path);
 }
 
@@ -42,10 +39,6 @@ function getSkillDestPath(skill: ResolvedSkill, stackDir: string): string {
 async function generateSkillHash(skillSourcePath: string): Promise<string> {
   const skillMdPath = path.join(skillSourcePath, "SKILL.md");
   return hashFile(skillMdPath);
-}
-
-function getCurrentDate(): string {
-  return new Date().toISOString().split("T")[0];
 }
 
 async function injectForkedFromMetadata(
@@ -173,10 +166,7 @@ export async function copySkillsToPluginFromSource(
  * // skill.id = "web-framework-react"
  * // Returns: "{localSkillsDir}/web-framework-react"
  */
-function getFlattenedSkillDestPath(
-  skill: ResolvedSkill,
-  localSkillsDir: string,
-): string {
+function getFlattenedSkillDestPath(skill: ResolvedSkill, localSkillsDir: string): string {
   return path.join(localSkillsDir, skill.id);
 }
 
@@ -232,11 +222,7 @@ export async function copySkillsToLocalFlattened(
       continue;
     }
 
-    const copied = await copySkillToLocalFlattened(
-      skill,
-      localSkillsDir,
-      sourceResult,
-    );
+    const copied = await copySkillToLocalFlattened(skill, localSkillsDir, sourceResult);
     copiedSkills.push(copied);
   }
 

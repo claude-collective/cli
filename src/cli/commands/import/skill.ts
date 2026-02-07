@@ -4,7 +4,7 @@ import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { BaseCommand } from "../../base-command.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 import { fetchFromSource } from "../../lib/source-fetcher.js";
-import { hashFile } from "../../lib/versioning.js";
+import { getCurrentDate, hashFile } from "../../lib/versioning.js";
 import {
   copy,
   directoryExists,
@@ -82,10 +82,6 @@ function parseGitHubSource(source: string): {
   };
 }
 
-function getCurrentDate(): string {
-  return new Date().toISOString().split("T")[0];
-}
-
 export default class ImportSkill extends BaseCommand {
   static summary = "Import a skill from a third-party GitHub repository";
   static description =
@@ -95,8 +91,7 @@ export default class ImportSkill extends BaseCommand {
   static examples = [
     {
       description: "List available skills from a repository",
-      command:
-        "<%= config.bin %> import skill github:vercel-labs/agent-skills --list",
+      command: "<%= config.bin %> import skill github:vercel-labs/agent-skills --list",
     },
     {
       description: "Import a specific skill",
@@ -105,8 +100,7 @@ export default class ImportSkill extends BaseCommand {
     },
     {
       description: "Import all skills from a repository",
-      command:
-        "<%= config.bin %> import skill github:vercel-labs/agent-skills --all",
+      command: "<%= config.bin %> import skill github:vercel-labs/agent-skills --all",
     },
     {
       description: "Import with custom skills directory",
@@ -165,10 +159,9 @@ export default class ImportSkill extends BaseCommand {
 
     // Validate flags
     if (!flags.list && !flags.skill && !flags.all) {
-      this.error(
-        "Please specify --skill <name>, --all, or --list to list available skills",
-        { exit: EXIT_CODES.INVALID_ARGS },
-      );
+      this.error("Please specify --skill <name>, --all, or --list to list available skills", {
+        exit: EXIT_CODES.INVALID_ARGS,
+      });
     }
 
     if (flags.skill && flags.all) {
@@ -190,16 +183,11 @@ export default class ImportSkill extends BaseCommand {
         forceRefresh: flags.refresh,
       });
       repoPath = result.path;
-      this.log(
-        result.fromCache ? "Using cached source" : "Downloaded fresh copy",
-      );
+      this.log(result.fromCache ? "Using cached source" : "Downloaded fresh copy");
     } catch (error) {
-      this.error(
-        error instanceof Error
-          ? error.message
-          : `Failed to fetch: ${args.source}`,
-        { exit: EXIT_CODES.NETWORK_ERROR },
-      );
+      this.error(error instanceof Error ? error.message : `Failed to fetch: ${args.source}`, {
+        exit: EXIT_CODES.NETWORK_ERROR,
+      });
     }
 
     // Find skills directory
@@ -215,15 +203,11 @@ export default class ImportSkill extends BaseCommand {
 
     // Discover available skills
     const skillDirs = await listDirectories(skillsDir);
-    const availableSkills = await this.discoverValidSkills(
-      skillsDir,
-      skillDirs,
-    );
+    const availableSkills = await this.discoverValidSkills(skillsDir, skillDirs);
 
     if (availableSkills.length === 0) {
       this.error(
-        `No valid skills found in ${flags.subdir}/\n` +
-          `Skills must have a SKILL.md file.`,
+        `No valid skills found in ${flags.subdir}/\n` + `Skills must have a SKILL.md file.`,
         { exit: EXIT_CODES.ERROR },
       );
     }
@@ -237,9 +221,7 @@ export default class ImportSkill extends BaseCommand {
         this.log(`  - ${skill}`);
       }
       this.log("");
-      this.log(
-        "Use --skill <name> to import a specific skill, or --all to import all.",
-      );
+      this.log("Use --skill <name> to import a specific skill, or --all to import all.");
       return;
     }
 
@@ -289,9 +271,7 @@ export default class ImportSkill extends BaseCommand {
       // Check if already exists
       if (await directoryExists(destPath)) {
         if (!flags.force) {
-          this.warn(
-            `Skipping '${skillName}': already exists. Use --force to overwrite.`,
-          );
+          this.warn(`Skipping '${skillName}': already exists. Use --force to overwrite.`);
           skipped++;
           continue;
         }
@@ -310,9 +290,7 @@ export default class ImportSkill extends BaseCommand {
     }
 
     this.log("");
-    this.logSuccess(
-      `Import complete: ${imported} imported, ${skipped} skipped`,
-    );
+    this.logSuccess(`Import complete: ${imported} imported, ${skipped} skipped`);
     this.log(`Skills location: ${destDir}`);
     this.log("");
     this.log("Run 'cc compile' to include imported skills in your agents.");
@@ -323,10 +301,7 @@ export default class ImportSkill extends BaseCommand {
    * Discover valid skills in a directory.
    * A valid skill must have a SKILL.md file.
    */
-  private async discoverValidSkills(
-    skillsDir: string,
-    skillDirs: string[],
-  ): Promise<string[]> {
+  private async discoverValidSkills(skillsDir: string, skillDirs: string[]): Promise<string[]> {
     const validSkills: string[] = [];
 
     for (const skillDir of skillDirs) {
@@ -362,12 +337,7 @@ export default class ImportSkill extends BaseCommand {
     await copy(sourcePath, destPath);
 
     // Inject forked_from metadata
-    await this.injectForkedFromMetadata(
-      destPath,
-      skillName,
-      source,
-      contentHash,
-    );
+    await this.injectForkedFromMetadata(destPath, skillName, source, contentHash);
   }
 
   /**
