@@ -1,12 +1,7 @@
 import { parse as parseYaml } from "yaml";
 import path from "path";
-import {
-  directoryExists,
-  listDirectories,
-  fileExists,
-  readFile,
-} from "../utils/fs";
-import { verbose } from "../utils/logger";
+import { directoryExists, listDirectories, fileExists, readFile } from "../utils/fs";
+import { verbose, warn } from "../utils/logger";
 import { LOCAL_SKILLS_PATH } from "../consts";
 import { parseFrontmatter } from "./loader";
 import type { ExtractedSkillMetadata } from "../types-matrix";
@@ -84,9 +79,7 @@ async function extractLocalSkill(
   const metadata = parseYaml(metadataContent) as LocalRawMetadata;
 
   if (!metadata.cli_name) {
-    verbose(
-      `Skipping local skill '${skillDirName}': Missing required 'cli_name' in metadata.yaml`,
-    );
+    verbose(`Skipping local skill '${skillDirName}': Missing required 'cli_name' in metadata.yaml`);
     return null;
   }
 
@@ -94,9 +87,7 @@ async function extractLocalSkill(
   const frontmatter = parseFrontmatter(skillMdContent);
 
   if (!frontmatter) {
-    verbose(
-      `Skipping local skill '${skillDirName}': Invalid SKILL.md frontmatter`,
-    );
+    verbose(`Skipping local skill '${skillDirName}': Invalid SKILL.md frontmatter`);
     return null;
   }
 
@@ -106,6 +97,12 @@ async function extractLocalSkill(
   // Use category from metadata.yaml if available (preserved from source skill),
   // otherwise fall back to generic "local" category
   const category = metadata.category || LOCAL_CATEGORY;
+
+  if (!metadata.category) {
+    warn(
+      `Local skill '${skillDirName}' has no category in metadata.yaml — defaulting to '${LOCAL_CATEGORY}' (will not appear in wizard domain views)`,
+    );
+  }
 
   const extracted: ExtractedSkillMetadata = {
     id: skillId,

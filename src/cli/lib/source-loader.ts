@@ -6,6 +6,7 @@ import { fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import { isLocalSource, resolveSource, type ResolvedConfig } from "./config";
 import { discoverLocalSkills, type LocalSkillDiscoveryResult } from "./local-skill-loader";
+import { checkMatrixHealth } from "./matrix-health-check";
 import { extractAllSkills, loadSkillsMatrix, mergeMatrixWithSkills } from "./matrix-loader";
 import { fetchFromSource } from "./source-fetcher";
 import { loadStacks, resolveAgentConfigToSkills } from "./stacks-loader";
@@ -53,6 +54,9 @@ export async function loadSkillsMatrixFromSource(
     );
     result.matrix = mergeLocalSkillsIntoMatrix(result.matrix, localSkillsResult);
   }
+
+  // Run matrix health check to surface referential integrity issues
+  checkMatrixHealth(result.matrix);
 
   return result;
 }

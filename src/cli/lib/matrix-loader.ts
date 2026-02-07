@@ -31,9 +31,7 @@ interface RawMetadata {
   provides_setup_for?: string[];
 }
 
-export async function loadSkillsMatrix(
-  configPath: string,
-): Promise<SkillsMatrixConfig> {
+export async function loadSkillsMatrix(configPath: string): Promise<SkillsMatrixConfig> {
   const content = await readFile(configPath);
   const config = parseYaml(content) as SkillsMatrixConfig;
 
@@ -43,17 +41,9 @@ export async function loadSkillsMatrix(
   return config;
 }
 
-function validateMatrixStructure(
-  config: SkillsMatrixConfig,
-  configPath: string,
-): void {
+function validateMatrixStructure(config: SkillsMatrixConfig, configPath: string): void {
   // Note: suggested_stacks removed from required - stacks now defined in config/stacks.yaml (Phase 6)
-  const requiredFields = [
-    "version",
-    "categories",
-    "relationships",
-    "skill_aliases",
-  ];
+  const requiredFields = ["version", "categories", "relationships", "skill_aliases"];
   const missing = requiredFields.filter((field) => !(field in config));
 
   if (missing.length > 0) {
@@ -62,12 +52,7 @@ function validateMatrixStructure(
     );
   }
 
-  const relationshipFields = [
-    "conflicts",
-    "recommends",
-    "requires",
-    "alternatives",
-  ];
+  const relationshipFields = ["conflicts", "recommends", "requires", "alternatives"];
   const missingRelationships = relationshipFields.filter(
     (field) => !config.relationships || !(field in config.relationships),
   );
@@ -79,17 +64,8 @@ function validateMatrixStructure(
   }
 
   for (const [categoryId, category] of Object.entries(config.categories)) {
-    const requiredCategoryFields = [
-      "id",
-      "name",
-      "description",
-      "exclusive",
-      "required",
-      "order",
-    ];
-    const missingCategoryFields = requiredCategoryFields.filter(
-      (field) => !(field in category),
-    );
+    const requiredCategoryFields = ["id", "name", "description", "exclusive", "required", "order"];
+    const missingCategoryFields = requiredCategoryFields.filter((field) => !(field in category));
 
     if (missingCategoryFields.length > 0) {
       throw new Error(
@@ -99,9 +75,7 @@ function validateMatrixStructure(
   }
 }
 
-export async function extractAllSkills(
-  skillsDir: string,
-): Promise<ExtractedSkillMetadata[]> {
+export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkillMetadata[]> {
   const skills: ExtractedSkillMetadata[] = [];
   const metadataFiles = await glob("**/metadata.yaml", skillsDir);
 
@@ -158,9 +132,7 @@ export async function extractAllSkills(
   return skills;
 }
 
-function buildReverseAliases(
-  aliases: Record<string, string>,
-): Record<string, string> {
+function buildReverseAliases(aliases: Record<string, string>): Record<string, string> {
   const reverse: Record<string, string> = {};
   for (const [alias, fullId] of Object.entries(aliases)) {
     reverse[fullId] = alias;
@@ -215,9 +187,7 @@ function buildAliasTargetToSkillIdMap(
   return map;
 }
 
-function buildDirectoryPathToIdMap(
-  skills: ExtractedSkillMetadata[],
-): Record<string, string> {
+function buildDirectoryPathToIdMap(skills: ExtractedSkillMetadata[]): Record<string, string> {
   const map: Record<string, string> = {};
   for (const skill of skills) {
     if (skill.directoryPath && skill.directoryPath !== skill.id) {
@@ -232,6 +202,7 @@ function resolveToCanonicalId(
   aliases: Record<string, string>,
   directoryPathToId: Record<string, string> = {},
   aliasTargetToSkillId: Record<string, string> = {},
+  context?: string,
 ): string {
   if (aliases[aliasOrId]) {
     return aliases[aliasOrId];
@@ -242,6 +213,9 @@ function resolveToCanonicalId(
   // Handle "short author" format like "react (@vince)" that maps to full ID
   if (aliasTargetToSkillId[aliasOrId]) {
     return aliasTargetToSkillId[aliasOrId];
+  }
+  if (context) {
+    verbose(`Unresolved ID '${aliasOrId}' in ${context} — passing through as-is`);
   }
   return aliasOrId;
 }
@@ -269,11 +243,7 @@ export async function mergeMatrixWithSkills(
   }
 
   computeInverseRelationships(resolvedSkills);
-  const suggestedStacks = resolveSuggestedStacks(
-    matrix,
-    aliases,
-    aliasTargetToSkillId,
-  );
+  const suggestedStacks = resolveSuggestedStacks(matrix, aliases, aliasTargetToSkillId);
 
   const merged: MergedSkillsMatrix = {
     version: matrix.version,
@@ -302,12 +272,18 @@ function buildResolvedSkill(
   const alternatives: SkillAlternative[] = [];
   const discourages: SkillRelation[] = [];
 
-  // Helper to resolve with all maps
-  const resolve = (id: string) =>
-    resolveToCanonicalId(id, aliases, directoryPathToId, aliasTargetToSkillId);
+  // Helper to resolve with all maps, with context for diagnostics
+  const resolve = (id: string, relationContext?: string) =>
+    resolveToCanonicalId(
+      id,
+      aliases,
+      directoryPathToId,
+      aliasTargetToSkillId,
+      relationContext ? `${skill.id} ${relationContext}` : undefined,
+    );
 
   for (const conflictRef of skill.conflictsWith) {
-    const canonicalId = resolve(conflictRef);
+    const canonicalId = resolve(conflictRef, "conflictsWith");
     conflictsWith.push({
       skillId: canonicalId,
       reason: "Defined in skill metadata",
@@ -315,7 +291,7 @@ function buildResolvedSkill(
   }
 
   for (const conflictRule of matrix.relationships.conflicts) {
-    const resolvedSkills = conflictRule.skills.map(resolve);
+    const resolvedSkills = conflictRule.skills.map((id) => resolve(id, "conflicts"));
     if (resolvedSkills.includes(skill.id)) {
       for (const otherSkill of resolvedSkills) {
         if (otherSkill !== skill.id) {
@@ -331,7 +307,7 @@ function buildResolvedSkill(
   }
 
   for (const compatRef of skill.compatibleWith) {
-    const canonicalId = resolve(compatRef);
+    const canonicalId = resolve(compatRef, "compatibleWith");
     recommends.push({
       skillId: canonicalId,
       reason: "Compatible with this skill",
@@ -339,10 +315,10 @@ function buildResolvedSkill(
   }
 
   for (const recommendRule of matrix.relationships.recommends) {
-    const whenCanonicalId = resolve(recommendRule.when);
+    const whenCanonicalId = resolve(recommendRule.when, "recommends.when");
     if (whenCanonicalId === skill.id) {
       for (const suggested of recommendRule.suggest) {
-        const canonicalId = resolve(suggested);
+        const canonicalId = resolve(suggested, "recommends.suggest");
         if (!recommends.some((r) => r.skillId === canonicalId)) {
           recommends.push({
             skillId: canonicalId,
@@ -355,17 +331,17 @@ function buildResolvedSkill(
 
   if (skill.requires.length > 0) {
     requires.push({
-      skillIds: skill.requires.map(resolve),
+      skillIds: skill.requires.map((id) => resolve(id, "requires")),
       needsAny: false,
       reason: "Defined in skill metadata",
     });
   }
 
   for (const requireRule of matrix.relationships.requires) {
-    const skillCanonicalId = resolve(requireRule.skill);
+    const skillCanonicalId = resolve(requireRule.skill, "requires.skill");
     if (skillCanonicalId === skill.id) {
       requires.push({
-        skillIds: requireRule.needs.map(resolve),
+        skillIds: requireRule.needs.map((id) => resolve(id, "requires.needs")),
         needsAny: requireRule.needs_any ?? false,
         reason: requireRule.reason,
       });
@@ -373,7 +349,7 @@ function buildResolvedSkill(
   }
 
   for (const altGroup of matrix.relationships.alternatives) {
-    const resolvedAlts = altGroup.skills.map(resolve);
+    const resolvedAlts = altGroup.skills.map((id) => resolve(id, "alternatives"));
     if (resolvedAlts.includes(skill.id)) {
       for (const altSkill of resolvedAlts) {
         if (altSkill !== skill.id) {
@@ -388,7 +364,7 @@ function buildResolvedSkill(
 
   if (matrix.relationships.discourages) {
     for (const discourageRule of matrix.relationships.discourages) {
-      const resolvedSkills = discourageRule.skills.map(resolve);
+      const resolvedSkills = discourageRule.skills.map((id) => resolve(id, "discourages"));
       if (resolvedSkills.includes(skill.id)) {
         for (const otherSkill of resolvedSkills) {
           if (otherSkill !== skill.id) {
@@ -405,7 +381,7 @@ function buildResolvedSkill(
   }
 
   // Preserve compatibleWith as resolved skill IDs for framework-first filtering
-  const compatibleWith = skill.compatibleWith.map(resolve);
+  const compatibleWith = skill.compatibleWith.map((id) => resolve(id, "compatibleWith"));
 
   return {
     id: skill.id,
@@ -425,15 +401,13 @@ function buildResolvedSkill(
     alternatives,
     discourages,
     compatibleWith,
-    requiresSetup: skill.requiresSetup.map(resolve),
-    providesSetupFor: skill.providesSetupFor.map(resolve),
+    requiresSetup: skill.requiresSetup.map((id) => resolve(id, "requiresSetup")),
+    providesSetupFor: skill.providesSetupFor.map((id) => resolve(id, "providesSetupFor")),
     path: skill.path,
   };
 }
 
-function computeInverseRelationships(
-  skills: Record<string, ResolvedSkill>,
-): void {
+function computeInverseRelationships(skills: Record<string, ResolvedSkill>): void {
   for (const skill of Object.values(skills)) {
     for (const recommend of skill.recommends) {
       const targetSkill = skills[recommend.skillId];

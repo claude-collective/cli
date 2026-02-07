@@ -15,3 +15,11 @@ export function verbose(msg: string): void {
     console.log(`  ${msg}`);
   }
 }
+
+/**
+ * Log a warning that is always visible (not gated by verbose mode).
+ * Used for issues the user should know about, like unresolved references.
+ */
+export function warn(msg: string): void {
+  console.warn(`  Warning: ${msg}`);
+}

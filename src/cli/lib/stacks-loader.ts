@@ -1,7 +1,7 @@
 import { parse as parseYaml } from "yaml";
 import path from "path";
 import { readFile, fileExists } from "../utils/fs";
-import { verbose } from "../utils/logger";
+import { verbose, warn } from "../utils/logger";
 import type { Stack, StacksConfig, StackAgentConfig } from "../types-stacks";
 import type { SkillReference } from "../types";
 
@@ -40,9 +40,7 @@ export async function loadStacks(configDir: string): Promise<Stack[]> {
     return config.stacks;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(
-      `Failed to load stacks from '${stacksPath}': ${errorMessage}`,
-    );
+    throw new Error(`Failed to load stacks from '${stacksPath}': ${errorMessage}`);
   }
 }
 
@@ -50,10 +48,7 @@ export async function loadStacks(configDir: string): Promise<Stack[]> {
  * Load a specific stack by ID
  * Returns null if stack not found
  */
-export async function loadStackById(
-  stackId: string,
-  configDir: string,
-): Promise<Stack | null> {
+export async function loadStackById(stackId: string, configDir: string): Promise<Stack | null> {
   const stacks = await loadStacks(configDir);
   const stack = stacks.find((s) => s.id === stackId);
 
@@ -97,8 +92,8 @@ export function resolveAgentConfigToSkills(
     const fullSkillId = skillAliases[technologyAlias];
 
     if (!fullSkillId) {
-      verbose(
-        `Warning: No skill alias found for '${technologyAlias}' (subcategory: ${subcategory}). Skipping.`,
+      warn(
+        `No skill alias found for '${technologyAlias}' (subcategory: ${subcategory}) in stack config. Skipping.`,
       );
       continue;
     }
@@ -164,9 +159,7 @@ export function resolveStackSkillsFromAliases(
     result[agentId] = resolveAgentConfigToSkills(agentConfig, skillAliases);
   }
 
-  verbose(
-    `Resolved skills for ${Object.keys(result).length} agents in stack '${stack.id}'`,
-  );
+  verbose(`Resolved skills for ${Object.keys(result).length} agents in stack '${stack.id}'`);
 
   return result;
 }
