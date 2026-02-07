@@ -481,6 +481,82 @@ describe("WizardStore", () => {
   });
 
   // ===========================================================================
+  // populateFromStack
+  // ===========================================================================
+
+  describe("populateFromStack", () => {
+    it("should set selectedDomains to all domains regardless of stack contents", () => {
+      const store = useWizardStore.getState();
+
+      // Stack only has web-domain skills
+      const stack = {
+        agents: {
+          web: { "frontend/framework": "react" },
+        },
+      };
+      const categories: Record<string, { domain?: string }> = {
+        "frontend/framework": { domain: "web" },
+      };
+
+      store.populateFromStack(stack, categories);
+
+      const { selectedDomains, domainSelections } = useWizardStore.getState();
+
+      // selectedDomains should include ALL domains, not just the stack's
+      expect(selectedDomains).toEqual(["web", "api", "cli", "mobile", "shared"]);
+
+      // domainSelections should only contain the stack's actual mappings
+      expect(domainSelections.web).toBeDefined();
+      expect(domainSelections.web["frontend/framework"]).toEqual(["react"]);
+      expect(domainSelections.api).toBeUndefined();
+    });
+
+    it("should populate domainSelections from stack agents", () => {
+      const store = useWizardStore.getState();
+
+      const stack = {
+        agents: {
+          web: { "frontend/framework": "react", "frontend/state": "zustand" },
+          api: { "backend/framework": "hono" },
+        },
+      };
+      const categories: Record<string, { domain?: string }> = {
+        "frontend/framework": { domain: "web" },
+        "frontend/state": { domain: "web" },
+        "backend/framework": { domain: "api" },
+      };
+
+      store.populateFromStack(stack, categories);
+
+      const { domainSelections } = useWizardStore.getState();
+
+      expect(domainSelections.web["frontend/framework"]).toEqual(["react"]);
+      expect(domainSelections.web["frontend/state"]).toEqual(["zustand"]);
+      expect(domainSelections.api["backend/framework"]).toEqual(["hono"]);
+    });
+
+    it("should skip entries without a domain", () => {
+      const store = useWizardStore.getState();
+
+      const stack = {
+        agents: {
+          misc: { "top-level-category": "some-skill" },
+        },
+      };
+      const categories: Record<string, { domain?: string }> = {
+        "top-level-category": {}, // No domain
+      };
+
+      store.populateFromStack(stack, categories);
+
+      const { domainSelections } = useWizardStore.getState();
+
+      // No domain selections should be created for domain-less categories
+      expect(Object.keys(domainSelections)).toHaveLength(0);
+    });
+  });
+
+  // ===========================================================================
   // Complex Flows
   // ===========================================================================
 
@@ -492,12 +568,12 @@ describe("WizardStore", () => {
       store.setApproach("stack");
       store.setStep("stack");
 
-      // Step 2: Select stack
+      // Step 2: Select stack and go directly to build
       store.selectStack("nextjs-fullstack");
-      store.setStep("stack-options");
+      store.setStackAction("customize");
+      store.setStep("build");
 
-      // Step 3: Choose defaults
-      store.setStackAction("defaults");
+      // Step 3: Continue to refine
       store.setStep("refine");
 
       // Step 4: Refine
@@ -509,14 +585,9 @@ describe("WizardStore", () => {
       expect(state.step).toBe("confirm");
       expect(state.approach).toBe("stack");
       expect(state.selectedStackId).toBe("nextjs-fullstack");
-      expect(state.stackAction).toBe("defaults");
+      expect(state.stackAction).toBe("customize");
       expect(state.refineAction).toBe("all-recommended");
-      expect(state.history).toEqual([
-        "approach",
-        "stack",
-        "stack-options",
-        "refine",
-      ]);
+      expect(state.history).toEqual(["approach", "stack", "build", "refine"]);
     });
 
     it("should handle complete scratch flow", () => {

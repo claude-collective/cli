@@ -54,7 +54,7 @@ interface StackSelectionProps {
 }
 
 const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
-  const { selectStack, setStep, goBack } = useWizardStore();
+  const { selectStack, setStep, setStackAction, populateFromStack, goBack } = useWizardStore();
   const [focusedIndex, setFocusedIndex] = useState(INITIAL_FOCUSED_INDEX);
 
   const stacks = matrix.suggestedStacks;
@@ -69,10 +69,33 @@ const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
 
     // Enter to select the focused stack
     if (key.return && stackCount > 0) {
-      const stack = stacks[focusedIndex];
-      if (stack) {
-        selectStack(stack.id);
-        setStep("stack-options");
+      const focusedStack = stacks[focusedIndex];
+      if (focusedStack) {
+        selectStack(focusedStack.id);
+        setStackAction("customize");
+
+        // Pre-populate domainSelections from the stack's skill mappings
+        const resolvedStack = matrix.suggestedStacks.find((s) => s.id === focusedStack.id);
+        if (resolvedStack) {
+          const stackAgents: Record<string, Record<string, string>> = {};
+
+          for (const skillId of resolvedStack.allSkillIds) {
+            const skill = matrix.skills[skillId];
+            if (skill?.category) {
+              const domain = matrix.categories[skill.category]?.domain;
+              if (domain) {
+                if (!stackAgents[domain]) {
+                  stackAgents[domain] = {};
+                }
+                stackAgents[domain][skill.category] = skill.alias || skill.id;
+              }
+            }
+          }
+
+          populateFromStack({ agents: stackAgents }, matrix.categories);
+        }
+
+        setStep("build");
       }
       return;
     }
@@ -90,7 +113,7 @@ const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
 
   return (
     <Box flexDirection="column">
-      <ViewTitle title="Select a pre-built template" />
+      <ViewTitle>Select a pre-built template</ViewTitle>
       <Box flexDirection="column" marginTop={1}>
         {stacks.map((stack, index) => (
           <MenuItem

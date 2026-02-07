@@ -43,6 +43,8 @@ const HOT_KEYS: { label: string; values: string[] }[] = [
 ];
 
 export const WizardFooter = () => {
+  const store = useWizardStore();
+
   return (
     <Box
       columnGap={2}
@@ -55,6 +57,11 @@ export const WizardFooter = () => {
       paddingLeft={1}
       paddingRight={1}
     >
+      <DefinitionItem
+        label="Accept defaults"
+        values={["A"]}
+        isVisible={store.step === "build" && !!store.selectedStackId}
+      />
       {HOT_KEYS.map((hotkey) => (
         <DefinitionItem {...hotkey} key={hotkey.label} />
       ))}
@@ -81,7 +88,7 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({ version, children })
     }
 
     // Stack step handling
-    if (store.step !== "approach" && store.step !== "stack" && store.step !== "stack-options") {
+    if (store.step !== "approach" && store.step !== "stack") {
       completed.push("stack");
     }
 

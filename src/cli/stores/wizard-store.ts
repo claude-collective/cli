@@ -1,11 +1,13 @@
 import { create } from "zustand";
 import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
 
+/** All available domains that the build step should cycle through */
+const ALL_DOMAINS = ["web", "api", "cli", "mobile", "shared"];
+
 // Step types for the wizard
 export type WizardStep =
   | "approach" // Choose stack template or build from scratch
   | "stack" // Select pre-built stack (if approach=stack) or domains (if approach=scratch)
-  | "stack-options" // After stack selection: continue defaults or customize
   | "build" // CategoryGrid for technology selection
   | "refine" // Skill source selection
   | "confirm"; // Final confirmation
@@ -78,11 +80,7 @@ export interface WizardState {
     categories: Record<string, { domain?: string }>,
   ) => void;
   toggleDomain: (domain: string) => void;
-  setDomainSelection: (
-    domain: string,
-    subcategory: string,
-    technologies: string[],
-  ) => void;
+  setDomainSelection: (domain: string, subcategory: string, technologies: string[]) => void;
   toggleTechnology: (
     domain: string,
     subcategory: string,
@@ -155,9 +153,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       // Iterate through all agents in the stack
       for (const agentConfig of Object.values(stack.agents)) {
         // Each agent has subcategory -> technology alias mappings
-        for (const [subcategoryId, technologyAlias] of Object.entries(
-          agentConfig,
-        )) {
+        for (const [subcategoryId, technologyAlias] of Object.entries(agentConfig)) {
           const category = categories[subcategoryId];
           const domain = category?.domain;
 
@@ -179,9 +175,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
           }
 
           // Add technology if not already present
-          if (
-            !domainSelections[domain][subcategoryId].includes(technologyAlias)
-          ) {
+          if (!domainSelections[domain][subcategoryId].includes(technologyAlias)) {
             domainSelections[domain][subcategoryId].push(technologyAlias);
           }
         }
@@ -189,7 +183,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
       return {
         domainSelections,
-        selectedDomains: Array.from(domains),
+        selectedDomains: ALL_DOMAINS,
       };
     }),
 
@@ -216,8 +210,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   toggleTechnology: (domain, subcategory, technology, exclusive) =>
     set((state) => {
-      const currentSelections =
-        state.domainSelections[domain]?.[subcategory] || [];
+      const currentSelections = state.domainSelections[domain]?.[subcategory] || [];
       const isSelected = currentSelections.includes(technology);
 
       let newSelections: string[];
@@ -285,8 +278,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   setCurrentRefineIndex: (index) => set({ currentRefineIndex: index }),
 
-  toggleShowDescriptions: () =>
-    set((state) => ({ showDescriptions: !state.showDescriptions })),
+  toggleShowDescriptions: () => set((state) => ({ showDescriptions: !state.showDescriptions })),
 
   toggleExpertMode: () => set((state) => ({ expertMode: !state.expertMode })),
 

@@ -4,8 +4,7 @@
  * V2 Flow:
  * - approach: Choose stack template or build from scratch
  * - stack: Select pre-built stack (stack path) OR domains (scratch path)
- * - stack-options: Continue defaults or customize (stack path only)
- * - build: CategoryGrid for technology selection
+ * - build: CategoryGrid for technology selection (pre-populated from stack if stack path)
  * - refine: Skill source selection
  * - confirm: Final confirmation
  *
@@ -22,7 +21,6 @@ import { cliTheme } from "../themes/default.js";
 import { WizardLayout } from "./wizard-layout.js";
 import { StepApproach } from "./step-approach.js";
 import { StepStack } from "./step-stack.js";
-import { StepStackOptions } from "./step-stack-options.js";
 import { StepBuild } from "./step-build.js";
 import { StepRefine } from "./step-refine.js";
 import { StepConfirm } from "./step-confirm.js";
@@ -103,16 +101,6 @@ function getStackName(stackId: string | null, matrix: MergedSkillsMatrix): strin
   return stack?.name;
 }
 
-/**
- * Count technologies in a stack.
- */
-function getStackTechnologyCount(stackId: string | null, matrix: MergedSkillsMatrix): number {
-  if (!stackId) return 0;
-  const stack = matrix.suggestedStacks.find((s) => s.id === stackId);
-  if (!stack) return 0;
-  return stack.allSkillIds.length;
-}
-
 // =============================================================================
 // Main Component
 // =============================================================================
@@ -132,9 +120,18 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
       if (store.step === "approach") {
         onCancel();
         exit();
-      } else {
+      } else if (store.step !== "build" && store.step !== "refine" && store.step !== "confirm") {
+        // Only handle escape globally for steps that don't have their own escape handler.
+        // Build, refine, and confirm handle escape via their onBack props.
         store.goBack();
       }
+      return;
+    }
+
+    // Accept defaults shortcut (stack path only, during build step)
+    if ((input === "a" || input === "A") && store.step === "build" && store.selectedStackId) {
+      store.setStackAction("defaults");
+      store.setStep("refine");
       return;
     }
 
@@ -199,14 +196,6 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
 
       case "stack":
         return <StepStack matrix={matrix} />;
-
-      case "stack-options": {
-        const stackName = getStackName(store.selectedStackId, matrix) || "Selected Stack";
-        const techCount = getStackTechnologyCount(store.selectedStackId, matrix);
-        return (
-          <StepStackOptions stackName={stackName} technologyCount={techCount} matrix={matrix} />
-        );
-      }
 
       case "build": {
         const currentDomain = store.getCurrentDomain();

@@ -2,11 +2,11 @@
  * Integration tests for the full Wizard component (v2).
  *
  * Tests complete user flows through the wizard from start to finish.
- * V2 wizard flow: approach -> stack -> stack-options -> build -> refine -> confirm
+ * V2 wizard flow: approach -> stack -> build -> refine -> confirm
  *
  * Flow coverage:
- * - Flow A1: Stack -> Continue with Defaults -> Refine -> Confirm
- * - Flow A2: Stack -> Customize -> Build -> Refine -> Confirm
+ * - Flow A1: Stack -> Build -> Accept Defaults (A shortcut) -> Refine -> Confirm
+ * - Flow A2: Stack -> Build (pre-populated) -> Refine -> Confirm
  * - Flow B: Scratch -> Single Domain (Web) -> Build -> Refine -> Confirm
  * - Flow C: Scratch -> Multi-Domain (Web + API) -> Build/Web -> Build/API -> Refine -> Confirm
  * - Flow D: Back Navigation with selection preservation
@@ -415,7 +415,7 @@ describe("Wizard integration", () => {
   // ===========================================================================
 
   describe("Flow A1: Stack path with defaults", () => {
-    it("should complete full stack -> defaults -> refine -> confirm flow", async () => {
+    it("should complete full stack -> build -> accept defaults -> refine -> confirm flow", async () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -443,12 +443,9 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER); // First stack card is already focused
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Step 3: Stack Options - choose "Continue with defaults"
-      expect(lastFrame()).toContain("Continue with defaults");
-      expect(lastFrame()).toContain("Customize");
-      await stdin.write(ARROW_DOWN); // Navigate past "Back" to "Continue with defaults"
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER);
+      // Step 3: Build - now goes directly to build (pre-populated from stack)
+      // Press "A" to accept defaults and skip to refine
+      await stdin.write("A");
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Step 4: Refine - should show refine step with recommended option
@@ -475,7 +472,7 @@ describe("Wizard integration", () => {
       expect(result.cancelled).toBe(false);
     });
 
-    it("should show stack name and technology count on confirm step", async () => {
+    it("should show stack name on confirm step", async () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -490,14 +487,12 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Navigate through: approach -> stack -> stack-options (defaults) -> refine -> confirm
+      // Navigate through: approach -> stack -> build -> [A] accept defaults -> refine -> confirm
       await stdin.write(ENTER); // Stack approach
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Select first stack (card UI, already focused)
       await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER); // Continue with defaults
+      await stdin.write("A"); // Accept defaults
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Continue through refine
       await delay(STEP_TRANSITION_DELAY_MS);
@@ -513,7 +508,7 @@ describe("Wizard integration", () => {
   // ===========================================================================
 
   describe("Flow A2: Stack path with customize", () => {
-    it("should navigate stack -> customize -> build step", async () => {
+    it("should navigate stack -> build step (pre-populated from stack)", async () => {
       const comprehensiveMatrix = createComprehensiveMatrix();
       const onComplete = vi.fn();
       const onCancel = vi.fn();
@@ -537,26 +532,15 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Step 3: Stack Options - choose "Customize technologies"
-      expect(lastFrame()).toContain("Continue with defaults");
-      expect(lastFrame()).toContain("Customize");
-      await stdin.write(ARROW_DOWN); // Back
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ARROW_DOWN); // Continue with defaults
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ARROW_DOWN); // Customize
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER); // Select Customize
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // Step 4: Build - should show CategoryGrid
-      // The Build step shows technology selection
+      // Step 3: Build - goes directly to build (pre-populated from stack)
       expect(lastFrame()).toContain("Build");
 
-      // Verify store state reflects customize action
+      // Verify store state reflects customize action and pre-population
       const state = useWizardStore.getState();
       expect(state.stackAction).toBe("customize");
       expect(state.step).toBe("build");
+      // Verify domainSelections were populated from stack
+      expect(Object.keys(state.domainSelections).length).toBeGreaterThan(0);
     });
   });
 
@@ -799,11 +783,9 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Should show domain tabs in header
+      // Should show ViewTitle for current domain
       const frame = lastFrame();
-      expect(frame).toContain("Configuring");
-      expect(frame).toContain("Web");
-      expect(frame).toContain("API");
+      expect(frame).toContain("Customise your Web stack");
     });
 
     it("should advance to next domain when validation passes", async () => {
@@ -905,7 +887,7 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Navigate forward: approach -> stack -> stack-options
+      // Navigate forward: approach -> stack -> build
       // Step 1: Select stack approach
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
@@ -914,9 +896,9 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Verify we're at stack-options
-      expect(lastFrame()).toContain("Continue with defaults");
+      // Verify we're at build (goes directly from stack to build now)
       let state = useWizardStore.getState();
+      expect(state.step).toBe("build");
       expect(state.selectedStackId).toBe("react-fullstack");
 
       // Go back to stack selection
@@ -944,9 +926,7 @@ describe("Wizard integration", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Select first stack (card UI, already focused)
       await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER); // Continue with defaults
+      await stdin.write("A"); // Accept defaults
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Should be at refine
@@ -1067,7 +1047,7 @@ describe("Wizard integration", () => {
   // ===========================================================================
 
   describe("stack selection flow", () => {
-    it("should navigate through approach -> stack -> stack-options", async () => {
+    it("should navigate through approach -> stack -> build", async () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -1092,12 +1072,13 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Step 3: Stack-options - should show options for stack
-      expect(lastFrame()).toContain("Continue with defaults");
-      expect(lastFrame()).toContain("Customize");
+      // Step 3: Build - goes directly to build (pre-populated from stack)
+      const state = useWizardStore.getState();
+      expect(state.step).toBe("build");
+      expect(state.selectedStackId).toBe("react-fullstack");
     });
 
-    it("should complete wizard with stack defaults flow", async () => {
+    it("should complete wizard with stack defaults flow via A shortcut", async () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -1120,10 +1101,8 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Step 3: Stack-options - select "Continue with defaults"
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER);
+      // Step 3: Build - press A to accept defaults
+      await stdin.write("A");
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Step 4: Refine - should show refine step
@@ -1209,8 +1188,9 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Should now be at stack-options
-      expect(lastFrame()).toContain("Continue with defaults");
+      // Should now be at build (goes directly from stack to build)
+      const state = useWizardStore.getState();
+      expect(state.step).toBe("build");
 
       // Go back using escape
       await stdin.write(ESCAPE);
@@ -1224,7 +1204,7 @@ describe("Wizard integration", () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
-      const { stdin, lastFrame, unmount } = render(
+      const { stdin, unmount } = render(
         <Wizard
           matrix={mockMatrix}
           onComplete={onComplete}
@@ -1243,8 +1223,8 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Should be at stack-options
-      expect(lastFrame()).toContain("React Fullstack");
+      // Should be at build
+      expect(useWizardStore.getState().step).toBe("build");
 
       // Go back using escape
       await stdin.write(ESCAPE);
@@ -1349,7 +1329,7 @@ describe("Wizard integration", () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
-      const { stdin, lastFrame, unmount } = render(
+      const { stdin, unmount } = render(
         <Wizard
           matrix={mockMatrix}
           onComplete={onComplete}
@@ -1364,7 +1344,7 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Navigate to second stack (Back, first stack, second stack) with sequential writes
+      // Navigate to second stack (first stack, second stack) with sequential writes
       await stdin.write(ARROW_DOWN);
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ARROW_DOWN);
@@ -1372,8 +1352,10 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Should be at stack-options for testing stack
-      expect(lastFrame()).toContain("Testing Stack");
+      // Should be at build with testing stack selected
+      const state = useWizardStore.getState();
+      expect(state.step).toBe("build");
+      expect(state.selectedStackId).toBe("testing-stack");
     });
   });
 
@@ -1422,14 +1404,12 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Complete full flow: approach -> stack -> stack-options -> refine -> confirm
+      // Complete full flow: approach -> stack -> build -> [A] -> refine -> confirm
       await stdin.write(ENTER); // Stack approach
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Select first stack (card UI, already focused)
       await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER); // Continue with defaults
+      await stdin.write("A"); // Accept defaults
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Continue through refine
       await delay(STEP_TRANSITION_DELAY_MS);
@@ -1469,14 +1449,12 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Complete full flow (card UI: no Back item in stack selection)
+      // Complete full flow: approach -> stack -> build -> [A] -> refine -> confirm
       await stdin.write(ENTER); // Stack approach
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Select first stack (already focused)
       await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ARROW_DOWN); // Navigate past Back in stack-options
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER); // Continue with defaults
+      await stdin.write("A"); // Accept defaults
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Continue through refine
       await delay(STEP_TRANSITION_DELAY_MS);

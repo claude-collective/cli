@@ -179,7 +179,7 @@ describe("StepStack component", () => {
         await delay(SELECT_NAV_DELAY_MS);
 
         const { step, selectedStackId } = useWizardStore.getState();
-        expect(step).toBe("stack-options");
+        expect(step).toBe("build");
         expect(selectedStackId).toBe("react-fullstack");
       });
 
