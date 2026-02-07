@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2026-02-07
+
+### Added
+
+- **Local skill badge in wizard** - Skill tags in the CategoryGrid now show a gray `[L]` badge when the skill has a local override in `.claude/skills/`
+
+### Changed
+
+- **Extract config-merger module** - Config merging logic (identity fields, skills/agents union, stack deep-merge) extracted from `init.tsx` into dedicated `lib/config-merger.ts` with comprehensive tests
+- **Extract local-installer module** - Local installation orchestration (skill copying, config generation, agent compilation) extracted from `init.tsx` into `lib/local-installer.ts`, reducing the command to a thin orchestrator
+- **Deduplicate getCurrentDate** - Removed duplicate `getCurrentDate()` definitions from `import/skill.ts`, `update.tsx`, and `skill-copier.ts` in favor of the canonical export from `lib/versioning.ts`
+- **Graceful missing skill resolution** - `resolveSkillReference` now returns `null` and logs a verbose message instead of throwing when a skill is not found; callers skip missing skills gracefully
+- **Remove synthetic local categories** - Stop injecting fake `local` and `local/custom` category definitions into the skills matrix; local skills use their declared or inherited category
+
+### Fixed
+
+- **Wizard skill count mismatch** - Confirm step now uses `getAllSelectedTechnologies()` instead of `getSelectedSkills()` so the count matches the actual technologies shown
+- **Wizard option tracking** - Build step uses `skill.id` instead of alias for `CategoryOption.id` so selection tracking stays consistent
+- **Multi-skill category pre-population** - Stack pre-population now uses per-skill pseudo-agents so categories with multiple skills (e.g. testing: vitest + playwright-e2e) are all preserved instead of the second overwriting the first
+
 ## [0.16.0] - 2026-02-07
 
 ### Changed
@@ -133,6 +153,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Old `search.ts` command - Replaced with dual-mode `search.tsx` (static + interactive)
 
+[0.17.0]: https://github.com/claude-collective/cli/releases/tag/v0.17.0
 [0.16.0]: https://github.com/claude-collective/cli/releases/tag/v0.16.0
 [0.15.0]: https://github.com/claude-collective/cli/releases/tag/v0.15.0
 [0.14.1]: https://github.com/claude-collective/cli/releases/tag/v0.14.1
