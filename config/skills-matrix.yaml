@@ -70,6 +70,38 @@ categories:
     order: 6
     icon: ">"
 
+  methodology:
+    id: methodology
+    name: Methodology
+    description: Development methodology and process skills
+    exclusive: false
+    required: false
+    order: 7
+
+  research:
+    id: research
+    name: Research
+    description: Research methodology skills
+    exclusive: false
+    required: false
+    order: 8
+
+  shared:
+    id: shared
+    name: Shared
+    description: Cross-cutting skills used across domains
+    exclusive: false
+    required: false
+    order: 9
+
+  local:
+    id: local
+    name: Local
+    description: User-defined local skills
+    exclusive: false
+    required: false
+    order: 10
+
   # ─────────────────────────────────────────────────────────────────
   # Frontend subcategories
   # ─────────────────────────────────────────────────────────────────
@@ -163,6 +195,66 @@ categories:
     required: false
     order: 10
 
+  error-handling:
+    id: error-handling
+    name: Error Handling
+    description: Error boundaries, result types, and error patterns
+    parent: frontend
+    domain: web
+    exclusive: false
+    required: false
+    order: 11
+
+  i18n:
+    id: i18n
+    name: Internationalization
+    description: i18n libraries (next-intl, react-intl, vue-i18n)
+    parent: frontend
+    domain: web
+    exclusive: true
+    required: false
+    order: 12
+
+  file-upload:
+    id: file-upload
+    name: File Upload
+    description: File upload patterns and handling
+    parent: frontend
+    domain: web
+    exclusive: false
+    required: false
+    order: 13
+
+  files:
+    id: files
+    name: Files & Images
+    description: Image handling and file processing
+    parent: frontend
+    domain: web
+    exclusive: false
+    required: false
+    order: 14
+
+  utilities:
+    id: utilities
+    name: Utilities
+    description: Utility libraries (date-fns, native JS patterns)
+    parent: frontend
+    domain: web
+    exclusive: false
+    required: false
+    order: 15
+
+  "frontend/realtime":
+    id: "frontend/realtime"
+    name: Realtime
+    description: WebSockets, SSE, and real-time communication
+    parent: frontend
+    domain: web
+    exclusive: true
+    required: false
+    order: 16
+
   # ─────────────────────────────────────────────────────────────────
   # Backend subcategories
   # ─────────────────────────────────────────────────────────────────
@@ -226,6 +318,16 @@ categories:
     required: false
     order: 6
 
+  performance:
+    id: performance
+    name: Performance
+    description: API performance patterns and optimization
+    parent: backend
+    domain: api
+    exclusive: false
+    required: false
+    order: 7
+
   # ─────────────────────────────────────────────────────────────────
   # Mobile subcategories
   # ─────────────────────────────────────────────────────────────────
@@ -262,13 +364,23 @@ categories:
     required: false
     order: 2
 
+  security:
+    id: security
+    name: Security
+    description: Authentication security patterns and best practices
+    parent: setup
+    domain: shared
+    exclusive: false
+    required: false
+    order: 3
+
   # ─────────────────────────────────────────────────────────────────
   # CLI subcategories
   # ─────────────────────────────────────────────────────────────────
   cli-framework:
     id: cli-framework
     name: CLI Framework
-    description: CLI application framework (Commander, oclif, yargs)
+    description: CLI application framework (Commander, oclif)
     parent: cli
     domain: cli
     exclusive: true
@@ -278,7 +390,7 @@ categories:
   cli-prompts:
     id: cli-prompts
     name: CLI Prompts
-    description: Interactive prompts and UI (Clack, Inquirer, Ink)
+    description: Interactive prompts and UI
     parent: cli
     domain: cli
     exclusive: true
@@ -352,12 +464,11 @@ relationships:
       reason: "Both are ORMs serving similar purposes. Choose one per service; migration scenarios and multi-service architectures may involve both."
 
     # CLI framework conflicts
-    - skills: [commander, oclif, yargs]
+    - skills: [commander, oclif]
       reason: "CLI frameworks are mutually exclusive"
 
     # CLI prompt library conflicts
-    - skills: [clack, inquirer, ink]
-      reason: "CLI prompt libraries - choose one primary approach"
+    # NOTE: clack, inquirer, ink skills not yet created
 
   # ─────────────────────────────────────────────────────────────────
   # DISCOURAGES (Soft warnings - selecting A shows warning for B but doesn't disable)
@@ -396,8 +507,7 @@ relationships:
   recommends:
     # React ecosystem recommendations
     - when: react
-      suggest:
-        [zustand, react-query, vitest, react-hook-form, react-testing-library]
+      suggest: [zustand, react-query, vitest, react-hook-form, react-testing-library]
       reason: "Best-in-class React libraries"
 
     # Next.js recommendations
@@ -510,16 +620,12 @@ relationships:
 
     # CLI recommendations
     - when: oclif
-      suggest: [ink, vitest]
-      reason: "oclif + Ink is a powerful combo for rich CLI UIs"
+      suggest: [vitest]
+      reason: "oclif pairs well with Vitest for CLI testing"
 
     - when: commander
-      suggest: [clack, vitest]
-      reason: "Commander + Clack is lightweight and elegant"
-
-    - when: yargs
-      suggest: [inquirer, vitest]
-      reason: "Yargs + Inquirer is a classic CLI combination"
+      suggest: [vitest]
+      reason: "Commander pairs well with Vitest for CLI testing"
 
   # ─────────────────────────────────────────────────────────────────
   # REQUIRES (Hard dependencies - A requires B to be selected first)
@@ -607,9 +713,9 @@ relationships:
       reason: "Apollo Client - first-party React support, community-maintained Vue/Angular integrations. Note: Svelte/Solid bindings exist but are stale (2020-2022)."
 
     - skill: graphql-urql
-      needs: [react, vue, svelte, solidjs]
+      needs: [react, vue, solidjs]
       needs_any: true
-      reason: "URQL has first-party support for React, Vue, Svelte, and Solid (no Angular support)"
+      reason: "URQL has first-party support for React, Vue, and Solid (no Angular support). Svelte support exists but skill not yet created."
 
   # ─────────────────────────────────────────────────────────────────
   # ALTERNATIVES (Interchangeable options for same purpose)
@@ -676,10 +782,9 @@ relationships:
       skills: [react-native]
 
     - purpose: "CLI Framework"
-      skills: [commander, oclif, yargs]
+      skills: [commander, oclif]
 
-    - purpose: "CLI Prompts"
-      skills: [clack, inquirer, ink]
+    # CLI Prompts alternatives: clack, inquirer, ink skills not yet created
 
 # =============================================================================
 # Skill Aliases (Map short names to normalized skill IDs)
@@ -711,7 +816,7 @@ skill_aliases:
   # ─────────────────────────────────────────────────────────────────
   scss-modules: "web-styling-scss-modules"
   cva: "web-styling-cva"
-  # tailwind: skill not yet created
+  tailwind: "web-styling-tailwind"
 
   # ─────────────────────────────────────────────────────────────────
   # Client State
@@ -721,7 +826,7 @@ skill_aliases:
   pinia: "web-state-pinia"
   ngrx-signalstore: "web-state-ngrx-signalstore"
   jotai: "web-state-jotai"
-  # mobx: skill not yet created
+  mobx: "web-state-mobx"
 
   # ─────────────────────────────────────────────────────────────────
   # Server State / Data Fetching
@@ -832,13 +937,13 @@ skill_aliases:
   # CLI Framework
   commander: "cli-framework-cli-commander"
   cli-commander: "cli-framework-cli-commander"
-  oclif: "cli-framework-cli-oclif"
-  yargs: "cli-framework-cli-yargs"
+  oclif: "cli-framework-oclif-ink"
+  # yargs: skill not yet created
 
   # CLI Prompts
-  clack: "cli-prompts-cli-clack"
-  inquirer: "cli-prompts-cli-inquirer"
-  ink: "cli-prompts-cli-ink"
+  # clack: skill not yet created
+  # inquirer: skill not yet created
+  # ink: skill not yet created
 
   # ─────────────────────────────────────────────────────────────────
   # Reviewing / Meta
