@@ -243,7 +243,7 @@ export async function mergeMatrixWithSkills(
   }
 
   computeInverseRelationships(resolvedSkills);
-  const suggestedStacks = resolveSuggestedStacks(matrix, aliases, aliasTargetToSkillId);
+  const suggestedStacks = resolveSuggestedStacks();
 
   const merged: MergedSkillsMatrix = {
     version: matrix.version,
@@ -433,42 +433,8 @@ function computeInverseRelationships(skills: Record<string, ResolvedSkill>): voi
   }
 }
 
-function resolveSuggestedStacks(
-  matrix: SkillsMatrixConfig,
-  aliases: Record<string, string>,
-  aliasTargetToSkillId: Record<string, string>,
-): ResolvedStack[] {
-  // Phase 6: suggested_stacks is now optional (stacks moved to config/stacks.yaml)
-  if (!matrix.suggested_stacks) {
-    return [];
-  }
-  return matrix.suggested_stacks.map((stack) => {
-    const resolvedSkillsMap: Record<string, Record<string, string>> = {};
-    const allSkillIds: string[] = [];
-
-    for (const [category, subcategories] of Object.entries(stack.skills)) {
-      resolvedSkillsMap[category] = {};
-      for (const [subcategory, alias] of Object.entries(subcategories)) {
-        // First resolve the alias to its target (e.g., "react" -> "react (@vince)")
-        const aliasTarget = resolveToCanonicalId(alias, aliases);
-        // Then check if the alias target needs to be mapped to a full skill ID
-        // (e.g., "react (@vince)" -> "web/framework/react (@vince)")
-        const canonicalId = aliasTargetToSkillId[aliasTarget] || aliasTarget;
-        resolvedSkillsMap[category][subcategory] = canonicalId;
-        allSkillIds.push(canonicalId);
-      }
-    }
-
-    return {
-      id: stack.id,
-      name: stack.name,
-      description: stack.description,
-      audience: stack.audience,
-      skills: resolvedSkillsMap,
-      allSkillIds,
-      philosophy: stack.philosophy,
-    };
-  });
+function resolveSuggestedStacks(): ResolvedStack[] {
+  return [];
 }
 
 export async function loadAndMergeSkillsMatrix(

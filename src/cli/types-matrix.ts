@@ -13,12 +13,6 @@ export interface SkillsMatrixConfig {
   relationships: RelationshipDefinitions;
 
   /**
-   * Pre-configured technology combinations for quick setup
-   * @deprecated Use config/stacks.yaml instead (Phase 6). Optional for backwards compatibility.
-   */
-  suggested_stacks?: SuggestedStack[];
-
-  /**
    * Maps short alias names to normalized skill IDs
    * @example { "react": "web-framework-react", "zustand": "web-state-zustand" }
    */
