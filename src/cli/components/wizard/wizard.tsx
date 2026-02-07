@@ -14,12 +14,12 @@
  * - ESC at approach cancels wizard
  * - Ctrl+C cancels at any point
  */
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback } from "react";
 import { Box, Text, useApp, useInput, useStdout } from "ink";
 import { ThemeProvider } from "@inkjs/ui";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import { cliTheme } from "../themes/default.js";
-import { WizardTabs, WIZARD_STEPS } from "./wizard-tabs.js";
+import { WizardLayout } from "./wizard-layout.js";
 import { StepApproach } from "./step-approach.js";
 import { StepStack } from "./step-stack.js";
 import { StepStackOptions } from "./step-stack-options.js";
@@ -65,10 +65,8 @@ interface WizardProps {
   matrix: MergedSkillsMatrix;
   onComplete: (result: WizardResultV2 | WizardResult) => void;
   onCancel: () => void;
-  /** CLI version string to display in header */
-  version?: string;
-  /** @deprecated Initial skills no longer skip to category */
   initialSkills?: string[];
+  version?: string;
 }
 
 // =============================================================================
@@ -140,45 +138,6 @@ export const Wizard: React.FC<WizardProps> = ({
   // Check terminal width
   const terminalWidth = stdout.columns || MIN_TERMINAL_WIDTH;
   const isNarrowTerminal = terminalWidth < MIN_TERMINAL_WIDTH;
-
-  // Compute completed and skipped steps for WizardTabs
-  const { completedSteps, skippedSteps } = useMemo(() => {
-    const completed: string[] = [];
-    const skipped: string[] = [];
-
-    // Approach is complete when we've moved past it
-    if (store.step !== "approach") {
-      completed.push("approach");
-    }
-
-    // Stack step handling
-    if (
-      store.step !== "approach" &&
-      store.step !== "stack" &&
-      store.step !== "stack-options"
-    ) {
-      completed.push("stack");
-    }
-
-    // Build step handling
-    // Stack path with defaults skips build
-    if (
-      store.approach === "stack" &&
-      store.selectedStackId &&
-      store.stackAction === "defaults"
-    ) {
-      skipped.push("build");
-    } else if (store.step === "refine" || store.step === "confirm") {
-      completed.push("build");
-    }
-
-    // Refine step
-    if (store.step === "confirm") {
-      completed.push("refine");
-    }
-
-    return { completedSteps: completed, skippedSteps: skipped };
-  }, [store.step, store.approach, store.selectedStackId, store.stackAction]);
 
   // Global escape handler
   useInput((input, key) => {
@@ -361,21 +320,9 @@ export const Wizard: React.FC<WizardProps> = ({
 
   return (
     <ThemeProvider theme={cliTheme}>
-      <Box flexDirection="column" padding={1}>
-        {/* Header with version */}
-        {version && (
-          <Box marginBottom={1}>
-            <Text dimColor>Claude Collective v{version}</Text>
-          </Box>
-        )}
-        <WizardTabs
-          steps={WIZARD_STEPS}
-          currentStep={store.step}
-          completedSteps={completedSteps}
-          skippedSteps={skippedSteps}
-        />
+      <WizardLayout version={version}>
         {renderStep()}
-      </Box>
+      </WizardLayout>
     </ThemeProvider>
   );
 };

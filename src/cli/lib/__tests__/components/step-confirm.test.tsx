@@ -198,7 +198,7 @@ describe("StepConfirm component", () => {
       expect(output).toContain("Local");
     });
 
-    it("should show keyboard hints", () => {
+    it("should render confirm step content", () => {
       const onComplete = vi.fn();
       const onBack = vi.fn();
 
@@ -216,8 +216,7 @@ describe("StepConfirm component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("ENTER confirm");
-      expect(output).toContain("ESC back");
+      expect(output).toContain("Ready to install");
     });
   });
 

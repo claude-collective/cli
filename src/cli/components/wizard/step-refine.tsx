@@ -11,7 +11,6 @@
  */
 import React from "react";
 import { Box, Text, useInput } from "ink";
-import { WizardFooter } from "./wizard-footer.js";
 
 // =============================================================================
 // Types
@@ -59,8 +58,7 @@ export const StepRefine: React.FC<StepRefineProps> = ({
 
   // Determine if "all-recommended" is the current selection
   // Default to "all-recommended" if nothing selected
-  const isRecommendedSelected =
-    refineAction === "all-recommended" || refineAction === null;
+  const isRecommendedSelected = refineAction === "all-recommended" || refineAction === null;
 
   return (
     <Box flexDirection="column" paddingX={2}>
@@ -87,9 +85,7 @@ export const StepRefine: React.FC<StepRefineProps> = ({
             {">"} Use all recommended skills (verified)
           </Text>
           <Text> </Text>
-          <Text dimColor>
-            This is the fastest option. All skills are verified and
-          </Text>
+          <Text dimColor>This is the fastest option. All skills are verified and</Text>
           <Text dimColor>maintained by Claude Collective.</Text>
         </Box>
       </Box>
@@ -103,13 +99,6 @@ export const StepRefine: React.FC<StepRefineProps> = ({
       <Box paddingLeft={4}>
         <Text dimColor>Choose alternative skills for each technology</Text>
       </Box>
-
-      {/* Footer with keyboard shortcuts */}
-      <Text> </Text>
-      <WizardFooter
-        navigation={"\u2191/\u2193 navigate"}
-        action="ENTER continue  ESC back"
-      />
     </Box>
   );
 };

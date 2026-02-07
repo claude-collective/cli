@@ -314,14 +314,13 @@ describe("StepBuild component", () => {
       expect(output).toContain("*");
     });
 
-    it("should show footer with keyboard hints", () => {
+    it("should show descriptions and expert mode toggles", () => {
       const { lastFrame, unmount } = renderStepBuild();
       cleanup = unmount;
 
       const output = lastFrame();
-      // Footer now shows full keyboard help text
-      expect(output).toContain("ESC");
-      expect(output).toContain("ENTER");
+      expect(output).toContain("Descriptions");
+      expect(output).toContain("Expert mode");
     });
   });
 
@@ -329,8 +328,8 @@ describe("StepBuild component", () => {
   // Progress Indicator
   // ===========================================================================
 
-  describe("progress indicator", () => {
-    it("should show SectionProgress when multiple domains selected", () => {
+  describe("domain header", () => {
+    it("should show domain tabs when multiple domains selected", () => {
       const { lastFrame, unmount } = renderStepBuild({
         selectedDomains: ["web", "api"],
         currentDomainIndex: 0,
@@ -338,13 +337,12 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Domain:");
+      expect(output).toContain("Configuring");
       expect(output).toContain("Web");
-      expect(output).toContain("[1/2]");
-      expect(output).toContain("Next: API");
+      expect(output).toContain("API");
     });
 
-    it("should hide SectionProgress when single domain selected", () => {
+    it("should show single domain when only one selected", () => {
       const { lastFrame, unmount } = renderStepBuild({
         selectedDomains: ["web"],
         currentDomainIndex: 0,
@@ -352,12 +350,11 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should NOT contain the progress indicator elements
-      // Note: "Domain:" without SectionProgress wouldn't appear
-      expect(output).not.toContain("[1/1]");
+      expect(output).toContain("Configuring");
+      expect(output).toContain("Web");
     });
 
-    it("should show 'Last step' when on final domain", () => {
+    it("should show all domains in header on final domain", () => {
       const { lastFrame, unmount } = renderStepBuild({
         selectedDomains: ["web", "api"],
         domain: "api",
@@ -366,10 +363,9 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Domain:");
+      expect(output).toContain("Configuring");
+      expect(output).toContain("Web");
       expect(output).toContain("API");
-      expect(output).toContain("[2/2]");
-      expect(output).toContain("Last step");
     });
 
     it("should show correct domain display names", () => {
@@ -381,8 +377,9 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
+      expect(output).toContain("Web");
       expect(output).toContain("API");
-      expect(output).toContain("Next: CLI");
+      expect(output).toContain("CLI");
     });
   });
 
@@ -635,7 +632,7 @@ describe("StepBuild component", () => {
   // ===========================================================================
 
   describe("multi-domain scenarios", () => {
-    it("should work for first domain in multi-domain flow", () => {
+    it("should show all domains in header for first domain", () => {
       const { lastFrame, unmount } = renderStepBuild({
         domain: "web",
         selectedDomains: ["web", "api"],
@@ -644,13 +641,12 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Domain:");
+      expect(output).toContain("Configuring");
       expect(output).toContain("Web");
-      expect(output).toContain("[1/2]");
-      expect(output).toContain("Next: API");
+      expect(output).toContain("API");
     });
 
-    it("should work for last domain in multi-domain flow", () => {
+    it("should show all domains in header for last domain", () => {
       const { lastFrame, unmount } = renderStepBuild({
         domain: "api",
         selectedDomains: ["web", "api"],
@@ -659,13 +655,12 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Domain:");
+      expect(output).toContain("Configuring");
+      expect(output).toContain("Web");
       expect(output).toContain("API");
-      expect(output).toContain("[2/2]");
-      expect(output).toContain("Last step");
     });
 
-    it("should show three-domain progress correctly", () => {
+    it("should show three domains in header correctly", () => {
       // Add cli category to matrix
       const cliFrameworkCategory = createCategory(
         "cli-framework",
@@ -724,8 +719,9 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("[2/3]");
-      expect(output).toContain("Next: CLI");
+      expect(output).toContain("Web");
+      expect(output).toContain("API");
+      expect(output).toContain("CLI");
     });
   });
 
@@ -739,9 +735,8 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Configure your");
+      expect(output).toContain("Configuring");
       expect(output).toContain("Web");
-      expect(output).toContain("stack:");
     });
 
     it("should show selection count in header", () => {
@@ -770,26 +765,27 @@ describe("StepBuild component", () => {
   // ===========================================================================
 
   describe("keyboard help text", () => {
-    it("should show keyboard shortcuts help in footer", () => {
+    it("should show toggle indicators in header", () => {
       const { lastFrame, unmount } = renderStepBuild();
       cleanup = unmount;
 
       const output = lastFrame();
-      // Check for key parts of help text in split footer (may be abbreviated)
-      expect(output).toContain("SPACE select");
-      expect(output).toContain("desc"); // TAB desc (abbreviated)
-      expect(output).toContain("ENTER continue");
-      expect(output).toContain("ESC back");
+      // Header now shows toggle indicators for descriptions and expert mode
+      expect(output).toContain("[d]");
+      expect(output).toContain("Descriptions");
+      expect(output).toContain("[e]");
+      expect(output).toContain("Expert mode");
     });
 
-    it("should show arrow key navigation hints", () => {
-      const { lastFrame, unmount } = renderStepBuild();
+    it("should show toggle states correctly", () => {
+      const { lastFrame, unmount } = renderStepBuild({
+        showDescriptions: true,
+        expertMode: true,
+      });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Check for navigation hints in the help text
-      expect(output).toContain("options");
-      expect(output).toContain("categories");
+      expect(output).toContain("ON");
     });
   });
 

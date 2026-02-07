@@ -10,53 +10,24 @@ import path from "path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
-import {
-  loadSkillsMatrixFromSource,
-  type SourceLoadResult,
-} from "../lib/source-loader.js";
+import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/source-loader.js";
 import { formatSourceOrigin, loadProjectConfig } from "../lib/config.js";
 import { loadProjectConfig as loadFullProjectConfig } from "../lib/project-config.js";
 import { copySkillsToLocalFlattened } from "../lib/skill-copier.js";
 import { checkPermissions } from "../lib/permission-checker.js";
 import { loadAllAgents } from "../lib/loader.js";
 import { loadStackById } from "../lib/stacks-loader.js";
-import {
-  resolveAgents,
-  resolveStackSkills,
-  resolveAgentSkillsFromStack,
-} from "../lib/resolver.js";
+import { resolveAgents, resolveStackSkills, resolveAgentSkillsFromStack } from "../lib/resolver.js";
 import { compileAgentForPlugin } from "../lib/stack-plugin-compiler.js";
 import { installStackAsPlugin } from "../lib/stack-installer.js";
 import { getCollectivePluginDir } from "../lib/plugin-finder.js";
 import { createLiquidEngine } from "../lib/compiler.js";
-import {
-  generateProjectConfigFromSkills,
-  buildStackProperty,
-} from "../lib/config-generator.js";
-import {
-  claudePluginMarketplaceExists,
-  claudePluginMarketplaceAdd,
-} from "../utils/exec.js";
-import {
-  ensureDir,
-  writeFile,
-  readFile,
-  directoryExists,
-  fileExists,
-} from "../utils/fs.js";
-import {
-  CLAUDE_DIR,
-  CLAUDE_SRC_DIR,
-  LOCAL_SKILLS_PATH,
-  PROJECT_ROOT,
-} from "../consts.js";
+import { generateProjectConfigFromSkills, buildStackProperty } from "../lib/config-generator.js";
+import { claudePluginMarketplaceExists, claudePluginMarketplaceAdd } from "../utils/exec.js";
+import { ensureDir, writeFile, readFile, directoryExists, fileExists } from "../utils/fs.js";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, LOCAL_SKILLS_PATH, PROJECT_ROOT } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
-import type {
-  CompileConfig,
-  CompileAgentConfig,
-  StackConfig,
-  ProjectConfig,
-} from "../../types.js";
+import type { CompileConfig, CompileAgentConfig, StackConfig, ProjectConfig } from "../../types.js";
 
 const PLUGIN_NAME = "claude-collective";
 
@@ -77,7 +48,16 @@ export default class Init extends BaseCommand {
     const { flags } = await this.parse(Init);
     const projectDir = process.cwd();
 
-    this.log("Claude Collective Setup\n");
+    this.log(
+      `       
+ █████╗  ██████╗ ███████╗███╗   ██╗████████╗███████╗      ██╗███╗   ██╗ ██████╗
+██╔══██╗██╔════╝ ██╔════╝████╗  ██║╚══██╔══╝██╔════╝      ██║████╗  ██║██╔════╝
+███████║██║  ███╗█████╗  ██╔██╗ ██║   ██║   ███████╗      ██║██╔██╗ ██║██║     
+██╔══██║██║   ██║██╔══╝  ██║╚██╗██║   ██║   ╚════██║      ██║██║╚██╗██║██║     
+██║  ██║╚██████╔╝███████╗██║ ╚████║   ██║   ███████║      ██║██║ ╚████║╚██████╗
+╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝      ╚═╝╚═╝  ╚═══╝ ╚═════╝
+`,
+    );
 
     if (flags["dry-run"]) {
       this.log("[dry-run] Preview mode - no files will be created\n");
@@ -95,7 +75,7 @@ export default class Init extends BaseCommand {
     }
 
     // Load skills matrix
-    this.log("Loading skills matrix...");
+    // this.log("Loading skills matrix...");
     let sourceResult: SourceLoadResult;
     try {
       sourceResult = await loadSkillsMatrixFromSource({
@@ -107,20 +87,16 @@ export default class Init extends BaseCommand {
       const sourceInfo = sourceResult.isLocal
         ? "local"
         : formatSourceOrigin(sourceResult.sourceConfig.sourceOrigin);
-      this.log(
-        `Loaded ${Object.keys(sourceResult.matrix.skills).length} skills (${sourceInfo})\n`,
-      );
+      // this.log(`Loaded ${Object.keys(sourceResult.matrix.skills).length} skills (${sourceInfo})\n`)
     } catch (error) {
-      this.error(
-        error instanceof Error ? error.message : "Unknown error occurred",
-        { exit: EXIT_CODES.ERROR },
-      );
+      this.error(error instanceof Error ? error.message : "Unknown error occurred", {
+        exit: EXIT_CODES.ERROR,
+      });
     }
 
     // Store result from wizard
     let wizardResult: WizardResultV2 | null = null;
 
-    // Render wizard and wait for completion
     const { waitUntilExit } = render(
       <Wizard
         matrix={sourceResult.matrix}
@@ -170,7 +146,6 @@ export default class Init extends BaseCommand {
     this.log(
       `Install mode: ${result.installMode === "plugin" ? "Plugin (native install)" : "Local (copy to .claude/skills/)"}`,
     );
-    this.log("\n");
 
     // Dry run preview
     if (dryRun) {
@@ -198,9 +173,7 @@ export default class Init extends BaseCommand {
       } else {
         // Local Mode (or Plugin Mode fallback when no stack selected)
         if (result.installMode === "plugin") {
-          this.log(
-            `[dry-run] Individual skill plugin installation not yet supported`,
-          );
+          this.log(`[dry-run] Individual skill plugin installation not yet supported`);
           this.log(`[dry-run] Would fall back to Local Mode...`);
         }
         const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
@@ -222,13 +195,9 @@ export default class Init extends BaseCommand {
         return;
       } else {
         // No stack selected - individual skill installation not yet supported
-        this.warn(
-          "Individual skill plugin installation not yet supported in Plugin Mode.",
-        );
+        this.warn("Individual skill plugin installation not yet supported in Plugin Mode.");
         this.log(`Falling back to Local Mode (copying to .claude/skills/)...`);
-        this.log(
-          "To use Plugin Mode, select a pre-built stack instead of individual skills.\n",
-        );
+        this.log("To use Plugin Mode, select a pre-built stack instead of individual skills.\n");
         // Fall through to Local Mode below
       }
     }
@@ -253,9 +222,7 @@ export default class Init extends BaseCommand {
 
     // Register marketplace if needed
     if (sourceResult.marketplace) {
-      const marketplaceExists = await claudePluginMarketplaceExists(
-        sourceResult.marketplace,
-      );
+      const marketplaceExists = await claudePluginMarketplaceExists(sourceResult.marketplace);
 
       if (!marketplaceExists) {
         this.log(`Registering marketplace "${sourceResult.marketplace}"...`);
@@ -290,9 +257,7 @@ export default class Init extends BaseCommand {
       const installedFrom = installResult.fromMarketplace
         ? `from marketplace`
         : `(compiled locally)`;
-      this.log(
-        `Installed stack plugin: ${installResult.pluginName} ${installedFrom}\n`,
-      );
+      this.log(`Installed stack plugin: ${installResult.pluginName} ${installedFrom}\n`);
 
       this.log("Claude Collective initialized successfully!\n");
       this.log(`Stack "${installResult.stackName}" installed as plugin`);
@@ -326,10 +291,7 @@ export default class Init extends BaseCommand {
   /**
    * Save source to project-level .claude-src/config.yaml.
    */
-  private async saveSourceToProjectConfig(
-    projectDir: string,
-    source: string,
-  ): Promise<void> {
+  private async saveSourceToProjectConfig(projectDir: string, source: string): Promise<void> {
     const configPath = path.join(projectDir, CLAUDE_SRC_DIR, "config.yaml");
 
     let config: Record<string, unknown> = {};
@@ -359,11 +321,7 @@ export default class Init extends BaseCommand {
     const matrix = sourceResult.matrix;
     const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
     const localAgentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-    const localConfigPath = path.join(
-      projectDir,
-      CLAUDE_SRC_DIR,
-      "config.yaml",
-    );
+    const localConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, "config.yaml");
 
     this.log("Copying skills to local directory...");
     try {
@@ -493,9 +451,7 @@ export default class Init extends BaseCommand {
         // Merge skills arrays (union of existing + new)
         if (existingConfig.skills && existingConfig.skills.length > 0) {
           const existingSkillIds = new Set(
-            existingConfig.skills.map((s) =>
-              typeof s === "string" ? s : s.id,
-            ),
+            existingConfig.skills.map((s) => (typeof s === "string" ? s : s.id)),
           );
           const newSkillIds =
             localConfig.skills?.filter(
@@ -507,18 +463,14 @@ export default class Init extends BaseCommand {
         // Merge agents arrays (union of existing + new)
         if (existingConfig.agents && existingConfig.agents.length > 0) {
           const existingAgentIds = new Set(existingConfig.agents);
-          const newAgentIds = localConfig.agents.filter(
-            (a) => !existingAgentIds.has(a),
-          );
+          const newAgentIds = localConfig.agents.filter((a) => !existingAgentIds.has(a));
           localConfig.agents = [...existingConfig.agents, ...newAgentIds];
         }
 
         // Deep merge stack (existing agent configs take precedence)
         if (existingConfig.stack) {
           const mergedStack = { ...localConfig.stack };
-          for (const [agentId, agentConfig] of Object.entries(
-            existingConfig.stack,
-          )) {
+          for (const [agentId, agentConfig] of Object.entries(existingConfig.stack)) {
             mergedStack[agentId] = { ...mergedStack[agentId], ...agentConfig };
           }
           localConfig.stack = mergedStack;
@@ -565,9 +517,7 @@ export default class Init extends BaseCommand {
           localConfig.hooks = existingConfig.hooks;
         }
 
-        this.log(
-          `Merged with existing config at ${existingFullConfig.configPath}`,
-        );
+        this.log(`Merged with existing config at ${existingFullConfig.configPath}`);
       } else {
         // No existing config, add author and agents_source from simple project config if available
         const existingProjectConfig = await loadProjectConfig(projectDir);
@@ -594,11 +544,7 @@ export default class Init extends BaseCommand {
         if (agents[agentId]) {
           // Phase 7: Skills come from stack's technology mappings
           if (loadedStack) {
-            const skillRefs = resolveAgentSkillsFromStack(
-              agentId,
-              loadedStack,
-              skillAliases,
-            );
+            const skillRefs = resolveAgentSkillsFromStack(agentId, loadedStack, skillAliases);
             compileAgents[agentId] = { skills: skillRefs };
           } else if (localConfig.agent_skills?.[agentId]) {
             // Legacy: stack-based skills from agent_skills config
@@ -619,8 +565,7 @@ export default class Init extends BaseCommand {
       const compileConfig: CompileConfig = {
         name: PLUGIN_NAME,
         description:
-          localConfig.description ||
-          `Local setup with ${result.selectedSkills.length} skills`,
+          localConfig.description || `Local setup with ${result.selectedSkills.length} skills`,
         claude_md: "",
         agents: compileAgents,
       };
@@ -637,19 +582,12 @@ export default class Init extends BaseCommand {
 
       const compiledAgentNames: string[] = [];
       for (const [name, agent] of Object.entries(resolvedAgents)) {
-        const output = await compileAgentForPlugin(
-          name,
-          agent,
-          sourceResult.sourcePath,
-          engine,
-        );
+        const output = await compileAgentForPlugin(name, agent, sourceResult.sourcePath, engine);
         await writeFile(path.join(localAgentsDir, `${name}.md`), output);
         compiledAgentNames.push(name);
       }
 
-      this.log(
-        `Compiled ${compiledAgentNames.length} agents to .claude/agents/\n`,
-      );
+      this.log(`Compiled ${compiledAgentNames.length} agents to .claude/agents/\n`);
 
       // Success summary
       this.log("Claude Collective initialized successfully!\n");

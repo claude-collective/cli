@@ -94,6 +94,7 @@ export default class Edit extends BaseCommand {
     const { waitUntilExit } = render(
       <Wizard
         matrix={sourceResult.matrix}
+        version={this.config.version}
         initialSkills={currentSkillIds}
         onComplete={(result) => {
           // Wizard always returns WizardResultV2 in the current implementation

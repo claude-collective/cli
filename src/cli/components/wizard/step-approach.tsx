@@ -2,7 +2,6 @@ import React from "react";
 import { Box, Text } from "ink";
 import { Select } from "@inkjs/ui";
 import { useWizardStore } from "../../stores/wizard-store.js";
-import { WizardFooter } from "./wizard-footer.js";
 
 const EXPERT_MODE_VALUE = "__expert_mode__";
 const INSTALL_MODE_VALUE = "__install_mode__";
@@ -85,10 +84,6 @@ export const StepApproach: React.FC = () => {
       <Box marginTop={1}>
         <Select options={options} onChange={handleSelect} />
       </Box>
-      <WizardFooter
-        navigation={"\u2191/\u2193 navigate  ENTER select"}
-        action="ESC cancel"
-      />
     </Box>
   );
 };

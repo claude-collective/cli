@@ -140,22 +140,15 @@ describe("StepRefine component", () => {
   // ===========================================================================
 
   describe("keyboard shortcuts display", () => {
-    it("should show ESC instruction for back", () => {
+    it("should render recommended option content", () => {
       const { lastFrame, unmount } = renderStepRefine();
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("ESC");
-      expect(output).toContain("back");
-    });
-
-    it("should show ENTER instruction for continue", () => {
-      const { lastFrame, unmount } = renderStepRefine();
-      cleanup = unmount;
-
-      const output = lastFrame();
-      expect(output).toContain("ENTER");
-      expect(output).toContain("continue");
+      // Keyboard hints are now in WizardLayout footer, not in StepRefine
+      // Verify core content renders
+      expect(output).toContain("Use all recommended");
+      expect(output).toContain("Customize skill sources");
     });
   });
 

@@ -1,7 +1,6 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
 import type { MergedSkillsMatrix } from "../../types-matrix.js";
-import { WizardFooter } from "./wizard-footer.js";
 
 // =============================================================================
 // Types
@@ -82,8 +81,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
             if (techs.length === 0) return null;
             return (
               <Text key={domain}>
-                <Text bold>{formatDomainName(domain)}:</Text>{" "}
-                <Text>{techs.join(", ")}</Text>
+                <Text bold>{formatDomainName(domain)}:</Text> <Text>{techs.join(", ")}</Text>
               </Text>
             );
           })}
@@ -94,8 +92,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
       <Box flexDirection="column" marginY={1}>
         {technologyCount !== undefined && (
           <Text>
-            <Text dimColor>Technologies:</Text>{" "}
-            <Text bold>{technologyCount}</Text>
+            <Text dimColor>Technologies:</Text> <Text bold>{technologyCount}</Text>
           </Text>
         )}
         {skillCount !== undefined && (
@@ -111,9 +108,6 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
           </Text>
         )}
       </Box>
-
-      <Text> </Text>
-      <WizardFooter navigation="ENTER confirm" action="ESC back" />
     </Box>
   );
 };

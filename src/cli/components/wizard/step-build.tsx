@@ -18,7 +18,7 @@ import {
   type OptionState,
 } from "./category-grid.js";
 import { SectionProgress } from "./section-progress.js";
-import { WizardFooter } from "./wizard-footer.js";
+import { DefinitionItem } from "./wizard-layout.js";
 
 // =============================================================================
 // Types
@@ -124,10 +124,7 @@ function computeOptionState(skill: {
  * Uses name with author suffix stripped for accurate display.
  * e.g., "React (@vince)" -> "React", "SCSS Modules (@vince)" -> "SCSS Modules"
  */
-export function getDisplayLabel(skill: {
-  alias?: string;
-  name: string;
-}): string {
+export function getDisplayLabel(skill: { alias?: string; name: string }): string {
   // Strip author suffix like " (@vince)" from name
   // This preserves the original capitalization (e.g., "SCSS Modules" stays as-is)
   const authorPattern = /\s*\(@[^)]+\)\s*$/;
@@ -204,9 +201,7 @@ function isCompatibleWithSelectedFrameworks(
   }
 
   // Check if any selected framework is in the skill's compatibleWith list
-  return selectedFrameworkIds.some((frameworkId) =>
-    skill.compatibleWith.includes(frameworkId),
-  );
+  return selectedFrameworkIds.some((frameworkId) => skill.compatibleWith.includes(frameworkId));
 }
 
 /**
@@ -243,9 +238,7 @@ function buildCategoriesForDomain(
 ): CategoryRow[] {
   // Check framework selection for framework-first flow
   const frameworkSelected = isFrameworkSelected(selections);
-  const selectedFrameworkIds = frameworkSelected
-    ? getSelectedFrameworks(selections, matrix)
-    : [];
+  const selectedFrameworkIds = frameworkSelected ? getSelectedFrameworks(selections, matrix) : [];
 
   // Get subcategories for the current domain (categories with parent and matching domain)
   const subcategories = Object.values(matrix.categories)
@@ -267,15 +260,9 @@ function buildCategoriesForDomain(
     // For web domain (non-framework categories), filter by compatibility
     // Framework category itself doesn't need filtering
     const filteredSkillOptions =
-      domain === WEB_DOMAIN_ID &&
-      cat.id !== FRAMEWORK_SUBCATEGORY_ID &&
-      frameworkSelected
+      domain === WEB_DOMAIN_ID && cat.id !== FRAMEWORK_SUBCATEGORY_ID && frameworkSelected
         ? skillOptions.filter((skill) =>
-            isCompatibleWithSelectedFrameworks(
-              skill.id,
-              selectedFrameworkIds,
-              matrix,
-            ),
+            isCompatibleWithSelectedFrameworks(skill.id, selectedFrameworkIds, matrix),
           )
         : skillOptions;
 
@@ -312,9 +299,7 @@ function getDomainDisplayName(domain: string): string {
     mobile: "Mobile",
     shared: "Shared",
   };
-  return (
-    displayNames[domain] || domain.charAt(0).toUpperCase() + domain.slice(1)
-  );
+  return displayNames[domain] || domain.charAt(0).toUpperCase() + domain.slice(1);
 }
 
 /**
@@ -340,24 +325,69 @@ function countSelections(categories: CategoryRow[]): {
 }
 
 // =============================================================================
+// DefinitionItem - imported from wizard-layout.tsx
+// =============================================================================
+
+// =============================================================================
 // Header Component (Domain info with selection count)
 // =============================================================================
 
 interface HeaderProps {
-  domain: string;
-  selectionCount: { selected: number; total: number };
+  currentDomain: string;
+  index: number;
+  selectedDomains: string[];
+  showDescriptions: boolean;
+  expertMode: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ domain, selectionCount }) => {
+const Header: React.FC<HeaderProps> = ({
+  currentDomain,
+  index,
+  selectedDomains,
+  showDescriptions,
+  expertMode,
+}) => {
   return (
-    <Box justifyContent="space-between" marginBottom={1}>
-      <Text bold>
-        Configure your <Text color="cyan">{getDomainDisplayName(domain)}</Text>{" "}
-        stack:
-      </Text>
-      <Text dimColor>
-        {selectionCount.selected}/{selectionCount.total} selected
-      </Text>
+    <Box flexDirection="column">
+      <Box flexDirection="row" justifyContent="space-between">
+        <Box>
+          <Text>Configuring </Text>
+          <Box columnGap={1}>
+            {selectedDomains.map((domain) => {
+              const displayName = getDomainDisplayName(domain);
+              return (
+                <Text key={domain} color={domain === currentDomain ? "cyan" : "white"}>
+                  {displayName}
+                </Text>
+              );
+            })}
+          </Box>
+        </Box>
+        <Box flexDirection="row" justifyContent="flex-end" gap={2}>
+          <Text>
+            <Text backgroundColor="black" color="white">
+              {" "}
+              [d]{" "}
+            </Text>{" "}
+            <Text>
+              Descriptions:{" "}
+              <Text color={showDescriptions ? "cyan" : "white"}>
+                {showDescriptions ? "ON" : "OFF"}
+              </Text>
+            </Text>
+          </Text>
+          <Text>
+            <Text backgroundColor="black" color="white">
+              {" "}
+              [e]{" "}
+            </Text>{" "}
+            <Text>
+              Expert mode:{" "}
+              <Text color={expertMode ? "cyan" : "white"}>{expertMode ? "ON" : "OFF"}</Text>
+            </Text>
+          </Text>
+        </Box>
+      </Box>
     </Box>
   );
 };
@@ -379,14 +409,6 @@ const Footer: React.FC<FooterProps> = ({ validationError }) => {
           <Text color="yellow">{validationError}</Text>
         </Box>
       )}
-
-      {/* Keyboard shortcuts help - split layout */}
-      <WizardFooter
-        navigation={
-          "\u2190/\u2192 options  \u2191/\u2193 categories  SPACE select  TAB desc  E expert"
-        }
-        action="ENTER continue  ESC back"
-      />
     </Box>
   );
 };
@@ -414,9 +436,7 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   onBack,
 }) => {
   // Validation state for showing error messages
-  const [validationError, setValidationError] = useState<string | undefined>(
-    undefined,
-  );
+  const [validationError, setValidationError] = useState<string | undefined>(undefined);
 
   // Build categories for the current domain (with framework-first filtering)
   const categories = buildCategoriesForDomain(
@@ -433,9 +453,7 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   // Multi-domain progress
   const showProgress = selectedDomains.length >= MIN_DOMAINS_FOR_PROGRESS;
   const isLastDomain = currentDomainIndex === selectedDomains.length - 1;
-  const nextDomain = isLastDomain
-    ? undefined
-    : selectedDomains[currentDomainIndex + 1];
+  const nextDomain = isLastDomain ? undefined : selectedDomains[currentDomainIndex + 1];
 
   // Handle keyboard input for Enter and Escape
   useInput((input, key) => {
@@ -456,34 +474,26 @@ export const StepBuild: React.FC<StepBuildProps> = ({
 
   return (
     <Box flexDirection="column">
-      {/* Header with domain and selection count */}
-      <Header domain={domain} selectionCount={selectionCount} />
+      <Header
+        currentDomain={domain}
+        index={currentDomainIndex + 1}
+        selectedDomains={selectedDomains}
+        showDescriptions={showDescriptions}
+        expertMode={expertMode}
+      />
 
-      {/* Progress indicator for multi-domain */}
-      {showProgress && (
-        <SectionProgress
-          label="Domain"
-          current={getDomainDisplayName(domain)}
-          index={currentDomainIndex + 1}
-          total={selectedDomains.length}
-          next={nextDomain ? getDomainDisplayName(nextDomain) : undefined}
-        />
-      )}
-
-      {/* Category grid */}
       <CategoryGrid
         categories={categories}
         focusedRow={focusedRow}
         focusedCol={focusedCol}
-        showDescriptions={showDescriptions}
         expertMode={expertMode}
+        showDescriptions={showDescriptions}
         onToggle={onToggle}
         onFocusChange={onFocusChange}
         onToggleDescriptions={onToggleDescriptions}
         onToggleExpertMode={onToggleExpertMode}
       />
 
-      {/* Footer with keyboard hints */}
       <Footer validationError={validationError} />
     </Box>
   );

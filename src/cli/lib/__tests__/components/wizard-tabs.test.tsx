@@ -57,7 +57,7 @@ describe("WizardTabs component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("[1] Approach");
+      expect(output).toContain("[1] Intro");
       expect(output).toContain("[2] Stack");
       expect(output).toContain("[3] Build");
       expect(output).toContain("[4] Refine");
@@ -90,7 +90,7 @@ describe("WizardTabs component", () => {
       const output = lastFrame();
       expect(output).toContain("[1] First");
       expect(output).toContain("[2] Second");
-      expect(output).not.toContain("Approach");
+      expect(output).not.toContain("Intro");
     });
 
     it("should render horizontal dividers above and below tabs", () => {
@@ -127,7 +127,7 @@ describe("WizardTabs component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("[1] Approach");
+      expect(output).toContain("[1] Intro");
     });
 
     it("should update current step when changed", () => {
@@ -156,7 +156,7 @@ describe("WizardTabs component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("[1] Approach");
+      expect(output).toContain("[1] Intro");
     });
 
     it("should render multiple completed steps", () => {
@@ -167,7 +167,7 @@ describe("WizardTabs component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("[1] Approach");
+      expect(output).toContain("[1] Intro");
       expect(output).toContain("[2] Stack");
     });
 
@@ -180,7 +180,7 @@ describe("WizardTabs component", () => {
 
       const output = lastFrame();
       // Should contain approach tab
-      expect(output).toContain("[1] Approach");
+      expect(output).toContain("[1] Intro");
     });
   });
 
@@ -258,7 +258,7 @@ describe("WizardTabs component", () => {
 
       const output = lastFrame();
       // Should render both - completed status takes precedence visually
-      expect(output).toContain("[1] Approach");
+      expect(output).toContain("[1] Intro");
       expect(output).toContain("[2] Stack");
     });
   });
@@ -277,7 +277,7 @@ describe("WizardTabs component", () => {
 
       const output = lastFrame();
       // Should render approach - completed takes precedence
-      expect(output).toContain("[1] Approach");
+      expect(output).toContain("[1] Intro");
     });
 
     it("should prioritize current over skipped", () => {
@@ -303,7 +303,7 @@ describe("WizardTabs component", () => {
 
       const output = lastFrame();
       // Should render approach - completed takes precedence
-      expect(output).toContain("[1] Approach");
+      expect(output).toContain("[1] Intro");
     });
   });
 
@@ -318,7 +318,7 @@ describe("WizardTabs component", () => {
 
       const output = lastFrame();
       // All tabs should be in the output
-      expect(output).toContain("Approach");
+      expect(output).toContain("Intro");
       expect(output).toContain("Confirm");
     });
 
@@ -347,7 +347,7 @@ describe("WizardTabs component", () => {
 
       const output = lastFrame();
       // Should still render all tabs
-      expect(output).toContain("[1] Approach");
+      expect(output).toContain("[1] Intro");
       expect(output).toContain("[5] Confirm");
     });
 
@@ -361,7 +361,7 @@ describe("WizardTabs component", () => {
 
       const output = lastFrame();
       // Should render all tabs
-      expect(output).toContain("[1] Approach");
+      expect(output).toContain("[1] Intro");
       expect(output).toContain("[2] Stack");
       expect(output).toContain("[3] Build");
     });
@@ -375,7 +375,7 @@ describe("WizardTabs component", () => {
 
       const output = lastFrame();
       // All 5 tabs should be rendered
-      expect(output).toContain("[1] Approach");
+      expect(output).toContain("[1] Intro");
       expect(output).toContain("[2] Stack");
       expect(output).toContain("[3] Build");
       expect(output).toContain("[4] Refine");

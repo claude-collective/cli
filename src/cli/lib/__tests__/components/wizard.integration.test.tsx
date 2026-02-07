@@ -432,7 +432,7 @@ describe("Wizard integration", () => {
 
       // Step 1: Approach - verify we're on approach step
       expect(lastFrame()).toContain("pre-built template");
-      expect(lastFrame()).toContain("Approach");
+      expect(lastFrame()).toContain("Intro");
 
       // Select "Use a pre-built template" (stack path)
       await stdin.write(ENTER);
@@ -780,13 +780,12 @@ describe("Wizard integration", () => {
       expect(state.currentDomainIndex).toBe(0);
     });
 
-    it("should show SectionProgress for multi-domain build", async () => {
+    it("should show domain tabs for multi-domain build", async () => {
       const comprehensiveMatrix = createComprehensiveMatrix();
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
       // Pre-set store to build step with multiple domains
-      // Skip validation by toggling through first domain quickly
       useWizardStore.setState({
         step: "build",
         approach: "scratch",
@@ -806,12 +805,11 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Should show domain progress (1/2, 2/2)
+      // Should show domain tabs in header
       const frame = lastFrame();
-      expect(frame).toContain("Domain");
-      expect(frame).toContain("1");
-      expect(frame).toContain("2");
-      expect(frame).toContain("Next: API");
+      expect(frame).toContain("Configuring");
+      expect(frame).toContain("Web");
+      expect(frame).toContain("API");
     });
 
     it("should advance to next domain when validation passes", async () => {
@@ -1292,8 +1290,8 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Each step now has its own footer with ESC hint
-      expect(lastFrame()).toContain("ESC cancel");
+      // Centralized footer shows keyboard hints on all steps
+      expect(lastFrame()).toContain("back");
     });
 
     it("should display navigation hints in step footer", async () => {
@@ -1311,9 +1309,9 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Step approach shows navigation hints
+      // Centralized footer shows navigation hints
       expect(lastFrame()).toContain("navigate");
-      expect(lastFrame()).toContain("ENTER select");
+      expect(lastFrame()).toContain("continue");
     });
   });
 
@@ -1423,7 +1421,7 @@ describe("Wizard integration", () => {
       await delay(RENDER_DELAY_MS);
 
       // Should show wizard tabs
-      expect(lastFrame()).toContain("Approach");
+      expect(lastFrame()).toContain("Intro");
       expect(lastFrame()).toContain("Stack");
       expect(lastFrame()).toContain("Build");
       expect(lastFrame()).toContain("Refine");
@@ -1543,10 +1541,10 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Should show keyboard navigation hints
+      // Centralized footer shows keyboard navigation hints
       const frame = lastFrame();
       expect(frame).toContain("navigate");
-      expect(frame).toContain("ENTER");
+      expect(frame).toContain("continue");
     });
 
     it("should show keyboard help text on stack selection step", async () => {
@@ -1570,7 +1568,7 @@ describe("Wizard integration", () => {
 
       const frame = lastFrame();
       expect(frame).toContain("navigate");
-      expect(frame).toContain("ESC back");
+      expect(frame).toContain("back");
     });
 
     it("should show domain selection hint when no domains selected on scratch path", async () => {
@@ -1617,7 +1615,7 @@ describe("Wizard integration", () => {
 
       // Check tabs are visible on approach step
       let frame = lastFrame();
-      expect(frame).toContain("Approach");
+      expect(frame).toContain("Intro");
       expect(frame).toContain("Stack");
       expect(frame).toContain("Build");
       expect(frame).toContain("Refine");
@@ -1629,7 +1627,7 @@ describe("Wizard integration", () => {
 
       // Check tabs are still visible
       frame = lastFrame();
-      expect(frame).toContain("Approach");
+      expect(frame).toContain("Intro");
       expect(frame).toContain("Stack");
     });
   });
