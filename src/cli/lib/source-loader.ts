@@ -10,15 +10,8 @@ import type { Stack } from "../types-stacks";
 import { fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import { isLocalSource, resolveSource, type ResolvedConfig } from "./config";
-import {
-  discoverLocalSkills,
-  type LocalSkillDiscoveryResult,
-} from "./local-skill-loader";
-import {
-  extractAllSkills,
-  loadSkillsMatrix,
-  mergeMatrixWithSkills,
-} from "./matrix-loader";
+import { discoverLocalSkills, type LocalSkillDiscoveryResult } from "./local-skill-loader";
+import { extractAllSkills, loadSkillsMatrix, mergeMatrixWithSkills } from "./matrix-loader";
 import { fetchFromSource } from "./source-fetcher";
 import { loadStacks, resolveAgentConfigToSkills } from "./stacks-loader";
 
@@ -40,12 +33,7 @@ export interface SourceLoadResult {
 export async function loadSkillsMatrixFromSource(
   options: SourceLoadOptions = {},
 ): Promise<SourceLoadResult> {
-  const {
-    sourceFlag,
-    projectDir,
-    forceRefresh = false,
-    devMode = false,
-  } = options;
+  const { sourceFlag, projectDir, forceRefresh = false, devMode = false } = options;
 
   const sourceConfig = await resolveSource(sourceFlag, projectDir);
   const { source } = sourceConfig;
@@ -68,10 +56,7 @@ export async function loadSkillsMatrixFromSource(
     verbose(
       `Found ${localSkillsResult.skills.length} local skill(s) in ${localSkillsResult.localSkillsPath}`,
     );
-    result.matrix = mergeLocalSkillsIntoMatrix(
-      result.matrix,
-      localSkillsResult,
-    );
+    result.matrix = mergeLocalSkillsIntoMatrix(result.matrix, localSkillsResult);
   }
 
   return result;
@@ -84,9 +69,7 @@ async function loadFromLocal(
   let skillsPath: string;
 
   if (isLocalSource(source)) {
-    skillsPath = path.isAbsolute(source)
-      ? source
-      : path.resolve(process.cwd(), source);
+    skillsPath = path.isAbsolute(source) ? source : path.resolve(process.cwd(), source);
   } else {
     skillsPath = PROJECT_ROOT;
   }
@@ -191,10 +174,7 @@ async function loadFromRemote(
  * Phase 7: Skills are defined in stacks per agent (subcategory -> technology alias).
  * Uses skill_aliases from the matrix to resolve aliases to full skill IDs.
  */
-function stackToResolvedStack(
-  stack: Stack,
-  skillAliases: Record<string, string>,
-): ResolvedStack {
+function stackToResolvedStack(stack: Stack, skillAliases: Record<string, string>): ResolvedStack {
   // Collect all unique skill IDs from agent configs in this stack
   const allSkillIds: string[] = [];
   const seenSkillIds = new Set<string>();
@@ -215,9 +195,7 @@ function stackToResolvedStack(
   }
 
   const agentCount = Object.keys(stack.agents).length;
-  verbose(
-    `Stack '${stack.id}' has ${allSkillIds.length} skills from ${agentCount} agents`,
-  );
+  verbose(`Stack '${stack.id}' has ${allSkillIds.length} skills from ${agentCount} agents`);
 
   return {
     id: stack.id,
@@ -261,14 +239,19 @@ function mergeLocalSkillsIntoMatrix(
   }
 
   for (const metadata of localResult.skills) {
+    // Preserve alias and category from existing matrix entry (if skill was in source)
+    const existingSkill = matrix.skills[metadata.id];
+
     // Use the skill's original category from metadata.yaml when available,
-    // falling back to "local/custom" for truly new local skills
+    // falling back to "local/custom" for truly new local skills.
+    // When overwriting a remote skill, preserve its category if the local skill
+    // doesn't have a valid one. This prevents local copies from losing their
+    // domain-based subcategory assignment (e.g., "client-state" -> "local/custom").
     const hasOriginalCategory =
       metadata.category !== "local" && matrix.categories[metadata.category];
-    const category = hasOriginalCategory ? metadata.category : "local/custom";
-
-    // Preserve alias from existing matrix entry (if skill was in source)
-    const existingSkill = matrix.skills[metadata.id];
+    const category = hasOriginalCategory
+      ? metadata.category
+      : (existingSkill?.category ?? "local/custom");
     const alias = existingSkill?.alias ?? matrix.aliasesReverse[metadata.id];
 
     const resolvedSkill: ResolvedSkill = {

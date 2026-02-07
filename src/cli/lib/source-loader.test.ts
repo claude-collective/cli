@@ -6,10 +6,7 @@ import { loadSkillsMatrixFromSource } from "./source-loader";
 
 // Skills are in claude-subagents repo, not CLI repo
 // CLI tests need to point to the skills repo for integration tests
-const SKILLS_REPO_ROOT = path.resolve(
-  __dirname,
-  "../../../../claude-subagents",
-);
+const SKILLS_REPO_ROOT = path.resolve(__dirname, "../../../../claude-subagents");
 // Fallback to the linked .claude folder's parent if skills repo not at expected path
 const SKILLS_SOURCE = process.env.CC_TEST_SKILLS_SOURCE || SKILLS_REPO_ROOT;
 
@@ -175,10 +172,7 @@ describe("source-loader local skills integration", () => {
     const skillsDir = path.join(tempDir, ".claude", "skills", "test-cat-skill");
     await mkdir(skillsDir, { recursive: true });
 
-    await writeFile(
-      path.join(skillsDir, "metadata.yaml"),
-      `cli_name: Category Test`,
-    );
+    await writeFile(path.join(skillsDir, "metadata.yaml"), `cli_name: Category Test`);
     await writeFile(
       path.join(skillsDir, "SKILL.md"),
       `---\nname: cat-skill (@local)\ndescription: Category test\n---\nContent`,
@@ -207,20 +201,63 @@ describe("source-loader local skills integration", () => {
     // Local categories should NOT be added if no local skills
     // (Matrix may already have local categories from previous tests,
     // so we check that no local skills are in the skills object)
-    const localSkills = Object.values(result.matrix.skills).filter(
-      (s) => s.local === true,
-    );
+    const localSkills = Object.values(result.matrix.skills).filter((s) => s.local === true);
     expect(localSkills).toHaveLength(0);
+  });
+
+  it("should preserve remote skill category when local skill overwrites with category 'local'", async () => {
+    // First, load the matrix without local skills to find a skill we can override
+    const initialResult = await loadSkillsMatrixFromSource({
+      sourceFlag: SKILLS_SOURCE,
+      projectDir: tempDir,
+    });
+
+    // Find a skill that has a domain-based category (not "local/custom")
+    const targetSkillId = Object.keys(initialResult.matrix.skills).find((id) => {
+      const skill = initialResult.matrix.skills[id];
+      return (
+        skill.category !== "local/custom" &&
+        skill.category !== "local" &&
+        initialResult.matrix.categories[skill.category]?.domain
+      );
+    });
+
+    // Skip if no suitable skill found (defensive)
+    if (!targetSkillId) return;
+
+    const originalSkill = initialResult.matrix.skills[targetSkillId];
+    const originalCategory = originalSkill.category;
+
+    // Create a local skill with the SAME ID but no category in metadata
+    // (so local-skill-loader defaults category to "local")
+    const skillsDir = path.join(tempDir, ".claude", "skills", "test-override-category");
+    await mkdir(skillsDir, { recursive: true });
+
+    await writeFile(path.join(skillsDir, "metadata.yaml"), `cli_name: Override Test`);
+    await writeFile(
+      path.join(skillsDir, "SKILL.md"),
+      `---\nname: ${targetSkillId}\ndescription: Local override\n---\nContent`,
+    );
+
+    // Load again with the local skill override
+    const result = await loadSkillsMatrixFromSource({
+      sourceFlag: SKILLS_SOURCE,
+      projectDir: tempDir,
+    });
+
+    const overriddenSkill = result.matrix.skills[targetSkillId];
+    expect(overriddenSkill).toBeDefined();
+    expect(overriddenSkill.local).toBe(true);
+
+    // The category should be preserved from the remote skill, not "local/custom"
+    expect(overriddenSkill.category).toBe(originalCategory);
   });
 
   it("should preserve existing skills when merging local skills", async () => {
     const skillsDir = path.join(tempDir, ".claude", "skills", "test-preserve");
     await mkdir(skillsDir, { recursive: true });
 
-    await writeFile(
-      path.join(skillsDir, "metadata.yaml"),
-      `cli_name: Preserve Test`,
-    );
+    await writeFile(path.join(skillsDir, "metadata.yaml"), `cli_name: Preserve Test`);
     await writeFile(
       path.join(skillsDir, "SKILL.md"),
       `---\nname: preserve-skill\ndescription: Preserve test\n---\nContent`,
@@ -232,65 +269,57 @@ describe("source-loader local skills integration", () => {
     });
 
     // Existing marketplace skills should still be present
-    const marketplaceSkills = Object.values(result.matrix.skills).filter(
-      (s) => s.local !== true,
-    );
+    const marketplaceSkills = Object.values(result.matrix.skills).filter((s) => s.local !== true);
     expect(marketplaceSkills.length).toBeGreaterThan(50);
 
     // Local skill should also be present with normalized ID
     expect(result.matrix.skills["preserve-skill"]).toBeDefined();
   });
 
-  itIntegration(
-    "P1-19: local skill takes precedence over plugin skill with same ID",
-    async () => {
-      // First, get the list of skills from the marketplace to find one to override
-      const initialResult = await loadSkillsMatrixFromSource({
-        sourceFlag: SKILLS_SOURCE,
-        projectDir: tempDir,
-      });
+  itIntegration("P1-19: local skill takes precedence over plugin skill with same ID", async () => {
+    // First, get the list of skills from the marketplace to find one to override
+    const initialResult = await loadSkillsMatrixFromSource({
+      sourceFlag: SKILLS_SOURCE,
+      projectDir: tempDir,
+    });
 
-      // Pick an existing skill from the marketplace to override
-      // Skill IDs are now normalized: web-testing-vitest
-      const existingSkillId = "web-testing-vitest";
-      const existingSkill = initialResult.matrix.skills[existingSkillId];
-      expect(existingSkill).toBeDefined();
-      expect(existingSkill.local).toBeUndefined(); // Should be a marketplace skill
-      const originalDescription = existingSkill.description;
+    // Pick an existing skill from the marketplace to override
+    // Skill IDs are now normalized: web-testing-vitest
+    const existingSkillId = "web-testing-vitest";
+    const existingSkill = initialResult.matrix.skills[existingSkillId];
+    expect(existingSkill).toBeDefined();
+    expect(existingSkill.local).toBeUndefined(); // Should be a marketplace skill
+    const originalDescription = existingSkill.description;
 
-      // Create a local skill with the SAME normalized ID to override it
-      const skillsDir = path.join(tempDir, ".claude", "skills", "local-vitest");
-      await mkdir(skillsDir, { recursive: true });
+    // Create a local skill with the SAME normalized ID to override it
+    const skillsDir = path.join(tempDir, ".claude", "skills", "local-vitest");
+    await mkdir(skillsDir, { recursive: true });
 
-      await writeFile(
-        path.join(skillsDir, "metadata.yaml"),
-        `cli_name: My Custom Vitest`,
-      );
-      await writeFile(
-        path.join(skillsDir, "SKILL.md"),
-        `---\nname: web-testing-vitest\ndescription: My custom vitest configuration\n---\nThis is my local override of the vitest skill.`,
-      );
+    await writeFile(path.join(skillsDir, "metadata.yaml"), `cli_name: My Custom Vitest`);
+    await writeFile(
+      path.join(skillsDir, "SKILL.md"),
+      `---\nname: web-testing-vitest\ndescription: My custom vitest configuration\n---\nThis is my local override of the vitest skill.`,
+    );
 
-      // Load again with the local skill in place
-      const result = await loadSkillsMatrixFromSource({
-        sourceFlag: SKILLS_SOURCE,
-        projectDir: tempDir,
-      });
+    // Load again with the local skill in place
+    const result = await loadSkillsMatrixFromSource({
+      sourceFlag: SKILLS_SOURCE,
+      projectDir: tempDir,
+    });
 
-      // The skill should now be the LOCAL version, not the marketplace version
-      const overriddenSkill = result.matrix.skills[existingSkillId];
-      expect(overriddenSkill).toBeDefined();
-      expect(overriddenSkill.local).toBe(true);
-      expect(overriddenSkill.description).toBe(
-        "My custom vitest configuration",
-      );
-      // Verify the original description was different (proves we actually overwrote something)
-      expect(overriddenSkill.description).not.toBe(originalDescription);
-      expect(overriddenSkill.author).toBe("@local");
-      expect(overriddenSkill.category).toBe("local/custom");
-      expect(overriddenSkill.localPath).toBe(".claude/skills/local-vitest/");
-    },
-  );
+    // The skill should now be the LOCAL version, not the marketplace version
+    const overriddenSkill = result.matrix.skills[existingSkillId];
+    expect(overriddenSkill).toBeDefined();
+    expect(overriddenSkill.local).toBe(true);
+    expect(overriddenSkill.description).toBe("My custom vitest configuration");
+    // Verify the original description was different (proves we actually overwrote something)
+    expect(overriddenSkill.description).not.toBe(originalDescription);
+    expect(overriddenSkill.author).toBe("@local");
+    // When overwriting a remote skill, the remote skill's category is preserved
+    // (rather than falling back to "local/custom") so domain-based views still work
+    expect(overriddenSkill.category).toBe(existingSkill.category);
+    expect(overriddenSkill.localPath).toBe(".claude/skills/local-vitest/");
+  });
 });
 
 describe("source-loader integration", () => {
