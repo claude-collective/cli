@@ -27,7 +27,7 @@ import {
   DEFAULT_SOURCE,
   GLOBAL_CONFIG_DIR,
   type GlobalConfig,
-  type ProjectConfig,
+  type ProjectSourceConfig,
 } from "../../config";
 import {
   createTestSource,
@@ -51,10 +51,7 @@ const PROJECT_CONFIG_DIR = ".claude-src";
 /**
  * Create a mock global config file in a temp directory
  */
-async function createMockGlobalConfig(
-  tempDir: string,
-  config: GlobalConfig,
-): Promise<string> {
+async function createMockGlobalConfig(tempDir: string, config: GlobalConfig): Promise<string> {
   const globalDir = path.join(tempDir, ".claude");
   await mkdir(globalDir, { recursive: true });
   const configPath = path.join(globalDir, "config.yaml");
@@ -67,7 +64,7 @@ async function createMockGlobalConfig(
  */
 async function createProjectConfig(
   projectDir: string,
-  config: ProjectConfig,
+  config: ProjectSourceConfig,
 ): Promise<string> {
   const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
   await mkdir(configDir, { recursive: true });
@@ -141,9 +138,7 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
     });
 
     it("should reject empty flag value", async () => {
-      await expect(resolveSource("", projectDir)).rejects.toThrow(
-        /--source flag cannot be empty/,
-      );
+      await expect(resolveSource("", projectDir)).rejects.toThrow(/--source flag cannot be empty/);
     });
 
     it("should reject whitespace-only flag value", async () => {
@@ -249,10 +244,7 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
     it("should return null for invalid YAML in project config", async () => {
       const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
       await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, "config.yaml"),
-        "invalid: yaml: content: :",
-      );
+      await writeFile(path.join(configDir, "config.yaml"), "invalid: yaml: content: :");
 
       const config = await loadProjectConfig(projectDir);
       expect(config).toBeNull();
@@ -322,10 +314,7 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
       // This is correct behavior - we're testing that project config doesn't
       // unexpectedly add a marketplace when none is configured there
       // The test should pass regardless of global config state
-      expect(
-        typeof result.marketplace === "string" ||
-          result.marketplace === undefined,
-      ).toBe(true);
+      expect(typeof result.marketplace === "string" || result.marketplace === undefined).toBe(true);
     });
 
     it("should preserve marketplace when using flag source", async () => {
@@ -369,10 +358,7 @@ describe("User Journey: Config Precedence - Agent Source Resolution", () => {
         agents_source: "https://project.example.com/agents",
       });
 
-      const result = await resolveAgentsSource(
-        "https://flag.example.com/agents",
-        projectDir,
-      );
+      const result = await resolveAgentsSource("https://flag.example.com/agents", projectDir);
 
       expect(result.agentsSource).toBe("https://flag.example.com/agents");
       expect(result.agentsSourceOrigin).toBe("flag");
@@ -474,16 +460,12 @@ describe("User Journey: Project Config Save and Load", () => {
       const config = await loadProjectConfig(projectDir);
 
       expect(config?.source).toBe("github:company/private-skills");
-      expect(config?.marketplace).toBe(
-        "https://internal-marketplace.company.com",
-      );
+      expect(config?.marketplace).toBe("https://internal-marketplace.company.com");
     });
 
     it("should return config path from getProjectConfigPath", () => {
       const configPath = getProjectConfigPath(projectDir);
-      expect(configPath).toBe(
-        path.join(projectDir, PROJECT_CONFIG_DIR, "config.yaml"),
-      );
+      expect(configPath).toBe(path.join(projectDir, PROJECT_CONFIG_DIR, "config.yaml"));
     });
   });
 });

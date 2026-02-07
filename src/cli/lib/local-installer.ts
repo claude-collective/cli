@@ -35,6 +35,19 @@ const PLUGIN_NAME = "claude-collective";
 const YAML_INDENT = 2;
 const YAML_LINE_WIDTH = 120;
 
+/**
+ * Resolved local skill for agent compilation.
+ * Extends SkillDefinition with content field.
+ */
+interface LocalResolvedSkill {
+  id: string;
+  name: string;
+  description: string;
+  canonicalId: string;
+  path: string;
+  content: string;
+}
+
 export interface LocalInstallOptions {
   /** Wizard result with selected skills and mode */
   wizardResult: WizardResultV2;
@@ -71,28 +84,8 @@ export interface LocalInstallResult {
 function buildLocalSkillsMap(
   copiedSkills: CopiedSkill[],
   matrix: MergedSkillsMatrix,
-): Record<
-  string,
-  {
-    id: string;
-    name: string;
-    description: string;
-    canonicalId: string;
-    path: string;
-    content: string;
-  }
-> {
-  const localSkillsForResolution: Record<
-    string,
-    {
-      id: string;
-      name: string;
-      description: string;
-      canonicalId: string;
-      path: string;
-      content: string;
-    }
-  > = {};
+): Record<string, LocalResolvedSkill> {
+  const localSkillsForResolution: Record<string, LocalResolvedSkill> = {};
   for (const copiedSkill of copiedSkills) {
     const skill = matrix.skills[copiedSkill.skillId];
     if (skill) {
@@ -193,17 +186,7 @@ function buildCompileAgents(
   agents: Record<string, AgentDefinition>,
   loadedStack: Stack | null,
   skillAliases: Record<string, string>,
-  localSkills: Record<
-    string,
-    {
-      id: string;
-      name: string;
-      description: string;
-      canonicalId: string;
-      path: string;
-      content: string;
-    }
-  >,
+  localSkills: Record<string, LocalResolvedSkill>,
 ): Record<string, CompileAgentConfig> {
   const compileAgents: Record<string, CompileAgentConfig> = {};
   for (const agentId of config.agents) {
@@ -236,17 +219,7 @@ function buildCompileAgents(
 async function compileAndWriteAgents(
   compileConfig: CompileConfig,
   agents: Record<string, AgentDefinition>,
-  localSkills: Record<
-    string,
-    {
-      id: string;
-      name: string;
-      description: string;
-      canonicalId: string;
-      path: string;
-      content: string;
-    }
-  >,
+  localSkills: Record<string, LocalResolvedSkill>,
   sourceResult: SourceLoadResult,
   loadedStack: Stack | null,
   skillAliases: Record<string, string>,

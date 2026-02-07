@@ -22,14 +22,14 @@ import { EXIT_CODES } from "../../lib/exit-codes.js";
 const META_AGENT_NAME = "agent-summoner";
 const AGENTS_SUBDIR = ".claude/agents";
 
-interface AgentDefinition {
+interface NewAgentInput {
   description: string;
   prompt: string;
   model?: string;
   tools?: string[];
 }
 
-interface AgentFrontmatter {
+interface AgentSourceFrontmatter {
   name: string;
   description: string;
   tools?: string;
@@ -82,7 +82,7 @@ const PurposeInput: React.FC<PurposeInputProps> = ({ onSubmit, onCancel }) => {
 async function fetchMetaAgent(
   source: string,
   forceRefresh: boolean,
-): Promise<AgentDefinition> {
+): Promise<NewAgentInput> {
   // Fetch the source repository
   const result = await fetchFromSource(source, {
     forceRefresh,
@@ -104,7 +104,7 @@ async function fetchMetaAgent(
 
   // Parse frontmatter and body
   const { data: frontmatter, content: body } = matter(content);
-  const fm = frontmatter as AgentFrontmatter;
+  const fm = frontmatter as AgentSourceFrontmatter;
 
   // Construct agent definition
   const tools = fm.tools
@@ -140,7 +140,7 @@ Follow the existing agent patterns in the codebase. Keep the agent focused and p
 }
 
 async function invokeMetaAgent(
-  agentDef: AgentDefinition,
+  agentDef: NewAgentInput,
   prompt: string,
   nonInteractive: boolean,
 ): Promise<void> {

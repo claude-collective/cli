@@ -4,7 +4,7 @@ import {
   loadProjectConfig,
   saveProjectConfig,
   getProjectConfigPath,
-  type ProjectConfig,
+  type ProjectSourceConfig,
 } from "../../lib/config.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 
@@ -36,15 +36,14 @@ export default class ConfigSetProject extends BaseCommand {
     const validKeys = ["source", "marketplace", "agents_source"];
 
     if (!validKeys.includes(key)) {
-      this.error(
-        `Unknown configuration key: ${key}\nValid keys: ${validKeys.join(", ")}`,
-        { exit: EXIT_CODES.INVALID_ARGS },
-      );
+      this.error(`Unknown configuration key: ${key}\nValid keys: ${validKeys.join(", ")}`, {
+        exit: EXIT_CODES.INVALID_ARGS,
+      });
     }
 
     const existingConfig = (await loadProjectConfig(projectDir)) || {};
 
-    const newConfig: ProjectConfig = {
+    const newConfig: ProjectSourceConfig = {
       ...existingConfig,
       [key]: value,
     };

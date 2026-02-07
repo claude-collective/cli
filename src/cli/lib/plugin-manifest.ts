@@ -8,7 +8,7 @@ const PLUGIN_DIR_NAME = ".claude-plugin";
 const PLUGIN_MANIFEST_FILE = "plugin.json";
 const SKILL_PLUGIN_PREFIX = "skill-";
 
-export interface SkillPluginOptions {
+export interface SkillManifestOptions {
   skillName: string;
   description?: string;
   author?: string;
@@ -17,7 +17,7 @@ export interface SkillPluginOptions {
   keywords?: string[];
 }
 
-export interface StackPluginOptions {
+export interface StackManifestOptions {
   stackName: string;
   description?: string;
   author?: string;
@@ -40,9 +40,7 @@ function buildAuthor(name?: string, email?: string): PluginAuthor | undefined {
   return author;
 }
 
-export function generateSkillPluginManifest(
-  options: SkillPluginOptions,
-): PluginManifest {
+export function generateSkillPluginManifest(options: SkillManifestOptions): PluginManifest {
   const manifest: PluginManifest = {
     name: `${SKILL_PLUGIN_PREFIX}${options.skillName}`,
     version: options.version ?? DEFAULT_VERSION,
@@ -66,9 +64,7 @@ export function generateSkillPluginManifest(
   return manifest;
 }
 
-export function generateStackPluginManifest(
-  options: StackPluginOptions,
-): PluginManifest {
+export function generateStackPluginManifest(options: StackManifestOptions): PluginManifest {
   const manifest: PluginManifest = {
     name: options.stackName,
     version: options.version ?? DEFAULT_VERSION,

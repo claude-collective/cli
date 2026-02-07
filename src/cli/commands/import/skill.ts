@@ -17,9 +17,11 @@ import {
 import { LOCAL_SKILLS_PATH } from "../../consts.js";
 
 /**
- * Metadata for tracking where a skill was imported from.
+ * Metadata for tracking third-party imports. Different from ForkedFromMetadata
+ * in skill-metadata.ts which tracks internal fork lineage (uses skill_id
+ * instead of source/skill_name).
  */
-interface ForkedFromMetadata {
+interface ImportedForkedFromMetadata {
   source: string;
   skill_name: string;
   content_hash: string;
@@ -27,7 +29,7 @@ interface ForkedFromMetadata {
 }
 
 interface SkillMetadata {
-  forked_from?: ForkedFromMetadata;
+  forked_from?: ImportedForkedFromMetadata;
   [key: string]: unknown;
 }
 
@@ -353,7 +355,7 @@ export default class ImportSkill extends BaseCommand {
     const metadataYamlPath = path.join(destPath, METADATA_YAML_FILE);
     const metadataJsonPath = path.join(destPath, METADATA_JSON_FILE);
 
-    const forkedFrom: ForkedFromMetadata = {
+    const forkedFrom: ImportedForkedFromMetadata = {
       source,
       skill_name: skillName,
       content_hash: contentHash,

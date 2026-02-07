@@ -42,22 +42,6 @@ export interface SkillReference {
 }
 
 /**
- * Skills config from skills.yaml (deprecated - use RegistryConfig)
- */
-export interface SkillsConfig {
-  skills: Record<string, SkillDefinition>;
-}
-
-/**
- * Registry config from registry.yaml
- * Single source of truth for all agent and skill definitions
- */
-export interface RegistryConfig {
-  agents: Record<string, AgentDefinition>;
-  skills: Record<string, SkillDefinition>;
-}
-
-/**
  * Fully resolved skill (merged from registry.yaml + config.yaml)
  * This is what the compiler uses after merging
  */
@@ -95,14 +79,7 @@ export interface AgentDefinition {
   /**
    * @deprecated Skills are now defined in stacks (Phase 7). This field is kept for backward compatibility.
    */
-  skills?: Record<string, AgentSkillEntry>;
-}
-
-/**
- * Top-level structure of agents.yaml
- */
-export interface AgentsConfig {
-  agents: Record<string, AgentDefinition>;
+  skills?: Record<string, { id: string; preloaded: boolean }>;
 }
 
 // =============================================================================
@@ -420,21 +397,6 @@ export interface ProjectConfig {
 // =============================================================================
 
 /**
- * Skill entry in agent YAML configuration
- * Specifies skill ID and whether it should be preloaded (embedded in compiled agent)
- *
- * @deprecated Skills are now defined in stacks (config/stacks.yaml), not agent YAMLs.
- * This interface is kept for backwards compatibility during Phase 7 migration.
- * Use stack-based skill configuration instead.
- */
-export interface AgentSkillEntry {
-  /** Full skill ID (e.g., "web-framework-react") */
-  id: string;
-  /** Whether to embed skill content in compiled agent. Default: false */
-  preloaded: boolean;
-}
-
-/**
  * Agent configuration from agent.yaml (co-located in each agent folder)
  * Supports official Claude Code plugin format fields
  */
@@ -449,22 +411,7 @@ export interface AgentYamlConfig {
   hooks?: Record<string, AgentHookDefinition[]>; // Lifecycle hooks
   output_format?: string;
   /** Skills available to this agent with inline preloaded flag */
-  skills?: Record<string, AgentSkillEntry>;
-}
-
-/**
- * Skill configuration from skill.yaml (co-located in each skill folder)
- * @deprecated Use SkillMetadataConfig + SKILL.md frontmatter instead (Phase 0B)
- */
-export interface SkillYamlConfig {
-  id: string;
-  name: string;
-  description: string;
-  category?: string;
-  category_exclusive?: boolean;
-  author?: string;
-  version?: string;
-  tags?: string[];
+  skills?: Record<string, { id: string; preloaded: boolean }>;
 }
 
 // =============================================================================
@@ -689,21 +636,6 @@ export interface Marketplace {
 }
 
 // =============================================================================
-// Config Types (for ~/.claude-collective/config.yaml)
-// =============================================================================
-
-/**
- * User configuration stored in ~/.claude-collective/config.yaml
- * Manages source settings and active stack state
- */
-export interface Config {
-  /** Source URL for fetching skills/agents (e.g., "github:claude-collective/skills") */
-  source?: string;
-  /** Name of the currently active stack (e.g., "nextjs-fullstack"). Used by cc add and cc switch. */
-  active_stack?: string;
-}
-
-// =============================================================================
 // Fetcher Types (for unified cc init flow)
 // =============================================================================
 
@@ -733,21 +665,4 @@ export interface AgentSourcePaths {
   templatesDir: string;
   /** Original source path */
   sourcePath: string;
-}
-
-/**
- * Options for compiling a complete plugin.
- * Used by unified compilation flow.
- */
-export interface PluginCompileOptions {
-  /** Output plugin directory */
-  pluginDir: string;
-  /** Path to skills directory in plugin */
-  skillsDir: string;
-  /** Fetched agent definition paths */
-  agentDefs: AgentSourcePaths;
-  /** Agent configs (matches CompileConfig.agents pattern) */
-  agentConfigs: Record<string, CompileAgentConfig>;
-  /** Enable verbose logging */
-  verbose?: boolean;
 }

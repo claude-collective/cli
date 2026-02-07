@@ -513,17 +513,6 @@ export interface SkillOption {
   alternatives: string[];
 }
 
-export interface WizardState {
-  /** Currently selected skill IDs (full IDs, not aliases) */
-  selectedSkills: string[];
-
-  /** Current step/category being displayed */
-  currentCategory: string;
-
-  /** Selected stack (if user chose a pre-built stack) */
-  selectedStack?: string;
-}
-
 export interface SelectionValidation {
   /** Whether the selection is valid */
   valid: boolean;

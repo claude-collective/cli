@@ -18,10 +18,7 @@ export const PROJECT_CONFIG_FILE = "config.yaml";
  * This is a function (not constant) to allow tests to set the env var after module load.
  */
 export function getGlobalConfigDir(): string {
-  return (
-    process.env[CONFIG_HOME_ENV_VAR] ||
-    path.join(os.homedir(), ".claude-collective")
-  );
+  return process.env[CONFIG_HOME_ENV_VAR] || path.join(os.homedir(), ".claude-collective");
 }
 
 /**
@@ -54,7 +51,7 @@ export interface GlobalConfig {
   sources?: SourceEntry[];
 }
 
-export interface ProjectConfig {
+export interface ProjectSourceConfig {
   source?: string;
   author?: string;
   marketplace?: string;
@@ -73,8 +70,7 @@ function isValidSourceEntry(entry: unknown): entry is SourceEntry {
   if (typeof entry !== "object" || entry === null) return false;
   const e = entry as Record<string, unknown>;
   if (typeof e.name !== "string" || typeof e.url !== "string") return false;
-  if (e.description !== undefined && typeof e.description !== "string")
-    return false;
+  if (e.description !== undefined && typeof e.description !== "string") return false;
   if (e.ref !== undefined && typeof e.ref !== "string") return false;
   return true;
 }
@@ -87,44 +83,22 @@ function isValidSourcesArray(arr: unknown): arr is SourceEntry[] {
 function isValidGlobalConfig(obj: unknown): obj is GlobalConfig {
   if (typeof obj !== "object" || obj === null) return false;
   const config = obj as Record<string, unknown>;
-  if (config.source !== undefined && typeof config.source !== "string")
-    return false;
-  if (config.author !== undefined && typeof config.author !== "string")
-    return false;
-  if (
-    config.marketplace !== undefined &&
-    typeof config.marketplace !== "string"
-  )
-    return false;
-  if (
-    config.agents_source !== undefined &&
-    typeof config.agents_source !== "string"
-  )
-    return false;
-  if (config.sources !== undefined && !isValidSourcesArray(config.sources))
-    return false;
+  if (config.source !== undefined && typeof config.source !== "string") return false;
+  if (config.author !== undefined && typeof config.author !== "string") return false;
+  if (config.marketplace !== undefined && typeof config.marketplace !== "string") return false;
+  if (config.agents_source !== undefined && typeof config.agents_source !== "string") return false;
+  if (config.sources !== undefined && !isValidSourcesArray(config.sources)) return false;
   return true;
 }
 
-function isValidProjectConfig(obj: unknown): obj is ProjectConfig {
+function isValidProjectConfig(obj: unknown): obj is ProjectSourceConfig {
   if (typeof obj !== "object" || obj === null) return false;
   const config = obj as Record<string, unknown>;
-  if (config.source !== undefined && typeof config.source !== "string")
-    return false;
-  if (config.author !== undefined && typeof config.author !== "string")
-    return false;
-  if (
-    config.marketplace !== undefined &&
-    typeof config.marketplace !== "string"
-  )
-    return false;
-  if (
-    config.agents_source !== undefined &&
-    typeof config.agents_source !== "string"
-  )
-    return false;
-  if (config.sources !== undefined && !isValidSourcesArray(config.sources))
-    return false;
+  if (config.source !== undefined && typeof config.source !== "string") return false;
+  if (config.author !== undefined && typeof config.author !== "string") return false;
+  if (config.marketplace !== undefined && typeof config.marketplace !== "string") return false;
+  if (config.agents_source !== undefined && typeof config.agents_source !== "string") return false;
+  if (config.sources !== undefined && !isValidSourcesArray(config.sources)) return false;
   return true;
 }
 
@@ -163,9 +137,7 @@ export async function loadGlobalConfig(): Promise<GlobalConfig | null> {
   }
 }
 
-export async function loadProjectConfig(
-  projectDir: string,
-): Promise<ProjectConfig | null> {
+export async function loadProjectConfig(projectDir: string): Promise<ProjectSourceConfig | null> {
   // Check .claude-src/config.yaml first (new location)
   const srcConfigPath = getProjectConfigPath(projectDir);
   // Fall back to .claude/config.yaml (legacy location)
@@ -177,9 +149,7 @@ export async function loadProjectConfig(
       configPath = legacyConfigPath;
       verbose(`Using legacy config location: ${legacyConfigPath}`);
     } else {
-      verbose(
-        `Project config not found at ${srcConfigPath} or ${legacyConfigPath}`,
-      );
+      verbose(`Project config not found at ${srcConfigPath} or ${legacyConfigPath}`);
       return null;
     }
   }
@@ -213,7 +183,7 @@ export async function saveGlobalConfig(config: GlobalConfig): Promise<void> {
 
 export async function saveProjectConfig(
   projectDir: string,
-  config: ProjectConfig,
+  config: ProjectSourceConfig,
 ): Promise<void> {
   const configPath = getProjectConfigPath(projectDir);
   await ensureDir(path.join(projectDir, CLAUDE_SRC_DIR));
@@ -282,9 +252,7 @@ export async function resolveAgentsSource(
 
   const projectConfig = projectDir ? await loadProjectConfig(projectDir) : null;
   if (projectConfig?.agents_source) {
-    verbose(
-      `Agents source from project config: ${projectConfig.agents_source}`,
-    );
+    verbose(`Agents source from project config: ${projectConfig.agents_source}`);
     return {
       agentsSource: projectConfig.agents_source,
       agentsSourceOrigin: "project",
@@ -309,16 +277,12 @@ export function formatAgentsSourceOrigin(origin: AgentsSourceOrigin): string {
 }
 
 /** Resolve author from project config */
-export async function resolveAuthor(
-  projectDir?: string,
-): Promise<string | undefined> {
+export async function resolveAuthor(projectDir?: string): Promise<string | undefined> {
   const projectConfig = projectDir ? await loadProjectConfig(projectDir) : null;
   return projectConfig?.author;
 }
 
-export function formatSourceOrigin(
-  origin: ResolvedConfig["sourceOrigin"],
-): string {
+export function formatSourceOrigin(origin: ResolvedConfig["sourceOrigin"]): string {
   switch (origin) {
     case "flag":
       return "--source flag";
@@ -393,15 +357,11 @@ export function isLocalSource(source: string): boolean {
     "http://",
   ];
 
-  const hasRemoteProtocol = remoteProtocols.some((prefix) =>
-    source.startsWith(prefix),
-  );
+  const hasRemoteProtocol = remoteProtocols.some((prefix) => source.startsWith(prefix));
 
   if (!hasRemoteProtocol) {
     if (source.includes("..") || source.includes("~")) {
-      throw new Error(
-        `Invalid source path: ${source}. Path traversal patterns are not allowed.`,
-      );
+      throw new Error(`Invalid source path: ${source}. Path traversal patterns are not allowed.`);
     }
   }
 
