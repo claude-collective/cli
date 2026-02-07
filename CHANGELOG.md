@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.0] - 2026-02-07
+
+### Changed
+
+- **Removed top-level categories from skills matrix** - Top-level categories (`frontend`, `backend`, `setup`, `cli`, `mobile`, `reviewing`, `methodology`, `research`, `shared`, `local`) and the `parent` field on subcategories have been removed. The wizard already operated entirely on the `domain` field; the top-level layer added no value.
+- **Aligned agent mapping patterns with domains** - Category path patterns in skill-agent-mappings renamed: `frontend/*` → `web/*`, `backend/*` → `api/*`, `setup/*` → `infra/*`. YAML defaults and marketplace generator updated to match.
+- **Renamed `frontend/realtime` to `realtime`** - Composite subcategory ID simplified to match the `^[a-z][a-z0-9-]*$` schema pattern.
+- **Stacks alias renamed** - `backend-testing` → `api-testing` in stacks.yaml.
+
+### Added
+
+- **New web categories** - `animation`, `pwa`, `accessibility`, `web-performance` for skills previously bucketed under the removed `frontend` top-level.
+- **New shared categories** - `methodology`, `research`, `reviewing`, `ci-cd` for meta and infrastructure skills.
+
+### Removed
+
+- **`parent` field** from `CategoryDefinition` type and JSON schema.
+- **`getSubcategories()` and `getTopLevelCategories()`** from matrix-resolver (unused in production code).
+
 ## [0.18.0] - 2026-02-07
 
 ### Added
