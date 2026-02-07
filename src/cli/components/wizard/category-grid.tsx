@@ -212,32 +212,46 @@ interface SkillTagProps {
 }
 
 const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked }) => {
-  // Determine background color
-  // Selected: cyan background, Recommended: NO background (just cyan text)
-  const getBackground = (): string | undefined => {
-    if (isLocked) return undefined;
-    if (option.selected) return BG_SELECTED; // Only selected gets background
-    if (isFocused) return BG_FOCUSED;
-    return undefined; // Recommended does NOT get background
-  };
-
-  // Determine text color
-  // Selected: black text (on cyan bg), Recommended: cyan text (no bg)
-  const getColor = (): string | undefined => {
-    if (isLocked) return "gray";
-    if (option.selected) return "black"; // Selected = black text on cyan
-    if (option.state === "recommended") return "cyan"; // Recommended = cyan text only
-    if (option.state === "disabled") return "gray";
-    if (option.state === "discouraged") return "yellow";
+  const getColor = (): { text: string; border: string } | undefined => {
+    if (isLocked || option.state === "disabled") {
+      return {
+        text: "gray",
+        border: "gray",
+      };
+    }
+    if (option.selected) {
+      return {
+        text: "cyan",
+        border: "cyan",
+      };
+    }
+    if (option.state === "recommended") {
+      return {
+        text: "white",
+        border: "gray",
+      };
+    }
+    if (option.state === "discouraged") {
+      return {
+        text: "yellow",
+        border: "yellow",
+      };
+    }
     return undefined;
   };
 
+  const isBold = isFocused || option.selected;
   const isDimmed = isLocked || option.state === "disabled";
-  const isBold = isFocused && !isLocked;
+  const focusBorderColor = option.selected ? "cyan" : "white";
 
   return (
-    <Box marginRight={1}>
-      <Text backgroundColor={getBackground()} color={getColor()} dimColor={isDimmed} bold={isBold}>
+    <Box
+      marginRight={1}
+      borderColor={isFocused ? focusBorderColor : getColor()?.border}
+      borderStyle="single"
+      borderDimColor={isDimmed}
+    >
+      <Text color={getColor()?.text} bold={isBold} dimColor={false}>
         {" "}
         {option.label}{" "}
       </Text>
@@ -262,20 +276,10 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   focusedOptionIndex,
   showDescriptions,
 }) => {
-  // Generate underline matching header length
-  const underline = "\u2500".repeat(category.name.length + (category.required ? 2 : 0));
-
   return (
-    <Box flexDirection="column" marginBottom={1}>
-      {/* Section header */}
+    <Box flexDirection="column" marginTop={1}>
       <Box flexDirection="row">
-        <Text
-          bold={isFocused && !isLocked}
-          color={isLocked ? "gray" : isFocused ? "cyan" : undefined}
-          dimColor={isLocked}
-        >
-          {category.name}
-        </Text>
+        <Text dimColor={isLocked}>{category.name}</Text>
         {category.required && (
           <Text color={isLocked ? "gray" : "red"} dimColor={isLocked}>
             {" "}
@@ -284,12 +288,6 @@ const CategorySection: React.FC<CategorySectionProps> = ({
         )}
       </Box>
 
-      {/* Underline below header */}
-      <Text dimColor={isLocked} color={isLocked ? "gray" : undefined}>
-        {underline}
-      </Text>
-
-      {/* Skills as flowing tags */}
       <Box flexDirection="row" flexWrap="wrap" marginTop={0}>
         {options.map((option, index) => (
           <Box key={option.id} flexDirection="column">
@@ -298,7 +296,6 @@ const CategorySection: React.FC<CategorySectionProps> = ({
               isFocused={isFocused && index === focusedOptionIndex && !isLocked}
               isLocked={isLocked}
             />
-            {/* Description below tag when enabled */}
             {showDescriptions && option.stateReason && !isLocked && (
               <Box marginLeft={1} marginBottom={0}>
                 <Text dimColor wrap="truncate-end">
