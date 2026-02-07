@@ -1,11 +1,6 @@
 import path from "path";
 import { PROJECT_ROOT, SKILLS_DIR_PATH, SKILLS_MATRIX_PATH } from "../consts";
-import type {
-  CategoryDefinition,
-  MergedSkillsMatrix,
-  ResolvedSkill,
-  ResolvedStack,
-} from "../types-matrix";
+import type { MergedSkillsMatrix, ResolvedSkill, ResolvedStack } from "../types-matrix";
 import type { Stack } from "../types-stacks";
 import { fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
@@ -208,50 +203,17 @@ function stackToResolvedStack(stack: Stack, skillAliases: Record<string, string>
   };
 }
 
-const LOCAL_CATEGORY_TOP: CategoryDefinition = {
-  id: "local",
-  name: "Local Skills",
-  description: "Project-specific skills from .claude/skills/",
-  exclusive: false,
-  required: false,
-  order: 0,
-};
-
-const LOCAL_CATEGORY_CUSTOM: CategoryDefinition = {
-  id: "local/custom",
-  name: "Custom",
-  description: "Your project-specific skills",
-  exclusive: false,
-  required: false,
-  order: 0,
-  parent: "local",
-};
-
 function mergeLocalSkillsIntoMatrix(
   matrix: MergedSkillsMatrix,
   localResult: LocalSkillDiscoveryResult,
 ): MergedSkillsMatrix {
-  if (!matrix.categories["local"]) {
-    matrix.categories["local"] = LOCAL_CATEGORY_TOP;
-  }
-  if (!matrix.categories["local/custom"]) {
-    matrix.categories["local/custom"] = LOCAL_CATEGORY_CUSTOM;
-  }
-
   for (const metadata of localResult.skills) {
     // Preserve alias and category from existing matrix entry (if skill was in source)
     const existingSkill = matrix.skills[metadata.id];
 
-    // Use the skill's original category from metadata.yaml when available,
-    // falling back to "local/custom" for truly new local skills.
-    // When overwriting a remote skill, preserve its category if the local skill
-    // doesn't have a valid one. This prevents local copies from losing their
-    // domain-based subcategory assignment (e.g., "client-state" -> "local/custom").
-    const hasOriginalCategory =
-      metadata.category !== "local" && matrix.categories[metadata.category];
-    const category = hasOriginalCategory
-      ? metadata.category
-      : (existingSkill?.category ?? "local/custom");
+    // If overwriting an existing remote skill, inherit its category unconditionally.
+    // Otherwise, use whatever the local skill declared in its metadata.yaml.
+    const category = existingSkill?.category ?? metadata.category;
     const alias = existingSkill?.alias ?? matrix.aliasesReverse[metadata.id];
 
     const resolvedSkill: ResolvedSkill = {

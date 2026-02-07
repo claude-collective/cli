@@ -162,13 +162,14 @@ describe("source-loader local skills integration", () => {
 
     expect(localSkill.id).toBe("my-local-skill");
     expect(localSkill.name).toBe("My Local Skill @local");
-    expect(localSkill.category).toBe("local/custom");
+    // New local skill without a category in metadata.yaml gets "local" from local-skill-loader defaults
+    expect(localSkill.category).toBe("local");
     expect(localSkill.author).toBe("@local");
     expect(localSkill.local).toBe(true);
     expect(localSkill.localPath).toBe(".claude/skills/test-my-skill/");
   });
 
-  it("should add local category definitions when local skills exist", async () => {
+  it("should not inject fake local category definitions into the matrix", async () => {
     const skillsDir = path.join(tempDir, ".claude", "skills", "test-cat-skill");
     await mkdir(skillsDir, { recursive: true });
 
@@ -183,13 +184,9 @@ describe("source-loader local skills integration", () => {
       projectDir: tempDir,
     });
 
-    // Local categories should be added
-    expect(result.matrix.categories["local"]).toBeDefined();
-    expect(result.matrix.categories["local"].name).toBe("Local Skills");
-    expect(result.matrix.categories["local"].order).toBe(0);
-
-    expect(result.matrix.categories["local/custom"]).toBeDefined();
-    expect(result.matrix.categories["local/custom"].parent).toBe("local");
+    // Local skills should NOT cause fake "local" or "local/custom" categories to be injected
+    // The skill uses whatever category it declared (or "local" default from local-skill-loader)
+    expect(result.matrix.categories["local/custom"]).toBeUndefined();
   });
 
   it("should not modify matrix when no local skills exist", async () => {
@@ -212,14 +209,10 @@ describe("source-loader local skills integration", () => {
       projectDir: tempDir,
     });
 
-    // Find a skill that has a domain-based category (not "local/custom")
+    // Find a skill that has a domain-based category
     const targetSkillId = Object.keys(initialResult.matrix.skills).find((id) => {
       const skill = initialResult.matrix.skills[id];
-      return (
-        skill.category !== "local/custom" &&
-        skill.category !== "local" &&
-        initialResult.matrix.categories[skill.category]?.domain
-      );
+      return skill.category !== "local" && initialResult.matrix.categories[skill.category]?.domain;
     });
 
     // Skip if no suitable skill found (defensive)
@@ -229,7 +222,7 @@ describe("source-loader local skills integration", () => {
     const originalCategory = originalSkill.category;
 
     // Create a local skill with the SAME ID but no category in metadata
-    // (so local-skill-loader defaults category to "local")
+    // (so local-skill-loader defaults category to "local" from LOCAL_CATEGORY constant)
     const skillsDir = path.join(tempDir, ".claude", "skills", "test-override-category");
     await mkdir(skillsDir, { recursive: true });
 
@@ -249,7 +242,7 @@ describe("source-loader local skills integration", () => {
     expect(overriddenSkill).toBeDefined();
     expect(overriddenSkill.local).toBe(true);
 
-    // The category should be preserved from the remote skill, not "local/custom"
+    // The category should be preserved from the remote skill
     expect(overriddenSkill.category).toBe(originalCategory);
   });
 
@@ -315,8 +308,7 @@ describe("source-loader local skills integration", () => {
     // Verify the original description was different (proves we actually overwrote something)
     expect(overriddenSkill.description).not.toBe(originalDescription);
     expect(overriddenSkill.author).toBe("@local");
-    // When overwriting a remote skill, the remote skill's category is preserved
-    // (rather than falling back to "local/custom") so domain-based views still work
+    // When overwriting a remote skill, the remote skill's category is inherited
     expect(overriddenSkill.category).toBe(existingSkill.category);
     expect(overriddenSkill.localPath).toBe(".claude/skills/local-vitest/");
   });
