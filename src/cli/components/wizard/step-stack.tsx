@@ -77,22 +77,21 @@ const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
         // Pre-populate domainSelections from the stack's skill mappings
         const resolvedStack = matrix.suggestedStacks.find((s) => s.id === focusedStack.id);
         if (resolvedStack) {
-          const stackAgents: Record<string, Record<string, string>> = {};
+          // Build one pseudo-agent per skill so populateFromStack can handle
+          // categories with multiple skills (e.g. testing: vitest + playwright-e2e)
+          // without overwriting. populateFromStack deduplicates internally.
+          const pseudoAgents: Record<string, Record<string, string>> = {};
 
-          for (const skillId of resolvedStack.allSkillIds) {
+          for (let i = 0; i < resolvedStack.allSkillIds.length; i++) {
+            const skillId = resolvedStack.allSkillIds[i];
             const skill = matrix.skills[skillId];
             if (skill?.category) {
-              const domain = matrix.categories[skill.category]?.domain;
-              if (domain) {
-                if (!stackAgents[domain]) {
-                  stackAgents[domain] = {};
-                }
-                stackAgents[domain][skill.category] = skill.alias || skill.id;
-              }
+              const displayId = skill.alias || skill.id;
+              pseudoAgents[`s${i}`] = { [skill.category]: displayId };
             }
           }
 
-          populateFromStack({ agents: stackAgents }, matrix.categories);
+          populateFromStack({ agents: pseudoAgents }, matrix.categories);
         }
 
         setStep("build");
