@@ -257,18 +257,6 @@ export async function validateSkillFrontmatter(skillPath: string): Promise<Valid
     errors.push(...formatAjvErrors(validate.errors));
   }
 
-  const fm = frontmatter as Record<string, unknown>;
-
-  if (fm.category) {
-    warnings.push('Deprecated field: "category" - use metadata.yaml for category information');
-  }
-  if (fm.author) {
-    warnings.push('Deprecated field: "author" - use metadata.yaml for author information');
-  }
-  if (fm.version) {
-    warnings.push('Deprecated field: "version" - use metadata.yaml for version information');
-  }
-
   return {
     valid: errors.length === 0,
     errors,
