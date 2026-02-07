@@ -258,7 +258,7 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
             selectedDomains={store.selectedDomains}
             domainSelections={store.domainSelections}
             technologyCount={store.getAllSelectedTechnologies().length}
-            skillCount={store.getSelectedSkills().length}
+            skillCount={store.getAllSelectedTechnologies().length}
             installMode={store.installMode}
             onBack={store.goBack}
           />

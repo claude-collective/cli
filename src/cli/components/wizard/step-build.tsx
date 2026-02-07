@@ -251,11 +251,12 @@ function buildCategoriesForDomain(
 
     // Map skills to CategoryOption[]
     const options: CategoryOption[] = filteredSkillOptions.map((skill) => ({
-      id: skill.alias || skill.id, // Use alias for selection tracking
+      id: skill.id,
       label: getDisplayLabel(skill), // Clean display name without author
       state: computeOptionState(skill),
       stateReason: getStateReason(skill),
       selected: skill.selected,
+      local: matrix.skills[skill.id]?.local,
     }));
 
     return {
