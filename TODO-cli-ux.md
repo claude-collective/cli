@@ -9,79 +9,57 @@
 
 ## Active Tasks
 
-| ID     | Task                                             | Status      | Notes                                                                         |
-| ------ | ------------------------------------------------ | ----------- | ----------------------------------------------------------------------------- |
-| UX-01  | Style the home screen                            | IN PROGRESS | Initial layout, branding, and navigation styling for the CLI home screen      |
-| UX-10  | Refactor command files - extract logic to lib/   | IN PROGRESS | See [docs/init-refactor-plan.md](./docs/init-refactor-plan.md). Phases below. |
-| UX-10a | Phase 1: Extract `lib/skill-metadata.ts`         | IN PROGRESS | -254 lines duplication from update.tsx, outdated.ts, diff.ts                  |
-| UX-10b | Phase 2: Extract `lib/config-saver.ts`           | PENDING     | -36 lines duplication from init.tsx, eject.ts                                 |
-| UX-10c | Phase 3: Extract `lib/config-merger.ts`          | PENDING     | -100 lines from init.tsx, add tests for merge rules                           |
-| UX-10d | Phase 4: Extract `lib/local-installer.ts`        | PENDING     | -335 lines from init.tsx (627 -> ~150 lines)                                  |
-| UX-10e | Phase 5: Extract `lib/plugin-manifest-finder.ts` | PENDING     | -72 lines from 4 version/\* files                                             |
-| UX-10f | Phase 6: Consolidate `getCurrentDate()`          | PENDING     | -9 lines, import from existing lib/versioning.ts                              |
+| ID     | Task                                           | Status      | Notes                                                                         |
+| ------ | ---------------------------------------------- | ----------- | ----------------------------------------------------------------------------- |
+| UX-10  | Refactor command files - extract logic to lib/ | IN PROGRESS | See [docs/init-refactor-plan.md](./docs/init-refactor-plan.md). Phases below. |
+| UX-10c | Phase 3: Extract `lib/config-merger.ts`        | PENDING     | -100 lines from init.tsx, add tests for merge rules                           |
+| UX-10d | Phase 4: Extract `lib/local-installer.ts`      | PENDING     | -335 lines from init.tsx (627 -> ~150 lines)                                  |
+| UX-10f | Phase 6: Consolidate `getCurrentDate()`        | PENDING     | -9 lines, import from existing lib/versioning.ts                              |
 
 ---
 
 ## Completed Tasks
 
-| ID  | Task                                    | Status | Notes                                                       |
-| --- | --------------------------------------- | ------ | ----------------------------------------------------------- |
-| U1  | Progress navigation bar - tab styling   | DONE   | Green bg active, white bg completed, no circles             |
-| U2  | Header - add version display            | DONE   | Pass `this.config.version` from Init command                |
-| U3  | Footer - split layout with WizardFooter | DONE   | Left: nav controls, right: action hints                     |
-| U6  | Extract WizardLayout component          | DONE   | WizardTabs + children + WizardFooter, centralized shortcuts |
-| U7  | Simplify WizardTabs styling             | DONE   | Text-only, border lines, "Approach" -> "Intro", version bar |
-| U8  | Fix version prop flow                   | DONE   | Prop-drill from oclif this.config.version (was broken)      |
-| U9  | ASCII art banner for init               | DONE   | "AGENTS INC" banner on init command                         |
-| U4  | Build step - framework-first flow       | DONE   | Hide categories until framework selected, background colors |
-| U5  | Import third-party skills command       | DONE   | `cc import skill github:owner/repo`                         |
+| ID     | Task                                    | Status | Notes                                                                 |
+| ------ | --------------------------------------- | ------ | --------------------------------------------------------------------- |
+| U1     | Progress navigation bar - tab styling   | DONE   | Green bg active, white bg completed, no circles                       |
+| U2     | Header - add version display            | DONE   | Pass `this.config.version` from Init command                          |
+| U3     | Footer - split layout with WizardFooter | DONE   | Left: nav controls, right: action hints                               |
+| U6     | Extract WizardLayout component          | DONE   | WizardTabs + children + WizardFooter, centralized shortcuts           |
+| U7     | Simplify WizardTabs styling             | DONE   | Text-only, border lines, "Approach" -> "Intro", version bar           |
+| U8     | Fix version prop flow                   | DONE   | Prop-drill from oclif this.config.version (was broken)                |
+| U9     | ASCII art banner for init               | DONE   | "AGENTS INC" banner on init command                                   |
+| U4     | Build step - framework-first flow       | DONE   | Hide categories until framework selected, background colors           |
+| U5     | Import third-party skills command       | DONE   | `cc import skill github:owner/repo`                                   |
+| UX-01  | Style the home screen                   | DONE   | Layout, branding, and navigation styling for the CLI home screen      |
+| UX-10a | Extract `lib/skill-metadata.ts`         | DONE   | -254 lines duplication from update.tsx, outdated.ts, diff.ts (0.14.1) |
+| UX-10b | Extract `lib/config-saver.ts`           | DONE   | -36 lines duplication from init.tsx, eject.ts (0.14.1)                |
+| UX-10e | Extract `lib/plugin-manifest-finder.ts` | DONE   | -72 lines from 4 version/\* files (0.14.1)                            |
+| UX-11  | Build step: cycle through all domains   | DONE   | `populateFromStack()` now sets ALL_DOMAINS (0.16.0)                   |
 
 ---
 
 ## Backlog
 
-| ID    | Task                                                           | Priority | Notes                                                                                                                                                                     |
-| ----- | -------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UX-02 | Align skills-matrix categories with domains                    | Medium   | Rename `frontend`/`backend` to `web`/`api`                                                                                                                                |
-| UX-03 | Build step UX improvements (column alignment, show all toggle) | Medium   | See TODO-deferred.md D-10                                                                                                                                                 |
-| UX-04 | Interactive skill search polish                                | Medium   | Manual testing + tests for interactive component                                                                                                                          |
-| UX-05 | Refine step - skills.sh integration                            | Low      | Community skill alternatives in Refine step                                                                                                                               |
-| UX-06 | Search with color highlighting                                 | Low      | Deferred - needs more UX thought                                                                                                                                          |
-| UX-07 | Incompatibility tooltips                                       | Low      | Show reason when hovering disabled options                                                                                                                                |
-| UX-08 | Keyboard shortcuts help overlay                                | Low      | In-wizard help for keybindings                                                                                                                                            |
-| UX-09 | Animations/transitions                                         | Low      | Polish pass for step transitions                                                                                                                                          |
-| UX-11 | Build step: always cycle through all domains                   | Medium   | After stack selection, step through all domains (web, api, cli, mobile) even if stack only covers one. Currently skips domains not in the stack.                          |
-| UX-12 | Build step: missing subcategories after stack selection        | High     | BUG: When selecting a stack (e.g. Next.js) with local skills, many subcategories (client state, server state, etc.) are not shown in the build view. Needs investigation. |
+| ID    | Task                                                           | Priority | Notes                                                                                                                                                                               |
+| ----- | -------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UX-02 | Align skills-matrix categories with domains                    | Medium   | Rename `frontend`/`backend` to `web`/`api`                                                                                                                                          |
+| UX-03 | Build step UX improvements (column alignment, show all toggle) | Medium   | See TODO-deferred.md D-10                                                                                                                                                           |
+| UX-04 | Interactive skill search polish                                | Medium   | Manual testing + tests for interactive component                                                                                                                                    |
+| UX-05 | Refine step - skills.sh integration                            | Low      | Community skill alternatives in Refine step                                                                                                                                         |
+| UX-06 | Search with color highlighting                                 | Low      | Deferred - needs more UX thought                                                                                                                                                    |
+| UX-07 | Incompatibility tooltips                                       | Low      | Show reason when hovering disabled options                                                                                                                                          |
+| UX-08 | Keyboard shortcuts help overlay                                | Low      | In-wizard help for keybindings                                                                                                                                                      |
+| UX-09 | Animations/transitions                                         | Low      | Polish pass for step transitions                                                                                                                                                    |
+| UX-12 | Build step: missing subcategories after stack selection        | High     | BUG: When selecting a stack (e.g. Next.js) with local skills, many subcategories (client state, server state, etc.) are not shown in the build view. See investigation notes below. |
 
 ---
 
 ## Investigation Notes
 
-### UX-11: Build step domain cycling
+### UX-11: Build step domain cycling (RESOLVED in 0.16.0)
 
-**Root cause:** When a stack is selected, `populateFromStack()` in the wizard store sets `selectedDomains` to ONLY the domains that the stack's skills actually cover. The build step then uses `store.selectedDomains` as `effectiveDomains` (wizard.tsx line 204), and `nextDomain()`/`prevDomain()` in the store cycle only through `selectedDomains` (wizard-store.ts lines 247-271). So if a stack only has "web" and "api" skills, the user never sees "cli", "mobile", or "shared" domains.
-
-**Relevant code:**
-
-1. **`src/cli/components/wizard/step-stack.tsx` lines 80-95** -- When user selects a stack, `StackSelection` iterates `resolvedStack.allSkillIds`, looks up each skill's category, then gets the category's `domain`. It builds `stackAgents` keyed by domain and calls `populateFromStack({ agents: stackAgents }, matrix.categories)`.
-
-2. **`src/cli/stores/wizard-store.ts` lines 149-193** -- `populateFromStack()` collects domains from the stack's agent configs into a `Set<string>` and sets `selectedDomains: Array.from(domains)`. This means only domains with at least one skill in the stack are included.
-
-3. **`src/cli/components/wizard/wizard.tsx` line 204** -- `effectiveDomains` is directly set to `store.selectedDomains`, so the build step only iterates the stack-covered domains.
-
-4. **`src/cli/stores/wizard-store.ts` lines 247-258** -- `nextDomain()` checks `currentDomainIndex < selectedDomains.length - 1`. When the user reaches the last domain, it returns `false` and the wizard moves to the refine step (wizard.tsx line 227-229).
-
-**The chain:** Stack selected -> `populateFromStack` sets `selectedDomains` to stack's domains only -> build step iterates only those -> user skips uncovered domains.
-
-**Proposed fix:** After `populateFromStack` is called (or inside it), ensure `selectedDomains` always contains ALL five domains: `["web", "api", "cli", "mobile", "shared"]`. The stack's pre-selections still get populated into `domainSelections` for the relevant domains, but the wizard will cycle through all domains so users can add technologies in domains the stack doesn't cover.
-
-There are two possible implementation approaches:
-
-**Option A (Minimal -- recommended):** In `step-stack.tsx` StackSelection component (lines 73-98), after calling `populateFromStack()`, explicitly set `selectedDomains` to the full domain list. This could be done by adding a store action like `setSelectedDomains()` or by modifying `populateFromStack` to accept an "allDomains" parameter.
-
-**Option B (Store-level):** Modify `populateFromStack()` in wizard-store.ts to always include all five domains, regardless of which domains have skills. The domains with no pre-populated skills would simply show empty `domainSelections` for those domains, and the build step would display all available subcategories for each.
-
-Note: The `AVAILABLE_DOMAINS` constant in `step-stack.tsx` (line 33) only lists `["web", "api", "cli", "mobile"]` -- it is missing `"shared"`. The `getDomainDisplayName()` functions in both `wizard.tsx` (line 84) and `step-build.tsx` (line 277) DO include "shared". The fix should use all five domains including "shared".
+Fixed via Option B: `populateFromStack()` in `wizard-store.ts` now sets `selectedDomains` to `ALL_DOMAINS` constant (`["web", "api", "cli", "mobile", "shared"]`), regardless of which domains the stack covers.
 
 ---
 

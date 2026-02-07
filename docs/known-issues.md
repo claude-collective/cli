@@ -4,12 +4,13 @@
 
 The following issues have been fixed:
 
-| Issue                             | Status | Resolution                          |
-| --------------------------------- | ------ | ----------------------------------- |
-| `cc eject skills` not implemented | Fixed  | Implemented in P2-10                |
-| `cc eject agents` not implemented | Fixed  | Implemented in P2-11                |
-| Local skill `test-` prefix filter | Fixed  | Removed in P1-00                    |
-| No uninstall command              | Fixed  | `cc uninstall` added in P3-06/P3-07 |
+| Issue                                      | Status | Resolution                                          |
+| ------------------------------------------ | ------ | --------------------------------------------------- |
+| `cc eject skills` not implemented          | Fixed  | Implemented in P2-10                                |
+| `cc eject agents` not implemented          | Fixed  | Implemented in P2-11                                |
+| Local skill `test-` prefix filter          | Fixed  | Removed in P1-00                                    |
+| No uninstall command                       | Fixed  | `cc uninstall` added in P3-06/P3-07                 |
+| Build step skips uncovered domains (UX-11) | Fixed  | `populateFromStack()` now uses ALL_DOMAINS (0.16.0) |
 
 ---
 
@@ -85,18 +86,6 @@ Expert mode (disables conflict/dependency checking) is automatically enabled whe
 ### Default Mode
 
 The wizard defaults to **Local Mode** (not Plugin Mode). This gives users ownership of their configuration.
-
----
-
-### Build Step Skips Uncovered Domains (UX-11)
-
-After selecting a stack, the build step only cycles through domains that the stack covers. For example, selecting a frontend-only stack only shows "web". Users cannot add technologies in uncovered domains (api, cli, mobile, shared).
-
-**Root cause:** `populateFromStack()` sets `selectedDomains` to only domains found in the stack's skills. The build step iterates only `selectedDomains`.
-
-**Workaround:** Use "Build from scratch" approach and manually select all desired domains.
-
-**Status:** Tracked as UX-11. See investigation notes in [TODO-cli-ux.md](../TODO-cli-ux.md).
 
 ---
 
