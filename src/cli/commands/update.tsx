@@ -9,14 +9,16 @@ import {
   loadSkillsMatrixFromSource,
   type SourceLoadResult,
 } from "../lib/source-loader.js";
-import { hashFile } from "../lib/versioning.js";
 import { recompileAgents } from "../lib/agent-recompiler.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
+import {
+  compareSkills,
+  type SkillComparisonResult,
+} from "../lib/skill-metadata.js";
 import {
   fileExists,
   readFile,
   writeFile,
-  listDirectories,
   copy,
 } from "../utils/fs.js";
 import { LOCAL_SKILLS_PATH } from "../consts.js";
@@ -24,99 +26,15 @@ import { getCollectivePluginDir } from "../lib/plugin-finder.js";
 import { Confirm } from "../components/common/confirm.js";
 
 /**
- * ForkedFrom metadata stored in local skill's metadata.yaml
- */
-interface ForkedFromMetadata {
-  skill_id: string;
-  content_hash: string;
-  date: string;
-}
-
-/**
  * Local skill metadata structure
  */
 interface LocalSkillMetadata {
-  forked_from?: ForkedFromMetadata;
+  forked_from?: {
+    skill_id: string;
+    content_hash: string;
+    date: string;
+  };
   [key: string]: unknown;
-}
-
-/**
- * Result of comparing a local skill to its source
- */
-interface SkillComparisonResult {
-  id: string;
-  localHash: string | null;
-  sourceHash: string | null;
-  status: "current" | "outdated" | "local-only";
-  dirName: string;
-  sourcePath?: string;
-}
-
-/**
- * Read forked_from metadata from a local skill's metadata.yaml
- */
-async function readForkedFromMetadata(
-  skillDir: string,
-): Promise<ForkedFromMetadata | null> {
-  const metadataPath = path.join(skillDir, "metadata.yaml");
-
-  if (!(await fileExists(metadataPath))) {
-    return null;
-  }
-
-  const content = await readFile(metadataPath);
-  const metadata = parseYaml(content) as LocalSkillMetadata;
-
-  return metadata.forked_from ?? null;
-}
-
-/**
- * Get local skills with their forked_from metadata
- */
-async function getLocalSkillsWithMetadata(
-  projectDir: string,
-): Promise<
-  Map<string, { dirName: string; forkedFrom: ForkedFromMetadata | null }>
-> {
-  const localSkillsPath = path.join(projectDir, LOCAL_SKILLS_PATH);
-  const result = new Map<
-    string,
-    { dirName: string; forkedFrom: ForkedFromMetadata | null }
-  >();
-
-  if (!(await fileExists(localSkillsPath))) {
-    return result;
-  }
-
-  const skillDirs = await listDirectories(localSkillsPath);
-
-  for (const dirName of skillDirs) {
-    const skillDir = path.join(localSkillsPath, dirName);
-    const forkedFrom = await readForkedFromMetadata(skillDir);
-
-    // Use the skill_id from forked_from if available, otherwise use directory name
-    const skillId = forkedFrom?.skill_id ?? dirName;
-
-    result.set(skillId, { dirName, forkedFrom });
-  }
-
-  return result;
-}
-
-/**
- * Compute source hash for a skill's SKILL.md file
- */
-async function computeSourceHash(
-  sourcePath: string,
-  skillPath: string,
-): Promise<string | null> {
-  const skillMdPath = path.join(sourcePath, "src", skillPath, "SKILL.md");
-
-  if (!(await fileExists(skillMdPath))) {
-    return null;
-  }
-
-  return hashFile(skillMdPath);
 }
 
 /**
@@ -124,76 +42,6 @@ async function computeSourceHash(
  */
 function getCurrentDate(): string {
   return new Date().toISOString().split("T")[0];
-}
-
-/**
- * Compare local skills against source and determine status
- */
-async function compareSkills(
-  projectDir: string,
-  sourcePath: string,
-  sourceSkills: Record<string, { path: string }>,
-): Promise<SkillComparisonResult[]> {
-  const results: SkillComparisonResult[] = [];
-  const localSkills = await getLocalSkillsWithMetadata(projectDir);
-
-  for (const [skillId, { dirName, forkedFrom }] of localSkills) {
-    if (!forkedFrom) {
-      // Local-only skill (no forked_from metadata)
-      results.push({
-        id: skillId,
-        localHash: null,
-        sourceHash: null,
-        status: "local-only",
-        dirName,
-      });
-      continue;
-    }
-
-    const localHash = forkedFrom.content_hash;
-    const sourceSkill = sourceSkills[forkedFrom.skill_id];
-
-    if (!sourceSkill) {
-      // Skill was forked from a source that no longer exists
-      results.push({
-        id: forkedFrom.skill_id,
-        localHash,
-        sourceHash: null,
-        status: "local-only",
-        dirName,
-      });
-      continue;
-    }
-
-    const sourceHash = await computeSourceHash(sourcePath, sourceSkill.path);
-
-    if (sourceHash === null) {
-      results.push({
-        id: forkedFrom.skill_id,
-        localHash,
-        sourceHash: null,
-        status: "local-only",
-        dirName,
-      });
-      continue;
-    }
-
-    const status = localHash === sourceHash ? "current" : "outdated";
-
-    results.push({
-      id: forkedFrom.skill_id,
-      localHash,
-      sourceHash,
-      status,
-      dirName,
-      sourcePath: sourceSkill.path,
-    });
-  }
-
-  // Sort results by skill ID
-  results.sort((a, b) => a.id.localeCompare(b.id));
-
-  return results;
 }
 
 /**

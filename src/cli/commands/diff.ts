@@ -2,29 +2,12 @@ import { Args, Flags } from "@oclif/core";
 import chalk from "chalk";
 import path from "path";
 import { createTwoFilesPatch } from "diff";
-import { parse as parseYaml } from "yaml";
 import { BaseCommand } from "../base-command.js";
 import { loadSkillsMatrixFromSource } from "../lib/source-loader.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
+import { readForkedFromMetadata, type ForkedFromMetadata } from "../lib/skill-metadata.js";
 import { fileExists, readFile, listDirectories } from "../utils/fs.js";
 import { LOCAL_SKILLS_PATH } from "../consts.js";
-
-/**
- * ForkedFrom metadata stored in local skill's metadata.yaml
- */
-interface ForkedFromMetadata {
-  skill_id: string;
-  content_hash: string;
-  date: string;
-}
-
-/**
- * Local skill metadata structure
- */
-interface LocalSkillMetadata {
-  forked_from?: ForkedFromMetadata;
-  [key: string]: unknown;
-}
 
 /**
  * Result of diffing a local skill against its source
@@ -34,24 +17,6 @@ interface SkillDiffResult {
   forkedFrom: ForkedFromMetadata | null;
   hasDiff: boolean;
   diffOutput: string;
-}
-
-/**
- * Read forked_from metadata from a local skill's metadata.yaml
- */
-async function readForkedFromMetadata(
-  skillDir: string,
-): Promise<ForkedFromMetadata | null> {
-  const metadataPath = path.join(skillDir, "metadata.yaml");
-
-  if (!(await fileExists(metadataPath))) {
-    return null;
-  }
-
-  const content = await readFile(metadataPath);
-  const metadata = parseYaml(content) as LocalSkillMetadata;
-
-  return metadata.forked_from ?? null;
 }
 
 /**
@@ -111,12 +76,7 @@ async function diffSkill(
   }
 
   // Load source SKILL.md
-  const sourceSkillMdPath = path.join(
-    sourcePath,
-    "src",
-    sourceSkill.path,
-    "SKILL.md",
-  );
+  const sourceSkillMdPath = path.join(sourcePath, "src", sourceSkill.path, "SKILL.md");
 
   if (!(await fileExists(sourceSkillMdPath))) {
     return {
@@ -174,8 +134,7 @@ async function diffSkill(
 }
 
 export default class Diff extends BaseCommand {
-  static summary =
-    "Show differences between local forked skills and their source versions";
+  static summary = "Show differences between local forked skills and their source versions";
   static description =
     "Compare local forked skills with their source versions and display differences using unified diff format with colored output";
 
@@ -219,11 +178,7 @@ export default class Diff extends BaseCommand {
       });
 
       if (!flags.quiet) {
-        this.log(
-          chalk.dim(
-            `Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`,
-          ),
-        );
+        this.log(chalk.dim(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`));
       }
 
       // Build source skills map for lookup
@@ -254,12 +209,7 @@ export default class Diff extends BaseCommand {
       const skillsWithoutForkedFrom: string[] = [];
 
       for (const skillDirName of skillDirs) {
-        const result = await diffSkill(
-          localSkillsPath,
-          skillDirName,
-          sourcePath,
-          sourceSkills,
-        );
+        const result = await diffSkill(localSkillsPath, skillDirName, sourcePath, sourceSkills);
         results.push(result);
 
         if (!result.forkedFrom) {
@@ -277,9 +227,7 @@ export default class Diff extends BaseCommand {
         // Warn about skills without forked_from
         if (skillsWithoutForkedFrom.length > 0) {
           for (const skillName of skillsWithoutForkedFrom) {
-            this.warn(
-              `Skill '${skillName}' has no forked_from metadata - cannot compare`,
-            );
+            this.warn(`Skill '${skillName}' has no forked_from metadata - cannot compare`);
           }
           this.log("");
         }
@@ -290,9 +238,7 @@ export default class Diff extends BaseCommand {
         if (forkedSkills.length === 0) {
           this.logInfo("No forked skills to compare.");
         } else if (skillsWithDiffs.length === 0) {
-          this.logSuccess(
-            `All ${forkedSkills.length} forked skill(s) are up to date with source.`,
-          );
+          this.logSuccess(`All ${forkedSkills.length} forked skill(s) are up to date with source.`);
         } else {
           // Show diffs
           for (const result of skillsWithDiffs) {
