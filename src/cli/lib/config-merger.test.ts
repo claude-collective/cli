@@ -221,7 +221,7 @@ describe("config-merger", () => {
           philosophy: "New philosophy",
           framework: "remix",
           principles: ["DRY"],
-          tags: ["frontend"],
+          tags: ["web"],
         };
 
         const result = await mergeWithExistingConfig(newConfig, {

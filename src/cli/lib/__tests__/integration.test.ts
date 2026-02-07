@@ -20,8 +20,7 @@ import type { Marketplace, PluginManifest } from "../../../types";
 
 // Skills are in claude-subagents repo
 const SKILLS_REPO =
-  process.env.CC_TEST_SKILLS_SOURCE ||
-  path.resolve(__dirname, "../../../../../claude-subagents");
+  process.env.CC_TEST_SKILLS_SOURCE || path.resolve(__dirname, "../../../../../claude-subagents");
 const SKILLS_DIR = path.join(SKILLS_REPO, "src", "skills");
 
 // Agents and stacks are in the CLI repo (Phase 6: agent-centric config)
@@ -29,9 +28,7 @@ const CLI_REPO = path.resolve(__dirname, "../../../..");
 
 // These are true integration tests that require the external claude-subagents
 // repo. Opt in by setting CC_TEST_SKILLS_SOURCE=/path/to/skills-repo
-const describeIntegration = process.env.CC_TEST_SKILLS_SOURCE
-  ? describe
-  : describe.skip;
+const describeIntegration = process.env.CC_TEST_SKILLS_SOURCE ? describe : describe.skip;
 
 // =============================================================================
 // Test Helpers
@@ -56,9 +53,7 @@ async function listStackIds(): Promise<string[]> {
 /**
  * Read plugin.json from a plugin directory
  */
-async function readPluginManifest(
-  pluginDir: string,
-): Promise<PluginManifest | null> {
+async function readPluginManifest(pluginDir: string): Promise<PluginManifest | null> {
   const manifestPath = path.join(pluginDir, ".claude-plugin", "plugin.json");
   try {
     const content = await readFile(manifestPath, "utf-8");
@@ -256,14 +251,10 @@ describeIntegration("Integration: Full Stack Pipeline", () => {
     // Verify plugin directory structure
     expect(await pathExists(result.pluginPath)).toBe(true);
     expect(await pathExists(path.join(result.pluginPath, "agents"))).toBe(true);
-    expect(
-      await pathExists(
-        path.join(result.pluginPath, ".claude-plugin", "plugin.json"),
-      ),
-    ).toBe(true);
-    expect(await pathExists(path.join(result.pluginPath, "README.md"))).toBe(
+    expect(await pathExists(path.join(result.pluginPath, ".claude-plugin", "plugin.json"))).toBe(
       true,
     );
+    expect(await pathExists(path.join(result.pluginPath, "README.md"))).toBe(true);
 
     // Verify manifest
     const manifest = await readPluginManifest(result.pluginPath);
@@ -406,9 +397,7 @@ describeIntegration("Integration: Marketplace Integrity", () => {
     const parsed = JSON.parse(content) as Marketplace;
 
     // Verify structure
-    expect(parsed.$schema).toBe(
-      "https://anthropic.com/claude-code/marketplace.schema.json",
-    );
+    expect(parsed.$schema).toBe("https://anthropic.com/claude-code/marketplace.schema.json");
     expect(parsed.name).toBe("claude-collective");
     expect(parsed.version).toBe("1.0.0");
     expect(parsed.owner.name).toBe("Claude Collective");
@@ -523,7 +512,7 @@ describeIntegration("Integration: Marketplace Integrity", () => {
     expect(Object.keys(stats.byCategory).length).toBeGreaterThan(1);
 
     // Common categories that should exist
-    const expectedCategories = ["frontend", "backend"];
+    const expectedCategories = ["web", "api"];
     for (const category of expectedCategories) {
       expect(stats.byCategory[category]).toBeGreaterThan(0);
     }
@@ -635,9 +624,7 @@ describeIntegration("Integration: End-to-End Pipeline", () => {
     });
 
     // Get skill plugin names from compiled plugins (format: "skill-xxx")
-    const compiledPluginNames = new Set(
-      skillResults.map((r) => r.manifest.name),
-    );
+    const compiledPluginNames = new Set(skillResults.map((r) => r.manifest.name));
 
     // Stack skill references now use normalized kebab-case format (e.g., "web-framework-react")
     // Compiled plugins use "skill-xxx" format (e.g., "skill-web-framework-react")
@@ -653,18 +640,12 @@ describeIntegration("Integration: End-to-End Pipeline", () => {
       return id;
     };
 
-    const stackBaseNames = new Set(
-      stackResult.skillPlugins.map(extractBaseName),
-    );
-    const compiledBaseNames = new Set(
-      skillResults.map((r) => extractBaseName(r.manifest.name)),
-    );
+    const stackBaseNames = new Set(stackResult.skillPlugins.map(extractBaseName));
+    const compiledBaseNames = new Set(skillResults.map((r) => extractBaseName(r.manifest.name)));
 
     // There should be SOME overlap between stack skill references and compiled skills
     // (e.g., both should have "web-framework-react", "web-state-zustand", etc.)
-    const commonSkills = [...stackBaseNames].filter((name) =>
-      compiledBaseNames.has(name),
-    );
+    const commonSkills = [...stackBaseNames].filter((name) => compiledBaseNames.has(name));
 
     // Expect at least a few common skills (core framework skills like react)
     expect(commonSkills.length).toBeGreaterThan(0);

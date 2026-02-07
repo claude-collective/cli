@@ -16,13 +16,13 @@ import type {
 describe("resolveSkillReference", () => {
   const mockSkills: Record<string, SkillDefinition> = {
     "react (@vince)": {
-      path: "skills/frontend/framework/react (@vince)/",
+      path: "skills/web/framework/react (@vince)/",
       name: "React",
       description: "React component patterns",
       canonicalId: "react (@vince)",
     },
     "hono (@vince)": {
-      path: "skills/backend/api/hono (@vince)/",
+      path: "skills/api/api/hono (@vince)/",
       name: "Hono",
       description: "Hono API framework",
       canonicalId: "hono (@vince)",
@@ -40,7 +40,7 @@ describe("resolveSkillReference", () => {
 
     expect(result).toEqual({
       id: "react (@vince)",
-      path: "skills/frontend/framework/react (@vince)/",
+      path: "skills/web/framework/react (@vince)/",
       name: "React",
       description: "React component patterns",
       usage: "when building React components",
@@ -74,13 +74,13 @@ describe("resolveSkillReference", () => {
 describe("resolveSkillReferences", () => {
   const mockSkills: Record<string, SkillDefinition> = {
     "react (@vince)": {
-      path: "skills/frontend/framework/react (@vince)/",
+      path: "skills/web/framework/react (@vince)/",
       name: "React",
       description: "React component patterns",
       canonicalId: "react (@vince)",
     },
     "zustand (@vince)": {
-      path: "skills/frontend/client-state-management/zustand (@vince)/",
+      path: "skills/web/client-state-management/zustand (@vince)/",
       name: "Zustand",
       description: "Lightweight state management",
       canonicalId: "zustand (@vince)",
@@ -645,13 +645,13 @@ describe("resolveAgentSkillsFromStack", () => {
 describe("getAgentSkills", () => {
   const mockSkillDefinitions: Record<string, SkillDefinition> = {
     "web-framework-react": {
-      path: "skills/frontend/framework/react/",
+      path: "skills/web/framework/react/",
       name: "React",
       description: "React framework",
       canonicalId: "web-framework-react",
     },
     "web-styling-scss-modules": {
-      path: "skills/frontend/styling/scss-modules/",
+      path: "skills/web/styling/scss-modules/",
       name: "SCSS Modules",
       description: "SCSS Modules styling",
       canonicalId: "web-styling-scss-modules",
@@ -790,25 +790,25 @@ describe("resolveAgents with stack and skillAliases", () => {
 
   const mockSkillDefinitions: Record<string, SkillDefinition> = {
     "web-framework-react": {
-      path: "skills/frontend/framework/react/",
+      path: "skills/web/framework/react/",
       name: "React",
       description: "React framework",
       canonicalId: "web-framework-react",
     },
     "web-styling-scss-modules": {
-      path: "skills/frontend/styling/scss-modules/",
+      path: "skills/web/styling/scss-modules/",
       name: "SCSS Modules",
       description: "SCSS Modules styling",
       canonicalId: "web-styling-scss-modules",
     },
     "api-framework-hono": {
-      path: "skills/backend/api/hono/",
+      path: "skills/api/api/hono/",
       name: "Hono",
       description: "Hono API framework",
       canonicalId: "api-framework-hono",
     },
     "api-database-drizzle": {
-      path: "skills/backend/database/drizzle/",
+      path: "skills/api/database/drizzle/",
       name: "Drizzle",
       description: "Drizzle ORM",
       canonicalId: "api-database-drizzle",
@@ -928,9 +928,9 @@ describe("resolveAgents with stack and skillAliases", () => {
 
     // Stack only has web-developer
     const stack: Stack = {
-      id: "frontend-only",
-      name: "Frontend Stack",
-      description: "A frontend-only stack",
+      id: "web-only",
+      name: "Web Stack",
+      description: "A web-only stack",
       agents: {
         "web-developer": {
           framework: "react",

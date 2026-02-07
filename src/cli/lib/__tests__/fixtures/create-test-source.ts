@@ -103,9 +103,9 @@ export const DEFAULT_TEST_SKILLS: TestSkill[] = [
     name: "react",
     alias: "react",
     description: "React framework for building user interfaces",
-    category: "frontend/framework",
+    category: "web/framework",
     author: TEST_AUTHOR,
-    tags: ["react", "frontend", "ui"],
+    tags: ["react", "web", "ui"],
     content: `---
 name: react
 description: React framework for building user interfaces
@@ -127,7 +127,7 @@ React is a JavaScript library for building user interfaces with components.
     name: "zustand",
     alias: "zustand",
     description: "Bear necessities state management",
-    category: "frontend/state",
+    category: "web/state",
     author: TEST_AUTHOR,
     tags: ["state", "react", "zustand"],
     content: `---
@@ -169,9 +169,9 @@ Vitest is a fast unit test framework powered by Vite.
     name: "hono",
     alias: "hono",
     description: "Lightweight web framework for the edge",
-    category: "backend/framework",
+    category: "api/framework",
     author: TEST_AUTHOR,
-    tags: ["backend", "api", "edge"],
+    tags: ["api", "api", "edge"],
     content: `---
 name: hono
 description: Lightweight web framework for the edge
@@ -194,8 +194,7 @@ export const DEFAULT_TEST_AGENTS: TestAgent[] = [
     model: "opus",
     permissionMode: "default",
     introContent: "You are a web developer agent.",
-    workflowContent:
-      "## Workflow\n\n1. Analyze requirements\n2. Implement solution",
+    workflowContent: "## Workflow\n\n1. Analyze requirements\n2. Implement solution",
   },
   {
     name: "api-developer",
@@ -244,10 +243,7 @@ export async function directoryExists(dirPath: string): Promise<boolean> {
 /**
  * Generate a skills-matrix.yaml content from test skills
  */
-function generateMatrix(
-  skills: TestSkill[],
-  overrides?: Partial<TestMatrix>,
-): TestMatrix {
+function generateMatrix(skills: TestSkill[], overrides?: Partial<TestMatrix>): TestMatrix {
   const skillsMap: Record<string, TestSkill> = {};
   const aliases: Record<string, string> = {};
   const categories: Record<string, { name: string; description: string }> = {};
@@ -288,9 +284,7 @@ function generateMatrix(
 /**
  * Create a test source directory structure
  */
-export async function createTestSource(
-  options: TestSourceOptions = {},
-): Promise<TestDirs> {
+export async function createTestSource(options: TestSourceOptions = {}): Promise<TestDirs> {
   const skills = options.skills ?? DEFAULT_TEST_SKILLS;
   const agents = options.agents ?? DEFAULT_TEST_AGENTS;
   const matrix = generateMatrix(skills, options.matrix);
@@ -309,10 +303,7 @@ export async function createTestSource(
   await mkdir(configDir, { recursive: true });
 
   // Write skills-matrix.yaml
-  await writeFile(
-    path.join(configDir, "skills-matrix.yaml"),
-    stringifyYaml(matrix),
-  );
+  await writeFile(path.join(configDir, "skills-matrix.yaml"), stringifyYaml(matrix));
 
   // Write skill files
   for (const skill of skills) {
@@ -341,10 +332,7 @@ ${skill.description}
       category: skill.category,
       tags: skill.tags ?? [],
     };
-    await writeFile(
-      path.join(skillDir, "metadata.yaml"),
-      stringifyYaml(metadata),
-    );
+    await writeFile(path.join(skillDir, "metadata.yaml"), stringifyYaml(metadata));
   }
 
   // Write agent partials
@@ -383,10 +371,7 @@ permissionMode: {{ agent.permission_mode }}
       model: agent.model ?? "opus",
       permissionMode: agent.permissionMode ?? "default",
     };
-    await writeFile(
-      path.join(agentDir, "agent.yaml"),
-      stringifyYaml(agentYaml),
-    );
+    await writeFile(path.join(agentDir, "agent.yaml"), stringifyYaml(agentYaml));
 
     // intro.md
     await writeFile(
@@ -412,12 +397,7 @@ permissionMode: {{ agent.permission_mode }}
 
   // Create plugin structure if requested
   if (options.asPlugin) {
-    const pluginDir = path.join(
-      projectDir,
-      ".claude",
-      "plugins",
-      "claude-collective",
-    );
+    const pluginDir = path.join(projectDir, ".claude", "plugins", "claude-collective");
     await mkdir(pluginDir, { recursive: true });
     await mkdir(path.join(pluginDir, ".claude-plugin"), { recursive: true });
     await mkdir(path.join(pluginDir, "agents"), { recursive: true });
@@ -441,28 +421,16 @@ permissionMode: {{ agent.permission_mode }}
       const destSkillDir = path.join(pluginDir, "skills", skill.name);
       await mkdir(destSkillDir, { recursive: true });
 
-      const skillMdContent = await readFile(
-        path.join(srcSkillDir, "SKILL.md"),
-        "utf-8",
-      );
+      const skillMdContent = await readFile(path.join(srcSkillDir, "SKILL.md"), "utf-8");
       await writeFile(path.join(destSkillDir, "SKILL.md"), skillMdContent);
 
-      const metadataContent = await readFile(
-        path.join(srcSkillDir, "metadata.yaml"),
-        "utf-8",
-      );
-      await writeFile(
-        path.join(destSkillDir, "metadata.yaml"),
-        metadataContent,
-      );
+      const metadataContent = await readFile(path.join(srcSkillDir, "metadata.yaml"), "utf-8");
+      await writeFile(path.join(destSkillDir, "metadata.yaml"), metadataContent);
     }
 
     // Write config.yaml for plugin
     if (options.projectConfig) {
-      await writeFile(
-        path.join(pluginDir, "config.yaml"),
-        stringifyYaml(options.projectConfig),
-      );
+      await writeFile(path.join(pluginDir, "config.yaml"), stringifyYaml(options.projectConfig));
     }
 
     dirs.pluginDir = pluginDir;
@@ -509,10 +477,7 @@ ${skill.description}
       if (skill.forkedFrom) {
         metadata.forked_from = skill.forkedFrom;
       }
-      await writeFile(
-        path.join(skillDir, "metadata.yaml"),
-        stringifyYaml(metadata),
-      );
+      await writeFile(path.join(skillDir, "metadata.yaml"), stringifyYaml(metadata));
     }
   }
 
@@ -552,10 +517,7 @@ export async function readTestJson<T>(filePath: string): Promise<T> {
 /**
  * Write a file to the test source
  */
-export async function writeTestFile(
-  filePath: string,
-  content: string,
-): Promise<void> {
+export async function writeTestFile(filePath: string, content: string): Promise<void> {
   await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, content);
 }
@@ -563,10 +525,7 @@ export async function writeTestFile(
 /**
  * Write YAML to a file
  */
-export async function writeTestYaml(
-  filePath: string,
-  data: unknown,
-): Promise<void> {
+export async function writeTestYaml(filePath: string, data: unknown): Promise<void> {
   await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, stringifyYaml(data));
 }

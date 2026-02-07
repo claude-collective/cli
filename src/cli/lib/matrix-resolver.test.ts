@@ -9,8 +9,6 @@ import {
   getRecommendReason,
   validateSelection,
   getSkillsByCategory,
-  getTopLevelCategories,
-  getSubcategories,
   getAvailableSkills,
   isCategoryAllDisabled,
 } from "./matrix-resolver";
@@ -19,10 +17,7 @@ import type { MergedSkillsMatrix, ResolvedSkill } from "../types-matrix";
 /**
  * Create a minimal ResolvedSkill for testing
  */
-function createSkill(
-  id: string,
-  overrides: Partial<ResolvedSkill> = {},
-): ResolvedSkill {
+function createSkill(id: string, overrides: Partial<ResolvedSkill> = {}): ResolvedSkill {
   return {
     id,
     name: id,
@@ -337,9 +332,7 @@ describe("validateSelection", () => {
 
     const result = validateSelection(["skill-a"], matrix);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.type === "missing_requirement")).toBe(
-      true,
-    );
+    expect(result.errors.some((e) => e.type === "missing_requirement")).toBe(true);
   });
 
   it("should return warning for missing recommendations", () => {
@@ -351,9 +344,7 @@ describe("validateSelection", () => {
 
     const result = validateSelection(["skill-a"], matrix);
     expect(result.valid).toBe(true); // Warnings don't make it invalid
-    expect(
-      result.warnings.some((w) => w.type === "missing_recommendation"),
-    ).toBe(true);
+    expect(result.warnings.some((w) => w.type === "missing_recommendation")).toBe(true);
   });
 
   it("should return error for category exclusivity violation", () => {
@@ -382,9 +373,7 @@ describe("validateSelection", () => {
 
     const result = validateSelection(["skill-a", "skill-b"], matrix);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.type === "category_exclusive")).toBe(
-      true,
-    );
+    expect(result.errors.some((e) => e.type === "category_exclusive")).toBe(true);
   });
 });
 
@@ -408,138 +397,6 @@ describe("getSkillsByCategory", () => {
     });
 
     const result = getSkillsByCategory("nonexistent", matrix);
-    expect(result).toHaveLength(0);
-  });
-});
-
-describe("getTopLevelCategories", () => {
-  it("should return categories without parents", () => {
-    const matrix = createMatrix(
-      {},
-      {},
-      {
-        framework: {
-          id: "framework",
-          name: "Framework",
-          description: "Frameworks",
-          exclusive: true,
-          required: false,
-          order: 1,
-        },
-        styling: {
-          id: "styling",
-          name: "Styling",
-          description: "Styling",
-          exclusive: false,
-          required: false,
-          order: 2,
-        },
-        "styling-css": {
-          id: "styling-css",
-          name: "CSS",
-          description: "CSS styling",
-          exclusive: false,
-          required: false,
-          order: 1,
-          parent: "styling",
-        },
-      },
-    );
-
-    const result = getTopLevelCategories(matrix);
-    expect(result).toContain("framework");
-    expect(result).toContain("styling");
-    expect(result).not.toContain("styling-css");
-  });
-
-  it("should sort by order", () => {
-    const matrix = createMatrix(
-      {},
-      {},
-      {
-        second: {
-          id: "second",
-          name: "Second",
-          description: "",
-          exclusive: false,
-          required: false,
-          order: 2,
-        },
-        first: {
-          id: "first",
-          name: "First",
-          description: "",
-          exclusive: false,
-          required: false,
-          order: 1,
-        },
-      },
-    );
-
-    const result = getTopLevelCategories(matrix);
-    expect(result[0]).toBe("first");
-    expect(result[1]).toBe("second");
-  });
-});
-
-describe("getSubcategories", () => {
-  it("should return subcategories of a parent", () => {
-    const matrix = createMatrix(
-      {},
-      {},
-      {
-        styling: {
-          id: "styling",
-          name: "Styling",
-          description: "",
-          exclusive: false,
-          required: false,
-          order: 1,
-        },
-        "styling-css": {
-          id: "styling-css",
-          name: "CSS",
-          description: "",
-          exclusive: false,
-          required: false,
-          order: 1,
-          parent: "styling",
-        },
-        "styling-tailwind": {
-          id: "styling-tailwind",
-          name: "Tailwind",
-          description: "",
-          exclusive: false,
-          required: false,
-          order: 2,
-          parent: "styling",
-        },
-      },
-    );
-
-    const result = getSubcategories("styling", matrix);
-    expect(result).toHaveLength(2);
-    expect(result).toContain("styling-css");
-    expect(result).toContain("styling-tailwind");
-  });
-
-  it("should return empty array if no subcategories", () => {
-    const matrix = createMatrix(
-      {},
-      {},
-      {
-        framework: {
-          id: "framework",
-          name: "Framework",
-          description: "",
-          exclusive: true,
-          required: false,
-          order: 1,
-        },
-      },
-    );
-
-    const result = getSubcategories("framework", matrix);
     expect(result).toHaveLength(0);
   });
 });
@@ -618,9 +475,7 @@ describe("Empty skill selection (P1-21)", () => {
     it("should still disable skills with unmet requirements", () => {
       // Skill A requires B, but nothing is selected
       const skillA = createSkill("skill-a", {
-        requires: [
-          { skillIds: ["skill-b"], needsAny: false, reason: "Needs B" },
-        ],
+        requires: [{ skillIds: ["skill-b"], needsAny: false, reason: "Needs B" }],
       });
       const skillB = createSkill("skill-b");
       const matrix = createMatrix({ "skill-a": skillA, "skill-b": skillB });
@@ -664,9 +519,7 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
     it("should return error when conflicting skills are both selected", () => {
       const skillA = createSkill("skill-a", {
         name: "Skill A",
-        conflictsWith: [
-          { skillId: "skill-b", reason: "These cannot work together" },
-        ],
+        conflictsWith: [{ skillId: "skill-b", reason: "These cannot work together" }],
       });
       const skillB = createSkill("skill-b", { name: "Skill B" });
       const matrix = createMatrix({ "skill-a": skillA, "skill-b": skillB });
@@ -676,9 +529,7 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0].type).toBe("conflict");
-      expect(result.errors[0].message).toContain(
-        "Skill A conflicts with Skill B",
-      );
+      expect(result.errors[0].message).toContain("Skill A conflicts with Skill B");
       expect(result.errors[0].message).toContain("These cannot work together");
       expect(result.errors[0].skills).toContain("skill-a");
       expect(result.errors[0].skills).toContain("skill-b");
@@ -700,15 +551,10 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
         "skill-c": skillC,
       });
 
-      const result = validateSelection(
-        ["skill-a", "skill-b", "skill-c"],
-        matrix,
-      );
+      const result = validateSelection(["skill-a", "skill-b", "skill-c"], matrix);
 
       expect(result.valid).toBe(false);
-      expect(result.errors.filter((e) => e.type === "conflict")).toHaveLength(
-        2,
-      );
+      expect(result.errors.filter((e) => e.type === "conflict")).toHaveLength(2);
     });
 
     it("should catch conflicts when declaring skill comes first in selection", () => {
@@ -777,9 +623,7 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
     it("should provide correct disable reason for conflicts", () => {
       const skillA = createSkill("skill-a", {
         name: "Skill A",
-        conflictsWith: [
-          { skillId: "skill-b", reason: "Incompatible architectures" },
-        ],
+        conflictsWith: [{ skillId: "skill-b", reason: "Incompatible architectures" }],
       });
       const skillB = createSkill("skill-b", { name: "Skill B" });
       const matrix = createMatrix({ "skill-a": skillA, "skill-b": skillB });
@@ -838,9 +682,7 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
       // skill-b is already selected
       const options = getAvailableSkills("framework", ["skill-b"], matrix);
 
-      const skillAOption = options.find(
-        (o: { id: string }) => o.id === "skill-a",
-      );
+      const skillAOption = options.find((o: { id: string }) => o.id === "skill-a");
       expect(skillAOption).toBeDefined();
       expect(skillAOption!.disabled).toBe(true);
       expect(skillAOption!.disabledReason).toContain("Different paradigms");
@@ -880,9 +722,7 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
 
     it("should NOT disable skill with unmet requirements in expert mode", () => {
       const skillA = createSkill("skill-a", {
-        requires: [
-          { skillIds: ["skill-b"], needsAny: false, reason: "Needs B" },
-        ],
+        requires: [{ skillIds: ["skill-b"], needsAny: false, reason: "Needs B" }],
       });
       const skillB = createSkill("skill-b");
       const matrix = createMatrix({ "skill-a": skillA, "skill-b": skillB });
@@ -945,9 +785,7 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
         expertMode: true,
       });
 
-      const skillAOption = options.find(
-        (o: { id: string }) => o.id === "skill-a",
-      );
+      const skillAOption = options.find((o: { id: string }) => o.id === "skill-a");
       expect(skillAOption).toBeDefined();
       expect(skillAOption!.disabled).toBe(false);
     });
@@ -980,9 +818,7 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
         expertMode: true,
       });
 
-      const skillBOption = options.find(
-        (o: { id: string }) => o.id === "skill-b",
-      );
+      const skillBOption = options.find((o: { id: string }) => o.id === "skill-b");
       expect(skillBOption).toBeDefined();
       expect(skillBOption!.selected).toBe(true);
     });
@@ -1152,14 +988,10 @@ describe("Missing skill dependencies (P1-24)", () => {
 
     it("should return multiple errors when multiple skills have missing dependencies", () => {
       const skillA = createSkill("skill-a", {
-        requires: [
-          { skillIds: ["skill-c"], needsAny: false, reason: "A needs C" },
-        ],
+        requires: [{ skillIds: ["skill-c"], needsAny: false, reason: "A needs C" }],
       });
       const skillB = createSkill("skill-b", {
-        requires: [
-          { skillIds: ["skill-d"], needsAny: false, reason: "B needs D" },
-        ],
+        requires: [{ skillIds: ["skill-d"], needsAny: false, reason: "B needs D" }],
       });
       const skillC = createSkill("skill-c");
       const skillD = createSkill("skill-d");
@@ -1175,9 +1007,7 @@ describe("Missing skill dependencies (P1-24)", () => {
 
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(2);
-      expect(result.errors.every((e) => e.type === "missing_requirement")).toBe(
-        true,
-      );
+      expect(result.errors.every((e) => e.type === "missing_requirement")).toBe(true);
     });
   });
 
@@ -1185,9 +1015,7 @@ describe("Missing skill dependencies (P1-24)", () => {
     it("should include missing skill IDs in the error skills array", () => {
       const skillA = createSkill("skill-a", {
         name: "Skill A",
-        requires: [
-          { skillIds: ["skill-b"], needsAny: false, reason: "Needs B" },
-        ],
+        requires: [{ skillIds: ["skill-b"], needsAny: false, reason: "Needs B" }],
       });
       const skillB = createSkill("skill-b", { name: "Skill B" });
       const matrix = createMatrix({ "skill-a": skillA, "skill-b": skillB });
@@ -1200,9 +1028,7 @@ describe("Missing skill dependencies (P1-24)", () => {
     it("should include skill name in error message", () => {
       const skillA = createSkill("skill-a", {
         name: "My Custom Skill",
-        requires: [
-          { skillIds: ["skill-b"], needsAny: false, reason: "Needs B" },
-        ],
+        requires: [{ skillIds: ["skill-b"], needsAny: false, reason: "Needs B" }],
       });
       const skillB = createSkill("skill-b", { name: "Required Skill" });
       const matrix = createMatrix({ "skill-a": skillA, "skill-b": skillB });
@@ -1289,9 +1115,7 @@ describe("Missing skill dependencies (P1-24)", () => {
       const result = validateSelection(["skill-a", "skill-c"], matrix);
 
       // Should not recommend B since it conflicts with C
-      expect(
-        result.warnings.filter((w) => w.type === "missing_recommendation"),
-      ).toHaveLength(0);
+      expect(result.warnings.filter((w) => w.type === "missing_recommendation")).toHaveLength(0);
     });
 
     it("should not warn when recommended skill is already selected", () => {
@@ -1303,18 +1127,14 @@ describe("Missing skill dependencies (P1-24)", () => {
 
       const result = validateSelection(["skill-a", "skill-b"], matrix);
 
-      expect(
-        result.warnings.filter((w) => w.type === "missing_recommendation"),
-      ).toHaveLength(0);
+      expect(result.warnings.filter((w) => w.type === "missing_recommendation")).toHaveLength(0);
     });
   });
 
   describe("isDisabled prevents selecting skills with unmet dependencies", () => {
     it("should disable skill when required dependency is not selected", () => {
       const skillA = createSkill("skill-a", {
-        requires: [
-          { skillIds: ["skill-b"], needsAny: false, reason: "Needs framework" },
-        ],
+        requires: [{ skillIds: ["skill-b"], needsAny: false, reason: "Needs framework" }],
       });
       const skillB = createSkill("skill-b");
       const matrix = createMatrix({ "skill-a": skillA, "skill-b": skillB });
@@ -1326,9 +1146,7 @@ describe("Missing skill dependencies (P1-24)", () => {
 
     it("should enable skill when required dependency is selected", () => {
       const skillA = createSkill("skill-a", {
-        requires: [
-          { skillIds: ["skill-b"], needsAny: false, reason: "Needs framework" },
-        ],
+        requires: [{ skillIds: ["skill-b"], needsAny: false, reason: "Needs framework" }],
       });
       const skillB = createSkill("skill-b");
       const matrix = createMatrix({ "skill-a": skillA, "skill-b": skillB });

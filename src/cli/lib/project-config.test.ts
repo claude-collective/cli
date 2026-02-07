@@ -73,10 +73,7 @@ agents:
       const result = await loadProjectConfig(tempDir);
 
       expect(result).not.toBeNull();
-      expect(result!.config.skills).toEqual([
-        "react (@vince)",
-        "zustand (@vince)",
-      ]);
+      expect(result!.config.skills).toEqual(["react (@vince)", "zustand (@vince)"]);
     });
 
     it("should load config with skills array (object format)", async () => {
@@ -201,21 +198,14 @@ tags:
       expect(result!.config.principles).toEqual(["Keep it simple"]);
       expect(result!.config.tags).toEqual(["nextjs", "react"]);
       // Legacy-only fields should not be present in normalized config
-      expect(
-        (result!.config as unknown as Record<string, unknown>).id,
-      ).toBeUndefined();
-      expect(
-        (result!.config as unknown as Record<string, unknown>).version,
-      ).toBeUndefined();
+      expect((result!.config as unknown as Record<string, unknown>).id).toBeUndefined();
+      expect((result!.config as unknown as Record<string, unknown>).version).toBeUndefined();
     });
 
     it("should return null for invalid YAML", async () => {
       const configDir = path.join(tempDir, ".claude");
       await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, "config.yaml"),
-        "invalid: yaml: content: :",
-      );
+      await writeFile(path.join(configDir, "config.yaml"), "invalid: yaml: content: :");
 
       const result = await loadProjectConfig(tempDir);
       expect(result).toBeNull();
@@ -278,18 +268,12 @@ custom_agents:
 
   describe("isLegacyStackConfig", () => {
     it("should return true for semver version", () => {
-      expect(
-        isLegacyStackConfig({ version: "1.0.0", name: "test", agents: [] }),
-      ).toBe(true);
-      expect(
-        isLegacyStackConfig({ version: "2.1.3", name: "test", agents: [] }),
-      ).toBe(true);
+      expect(isLegacyStackConfig({ version: "1.0.0", name: "test", agents: [] })).toBe(true);
+      expect(isLegacyStackConfig({ version: "2.1.3", name: "test", agents: [] })).toBe(true);
     });
 
     it("should return true for config with id field", () => {
-      expect(
-        isLegacyStackConfig({ id: "my-stack", name: "test", agents: [] }),
-      ).toBe(true);
+      expect(isLegacyStackConfig({ id: "my-stack", name: "test", agents: [] })).toBe(true);
     });
 
     it("should return true for config with created/updated fields", () => {
@@ -311,9 +295,7 @@ custom_agents:
 
     it("should return false for new format config", () => {
       expect(isLegacyStackConfig({ name: "test", agents: [] })).toBe(false);
-      expect(
-        isLegacyStackConfig({ version: "1", name: "test", agents: [] }),
-      ).toBe(false);
+      expect(isLegacyStackConfig({ version: "1", name: "test", agents: [] })).toBe(false);
     });
 
     it("should return false for null/undefined", () => {
@@ -348,9 +330,7 @@ custom_agents:
       });
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain(
-        "agents is required and must be an array",
-      );
+      expect(result.errors).toContain("agents is required and must be an array");
     });
 
     it("should fail for non-string agents", () => {
@@ -360,9 +340,7 @@ custom_agents:
       });
 
       expect(result.valid).toBe(false);
-      expect(
-        result.errors.some((e) => e.includes("must contain strings")),
-      ).toBe(true);
+      expect(result.errors.some((e) => e.includes("must contain strings"))).toBe(true);
     });
 
     it("should fail for invalid version", () => {
@@ -373,9 +351,7 @@ custom_agents:
       });
 
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes('version must be "1"'))).toBe(
-        true,
-      );
+      expect(result.errors.some((e) => e.includes('version must be "1"'))).toBe(true);
     });
 
     it("should fail for skills as non-array", () => {
@@ -397,9 +373,7 @@ custom_agents:
       });
 
       expect(result.valid).toBe(false);
-      expect(
-        result.errors.some((e) => e.includes("must have an id string")),
-      ).toBe(true);
+      expect(result.errors.some((e) => e.includes("must have an id string"))).toBe(true);
     });
 
     it("should fail for local skill without path", () => {
@@ -410,9 +384,7 @@ custom_agents:
       });
 
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("must have a path"))).toBe(
-        true,
-      );
+      expect(result.errors.some((e) => e.includes("must have a path"))).toBe(true);
     });
 
     it("should pass for valid skills with both string and object format", () => {
@@ -468,9 +440,7 @@ custom_agents:
       });
 
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("must be an array"))).toBe(
-        true,
-      );
+      expect(result.errors.some((e) => e.includes("must be an array"))).toBe(true);
     });
 
     it("should warn for deprecated fields", () => {
@@ -484,15 +454,9 @@ custom_agents:
 
       // Still valid, but with warnings
       expect(result.valid).toBe(true);
-      expect(result.warnings).toContain(
-        "id field is deprecated in project config",
-      );
-      expect(result.warnings).toContain(
-        "created field is deprecated in project config",
-      );
-      expect(result.warnings).toContain(
-        "updated field is deprecated in project config",
-      );
+      expect(result.warnings).toContain("id field is deprecated in project config");
+      expect(result.warnings).toContain("created field is deprecated in project config");
+      expect(result.warnings).toContain("updated field is deprecated in project config");
     });
 
     it("should fail for non-object config", () => {
@@ -556,10 +520,7 @@ custom_agents:
               tools: ["Read", "Grep", "Glob"],
               disallowed_tools: ["Bash"],
               permission_mode: "acceptEdits",
-              skills: [
-                { id: "react (@vince)", preloaded: true },
-                "zustand (@vince)",
-              ],
+              skills: [{ id: "react (@vince)", preloaded: true }, "zustand (@vince)"],
               hooks: {
                 PreToolUse: [{ matcher: "*" }],
               },
@@ -593,9 +554,7 @@ custom_agents:
         });
 
         expect(result.valid).toBe(false);
-        expect(result.errors.some((e) => e.includes("title is required"))).toBe(
-          true,
-        );
+        expect(result.errors.some((e) => e.includes("title is required"))).toBe(true);
       });
 
       it("should fail for custom agent missing description", () => {
@@ -610,9 +569,7 @@ custom_agents:
         });
 
         expect(result.valid).toBe(false);
-        expect(
-          result.errors.some((e) => e.includes("description is required")),
-        ).toBe(true);
+        expect(result.errors.some((e) => e.includes("description is required"))).toBe(true);
       });
 
       it("should fail for custom agent with invalid model", () => {
@@ -629,9 +586,7 @@ custom_agents:
         });
 
         expect(result.valid).toBe(false);
-        expect(
-          result.errors.some((e) => e.includes("model must be one of")),
-        ).toBe(true);
+        expect(result.errors.some((e) => e.includes("model must be one of"))).toBe(true);
       });
 
       it("should fail for custom agent with invalid permission_mode", () => {
@@ -648,11 +603,7 @@ custom_agents:
         });
 
         expect(result.valid).toBe(false);
-        expect(
-          result.errors.some((e) =>
-            e.includes("permission_mode must be one of"),
-          ),
-        ).toBe(true);
+        expect(result.errors.some((e) => e.includes("permission_mode must be one of"))).toBe(true);
       });
 
       it("should fail for custom agent with non-array tools", () => {
@@ -669,9 +620,7 @@ custom_agents:
         });
 
         expect(result.valid).toBe(false);
-        expect(
-          result.errors.some((e) => e.includes("tools must be an array")),
-        ).toBe(true);
+        expect(result.errors.some((e) => e.includes("tools must be an array"))).toBe(true);
       });
 
       it("should fail for custom agent with non-string tools entries", () => {
@@ -688,11 +637,7 @@ custom_agents:
         });
 
         expect(result.valid).toBe(false);
-        expect(
-          result.errors.some((e) =>
-            e.includes("tools must contain only strings"),
-          ),
-        ).toBe(true);
+        expect(result.errors.some((e) => e.includes("tools must contain only strings"))).toBe(true);
       });
 
       it("should fail when custom agent extends another custom agent", () => {
@@ -713,18 +658,13 @@ custom_agents:
         });
 
         expect(result.valid).toBe(false);
-        expect(
-          result.errors.some((e) =>
-            e.includes("cannot reference another custom agent"),
-          ),
-        ).toBe(true);
+        expect(result.errors.some((e) => e.includes("cannot reference another custom agent"))).toBe(
+          true,
+        );
       });
 
       it("should fail when exceeding maximum custom agents (20)", () => {
-        const customAgents: Record<
-          string,
-          { title: string; description: string }
-        > = {};
+        const customAgents: Record<string, { title: string; description: string }> = {};
         for (let i = 0; i < 21; i++) {
           customAgents[`agent-${i}`] = {
             title: `Agent ${i}`,
@@ -739,16 +679,11 @@ custom_agents:
         });
 
         expect(result.valid).toBe(false);
-        expect(
-          result.errors.some((e) => e.includes("cannot exceed 20 agents")),
-        ).toBe(true);
+        expect(result.errors.some((e) => e.includes("cannot exceed 20 agents"))).toBe(true);
       });
 
       it("should pass with exactly 20 custom agents", () => {
-        const customAgents: Record<
-          string,
-          { title: string; description: string }
-        > = {};
+        const customAgents: Record<string, { title: string; description: string }> = {};
         for (let i = 0; i < 20; i++) {
           customAgents[`agent-${i}`] = {
             title: `Agent ${i}`,
@@ -779,9 +714,7 @@ custom_agents:
         });
 
         expect(result.valid).toBe(false);
-        expect(
-          result.errors.some((e) => e.includes("must have an id string")),
-        ).toBe(true);
+        expect(result.errors.some((e) => e.includes("must have an id string"))).toBe(true);
       });
 
       it("should fail for custom agent config as non-object", () => {
@@ -794,9 +727,7 @@ custom_agents:
         });
 
         expect(result.valid).toBe(false);
-        expect(result.errors.some((e) => e.includes("must be an object"))).toBe(
-          true,
-        );
+        expect(result.errors.some((e) => e.includes("must be an object"))).toBe(true);
       });
     });
   });
@@ -994,9 +925,7 @@ function createMockSkill(
 /**
  * Helper to create a minimal merged skills matrix for testing
  */
-function createMockMatrix(
-  skills: Record<string, ResolvedSkill>,
-): MergedSkillsMatrix {
+function createMockMatrix(skills: Record<string, ResolvedSkill>): MergedSkillsMatrix {
   return {
     version: "1.0.0",
     categories: {},
@@ -1022,8 +951,8 @@ describe("round-trip tests", () => {
   it("should round-trip minimal config (name and skills only)", async () => {
     // Create mock matrix with skills
     const matrix = createMockMatrix({
-      "react (@vince)": createMockSkill("react (@vince)", "frontend/framework"),
-      "zustand (@vince)": createMockSkill("zustand (@vince)", "frontend/state"),
+      "react (@vince)": createMockSkill("react (@vince)", "web/framework"),
+      "zustand (@vince)": createMockSkill("zustand (@vince)", "web/state"),
     });
 
     // Generate config
@@ -1036,10 +965,7 @@ describe("round-trip tests", () => {
     // Write to temp dir
     const configDir = path.join(tempDir, ".claude");
     await mkdir(configDir, { recursive: true });
-    await writeFile(
-      path.join(configDir, "config.yaml"),
-      stringifyYaml(generated),
-    );
+    await writeFile(path.join(configDir, "config.yaml"), stringifyYaml(generated));
 
     // Load it back
     const loaded = await loadProjectConfig(tempDir);
@@ -1055,7 +981,7 @@ describe("round-trip tests", () => {
   it("should round-trip config with options (description/framework/author)", async () => {
     // Create mock matrix with skills
     const matrix = createMockMatrix({
-      "react (@vince)": createMockSkill("react (@vince)", "frontend/framework"),
+      "react (@vince)": createMockSkill("react (@vince)", "web/framework"),
     });
 
     // Generate config with options
@@ -1073,10 +999,7 @@ describe("round-trip tests", () => {
     // Write to temp dir
     const configDir = path.join(tempDir, ".claude");
     await mkdir(configDir, { recursive: true });
-    await writeFile(
-      path.join(configDir, "config.yaml"),
-      stringifyYaml(generated),
-    );
+    await writeFile(path.join(configDir, "config.yaml"), stringifyYaml(generated));
 
     // Load it back
     const loaded = await loadProjectConfig(tempDir);
@@ -1094,15 +1017,11 @@ describe("round-trip tests", () => {
   it("should round-trip config with local skills (path preserved)", async () => {
     // Create mock matrix with local skill
     const matrix = createMockMatrix({
-      "react (@vince)": createMockSkill("react (@vince)", "frontend/framework"),
-      "my-custom-skill (@local)": createMockSkill(
-        "my-custom-skill (@local)",
-        "local/custom",
-        {
-          local: true,
-          localPath: ".claude/skills/my-custom-skill/",
-        },
-      ),
+      "react (@vince)": createMockSkill("react (@vince)", "web/framework"),
+      "my-custom-skill (@local)": createMockSkill("my-custom-skill (@local)", "local/custom", {
+        local: true,
+        localPath: ".claude/skills/my-custom-skill/",
+      }),
     });
 
     // Generate config with local skill
@@ -1115,10 +1034,7 @@ describe("round-trip tests", () => {
     // Write to temp dir
     const configDir = path.join(tempDir, ".claude");
     await mkdir(configDir, { recursive: true });
-    await writeFile(
-      path.join(configDir, "config.yaml"),
-      stringifyYaml(generated),
-    );
+    await writeFile(path.join(configDir, "config.yaml"), stringifyYaml(generated));
 
     // Load it back
     const loaded = await loadProjectConfig(tempDir);
@@ -1149,10 +1065,7 @@ describe("round-trip tests", () => {
       author: "@vince",
       description: "A legacy stack config for testing",
       framework: "nextjs",
-      skills: [
-        { id: "react (@vince)" },
-        { id: "zustand (@vince)", preloaded: true },
-      ],
+      skills: [{ id: "react (@vince)" }, { id: "zustand (@vince)", preloaded: true }],
       agents: ["web-developer", "api-developer"],
       agent_skills: {
         "web-developer": {
@@ -1167,10 +1080,7 @@ describe("round-trip tests", () => {
     // Write as StackConfig (legacy format with semver version)
     const configDir = path.join(tempDir, ".claude");
     await mkdir(configDir, { recursive: true });
-    await writeFile(
-      path.join(configDir, "config.yaml"),
-      stringifyYaml(stackConfig),
-    );
+    await writeFile(path.join(configDir, "config.yaml"), stringifyYaml(stackConfig));
 
     // Load it back (should detect legacy and normalize)
     const loaded = await loadProjectConfig(tempDir);
@@ -1181,9 +1091,7 @@ describe("round-trip tests", () => {
 
     // Core fields should be preserved
     expect(loaded!.config.name).toBe("legacy-stack");
-    expect(loaded!.config.description).toBe(
-      "A legacy stack config for testing",
-    );
+    expect(loaded!.config.description).toBe("A legacy stack config for testing");
     expect(loaded!.config.framework).toBe("nextjs");
     expect(loaded!.config.author).toBe("@vince");
     expect(loaded!.config.agents).toEqual(["web-developer", "api-developer"]);
@@ -1203,23 +1111,18 @@ describe("round-trip tests", () => {
 
     // Extended fields should be preserved
     expect(loaded!.config.philosophy).toBe("Ship fast, iterate faster");
-    expect(loaded!.config.principles).toEqual([
-      "Keep it simple",
-      "Test everything",
-    ]);
+    expect(loaded!.config.principles).toEqual(["Keep it simple", "Test everything"]);
     expect(loaded!.config.tags).toEqual(["nextjs", "react", "fullstack"]);
 
     // Legacy-only fields should NOT be in normalized config
-    expect(
-      (loaded!.config as unknown as Record<string, unknown>).version,
-    ).toBeUndefined();
+    expect((loaded!.config as unknown as Record<string, unknown>).version).toBeUndefined();
   });
 
   it("should round-trip config with agent_skills (includeAgentSkills option)", async () => {
     // Create mock matrix with skills
     const matrix = createMockMatrix({
-      "react (@vince)": createMockSkill("react (@vince)", "frontend/framework"),
-      "zustand (@vince)": createMockSkill("zustand (@vince)", "frontend/state"),
+      "react (@vince)": createMockSkill("react (@vince)", "web/framework"),
+      "zustand (@vince)": createMockSkill("zustand (@vince)", "web/state"),
     });
 
     // Generate config with agent_skills included
@@ -1233,10 +1136,7 @@ describe("round-trip tests", () => {
     // Write to temp dir
     const configDir = path.join(tempDir, ".claude");
     await mkdir(configDir, { recursive: true });
-    await writeFile(
-      path.join(configDir, "config.yaml"),
-      stringifyYaml(generated),
-    );
+    await writeFile(path.join(configDir, "config.yaml"), stringifyYaml(generated));
 
     // Load it back
     const loaded = await loadProjectConfig(tempDir);
@@ -1277,10 +1177,7 @@ describe("round-trip tests", () => {
     // Write to temp dir
     const configDir = path.join(tempDir, ".claude");
     await mkdir(configDir, { recursive: true });
-    await writeFile(
-      path.join(configDir, "config.yaml"),
-      stringifyYaml(generated),
-    );
+    await writeFile(path.join(configDir, "config.yaml"), stringifyYaml(generated));
 
     // Load it back
     const loaded = await loadProjectConfig(tempDir);

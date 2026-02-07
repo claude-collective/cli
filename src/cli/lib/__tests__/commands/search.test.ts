@@ -63,12 +63,7 @@ describe("search command", () => {
     });
 
     it("should accept --category flag", async () => {
-      const { stdout, error } = await runCliCommand([
-        "search",
-        "test",
-        "--category",
-        "frontend",
-      ]);
+      const { stdout, error } = await runCliCommand(["search", "test", "--category", "web"]);
 
       // Should not error on invalid flag
       const output = stdout + (error?.message || "");
@@ -76,12 +71,7 @@ describe("search command", () => {
     });
 
     it("should accept -c shorthand for category", async () => {
-      const { stdout, error } = await runCliCommand([
-        "search",
-        "test",
-        "-c",
-        "frontend",
-      ]);
+      const { stdout, error } = await runCliCommand(["search", "test", "-c", "web"]);
 
       // Should not error on invalid flag
       const output = stdout + (error?.message || "");
@@ -114,12 +104,7 @@ describe("search command", () => {
     });
 
     it("should accept -s shorthand for source", async () => {
-      const { stdout, error } = await runCliCommand([
-        "search",
-        "test",
-        "-s",
-        "/nonexistent/path",
-      ]);
+      const { stdout, error } = await runCliCommand(["search", "test", "-s", "/nonexistent/path"]);
 
       // Should not error on invalid flag
       const output = stdout + (error?.message || "");

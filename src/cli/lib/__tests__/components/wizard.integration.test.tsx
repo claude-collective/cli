@@ -62,14 +62,14 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
     // Web domain skills
     [TEST_SKILLS.REACT]: createMockSkill(
       TEST_SKILLS.REACT,
-      "frontend/framework",
+      "web/framework",
       {
         name: "React",
         description: "React framework",
         alias: "react",
       },
     ),
-    [TEST_SKILLS.VUE]: createMockSkill(TEST_SKILLS.VUE, "frontend/framework", {
+    [TEST_SKILLS.VUE]: createMockSkill(TEST_SKILLS.VUE, "web/framework", {
       name: "Vue",
       description: "Vue.js framework",
       alias: "vue",
@@ -79,7 +79,7 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
     }),
     [TEST_SKILLS.ZUSTAND]: createMockSkill(
       TEST_SKILLS.ZUSTAND,
-      "frontend/state",
+      "web/state",
       {
         name: "Zustand",
         description: "State management",
@@ -91,7 +91,7 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
     ),
     [TEST_SKILLS.SCSS_MODULES]: createMockSkill(
       TEST_SKILLS.SCSS_MODULES,
-      "frontend/styling",
+      "web/styling",
       {
         name: "SCSS Modules",
         description: "CSS Modules with SCSS",
@@ -99,14 +99,14 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
       },
     ),
     // API domain skills
-    [TEST_SKILLS.HONO]: createMockSkill(TEST_SKILLS.HONO, "backend/framework", {
+    [TEST_SKILLS.HONO]: createMockSkill(TEST_SKILLS.HONO, "api/framework", {
       name: "Hono",
       description: "Web framework for the edge",
       alias: "hono",
     }),
     [TEST_SKILLS.DRIZZLE]: createMockSkill(
       TEST_SKILLS.DRIZZLE,
-      "backend/database",
+      "api/database",
       {
         name: "Drizzle",
         description: "TypeScript ORM",
@@ -123,70 +123,48 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
 
   // Create categories with domain assignments
   const categories: Record<string, CategoryDefinition> = {
-    // Top-level categories (no domain)
-    frontend: {
-      id: "frontend",
-      name: "Frontend",
-      description: "Frontend skills",
-      exclusive: false,
-      required: false,
-      order: 0,
-    },
-    backend: {
-      id: "backend",
-      name: "Backend",
-      description: "Backend skills",
-      exclusive: false,
-      required: false,
-      order: 1,
-    },
-    // Web domain subcategories
-    "frontend/framework": {
-      id: "frontend/framework",
+    // Web domain categories
+    "web/framework": {
+      id: "web/framework",
       name: "Framework",
       description: "UI Frameworks",
-      parent: "frontend",
       domain: "web",
       exclusive: true,
       required: true,
       order: 0,
     },
-    "frontend/state": {
-      id: "frontend/state",
+    "web/state": {
+      id: "web/state",
       name: "State",
       description: "State management",
-      parent: "frontend",
       domain: "web",
       exclusive: true,
       required: false,
       order: 1,
     },
-    "frontend/styling": {
-      id: "frontend/styling",
+    "web/styling": {
+      id: "web/styling",
       name: "Styling",
       description: "CSS solutions",
-      parent: "frontend",
       domain: "web",
       exclusive: true,
       required: false,
       order: 2,
     },
-    // API domain subcategories
-    "backend/framework": {
-      id: "backend/framework",
+    // API domain categories
+    "api/framework": {
+      id: "api/framework",
       name: "Backend Framework",
       description: "Server frameworks",
-      parent: "backend",
       domain: "api",
       exclusive: true,
       required: true,
       order: 0,
     },
-    "backend/database": {
-      id: "backend/database",
+    "api/database": {
+      id: "api/database",
       name: "Database",
       description: "Database ORMs",
-      parent: "backend",
       domain: "api",
       exclusive: true,
       required: false,
@@ -212,12 +190,12 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
       description: "Complete Next.js stack with React and Hono",
       audience: ["startups", "enterprise"],
       skills: {
-        frontend: {
+        web: {
           framework: "react",
           state: "zustand",
           styling: "scss-modules",
         },
-        backend: {
+        api: {
           framework: "hono",
           database: "drizzle",
         },
@@ -237,7 +215,7 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
       description: "Vue.js frontend stack",
       audience: ["startups"],
       skills: {
-        frontend: {
+        web: {
           framework: "vue",
         },
       },
@@ -323,19 +301,10 @@ const createBasicMatrix = (): MergedSkillsMatrix => {
   return createMockMatrix(skills, {
     suggestedStacks,
     categories: {
-      frontend: {
-        id: "frontend",
-        name: "Frontend",
-        description: "Frontend skills",
-        exclusive: false,
-        required: false,
-        order: 0,
-      },
       [TEST_CATEGORIES.FRAMEWORK]: {
         id: TEST_CATEGORIES.FRAMEWORK,
         name: "Framework",
         description: "UI Frameworks",
-        parent: "frontend",
         domain: "web",
         exclusive: true,
         required: true,
@@ -345,17 +314,8 @@ const createBasicMatrix = (): MergedSkillsMatrix => {
         id: TEST_CATEGORIES.STATE,
         name: "State",
         description: "State management",
-        parent: "frontend",
         domain: "web",
         exclusive: true,
-        required: false,
-        order: 1,
-      },
-      backend: {
-        id: "backend",
-        name: "Backend",
-        description: "Backend skills",
-        exclusive: false,
         required: false,
         order: 1,
       },
@@ -363,26 +323,15 @@ const createBasicMatrix = (): MergedSkillsMatrix => {
         id: TEST_CATEGORIES.BACKEND_FRAMEWORK,
         name: "Backend Framework",
         description: "Backend frameworks",
-        parent: "backend",
         domain: "api",
         exclusive: true,
         required: true,
         order: 0,
       },
-      "testing-parent": {
-        id: "testing-parent",
-        name: "Testing",
-        description: "Testing tools",
-        domain: "shared",
-        exclusive: false,
-        required: false,
-        order: 10,
-      },
       [TEST_CATEGORIES.TESTING]: {
         id: TEST_CATEGORIES.TESTING,
         name: "Testing Framework",
         description: "Testing frameworks",
-        parent: "testing-parent",
         domain: "shared",
         exclusive: false,
         required: false,
@@ -800,7 +749,7 @@ describe("Wizard integration", () => {
         selectedDomains: ["web", "api"],
         currentDomainIndex: 0,
         domainSelections: {
-          web: { "frontend/framework": ["react (@vince)"] },
+          web: { "web/framework": ["react (@vince)"] },
         },
       });
 
@@ -836,7 +785,7 @@ describe("Wizard integration", () => {
         selectedDomains: ["web", "api"],
         currentDomainIndex: 1, // On API domain
         domainSelections: {
-          web: { "frontend/framework": ["react"] },
+          web: { "web/framework": ["react"] },
         },
         history: ["approach", "stack", "build"],
       });
@@ -861,7 +810,7 @@ describe("Wizard integration", () => {
       expect(state.currentDomainIndex).toBe(0);
 
       // Web selections should be preserved
-      expect(state.domainSelections.web?.["frontend/framework"]).toContain(
+      expect(state.domainSelections.web?.["web/framework"]).toContain(
         "react",
       );
     });

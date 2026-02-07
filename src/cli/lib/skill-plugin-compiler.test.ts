@@ -34,12 +34,12 @@ describe("skill-plugin-compiler", () => {
 
   describe("extractSkillName", () => {
     it("should return directory basename", () => {
-      const result = extractSkillName("/skills/frontend/web-framework-react");
+      const result = extractSkillName("/skills/web/web-framework-react");
       expect(result).toBe("web-framework-react");
     });
 
     it("should handle plus signs in name by converting to hyphens", () => {
-      const result = extractSkillName("/skills/frontend/c++");
+      const result = extractSkillName("/skills/web/c++");
       expect(result).toBe("c--");
     });
 
@@ -54,7 +54,7 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should handle kebab-case names", () => {
-      const result = extractSkillName("/skills/backend/backend-api-hono");
+      const result = extractSkillName("/skills/api/backend-api-hono");
       expect(result).toBe("backend-api-hono");
     });
   });
@@ -65,8 +65,8 @@ describe("skill-plugin-compiler", () => {
 
   describe("extractAuthor", () => {
     it("should always return undefined (author now comes from metadata.yaml)", () => {
-      expect(extractAuthor("/skills/frontend/react")).toBeUndefined();
-      expect(extractAuthor("/skills/frontend/react (@vince)")).toBeUndefined();
+      expect(extractAuthor("/skills/web/react")).toBeUndefined();
+      expect(extractAuthor("/skills/web/react (@vince)")).toBeUndefined();
       expect(extractAuthor("any-path")).toBeUndefined();
     });
   });
@@ -77,15 +77,9 @@ describe("skill-plugin-compiler", () => {
 
   describe("extractCategory", () => {
     it("should always return undefined (directories are now flat)", () => {
-      expect(
-        extractCategory("/home/skills/frontend/react", "/home/skills"),
-      ).toBeUndefined();
-      expect(
-        extractCategory("/home/skills/react", "/home/skills"),
-      ).toBeUndefined();
-      expect(
-        extractCategory("/home/skills/backend/api/hono", "/home/skills"),
-      ).toBeUndefined();
+      expect(extractCategory("/home/skills/web/react", "/home/skills")).toBeUndefined();
+      expect(extractCategory("/home/skills/react", "/home/skills")).toBeUndefined();
+      expect(extractCategory("/home/skills/api/api/hono", "/home/skills")).toBeUndefined();
     });
   });
 
@@ -120,9 +114,7 @@ describe("skill-plugin-compiler", () => {
             }
             // Quote strings that start with @ to avoid YAML parsing issues
             const stringValue =
-              typeof value === "string" && value.startsWith("@")
-                ? `"${value}"`
-                : String(value);
+              typeof value === "string" && value.startsWith("@") ? `"${value}"` : String(value);
             return `${key}: ${stringValue}`;
           })
           .join("\n");
@@ -163,11 +155,7 @@ describe("skill-plugin-compiler", () => {
         outputDir,
       });
 
-      const manifestPath = path.join(
-        result.pluginPath,
-        ".claude-plugin",
-        "plugin.json",
-      );
+      const manifestPath = path.join(result.pluginPath, ".claude-plugin", "plugin.json");
       const content = await readFile(manifestPath, "utf-8");
       const manifest = JSON.parse(content);
 
@@ -195,12 +183,7 @@ describe("skill-plugin-compiler", () => {
         outputDir,
       });
 
-      const copiedSkillMd = path.join(
-        result.pluginPath,
-        "skills",
-        "tailwind",
-        "SKILL.md",
-      );
+      const copiedSkillMd = path.join(result.pluginPath, "skills", "tailwind", "SKILL.md");
       const content = await readFile(copiedSkillMd, "utf-8");
 
       expect(content).toContain("---");
@@ -218,29 +201,18 @@ describe("skill-plugin-compiler", () => {
       // Create examples directory
       const examplesDir = path.join(skillPath, "examples");
       await mkdir(examplesDir, { recursive: true });
-      await writeFile(
-        path.join(examplesDir, "basic.test.ts"),
-        "// test example",
-      );
+      await writeFile(path.join(examplesDir, "basic.test.ts"), "// test example");
 
       const result = await compileSkillPlugin({
         skillPath,
         outputDir,
       });
 
-      const copiedExamples = path.join(
-        result.pluginPath,
-        "skills",
-        "vitest",
-        "examples",
-      );
+      const copiedExamples = path.join(result.pluginPath, "skills", "vitest", "examples");
       const stats = await stat(copiedExamples);
       expect(stats.isDirectory()).toBe(true);
 
-      const exampleContent = await readFile(
-        path.join(copiedExamples, "basic.test.ts"),
-        "utf-8",
-      );
+      const exampleContent = await readFile(path.join(copiedExamples, "basic.test.ts"), "utf-8");
       expect(exampleContent).toBe("// test example");
     });
 
@@ -272,7 +244,7 @@ describe("skill-plugin-compiler", () => {
           description: "Data fetching with React Query",
         },
         "# React Query",
-        { tags: ["frontend", "data", "async"] },
+        { tags: ["web", "data", "async"] },
       );
 
       const result = await compileSkillPlugin({
@@ -284,7 +256,7 @@ describe("skill-plugin-compiler", () => {
       const content = await readFile(readmePath, "utf-8");
 
       expect(content).toContain("## Tags");
-      expect(content).toContain("`frontend`");
+      expect(content).toContain("`web`");
       expect(content).toContain("`data`");
       expect(content).toContain("`async`");
     });
@@ -310,22 +282,19 @@ describe("skill-plugin-compiler", () => {
       await mkdir(skillPath, { recursive: true });
       // Don't create SKILL.md
 
-      await expect(
-        compileSkillPlugin({ skillPath, outputDir }),
-      ).rejects.toThrow(/is missing required SKILL\.md file/);
+      await expect(compileSkillPlugin({ skillPath, outputDir })).rejects.toThrow(
+        /is missing required SKILL\.md file/,
+      );
     });
 
     it("should throw error when frontmatter is invalid", async () => {
       const skillPath = path.join(skillsDir, "bad-skill");
       await mkdir(skillPath, { recursive: true });
-      await writeFile(
-        path.join(skillPath, "SKILL.md"),
-        "# No frontmatter here",
-      );
+      await writeFile(path.join(skillPath, "SKILL.md"), "# No frontmatter here");
 
-      await expect(
-        compileSkillPlugin({ skillPath, outputDir }),
-      ).rejects.toThrow(/has invalid or missing YAML frontmatter/);
+      await expect(compileSkillPlugin({ skillPath, outputDir })).rejects.toThrow(
+        /has invalid or missing YAML frontmatter/,
+      );
     });
 
     it("should get author from metadata.yaml", async () => {
@@ -531,9 +500,7 @@ description: Simple skill
       expect(skillNames).toContain("state-zustand");
 
       // Should have warned about the failed skill
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("[WARN]"),
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("[WARN]"));
 
       consoleSpy.mockRestore();
     });
@@ -550,9 +517,7 @@ description: Simple skill
       await compileAllSkillPlugins(skillsDir, outputDir);
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("[OK]"));
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("skill-web-framework-react"),
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("skill-web-framework-react"));
 
       consoleSpy.mockRestore();
     });
@@ -606,9 +571,7 @@ description: Simple skill
 
       printCompilationSummary(results);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Compiled 3 skill plugins"),
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Compiled 3 skill plugins"));
 
       consoleSpy.mockRestore();
     });
@@ -631,18 +594,10 @@ description: Simple skill
 
       printCompilationSummary(results);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("skill-react"),
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("v1.0.0"),
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("skill-zustand"),
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("v5.0.0"),
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("skill-react"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("v1.0.0"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("skill-zustand"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("v5.0.0"));
 
       consoleSpy.mockRestore();
     });
@@ -652,9 +607,7 @@ description: Simple skill
 
       printCompilationSummary([]);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Compiled 0 skill plugins"),
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Compiled 0 skill plugins"));
 
       consoleSpy.mockRestore();
     });
@@ -672,12 +625,8 @@ description: Simple skill
 
       printCompilationSummary(results);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Compiled 1 skill plugins"),
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("skill-react"),
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Compiled 1 skill plugins"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("skill-react"));
 
       consoleSpy.mockRestore();
     });

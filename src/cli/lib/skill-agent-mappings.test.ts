@@ -10,11 +10,7 @@ import {
   isSkillAssignedToAgent,
   resolveAgentsForSkill,
 } from "./skill-agent-mappings";
-import {
-  loadDefaultMappings,
-  clearDefaultsCache,
-  getCachedDefaults,
-} from "./defaults-loader";
+import { loadDefaultMappings, clearDefaultsCache, getCachedDefaults } from "./defaults-loader";
 import type { ProjectConfig } from "../../types";
 
 // =============================================================================
@@ -22,8 +18,8 @@ import type { ProjectConfig } from "../../types";
 // =============================================================================
 
 describe("SKILL_TO_AGENTS mappings", () => {
-  it("should return correct agent list for frontend/* pattern", () => {
-    const agents = SKILL_TO_AGENTS["frontend/*"];
+  it("should return correct agent list for web/* pattern", () => {
+    const agents = SKILL_TO_AGENTS["web/*"];
     expect(agents).toBeDefined();
     expect(agents).toContain("web-developer");
     expect(agents).toContain("web-reviewer");
@@ -31,8 +27,8 @@ describe("SKILL_TO_AGENTS mappings", () => {
     expect(agents).toContain("web-pm");
   });
 
-  it("should return correct agent list for backend/* pattern", () => {
-    const agents = SKILL_TO_AGENTS["backend/*"];
+  it("should return correct agent list for api/* pattern", () => {
+    const agents = SKILL_TO_AGENTS["api/*"];
     expect(agents).toBeDefined();
     expect(agents).toContain("api-developer");
     expect(agents).toContain("api-reviewer");
@@ -47,16 +43,16 @@ describe("SKILL_TO_AGENTS mappings", () => {
     expect(agents).toContain("cli-reviewer");
   });
 
-  it("should have specific pattern for frontend/testing", () => {
-    const agents = SKILL_TO_AGENTS["frontend/testing"];
+  it("should have specific pattern for web/testing", () => {
+    const agents = SKILL_TO_AGENTS["web/testing"];
     expect(agents).toBeDefined();
     expect(agents).toContain("web-tester");
     expect(agents).toContain("web-developer");
     expect(agents).toContain("web-reviewer");
   });
 
-  it("should have specific pattern for backend/testing", () => {
-    const agents = SKILL_TO_AGENTS["backend/testing"];
+  it("should have specific pattern for api/testing", () => {
+    const agents = SKILL_TO_AGENTS["api/testing"];
     expect(agents).toBeDefined();
     expect(agents).toContain("web-tester");
     expect(agents).toContain("api-developer");
@@ -65,10 +61,10 @@ describe("SKILL_TO_AGENTS mappings", () => {
 
   it("should include common agents in most patterns", () => {
     const patternsWithCommonAgents = [
-      "frontend/*",
-      "backend/*",
+      "web/*",
+      "api/*",
       "mobile/*",
-      "setup/*",
+      "infra/*",
       "security/*",
       "cli/*",
       "research/*",
@@ -137,23 +133,20 @@ describe("PRELOADED_SKILLS", () => {
 
 describe("getAgentsForSkill", () => {
   describe("wildcard pattern matching", () => {
-    it("should match frontend/* pattern for skills/frontend/framework/react", () => {
-      const agents = getAgentsForSkill(
-        "skills/frontend/framework/react",
-        "frontend",
-      );
+    it("should match web/* pattern for skills/web/framework/react", () => {
+      const agents = getAgentsForSkill("skills/web/framework/react", "web");
       expect(agents).toContain("web-developer");
       expect(agents).toContain("web-reviewer");
     });
 
-    it("should match frontend/* pattern for frontend/styling/tailwind", () => {
-      const agents = getAgentsForSkill("frontend/styling/tailwind", "frontend");
+    it("should match web/* pattern for web/styling/tailwind", () => {
+      const agents = getAgentsForSkill("web/styling/tailwind", "web");
       expect(agents).toContain("web-developer");
       expect(agents).toContain("web-reviewer");
     });
 
-    it("should match backend/* pattern for backend/api/hono", () => {
-      const agents = getAgentsForSkill("backend/api/hono", "backend");
+    it("should match api/* pattern for api/api/hono", () => {
+      const agents = getAgentsForSkill("api/api/hono", "api");
       expect(agents).toContain("api-developer");
       expect(agents).toContain("api-reviewer");
     });
@@ -171,8 +164,8 @@ describe("getAgentsForSkill", () => {
       expect(agents).toContain("web-pm");
     });
 
-    it("should match setup/* pattern for setup/monorepo", () => {
-      const agents = getAgentsForSkill("setup/monorepo", "setup");
+    it("should match infra/* pattern for infra/monorepo", () => {
+      const agents = getAgentsForSkill("infra/monorepo", "infra");
       expect(agents).toContain("web-architecture");
       expect(agents).toContain("web-developer");
       expect(agents).toContain("api-developer");
@@ -180,21 +173,21 @@ describe("getAgentsForSkill", () => {
   });
 
   describe("exact pattern matching", () => {
-    it("should prefer exact pattern over wildcard for frontend/testing", () => {
-      const agents = getAgentsForSkill("frontend/testing", "frontend/testing");
+    it("should prefer exact pattern over wildcard for web/testing", () => {
+      const agents = getAgentsForSkill("web/testing", "web/testing");
       // The exact pattern should be matched first via category
       expect(agents).toContain("web-tester");
     });
 
-    it("should prefer exact pattern over wildcard for frontend/mocks", () => {
-      const agents = getAgentsForSkill("frontend/mocks", "frontend/mocks");
+    it("should prefer exact pattern over wildcard for web/mocks", () => {
+      const agents = getAgentsForSkill("web/mocks", "web/mocks");
       expect(agents).toContain("web-tester");
     });
   });
 
   describe("category-based matching", () => {
     it("should use category parameter for direct lookup", () => {
-      const agents = getAgentsForSkill("any/path", "frontend/*");
+      const agents = getAgentsForSkill("any/path", "web/*");
       expect(agents).toContain("web-developer");
     });
 
@@ -208,20 +201,17 @@ describe("getAgentsForSkill", () => {
 
   describe("path normalization", () => {
     it("should strip skills/ prefix from path", () => {
-      const agents = getAgentsForSkill(
-        "skills/frontend/framework/react",
-        "frontend",
-      );
+      const agents = getAgentsForSkill("skills/web/framework/react", "web");
       expect(agents).toContain("web-developer");
     });
 
     it("should strip trailing slash from path", () => {
-      const agents = getAgentsForSkill("frontend/framework/", "frontend");
+      const agents = getAgentsForSkill("web/framework/", "web");
       expect(agents).toContain("web-developer");
     });
 
     it("should handle path without skills/ prefix", () => {
-      const agents = getAgentsForSkill("frontend/framework/react", "frontend");
+      const agents = getAgentsForSkill("web/framework/react", "web");
       expect(agents).toContain("web-developer");
     });
   });
@@ -229,11 +219,7 @@ describe("getAgentsForSkill", () => {
   describe("fallback behavior", () => {
     it("should return default agents when no pattern matches", () => {
       const agents = getAgentsForSkill("completely/unknown/path", "unknown");
-      expect(agents).toEqual([
-        "agent-summoner",
-        "skill-summoner",
-        "documentor",
-      ]);
+      expect(agents).toEqual(["agent-summoner", "skill-summoner", "documentor"]);
     });
   });
 });
@@ -242,7 +228,7 @@ describe("shouldPreloadSkill", () => {
   describe("category-based preloading", () => {
     it("should preload framework skill for web-developer", () => {
       const result = shouldPreloadSkill(
-        "skills/frontend/framework/react",
+        "skills/web/framework/react",
         "react (@vince)",
         "framework",
         "web-developer",
@@ -252,7 +238,7 @@ describe("shouldPreloadSkill", () => {
 
     it("should preload styling skill for web-developer", () => {
       const result = shouldPreloadSkill(
-        "skills/frontend/styling/tailwind",
+        "skills/web/styling/tailwind",
         "tailwind (@vince)",
         "styling",
         "web-developer",
@@ -262,7 +248,7 @@ describe("shouldPreloadSkill", () => {
 
     it("should preload api skill for api-developer", () => {
       const result = shouldPreloadSkill(
-        "skills/backend/api/hono",
+        "skills/api/api/hono",
         "hono (@vince)",
         "api",
         "api-developer",
@@ -284,7 +270,7 @@ describe("shouldPreloadSkill", () => {
   describe("path-based preloading", () => {
     it("should preload when path contains preloaded pattern", () => {
       const result = shouldPreloadSkill(
-        "skills/frontend/framework/react",
+        "skills/web/framework/react",
         "react (@vince)",
         "other",
         "web-developer",
@@ -294,7 +280,7 @@ describe("shouldPreloadSkill", () => {
 
     it("should preload when path contains testing pattern", () => {
       const result = shouldPreloadSkill(
-        "skills/frontend/testing/vitest",
+        "skills/web/testing/vitest",
         "vitest (@vince)",
         "other",
         "web-tester",
@@ -317,9 +303,9 @@ describe("shouldPreloadSkill", () => {
 
   describe("alias-based preloading", () => {
     it("should preload via subcategory alias", () => {
-      // framework alias -> frontend/framework
+      // framework alias -> web/framework
       const result = shouldPreloadSkill(
-        "skills/frontend/framework/react",
+        "skills/web/framework/react",
         "react (@vince)",
         "other",
         "web-developer",
@@ -331,7 +317,7 @@ describe("shouldPreloadSkill", () => {
   describe("no preloading scenarios", () => {
     it("should not preload for agent with empty preloaded list", () => {
       const result = shouldPreloadSkill(
-        "skills/frontend/framework/react",
+        "skills/web/framework/react",
         "react (@vince)",
         "framework",
         "agent-summoner",
@@ -341,7 +327,7 @@ describe("shouldPreloadSkill", () => {
 
     it("should not preload for unknown agent", () => {
       const result = shouldPreloadSkill(
-        "skills/frontend/framework/react",
+        "skills/web/framework/react",
         "react (@vince)",
         "framework",
         "unknown-agent",
@@ -363,14 +349,14 @@ describe("shouldPreloadSkill", () => {
 
 describe("extractCategoryKey", () => {
   it("should extract subcategory (parts[1]) from normalized path", () => {
-    // skills/frontend/framework/react -> frontend/framework/react -> parts[1] = "framework"
-    const result = extractCategoryKey("skills/frontend/framework/react");
+    // skills/web/framework/react -> web/framework/react -> parts[1] = "framework"
+    const result = extractCategoryKey("skills/web/framework/react");
     expect(result).toBe("framework");
   });
 
   it("should strip skills/ prefix and return parts[1]", () => {
-    // skills/backend/api/hono -> backend/api/hono -> parts[1] = "api"
-    const result = extractCategoryKey("skills/backend/api/hono");
+    // skills/api/api/hono -> api/api/hono -> parts[1] = "api"
+    const result = extractCategoryKey("skills/api/api/hono");
     expect(result).toBe("api");
   });
 
@@ -387,14 +373,14 @@ describe("extractCategoryKey", () => {
   });
 
   it("should handle path without skills/ prefix", () => {
-    // frontend/framework/react -> parts[1] = "framework"
-    const result = extractCategoryKey("frontend/framework/react");
+    // web/framework/react -> parts[1] = "framework"
+    const result = extractCategoryKey("web/framework/react");
     expect(result).toBe("framework");
   });
 
   it("should return parts[0] when only two levels", () => {
-    // frontend/framework -> parts[1] = "framework"
-    const result = extractCategoryKey("frontend/framework");
+    // web/framework -> parts[1] = "framework"
+    const result = extractCategoryKey("web/framework");
     expect(result).toBe("framework");
   });
 
@@ -406,34 +392,32 @@ describe("extractCategoryKey", () => {
 });
 
 describe("SUBCATEGORY_ALIASES", () => {
-  it("should map framework to frontend/framework", () => {
-    expect(SUBCATEGORY_ALIASES["framework"]).toBe("frontend/framework");
+  it("should map framework to web/framework", () => {
+    expect(SUBCATEGORY_ALIASES["framework"]).toBe("web/framework");
   });
 
-  it("should map styling to frontend/styling", () => {
-    expect(SUBCATEGORY_ALIASES["styling"]).toBe("frontend/styling");
+  it("should map styling to web/styling", () => {
+    expect(SUBCATEGORY_ALIASES["styling"]).toBe("web/styling");
   });
 
-  it("should map api to backend/api", () => {
-    expect(SUBCATEGORY_ALIASES["api"]).toBe("backend/api");
+  it("should map api to api/api", () => {
+    expect(SUBCATEGORY_ALIASES["api"]).toBe("api/api");
   });
 
-  it("should map database to backend/database", () => {
-    expect(SUBCATEGORY_ALIASES["database"]).toBe("backend/database");
+  it("should map database to api/database", () => {
+    expect(SUBCATEGORY_ALIASES["database"]).toBe("api/database");
   });
 
-  it("should map mocks to frontend/mocks", () => {
-    expect(SUBCATEGORY_ALIASES["mocks"]).toBe("frontend/mocks");
+  it("should map mocks to web/mocks", () => {
+    expect(SUBCATEGORY_ALIASES["mocks"]).toBe("web/mocks");
   });
 
   it("should map research-methodology to research/research-methodology", () => {
-    expect(SUBCATEGORY_ALIASES["research-methodology"]).toBe(
-      "research/research-methodology",
-    );
+    expect(SUBCATEGORY_ALIASES["research-methodology"]).toBe("research/research-methodology");
   });
 
-  it("should map monorepo to setup/monorepo", () => {
-    expect(SUBCATEGORY_ALIASES["monorepo"]).toBe("setup/monorepo");
+  it("should map monorepo to infra/monorepo", () => {
+    expect(SUBCATEGORY_ALIASES["monorepo"]).toBe("infra/monorepo");
   });
 
   it("should map cli directly to cli", () => {
@@ -485,10 +469,10 @@ describe("defaults-loader", () => {
     it("should load skill_to_agents with all expected patterns", async () => {
       const defaults = await loadDefaultMappings();
 
-      expect(defaults!.skill_to_agents["frontend/*"]).toBeDefined();
-      expect(defaults!.skill_to_agents["backend/*"]).toBeDefined();
+      expect(defaults!.skill_to_agents["web/*"]).toBeDefined();
+      expect(defaults!.skill_to_agents["api/*"]).toBeDefined();
       expect(defaults!.skill_to_agents["cli/*"]).toBeDefined();
-      expect(defaults!.skill_to_agents["frontend/testing"]).toBeDefined();
+      expect(defaults!.skill_to_agents["web/testing"]).toBeDefined();
     });
 
     it("should load preloaded_skills with all expected agents", async () => {
@@ -503,10 +487,8 @@ describe("defaults-loader", () => {
     it("should load subcategory_aliases with all expected mappings", async () => {
       const defaults = await loadDefaultMappings();
 
-      expect(defaults!.subcategory_aliases["framework"]).toBe(
-        "frontend/framework",
-      );
-      expect(defaults!.subcategory_aliases["api"]).toBe("backend/api");
+      expect(defaults!.subcategory_aliases["framework"]).toBe("web/framework");
+      expect(defaults!.subcategory_aliases["api"]).toBe("api/api");
       expect(defaults!.subcategory_aliases["cli"]).toBe("cli");
     });
   });
@@ -605,7 +587,7 @@ describe("project config overrides", () => {
 
       // With custom preload_patterns, skill should not match default patterns
       const result = shouldPreloadSkill(
-        "skills/frontend/framework/react",
+        "skills/web/framework/react",
         "react (@vince)",
         "framework",
         "web-developer",
@@ -646,7 +628,7 @@ describe("project config overrides", () => {
 
       // Should use default patterns
       const result = shouldPreloadSkill(
-        "skills/frontend/framework/react",
+        "skills/web/framework/react",
         "react (@vince)",
         "framework",
         "web-developer",
@@ -669,7 +651,7 @@ describe("project config overrides", () => {
       // api-developer not in custom patterns, so should return false
       // (preload_patterns completely replaces defaults when provided)
       const result = shouldPreloadSkill(
-        "skills/backend/api/hono",
+        "skills/api/api/hono",
         "hono (@vince)",
         "api",
         "api-developer",
@@ -702,9 +684,7 @@ describe("project config overrides", () => {
         },
       };
 
-      expect(hasAgentSkillsOverride("api-developer", projectConfig)).toBe(
-        false,
-      );
+      expect(hasAgentSkillsOverride("api-developer", projectConfig)).toBe(false);
     });
 
     it("should return false when project config has no agent_skills", () => {
@@ -713,9 +693,7 @@ describe("project config overrides", () => {
         agents: ["web-developer"],
       };
 
-      expect(hasAgentSkillsOverride("web-developer", projectConfig)).toBe(
-        false,
-      );
+      expect(hasAgentSkillsOverride("web-developer", projectConfig)).toBe(false);
     });
 
     it("should return false when project config is undefined", () => {
@@ -731,11 +709,7 @@ describe("project config overrides", () => {
       };
 
       // getAgentsForSkill uses YAML defaults or hardcoded fallback
-      const agents = getAgentsForSkill(
-        "skills/frontend/framework/react",
-        "frontend",
-        projectConfig,
-      );
+      const agents = getAgentsForSkill("skills/web/framework/react", "web", projectConfig);
 
       expect(agents).toContain("web-developer");
       expect(agents).toContain("web-reviewer");
@@ -755,10 +729,7 @@ describe("fallback to hardcoded when YAML not loaded", () => {
 
   it("should use hardcoded SKILL_TO_AGENTS when cache is empty", () => {
     // Don't load defaults, cache is empty
-    const agents = getAgentsForSkill(
-      "skills/frontend/framework/react",
-      "frontend",
-    );
+    const agents = getAgentsForSkill("skills/web/framework/react", "web");
 
     // Should still work using hardcoded fallback
     expect(agents).toContain("web-developer");
@@ -768,7 +739,7 @@ describe("fallback to hardcoded when YAML not loaded", () => {
   it("should use hardcoded PRELOADED_SKILLS when cache is empty", () => {
     // Don't load defaults, cache is empty
     const result = shouldPreloadSkill(
-      "skills/frontend/framework/react",
+      "skills/web/framework/react",
       "react (@vince)",
       "framework",
       "web-developer",
@@ -781,7 +752,7 @@ describe("fallback to hardcoded when YAML not loaded", () => {
   it("should use hardcoded SUBCATEGORY_ALIASES when cache is empty", () => {
     // Don't load defaults, cache is empty
     const result = shouldPreloadSkill(
-      "skills/frontend/framework/react",
+      "skills/web/framework/react",
       "react (@vince)",
       "other", // Not matching category
       "web-developer",
@@ -803,9 +774,7 @@ describe("isSkillAssignedToAgent", () => {
         "web-developer": ["react (@vince)", "zustand (@vince)"],
       };
 
-      expect(
-        isSkillAssignedToAgent("react (@vince)", "web-developer", agentSkills),
-      ).toBe(true);
+      expect(isSkillAssignedToAgent("react (@vince)", "web-developer", agentSkills)).toBe(true);
     });
 
     it("should return false when skill ID is not in simple list", () => {
@@ -813,9 +782,7 @@ describe("isSkillAssignedToAgent", () => {
         "web-developer": ["react (@vince)", "zustand (@vince)"],
       };
 
-      expect(
-        isSkillAssignedToAgent("hono (@vince)", "web-developer", agentSkills),
-      ).toBe(false);
+      expect(isSkillAssignedToAgent("hono (@vince)", "web-developer", agentSkills)).toBe(false);
     });
 
     it("should return false when agent is not in config", () => {
@@ -823,51 +790,27 @@ describe("isSkillAssignedToAgent", () => {
         "web-developer": ["react (@vince)"],
       };
 
-      expect(
-        isSkillAssignedToAgent("react (@vince)", "api-developer", agentSkills),
-      ).toBe(false);
+      expect(isSkillAssignedToAgent("react (@vince)", "api-developer", agentSkills)).toBe(false);
     });
   });
 
   describe("SkillAssignment objects in list", () => {
     it("should match SkillAssignment by id field", () => {
       const agentSkills = {
-        "web-developer": [
-          { id: "react (@vince)", preloaded: true },
-          { id: "zustand (@vince)" },
-        ],
+        "web-developer": [{ id: "react (@vince)", preloaded: true }, { id: "zustand (@vince)" }],
       };
 
-      expect(
-        isSkillAssignedToAgent("react (@vince)", "web-developer", agentSkills),
-      ).toBe(true);
-      expect(
-        isSkillAssignedToAgent(
-          "zustand (@vince)",
-          "web-developer",
-          agentSkills,
-        ),
-      ).toBe(true);
+      expect(isSkillAssignedToAgent("react (@vince)", "web-developer", agentSkills)).toBe(true);
+      expect(isSkillAssignedToAgent("zustand (@vince)", "web-developer", agentSkills)).toBe(true);
     });
 
     it("should handle mixed string and SkillAssignment entries", () => {
       const agentSkills = {
-        "web-developer": [
-          "react (@vince)",
-          { id: "zustand (@vince)", preloaded: true },
-        ],
+        "web-developer": ["react (@vince)", { id: "zustand (@vince)", preloaded: true }],
       };
 
-      expect(
-        isSkillAssignedToAgent("react (@vince)", "web-developer", agentSkills),
-      ).toBe(true);
-      expect(
-        isSkillAssignedToAgent(
-          "zustand (@vince)",
-          "web-developer",
-          agentSkills,
-        ),
-      ).toBe(true);
+      expect(isSkillAssignedToAgent("react (@vince)", "web-developer", agentSkills)).toBe(true);
+      expect(isSkillAssignedToAgent("zustand (@vince)", "web-developer", agentSkills)).toBe(true);
     });
   });
 
@@ -880,16 +823,8 @@ describe("isSkillAssignedToAgent", () => {
         },
       };
 
-      expect(
-        isSkillAssignedToAgent("react (@vince)", "web-developer", agentSkills),
-      ).toBe(true);
-      expect(
-        isSkillAssignedToAgent(
-          "zustand (@vince)",
-          "web-developer",
-          agentSkills,
-        ),
-      ).toBe(true);
+      expect(isSkillAssignedToAgent("react (@vince)", "web-developer", agentSkills)).toBe(true);
+      expect(isSkillAssignedToAgent("zustand (@vince)", "web-developer", agentSkills)).toBe(true);
     });
 
     it("should return false when skill not in any category", () => {
@@ -899,9 +834,7 @@ describe("isSkillAssignedToAgent", () => {
         },
       };
 
-      expect(
-        isSkillAssignedToAgent("hono (@vince)", "web-developer", agentSkills),
-      ).toBe(false);
+      expect(isSkillAssignedToAgent("hono (@vince)", "web-developer", agentSkills)).toBe(false);
     });
 
     it("should handle SkillAssignment objects in categories", () => {
@@ -911,9 +844,7 @@ describe("isSkillAssignedToAgent", () => {
         },
       };
 
-      expect(
-        isSkillAssignedToAgent("react (@vince)", "web-developer", agentSkills),
-      ).toBe(true);
+      expect(isSkillAssignedToAgent("react (@vince)", "web-developer", agentSkills)).toBe(true);
     });
   });
 });
@@ -935,8 +866,8 @@ describe("resolveAgentsForSkill", () => {
     it("should fall back to default mappings when no config", () => {
       const agents = resolveAgentsForSkill(
         "react (@vince)",
-        "skills/frontend/framework/react",
-        "frontend",
+        "skills/web/framework/react",
+        "web",
         undefined,
       );
 
@@ -954,8 +885,8 @@ describe("resolveAgentsForSkill", () => {
 
       const agents = resolveAgentsForSkill(
         "react (@vince)",
-        "skills/frontend/framework/react",
-        "frontend",
+        "skills/web/framework/react",
+        "web",
         projectConfig,
       );
 
@@ -983,8 +914,8 @@ describe("resolveAgentsForSkill", () => {
       // React should only go to web-developer
       const reactAgents = resolveAgentsForSkill(
         "react (@vince)",
-        "skills/frontend/framework/react",
-        "frontend",
+        "skills/web/framework/react",
+        "web",
         projectConfig,
       );
       expect(reactAgents).toEqual(["web-developer"]);
@@ -992,8 +923,8 @@ describe("resolveAgentsForSkill", () => {
       // Hono should only go to api-developer
       const honoAgents = resolveAgentsForSkill(
         "hono (@vince)",
-        "skills/backend/api/hono",
-        "backend",
+        "skills/api/api/hono",
+        "api",
         projectConfig,
       );
       expect(honoAgents).toEqual(["api-developer"]);
@@ -1011,8 +942,8 @@ describe("resolveAgentsForSkill", () => {
       // Vue not in any config
       const agents = resolveAgentsForSkill(
         "vue (@vince)",
-        "skills/frontend/framework/vue",
-        "frontend",
+        "skills/web/framework/vue",
+        "web",
         projectConfig,
       );
 
@@ -1031,8 +962,8 @@ describe("resolveAgentsForSkill", () => {
 
       const agents = resolveAgentsForSkill(
         "react (@vince)",
-        "skills/frontend/framework/react",
-        "frontend",
+        "skills/web/framework/react",
+        "web",
         projectConfig,
       );
 
@@ -1055,16 +986,16 @@ describe("resolveAgentsForSkill", () => {
 
       const reactAgents = resolveAgentsForSkill(
         "react (@vince)",
-        "skills/frontend/framework/react",
-        "frontend",
+        "skills/web/framework/react",
+        "web",
         projectConfig,
       );
       expect(reactAgents).toEqual(["web-developer"]);
 
       const zustandAgents = resolveAgentsForSkill(
         "zustand (@vince)",
-        "skills/frontend/state/zustand",
-        "frontend",
+        "skills/web/state/zustand",
+        "web",
         projectConfig,
       );
       expect(zustandAgents).toEqual(["web-developer"]);
@@ -1075,17 +1006,14 @@ describe("resolveAgentsForSkill", () => {
         name: "test-project",
         agents: ["web-developer"],
         agent_skills: {
-          "web-developer": [
-            { id: "react (@vince)", preloaded: true },
-            { id: "zustand (@vince)" },
-          ],
+          "web-developer": [{ id: "react (@vince)", preloaded: true }, { id: "zustand (@vince)" }],
         },
       };
 
       const agents = resolveAgentsForSkill(
         "react (@vince)",
-        "skills/frontend/framework/react",
-        "frontend",
+        "skills/web/framework/react",
+        "web",
         projectConfig,
       );
 
@@ -1099,7 +1027,7 @@ describe("resolveAgentsForSkill", () => {
 
   describe("P2-09: override default mappings", () => {
     it("should allow adding an agent that would not normally get a skill", () => {
-      // By default, cli-developer would not get a frontend skill
+      // By default, cli-developer would not get a web skill
       // But with config override, we can assign it
       const projectConfig: ProjectConfig = {
         name: "test-project",
@@ -1111,8 +1039,8 @@ describe("resolveAgentsForSkill", () => {
 
       const agents = resolveAgentsForSkill(
         "react (@vince)",
-        "skills/frontend/framework/react",
-        "frontend",
+        "skills/web/framework/react",
+        "web",
         projectConfig,
       );
 
@@ -1120,7 +1048,7 @@ describe("resolveAgentsForSkill", () => {
     });
 
     it("should allow removing an agent that would normally get a skill", () => {
-      // By default, web-developer would get frontend skills
+      // By default, web-developer would get web skills
       // But with config override, we can exclude them
       const projectConfig: ProjectConfig = {
         name: "test-project",
@@ -1133,8 +1061,8 @@ describe("resolveAgentsForSkill", () => {
 
       const agents = resolveAgentsForSkill(
         "react (@vince)",
-        "skills/frontend/framework/react",
-        "frontend",
+        "skills/web/framework/react",
+        "web",
         projectConfig,
       );
 
@@ -1154,11 +1082,11 @@ describe("resolveAgentsForSkill", () => {
         },
       };
 
-      // React should NOT go to web-developer despite being a frontend skill
+      // React should NOT go to web-developer despite being a web skill
       const reactAgents = resolveAgentsForSkill(
         "react (@vince)",
-        "skills/frontend/framework/react",
-        "frontend",
+        "skills/web/framework/react",
+        "web",
         projectConfig,
       );
       expect(reactAgents).toEqual([]);
@@ -1166,15 +1094,15 @@ describe("resolveAgentsForSkill", () => {
       // Zustand should go to web-developer as specified
       const zustandAgents = resolveAgentsForSkill(
         "zustand (@vince)",
-        "skills/frontend/state/zustand",
-        "frontend",
+        "skills/web/state/zustand",
+        "web",
         projectConfig,
       );
       expect(zustandAgents).toEqual(["web-developer"]);
     });
 
     it("should support cross-domain skill assignment via override", () => {
-      // Assign a backend skill to a frontend developer via override
+      // Assign an api skill to a web developer via override
       const projectConfig: ProjectConfig = {
         name: "test-project",
         agents: ["web-developer"],
@@ -1185,8 +1113,8 @@ describe("resolveAgentsForSkill", () => {
 
       const honoAgents = resolveAgentsForSkill(
         "hono (@vince)",
-        "skills/backend/api/hono",
-        "backend",
+        "skills/api/api/hono",
+        "api",
         projectConfig,
       );
 

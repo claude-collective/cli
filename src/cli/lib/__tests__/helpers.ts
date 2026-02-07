@@ -29,7 +29,7 @@
  * ```typescript
  * import { createMockSkill, createMockMatrix } from './helpers';
  *
- * const skill = createMockSkill('web-framework-react', 'frontend/framework');
+ * const skill = createMockSkill('web-framework-react', 'web/framework');
  * const matrix = createMockMatrix({ [skill.id]: skill });
  * ```
  */
@@ -357,12 +357,7 @@ export interface TestDirs {
 export async function createTestDirs(prefix = "cc-test-"): Promise<TestDirs> {
   const tempDir = await createTempDir(prefix);
   const projectDir = path.join(tempDir, "project");
-  const pluginDir = path.join(
-    projectDir,
-    ".claude",
-    "plugins",
-    "claude-collective",
-  );
+  const pluginDir = path.join(projectDir, ".claude", "plugins", "claude-collective");
   const skillsDir = path.join(pluginDir, "skills");
   const agentsDir = path.join(pluginDir, "agents");
 
@@ -409,22 +404,22 @@ export async function cleanupTestDirs(dirs: TestDirs): Promise<void> {
  * as needed.
  *
  * @param id - Normalized skill ID (e.g., "web-framework-react")
- * @param category - Skill category path (e.g., "frontend/framework")
+ * @param category - Skill category path (e.g., "web/framework")
  * @param overrides - Optional partial skill to override defaults
  * @returns Complete ResolvedSkill object
  *
  * @example Basic usage
  * ```typescript
- * const skill = createMockSkill('web-framework-react', 'frontend/framework');
+ * const skill = createMockSkill('web-framework-react', 'web/framework');
  * expect(skill.name).toBe('web-framework-react');
  * expect(skill.author).toBe('@test');
  * ```
  *
  * @example With overrides
  * ```typescript
- * const skill = createMockSkill('web-framework-react', 'frontend', {
+ * const skill = createMockSkill('web-framework-react', 'web', {
  *   author: '@custom',
- *   tags: ['popular', 'frontend'],
+ *   tags: ['popular', 'web'],
  *   recommends: [{ skillId: 'web-state-zustand', reason: 'Works well with React' }],
  * });
  * ```
@@ -473,7 +468,7 @@ export function createMockSkill(
  *
  * @example Basic usage
  * ```typescript
- * const skill = createMockSkill('react (@vince)', 'frontend');
+ * const skill = createMockSkill('react (@vince)', 'web');
  * const matrix = createMockMatrix({ 'react (@vince)': skill });
  * ```
  *
@@ -481,7 +476,7 @@ export function createMockSkill(
  * ```typescript
  * const matrix = createMockMatrix(skills, {
  *   categories: {
- *     frontend: { name: 'Frontend', description: 'Frontend skills' },
+ *     web: { name: 'Web', description: 'Web skills' },
  *   },
  *   suggestedStacks: [
  *     { id: 'react-stack', name: 'React Stack', allSkillIds: ['web-framework-react'] },
@@ -585,14 +580,10 @@ export function createMockStackConfig(
     agents: ["web-developer", "api-developer"],
     agent_skills: {
       "web-developer": {
-        default: skills
-          .filter((s) => !s.includes("backend"))
-          .map((s) => ({ id: s })),
+        default: skills.filter((s) => !s.includes("api")).map((s) => ({ id: s })),
       },
       "api-developer": {
-        default: skills
-          .filter((s) => !s.includes("frontend"))
-          .map((s) => ({ id: s })),
+        default: skills.filter((s) => !s.includes("web")).map((s) => ({ id: s })),
       },
     },
     ...overrides,
@@ -660,10 +651,7 @@ export function createMockAgent(
  *
  * @see {@link writeTestSkill} for creating complete skill directories
  */
-export function createSkillContent(
-  name: string,
-  description = "A test skill",
-): string {
+export function createSkillContent(name: string, description = "A test skill"): string {
   return `---
 name: ${name}
 description: ${description}
@@ -714,10 +702,7 @@ author: ${author}
  *
  * @see {@link writeTestAgent} for creating complete agent directories
  */
-export function createAgentYamlContent(
-  name: string,
-  description = "A test agent",
-): string {
+export function createAgentYamlContent(name: string, description = "A test agent"): string {
   return `name: ${name}
 description: ${description}
 tools: Read, Write, Edit
@@ -770,10 +755,7 @@ export async function writeTestSkill(
     createSkillContent(skillName, options?.description),
   );
 
-  await writeFile(
-    path.join(skillDir, "metadata.yaml"),
-    createMetadataContent(options?.author),
-  );
+  await writeFile(path.join(skillDir, "metadata.yaml"), createMetadataContent(options?.author));
 
   return skillDir;
 }

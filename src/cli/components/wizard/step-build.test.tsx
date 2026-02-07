@@ -97,46 +97,32 @@ const createTestMatrix = (
 });
 
 // Create test categories
-const webCategory = createCategory("web", "Web", {
-  description: "Web development",
-  order: 0,
-});
-
-const apiCategory = createCategory("api", "API", {
-  description: "API development",
-  order: 1,
-});
 
 const frameworkCategory = createCategory("framework", "Framework", {
-  parent: "web",
   domain: "web",
   required: true,
   order: 0,
 });
 
 const stylingCategory = createCategory("styling", "Styling", {
-  parent: "web",
   domain: "web",
   required: true,
   order: 1,
 });
 
 const stateCategory = createCategory("client-state", "Client State", {
-  parent: "web",
   domain: "web",
   required: false,
   order: 2,
 });
 
 const apiFrameworkCategory = createCategory("api-framework", "API Framework", {
-  parent: "api",
   domain: "api",
   required: true,
   order: 0,
 });
 
 const databaseCategory = createCategory("database", "Database", {
-  parent: "api",
   domain: "api",
   required: false,
   order: 1,
@@ -193,8 +179,6 @@ const postgresSkill = createSkill(
 // Default test matrix with web and API domains
 const defaultMatrix = createTestMatrix(
   [
-    webCategory,
-    apiCategory,
     frameworkCategory,
     stylingCategory,
     stateCategory,
@@ -651,16 +635,11 @@ describe("StepBuild component", () => {
         "cli-framework",
         "CLI Framework",
         {
-          parent: "cli",
           domain: "cli",
           required: true,
           order: 0,
         },
       );
-      const cliCategory = createCategory("cli", "CLI", {
-        description: "CLI development",
-        order: 2,
-      });
       const commanderSkill = createSkill(
         "commander (@vince)",
         "Commander",
@@ -672,9 +651,6 @@ describe("StepBuild component", () => {
 
       const matrixWithCli = createTestMatrix(
         [
-          webCategory,
-          apiCategory,
-          cliCategory,
           frameworkCategory,
           stylingCategory,
           stateCategory,

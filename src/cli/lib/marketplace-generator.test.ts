@@ -24,10 +24,7 @@ describe("marketplace-generator", () => {
   });
 
   // Helper to create a plugin with manifest
-  async function createPlugin(
-    name: string,
-    manifest: Record<string, unknown>,
-  ): Promise<void> {
+  async function createPlugin(name: string, manifest: Record<string, unknown>): Promise<void> {
     const pluginDir = path.join(pluginsDir, name);
     await mkdir(path.join(pluginDir, ".claude-plugin"), { recursive: true });
     await writeFile(
@@ -68,8 +65,8 @@ describe("marketplace-generator", () => {
 
     it("should extract category from normalized skill ID", async () => {
       // With normalized skill IDs, category is inferred from the ID prefix
-      // skill-web-* -> frontend
-      // skill-api-* -> backend
+      // skill-web-* -> web
+      // skill-api-* -> api
       await createPlugin("skill-web-framework-react", {
         name: "skill-web-framework-react",
         description: "React framework",
@@ -82,11 +79,9 @@ describe("marketplace-generator", () => {
         pluginRoot: "./plugins",
       });
 
-      // skill-web-* should match frontend category pattern
-      const reactPlugin = marketplace.plugins.find(
-        (p) => p.name === "skill-web-framework-react",
-      );
-      expect(reactPlugin?.category).toBe("frontend");
+      // skill-web-* should match web category pattern
+      const reactPlugin = marketplace.plugins.find((p) => p.name === "skill-web-framework-react");
+      expect(reactPlugin?.category).toBe("web");
     });
 
     it("should sort plugins alphabetically", async () => {
@@ -153,9 +148,7 @@ describe("marketplace-generator", () => {
         pluginRoot: "./plugins",
       });
 
-      expect(marketplace.$schema).toBe(
-        "https://anthropic.com/claude-code/marketplace.schema.json",
-      );
+      expect(marketplace.$schema).toBe("https://anthropic.com/claude-code/marketplace.schema.json");
     });
 
     it("should use default version 1.0.0 when not specified", async () => {
@@ -194,10 +187,7 @@ describe("marketplace-generator", () => {
 
       // Create an invalid directory (no .claude-plugin)
       await mkdir(path.join(pluginsDir, "not-a-plugin"), { recursive: true });
-      await writeFile(
-        path.join(pluginsDir, "not-a-plugin", "README.md"),
-        "# Not a plugin",
-      );
+      await writeFile(path.join(pluginsDir, "not-a-plugin", "README.md"), "# Not a plugin");
 
       const marketplace = await generateMarketplace(pluginsDir, {
         name: "test-marketplace",
@@ -236,7 +226,7 @@ describe("marketplace-generator", () => {
         name: "skill-with-keywords",
         description: "Plugin with keywords",
         version: "1.0.0",
-        keywords: ["frontend", "react", "ui"],
+        keywords: ["web", "react", "ui"],
       });
 
       const marketplace = await generateMarketplace(pluginsDir, {
@@ -246,7 +236,7 @@ describe("marketplace-generator", () => {
       });
 
       const plugin = marketplace.plugins[0];
-      expect(plugin.keywords).toEqual(["frontend", "react", "ui"]);
+      expect(plugin.keywords).toEqual(["web", "react", "ui"]);
     });
 
     it("should generate correct source paths for plugins", async () => {
@@ -281,12 +271,7 @@ describe("marketplace-generator", () => {
         plugins: [],
       };
 
-      const nestedPath = path.join(
-        tempDir,
-        "nested",
-        "dir",
-        "marketplace.json",
-      );
+      const nestedPath = path.join(tempDir, "nested", "dir", "marketplace.json");
       await writeMarketplace(nestedPath, marketplace);
 
       const content = await readFile(nestedPath, "utf-8");
@@ -337,9 +322,7 @@ describe("marketplace-generator", () => {
       const content = await readFile(outputPath, "utf-8");
       const parsed = JSON.parse(content);
 
-      expect(parsed.$schema).toBe(
-        "https://anthropic.com/claude-code/marketplace.schema.json",
-      );
+      expect(parsed.$schema).toBe("https://anthropic.com/claude-code/marketplace.schema.json");
     });
 
     it("should format JSON with 2-space indentation", async () => {
@@ -402,17 +385,17 @@ describe("marketplace-generator", () => {
         version: "1.0.0",
         owner: { name: "Test" },
         plugins: [
-          { name: "skill-react", source: "./p1", category: "frontend" },
-          { name: "skill-vue", source: "./p2", category: "frontend" },
-          { name: "skill-express", source: "./p3", category: "backend" },
+          { name: "skill-react", source: "./p1", category: "web" },
+          { name: "skill-vue", source: "./p2", category: "web" },
+          { name: "skill-express", source: "./p3", category: "api" },
           { name: "skill-vitest", source: "./p4", category: "testing" },
         ],
       };
 
       const stats = getMarketplaceStats(marketplace);
 
-      expect(stats.byCategory.frontend).toBe(2);
-      expect(stats.byCategory.backend).toBe(1);
+      expect(stats.byCategory.web).toBe(2);
+      expect(stats.byCategory.api).toBe(1);
       expect(stats.byCategory.testing).toBe(1);
     });
 
@@ -422,7 +405,7 @@ describe("marketplace-generator", () => {
         version: "1.0.0",
         owner: { name: "Test" },
         plugins: [
-          { name: "skill-react", source: "./p1", category: "frontend" },
+          { name: "skill-react", source: "./p1", category: "web" },
           { name: "skill-unknown", source: "./p2" }, // No category
           { name: "skill-misc", source: "./p3" }, // No category
         ],
@@ -430,7 +413,7 @@ describe("marketplace-generator", () => {
 
       const stats = getMarketplaceStats(marketplace);
 
-      expect(stats.byCategory.frontend).toBe(1);
+      expect(stats.byCategory.web).toBe(1);
       expect(stats.byCategory.uncategorized).toBe(2);
     });
 

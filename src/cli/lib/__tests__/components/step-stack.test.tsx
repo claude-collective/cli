@@ -75,18 +75,18 @@ const createMockStackWithSkills = (): MergedSkillsMatrix => {
   return createMockMatrix(skills, {
     suggestedStacks,
     categories: {
-      frontend: {
-        id: "frontend",
-        name: "Frontend",
-        description: "Frontend skills",
+      web: {
+        id: "web",
+        name: "Web",
+        description: "Web skills",
         exclusive: false,
         required: false,
         order: 0,
       },
-      backend: {
-        id: "backend",
-        name: "Backend",
-        description: "Backend skills",
+      api: {
+        id: "api",
+        name: "API",
+        description: "API skills",
         exclusive: false,
         required: false,
         order: 1,

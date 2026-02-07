@@ -46,9 +46,7 @@ describe("plugin-validator", () => {
     });
 
     it("should fail if plugin directory does not exist", async () => {
-      const result = await validatePluginStructure(
-        path.join(tempDir, "nonexistent"),
-      );
+      const result = await validatePluginStructure(path.join(tempDir, "nonexistent"));
 
       expect(result.valid).toBe(false);
       expect(result.errors[0]).toContain("does not exist");
@@ -83,9 +81,7 @@ describe("plugin-validator", () => {
       const result = await validatePluginStructure(tempDir);
 
       expect(result.valid).toBe(true);
-      expect(result.warnings).toContain(
-        "Missing README.md (recommended for documentation)",
-      );
+      expect(result.warnings).toContain("Missing README.md (recommended for documentation)");
     });
   });
 
@@ -112,9 +108,7 @@ describe("plugin-validator", () => {
     });
 
     it("should fail if file does not exist", async () => {
-      const result = await validatePluginManifest(
-        path.join(tempDir, "nonexistent.json"),
-      );
+      const result = await validatePluginManifest(path.join(tempDir, "nonexistent.json"));
 
       expect(result.valid).toBe(false);
       expect(result.errors[0]).toContain("not found");
@@ -289,9 +283,7 @@ Content here.
     });
 
     it("should fail if file does not exist", async () => {
-      const result = await validateSkillFrontmatter(
-        path.join(tempDir, "SKILL.md"),
-      );
+      const result = await validateSkillFrontmatter(path.join(tempDir, "SKILL.md"));
 
       expect(result.valid).toBe(false);
       expect(result.errors[0]).toContain("not found");
@@ -333,7 +325,7 @@ name: test-skill
 name: test-skill
 description: A test skill
 author: "@test"
-category: frontend
+category: web
 version: "1.0.0"
 ---
 
@@ -345,9 +337,7 @@ version: "1.0.0"
 
       // Schema has additionalProperties: false, so extra fields cause errors
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("Unrecognized key"))).toBe(
-        true,
-      );
+      expect(result.errors.some((e) => e.includes("Unrecognized key"))).toBe(true);
     });
 
     it("should pass with optional runtime fields", async () => {
@@ -400,9 +390,7 @@ tools: Read, Write, Edit, Grep, Glob
     });
 
     it("should fail if file does not exist", async () => {
-      const result = await validateAgentFrontmatter(
-        path.join(tempDir, "agent.md"),
-      );
+      const result = await validateAgentFrontmatter(path.join(tempDir, "agent.md"));
 
       expect(result.valid).toBe(false);
       expect(result.errors[0]).toContain("not found");
@@ -597,9 +585,7 @@ name: bad-skill
       const result = await validatePlugin(tempDir);
 
       expect(result.valid).toBe(true);
-      expect(result.warnings.some((w) => w.includes("no SKILL.md files"))).toBe(
-        true,
-      );
+      expect(result.warnings.some((w) => w.includes("no SKILL.md files"))).toBe(true);
     });
   });
 
@@ -631,9 +617,7 @@ name: bad-skill
     });
 
     it("should fail if directory does not exist", async () => {
-      const result = await validateAllPlugins(
-        path.join(tempDir, "nonexistent"),
-      );
+      const result = await validateAllPlugins(path.join(tempDir, "nonexistent"));
 
       expect(result.valid).toBe(false);
       expect(result.results[0].result.errors[0]).toContain("does not exist");

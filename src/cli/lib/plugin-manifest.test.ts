@@ -75,10 +75,10 @@ describe("plugin-manifest", () => {
     it("should include keywords when provided", () => {
       const manifest = generateSkillPluginManifest({
         skillName: "react",
-        keywords: ["frontend", "ui", "framework"],
+        keywords: ["web", "ui", "framework"],
       });
 
-      expect(manifest.keywords).toEqual(["frontend", "ui", "framework"]);
+      expect(manifest.keywords).toEqual(["web", "ui", "framework"]);
     });
 
     it("should not include keywords when empty array", () => {
@@ -96,9 +96,7 @@ describe("plugin-manifest", () => {
         description: "React skills for frontend development",
       });
 
-      expect(manifest.description).toBe(
-        "React skills for frontend development",
-      );
+      expect(manifest.description).toBe("React skills for frontend development");
     });
 
     it("should use custom version when provided", () => {
@@ -228,10 +226,10 @@ describe("plugin-manifest", () => {
     it("should include keywords when provided", () => {
       const manifest = generateStackPluginManifest({
         stackName: "nextjs-fullstack",
-        keywords: ["frontend", "react", "stack"],
+        keywords: ["web", "react", "stack"],
       });
 
-      expect(manifest.keywords).toEqual(["frontend", "react", "stack"]);
+      expect(manifest.keywords).toEqual(["web", "react", "stack"]);
     });
 
     it("should default to version 1.0.0", () => {
@@ -370,9 +368,7 @@ describe("plugin-manifest", () => {
     it("should handle relative paths", () => {
       const result = getPluginManifestPath("dist/plugins");
 
-      expect(result).toBe(
-        path.join("dist/plugins", ".claude-plugin", "plugin.json"),
-      );
+      expect(result).toBe(path.join("dist/plugins", ".claude-plugin", "plugin.json"));
     });
   });
 });

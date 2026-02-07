@@ -89,14 +89,12 @@ describe("User Journey: Compile Flow", () => {
         agent_skills: {
           "web-developer": {
             default: DEFAULT_TEST_SKILLS.filter(
-              (s) =>
-                s.category.startsWith("frontend") || s.category === "testing",
+              (s) => s.category.startsWith("web") || s.category === "testing",
             ).map((s) => ({ id: s.id, preloaded: true })),
           },
           "api-developer": {
             default: DEFAULT_TEST_SKILLS.filter(
-              (s) =>
-                s.category.startsWith("backend") || s.category === "testing",
+              (s) => s.category.startsWith("api") || s.category === "testing",
             ).map((s) => ({ id: s.id, preloaded: true })),
           },
         },
@@ -128,11 +126,7 @@ describe("User Journey: Compile Flow", () => {
 
       try {
         // Run compile command with custom output
-        const { error } = await runCliCommand([
-          "compile",
-          "--output",
-          outputDir,
-        ]);
+        const { error } = await runCliCommand(["compile", "--output", outputDir]);
 
         // The compile command may error due to skill resolution issues
         // (test skill IDs don't match what resolver expects)
@@ -140,11 +134,7 @@ describe("User Journey: Compile Flow", () => {
         if (error?.oclif?.exit && error.oclif.exit !== 0) {
           const message = error.message || "";
           // These are acceptable errors - the command logic ran correctly
-          const acceptableErrors = [
-            "No skills found",
-            "not found in scanned skills",
-            "skill",
-          ];
+          const acceptableErrors = ["No skills found", "not found in scanned skills", "skill"];
           const isAcceptable = acceptableErrors.some((e) =>
             message.toLowerCase().includes(e.toLowerCase()),
           );
@@ -389,10 +379,7 @@ Use this skill for project-specific patterns.
         name: "local-skills-project",
         description: "Project with local skills",
         agents: ["web-developer"],
-        skills: [
-          ...DEFAULT_TEST_SKILLS.map((s) => ({ id: s.id })),
-          { id: localSkill.id },
-        ],
+        skills: [...DEFAULT_TEST_SKILLS.map((s) => ({ id: s.id })), { id: localSkill.id }],
         agent_skills: {
           "web-developer": {
             default: [

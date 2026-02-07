@@ -178,8 +178,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
 
   /**
    * Create a skill in src/skills/ (new architecture)
-   * @param directoryPath - filesystem path like "frontend/framework/react (@vince)"
-   * @param config.name - frontmatter name (canonical ID) like "frontend/react (@vince)"
+   * @param directoryPath - filesystem path like "web/framework/react (@vince)"
+   * @param config.name - frontmatter name (canonical ID) like "web/react (@vince)"
    */
   async function createSkillInSource(
     directoryPath: string,
@@ -216,7 +216,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
 
       // Create skill in src/skills/ (new architecture)
       // Directory path is where the files live, frontmatter name is the canonical ID
-      const directoryPath = "frontend/framework/react (@vince)";
+      const directoryPath = "web/framework/react (@vince)";
       const frontmatterName = "react (@vince)";
       await createSkillInSource(directoryPath, {
         name: frontmatterName,
@@ -274,11 +274,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
         stack,
       });
 
-      const manifestPath = path.join(
-        result.pluginPath,
-        ".claude-plugin",
-        "plugin.json",
-      );
+      const manifestPath = path.join(result.pluginPath, ".claude-plugin", "plugin.json");
       const manifestContent = await readFile(manifestPath, "utf-8");
       const manifest = JSON.parse(manifestContent);
 
@@ -316,11 +312,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
         stack,
       });
 
-      const agentMdPath = path.join(
-        result.pluginPath,
-        "agents",
-        "web-developer.md",
-      );
+      const agentMdPath = path.join(result.pluginPath, "agents", "web-developer.md");
       const agentContent = await readFile(agentMdPath, "utf-8");
 
       expect(agentContent).toContain("name: web-developer");
@@ -379,7 +371,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
         version: "1.0.0",
         author: "@test",
         agents: ["web-developer"],
-        tags: ["frontend", "react", "typescript"],
+        tags: ["web", "react", "typescript"],
         skills: [],
       });
 
@@ -394,7 +386,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       const readmeContent = await readFile(readmePath, "utf-8");
 
       expect(readmeContent).toContain("## Tags");
-      expect(readmeContent).toContain("`frontend`");
+      expect(readmeContent).toContain("`web`");
       expect(readmeContent).toContain("`react`");
       expect(readmeContent).toContain("`typescript`");
     });
@@ -556,9 +548,9 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       const { agentsDir, configDir } = await createProjectStructure();
 
       // Create skills in src/skills/ (new architecture)
-      const reactDirPath = "frontend/framework/react (@vince)";
+      const reactDirPath = "web/framework/react (@vince)";
       const reactCanonicalId = "react (@vince)";
-      const tsDirPath = "frontend/language/typescript (@vince)";
+      const tsDirPath = "web/language/typescript (@vince)";
       const tsCanonicalId = "typescript (@vince)";
 
       await createSkillInSource(reactDirPath, {
@@ -963,10 +955,9 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       const { agentsDir, configDir } = await createProjectStructure();
 
       // Create skills in src/skills/ (new architecture)
-      const reactDirPath = "frontend/framework/react (@vince)";
+      const reactDirPath = "web/framework/react (@vince)";
       const reactCanonicalId = "react (@vince)";
-      const zustandDirPath =
-        "frontend/client-state-management/zustand (@vince)";
+      const zustandDirPath = "web/client-state-management/zustand (@vince)";
       const zustandCanonicalId = "zustand (@vince)";
 
       await createSkillInSource(reactDirPath, {
@@ -1032,12 +1023,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
 
       printStackCompilationSummary(result);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Test Stack"),
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("/output/test-stack"),
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Test Stack"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("/output/test-stack"));
 
       consoleSpy.mockRestore();
     });
@@ -1056,18 +1043,10 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
 
       printStackCompilationSummary(result);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Agents: 3"),
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("web-developer"),
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("api-developer"),
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("web-tester"),
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Agents: 3"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("web-developer"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("api-developer"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("web-tester"));
 
       consoleSpy.mockRestore();
     });
@@ -1080,28 +1059,16 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
         manifest: { name: "test-stack" },
         stackName: "Test Stack",
         agents: ["web-developer"],
-        skillPlugins: [
-          "react (@vince)",
-          "zustand (@vince)",
-          "typescript (@vince)",
-        ],
+        skillPlugins: ["react (@vince)", "zustand (@vince)", "typescript (@vince)"],
         hasHooks: false,
       };
 
       printStackCompilationSummary(result);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Skills included: 3"),
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("react (@vince)"),
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("zustand (@vince)"),
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("typescript (@vince)"),
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Skills included: 3"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("react (@vince)"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("zustand (@vince)"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("typescript (@vince)"));
 
       consoleSpy.mockRestore();
     });
@@ -1141,9 +1108,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
 
       printStackCompilationSummary(result);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Hooks: enabled"),
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Hooks: enabled"));
 
       consoleSpy.mockRestore();
     });

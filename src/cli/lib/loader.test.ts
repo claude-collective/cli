@@ -61,7 +61,7 @@ version: 1
 author: "@test"
 tags:
   - api
-  - backend
+  - api
 ---
 
 Content`;
@@ -128,8 +128,7 @@ Content`;
   });
 
   it("should not handle frontmatter with Windows line endings (current limitation)", () => {
-    const content =
-      "---\r\nname: skill\r\ndescription: desc\r\n---\r\n\r\nContent";
+    const content = "---\r\nname: skill\r\ndescription: desc\r\n---\r\n\r\nContent";
 
     const result = parseFrontmatter(content);
 

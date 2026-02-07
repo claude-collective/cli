@@ -28,20 +28,17 @@ describe("test helpers", () => {
   describe("createMockSkill", () => {
     it("creates a valid skill with defaults", () => {
       // Using normalized skill ID format
-      const skill = createMockSkill(
-        "web-framework-react",
-        "frontend/framework",
-      );
+      const skill = createMockSkill("web-framework-react", "web/framework");
 
       expect(skill.id).toBe("web-framework-react");
       // With normalized IDs, name is the same as ID unless overridden
       expect(skill.name).toBe("web-framework-react");
-      expect(skill.category).toBe("frontend/framework");
+      expect(skill.category).toBe("web/framework");
       expect(skill.author).toBe("@test");
     });
 
     it("allows overrides", () => {
-      const skill = createMockSkill("web-framework-react", "frontend", {
+      const skill = createMockSkill("web-framework-react", "web", {
         author: "@custom",
         tags: ["popular"],
       });
@@ -53,7 +50,7 @@ describe("test helpers", () => {
 
   describe("createMockMatrix", () => {
     it("creates a valid matrix", () => {
-      const skill = createMockSkill("web-framework-react", "frontend");
+      const skill = createMockSkill("web-framework-react", "web");
       const matrix = createMockMatrix({ "web-framework-react": skill });
 
       expect(matrix.version).toBe("1.0.0");
