@@ -4,19 +4,13 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { stringify as stringifyYaml } from "yaml";
 import {
-  isLegacyStackConfig,
   isSimpleAgentSkills,
   loadProjectConfig,
   normalizeAgentSkills,
   normalizeSkillEntry,
-  normalizeStackConfig,
   validateProjectConfig,
 } from "./project-config";
-import {
-  generateProjectConfigFromSkills,
-  generateProjectConfigFromStack,
-} from "./config-generator";
-import type { StackConfig } from "../../types";
+import { generateProjectConfigFromSkills } from "./config-generator";
 import type { MergedSkillsMatrix, ResolvedSkill } from "../types-matrix";
 
 describe("project-config", () => {
@@ -158,16 +152,14 @@ agent_skills:
       });
     });
 
-    it("should load legacy StackConfig format (backward compatibility)", async () => {
+    it("should load config with extra fields (backward compatibility)", async () => {
       const configDir = path.join(tempDir, ".claude");
       await mkdir(configDir, { recursive: true });
       await writeFile(
         path.join(configDir, "config.yaml"),
-        `id: legacy-stack
-name: my-stack
-version: 1.0.0
+        `name: my-stack
 author: "@vince"
-description: A legacy stack config
+description: A config with extra fields
 framework: nextjs
 skills:
   - id: react (@vince)
@@ -190,16 +182,13 @@ tags:
       const result = await loadProjectConfig(tempDir);
 
       expect(result).not.toBeNull();
-      expect(result!.isLegacy).toBe(true);
+      expect(result!.isLegacy).toBe(false);
       expect(result!.config.name).toBe("my-stack");
       expect(result!.config.framework).toBe("nextjs");
       expect(result!.config.author).toBe("@vince");
       expect(result!.config.philosophy).toBe("Ship fast");
       expect(result!.config.principles).toEqual(["Keep it simple"]);
       expect(result!.config.tags).toEqual(["nextjs", "react"]);
-      // Legacy-only fields should not be present in normalized config
-      expect((result!.config as unknown as Record<string, unknown>).id).toBeUndefined();
-      expect((result!.config as unknown as Record<string, unknown>).version).toBeUndefined();
     });
 
     it("should return null for invalid YAML", async () => {
@@ -263,44 +252,6 @@ custom_agents:
         permission_mode: "acceptEdits",
         skills: [{ id: "react (@vince)", preloaded: true }],
       });
-    });
-  });
-
-  describe("isLegacyStackConfig", () => {
-    it("should return true for semver version", () => {
-      expect(isLegacyStackConfig({ version: "1.0.0", name: "test", agents: [] })).toBe(true);
-      expect(isLegacyStackConfig({ version: "2.1.3", name: "test", agents: [] })).toBe(true);
-    });
-
-    it("should return true for config with id field", () => {
-      expect(isLegacyStackConfig({ id: "my-stack", name: "test", agents: [] })).toBe(true);
-    });
-
-    it("should return true for config with created/updated fields", () => {
-      expect(
-        isLegacyStackConfig({
-          created: "2024-01-01",
-          name: "test",
-          agents: [],
-        }),
-      ).toBe(true);
-      expect(
-        isLegacyStackConfig({
-          updated: "2024-01-01",
-          name: "test",
-          agents: [],
-        }),
-      ).toBe(true);
-    });
-
-    it("should return false for new format config", () => {
-      expect(isLegacyStackConfig({ name: "test", agents: [] })).toBe(false);
-      expect(isLegacyStackConfig({ version: "1", name: "test", agents: [] })).toBe(false);
-    });
-
-    it("should return false for null/undefined", () => {
-      expect(isLegacyStackConfig(null)).toBe(false);
-      expect(isLegacyStackConfig(undefined)).toBe(false);
     });
   });
 
@@ -441,22 +392,6 @@ custom_agents:
 
       expect(result.valid).toBe(false);
       expect(result.errors.some((e) => e.includes("must be an array"))).toBe(true);
-    });
-
-    it("should warn for deprecated fields", () => {
-      const result = validateProjectConfig({
-        name: "my-project",
-        agents: ["web-developer"],
-        id: "deprecated-id",
-        created: "2024-01-01",
-        updated: "2024-01-02",
-      });
-
-      // Still valid, but with warnings
-      expect(result.valid).toBe(true);
-      expect(result.warnings).toContain("id field is deprecated in project config");
-      expect(result.warnings).toContain("created field is deprecated in project config");
-      expect(result.warnings).toContain("updated field is deprecated in project config");
     });
 
     it("should fail for non-object config", () => {
@@ -732,64 +667,6 @@ custom_agents:
     });
   });
 
-  describe("normalizeStackConfig", () => {
-    it("should convert StackConfig to ProjectConfig", () => {
-      const stackConfig: StackConfig = {
-        name: "my-stack",
-        version: "1.0.0",
-        author: "@vince",
-        description: "Test stack",
-        framework: "nextjs",
-        skills: [{ id: "react" }],
-        agents: ["web-developer"],
-        agent_skills: {
-          "web-developer": {
-            framework: [{ id: "react", preloaded: true }],
-          },
-        },
-        philosophy: "Ship fast",
-        principles: ["Keep it simple"],
-        tags: ["nextjs"],
-      };
-
-      const result = normalizeStackConfig(stackConfig);
-
-      expect(result.name).toBe("my-stack");
-      expect(result.agents).toEqual(["web-developer"]);
-      expect(result.description).toBe("Test stack");
-      expect(result.framework).toBe("nextjs");
-      expect(result.author).toBe("@vince");
-      expect(result.philosophy).toBe("Ship fast");
-      expect(result.principles).toEqual(["Keep it simple"]);
-      expect(result.tags).toEqual(["nextjs"]);
-      expect(result.skills).toEqual([{ id: "react" }]);
-      expect(result.agent_skills).toEqual({
-        "web-developer": {
-          framework: [{ id: "react", preloaded: true }],
-        },
-      });
-      // version should not be copied (it's semver in StackConfig)
-      expect(result.version).toBeUndefined();
-    });
-
-    it("should handle minimal StackConfig", () => {
-      const stackConfig: StackConfig = {
-        name: "minimal",
-        version: "1.0.0",
-        author: "@user",
-        skills: [],
-        agents: ["web-developer"],
-      };
-
-      const result = normalizeStackConfig(stackConfig);
-
-      expect(result.name).toBe("minimal");
-      expect(result.agents).toEqual(["web-developer"]);
-      expect(result.skills).toBeUndefined(); // Empty array not copied
-      expect(result.description).toBeUndefined();
-    });
-  });
-
   describe("isSimpleAgentSkills", () => {
     it("should return true for array", () => {
       expect(isSimpleAgentSkills(["react", "zustand"])).toBe(true);
@@ -1057,67 +934,6 @@ describe("round-trip tests", () => {
     expect(loaded!.isLegacy).toBe(false);
   });
 
-  it("should round-trip legacy StackConfig format (backward compat)", async () => {
-    // Create a legacy StackConfig
-    const stackConfig: StackConfig = {
-      name: "legacy-stack",
-      version: "1.0.0",
-      author: "@vince",
-      description: "A legacy stack config for testing",
-      framework: "nextjs",
-      skills: [{ id: "react (@vince)" }, { id: "zustand (@vince)", preloaded: true }],
-      agents: ["web-developer", "api-developer"],
-      agent_skills: {
-        "web-developer": {
-          framework: [{ id: "react (@vince)", preloaded: true }],
-        },
-      },
-      philosophy: "Ship fast, iterate faster",
-      principles: ["Keep it simple", "Test everything"],
-      tags: ["nextjs", "react", "fullstack"],
-    };
-
-    // Write as StackConfig (legacy format with semver version)
-    const configDir = path.join(tempDir, ".claude");
-    await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.yaml"), stringifyYaml(stackConfig));
-
-    // Load it back (should detect legacy and normalize)
-    const loaded = await loadProjectConfig(tempDir);
-
-    // Verify
-    expect(loaded).not.toBeNull();
-    expect(loaded!.isLegacy).toBe(true);
-
-    // Core fields should be preserved
-    expect(loaded!.config.name).toBe("legacy-stack");
-    expect(loaded!.config.description).toBe("A legacy stack config for testing");
-    expect(loaded!.config.framework).toBe("nextjs");
-    expect(loaded!.config.author).toBe("@vince");
-    expect(loaded!.config.agents).toEqual(["web-developer", "api-developer"]);
-
-    // Skills should be preserved
-    expect(loaded!.config.skills).toEqual([
-      { id: "react (@vince)" },
-      { id: "zustand (@vince)", preloaded: true },
-    ]);
-
-    // agent_skills should be preserved
-    expect(loaded!.config.agent_skills).toEqual({
-      "web-developer": {
-        framework: [{ id: "react (@vince)", preloaded: true }],
-      },
-    });
-
-    // Extended fields should be preserved
-    expect(loaded!.config.philosophy).toBe("Ship fast, iterate faster");
-    expect(loaded!.config.principles).toEqual(["Keep it simple", "Test everything"]);
-    expect(loaded!.config.tags).toEqual(["nextjs", "react", "fullstack"]);
-
-    // Legacy-only fields should NOT be in normalized config
-    expect((loaded!.config as unknown as Record<string, unknown>).version).toBeUndefined();
-  });
-
   it("should round-trip config with agent_skills (includeAgentSkills option)", async () => {
     // Create mock matrix with skills
     const matrix = createMockMatrix({
@@ -1150,60 +966,5 @@ describe("round-trip tests", () => {
     expect(loaded!.config.agent_skills).toEqual(generated.agent_skills);
 
     expect(loaded!.isLegacy).toBe(false);
-  });
-
-  it("should round-trip ProjectConfig generated from StackConfig", async () => {
-    // Create a StackConfig
-    const stackConfig: StackConfig = {
-      name: "converted-stack",
-      version: "2.0.0",
-      author: "@converter",
-      description: "Stack converted to ProjectConfig",
-      framework: "remix",
-      skills: [
-        { id: "react (@vince)", preloaded: true },
-        { id: "hono (@vince)" },
-        { id: "local-skill", local: true, path: ".claude/skills/local-skill/" },
-      ],
-      agents: ["web-developer"],
-      philosophy: "Convention over configuration",
-      principles: ["DRY", "KISS"],
-      tags: ["remix", "fullstack"],
-    };
-
-    // Generate ProjectConfig from StackConfig
-    const generated = generateProjectConfigFromStack(stackConfig);
-
-    // Write to temp dir
-    const configDir = path.join(tempDir, ".claude");
-    await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.yaml"), stringifyYaml(generated));
-
-    // Load it back
-    const loaded = await loadProjectConfig(tempDir);
-
-    // Verify
-    expect(loaded).not.toBeNull();
-    expect(loaded!.isLegacy).toBe(false); // ProjectConfig, not StackConfig
-
-    expect(loaded!.config.name).toBe("converted-stack");
-    expect(loaded!.config.description).toBe("Stack converted to ProjectConfig");
-    expect(loaded!.config.framework).toBe("remix");
-    expect(loaded!.config.author).toBe("@converter");
-    expect(loaded!.config.agents).toEqual(["web-developer"]);
-
-    // Skills should use minimal format
-    expect(loaded!.config.skills).toEqual([
-      { id: "react (@vince)", preloaded: true },
-      "hono (@vince)",
-      { id: "local-skill", local: true, path: ".claude/skills/local-skill/" },
-    ]);
-
-    expect(loaded!.config.philosophy).toBe("Convention over configuration");
-    expect(loaded!.config.principles).toEqual(["DRY", "KISS"]);
-    expect(loaded!.config.tags).toEqual(["remix", "fullstack"]);
-
-    // version should NOT be copied from StackConfig (it's semver)
-    expect(loaded!.config.version).toBeUndefined();
   });
 });

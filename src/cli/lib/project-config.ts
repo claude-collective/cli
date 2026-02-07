@@ -5,7 +5,6 @@ import { verbose } from "../utils/logger";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../consts";
 import type {
   ProjectConfig,
-  StackConfig,
   SkillAssignment,
   SkillEntry,
   AgentSkillConfig,
@@ -26,9 +25,7 @@ export interface LoadedProjectConfig {
 /**
  * Load project config from .claude-src/config.yaml (with fallback to .claude/config.yaml)
  */
-export async function loadProjectConfig(
-  projectDir: string,
-): Promise<LoadedProjectConfig | null> {
+export async function loadProjectConfig(projectDir: string): Promise<LoadedProjectConfig | null> {
   // Check .claude-src/config.yaml first (new location)
   const srcConfigPath = path.join(projectDir, CONFIG_PATH);
   // Fall back to .claude/config.yaml (legacy location)
@@ -40,9 +37,7 @@ export async function loadProjectConfig(
       configPath = legacyConfigPath;
       verbose(`Using legacy config location: ${legacyConfigPath}`);
     } else {
-      verbose(
-        `Project config not found at ${srcConfigPath} or ${legacyConfigPath}`,
-      );
+      verbose(`Project config not found at ${srcConfigPath} or ${legacyConfigPath}`);
       return null;
     }
   }
@@ -56,19 +51,6 @@ export async function loadProjectConfig(
       return null;
     }
 
-    // Detect if this is legacy StackConfig format
-    const isLegacy = isLegacyStackConfig(parsed);
-
-    if (isLegacy) {
-      verbose(`Detected legacy StackConfig format at ${configPath}`);
-      const normalized = normalizeStackConfig(parsed as StackConfig);
-      return {
-        config: normalized,
-        configPath,
-        isLegacy: true,
-      };
-    }
-
     verbose(`Loaded project config from ${configPath}`);
     return {
       config: parsed as ProjectConfig,
@@ -79,86 +61,6 @@ export async function loadProjectConfig(
     verbose(`Failed to parse project config: ${error}`);
     return null;
   }
-}
-
-/**
- * Check if a config object is in legacy StackConfig format.
- * Detection logic:
- * - If version is semver (e.g., "1.0.0") -> legacy
- * - If version is "1" -> new format
- * - If has 'id' field -> legacy
- * - If has 'created' or 'updated' fields -> legacy
- */
-export function isLegacyStackConfig(config: unknown): boolean {
-  if (!config || typeof config !== "object") return false;
-
-  const obj = config as Record<string, unknown>;
-
-  // If version looks like semver (x.y.z), it's legacy
-  if (typeof obj.version === "string" && obj.version.includes(".")) {
-    return true;
-  }
-
-  // If has legacy-only fields, it's legacy
-  if (
-    obj.id !== undefined ||
-    obj.created !== undefined ||
-    obj.updated !== undefined
-  ) {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Normalize StackConfig to ProjectConfig (for backward compatibility)
- */
-export function normalizeStackConfig(stackConfig: StackConfig): ProjectConfig {
-  const config: ProjectConfig = {
-    name: stackConfig.name,
-    agents: stackConfig.agents,
-  };
-
-  // Copy optional fields
-  if (stackConfig.description) {
-    config.description = stackConfig.description;
-  }
-
-  if (stackConfig.skills && stackConfig.skills.length > 0) {
-    config.skills = stackConfig.skills;
-  }
-
-  if (stackConfig.agent_skills) {
-    // StackConfig agent_skills is always categorized format
-    config.agent_skills = stackConfig.agent_skills;
-  }
-
-  if (stackConfig.hooks) {
-    config.hooks = stackConfig.hooks;
-  }
-
-  if (stackConfig.author) {
-    config.author = stackConfig.author;
-  }
-
-  if (stackConfig.framework) {
-    config.framework = stackConfig.framework;
-  }
-
-  if (stackConfig.philosophy) {
-    config.philosophy = stackConfig.philosophy;
-  }
-
-  if (stackConfig.principles && stackConfig.principles.length > 0) {
-    config.principles = stackConfig.principles;
-  }
-
-  if (stackConfig.tags && stackConfig.tags.length > 0) {
-    config.tags = stackConfig.tags;
-  }
-
-  return config;
 }
 
 /**
@@ -216,10 +118,7 @@ export function validateProjectConfig(config: unknown): ValidationResult {
       errors.push("agent_skills must be an object");
     } else {
       for (const [agentName, agentSkills] of Object.entries(c.agent_skills)) {
-        const agentSkillsError = validateAgentSkillConfig(
-          agentName,
-          agentSkills,
-        );
+        const agentSkillsError = validateAgentSkillConfig(agentName, agentSkills);
         if (agentSkillsError) {
           errors.push(agentSkillsError);
         }
@@ -234,15 +133,11 @@ export function validateProjectConfig(config: unknown): ValidationResult {
     } else {
       for (const [agentName, patterns] of Object.entries(c.preload_patterns)) {
         if (!Array.isArray(patterns)) {
-          errors.push(
-            `preload_patterns.${agentName} must be an array of strings`,
-          );
+          errors.push(`preload_patterns.${agentName} must be an array of strings`);
         } else {
           for (const pattern of patterns) {
             if (typeof pattern !== "string") {
-              errors.push(
-                `preload_patterns.${agentName} must contain only strings`,
-              );
+              errors.push(`preload_patterns.${agentName} must contain only strings`);
               break;
             }
           }
@@ -255,17 +150,6 @@ export function validateProjectConfig(config: unknown): ValidationResult {
   if (c.custom_agents !== undefined) {
     const customAgentsErrors = validateCustomAgents(c.custom_agents, c.agents);
     errors.push(...customAgentsErrors);
-  }
-
-  // Warnings for deprecated patterns
-  if (c.id !== undefined) {
-    warnings.push("id field is deprecated in project config");
-  }
-  if (c.created !== undefined) {
-    warnings.push("created field is deprecated in project config");
-  }
-  if (c.updated !== undefined) {
-    warnings.push("updated field is deprecated in project config");
   }
 
   return {
@@ -294,10 +178,7 @@ const VALID_PERMISSION_MODES = [
 /**
  * Validate custom_agents section of config
  */
-function validateCustomAgents(
-  customAgents: unknown,
-  agents: unknown,
-): string[] {
+function validateCustomAgents(customAgents: unknown, agents: unknown): string[] {
   const errors: string[] = [];
 
   if (typeof customAgents !== "object" || customAgents === null) {
@@ -318,11 +199,7 @@ function validateCustomAgents(
   const customAgentNames = new Set(customAgentEntries.map(([name]) => name));
 
   for (const [agentName, agentConfig] of customAgentEntries) {
-    const agentErrors = validateCustomAgentConfig(
-      agentName,
-      agentConfig,
-      customAgentNames,
-    );
+    const agentErrors = validateCustomAgentConfig(agentName, agentConfig, customAgentNames);
     errors.push(...agentErrors);
   }
 
@@ -363,9 +240,7 @@ function validateCustomAgentConfig(
       errors.push(`${prefix}.extends must be a string`);
     } else if (customAgentNames.has(c.extends)) {
       // Custom agents cannot extend other custom agents
-      errors.push(
-        `${prefix}.extends cannot reference another custom agent "${c.extends}"`,
-      );
+      errors.push(`${prefix}.extends cannot reference another custom agent "${c.extends}"`);
     }
   }
 
@@ -410,9 +285,7 @@ function validateCustomAgentConfig(
       typeof c.permission_mode !== "string" ||
       !VALID_PERMISSION_MODES.includes(c.permission_mode)
     ) {
-      errors.push(
-        `${prefix}.permission_mode must be one of: ${VALID_PERMISSION_MODES.join(", ")}`,
-      );
+      errors.push(`${prefix}.permission_mode must be one of: ${VALID_PERMISSION_MODES.join(", ")}`);
     }
   }
 
@@ -481,10 +354,7 @@ function validateSkillEntry(skill: unknown): string | null {
 /**
  * Validate agent skill config (can be simple list or categorized)
  */
-function validateAgentSkillConfig(
-  agentName: string,
-  agentSkills: unknown,
-): string | null {
+function validateAgentSkillConfig(agentName: string, agentSkills: unknown): string | null {
   // Check if it's a simple list (array)
   if (Array.isArray(agentSkills)) {
     for (const skill of agentSkills) {
