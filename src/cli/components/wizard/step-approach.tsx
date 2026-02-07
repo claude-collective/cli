@@ -62,14 +62,10 @@ export const StepApproach: React.FC = () => {
 
   return (
     <Box flexDirection="column">
-      <ViewTitle title="How would you like to set up your stack?" />
+      <ViewTitle>How would you like to set up your stack?</ViewTitle>
       <Box flexDirection="column" marginTop={1}>
         {APPROACH_OPTIONS.map((option, index) => (
-          <MenuItem
-            key={option.value}
-            label={option.label}
-            isFocused={index === focusedIndex}
-          />
+          <MenuItem key={option.value} label={option.label} isFocused={index === focusedIndex} />
         ))}
       </Box>
     </Box>
