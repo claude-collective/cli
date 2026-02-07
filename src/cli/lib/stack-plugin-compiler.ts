@@ -26,7 +26,7 @@ import type { Stack } from "../types-stacks";
 import { hashString, getCurrentDate } from "./versioning";
 import type {
   PluginManifest,
-  StackConfig,
+  ProjectConfig,
   AgentConfig,
   CompileConfig,
   Skill,
@@ -74,23 +74,21 @@ async function readExistingManifest(
   }
 }
 
-function hashStackConfig(stack: StackConfig): string {
+function hashStackConfig(stack: ProjectConfig): string {
   const parts: string[] = [
     `name:${stack.name}`,
     `description:${stack.description ?? ""}`,
     `skills:${(stack.skills || [])
-      .map((s) => s.id)
+      .map((s) => (typeof s === "string" ? s : s.id))
       .sort()
       .join(",")}`,
-    `agents:${Object.keys(stack.agents || {})
-      .sort()
-      .join(",")}`,
+    `agents:${(stack.agents || []).sort().join(",")}`,
   ];
   return hashString(parts.join("\n"));
 }
 
 async function determineStackVersion(
-  stack: StackConfig,
+  stack: ProjectConfig,
   pluginDir: string,
 ): Promise<{ version: string; contentHash: string }> {
   const newHash = hashStackConfig(stack);
@@ -168,15 +166,9 @@ export async function compileAgentForPlugin(
   const category = agentPath.split("/")[0];
   const categoryDir = path.join(agentSourceRoot, agentBaseDir, category);
 
-  let outputFormat = await readFileOptional(
-    path.join(agentDir, "output-format.md"),
-    "",
-  );
+  let outputFormat = await readFileOptional(path.join(agentDir, "output-format.md"), "");
   if (!outputFormat) {
-    outputFormat = await readFileOptional(
-      path.join(categoryDir, "output-format.md"),
-      "",
-    );
+    outputFormat = await readFileOptional(path.join(categoryDir, "output-format.md"), "");
   }
 
   const preloadedSkills = agent.skills.filter((s) => s.preloaded);
@@ -207,7 +199,7 @@ export async function compileAgentForPlugin(
 
 function generateStackReadme(
   stackId: string,
-  stack: StackConfig,
+  stack: ProjectConfig,
   agents: string[],
   skillPlugins: string[],
 ): string {
@@ -285,13 +277,11 @@ interface HooksJsonOutput {
   hooks: Record<string, AgentHookDefinition[]>;
 }
 
-function stackHasHooks(stack: StackConfig): boolean {
+function stackHasHooks(stack: ProjectConfig): boolean {
   return stack.hooks !== undefined && Object.keys(stack.hooks).length > 0;
 }
 
-function generateHooksJson(
-  hooks: Record<string, AgentHookDefinition[]>,
-): string {
+function generateHooksJson(hooks: Record<string, AgentHookDefinition[]>): string {
   const output: HooksJsonOutput = { hooks };
   return JSON.stringify(output, null, 2);
 }
@@ -317,8 +307,7 @@ export async function compileStackPlugin(
   );
 
   // Use provided stack or load from CLI's config/stacks.yaml
-  const newStack =
-    options.stack || (await loadStackById(stackId, PROJECT_ROOT));
+  const newStack = options.stack || (await loadStackById(stackId, PROJECT_ROOT));
 
   // Load skill aliases from the matrix to resolve technology aliases to skill IDs
   // This is needed for Phase 7 skill resolution in resolveAgents
@@ -326,7 +315,7 @@ export async function compileStackPlugin(
   const matrix = await loadSkillsMatrix(matrixPath);
   const skillAliases = matrix.skill_aliases || {};
 
-  let stack: StackConfig;
+  let stack: ProjectConfig;
   if (newStack) {
     verbose(`  Found stack: ${newStack.name}`);
 
@@ -340,11 +329,9 @@ export async function compileStackPlugin(
       }
     }
 
-    // Build StackConfig for compatibility with rest of function
+    // Build ProjectConfig for rest of function
     stack = {
       name: newStack.name,
-      version: "1.0.0",
-      author: "",
       description: newStack.description,
       skills: Array.from(agentSkillIds).map((id) => ({ id })),
       agents: Object.keys(newStack.agents),
@@ -354,7 +341,10 @@ export async function compileStackPlugin(
     throw new Error(`Stack '${stackId}' not found in config/stacks.yaml`);
   }
 
-  const skills = await loadSkillsByIds(stack.skills || [], projectRoot);
+  const normalizedSkillIds = (stack.skills || []).map((s) =>
+    typeof s === "string" ? { id: s } : s,
+  );
+  const skills = await loadSkillsByIds(normalizedSkillIds, projectRoot);
 
   const compileConfig: CompileConfig = stackToCompileConfig(stackId, stack);
 
@@ -403,12 +393,7 @@ export async function compileStackPlugin(
   const allSkillPlugins: string[] = [];
 
   for (const [name, agent] of Object.entries(resolvedAgents)) {
-    const output = await compileAgentForPlugin(
-      name,
-      agent,
-      PROJECT_ROOT,
-      engine,
-    );
+    const output = await compileAgentForPlugin(name, agent, PROJECT_ROOT, engine);
     await writeFile(path.join(agentsDir, `${name}.md`), output);
     compiledAgentNames.push(name);
 
@@ -436,10 +421,7 @@ export async function compileStackPlugin(
     verbose(`  Generated hooks/hooks.json`);
   }
 
-  const { version, contentHash } = await determineStackVersion(
-    stack,
-    pluginDir,
-  );
+  const { version, contentHash } = await determineStackVersion(stack, pluginDir);
 
   const uniqueSkillPlugins = [...new Set(allSkillPlugins)];
   const manifest = generateStackPluginManifest({
@@ -455,20 +437,12 @@ export async function compileStackPlugin(
 
   await writePluginManifest(pluginDir, manifest);
 
-  const hashFilePath = getPluginManifestPath(pluginDir).replace(
-    "plugin.json",
-    CONTENT_HASH_FILE,
-  );
+  const hashFilePath = getPluginManifestPath(pluginDir).replace("plugin.json", CONTENT_HASH_FILE);
   await writeFile(hashFilePath, contentHash);
 
   verbose(`  Wrote plugin.json (v${version})`);
 
-  const readme = generateStackReadme(
-    stackId,
-    stack,
-    compiledAgentNames,
-    uniqueSkillPlugins,
-  );
+  const readme = generateStackReadme(stackId, stack, compiledAgentNames, uniqueSkillPlugins);
   await writeFile(path.join(pluginDir, "README.md"), readme);
   verbose(`  Generated README.md`);
 
@@ -482,9 +456,7 @@ export async function compileStackPlugin(
   };
 }
 
-export function printStackCompilationSummary(
-  result: CompiledStackPlugin,
-): void {
+export function printStackCompilationSummary(result: CompiledStackPlugin): void {
   console.log(`\nStack plugin compiled: ${result.stackName}`);
   console.log(`  Path: ${result.pluginPath}`);
   console.log(`  Agents: ${result.agents.length}`);

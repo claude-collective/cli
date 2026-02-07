@@ -3,13 +3,7 @@ import path from "path";
 import { glob, readFile, directoryExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import { CLAUDE_SRC_DIR, DIRS } from "../consts";
-import type {
-  AgentDefinition,
-  AgentYamlConfig,
-  SkillDefinition,
-  SkillFrontmatter,
-  StackConfig,
-} from "../types";
+import type { AgentDefinition, AgentYamlConfig, SkillDefinition, SkillFrontmatter } from "../types";
 
 export type CompileMode = "dev";
 
@@ -39,9 +33,7 @@ function extractDisplayName(skillId: string): string {
     .join(" ");
 }
 
-export async function loadAllAgents(
-  projectRoot: string,
-): Promise<Record<string, AgentDefinition>> {
+export async function loadAllAgents(projectRoot: string): Promise<Record<string, AgentDefinition>> {
   const agents: Record<string, AgentDefinition> = {};
   const agentSourcesDir = path.join(projectRoot, DIRS.agents);
 
@@ -60,7 +52,6 @@ export async function loadAllAgents(
       tools: config.tools,
       path: agentPath,
       sourceRoot: projectRoot,
-      skills: config.skills,
     };
 
     verbose(`Loaded agent: ${config.id} from ${file}`);
@@ -100,7 +91,6 @@ export async function loadProjectAgents(
       path: agentPath,
       sourceRoot: projectRoot,
       agentBaseDir: `${CLAUDE_SRC_DIR}/agents`, // Project agents are in .claude-src/agents/
-      skills: config.skills,
     };
 
     verbose(`Loaded project agent: ${config.id} from ${file}`);
@@ -109,54 +99,7 @@ export async function loadProjectAgents(
   return agents;
 }
 
-/** @deprecated Use loadSkillsByIds instead - stacks no longer embed skills */
-export async function loadStackSkills(
-  stackId: string,
-  projectRoot: string,
-  _mode: CompileMode = "dev",
-): Promise<Record<string, SkillDefinition>> {
-  const skills: Record<string, SkillDefinition> = {};
-  const stackSkillsDir = path.join(projectRoot, DIRS.stacks, stackId, "skills");
-
-  if (!(await directoryExists(stackSkillsDir))) {
-    verbose(`No embedded skills directory for stack ${stackId}`);
-    return skills;
-  }
-
-  const files = await glob("**/SKILL.md", stackSkillsDir);
-
-  for (const file of files) {
-    const fullPath = path.join(stackSkillsDir, file);
-    const content = await readFile(fullPath);
-
-    const frontmatter = parseFrontmatter(content);
-    if (!frontmatter) {
-      console.warn(
-        `  Warning: Skipping ${file}: Missing or invalid frontmatter`,
-      );
-      continue;
-    }
-
-    const folderPath = file.replace("/SKILL.md", "");
-    const skillPath = `src/stacks/${stackId}/skills/${folderPath}/`;
-    const skillId = frontmatter.name;
-
-    skills[skillId] = {
-      path: skillPath,
-      name: extractDisplayName(frontmatter.name),
-      description: frontmatter.description,
-      canonicalId: skillId,
-    };
-
-    verbose(`Loaded stack skill: ${skillId} from ${file}`);
-  }
-
-  return skills;
-}
-
-async function buildIdToDirectoryPathMap(
-  skillsDir: string,
-): Promise<Record<string, string>> {
+async function buildIdToDirectoryPathMap(skillsDir: string): Promise<Record<string, string>> {
   const map: Record<string, string> = {};
   const files = await glob("**/SKILL.md", skillsDir);
 
@@ -197,9 +140,7 @@ export async function loadSkillsByIds(
 
       if (childSkills.length > 0) {
         expandedSkillIds.push(...childSkills);
-        verbose(
-          `Expanded directory '${skillId}' to ${childSkills.length} skills`,
-        );
+        verbose(`Expanded directory '${skillId}' to ${childSkills.length} skills`);
       } else {
         console.warn(`  Warning: Unknown skill reference '${skillId}'`);
       }
@@ -211,9 +152,7 @@ export async function loadSkillsByIds(
   for (const skillId of uniqueSkillIds) {
     const directoryPath = idToDirectoryPath[skillId];
     if (!directoryPath) {
-      console.warn(
-        `  Warning: Could not find skill ${skillId}: No matching skill found`,
-      );
+      console.warn(`  Warning: Could not find skill ${skillId}: No matching skill found`);
       continue;
     }
 
@@ -225,9 +164,7 @@ export async function loadSkillsByIds(
       const frontmatter = parseFrontmatter(content);
 
       if (!frontmatter) {
-        console.warn(
-          `  Warning: Skipping ${skillId}: Missing or invalid frontmatter`,
-        );
+        console.warn(`  Warning: Skipping ${skillId}: Missing or invalid frontmatter`);
         continue;
       }
 
@@ -272,9 +209,7 @@ export async function loadPluginSkills(
 
     const frontmatter = parseFrontmatter(content);
     if (!frontmatter) {
-      console.warn(
-        `  Warning: Skipping ${file}: Missing or invalid frontmatter`,
-      );
+      console.warn(`  Warning: Skipping ${file}: Missing or invalid frontmatter`);
       continue;
     }
 
@@ -293,44 +228,4 @@ export async function loadPluginSkills(
   }
 
   return skills;
-}
-
-const stackCache = new Map<string, StackConfig>();
-
-/**
- * @deprecated Use loadStackById from stacks-loader.ts instead.
- * This function loads legacy stack configs from src/stacks/{stackId}/config.yaml.
- * The new system uses config/stacks.yaml with agent-centric configuration
- * where skills are defined in each agent's agent.yaml file.
- *
- * Migration path:
- * 1. Use loadStackById() to get stack metadata (agents list)
- * 2. Skills come from agent.yaml files, not stack config
- *
- * @see src/cli/lib/stacks-loader.ts
- */
-export async function loadStack(
-  stackId: string,
-  projectRoot: string,
-  mode: CompileMode = "dev",
-): Promise<StackConfig> {
-  const cacheKey = `${mode}:${stackId}`;
-  const cached = stackCache.get(cacheKey);
-  if (cached) return cached;
-
-  const dirs = getDirs(mode);
-  const stackPath = path.join(projectRoot, dirs.stacks, stackId, "config.yaml");
-
-  try {
-    const content = await readFile(stackPath);
-    const stack = parseYaml(content) as StackConfig;
-    stackCache.set(cacheKey, stack);
-    verbose(`Loaded stack: ${stack.name} (${stackId})`);
-    return stack;
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(
-      `Failed to load stack '${stackId}': ${errorMessage}. Expected config at: ${stackPath}`,
-    );
-  }
 }

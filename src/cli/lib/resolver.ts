@@ -7,11 +7,12 @@ import type {
   AgentDefinition,
   CompileAgentConfig,
   CompileConfig,
+  ProjectConfig,
   Skill,
   SkillAssignment,
   SkillDefinition,
+  SkillEntry,
   SkillReference,
-  StackConfig,
 } from "../types";
 import type { Stack, StackAgentConfig } from "../types-stacks";
 
@@ -83,6 +84,13 @@ function flattenAgentSkills(
   return assignments;
 }
 
+function normalizeSkillEntry(entry: SkillEntry): SkillAssignment {
+  if (typeof entry === "string") {
+    return { id: entry };
+  }
+  return entry;
+}
+
 function expandSkillIdIfDirectory(
   skillId: string,
   skills: Record<string, SkillDefinition>,
@@ -111,22 +119,6 @@ function expandSkillIdIfDirectory(
   }
 
   return [skillId];
-}
-
-/**
- * Resolve skills from agent's skills field (Phase 6: agent-centric configuration)
- * Converts agent's skills Record to SkillReference array
- *
- * @deprecated Use resolveAgentSkillsFromStack for Phase 7 agent-centric configuration
- */
-export function resolveAgentSkills(agentDef: AgentDefinition): SkillReference[] {
-  if (!agentDef.skills) return [];
-
-  return Object.entries(agentDef.skills).map(([category, entry]) => ({
-    id: entry.id,
-    usage: `when working with ${category}`,
-    preloaded: entry.preloaded,
-  }));
 }
 
 /**
@@ -212,19 +204,34 @@ export function resolveAgentSkillsFromStack(
 }
 
 export function resolveStackSkills(
-  stack: StackConfig,
+  stack: ProjectConfig,
   agentName: string,
   skills: Record<string, SkillDefinition>,
 ): SkillReference[] {
   const skillRefs: SkillReference[] = [];
 
-  const agentSkillCategories = stack.agent_skills?.[agentName];
-  const assignments: SkillAssignment[] = agentSkillCategories
-    ? flattenAgentSkills(agentSkillCategories)
-    : stack.skills;
+  const rawAgentSkills = stack.agent_skills?.[agentName];
+  const normalizedSkills: SkillAssignment[] = (stack.skills ?? []).map(normalizeSkillEntry);
+
+  let assignments: SkillAssignment[];
+  if (rawAgentSkills) {
+    if (Array.isArray(rawAgentSkills)) {
+      // Simple list format: SkillEntry[]
+      assignments = rawAgentSkills.map(normalizeSkillEntry);
+    } else {
+      // Categorized format: Record<string, SkillEntry[]>
+      const normalized: Record<string, SkillAssignment[]> = {};
+      for (const [category, entries] of Object.entries(rawAgentSkills)) {
+        normalized[category] = entries.map(normalizeSkillEntry);
+      }
+      assignments = flattenAgentSkills(normalized);
+    }
+  } else {
+    assignments = normalizedSkills;
+  }
 
   const validSkillIds = new Set<string>();
-  for (const s of stack.skills) {
+  for (const s of normalizedSkills) {
     const expandedIds = expandSkillIdIfDirectory(s.id, skills);
     for (const id of expandedIds) {
       validSkillIds.add(id);
@@ -248,7 +255,7 @@ export function resolveStackSkills(
         );
       }
 
-      if (agentSkillCategories && !validSkillIds.has(expandedId)) {
+      if (rawAgentSkills && !validSkillIds.has(expandedId)) {
         throw new Error(
           `Stack "${stack.name}" agent_skills for "${agentName}" includes skill "${expandedId}" not in stack's skills array`,
         );
@@ -270,7 +277,7 @@ export function resolveStackSkills(
 
 /**
  * Options for getAgentSkills function.
- * Supports both Phase 6 (agent-centric) and Phase 7 (stack-based) configurations.
+ * Supports stack-based (Phase 7) configurations.
  */
 export interface GetAgentSkillsOptions {
   /** The agent name/ID */
@@ -283,8 +290,6 @@ export interface GetAgentSkillsOptions {
   skills: Record<string, SkillDefinition>;
   /** Project root path */
   projectRoot: string;
-  /** Agent definition (Phase 6) */
-  agentDef?: AgentDefinition;
   /** Stack definition (Phase 7) */
   stack?: Stack;
   /** Skill aliases mapping (Phase 7) */
@@ -297,7 +302,6 @@ export interface GetAgentSkillsOptions {
  *
  * 1. Explicit skills in compile config (agentConfig.skills)
  * 2. Stack-based skills (Phase 7) if stack and skillAliases provided
- * 3. Agent definition skills (Phase 6) if agentDef.skills provided
  *
  * @param options - Configuration options for skill resolution
  * @returns Array of SkillReference objects
@@ -308,7 +312,6 @@ export async function getAgentSkills(
   _compileConfig: CompileConfig,
   _skills: Record<string, SkillDefinition>,
   _projectRoot: string,
-  agentDef?: AgentDefinition,
   stack?: Stack,
   skillAliases?: Record<string, string>,
 ): Promise<SkillReference[]> {
@@ -324,12 +327,6 @@ export async function getAgentSkills(
       verbose(`Resolved ${stackSkills.length} skills from stack for ${agentName}`);
       return stackSkills;
     }
-  }
-
-  // Priority 3: Agent's own skills field (Phase 6: agent-centric configuration)
-  if (agentDef?.skills && Object.keys(agentDef.skills).length > 0) {
-    verbose(`Resolving skills from agent definition for ${agentName}`);
-    return resolveAgentSkills(agentDef);
   }
 
   // No skills defined for this agent
@@ -386,7 +383,6 @@ export async function resolveAgents(
       compileConfig,
       skills,
       projectRoot,
-      definition,
       stack,
       skillAliases,
     );
@@ -409,7 +405,7 @@ export async function resolveAgents(
   return resolved;
 }
 
-export function stackToCompileConfig(stackId: string, stack: StackConfig): CompileConfig {
+export function stackToCompileConfig(stackId: string, stack: ProjectConfig): CompileConfig {
   const agents: Record<string, CompileAgentConfig> = {};
 
   for (const agentId of stack.agents) {

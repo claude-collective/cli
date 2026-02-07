@@ -10,7 +10,6 @@ import { stringify as stringifyYaml } from "yaml";
 import type {
   CompileConfig,
   CompileAgentConfig,
-  StackConfig,
   ProjectConfig,
   AgentDefinition,
 } from "../../types";
@@ -196,13 +195,8 @@ function buildCompileAgents(
         const skillRefs = resolveAgentSkillsFromStack(agentId, loadedStack, skillAliases);
         compileAgents[agentId] = { skills: skillRefs };
       } else if (config.agent_skills?.[agentId]) {
-        // Legacy: stack-based skills from agent_skills config
-        // Cast to StackConfig since agent_skills format is compatible
-        const skillRefs = resolveStackSkills(
-          config as unknown as StackConfig,
-          agentId,
-          localSkills,
-        );
+        // Resolve skills from agent_skills config
+        const skillRefs = resolveStackSkills(config, agentId, localSkills);
         compileAgents[agentId] = { skills: skillRefs };
       } else {
         // No stack, no agent_skills: empty skills

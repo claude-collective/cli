@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from "vitest";
 import {
   createMockSkill,
   createMockMatrix,
-  createMockStackConfig,
+  createMockProjectConfig,
   createMockAgent,
   createTestDirs,
   cleanupTestDirs,
@@ -58,9 +58,9 @@ describe("test helpers", () => {
     });
   });
 
-  describe("createMockStackConfig", () => {
-    it("creates a valid stack config", () => {
-      const config = createMockStackConfig("test-stack", ["react", "zustand"]);
+  describe("createMockProjectConfig", () => {
+    it("creates a valid project config", () => {
+      const config = createMockProjectConfig("test-stack", ["react", "zustand"]);
 
       expect(config.name).toBe("test-stack");
       expect(config.skills).toEqual([{ id: "react" }, { id: "zustand" }]);

@@ -7,7 +7,7 @@ import { resolveSkillReference, resolveSkillReferences, stackToCompileConfig } f
 import type {
   SkillDefinition,
   SkillReference,
-  StackConfig,
+  ProjectConfig,
   Skill,
   AgentConfig,
   CompiledAgentData,
@@ -108,17 +108,14 @@ describe("resolveSkillReferences", () => {
 });
 
 describe("stackToCompileConfig", () => {
-  it("should convert a stack config to a compile config", () => {
-    const stack: StackConfig = {
+  it("should convert a project config to a compile config", () => {
+    const config: ProjectConfig = {
       name: "Test Stack",
-      version: "1.0.0",
-      author: "test",
       description: "A test stack",
       agents: ["web-developer", "api-developer"],
-      skills: [],
     };
 
-    const result = stackToCompileConfig("test-stack", stack);
+    const result = stackToCompileConfig("test-stack", config);
 
     expect(result).toEqual({
       name: "Test Stack",
@@ -133,29 +130,23 @@ describe("stackToCompileConfig", () => {
   });
 
   it("should handle empty agents array", () => {
-    const stack: StackConfig = {
+    const config: ProjectConfig = {
       name: "Empty Stack",
-      version: "1.0.0",
-      author: "test",
       agents: [],
-      skills: [],
     };
 
-    const result = stackToCompileConfig("empty-stack", stack);
+    const result = stackToCompileConfig("empty-stack", config);
 
     expect(result.agents).toEqual({});
   });
 
   it("should use empty string for missing description", () => {
-    const stack: StackConfig = {
+    const config: ProjectConfig = {
       name: "No Description",
-      version: "1.0.0",
-      author: "test",
       agents: ["test-agent"],
-      skills: [],
     };
 
-    const result = stackToCompileConfig("no-desc", stack);
+    const result = stackToCompileConfig("no-desc", config);
 
     expect(result.description).toBe("");
   });
@@ -688,7 +679,6 @@ describe("getAgentSkills", () => {
       compileConfig,
       mockSkillDefinitions,
       "/test/path",
-      undefined, // agentDef
       stack,
       skillAliases,
     );
@@ -736,7 +726,6 @@ describe("getAgentSkills", () => {
       compileConfig,
       mockSkillDefinitions,
       "/test/path",
-      undefined,
       stack,
       skillAliases,
     );
@@ -761,7 +750,6 @@ describe("getAgentSkills", () => {
       compileConfig,
       mockSkillDefinitions,
       "/test/path",
-      undefined,
       undefined, // no stack
       undefined, // no skillAliases
     );

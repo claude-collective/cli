@@ -6,22 +6,12 @@ import { resolveAgents, resolveStackSkills } from "./resolver";
 import { compileAgentForPlugin } from "./stack-plugin-compiler";
 import { getPluginAgentsDir } from "./plugin-finder";
 import { createLiquidEngine } from "./compiler";
-import {
-  loadProjectConfig,
-  isLegacyStackConfig,
-  normalizeStackConfig,
-  normalizeAgentSkills,
-  type LoadedProjectConfig,
-} from "./project-config";
-import {
-  resolveCustomAgents,
-  validateCustomAgentIds,
-} from "./custom-agent-resolver";
+import { loadProjectConfig, type LoadedProjectConfig } from "./project-config";
+import { resolveCustomAgents, validateCustomAgentIds } from "./custom-agent-resolver";
 import { parse as parseYaml } from "yaml";
 import type {
   CompileConfig,
   CompileAgentConfig,
-  StackConfig,
   SkillReference,
   SkillDefinition,
   ProjectConfig,
@@ -56,9 +46,7 @@ async function getExistingAgentNames(pluginDir: string): Promise<string[]> {
  *
  * This provides backward compatibility with existing plugins.
  */
-async function loadConfigWithFallback(
-  pluginDir: string,
-): Promise<LoadedProjectConfig | null> {
+async function loadConfigWithFallback(pluginDir: string): Promise<LoadedProjectConfig | null> {
   // First try the legacy plugin location (pluginDir/config.yaml)
   const legacyConfigPath = path.join(pluginDir, "config.yaml");
   if (await fileExists(legacyConfigPath)) {
@@ -68,17 +56,6 @@ async function loadConfigWithFallback(
 
       if (parsed && typeof parsed === "object") {
         verbose(`Loaded config.yaml from ${legacyConfigPath}`);
-
-        // Check if it's legacy StackConfig format
-        if (isLegacyStackConfig(parsed)) {
-          const normalized = normalizeStackConfig(parsed as StackConfig);
-          return {
-            config: normalized,
-            configPath: legacyConfigPath,
-            isLegacy: true,
-          };
-        }
-
         return {
           config: parsed as ProjectConfig,
           configPath: legacyConfigPath,
@@ -92,30 +69,6 @@ async function loadConfigWithFallback(
 
   // Fall back to project config location (.claude/config.yaml)
   return loadProjectConfig(pluginDir);
-}
-
-/**
- * Convert ProjectConfig to StackConfig-like structure for compatibility
- * with existing resolveStackSkills function
- */
-function projectConfigToStackLike(config: ProjectConfig): StackConfig {
-  return {
-    name: config.name,
-    version: "1.0.0",
-    author: config.author ?? "@unknown",
-    description: config.description,
-    skills:
-      config.skills?.map((s) => (typeof s === "string" ? { id: s } : s)) ?? [],
-    agents: config.agents,
-    agent_skills: config.agent_skills
-      ? normalizeAgentSkills(config.agent_skills)
-      : undefined,
-    hooks: config.hooks,
-    framework: config.framework,
-    philosophy: config.philosophy,
-    principles: config.principles,
-    tags: config.tags,
-  };
 }
 
 export async function recompileAgents(
@@ -158,10 +111,7 @@ export async function recompileAgents(
   };
   if (projectConfig?.custom_agents) {
     // Validate custom agent IDs don't conflict with built-in agents
-    const idConflicts = validateCustomAgentIds(
-      projectConfig.custom_agents,
-      builtinAgents,
-    );
+    const idConflicts = validateCustomAgentIds(projectConfig.custom_agents, builtinAgents);
     if (idConflicts.length > 0) {
       for (const error of idConflicts) {
         result.warnings.push(error);
@@ -170,15 +120,10 @@ export async function recompileAgents(
 
     // Resolve custom agents to AgentDefinition
     try {
-      const resolvedCustomAgents = resolveCustomAgents(
-        projectConfig.custom_agents,
-        builtinAgents,
-      );
+      const resolvedCustomAgents = resolveCustomAgents(projectConfig.custom_agents, builtinAgents);
       // Merge: custom agents can override built-in if same name (though we warn above)
       allAgents = { ...builtinAgents, ...resolvedCustomAgents };
-      verbose(
-        `Resolved ${Object.keys(resolvedCustomAgents).length} custom agents`,
-      );
+      verbose(`Resolved ${Object.keys(resolvedCustomAgents).length} custom agents`);
     } catch (error) {
       result.warnings.push(
         `Failed to resolve custom agents: ${error instanceof Error ? error.message : String(error)}`,
@@ -186,16 +131,11 @@ export async function recompileAgents(
     }
   }
 
-  // Convert to StackConfig-like for compatibility with existing functions
-  const pluginConfig = projectConfig
-    ? projectConfigToStackLike(projectConfig)
-    : null;
-
   let agentNames: string[];
   if (specifiedAgents) {
     agentNames = specifiedAgents;
-  } else if (pluginConfig?.agents) {
-    agentNames = pluginConfig.agents;
+  } else if (projectConfig?.agents) {
+    agentNames = projectConfig.agents;
     verbose(`Using agents from config.yaml: ${agentNames.join(", ")}`);
   } else if (outputDir) {
     agentNames = Object.keys(allAgents);
@@ -209,9 +149,7 @@ export async function recompileAgents(
     return result;
   }
 
-  verbose(
-    `Recompiling ${agentNames.length} agents in ${outputDir ?? pluginDir}`,
-  );
+  verbose(`Recompiling ${agentNames.length} agents in ${outputDir ?? pluginDir}`);
 
   const pluginSkills = providedSkills ?? (await loadPluginSkills(pluginDir));
 
@@ -222,72 +160,55 @@ export async function recompileAgents(
       const customAgentConfig = projectConfig?.custom_agents?.[agentName];
       if (customAgentConfig?.skills && customAgentConfig.skills.length > 0) {
         // Custom agent has explicit skills defined
-        const skillRefs: SkillReference[] = customAgentConfig.skills.map(
-          (s) => ({
-            id: typeof s === "string" ? s : s.id,
-            usage: `when working with ${(typeof s === "string" ? s : s.id).split(" ")[0]}`,
-            preloaded:
-              (typeof s === "object" && "preloaded" in s && s.preloaded) ??
-              false,
-          }),
-        );
+        const skillRefs: SkillReference[] = customAgentConfig.skills.map((s) => ({
+          id: typeof s === "string" ? s : s.id,
+          usage: `when working with ${(typeof s === "string" ? s : s.id).split(" ")[0]}`,
+          preloaded: (typeof s === "object" && "preloaded" in s && s.preloaded) ?? false,
+        }));
         compileAgents[agentName] = { skills: skillRefs };
-        verbose(
-          `  Agent ${agentName}: ${skillRefs.length} skills from custom_agents`,
-        );
-      } else if (pluginConfig?.agent_skills?.[agentName]) {
-        const skillRefs = resolveStackSkills(
-          pluginConfig,
-          agentName,
-          pluginSkills,
-        );
+        verbose(`  Agent ${agentName}: ${skillRefs.length} skills from custom_agents`);
+      } else if (projectConfig?.agent_skills?.[agentName]) {
+        const skillRefs = resolveStackSkills(projectConfig, agentName, pluginSkills);
         compileAgents[agentName] = { skills: skillRefs };
         verbose(`  Agent ${agentName}: ${skillRefs.length} skills from config`);
-      } else if (pluginConfig?.skills) {
+      } else if (projectConfig?.skills) {
         // Fall back to all skills in the config
-        const skillRefs: SkillReference[] = pluginConfig.skills.map((s) => ({
-          id: s.id,
-          usage: `when working with ${s.id.split(" ")[0]}`,
-          preloaded: s.preloaded ?? false,
-        }));
+        const skillRefs: SkillReference[] = projectConfig.skills.map((s) => {
+          const id = typeof s === "string" ? s : s.id;
+          const preloaded =
+            typeof s === "object" && "preloaded" in s ? (s.preloaded ?? false) : false;
+          return {
+            id,
+            usage: `when working with ${id.split(" ")[0]}`,
+            preloaded,
+          };
+        });
         compileAgents[agentName] = { skills: skillRefs };
         verbose(`  Agent ${agentName}: ${skillRefs.length} skills (all)`);
       } else {
         compileAgents[agentName] = {};
       }
     } else {
-      result.warnings.push(
-        `Agent "${agentName}" not found in source definitions`,
-      );
+      result.warnings.push(`Agent "${agentName}" not found in source definitions`);
     }
   }
 
   const compileConfig: CompileConfig = {
-    name: pluginConfig?.name || path.basename(pluginDir),
-    description: pluginConfig?.description || "Recompiled plugin",
+    name: projectConfig?.name || path.basename(pluginDir),
+    description: projectConfig?.description || "Recompiled plugin",
     claude_md: "",
     agents: compileAgents,
   };
 
   const engine = await createLiquidEngine(projectDir);
-  const resolvedAgents = await resolveAgents(
-    allAgents,
-    pluginSkills,
-    compileConfig,
-    sourcePath,
-  );
+  const resolvedAgents = await resolveAgents(allAgents, pluginSkills, compileConfig, sourcePath);
 
   const agentsDir = outputDir ?? getPluginAgentsDir(pluginDir);
   await ensureDir(agentsDir);
 
   for (const [name, agent] of Object.entries(resolvedAgents)) {
     try {
-      const output = await compileAgentForPlugin(
-        name,
-        agent,
-        sourcePath,
-        engine,
-      );
+      const output = await compileAgentForPlugin(name, agent, sourcePath, engine);
       await writeFile(path.join(agentsDir, `${name}.md`), output);
       result.compiled.push(name);
       verbose(`  Recompiled: ${name}`);

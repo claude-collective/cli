@@ -24,12 +24,7 @@ import { loadPluginSkills } from "../lib/loader";
 import { LOCAL_SKILLS_PATH } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
 import { detectInstallation } from "../lib/installation";
-import type {
-  AgentSourcePaths,
-  PluginManifest,
-  StackConfig,
-  SkillDefinition,
-} from "../../types";
+import type { AgentSourcePaths, PluginManifest, ProjectConfig, SkillDefinition } from "../../types";
 
 async function loadSkillsFromDir(
   skillsDir: string,
@@ -72,9 +67,7 @@ async function loadSkillsFromDir(
       const canonicalId = skillName;
 
       const skill: SkillDefinition = {
-        path: pathPrefix
-          ? `${pathPrefix}/${relativePath}/`
-          : `${relativePath}/`,
+        path: pathPrefix ? `${pathPrefix}/${relativePath}/` : `${relativePath}/`,
         name: skillName,
         description: (metadata.description as string) || "",
         canonicalId,
@@ -90,9 +83,7 @@ async function loadSkillsFromDir(
   return skills;
 }
 
-async function discoverPluginSkills(
-  projectDir: string,
-): Promise<Record<string, SkillDefinition>> {
+async function discoverPluginSkills(projectDir: string): Promise<Record<string, SkillDefinition>> {
   const allSkills: Record<string, SkillDefinition> = {};
   const pluginsDir = getProjectPluginsDir(projectDir);
 
@@ -142,9 +133,7 @@ function mergeSkills(
   return merged;
 }
 
-async function readPluginManifest(
-  pluginDir: string,
-): Promise<PluginManifest | null> {
+async function readPluginManifest(pluginDir: string): Promise<PluginManifest | null> {
   const manifestPath = getPluginManifestPath(pluginDir);
 
   if (!(await fileExists(manifestPath))) {
@@ -211,10 +200,9 @@ export default class Compile extends BaseCommand {
     const installation = await detectInstallation();
 
     if (!installation) {
-      this.error(
-        "No installation found. Run 'cc init' first to set up Claude Collective.",
-        { exit: EXIT_CODES.ERROR },
-      );
+      this.error("No installation found. Run 'cc init' first to set up Claude Collective.", {
+        exit: EXIT_CODES.ERROR,
+      });
     }
 
     if (installation.mode === "local") {
@@ -266,12 +254,10 @@ export default class Compile extends BaseCommand {
     if (hasConfig) {
       try {
         const configContent = await readFile(configPath);
-        const config = parseYaml(configContent) as StackConfig;
+        const config = parseYaml(configContent) as ProjectConfig;
         const agentCount = config.agents?.length ?? 0;
         const configSkillCount = config.skills?.length ?? 0;
-        this.log(
-          `Using config.yaml (${agentCount} agents, ${configSkillCount} skills)`,
-        );
+        this.log(`Using config.yaml (${agentCount} agents, ${configSkillCount} skills)`);
         verbose(`  Config: ${configPath}`);
       } catch {
         this.warn("config.yaml found but could not be parsed - using defaults");
@@ -324,22 +310,14 @@ export default class Compile extends BaseCommand {
       });
     }
 
-    this.log(
-      flags["agent-source"]
-        ? "Fetching agent partials..."
-        : "Loading agent partials...",
-    );
+    this.log(flags["agent-source"] ? "Fetching agent partials..." : "Loading agent partials...");
     let agentDefs: AgentSourcePaths;
     try {
       agentDefs = await getAgentDefinitions(flags["agent-source"], {
         forceRefresh: flags.refresh,
         projectDir,
       });
-      this.log(
-        flags["agent-source"]
-          ? "Agent partials fetched"
-          : "Agent partials loaded",
-      );
+      this.log(flags["agent-source"] ? "Agent partials fetched" : "Agent partials loaded");
       verbose(`  Agents: ${agentDefs.agentsDir}`);
       verbose(`  Templates: ${agentDefs.templatesDir}`);
     } catch (error) {
@@ -352,9 +330,7 @@ export default class Compile extends BaseCommand {
     if (flags["dry-run"]) {
       this.log("");
       this.log(`[dry-run] Would compile ${totalSkillCount} skills`);
-      this.log(
-        `[dry-run] Would use agent partials from: ${agentDefs.sourcePath}`,
-      );
+      this.log(`[dry-run] Would use agent partials from: ${agentDefs.sourcePath}`);
       this.log(`[dry-run] Would output to: ${getPluginAgentsDir(pluginDir)}`);
       this.log("[dry-run] Preview complete - no files were written");
       this.log("");
@@ -457,22 +433,14 @@ export default class Compile extends BaseCommand {
       });
     }
 
-    this.log(
-      flags["agent-source"]
-        ? "Fetching agent partials..."
-        : "Loading agent partials...",
-    );
+    this.log(flags["agent-source"] ? "Fetching agent partials..." : "Loading agent partials...");
     let agentDefs: AgentSourcePaths;
     try {
       agentDefs = await getAgentDefinitions(flags["agent-source"], {
         forceRefresh: flags.refresh,
         projectDir,
       });
-      this.log(
-        flags["agent-source"]
-          ? "Agent partials fetched"
-          : "Agent partials loaded",
-      );
+      this.log(flags["agent-source"] ? "Agent partials fetched" : "Agent partials loaded");
       verbose(`  Agents: ${agentDefs.agentsDir}`);
       verbose(`  Templates: ${agentDefs.templatesDir}`);
     } catch (error) {
@@ -485,9 +453,7 @@ export default class Compile extends BaseCommand {
     if (flags["dry-run"]) {
       this.log("");
       this.log(`[dry-run] Would compile agents with ${totalSkillCount} skills`);
-      this.log(
-        `[dry-run] Would use agent definitions from: ${agentDefs.sourcePath}`,
-      );
+      this.log(`[dry-run] Would use agent definitions from: ${agentDefs.sourcePath}`);
       this.log(`[dry-run] Would output to: ${outputDir}`);
       this.log("[dry-run] Preview complete - no files were written");
       this.log("");

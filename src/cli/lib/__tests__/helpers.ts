@@ -187,7 +187,7 @@ export async function runCliCommand(args: string[]) {
   return runCommand(args, { root: CLI_ROOT });
 }
 import type { MergedSkillsMatrix, ResolvedSkill } from "../../types-matrix";
-import type { StackConfig, AgentDefinition } from "../../../types";
+import type { AgentDefinition, ProjectConfig } from "../../../types";
 
 // =============================================================================
 // File System Helpers
@@ -545,36 +545,35 @@ export function createMockMatrixWithMethodology(
 }
 
 /**
- * Create a minimal stack config for testing.
+ * Create a minimal project config for testing.
  *
- * Creates a {@link StackConfig} representing a pre-built skill stack.
+ * Creates a {@link ProjectConfig} representing a project skill configuration.
  * Automatically sets up agent_skills mappings.
  *
- * @param name - Stack name (e.g., "nextjs-fullstack")
+ * @param name - Config name (e.g., "nextjs-fullstack")
  * @param skills - Array of skill IDs to include
  * @param overrides - Optional partial config to override defaults
- * @returns Complete StackConfig object
+ * @returns Complete ProjectConfig object
  *
  * @example
  * ```typescript
- * const stack = createMockStackConfig('react-stack', [
+ * const config = createMockProjectConfig('react-stack', [
  *   'web-framework-react',
  *   'web-state-zustand',
  * ]);
- * expect(stack.agents).toContain('web-developer');
+ * expect(config.agents).toContain('web-developer');
  * ```
  *
  * @see {@link createMockAgent} for creating agent definitions
  */
-export function createMockStackConfig(
+export function createMockProjectConfig(
   name: string,
   skills: string[],
-  overrides?: Partial<StackConfig>,
-): StackConfig {
+  overrides?: Partial<ProjectConfig>,
+): ProjectConfig {
   return {
     name,
-    version: "1.0.0",
-    description: `Test stack: ${name}`,
+    description: `Test project: ${name}`,
     author: "@test",
     skills: skills.map((s) => ({ id: s })),
     agents: ["web-developer", "api-developer"],

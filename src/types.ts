@@ -76,10 +76,6 @@ export interface AgentDefinition {
   path?: string; // Relative path to agent directory (e.g., "developer/api-developer")
   sourceRoot?: string; // Root path where this agent was loaded from (for template resolution)
   agentBaseDir?: string; // Base directory for agent files relative to sourceRoot (e.g., "src/agents" or ".claude-src/agents")
-  /**
-   * @deprecated Skills are now defined in stacks (Phase 7). This field is kept for backward compatibility.
-   */
-  skills?: Record<string, { id: string; preloaded: boolean }>;
 }
 
 // =============================================================================
@@ -153,54 +149,6 @@ export interface ValidationResult {
   valid: boolean;
   errors: string[];
   warnings: string[];
-}
-
-// =============================================================================
-// Stack Types
-// =============================================================================
-
-/**
- * Stack configuration from stacks/{stack-id}/config.yaml
- * Bundles framework, skills, agents, and philosophy into a single config
- *
- * @deprecated Use `Stack` from types-stacks.ts instead.
- * The new agent-centric configuration (Phase 6) moves skills into agent YAMLs.
- * Stacks are now simple agent groupings defined in config/stacks.yaml.
- *
- * Migration path:
- * - Stack metadata: Use `Stack` from src/cli/types-stacks.ts
- * - Agent skills: Defined in each agent's agent.yaml file
- * - Stack loading: Use loadStackById() from src/cli/lib/stacks-loader.ts
- *
- * This interface is kept for backwards compatibility with legacy stack configs.
- */
-export interface StackConfig {
-  id?: string;
-  name: string;
-  version: string;
-  author: string;
-  description?: string;
-  created?: string;
-  updated?: string;
-  framework?: string;
-  /** Array of skill assignments with preloaded flag */
-  skills: SkillAssignment[];
-  /** List of agent names this stack supports */
-  agents: string[];
-  /** Per-agent skill assignments - maps agent name to categories, each with array of skill assignments */
-  agent_skills?: Record<string, Record<string, SkillAssignment[]>>;
-  /** Lifecycle hooks for the stack plugin */
-  hooks?: Record<string, AgentHookDefinition[]>;
-  philosophy?: string;
-  principles?: string[];
-  tags?: string[];
-  /**
-   * Installation mode for this project
-   * - 'local': Agents compiled to .claude/agents (committed to repo)
-   * - 'plugin': Agents compiled to .claude/plugins/claude-collective
-   * @default 'local'
-   */
-  installMode?: "local" | "plugin";
 }
 
 // =============================================================================
