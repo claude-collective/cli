@@ -52,36 +52,13 @@ describe("StepApproach component", () => {
       expect(output).toContain("Start from scratch");
     });
 
-    it("should render expert mode option", () => {
+    it("should not render expert mode or install mode options (now global shortcuts)", () => {
       const { lastFrame, unmount } = render(<StepApproach />);
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Expert Mode");
-    });
-
-    it("should render install mode option", () => {
-      const { lastFrame, unmount } = render(<StepApproach />);
-      cleanup = unmount;
-
-      const output = lastFrame();
-      expect(output).toContain("Install Mode");
-    });
-
-    it("should show current install mode", () => {
-      const { lastFrame, unmount } = render(<StepApproach />);
-      cleanup = unmount;
-
-      const output = lastFrame();
-      expect(output).toContain("Local");
-    });
-
-    it("should render question prompt", () => {
-      const { lastFrame, unmount } = render(<StepApproach />);
-      cleanup = unmount;
-
-      const output = lastFrame();
-      expect(output).toContain("How would you like to set up your stack?");
+      expect(output).not.toContain("Expert Mode");
+      expect(output).not.toContain("Install Mode");
     });
   });
 
@@ -126,116 +103,6 @@ describe("StepApproach component", () => {
   });
 
   // ===========================================================================
-  // Expert Mode Toggle
-  // ===========================================================================
-
-  describe("expert mode toggle", () => {
-    it("should toggle expert mode when selected", async () => {
-      const { stdin, unmount } = render(<StepApproach />);
-      cleanup = unmount;
-
-      // Wait for component to be ready
-      await delay(RENDER_DELAY_MS);
-
-      // Expert mode is the 3rd option
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ENTER);
-      await delay(RENDER_DELAY_MS);
-
-      const { expertMode } = useWizardStore.getState();
-      expect(expertMode).toBe(true);
-    });
-
-    it("should stay on approach step after toggling expert mode", async () => {
-      const { stdin, unmount } = render(<StepApproach />);
-      cleanup = unmount;
-
-      await delay(RENDER_DELAY_MS);
-
-      // Navigate to expert mode and select
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ENTER);
-      await delay(SELECT_NAV_DELAY_MS);
-
-      const { step } = useWizardStore.getState();
-      expect(step).toBe("approach");
-    });
-
-    it("should show expert mode status when enabled", () => {
-      // Enable expert mode first
-      useWizardStore.getState().toggleExpertMode();
-
-      const { lastFrame, unmount } = render(<StepApproach />);
-      cleanup = unmount;
-
-      const output = lastFrame();
-      expect(output).toContain("Expert Mode is ON");
-    });
-  });
-
-  // ===========================================================================
-  // Install Mode Toggle
-  // ===========================================================================
-
-  describe("install mode toggle", () => {
-    it("should toggle install mode when selected", async () => {
-      const { stdin, unmount } = render(<StepApproach />);
-      cleanup = unmount;
-
-      await delay(RENDER_DELAY_MS);
-
-      // Install mode is the 4th option
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ENTER);
-      await delay(RENDER_DELAY_MS);
-
-      const { installMode } = useWizardStore.getState();
-      expect(installMode).toBe("plugin");
-    });
-
-    it("should stay on approach step after toggling install mode", async () => {
-      const { stdin, unmount } = render(<StepApproach />);
-      cleanup = unmount;
-
-      await delay(RENDER_DELAY_MS);
-
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
-      await stdin.write(ENTER);
-      await delay(SELECT_NAV_DELAY_MS);
-
-      const { step } = useWizardStore.getState();
-      expect(step).toBe("approach");
-    });
-
-    it("should show plugin mode when toggled", () => {
-      // Enable plugin mode first
-      useWizardStore.getState().toggleInstallMode();
-
-      const { lastFrame, unmount } = render(<StepApproach />);
-      cleanup = unmount;
-
-      const output = lastFrame();
-      expect(output).toContain("Plugin");
-    });
-  });
-
-  // ===========================================================================
   // Arrow Key Navigation
   // ===========================================================================
 
@@ -265,21 +132,19 @@ describe("StepApproach component", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Navigate down twice then up once
-      await stdin.write(ARROW_DOWN);
-      await delay(SELECT_NAV_DELAY_MS);
+      // Navigate down then up
       await stdin.write(ARROW_DOWN);
       await delay(SELECT_NAV_DELAY_MS);
       await stdin.write(ARROW_UP);
       await delay(SELECT_NAV_DELAY_MS);
 
-      // Select (should be "Start from scratch" - second option)
+      // Select (should be back to "Use a pre-built template")
       await stdin.write(ENTER);
       await delay(SELECT_NAV_DELAY_MS);
 
       const { step, approach } = useWizardStore.getState();
-      expect(step).toBe("stack"); // Goes to stack step for domain selection
-      expect(approach).toBe("scratch");
+      expect(step).toBe("stack");
+      expect(approach).toBe("stack");
     });
   });
 });

@@ -1,88 +1,76 @@
-import React from "react";
-import { Box, Text } from "ink";
-import { Select } from "@inkjs/ui";
+import React, { useState } from "react";
+import { Box, useInput } from "ink";
 import { useWizardStore } from "../../stores/wizard-store.js";
+import { MenuItem } from "./menu-item.js";
+import { ViewTitle } from "./view-title.js";
 
-const EXPERT_MODE_VALUE = "__expert_mode__";
-const INSTALL_MODE_VALUE = "__install_mode__";
+// =============================================================================
+// Constants
+// =============================================================================
+
+/** Initial focused index for approach options */
+const INITIAL_FOCUSED_INDEX = 0;
+
+/** Approach options for the wizard intro step */
+const APPROACH_OPTIONS = [
+  {
+    value: "stack",
+    label: "Use a pre-built template",
+  },
+  {
+    value: "scratch",
+    label: "Start from scratch",
+  },
+] as const;
+
+// =============================================================================
+// Component
+// =============================================================================
 
 export const StepApproach: React.FC = () => {
-  const {
-    expertMode,
-    installMode,
-    toggleExpertMode,
-    toggleInstallMode,
-    setStep,
-    setApproach,
-  } = useWizardStore();
+  const { setStep, setApproach } = useWizardStore();
+  const [focusedIndex, setFocusedIndex] = useState(INITIAL_FOCUSED_INDEX);
 
-  // Build options matching the original wizard
-  const options = [
-    {
-      value: "stack",
-      label: "Use a pre-built template",
-    },
-    {
-      value: "scratch",
-      label: "Start from scratch",
-    },
-    {
-      value: EXPERT_MODE_VALUE,
-      label: expertMode ? "Expert Mode: ON" : "Expert Mode: OFF",
-    },
-    {
-      value: INSTALL_MODE_VALUE,
-      label:
-        installMode === "local"
-          ? "Install Mode: Local"
-          : "Install Mode: Plugin",
-    },
-  ];
+  const optionCount = APPROACH_OPTIONS.length;
 
-  const handleSelect = (value: string) => {
-    // Handle mode toggles - stay on this step
-    if (value === EXPERT_MODE_VALUE) {
-      toggleExpertMode();
+  useInput((input, key) => {
+    // Enter to select the focused option
+    if (key.return) {
+      const option = APPROACH_OPTIONS[focusedIndex];
+      if (option) {
+        if (option.value === "stack") {
+          setApproach("stack");
+          setStep("stack");
+        } else if (option.value === "scratch") {
+          setApproach("scratch");
+          setStep("stack");
+        }
+      }
       return;
     }
 
-    if (value === INSTALL_MODE_VALUE) {
-      toggleInstallMode();
+    // Arrow key navigation (wrapping)
+    if (key.upArrow || input === "k") {
+      setFocusedIndex((prev) => (prev - 1 + optionCount) % optionCount);
       return;
     }
-
-    // Navigate to next step based on approach
-    if (value === "stack") {
-      setApproach("stack");
-      setStep("stack");
-    } else if (value === "scratch") {
-      setApproach("scratch");
-      setStep("stack"); // Goes to domain selection in scratch mode
+    if (key.downArrow || input === "j") {
+      setFocusedIndex((prev) => (prev + 1) % optionCount);
+      return;
     }
-  };
+  });
 
   return (
     <Box flexDirection="column">
-      {/* Mode status display */}
-      <Box marginBottom={1} flexDirection="column">
-        {expertMode && (
-          <Text color="yellow">
-            Expert Mode is ON <Text dimColor>- conflict checking disabled</Text>
-          </Text>
-        )}
-        <Text color="cyan">
-          Install Mode: {installMode === "plugin" ? "Plugin" : "Local"}
-          <Text dimColor>
-            {installMode === "plugin"
-              ? " - native Claude plugins"
-              : " - copy to .claude/skills/"}
-          </Text>
-        </Text>
-      </Box>
-
-      <Text>How would you like to set up your stack?</Text>
-      <Box marginTop={1}>
-        <Select options={options} onChange={handleSelect} />
+      <ViewTitle title="How would you like to set up your stack?" />
+      <Box flexDirection="column" marginTop={1}>
+        {APPROACH_OPTIONS.map((option, index) => (
+          <MenuItem
+            key={option.value}
+            label={option.label}
+            isFocused={index === focusedIndex}
+          />
+        ))}
       </Box>
     </Box>
   );
