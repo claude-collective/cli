@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.1] - 2026-02-07
+
+### Changed
+
+- **Extract skill-metadata library** - Deduplicated `readForkedFromMetadata`, `getLocalSkillsWithMetadata`, `computeSourceHash`, and `compareSkills` into shared `lib/skill-metadata.ts`, removing ~254 lines from `update.tsx`, `outdated.ts`, and `diff.ts`
+- **Extract config-saver library** - Deduplicated `saveSourceToProjectConfig` into shared `lib/config-saver.ts`, removing duplication from `init.tsx` and `eject.ts`
+- **Extract plugin-manifest-finder library** - Deduplicated `findPluginManifest` into shared `lib/plugin-manifest-finder.ts`, removing duplication from 4 `version/*` command files
+
+### Removed
+
+- **Unused step-build props** - Removed `currentDomainIndex` prop, dead code from SectionProgress removal (unused imports, constants, functions)
+
 ## [0.14.0] - 2026-02-07
 
 ### Changed
