@@ -82,10 +82,7 @@ const FRAMEWORK_CATEGORY_ID = "framework";
  * Sort options based on state (recommended first, discouraged last).
  * In expert mode, returns options as-is.
  */
-const sortOptions = (
-  options: CategoryOption[],
-  expertMode: boolean,
-): CategoryOption[] => {
+const sortOptions = (options: CategoryOption[], expertMode: boolean): CategoryOption[] => {
   if (expertMode) {
     return options;
   }
@@ -161,19 +158,14 @@ const findValidStartColumn = (options: CategoryOption[]): number => {
  * - It's not the framework section
  * - No framework has been selected yet
  */
-const isSectionLocked = (
-  categoryId: string,
-  categories: CategoryRow[],
-): boolean => {
+const isSectionLocked = (categoryId: string, categories: CategoryRow[]): boolean => {
   // Framework section is never locked
   if (categoryId === FRAMEWORK_CATEGORY_ID) {
     return false;
   }
 
   // Find framework category and check if any option is selected
-  const frameworkCategory = categories.find(
-    (cat) => cat.id === FRAMEWORK_CATEGORY_ID,
-  );
+  const frameworkCategory = categories.find((cat) => cat.id === FRAMEWORK_CATEGORY_ID);
 
   if (!frameworkCategory) {
     // No framework category exists, nothing is locked
@@ -181,9 +173,7 @@ const isSectionLocked = (
   }
 
   // Check if any framework option is selected
-  const hasFrameworkSelected = frameworkCategory.options.some(
-    (opt) => opt.selected,
-  );
+  const hasFrameworkSelected = frameworkCategory.options.some((opt) => opt.selected);
 
   // Lock if no framework is selected
   return !hasFrameworkSelected;
@@ -232,10 +222,7 @@ interface HeaderRowProps {
   expertMode: boolean;
 }
 
-const HeaderRow: React.FC<HeaderRowProps> = ({
-  showDescriptions,
-  expertMode,
-}) => {
+const HeaderRow: React.FC<HeaderRowProps> = ({ showDescriptions, expertMode }) => {
   return (
     <Box flexDirection="row" justifyContent="flex-end" marginBottom={1} gap={2}>
       <Text dimColor>[d] Descriptions: {showDescriptions ? "ON" : "OFF"}</Text>
@@ -276,12 +263,7 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked }) => {
 
   return (
     <Box marginRight={1}>
-      <Text
-        backgroundColor={getBackground()}
-        color={getColor()}
-        dimColor={isDimmed}
-        bold={isBold}
-      >
+      <Text backgroundColor={getBackground()} color={getColor()} dimColor={isDimmed} bold={isBold}>
         {" "}
         {option.label}{" "}
       </Text>
@@ -307,9 +289,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   showDescriptions,
 }) => {
   // Generate underline matching header length
-  const underline = "\u2500".repeat(
-    category.name.length + (category.required ? 2 : 0),
-  );
+  const underline = "\u2500".repeat(category.name.length + (category.required ? 2 : 0));
 
   return (
     <Box flexDirection="column" marginBottom={1}>
@@ -403,9 +383,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
   // Get current row and its options
   const currentRow = processedCategories[focusedRow];
   const currentOptions = currentRow?.sortedOptions || [];
-  const currentLocked = currentRow
-    ? isSectionLocked(currentRow.id, categories)
-    : false;
+  const currentLocked = currentRow ? isSectionLocked(currentRow.id, categories) : false;
 
   // Ensure focusedCol is valid when row changes or options change
   useEffect(() => {
@@ -428,27 +406,14 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
   // If current section is locked, move to first unlocked section
   useEffect(() => {
     if (currentRow && currentLocked) {
-      const unlockedIndex = findNextUnlockedSection(
-        processedCategories,
-        focusedRow,
-        1,
-        categories,
-      );
+      const unlockedIndex = findNextUnlockedSection(processedCategories, focusedRow, 1, categories);
       if (unlockedIndex !== focusedRow) {
-        const newRowOptions =
-          processedCategories[unlockedIndex]?.sortedOptions || [];
+        const newRowOptions = processedCategories[unlockedIndex]?.sortedOptions || [];
         const newCol = findValidStartColumn(newRowOptions);
         onFocusChange(unlockedIndex, newCol);
       }
     }
-  }, [
-    currentRow,
-    currentLocked,
-    focusedRow,
-    processedCategories,
-    categories,
-    onFocusChange,
-  ]);
+  }, [currentRow, currentLocked, focusedRow, processedCategories, categories, onFocusChange]);
 
   // Handle keyboard navigation
   useInput(
@@ -479,8 +444,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
             categories,
           );
           if (nextSection !== focusedRow) {
-            const newRowOptions =
-              processedCategories[nextSection]?.sortedOptions || [];
+            const newRowOptions = processedCategories[nextSection]?.sortedOptions || [];
             const newCol = findValidStartColumn(newRowOptions);
             onFocusChange(nextSection, newCol);
           }
@@ -517,32 +481,16 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
 
         if (isLeft) {
           if (currentLocked) return;
-          const newCol = findNextValidOption(
-            currentOptions,
-            focusedCol,
-            -1,
-            true,
-          );
+          const newCol = findNextValidOption(currentOptions, focusedCol, -1, true);
           onFocusChange(focusedRow, newCol);
         } else if (isRight) {
           if (currentLocked) return;
-          const newCol = findNextValidOption(
-            currentOptions,
-            focusedCol,
-            1,
-            true,
-          );
+          const newCol = findNextValidOption(currentOptions, focusedCol, 1, true);
           onFocusChange(focusedRow, newCol);
         } else if (isUp) {
           // Move to previous unlocked section
-          const newRow = findNextUnlockedSection(
-            processedCategories,
-            focusedRow,
-            -1,
-            categories,
-          );
-          const newRowOptions =
-            processedCategories[newRow]?.sortedOptions || [];
+          const newRow = findNextUnlockedSection(processedCategories, focusedRow, -1, categories);
+          const newRowOptions = processedCategories[newRow]?.sortedOptions || [];
           // Try to keep same column, or find valid one
           let newCol = Math.min(focusedCol, newRowOptions.length - 1);
           if (newRowOptions[newCol]?.state === "disabled") {
@@ -551,14 +499,8 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
           onFocusChange(newRow, newCol);
         } else if (isDown) {
           // Move to next unlocked section
-          const newRow = findNextUnlockedSection(
-            processedCategories,
-            focusedRow,
-            1,
-            categories,
-          );
-          const newRowOptions =
-            processedCategories[newRow]?.sortedOptions || [];
+          const newRow = findNextUnlockedSection(processedCategories, focusedRow, 1, categories);
+          const newRowOptions = processedCategories[newRow]?.sortedOptions || [];
           // Try to keep same column, or find valid one
           let newCol = Math.min(focusedCol, newRowOptions.length - 1);
           if (newRowOptions[newCol]?.state === "disabled") {
@@ -593,10 +535,8 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
 
   return (
     <Box flexDirection="column">
-      {/* Header with toggles */}
       <HeaderRow showDescriptions={showDescriptions} expertMode={expertMode} />
 
-      {/* Category sections */}
       {processedCategories.map((category, rowIndex) => {
         const isLocked = isSectionLocked(category.id, categories);
 

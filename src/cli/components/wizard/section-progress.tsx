@@ -25,12 +25,7 @@ export const SectionProgress: React.FC<SectionProgressProps> = ({
   const rightText = isLast ? "Last step" : `Next: ${next}`;
 
   return (
-    <Box
-      flexDirection="row"
-      justifyContent="space-between"
-      paddingX={2}
-      marginBottom={1}
-    >
+    <Box flexDirection="row" justifyContent="space-between" marginBottom={1}>
       <Text>
         <Text bold>{label}:</Text> <Text color="cyan">{current}</Text>
       </Text>
