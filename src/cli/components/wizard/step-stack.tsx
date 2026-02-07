@@ -2,19 +2,22 @@
  * StepStack component - Dual-purpose step for stack selection or domain selection.
  *
  * Stack path (approach === "stack"):
- *   - Shows list of pre-built stacks from matrix.suggestedStacks
- *   - Selecting a stack populates domainSelections and goes to stack-options
+ *   - Shows list of pre-built stacks using MenuItem for chevron + label pattern
+ *   - Keyboard navigation with arrow keys, Enter to select, Escape to go back
+ *   - Focused item has cyan chevron and label
  *
  * Scratch path (approach === "scratch"):
  *   - Shows multi-select of domains (Web, API, CLI, Mobile)
  *   - User selects which domains to configure
  *   - Continue goes to build step for first selected domain
  */
-import React from "react";
+import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { Select } from "@inkjs/ui";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import type { MergedSkillsMatrix } from "../../types-matrix.js";
+import { MenuItem } from "./menu-item.js";
+import { ViewTitle } from "./view-title.js";
 
 // =============================================================================
 // Constants
@@ -22,6 +25,9 @@ import type { MergedSkillsMatrix } from "../../types-matrix.js";
 
 const BACK_VALUE = "_back";
 const CONTINUE_VALUE = "_continue";
+
+/** Default focused index starts at first stack item (0) */
+const INITIAL_FOCUSED_INDEX = 0;
 
 /** Available domains for scratch path */
 const AVAILABLE_DOMAINS = [
@@ -49,43 +55,51 @@ interface StackSelectionProps {
 
 const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
   const { selectStack, setStep, goBack } = useWizardStore();
+  const [focusedIndex, setFocusedIndex] = useState(INITIAL_FOCUSED_INDEX);
 
-  // Build options from matrix.suggestedStacks
-  const options = [
-    { value: BACK_VALUE, label: "\u2190 Back" },
-    ...matrix.suggestedStacks.map((stack) => ({
-      value: stack.id,
-      label: `${stack.name} - ${stack.description}`,
-    })),
-  ];
+  const stacks = matrix.suggestedStacks;
+  const stackCount = stacks.length;
 
-  const handleSelect = (value: string) => {
-    if (value === BACK_VALUE) {
+  useInput((input, key) => {
+    // Escape to go back
+    if (key.escape) {
       goBack();
       return;
     }
 
-    const stack = matrix.suggestedStacks.find((s) => s.id === value);
-    if (stack) {
-      selectStack(stack.id);
-      setStep("stack-options");
+    // Enter to select the focused stack
+    if (key.return && stackCount > 0) {
+      const stack = stacks[focusedIndex];
+      if (stack) {
+        selectStack(stack.id);
+        setStep("stack-options");
+      }
+      return;
     }
-  };
+
+    // Arrow key navigation (clamped at boundaries)
+    if (key.upArrow || input === "k") {
+      setFocusedIndex((prev) => Math.max(0, prev - 1));
+      return;
+    }
+    if (key.downArrow || input === "j") {
+      setFocusedIndex((prev) => Math.min(stackCount - 1, prev + 1));
+      return;
+    }
+  });
 
   return (
     <Box flexDirection="column">
-      <Text bold>Select a pre-built template:</Text>
-      <Box marginTop={1}>
-        <Select
-          options={options}
-          onChange={handleSelect}
-          visibleOptionCount={options.length}
-        />
-      </Box>
-      <Box marginTop={1}>
-        <Text dimColor>
-          {"\u2191"}/{"\u2193"} navigate ENTER select ESC back
-        </Text>
+      <ViewTitle title="Select a pre-built template" />
+      <Box flexDirection="column" marginTop={1}>
+        {stacks.map((stack, index) => (
+          <MenuItem
+            key={stack.id}
+            label={stack.name}
+            description={stack.description}
+            isFocused={index === focusedIndex}
+          />
+        ))}
       </Box>
     </Box>
   );
