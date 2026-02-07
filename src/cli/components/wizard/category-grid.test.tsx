@@ -144,7 +144,6 @@ const defaultProps: CategoryGridProps = {
   onToggle: vi.fn(),
   onFocusChange: vi.fn(),
   onToggleDescriptions: vi.fn(),
-  onToggleExpertMode: vi.fn(),
 };
 
 const renderGrid = (props: Partial<CategoryGridProps> = {}) => {
@@ -213,27 +212,6 @@ describe("CategoryGrid component", () => {
       const output = lastFrame();
       // Optional is assumed by default, so we don't show the label
       expect(output).not.toContain("(optional)");
-    });
-
-    it("should render legend row with visual states", () => {
-      const { lastFrame, unmount } = renderGrid();
-      cleanup = unmount;
-
-      const output = lastFrame();
-      expect(output).toContain("Legend:");
-      expect(output).toContain("selected");
-      expect(output).toContain("recommended");
-      expect(output).toContain("discouraged");
-      expect(output).toContain("disabled");
-    });
-
-    it("should render header with toggle hints", () => {
-      const { lastFrame, unmount } = renderGrid();
-      cleanup = unmount;
-
-      const output = lastFrame();
-      expect(output).toContain("[d] Descriptions");
-      expect(output).toContain("[e] Expert Mode");
     });
 
     it("should handle empty categories array", () => {
@@ -897,72 +875,32 @@ describe("CategoryGrid component", () => {
       expect(output).toBeDefined();
     });
 
-    it("should show toggle state in header", () => {
-      const { lastFrame: frame1, unmount: unmount1 } = renderGrid({
-        showDescriptions: false,
-      });
-      const output1 = frame1();
-      unmount1();
-
-      const { lastFrame: frame2, unmount: unmount2 } = renderGrid({
+    it("should show descriptions when enabled", () => {
+      const { lastFrame, unmount } = renderGrid({
         showDescriptions: true,
       });
-      cleanup = unmount2;
-      const output2 = frame2();
+      cleanup = unmount;
 
-      expect(output1).toContain("Descriptions: OFF");
-      expect(output2).toContain("Descriptions: ON");
+      const output = lastFrame();
+      // Should show state reasons when descriptions are enabled
+      expect(output).toContain("Popular choice"); // react's stateReason
     });
   });
 
   // ===========================================================================
-  // Expert Mode Toggle
+  // Expert Mode (now handled globally in wizard.tsx)
   // ===========================================================================
 
-  describe("expert mode toggle", () => {
-    it("should call onToggleExpertMode when pressing e", async () => {
-      const onToggleExpertMode = vi.fn();
-      const { stdin, unmount } = renderGrid({
-        onToggleExpertMode,
-      });
+  describe("expert mode", () => {
+    it("should not handle expert mode toggle locally (handled globally)", () => {
+      // Expert mode toggle is now handled at wizard.tsx level via global useInput
+      // CategoryGrid no longer has onToggleExpertMode prop
+      const { lastFrame, unmount } = renderGrid();
       cleanup = unmount;
 
-      await delay(RENDER_DELAY_MS);
-      await stdin.write("e");
-      await delay(INPUT_DELAY_MS);
-
-      expect(onToggleExpertMode).toHaveBeenCalled();
-    });
-
-    it("should call onToggleExpertMode when pressing E (uppercase)", async () => {
-      const onToggleExpertMode = vi.fn();
-      const { stdin, unmount } = renderGrid({
-        onToggleExpertMode,
-      });
-      cleanup = unmount;
-
-      await delay(RENDER_DELAY_MS);
-      await stdin.write("E");
-      await delay(INPUT_DELAY_MS);
-
-      expect(onToggleExpertMode).toHaveBeenCalled();
-    });
-
-    it("should show toggle state in header", () => {
-      const { lastFrame: frame1, unmount: unmount1 } = renderGrid({
-        expertMode: false,
-      });
-      const output1 = frame1();
-      unmount1();
-
-      const { lastFrame: frame2, unmount: unmount2 } = renderGrid({
-        expertMode: true,
-      });
-      cleanup = unmount2;
-      const output2 = frame2();
-
-      expect(output1).toContain("Expert Mode: OFF");
-      expect(output2).toContain("Expert Mode: ON");
+      const output = lastFrame();
+      // Header should not show expert mode toggle hint
+      expect(output).not.toContain("[e] Expert Mode");
     });
   });
 

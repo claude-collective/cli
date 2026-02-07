@@ -3,44 +3,44 @@ import { Box, Text } from "ink";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import { WizardTabs, WIZARD_STEPS } from "./wizard-tabs.js";
 
-// =============================================================================
-// DefinitionItem Component (reusable keyboard shortcut tag)
-// =============================================================================
-
 interface KeyHintProps {
+  isVisible?: boolean;
+  isActive?: boolean;
   label: string;
   values: string[];
 }
 
-export const DefinitionItem: React.FC<KeyHintProps> = ({ label, values }) => (
-  <Text>
-    {values.map((value) => (
-      <Fragment key={value}>
-        <Text backgroundColor="black" color="white">
-          {" "}
-          {value}{" "}
-        </Text>{" "}
-      </Fragment>
-    ))}
-    <Text>{label}</Text>
-  </Text>
-);
+export const DefinitionItem: React.FC<KeyHintProps> = ({
+  isVisible = true,
+  isActive = false,
+  label,
+  values,
+}) => {
+  if (!isVisible) {
+    return null;
+  }
 
-// =============================================================================
-// Constants
-// =============================================================================
+  return (
+    <Text>
+      {values.map((value) => (
+        <Fragment key={value}>
+          <Text backgroundColor="black" color="white">
+            {" "}
+            {value}{" "}
+          </Text>{" "}
+        </Fragment>
+      ))}
+      <Text color={isActive ? "cyan" : undefined}>{label}</Text>
+    </Text>
+  );
+};
 
 const HOT_KEYS: { label: string; values: string[] }[] = [
   { label: "navigate", values: ["\u2190/\u2192", "\u2191/\u2193"] },
   { label: "select", values: ["SPACE"] },
   { label: "continue", values: ["ENTER"] },
   { label: "back", values: ["ESC"] },
-  { label: "export", values: ["E"] },
 ];
-
-// =============================================================================
-// WizardFooter Component
-// =============================================================================
 
 export const WizardFooter = () => {
   return (
@@ -61,10 +61,6 @@ export const WizardFooter = () => {
     </Box>
   );
 };
-
-// =============================================================================
-// WizardLayout Component
-// =============================================================================
 
 interface WizardLayoutProps {
   version?: string;
@@ -106,7 +102,7 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({ version, children })
   }, [store.step, store.approach, store.selectedStackId, store.stackAction]);
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" paddingX={1}>
       <WizardTabs
         steps={WIZARD_STEPS}
         currentStep={store.step}
@@ -114,7 +110,21 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({ version, children })
         skippedSteps={skippedSteps}
         version={version}
       />
-      {children}
+      <Box marginTop={1}>{children}</Box>
+      <Box paddingX={1} columnGap={2} marginTop={2}>
+        <DefinitionItem label="Expert mode" values={["E"]} isActive={store.expertMode} />
+        <DefinitionItem
+          label="Descriptions"
+          values={["D"]}
+          isVisible={store.step === "build"}
+          isActive={store.showDescriptions}
+        />
+        <DefinitionItem
+          label="Plugin mode"
+          values={["P"]}
+          isActive={store.installMode === "plugin"}
+        />
+      </Box>
       <WizardFooter />
     </Box>
   );

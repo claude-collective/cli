@@ -17,9 +17,7 @@
 import React, { useCallback, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
 
-// =============================================================================
 // Types
-// =============================================================================
 
 export type OptionState = "normal" | "recommended" | "discouraged" | "disabled";
 
@@ -56,27 +54,21 @@ export interface CategoryGridProps {
   onFocusChange: (row: number, col: number) => void;
   /** Called when show descriptions is toggled */
   onToggleDescriptions: () => void;
-  /** Called when expert mode is toggled */
-  onToggleExpertMode: () => void;
 }
 
-// =============================================================================
 // Constants
-// =============================================================================
 
 /** Required indicator */
 const SYMBOL_REQUIRED = "*";
 
 /** Background colors for different states */
 const BG_SELECTED = "cyan"; // Cyan background for selected
-const BG_FOCUSED = "#333333"; // Dark gray for focused
+const BG_FOCUSED = "#333"; // Dark gray for focused
 
 /** Framework category ID for locking logic */
 const FRAMEWORK_CATEGORY_ID = "framework";
 
-// =============================================================================
 // Helper Functions
-// =============================================================================
 
 /**
  * Sort options based on state (recommended first, discouraged last).
@@ -213,24 +205,6 @@ const findNextUnlockedSection = (
   return currentIndex;
 };
 
-// =============================================================================
-// Sub-Components
-// =============================================================================
-
-interface HeaderRowProps {
-  showDescriptions: boolean;
-  expertMode: boolean;
-}
-
-const HeaderRow: React.FC<HeaderRowProps> = ({ showDescriptions, expertMode }) => {
-  return (
-    <Box flexDirection="row" justifyContent="flex-end" marginBottom={1} gap={2}>
-      <Text dimColor>[d] Descriptions: {showDescriptions ? "ON" : "OFF"}</Text>
-      <Text dimColor>[e] Expert Mode: {expertMode ? "ON" : "OFF"}</Text>
-    </Box>
-  );
-};
-
 interface SkillTagProps {
   option: CategoryOption;
   isFocused: boolean;
@@ -339,29 +313,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   );
 };
 
-const LegendRow: React.FC = () => {
-  return (
-    <Box marginTop={1}>
-      <Text dimColor>
-        Legend:{" "}
-        <Text backgroundColor={BG_SELECTED} color="black">
-          {" "}
-          selected{" "}
-        </Text>
-        {"  "}
-        <Text color="cyan">recommended</Text>
-        {"  "}
-        <Text color="yellow">discouraged</Text>
-        {"  "}
-        <Text color="gray">disabled</Text>
-      </Text>
-    </Box>
-  );
-};
-
-// =============================================================================
 // Main Component
-// =============================================================================
 
 export const CategoryGrid: React.FC<CategoryGridProps> = ({
   categories,
@@ -372,7 +324,6 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
   onToggle,
   onFocusChange,
   onToggleDescriptions,
-  onToggleExpertMode,
 }) => {
   // Process categories with sorted options
   const processedCategories = categories.map((category) => ({
@@ -451,12 +402,6 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
           return;
         }
 
-        // Toggle expert mode with 'e'
-        if (input === "e" || input === "E") {
-          onToggleExpertMode();
-          return;
-        }
-
         // Toggle descriptions with 'd'
         if (input === "d" || input === "D") {
           onToggleDescriptions();
@@ -520,7 +465,6 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
         onToggle,
         onFocusChange,
         onToggleDescriptions,
-        onToggleExpertMode,
       ],
     ),
   );
@@ -535,8 +479,6 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
 
   return (
     <Box flexDirection="column">
-      <HeaderRow showDescriptions={showDescriptions} expertMode={expertMode} />
-
       {processedCategories.map((category, rowIndex) => {
         const isLocked = isSectionLocked(category.id, categories);
 
@@ -552,9 +494,6 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
           />
         );
       })}
-
-      {/* Legend */}
-      <LegendRow />
     </Box>
   );
 };

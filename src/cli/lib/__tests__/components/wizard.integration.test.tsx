@@ -438,11 +438,9 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Step 2: Stack Selection - select first stack
+      // Step 2: Stack Selection - select first stack (card UI, focus starts at first card)
       expect(lastFrame()).toContain("React Fullstack");
-      await stdin.write(ARROW_DOWN); // Navigate past "Back"
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER);
+      await stdin.write(ENTER); // First stack card is already focused
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Step 3: Stack Options - choose "Continue with defaults"
@@ -495,9 +493,7 @@ describe("Wizard integration", () => {
       // Navigate through: approach -> stack -> stack-options (defaults) -> refine -> confirm
       await stdin.write(ENTER); // Stack approach
       await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER); // Select first stack
+      await stdin.write(ENTER); // Select first stack (card UI, already focused)
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ARROW_DOWN);
       await delay(STEP_TRANSITION_DELAY_MS);
@@ -537,9 +533,7 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Step 2: Stack Selection - select first stack (Next.js Fullstack)
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      // Step 2: Stack Selection - select first stack (card UI, already focused)
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
@@ -916,9 +910,7 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Step 2: Select a stack
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      // Step 2: Select a stack (card UI, first card already focused)
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
@@ -938,7 +930,7 @@ describe("Wizard integration", () => {
       // Stack selection should be preserved
       expect(state.selectedStackId).toBe("react-fullstack");
 
-      // Go back to approach
+      // Go back to approach (card UI uses Escape for back)
       await stdin.write(ESCAPE);
       await delay(STEP_TRANSITION_DELAY_MS);
 
@@ -950,9 +942,7 @@ describe("Wizard integration", () => {
       // Now navigate forward again and verify we can complete
       await stdin.write(ENTER); // Stack approach
       await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER); // Select stack
+      await stdin.write(ENTER); // Select first stack (card UI, already focused)
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ARROW_DOWN);
       await delay(STEP_TRANSITION_DELAY_MS);
@@ -1097,10 +1087,8 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Step 2: Stack - navigate down to first stack and select
+      // Step 2: Stack - select first stack (card UI, already focused)
       expect(lastFrame()).toContain("React Fullstack");
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
@@ -1128,9 +1116,7 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Step 2: Stack - select first stack
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      // Step 2: Stack - select first stack (card UI, already focused)
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
@@ -1219,9 +1205,7 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Select a stack to go to stack-options
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      // Select first stack (card UI, already focused)
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
@@ -1255,9 +1239,7 @@ describe("Wizard integration", () => {
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Select first stack
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
+      // Select first stack (card UI, already focused)
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
@@ -1316,7 +1298,7 @@ describe("Wizard integration", () => {
   });
 
   describe("mode selection", () => {
-    it("should toggle expert mode during approach", async () => {
+    it("should toggle expert mode via keyboard shortcut", async () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -1331,18 +1313,15 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Navigate to expert mode toggle (3rd option) with sequential writes
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER);
+      // Toggle expert mode with 'e' keyboard shortcut (global handler)
+      await stdin.write("e");
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      expect(lastFrame()).toContain("Expert Mode is ON");
+      // Expert mode indicator is shown in wizard-layout with cyan color when active
+      expect(lastFrame()).toContain("Expert mode");
     });
 
-    it("should toggle install mode during approach", async () => {
+    it("should toggle install mode via keyboard shortcut", async () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -1357,17 +1336,11 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Navigate to install mode toggle (4th option) with sequential writes
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER);
+      // Toggle install mode with 'p' keyboard shortcut (global handler)
+      await stdin.write("p");
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      expect(lastFrame()).toContain("Plugin");
+      expect(lastFrame()).toContain("Plugin mode");
     });
   });
 
@@ -1452,9 +1425,7 @@ describe("Wizard integration", () => {
       // Complete full flow: approach -> stack -> stack-options -> refine -> confirm
       await stdin.write(ENTER); // Stack approach
       await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER); // Select stack
+      await stdin.write(ENTER); // Select first stack (card UI, already focused)
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ARROW_DOWN);
       await delay(STEP_TRANSITION_DELAY_MS);
@@ -1498,20 +1469,18 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Complete full flow
-      await stdin.write(ENTER);
+      // Complete full flow (card UI: no Back item in stack selection)
+      await stdin.write(ENTER); // Stack approach
       await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
+      await stdin.write(ENTER); // Select first stack (already focused)
       await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER);
+      await stdin.write(ARROW_DOWN); // Navigate past Back in stack-options
       await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
+      await stdin.write(ENTER); // Continue with defaults
       await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER);
+      await stdin.write(ENTER); // Continue through refine
       await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER);
+      await stdin.write(ENTER); // Confirm
       await delay(STEP_TRANSITION_DELAY_MS);
 
       const result = onComplete.mock.calls[0][0];

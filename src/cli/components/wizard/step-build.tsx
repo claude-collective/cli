@@ -18,9 +18,7 @@ import {
   type OptionState,
 } from "./category-grid.js";
 
-// =============================================================================
 // Types
-// =============================================================================
 
 export interface StepBuildProps {
   /** Skills matrix for category/skill lookup */
@@ -43,14 +41,11 @@ export interface StepBuildProps {
   onToggle: (subcategoryId: string, technologyId: string) => void;
   onFocusChange: (row: number, col: number) => void;
   onToggleDescriptions: () => void;
-  onToggleExpertMode: () => void;
   onContinue: () => void;
   onBack: () => void;
 }
 
-// =============================================================================
 // Constants
-// =============================================================================
 
 /** Framework subcategory ID for web domain (framework-first filtering) */
 const FRAMEWORK_SUBCATEGORY_ID = "framework";
@@ -58,9 +53,7 @@ const FRAMEWORK_SUBCATEGORY_ID = "framework";
 /** Web domain ID where framework-first flow applies */
 const WEB_DOMAIN_ID = "web";
 
-// =============================================================================
 // Validation
-// =============================================================================
 
 export interface ValidationResult {
   valid: boolean;
@@ -88,9 +81,7 @@ export function validateBuildStep(
   return { valid: true };
 }
 
-// =============================================================================
 // Helper Functions
-// =============================================================================
 
 /**
  * Compute option state from skill flags.
@@ -147,9 +138,7 @@ function getStateReason(skill: {
   return undefined;
 }
 
-// =============================================================================
 // Framework-First Flow (Web Domain)
-// =============================================================================
 
 /**
  * Check if a framework is selected in the current selections.
@@ -295,23 +284,14 @@ function getDomainDisplayName(domain: string): string {
   return displayNames[domain] || domain.charAt(0).toUpperCase() + domain.slice(1);
 }
 
-// =============================================================================
 // Header Component (Domain info with selection count)
-// =============================================================================
 
 interface HeaderProps {
   currentDomain: string;
   selectedDomains: string[];
-  showDescriptions: boolean;
-  expertMode: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({
-  currentDomain,
-  selectedDomains,
-  showDescriptions,
-  expertMode,
-}) => {
+const Header: React.FC<HeaderProps> = ({ currentDomain, selectedDomains }) => {
   return (
     <Box flexDirection="column">
       <Box flexDirection="row" justifyContent="space-between">
@@ -328,38 +308,10 @@ const Header: React.FC<HeaderProps> = ({
             })}
           </Box>
         </Box>
-        <Box flexDirection="row" justifyContent="flex-end" gap={2}>
-          <Text>
-            <Text backgroundColor="black" color="white">
-              {" "}
-              [d]{" "}
-            </Text>{" "}
-            <Text>
-              Descriptions:{" "}
-              <Text color={showDescriptions ? "cyan" : "white"}>
-                {showDescriptions ? "ON" : "OFF"}
-              </Text>
-            </Text>
-          </Text>
-          <Text>
-            <Text backgroundColor="black" color="white">
-              {" "}
-              [e]{" "}
-            </Text>{" "}
-            <Text>
-              Expert mode:{" "}
-              <Text color={expertMode ? "cyan" : "white"}>{expertMode ? "ON" : "OFF"}</Text>
-            </Text>
-          </Text>
-        </Box>
       </Box>
     </Box>
   );
 };
-
-// =============================================================================
-// Footer Component (Keyboard Help)
-// =============================================================================
 
 interface FooterProps {
   validationError?: string;
@@ -368,7 +320,6 @@ interface FooterProps {
 const Footer: React.FC<FooterProps> = ({ validationError }) => {
   return (
     <Box flexDirection="column" marginTop={1}>
-      {/* Validation error message */}
       {validationError && (
         <Box marginBottom={1}>
           <Text color="yellow">{validationError}</Text>
@@ -378,9 +329,30 @@ const Footer: React.FC<FooterProps> = ({ validationError }) => {
   );
 };
 
-// =============================================================================
-// Main Component
-// =============================================================================
+const LegendRow: React.FC = () => {
+  return (
+    <Box justifyContent="flex-end">
+      <Box paddingLeft={1} columnGap={1} position="absolute" marginTop={-1}>
+        <Text backgroundColor="cyan" color="#000">
+          {" "}
+          active{" "}
+        </Text>
+        <Text backgroundColor="#333" color="#fff">
+          {" "}
+          recommended{" "}
+        </Text>
+        <Text backgroundColor="#333" color="yellow">
+          {" "}
+          discouraged{" "}
+        </Text>
+        <Text backgroundColor="#333" color="gray">
+          {" "}
+          disabled{" "}
+        </Text>
+      </Box>
+    </Box>
+  );
+};
 
 export const StepBuild: React.FC<StepBuildProps> = ({
   matrix,
@@ -395,7 +367,6 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   onToggle,
   onFocusChange,
   onToggleDescriptions,
-  onToggleExpertMode,
   onContinue,
   onBack,
 }) => {
@@ -430,12 +401,8 @@ export const StepBuild: React.FC<StepBuildProps> = ({
 
   return (
     <Box flexDirection="column">
-      <Header
-        currentDomain={domain}
-        selectedDomains={selectedDomains}
-        showDescriptions={showDescriptions}
-        expertMode={expertMode}
-      />
+      <LegendRow />
+      <Header currentDomain={domain} selectedDomains={selectedDomains} />
 
       <CategoryGrid
         categories={categories}
@@ -446,7 +413,6 @@ export const StepBuild: React.FC<StepBuildProps> = ({
         onToggle={onToggle}
         onFocusChange={onFocusChange}
         onToggleDescriptions={onToggleDescriptions}
-        onToggleExpertMode={onToggleExpertMode}
       />
 
       <Footer validationError={validationError} />

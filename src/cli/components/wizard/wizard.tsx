@@ -91,18 +91,13 @@ function getDomainDisplayName(domain: string): string {
     mobile: "Mobile",
     shared: "Shared",
   };
-  return (
-    displayNames[domain] || domain.charAt(0).toUpperCase() + domain.slice(1)
-  );
+  return displayNames[domain] || domain.charAt(0).toUpperCase() + domain.slice(1);
 }
 
 /**
  * Get stack name from matrix by stack ID.
  */
-function getStackName(
-  stackId: string | null,
-  matrix: MergedSkillsMatrix,
-): string | undefined {
+function getStackName(stackId: string | null, matrix: MergedSkillsMatrix): string | undefined {
   if (!stackId) return undefined;
   const stack = matrix.suggestedStacks.find((s) => s.id === stackId);
   return stack?.name;
@@ -111,10 +106,7 @@ function getStackName(
 /**
  * Count technologies in a stack.
  */
-function getStackTechnologyCount(
-  stackId: string | null,
-  matrix: MergedSkillsMatrix,
-): number {
+function getStackTechnologyCount(stackId: string | null, matrix: MergedSkillsMatrix): number {
   if (!stackId) return 0;
   const stack = matrix.suggestedStacks.find((s) => s.id === stackId);
   if (!stack) return 0;
@@ -125,12 +117,7 @@ function getStackTechnologyCount(
 // Main Component
 // =============================================================================
 
-export const Wizard: React.FC<WizardProps> = ({
-  matrix,
-  onComplete,
-  onCancel,
-  version,
-}) => {
+export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, version }) => {
   const store = useWizardStore();
   const { exit } = useApp();
   const { stdout } = useStdout();
@@ -139,7 +126,7 @@ export const Wizard: React.FC<WizardProps> = ({
   const terminalWidth = stdout.columns || MIN_TERMINAL_WIDTH;
   const isNarrowTerminal = terminalWidth < MIN_TERMINAL_WIDTH;
 
-  // Global escape handler
+  // Global keyboard shortcut handler
   useInput((input, key) => {
     if (key.escape) {
       if (store.step === "approach") {
@@ -148,6 +135,17 @@ export const Wizard: React.FC<WizardProps> = ({
       } else {
         store.goBack();
       }
+      return;
+    }
+
+    // Global toggles
+    if (input === "e" || input === "E") {
+      store.toggleExpertMode();
+      return;
+    }
+    if (input === "p" || input === "P") {
+      store.toggleInstallMode();
+      return;
     }
   });
 
@@ -157,9 +155,7 @@ export const Wizard: React.FC<WizardProps> = ({
 
     if (store.selectedStackId && store.stackAction === "defaults") {
       // Stack + defaults path: use stack's allSkillIds directly
-      const stack = matrix.suggestedStacks.find(
-        (s) => s.id === store.selectedStackId,
-      );
+      const stack = matrix.suggestedStacks.find((s) => s.id === store.selectedStackId);
       if (!stack) {
         console.warn(`Stack not found in matrix: ${store.selectedStackId}`);
       }
@@ -205,18 +201,10 @@ export const Wizard: React.FC<WizardProps> = ({
         return <StepStack matrix={matrix} />;
 
       case "stack-options": {
-        const stackName =
-          getStackName(store.selectedStackId, matrix) || "Selected Stack";
-        const techCount = getStackTechnologyCount(
-          store.selectedStackId,
-          matrix,
-        );
+        const stackName = getStackName(store.selectedStackId, matrix) || "Selected Stack";
+        const techCount = getStackTechnologyCount(store.selectedStackId, matrix);
         return (
-          <StepStackOptions
-            stackName={stackName}
-            technologyCount={techCount}
-            matrix={matrix}
-          />
+          <StepStackOptions stackName={stackName} technologyCount={techCount} matrix={matrix} />
         );
       }
 
@@ -224,8 +212,7 @@ export const Wizard: React.FC<WizardProps> = ({
         const currentDomain = store.getCurrentDomain();
         // For stack path with customize, use all domains from stack
         // For scratch path, use selectedDomains
-        const effectiveDomains =
-          store.selectedDomains.length > 0 ? store.selectedDomains : ["web"]; // Default to web if no domains selected
+        const effectiveDomains = store.selectedDomains.length > 0 ? store.selectedDomains : ["web"]; // Default to web if no domains selected
 
         const allSelections = store.getAllSelectedTechnologies();
 
@@ -243,16 +230,10 @@ export const Wizard: React.FC<WizardProps> = ({
             onToggle={(subcategoryId, techId) => {
               const domain = store.getCurrentDomain() || "web";
               const cat = matrix.categories[subcategoryId];
-              store.toggleTechnology(
-                domain,
-                subcategoryId,
-                techId,
-                cat?.exclusive ?? true,
-              );
+              store.toggleTechnology(domain, subcategoryId, techId, cat?.exclusive ?? true);
             }}
             onFocusChange={store.setFocus}
             onToggleDescriptions={store.toggleShowDescriptions}
-            onToggleExpertMode={store.toggleExpertMode}
             onContinue={() => {
               if (!store.nextDomain()) {
                 store.setStep("refine");
@@ -306,8 +287,8 @@ export const Wizard: React.FC<WizardProps> = ({
       <ThemeProvider theme={cliTheme}>
         <Box flexDirection="column" padding={1}>
           <Text color="yellow">
-            Terminal too narrow ({terminalWidth} columns). Please resize to at
-            least {MIN_TERMINAL_WIDTH} columns.
+            Terminal too narrow ({terminalWidth} columns). Please resize to at least{" "}
+            {MIN_TERMINAL_WIDTH} columns.
           </Text>
           <Box marginTop={1}>
             <Text dimColor>Current width: {terminalWidth} columns</Text>
@@ -319,9 +300,7 @@ export const Wizard: React.FC<WizardProps> = ({
 
   return (
     <ThemeProvider theme={cliTheme}>
-      <WizardLayout version={version}>
-        {renderStep()}
-      </WizardLayout>
+      <WizardLayout version={version}>{renderStep()}</WizardLayout>
     </ThemeProvider>
   );
 };

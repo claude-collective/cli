@@ -43,13 +43,7 @@ export const StepStackOptions: React.FC<StepStackOptionsProps> = ({
   technologyCount,
   matrix,
 }) => {
-  const {
-    setStep,
-    setStackAction,
-    populateFromStack,
-    selectedStackId,
-    goBack,
-  } = useWizardStore();
+  const { setStep, setStackAction, populateFromStack, selectedStackId, goBack } = useWizardStore();
 
   const options = [
     { value: BACK_VALUE, label: "\u2190 Back" },
@@ -79,9 +73,7 @@ export const StepStackOptions: React.FC<StepStackOptionsProps> = ({
       setStackAction("customize");
 
       // Pre-populate domainSelections with stack's default technology selections
-      const stack = matrix.suggestedStacks.find(
-        (s) => s.id === selectedStackId,
-      );
+      const stack = matrix.suggestedStacks.find((s) => s.id === selectedStackId);
       if (stack) {
         // Build a stack-like structure from the resolved stack's skills
         // The resolved stack has allSkillIds, but we need the technology aliases
@@ -122,11 +114,6 @@ export const StepStackOptions: React.FC<StepStackOptionsProps> = ({
       <Text>What would you like to do?</Text>
       <Box marginTop={1}>
         <Select options={options} onChange={handleSelect} />
-      </Box>
-      <Box marginTop={1}>
-        <Text dimColor>
-          {"\u2191"}/{"\u2193"} navigate ENTER select ESC back
-        </Text>
       </Box>
     </Box>
   );
