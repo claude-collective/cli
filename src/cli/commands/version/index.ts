@@ -7,31 +7,11 @@ import { getPluginVersion } from "../../lib/plugin-version.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 import path from "path";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts.js";
-import { fileExists } from "../../utils/fs.js";
-
-async function findPluginManifest(startDir: string): Promise<string | null> {
-  let currentDir = startDir;
-  const root = path.parse(currentDir).root;
-
-  while (currentDir !== root) {
-    const manifestPath = path.join(
-      currentDir,
-      PLUGIN_MANIFEST_DIR,
-      PLUGIN_MANIFEST_FILE,
-    );
-    if (await fileExists(manifestPath)) {
-      return manifestPath;
-    }
-    currentDir = path.dirname(currentDir);
-  }
-
-  return null;
-}
+import { findPluginManifest } from "../../lib/plugin-manifest-finder.js";
 
 export default class Version extends BaseCommand {
   static summary = "Show current plugin version";
-  static description =
-    "Display the current version of the plugin in the current directory.";
+  static description = "Display the current version of the plugin in the current directory.";
 
   static flags = {
     ...BaseCommand.baseFlags,

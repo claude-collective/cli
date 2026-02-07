@@ -3,34 +3,13 @@
  */
 import { BaseCommand } from "../../base-command.js";
 import { Args, Flags } from "@oclif/core";
-import {
-  bumpPluginVersion,
-  type VersionBumpType,
-} from "../../lib/plugin-version.js";
+import { bumpPluginVersion, type VersionBumpType } from "../../lib/plugin-version.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 import path from "path";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts.js";
-import { fileExists, readFile } from "../../utils/fs.js";
+import { readFile } from "../../utils/fs.js";
+import { findPluginManifest } from "../../lib/plugin-manifest-finder.js";
 import type { PluginManifest } from "../../../types.js";
-
-async function findPluginManifest(startDir: string): Promise<string | null> {
-  let currentDir = startDir;
-  const root = path.parse(currentDir).root;
-
-  while (currentDir !== root) {
-    const manifestPath = path.join(
-      currentDir,
-      PLUGIN_MANIFEST_DIR,
-      PLUGIN_MANIFEST_FILE,
-    );
-    if (await fileExists(manifestPath)) {
-      return manifestPath;
-    }
-    currentDir = path.dirname(currentDir);
-  }
-
-  return null;
-}
 
 export default class VersionBump extends BaseCommand {
   static summary = "Bump plugin version";
@@ -79,9 +58,7 @@ export default class VersionBump extends BaseCommand {
       const pluginName = manifest.name || "unknown";
 
       if (flags["dry-run"]) {
-        this.log(
-          `[DRY RUN] Would bump ${pluginName} version: ${oldVersion} -> ${bumpType}`,
-        );
+        this.log(`[DRY RUN] Would bump ${pluginName} version: ${oldVersion} -> ${bumpType}`);
         return;
       }
 

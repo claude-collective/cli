@@ -6,29 +6,11 @@ import { Args, Flags } from "@oclif/core";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 import path from "path";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts.js";
-import { fileExists, readFile, writeFile } from "../../utils/fs.js";
+import { readFile, writeFile } from "../../utils/fs.js";
+import { findPluginManifest } from "../../lib/plugin-manifest-finder.js";
 import type { PluginManifest } from "../../../types.js";
 
 const SEMVER_REGEX = /^(\d+)\.(\d+)\.(\d+)$/;
-
-async function findPluginManifest(startDir: string): Promise<string | null> {
-  let currentDir = startDir;
-  const root = path.parse(currentDir).root;
-
-  while (currentDir !== root) {
-    const manifestPath = path.join(
-      currentDir,
-      PLUGIN_MANIFEST_DIR,
-      PLUGIN_MANIFEST_FILE,
-    );
-    if (await fileExists(manifestPath)) {
-      return manifestPath;
-    }
-    currentDir = path.dirname(currentDir);
-  }
-
-  return null;
-}
 
 function isValidSemver(version: string): boolean {
   return SEMVER_REGEX.test(version);
@@ -36,8 +18,7 @@ function isValidSemver(version: string): boolean {
 
 export default class VersionSet extends BaseCommand {
   static summary = "Set plugin version to a specific value";
-  static description =
-    "Set the plugin version to an explicit semantic version (e.g., 1.2.3).";
+  static description = "Set the plugin version to an explicit semantic version (e.g., 1.2.3).";
 
   static args = {
     version: Args.string({
@@ -85,9 +66,7 @@ export default class VersionSet extends BaseCommand {
       const pluginName = manifest.name || "unknown";
 
       if (flags["dry-run"]) {
-        this.log(
-          `[DRY RUN] Would set ${pluginName} version: ${oldVersion} -> ${newVersion}`,
-        );
+        this.log(`[DRY RUN] Would set ${pluginName} version: ${oldVersion} -> ${newVersion}`);
         return;
       }
 
