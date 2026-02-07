@@ -17,6 +17,7 @@ import {
   type CategoryOption,
   type OptionState,
 } from "./category-grid.js";
+import { ViewTitle } from "./view-title.js";
 
 // Types
 
@@ -284,35 +285,6 @@ function getDomainDisplayName(domain: string): string {
   return displayNames[domain] || domain.charAt(0).toUpperCase() + domain.slice(1);
 }
 
-// Header Component (Domain info with selection count)
-
-interface HeaderProps {
-  currentDomain: string;
-  selectedDomains: string[];
-}
-
-const Header: React.FC<HeaderProps> = ({ currentDomain, selectedDomains }) => {
-  return (
-    <Box flexDirection="column">
-      <Box flexDirection="row" justifyContent="space-between">
-        <Box>
-          <Text>Configuring </Text>
-          <Box columnGap={1}>
-            {selectedDomains.map((domain) => {
-              const displayName = getDomainDisplayName(domain);
-              return (
-                <Text key={domain} color={domain === currentDomain ? "cyan" : "white"}>
-                  {displayName}
-                </Text>
-              );
-            })}
-          </Box>
-        </Box>
-      </Box>
-    </Box>
-  );
-};
-
 interface FooterProps {
   validationError?: string;
 }
@@ -332,23 +304,11 @@ const Footer: React.FC<FooterProps> = ({ validationError }) => {
 const LegendRow: React.FC = () => {
   return (
     <Box justifyContent="flex-end">
-      <Box paddingLeft={1} columnGap={1} position="absolute" marginTop={-1}>
-        <Text backgroundColor="cyan" color="#000">
-          {" "}
-          active{" "}
-        </Text>
-        <Text backgroundColor="#333" color="#fff">
-          {" "}
-          recommended{" "}
-        </Text>
-        <Text backgroundColor="#333" color="yellow">
-          {" "}
-          discouraged{" "}
-        </Text>
-        <Text backgroundColor="#333" color="gray">
-          {" "}
-          disabled{" "}
-        </Text>
+      <Box paddingLeft={1} columnGap={2} position="absolute" marginTop={-1}>
+        <Text color="cyan">active</Text>
+        <Text color="#fff">recommended</Text>
+        <Text color="yellow">discouraged</Text>
+        <Text color="gray">disabled</Text>
       </Box>
     </Box>
   );
@@ -402,7 +362,7 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   return (
     <Box flexDirection="column">
       <LegendRow />
-      <Header currentDomain={domain} selectedDomains={selectedDomains} />
+      <ViewTitle>Customise your {getDomainDisplayName(domain)} stack</ViewTitle>
 
       <CategoryGrid
         categories={categories}

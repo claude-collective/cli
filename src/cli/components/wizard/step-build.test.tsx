@@ -329,30 +329,27 @@ describe("StepBuild component", () => {
   // ===========================================================================
 
   describe("domain header", () => {
-    it("should show domain tabs when multiple domains selected", () => {
+    it("should show ViewTitle with current domain when multiple domains selected", () => {
       const { lastFrame, unmount } = renderStepBuild({
         selectedDomains: ["web", "api"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Configuring");
-      expect(output).toContain("Web");
-      expect(output).toContain("API");
+      expect(output).toContain("Customise your Web stack");
     });
 
-    it("should show single domain when only one selected", () => {
+    it("should show ViewTitle with domain when only one selected", () => {
       const { lastFrame, unmount } = renderStepBuild({
         selectedDomains: ["web"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Configuring");
-      expect(output).toContain("Web");
+      expect(output).toContain("Customise your Web stack");
     });
 
-    it("should show all domains in header on final domain", () => {
+    it("should show ViewTitle for current domain on final domain", () => {
       const { lastFrame, unmount } = renderStepBuild({
         selectedDomains: ["web", "api"],
         domain: "api",
@@ -360,9 +357,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Configuring");
-      expect(output).toContain("Web");
-      expect(output).toContain("API");
+      expect(output).toContain("Customise your API stack");
     });
 
     it("should show correct domain display names", () => {
@@ -373,9 +368,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Web");
-      expect(output).toContain("API");
-      expect(output).toContain("CLI");
+      expect(output).toContain("Customise your API stack");
     });
   });
 
@@ -630,7 +623,7 @@ describe("StepBuild component", () => {
   // ===========================================================================
 
   describe("multi-domain scenarios", () => {
-    it("should show all domains in header for first domain", () => {
+    it("should show ViewTitle for current domain in multi-domain flow", () => {
       const { lastFrame, unmount } = renderStepBuild({
         domain: "web",
         selectedDomains: ["web", "api"],
@@ -638,12 +631,10 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Configuring");
-      expect(output).toContain("Web");
-      expect(output).toContain("API");
+      expect(output).toContain("Customise your Web stack");
     });
 
-    it("should show all domains in header for last domain", () => {
+    it("should show ViewTitle for last domain in multi-domain flow", () => {
       const { lastFrame, unmount } = renderStepBuild({
         domain: "api",
         selectedDomains: ["web", "api"],
@@ -651,12 +642,10 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Configuring");
-      expect(output).toContain("Web");
-      expect(output).toContain("API");
+      expect(output).toContain("Customise your API stack");
     });
 
-    it("should show three domains in header correctly", () => {
+    it("should show ViewTitle for current domain in three-domain flow", () => {
       // Add cli category to matrix
       const cliFrameworkCategory = createCategory(
         "cli-framework",
@@ -714,9 +703,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Web");
-      expect(output).toContain("API");
-      expect(output).toContain("CLI");
+      expect(output).toContain("Customise your API stack");
     });
   });
 
@@ -725,22 +712,22 @@ describe("StepBuild component", () => {
   // ===========================================================================
 
   describe("header and selection count", () => {
-    it("should show header with domain name", () => {
+    it("should show ViewTitle with domain name", () => {
       const { lastFrame, unmount } = renderStepBuild();
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Configuring");
-      expect(output).toContain("Web");
+      expect(output).toContain("Customise your Web stack");
     });
 
-    it("should render header with configuring label", () => {
-      const { lastFrame, unmount } = renderStepBuild();
+    it("should render ViewTitle with domain display name", () => {
+      const { lastFrame, unmount } = renderStepBuild({
+        domain: "api",
+      });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Header shows domain being configured
-      expect(output).toContain("Configuring");
+      expect(output).toContain("Customise your API stack");
     });
   });
 
