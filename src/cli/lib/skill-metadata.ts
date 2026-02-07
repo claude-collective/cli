@@ -1,7 +1,8 @@
 import path from "path";
-import { parse as parseYaml } from "yaml";
-import { fileExists, readFile, listDirectories } from "../utils/fs";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
+import { fileExists, readFile, writeFile, listDirectories } from "../utils/fs";
 import { hashFile } from "./versioning";
+import { getCurrentDate } from "./versioning";
 import { LOCAL_SKILLS_PATH } from "../consts";
 
 /**
@@ -161,4 +162,34 @@ export async function compareSkills(
   results.sort((a, b) => a.id.localeCompare(b.id));
 
   return results;
+}
+
+/**
+ * Inject or update forked_from metadata in a skill's metadata.yaml.
+ */
+export async function injectForkedFromMetadata(
+  destPath: string,
+  skillId: string,
+  contentHash: string,
+): Promise<void> {
+  const metadataPath = path.join(destPath, "metadata.yaml");
+  const rawContent = await readFile(metadataPath);
+
+  const lines = rawContent.split("\n");
+  let yamlContent = rawContent;
+
+  if (lines[0]?.startsWith("# yaml-language-server:")) {
+    yamlContent = lines.slice(1).join("\n");
+  }
+
+  const metadata = parseYaml(yamlContent) as LocalSkillMetadata;
+
+  metadata.forked_from = {
+    skill_id: skillId,
+    content_hash: contentHash,
+    date: getCurrentDate(),
+  };
+
+  const newYamlContent = stringifyYaml(metadata, { lineWidth: 0 });
+  await writeFile(metadataPath, newYamlContent);
 }

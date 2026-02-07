@@ -18,6 +18,7 @@ import {
   type OptionState,
 } from "./category-grid.js";
 import { ViewTitle } from "./view-title.js";
+import { getDomainDisplayName } from "./utils.js";
 
 // Types
 
@@ -56,7 +57,7 @@ const WEB_DOMAIN_ID = "web";
 
 // Validation
 
-export interface ValidationResult {
+export interface BuildStepValidation {
   valid: boolean;
   message?: string;
 }
@@ -67,7 +68,7 @@ export interface ValidationResult {
 export function validateBuildStep(
   categories: CategoryRow[],
   selections: Record<string, string[]>,
-): ValidationResult {
+): BuildStepValidation {
   for (const category of categories) {
     if (category.required) {
       const categorySelections = selections[category.id] || [];
@@ -270,20 +271,6 @@ function buildCategoriesForDomain(
 
   // Filter out categories with no options (after compatibility filtering)
   return categoryRows.filter((row) => row.options.length > 0);
-}
-
-/**
- * Get display name for a domain.
- */
-function getDomainDisplayName(domain: string): string {
-  const displayNames: Record<string, string> = {
-    web: "Web",
-    api: "API",
-    cli: "CLI",
-    mobile: "Mobile",
-    shared: "Shared",
-  };
-  return displayNames[domain] || domain.charAt(0).toUpperCase() + domain.slice(1);
 }
 
 interface FooterProps {

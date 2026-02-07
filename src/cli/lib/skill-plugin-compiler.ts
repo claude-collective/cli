@@ -1,26 +1,16 @@
 import path from "path";
 import { parse as parseYaml } from "yaml";
-import {
-  readFile,
-  writeFile,
-  ensureDir,
-  glob,
-  fileExists,
-  copy,
-} from "../utils/fs";
+import { readFile, writeFile, ensureDir, glob, fileExists, copy } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import {
   generateSkillPluginManifest,
   writePluginManifest,
   getPluginManifestPath,
 } from "./plugin-manifest";
+import { parseFrontmatter } from "./loader";
 import { hashSkillFolder } from "./versioning";
 import { DEFAULT_VERSION } from "../consts";
-import type {
-  PluginManifest,
-  SkillFrontmatter,
-  SkillMetadataConfig,
-} from "../../types";
+import type { PluginManifest, SkillFrontmatter, SkillMetadataConfig } from "../../types";
 
 export interface SkillPluginOptions {
   skillPath: string;
@@ -34,22 +24,9 @@ export interface CompiledSkillPlugin {
   skillName: string;
 }
 
-const FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---/;
-
 const SKILL_FILES = ["SKILL.md", "reference.md"] as const;
 
 const SKILL_DIRS = ["examples", "scripts"] as const;
-
-function parseFrontmatter(content: string): SkillFrontmatter | null {
-  const match = content.match(FRONTMATTER_REGEX);
-  if (!match) return null;
-
-  const yamlContent = match[1];
-  const frontmatter = parseYaml(yamlContent) as SkillFrontmatter;
-
-  if (!frontmatter.name || !frontmatter.description) return null;
-  return frontmatter;
-}
 
 function sanitizeSkillName(name: string): string {
   return name.replace(/\+/g, "-");
@@ -136,10 +113,7 @@ export function extractSkillName(skillPath: string): string {
  * @deprecated Legacy function - categories no longer used with flat directory structure.
  * Always returns undefined.
  */
-export function extractCategory(
-  _skillPath: string,
-  _skillsRoot: string,
-): string | undefined {
+export function extractCategory(_skillPath: string, _skillsRoot: string): string | undefined {
   return undefined;
 }
 
@@ -151,9 +125,7 @@ export function extractAuthor(_skillPath: string): string | undefined {
   return undefined;
 }
 
-async function readSkillMetadata(
-  skillPath: string,
-): Promise<SkillMetadataConfig | null> {
+async function readSkillMetadata(skillPath: string): Promise<SkillMetadataConfig | null> {
   const metadataPath = path.join(skillPath, "metadata.yaml");
 
   if (!(await fileExists(metadataPath))) {
@@ -271,10 +243,7 @@ export async function compileSkillPlugin(
 
   await writePluginManifest(pluginDir, manifest);
 
-  const hashFilePath = getPluginManifestPath(pluginDir).replace(
-    "plugin.json",
-    CONTENT_HASH_FILE,
-  );
+  const hashFilePath = getPluginManifestPath(pluginDir).replace("plugin.json", CONTENT_HASH_FILE);
   await writeFile(hashFilePath, contentHash);
 
   verbose(`  Wrote plugin.json for ${skillName} (v${version})`);
@@ -332,12 +301,9 @@ export async function compileAllSkillPlugins(
       results.push(result);
       console.log(`  [OK] skill-${result.skillName}`);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       const dirBasename = path.basename(skillPath);
-      console.warn(
-        `  [WARN] Failed to compile skill from ${dirBasename}: ${errorMessage}`,
-      );
+      console.warn(`  [WARN] Failed to compile skill from ${dirBasename}: ${errorMessage}`);
     }
   }
 

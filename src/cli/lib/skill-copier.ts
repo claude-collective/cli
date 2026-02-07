@@ -1,23 +1,9 @@
 import path from "path";
-import { stringify as stringifyYaml, parse as parseYaml } from "yaml";
-import { copy, ensureDir, readFile, writeFile } from "../utils/fs";
-import { getCurrentDate, hashFile } from "./versioning";
+import { copy, ensureDir } from "../utils/fs";
+import { hashFile } from "./versioning";
 import type { MergedSkillsMatrix, ResolvedSkill } from "../types-matrix";
 import type { SourceLoadResult } from "./source-loader";
-
-interface ForkedFromMetadata {
-  skill_id: string;
-  content_hash: string;
-  date: string;
-}
-
-interface SkillMetadata {
-  content_hash?: string;
-  forked_from?: ForkedFromMetadata;
-  [key: string]: unknown;
-}
-
-const METADATA_FILE_NAME = "metadata.yaml";
+import { injectForkedFromMetadata } from "./skill-metadata";
 
 export interface CopiedSkill {
   skillId: string;
@@ -39,33 +25,6 @@ function getSkillDestPath(skill: ResolvedSkill, stackDir: string): string {
 async function generateSkillHash(skillSourcePath: string): Promise<string> {
   const skillMdPath = path.join(skillSourcePath, "SKILL.md");
   return hashFile(skillMdPath);
-}
-
-async function injectForkedFromMetadata(
-  destPath: string,
-  skillId: string,
-  contentHash: string,
-): Promise<void> {
-  const metadataPath = path.join(destPath, METADATA_FILE_NAME);
-  const rawContent = await readFile(metadataPath);
-
-  const lines = rawContent.split("\n");
-  let yamlContent = rawContent;
-
-  if (lines[0]?.startsWith("# yaml-language-server:")) {
-    yamlContent = lines.slice(1).join("\n");
-  }
-
-  const metadata = parseYaml(yamlContent) as SkillMetadata;
-
-  metadata.forked_from = {
-    skill_id: skillId,
-    content_hash: contentHash,
-    date: getCurrentDate(),
-  };
-
-  const newYamlContent = stringifyYaml(metadata, { lineWidth: 0 });
-  await writeFile(metadataPath, newYamlContent);
 }
 
 export async function copySkill(

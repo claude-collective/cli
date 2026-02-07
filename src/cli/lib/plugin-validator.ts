@@ -3,14 +3,10 @@ import addFormats from "ajv-formats";
 import path from "path";
 import { parse as parseYaml } from "yaml";
 import fg from "fast-glob";
-import {
-  fileExists,
-  readFile,
-  directoryExists,
-  listDirectories,
-} from "../utils/fs";
+import { fileExists, readFile, directoryExists, listDirectories } from "../utils/fs";
 import { PROJECT_ROOT } from "../consts";
 import type { ValidationResult } from "../../types";
+import { extractFrontmatter } from "../utils/frontmatter";
 
 const PLUGIN_DIR = ".claude-plugin";
 const PLUGIN_MANIFEST = "plugin.json";
@@ -91,14 +87,12 @@ function formatAjvErrors(errors: ErrorObject[] | null | undefined): string[] {
     const message = err.message || "Unknown error";
 
     if (err.keyword === "additionalProperties") {
-      const prop = (err.params as { additionalProperty?: string })
-        .additionalProperty;
+      const prop = (err.params as { additionalProperty?: string }).additionalProperty;
       return `Unrecognized key: "${prop}"`;
     }
 
     if (err.keyword === "enum") {
-      const allowed = (err.params as { allowedValues?: string[] })
-        .allowedValues;
+      const allowed = (err.params as { allowedValues?: string[] }).allowedValues;
       return errorPath
         ? `${errorPath}: ${message}. Allowed: ${allowed?.join(", ")}`
         : `${message}. Allowed: ${allowed?.join(", ")}`;
@@ -111,28 +105,11 @@ function formatAjvErrors(errors: ErrorObject[] | null | undefined): string[] {
       } else if (errorPath === "version") {
         hint = " (must be semver: x.y.z)";
       }
-      return errorPath
-        ? `${errorPath}: ${message}${hint}`
-        : `${message}${hint}`;
+      return errorPath ? `${errorPath}: ${message}${hint}` : `${message}${hint}`;
     }
 
     return errorPath ? `${errorPath}: ${message}` : message;
   });
-}
-
-function extractFrontmatter(content: string): unknown | null {
-  const frontmatterRegex = /^---\r?\n([\s\S]*?)\r?\n---/;
-  const match = content.match(frontmatterRegex);
-
-  if (!match || !match[1]) {
-    return null;
-  }
-
-  try {
-    return parseYaml(match[1]);
-  } catch {
-    return null;
-  }
 }
 
 function isKebabCase(str: string): boolean {
@@ -143,9 +120,7 @@ function isValidSemver(str: string): boolean {
   return SEMVER_REGEX.test(str);
 }
 
-export async function validatePluginStructure(
-  pluginPath: string,
-): Promise<ValidationResult> {
+export async function validatePluginStructure(pluginPath: string): Promise<ValidationResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -179,9 +154,7 @@ export async function validatePluginStructure(
   };
 }
 
-export async function validatePluginManifest(
-  manifestPath: string,
-): Promise<ValidationResult> {
+export async function validatePluginManifest(manifestPath: string): Promise<ValidationResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -228,9 +201,7 @@ export async function validatePluginManifest(
   }
 
   if (!manifest.description) {
-    warnings.push(
-      "Missing description field (recommended for discoverability)",
-    );
+    warnings.push("Missing description field (recommended for discoverability)");
   }
 
   const pluginDir = path.dirname(path.dirname(manifestPath));
@@ -256,9 +227,7 @@ export async function validatePluginManifest(
   };
 }
 
-export async function validateSkillFrontmatter(
-  skillPath: string,
-): Promise<ValidationResult> {
+export async function validateSkillFrontmatter(skillPath: string): Promise<ValidationResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -291,19 +260,13 @@ export async function validateSkillFrontmatter(
   const fm = frontmatter as Record<string, unknown>;
 
   if (fm.category) {
-    warnings.push(
-      'Deprecated field: "category" - use metadata.yaml for category information',
-    );
+    warnings.push('Deprecated field: "category" - use metadata.yaml for category information');
   }
   if (fm.author) {
-    warnings.push(
-      'Deprecated field: "author" - use metadata.yaml for author information',
-    );
+    warnings.push('Deprecated field: "author" - use metadata.yaml for author information');
   }
   if (fm.version) {
-    warnings.push(
-      'Deprecated field: "version" - use metadata.yaml for version information',
-    );
+    warnings.push('Deprecated field: "version" - use metadata.yaml for version information');
   }
 
   return {
@@ -313,9 +276,7 @@ export async function validateSkillFrontmatter(
   };
 }
 
-export async function validateAgentFrontmatter(
-  agentPath: string,
-): Promise<ValidationResult> {
+export async function validateAgentFrontmatter(agentPath: string): Promise<ValidationResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -360,9 +321,7 @@ export async function validateAgentFrontmatter(
   };
 }
 
-export async function validatePlugin(
-  pluginPath: string,
-): Promise<ValidationResult> {
+export async function validatePlugin(pluginPath: string): Promise<ValidationResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -405,13 +364,9 @@ export async function validatePlugin(
           const skillResult = await validateSkillFrontmatter(skillFile);
 
           if (!skillResult.valid) {
-            errors.push(
-              ...skillResult.errors.map((e) => `${relativePath}: ${e}`),
-            );
+            errors.push(...skillResult.errors.map((e) => `${relativePath}: ${e}`));
           }
-          warnings.push(
-            ...skillResult.warnings.map((w) => `${relativePath}: ${w}`),
-          );
+          warnings.push(...skillResult.warnings.map((w) => `${relativePath}: ${w}`));
         }
       }
     }
@@ -425,9 +380,7 @@ export async function validatePlugin(
         });
 
         if (agentFiles.length === 0) {
-          warnings.push(
-            `Agents directory exists but contains no .md files: ${manifest.agents}`,
-          );
+          warnings.push(`Agents directory exists but contains no .md files: ${manifest.agents}`);
         }
 
         for (const agentFile of agentFiles) {
@@ -435,13 +388,9 @@ export async function validatePlugin(
           const agentResult = await validateAgentFrontmatter(agentFile);
 
           if (!agentResult.valid) {
-            errors.push(
-              ...agentResult.errors.map((e) => `${relativePath}: ${e}`),
-            );
+            errors.push(...agentResult.errors.map((e) => `${relativePath}: ${e}`));
           }
-          warnings.push(
-            ...agentResult.warnings.map((w) => `${relativePath}: ${w}`),
-          );
+          warnings.push(...agentResult.warnings.map((w) => `${relativePath}: ${w}`));
         }
       }
     }

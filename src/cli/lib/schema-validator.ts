@@ -5,6 +5,7 @@ import { readFile, fileExists } from "../utils/fs";
 import { parse as parseYaml } from "yaml";
 import fg from "fast-glob";
 import { PROJECT_ROOT } from "../consts";
+import { extractFrontmatter } from "../utils/frontmatter";
 
 export interface FileValidationError {
   file: string;
@@ -38,21 +39,6 @@ interface ValidationTarget {
   pattern: string;
   baseDir: string;
   extractor?: ContentExtractor;
-}
-
-function extractFrontmatter(content: string): unknown | null {
-  const frontmatterRegex = /^---\r?\n([\s\S]*?)\r?\n---/;
-  const match = content.match(frontmatterRegex);
-
-  if (!match || !match[1]) {
-    return null;
-  }
-
-  try {
-    return parseYaml(match[1]);
-  } catch {
-    return null;
-  }
 }
 
 const VALIDATION_TARGETS: ValidationTarget[] = [
@@ -105,10 +91,7 @@ const VALIDATION_TARGETS: ValidationTarget[] = [
 const schemaCache = new Map<string, object>();
 const validatorCache = new Map<string, ValidateFunction>();
 
-async function loadSchema(
-  schemaName: string,
-  rootDir: string = process.cwd(),
-): Promise<object> {
+async function loadSchema(schemaName: string, rootDir: string = process.cwd()): Promise<object> {
   const cacheKey = `${rootDir}:${schemaName}`;
   if (schemaCache.has(cacheKey)) {
     return schemaCache.get(cacheKey)!;
@@ -131,9 +114,7 @@ async function loadSchema(
     }
   }
 
-  throw new Error(
-    `Schema not found: ${schemaName}. Searched: ${locations.join(", ")}`,
-  );
+  throw new Error(`Schema not found: ${schemaName}. Searched: ${locations.join(", ")}`);
 }
 
 async function getValidator(
@@ -163,14 +144,12 @@ function formatAjvErrors(errors: ErrorObject[] | null | undefined): string[] {
     const message = err.message || "Unknown error";
 
     if (err.keyword === "additionalProperties") {
-      const prop = (err.params as { additionalProperty?: string })
-        .additionalProperty;
+      const prop = (err.params as { additionalProperty?: string }).additionalProperty;
       return `Unrecognized key: "${prop}"`;
     }
 
     if (err.keyword === "enum") {
-      const allowed = (err.params as { allowedValues?: string[] })
-        .allowedValues;
+      const allowed = (err.params as { allowedValues?: string[] }).allowedValues;
       return errorPath
         ? `${errorPath}: ${message}. Allowed: ${allowed?.join(", ")}`
         : `${message}. Allowed: ${allowed?.join(", ")}`;

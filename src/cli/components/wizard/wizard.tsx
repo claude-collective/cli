@@ -26,6 +26,7 @@ import { StepRefine } from "./step-refine.js";
 import { StepConfirm } from "./step-confirm.js";
 import { validateSelection } from "../../lib/matrix-resolver.js";
 import type { MergedSkillsMatrix } from "../../types-matrix.js";
+import { getStackName } from "./utils.js";
 
 // =============================================================================
 // Types
@@ -45,23 +46,9 @@ export interface WizardResultV2 {
   };
 }
 
-/** @deprecated Use WizardResultV2 instead */
-export interface WizardResult {
-  selectedSkills: string[];
-  selectedStack: { id: string } | null;
-  expertMode: boolean;
-  installMode: "plugin" | "local";
-  cancelled: boolean;
-  validation: {
-    valid: boolean;
-    errors: Array<{ message: string }>;
-    warnings: Array<{ message: string }>;
-  };
-}
-
 interface WizardProps {
   matrix: MergedSkillsMatrix;
-  onComplete: (result: WizardResultV2 | WizardResult) => void;
+  onComplete: (result: WizardResultV2) => void;
   onCancel: () => void;
   initialSkills?: string[];
   version?: string;
@@ -73,33 +60,6 @@ interface WizardProps {
 
 /** Minimum terminal width required for the wizard */
 const MIN_TERMINAL_WIDTH = 80;
-
-// =============================================================================
-// Helper Functions
-// =============================================================================
-
-/**
- * Get display name for a domain.
- */
-function getDomainDisplayName(domain: string): string {
-  const displayNames: Record<string, string> = {
-    web: "Web",
-    api: "API",
-    cli: "CLI",
-    mobile: "Mobile",
-    shared: "Shared",
-  };
-  return displayNames[domain] || domain.charAt(0).toUpperCase() + domain.slice(1);
-}
-
-/**
- * Get stack name from matrix by stack ID.
- */
-function getStackName(stackId: string | null, matrix: MergedSkillsMatrix): string | undefined {
-  if (!stackId) return undefined;
-  const stack = matrix.suggestedStacks.find((s) => s.id === stackId);
-  return stack?.name;
-}
 
 // =============================================================================
 // Main Component
@@ -161,7 +121,13 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
       // Scratch / Customize path: resolve domainSelections via aliases
       const techNames = store.getAllSelectedTechnologies();
       // Resolve each technology name to its full skill ID via aliases
-      allSkills = techNames.map((tech) => matrix.aliases[tech] || tech);
+      allSkills = techNames.map((tech) => {
+        const resolved = matrix.aliases[tech];
+        if (!resolved && !matrix.skills[tech]) {
+          console.warn(`Warning: Technology '${tech}' could not be resolved to a skill ID — it may be missing from skill_aliases`);
+        }
+        return resolved || tech;
+      });
     }
 
     // Add methodology skills (always included)

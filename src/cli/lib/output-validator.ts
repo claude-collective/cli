@@ -1,25 +1,5 @@
-import { parse as parseYaml } from "yaml";
-
-export interface OutputValidationResult {
-  valid: boolean;
-  errors: string[];
-  warnings: string[];
-}
-
-function extractFrontmatter(content: string): unknown | null {
-  const frontmatterRegex = /^---\r?\n([\s\S]*?)\r?\n---/;
-  const match = content.match(frontmatterRegex);
-
-  if (!match || !match[1]) {
-    return null;
-  }
-
-  try {
-    return parseYaml(match[1]);
-  } catch {
-    return null;
-  }
-}
+import type { ValidationResult } from "../../types";
+import { extractFrontmatter } from "../utils/frontmatter";
 
 function checkXmlTagBalance(content: string): string[] {
   const errors: string[] = [];
@@ -32,10 +12,7 @@ function checkXmlTagBalance(content: string): string[] {
     const tagName = match[1].toLowerCase();
 
     const before = content.slice(Math.max(0, match.index - 10), match.index);
-    const after = content.slice(
-      match.index + fullTag.length,
-      match.index + fullTag.length + 10,
-    );
+    const after = content.slice(match.index + fullTag.length, match.index + fullTag.length + 10);
     if (before.includes("`") || after.includes("`")) {
       continue;
     }
@@ -61,16 +38,12 @@ function checkTemplateArtifacts(content: string): string[] {
 
   const variableMatches = content.match(/\{\{[^}]*\}\}/g);
   if (variableMatches) {
-    warnings.push(
-      `Template artifacts found: ${variableMatches.length} unprocessed {{ }} tags`,
-    );
+    warnings.push(`Template artifacts found: ${variableMatches.length} unprocessed {{ }} tags`);
   }
 
   const controlMatches = content.match(/\{%[^%]*%\}/g);
   if (controlMatches) {
-    warnings.push(
-      `Template artifacts found: ${controlMatches.length} unprocessed {% %} tags`,
-    );
+    warnings.push(`Template artifacts found: ${controlMatches.length} unprocessed {% %} tags`);
   }
 
   return warnings;
@@ -87,10 +60,7 @@ function checkRequiredPatterns(content: string): string[] {
     warnings.push("Missing <role> section");
   }
 
-  if (
-    !content.includes("Core Principles") &&
-    !content.includes("core_principles")
-  ) {
+  if (!content.includes("Core Principles") && !content.includes("core_principles")) {
     warnings.push("Missing Core Principles section");
   }
 
@@ -133,7 +103,7 @@ function validateFrontmatter(content: string): {
   return { errors, warnings };
 }
 
-export function validateCompiledAgent(content: string): OutputValidationResult {
+export function validateCompiledAgent(content: string): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -165,10 +135,7 @@ export function validateCompiledAgent(content: string): OutputValidationResult {
   };
 }
 
-export function printOutputValidationResult(
-  agentName: string,
-  result: OutputValidationResult,
-): void {
+export function printOutputValidationResult(agentName: string, result: ValidationResult): void {
   if (result.errors.length > 0) {
     console.log(`    Validation errors for ${agentName}:`);
     result.errors.forEach((e) => console.log(`      - ${e}`));

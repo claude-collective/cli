@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { render } from "ink";
 import { Flags, Args } from "@oclif/core";
 import { printTable } from "@oclif/table";
 import path from "path";
-import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { BaseCommand } from "../base-command.js";
 import {
   loadSkillsMatrixFromSource,
@@ -13,60 +12,16 @@ import { recompileAgents } from "../lib/agent-recompiler.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import {
   compareSkills,
+  injectForkedFromMetadata,
   type SkillComparisonResult,
 } from "../lib/skill-metadata.js";
-import { getCurrentDate } from "../lib/versioning.js";
 import {
   fileExists,
-  readFile,
-  writeFile,
   copy,
 } from "../utils/fs.js";
 import { LOCAL_SKILLS_PATH } from "../consts.js";
 import { getCollectivePluginDir } from "../lib/plugin-finder.js";
 import { Confirm } from "../components/common/confirm.js";
-
-/**
- * Local skill metadata structure
- */
-interface LocalSkillMetadata {
-  forked_from?: {
-    skill_id: string;
-    content_hash: string;
-    date: string;
-  };
-  [key: string]: unknown;
-}
-
-/**
- * Update forked_from metadata in a skill's metadata.yaml
- */
-async function updateForkedFromMetadata(
-  skillDir: string,
-  skillId: string,
-  contentHash: string,
-): Promise<void> {
-  const metadataPath = path.join(skillDir, "metadata.yaml");
-  const rawContent = await readFile(metadataPath);
-
-  const lines = rawContent.split("\n");
-  let yamlContent = rawContent;
-
-  if (lines[0]?.startsWith("# yaml-language-server:")) {
-    yamlContent = lines.slice(1).join("\n");
-  }
-
-  const metadata = parseYaml(yamlContent) as LocalSkillMetadata;
-
-  metadata.forked_from = {
-    skill_id: skillId,
-    content_hash: contentHash,
-    date: getCurrentDate(),
-  };
-
-  const newYamlContent = stringifyYaml(metadata, { lineWidth: 0 });
-  await writeFile(metadataPath, newYamlContent);
-}
 
 /**
  * Update a single skill from source
@@ -89,7 +44,7 @@ async function updateSkill(
     await copy(srcPath, destPath);
 
     // Update forked_from metadata
-    await updateForkedFromMetadata(destPath, skill.id, skill.sourceHash);
+    await injectForkedFromMetadata(destPath, skill.id, skill.sourceHash);
 
     return { success: true, newHash: skill.sourceHash };
   } catch (error) {
