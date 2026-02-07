@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2026-02-07
+
+### Changed
+
+- **Wizard flow simplified** - Removed the intermediate "stack-options" step; selecting a stack now goes directly to the build step with pre-populated technology selections. Flow is now: approach -> stack -> build -> refine -> confirm
+- **ViewTitle component** - Simplified API from `title` string prop to `children` for flexible composition
+- **Build step header** - Replaced domain tab header with ViewTitle showing "Customise your {Domain} stack"
+- **Build step legend** - Simplified color legend from background-colored badges to plain colored text
+- **CategoryGrid styling** - Skill tags now use border-based styling instead of background colors; removed section header underlines
+
+### Added
+
+- **Accept defaults shortcut** - Press `A` during build step (stack path only) to skip customization and continue with stack defaults
+- **All-domain cycling** - Stack selection now includes all five domains (web, api, cli, mobile, shared) in the build step, even if the stack only covers some
+
+### Fixed
+
+- **Local skill category preservation** - When a local skill overwrites a remote skill, the remote skill's domain-based category is now preserved instead of falling back to "local/custom"
+
+### Removed
+
+- **StepStackOptions component** - Eliminated intermediate step between stack selection and technology customization
+
 ## [0.15.0] - 2026-02-07
 
 ### Added
@@ -110,6 +133,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Old `search.ts` command - Replaced with dual-mode `search.tsx` (static + interactive)
 
+[0.16.0]: https://github.com/claude-collective/cli/releases/tag/v0.16.0
+[0.15.0]: https://github.com/claude-collective/cli/releases/tag/v0.15.0
+[0.14.1]: https://github.com/claude-collective/cli/releases/tag/v0.14.1
 [0.14.0]: https://github.com/claude-collective/cli/releases/tag/v0.14.0
 [0.13.4]: https://github.com/claude-collective/cli/releases/tag/v0.13.4
 [0.13.3]: https://github.com/claude-collective/cli/releases/tag/v0.13.3
