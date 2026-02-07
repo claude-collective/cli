@@ -7,11 +7,12 @@
 import { Flags } from "@oclif/core";
 import { render } from "ink";
 import path from "path";
-import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
+import { stringify as stringifyYaml } from "yaml";
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
 import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/source-loader.js";
 import { formatSourceOrigin, loadProjectConfig } from "../lib/config.js";
+import { saveSourceToProjectConfig } from "../lib/config-saver.js";
 import { loadProjectConfig as loadFullProjectConfig } from "../lib/project-config.js";
 import { copySkillsToLocalFlattened } from "../lib/skill-copier.js";
 import { checkPermissions } from "../lib/permission-checker.js";
@@ -24,7 +25,7 @@ import { getCollectivePluginDir } from "../lib/plugin-finder.js";
 import { createLiquidEngine } from "../lib/compiler.js";
 import { generateProjectConfigFromSkills, buildStackProperty } from "../lib/config-generator.js";
 import { claudePluginMarketplaceExists, claudePluginMarketplaceAdd } from "../utils/exec.js";
-import { ensureDir, writeFile, readFile, directoryExists, fileExists } from "../utils/fs.js";
+import { ensureDir, writeFile, directoryExists } from "../utils/fs.js";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, LOCAL_SKILLS_PATH, PROJECT_ROOT } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import type { CompileConfig, CompileAgentConfig, StackConfig, ProjectConfig } from "../../types.js";
@@ -273,7 +274,8 @@ export default class Init extends BaseCommand {
 
       // Save source to project config if provided via --source flag
       if (flags.source) {
-        await this.saveSourceToProjectConfig(projectDir, flags.source);
+        await saveSourceToProjectConfig(projectDir, flags.source);
+        this.log(`Source saved to .claude-src/config.yaml`);
       }
 
       const permissionWarning = await checkPermissions(projectDir);
@@ -286,27 +288,6 @@ export default class Init extends BaseCommand {
         exit: EXIT_CODES.ERROR,
       });
     }
-  }
-
-  /**
-   * Save source to project-level .claude-src/config.yaml.
-   */
-  private async saveSourceToProjectConfig(projectDir: string, source: string): Promise<void> {
-    const configPath = path.join(projectDir, CLAUDE_SRC_DIR, "config.yaml");
-
-    let config: Record<string, unknown> = {};
-    if (await fileExists(configPath)) {
-      const content = await readFile(configPath);
-      config = (parseYaml(content) as Record<string, unknown>) || {};
-    }
-
-    config.source = source;
-
-    await ensureDir(path.join(projectDir, CLAUDE_SRC_DIR));
-    const configYaml = stringifyYaml(config, { indent: 2 });
-    await writeFile(configPath, configYaml);
-
-    this.log(`Source saved to .claude-src/config.yaml`);
   }
 
   /**

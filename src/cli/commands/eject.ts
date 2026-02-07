@@ -1,29 +1,15 @@
 import { Args, Flags } from "@oclif/core";
 import path from "path";
 import os from "os";
-import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
+import { stringify as stringifyYaml } from "yaml";
 import { BaseCommand } from "../base-command.js";
-import {
-  copy,
-  ensureDir,
-  directoryExists,
-  fileExists,
-  readFile,
-  writeFile,
-} from "../utils/fs.js";
-import {
-  CLAUDE_SRC_DIR,
-  DIRS,
-  LOCAL_SKILLS_PATH,
-  PROJECT_ROOT,
-} from "../consts.js";
+import { copy, ensureDir, directoryExists, fileExists, writeFile } from "../utils/fs.js";
+import { CLAUDE_SRC_DIR, DIRS, LOCAL_SKILLS_PATH, PROJECT_ROOT } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
-import {
-  loadSkillsMatrixFromSource,
-  type SourceLoadResult,
-} from "../lib/source-loader.js";
+import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/source-loader.js";
 import { copySkillsToLocalFlattened } from "../lib/skill-copier.js";
 import { loadProjectConfig, resolveSource } from "../lib/config.js";
+import { saveSourceToProjectConfig } from "../lib/config-saver.js";
 
 const EJECT_TYPES = ["agent-partials", "skills", "all"] as const;
 type EjectType = (typeof EJECT_TYPES)[number];
@@ -65,10 +51,9 @@ export default class Eject extends BaseCommand {
     const projectDir = process.cwd();
 
     if (!args.type) {
-      this.error(
-        "Please specify what to eject: agent-partials, skills, or all",
-        { exit: EXIT_CODES.INVALID_ARGS },
-      );
+      this.error("Please specify what to eject: agent-partials, skills, or all", {
+        exit: EXIT_CODES.INVALID_ARGS,
+      });
     }
 
     if (!EJECT_TYPES.includes(args.type as EjectType)) {
@@ -145,7 +130,8 @@ export default class Eject extends BaseCommand {
 
     // Save source to project config if --source was provided
     if (flags.source) {
-      await this.saveSourceToProjectConfig(projectDir, flags.source);
+      await saveSourceToProjectConfig(projectDir, flags.source);
+      this.log(`Source saved to .claude-src/config.yaml`);
     }
 
     // Create minimal config.yaml if it doesn't exist
@@ -154,30 +140,6 @@ export default class Eject extends BaseCommand {
     this.log("");
     this.logSuccess("Eject complete!");
     this.log("");
-  }
-
-  /**
-   * Save source to project-level .claude-src/config.yaml.
-   * Creates the config file if it doesn't exist, or merges with existing config.
-   */
-  private async saveSourceToProjectConfig(
-    projectDir: string,
-    source: string,
-  ): Promise<void> {
-    const configPath = path.join(projectDir, CLAUDE_SRC_DIR, "config.yaml");
-
-    let config: Record<string, unknown> = {};
-    if (await fileExists(configPath)) {
-      const content = await readFile(configPath);
-      config = (parseYaml(content) as Record<string, unknown>) || {};
-    }
-
-    config.source = source;
-
-    await ensureDir(path.join(projectDir, CLAUDE_SRC_DIR));
-    await writeFile(configPath, stringifyYaml(config, { indent: 2 }));
-
-    this.log(`Source saved to .claude-src/config.yaml`);
   }
 
   /**
@@ -207,8 +169,7 @@ export default class Eject extends BaseCommand {
 
     // Get resolved source config
     const resolvedConfig =
-      sourceResult?.sourceConfig ??
-      (await resolveSource(sourceFlag, projectDir));
+      sourceResult?.sourceConfig ?? (await resolveSource(sourceFlag, projectDir));
 
     // Add source (flag overrides resolved source, but always include it)
     if (sourceFlag) {
@@ -293,9 +254,7 @@ export default class Eject extends BaseCommand {
     const destDir = directOutput ? outputBase : path.join(outputBase, "agents");
 
     if ((await directoryExists(destDir)) && !force) {
-      this.warn(
-        `Agent partials already exist at ${destDir}. Use --force to overwrite.`,
-      );
+      this.warn(`Agent partials already exist at ${destDir}. Use --force to overwrite.`);
       return;
     }
 
@@ -305,9 +264,7 @@ export default class Eject extends BaseCommand {
     await copy(sourceDir, destDir);
 
     this.logSuccess(`Agent partials ejected to ${destDir}`);
-    this.log(
-      "You can now customize templates, agent intro, workflow, and examples locally.",
-    );
+    this.log("You can now customize templates, agent intro, workflow, and examples locally.");
   }
 
   /**
@@ -336,9 +293,7 @@ export default class Eject extends BaseCommand {
         : path.join(projectDir, LOCAL_SKILLS_PATH);
 
     if ((await directoryExists(destDir)) && !force) {
-      this.warn(
-        `Skills already exist at ${destDir}. Use --force to overwrite.`,
-      );
+      this.warn(`Skills already exist at ${destDir}. Use --force to overwrite.`);
       return;
     }
 
@@ -366,9 +321,7 @@ export default class Eject extends BaseCommand {
       ? sourceResult.sourcePath
       : sourceResult.marketplace || sourceResult.sourceConfig.source;
 
-    this.logSuccess(
-      `${copiedSkills.length} skills ejected to ${destDir} from ${sourceLabel}`,
-    );
+    this.logSuccess(`${copiedSkills.length} skills ejected to ${destDir} from ${sourceLabel}`);
     this.log("You can now customize skill content locally.");
   }
 }
