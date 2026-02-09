@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.0] - 2026-02-09
+
+### Changed
+
+- **Removed refine wizard step** - The 5-step wizard flow (approach → stack → build → refine → confirm) is now 4 steps (approach → stack → build → confirm). The refine step for skill source selection has been removed; `refineAction` state and `setRefineAction` action removed from wizard store.
+- **Build step layout** - Domain tabs header shows all selected domains with active domain highlighted; legend row simplified from positioned overlay to inline flex layout.
+
+### Added
+
+- **`web-extras` domain** - 8 categories (error-handling, file-upload, files, utilities, realtime, animation, pwa, accessibility) split from `web` into a new `web-extras` domain to reduce vertical height in the build view.
+- **`parent_domain` field** on `CategoryDefinition` - Sub-domains inherit framework-first filtering from their parent domain (e.g., `web-extras` respects `web`'s framework selection).
+- **`parentDomainSelections` prop** on `StepBuild` - Passes parent domain selections for framework compatibility filtering in sub-domains.
+
 ## [0.20.0] - 2026-02-07
 
 ### Changed
@@ -216,6 +229,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Old `search.ts` command - Replaced with dual-mode `search.tsx` (static + interactive)
 
+[0.21.0]: https://github.com/claude-collective/cli/releases/tag/v0.21.0
 [0.20.0]: https://github.com/claude-collective/cli/releases/tag/v0.20.0
 [0.19.0]: https://github.com/claude-collective/cli/releases/tag/v0.19.0
 [0.18.0]: https://github.com/claude-collective/cli/releases/tag/v0.18.0
