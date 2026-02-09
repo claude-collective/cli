@@ -87,63 +87,9 @@ When skills are copied locally, use the full path as the folder name instead of 
 
 ---
 
-## Phase 7C - Build Step UX Improvements
+## ~~Phase 7C - Build Step UX Improvements~~ DONE
 
-**M | D-10 | Build Step UX Improvements**
-
-Improve the wizard Build step with:
-
-1. Vertical column alignment for skill options (max 5 columns)
-2. Framework-first selection flow - only show framework row until one is selected
-3. Rename "Expert Mode" to "Show All" (`[a]` key) - hide conflicting items instead of disabling
-
-### Design Decisions
-
-- **Framework UI**: Show only framework row initially; other subcategories appear after framework is selected
-- **Column alignment**: Fixed at 5 columns maximum
-- **Keyboard shortcut**: `[a]` for "Show All" toggle
-
-### Implementation Tasks
-
-1. **Column Alignment in CategoryGrid** (`src/cli/components/wizard/category-grid.tsx`)
-   - Calculate consistent column width based on longest option label
-   - Cap at 5 columns per row
-   - Align all option cells to same width
-   - Update `OptionCell` component with fixed width instead of `minWidth`
-
-2. **Framework-First Flow in StepBuild** (`src/cli/components/wizard/step-build.tsx`)
-   - Add logic to detect if framework is selected for current domain
-   - When no framework selected: only show "framework" subcategory row
-   - When framework selected: show all subcategories
-   - Add empty state or guidance message when awaiting framework selection
-
-3. **Hide vs Disable Conflicting Options** (`src/cli/lib/matrix-resolver.ts`, `step-build.tsx`)
-   - When `showAll=false`: Filter out conflicting options entirely (don't return them)
-   - When `showAll=true`: Return all options with appropriate state indicators
-   - Update `getAvailableSkills()` to accept `filterConflicts: boolean` option
-
-4. **Rename expertMode → showAll**
-   - `src/cli/stores/wizard-store.ts`: Rename state and action
-   - `src/cli/components/wizard/category-grid.tsx`: Update key handler and UI text
-   - `src/cli/components/wizard/step-build.tsx`: Update prop name
-   - Tests: Update all references
-   - Key binding: `e` → `a`
-   - UI text: `[e] Expert Mode: ON/OFF` → `[a] Show All: ON/OFF`
-
-5. **Verify Framework Order** (`config/skills-matrix.yaml`)
-   - Verify all `framework` subcategories have `order: 0` (or lowest in their domain)
-
-### Verification
-
-1. Run `bun test` - all tests pass
-2. Manual test: `bun run dev init` in `/home/vince/dev/cv-launch`
-   - Verify only framework row shows initially
-   - Select a framework, verify other rows appear
-   - Verify columns are vertically aligned (5 max)
-   - Press `[a]` to toggle Show All
-   - Verify hidden conflicting options appear/disappear
-
-**Note:** Partial implementation exists in `category-grid.tsx` (5-column layout started but not complete). Revert or complete as needed.
+D-10 completed. Framework-first locking flow implemented in step-build.tsx. Expert mode retained as-is.
 
 ---
 

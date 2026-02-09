@@ -12,7 +12,7 @@ stacks:
         client-state: zustand
         server-state: react-query
         testing: vitest
-        mocks: msw
+        mocking: msw
         accessibility: accessibility
       api-developer:
         api: hono
@@ -32,8 +32,7 @@ stacks:
       cli-reviewer:
         reviewing: cli-reviewing
       web-tester:
-        testing: vitest
-        e2e: playwright-e2e
+        testing: playwright-e2e
       cli-tester: {}
       web-pm: {}
       skill-summoner: {}
@@ -75,8 +74,7 @@ stacks:
       skill-summoner: {}
       documentor: {}
       web-tester:
-        testing: vitest
-        e2e: playwright-e2e
+        testing: playwright-e2e
     philosophy: Enterprise-grade and type-safe
 
   - id: nuxt-stack
@@ -108,8 +106,7 @@ stacks:
       skill-summoner: {}
       documentor: {}
       web-tester:
-        testing: vitest
-        e2e: playwright-e2e
+        testing: playwright-e2e
     philosophy: Progressive Vue with Nuxt power
 
   - id: remix-stack
@@ -140,8 +137,7 @@ stacks:
       skill-summoner: {}
       documentor: {}
       web-tester:
-        testing: vitest
-        e2e: playwright-e2e
+        testing: playwright-e2e
     philosophy: Web standards and excellent forms handling
 
   - id: vue-stack
@@ -172,8 +168,7 @@ stacks:
       skill-summoner: {}
       documentor: {}
       web-tester:
-        testing: vitest
-        e2e: playwright-e2e
+        testing: playwright-e2e
     philosophy: Progressive and approachable
 
   - id: solidjs-stack
@@ -203,8 +198,7 @@ stacks:
       skill-summoner: {}
       documentor: {}
       web-tester:
-        testing: vitest
-        e2e: playwright-e2e
+        testing: playwright-e2e
     philosophy: Maximum performance with minimal overhead
 
   - id: react-native-stack

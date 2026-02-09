@@ -166,12 +166,12 @@ See [docs/CLI-IMPROVEMENTS-RESEARCH.md#4](./docs/CLI-IMPROVEMENTS-RESEARCH.md) f
 
 ---
 
-#### U7: Align Skills Matrix Categories with Domains
+#### U7: Align Skills Matrix Categories with Domains [DONE]
 
-- [ ] Rename top-level categories in `config/skills-matrix.yaml` to match domain names (`web`, `api`, `mobile`, `cli`, `shared`) instead of `frontend`, `backend`, `setup`, `reviewing`
-- [ ] Update `src/schemas/skills-matrix.schema.json` if category names are validated
-- [ ] Update any code that references the old category names
-- [ ] Update docs to reflect the change
+- [x] Rename top-level categories in `config/skills-matrix.yaml` to match domain names (`web`, `api`, `mobile`, `cli`, `shared`) instead of `frontend`, `backend`, `setup`, `reviewing`
+- [x] Update `src/schemas/skills-matrix.schema.json` if category names are validated
+- [x] Update any code that references the old category names
+- [x] Update docs to reflect the change
 
 **Files:** `config/skills-matrix.yaml`, `src/schemas/skills-matrix.schema.json`, docs
 
@@ -209,6 +209,19 @@ See [docs/CLI-IMPROVEMENTS-RESEARCH.md#4](./docs/CLI-IMPROVEMENTS-RESEARCH.md) f
 - Live filtering in interactive mode
 - Source attribution in results
 - Multi-select for batch import
+
+---
+
+#### U8: Separate E2E testing subcategory or support arrays in stack agent configs
+
+Currently all testing skills (vitest, playwright-e2e, cypress-e2e) share the single `testing` subcategory. Because stacks.yaml agent blocks are key-value maps, only one skill can be assigned per subcategory per agent. This prevents assigning both vitest and playwright-e2e to the same agent (e.g. `web-tester`).
+
+**Two approaches (pick one):**
+
+1. **Create an `e2e` subcategory** in `skills-matrix.yaml` under the `web` domain. Move playwright-e2e and cypress-e2e into it. Stacks can then use `testing: vitest` + `e2e: playwright-e2e` on the same agent.
+2. **Support array values** in stack agent configs (e.g. `testing: [vitest, playwright-e2e]`). Requires updating the stack schema and `resolveAgentConfigToSkills` in `source-loader.ts`.
+
+**Files:** `config/skills-matrix.yaml`, `config/stacks.yaml`, `src/schemas/stacks.schema.json`, `src/cli/lib/source-loader.ts`
 
 ---
 

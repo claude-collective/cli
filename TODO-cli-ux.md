@@ -15,43 +15,43 @@ No active tasks. All UX-10 refactoring phases are complete.
 
 ## Completed Tasks
 
-| ID     | Task                                           | Status | Notes                                                                 |
-| ------ | ---------------------------------------------- | ------ | --------------------------------------------------------------------- |
-| U1     | Progress navigation bar - tab styling          | DONE   | Green bg active, white bg completed, no circles                       |
-| U2     | Header - add version display                   | DONE   | Pass `this.config.version` from Init command                          |
-| U3     | Footer - split layout with WizardFooter        | DONE   | Left: nav controls, right: action hints                               |
-| U6     | Extract WizardLayout component                 | DONE   | WizardTabs + children + WizardFooter, centralized shortcuts           |
-| U7     | Simplify WizardTabs styling                    | DONE   | Text-only, border lines, "Approach" -> "Intro", version bar           |
-| U8     | Fix version prop flow                          | DONE   | Prop-drill from oclif this.config.version (was broken)                |
-| U9     | ASCII art banner for init                      | DONE   | "AGENTS INC" banner on init command                                   |
-| U4     | Build step - framework-first flow              | DONE   | Hide categories until framework selected, background colors           |
-| U5     | Import third-party skills command              | DONE   | `cc import skill github:owner/repo`                                   |
-| UX-01  | Style the home screen                          | DONE   | Layout, branding, and navigation styling for the CLI home screen      |
-| UX-10a | Extract `lib/skill-metadata.ts`                | DONE   | -254 lines duplication from update.tsx, outdated.ts, diff.ts (0.14.1) |
-| UX-10b | Extract `lib/config-saver.ts`                  | DONE   | -36 lines duplication from init.tsx, eject.ts (0.14.1)                |
-| UX-10e | Extract `lib/plugin-manifest-finder.ts`        | DONE   | -72 lines from 4 version/\* files (0.14.1)                            |
-| UX-11  | Build step: cycle through all domains          | DONE   | `populateFromStack()` now sets ALL_DOMAINS (0.16.0)                   |
-| UX-10  | Refactor command files - extract logic to lib/ | DONE   | All 6 phases complete (0.14.1-0.16.0)                                 |
-| UX-10c | Phase 3: Extract `lib/config-merger.ts`        | DONE   | 20 tests, merge rules for identity/skills/agents/stack                |
-| UX-10d | Phase 4: Extract `lib/local-installer.ts`      | DONE   | 9 tests, init.tsx reduced from 609 to 348 lines                       |
-| UX-10f | Phase 6: Consolidate `getCurrentDate()`        | DONE   | Removed duplicates from 3 files, import from lib/versioning           |
+| ID     | Task                                            | Status | Notes                                                                 |
+| ------ | ----------------------------------------------- | ------ | --------------------------------------------------------------------- |
+| U1     | Progress navigation bar - tab styling           | DONE   | Green bg active, white bg completed, no circles                       |
+| U2     | Header - add version display                    | DONE   | Pass `this.config.version` from Init command                          |
+| U3     | Footer - split layout with WizardFooter         | DONE   | Left: nav controls, right: action hints                               |
+| U6     | Extract WizardLayout component                  | DONE   | WizardTabs + children + WizardFooter, centralized shortcuts           |
+| U7     | Simplify WizardTabs styling                     | DONE   | Text-only, border lines, "Approach" -> "Intro", version bar           |
+| U8     | Fix version prop flow                           | DONE   | Prop-drill from oclif this.config.version (was broken)                |
+| U9     | ASCII art banner for init                       | DONE   | "AGENTS INC" banner on init command                                   |
+| U4     | Build step - framework-first flow               | DONE   | Hide categories until framework selected, background colors           |
+| U5     | Import third-party skills command               | DONE   | `cc import skill github:owner/repo`                                   |
+| UX-01  | Style the home screen                           | DONE   | Layout, branding, and navigation styling for the CLI home screen      |
+| UX-10a | Extract `lib/skill-metadata.ts`                 | DONE   | -254 lines duplication from update.tsx, outdated.ts, diff.ts (0.14.1) |
+| UX-10b | Extract `lib/config-saver.ts`                   | DONE   | -36 lines duplication from init.tsx, eject.ts (0.14.1)                |
+| UX-10e | Extract `lib/plugin-manifest-finder.ts`         | DONE   | -72 lines from 4 version/\* files (0.14.1)                            |
+| UX-11  | Build step: cycle through all domains           | DONE   | `populateFromStack()` now sets ALL_DOMAINS (0.16.0)                   |
+| UX-10  | Refactor command files - extract logic to lib/  | DONE   | All 6 phases complete (0.14.1-0.16.0)                                 |
+| UX-10c | Phase 3: Extract `lib/config-merger.ts`         | DONE   | 20 tests, merge rules for identity/skills/agents/stack                |
+| UX-10d | Phase 4: Extract `lib/local-installer.ts`       | DONE   | 9 tests, init.tsx reduced from 609 to 348 lines                       |
+| UX-10f | Phase 6: Consolidate `getCurrentDate()`         | DONE   | Removed duplicates from 3 files, import from lib/versioning           |
+| UX-02  | Align skills-matrix categories with domains     | DONE   | Production code updated; test fixtures cleaned up                     |
+| UX-03  | Build step UX improvements                      | DONE   | Framework-first locking flow implemented; expert mode retained        |
+| UX-12  | Fix missing subcategories after stack selection | DONE   | Removed synthetic local category; fixed stacks.yaml mismatches        |
 
 ---
 
 ## Backlog
 
-| ID    | Task                                                           | Priority | Notes                                                                                                                                                                               |
-| ----- | -------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UX-02 | Align skills-matrix categories with domains                    | Medium   | Rename `frontend`->`web`, `backend`->`api`, `setup`->`infra`. See detailed investigation notes below. 17 files affected, low risk, mostly search-and-replace.                       |
-| UX-03 | Build step UX improvements (column alignment, show all toggle) | Medium   | See TODO-deferred.md D-10                                                                                                                                                           |
-| UX-04 | Interactive skill search polish                                | Medium   | Manual testing + tests for interactive component                                                                                                                                    |
-| UX-05 | Refine step - skills.sh integration                            | Low      | Community skill alternatives in Refine step                                                                                                                                         |
-| UX-06 | Search with color highlighting                                 | Low      | Deferred - needs more UX thought                                                                                                                                                    |
-| UX-07 | Incompatibility tooltips                                       | Low      | Show reason when hovering disabled options                                                                                                                                          |
-| UX-08 | Keyboard shortcuts help overlay                                | Low      | In-wizard help for keybindings                                                                                                                                                      |
-| UX-09 | Animations/transitions                                         | Low      | Polish pass for step transitions                                                                                                                                                    |
-| UX-12 | Build step: missing subcategories after stack selection        | High     | BUG: When selecting a stack (e.g. Next.js) with local skills, many subcategories (client state, server state, etc.) are not shown in the build view. See investigation notes below. |
-| UX-13 | Add readable schemas on subagents and skills                   | Medium   | -                                                                                                                                                                                   |
+| ID    | Task                                         | Priority | Notes                                            |
+| ----- | -------------------------------------------- | -------- | ------------------------------------------------ |
+| UX-04 | Interactive skill search polish              | Medium   | Manual testing + tests for interactive component |
+| UX-05 | Refine step - skills.sh integration          | Low      | Community skill alternatives in Refine step      |
+| UX-06 | Search with color highlighting               | Low      | Deferred - needs more UX thought                 |
+| UX-07 | Incompatibility tooltips                     | Low      | Show reason when hovering disabled options       |
+| UX-08 | Keyboard shortcuts help overlay              | Low      | In-wizard help for keybindings                   |
+| UX-09 | Animations/transitions                       | Low      | Polish pass for step transitions                 |
+| UX-13 | Add readable schemas on subagents and skills | Medium   | -                                                |
 
 ---
 
