@@ -23,7 +23,7 @@ import { StepStack } from "./step-stack.js";
 import { StepBuild } from "./step-build.js";
 import { StepConfirm } from "./step-confirm.js";
 import { validateSelection } from "../../lib/matrix-resolver.js";
-import type { MergedSkillsMatrix } from "../../types-matrix.js";
+import type { MergedSkillsMatrix, Domain } from "../../types-matrix.js";
 import { getStackName } from "./utils.js";
 
 // =============================================================================
@@ -56,7 +56,7 @@ interface WizardProps {
 // Helpers
 // =============================================================================
 
-function getParentDomain(domain: string, matrix: MergedSkillsMatrix): string | undefined {
+function getParentDomain(domain: Domain, matrix: MergedSkillsMatrix): Domain | undefined {
   const cat = Object.values(matrix.categories).find((c) => c.domain === domain && c.parent_domain);
   return cat?.parent_domain;
 }
@@ -176,11 +176,12 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
         const currentDomain = store.getCurrentDomain();
         // For stack path with customize, use all domains from stack
         // For scratch path, use selectedDomains
-        const effectiveDomains = store.selectedDomains.length > 0 ? store.selectedDomains : ["web"]; // Default to web if no domains selected
+        const defaultDomains: Domain[] = ["web"];
+        const effectiveDomains = store.selectedDomains.length > 0 ? store.selectedDomains : defaultDomains;
 
         const allSelections = store.getAllSelectedTechnologies();
 
-        const activeDomain = currentDomain || effectiveDomains[0] || "web";
+        const activeDomain: Domain = currentDomain || effectiveDomains[0] || "web";
         const parentDomain = getParentDomain(activeDomain, matrix);
         const parentDomainSelections = parentDomain
           ? store.domainSelections[parentDomain]
@@ -199,7 +200,7 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
             expertMode={store.expertMode}
             parentDomainSelections={parentDomainSelections}
             onToggle={(subcategoryId, techId) => {
-              const domain = store.getCurrentDomain() || "web";
+              const domain: Domain = store.getCurrentDomain() || "web";
               const cat = matrix.categories[subcategoryId];
               store.toggleTechnology(domain, subcategoryId, techId, cat?.exclusive ?? true);
             }}

@@ -2,27 +2,29 @@ import type {
   MergedSkillsMatrix,
   ResolvedSkill,
   SkillOption,
+  SkillId,
+  CategoryPath,
   SelectionValidation,
   ValidationError,
   ValidationWarning,
 } from "../types-matrix";
 
-export function resolveAlias(aliasOrId: string, matrix: MergedSkillsMatrix): string {
-  return matrix.aliases[aliasOrId] || aliasOrId;
+export function resolveAlias(aliasOrId: string, matrix: MergedSkillsMatrix): SkillId {
+  return (matrix.aliases[aliasOrId] || aliasOrId) as SkillId;
 }
 
 export function getDependentSkills(
-  skillId: string,
+  skillId: SkillId,
   currentSelections: string[],
   matrix: MergedSkillsMatrix,
-): string[] {
+): SkillId[] {
   const fullId = resolveAlias(skillId, matrix);
   const skill = matrix.skills[fullId];
 
   if (!skill) return [];
 
   const resolvedSelections = currentSelections.map((s) => resolveAlias(s, matrix));
-  const dependents: string[] = [];
+  const dependents: SkillId[] = [];
 
   for (const selectedId of resolvedSelections) {
     if (selectedId === fullId) continue;
@@ -54,7 +56,7 @@ export interface SkillCheckOptions {
 }
 
 export function isDisabled(
-  skillId: string,
+  skillId: SkillId,
   currentSelections: string[],
   matrix: MergedSkillsMatrix,
   options?: SkillCheckOptions,
@@ -103,7 +105,7 @@ export function isDisabled(
 }
 
 export function getDisableReason(
-  skillId: string,
+  skillId: SkillId,
   currentSelections: string[],
   matrix: MergedSkillsMatrix,
 ): string | undefined {
@@ -158,7 +160,7 @@ export function getDisableReason(
 }
 
 export function isDiscouraged(
-  skillId: string,
+  skillId: SkillId,
   currentSelections: string[],
   matrix: MergedSkillsMatrix,
 ): boolean {
@@ -186,7 +188,7 @@ export function isDiscouraged(
 }
 
 export function getDiscourageReason(
-  skillId: string,
+  skillId: SkillId,
   currentSelections: string[],
   matrix: MergedSkillsMatrix,
 ): string | undefined {
@@ -218,7 +220,7 @@ export function getDiscourageReason(
 }
 
 export function isRecommended(
-  skillId: string,
+  skillId: SkillId,
   currentSelections: string[],
   matrix: MergedSkillsMatrix,
 ): boolean {
@@ -242,7 +244,7 @@ export function isRecommended(
 }
 
 export function getRecommendReason(
-  skillId: string,
+  skillId: SkillId,
   currentSelections: string[],
   matrix: MergedSkillsMatrix,
 ): string | undefined {
@@ -373,7 +375,7 @@ export function validateSelection(
     if (!skill || skill.providesSetupFor.length === 0) continue;
 
     const hasUsageSkill = skill.providesSetupFor.some((usageId) =>
-      resolvedSelections.includes(usageId),
+      resolvedSelections.includes(usageId as SkillId),
     );
     if (!hasUsageSkill) {
       warnings.push({
@@ -392,7 +394,7 @@ export function validateSelection(
 }
 
 export function getAvailableSkills(
-  categoryId: string,
+  categoryId: CategoryPath,
   currentSelections: string[],
   matrix: MergedSkillsMatrix,
   options?: SkillCheckOptions,
@@ -434,7 +436,7 @@ export function getAvailableSkills(
 }
 
 export function getSkillsByCategory(
-  categoryId: string,
+  categoryId: CategoryPath,
   matrix: MergedSkillsMatrix,
 ): ResolvedSkill[] {
   const skills: ResolvedSkill[] = [];
@@ -449,7 +451,7 @@ export function getSkillsByCategory(
 }
 
 export function isCategoryAllDisabled(
-  categoryId: string,
+  categoryId: CategoryPath,
   currentSelections: string[],
   matrix: MergedSkillsMatrix,
   options?: SkillCheckOptions,

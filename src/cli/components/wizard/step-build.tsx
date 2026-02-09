@@ -9,7 +9,7 @@
  */
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
-import type { MergedSkillsMatrix } from "../../types-matrix.js";
+import type { MergedSkillsMatrix, Domain, CategoryPath, Subcategory, SkillId } from "../../types-matrix.js";
 import { getAvailableSkills } from "../../lib/matrix-resolver.js";
 import {
   CategoryGrid,
@@ -26,9 +26,9 @@ export interface StepBuildProps {
   /** Skills matrix for category/skill lookup */
   matrix: MergedSkillsMatrix;
   /** Current domain being configured (e.g., 'web', 'api') */
-  domain: string;
+  domain: Domain;
   /** All selected domains (for progress indicator) */
-  selectedDomains: string[];
+  selectedDomains: Domain[];
   /** Current selections by subcategory */
   selections: Record<string, string[]>;
   /** All current selections (for state calculation across domains) */
@@ -42,7 +42,7 @@ export interface StepBuildProps {
   /** Parent domain selections for framework-first filtering on sub-domains (e.g., web-extras inherits from web) */
   parentDomainSelections?: Record<string, string[]>;
   /** Callbacks */
-  onToggle: (subcategoryId: string, technologyId: string) => void;
+  onToggle: (subcategoryId: Subcategory, technologyId: SkillId) => void;
   onFocusChange: (row: number, col: number) => void;
   onToggleDescriptions: () => void;
   onContinue: () => void;
@@ -110,10 +110,10 @@ function computeOptionState(skill: {
 /**
  * Get clean display label for a skill option.
  * Uses name with author suffix stripped for accurate display.
- * e.g., "React (@vince)" -> "React", "SCSS Modules (@vince)" -> "SCSS Modules"
+ * e.g., "React" from "web-framework-react", "SCSS Modules" from "web-styling-scss-modules"
  */
 export function getDisplayLabel(skill: { alias?: string; name: string }): string {
-  // Strip author suffix like " (@vince)" from name
+  // Strip author suffix like " (@author)" from name if present (legacy data)
   // This preserves the original capitalization (e.g., "SCSS Modules" stays as-is)
   const authorPattern = /\s*\(@[^)]+\)\s*$/;
   return skill.name.replace(authorPattern, "");
@@ -199,7 +199,7 @@ function isCompatibleWithSelectedFrameworks(
  */
 function shouldShowSubcategory(
   _subcategoryId: string,
-  _domain: string,
+  _domain: Domain,
   _frameworkSelected: boolean,
 ): boolean {
   // All sections are always visible
@@ -216,7 +216,7 @@ function shouldShowSubcategory(
  * - After framework selection, shows skills compatible with selected framework
  */
 function buildCategoriesForDomain(
-  domain: string,
+  domain: Domain,
   allSelections: string[],
   matrix: MergedSkillsMatrix,
   expertMode: boolean,
@@ -244,7 +244,7 @@ function buildCategoriesForDomain(
   // Build CategoryRow for each visible subcategory
   const categoryRows: CategoryRow[] = visibleSubcategories.map((cat) => {
     // Get available skills with computed states
-    const skillOptions = getAvailableSkills(cat.id, allSelections, matrix, {
+    const skillOptions = getAvailableSkills(cat.id as CategoryPath, allSelections, matrix, {
       expertMode,
     });
 

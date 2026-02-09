@@ -4,6 +4,7 @@ import { readFile, fileExists } from "../utils/fs";
 import { verbose, warn } from "../utils/logger";
 import type { Stack, StacksConfig, StackAgentConfig } from "../types-stacks";
 import type { SkillReference } from "../types";
+import type { SkillId } from "../types-matrix";
 
 const STACKS_FILE = "config/stacks.yaml";
 
@@ -101,7 +102,7 @@ export function resolveAgentConfigToSkills(
     const isKeySkill = KEY_SUBCATEGORIES.has(subcategory);
 
     skillRefs.push({
-      id: fullSkillId,
+      id: fullSkillId as SkillId,
       usage: `when working with ${subcategory}`,
       preloaded: isKeySkill,
     });
@@ -130,16 +131,16 @@ export function resolveAgentConfigToSkills(
  * };
  *
  * const aliases = {
- *   react: 'web/framework/react (@vince)',
- *   hono: 'api/framework/hono (@vince)',
+ *   react: 'web-framework-react',
+ *   hono: 'api-framework-hono',
  *   // ...
  * };
  *
  * const result = resolveStackSkillsFromAliases(stack, aliases);
  * // Returns:
  * // {
- * //   'web-developer': [{ id: 'web/framework/react (@vince)', usage: '...', preloaded: true }, ...],
- * //   'api-developer': [{ id: 'api/framework/hono (@vince)', usage: '...', preloaded: true }, ...]
+ * //   'web-developer': [{ id: 'web-framework-react', usage: '...', preloaded: true }, ...],
+ * //   'api-developer': [{ id: 'api-framework-hono', usage: '...', preloaded: true }, ...]
  * // }
  * ```
  */

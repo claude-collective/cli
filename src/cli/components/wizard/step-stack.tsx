@@ -15,7 +15,7 @@ import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { Select } from "@inkjs/ui";
 import { useWizardStore } from "../../stores/wizard-store.js";
-import type { MergedSkillsMatrix } from "../../types-matrix.js";
+import type { MergedSkillsMatrix, Domain } from "../../types-matrix.js";
 import { MenuItem } from "./menu-item.js";
 import { ViewTitle } from "./view-title.js";
 
@@ -30,7 +30,7 @@ const CONTINUE_VALUE = "_continue";
 const INITIAL_FOCUSED_INDEX = 0;
 
 /** Available domains for scratch path */
-const AVAILABLE_DOMAINS = [
+const AVAILABLE_DOMAINS: Array<{ id: Domain; label: string; description: string }> = [
   { id: "web", label: "Web", description: "Frontend web applications" },
   {
     id: "web-extras",
@@ -175,8 +175,8 @@ const DomainSelection: React.FC = () => {
       return;
     }
 
-    // Toggle domain selection
-    toggleDomain(value);
+    // Toggle domain selection (value comes from Select UI component - data boundary)
+    toggleDomain(value as Domain);
   };
 
   return (

@@ -1,6 +1,13 @@
 import path from "path";
 import { PROJECT_ROOT, SKILLS_DIR_PATH, SKILLS_MATRIX_PATH } from "../consts";
-import type { MergedSkillsMatrix, ResolvedSkill, ResolvedStack } from "../types-matrix";
+import type {
+  MergedSkillsMatrix,
+  ResolvedSkill,
+  ResolvedStack,
+  SkillId,
+  SkillAlias,
+  CategoryPath,
+} from "../types-matrix";
 import type { Stack } from "../types-stacks";
 import { fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
@@ -217,12 +224,12 @@ function mergeLocalSkillsIntoMatrix(
 
     // If overwriting an existing remote skill, inherit its category unconditionally.
     // Otherwise, use whatever the local skill declared in its metadata.yaml.
-    const category = existingSkill?.category ?? metadata.category;
+    const category = (existingSkill?.category ?? metadata.category) as CategoryPath;
     const alias = existingSkill?.alias ?? matrix.aliasesReverse[metadata.id];
 
     const resolvedSkill: ResolvedSkill = {
-      id: metadata.id,
-      alias,
+      id: metadata.id as SkillId,
+      alias: alias as SkillAlias | undefined,
       name: metadata.name,
       description: metadata.description,
       usageGuidance: metadata.usageGuidance,

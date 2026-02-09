@@ -33,6 +33,7 @@ import type {
   CompiledAgentData,
   AgentHookDefinition,
 } from "../../types";
+import type { SkillId } from "../types-matrix";
 
 const CONTENT_HASH_FILE = ".content-hash";
 
@@ -333,7 +334,7 @@ export async function compileStackPlugin(
     stack = {
       name: newStack.name,
       description: newStack.description,
-      skills: Array.from(agentSkillIds).map((id) => ({ id })),
+      skills: Array.from(agentSkillIds).map((id) => ({ id: id as SkillId })),
       agents: Object.keys(newStack.agents),
       philosophy: newStack.philosophy,
     };

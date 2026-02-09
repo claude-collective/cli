@@ -11,6 +11,7 @@ import type {
   ValidationResult,
   CustomAgentConfig,
 } from "../../types";
+import type { AgentName } from "../types-matrix";
 
 const CONFIG_PATH = `${CLAUDE_SRC_DIR}/config.yaml`;
 const LEGACY_CONFIG_PATH = `${CLAUDE_DIR}/config.yaml`;
@@ -118,7 +119,7 @@ export function validateProjectConfig(config: unknown): ValidationResult {
       errors.push("agent_skills must be an object");
     } else {
       for (const [agentName, agentSkills] of Object.entries(c.agent_skills)) {
-        const agentSkillsError = validateAgentSkillConfig(agentName, agentSkills);
+        const agentSkillsError = validateAgentSkillConfig(agentName as AgentName, agentSkills);
         if (agentSkillsError) {
           errors.push(agentSkillsError);
         }
@@ -354,7 +355,7 @@ function validateSkillEntry(skill: unknown): string | null {
 /**
  * Validate agent skill config (can be simple list or categorized)
  */
-function validateAgentSkillConfig(agentName: string, agentSkills: unknown): string | null {
+function validateAgentSkillConfig(agentName: AgentName, agentSkills: unknown): string | null {
   // Check if it's a simple list (array)
   if (Array.isArray(agentSkills)) {
     for (const skill of agentSkills) {

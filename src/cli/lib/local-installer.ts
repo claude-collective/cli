@@ -17,7 +17,7 @@ import type { SourceLoadResult } from "./source-loader";
 import type { WizardResultV2 } from "../components/wizard/wizard";
 import type { CopiedSkill } from "./skill-copier";
 import type { Stack } from "../types-stacks";
-import type { MergedSkillsMatrix } from "../types-matrix";
+import type { AgentName, MergedSkillsMatrix, SkillId } from "../types-matrix";
 import { copySkillsToLocalFlattened } from "./skill-copier";
 import { mergeWithExistingConfig } from "./config-merger";
 import { loadAllAgents } from "./loader";
@@ -39,7 +39,7 @@ const YAML_LINE_WIDTH = 120;
  * Extends SkillDefinition with content field.
  */
 interface LocalResolvedSkill {
-  id: string;
+  id: SkillId;
   name: string;
   description: string;
   canonicalId: string;
@@ -129,7 +129,7 @@ async function buildLocalConfig(
         name: PLUGIN_NAME,
         installMode: wizardResult.installMode,
         description: loadedStack.description,
-        skills: wizardResult.selectedSkills.map((id) => id),
+        skills: wizardResult.selectedSkills.map((id) => id as SkillId),
         agents: agentIds,
         philosophy: loadedStack.philosophy,
         stack: stackProperty,
@@ -192,11 +192,15 @@ function buildCompileAgents(
     if (agents[agentId]) {
       // Phase 7: Skills come from stack's technology mappings
       if (loadedStack) {
-        const skillRefs = resolveAgentSkillsFromStack(agentId, loadedStack, skillAliases);
+        const skillRefs = resolveAgentSkillsFromStack(
+          agentId as AgentName,
+          loadedStack,
+          skillAliases,
+        );
         compileAgents[agentId] = { skills: skillRefs };
       } else if (config.agent_skills?.[agentId]) {
         // Resolve skills from agent_skills config
-        const skillRefs = resolveStackSkills(config, agentId, localSkills);
+        const skillRefs = resolveStackSkills(config, agentId as AgentName, localSkills);
         compileAgents[agentId] = { skills: skillRefs };
       } else {
         // No stack, no agent_skills: empty skills

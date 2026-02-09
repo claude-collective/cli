@@ -18,7 +18,7 @@ import React, { useState, useCallback, useMemo } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import { ThemeProvider } from "@inkjs/ui";
 import { cliTheme } from "../themes/default.js";
-import type { ResolvedSkill } from "../../types-matrix.js";
+import type { ResolvedSkill, SkillId } from "../../types-matrix.js";
 
 // =============================================================================
 // Types
@@ -338,7 +338,7 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
   }, []);
 
   // Toggle selection
-  const toggleSelection = useCallback((skillId: string) => {
+  const toggleSelection = useCallback((skillId: SkillId) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(skillId)) {

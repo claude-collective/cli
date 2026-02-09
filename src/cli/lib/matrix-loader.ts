@@ -13,6 +13,9 @@ import type {
   SkillRelation,
   SkillRequirement,
   SkillAlternative,
+  SkillId,
+  SkillAlias,
+  CategoryPath,
 } from "../types-matrix";
 
 interface RawMetadata {
@@ -144,8 +147,8 @@ function buildReverseAliases(aliases: Record<string, string>): Record<string, st
  * Build a map from short names to actual skill IDs.
  *
  * This handles multiple formats used in skill metadata:
- * - "react (@vince)" -> "web/framework/react (@vince)"
- * - "react" -> "web/framework/react (@vince)"
+ * - "react" -> "web-framework-react" (alias resolution)
+ * - Directory paths -> normalized skill IDs
  * - Old alias targets that may still exist in metadata files
  */
 function buildAliasTargetToSkillIdMap(
@@ -155,8 +158,8 @@ function buildAliasTargetToSkillIdMap(
   const map: Record<string, string> = {};
 
   for (const skill of skills) {
-    // Extract the "short author" form: last path segment with author
-    // e.g., "web/framework/react (@vince)" -> "react (@vince)"
+    // Extract the short form: last path segment
+    // e.g., "web-framework-react" -> short form for lookup
     const parts = skill.id.split("/");
     const shortForm = parts[parts.length - 1];
 
@@ -164,8 +167,8 @@ function buildAliasTargetToSkillIdMap(
       map[shortForm] = skill.id;
     }
 
-    // Also map directory name without author if different
-    // e.g., "web/framework/react" -> "web/framework/react (@vince)"
+    // Also map directory path to skill ID if different
+    // e.g., directory path -> normalized skill ID
     if (skill.directoryPath && skill.directoryPath !== skill.id) {
       map[skill.directoryPath] = skill.id;
     }
@@ -272,15 +275,16 @@ function buildResolvedSkill(
   const alternatives: SkillAlternative[] = [];
   const discourages: SkillRelation[] = [];
 
-  // Helper to resolve with all maps, with context for diagnostics
-  const resolve = (id: string, relationContext?: string) =>
+  // Helper to resolve with all maps, with context for diagnostics.
+  // All canonical IDs follow the SkillId format (prefix-subcategory-name).
+  const resolve = (id: string, relationContext?: string): SkillId =>
     resolveToCanonicalId(
       id,
       aliases,
       directoryPathToId,
       aliasTargetToSkillId,
       relationContext ? `${skill.id} ${relationContext}` : undefined,
-    );
+    ) as SkillId;
 
   for (const conflictRef of skill.conflictsWith) {
     const canonicalId = resolve(conflictRef, "conflictsWith");
@@ -292,7 +296,7 @@ function buildResolvedSkill(
 
   for (const conflictRule of matrix.relationships.conflicts) {
     const resolvedSkills = conflictRule.skills.map((id) => resolve(id, "conflicts"));
-    if (resolvedSkills.includes(skill.id)) {
+    if (resolvedSkills.includes(skill.id as SkillId)) {
       for (const otherSkill of resolvedSkills) {
         if (otherSkill !== skill.id) {
           if (!conflictsWith.some((c) => c.skillId === otherSkill)) {
@@ -350,7 +354,7 @@ function buildResolvedSkill(
 
   for (const altGroup of matrix.relationships.alternatives) {
     const resolvedAlts = altGroup.skills.map((id) => resolve(id, "alternatives"));
-    if (resolvedAlts.includes(skill.id)) {
+    if (resolvedAlts.includes(skill.id as SkillId)) {
       for (const altSkill of resolvedAlts) {
         if (altSkill !== skill.id) {
           alternatives.push({
@@ -365,7 +369,7 @@ function buildResolvedSkill(
   if (matrix.relationships.discourages) {
     for (const discourageRule of matrix.relationships.discourages) {
       const resolvedSkills = discourageRule.skills.map((id) => resolve(id, "discourages"));
-      if (resolvedSkills.includes(skill.id)) {
+      if (resolvedSkills.includes(skill.id as SkillId)) {
         for (const otherSkill of resolvedSkills) {
           if (otherSkill !== skill.id) {
             if (!discourages.some((d) => d.skillId === otherSkill)) {
@@ -384,12 +388,12 @@ function buildResolvedSkill(
   const compatibleWith = skill.compatibleWith.map((id) => resolve(id, "compatibleWith"));
 
   return {
-    id: skill.id,
-    alias: aliasesReverse[skill.id],
+    id: skill.id as SkillId,
+    alias: aliasesReverse[skill.id] as SkillAlias | undefined,
     name: skill.name,
     description: skill.description,
     usageGuidance: skill.usageGuidance,
-    category: skill.category,
+    category: skill.category as CategoryPath,
     categoryExclusive: skill.categoryExclusive,
     tags: skill.tags,
     author: skill.author,

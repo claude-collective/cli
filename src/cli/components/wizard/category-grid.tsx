@@ -16,13 +16,14 @@
  */
 import React, { useCallback, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
+import type { SkillId, Subcategory } from "../../types-matrix.js";
 
 // Types
 
 export type OptionState = "normal" | "recommended" | "discouraged" | "disabled";
 
 export interface CategoryOption {
-  id: string;
+  id: SkillId;
   label: string;
   state: OptionState;
   stateReason?: string;
@@ -31,7 +32,7 @@ export interface CategoryOption {
 }
 
 export interface CategoryRow {
-  id: string;
+  id: Subcategory;
   name: string;
   required: boolean;
   exclusive: boolean;
@@ -50,7 +51,7 @@ export interface CategoryGridProps {
   /** Expert mode - shows all options, disables smart ordering */
   expertMode: boolean;
   /** Called when user toggles a technology */
-  onToggle: (categoryId: string, technologyId: string) => void;
+  onToggle: (categoryId: Subcategory, technologyId: SkillId) => void;
   /** Called when focus changes */
   onFocusChange: (row: number, col: number) => void;
   /** Called when show descriptions is toggled */
@@ -151,7 +152,7 @@ const findValidStartColumn = (options: CategoryOption[]): number => {
  * - It's not the framework section
  * - No framework has been selected yet
  */
-const isSectionLocked = (categoryId: string, categories: CategoryRow[]): boolean => {
+const isSectionLocked = (categoryId: Subcategory, categories: CategoryRow[]): boolean => {
   // Framework section is never locked
   if (categoryId === FRAMEWORK_CATEGORY_ID) {
     return false;
@@ -176,7 +177,7 @@ const isSectionLocked = (categoryId: string, categories: CategoryRow[]): boolean
  * Find the next unlocked section index in a direction.
  */
 const findNextUnlockedSection = (
-  categories: { id: string; sortedOptions: CategoryOption[] }[],
+  categories: { id: Subcategory; sortedOptions: CategoryOption[] }[],
   currentIndex: number,
   direction: 1 | -1,
   allCategories: CategoryRow[],

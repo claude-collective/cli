@@ -1,5 +1,5 @@
 import type { ProjectConfig, SkillEntry, AgentSkillConfig } from "../../types";
-import type { MergedSkillsMatrix } from "../types-matrix";
+import type { AgentName, MergedSkillsMatrix, SkillId } from "../types-matrix";
 import type { Stack, StackAgentConfig } from "../types-stacks";
 import { getAgentsForSkill, shouldPreloadSkill } from "./skill-agent-mappings";
 
@@ -51,18 +51,19 @@ export function generateProjectConfigFromSkills(
     }
   }
 
-  // Build minimal skills array
+  // Build minimal skills array (selectedSkillIds are data boundary from wizard)
   const skills: SkillEntry[] = selectedSkillIds.map((id) => {
+    const skillId = id as SkillId;
     const skill = matrix.skills[id];
     if (skill?.local && skill?.localPath) {
       return {
-        id,
-        local: true,
+        id: skillId,
+        local: true as const,
         path: skill.localPath,
       };
     }
     // For remote skills, just use string ID (minimal format)
-    return id;
+    return skillId;
   });
 
   // Build minimal config
@@ -128,13 +129,19 @@ function buildAgentSkills(
         agentSkills[agentId] = [];
       }
 
-      const isPreloaded = shouldPreloadSkill(skillPath, skillId, category, agentId);
+      const typedSkillId = skillId as SkillId;
+      const isPreloaded = shouldPreloadSkill(
+        skillPath,
+        typedSkillId,
+        category,
+        agentId as AgentName,
+      );
 
       // Use minimal format: string for non-preloaded, object only if preloaded
       if (isPreloaded) {
-        agentSkills[agentId].push({ id: skillId, preloaded: true });
+        agentSkills[agentId].push({ id: typedSkillId, preloaded: true });
       } else {
-        agentSkills[agentId].push(skillId);
+        agentSkills[agentId].push(typedSkillId);
       }
     }
   }
@@ -158,8 +165,8 @@ function buildAgentSkills(
  *
  * Output:
  *   web-developer:
- *     framework: web/framework/react (@vince)
- *     styling: web/styling/scss-modules (@vince)
+ *     framework: web-framework-react
+ *     styling: web-styling-scss-modules
  */
 export function buildStackProperty(
   stack: Stack,

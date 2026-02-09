@@ -24,7 +24,7 @@ import { listDirectories, fileExists, copy, ensureDir } from "../utils/fs.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { SkillSearch, type SkillSearchResult } from "../components/skill-search/index.js";
 import type { SourcedSkill } from "../components/skill-search/skill-search.js";
-import type { ResolvedSkill } from "../types-matrix.js";
+import type { ResolvedSkill, SkillId, CategoryPath } from "../types-matrix.js";
 import { LOCAL_SKILLS_PATH } from "../consts.js";
 
 /**
@@ -75,7 +75,7 @@ function matchesQuery(skill: ResolvedSkill, query: string): boolean {
 /**
  * Check if a skill matches the category filter (case-insensitive)
  */
-function matchesCategory(skill: ResolvedSkill, category: string): boolean {
+function matchesCategory(skill: ResolvedSkill, category: CategoryPath): boolean {
   const lowerCategory = category.toLowerCase();
   return skill.category.toLowerCase().includes(lowerCategory);
 }
@@ -119,15 +119,15 @@ async function fetchSkillsFromSource(
     for (const skillDir of skillDirs) {
       const skillMdPath = path.join(skillsDir, skillDir, "SKILL.md");
       if (await fileExists(skillMdPath)) {
-        // Create a minimal skill entry
+        // Create a minimal skill entry for third-party source
         skills.push({
-          id: skillDir,
+          id: skillDir as SkillId,
           name: skillDir
             .split("-")
             .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
             .join(" "),
           description: `Skill from ${source.name}`,
-          category: "imported",
+          category: "imported" as CategoryPath,
           categoryExclusive: false,
           tags: [],
           author: "@" + source.name,
@@ -344,7 +344,7 @@ export default class Search extends BaseCommand {
 
       // Apply category filter if provided
       if (flags.category) {
-        results = results.filter((skill) => matchesCategory(skill, flags.category as string));
+        results = results.filter((skill) => matchesCategory(skill, flags.category as CategoryPath));
       }
 
       // Sort results by name

@@ -22,6 +22,7 @@ import type {
   CompileConfig,
   CompileContext,
 } from "../types";
+import type { AgentName } from "../types-matrix";
 
 async function compileAgent(
   name: string,
@@ -106,7 +107,7 @@ export async function compileAllAgents(
       const validationResult = validateCompiledAgent(output);
       if (!validationResult.valid || validationResult.warnings.length > 0) {
         hasValidationIssues = true;
-        printOutputValidationResult(name, validationResult);
+        printOutputValidationResult(name as AgentName, validationResult);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);

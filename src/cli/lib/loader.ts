@@ -4,6 +4,7 @@ import { glob, readFile, directoryExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import { CLAUDE_SRC_DIR, DIRS } from "../consts";
 import type { AgentDefinition, AgentYamlConfig, SkillDefinition, SkillFrontmatter } from "../types";
+import type { SkillId } from "../types-matrix";
 
 export type CompileMode = "dev";
 
@@ -24,7 +25,7 @@ export function parseFrontmatter(content: string): SkillFrontmatter | null {
   return frontmatter;
 }
 
-function extractDisplayName(skillId: string): string {
+function extractDisplayName(skillId: SkillId): string {
   const withoutCategory = skillId.split("/").pop() || skillId;
   const withoutAuthor = withoutCategory.replace(/\s*\(@\w+\)$/, "").trim();
   return withoutAuthor
@@ -171,7 +172,7 @@ export async function loadSkillsByIds(
       const canonicalId = frontmatter.name;
       const skillDef: SkillDefinition = {
         path: `${DIRS.skills}/${directoryPath}/`,
-        name: extractDisplayName(frontmatter.name),
+        name: extractDisplayName(frontmatter.name as SkillId),
         description: frontmatter.description,
         canonicalId,
       };
@@ -219,7 +220,7 @@ export async function loadPluginSkills(
 
     skills[skillId] = {
       path: skillPath,
-      name: extractDisplayName(frontmatter.name),
+      name: extractDisplayName(frontmatter.name as SkillId),
       description: frontmatter.description,
       canonicalId: skillId,
     };

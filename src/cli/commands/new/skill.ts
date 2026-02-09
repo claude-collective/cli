@@ -5,6 +5,7 @@ import { resolveAuthor } from "../../lib/config.js";
 import { writeFile, directoryExists } from "../../utils/fs.js";
 import { LOCAL_SKILLS_PATH } from "../../consts.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
+import type { CategoryPath } from "../../types-matrix.js";
 
 const DEFAULT_AUTHOR = "@local";
 const DEFAULT_CATEGORY = "local";
@@ -100,7 +101,7 @@ Add your patterns here.
 /**
  * Generates the metadata.yaml content.
  */
-export function generateMetadataYaml(name: string, author: string, category: string): string {
+export function generateMetadataYaml(name: string, author: string, category: CategoryPath): string {
   const titleName = toTitleCase(name);
 
   return `# yaml-language-server: $schema=https://raw.githubusercontent.com/claude-collective/skills/main/schemas/metadata.schema.json
@@ -167,7 +168,7 @@ export default class NewSkill extends BaseCommand {
       author = (await resolveAuthor(projectDir)) || DEFAULT_AUTHOR;
     }
 
-    const category = flags.category;
+    const category = flags.category as CategoryPath;
 
     // Determine skill directory path
     const skillDir = path.join(projectDir, LOCAL_SKILLS_PATH, args.name);

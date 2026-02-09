@@ -17,6 +17,7 @@ import type {
   ProjectConfig,
   AgentDefinition,
 } from "../../types";
+import type { AgentName, SkillId } from "../types-matrix";
 
 export interface RecompileAgentsOptions {
   pluginDir: string;
@@ -168,7 +169,7 @@ export async function recompileAgents(
         compileAgents[agentName] = { skills: skillRefs };
         verbose(`  Agent ${agentName}: ${skillRefs.length} skills from custom_agents`);
       } else if (projectConfig?.agent_skills?.[agentName]) {
-        const skillRefs = resolveStackSkills(projectConfig, agentName, pluginSkills);
+        const skillRefs = resolveStackSkills(projectConfig, agentName as AgentName, pluginSkills);
         compileAgents[agentName] = { skills: skillRefs };
         verbose(`  Agent ${agentName}: ${skillRefs.length} skills from config`);
       } else if (projectConfig?.skills) {

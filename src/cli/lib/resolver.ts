@@ -15,6 +15,7 @@ import type {
   SkillReference,
 } from "../types";
 import type { Stack, StackAgentConfig } from "../types-stacks";
+import type { AgentName, SkillId } from "../types-matrix";
 
 export async function resolveTemplate(
   projectRoot: string,
@@ -159,7 +160,7 @@ const KEY_SUBCATEGORIES = new Set([
  * ```
  */
 export function resolveAgentSkillsFromStack(
-  agentName: string,
+  agentName: AgentName,
   stack: Stack,
   skillAliases: Record<string, string>,
 ): SkillReference[] {
@@ -192,7 +193,7 @@ export function resolveAgentSkillsFromStack(
     const isKeySkill = KEY_SUBCATEGORIES.has(subcategory);
 
     skillRefs.push({
-      id: fullSkillId,
+      id: fullSkillId as SkillId,
       usage: `when working with ${subcategory}`,
       preloaded: isKeySkill,
     });
@@ -205,7 +206,7 @@ export function resolveAgentSkillsFromStack(
 
 export function resolveStackSkills(
   stack: ProjectConfig,
-  agentName: string,
+  agentName: AgentName,
   skills: Record<string, SkillDefinition>,
 ): SkillReference[] {
   const skillRefs: SkillReference[] = [];
@@ -263,7 +264,7 @@ export function resolveStackSkills(
 
       const skillDef = skills[expandedId];
       skillRefs.push({
-        id: expandedId,
+        id: expandedId as SkillId,
         usage: `when working with ${skillDef.name.toLowerCase()}`,
         preloaded: assignment.preloaded ?? false,
       });
@@ -281,7 +282,7 @@ export function resolveStackSkills(
  */
 export interface GetAgentSkillsOptions {
   /** The agent name/ID */
-  agentName: string;
+  agentName: AgentName;
   /** Per-agent compile config (may have explicit skills) */
   agentConfig: CompileAgentConfig;
   /** Overall compile config */
@@ -307,7 +308,7 @@ export interface GetAgentSkillsOptions {
  * @returns Array of SkillReference objects
  */
 export async function getAgentSkills(
-  agentName: string,
+  agentName: AgentName,
   agentConfig: CompileAgentConfig,
   _compileConfig: CompileConfig,
   _skills: Record<string, SkillDefinition>,
@@ -378,7 +379,7 @@ export async function resolveAgents(
     const agentConfig = compileConfig.agents[agentName];
 
     const skillRefs = await getAgentSkills(
-      agentName,
+      agentName as AgentName,
       agentConfig,
       compileConfig,
       skills,

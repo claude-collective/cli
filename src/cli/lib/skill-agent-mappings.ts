@@ -12,6 +12,7 @@
  */
 
 import type { ProjectConfig } from "../../types";
+import type { AgentName, CategoryPath, SkillId } from "../types-matrix";
 import { getCachedDefaults } from "./defaults-loader";
 
 // =============================================================================
@@ -239,7 +240,7 @@ function getEffectiveSubcategoryAliases(): Record<string, string> {
  */
 export function getAgentsForSkill(
   skillPath: string,
-  category: string,
+  category: CategoryPath,
   projectConfig?: ProjectConfig,
 ): string[] {
   const normalizedPath = skillPath.replace(/^skills\//, "").replace(/\/$/, "");
@@ -289,9 +290,9 @@ export function getAgentsForSkill(
  */
 export function shouldPreloadSkill(
   skillPath: string,
-  skillId: string,
-  category: string,
-  agentId: string,
+  skillId: SkillId,
+  category: CategoryPath,
+  agentId: AgentName,
   projectConfig?: ProjectConfig,
 ): boolean {
   const preloadedSkills = getEffectivePreloadedSkills(projectConfig);
@@ -363,7 +364,7 @@ export function hasAgentSkillsOverride(agentId: string, projectConfig?: ProjectC
  * Handles both simple list format (SkillEntry[]) and categorized format (Record<string, SkillEntry[]>).
  * Matches by skill ID - supports both string entries and SkillAssignment objects.
  *
- * @param skillId - Skill identifier to check (e.g., "react (@vince)")
+ * @param skillId - Skill identifier to check (e.g., "web-framework-react")
  * @param agentId - Agent identifier (e.g., "web-developer")
  * @param agentSkills - The agent_skills record from project config
  * @returns true if the skill is assigned to the agent
@@ -411,16 +412,16 @@ export function isSkillAssignedToAgent(
  * 2. Otherwise:
  *    Use default mappings (YAML > hardcoded)
  *
- * @param skillId - Skill identifier (e.g., "react (@vince)")
+ * @param skillId - Skill identifier (e.g., "web-framework-react")
  * @param skillPath - Full path to the skill (e.g., "skills/web/framework/react")
  * @param category - Skill category (e.g., "web/*" or "web/testing")
  * @param projectConfig - Optional project config for overrides
  * @returns Array of agent IDs that should receive this skill
  */
 export function resolveAgentsForSkill(
-  skillId: string,
+  skillId: SkillId,
   skillPath: string,
-  category: string,
+  category: CategoryPath,
   projectConfig?: ProjectConfig,
 ): string[] {
   // If project config has agent_skills, use that as the source of truth

@@ -2,6 +2,7 @@ import path from "path";
 import { copy, ensureDir, directoryExists, glob } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import type { Marketplace, MarketplacePlugin } from "../../types";
+import type { SkillId } from "../types-matrix";
 
 export interface FetchSkillsOptions {
   forceRefresh?: boolean;
@@ -25,7 +26,7 @@ function resolvePluginSource(plugin: MarketplacePlugin, _marketplace: Marketplac
 }
 
 export async function fetchSkills(
-  skillIds: string[],
+  skillIds: SkillId[],
   marketplace: Marketplace,
   outputDir: string,
   sourcePath: string,
@@ -66,7 +67,7 @@ export async function fetchSkills(
   return copiedSkills;
 }
 
-async function findSkillPath(baseDir: string, skillId: string): Promise<string | null> {
+async function findSkillPath(baseDir: string, skillId: SkillId): Promise<string | null> {
   if (!(await directoryExists(baseDir))) {
     verbose(`Skills base directory not found: ${baseDir}`);
     return null;

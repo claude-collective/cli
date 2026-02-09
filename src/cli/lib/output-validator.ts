@@ -1,4 +1,5 @@
 import type { ValidationResult } from "../../types";
+import type { AgentName } from "../types-matrix";
 import { extractFrontmatter } from "../utils/frontmatter";
 
 function checkXmlTagBalance(content: string): string[] {
@@ -135,7 +136,7 @@ export function validateCompiledAgent(content: string): ValidationResult {
   };
 }
 
-export function printOutputValidationResult(agentName: string, result: ValidationResult): void {
+export function printOutputValidationResult(agentName: AgentName, result: ValidationResult): void {
   if (result.errors.length > 0) {
     console.log(`    Validation errors for ${agentName}:`);
     result.errors.forEach((e) => console.log(`      - ${e}`));

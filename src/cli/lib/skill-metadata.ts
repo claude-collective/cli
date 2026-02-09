@@ -4,12 +4,13 @@ import { fileExists, readFile, writeFile, listDirectories } from "../utils/fs";
 import { hashFile } from "./versioning";
 import { getCurrentDate } from "./versioning";
 import { LOCAL_SKILLS_PATH } from "../consts";
+import type { SkillId } from "../types-matrix";
 
 /**
  * ForkedFrom metadata stored in local skill's metadata.yaml
  */
 export interface ForkedFromMetadata {
-  skill_id: string;
+  skill_id: SkillId;
   content_hash: string;
   date: string;
 }
@@ -26,7 +27,7 @@ export interface LocalSkillMetadata {
  * Result of comparing a local skill to its source
  */
 export interface SkillComparisonResult {
-  id: string;
+  id: SkillId;
   localHash: string | null;
   sourceHash: string | null;
   status: "current" | "outdated" | "local-only";
@@ -109,7 +110,7 @@ export async function compareSkills(
     if (!forkedFrom) {
       // Local-only skill (no forked_from metadata)
       results.push({
-        id: skillId,
+        id: skillId as SkillId,
         localHash: null,
         sourceHash: null,
         status: "local-only",
@@ -169,7 +170,7 @@ export async function compareSkills(
  */
 export async function injectForkedFromMetadata(
   destPath: string,
-  skillId: string,
+  skillId: SkillId,
   contentHash: string,
 ): Promise<void> {
   const metadataPath = path.join(destPath, "metadata.yaml");

@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
+import type { Domain } from "../types-matrix.js";
 
 /** All available domains that the build step should cycle through */
-const ALL_DOMAINS = ["web", "web-extras", "api", "cli", "mobile", "shared"];
+const ALL_DOMAINS: Domain[] = ["web", "web-extras", "api", "cli", "mobile", "shared"];
 
 // Step types for the wizard
 export type WizardStep =
@@ -27,7 +28,7 @@ export interface WizardState {
   // ─────────────────────────────────────────────────────────────────
   // Domain selection (scratch flow or customize flow)
   // ─────────────────────────────────────────────────────────────────
-  selectedDomains: string[]; // ['web', 'api', 'cli', 'mobile']
+  selectedDomains: Domain[]; // ['web', 'api', 'cli', 'mobile']
 
   // ─────────────────────────────────────────────────────────────────
   // Build step state
@@ -77,10 +78,10 @@ export interface WizardState {
     stack: { agents: Record<string, Record<string, string>> },
     categories: Record<string, { domain?: string }>,
   ) => void;
-  toggleDomain: (domain: string) => void;
-  setDomainSelection: (domain: string, subcategory: string, technologies: string[]) => void;
+  toggleDomain: (domain: Domain) => void;
+  setDomainSelection: (domain: Domain, subcategory: string, technologies: string[]) => void;
   toggleTechnology: (
-    domain: string,
+    domain: Domain,
     subcategory: string,
     technology: string,
     exclusive: boolean,
@@ -101,7 +102,7 @@ export interface WizardState {
   // Computed getters (derive from state)
   // ─────────────────────────────────────────────────────────────────
   getAllSelectedTechnologies: () => string[];
-  getCurrentDomain: () => string | null;
+  getCurrentDomain: () => Domain | null;
   getSelectedSkills: () => string[]; // All selected skills including preselected
 }
 
@@ -110,7 +111,7 @@ const createInitialState = () => ({
   approach: null as "stack" | "scratch" | null,
   selectedStackId: null as string | null,
   stackAction: null as "defaults" | "customize" | null,
-  selectedDomains: [] as string[],
+  selectedDomains: [] as Domain[],
   currentDomainIndex: 0,
   domainSelections: {} as Record<string, Record<string, string[]>>,
   focusedRow: 0,
