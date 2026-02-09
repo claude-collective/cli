@@ -2,13 +2,13 @@
  * Integration tests for the full Wizard component (v2).
  *
  * Tests complete user flows through the wizard from start to finish.
- * V2 wizard flow: approach -> stack -> build -> refine -> confirm
+ * V2 wizard flow: approach -> stack -> build -> confirm
  *
  * Flow coverage:
- * - Flow A1: Stack -> Build -> Accept Defaults (A shortcut) -> Refine -> Confirm
- * - Flow A2: Stack -> Build (pre-populated) -> Refine -> Confirm
- * - Flow B: Scratch -> Single Domain (Web) -> Build -> Refine -> Confirm
- * - Flow C: Scratch -> Multi-Domain (Web + API) -> Build/Web -> Build/API -> Refine -> Confirm
+ * - Flow A1: Stack -> Build -> Accept Defaults (A shortcut) -> Confirm
+ * - Flow A2: Stack -> Build (pre-populated) -> Confirm
+ * - Flow B: Scratch -> Single Domain (Web) -> Build -> Confirm
+ * - Flow C: Scratch -> Multi-Domain (Web + API) -> Build/Web -> Build/API -> Confirm
  * - Flow D: Back Navigation with selection preservation
  * - Flow E: Cancel from First Step
  *
@@ -360,11 +360,11 @@ describe("Wizard integration", () => {
   });
 
   // ===========================================================================
-  // Flow A1: Stack -> Continue with Defaults -> Refine -> Confirm
+  // Flow A1: Stack -> Continue with Defaults -> Confirm
   // ===========================================================================
 
   describe("Flow A1: Stack path with defaults", () => {
-    it("should complete full stack -> build -> accept defaults -> refine -> confirm flow", async () => {
+    it("should complete full stack -> build -> accept defaults -> confirm flow", async () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -393,17 +393,11 @@ describe("Wizard integration", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Step 3: Build - now goes directly to build (pre-populated from stack)
-      // Press "A" to accept defaults and skip to refine
+      // Press "A" to accept defaults and skip to confirm
       await stdin.write("A");
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Step 4: Refine - should show refine step with recommended option
-      expect(lastFrame()).toContain("recommended");
-      expect(lastFrame()).toContain("Use all recommended");
-      await stdin.write(ENTER); // Continue with recommended
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // Step 5: Confirm - should show confirmation with stack name
+      // Step 4: Confirm - should show confirmation with stack name
       expect(lastFrame()).toContain("React Fullstack");
       expect(lastFrame()).toContain("Confirm");
 
@@ -436,14 +430,12 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Navigate through: approach -> stack -> build -> [A] accept defaults -> refine -> confirm
+      // Navigate through: approach -> stack -> build -> [A] accept defaults -> confirm
       await stdin.write(ENTER); // Stack approach
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Select first stack (card UI, already focused)
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write("A"); // Accept defaults
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER); // Continue through refine
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Verify confirm step shows stack info
@@ -453,7 +445,7 @@ describe("Wizard integration", () => {
   });
 
   // ===========================================================================
-  // Flow A2: Stack -> Customize -> Build -> Refine -> Confirm
+  // Flow A2: Stack -> Customize -> Build -> Confirm
   // ===========================================================================
 
   describe("Flow A2: Stack path with customize", () => {
@@ -494,7 +486,7 @@ describe("Wizard integration", () => {
   });
 
   // ===========================================================================
-  // Flow B: Scratch -> Single Domain (Web) -> Build -> Refine -> Confirm
+  // Flow B: Scratch -> Single Domain (Web) -> Build -> Confirm
   // ===========================================================================
 
   describe("Flow B: Scratch path with single domain (Web)", () => {
@@ -613,18 +605,18 @@ describe("Wizard integration", () => {
       await stdin.write(SPACE);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Continue to refine
+      // Continue to confirm
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Should be at refine step
+      // Should be at confirm step
       const state = useWizardStore.getState();
-      expect(state.step).toBe("refine");
+      expect(state.step).toBe("confirm");
     });
   });
 
   // ===========================================================================
-  // Flow C: Scratch -> Multi-Domain (Web + API) -> Build/Web -> Build/API -> Refine -> Confirm
+  // Flow C: Scratch -> Multi-Domain (Web + API) -> Build/Web -> Build/API -> Confirm
   // ===========================================================================
 
   describe("Flow C: Scratch path with multi-domain (Web + API)", () => {
@@ -878,8 +870,8 @@ describe("Wizard integration", () => {
       await stdin.write("A"); // Accept defaults
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Should be at refine
-      expect(lastFrame()).toContain("recommended");
+      // Should be at confirm
+      expect(lastFrame()).toContain("Confirm");
     });
 
     it("should preserve domain selections when navigating back in scratch flow", async () => {
@@ -1054,8 +1046,8 @@ describe("Wizard integration", () => {
       await stdin.write("A");
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Step 4: Refine - should show refine step
-      expect(lastFrame()).toContain("recommended");
+      // Step 4: Confirm - should show confirm step
+      expect(lastFrame()).toContain("Confirm");
     });
   });
 
@@ -1328,7 +1320,6 @@ describe("Wizard integration", () => {
       expect(lastFrame()).toContain("Intro");
       expect(lastFrame()).toContain("Stack");
       expect(lastFrame()).toContain("Build");
-      expect(lastFrame()).toContain("Refine");
       expect(lastFrame()).toContain("Confirm");
     });
   });
@@ -1353,14 +1344,12 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Complete full flow: approach -> stack -> build -> [A] -> refine -> confirm
+      // Complete full flow: approach -> stack -> build -> [A] -> confirm
       await stdin.write(ENTER); // Stack approach
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Select first stack (card UI, already focused)
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write("A"); // Accept defaults
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER); // Continue through refine
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Confirm
       await delay(STEP_TRANSITION_DELAY_MS);
@@ -1398,14 +1387,12 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Complete full flow: approach -> stack -> build -> [A] -> refine -> confirm
+      // Complete full flow: approach -> stack -> build -> [A] -> confirm
       await stdin.write(ENTER); // Stack approach
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Select first stack (already focused)
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write("A"); // Accept defaults
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER); // Continue through refine
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Confirm
       await delay(STEP_TRANSITION_DELAY_MS);
@@ -1514,7 +1501,6 @@ describe("Wizard integration", () => {
       expect(frame).toContain("Intro");
       expect(frame).toContain("Stack");
       expect(frame).toContain("Build");
-      expect(frame).toContain("Refine");
       expect(frame).toContain("Confirm");
 
       // Navigate to stack step

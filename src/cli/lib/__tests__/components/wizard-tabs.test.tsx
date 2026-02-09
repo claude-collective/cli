@@ -52,7 +52,7 @@ describe("WizardTabs component", () => {
   // ===========================================================================
 
   describe("rendering", () => {
-    it("should render all 5 tabs", () => {
+    it("should render all 4 tabs", () => {
       const { lastFrame, unmount } = renderWizardTabs();
       cleanup = unmount;
 
@@ -60,8 +60,7 @@ describe("WizardTabs component", () => {
       expect(output).toContain("[1] Intro");
       expect(output).toContain("[2] Stack");
       expect(output).toContain("[3] Build");
-      expect(output).toContain("[4] Refine");
-      expect(output).toContain("[5] Confirm");
+      expect(output).toContain("[4] Confirm");
     });
 
     it("should render all step numbers", () => {
@@ -73,7 +72,6 @@ describe("WizardTabs component", () => {
       expect(output).toContain("[2]");
       expect(output).toContain("[3]");
       expect(output).toContain("[4]");
-      expect(output).toContain("[5]");
     });
 
     it("should render with custom steps", () => {
@@ -132,14 +130,14 @@ describe("WizardTabs component", () => {
 
     it("should update current step when changed", () => {
       const { lastFrame, unmount } = renderWizardTabs({
-        currentStep: "refine",
+        currentStep: "confirm",
         completedSteps: ["approach", "stack", "build"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should show refine step
-      expect(output).toContain("[4] Refine");
+      // Should show confirm step
+      expect(output).toContain("[4] Confirm");
     });
   });
 
@@ -210,9 +208,8 @@ describe("WizardTabs component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      // Pending steps (refine, confirm) should be rendered
-      expect(output).toContain("[4] Refine");
-      expect(output).toContain("[5] Confirm");
+      // Pending step (confirm) should be rendered
+      expect(output).toContain("[4] Confirm");
     });
   });
 
@@ -238,13 +235,12 @@ describe("WizardTabs component", () => {
       const { lastFrame, unmount } = renderWizardTabs({
         currentStep: "confirm",
         completedSteps: ["approach", "build"],
-        skippedSteps: ["stack", "refine"],
+        skippedSteps: ["stack"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
       expect(output).toContain("[2] Stack");
-      expect(output).toContain("[4] Refine");
     });
 
     it("should prioritize completed over skipped when step is in both arrays", () => {
@@ -348,7 +344,7 @@ describe("WizardTabs component", () => {
       const output = lastFrame();
       // Should still render all tabs
       expect(output).toContain("[1] Intro");
-      expect(output).toContain("[5] Confirm");
+      expect(output).toContain("[4] Confirm");
     });
 
     it("should handle empty skipped steps", () => {
@@ -369,17 +365,16 @@ describe("WizardTabs component", () => {
     it("should handle all steps completed", () => {
       const { lastFrame, unmount } = renderWizardTabs({
         currentStep: "confirm",
-        completedSteps: ["approach", "stack", "build", "refine", "confirm"],
+        completedSteps: ["approach", "stack", "build", "confirm"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // All 5 tabs should be rendered
+      // All 4 tabs should be rendered
       expect(output).toContain("[1] Intro");
       expect(output).toContain("[2] Stack");
       expect(output).toContain("[3] Build");
-      expect(output).toContain("[4] Refine");
-      expect(output).toContain("[5] Confirm");
+      expect(output).toContain("[4] Confirm");
     });
 
     it("should handle single step", () => {

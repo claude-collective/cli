@@ -96,13 +96,8 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({ version, children })
     // Stack path with defaults skips build
     if (store.approach === "stack" && store.selectedStackId && store.stackAction === "defaults") {
       skipped.push("build");
-    } else if (store.step === "refine" || store.step === "confirm") {
+    } else if (store.step === "confirm") {
       completed.push("build");
-    }
-
-    // Refine step
-    if (store.step === "confirm") {
-      completed.push("refine");
     }
 
     return { completedSteps: completed, skippedSteps: skipped };

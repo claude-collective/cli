@@ -9,7 +9,6 @@ export type WizardStep =
   | "approach" // Choose stack template or build from scratch
   | "stack" // Select pre-built stack (if approach=stack) or domains (if approach=scratch)
   | "build" // CategoryGrid for technology selection
-  | "refine" // Skill source selection
   | "confirm"; // Final confirmation
 
 export interface WizardState {
@@ -45,11 +44,10 @@ export interface WizardState {
   focusedCol: number;
 
   // ─────────────────────────────────────────────────────────────────
-  // Refine step state
+  // Skill source state
   // ─────────────────────────────────────────────────────────────────
   currentRefineIndex: number; // Which skill we're refining
   skillSources: Record<string, string>; // technology -> selected skill ID
-  refineAction: "all-recommended" | "customize" | null;
 
   // ─────────────────────────────────────────────────────────────────
   // UI state
@@ -91,7 +89,6 @@ export interface WizardState {
   nextDomain: () => boolean; // Returns true if moved to next domain, false if at end
   prevDomain: () => boolean; // Returns true if moved to prev domain, false if at start
   setFocus: (row: number, col: number) => void;
-  setRefineAction: (action: "all-recommended" | "customize") => void;
   setSkillSource: (technology: string, skillId: string) => void;
   setCurrentRefineIndex: (index: number) => void;
   toggleShowDescriptions: () => void;
@@ -120,7 +117,6 @@ const createInitialState = () => ({
   focusedCol: 0,
   currentRefineIndex: 0,
   skillSources: {} as Record<string, string>,
-  refineAction: null as "all-recommended" | "customize" | null,
   showDescriptions: false,
   expertMode: false,
   installMode: "local" as "plugin" | "local",
@@ -265,8 +261,6 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   setFocus: (row, col) => set({ focusedRow: row, focusedCol: col }),
-
-  setRefineAction: (action) => set({ refineAction: action }),
 
   setSkillSource: (technology, skillId) =>
     set((state) => ({

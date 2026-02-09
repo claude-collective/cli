@@ -19,8 +19,7 @@ export const WIZARD_STEPS: WizardTabStep[] = [
   { id: "approach", label: "Intro", number: 1 },
   { id: "stack", label: "Stack", number: 2 },
   { id: "build", label: "Build", number: 3 },
-  { id: "refine", label: "Refine", number: 4 },
-  { id: "confirm", label: "Confirm", number: 5 },
+  { id: "confirm", label: "Confirm", number: 4 },
 ];
 
 type StepState = "completed" | "current" | "pending" | "skipped";

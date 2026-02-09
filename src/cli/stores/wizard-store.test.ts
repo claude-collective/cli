@@ -391,15 +391,7 @@ describe("WizardStore", () => {
   // Refine Step
   // ===========================================================================
 
-  describe("refine step", () => {
-    it("should set refine action", () => {
-      const store = useWizardStore.getState();
-      store.setRefineAction("all-recommended");
-
-      const { refineAction } = useWizardStore.getState();
-      expect(refineAction).toBe("all-recommended");
-    });
-
+  describe("skill sources", () => {
     it("should set skill source", () => {
       const store = useWizardStore.getState();
       store.setSkillSource("react", "react (@vince)");
@@ -573,11 +565,7 @@ describe("WizardStore", () => {
       store.setStackAction("customize");
       store.setStep("build");
 
-      // Step 3: Continue to refine
-      store.setStep("refine");
-
-      // Step 4: Refine
-      store.setRefineAction("all-recommended");
+      // Step 3: Continue to confirm
       store.setStep("confirm");
 
       // Verify final state
@@ -586,8 +574,7 @@ describe("WizardStore", () => {
       expect(state.approach).toBe("stack");
       expect(state.selectedStackId).toBe("nextjs-fullstack");
       expect(state.stackAction).toBe("customize");
-      expect(state.refineAction).toBe("all-recommended");
-      expect(state.history).toEqual(["approach", "stack", "build", "refine"]);
+      expect(state.history).toEqual(["approach", "stack", "build"]);
     });
 
     it("should handle complete scratch flow", () => {
@@ -606,10 +593,6 @@ describe("WizardStore", () => {
       store.toggleTechnology("web", "framework", "react", true);
       store.toggleTechnology("web", "styling", "scss", true);
       store.toggleTechnology("api", "api-framework", "hono", true);
-      store.setStep("refine");
-
-      // Step 4: Refine
-      store.setRefineAction("all-recommended");
       store.setStep("confirm");
 
       // Verify final state

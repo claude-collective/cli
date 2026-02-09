@@ -5,7 +5,6 @@
  * - approach: Choose stack template or build from scratch
  * - stack: Select pre-built stack (stack path) OR domains (scratch path)
  * - build: CategoryGrid for technology selection (pre-populated from stack if stack path)
- * - refine: Skill source selection
  * - confirm: Final confirmation
  *
  * Navigation:
@@ -22,7 +21,6 @@ import { WizardLayout } from "./wizard-layout.js";
 import { StepApproach } from "./step-approach.js";
 import { StepStack } from "./step-stack.js";
 import { StepBuild } from "./step-build.js";
-import { StepRefine } from "./step-refine.js";
 import { StepConfirm } from "./step-confirm.js";
 import { validateSelection } from "../../lib/matrix-resolver.js";
 import type { MergedSkillsMatrix } from "../../types-matrix.js";
@@ -80,9 +78,9 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
       if (store.step === "approach") {
         onCancel();
         exit();
-      } else if (store.step !== "build" && store.step !== "refine" && store.step !== "confirm") {
+      } else if (store.step !== "build" && store.step !== "confirm") {
         // Only handle escape globally for steps that don't have their own escape handler.
-        // Build, refine, and confirm handle escape via their onBack props.
+        // Build and confirm handle escape via their onBack props.
         store.goBack();
       }
       return;
@@ -91,7 +89,7 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
     // Accept defaults shortcut (stack path only, during build step)
     if ((input === "a" || input === "A") && store.step === "build" && store.selectedStackId) {
       store.setStackAction("defaults");
-      store.setStep("refine");
+      store.setStep("confirm");
       return;
     }
 
@@ -191,7 +189,7 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
             onToggleDescriptions={store.toggleShowDescriptions}
             onContinue={() => {
               if (!store.nextDomain()) {
-                store.setStep("refine");
+                store.setStep("confirm");
               }
             }}
             onBack={() => {
@@ -202,17 +200,6 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
           />
         );
       }
-
-      case "refine":
-        return (
-          <StepRefine
-            technologyCount={store.getAllSelectedTechnologies().length}
-            refineAction={store.refineAction}
-            onSelectAction={store.setRefineAction}
-            onContinue={() => store.setStep("confirm")}
-            onBack={store.goBack}
-          />
-        );
 
       case "confirm": {
         const stackName = getStackName(store.selectedStackId, matrix);
