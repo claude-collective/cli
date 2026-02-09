@@ -41,31 +41,19 @@
       "uniqueItems": true
     },
     "commands": {
-      "oneOf": [
-        { "type": "string" },
-        { "type": "array", "items": { "type": "string" } }
-      ]
+      "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
     },
     "agents": {
-      "oneOf": [
-        { "type": "string" },
-        { "type": "array", "items": { "type": "string" } }
-      ]
+      "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
     },
     "skills": {
-      "oneOf": [
-        { "type": "string" },
-        { "type": "array", "items": { "type": "string" } }
-      ]
+      "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
     },
     "hooks": {
       "oneOf": [{ "type": "string" }, { "$ref": "#/$defs/HooksConfig" }]
     },
     "mcpServers": {
-      "oneOf": [
-        { "type": "string" },
-        { "type": "object", "additionalProperties": true }
-      ]
+      "oneOf": [{ "type": "string" }, { "type": "object", "additionalProperties": true }]
     }
   },
   "$defs": {

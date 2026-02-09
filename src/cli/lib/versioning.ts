@@ -99,9 +99,7 @@ async function writeMetadata(
   await writeFile(metadataPath, schemaComment + yamlContent);
 }
 
-export async function versionSkill(
-  skillPath: string,
-): Promise<VersionCheckResult> {
+export async function versionSkill(skillPath: string): Promise<VersionCheckResult> {
   const newHash = await hashSkillFolder(skillPath);
 
   const { metadata, schemaComment } = await readMetadata(skillPath);
@@ -117,9 +115,7 @@ export async function versionSkill(
 
     await writeMetadata(skillPath, metadata, schemaComment);
 
-    verbose(
-      `  Version bumped: ${skillPath} (v${previousVersion} -> v${metadata.version})`,
-    );
+    verbose(`  Version bumped: ${skillPath} (v${previousVersion} -> v${metadata.version})`);
   }
 
   return {
@@ -132,9 +128,7 @@ export async function versionSkill(
   };
 }
 
-export async function versionAllSkills(
-  skillsDir: string,
-): Promise<VersionCheckResult[]> {
+export async function versionAllSkills(skillsDir: string): Promise<VersionCheckResult[]> {
   const results: VersionCheckResult[] = [];
 
   const metadataFiles = await glob("**/metadata.yaml", skillsDir);
@@ -146,9 +140,7 @@ export async function versionAllSkills(
       const result = await versionSkill(skillPath);
       results.push(result);
     } catch (error) {
-      console.warn(
-        `  Warning: Failed to version skill at ${skillPath}: ${error}`,
-      );
+      console.warn(`  Warning: Failed to version skill at ${skillPath}: ${error}`);
     }
   }
 
@@ -163,13 +155,9 @@ export function printVersionResults(results: VersionCheckResult[]): void {
     console.log(`\n  Version Updates:`);
     for (const result of changed) {
       const skillName = path.basename(result.skillPath);
-      console.log(
-        `    ✓ ${skillName}: v${result.previousVersion} -> v${result.newVersion}`,
-      );
+      console.log(`    ✓ ${skillName}: v${result.previousVersion} -> v${result.newVersion}`);
     }
   }
 
-  console.log(
-    `\n  Summary: ${changed.length} updated, ${unchanged.length} unchanged`,
-  );
+  console.log(`\n  Summary: ${changed.length} updated, ${unchanged.length} unchanged`);
 }

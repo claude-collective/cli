@@ -94,9 +94,7 @@ const defaultCategories: CategoryRow[] = [
     createOption("swr", "SWR"),
     createOption("apollo", "Apollo"),
   ]),
-  createCategory("analytics", "Analytics", [
-    createOption("posthog", "PostHog"),
-  ]),
+  createCategory("analytics", "Analytics", [createOption("posthog", "PostHog")]),
 ];
 
 // Categories with framework selected (unlocks other sections)
@@ -620,10 +618,7 @@ describe("CategoryGrid component", () => {
         createCategory(
           "framework",
           "Framework",
-          [
-            createOption("react", "React", { selected: true }),
-            createOption("vue", "Vue"),
-          ],
+          [createOption("react", "React", { selected: true }), createOption("vue", "Vue")],
           { required: true },
         ),
       ];
@@ -937,9 +932,7 @@ describe("CategoryGrid component", () => {
   describe("edge cases", () => {
     it("should handle single category", () => {
       const categories: CategoryRow[] = [
-        createCategory("single", "Single Category", [
-          createOption("opt1", "Option 1"),
-        ]),
+        createCategory("single", "Single Category", [createOption("opt1", "Option 1")]),
       ];
 
       const { lastFrame, unmount } = renderGrid({ categories });
@@ -952,9 +945,7 @@ describe("CategoryGrid component", () => {
 
     it("should handle single option in category", () => {
       const categories: CategoryRow[] = [
-        createCategory("single", "Single", [
-          createOption("only", "Only Option"),
-        ]),
+        createCategory("single", "Single", [createOption("only", "Only Option")]),
       ];
 
       const { lastFrame, unmount } = renderGrid({ categories });
@@ -965,12 +956,8 @@ describe("CategoryGrid component", () => {
     });
 
     it("should handle category with many options (flows naturally)", () => {
-      const options = Array.from({ length: 10 }, (_, i) =>
-        createOption(`opt${i}`, `Option ${i}`),
-      );
-      const categories: CategoryRow[] = [
-        createCategory("many", "Many Options", options),
-      ];
+      const options = Array.from({ length: 10 }, (_, i) => createOption(`opt${i}`, `Option ${i}`));
+      const categories: CategoryRow[] = [createCategory("many", "Many Options", options)];
 
       const { lastFrame, unmount } = renderGrid({ categories });
       cleanup = unmount;
@@ -1004,9 +991,7 @@ describe("CategoryGrid component", () => {
           createOption("opt1", "Option 1"),
           createOption("opt2", "Option 2"),
         ]),
-        createCategory("cat2", "Category 2", [
-          createOption("opt3", "Option 3"),
-        ]),
+        createCategory("cat2", "Category 2", [createOption("opt3", "Option 3")]),
         createCategory("cat3", "Category 3", [
           createOption("opt4", "Option 4"),
           createOption("opt5", "Option 5"),
@@ -1042,9 +1027,7 @@ describe("CategoryGrid component", () => {
           ],
           { required: true },
         ),
-        createCategory("cat2", "Category 2", [
-          createOption("opt4", "Option 4"),
-        ]),
+        createCategory("cat2", "Category 2", [createOption("opt4", "Option 4")]),
       ];
 
       const { stdin, unmount } = renderGrid({

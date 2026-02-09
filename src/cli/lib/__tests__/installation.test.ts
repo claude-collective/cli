@@ -115,12 +115,7 @@ agents:
   describe("detectInstallation - plugin mode", () => {
     it("should return plugin installation when only plugin directory exists", async () => {
       // Create plugin directory (without local config)
-      const pluginDir = path.join(
-        tempDir,
-        ".claude",
-        "plugins",
-        "claude-collective",
-      );
+      const pluginDir = path.join(tempDir, ".claude", "plugins", "claude-collective");
       await mkdir(pluginDir, { recursive: true });
 
       const result = await detectInstallation(tempDir);
@@ -133,12 +128,7 @@ agents:
 
     it("should use correct plugin paths for agentsDir and skillsDir", async () => {
       // Create plugin directory
-      const pluginDir = path.join(
-        tempDir,
-        ".claude",
-        "plugins",
-        "claude-collective",
-      );
+      const pluginDir = path.join(tempDir, ".claude", "plugins", "claude-collective");
       await mkdir(pluginDir, { recursive: true });
 
       const result = await detectInstallation(tempDir);
@@ -238,12 +228,7 @@ agents:
 
     it("should return installation when found (plugin)", async () => {
       // Create plugin directory
-      const pluginDir = path.join(
-        tempDir,
-        ".claude",
-        "plugins",
-        "claude-collective",
-      );
+      const pluginDir = path.join(tempDir, ".claude", "plugins", "claude-collective");
       await mkdir(pluginDir, { recursive: true });
 
       const result = await getInstallationOrThrow(tempDir);
@@ -284,10 +269,7 @@ installMode: plugin
       // Create invalid config
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
-      await writeFile(
-        path.join(claudeSrcDir, "config.yaml"),
-        "invalid: yaml: content: :",
-      );
+      await writeFile(path.join(claudeSrcDir, "config.yaml"), "invalid: yaml: content: :");
 
       // When config file exists but is invalid, loadProjectConfig returns null
       // The detection logic sees file exists, loaded?.config?.installMode is undefined,

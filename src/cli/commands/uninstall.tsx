@@ -27,9 +27,7 @@ interface UninstallTarget {
   claudeSrcDir: string;
 }
 
-async function detectInstallation(
-  projectDir: string,
-): Promise<UninstallTarget> {
+async function detectInstallation(projectDir: string): Promise<UninstallTarget> {
   const pluginDir = getCollectivePluginDir(projectDir);
   const skillsDir = path.join(projectDir, CLAUDE_DIR, "skills");
   const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
@@ -37,21 +35,15 @@ async function detectInstallation(
   const claudeDir = path.join(projectDir, CLAUDE_DIR);
   const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
 
-  const [
-    hasPlugin,
-    hasLocalSkills,
-    hasLocalAgents,
-    hasLocalConfig,
-    hasClaudeDir,
-    hasClaudeSrcDir,
-  ] = await Promise.all([
-    directoryExists(pluginDir),
-    directoryExists(skillsDir),
-    directoryExists(agentsDir),
-    fileExists(configPath),
-    directoryExists(claudeDir),
-    directoryExists(claudeSrcDir),
-  ]);
+  const [hasPlugin, hasLocalSkills, hasLocalAgents, hasLocalConfig, hasClaudeDir, hasClaudeSrcDir] =
+    await Promise.all([
+      directoryExists(pluginDir),
+      directoryExists(skillsDir),
+      directoryExists(agentsDir),
+      fileExists(configPath),
+      directoryExists(claudeDir),
+      directoryExists(claudeSrcDir),
+    ]);
 
   return {
     hasPlugin,
@@ -86,8 +78,7 @@ const UninstallConfirm: React.FC<UninstallConfirmProps> = ({
 }) => {
   const { exit } = useApp();
   const hasPluginToRemove = uninstallPlugin && target.hasPlugin;
-  const hasLocalToRemove =
-    uninstallLocal && (target.hasClaudeDir || target.hasClaudeSrcDir);
+  const hasLocalToRemove = uninstallLocal && (target.hasClaudeDir || target.hasClaudeSrcDir);
 
   return (
     <Box flexDirection="column">
@@ -105,9 +96,7 @@ const UninstallConfirm: React.FC<UninstallConfirmProps> = ({
         <Box flexDirection="column">
           <Text color="red"> Local directories:</Text>
           {target.hasClaudeDir && <Text dimColor> {target.claudeDir}/</Text>}
-          {target.hasClaudeSrcDir && (
-            <Text dimColor> {target.claudeSrcDir}/</Text>
-          )}
+          {target.hasClaudeSrcDir && <Text dimColor> {target.claudeSrcDir}/</Text>}
         </Box>
       )}
 
@@ -181,8 +170,7 @@ export default class Uninstall extends BaseCommand {
 
     // Check if there's anything to uninstall
     const hasPluginToRemove = uninstallPlugin && target.hasPlugin;
-    const hasLocalToRemove =
-      uninstallLocal && (target.hasClaudeDir || target.hasClaudeSrcDir);
+    const hasLocalToRemove = uninstallLocal && (target.hasClaudeDir || target.hasClaudeSrcDir);
 
     if (!hasPluginToRemove && !hasLocalToRemove) {
       this.warn("Nothing to uninstall.");
@@ -284,10 +272,9 @@ export default class Uninstall extends BaseCommand {
         this.logSuccess("Plugin uninstalled");
       } catch (error) {
         this.log("Plugin uninstall failed");
-        this.error(
-          error instanceof Error ? error.message : "Unknown error occurred",
-          { exit: EXIT_CODES.ERROR },
-        );
+        this.error(error instanceof Error ? error.message : "Unknown error occurred", {
+          exit: EXIT_CODES.ERROR,
+        });
       }
     }
 
@@ -313,10 +300,9 @@ export default class Uninstall extends BaseCommand {
         );
       } catch (error) {
         this.log("Failed to remove local directories");
-        this.error(
-          error instanceof Error ? error.message : "Unknown error occurred",
-          { exit: EXIT_CODES.ERROR },
-        );
+        this.error(error instanceof Error ? error.message : "Unknown error occurred", {
+          exit: EXIT_CODES.ERROR,
+        });
       }
     }
 

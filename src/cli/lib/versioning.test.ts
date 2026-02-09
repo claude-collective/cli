@@ -2,12 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
-import {
-  getCurrentDate,
-  hashString,
-  hashFile,
-  hashSkillFolder,
-} from "./versioning";
+import { getCurrentDate, hashString, hashFile, hashSkillFolder } from "./versioning";
 
 describe("getCurrentDate", () => {
   it("should return date in YYYY-MM-DD format", () => {
@@ -115,10 +110,7 @@ describe("hashSkillFolder", () => {
   });
 
   it("should hash SKILL.md content", async () => {
-    await writeFile(
-      path.join(tempDir, "SKILL.md"),
-      "# Test Skill\n\nThis is a test.",
-    );
+    await writeFile(path.join(tempDir, "SKILL.md"), "# Test Skill\n\nThis is a test.");
 
     const hash = await hashSkillFolder(tempDir);
 
@@ -161,10 +153,7 @@ describe("hashSkillFolder", () => {
     const hashWithoutExamples = await hashSkillFolder(tempDir);
 
     await mkdir(path.join(tempDir, "examples"), { recursive: true });
-    await writeFile(
-      path.join(tempDir, "examples", "example.ts"),
-      "// Example code",
-    );
+    await writeFile(path.join(tempDir, "examples", "example.ts"), "// Example code");
     const hashWithExamples = await hashSkillFolder(tempDir);
 
     expect(hashWithoutExamples).not.toBe(hashWithExamples);

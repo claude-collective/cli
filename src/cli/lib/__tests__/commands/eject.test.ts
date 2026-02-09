@@ -126,11 +126,7 @@ describe("eject command", () => {
 
   describe("flag validation", () => {
     it("should accept --force flag", async () => {
-      const { error } = await runCliCommand([
-        "eject",
-        "agent-partials",
-        "--force",
-      ]);
+      const { error } = await runCliCommand(["eject", "agent-partials", "--force"]);
 
       // Should not error on --force flag
       const output = error?.message || "";
@@ -148,12 +144,7 @@ describe("eject command", () => {
     it("should accept --output flag", async () => {
       const outputDir = path.join(tempDir, "custom-output");
 
-      const { error } = await runCliCommand([
-        "eject",
-        "agent-partials",
-        "--output",
-        outputDir,
-      ]);
+      const { error } = await runCliCommand(["eject", "agent-partials", "--output", outputDir]);
 
       // Should not error on --output flag
       const output = error?.message || "";
@@ -163,12 +154,7 @@ describe("eject command", () => {
     it("should accept -o shorthand for output", async () => {
       const outputDir = path.join(tempDir, "custom-output");
 
-      const { error } = await runCliCommand([
-        "eject",
-        "agent-partials",
-        "-o",
-        outputDir,
-      ]);
+      const { error } = await runCliCommand(["eject", "agent-partials", "-o", outputDir]);
 
       // Should accept -o shorthand
       const output = error?.message || "";
@@ -249,12 +235,7 @@ describe("eject command", () => {
     it("should eject agent partials to custom output with --output", async () => {
       const outputDir = path.join(tempDir, "custom-partials");
 
-      const { error } = await runCliCommand([
-        "eject",
-        "agent-partials",
-        "--output",
-        outputDir,
-      ]);
+      const { error } = await runCliCommand(["eject", "agent-partials", "--output", outputDir]);
 
       // Should not error on flag usage
       const output = error?.message || "";
@@ -278,11 +259,7 @@ describe("eject command", () => {
       await runCliCommand(["eject", "agent-partials"]);
 
       // Second eject with --force
-      const { error } = await runCliCommand([
-        "eject",
-        "agent-partials",
-        "--force",
-      ]);
+      const { error } = await runCliCommand(["eject", "agent-partials", "--force"]);
 
       // Should not error
       const output = error?.message || "";
@@ -307,12 +284,7 @@ describe("eject command", () => {
     it("should accept --output flag for skills", async () => {
       const outputDir = path.join(tempDir, "custom-skills");
 
-      const { error } = await runCliCommand([
-        "eject",
-        "skills",
-        "--output",
-        outputDir,
-      ]);
+      const { error } = await runCliCommand(["eject", "skills", "--output", outputDir]);
 
       // Should not error on flag usage
       const output = error?.message || "";
@@ -320,12 +292,7 @@ describe("eject command", () => {
     });
 
     it("should accept --source flag for custom source", async () => {
-      const { error } = await runCliCommand([
-        "eject",
-        "skills",
-        "--source",
-        "/nonexistent/path",
-      ]);
+      const { error } = await runCliCommand(["eject", "skills", "--source", "/nonexistent/path"]);
 
       // May error on nonexistent path, but should accept the flag
       const output = error?.message || "";
@@ -357,12 +324,7 @@ describe("eject command", () => {
     it("should accept --output flag for all", async () => {
       const outputDir = path.join(tempDir, "custom-all");
 
-      const { error } = await runCliCommand([
-        "eject",
-        "all",
-        "--output",
-        outputDir,
-      ]);
+      const { error } = await runCliCommand(["eject", "all", "--output", outputDir]);
 
       // Should not error on flag usage
       const output = error?.message || "";
@@ -381,12 +343,7 @@ describe("eject command", () => {
       const fs = await import("fs/promises");
       await fs.writeFile(outputPath, "existing content");
 
-      const { error } = await runCliCommand([
-        "eject",
-        "agent-partials",
-        "--output",
-        outputPath,
-      ]);
+      const { error } = await runCliCommand(["eject", "agent-partials", "--output", outputPath]);
 
       // Should error because output path is a file
       expect(error?.oclif?.exit).toBeDefined();

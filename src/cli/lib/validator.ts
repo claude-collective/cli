@@ -29,11 +29,7 @@ export async function validate(
       }
     }
 
-    const optionalFiles = [
-      "examples.md",
-      "critical-requirements.md",
-      "critical-reminders.md",
-    ];
+    const optionalFiles = ["examples.md", "critical-requirements.md", "critical-reminders.md"];
     for (const file of optionalFiles) {
       const filePath = path.join(agentDir, file);
       if (!(await fileExists(filePath))) {
@@ -43,9 +39,7 @@ export async function validate(
 
     for (const skill of agent.skills) {
       if (!skill.path) {
-        warnings.push(
-          `Skill missing path (won't be compiled): ${skill.id} (agent: ${name})`,
-        );
+        warnings.push(`Skill missing path (won't be compiled): ${skill.id} (agent: ${name})`);
         continue;
       }
 
@@ -56,9 +50,7 @@ export async function validate(
         // Folder-based skill: check for SKILL.md inside
         const skillFile = path.join(basePath, "SKILL.md");
         if (!(await fileExists(skillFile))) {
-          errors.push(
-            `Skill folder missing SKILL.md: ${skill.path}SKILL.md (agent: ${name})`,
-          );
+          errors.push(`Skill folder missing SKILL.md: ${skill.path}SKILL.md (agent: ${name})`);
         }
       } else {
         // Legacy: single file skill

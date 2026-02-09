@@ -14,9 +14,7 @@ const hook: Hook<"init"> = async function (options) {
   if (sourceArgIndex !== -1 && sourceArgIndex + 1 < options.argv.length) {
     sourceFlag = options.argv[sourceArgIndex + 1];
   } else {
-    const sourceFlagWithEquals = options.argv.find((arg) =>
-      arg.startsWith("--source="),
-    );
+    const sourceFlagWithEquals = options.argv.find((arg) => arg.startsWith("--source="));
     if (sourceFlagWithEquals) {
       sourceFlag = sourceFlagWithEquals.split("=")[1];
     }

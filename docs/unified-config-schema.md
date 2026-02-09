@@ -595,9 +595,7 @@ function validateSemanticRules(
   if (config.agent_skills) {
     for (const [agentName, skills] of Object.entries(config.agent_skills)) {
       if (!config.agents.includes(agentName)) {
-        warnings.push(
-          `agent_skills contains "${agentName}" not in agents list`,
-        );
+        warnings.push(`agent_skills contains "${agentName}" not in agents list`);
       }
       // Check skill references...
     }

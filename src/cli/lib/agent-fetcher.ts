@@ -28,18 +28,13 @@ export async function getLocalAgentDefinitions(
 
   if (!(await directoryExists(agentsDir))) {
     throw new Error(
-      `Agent partials not found at: ${agentsDir}. ` +
-        `Ensure the CLI is properly installed.`,
+      `Agent partials not found at: ${agentsDir}. ` + `Ensure the CLI is properly installed.`,
     );
   }
 
   // Check for local templates first (from eject templates)
   if (options.projectDir) {
-    const localTemplatesDir = path.join(
-      options.projectDir,
-      CLAUDE_DIR,
-      "templates",
-    );
+    const localTemplatesDir = path.join(options.projectDir, CLAUDE_DIR, "templates");
     if (await directoryExists(localTemplatesDir)) {
       verbose(`Using local templates from: ${localTemplatesDir}`);
       templatesDir = localTemplatesDir;

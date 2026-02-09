@@ -5,6 +5,4 @@ interface SpinnerProps {
   label: string;
 }
 
-export const Spinner: React.FC<SpinnerProps> = ({ label }) => (
-  <InkSpinner label={label} />
-);
+export const Spinner: React.FC<SpinnerProps> = ({ label }) => <InkSpinner label={label} />;

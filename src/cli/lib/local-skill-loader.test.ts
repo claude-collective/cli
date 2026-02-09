@@ -28,9 +28,7 @@ describe("local-skill-loader", () => {
 
       expect(result).not.toBeNull();
       expect(result?.skills).toEqual([]);
-      expect(result?.localSkillsPath).toBe(
-        path.join(tempDir, ".claude/skills"),
-      );
+      expect(result?.localSkillsPath).toBe(path.join(tempDir, ".claude/skills"));
     });
 
     it("discovers skills regardless of name prefix", async () => {
@@ -57,9 +55,7 @@ describe("local-skill-loader", () => {
       expect(result?.skills[0].category).toBe("local");
       expect(result?.skills[0].author).toBe("@local");
       expect(result?.skills[0].local).toBe(true);
-      expect(result?.skills[0].localPath).toBe(
-        ".claude/skills/my-normal-skill/",
-      );
+      expect(result?.skills[0].localPath).toBe(".claude/skills/my-normal-skill/");
     });
 
     it("skips skill without metadata.yaml", async () => {
@@ -84,10 +80,7 @@ describe("local-skill-loader", () => {
       await mkdir(skillDir, { recursive: true });
 
       // Only create metadata.yaml, no SKILL.md
-      await writeFile(
-        path.join(skillDir, "metadata.yaml"),
-        `cli_name: No Skill MD`,
-      );
+      await writeFile(path.join(skillDir, "metadata.yaml"), `cli_name: No Skill MD`);
 
       const result = await discoverLocalSkills(tempDir);
 
@@ -100,10 +93,7 @@ describe("local-skill-loader", () => {
       await mkdir(skillDir, { recursive: true });
 
       // Create metadata.yaml without cli_name
-      await writeFile(
-        path.join(skillDir, "metadata.yaml"),
-        `cli_description: Just a description`,
-      );
+      await writeFile(path.join(skillDir, "metadata.yaml"), `cli_description: Just a description`);
       await writeFile(
         path.join(skillDir, "SKILL.md"),
         `---\nname: no-cli-name (@local)\ndescription: Missing cli_name\n---\nContent`,
@@ -119,10 +109,7 @@ describe("local-skill-loader", () => {
       const skillDir = path.join(skillsDir, "bad-frontmatter");
       await mkdir(skillDir, { recursive: true });
 
-      await writeFile(
-        path.join(skillDir, "metadata.yaml"),
-        `cli_name: Bad Frontmatter Skill`,
-      );
+      await writeFile(path.join(skillDir, "metadata.yaml"), `cli_name: Bad Frontmatter Skill`);
       // SKILL.md without proper frontmatter (missing name)
       await writeFile(
         path.join(skillDir, "SKILL.md"),
@@ -158,10 +145,7 @@ describe("local-skill-loader", () => {
       const skillDir = path.join(skillsDir, "fallback-desc");
       await mkdir(skillDir, { recursive: true });
 
-      await writeFile(
-        path.join(skillDir, "metadata.yaml"),
-        `cli_name: Fallback Skill`,
-      );
+      await writeFile(path.join(skillDir, "metadata.yaml"), `cli_name: Fallback Skill`);
       await writeFile(
         path.join(skillDir, "SKILL.md"),
         `---\nname: fallback-skill (@local)\ndescription: Frontmatter description\n---\nContent`,
@@ -181,19 +165,13 @@ describe("local-skill-loader", () => {
       await mkdir(skill1Dir, { recursive: true });
       await mkdir(skill2Dir, { recursive: true });
 
-      await writeFile(
-        path.join(skill1Dir, "metadata.yaml"),
-        `cli_name: Skill One`,
-      );
+      await writeFile(path.join(skill1Dir, "metadata.yaml"), `cli_name: Skill One`);
       await writeFile(
         path.join(skill1Dir, "SKILL.md"),
         `---\nname: skill-one (@local)\ndescription: First skill\n---\nContent`,
       );
 
-      await writeFile(
-        path.join(skill2Dir, "metadata.yaml"),
-        `cli_name: Skill Two`,
-      );
+      await writeFile(path.join(skill2Dir, "metadata.yaml"), `cli_name: Skill Two`);
       await writeFile(
         path.join(skill2Dir, "SKILL.md"),
         `---\nname: skill-two (@local)\ndescription: Second skill\n---\nContent`,

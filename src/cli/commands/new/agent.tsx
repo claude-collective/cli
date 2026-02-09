@@ -65,9 +65,7 @@ const PurposeInput: React.FC<PurposeInputProps> = ({ onSubmit, onCancel }) => {
     <Box flexDirection="column">
       <Text bold>Create New Agent</Text>
       <Text>What should this agent do?</Text>
-      <Text dimColor>
-        e.g., Manages database migrations with rollback support
-      </Text>
+      <Text dimColor>e.g., Manages database migrations with rollback support</Text>
       <Text> </Text>
       <TextInput placeholder="Enter agent purpose..." onSubmit={handleSubmit} />
       {error && (
@@ -79,10 +77,7 @@ const PurposeInput: React.FC<PurposeInputProps> = ({ onSubmit, onCancel }) => {
   );
 };
 
-async function fetchMetaAgent(
-  source: string,
-  forceRefresh: boolean,
-): Promise<NewAgentInput> {
+async function fetchMetaAgent(source: string, forceRefresh: boolean): Promise<NewAgentInput> {
   // Fetch the source repository
   const result = await fetchFromSource(source, {
     forceRefresh,
@@ -107,9 +102,7 @@ async function fetchMetaAgent(
   const fm = frontmatter as AgentSourceFrontmatter;
 
   // Construct agent definition
-  const tools = fm.tools
-    ? fm.tools.split(",").map((t: string) => t.trim())
-    : undefined;
+  const tools = fm.tools ? fm.tools.split(",").map((t: string) => t.trim()) : undefined;
 
   return {
     description: fm.description || "Creates new agents",
@@ -119,11 +112,7 @@ async function fetchMetaAgent(
   };
 }
 
-function buildAgentPrompt(
-  agentName: string,
-  purpose: string,
-  outputDir: string,
-): string {
+function buildAgentPrompt(agentName: string, purpose: string, outputDir: string): string {
   return `Create a new Claude Code agent named "${agentName}" in the directory "${outputDir}".
 
 Agent Purpose: ${purpose}
@@ -294,10 +283,9 @@ export default class NewAgent extends BaseCommand {
       this.log("─".repeat(60));
       this.logSuccess("Agent creation complete!");
     } catch (error) {
-      this.error(
-        error instanceof Error ? error.message : "Unknown error occurred",
-        { exit: EXIT_CODES.ERROR },
-      );
+      this.error(error instanceof Error ? error.message : "Unknown error occurred", {
+        exit: EXIT_CODES.ERROR,
+      });
     }
   }
 }

@@ -37,14 +37,7 @@
     "permissionMode": {
       "type": "string",
       "description": "How agent handles permissions",
-      "enum": [
-        "default",
-        "acceptEdits",
-        "dontAsk",
-        "bypassPermissions",
-        "plan",
-        "delegate"
-      ],
+      "enum": ["default", "acceptEdits", "dontAsk", "bypassPermissions", "plan", "delegate"],
       "default": "default"
     },
     "skills": {

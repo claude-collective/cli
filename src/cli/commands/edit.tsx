@@ -19,8 +19,7 @@ import { detectInstallation } from "../lib/installation.js";
 
 export default class Edit extends BaseCommand {
   static summary = "Edit skills in the plugin";
-  static description =
-    "Modify the currently installed skills via interactive wizard";
+  static description = "Modify the currently installed skills via interactive wizard";
 
   static flags = {
     ...BaseCommand.baseFlags,
@@ -40,17 +39,14 @@ export default class Edit extends BaseCommand {
     const installation = await detectInstallation();
 
     if (!installation) {
-      this.error(
-        "No installation found. Run 'cc init' first to set up Claude Collective.",
-        { exit: EXIT_CODES.ERROR },
-      );
+      this.error("No installation found. Run 'cc init' first to set up Claude Collective.", {
+        exit: EXIT_CODES.ERROR,
+      });
     }
 
     const pluginDir = getCollectivePluginDir();
     const pluginSkillsDir =
-      installation.mode === "local"
-        ? installation.skillsDir
-        : getPluginSkillsDir(pluginDir);
+      installation.mode === "local" ? installation.skillsDir : getPluginSkillsDir(pluginDir);
 
     const modeLabel = installation.mode === "local" ? "Local" : "Plugin";
     this.log(`Edit ${modeLabel} Skills\n`);
@@ -65,9 +61,7 @@ export default class Edit extends BaseCommand {
         forceRefresh: flags.refresh,
       });
 
-      const sourceInfo = sourceResult.isLocal
-        ? "local"
-        : sourceResult.sourceConfig.sourceOrigin;
+      const sourceInfo = sourceResult.isLocal ? "local" : sourceResult.sourceConfig.sourceOrigin;
       this.log(
         `✓ Loaded ${Object.keys(sourceResult.matrix.skills).length} skills (${sourceInfo})\n`,
       );
@@ -79,10 +73,7 @@ export default class Edit extends BaseCommand {
     this.log("Reading current skills...");
     let currentSkillIds: string[];
     try {
-      currentSkillIds = await getPluginSkillIds(
-        pluginSkillsDir,
-        sourceResult.matrix,
-      );
+      currentSkillIds = await getPluginSkillIds(pluginSkillsDir, sourceResult.matrix);
       this.log(`✓ Current plugin has ${currentSkillIds.length} skills\n`);
     } catch (error) {
       this.handleError(error);
@@ -119,21 +110,15 @@ export default class Edit extends BaseCommand {
 
     // Validate selection - use error() which throws and TypeScript understands
     if (!result.validation.valid) {
-      const errorMessages = result.validation.errors
-        .map((e) => e.message)
-        .join("\n  ");
+      const errorMessages = result.validation.errors.map((e) => e.message).join("\n  ");
       this.error(`Selection has validation errors:\n  ${errorMessages}`, {
         exit: EXIT_CODES.ERROR,
       });
     }
 
     // Calculate changes
-    const addedSkills = result.selectedSkills.filter(
-      (id: string) => !currentSkillIds.includes(id),
-    );
-    const removedSkills = currentSkillIds.filter(
-      (id) => !result.selectedSkills.includes(id),
-    );
+    const addedSkills = result.selectedSkills.filter((id: string) => !currentSkillIds.includes(id));
+    const removedSkills = currentSkillIds.filter((id) => !result.selectedSkills.includes(id));
 
     // Show warnings if any
     if (result.validation.warnings.length > 0) {
@@ -177,30 +162,20 @@ export default class Edit extends BaseCommand {
         sourceResult.matrix,
         sourceResult,
       );
-      this.log(
-        `✓ Plugin updated with ${result.selectedSkills.length} skills\n`,
-      );
+      this.log(`✓ Plugin updated with ${result.selectedSkills.length} skills\n`);
     } catch (error) {
       this.handleError(error);
     }
 
     // Fetch agent partials
     let sourcePath: string;
-    this.log(
-      flags["agent-source"]
-        ? "Fetching agent partials..."
-        : "Loading agent partials...",
-    );
+    this.log(flags["agent-source"] ? "Fetching agent partials..." : "Loading agent partials...");
     try {
       const agentDefs = await getAgentDefinitions(flags["agent-source"], {
         forceRefresh: flags.refresh,
       });
       sourcePath = agentDefs.sourcePath;
-      this.log(
-        flags["agent-source"]
-          ? "✓ Agent partials fetched\n"
-          : "✓ Agent partials loaded\n",
-      );
+      this.log(flags["agent-source"] ? "✓ Agent partials fetched\n" : "✓ Agent partials loaded\n");
     } catch (error) {
       this.handleError(error);
     }

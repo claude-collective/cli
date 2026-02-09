@@ -16,14 +16,7 @@ import { useWizardStore } from "../../../stores/wizard-store";
 import { createMockMatrix, createMockSkill } from "../helpers";
 import { TEST_SKILLS, TEST_CATEGORIES } from "../test-fixtures";
 import type { MergedSkillsMatrix, ResolvedStack } from "../../../types-matrix";
-import {
-  ARROW_DOWN,
-  ARROW_UP,
-  ENTER,
-  ESCAPE,
-  RENDER_DELAY_MS,
-  delay,
-} from "../test-constants";
+import { ARROW_DOWN, ARROW_UP, ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../test-constants";
 
 // Delay between key presses for input processing
 const SELECT_NAV_DELAY_MS = 100;
@@ -34,21 +27,18 @@ const SELECT_NAV_DELAY_MS = 100;
 
 const createMockStackWithSkills = (): MergedSkillsMatrix => {
   const skills = {
-    [TEST_SKILLS.REACT]: createMockSkill(
-      TEST_SKILLS.REACT,
-      TEST_CATEGORIES.FRAMEWORK,
-      { name: "React", description: "React framework" },
-    ),
-    [TEST_SKILLS.ZUSTAND]: createMockSkill(
-      TEST_SKILLS.ZUSTAND,
-      TEST_CATEGORIES.STATE,
-      { name: "Zustand", description: "State management" },
-    ),
-    [TEST_SKILLS.HONO]: createMockSkill(
-      TEST_SKILLS.HONO,
-      TEST_CATEGORIES.BACKEND_FRAMEWORK,
-      { name: "Hono", description: "Web framework" },
-    ),
+    [TEST_SKILLS.REACT]: createMockSkill(TEST_SKILLS.REACT, TEST_CATEGORIES.FRAMEWORK, {
+      name: "React",
+      description: "React framework",
+    }),
+    [TEST_SKILLS.ZUSTAND]: createMockSkill(TEST_SKILLS.ZUSTAND, TEST_CATEGORIES.STATE, {
+      name: "Zustand",
+      description: "State management",
+    }),
+    [TEST_SKILLS.HONO]: createMockSkill(TEST_SKILLS.HONO, TEST_CATEGORIES.BACKEND_FRAMEWORK, {
+      name: "Hono",
+      description: "Web framework",
+    }),
   };
 
   const suggestedStacks: ResolvedStack[] = [
@@ -125,9 +115,7 @@ describe("StepStack component", () => {
 
     describe("rendering", () => {
       it("should render stack options as cards", () => {
-        const { lastFrame, unmount } = render(
-          <StepStack matrix={mockMatrix} />,
-        );
+        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -136,9 +124,7 @@ describe("StepStack component", () => {
       });
 
       it("should render focused stack description (only focused item shows description)", () => {
-        const { lastFrame, unmount } = render(
-          <StepStack matrix={mockMatrix} />,
-        );
+        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -147,9 +133,7 @@ describe("StepStack component", () => {
       });
 
       it("should render ViewTitle for stack selection", () => {
-        const { lastFrame, unmount } = render(
-          <StepStack matrix={mockMatrix} />,
-        );
+        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -157,9 +141,7 @@ describe("StepStack component", () => {
       });
 
       it("should render header text", () => {
-        const { lastFrame, unmount } = render(
-          <StepStack matrix={mockMatrix} />,
-        );
+        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -316,9 +298,7 @@ describe("StepStack component", () => {
       it("should render header with no stacks available", () => {
         const emptyMatrix = createMockMatrix({}, { suggestedStacks: [] });
 
-        const { lastFrame, unmount } = render(
-          <StepStack matrix={emptyMatrix} />,
-        );
+        const { lastFrame, unmount } = render(<StepStack matrix={emptyMatrix} />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -329,9 +309,7 @@ describe("StepStack component", () => {
       it("should not render keyboard hints when no stacks", () => {
         const emptyMatrix = createMockMatrix({}, { suggestedStacks: [] });
 
-        const { lastFrame, unmount } = render(
-          <StepStack matrix={emptyMatrix} />,
-        );
+        const { lastFrame, unmount } = render(<StepStack matrix={emptyMatrix} />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -371,9 +349,7 @@ describe("StepStack component", () => {
 
     describe("rendering", () => {
       it("should render domain options", () => {
-        const { lastFrame, unmount } = render(
-          <StepStack matrix={mockMatrix} />,
-        );
+        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -385,9 +361,7 @@ describe("StepStack component", () => {
       });
 
       it("should render header text for domain selection", () => {
-        const { lastFrame, unmount } = render(
-          <StepStack matrix={mockMatrix} />,
-        );
+        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -395,9 +369,7 @@ describe("StepStack component", () => {
       });
 
       it("should show domain descriptions", () => {
-        const { lastFrame, unmount } = render(
-          <StepStack matrix={mockMatrix} />,
-        );
+        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
         cleanup = unmount;
 
         const output = lastFrame();
@@ -451,9 +423,7 @@ describe("StepStack component", () => {
         // Pre-select a domain
         useWizardStore.getState().toggleDomain("web");
 
-        const { lastFrame, unmount } = render(
-          <StepStack matrix={mockMatrix} />,
-        );
+        const { lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
         cleanup = unmount;
 
         const output = lastFrame();

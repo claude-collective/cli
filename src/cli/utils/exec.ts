@@ -85,15 +85,9 @@ export interface MarketplaceInfo {
 /**
  * List configured marketplaces in Claude Code
  */
-export async function claudePluginMarketplaceList(): Promise<
-  MarketplaceInfo[]
-> {
+export async function claudePluginMarketplaceList(): Promise<MarketplaceInfo[]> {
   try {
-    const result = await execCommand(
-      "claude",
-      ["plugin", "marketplace", "list", "--json"],
-      {},
-    );
+    const result = await execCommand("claude", ["plugin", "marketplace", "list", "--json"], {});
 
     if (result.exitCode !== 0) {
       return [];
@@ -109,9 +103,7 @@ export async function claudePluginMarketplaceList(): Promise<
 /**
  * Check if a marketplace with the given name exists
  */
-export async function claudePluginMarketplaceExists(
-  name: string,
-): Promise<boolean> {
+export async function claudePluginMarketplaceExists(name: string): Promise<boolean> {
   const marketplaces = await claudePluginMarketplaceList();
   return marketplaces.some((m) => m.name === name);
 }
@@ -119,10 +111,7 @@ export async function claudePluginMarketplaceExists(
 /**
  * Add a marketplace to Claude Code from a GitHub repository
  */
-export async function claudePluginMarketplaceAdd(
-  githubRepo: string,
-  name: string,
-): Promise<void> {
+export async function claudePluginMarketplaceAdd(githubRepo: string, name: string): Promise<void> {
   const args = ["plugin", "marketplace", "add", githubRepo, "--name", name];
   let result;
   try {
@@ -156,10 +145,7 @@ export async function claudePluginUninstall(
   if (result.exitCode !== 0) {
     const errorMessage = result.stderr || result.stdout || "Unknown error";
     // Ignore "not installed" errors - plugin may already be removed
-    if (
-      errorMessage.includes("not installed") ||
-      errorMessage.includes("not found")
-    ) {
+    if (errorMessage.includes("not installed") || errorMessage.includes("not found")) {
       return;
     }
     throw new Error(`Plugin uninstall failed: ${errorMessage.trim()}`);

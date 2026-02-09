@@ -4,10 +4,7 @@ import { Flags, Args } from "@oclif/core";
 import { printTable } from "@oclif/table";
 import path from "path";
 import { BaseCommand } from "../base-command.js";
-import {
-  loadSkillsMatrixFromSource,
-  type SourceLoadResult,
-} from "../lib/source-loader.js";
+import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/source-loader.js";
 import { recompileAgents } from "../lib/agent-recompiler.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import {
@@ -15,10 +12,7 @@ import {
   injectForkedFromMetadata,
   type SkillComparisonResult,
 } from "../lib/skill-metadata.js";
-import {
-  fileExists,
-  copy,
-} from "../utils/fs.js";
+import { fileExists, copy } from "../utils/fs.js";
 import { LOCAL_SKILLS_PATH } from "../consts.js";
 import { getCollectivePluginDir } from "../lib/plugin-finder.js";
 import { Confirm } from "../components/common/confirm.js";
@@ -75,9 +69,7 @@ function findSkillByPartialMatch(
   if (partial) return partial;
 
   // Directory name match
-  const byDir = results.find(
-    (r) => r.dirName.toLowerCase() === skillName.toLowerCase(),
-  );
+  const byDir = results.find((r) => r.dirName.toLowerCase() === skillName.toLowerCase());
   if (byDir) return byDir;
 
   return null;
@@ -86,19 +78,14 @@ function findSkillByPartialMatch(
 /**
  * Find similar skill names for suggestions
  */
-function findSimilarSkills(
-  skillName: string,
-  results: SkillComparisonResult[],
-): string[] {
+function findSimilarSkills(skillName: string, results: SkillComparisonResult[]): string[] {
   const lowered = skillName.toLowerCase();
   return results
     .filter((r) => {
       const name = r.id.toLowerCase();
       const dir = r.dirName.toLowerCase();
       return (
-        name.includes(lowered) ||
-        dir.includes(lowered) ||
-        lowered.includes(name.split(" ")[0])
+        name.includes(lowered) || dir.includes(lowered) || lowered.includes(name.split(" ")[0])
       );
     })
     .map((r) => r.id)
@@ -113,10 +100,7 @@ interface UpdateConfirmProps {
   onCancel: () => void;
 }
 
-const UpdateConfirm: React.FC<UpdateConfirmProps> = ({
-  onConfirm,
-  onCancel,
-}) => {
+const UpdateConfirm: React.FC<UpdateConfirmProps> = ({ onConfirm, onCancel }) => {
   return (
     <Confirm
       message="Proceed with update?"
@@ -187,20 +171,14 @@ export default class Update extends BaseCommand {
 
       // Build source skills map for lookup
       const sourceSkills: Record<string, { path: string }> = {};
-      for (const [skillId, skill] of Object.entries(
-        sourceResult.matrix.skills,
-      )) {
+      for (const [skillId, skill] of Object.entries(sourceResult.matrix.skills)) {
         if (!skill.local) {
           sourceSkills[skillId] = { path: skill.path };
         }
       }
 
       // Compare local skills against source
-      const allResults = await compareSkills(
-        projectDir,
-        sourceResult.sourcePath,
-        sourceSkills,
-      );
+      const allResults = await compareSkills(projectDir, sourceResult.sourcePath, sourceSkills);
 
       // Filter to just outdated skills
       let outdatedSkills = allResults.filter((r) => r.status === "outdated");
@@ -223,9 +201,7 @@ export default class Update extends BaseCommand {
             this.log("");
           }
 
-          this.log(
-            `Run \`cc search ${args.skill}\` to search available skills.`,
-          );
+          this.log(`Run \`cc search ${args.skill}\` to search available skills.`);
           this.log("");
           this.error("Skill not found", { exit: EXIT_CODES.ERROR });
         }
@@ -242,9 +218,7 @@ export default class Update extends BaseCommand {
 
         if (foundSkill.status === "local-only") {
           this.log("");
-          this.log(
-            `Skill "${foundSkill.id}" is a local-only skill (not forked from source).`,
-          );
+          this.log(`Skill "${foundSkill.id}" is a local-only skill (not forked from source).`);
           this.log("Cannot update local-only skills.");
           this.log("");
           return;
@@ -377,12 +351,8 @@ export default class Update extends BaseCommand {
       this.log("");
       if (failed.length === 0) {
         const agentMsg =
-          recompiledAgents.length > 0
-            ? `, ${recompiledAgents.length} agent(s) recompiled`
-            : "";
-        this.logSuccess(
-          `Update complete! ${updated.length} skill(s) updated${agentMsg}.`,
-        );
+          recompiledAgents.length > 0 ? `, ${recompiledAgents.length} agent(s) recompiled` : "";
+        this.logSuccess(`Update complete! ${updated.length} skill(s) updated${agentMsg}.`);
       } else {
         this.warn(
           `Update finished with errors: ${updated.length} updated, ${failed.length} failed.`,

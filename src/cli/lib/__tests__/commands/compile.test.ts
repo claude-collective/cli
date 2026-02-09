@@ -98,11 +98,7 @@ describe("compile command", () => {
     it("should accept --output flag with path", async () => {
       const outputPath = path.join(tempDir, "output");
 
-      const { error } = await runCliCommand([
-        "compile",
-        "--output",
-        outputPath,
-      ]);
+      const { error } = await runCliCommand(["compile", "--output", outputPath]);
 
       // Should not error on --output flag
       const output = error?.message || "";
@@ -121,11 +117,7 @@ describe("compile command", () => {
     });
 
     it("should accept --source flag", async () => {
-      const { error } = await runCliCommand([
-        "compile",
-        "--source",
-        "/some/path",
-      ]);
+      const { error } = await runCliCommand(["compile", "--source", "/some/path"]);
 
       // Should accept --source flag
       const output = error?.message || "";
@@ -179,12 +171,7 @@ describe("compile command", () => {
       const outputPath = path.join(tempDir, "dry-run-output");
 
       // Create minimal skill setup so compile can proceed
-      const skillsDir = path.join(
-        projectDir,
-        ".claude",
-        "skills",
-        "test-skill",
-      );
+      const skillsDir = path.join(projectDir, ".claude", "skills", "test-skill");
       await mkdir(skillsDir, { recursive: true });
       await writeFile(
         path.join(skillsDir, "SKILL.md"),
@@ -200,12 +187,7 @@ Content.
 `,
       );
 
-      const { error } = await runCliCommand([
-        "compile",
-        "--dry-run",
-        "--output",
-        outputPath,
-      ]);
+      const { error } = await runCliCommand(["compile", "--dry-run", "--output", outputPath]);
 
       // Command should complete without flag parsing errors
       // Note: stdout capture is limited in oclif test environment
@@ -242,11 +224,7 @@ Content.
 
   describe("verbose mode", () => {
     it("should accept --verbose with --dry-run", async () => {
-      const { error } = await runCliCommand([
-        "compile",
-        "--verbose",
-        "--dry-run",
-      ]);
+      const { error } = await runCliCommand(["compile", "--verbose", "--dry-run"]);
 
       // Should accept both flags
       const output = error?.message || "";
@@ -256,12 +234,7 @@ Content.
     it("should accept -v with -o", async () => {
       const outputPath = path.join(tempDir, "output");
 
-      const { error } = await runCliCommand([
-        "compile",
-        "-v",
-        "-o",
-        outputPath,
-      ]);
+      const { error } = await runCliCommand(["compile", "-v", "-o", outputPath]);
 
       // Should accept both flags
       const output = error?.message || "";
@@ -310,11 +283,7 @@ Content.
     });
 
     it("should accept --verbose with --refresh", async () => {
-      const { error } = await runCliCommand([
-        "compile",
-        "--verbose",
-        "--refresh",
-      ]);
+      const { error } = await runCliCommand(["compile", "--verbose", "--refresh"]);
 
       // Should accept both flags
       const output = error?.message || "";
@@ -362,11 +331,7 @@ Content.
     });
 
     it("should handle invalid agent-source URL gracefully", async () => {
-      const { error } = await runCliCommand([
-        "compile",
-        "--agent-source",
-        "not-a-valid-url",
-      ]);
+      const { error } = await runCliCommand(["compile", "--agent-source", "not-a-valid-url"]);
 
       // Should error but not crash (may fail on plugin check first)
       expect(error).toBeDefined();
@@ -391,12 +356,7 @@ Content.
     it("should use custom output mode when output flag provided", async () => {
       const outputPath = path.join(tempDir, "custom-output");
 
-      const { error } = await runCliCommand([
-        "compile",
-        "--output",
-        outputPath,
-        "--dry-run",
-      ]);
+      const { error } = await runCliCommand(["compile", "--output", outputPath, "--dry-run"]);
 
       // Command should complete without flag parsing errors
       // Note: stdout capture is limited in oclif test environment

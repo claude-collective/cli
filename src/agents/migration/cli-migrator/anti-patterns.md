@@ -92,9 +92,7 @@ export class Init extends Command {
 
 ```tsx
 // BAD
-const Component = () => (
-  <Box>Hello World {/* Error: text outside Text component */}</Box>
-);
+const Component = () => <Box>Hello World {/* Error: text outside Text component */}</Box>;
 
 // GOOD
 const Component = () => (

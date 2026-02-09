@@ -230,11 +230,7 @@ import { exec } from "child_process";
 
 function openBrowser(url: string) {
   const cmd =
-    process.platform === "darwin"
-      ? "open"
-      : process.platform === "win32"
-        ? "start"
-        : "xdg-open";
+    process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
   exec(`${cmd} "${url}"`);
 }
 ```

@@ -52,8 +52,7 @@ export async function compileStackToTemp(options: {
 export async function installStackAsPlugin(
   options: StackInstallOptions,
 ): Promise<StackInstallResult> {
-  const { stackId, projectDir, sourcePath, agentSourcePath, marketplace } =
-    options;
+  const { stackId, projectDir, sourcePath, agentSourcePath, marketplace } = options;
 
   const claudeAvailable = await isClaudeCLIAvailable();
   if (!claudeAvailable) {

@@ -631,11 +631,7 @@ export interface WizardStateV2 {
   selectStack: (stackId: string | null) => void;
   setStackAction: (action: "defaults" | "customize") => void;
   toggleDomain: (domain: string) => void;
-  setDomainSelection: (
-    domain: string,
-    subcategory: string,
-    technologies: string[],
-  ) => void;
+  setDomainSelection: (domain: string, subcategory: string, technologies: string[]) => void;
   setCurrentDomainIndex: (index: number) => void;
   setFocus: (row: number, col: number) => void;
   setRefineAction: (action: "all-recommended" | "customize") => void;

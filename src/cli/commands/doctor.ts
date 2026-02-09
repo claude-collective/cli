@@ -4,10 +4,7 @@ import { BaseCommand } from "../base-command";
 import { setVerbose } from "../utils/logger";
 import { fileExists, glob, directoryExists } from "../utils/fs";
 import { EXIT_CODES } from "../lib/exit-codes";
-import {
-  loadProjectConfig,
-  validateProjectConfig,
-} from "../lib/project-config";
+import { loadProjectConfig, validateProjectConfig } from "../lib/project-config";
 import { loadSkillsMatrixFromSource } from "../lib/source-loader";
 import { discoverLocalSkills } from "../lib/local-skill-loader";
 import type { ProjectConfig } from "../../types";
@@ -200,10 +197,7 @@ async function checkAgentsCompiled(
  * Check 4: No Orphans
  * No extra files in .claude/agents/ not in config
  */
-async function checkNoOrphans(
-  config: ProjectConfig,
-  projectDir: string,
-): Promise<CheckResult> {
+async function checkNoOrphans(config: ProjectConfig, projectDir: string): Promise<CheckResult> {
   const agentsDir = path.join(projectDir, ".claude", "agents");
 
   if (!(await directoryExists(agentsDir))) {
@@ -294,11 +288,7 @@ function formatStatus(status: CheckResult["status"]): string {
   }
 }
 
-function formatCheckLine(
-  name: string,
-  result: CheckResult,
-  verbose: boolean,
-): string[] {
+function formatCheckLine(name: string, result: CheckResult, verbose: boolean): string[] {
   const statusIcon = formatStatus(result.status);
   const nameFormatted = formatCheckName(name);
   const lines: string[] = [];
@@ -362,9 +352,7 @@ function formatTips(results: CheckResult[]): string[] {
   const hasAgentWarning = results.some(
     (r) => r.status === "warn" && r.message.includes("recompilation"),
   );
-  const hasConfigError = results.some(
-    (r) => r.status === "fail" && r.message.includes("config"),
-  );
+  const hasConfigError = results.some((r) => r.status === "fail" && r.message.includes("config"));
   const hasSkillError = results.some(
     (r) => r.status === "fail" && r.message.includes("skills found"),
   );
@@ -430,9 +418,7 @@ export default class Doctor extends BaseCommand {
     // Check 1: Config Valid
     const configResult = await checkConfigValid(projectDir);
     results.push(configResult);
-    formatCheckLine("Config Valid", configResult, flags.verbose).forEach(
-      (line) => this.log(line),
-    );
+    formatCheckLine("Config Valid", configResult, flags.verbose).forEach((line) => this.log(line));
 
     // Load config for remaining checks (if valid)
     let config: ProjectConfig | null = null;
@@ -459,14 +445,10 @@ export default class Doctor extends BaseCommand {
 
     // Check 2: Skills Resolved
     if (config && matrix) {
-      const skillsResult = await checkSkillsResolved(
-        config,
-        matrix,
-        projectDir,
-      );
+      const skillsResult = await checkSkillsResolved(config, matrix, projectDir);
       results.push(skillsResult);
-      formatCheckLine("Skills Resolved", skillsResult, flags.verbose).forEach(
-        (line) => this.log(line),
+      formatCheckLine("Skills Resolved", skillsResult, flags.verbose).forEach((line) =>
+        this.log(line),
       );
     } else {
       const skipResult: CheckResult = {
@@ -474,8 +456,8 @@ export default class Doctor extends BaseCommand {
         message: "Skipped (config invalid)",
       };
       results.push(skipResult);
-      formatCheckLine("Skills Resolved", skipResult, flags.verbose).forEach(
-        (line) => this.log(line),
+      formatCheckLine("Skills Resolved", skipResult, flags.verbose).forEach((line) =>
+        this.log(line),
       );
     }
 
@@ -483,8 +465,8 @@ export default class Doctor extends BaseCommand {
     if (config) {
       const agentsResult = await checkAgentsCompiled(config, projectDir);
       results.push(agentsResult);
-      formatCheckLine("Agents Compiled", agentsResult, flags.verbose).forEach(
-        (line) => this.log(line),
+      formatCheckLine("Agents Compiled", agentsResult, flags.verbose).forEach((line) =>
+        this.log(line),
       );
     } else {
       const skipResult: CheckResult = {
@@ -492,8 +474,8 @@ export default class Doctor extends BaseCommand {
         message: "Skipped (config invalid)",
       };
       results.push(skipResult);
-      formatCheckLine("Agents Compiled", skipResult, flags.verbose).forEach(
-        (line) => this.log(line),
+      formatCheckLine("Agents Compiled", skipResult, flags.verbose).forEach((line) =>
+        this.log(line),
       );
     }
 
@@ -501,24 +483,20 @@ export default class Doctor extends BaseCommand {
     if (config) {
       const orphansResult = await checkNoOrphans(config, projectDir);
       results.push(orphansResult);
-      formatCheckLine("No Orphans", orphansResult, flags.verbose).forEach(
-        (line) => this.log(line),
-      );
+      formatCheckLine("No Orphans", orphansResult, flags.verbose).forEach((line) => this.log(line));
     } else {
       const skipResult: CheckResult = {
         status: "skip",
         message: "Skipped (config invalid)",
       };
       results.push(skipResult);
-      formatCheckLine("No Orphans", skipResult, flags.verbose).forEach((line) =>
-        this.log(line),
-      );
+      formatCheckLine("No Orphans", skipResult, flags.verbose).forEach((line) => this.log(line));
     }
 
     // Check 5: Source Reachable (already ran, just print)
     results.push(sourceResult);
-    formatCheckLine("Source Reachable", sourceResult, flags.verbose).forEach(
-      (line) => this.log(line),
+    formatCheckLine("Source Reachable", sourceResult, flags.verbose).forEach((line) =>
+      this.log(line),
     );
 
     // Summary

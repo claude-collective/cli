@@ -201,9 +201,7 @@ describe("version:show command", () => {
 
       // Should not error with "command not found"
       const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain(
-        "command version:show not found",
-      );
+      expect(output.toLowerCase()).not.toContain("command version:show not found");
     });
   });
 });

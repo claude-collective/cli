@@ -2,12 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile, readFile, readdir } from "fs/promises";
 import { recompileAgents } from "./agent-recompiler";
-import {
-  createTestDirs,
-  cleanupTestDirs,
-  writeTestSkill,
-  fileExists,
-} from "./__tests__/helpers";
+import { createTestDirs, cleanupTestDirs, writeTestSkill, fileExists } from "./__tests__/helpers";
 import type { TestDirs } from "./__tests__/helpers";
 
 // Path to CLI repo (agents, templates live here)
@@ -82,10 +77,7 @@ description: Test plugin
 agents:
   - web-pm
 `;
-      await writeFile(
-        path.join(testDirs.pluginDir, "config.yaml"),
-        configContent,
-      );
+      await writeFile(path.join(testDirs.pluginDir, "config.yaml"), configContent);
       await writeTestSkill(testDirs.skillsDir, "test-skill");
 
       const result = await recompileAgents({
@@ -98,10 +90,7 @@ agents:
 
     it.skip("uses existing compiled agents when no config exists", async () => {
       // Create an existing agent file
-      await writeFile(
-        path.join(testDirs.agentsDir, "web-pm.md"),
-        "# Existing PM Agent\n",
-      );
+      await writeFile(path.join(testDirs.agentsDir, "web-pm.md"), "# Existing PM Agent\n");
 
       const result = await recompileAgents({
         pluginDir: testDirs.pluginDir,
@@ -179,11 +168,7 @@ agents:
     it.skip("respects projectDir for local template resolution", async () => {
       // Create a local templates directory (but don't add templates)
       // This just tests the option is passed through correctly
-      const localTemplatesDir = path.join(
-        testDirs.projectDir,
-        ".claude",
-        "templates",
-      );
+      const localTemplatesDir = path.join(testDirs.projectDir, ".claude", "templates");
       await mkdir(localTemplatesDir, { recursive: true });
 
       const result = await recompileAgents({

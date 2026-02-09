@@ -21,19 +21,8 @@ import { Wizard } from "../../../components/wizard/wizard";
 import { useWizardStore } from "../../../stores/wizard-store";
 import { createMockMatrix, createMockSkill } from "../helpers";
 import { TEST_SKILLS, TEST_CATEGORIES } from "../test-fixtures";
-import type {
-  MergedSkillsMatrix,
-  ResolvedStack,
-  CategoryDefinition,
-} from "../../../types-matrix";
-import {
-  ARROW_DOWN,
-  ARROW_UP,
-  ENTER,
-  ESCAPE,
-  RENDER_DELAY_MS,
-  delay,
-} from "../test-constants";
+import type { MergedSkillsMatrix, ResolvedStack, CategoryDefinition } from "../../../types-matrix";
+import { ARROW_DOWN, ARROW_UP, ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../test-constants";
 
 // =============================================================================
 // Constants
@@ -60,59 +49,39 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
   // Create skills for different domains
   const skills = {
     // Web domain skills
-    [TEST_SKILLS.REACT]: createMockSkill(
-      TEST_SKILLS.REACT,
-      "web/framework",
-      {
-        name: "React",
-        description: "React framework",
-        alias: "react",
-      },
-    ),
+    [TEST_SKILLS.REACT]: createMockSkill(TEST_SKILLS.REACT, "web/framework", {
+      name: "React",
+      description: "React framework",
+      alias: "react",
+    }),
     [TEST_SKILLS.VUE]: createMockSkill(TEST_SKILLS.VUE, "web/framework", {
       name: "Vue",
       description: "Vue.js framework",
       alias: "vue",
-      conflictsWith: [
-        { skillId: TEST_SKILLS.REACT, reason: "Choose one framework" },
-      ],
+      conflictsWith: [{ skillId: TEST_SKILLS.REACT, reason: "Choose one framework" }],
     }),
-    [TEST_SKILLS.ZUSTAND]: createMockSkill(
-      TEST_SKILLS.ZUSTAND,
-      "web/state",
-      {
-        name: "Zustand",
-        description: "State management",
-        alias: "zustand",
-        recommends: [
-          { skillId: TEST_SKILLS.REACT, reason: "Works great with React" },
-        ],
-      },
-    ),
-    [TEST_SKILLS.SCSS_MODULES]: createMockSkill(
-      TEST_SKILLS.SCSS_MODULES,
-      "web/styling",
-      {
-        name: "SCSS Modules",
-        description: "CSS Modules with SCSS",
-        alias: "scss-modules",
-      },
-    ),
+    [TEST_SKILLS.ZUSTAND]: createMockSkill(TEST_SKILLS.ZUSTAND, "web/state", {
+      name: "Zustand",
+      description: "State management",
+      alias: "zustand",
+      recommends: [{ skillId: TEST_SKILLS.REACT, reason: "Works great with React" }],
+    }),
+    [TEST_SKILLS.SCSS_MODULES]: createMockSkill(TEST_SKILLS.SCSS_MODULES, "web/styling", {
+      name: "SCSS Modules",
+      description: "CSS Modules with SCSS",
+      alias: "scss-modules",
+    }),
     // API domain skills
     [TEST_SKILLS.HONO]: createMockSkill(TEST_SKILLS.HONO, "api/framework", {
       name: "Hono",
       description: "Web framework for the edge",
       alias: "hono",
     }),
-    [TEST_SKILLS.DRIZZLE]: createMockSkill(
-      TEST_SKILLS.DRIZZLE,
-      "api/database",
-      {
-        name: "Drizzle",
-        description: "TypeScript ORM",
-        alias: "drizzle",
-      },
-    ),
+    [TEST_SKILLS.DRIZZLE]: createMockSkill(TEST_SKILLS.DRIZZLE, "api/database", {
+      name: "Drizzle",
+      description: "TypeScript ORM",
+      alias: "drizzle",
+    }),
     // Testing (shared domain)
     [TEST_SKILLS.VITEST]: createMockSkill(TEST_SKILLS.VITEST, "testing", {
       name: "Vitest",
@@ -255,26 +224,22 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
  */
 const createBasicMatrix = (): MergedSkillsMatrix => {
   const skills = {
-    [TEST_SKILLS.REACT]: createMockSkill(
-      TEST_SKILLS.REACT,
-      TEST_CATEGORIES.FRAMEWORK,
-      { name: "React", description: "React framework" },
-    ),
-    [TEST_SKILLS.ZUSTAND]: createMockSkill(
-      TEST_SKILLS.ZUSTAND,
-      TEST_CATEGORIES.STATE,
-      { name: "Zustand", description: "State management" },
-    ),
-    [TEST_SKILLS.HONO]: createMockSkill(
-      TEST_SKILLS.HONO,
-      TEST_CATEGORIES.BACKEND_FRAMEWORK,
-      { name: "Hono", description: "Web framework" },
-    ),
-    [TEST_SKILLS.VITEST]: createMockSkill(
-      TEST_SKILLS.VITEST,
-      TEST_CATEGORIES.TESTING,
-      { name: "Vitest", description: "Testing framework" },
-    ),
+    [TEST_SKILLS.REACT]: createMockSkill(TEST_SKILLS.REACT, TEST_CATEGORIES.FRAMEWORK, {
+      name: "React",
+      description: "React framework",
+    }),
+    [TEST_SKILLS.ZUSTAND]: createMockSkill(TEST_SKILLS.ZUSTAND, TEST_CATEGORIES.STATE, {
+      name: "Zustand",
+      description: "State management",
+    }),
+    [TEST_SKILLS.HONO]: createMockSkill(TEST_SKILLS.HONO, TEST_CATEGORIES.BACKEND_FRAMEWORK, {
+      name: "Hono",
+      description: "Web framework",
+    }),
+    [TEST_SKILLS.VITEST]: createMockSkill(TEST_SKILLS.VITEST, TEST_CATEGORIES.TESTING, {
+      name: "Vitest",
+      description: "Testing framework",
+    }),
   };
 
   const suggestedStacks: ResolvedStack[] = [
@@ -369,11 +334,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -420,11 +381,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -455,11 +412,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={comprehensiveMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -496,11 +449,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={comprehensiveMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -536,11 +485,7 @@ describe("Wizard integration", () => {
       });
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={comprehensiveMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -590,11 +535,7 @@ describe("Wizard integration", () => {
       });
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={comprehensiveMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -628,11 +569,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={comprehensiveMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -665,11 +602,7 @@ describe("Wizard integration", () => {
       });
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={comprehensiveMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -718,11 +651,7 @@ describe("Wizard integration", () => {
       });
 
       const { lastFrame, unmount } = render(
-        <Wizard
-          matrix={comprehensiveMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -750,11 +679,7 @@ describe("Wizard integration", () => {
       });
 
       const { stdin, unmount } = render(
-        <Wizard
-          matrix={comprehensiveMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -787,11 +712,7 @@ describe("Wizard integration", () => {
       });
 
       const { stdin, unmount } = render(
-        <Wizard
-          matrix={comprehensiveMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -806,9 +727,7 @@ describe("Wizard integration", () => {
       expect(state.currentDomainIndex).toBe(0);
 
       // Web selections should be preserved
-      expect(state.domainSelections.web?.["web/framework"]).toContain(
-        "react",
-      );
+      expect(state.domainSelections.web?.["web/framework"]).toContain("react");
     });
   });
 
@@ -822,11 +741,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -884,11 +799,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={comprehensiveMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -933,11 +844,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -957,11 +864,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -997,11 +900,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -1028,11 +927,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -1061,11 +956,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -1084,11 +975,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -1115,11 +1002,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -1150,11 +1033,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -1187,11 +1066,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { lastFrame, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -1206,11 +1081,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { lastFrame, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -1228,11 +1099,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -1251,11 +1118,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -1275,11 +1138,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -1310,11 +1169,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { lastFrame, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -1338,11 +1193,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -1381,11 +1232,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -1418,11 +1265,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { lastFrame, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -1439,11 +1282,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -1464,11 +1303,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={comprehensiveMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={comprehensiveMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -1490,11 +1325,7 @@ describe("Wizard integration", () => {
       const onCancel = vi.fn();
 
       const { stdin, lastFrame, unmount } = render(
-        <Wizard
-          matrix={mockMatrix}
-          onComplete={onComplete}
-          onCancel={onCancel}
-        />,
+        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
       );
       cleanup = unmount;
 

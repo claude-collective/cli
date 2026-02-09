@@ -171,11 +171,7 @@ interface ResultItemProps {
   isFocused: boolean;
 }
 
-const ResultItem: React.FC<ResultItemProps> = ({
-  skill,
-  isSelected,
-  isFocused,
-}) => {
+const ResultItem: React.FC<ResultItemProps> = ({ skill, isSelected, isFocused }) => {
   const checkbox = isSelected ? CHECKBOX_CHECKED : CHECKBOX_UNCHECKED;
   const displayName = skill.alias || skill.id;
   const descriptionWidth = 30;
@@ -194,10 +190,7 @@ const ResultItem: React.FC<ResultItemProps> = ({
         <Text dimColor>{truncate(skill.sourceName, 12)}</Text>
       </Box>
       <Box width={24}>
-        <Text
-          color={isFocused ? "cyan" : undefined}
-          bold={isFocused || isSelected}
-        >
+        <Text color={isFocused ? "cyan" : undefined} bold={isFocused || isSelected}>
           {truncate(displayName, 22)}
         </Text>
       </Box>
@@ -219,10 +212,7 @@ const ResultsList: React.FC<ResultsListProps> = ({
   focusedIndex,
   scrollOffset,
 }) => {
-  const visibleResults = results.slice(
-    scrollOffset,
-    scrollOffset + MAX_VISIBLE_RESULTS,
-  );
+  const visibleResults = results.slice(scrollOffset, scrollOffset + MAX_VISIBLE_RESULTS);
 
   if (results.length === 0) {
     return (
@@ -260,17 +250,12 @@ interface StatusBarProps {
   selectedCount: number;
 }
 
-const StatusBar: React.FC<StatusBarProps> = ({
-  resultCount,
-  selectedCount,
-}) => {
+const StatusBar: React.FC<StatusBarProps> = ({ resultCount, selectedCount }) => {
   return (
     <Box paddingX={1}>
       <Text dimColor>
         {resultCount} result{resultCount !== 1 ? "s" : ""}
-        {selectedCount > 0 && (
-          <Text color="green"> | {selectedCount} selected</Text>
-        )}
+        {selectedCount > 0 && <Text color="green"> | {selectedCount} selected</Text>}
       </Text>
     </Box>
   );
@@ -340,10 +325,7 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
   }, [skills, query]);
 
   // Ensure focus stays in bounds when results change
-  const safeFocusedIndex = Math.min(
-    focusedIndex,
-    Math.max(0, filteredResults.length - 1),
-  );
+  const safeFocusedIndex = Math.min(focusedIndex, Math.max(0, filteredResults.length - 1));
 
   // Get the currently focused skill
   const focusedSkill = filteredResults[safeFocusedIndex];
@@ -397,9 +379,7 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
     // Enter to import selected
     if (key.return) {
       if (selectedIds.size > 0) {
-        const selectedSkills = filteredResults.filter((s) =>
-          selectedIds.has(s.id),
-        );
+        const selectedSkills = filteredResults.filter((s) => selectedIds.has(s.id));
         onComplete({
           selectedSkills,
           cancelled: false,
@@ -455,10 +435,7 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
           focusedIndex={safeFocusedIndex}
           scrollOffset={scrollOffset}
         />
-        <StatusBar
-          resultCount={filteredResults.length}
-          selectedCount={selectedIds.size}
-        />
+        <StatusBar resultCount={filteredResults.length} selectedCount={selectedIds.size} />
         {copiedMessage && (
           <Box paddingX={1}>
             <Text color="green">{copiedMessage}</Text>

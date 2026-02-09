@@ -131,7 +131,9 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
       allSkills = techNames.map((tech) => {
         const resolved = matrix.aliases[tech];
         if (!resolved && !matrix.skills[tech]) {
-          console.warn(`Warning: Technology '${tech}' could not be resolved to a skill ID — it may be missing from skill_aliases`);
+          console.warn(
+            `Warning: Technology '${tech}' could not be resolved to a skill ID — it may be missing from skill_aliases`,
+          );
         }
         return resolved || tech;
       });
@@ -180,7 +182,9 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
 
         const activeDomain = currentDomain || effectiveDomains[0] || "web";
         const parentDomain = getParentDomain(activeDomain, matrix);
-        const parentDomainSelections = parentDomain ? store.domainSelections[parentDomain] : undefined;
+        const parentDomainSelections = parentDomain
+          ? store.domainSelections[parentDomain]
+          : undefined;
 
         return (
           <StepBuild

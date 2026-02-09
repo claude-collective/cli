@@ -201,11 +201,7 @@ describe("validate command", () => {
         JSON.stringify({ name: "test-plugin", version: "1.0.0" }),
       );
 
-      const { error } = await runCliCommand([
-        "validate",
-        "--plugins",
-        "--verbose",
-      ]);
+      const { error } = await runCliCommand(["validate", "--plugins", "--verbose"]);
 
       // Should accept both flags together
       const output = error?.message || "";

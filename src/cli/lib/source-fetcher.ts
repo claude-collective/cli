@@ -18,11 +18,7 @@ export interface FetchResult {
 }
 
 export function sanitizeSourceForCache(source: string): string {
-  return source
-    .replace(/:/g, "-")
-    .replace(/[\/]/g, "-")
-    .replace(/--+/g, "-")
-    .replace(/^-|-$/g, "");
+  return source.replace(/:/g, "-").replace(/[\/]/g, "-").replace(/--+/g, "-").replace(/^-|-$/g, "");
 }
 
 function getCacheDir(source: string): string {
@@ -43,14 +39,9 @@ export async function fetchFromSource(
   return fetchFromRemoteSource(source, { forceRefresh, subdir });
 }
 
-async function fetchFromLocalSource(
-  source: string,
-  subdir?: string,
-): Promise<FetchResult> {
+async function fetchFromLocalSource(source: string, subdir?: string): Promise<FetchResult> {
   const fullPath = subdir ? path.join(source, subdir) : source;
-  const absolutePath = path.isAbsolute(fullPath)
-    ? fullPath
-    : path.resolve(process.cwd(), fullPath);
+  const absolutePath = path.isAbsolute(fullPath) ? fullPath : path.resolve(process.cwd(), fullPath);
 
   if (!(await directoryExists(absolutePath))) {
     throw new Error(`Local source not found: ${absolutePath}`);
@@ -65,10 +56,7 @@ async function fetchFromLocalSource(
   };
 }
 
-async function fetchFromRemoteSource(
-  source: string,
-  options: FetchOptions,
-): Promise<FetchResult> {
+async function fetchFromRemoteSource(source: string, options: FetchOptions): Promise<FetchResult> {
   const { forceRefresh = false, subdir } = options;
   const cacheDir = getCacheDir(source);
 
@@ -167,11 +155,7 @@ export async function fetchMarketplace(
     subdir: "", // Root of repo
   });
 
-  const marketplacePath = path.join(
-    result.path,
-    ".claude-plugin",
-    "marketplace.json",
-  );
+  const marketplacePath = path.join(result.path, ".claude-plugin", "marketplace.json");
 
   if (!(await directoryExists(path.dirname(marketplacePath)))) {
     throw new Error(

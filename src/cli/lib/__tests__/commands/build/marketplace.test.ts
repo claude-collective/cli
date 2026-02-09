@@ -35,9 +35,7 @@ describe("build:marketplace command", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    tempDir = await mkdtemp(
-      path.join(os.tmpdir(), "cc-build-marketplace-test-"),
-    );
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-build-marketplace-test-"));
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
@@ -80,11 +78,7 @@ describe("build:marketplace command", () => {
     it("should accept --plugins-dir flag with path", async () => {
       const pluginsPath = path.join(tempDir, "custom-plugins");
 
-      const { error } = await runCliCommand([
-        "build:marketplace",
-        "--plugins-dir",
-        pluginsPath,
-      ]);
+      const { error } = await runCliCommand(["build:marketplace", "--plugins-dir", pluginsPath]);
 
       // Should not error on --plugins-dir flag
       const output = error?.message || "";
@@ -95,11 +89,7 @@ describe("build:marketplace command", () => {
     it("should accept -p shorthand for plugins-dir", async () => {
       const pluginsPath = path.join(tempDir, "custom-plugins");
 
-      const { error } = await runCliCommand([
-        "build:marketplace",
-        "-p",
-        pluginsPath,
-      ]);
+      const { error } = await runCliCommand(["build:marketplace", "-p", pluginsPath]);
 
       // Should accept -p shorthand
       const output = error?.message || "";
@@ -109,11 +99,7 @@ describe("build:marketplace command", () => {
     it("should accept --output flag with path", async () => {
       const outputPath = path.join(tempDir, "marketplace.json");
 
-      const { error } = await runCliCommand([
-        "build:marketplace",
-        "--output",
-        outputPath,
-      ]);
+      const { error } = await runCliCommand(["build:marketplace", "--output", outputPath]);
 
       // Should not error on --output flag
       const output = error?.message || "";
@@ -124,11 +110,7 @@ describe("build:marketplace command", () => {
     it("should accept -o shorthand for output", async () => {
       const outputPath = path.join(tempDir, "marketplace.json");
 
-      const { error } = await runCliCommand([
-        "build:marketplace",
-        "-o",
-        outputPath,
-      ]);
+      const { error } = await runCliCommand(["build:marketplace", "-o", outputPath]);
 
       // Should accept -o shorthand
       const output = error?.message || "";
@@ -136,11 +118,7 @@ describe("build:marketplace command", () => {
     });
 
     it("should accept --name flag", async () => {
-      const { error } = await runCliCommand([
-        "build:marketplace",
-        "--name",
-        "my-marketplace",
-      ]);
+      const { error } = await runCliCommand(["build:marketplace", "--name", "my-marketplace"]);
 
       // Should not error on --name flag
       const output = error?.message || "";
@@ -148,11 +126,7 @@ describe("build:marketplace command", () => {
     });
 
     it("should accept --version flag", async () => {
-      const { error } = await runCliCommand([
-        "build:marketplace",
-        "--version",
-        "2.0.0",
-      ]);
+      const { error } = await runCliCommand(["build:marketplace", "--version", "2.0.0"]);
 
       // Should not error on --version flag
       const output = error?.message || "";
@@ -172,11 +146,7 @@ describe("build:marketplace command", () => {
     });
 
     it("should accept --owner-name flag", async () => {
-      const { error } = await runCliCommand([
-        "build:marketplace",
-        "--owner-name",
-        "Test Owner",
-      ]);
+      const { error } = await runCliCommand(["build:marketplace", "--owner-name", "Test Owner"]);
 
       // Should not error on --owner-name flag
       const output = error?.message || "";

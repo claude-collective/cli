@@ -154,9 +154,7 @@ describe("[Feature/Component Name]", () => {
 const mockApi = {
   success: { data: { id: 1, name: "Test" } },
   error: { error: { message: "Failed" } },
-  timeout: new Promise((_, reject) =>
-    setTimeout(() => reject(new Error("Timeout")), 100),
-  ),
+  timeout: new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 100)),
 };
 ```
 

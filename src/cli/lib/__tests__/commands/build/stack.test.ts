@@ -63,11 +63,7 @@ describe("build:stack command", () => {
 
   describe("flag validation", () => {
     it("should accept --stack flag", async () => {
-      const { error } = await runCliCommand([
-        "build:stack",
-        "--stack",
-        "nonexistent-stack",
-      ]);
+      const { error } = await runCliCommand(["build:stack", "--stack", "nonexistent-stack"]);
 
       // Should not error on --stack flag itself
       const output = error?.message || "";
@@ -95,13 +91,7 @@ describe("build:stack command", () => {
     it("should accept -o shorthand for output-dir", async () => {
       const outputPath = path.join(tempDir, "output");
 
-      const { error } = await runCliCommand([
-        "build:stack",
-        "--stack",
-        "test",
-        "-o",
-        outputPath,
-      ]);
+      const { error } = await runCliCommand(["build:stack", "--stack", "test", "-o", outputPath]);
 
       // Should accept -o shorthand
       const output = error?.message || "";
@@ -123,12 +113,7 @@ describe("build:stack command", () => {
     });
 
     it("should accept --refresh flag", async () => {
-      const { error } = await runCliCommand([
-        "build:stack",
-        "--stack",
-        "test",
-        "--refresh",
-      ]);
+      const { error } = await runCliCommand(["build:stack", "--stack", "test", "--refresh"]);
 
       // Should accept --refresh flag
       const output = error?.message || "";
@@ -136,12 +121,7 @@ describe("build:stack command", () => {
     });
 
     it("should accept --verbose flag", async () => {
-      const { error } = await runCliCommand([
-        "build:stack",
-        "--stack",
-        "test",
-        "--verbose",
-      ]);
+      const { error } = await runCliCommand(["build:stack", "--stack", "test", "--verbose"]);
 
       // Should not error on --verbose flag
       const output = error?.message || "";
@@ -149,12 +129,7 @@ describe("build:stack command", () => {
     });
 
     it("should accept -v shorthand for verbose", async () => {
-      const { error } = await runCliCommand([
-        "build:stack",
-        "--stack",
-        "test",
-        "-v",
-      ]);
+      const { error } = await runCliCommand(["build:stack", "--stack", "test", "-v"]);
 
       // Should accept -v shorthand
       const output = error?.message || "";
@@ -237,11 +212,7 @@ describe("build:stack command", () => {
 
   describe("error handling", () => {
     it("should error when stack not found", async () => {
-      const { error } = await runCliCommand([
-        "build:stack",
-        "--stack",
-        "nonexistent-stack-xyz",
-      ]);
+      const { error } = await runCliCommand(["build:stack", "--stack", "nonexistent-stack-xyz"]);
 
       // Should exit with error when stack not found
       expect(error).toBeDefined();

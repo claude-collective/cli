@@ -82,11 +82,7 @@ describe("outdated command", () => {
     });
 
     it("should accept --source flag", async () => {
-      const { error } = await runCliCommand([
-        "outdated",
-        "--source",
-        "/some/path",
-      ]);
+      const { error } = await runCliCommand(["outdated", "--source", "/some/path"]);
 
       // Should accept --source flag
       const output = error?.message || "";
@@ -117,12 +113,7 @@ describe("outdated command", () => {
     });
 
     it("should accept --json with --source together", async () => {
-      const { error } = await runCliCommand([
-        "outdated",
-        "--json",
-        "--source",
-        "/some/path",
-      ]);
+      const { error } = await runCliCommand(["outdated", "--json", "--source", "/some/path"]);
 
       // Should accept both flags
       const output = error?.message || "";
@@ -188,12 +179,7 @@ author: "@test"
   describe("with forked skills", () => {
     beforeEach(async () => {
       // Create local skills directory with forked_from metadata
-      const skillsDir = path.join(
-        projectDir,
-        ".claude",
-        "skills",
-        "forked-skill",
-      );
+      const skillsDir = path.join(projectDir, ".claude", "skills", "forked-skill");
       await mkdir(skillsDir, { recursive: true });
 
       await writeFile(
@@ -240,11 +226,7 @@ forked_from:
     });
 
     it("should accept --source flag with forked skills", async () => {
-      const { error } = await runCliCommand([
-        "outdated",
-        "--source",
-        "/nonexistent/source",
-      ]);
+      const { error } = await runCliCommand(["outdated", "--source", "/nonexistent/source"]);
 
       // Should not error on flag parsing
       const output = error?.message || "";
@@ -258,12 +240,7 @@ forked_from:
 
   describe("combined flags", () => {
     it("should accept --json with --source", async () => {
-      const { error } = await runCliCommand([
-        "outdated",
-        "--json",
-        "--source",
-        "/custom/path",
-      ]);
+      const { error } = await runCliCommand(["outdated", "--json", "--source", "/custom/path"]);
 
       // Should accept both flags
       const output = error?.message || "";
@@ -271,12 +248,7 @@ forked_from:
     });
 
     it("should accept -s with --json", async () => {
-      const { error } = await runCliCommand([
-        "outdated",
-        "-s",
-        "/custom/path",
-        "--json",
-      ]);
+      const { error } = await runCliCommand(["outdated", "-s", "/custom/path", "--json"]);
 
       // Should accept both flags
       const output = error?.message || "";
@@ -293,10 +265,7 @@ forked_from:
       // Create local skills so command proceeds to source loading
       const skillsDir = path.join(projectDir, ".claude", "skills", "test");
       await mkdir(skillsDir, { recursive: true });
-      await writeFile(
-        path.join(skillsDir, "SKILL.md"),
-        "---\nname: test\n---\n# Test",
-      );
+      await writeFile(path.join(skillsDir, "SKILL.md"), "---\nname: test\n---\n# Test");
       await writeFile(
         path.join(skillsDir, "metadata.yaml"),
         `forked_from:\n  skill_id: "react (@vince)"\n  content_hash: "abc"\n  date: "2025-01-01"`,

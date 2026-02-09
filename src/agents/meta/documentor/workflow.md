@@ -562,11 +562,7 @@ export type ButtonProps = React.ComponentProps<"button"> & {
   size?: "sm" | "lg";
 };
 
-export const Button = ({
-  variant = "primary",
-  size = "sm",
-  ...props
-}: ButtonProps) => {
+export const Button = ({ variant = "primary", size = "sm", ...props }: ButtonProps) => {
   // ...
 };
 ```

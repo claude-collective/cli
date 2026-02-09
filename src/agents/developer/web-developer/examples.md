@@ -53,12 +53,7 @@ import { useThemeStore } from "../stores/ThemeStore";
 export function DarkModeToggle({ className }: { className?: string }) {
   const { darkMode, toggleDarkMode } = useThemeStore();
   return (
-    <Switch
-      label="Dark mode"
-      checked={darkMode}
-      onChange={toggleDarkMode}
-      className={className}
-    />
+    <Switch label="Dark mode" checked={darkMode} onChange={toggleDarkMode} className={className} />
   );
 }
 ```

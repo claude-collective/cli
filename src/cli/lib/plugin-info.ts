@@ -56,9 +56,7 @@ export async function getPluginInfo(): Promise<PluginInfo | null> {
 
   if (await directoryExists(agentsDir)) {
     const agents = await readdir(agentsDir, { withFileTypes: true });
-    agentCount = agents.filter(
-      (a) => a.isFile() && a.name.endsWith(".md"),
-    ).length;
+    agentCount = agents.filter((a) => a.isFile() && a.name.endsWith(".md")).length;
   }
 
   return {
@@ -111,9 +109,7 @@ export async function getInstallationInfo(): Promise<InstallationInfo | null> {
       const agents = await readdir(installation.agentsDir, {
         withFileTypes: true,
       });
-      agentCount = agents.filter(
-        (a) => a.isFile() && a.name.endsWith(".md"),
-      ).length;
+      agentCount = agents.filter((a) => a.isFile() && a.name.endsWith(".md")).length;
     } catch {
       // Ignore errors
     }
@@ -151,8 +147,7 @@ export async function getInstallationInfo(): Promise<InstallationInfo | null> {
 
 export function formatInstallationDisplay(info: InstallationInfo): string {
   const modeLabel = info.mode === "local" ? "Local" : "Plugin";
-  const versionDisplay =
-    info.mode === "local" ? "(local mode)" : `v${info.version}`;
+  const versionDisplay = info.mode === "local" ? "(local mode)" : `v${info.version}`;
 
   return `Installation: ${info.name} ${versionDisplay}
   Mode:    ${modeLabel}

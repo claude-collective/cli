@@ -489,11 +489,7 @@ $ cc search zustand --format list | xargs -I {} cc info {}
 <SearchApp>
   <Header skillCount={150} />
   <SearchInput value={query} onChange={setQuery} />
-  <ResultsList
-    results={filteredResults}
-    selectedIndex={selected}
-    onSelect={handleSelect}
-  />
+  <ResultsList results={filteredResults} selectedIndex={selected} onSelect={handleSelect} />
   {showPreview && <SkillPreview skill={selectedSkill} />}
   <Footer shortcuts={KEYBOARD_SHORTCUTS} matchCount={filteredResults.length} />
 </SearchApp>

@@ -23,13 +23,7 @@ describe("SectionProgress component", () => {
   describe("rendering", () => {
     it("should render label and current value", () => {
       const { lastFrame, unmount } = render(
-        <SectionProgress
-          label="Domain"
-          current="Web"
-          index={1}
-          total={2}
-          next="API"
-        />,
+        <SectionProgress label="Domain" current="Web" index={1} total={2} next="API" />,
       );
       cleanup = unmount;
 
@@ -40,13 +34,7 @@ describe("SectionProgress component", () => {
 
     it("should show correct index/total format", () => {
       const { lastFrame, unmount } = render(
-        <SectionProgress
-          label="Skill"
-          current="react"
-          index={1}
-          total={8}
-          next="zustand"
-        />,
+        <SectionProgress label="Skill" current="react" index={1} total={8} next="zustand" />,
       );
       cleanup = unmount;
 
@@ -56,13 +44,7 @@ describe("SectionProgress component", () => {
 
     it("should show different index/total values", () => {
       const { lastFrame, unmount } = render(
-        <SectionProgress
-          label="Domain"
-          current="API"
-          index={3}
-          total={4}
-          next="Mobile"
-        />,
+        <SectionProgress label="Domain" current="API" index={3} total={4} next="Mobile" />,
       );
       cleanup = unmount;
 
@@ -78,13 +60,7 @@ describe("SectionProgress component", () => {
   describe("next item display", () => {
     it("should show 'Next: X' when not last item", () => {
       const { lastFrame, unmount } = render(
-        <SectionProgress
-          label="Domain"
-          current="Web"
-          index={1}
-          total={2}
-          next="API"
-        />,
+        <SectionProgress label="Domain" current="Web" index={1} total={2} next="API" />,
       );
       cleanup = unmount;
 
@@ -124,13 +100,7 @@ describe("SectionProgress component", () => {
       // Note: ink-testing-library doesn't expose ANSI codes directly in lastFrame()
       // but we verify the text content is present and structure is correct
       const { lastFrame, unmount } = render(
-        <SectionProgress
-          label="Domain"
-          current="Web"
-          index={1}
-          total={2}
-          next="API"
-        />,
+        <SectionProgress label="Domain" current="Web" index={1} total={2} next="API" />,
       );
       cleanup = unmount;
 
@@ -141,13 +111,7 @@ describe("SectionProgress component", () => {
 
     it("should render current value with cyan color", () => {
       const { lastFrame, unmount } = render(
-        <SectionProgress
-          label="Skill"
-          current="react"
-          index={1}
-          total={3}
-          next="vue"
-        />,
+        <SectionProgress label="Skill" current="react" index={1} total={3} next="vue" />,
       );
       cleanup = unmount;
 
@@ -158,13 +122,7 @@ describe("SectionProgress component", () => {
 
     it("should render index/total as dim text", () => {
       const { lastFrame, unmount } = render(
-        <SectionProgress
-          label="Domain"
-          current="CLI"
-          index={2}
-          total={3}
-          next="Mobile"
-        />,
+        <SectionProgress label="Domain" current="CLI" index={2} total={3} next="Mobile" />,
       );
       cleanup = unmount;
 
@@ -216,13 +174,7 @@ describe("SectionProgress component", () => {
     it("should handle empty next value gracefully", () => {
       // When next is undefined (last item case)
       const { lastFrame, unmount } = render(
-        <SectionProgress
-          label="Domain"
-          current="Mobile"
-          index={4}
-          total={4}
-          next={undefined}
-        />,
+        <SectionProgress label="Domain" current="Mobile" index={4} total={4} next={undefined} />,
       );
       cleanup = unmount;
 
@@ -240,13 +192,7 @@ describe("SectionProgress component", () => {
     it("should match multi-domain Build step format", () => {
       // Domain: Web                                         [1/2] Next: API
       const { lastFrame, unmount } = render(
-        <SectionProgress
-          label="Domain"
-          current="Web"
-          index={1}
-          total={2}
-          next="API"
-        />,
+        <SectionProgress label="Domain" current="Web" index={1} total={2} next="API" />,
       );
       cleanup = unmount;
 
@@ -260,13 +206,7 @@ describe("SectionProgress component", () => {
     it("should match Refine step format", () => {
       // Skill: react                                   [1/8] Next: zustand
       const { lastFrame, unmount } = render(
-        <SectionProgress
-          label="Skill"
-          current="react"
-          index={1}
-          total={8}
-          next="zustand"
-        />,
+        <SectionProgress label="Skill" current="react" index={1} total={8} next="zustand" />,
       );
       cleanup = unmount;
 

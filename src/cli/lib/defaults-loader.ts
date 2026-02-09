@@ -93,10 +93,7 @@ function isValidDefaultMappings(obj: unknown): obj is DefaultMappings {
   const mappings = obj as Record<string, unknown>;
 
   // Validate skill_to_agents
-  if (
-    typeof mappings.skill_to_agents !== "object" ||
-    mappings.skill_to_agents === null
-  ) {
+  if (typeof mappings.skill_to_agents !== "object" || mappings.skill_to_agents === null) {
     return false;
   }
 
@@ -108,10 +105,7 @@ function isValidDefaultMappings(obj: unknown): obj is DefaultMappings {
   }
 
   // Validate preloaded_skills
-  if (
-    typeof mappings.preloaded_skills !== "object" ||
-    mappings.preloaded_skills === null
-  ) {
+  if (typeof mappings.preloaded_skills !== "object" || mappings.preloaded_skills === null) {
     return false;
   }
 
@@ -123,10 +117,7 @@ function isValidDefaultMappings(obj: unknown): obj is DefaultMappings {
   }
 
   // Validate subcategory_aliases
-  if (
-    typeof mappings.subcategory_aliases !== "object" ||
-    mappings.subcategory_aliases === null
-  ) {
+  if (typeof mappings.subcategory_aliases !== "object" || mappings.subcategory_aliases === null) {
     return false;
   }
 

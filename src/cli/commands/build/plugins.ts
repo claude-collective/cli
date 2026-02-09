@@ -13,8 +13,7 @@ import { EXIT_CODES } from "../../lib/exit-codes";
 const DEFAULT_OUTPUT_DIR = "dist/plugins";
 
 export default class BuildPlugins extends BaseCommand {
-  static summary =
-    "Build skills into standalone plugins (requires skills repo)";
+  static summary = "Build skills into standalone plugins (requires skills repo)";
 
   static description =
     "Build skills into standalone plugins. By default, compiles all skills. Use --skill to compile a specific skill only.";

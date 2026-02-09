@@ -75,11 +75,7 @@ describe("build:plugins command", () => {
     it("should accept --skills-dir flag with path", async () => {
       const skillsPath = path.join(tempDir, "custom-skills");
 
-      const { error } = await runCliCommand([
-        "build:plugins",
-        "--skills-dir",
-        skillsPath,
-      ]);
+      const { error } = await runCliCommand(["build:plugins", "--skills-dir", skillsPath]);
 
       // Should not error on --skills-dir flag
       const output = error?.message || "";
@@ -90,11 +86,7 @@ describe("build:plugins command", () => {
     it("should accept -s shorthand for skills-dir", async () => {
       const skillsPath = path.join(tempDir, "custom-skills");
 
-      const { error } = await runCliCommand([
-        "build:plugins",
-        "-s",
-        skillsPath,
-      ]);
+      const { error } = await runCliCommand(["build:plugins", "-s", skillsPath]);
 
       // Should accept -s shorthand
       const output = error?.message || "";
@@ -104,11 +96,7 @@ describe("build:plugins command", () => {
     it("should accept --output-dir flag with path", async () => {
       const outputPath = path.join(tempDir, "output");
 
-      const { error } = await runCliCommand([
-        "build:plugins",
-        "--output-dir",
-        outputPath,
-      ]);
+      const { error } = await runCliCommand(["build:plugins", "--output-dir", outputPath]);
 
       // Should not error on --output-dir flag
       const output = error?.message || "";
@@ -119,11 +107,7 @@ describe("build:plugins command", () => {
     it("should accept -o shorthand for output-dir", async () => {
       const outputPath = path.join(tempDir, "output");
 
-      const { error } = await runCliCommand([
-        "build:plugins",
-        "-o",
-        outputPath,
-      ]);
+      const { error } = await runCliCommand(["build:plugins", "-o", outputPath]);
 
       // Should accept -o shorthand
       const output = error?.message || "";
@@ -131,11 +115,7 @@ describe("build:plugins command", () => {
     });
 
     it("should accept --skill flag", async () => {
-      const { error } = await runCliCommand([
-        "build:plugins",
-        "--skill",
-        "web/framework/react",
-      ]);
+      const { error } = await runCliCommand(["build:plugins", "--skill", "web/framework/react"]);
 
       // Should not error on --skill flag
       const output = error?.message || "";
@@ -217,12 +197,7 @@ describe("build:plugins command", () => {
     });
 
     it("should accept --skill with --verbose", async () => {
-      const { error } = await runCliCommand([
-        "build:plugins",
-        "--skill",
-        "react",
-        "--verbose",
-      ]);
+      const { error } = await runCliCommand(["build:plugins", "--skill", "react", "--verbose"]);
 
       // Should accept both flags
       const output = error?.message || "";
@@ -248,11 +223,7 @@ describe("build:plugins command", () => {
     });
 
     it("should error when specific skill not found", async () => {
-      const { error } = await runCliCommand([
-        "build:plugins",
-        "--skill",
-        "nonexistent-skill-xyz",
-      ]);
+      const { error } = await runCliCommand(["build:plugins", "--skill", "nonexistent-skill-xyz"]);
 
       // Should exit with error when skill not found
       expect(error).toBeDefined();

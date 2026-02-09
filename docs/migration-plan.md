@@ -444,8 +444,7 @@ import { getPluginInfo, formatPluginDisplay } from "../../cli/lib/plugin-info";
 
 export class List extends Command {
   static summary = "Show plugin information";
-  static description =
-    "Display details about the installed Claude Collective plugin";
+  static description = "Display details about the installed Claude Collective plugin";
   static aliases = ["ls"];
 
   async run(): Promise<void> {

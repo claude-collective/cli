@@ -2,10 +2,7 @@ import { Args, Flags } from "@oclif/core";
 import path from "path";
 import { BaseCommand } from "../base-command.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
-import {
-  validateAllSchemas,
-  printValidationResults,
-} from "../lib/schema-validator.js";
+import { validateAllSchemas, printValidationResults } from "../lib/schema-validator.js";
 import {
   validatePlugin,
   validateAllPlugins,
@@ -13,8 +10,7 @@ import {
 } from "../lib/plugin-validator.js";
 
 export default class Validate extends BaseCommand {
-  static summary =
-    "Validate YAML files against schemas or validate compiled plugins";
+  static summary = "Validate YAML files against schemas or validate compiled plugins";
   static description =
     "Validates skill/agent YAML files against JSON schemas, or validates compiled plugin structure and content. " +
     "Without arguments, validates all YAML files in the current directory against their schemas. " +
@@ -94,10 +90,7 @@ export default class Validate extends BaseCommand {
     }
   }
 
-  private async validateAllPluginsInDirectory(
-    targetPath: string,
-    verbose: boolean,
-  ): Promise<void> {
+  private async validateAllPluginsInDirectory(targetPath: string, verbose: boolean): Promise<void> {
     this.log("");
     this.log(`Validating all plugins in: ${targetPath}`);
     this.log("");
@@ -137,10 +130,7 @@ export default class Validate extends BaseCommand {
     }
   }
 
-  private async validateSinglePlugin(
-    targetPath: string,
-    verbose: boolean,
-  ): Promise<void> {
+  private async validateSinglePlugin(targetPath: string, verbose: boolean): Promise<void> {
     this.log("");
     this.log(`Validating plugin: ${targetPath}`);
     this.log("");
@@ -148,9 +138,7 @@ export default class Validate extends BaseCommand {
     try {
       const result = await validatePlugin(targetPath);
 
-      const summary = result.valid
-        ? "Done: Plugin is valid"
-        : "Done: Plugin has errors";
+      const summary = result.valid ? "Done: Plugin is valid" : "Done: Plugin has errors";
 
       this.log(summary);
 

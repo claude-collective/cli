@@ -32,7 +32,11 @@ const INITIAL_FOCUSED_INDEX = 0;
 /** Available domains for scratch path */
 const AVAILABLE_DOMAINS = [
   { id: "web", label: "Web", description: "Frontend web applications" },
-  { id: "web-extras", label: "Web Extras", description: "Animation, files, realtime, PWA, accessibility" },
+  {
+    id: "web-extras",
+    label: "Web Extras",
+    description: "Animation, files, realtime, PWA, accessibility",
+  },
   { id: "api", label: "API", description: "Backend APIs and services" },
   { id: "cli", label: "CLI", description: "Command-line tools" },
   { id: "mobile", label: "Mobile", description: "Mobile applications" },

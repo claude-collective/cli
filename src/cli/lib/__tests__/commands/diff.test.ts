@@ -173,12 +173,7 @@ author: "@test"
   describe("with forked skills", () => {
     beforeEach(async () => {
       // Create local skills directory with forked_from metadata
-      const skillsDir = path.join(
-        projectDir,
-        ".claude",
-        "skills",
-        "forked-skill",
-      );
+      const skillsDir = path.join(projectDir, ".claude", "skills", "forked-skill");
       await mkdir(skillsDir, { recursive: true });
 
       await writeFile(
@@ -218,11 +213,7 @@ forked_from:
     });
 
     it("should accept --source flag with forked skills", async () => {
-      const { error } = await runCliCommand([
-        "diff",
-        "--source",
-        "/nonexistent/source",
-      ]);
+      const { error } = await runCliCommand(["diff", "--source", "/nonexistent/source"]);
 
       // Should not error on flag parsing
       const output = error?.message || "";
@@ -236,12 +227,7 @@ forked_from:
 
   describe("combined flags", () => {
     it("should accept --quiet with --source", async () => {
-      const { error } = await runCliCommand([
-        "diff",
-        "--quiet",
-        "--source",
-        "/custom/path",
-      ]);
+      const { error } = await runCliCommand(["diff", "--quiet", "--source", "/custom/path"]);
 
       // Should accept both flags
       const output = error?.message || "";
@@ -249,12 +235,7 @@ forked_from:
     });
 
     it("should accept -q with -s", async () => {
-      const { error } = await runCliCommand([
-        "diff",
-        "-q",
-        "-s",
-        "/custom/path",
-      ]);
+      const { error } = await runCliCommand(["diff", "-q", "-s", "/custom/path"]);
 
       // Should accept both shorthand flags
       const output = error?.message || "";
@@ -285,20 +266,13 @@ forked_from:
       // Create local skills directory so command proceeds to source loading
       const skillsDir = path.join(projectDir, ".claude", "skills", "test");
       await mkdir(skillsDir, { recursive: true });
-      await writeFile(
-        path.join(skillsDir, "SKILL.md"),
-        "---\nname: test\n---\n# Test",
-      );
+      await writeFile(path.join(skillsDir, "SKILL.md"), "---\nname: test\n---\n# Test");
       await writeFile(
         path.join(skillsDir, "metadata.yaml"),
         `forked_from:\n  skill_id: "react (@vince)"\n  content_hash: "abc"\n  date: "2025-01-01"`,
       );
 
-      const { error } = await runCliCommand([
-        "diff",
-        "--source",
-        "/definitely/not/real/path/xyz",
-      ]);
+      const { error } = await runCliCommand(["diff", "--source", "/definitely/not/real/path/xyz"]);
 
       // Should error but not crash
       expect(error).toBeDefined();

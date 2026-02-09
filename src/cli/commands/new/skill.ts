@@ -100,11 +100,7 @@ Add your patterns here.
 /**
  * Generates the metadata.yaml content.
  */
-export function generateMetadataYaml(
-  name: string,
-  author: string,
-  category: string,
-): string {
+export function generateMetadataYaml(name: string, author: string, category: string): string {
   const titleName = toTitleCase(name);
 
   return `# yaml-language-server: $schema=https://raw.githubusercontent.com/claude-collective/skills/main/schemas/metadata.schema.json
@@ -123,8 +119,7 @@ tags:
 
 export default class NewSkill extends BaseCommand {
   static summary = "Create a new local skill with proper structure";
-  static description =
-    "Create a new local skill scaffold with SKILL.md and metadata.yaml files";
+  static description = "Create a new local skill scaffold with SKILL.md and metadata.yaml files";
 
   static args = {
     name: Args.string({
@@ -180,10 +175,9 @@ export default class NewSkill extends BaseCommand {
     // Check if directory already exists
     if (await directoryExists(skillDir)) {
       if (!flags.force) {
-        this.error(
-          `Skill directory already exists: ${skillDir}\nUse --force to overwrite.`,
-          { exit: EXIT_CODES.ERROR },
-        );
+        this.error(`Skill directory already exists: ${skillDir}\nUse --force to overwrite.`, {
+          exit: EXIT_CODES.ERROR,
+        });
       }
       this.warn(`Overwriting existing skill at ${skillDir}`);
     }
@@ -217,15 +211,12 @@ export default class NewSkill extends BaseCommand {
       this.logSuccess(`Created SKILL.md at ${skillMdPath}`);
       this.logSuccess(`Created metadata.yaml at ${metadataPath}`);
       this.log("");
-      this.log(
-        "Skill created successfully! Run 'cc compile' to include it in your agents.",
-      );
+      this.log("Skill created successfully! Run 'cc compile' to include it in your agents.");
       this.log("");
     } catch (error) {
-      this.error(
-        error instanceof Error ? error.message : "Unknown error occurred",
-        { exit: EXIT_CODES.ERROR },
-      );
+      this.error(error instanceof Error ? error.message : "Unknown error occurred", {
+        exit: EXIT_CODES.ERROR,
+      });
     }
   }
 }

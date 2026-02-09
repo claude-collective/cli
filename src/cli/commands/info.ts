@@ -4,11 +4,7 @@ import { BaseCommand } from "../base-command.js";
 import { loadSkillsMatrixFromSource } from "../lib/source-loader.js";
 import { discoverLocalSkills } from "../lib/local-skill-loader.js";
 import { fileExists, readFile } from "../utils/fs.js";
-import type {
-  ResolvedSkill,
-  SkillRelation,
-  SkillRequirement,
-} from "../types-matrix.js";
+import type { ResolvedSkill, SkillRelation, SkillRequirement } from "../types-matrix.js";
 
 /**
  * Maximum number of lines to show in content preview
@@ -61,9 +57,7 @@ function getPreviewLines(content: string, maxLines: number): string[] {
     // Include non-empty lines or blank lines after content has started
     if (line.trim() || result.length > 0) {
       const truncated =
-        line.length > MAX_LINE_LENGTH
-          ? line.slice(0, MAX_LINE_LENGTH - 3) + "..."
-          : line;
+        line.length > MAX_LINE_LENGTH ? line.slice(0, MAX_LINE_LENGTH - 3) + "..." : line;
       result.push(truncated);
     }
   }
@@ -211,11 +205,7 @@ export default class Info extends BaseCommand {
 
       if (!skill) {
         // Skill not found - show error with suggestions
-        const suggestions = findSuggestions(
-          matrix.skills,
-          args.skill,
-          MAX_SUGGESTIONS,
-        );
+        const suggestions = findSuggestions(matrix.skills, args.skill, MAX_SUGGESTIONS);
 
         this.log("");
         this.error(`Skill "${args.skill}" not found.`, { exit: false });
@@ -263,9 +253,7 @@ export default class Info extends BaseCommand {
 
           if (previewLines.length > 0) {
             this.log("");
-            this.log(
-              `--- Content Preview (first ${CONTENT_PREVIEW_LINES} lines) ---`,
-            );
+            this.log(`--- Content Preview (first ${CONTENT_PREVIEW_LINES} lines) ---`);
             for (const line of previewLines) {
               this.log(line);
             }

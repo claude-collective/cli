@@ -42,9 +42,7 @@ describe("source-fetcher", () => {
     it("should throw error for non-existent local path", async () => {
       const nonExistent = path.join(tempDir, "does-not-exist");
 
-      await expect(fetchFromSource(nonExistent)).rejects.toThrow(
-        /Local source not found/,
-      );
+      await expect(fetchFromSource(nonExistent)).rejects.toThrow(/Local source not found/);
     });
 
     it("should handle subdir option for local paths", async () => {

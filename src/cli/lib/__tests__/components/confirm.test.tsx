@@ -35,11 +35,7 @@ describe("Confirm component", () => {
   describe("rendering", () => {
     it("should render the message", () => {
       const { lastFrame, unmount } = render(
-        <Confirm
-          message="Do you want to proceed?"
-          onConfirm={() => {}}
-          onCancel={() => {}}
-        />,
+        <Confirm message="Do you want to proceed?" onConfirm={() => {}} onCancel={() => {}} />,
       );
       cleanup = unmount;
 
@@ -49,11 +45,7 @@ describe("Confirm component", () => {
 
     it("should show y/n prompt", () => {
       const { lastFrame, unmount } = render(
-        <Confirm
-          message="Continue?"
-          onConfirm={() => {}}
-          onCancel={() => {}}
-        />,
+        <Confirm message="Continue?" onConfirm={() => {}} onCancel={() => {}} />,
       );
       cleanup = unmount;
 
@@ -64,12 +56,7 @@ describe("Confirm component", () => {
 
     it("should show Y/n when default is confirm (true)", () => {
       const { lastFrame, unmount } = render(
-        <Confirm
-          message="Confirm?"
-          onConfirm={() => {}}
-          onCancel={() => {}}
-          defaultValue={true}
-        />,
+        <Confirm message="Confirm?" onConfirm={() => {}} onCancel={() => {}} defaultValue={true} />,
       );
       cleanup = unmount;
 
@@ -103,11 +90,7 @@ describe("Confirm component", () => {
       const onCancel = vi.fn();
 
       const { stdin, unmount } = render(
-        <Confirm
-          message="Confirm?"
-          onConfirm={onConfirm}
-          onCancel={onCancel}
-        />,
+        <Confirm message="Confirm?" onConfirm={onConfirm} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -126,11 +109,7 @@ describe("Confirm component", () => {
       const onCancel = vi.fn();
 
       const { stdin, unmount } = render(
-        <Confirm
-          message="Confirm?"
-          onConfirm={onConfirm}
-          onCancel={onCancel}
-        />,
+        <Confirm message="Confirm?" onConfirm={onConfirm} onCancel={onCancel} />,
       );
       cleanup = unmount;
 
@@ -193,11 +172,7 @@ describe("Confirm component", () => {
       const onConfirm = vi.fn();
 
       const { stdin, unmount } = render(
-        <Confirm
-          message="Confirm?"
-          onConfirm={onConfirm}
-          onCancel={() => {}}
-        />,
+        <Confirm message="Confirm?" onConfirm={onConfirm} onCancel={() => {}} />,
       );
       cleanup = unmount;
 
@@ -244,12 +219,7 @@ describe("Confirm component", () => {
 
     it("should render with specified default value of true", () => {
       const { lastFrame, unmount } = render(
-        <Confirm
-          message="Confirm?"
-          onConfirm={() => {}}
-          onCancel={() => {}}
-          defaultValue={true}
-        />,
+        <Confirm message="Confirm?" onConfirm={() => {}} onCancel={() => {}} defaultValue={true} />,
       );
       cleanup = unmount;
 

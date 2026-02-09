@@ -7,10 +7,7 @@ export interface FetchSkillsOptions {
   forceRefresh?: boolean;
 }
 
-function resolvePluginSource(
-  plugin: MarketplacePlugin,
-  _marketplace: Marketplace,
-): string {
+function resolvePluginSource(plugin: MarketplacePlugin, _marketplace: Marketplace): string {
   if (typeof plugin.source === "object" && plugin.source.url) {
     return plugin.source.url;
   }
@@ -69,10 +66,7 @@ export async function fetchSkills(
   return copiedSkills;
 }
 
-async function findSkillPath(
-  baseDir: string,
-  skillId: string,
-): Promise<string | null> {
+async function findSkillPath(baseDir: string, skillId: string): Promise<string | null> {
   if (!(await directoryExists(baseDir))) {
     verbose(`Skills base directory not found: ${baseDir}`);
     return null;
@@ -99,14 +93,8 @@ async function findSkillPath(
 
   const skillNameWithoutAuthor = skillId.replace(/\s*\(@\w+\)$/, "");
   if (skillNameWithoutAuthor !== skillId) {
-    const escapedName = skillNameWithoutAuthor.replace(
-      /[.*+?^${}()|[\]\\]/g,
-      "\\$&",
-    );
-    const matchesWithoutAuthor = await glob(
-      `**/${escapedName}*/SKILL.md`,
-      baseDir,
-    );
+    const escapedName = skillNameWithoutAuthor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const matchesWithoutAuthor = await glob(`**/${escapedName}*/SKILL.md`, baseDir);
     if (matchesWithoutAuthor.length > 0) {
       return path.join(baseDir, path.dirname(matchesWithoutAuthor[0]));
     }

@@ -91,12 +91,7 @@ describe("info command", () => {
     });
 
     it("should accept --source flag", async () => {
-      const { error } = await runCliCommand([
-        "info",
-        "react",
-        "--source",
-        "/nonexistent/path",
-      ]);
+      const { error } = await runCliCommand(["info", "react", "--source", "/nonexistent/path"]);
 
       // Should not error on --source flag
       const output = error?.message || "";
@@ -105,12 +100,7 @@ describe("info command", () => {
     });
 
     it("should accept -s shorthand for source", async () => {
-      const { error } = await runCliCommand([
-        "info",
-        "react",
-        "-s",
-        "/nonexistent/path",
-      ]);
+      const { error } = await runCliCommand(["info", "react", "-s", "/nonexistent/path"]);
 
       // Should not error on shorthand flag
       const output = error?.message || "";
@@ -182,13 +172,7 @@ describe("info command", () => {
     });
 
     it("should accept -s with --preview", async () => {
-      const { error } = await runCliCommand([
-        "info",
-        "react",
-        "--preview",
-        "-s",
-        "/some/path",
-      ]);
+      const { error } = await runCliCommand(["info", "react", "--preview", "-s", "/some/path"]);
 
       // Should accept both flags
       const output = error?.message || "";

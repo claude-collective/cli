@@ -84,10 +84,7 @@ export async function getInstallationOrThrow(
   const installation = await detectInstallation(projectDir);
 
   if (!installation) {
-    throw new Error(
-      "No Claude Collective installation found.\n" +
-        "Run 'cc init' to create one.",
-    );
+    throw new Error("No Claude Collective installation found.\n" + "Run 'cc init' to create one.");
   }
 
   return installation;

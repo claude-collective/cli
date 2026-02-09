@@ -16,15 +16,9 @@ interface SettingsFile {
  * Check permissions configuration and return warning component if needed.
  * Returns null if permissions are properly configured.
  */
-export async function checkPermissions(
-  projectRoot: string,
-): Promise<React.ReactElement | null> {
+export async function checkPermissions(projectRoot: string): Promise<React.ReactElement | null> {
   const settingsPath = path.join(projectRoot, ".claude", "settings.json");
-  const localSettingsPath = path.join(
-    projectRoot,
-    ".claude",
-    "settings.local.json",
-  );
+  const localSettingsPath = path.join(projectRoot, ".claude", "settings.local.json");
 
   let permissions: PermissionConfig | undefined;
 
@@ -43,12 +37,7 @@ export async function checkPermissions(
 
   if (!permissions) {
     return (
-      <Box
-        flexDirection="column"
-        borderStyle="round"
-        borderColor="yellow"
-        padding={1}
-      >
+      <Box flexDirection="column" borderStyle="round" borderColor="yellow" padding={1}>
         <Text bold color="yellow">
           Permission Notice
         </Text>
@@ -77,25 +66,18 @@ export async function checkPermissions(
 
   if (hasRestrictiveBash || hasNoAllows) {
     return (
-      <Box
-        flexDirection="column"
-        borderStyle="round"
-        borderColor="yellow"
-        padding={1}
-      >
+      <Box flexDirection="column" borderStyle="round" borderColor="yellow" padding={1}>
         <Text bold color="yellow">
           Permission Warnings
         </Text>
         {hasRestrictiveBash && (
           <Text>
-            ⚠ Bash is denied in permissions. Some agents require Bash for git,
-            testing, and build commands.
+            ⚠ Bash is denied in permissions. Some agents require Bash for git, testing, and build
+            commands.
           </Text>
         )}
         {hasNoAllows && (
-          <Text>
-            ⚠ No allow rules configured. Agents will prompt for each tool use.
-          </Text>
+          <Text>⚠ No allow rules configured. Agents will prompt for each tool use.</Text>
         )}
       </Box>
     );

@@ -54,11 +54,7 @@ describe("custom-agent-resolver", () => {
           tools: ["Read", "Grep", "Glob"],
         };
 
-        const result = resolveCustomAgent(
-          "data-analyst",
-          customConfig,
-          mockBuiltinAgents,
-        );
+        const result = resolveCustomAgent("data-analyst", customConfig, mockBuiltinAgents);
 
         expect(result.title).toBe("Data Analyst");
         expect(result.description).toBe("Analyzes data patterns");
@@ -73,11 +69,7 @@ describe("custom-agent-resolver", () => {
           description: "A simple agent",
         };
 
-        const result = resolveCustomAgent(
-          "simple-agent",
-          customConfig,
-          mockBuiltinAgents,
-        );
+        const result = resolveCustomAgent("simple-agent", customConfig, mockBuiltinAgents);
 
         expect(result.tools).toEqual(["Read", "Grep", "Glob"]);
       });
@@ -90,11 +82,7 @@ describe("custom-agent-resolver", () => {
           tools: ["Read"],
         };
 
-        const result = resolveCustomAgent(
-          "fast-agent",
-          customConfig,
-          mockBuiltinAgents,
-        );
+        const result = resolveCustomAgent("fast-agent", customConfig, mockBuiltinAgents);
 
         expect(result.model).toBe("sonnet");
       });
@@ -107,11 +95,7 @@ describe("custom-agent-resolver", () => {
           tools: ["Read"],
         };
 
-        const result = resolveCustomAgent(
-          "cautious-agent",
-          customConfig,
-          mockBuiltinAgents,
-        );
+        const result = resolveCustomAgent("cautious-agent", customConfig, mockBuiltinAgents);
 
         expect(result.permission_mode).toBe("plan");
       });
@@ -124,11 +108,7 @@ describe("custom-agent-resolver", () => {
           disallowed_tools: ["Bash", "Write"],
         };
 
-        const result = resolveCustomAgent(
-          "safe-agent",
-          customConfig,
-          mockBuiltinAgents,
-        );
+        const result = resolveCustomAgent("safe-agent", customConfig, mockBuiltinAgents);
 
         expect(result.disallowed_tools).toEqual(["Bash", "Write"]);
       });
@@ -143,11 +123,7 @@ describe("custom-agent-resolver", () => {
           },
         };
 
-        const result = resolveCustomAgent(
-          "hooked-agent",
-          customConfig,
-          mockBuiltinAgents,
-        );
+        const result = resolveCustomAgent("hooked-agent", customConfig, mockBuiltinAgents);
 
         expect(result.hooks).toEqual({
           PostToolUse: [{ matcher: "*" }],
@@ -163,23 +139,12 @@ describe("custom-agent-resolver", () => {
           extends: "web-developer",
         };
 
-        const result = resolveCustomAgent(
-          "custom-web-dev",
-          customConfig,
-          mockBuiltinAgents,
-        );
+        const result = resolveCustomAgent("custom-web-dev", customConfig, mockBuiltinAgents);
 
         expect(result.title).toBe("Custom Web Dev");
         expect(result.description).toBe("Extended web developer");
         expect(result.model).toBe("opus"); // Inherited
-        expect(result.tools).toEqual([
-          "Read",
-          "Write",
-          "Edit",
-          "Grep",
-          "Glob",
-          "Bash",
-        ]); // Inherited
+        expect(result.tools).toEqual(["Read", "Write", "Edit", "Grep", "Glob", "Bash"]); // Inherited
         expect(result.permission_mode).toBe("default"); // Inherited
         expect(result.path).toBe("developer/web-developer"); // Inherited
         expect(result.sourceRoot).toBe("/mock/source"); // Inherited
@@ -193,21 +158,10 @@ describe("custom-agent-resolver", () => {
           model: "haiku",
         };
 
-        const result = resolveCustomAgent(
-          "fast-web-dev",
-          customConfig,
-          mockBuiltinAgents,
-        );
+        const result = resolveCustomAgent("fast-web-dev", customConfig, mockBuiltinAgents);
 
         expect(result.model).toBe("haiku");
-        expect(result.tools).toEqual([
-          "Read",
-          "Write",
-          "Edit",
-          "Grep",
-          "Glob",
-          "Bash",
-        ]); // Still inherited
+        expect(result.tools).toEqual(["Read", "Write", "Edit", "Grep", "Glob", "Bash"]); // Still inherited
       });
 
       it("should override tools when specified", () => {
@@ -218,11 +172,7 @@ describe("custom-agent-resolver", () => {
           tools: ["Read", "Grep"],
         };
 
-        const result = resolveCustomAgent(
-          "limited-web-dev",
-          customConfig,
-          mockBuiltinAgents,
-        );
+        const result = resolveCustomAgent("limited-web-dev", customConfig, mockBuiltinAgents);
 
         expect(result.tools).toEqual(["Read", "Grep"]);
         expect(result.model).toBe("opus"); // Still inherited
@@ -236,11 +186,7 @@ describe("custom-agent-resolver", () => {
           permission_mode: "dontAsk",
         };
 
-        const result = resolveCustomAgent(
-          "strict-web-dev",
-          customConfig,
-          mockBuiltinAgents,
-        );
+        const result = resolveCustomAgent("strict-web-dev", customConfig, mockBuiltinAgents);
 
         expect(result.permission_mode).toBe("dontAsk");
       });
@@ -253,11 +199,7 @@ describe("custom-agent-resolver", () => {
           disallowed_tools: ["Write", "Edit"],
         };
 
-        const result = resolveCustomAgent(
-          "safer-reviewer",
-          customConfig,
-          mockBuiltinAgents,
-        );
+        const result = resolveCustomAgent("safer-reviewer", customConfig, mockBuiltinAgents);
 
         // Should have both inherited (Bash) and custom (Write, Edit)
         expect(result.disallowed_tools).toContain("Bash");
@@ -277,11 +219,7 @@ describe("custom-agent-resolver", () => {
           },
         };
 
-        const result = resolveCustomAgent(
-          "more-hooked-reviewer",
-          customConfig,
-          mockBuiltinAgents,
-        );
+        const result = resolveCustomAgent("more-hooked-reviewer", customConfig, mockBuiltinAgents);
 
         // Should have merged hooks
         expect(result.hooks?.PreToolUse).toHaveLength(2);
@@ -298,9 +236,7 @@ describe("custom-agent-resolver", () => {
           extends: "non-existent-agent",
         };
 
-        expect(() =>
-          resolveCustomAgent("bad-agent", customConfig, mockBuiltinAgents),
-        ).toThrow(
+        expect(() => resolveCustomAgent("bad-agent", customConfig, mockBuiltinAgents)).toThrow(
           /Custom agent "bad-agent" extends unknown agent "non-existent-agent"/,
         );
       });
@@ -312,9 +248,9 @@ describe("custom-agent-resolver", () => {
           extends: "non-existent-agent",
         };
 
-        expect(() =>
-          resolveCustomAgent("bad-agent", customConfig, mockBuiltinAgents),
-        ).toThrow(/Available agents:/);
+        expect(() => resolveCustomAgent("bad-agent", customConfig, mockBuiltinAgents)).toThrow(
+          /Available agents:/,
+        );
       });
     });
   });
@@ -357,9 +293,9 @@ describe("custom-agent-resolver", () => {
         },
       };
 
-      expect(() =>
-        resolveCustomAgents(customAgents, mockBuiltinAgents),
-      ).toThrow(/Custom agent "bad-agent" extends unknown agent/);
+      expect(() => resolveCustomAgents(customAgents, mockBuiltinAgents)).toThrow(
+        /Custom agent "bad-agent" extends unknown agent/,
+      );
     });
   });
 
@@ -369,9 +305,7 @@ describe("custom-agent-resolver", () => {
     });
 
     it("should return false for non-conflicting ID", () => {
-      expect(hasAgentIdConflict("my-custom-agent", mockBuiltinAgents)).toBe(
-        false,
-      );
+      expect(hasAgentIdConflict("my-custom-agent", mockBuiltinAgents)).toBe(false);
     });
   });
 
@@ -454,11 +388,7 @@ describe("custom-agent-resolver", () => {
       // Note: resolveCustomAgent returns AgentDefinition which doesn't have skills
       // Skills are handled separately in the compilation pipeline
       // This test verifies the config structure is valid
-      const result = resolveCustomAgent(
-        "skill-agent",
-        customConfig,
-        mockBuiltinAgents,
-      );
+      const result = resolveCustomAgent("skill-agent", customConfig, mockBuiltinAgents);
 
       // Agent resolves correctly despite having skills in config
       expect(result.title).toBe("Skill Test Agent");
@@ -488,11 +418,7 @@ describe("custom-agent-resolver", () => {
       });
 
       // Agent resolves correctly with local skills in config
-      const result = resolveCustomAgent(
-        "local-skill-agent",
-        customConfig,
-        mockBuiltinAgents,
-      );
+      const result = resolveCustomAgent("local-skill-agent", customConfig, mockBuiltinAgents);
 
       expect(result.title).toBe("Local Skill Agent");
     });
@@ -508,24 +434,13 @@ describe("custom-agent-resolver", () => {
       // Verify skills are defined on extended agent config
       expect(customConfig.skills).toHaveLength(2);
 
-      const result = resolveCustomAgent(
-        "extended-skill-agent",
-        customConfig,
-        mockBuiltinAgents,
-      );
+      const result = resolveCustomAgent("extended-skill-agent", customConfig, mockBuiltinAgents);
 
       // Inherits from base
       expect(result.model).toBe("opus");
       expect(result.path).toBe("developer/web-developer");
       // Uses inherited tools (not overridden)
-      expect(result.tools).toEqual([
-        "Read",
-        "Write",
-        "Edit",
-        "Grep",
-        "Glob",
-        "Bash",
-      ]);
+      expect(result.tools).toEqual(["Read", "Write", "Edit", "Grep", "Glob", "Bash"]);
     });
 
     it("should handle empty skills array", () => {
@@ -538,11 +453,7 @@ describe("custom-agent-resolver", () => {
 
       expect(customConfig.skills).toEqual([]);
 
-      const result = resolveCustomAgent(
-        "no-skill-agent",
-        customConfig,
-        mockBuiltinAgents,
-      );
+      const result = resolveCustomAgent("no-skill-agent", customConfig, mockBuiltinAgents);
 
       expect(result.title).toBe("No Skills Agent");
     });
@@ -564,11 +475,7 @@ describe("custom-agent-resolver", () => {
       };
 
       // Resolve using the same ID as builtin
-      const result = resolveCustomAgent(
-        "web-developer",
-        customConfig,
-        mockBuiltinAgents,
-      );
+      const result = resolveCustomAgent("web-developer", customConfig, mockBuiltinAgents);
 
       // Custom properties override
       expect(result.title).toBe("Custom Web Developer");
@@ -591,11 +498,7 @@ describe("custom-agent-resolver", () => {
       };
 
       // Resolve using builtin ID (no extends - fresh agent)
-      const result = resolveCustomAgent(
-        "web-developer",
-        customConfig,
-        mockBuiltinAgents,
-      );
+      const result = resolveCustomAgent("web-developer", customConfig, mockBuiltinAgents);
 
       // All properties from custom config
       expect(result.title).toBe("Completely Custom Web Dev");
@@ -627,21 +530,10 @@ describe("custom-agent-resolver", () => {
         preloaded: true,
       });
 
-      const result = resolveCustomAgent(
-        "web-developer",
-        customConfig,
-        mockBuiltinAgents,
-      );
+      const result = resolveCustomAgent("web-developer", customConfig, mockBuiltinAgents);
 
       // Inherits non-overridden properties
-      expect(result.tools).toEqual([
-        "Read",
-        "Write",
-        "Edit",
-        "Grep",
-        "Glob",
-        "Bash",
-      ]);
+      expect(result.tools).toEqual(["Read", "Write", "Edit", "Grep", "Glob", "Bash"]);
       expect(result.model).toBe("opus");
     });
 
@@ -653,11 +545,7 @@ describe("custom-agent-resolver", () => {
         disallowed_tools: ["Write", "Edit"],
       };
 
-      const result = resolveCustomAgent(
-        "web-reviewer",
-        customConfig,
-        mockBuiltinAgents,
-      );
+      const result = resolveCustomAgent("web-reviewer", customConfig, mockBuiltinAgents);
 
       // Should merge both inherited and custom disallowed tools
       expect(result.disallowed_tools).toContain("Bash"); // Inherited
@@ -677,11 +565,7 @@ describe("custom-agent-resolver", () => {
         },
       };
 
-      const result = resolveCustomAgent(
-        "web-reviewer",
-        customConfig,
-        mockBuiltinAgents,
-      );
+      const result = resolveCustomAgent("web-reviewer", customConfig, mockBuiltinAgents);
 
       // PreToolUse should have both inherited and custom
       expect(result.hooks?.PreToolUse).toHaveLength(2);

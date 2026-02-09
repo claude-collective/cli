@@ -18,8 +18,7 @@ const DEFAULT_OWNER_NAME = "Claude Collective";
 const DEFAULT_OWNER_EMAIL = "hello@claude-collective.com";
 
 export default class BuildMarketplace extends BaseCommand {
-  static summary =
-    "Generate marketplace.json from built plugins (requires skills repo)";
+  static summary = "Generate marketplace.json from built plugins (requires skills repo)";
 
   static description =
     "Generate marketplace.json from built plugins. This command scans the plugins directory and generates a marketplace manifest file.";
@@ -102,9 +101,7 @@ export default class BuildMarketplace extends BaseCommand {
 
       this.log("");
       this.log("Category breakdown:");
-      const sortedCategories = Object.entries(stats.byCategory).sort(
-        ([, a], [, b]) => b - a,
-      );
+      const sortedCategories = Object.entries(stats.byCategory).sort(([, a], [, b]) => b - a);
       for (const [category, count] of sortedCategories) {
         this.log(`  ${category}: ${count}`);
       }

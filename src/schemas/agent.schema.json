@@ -80,14 +80,7 @@
       "type": "string",
       "description": "Permission mode for agent operations",
       "default": "default",
-      "enum": [
-        "default",
-        "acceptEdits",
-        "dontAsk",
-        "bypassPermissions",
-        "plan",
-        "delegate"
-      ]
+      "enum": ["default", "acceptEdits", "dontAsk", "bypassPermissions", "plan", "delegate"]
     },
     "hooks": {
       "type": "object",

@@ -105,9 +105,7 @@ Then update `WizardProps` interface and pass to a new header component.
 - **File:** `/home/vince/dev/cli/src/cli/commands/init.tsx:106`
 
 ```tsx
-this.log(
-  `Loaded ${Object.keys(sourceResult.matrix.skills).length} skills (${sourceInfo})\n`,
-);
+this.log(`Loaded ${Object.keys(sourceResult.matrix.skills).length} skills (${sourceInfo})\n`);
 ```
 
 **Why 169 might show duplicates:**
@@ -184,8 +182,7 @@ Navigation hints are rendered inline in each step component AND in the main wiza
 
 ```tsx
 <Text dimColor>
-  ←/→ options ↑/↓ categories SPACE select TAB descriptions E expert ENTER
-  continue ESC back
+  ←/→ options ↑/↓ categories SPACE select TAB descriptions E expert ENTER continue ESC back
 </Text>
 ```
 
@@ -234,10 +231,7 @@ interface WizardFooterProps {
   action: string; // e.g., "ESC cancel"
 }
 
-export const WizardFooter: React.FC<WizardFooterProps> = ({
-  navigation,
-  action,
-}) => {
+export const WizardFooter: React.FC<WizardFooterProps> = ({ navigation, action }) => {
   return (
     <Box flexDirection="row" justifyContent="space-between" marginTop={1}>
       <Text dimColor>{navigation}</Text>
@@ -384,9 +378,7 @@ function isFrameworkSelected(selections: Record<string, string[]>): boolean {
   return (selections[frameworkSubcategoryId]?.length ?? 0) > 0;
 }
 
-function getSelectedFramework(
-  selections: Record<string, string[]>,
-): string | null {
+function getSelectedFramework(selections: Record<string, string[]>): string | null {
   return selections[frameworkSubcategoryId]?.[0] ?? null;
 }
 ```
@@ -416,10 +408,7 @@ function filterByFrameworkCompatibility(
 
 ```typescript
 // Disable skills that conflict with any selected skill
-function getDisabledByConflicts(
-  skills: ResolvedSkill[],
-  selectedSkillIds: string[],
-): Set<string> {
+function getDisabledByConflicts(skills: ResolvedSkill[], selectedSkillIds: string[]): Set<string> {
   const disabled = new Set<string>();
 
   for (const skill of skills) {
@@ -445,10 +434,7 @@ function getDisabledByConflicts(
 
 ```typescript
 // In buildCategoriesForDomain() or equivalent
-function shouldShowSubcategory(
-  subcategoryId: string,
-  frameworkSelected: boolean,
-): boolean {
+function shouldShowSubcategory(subcategoryId: string, frameworkSelected: boolean): boolean {
   // Always show framework subcategory
   if (subcategoryId === "framework") return true;
 

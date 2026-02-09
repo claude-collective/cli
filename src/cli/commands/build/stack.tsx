@@ -6,10 +6,7 @@ import path from "path";
 import { BaseCommand } from "../../base-command";
 import { setVerbose } from "../../utils/logger";
 import { PROJECT_ROOT } from "../../consts";
-import {
-  compileStackPlugin,
-  printStackCompilationSummary,
-} from "../../lib/stack-plugin-compiler";
+import { compileStackPlugin, printStackCompilationSummary } from "../../lib/stack-plugin-compiler";
 import { getAgentDefinitions } from "../../lib/agent-fetcher";
 import { EXIT_CODES } from "../../lib/exit-codes";
 import { loadStacks } from "../../lib/stacks-loader";
@@ -21,10 +18,7 @@ interface StackSelectorProps {
   onSelect: (stackId: string) => void;
 }
 
-const StackSelector: React.FC<StackSelectorProps> = ({
-  availableStacks,
-  onSelect,
-}) => {
+const StackSelector: React.FC<StackSelectorProps> = ({ availableStacks, onSelect }) => {
   return (
     <Box flexDirection="column">
       <Text>Select a stack to compile:</Text>
@@ -125,11 +119,7 @@ export default class BuildStack extends BaseCommand {
     // Load agent partials
     let agentSourcePath: string;
     try {
-      this.log(
-        flags["agent-source"]
-          ? "Fetching agent partials..."
-          : "Loading agent partials...",
-      );
+      this.log(flags["agent-source"] ? "Fetching agent partials..." : "Loading agent partials...");
       const agentDefs = await getAgentDefinitions(flags["agent-source"], {
         forceRefresh: flags.refresh,
       });

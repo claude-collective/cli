@@ -109,11 +109,7 @@ describe("doctor command", () => {
     });
 
     it("should accept --source flag", async () => {
-      const { error } = await runCliCommand([
-        "doctor",
-        "--source",
-        "/some/path",
-      ]);
+      const { error } = await runCliCommand(["doctor", "--source", "/some/path"]);
 
       // Should accept --source flag
       const output = error?.message || "";
@@ -137,10 +133,7 @@ describe("doctor command", () => {
     it("should fail when config.yaml has syntax errors", async () => {
       const claudeDir = path.join(projectDir, ".claude");
       await mkdir(claudeDir, { recursive: true });
-      await writeFile(
-        path.join(claudeDir, "config.yaml"),
-        "invalid: yaml: content: ::::",
-      );
+      await writeFile(path.join(claudeDir, "config.yaml"), "invalid: yaml: content: ::::");
 
       const { error } = await runCliCommand(["doctor"]);
 
@@ -260,12 +253,7 @@ describe("doctor command", () => {
 
   describe("combined flags", () => {
     it("should accept --verbose with --source", async () => {
-      const { error } = await runCliCommand([
-        "doctor",
-        "--verbose",
-        "--source",
-        "/custom/path",
-      ]);
+      const { error } = await runCliCommand(["doctor", "--verbose", "--source", "/custom/path"]);
 
       // Should accept both flags
       const output = error?.message || "";
@@ -273,12 +261,7 @@ describe("doctor command", () => {
     });
 
     it("should accept -v with -s", async () => {
-      const { error } = await runCliCommand([
-        "doctor",
-        "-v",
-        "-s",
-        "/custom/path",
-      ]);
+      const { error } = await runCliCommand(["doctor", "-v", "-s", "/custom/path"]);
 
       // Should accept both shorthand flags
       const output = error?.message || "";

@@ -8,9 +8,7 @@ const __dirname = path.dirname(__filename);
 // After tsup build, dist/ is flat, so we go up one level from dist/ to get CLI root
 // In development (src/cli/consts.ts), we go up two levels
 const isInDist = __dirname.includes("/dist");
-export const CLI_ROOT = isInDist
-  ? path.resolve(__dirname, "..")
-  : path.resolve(__dirname, "../..");
+export const CLI_ROOT = isInDist ? path.resolve(__dirname, "..") : path.resolve(__dirname, "../..");
 export const PROJECT_ROOT = CLI_ROOT;
 
 export const OUTPUT_DIR = ".claude";

@@ -19,21 +19,18 @@ import { ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../test-constants";
 
 const createTestMatrix = (): MergedSkillsMatrix => {
   const skills = {
-    [TEST_SKILLS.REACT]: createMockSkill(
-      TEST_SKILLS.REACT,
-      TEST_CATEGORIES.FRAMEWORK,
-      { name: "React", description: "React framework" },
-    ),
-    [TEST_SKILLS.ZUSTAND]: createMockSkill(
-      TEST_SKILLS.ZUSTAND,
-      TEST_CATEGORIES.STATE,
-      { name: "Zustand", description: "State management" },
-    ),
-    [TEST_SKILLS.VITEST]: createMockSkill(
-      TEST_SKILLS.VITEST,
-      TEST_CATEGORIES.TESTING,
-      { name: "Vitest", description: "Testing framework" },
-    ),
+    [TEST_SKILLS.REACT]: createMockSkill(TEST_SKILLS.REACT, TEST_CATEGORIES.FRAMEWORK, {
+      name: "React",
+      description: "React framework",
+    }),
+    [TEST_SKILLS.ZUSTAND]: createMockSkill(TEST_SKILLS.ZUSTAND, TEST_CATEGORIES.STATE, {
+      name: "Zustand",
+      description: "State management",
+    }),
+    [TEST_SKILLS.VITEST]: createMockSkill(TEST_SKILLS.VITEST, TEST_CATEGORIES.TESTING, {
+      name: "Vitest",
+      description: "Testing framework",
+    }),
   };
 
   return createMockMatrix(skills, {
@@ -331,9 +328,7 @@ describe("StepConfirm component", () => {
       expect(output).toContain("react");
       // API section should not appear since no technologies selected
       const lines = output?.split("\n") || [];
-      const apiLine = lines.find(
-        (line) => line.includes("API:") && line.includes("hono"),
-      );
+      const apiLine = lines.find((line) => line.includes("API:") && line.includes("hono"));
       expect(apiLine).toBeUndefined();
     });
   });

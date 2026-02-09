@@ -212,10 +212,9 @@ async function createSkillWithGeneration(
   // 6. Invoke claude with inline agent definition
   const prompt = `Create a comprehensive skill at "${skillPath}" for: ${topic}`;
 
-  execSync(
-    `claude --agents '${agentsJson}' --agent skill-summoner -p "${prompt}"`,
-    { stdio: "inherit" },
-  );
+  execSync(`claude --agents '${agentsJson}' --agent skill-summoner -p "${prompt}"`, {
+    stdio: "inherit",
+  });
 }
 ```
 

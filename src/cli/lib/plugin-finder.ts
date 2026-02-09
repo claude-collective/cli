@@ -2,12 +2,7 @@ import path from "path";
 import os from "os";
 import { fileExists, readFile, glob } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import {
-  CLAUDE_DIR,
-  PLUGINS_SUBDIR,
-  PLUGIN_MANIFEST_DIR,
-  PLUGIN_MANIFEST_FILE,
-} from "../consts";
+import { CLAUDE_DIR, PLUGINS_SUBDIR, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../consts";
 import type { PluginManifest } from "../../types";
 import type { MergedSkillsMatrix } from "../types-matrix";
 
@@ -37,9 +32,7 @@ export function getPluginManifestPath(pluginDir: string): string {
   return path.join(pluginDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
 }
 
-export async function readPluginManifest(
-  pluginDir: string,
-): Promise<PluginManifest | null> {
+export async function readPluginManifest(pluginDir: string): Promise<PluginManifest | null> {
   const manifestPath = getPluginManifestPath(pluginDir);
 
   if (!(await fileExists(manifestPath))) {

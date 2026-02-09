@@ -12,18 +12,9 @@ import {
   directoryExists,
 } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import {
-  CLAUDE_DIR,
-  CLAUDE_SRC_DIR,
-  DIRS,
-  OUTPUT_DIR,
-  PROJECT_ROOT,
-} from "../consts";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, DIRS, OUTPUT_DIR, PROJECT_ROOT } from "../consts";
 import { resolveClaudeMd } from "./resolver";
-import {
-  validateCompiledAgent,
-  printOutputValidationResult,
-} from "./output-validator";
+import { validateCompiledAgent, printOutputValidationResult } from "./output-validator";
 import type {
   Skill,
   AgentConfig,
@@ -64,15 +55,9 @@ async function compileAgent(
   const category = agentPath.split("/")[0];
   const categoryDir = path.join(agentSourceRoot, agentBaseDir, category);
 
-  let outputFormat = await readFileOptional(
-    path.join(agentDir, "output-format.md"),
-    "",
-  );
+  let outputFormat = await readFileOptional(path.join(agentDir, "output-format.md"), "");
   if (!outputFormat) {
-    outputFormat = await readFileOptional(
-      path.join(categoryDir, "output-format.md"),
-      "",
-    );
+    outputFormat = await readFileOptional(path.join(categoryDir, "output-format.md"), "");
   }
 
   const preloadedSkills = agent.skills.filter((s) => s.preloaded);
@@ -124,8 +109,7 @@ export async function compileAllAgents(
         printOutputValidationResult(name, validationResult);
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(`  ✗ ${name}.md - ${errorMessage}`);
       throw new Error(
         `Failed to compile agent '${name}': ${errorMessage}. Check that all required files exist in src/agents/${agent.path || name}/`,
@@ -162,9 +146,7 @@ export async function compileAllSkills(
         await writeFile(path.join(outDir, "SKILL.md"), mainContent);
         console.log(`  ✓ skills/${id}/SKILL.md`);
 
-        const referenceContent = await readFileOptional(
-          path.join(sourcePath, "reference.md"),
-        );
+        const referenceContent = await readFileOptional(path.join(sourcePath, "reference.md"));
         if (referenceContent) {
           await writeFile(path.join(outDir, "reference.md"), referenceContent);
           console.log(`  ✓ skills/${id}/reference.md`);
@@ -187,8 +169,7 @@ export async function compileAllSkills(
         console.log(`  ✓ skills/${id}/SKILL.md`);
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(`  ✗ skills/${id}/SKILL.md - ${errorMessage}`);
       throw new Error(
         `Failed to compile skill '${skill.id}': ${errorMessage}. Expected skill at: ${sourcePath}`,
@@ -198,11 +179,7 @@ export async function compileAllSkills(
 }
 
 export async function copyClaude(ctx: CompileContext): Promise<void> {
-  const claudePath = await resolveClaudeMd(
-    ctx.projectRoot,
-    ctx.stackId,
-    ctx.mode,
-  );
+  const claudePath = await resolveClaudeMd(ctx.projectRoot, ctx.stackId, ctx.mode);
 
   const content = await readFile(claudePath);
   const outputPath = path.join(ctx.outputDir, "..", "CLAUDE.md");
@@ -234,8 +211,7 @@ export async function compileAllCommands(ctx: CompileContext): Promise<void> {
       await writeFile(path.join(outDir, file), content);
       console.log(`  ✓ ${file}`);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(`  ✗ ${file} - ${errorMessage}`);
       throw new Error(
         `Failed to compile command '${file}': ${errorMessage}. Expected at: ${path.join(commandsDir, file)}`,
@@ -249,12 +225,7 @@ export async function createLiquidEngine(projectDir?: string): Promise<Liquid> {
 
   if (projectDir) {
     // Check .claude-src/agents/_templates/ FIRST (new location)
-    const srcTemplatesDir = path.join(
-      projectDir,
-      CLAUDE_SRC_DIR,
-      "agents",
-      "_templates",
-    );
+    const srcTemplatesDir = path.join(projectDir, CLAUDE_SRC_DIR, "agents", "_templates");
     if (await directoryExists(srcTemplatesDir)) {
       roots.push(srcTemplatesDir);
       verbose(`Using local templates from: ${srcTemplatesDir}`);

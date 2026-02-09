@@ -22,10 +22,7 @@ import { resolveAllSources, type SourceEntry } from "../lib/config.js";
 import { fetchFromSource } from "../lib/source-fetcher.js";
 import { listDirectories, fileExists, copy, ensureDir } from "../utils/fs.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
-import {
-  SkillSearch,
-  type SkillSearchResult,
-} from "../components/skill-search/index.js";
+import { SkillSearch, type SkillSearchResult } from "../components/skill-search/index.js";
 import type { SourcedSkill } from "../components/skill-search/skill-search.js";
 import type { ResolvedSkill } from "../types-matrix.js";
 import { LOCAL_SKILLS_PATH } from "../consts.js";
@@ -254,17 +251,12 @@ export default class Search extends BaseCommand {
       );
 
       // Merge all skills (primary first, then extras)
-      const allSkills: SourcedSkill[] = [
-        ...primarySkills,
-        ...extraSkillArrays.flat(),
-      ];
+      const allSkills: SourcedSkill[] = [...primarySkills, ...extraSkillArrays.flat()];
 
       // Total source count
       const sourceCount = 1 + extras.length;
 
-      this.log(
-        `Loaded ${allSkills.length} skills from ${sourceCount} source(s)`,
-      );
+      this.log(`Loaded ${allSkills.length} skills from ${sourceCount} source(s)`);
       this.log("");
 
       // Render interactive search
@@ -352,9 +344,7 @@ export default class Search extends BaseCommand {
 
       // Apply category filter if provided
       if (flags.category) {
-        results = results.filter((skill) =>
-          matchesCategory(skill, flags.category as string),
-        );
+        results = results.filter((skill) => matchesCategory(skill, flags.category as string));
       }
 
       // Sort results by name
