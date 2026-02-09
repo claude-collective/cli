@@ -28,6 +28,7 @@ export interface StepConfirmProps {
 const formatDomainName = (domain: string): string => {
   const names: Record<string, string> = {
     web: "Web",
+    "web-extras": "Web Extras",
     api: "API",
     cli: "CLI",
     mobile: "Mobile",

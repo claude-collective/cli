@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
 
 /** All available domains that the build step should cycle through */
-const ALL_DOMAINS = ["web", "api", "cli", "mobile", "shared"];
+const ALL_DOMAINS = ["web", "web-extras", "api", "cli", "mobile", "shared"];
 
 // Step types for the wizard
 export type WizardStep =

@@ -39,6 +39,8 @@ export interface StepBuildProps {
   /** UI toggles */
   showDescriptions: boolean;
   expertMode: boolean;
+  /** Parent domain selections for framework-first filtering on sub-domains (e.g., web-extras inherits from web) */
+  parentDomainSelections?: Record<string, string[]>;
   /** Callbacks */
   onToggle: (subcategoryId: string, technologyId: string) => void;
   onFocusChange: (row: number, col: number) => void;
@@ -219,10 +221,15 @@ function buildCategoriesForDomain(
   matrix: MergedSkillsMatrix,
   expertMode: boolean,
   selections: Record<string, string[]>,
+  parentDomainSelections?: Record<string, string[]>,
 ): CategoryRow[] {
   // Check framework selection for framework-first flow
-  const frameworkSelected = isFrameworkSelected(selections);
-  const selectedFrameworkIds = frameworkSelected ? getSelectedFrameworks(selections, matrix) : [];
+  // For sub-domains (e.g., web-extras), use parent domain selections for framework checks
+  const frameworkSource = parentDomainSelections ?? selections;
+  const frameworkSelected = isFrameworkSelected(frameworkSource);
+  const selectedFrameworkIds = frameworkSelected
+    ? getSelectedFrameworks(frameworkSource, matrix)
+    : [];
 
   // Get categories for the current domain
   const subcategories = Object.values(matrix.categories)
@@ -241,14 +248,17 @@ function buildCategoriesForDomain(
       expertMode,
     });
 
-    // For web domain (non-framework categories), filter by compatibility
+    // For web domain or sub-domains with parent selections, filter by framework compatibility
     // Framework category itself doesn't need filtering
-    const filteredSkillOptions =
-      domain === WEB_DOMAIN_ID && cat.id !== FRAMEWORK_SUBCATEGORY_ID && frameworkSelected
-        ? skillOptions.filter((skill) =>
-            isCompatibleWithSelectedFrameworks(skill.id, selectedFrameworkIds, matrix),
-          )
-        : skillOptions;
+    const useFrameworkFilter =
+      (domain === WEB_DOMAIN_ID || parentDomainSelections !== undefined) &&
+      cat.id !== FRAMEWORK_SUBCATEGORY_ID &&
+      frameworkSelected;
+    const filteredSkillOptions = useFrameworkFilter
+      ? skillOptions.filter((skill) =>
+          isCompatibleWithSelectedFrameworks(skill.id, selectedFrameworkIds, matrix),
+        )
+      : skillOptions;
 
     // Map skills to CategoryOption[]
     const options: CategoryOption[] = filteredSkillOptions.map((skill) => ({
@@ -291,20 +301,18 @@ const Footer: React.FC<FooterProps> = ({ validationError }) => {
 
 const LegendRow: React.FC = () => {
   return (
-    <Box justifyContent="flex-end">
-      <Box paddingLeft={1} columnGap={2} position="absolute" marginTop={-1}>
-        <Text color="cyan">active</Text>
-        <Text color="#fff">recommended</Text>
-        <Text color="yellow">discouraged</Text>
-        <Text color="gray">disabled</Text>
-      </Box>
+    <Box paddingLeft={1} columnGap={2}>
+      <Text color="cyan">active</Text>
+      <Text color="#fff">recommended</Text>
+      <Text color="yellow">discouraged</Text>
+      <Text color="gray">disabled</Text>
     </Box>
   );
 };
 
 export const StepBuild: React.FC<StepBuildProps> = ({
   matrix,
-  domain,
+  domain: activeDomain,
   selectedDomains,
   selections,
   allSelections,
@@ -312,6 +320,7 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   focusedCol,
   showDescriptions,
   expertMode,
+  parentDomainSelections,
   onToggle,
   onFocusChange,
   onToggleDescriptions,
@@ -323,11 +332,12 @@ export const StepBuild: React.FC<StepBuildProps> = ({
 
   // Build categories for the current domain (with framework-first filtering)
   const categories = buildCategoriesForDomain(
-    domain,
+    activeDomain,
     allSelections,
     matrix,
     expertMode,
     selections,
+    parentDomainSelections,
   );
 
   // Handle keyboard input for Enter and Escape
@@ -348,9 +358,30 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   });
 
   return (
-    <Box flexDirection="column">
-      <LegendRow />
-      <ViewTitle>Customise your {getDomainDisplayName(domain)} stack</ViewTitle>
+    <Box flexDirection="column" width="100%">
+      <Box
+        columnGap={2}
+        flexDirection="row"
+        justifyContent="space-between"
+        marginBottom={1}
+        paddingRight={1}
+        marginTop={-1}
+        borderTop={false}
+        borderRight={false}
+        borderLeft={false}
+        borderColor="gray"
+        borderStyle="single"
+      >
+        <Box columnGap={2} flexDirection="row">
+          {selectedDomains.map((domain) => (
+            <Text key={domain} color={domain === activeDomain ? "cyan" : undefined}>
+              {getDomainDisplayName(domain)}
+            </Text>
+          ))}
+        </Box>
+        <LegendRow />
+      </Box>
+      <ViewTitle>Customise your {getDomainDisplayName(activeDomain)} stack</ViewTitle>
 
       <CategoryGrid
         categories={categories}

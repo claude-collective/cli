@@ -552,9 +552,11 @@ describe("Wizard integration", () => {
       expect(lastFrame()).toContain("web");
 
       // Navigate to Continue (which now appears since a domain is selected)
-      // Options: Back, Web[checked], API, CLI, Mobile, Continue
+      // Options: Back, Web[checked], Web Extras, API, CLI, Mobile, Continue
       // Navigate to the last option (Continue)
       await stdin.write(ARROW_DOWN); // Past Back to Web
+      await delay(STEP_TRANSITION_DELAY_MS);
+      await stdin.write(ARROW_DOWN); // To Web Extras
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ARROW_DOWN); // To API
       await delay(STEP_TRANSITION_DELAY_MS);
@@ -679,8 +681,10 @@ describe("Wizard integration", () => {
       expect(lastFrame()).toContain("api");
 
       // Navigate to Continue option
-      // Options: Back, Web[checked], API[checked], CLI, Mobile, Continue
+      // Options: Back, Web[checked], Web Extras, API[checked], CLI, Mobile, Continue
       await stdin.write(ARROW_DOWN); // To Web
+      await delay(STEP_TRANSITION_DELAY_MS);
+      await stdin.write(ARROW_DOWN); // To Web Extras
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ARROW_DOWN); // To API
       await delay(STEP_TRANSITION_DELAY_MS);

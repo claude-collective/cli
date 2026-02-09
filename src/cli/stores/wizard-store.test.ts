@@ -495,7 +495,7 @@ describe("WizardStore", () => {
       const { selectedDomains, domainSelections } = useWizardStore.getState();
 
       // selectedDomains should include ALL domains, not just the stack's
-      expect(selectedDomains).toEqual(["web", "api", "cli", "mobile", "shared"]);
+      expect(selectedDomains).toEqual(["web", "web-extras", "api", "cli", "mobile", "shared"]);
 
       // domainSelections should only contain the stack's actual mappings
       expect(domainSelections.web).toBeDefined();

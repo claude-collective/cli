@@ -378,9 +378,10 @@ describe("StepStack component", () => {
 
         const output = lastFrame();
         expect(output).toContain("Web");
+        expect(output).toContain("Web Extras");
         expect(output).toContain("API");
         expect(output).toContain("CLI");
-        expect(output).toContain("Mobile");
+        // Mobile may be scrolled below the visible window due to the Select component's viewport limit
       });
 
       it("should render header text for domain selection", () => {
@@ -471,7 +472,7 @@ describe("StepStack component", () => {
         await delay(RENDER_DELAY_MS);
 
         // Navigate to continue option (last option)
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 6; i++) {
           stdin.write(ARROW_DOWN);
           await delay(SELECT_NAV_DELAY_MS);
         }

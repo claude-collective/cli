@@ -37,7 +37,13 @@ export interface CategoryDefinition {
    * Domain this category belongs to, for wizard domain filtering
    * @example "web" for web categories, "api" for api categories
    */
-  domain?: "web" | "api" | "cli" | "mobile" | "shared";
+  domain?: "web" | "web-extras" | "api" | "cli" | "mobile" | "shared";
+
+  /**
+   * Parent domain for display-only sub-domains (e.g., "web" for "web-extras").
+   * Used to inherit framework selections from the parent domain.
+   */
+  parent_domain?: string;
 
   /**
    * If true, only one skill from this category can be selected

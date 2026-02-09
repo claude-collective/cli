@@ -6,6 +6,7 @@ import type { MergedSkillsMatrix } from "../../types-matrix.js";
 export function getDomainDisplayName(domain: string): string {
   const displayNames: Record<string, string> = {
     web: "Web",
+    "web-extras": "Web Extras",
     api: "API",
     cli: "CLI",
     mobile: "Mobile",

@@ -53,6 +53,15 @@ interface WizardProps {
 }
 
 // =============================================================================
+// Helpers
+// =============================================================================
+
+function getParentDomain(domain: string, matrix: MergedSkillsMatrix): string | undefined {
+  const cat = Object.values(matrix.categories).find((c) => c.domain === domain && c.parent_domain);
+  return cat?.parent_domain;
+}
+
+// =============================================================================
 // Constants
 // =============================================================================
 
@@ -169,17 +178,22 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
 
         const allSelections = store.getAllSelectedTechnologies();
 
+        const activeDomain = currentDomain || effectiveDomains[0] || "web";
+        const parentDomain = getParentDomain(activeDomain, matrix);
+        const parentDomainSelections = parentDomain ? store.domainSelections[parentDomain] : undefined;
+
         return (
           <StepBuild
             matrix={matrix}
-            domain={currentDomain || effectiveDomains[0] || "web"}
+            domain={activeDomain}
             selectedDomains={effectiveDomains}
-            selections={store.domainSelections[currentDomain || "web"] || {}}
+            selections={store.domainSelections[activeDomain] || {}}
             allSelections={allSelections}
             focusedRow={store.focusedRow}
             focusedCol={store.focusedCol}
             showDescriptions={store.showDescriptions}
             expertMode={store.expertMode}
+            parentDomainSelections={parentDomainSelections}
             onToggle={(subcategoryId, techId) => {
               const domain = store.getCurrentDomain() || "web";
               const cat = matrix.categories[subcategoryId];

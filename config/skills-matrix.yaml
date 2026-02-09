@@ -101,7 +101,8 @@ categories:
     id: error-handling
     name: Error Handling
     description: Error boundaries, result types, and error patterns
-    domain: web
+    domain: web-extras
+    parent_domain: web
     exclusive: false
     required: false
     order: 11
@@ -119,7 +120,8 @@ categories:
     id: file-upload
     name: File Upload
     description: File upload patterns and handling
-    domain: web
+    domain: web-extras
+    parent_domain: web
     exclusive: false
     required: false
     order: 13
@@ -128,7 +130,8 @@ categories:
     id: files
     name: Files & Images
     description: Image handling and file processing
-    domain: web
+    domain: web-extras
+    parent_domain: web
     exclusive: false
     required: false
     order: 14
@@ -137,7 +140,8 @@ categories:
     id: utilities
     name: Utilities
     description: Utility libraries (date-fns, native JS patterns)
-    domain: web
+    domain: web-extras
+    parent_domain: web
     exclusive: false
     required: false
     order: 15
@@ -146,7 +150,8 @@ categories:
     id: realtime
     name: Realtime
     description: WebSockets, SSE, and real-time communication
-    domain: web
+    domain: web-extras
+    parent_domain: web
     exclusive: true
     required: false
     order: 16
@@ -155,7 +160,8 @@ categories:
     id: animation
     name: Animation
     description: Animation libraries and CSS animations
-    domain: web
+    domain: web-extras
+    parent_domain: web
     exclusive: false
     required: false
     order: 17
@@ -164,7 +170,8 @@ categories:
     id: pwa
     name: Progressive Web App
     description: Service workers, offline-first patterns, and PWA features
-    domain: web
+    domain: web-extras
+    parent_domain: web
     exclusive: false
     required: false
     order: 18
@@ -173,7 +180,8 @@ categories:
     id: accessibility
     name: Accessibility
     description: WCAG compliance, ARIA, and keyboard navigation
-    domain: web
+    domain: web-extras
+    parent_domain: web
     exclusive: false
     required: false
     order: 19
