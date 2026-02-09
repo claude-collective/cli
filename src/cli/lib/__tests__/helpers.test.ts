@@ -38,7 +38,7 @@ describe("test helpers", () => {
     });
 
     it("allows overrides", () => {
-      const skill = createMockSkill("web-framework-react", "web", {
+      const skill = createMockSkill("web-framework-react", "web-framework", {
         author: "@custom",
         tags: ["popular"],
       });
@@ -50,7 +50,7 @@ describe("test helpers", () => {
 
   describe("createMockMatrix", () => {
     it("creates a valid matrix", () => {
-      const skill = createMockSkill("web-framework-react", "web");
+      const skill = createMockSkill("web-framework-react", "web-framework");
       const matrix = createMockMatrix({ "web-framework-react": skill });
 
       expect(matrix.version).toBe("1.0.0");
@@ -60,10 +60,13 @@ describe("test helpers", () => {
 
   describe("createMockProjectConfig", () => {
     it("creates a valid project config", () => {
-      const config = createMockProjectConfig("test-stack", ["react", "zustand"]);
+      const config = createMockProjectConfig("test-stack", [
+        "web-framework-react",
+        "web-state-zustand",
+      ]);
 
       expect(config.name).toBe("test-stack");
-      expect(config.skills).toEqual([{ id: "react" }, { id: "zustand" }]);
+      expect(config.skills).toEqual([{ id: "web-framework-react" }, { id: "web-state-zustand" }]);
       expect(config.agents).toContain("web-developer");
     });
   });

@@ -186,7 +186,7 @@ export const OUTPUT_STRINGS = {
 export async function runCliCommand(args: string[]) {
   return runCommand(args, { root: CLI_ROOT });
 }
-import type { MergedSkillsMatrix, ResolvedSkill } from "../../types-matrix";
+import type { CategoryPath, MergedSkillsMatrix, ResolvedSkill, SkillId } from "../../types-matrix";
 import type { AgentDefinition, ProjectConfig } from "../../../types";
 
 // =============================================================================
@@ -428,8 +428,8 @@ export async function cleanupTestDirs(dirs: TestDirs): Promise<void> {
  * @see {@link createTestReactSkill} for pre-built common skills
  */
 export function createMockSkill(
-  id: string,
-  category: string,
+  id: SkillId,
+  category: CategoryPath,
   overrides?: Partial<ResolvedSkill>,
 ): ResolvedSkill {
   return {
@@ -468,8 +468,8 @@ export function createMockSkill(
  *
  * @example Basic usage
  * ```typescript
- * const skill = createMockSkill('react (@vince)', 'web');
- * const matrix = createMockMatrix({ 'react (@vince)': skill });
+ * const skill = createMockSkill('web-framework-react', 'web/framework');
+ * const matrix = createMockMatrix({ 'web-framework-react': skill });
  * ```
  *
  * @example With stacks and categories
@@ -516,7 +516,7 @@ export function createMockMatrixWithMethodology(
   skills: Record<string, ResolvedSkill> = {},
   overrides?: Partial<MergedSkillsMatrix>,
 ): MergedSkillsMatrix {
-  const METHODOLOGY_CATEGORY = "meta/methodology";
+  const METHODOLOGY_CATEGORY = "methodology";
   // Just one methodology skill is enough to test preselection
   // Using normalized skill ID format
   const methodologySkill = createMockSkill(
@@ -568,7 +568,7 @@ export function createMockMatrixWithMethodology(
  */
 export function createMockProjectConfig(
   name: string,
-  skills: string[],
+  skills: SkillId[],
   overrides?: Partial<ProjectConfig>,
 ): ProjectConfig {
   return {
@@ -810,33 +810,20 @@ export async function writeTestAgent(
 /**
  * Re-exports from test-fixtures module.
  *
- * These exports provide consistent skill IDs, categories, and pre-built
- * mock skill creators across all tests.
+ * These exports provide pre-built mock skill creators across all tests.
  *
  * @example
  * ```typescript
- * import {
- *   TEST_SKILLS,
- *   TEST_CATEGORIES,
- *   createTestReactSkill,
- * } from './helpers';
+ * import { createTestReactSkill } from './helpers';
  *
  * const skill = createTestReactSkill();
- * expect(skill.id).toBe(TEST_SKILLS.REACT);
- * expect(skill.category).toBe(TEST_CATEGORIES.FRAMEWORK);
+ * expect(skill.id).toBe("web-framework-react");
+ * expect(skill.category).toBe("web/framework");
  * ```
  *
  * @see module:test-fixtures for detailed documentation
  */
 export {
-  /** Constant skill IDs for use in tests (e.g., TEST_SKILLS.REACT) */
-  TEST_SKILLS,
-  /** Default test author (@vince) */
-  TEST_AUTHOR,
-  /** Constant category paths for use in tests (e.g., TEST_CATEGORIES.FRAMEWORK) */
-  TEST_CATEGORIES,
-  /** Generic placeholder skill IDs for abstract tests */
-  PLACEHOLDER_SKILLS,
   /** Create a pre-configured React skill */
   createTestReactSkill,
   /** Create a pre-configured Zustand skill */
