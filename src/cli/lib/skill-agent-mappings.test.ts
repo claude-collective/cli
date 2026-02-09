@@ -11,7 +11,8 @@ import {
   resolveAgentsForSkill,
 } from "./skill-agent-mappings";
 import { loadDefaultMappings, clearDefaultsCache, getCachedDefaults } from "./defaults-loader";
-import type { ProjectConfig } from "../../types";
+
+import type { AgentSkillConfig, ProjectConfig, SkillEntry } from "../../types";
 
 // =============================================================================
 // P1-18: Test Agent-skill mapping from skill-agent-mappings.ts
@@ -134,25 +135,25 @@ describe("PRELOADED_SKILLS", () => {
 describe("getAgentsForSkill", () => {
   describe("wildcard pattern matching", () => {
     it("should match web/* pattern for skills/web/framework/react", () => {
-      const agents = getAgentsForSkill("skills/web/framework/react", "web");
+      const agents = getAgentsForSkill("skills/web/framework/react", "web/framework");
       expect(agents).toContain("web-developer");
       expect(agents).toContain("web-reviewer");
     });
 
     it("should match web/* pattern for web/styling/tailwind", () => {
-      const agents = getAgentsForSkill("web/styling/tailwind", "web");
+      const agents = getAgentsForSkill("web/styling/tailwind", "web/styling");
       expect(agents).toContain("web-developer");
       expect(agents).toContain("web-reviewer");
     });
 
     it("should match api/* pattern for api/api/hono", () => {
-      const agents = getAgentsForSkill("api/api/hono", "api");
+      const agents = getAgentsForSkill("api/api/hono", "api/api");
       expect(agents).toContain("api-developer");
       expect(agents).toContain("api-reviewer");
     });
 
     it("should match cli/* pattern for cli/commander", () => {
-      const agents = getAgentsForSkill("cli/commander", "cli");
+      const agents = getAgentsForSkill("cli/commander", "cli-framework");
       expect(agents).toContain("cli-developer");
       expect(agents).toContain("cli-reviewer");
     });
@@ -165,7 +166,7 @@ describe("getAgentsForSkill", () => {
     });
 
     it("should match infra/* pattern for infra/monorepo", () => {
-      const agents = getAgentsForSkill("infra/monorepo", "infra");
+      const agents = getAgentsForSkill("infra/monorepo", "infra/monorepo");
       expect(agents).toContain("web-architecture");
       expect(agents).toContain("web-developer");
       expect(agents).toContain("api-developer");
@@ -192,7 +193,7 @@ describe("getAgentsForSkill", () => {
     });
 
     it("should return default agents for unknown category", () => {
-      const agents = getAgentsForSkill("unknown/path", "unknown/category");
+      const agents = getAgentsForSkill("unknown/path", "web/unknown-category");
       expect(agents).toContain("agent-summoner");
       expect(agents).toContain("skill-summoner");
       expect(agents).toContain("documentor");
@@ -201,24 +202,24 @@ describe("getAgentsForSkill", () => {
 
   describe("path normalization", () => {
     it("should strip skills/ prefix from path", () => {
-      const agents = getAgentsForSkill("skills/web/framework/react", "web");
+      const agents = getAgentsForSkill("skills/web/framework/react", "web/framework");
       expect(agents).toContain("web-developer");
     });
 
     it("should strip trailing slash from path", () => {
-      const agents = getAgentsForSkill("web/framework/", "web");
+      const agents = getAgentsForSkill("web/framework/", "web/framework");
       expect(agents).toContain("web-developer");
     });
 
     it("should handle path without skills/ prefix", () => {
-      const agents = getAgentsForSkill("web/framework/react", "web");
+      const agents = getAgentsForSkill("web/framework/react", "web/framework");
       expect(agents).toContain("web-developer");
     });
   });
 
   describe("fallback behavior", () => {
     it("should return default agents when no pattern matches", () => {
-      const agents = getAgentsForSkill("completely/unknown/path", "unknown");
+      const agents = getAgentsForSkill("completely/unknown/path", "web-unknown");
       expect(agents).toEqual(["agent-summoner", "skill-summoner", "documentor"]);
     });
   });
@@ -229,7 +230,7 @@ describe("shouldPreloadSkill", () => {
     it("should preload framework skill for web-developer", () => {
       const result = shouldPreloadSkill(
         "skills/web/framework/react",
-        "react (@vince)",
+        "web-framework-react",
         "framework",
         "web-developer",
       );
@@ -239,7 +240,7 @@ describe("shouldPreloadSkill", () => {
     it("should preload styling skill for web-developer", () => {
       const result = shouldPreloadSkill(
         "skills/web/styling/tailwind",
-        "tailwind (@vince)",
+        "web-styling-tailwind",
         "styling",
         "web-developer",
       );
@@ -249,7 +250,7 @@ describe("shouldPreloadSkill", () => {
     it("should preload api skill for api-developer", () => {
       const result = shouldPreloadSkill(
         "skills/api/api/hono",
-        "hono (@vince)",
+        "api-framework-hono",
         "api",
         "api-developer",
       );
@@ -259,8 +260,8 @@ describe("shouldPreloadSkill", () => {
     it("should preload cli skill for cli-developer", () => {
       const result = shouldPreloadSkill(
         "skills/cli/commander",
-        "commander (@vince)",
-        "cli",
+        "cli-cli-framework-commander",
+        "cli-framework",
         "cli-developer",
       );
       expect(result).toBe(true);
@@ -271,8 +272,8 @@ describe("shouldPreloadSkill", () => {
     it("should preload when path contains preloaded pattern", () => {
       const result = shouldPreloadSkill(
         "skills/web/framework/react",
-        "react (@vince)",
-        "other",
+        "web-framework-react",
+        "web-other",
         "web-developer",
       );
       expect(result).toBe(true);
@@ -281,8 +282,8 @@ describe("shouldPreloadSkill", () => {
     it("should preload when path contains testing pattern", () => {
       const result = shouldPreloadSkill(
         "skills/web/testing/vitest",
-        "vitest (@vince)",
-        "other",
+        "web-testing-vitest",
+        "web-other",
         "web-tester",
       );
       expect(result).toBe(true);
@@ -293,8 +294,8 @@ describe("shouldPreloadSkill", () => {
     it("should preload when skill ID contains preloaded pattern", () => {
       const result = shouldPreloadSkill(
         "skills/other/path",
-        "framework-utils (@vince)",
-        "other",
+        "web-framework-utils",
+        "web-other",
         "web-developer",
       );
       expect(result).toBe(true);
@@ -306,8 +307,8 @@ describe("shouldPreloadSkill", () => {
       // framework alias -> web/framework
       const result = shouldPreloadSkill(
         "skills/web/framework/react",
-        "react (@vince)",
-        "other",
+        "web-framework-react",
+        "web-other",
         "web-developer",
       );
       expect(result).toBe(true);
@@ -318,7 +319,7 @@ describe("shouldPreloadSkill", () => {
     it("should not preload for agent with empty preloaded list", () => {
       const result = shouldPreloadSkill(
         "skills/web/framework/react",
-        "react (@vince)",
+        "web-framework-react",
         "framework",
         "agent-summoner",
       );
@@ -328,9 +329,9 @@ describe("shouldPreloadSkill", () => {
     it("should not preload for unknown agent", () => {
       const result = shouldPreloadSkill(
         "skills/web/framework/react",
-        "react (@vince)",
+        "web-framework-react",
         "framework",
-        "unknown-agent",
+        "cli-tester",
       );
       expect(result).toBe(false);
     });
@@ -338,8 +339,8 @@ describe("shouldPreloadSkill", () => {
     it("should not preload when no patterns match", () => {
       const result = shouldPreloadSkill(
         "skills/custom/category/skill",
-        "custom-skill (@vince)",
-        "custom",
+        "web-custom-skill",
+        "web-custom",
         "web-developer",
       );
       expect(result).toBe(false);
@@ -588,7 +589,7 @@ describe("project config overrides", () => {
       // With custom preload_patterns, skill should not match default patterns
       const result = shouldPreloadSkill(
         "skills/web/framework/react",
-        "react (@vince)",
+        "web-framework-react",
         "framework",
         "web-developer",
         projectConfig,
@@ -610,8 +611,8 @@ describe("project config overrides", () => {
       // Skill ID contains "custom-framework"
       const result = shouldPreloadSkill(
         "skills/custom/path",
-        "custom-framework-skill (@vince)",
-        "custom",
+        "web-custom-framework-skill",
+        "web-custom",
         "web-developer",
         projectConfig,
       );
@@ -629,7 +630,7 @@ describe("project config overrides", () => {
       // Should use default patterns
       const result = shouldPreloadSkill(
         "skills/web/framework/react",
-        "react (@vince)",
+        "web-framework-react",
         "framework",
         "web-developer",
         projectConfig,
@@ -652,7 +653,7 @@ describe("project config overrides", () => {
       // (preload_patterns completely replaces defaults when provided)
       const result = shouldPreloadSkill(
         "skills/api/api/hono",
-        "hono (@vince)",
+        "api-framework-hono",
         "api",
         "api-developer",
         projectConfig,
@@ -668,7 +669,7 @@ describe("project config overrides", () => {
         name: "test-project",
         agents: ["web-developer"],
         agent_skills: {
-          "web-developer": ["react", "zustand"],
+          "web-developer": ["web-framework-react", "web-state-zustand"],
         },
       };
 
@@ -680,7 +681,7 @@ describe("project config overrides", () => {
         name: "test-project",
         agents: ["web-developer", "api-developer"],
         agent_skills: {
-          "web-developer": ["react"],
+          "web-developer": ["web-framework-react"],
         },
       };
 
@@ -709,7 +710,11 @@ describe("project config overrides", () => {
       };
 
       // getAgentsForSkill uses YAML defaults or hardcoded fallback
-      const agents = getAgentsForSkill("skills/web/framework/react", "web", projectConfig);
+      const agents = getAgentsForSkill(
+        "skills/web/framework/react",
+        "web/framework",
+        projectConfig,
+      );
 
       expect(agents).toContain("web-developer");
       expect(agents).toContain("web-reviewer");
@@ -729,7 +734,7 @@ describe("fallback to hardcoded when YAML not loaded", () => {
 
   it("should use hardcoded SKILL_TO_AGENTS when cache is empty", () => {
     // Don't load defaults, cache is empty
-    const agents = getAgentsForSkill("skills/web/framework/react", "web");
+    const agents = getAgentsForSkill("skills/web/framework/react", "web/framework");
 
     // Should still work using hardcoded fallback
     expect(agents).toContain("web-developer");
@@ -740,7 +745,7 @@ describe("fallback to hardcoded when YAML not loaded", () => {
     // Don't load defaults, cache is empty
     const result = shouldPreloadSkill(
       "skills/web/framework/react",
-      "react (@vince)",
+      "web-framework-react",
       "framework",
       "web-developer",
     );
@@ -753,8 +758,8 @@ describe("fallback to hardcoded when YAML not loaded", () => {
     // Don't load defaults, cache is empty
     const result = shouldPreloadSkill(
       "skills/web/framework/react",
-      "react (@vince)",
-      "other", // Not matching category
+      "web-framework-react",
+      "web-other", // Not matching category
       "web-developer",
     );
 
@@ -770,81 +775,100 @@ describe("fallback to hardcoded when YAML not loaded", () => {
 describe("isSkillAssignedToAgent", () => {
   describe("simple list format", () => {
     it("should return true when skill ID is in simple list", () => {
-      const agentSkills = {
-        "web-developer": ["react (@vince)", "zustand (@vince)"],
+      const agentSkills: Record<string, AgentSkillConfig> = {
+        "web-developer": ["web-framework-react", "web-state-zustand"],
       };
 
-      expect(isSkillAssignedToAgent("react (@vince)", "web-developer", agentSkills)).toBe(true);
+      expect(isSkillAssignedToAgent("web-framework-react", "web-developer", agentSkills)).toBe(
+        true,
+      );
     });
 
     it("should return false when skill ID is not in simple list", () => {
-      const agentSkills = {
-        "web-developer": ["react (@vince)", "zustand (@vince)"],
+      const agentSkills: Record<string, AgentSkillConfig> = {
+        "web-developer": ["web-framework-react", "web-state-zustand"],
       };
 
-      expect(isSkillAssignedToAgent("hono (@vince)", "web-developer", agentSkills)).toBe(false);
+      expect(isSkillAssignedToAgent("api-framework-hono", "web-developer", agentSkills)).toBe(
+        false,
+      );
     });
 
     it("should return false when agent is not in config", () => {
-      const agentSkills = {
-        "web-developer": ["react (@vince)"],
+      const agentSkills: Record<string, AgentSkillConfig> = {
+        "web-developer": ["web-framework-react"],
       };
 
-      expect(isSkillAssignedToAgent("react (@vince)", "api-developer", agentSkills)).toBe(false);
+      expect(isSkillAssignedToAgent("web-framework-react", "api-developer", agentSkills)).toBe(
+        false,
+      );
     });
   });
 
   describe("SkillAssignment objects in list", () => {
     it("should match SkillAssignment by id field", () => {
-      const agentSkills = {
-        "web-developer": [{ id: "react (@vince)", preloaded: true }, { id: "zustand (@vince)" }],
+      const agentSkills: Record<string, AgentSkillConfig> = {
+        "web-developer": [
+          { id: "web-framework-react", preloaded: true },
+          { id: "web-state-zustand" },
+        ],
       };
 
-      expect(isSkillAssignedToAgent("react (@vince)", "web-developer", agentSkills)).toBe(true);
-      expect(isSkillAssignedToAgent("zustand (@vince)", "web-developer", agentSkills)).toBe(true);
+      expect(isSkillAssignedToAgent("web-framework-react", "web-developer", agentSkills)).toBe(
+        true,
+      );
+      expect(isSkillAssignedToAgent("web-state-zustand", "web-developer", agentSkills)).toBe(true);
     });
 
     it("should handle mixed string and SkillAssignment entries", () => {
-      const agentSkills = {
-        "web-developer": ["react (@vince)", { id: "zustand (@vince)", preloaded: true }],
+      const agentSkills: Record<string, AgentSkillConfig> = {
+        "web-developer": ["web-framework-react", { id: "web-state-zustand", preloaded: true }],
       };
 
-      expect(isSkillAssignedToAgent("react (@vince)", "web-developer", agentSkills)).toBe(true);
-      expect(isSkillAssignedToAgent("zustand (@vince)", "web-developer", agentSkills)).toBe(true);
+      expect(isSkillAssignedToAgent("web-framework-react", "web-developer", agentSkills)).toBe(
+        true,
+      );
+      expect(isSkillAssignedToAgent("web-state-zustand", "web-developer", agentSkills)).toBe(true);
     });
   });
 
   describe("categorized format", () => {
     it("should find skill in categorized format", () => {
-      const agentSkills = {
+      const agentSkills: Record<string, AgentSkillConfig> = {
         "web-developer": {
-          framework: ["react (@vince)"],
-          "state-management": ["zustand (@vince)"],
+          framework: ["web-framework-react"],
+          "state-management": ["web-state-zustand"],
         },
       };
 
-      expect(isSkillAssignedToAgent("react (@vince)", "web-developer", agentSkills)).toBe(true);
-      expect(isSkillAssignedToAgent("zustand (@vince)", "web-developer", agentSkills)).toBe(true);
+      expect(isSkillAssignedToAgent("web-framework-react", "web-developer", agentSkills)).toBe(
+        true,
+      );
+      expect(isSkillAssignedToAgent("web-state-zustand", "web-developer", agentSkills)).toBe(true);
     });
 
     it("should return false when skill not in any category", () => {
-      const agentSkills = {
+      const agentSkills: Record<string, AgentSkillConfig> = {
         "web-developer": {
-          framework: ["react (@vince)"],
+          framework: ["web-framework-react"],
         },
       };
 
-      expect(isSkillAssignedToAgent("hono (@vince)", "web-developer", agentSkills)).toBe(false);
+      expect(isSkillAssignedToAgent("api-framework-hono", "web-developer", agentSkills)).toBe(
+        false,
+      );
     });
 
     it("should handle SkillAssignment objects in categories", () => {
-      const agentSkills = {
+      const agentSkills: Record<string, AgentSkillConfig> = {
         "web-developer": {
-          framework: [{ id: "react (@vince)", preloaded: true }],
+          framework: [{ id: "web-framework-react", preloaded: true }],
         },
       };
 
-      expect(isSkillAssignedToAgent("react (@vince)", "web-developer", agentSkills)).toBe(true);
+      expect(isSkillAssignedToAgent("web-framework-react", "web-developer", agentSkills)).toBe(
+        true,
+      );
     });
   });
 });
@@ -865,9 +889,9 @@ describe("resolveAgentsForSkill", () => {
   describe("without project config", () => {
     it("should fall back to default mappings when no config", () => {
       const agents = resolveAgentsForSkill(
-        "react (@vince)",
+        "web-framework-react",
         "skills/web/framework/react",
-        "web",
+        "web/framework",
         undefined,
       );
 
@@ -884,9 +908,9 @@ describe("resolveAgentsForSkill", () => {
       };
 
       const agents = resolveAgentsForSkill(
-        "react (@vince)",
+        "web-framework-react",
         "skills/web/framework/react",
-        "web",
+        "web/framework",
         projectConfig,
       );
 
@@ -906,25 +930,25 @@ describe("resolveAgentsForSkill", () => {
         name: "test-project",
         agents: ["web-developer", "api-developer"],
         agent_skills: {
-          "web-developer": ["react (@vince)", "zustand (@vince)"],
-          "api-developer": ["hono (@vince)", "drizzle (@vince)"],
+          "web-developer": ["web-framework-react", "web-state-zustand"],
+          "api-developer": ["api-framework-hono", "api-database-drizzle"],
         },
       };
 
       // React should only go to web-developer
       const reactAgents = resolveAgentsForSkill(
-        "react (@vince)",
+        "web-framework-react",
         "skills/web/framework/react",
-        "web",
+        "web/framework",
         projectConfig,
       );
       expect(reactAgents).toEqual(["web-developer"]);
 
       // Hono should only go to api-developer
       const honoAgents = resolveAgentsForSkill(
-        "hono (@vince)",
+        "api-framework-hono",
         "skills/api/api/hono",
-        "api",
+        "api/api",
         projectConfig,
       );
       expect(honoAgents).toEqual(["api-developer"]);
@@ -935,15 +959,15 @@ describe("resolveAgentsForSkill", () => {
         name: "test-project",
         agents: ["web-developer"],
         agent_skills: {
-          "web-developer": ["react (@vince)"],
+          "web-developer": ["web-framework-react"],
         },
       };
 
       // Vue not in any config
       const agents = resolveAgentsForSkill(
-        "vue (@vince)",
+        "web-framework-vue",
         "skills/web/framework/vue",
-        "web",
+        "web/framework",
         projectConfig,
       );
 
@@ -955,15 +979,15 @@ describe("resolveAgentsForSkill", () => {
         name: "test-project",
         agents: ["web-developer", "web-reviewer"],
         agent_skills: {
-          "web-developer": ["react (@vince)"],
-          "web-reviewer": ["react (@vince)"],
+          "web-developer": ["web-framework-react"],
+          "web-reviewer": ["web-framework-react"],
         },
       };
 
       const agents = resolveAgentsForSkill(
-        "react (@vince)",
+        "web-framework-react",
         "skills/web/framework/react",
-        "web",
+        "web/framework",
         projectConfig,
       );
 
@@ -978,24 +1002,24 @@ describe("resolveAgentsForSkill", () => {
         agents: ["web-developer"],
         agent_skills: {
           "web-developer": {
-            framework: ["react (@vince)"],
-            "state-management": ["zustand (@vince)"],
+            framework: ["web-framework-react"],
+            "state-management": ["web-state-zustand"],
           },
         },
       };
 
       const reactAgents = resolveAgentsForSkill(
-        "react (@vince)",
+        "web-framework-react",
         "skills/web/framework/react",
-        "web",
+        "web/framework",
         projectConfig,
       );
       expect(reactAgents).toEqual(["web-developer"]);
 
       const zustandAgents = resolveAgentsForSkill(
-        "zustand (@vince)",
+        "web-state-zustand",
         "skills/web/state/zustand",
-        "web",
+        "web/state",
         projectConfig,
       );
       expect(zustandAgents).toEqual(["web-developer"]);
@@ -1006,14 +1030,17 @@ describe("resolveAgentsForSkill", () => {
         name: "test-project",
         agents: ["web-developer"],
         agent_skills: {
-          "web-developer": [{ id: "react (@vince)", preloaded: true }, { id: "zustand (@vince)" }],
+          "web-developer": [
+            { id: "web-framework-react", preloaded: true },
+            { id: "web-state-zustand" },
+          ],
         },
       };
 
       const agents = resolveAgentsForSkill(
-        "react (@vince)",
+        "web-framework-react",
         "skills/web/framework/react",
-        "web",
+        "web/framework",
         projectConfig,
       );
 
@@ -1033,14 +1060,14 @@ describe("resolveAgentsForSkill", () => {
         name: "test-project",
         agents: ["cli-developer"],
         agent_skills: {
-          "cli-developer": ["react (@vince)"], // Override: CLI dev gets React
+          "cli-developer": ["web-framework-react"], // Override: CLI dev gets React
         },
       };
 
       const agents = resolveAgentsForSkill(
-        "react (@vince)",
+        "web-framework-react",
         "skills/web/framework/react",
-        "web",
+        "web/framework",
         projectConfig,
       );
 
@@ -1055,14 +1082,14 @@ describe("resolveAgentsForSkill", () => {
         agents: ["web-developer", "web-reviewer"],
         agent_skills: {
           // Only web-reviewer gets React, web-developer is excluded
-          "web-reviewer": ["react (@vince)"],
+          "web-reviewer": ["web-framework-react"],
         },
       };
 
       const agents = resolveAgentsForSkill(
-        "react (@vince)",
+        "web-framework-react",
         "skills/web/framework/react",
-        "web",
+        "web/framework",
         projectConfig,
       );
 
@@ -1078,24 +1105,24 @@ describe("resolveAgentsForSkill", () => {
         name: "test-project",
         agents: ["web-developer"],
         agent_skills: {
-          "web-developer": ["zustand (@vince)"], // Only zustand, NOT react
+          "web-developer": ["web-state-zustand"], // Only zustand, NOT react
         },
       };
 
       // React should NOT go to web-developer despite being a web skill
       const reactAgents = resolveAgentsForSkill(
-        "react (@vince)",
+        "web-framework-react",
         "skills/web/framework/react",
-        "web",
+        "web/framework",
         projectConfig,
       );
       expect(reactAgents).toEqual([]);
 
       // Zustand should go to web-developer as specified
       const zustandAgents = resolveAgentsForSkill(
-        "zustand (@vince)",
+        "web-state-zustand",
         "skills/web/state/zustand",
-        "web",
+        "web/state",
         projectConfig,
       );
       expect(zustandAgents).toEqual(["web-developer"]);
@@ -1107,14 +1134,14 @@ describe("resolveAgentsForSkill", () => {
         name: "test-project",
         agents: ["web-developer"],
         agent_skills: {
-          "web-developer": ["react (@vince)", "hono (@vince)"], // Fullstack!
+          "web-developer": ["web-framework-react", "api-framework-hono"], // Fullstack!
         },
       };
 
       const honoAgents = resolveAgentsForSkill(
-        "hono (@vince)",
+        "api-framework-hono",
         "skills/api/api/hono",
-        "api",
+        "api/api",
         projectConfig,
       );
 

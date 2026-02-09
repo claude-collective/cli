@@ -7,6 +7,7 @@ import {
   printStackCompilationSummary,
   type CompiledStackPlugin,
 } from "./stack-plugin-compiler";
+
 import type { Stack, StackAgentConfig } from "../types-stacks";
 
 describe("stack-plugin-compiler", () => {
@@ -179,7 +180,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
   /**
    * Create a skill in src/skills/ (new architecture)
    * @param directoryPath - filesystem path like "web/framework/react (@vince)"
-   * @param config.name - frontmatter name (canonical ID) like "web/react (@vince)"
+   * @param config.name - frontmatter name (canonical ID) like "web-framework-react"
    */
   async function createSkillInSource(
     directoryPath: string,
@@ -217,7 +218,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       // Create skill in src/skills/ (new architecture)
       // Directory path is where the files live, frontmatter name is the canonical ID
       const directoryPath = "web/framework/react (@vince)";
-      const frontmatterName = "react (@vince)";
+      const frontmatterName = "web-framework-react";
       await createSkillInSource(directoryPath, {
         name: frontmatterName,
         description: "React development skills",
@@ -549,9 +550,9 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
 
       // Create skills in src/skills/ (new architecture)
       const reactDirPath = "web/framework/react (@vince)";
-      const reactCanonicalId = "react (@vince)";
+      const reactCanonicalId = "web-framework-react";
       const tsDirPath = "web/language/typescript (@vince)";
-      const tsCanonicalId = "typescript (@vince)";
+      const tsCanonicalId = "web-language-typescript";
 
       await createSkillInSource(reactDirPath, {
         name: reactCanonicalId,
@@ -588,8 +589,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       });
 
       // Skill plugins now use canonical frontmatter names (simplified ID format)
-      expect(result.skillPlugins).toContain("react (@vince)");
-      expect(result.skillPlugins).toContain("typescript (@vince)");
+      expect(result.skillPlugins).toContain("web-framework-react");
+      expect(result.skillPlugins).toContain("web-language-typescript");
     });
 
     it("should return correct manifest structure", async () => {
@@ -956,9 +957,9 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
 
       // Create skills in src/skills/ (new architecture)
       const reactDirPath = "web/framework/react (@vince)";
-      const reactCanonicalId = "react (@vince)";
+      const reactCanonicalId = "web-framework-react";
       const zustandDirPath = "web/client-state-management/zustand (@vince)";
-      const zustandCanonicalId = "zustand (@vince)";
+      const zustandCanonicalId = "web-state-zustand";
 
       await createSkillInSource(reactDirPath, {
         name: reactCanonicalId,
@@ -999,8 +1000,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
 
       // README now uses "Included Skills" with canonical IDs
       expect(readmeContent).toContain("## Included Skills");
-      expect(readmeContent).toContain("`react (@vince)`");
-      expect(readmeContent).toContain("`zustand (@vince)`");
+      expect(readmeContent).toContain(`\`${"web-framework-react"}\``);
+      expect(readmeContent).toContain(`\`${"web-state-zustand"}\``);
     });
   });
 
@@ -1017,7 +1018,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
         manifest: { name: "test-stack", version: "1.0.0" },
         stackName: "Test Stack",
         agents: ["web-developer"],
-        skillPlugins: ["react (@vince)"],
+        skillPlugins: ["web-framework-react"],
         hasHooks: false,
       };
 
@@ -1059,16 +1060,16 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
         manifest: { name: "test-stack" },
         stackName: "Test Stack",
         agents: ["web-developer"],
-        skillPlugins: ["react (@vince)", "zustand (@vince)", "typescript (@vince)"],
+        skillPlugins: ["web-framework-react", "web-state-zustand", "web-language-typescript"],
         hasHooks: false,
       };
 
       printStackCompilationSummary(result);
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Skills included: 3"));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("react (@vince)"));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("zustand (@vince)"));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("typescript (@vince)"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("web-framework-react"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("web-state-zustand"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("web-language-typescript"));
 
       consoleSpy.mockRestore();
     });

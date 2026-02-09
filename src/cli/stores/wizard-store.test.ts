@@ -394,10 +394,10 @@ describe("WizardStore", () => {
   describe("skill sources", () => {
     it("should set skill source", () => {
       const store = useWizardStore.getState();
-      store.setSkillSource("react", "react (@vince)");
+      store.setSkillSource("react", "web-framework-react");
 
       const { skillSources } = useWizardStore.getState();
-      expect(skillSources.react).toBe("react (@vince)");
+      expect(skillSources.react).toBe("web-framework-react");
     });
 
     it("should set current refine index", () => {
@@ -428,8 +428,8 @@ describe("WizardStore", () => {
 
     it("should get selected skills including preselected", () => {
       const store = useWizardStore.getState();
-      store.setSkillSource("react", "react (@vince)");
-      store.setSkillSource("scss", "scss-modules (@vince)");
+      store.setSkillSource("react", "web-framework-react");
+      store.setSkillSource("scss", "web-styling-scss-modules");
 
       const skills = store.getSelectedSkills();
 
@@ -438,8 +438,8 @@ describe("WizardStore", () => {
         expect(skills).toContain(skill);
       }
       // Should include user selected skills
-      expect(skills).toContain("react (@vince)");
-      expect(skills).toContain("scss-modules (@vince)");
+      expect(skills).toContain("web-framework-react");
+      expect(skills).toContain("web-styling-scss-modules");
     });
   });
 
@@ -483,11 +483,11 @@ describe("WizardStore", () => {
       // Stack only has web-domain skills
       const stack = {
         agents: {
-          web: { "frontend/framework": "react" },
+          web: { ["web/framework"]: "react" },
         },
       };
       const categories: Record<string, { domain?: string }> = {
-        "frontend/framework": { domain: "web" },
+        ["web/framework"]: { domain: "web" },
       };
 
       store.populateFromStack(stack, categories);
@@ -499,7 +499,7 @@ describe("WizardStore", () => {
 
       // domainSelections should only contain the stack's actual mappings
       expect(domainSelections.web).toBeDefined();
-      expect(domainSelections.web["frontend/framework"]).toEqual(["react"]);
+      expect(domainSelections.web["web/framework"]).toEqual(["react"]);
       expect(domainSelections.api).toBeUndefined();
     });
 
@@ -508,23 +508,23 @@ describe("WizardStore", () => {
 
       const stack = {
         agents: {
-          web: { "frontend/framework": "react", "frontend/state": "zustand" },
-          api: { "backend/framework": "hono" },
+          web: { ["web/framework"]: "react", ["web/state"]: "zustand" },
+          api: { ["api/framework"]: "hono" },
         },
       };
       const categories: Record<string, { domain?: string }> = {
-        "frontend/framework": { domain: "web" },
-        "frontend/state": { domain: "web" },
-        "backend/framework": { domain: "api" },
+        ["web/framework"]: { domain: "web" },
+        ["web/state"]: { domain: "web" },
+        ["api/framework"]: { domain: "api" },
       };
 
       store.populateFromStack(stack, categories);
 
       const { domainSelections } = useWizardStore.getState();
 
-      expect(domainSelections.web["frontend/framework"]).toEqual(["react"]);
-      expect(domainSelections.web["frontend/state"]).toEqual(["zustand"]);
-      expect(domainSelections.api["backend/framework"]).toEqual(["hono"]);
+      expect(domainSelections.web["web/framework"]).toEqual(["react"]);
+      expect(domainSelections.web["web/state"]).toEqual(["zustand"]);
+      expect(domainSelections.api["api/framework"]).toEqual(["hono"]);
     });
 
     it("should skip entries without a domain", () => {

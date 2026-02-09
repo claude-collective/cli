@@ -11,7 +11,8 @@ import {
   validateProjectConfig,
 } from "./project-config";
 import { generateProjectConfigFromSkills } from "./config-generator";
-import type { MergedSkillsMatrix, ResolvedSkill } from "../types-matrix";
+import { createMockSkill, createMockMatrix } from "./__tests__/helpers";
+import type { SkillAssignment } from "../types";
 
 describe("project-config", () => {
   let tempDir: string;
@@ -57,8 +58,8 @@ agents:
         path.join(configDir, "config.yaml"),
         `name: my-project
 skills:
-  - react (@vince)
-  - zustand (@vince)
+  - ${"web-framework-react"}
+  - ${"web-state-zustand"}
 agents:
   - web-developer
 `,
@@ -67,7 +68,7 @@ agents:
       const result = await loadProjectConfig(tempDir);
 
       expect(result).not.toBeNull();
-      expect(result!.config.skills).toEqual(["react (@vince)", "zustand (@vince)"]);
+      expect(result!.config.skills).toEqual(["web-framework-react", "web-state-zustand"]);
     });
 
     it("should load config with skills array (object format)", async () => {
@@ -77,7 +78,7 @@ agents:
         path.join(configDir, "config.yaml"),
         `name: my-project
 skills:
-  - id: react (@vince)
+  - id: ${"web-framework-react"}
     preloaded: true
   - id: my-custom-skill
     local: true
@@ -91,7 +92,7 @@ agents:
 
       expect(result).not.toBeNull();
       expect(result!.config.skills).toEqual([
-        { id: "react (@vince)", preloaded: true },
+        { id: "web-framework-react", preloaded: true },
         {
           id: "my-custom-skill",
           local: true,
@@ -110,8 +111,8 @@ agents:
   - web-developer
 agent_skills:
   web-developer:
-    - react (@vince)
-    - zustand (@vince)
+    - ${"web-framework-react"}
+    - ${"web-state-zustand"}
 `,
       );
 
@@ -119,7 +120,7 @@ agent_skills:
 
       expect(result).not.toBeNull();
       expect(result!.config.agent_skills).toEqual({
-        "web-developer": ["react (@vince)", "zustand (@vince)"],
+        "web-developer": ["web-framework-react", "web-state-zustand"],
       });
     });
 
@@ -134,10 +135,10 @@ agents:
 agent_skills:
   api-developer:
     api:
-      - id: hono (@vince)
+      - id: ${"api-framework-hono"}
         preloaded: true
     database:
-      - drizzle (@vince)
+      - ${"api-database-drizzle"}
 `,
       );
 
@@ -146,8 +147,8 @@ agent_skills:
       expect(result).not.toBeNull();
       expect(result!.config.agent_skills).toEqual({
         "api-developer": {
-          api: [{ id: "hono (@vince)", preloaded: true }],
-          database: ["drizzle (@vince)"],
+          api: [{ id: "api-framework-hono", preloaded: true }],
+          database: ["api-database-drizzle"],
         },
       });
     });
@@ -162,13 +163,13 @@ author: "@vince"
 description: A config with extra fields
 framework: nextjs
 skills:
-  - id: react (@vince)
+  - id: ${"web-framework-react"}
 agents:
   - web-developer
 agent_skills:
   web-developer:
     framework:
-      - id: react (@vince)
+      - id: ${"web-framework-react"}
         preloaded: true
 philosophy: Ship fast
 principles:
@@ -232,7 +233,7 @@ custom_agents:
       - Bash
     permission_mode: acceptEdits
     skills:
-      - id: react (@vince)
+      - id: ${"web-framework-react"}
         preloaded: true
 `,
       );
@@ -250,7 +251,7 @@ custom_agents:
         tools: ["Read", "Grep", "Glob"],
         disallowed_tools: ["Bash"],
         permission_mode: "acceptEdits",
-        skills: [{ id: "react (@vince)", preloaded: true }],
+        skills: [{ id: "web-framework-react", preloaded: true }],
       });
     });
   });
@@ -343,8 +344,8 @@ custom_agents:
         name: "my-project",
         agents: ["web-developer"],
         skills: [
-          "react (@vince)",
-          { id: "zustand (@vince)", preloaded: true },
+          "web-framework-react",
+          { id: "web-state-zustand", preloaded: true },
           { id: "my-local", local: true, path: ".claude/skills/my-local/" },
         ],
       });
@@ -455,7 +456,7 @@ custom_agents:
               tools: ["Read", "Grep", "Glob"],
               disallowed_tools: ["Bash"],
               permission_mode: "acceptEdits",
-              skills: [{ id: "react (@vince)", preloaded: true }, "zustand (@vince)"],
+              skills: [{ id: "web-framework-react", preloaded: true }, "web-state-zustand"],
               hooks: {
                 PreToolUse: [{ matcher: "*" }],
               },
@@ -687,12 +688,12 @@ custom_agents:
 
   describe("normalizeSkillEntry", () => {
     it("should convert string to SkillAssignment", () => {
-      const result = normalizeSkillEntry("react (@vince)");
-      expect(result).toEqual({ id: "react (@vince)" });
+      const result = normalizeSkillEntry("web-framework-react");
+      expect(result).toEqual({ id: "web-framework-react" });
     });
 
     it("should pass through SkillAssignment", () => {
-      const assignment = { id: "react", preloaded: true };
+      const assignment: SkillAssignment = { id: "web-framework-react", preloaded: true };
       const result = normalizeSkillEntry(assignment);
       expect(result).toBe(assignment); // Same object reference
     });
@@ -701,24 +702,27 @@ custom_agents:
   describe("normalizeAgentSkills", () => {
     it("should normalize simple list to categorized format", () => {
       const result = normalizeAgentSkills({
-        "web-developer": ["react", "zustand"],
+        "web-developer": ["web-framework-react", "web-state-zustand"],
       });
 
       expect(result).toEqual({
         "web-developer": {
-          uncategorized: [{ id: "react" }, { id: "zustand" }],
+          uncategorized: [{ id: "web-framework-react" }, { id: "web-state-zustand" }],
         },
       });
     });
 
     it("should normalize mixed format entries in simple list", () => {
       const result = normalizeAgentSkills({
-        "web-developer": ["react", { id: "zustand", preloaded: true }],
+        "web-developer": ["web-framework-react", { id: "web-state-zustand", preloaded: true }],
       });
 
       expect(result).toEqual({
         "web-developer": {
-          uncategorized: [{ id: "react" }, { id: "zustand", preloaded: true }],
+          uncategorized: [
+            { id: "web-framework-react" },
+            { id: "web-state-zustand", preloaded: true },
+          ],
         },
       });
     });
@@ -726,33 +730,33 @@ custom_agents:
     it("should normalize categorized format entries", () => {
       const result = normalizeAgentSkills({
         "web-developer": {
-          framework: ["react"],
-          state: [{ id: "zustand", preloaded: true }],
+          framework: ["web-framework-react"],
+          state: [{ id: "web-state-zustand", preloaded: true }],
         },
       });
 
       expect(result).toEqual({
         "web-developer": {
-          framework: [{ id: "react" }],
-          state: [{ id: "zustand", preloaded: true }],
+          framework: [{ id: "web-framework-react" }],
+          state: [{ id: "web-state-zustand", preloaded: true }],
         },
       });
     });
 
     it("should handle multiple agents", () => {
       const result = normalizeAgentSkills({
-        "web-developer": ["react"],
+        "web-developer": ["web-framework-react"],
         "api-developer": {
-          api: ["hono"],
+          api: ["api-framework-hono"],
         },
       });
 
       expect(result).toEqual({
         "web-developer": {
-          uncategorized: [{ id: "react" }],
+          uncategorized: [{ id: "web-framework-react" }],
         },
         "api-developer": {
-          api: [{ id: "hono" }],
+          api: [{ id: "api-framework-hono" }],
         },
       });
     });
@@ -768,52 +772,6 @@ custom_agents:
 // Round-trip Tests (Generate -> Write -> Load)
 // =============================================================================
 
-/**
- * Helper to create a minimal resolved skill for testing
- */
-function createMockSkill(
-  id: string,
-  category: string,
-  overrides?: Partial<ResolvedSkill>,
-): ResolvedSkill {
-  return {
-    id,
-    name: id.replace(/ \(@.*\)$/, ""),
-    description: `${id} skill`,
-    category,
-    categoryExclusive: false,
-    tags: [],
-    author: "@test",
-    conflictsWith: [],
-    recommends: [],
-    recommendedBy: [],
-    requires: [],
-    requiredBy: [],
-    alternatives: [],
-    discourages: [],
-    compatibleWith: [],
-    requiresSetup: [],
-    providesSetupFor: [],
-    path: `skills/${category}/${id}/`,
-    ...overrides,
-  };
-}
-
-/**
- * Helper to create a minimal merged skills matrix for testing
- */
-function createMockMatrix(skills: Record<string, ResolvedSkill>): MergedSkillsMatrix {
-  return {
-    version: "1.0.0",
-    categories: {},
-    skills,
-    suggestedStacks: [],
-    aliases: {},
-    aliasesReverse: {},
-    generatedAt: new Date().toISOString(),
-  };
-}
-
 describe("round-trip tests", () => {
   let tempDir: string;
 
@@ -828,14 +786,14 @@ describe("round-trip tests", () => {
   it("should round-trip minimal config (name and skills only)", async () => {
     // Create mock matrix with skills
     const matrix = createMockMatrix({
-      "react (@vince)": createMockSkill("react (@vince)", "web/framework"),
-      "zustand (@vince)": createMockSkill("zustand (@vince)", "web/state"),
+      ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+      ["web-state-zustand"]: createMockSkill("web-state-zustand", "web/state"),
     });
 
     // Generate config
     const generated = generateProjectConfigFromSkills(
       "test-project",
-      ["react (@vince)", "zustand (@vince)"],
+      ["web-framework-react", "web-state-zustand"],
       matrix,
     );
 
@@ -858,13 +816,13 @@ describe("round-trip tests", () => {
   it("should round-trip config with options (description/framework/author)", async () => {
     // Create mock matrix with skills
     const matrix = createMockMatrix({
-      "react (@vince)": createMockSkill("react (@vince)", "web/framework"),
+      ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
     });
 
     // Generate config with options
     const generated = generateProjectConfigFromSkills(
       "my-awesome-project",
-      ["react (@vince)"],
+      ["web-framework-react"],
       matrix,
       {
         description: "An awesome project for testing",
@@ -887,15 +845,15 @@ describe("round-trip tests", () => {
     expect(loaded!.config.description).toBe("An awesome project for testing");
     expect(loaded!.config.framework).toBe("nextjs");
     expect(loaded!.config.author).toBe("@testuser");
-    expect(loaded!.config.skills).toEqual(["react (@vince)"]);
+    expect(loaded!.config.skills).toEqual(["web-framework-react"]);
     expect(loaded!.isLegacy).toBe(false);
   });
 
   it("should round-trip config with local skills (path preserved)", async () => {
     // Create mock matrix with local skill
     const matrix = createMockMatrix({
-      "react (@vince)": createMockSkill("react (@vince)", "web/framework"),
-      "my-custom-skill (@local)": createMockSkill("my-custom-skill (@local)", "local/custom", {
+      ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+      "web-custom-skill": createMockSkill("web-custom-skill", "local", {
         local: true,
         localPath: ".claude/skills/my-custom-skill/",
       }),
@@ -904,7 +862,7 @@ describe("round-trip tests", () => {
     // Generate config with local skill
     const generated = generateProjectConfigFromSkills(
       "project-with-local",
-      ["react (@vince)", "my-custom-skill (@local)"],
+      ["web-framework-react", "web-custom-skill"],
       matrix,
     );
 
@@ -922,11 +880,11 @@ describe("round-trip tests", () => {
     expect(loaded!.config.skills).toHaveLength(2);
 
     // Remote skill should be string
-    expect(loaded!.config.skills![0]).toBe("react (@vince)");
+    expect(loaded!.config.skills![0]).toBe("web-framework-react");
 
     // Local skill should be object with path preserved
     expect(loaded!.config.skills![1]).toEqual({
-      id: "my-custom-skill (@local)",
+      id: "web-custom-skill",
       local: true,
       path: ".claude/skills/my-custom-skill/",
     });
@@ -937,14 +895,14 @@ describe("round-trip tests", () => {
   it("should round-trip config with agent_skills (includeAgentSkills option)", async () => {
     // Create mock matrix with skills
     const matrix = createMockMatrix({
-      "react (@vince)": createMockSkill("react (@vince)", "web/framework"),
-      "zustand (@vince)": createMockSkill("zustand (@vince)", "web/state"),
+      ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+      ["web-state-zustand"]: createMockSkill("web-state-zustand", "web/state"),
     });
 
     // Generate config with agent_skills included
     const generated = generateProjectConfigFromSkills(
       "project-with-agent-skills",
-      ["react (@vince)", "zustand (@vince)"],
+      ["web-framework-react", "web-state-zustand"],
       matrix,
       { includeAgentSkills: true },
     );

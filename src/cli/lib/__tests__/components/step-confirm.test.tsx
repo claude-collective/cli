@@ -9,7 +9,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StepConfirm } from "../../../components/wizard/step-confirm";
 import { useWizardStore } from "../../../stores/wizard-store";
 import { createMockMatrix, createMockSkill } from "../helpers";
-import { TEST_SKILLS, TEST_CATEGORIES } from "../test-fixtures";
+
+
 import type { MergedSkillsMatrix } from "../../../types-matrix";
 import { ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../test-constants";
 
@@ -19,15 +20,15 @@ import { ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../test-constants";
 
 const createTestMatrix = (): MergedSkillsMatrix => {
   const skills = {
-    [TEST_SKILLS.REACT]: createMockSkill(TEST_SKILLS.REACT, TEST_CATEGORIES.FRAMEWORK, {
+    ["web-framework-react"]: createMockSkill("web-framework-react", "framework", {
       name: "React",
       description: "React framework",
     }),
-    [TEST_SKILLS.ZUSTAND]: createMockSkill(TEST_SKILLS.ZUSTAND, TEST_CATEGORIES.STATE, {
+    ["web-state-zustand"]: createMockSkill("web-state-zustand", "client-state", {
       name: "Zustand",
       description: "State management",
     }),
-    [TEST_SKILLS.VITEST]: createMockSkill(TEST_SKILLS.VITEST, TEST_CATEGORIES.TESTING, {
+    ["web-testing-vitest"]: createMockSkill("web-testing-vitest", "testing", {
       name: "Vitest",
       description: "Testing framework",
     }),
@@ -35,24 +36,24 @@ const createTestMatrix = (): MergedSkillsMatrix => {
 
   return createMockMatrix(skills, {
     categories: {
-      [TEST_CATEGORIES.FRAMEWORK]: {
-        id: TEST_CATEGORIES.FRAMEWORK,
+      ["framework"]: {
+        id: "framework",
         name: "Framework",
         description: "UI Frameworks",
         exclusive: false,
         required: false,
         order: 1,
       },
-      [TEST_CATEGORIES.STATE]: {
-        id: TEST_CATEGORIES.STATE,
+      ["client-state"]: {
+        id: "client-state",
         name: "State",
         description: "State management",
         exclusive: false,
         required: false,
         order: 2,
       },
-      [TEST_CATEGORIES.TESTING]: {
-        id: TEST_CATEGORIES.TESTING,
+      ["testing"]: {
+        id: "testing",
         name: "Testing",
         description: "Testing frameworks",
         exclusive: false,

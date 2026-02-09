@@ -3,55 +3,25 @@ import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
 import { copySkillsToPluginFromSource, copySkillsToLocalFlattened } from "./skill-copier";
-import type { MergedSkillsMatrix, ResolvedSkill } from "../types-matrix";
+import type { CategoryPath, ResolvedSkill, SkillId } from "../types-matrix";
 import type { SourceLoadResult } from "./source-loader";
 import { PROJECT_ROOT } from "../consts";
+import { createMockSkill as _createMockSkill, createMockMatrix } from "./__tests__/helpers";
 
 /**
- * Helper to create a minimal resolved skill for testing
+ * Helper to create a mock skill with an explicit path (wraps shared helper)
  */
 function createMockSkill(
-  id: string,
-  category: string,
+  id: SkillId,
+  category: CategoryPath,
   skillPath: string,
   overrides?: Partial<ResolvedSkill>,
 ): ResolvedSkill {
-  return {
-    id,
+  return _createMockSkill(id, category, {
     name: id.replace(/ \(@.*\)$/, ""),
-    description: `${id} skill`,
-    category,
-    categoryExclusive: false,
-    tags: [],
-    author: "@test",
-    conflictsWith: [],
-    recommends: [],
-    recommendedBy: [],
-    requires: [],
-    requiredBy: [],
-    alternatives: [],
-    discourages: [],
-    compatibleWith: [],
-    requiresSetup: [],
-    providesSetupFor: [],
     path: skillPath,
     ...overrides,
-  };
-}
-
-/**
- * Helper to create a minimal merged skills matrix for testing
- */
-function createMockMatrix(skills: Record<string, ResolvedSkill>): MergedSkillsMatrix {
-  return {
-    version: "1.0.0",
-    categories: {},
-    skills,
-    suggestedStacks: [],
-    aliases: {},
-    aliasesReverse: {},
-    generatedAt: new Date().toISOString(),
-  };
+  });
 }
 
 describe("skill-copier", () => {
@@ -83,15 +53,10 @@ describe("skill-copier", () => {
       );
 
       const matrix = createMockMatrix({
-        "my-local-skill (@local)": createMockSkill(
-          "my-local-skill (@local)",
-          "local/custom",
-          localSkillPath,
-          {
-            local: true,
-            localPath: localSkillPath,
-          },
-        ),
+        "web-local-skill": createMockSkill("web-local-skill", "local", localSkillPath, {
+          local: true,
+          localPath: localSkillPath,
+        }),
       });
 
       const sourceResult: SourceLoadResult = {
@@ -107,7 +72,7 @@ describe("skill-copier", () => {
 
       try {
         const result = await copySkillsToPluginFromSource(
-          ["my-local-skill (@local)"],
+          ["web-local-skill"],
           pluginDir,
           matrix,
           sourceResult,
@@ -115,7 +80,7 @@ describe("skill-copier", () => {
 
         // Local skill should be returned but marked as local
         expect(result).toHaveLength(1);
-        expect(result[0].skillId).toBe("my-local-skill (@local)");
+        expect(result[0].skillId).toBe("web-local-skill");
         expect(result[0].local).toBe(true);
         expect(result[0].sourcePath).toBe(localSkillPath);
         expect(result[0].destPath).toBe(localSkillPath);
@@ -145,15 +110,10 @@ describe("skill-copier", () => {
       );
 
       const matrix = createMockMatrix({
-        "test-local (@local)": createMockSkill(
-          "test-local (@local)",
-          "local/custom",
-          localSkillPath,
-          {
-            local: true,
-            localPath: localSkillPath,
-          },
-        ),
+        "web-test-local": createMockSkill("web-test-local", "local", localSkillPath, {
+          local: true,
+          localPath: localSkillPath,
+        }),
       });
 
       const sourceResult: SourceLoadResult = {
@@ -168,14 +128,14 @@ describe("skill-copier", () => {
 
       try {
         const result = await copySkillsToPluginFromSource(
-          ["test-local (@local)"],
+          ["web-test-local"],
           pluginDir,
           matrix,
           sourceResult,
         );
 
         expect(result[0]).toMatchObject({
-          skillId: "test-local (@local)",
+          skillId: "web-test-local",
           sourcePath: localSkillPath,
           destPath: localSkillPath,
           local: true,
@@ -212,11 +172,11 @@ describe("skill-copier", () => {
       );
 
       const matrix = createMockMatrix({
-        "my-local (@local)": createMockSkill("my-local (@local)", "local/custom", localSkillPath, {
+        "web-my-local": createMockSkill("web-my-local", "local", localSkillPath, {
           local: true,
           localPath: localSkillPath,
         }),
-        "web-framework-react": createMockSkill(
+        ["web-framework-react"]: createMockSkill(
           "web-framework-react",
           "web/framework",
           remoteSkillRelPath,
@@ -235,7 +195,7 @@ describe("skill-copier", () => {
 
       try {
         const result = await copySkillsToPluginFromSource(
-          ["my-local (@local)", "web-framework-react"],
+          ["web-my-local", "web-framework-react"],
           pluginDir,
           matrix,
           sourceResult,
@@ -248,7 +208,7 @@ describe("skill-copier", () => {
         const remoteResult = result.find((r) => r.local !== true);
 
         // Local skill should not be copied
-        expect(localResult?.skillId).toBe("my-local (@local)");
+        expect(localResult?.skillId).toBe("web-my-local");
         expect(localResult?.local).toBe(true);
         expect(localResult?.sourcePath).toBe(localSkillPath);
         expect(localResult?.destPath).toBe(localSkillPath);
@@ -322,9 +282,14 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        "web-state-zustand": createMockSkill("web-state-zustand", "web/state", remoteSkillRelPath, {
-          alias: "zustand",
-        }),
+        ["web-state-zustand"]: createMockSkill(
+          "web-state-zustand",
+          "web/state",
+          remoteSkillRelPath,
+          {
+            alias: "zustand",
+          },
+        ),
       });
 
       const sourceResult: SourceLoadResult = {
@@ -372,7 +337,7 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        "api-framework-hono": createMockSkill(
+        ["api-framework-hono"]: createMockSkill(
           "api-framework-hono",
           "api/api",
           remoteSkillRelPath,
@@ -412,15 +377,10 @@ describe("skill-copier", () => {
       const localSkillsDir = path.join(projectDir, ".claude", "skills");
 
       const matrix = createMockMatrix({
-        "my-local-skill (@local)": createMockSkill(
-          "my-local-skill (@local)",
-          "local/custom",
-          localSkillPath,
-          {
-            local: true,
-            localPath: localSkillPath,
-          },
-        ),
+        "web-local-skill": createMockSkill("web-local-skill", "local", localSkillPath, {
+          local: true,
+          localPath: localSkillPath,
+        }),
       });
 
       const sourceResult: SourceLoadResult = {
@@ -435,7 +395,7 @@ describe("skill-copier", () => {
 
       try {
         const result = await copySkillsToLocalFlattened(
-          ["my-local-skill (@local)"],
+          ["web-local-skill"],
           localSkillsDir,
           matrix,
           sourceResult,
@@ -443,7 +403,7 @@ describe("skill-copier", () => {
 
         // Local skill should be returned but marked as local
         expect(result).toHaveLength(1);
-        expect(result[0].skillId).toBe("my-local-skill (@local)");
+        expect(result[0].skillId).toBe("web-local-skill");
         expect(result[0].local).toBe(true);
         expect(result[0].sourcePath).toBe(localSkillPath);
         expect(result[0].destPath).toBe(localSkillPath);
@@ -478,11 +438,11 @@ describe("skill-copier", () => {
       const localSkillsDir = path.join(projectDir, ".claude", "skills");
 
       const matrix = createMockMatrix({
-        "my-local (@local)": createMockSkill("my-local (@local)", "local/custom", localSkillPath, {
+        "web-my-local": createMockSkill("web-my-local", "local", localSkillPath, {
           local: true,
           localPath: localSkillPath,
         }),
-        "web-framework-react": createMockSkill(
+        ["web-framework-react"]: createMockSkill(
           "web-framework-react",
           "web/framework",
           remoteSkillRelPath,
@@ -502,7 +462,7 @@ describe("skill-copier", () => {
 
       try {
         const result = await copySkillsToLocalFlattened(
-          ["my-local (@local)", "web-framework-react"],
+          ["web-my-local", "web-framework-react"],
           localSkillsDir,
           matrix,
           sourceResult,
@@ -515,7 +475,7 @@ describe("skill-copier", () => {
         const remoteResult = result.find((r) => r.local !== true);
 
         // Local skill should not be copied
-        expect(localResult?.skillId).toBe("my-local (@local)");
+        expect(localResult?.skillId).toBe("web-my-local");
         expect(localResult?.local).toBe(true);
 
         // Remote skill should be copied to flattened location using normalized ID
@@ -564,7 +524,7 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill(
+        ["web-framework-react"]: createMockSkill(
           "web-framework-react",
           "web/framework/client-rendering",
           deeplyNestedPath,
@@ -648,13 +608,18 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react", "web/framework", reactPath, {
-          alias: "react",
-        }),
-        "api-framework-hono": createMockSkill("api-framework-hono", "api/api", honoPath, {
+        ["web-framework-react"]: createMockSkill(
+          "web-framework-react",
+          "web/framework",
+          reactPath,
+          {
+            alias: "react",
+          },
+        ),
+        ["api-framework-hono"]: createMockSkill("api-framework-hono", "api/api", honoPath, {
           alias: "hono",
         }),
-        "web-testing-vitest": createMockSkill("web-testing-vitest", "testing/unit", vitestPath, {
+        ["web-testing-vitest"]: createMockSkill("web-testing-vitest", "testing", vitestPath, {
           alias: "vitest",
         }),
       });
@@ -717,7 +682,7 @@ describe("skill-copier", () => {
       const matrix = createMockMatrix({
         "web-tooling-vite": createMockSkill(
           "web-tooling-vite",
-          "tooling/bundler",
+          "web/tooling",
           nestedPath,
           // No alias!
         ),

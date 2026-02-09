@@ -195,7 +195,7 @@ Local modifications here.
         `version: 1
 author: "@test"
 forked_from:
-  skill_id: "react (@vince)"
+  skill_id: "${"web-framework-react"}"
   content_hash: "abc123"
   date: "2025-01-01"
 `,
@@ -269,7 +269,7 @@ forked_from:
       await writeFile(path.join(skillsDir, "SKILL.md"), "---\nname: test\n---\n# Test");
       await writeFile(
         path.join(skillsDir, "metadata.yaml"),
-        `forked_from:\n  skill_id: "react (@vince)"\n  content_hash: "abc"\n  date: "2025-01-01"`,
+        `forked_from:\n  skill_id: "${"web-framework-react"}"\n  content_hash: "abc"\n  date: "2025-01-01"`,
       );
 
       const { error } = await runCliCommand(["diff", "--source", "/definitely/not/real/path/xyz"]);

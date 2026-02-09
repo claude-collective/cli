@@ -14,7 +14,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { StepStack } from "../../../components/wizard/step-stack";
 import { useWizardStore } from "../../../stores/wizard-store";
 import { createMockMatrix, createMockSkill } from "../helpers";
-import { TEST_SKILLS, TEST_CATEGORIES } from "../test-fixtures";
+
+
 import type { MergedSkillsMatrix, ResolvedStack } from "../../../types-matrix";
 import { ARROW_DOWN, ARROW_UP, ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../test-constants";
 
@@ -27,15 +28,15 @@ const SELECT_NAV_DELAY_MS = 100;
 
 const createMockStackWithSkills = (): MergedSkillsMatrix => {
   const skills = {
-    [TEST_SKILLS.REACT]: createMockSkill(TEST_SKILLS.REACT, TEST_CATEGORIES.FRAMEWORK, {
+    ["web-framework-react"]: createMockSkill("web-framework-react", "framework", {
       name: "React",
       description: "React framework",
     }),
-    [TEST_SKILLS.ZUSTAND]: createMockSkill(TEST_SKILLS.ZUSTAND, TEST_CATEGORIES.STATE, {
+    ["web-state-zustand"]: createMockSkill("web-state-zustand", "client-state", {
       name: "Zustand",
       description: "State management",
     }),
-    [TEST_SKILLS.HONO]: createMockSkill(TEST_SKILLS.HONO, TEST_CATEGORIES.BACKEND_FRAMEWORK, {
+    ["api-framework-hono"]: createMockSkill("api-framework-hono", "api", {
       name: "Hono",
       description: "Web framework",
     }),
@@ -48,7 +49,7 @@ const createMockStackWithSkills = (): MergedSkillsMatrix => {
       description: "Full React stack with Zustand and Hono",
       audience: [],
       skills: {},
-      allSkillIds: [TEST_SKILLS.REACT, TEST_SKILLS.ZUSTAND, TEST_SKILLS.HONO],
+      allSkillIds: ["web-framework-react", "web-state-zustand", "api-framework-hono"],
       philosophy: "",
     },
     {
@@ -57,7 +58,7 @@ const createMockStackWithSkills = (): MergedSkillsMatrix => {
       description: "Minimal React setup",
       audience: [],
       skills: {},
-      allSkillIds: [TEST_SKILLS.REACT],
+      allSkillIds: ["web-framework-react"],
       philosophy: "",
     },
   ];
@@ -65,8 +66,8 @@ const createMockStackWithSkills = (): MergedSkillsMatrix => {
   return createMockMatrix(skills, {
     suggestedStacks,
     categories: {
-      web: {
-        id: "web",
+      framework: {
+        id: "framework",
         name: "Web",
         description: "Web skills",
         exclusive: false,

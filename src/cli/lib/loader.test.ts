@@ -4,7 +4,7 @@ import { parseFrontmatter } from "./loader";
 describe("parseFrontmatter", () => {
   it("should parse valid frontmatter with name and description", () => {
     const content = `---
-name: react (@vince)
+name: ${"web-framework-react"}
 description: React component patterns and hooks
 ---
 
@@ -15,7 +15,7 @@ Content here...`;
     const result = parseFrontmatter(content);
 
     expect(result).not.toBeNull();
-    expect(result?.name).toBe("react (@vince)");
+    expect(result?.name).toBe("web-framework-react");
     expect(result?.description).toBe("React component patterns and hooks");
   });
 
@@ -55,7 +55,7 @@ Content`;
 
   it("should handle frontmatter with additional fields", () => {
     const content = `---
-name: hono (@vince)
+name: ${"api-framework-hono"}
 description: API patterns
 version: 1
 author: "@test"
@@ -69,7 +69,7 @@ Content`;
     const result = parseFrontmatter(content);
 
     expect(result).not.toBeNull();
-    expect(result?.name).toBe("hono (@vince)");
+    expect(result?.name).toBe("api-framework-hono");
     expect(result?.description).toBe("API patterns");
   });
 

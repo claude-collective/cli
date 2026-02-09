@@ -4,7 +4,7 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { stringify as stringifyYaml } from "yaml";
 import { mergeWithExistingConfig } from "./config-merger";
-import type { ProjectConfig } from "../../types";
+import type { AgentSkillConfig, ProjectConfig } from "../../types";
 
 describe("config-merger", () => {
   let tempDir: string;
@@ -22,7 +22,7 @@ describe("config-merger", () => {
       const newConfig: ProjectConfig = {
         name: "new-project",
         agents: ["web-developer"],
-        skills: ["react"],
+        skills: ["web-framework-react"],
         description: "A new project",
       };
 
@@ -33,7 +33,7 @@ describe("config-merger", () => {
       expect(result.merged).toBe(false);
       expect(result.config.name).toBe("new-project");
       expect(result.config.agents).toEqual(["web-developer"]);
-      expect(result.config.skills).toEqual(["react"]);
+      expect(result.config.skills).toEqual(["web-framework-react"]);
       expect(result.config.description).toBe("A new project");
       expect(result.existingConfigPath).toBeUndefined();
     });
@@ -237,8 +237,8 @@ describe("config-merger", () => {
 
       it("should preserve existing hooks, agent_skills, preload_patterns, custom_agents", async () => {
         const existingHooks = { PreToolUse: [{ matcher: "*" }] };
-        const existingAgentSkills = {
-          "web-developer": ["react"],
+        const existingAgentSkills: Record<string, AgentSkillConfig> = {
+          "web-developer": ["web-framework-react"],
         };
         const existingPreloadPatterns = {
           "web-developer": ["framework"],
@@ -287,13 +287,13 @@ describe("config-merger", () => {
         await writeFullConfig({
           name: "project",
           agents: ["web-developer"],
-          skills: ["react", "zustand"],
+          skills: ["web-framework-react", "web-state-zustand"],
         });
 
         const newConfig: ProjectConfig = {
           name: "project",
           agents: ["web-developer"],
-          skills: ["react", "tailwind"], // react is duplicate
+          skills: ["web-framework-react", "web-styling-tailwind"], // react is duplicate
         };
 
         const result = await mergeWithExistingConfig(newConfig, {
@@ -302,20 +302,24 @@ describe("config-merger", () => {
 
         expect(result.merged).toBe(true);
         // Existing skills come first, new unique skills appended
-        expect(result.config.skills).toEqual(["react", "zustand", "tailwind"]);
+        expect(result.config.skills).toEqual([
+          "web-framework-react",
+          "web-state-zustand",
+          "web-styling-tailwind",
+        ]);
       });
 
       it("should handle object-format skill entries in union", async () => {
         await writeFullConfig({
           name: "project",
           agents: ["web-developer"],
-          skills: [{ id: "react", preloaded: true }],
+          skills: [{ id: "web-framework-react", preloaded: true }],
         });
 
         const newConfig: ProjectConfig = {
           name: "project",
           agents: ["web-developer"],
-          skills: ["react", "zustand"], // "react" duplicates existing { id: "react" }
+          skills: ["web-framework-react", "web-state-zustand"], // "react" duplicates existing { id: "react" }
         };
 
         const result = await mergeWithExistingConfig(newConfig, {
@@ -324,7 +328,10 @@ describe("config-merger", () => {
 
         expect(result.merged).toBe(true);
         // Existing object-format skill preserved, duplicate removed
-        expect(result.config.skills).toEqual([{ id: "react", preloaded: true }, "zustand"]);
+        expect(result.config.skills).toEqual([
+          { id: "web-framework-react", preloaded: true },
+          "web-state-zustand",
+        ]);
       });
 
       it("should use new config skills if existing has no skills", async () => {
@@ -336,7 +343,7 @@ describe("config-merger", () => {
         const newConfig: ProjectConfig = {
           name: "project",
           agents: ["web-developer"],
-          skills: ["react", "zustand"],
+          skills: ["web-framework-react", "web-state-zustand"],
         };
 
         const result = await mergeWithExistingConfig(newConfig, {
@@ -344,7 +351,7 @@ describe("config-merger", () => {
         });
 
         expect(result.merged).toBe(true);
-        expect(result.config.skills).toEqual(["react", "zustand"]);
+        expect(result.config.skills).toEqual(["web-framework-react", "web-state-zustand"]);
       });
     });
 

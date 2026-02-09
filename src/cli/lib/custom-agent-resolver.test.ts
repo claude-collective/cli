@@ -5,26 +5,21 @@ import {
   hasAgentIdConflict,
   validateCustomAgentIds,
 } from "./custom-agent-resolver";
+import { createMockAgent } from "./__tests__/helpers";
 import type { CustomAgentConfig, AgentDefinition } from "../../types";
 
 describe("custom-agent-resolver", () => {
   // Mock built-in agents for testing
   const mockBuiltinAgents: Record<string, AgentDefinition> = {
-    "web-developer": {
-      title: "Web Developer",
+    "web-developer": createMockAgent("Web Developer", {
       description: "A frontend web developer agent",
-      model: "opus",
-      tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"],
       disallowed_tools: undefined,
-      permission_mode: "default",
       hooks: undefined,
       path: "developer/web-developer",
       sourceRoot: "/mock/source",
-    },
-    "web-reviewer": {
-      title: "Web Reviewer",
+    }),
+    "web-reviewer": createMockAgent("Web Reviewer", {
       description: "A code review agent for web projects",
-      model: "opus",
       tools: ["Read", "Grep", "Glob"],
       disallowed_tools: ["Bash"],
       permission_mode: "acceptEdits",
@@ -33,16 +28,13 @@ describe("custom-agent-resolver", () => {
       },
       path: "reviewer/web-reviewer",
       sourceRoot: "/mock/source",
-    },
-    "api-developer": {
-      title: "API Developer",
+    }),
+    "api-developer": createMockAgent("API Developer", {
       description: "A backend API developer agent",
       model: "sonnet",
-      tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"],
-      permission_mode: "default",
       path: "developer/api-developer",
       sourceRoot: "/mock/source",
-    },
+    }),
   };
 
   describe("resolveCustomAgent", () => {
@@ -373,17 +365,17 @@ describe("custom-agent-resolver", () => {
         title: "Skill Test Agent",
         description: "Test skills",
         tools: ["Read"],
-        skills: [{ id: "react", preloaded: true }, { id: "typescript" }],
+        skills: [{ id: "web-framework-react", preloaded: true }, { id: "web-language-typescript" }],
       };
 
       // Verify the config structure is valid with skills
       expect(customConfig.skills).toBeDefined();
       expect(customConfig.skills).toHaveLength(2);
       expect(customConfig.skills?.[0]).toEqual({
-        id: "react",
+        id: "web-framework-react",
         preloaded: true,
       });
-      expect(customConfig.skills?.[1]).toEqual({ id: "typescript" });
+      expect(customConfig.skills?.[1]).toEqual({ id: "web-language-typescript" });
 
       // Note: resolveCustomAgent returns AgentDefinition which doesn't have skills
       // Skills are handled separately in the compilation pipeline
@@ -402,17 +394,17 @@ describe("custom-agent-resolver", () => {
         tools: ["Read", "Write"],
         skills: [
           {
-            id: "my-custom-skill",
+            id: "web-custom-skill",
             local: true,
             path: ".claude/skills/my-skill/",
           },
-          { id: "react", preloaded: false },
+          { id: "web-framework-react", preloaded: false },
         ],
       };
 
       // Verify local skill structure
       expect(customConfig.skills?.[0]).toEqual({
-        id: "my-custom-skill",
+        id: "web-custom-skill",
         local: true,
         path: ".claude/skills/my-skill/",
       });
@@ -428,7 +420,7 @@ describe("custom-agent-resolver", () => {
         title: "Extended With Skills",
         description: "Extended agent with custom skills",
         extends: "web-developer",
-        skills: [{ id: "nextjs", preloaded: true }, { id: "testing-rtl" }],
+        skills: [{ id: "web-framework-nextjs", preloaded: true }, { id: "web-testing-rtl" }],
       };
 
       // Verify skills are defined on extended agent config
@@ -517,16 +509,16 @@ describe("custom-agent-resolver", () => {
         description: "Custom web developer with specific skills",
         extends: "web-developer",
         skills: [
-          { id: "react", preloaded: true },
-          { id: "nextjs" },
-          { id: "tailwind", preloaded: true },
+          { id: "web-framework-react", preloaded: true },
+          { id: "web-framework-nextjs" },
+          { id: "web-styling-tailwind", preloaded: true },
         ],
       };
 
       // Skills are preserved in config for compilation pipeline
       expect(customConfig.skills).toHaveLength(3);
       expect(customConfig.skills?.[0]).toEqual({
-        id: "react",
+        id: "web-framework-react",
         preloaded: true,
       });
 

@@ -6,55 +6,9 @@ import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { installLocal, type LocalInstallOptions } from "./local-installer";
 import type { WizardResultV2 } from "../components/wizard/wizard";
 import type { SourceLoadResult } from "./source-loader";
-import type { MergedSkillsMatrix, ResolvedSkill } from "../types-matrix";
+import type { MergedSkillsMatrix } from "../types-matrix";
 import type { ProjectConfig } from "../../types";
-
-/**
- * Helper to create a minimal resolved skill for testing
- */
-function createMockSkill(
-  id: string,
-  category: string,
-  skillPath: string,
-  overrides?: Partial<ResolvedSkill>,
-): ResolvedSkill {
-  return {
-    id,
-    name: id.replace(/ \(@.*\)$/, ""),
-    description: `${id} skill`,
-    category,
-    categoryExclusive: false,
-    tags: [],
-    author: "@test",
-    conflictsWith: [],
-    recommends: [],
-    recommendedBy: [],
-    requires: [],
-    requiredBy: [],
-    alternatives: [],
-    discourages: [],
-    compatibleWith: [],
-    requiresSetup: [],
-    providesSetupFor: [],
-    path: skillPath,
-    ...overrides,
-  };
-}
-
-/**
- * Helper to create a minimal merged skills matrix for testing
- */
-function createMockMatrix(skills: Record<string, ResolvedSkill>): MergedSkillsMatrix {
-  return {
-    version: "1.0.0",
-    categories: {},
-    skills,
-    suggestedStacks: [],
-    aliases: {},
-    aliasesReverse: {},
-    generatedAt: new Date().toISOString(),
-  };
-}
+import { createMockMatrix } from "./__tests__/helpers";
 
 /**
  * Helper to create a minimal wizard result

@@ -7,7 +7,7 @@ import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, vi } from "vitest";
 import { StepBuild, type StepBuildProps, validateBuildStep, getDisplayLabel } from "./step-build";
 import type { CategoryRow as GridCategoryRow } from "./category-grid";
-import type { MergedSkillsMatrix, ResolvedSkill, CategoryDefinition } from "../../types-matrix";
+import type { CategoryPath, MergedSkillsMatrix, ResolvedSkill, CategoryDefinition, SkillId, Subcategory } from "../../types-matrix";
 import {
   ENTER,
   ESCAPE,
@@ -15,6 +15,8 @@ import {
   INPUT_DELAY_MS,
   delay,
 } from "../../lib/__tests__/test-constants";
+
+
 
 // =============================================================================
 // Test Fixtures
@@ -24,7 +26,7 @@ import {
  * Create a minimal category definition.
  */
 const createCategory = (
-  id: string,
+  id: Subcategory,
   name: string,
   overrides: Partial<CategoryDefinition> = {},
 ): CategoryDefinition => ({
@@ -41,9 +43,9 @@ const createCategory = (
  * Create a minimal skill definition.
  */
 const createSkill = (
-  id: string,
+  id: SkillId,
   name: string,
-  category: string,
+  category: CategoryPath,
   overrides: Partial<ResolvedSkill> = {},
 ): ResolvedSkill => ({
   id,
@@ -103,7 +105,7 @@ const stateCategory = createCategory("client-state", "Client State", {
   order: 2,
 });
 
-const apiFrameworkCategory = createCategory("api-framework", "API Framework", {
+const apiFrameworkCategory = createCategory("api", "API Framework", {
   domain: "api",
   required: true,
   order: 0,
@@ -116,36 +118,35 @@ const databaseCategory = createCategory("database", "Database", {
 });
 
 // Create test skills
-const reactSkill = createSkill("react (@vince)", "React", "framework", {
+const reactSkill = createSkill("web-framework-react", "React", "framework", {
   alias: "react",
 });
 
-const vueSkill = createSkill("vue (@vince)", "Vue", "framework", {
+const vueSkill = createSkill("web-framework-vue", "Vue", "framework", {
   alias: "vue",
 });
 
-const tailwindSkill = createSkill("tailwind (@vince)", "Tailwind", "styling", {
+const tailwindSkill = createSkill("web-styling-tailwind", "Tailwind", "styling", {
   alias: "tailwind",
 });
 
-const scssSkill = createSkill("scss (@vince)", "SCSS Modules", "styling", {
-  alias: "scss",
+const scssSkill = createSkill("web-styling-scss-modules", "SCSS Modules", "styling", {
+  alias: "scss-modules",
 });
 
-const zustandSkill = createSkill("zustand (@vince)", "Zustand", "client-state", {
+const zustandSkill = createSkill("web-state-zustand", "Zustand", "client-state", {
   alias: "zustand",
 });
 
-const honoSkill = createSkill("hono (@vince)", "Hono", "api-framework", {
+const honoSkill = createSkill("api-framework-hono", "Hono", "api", {
   alias: "hono",
 });
 
-const expressSkill = createSkill("express (@vince)", "Express", "api-framework", {
+const expressSkill = createSkill("api-framework-express", "Express", "api", {
   alias: "express",
 });
 
-const postgresSkill = createSkill("postgres (@vince)", "PostgreSQL", "database", {
-  alias: "postgres",
+const postgresSkill = createSkill("api-database-postgres", "PostgreSQL", "database", {
 });
 
 // Default test matrix with web and API domains
@@ -381,7 +382,7 @@ describe("StepBuild component", () => {
   describe("option states", () => {
     it("should show selected options correctly", () => {
       const { lastFrame, unmount } = renderStepBuild({
-        allSelections: ["react (@vince)"],
+        allSelections: ["web-framework-react"],
         selections: { framework: ["react"] },
       });
       cleanup = unmount;
@@ -534,7 +535,7 @@ describe("StepBuild component", () => {
 
     it("should handle unknown domain gracefully", () => {
       const { lastFrame, unmount } = renderStepBuild({
-        domain: "unknown",
+        domain: "shared",
       });
       cleanup = unmount;
 
@@ -556,7 +557,7 @@ describe("StepBuild component", () => {
     it("should handle allSelections with skills from other domains", () => {
       const { lastFrame, unmount } = renderStepBuild({
         domain: "web",
-        allSelections: ["hono (@vince)", "postgres (@vince)"], // API skills
+        allSelections: ["api-framework-hono", "api-database-postgres"], // API skills
         selections: { framework: ["react"] }, // Need framework to see other categories
       });
       cleanup = unmount;
@@ -602,7 +603,7 @@ describe("StepBuild component", () => {
         required: true,
         order: 0,
       });
-      const commanderSkill = createSkill("commander (@vince)", "Commander", "cli-framework", {
+      const commanderSkill = createSkill("cli-cli-framework-commander", "Commander", "cli-framework", {
         alias: "commander",
       });
 
@@ -694,10 +695,10 @@ describe("StepBuild component", () => {
           name: "Framework",
           required: true,
           exclusive: true,
-          options: [{ id: "react", label: "React", state: "normal", selected: true }],
+          options: [{ id: "web-framework-react", label: "React", state: "normal", selected: true }],
         },
       ];
-      const selections = { framework: ["react"] };
+      const selections = { framework: ["web-framework-react"] };
 
       const result = validateBuildStep(categories, selections);
       expect(result.valid).toBe(true);
@@ -711,7 +712,7 @@ describe("StepBuild component", () => {
           name: "Framework",
           required: true,
           exclusive: true,
-          options: [{ id: "react", label: "React", state: "normal", selected: false }],
+          options: [{ id: "web-framework-react", label: "React", state: "normal", selected: false }],
         },
       ];
       const selections = {};
@@ -724,13 +725,13 @@ describe("StepBuild component", () => {
     it("should return valid when optional categories have no selections", () => {
       const categories: GridCategoryRow[] = [
         {
-          id: "state",
+          id: "client-state",
           name: "State Management",
           required: false,
           exclusive: true,
           options: [
             {
-              id: "zustand",
+              id: "web-state-zustand",
               label: "Zustand",
               state: "normal",
               selected: false,

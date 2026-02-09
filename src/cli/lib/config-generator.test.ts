@@ -1,67 +1,21 @@
 import { describe, it, expect } from "vitest";
 import { generateProjectConfigFromSkills, buildStackProperty } from "./config-generator";
-import type { MergedSkillsMatrix, ResolvedSkill } from "../types-matrix";
 import type { Stack } from "../types-stacks";
-
-/**
- * Helper to create a minimal resolved skill for testing
- */
-function createMockSkill(
-  id: string,
-  category: string,
-  overrides?: Partial<ResolvedSkill>,
-): ResolvedSkill {
-  return {
-    id,
-    name: id.replace(/ \(@.*\)$/, ""),
-    description: `${id} skill`,
-    category,
-    categoryExclusive: false,
-    tags: [],
-    author: "@test",
-    conflictsWith: [],
-    recommends: [],
-    recommendedBy: [],
-    requires: [],
-    requiredBy: [],
-    alternatives: [],
-    discourages: [],
-    compatibleWith: [],
-    requiresSetup: [],
-    providesSetupFor: [],
-    path: `skills/${category}/${id}/`,
-    ...overrides,
-  };
-}
-
-/**
- * Helper to create a minimal merged skills matrix for testing
- */
-function createMockMatrix(skills: Record<string, ResolvedSkill>): MergedSkillsMatrix {
-  return {
-    version: "1.0.0",
-    categories: {},
-    skills,
-    suggestedStacks: [],
-    aliases: {},
-    aliasesReverse: {},
-    generatedAt: new Date().toISOString(),
-  };
-}
+import { createMockSkill, createMockMatrix } from "./__tests__/helpers";
 
 describe("config-generator", () => {
   describe("generateProjectConfigFromSkills", () => {
     it("returns a minimal ProjectConfig structure", () => {
       const matrix = createMockMatrix({
-        "react (@vince)": createMockSkill("react (@vince)", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
       });
 
-      const config = generateProjectConfigFromSkills("my-project", ["react (@vince)"], matrix);
+      const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], matrix);
 
       expect(config.name).toBe("my-project");
       expect(config.agents).toBeDefined();
       expect(config.agents.length).toBeGreaterThan(0);
-      expect(config.skills).toEqual(["react (@vince)"]);
+      expect(config.skills).toEqual(["web-framework-react"]);
       // Should NOT have these fields by default
       expect(config.version).toBeUndefined();
       expect(config.author).toBeUndefined();
@@ -72,25 +26,25 @@ describe("config-generator", () => {
 
     it("uses string format for remote skills (minimal)", () => {
       const matrix = createMockMatrix({
-        "react (@vince)": createMockSkill("react (@vince)", "web/framework"),
-        "zustand (@vince)": createMockSkill("zustand (@vince)", "web/state"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        ["web-state-zustand"]: createMockSkill("web-state-zustand", "web/state"),
       });
 
       const config = generateProjectConfigFromSkills(
         "my-project",
-        ["react (@vince)", "zustand (@vince)"],
+        ["web-framework-react", "web-state-zustand"],
         matrix,
       );
 
-      expect(config.skills).toEqual(["react (@vince)", "zustand (@vince)"]);
+      expect(config.skills).toEqual(["web-framework-react", "web-state-zustand"]);
     });
 
     it("derives agents from skills via getAgentsForSkill", () => {
       const matrix = createMockMatrix({
-        "react (@vince)": createMockSkill("react (@vince)", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
       });
 
-      const config = generateProjectConfigFromSkills("my-project", ["react (@vince)"], matrix);
+      const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], matrix);
 
       // web/* skills should include web-developer, web-reviewer, etc.
       expect(config.agents).toContain("web-developer");
@@ -109,21 +63,17 @@ describe("config-generator", () => {
 
     it("includes local skills with proper path entries", () => {
       const matrix = createMockMatrix({
-        "my-local-skill (@local)": createMockSkill("my-local-skill (@local)", "local/custom", {
+        "web-local-skill": createMockSkill("web-local-skill", "local", {
           local: true,
           localPath: ".claude/skills/my-local-skill/",
         }),
       });
 
-      const config = generateProjectConfigFromSkills(
-        "my-project",
-        ["my-local-skill (@local)"],
-        matrix,
-      );
+      const config = generateProjectConfigFromSkills("my-project", ["web-local-skill"], matrix);
 
       expect(config.skills).toHaveLength(1);
       expect(config.skills![0]).toEqual({
-        id: "my-local-skill (@local)",
+        id: "web-local-skill",
         local: true,
         path: ".claude/skills/my-local-skill/",
       });
@@ -131,8 +81,8 @@ describe("config-generator", () => {
 
     it("mixes remote (string) and local (object) skills correctly", () => {
       const matrix = createMockMatrix({
-        "react (@vince)": createMockSkill("react (@vince)", "web/framework"),
-        "company-patterns (@local)": createMockSkill("company-patterns (@local)", "local/custom", {
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        "meta-company-patterns": createMockSkill("meta-company-patterns", "local", {
           local: true,
           localPath: ".claude/skills/company-patterns/",
         }),
@@ -140,16 +90,16 @@ describe("config-generator", () => {
 
       const config = generateProjectConfigFromSkills(
         "my-project",
-        ["react (@vince)", "company-patterns (@local)"],
+        ["web-framework-react", "meta-company-patterns"],
         matrix,
       );
 
       expect(config.skills).toHaveLength(2);
       // Remote skill should be string
-      expect(config.skills![0]).toBe("react (@vince)");
+      expect(config.skills![0]).toBe("web-framework-react");
       // Local skill should be object
       expect(config.skills![1]).toEqual({
-        id: "company-patterns (@local)",
+        id: "meta-company-patterns",
         local: true,
         path: ".claude/skills/company-patterns/",
       });
@@ -157,14 +107,19 @@ describe("config-generator", () => {
 
     it("includes optional fields when provided", () => {
       const matrix = createMockMatrix({
-        "react (@vince)": createMockSkill("react (@vince)", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
       });
 
-      const config = generateProjectConfigFromSkills("my-project", ["react (@vince)"], matrix, {
-        description: "My awesome project",
-        framework: "nextjs",
-        author: "@vince",
-      });
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-framework-react"],
+        matrix,
+        {
+          description: "My awesome project",
+          framework: "nextjs",
+          author: "@vince",
+        },
+      );
 
       expect(config.description).toBe("My awesome project");
       expect(config.framework).toBe("nextjs");
@@ -173,12 +128,17 @@ describe("config-generator", () => {
 
     it("includes agent_skills when includeAgentSkills is true", () => {
       const matrix = createMockMatrix({
-        "react (@vince)": createMockSkill("react (@vince)", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
       });
 
-      const config = generateProjectConfigFromSkills("my-project", ["react (@vince)"], matrix, {
-        includeAgentSkills: true,
-      });
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-framework-react"],
+        matrix,
+        {
+          includeAgentSkills: true,
+        },
+      );
 
       expect(config.agent_skills).toBeDefined();
       // web-developer should have react skill
@@ -187,12 +147,17 @@ describe("config-generator", () => {
 
     it("agent_skills uses simple list format with preloaded flags", () => {
       const matrix = createMockMatrix({
-        "react (@vince)": createMockSkill("react (@vince)", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
       });
 
-      const config = generateProjectConfigFromSkills("my-project", ["react (@vince)"], matrix, {
-        includeAgentSkills: true,
-      });
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-framework-react"],
+        matrix,
+        {
+          includeAgentSkills: true,
+        },
+      );
 
       const webDevSkills = config.agent_skills!["web-developer"];
       expect(Array.isArray(webDevSkills)).toBe(true);
@@ -204,17 +169,17 @@ describe("config-generator", () => {
 
     it("skips unknown skills gracefully", () => {
       const matrix = createMockMatrix({
-        "react (@vince)": createMockSkill("react (@vince)", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
       });
 
       const config = generateProjectConfigFromSkills(
         "my-project",
-        ["react (@vince)", "unknown-skill (@test)"],
+        ["web-framework-react", "web-unknown-skill"],
         matrix,
       );
 
       // Only react should be in skills
-      expect(config.skills).toEqual(["react (@vince)", "unknown-skill (@test)"]);
+      expect(config.skills).toEqual(["web-framework-react", "web-unknown-skill"]);
       // But agents should only be derived from known skills
       expect(config.agents.length).toBeGreaterThan(0);
     });
@@ -239,22 +204,22 @@ describe("config-generator", () => {
       };
 
       const skillAliases: Record<string, string> = {
-        react: "web/framework/react (@vince)",
-        "scss-modules": "web/styling/scss-modules (@vince)",
-        hono: "api/framework/hono (@vince)",
-        drizzle: "api/database/drizzle (@vince)",
+        react: "web-framework-react",
+        "scss-modules": "web-styling-scss-modules",
+        hono: "api-framework-hono",
+        drizzle: "api-database-drizzle",
       };
 
       const result = buildStackProperty(stack, skillAliases);
 
       expect(result).toEqual({
         "web-developer": {
-          framework: "web/framework/react (@vince)",
-          styling: "web/styling/scss-modules (@vince)",
+          framework: "web-framework-react",
+          styling: "web-styling-scss-modules",
         },
         "api-developer": {
-          api: "api/framework/hono (@vince)",
-          database: "api/database/drizzle (@vince)",
+          api: "api-framework-hono",
+          database: "api-database-drizzle",
         },
       });
     });
@@ -274,14 +239,14 @@ describe("config-generator", () => {
       };
 
       const skillAliases: Record<string, string> = {
-        react: "web/framework/react (@vince)",
+        react: "web-framework-react",
       };
 
       const result = buildStackProperty(stack, skillAliases);
 
       expect(result).toEqual({
         "web-developer": {
-          framework: "web/framework/react (@vince)",
+          framework: "web-framework-react",
         },
       });
       expect(result["cli-tester"]).toBeUndefined();
@@ -302,14 +267,14 @@ describe("config-generator", () => {
       };
 
       const skillAliases: Record<string, string> = {
-        react: "web/framework/react (@vince)",
+        react: "web-framework-react",
       };
 
       const result = buildStackProperty(stack, skillAliases);
 
       expect(result).toEqual({
         "web-developer": {
-          framework: "web/framework/react (@vince)",
+          framework: "web-framework-react",
           custom: "some-unknown-alias",
         },
       });
