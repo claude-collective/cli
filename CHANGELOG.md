@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.22.0] - 2026-02-09
+
+### Changed
+
+- **Union types for skill IDs, categories, agents, and domains** - Added `SkillId`, `CategoryPath`, `SkillAlias`, `AgentName`, `Domain`, `Subcategory` template literal and union types to `types-matrix.ts` as the single source of truth. All interface fields and function parameters across the codebase now use strict union types instead of `string`.
+- **Narrowed production function signatures** - 27 production files updated: `matrix-resolver`, `skill-agent-mappings`, `resolver`, `wizard-store`, `step-build`, `category-grid`, and others. Type assertions (`as SkillId`, etc.) used only at data entry boundaries (YAML parsing, CLI input, `Object.keys()`).
+- **Normalized skill ID format enforced at compile time** - `SkillId` = `` `${SkillIdPrefix}-${string}` `` prevents old-format IDs like `"react (@vince)"` at the type level. All test files updated to use `domain-subcategory-name` format.
+- **Removed test constants** - `TEST_SKILLS`, `TEST_CATEGORIES`, `PLACEHOLDER_SKILLS`, `TEST_AUTHOR` removed from test helpers — union types provide compile-time safety, making string constants redundant.
+- **`CategoryDefinition.id`** narrowed from `string` to `Subcategory`.
+- **`SkillEntry`** narrowed from `string | SkillAssignment` to `SkillId | SkillAssignment`.
+
 ## [0.21.0] - 2026-02-09
 
 ### Changed
