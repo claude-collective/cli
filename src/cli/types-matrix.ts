@@ -1,3 +1,229 @@
+// =============================================================================
+// Base Union Types - Single Source of Truth
+// =============================================================================
+
+/** Valid domain names for skill categorization in the wizard */
+export type Domain = "web" | "web-extras" | "api" | "cli" | "mobile" | "shared";
+
+/**
+ * Valid subcategory names (category IDs) within domains.
+ * These are the keys in skills-matrix.yaml `categories` section.
+ */
+export type Subcategory =
+  // Web
+  | "framework"
+  | "meta-framework"
+  | "styling"
+  | "client-state"
+  | "server-state"
+  | "forms"
+  | "testing"
+  | "ui-components"
+  | "mocking"
+  | "error-handling"
+  | "i18n"
+  | "file-upload"
+  | "files"
+  | "utilities"
+  | "realtime"
+  | "animation"
+  | "pwa"
+  | "accessibility"
+  | "web-performance"
+  // API
+  | "api"
+  | "database"
+  | "auth"
+  | "observability"
+  | "analytics"
+  | "email"
+  | "performance"
+  // Mobile
+  | "mobile-framework"
+  // Shared / Infrastructure
+  | "monorepo"
+  | "tooling"
+  | "security"
+  | "methodology"
+  | "research"
+  | "reviewing"
+  | "ci-cd"
+  // CLI
+  | "cli-framework"
+  | "cli-prompts"
+  | "cli-testing";
+
+/**
+ * Valid built-in agent names in the system.
+ * Derived from src/agents/ directory structure and stacks.yaml.
+ */
+export type AgentName =
+  // Developers
+  | "web-developer"
+  | "api-developer"
+  | "cli-developer"
+  | "web-architecture"
+  // Meta
+  | "agent-summoner"
+  | "documentor"
+  | "skill-summoner"
+  // Migration
+  | "cli-migrator"
+  // Pattern
+  | "pattern-scout"
+  | "web-pattern-critique"
+  // Planning
+  | "web-pm"
+  // Researchers
+  | "api-researcher"
+  | "web-researcher"
+  // Reviewers
+  | "api-reviewer"
+  | "cli-reviewer"
+  | "web-reviewer"
+  // Testers
+  | "cli-tester"
+  | "web-tester";
+
+/**
+ * Skill alias short names used in wizard/store operations and relationships.
+ * These are the keys in skills-matrix.yaml `skill_aliases` section.
+ */
+export type SkillAlias =
+  // Frameworks
+  | "react"
+  | "vue"
+  | "angular"
+  | "solidjs"
+  // Meta-frameworks
+  | "nextjs-app-router"
+  | "nextjs-server-actions"
+  | "remix"
+  | "nuxt"
+  // Styling
+  | "scss-modules"
+  | "cva"
+  | "tailwind"
+  // Client State
+  | "zustand"
+  | "redux-toolkit"
+  | "pinia"
+  | "ngrx-signalstore"
+  | "jotai"
+  | "mobx"
+  // Server State / Data Fetching
+  | "react-query"
+  | "swr"
+  | "graphql-apollo"
+  | "graphql-urql"
+  | "trpc"
+  // Forms & Validation
+  | "react-hook-form"
+  | "vee-validate"
+  | "zod-validation"
+  // Testing
+  | "vitest"
+  | "playwright-e2e"
+  | "cypress-e2e"
+  | "react-testing-library"
+  | "vue-test-utils"
+  | "msw"
+  // UI Components
+  | "shadcn-ui"
+  | "tanstack-table"
+  | "radix-ui"
+  // Backend - API Framework
+  | "hono"
+  | "express"
+  | "fastify"
+  // Backend - Database
+  | "drizzle"
+  | "prisma"
+  // Backend - Auth
+  | "better-auth"
+  // Backend - Observability
+  | "axiom-pino-sentry"
+  // Backend - Analytics
+  | "posthog"
+  | "posthog-flags"
+  // Backend - Email
+  | "resend"
+  // Backend - CI/CD
+  | "github-actions"
+  // Mobile
+  | "react-native"
+  | "expo"
+  // Setup / Infrastructure
+  | "turborepo"
+  | "tooling"
+  | "posthog-setup"
+  | "env"
+  | "observability-setup"
+  | "email-setup"
+  // Animation / PWA / Realtime / etc.
+  | "framer-motion"
+  | "css-animations"
+  | "view-transitions"
+  | "storybook"
+  | "error-boundaries"
+  | "accessibility"
+  | "websockets"
+  | "sse"
+  | "socket-io"
+  | "service-workers"
+  | "file-upload"
+  | "image-handling"
+  | "date-fns"
+  // Backend-specific category skills
+  | "api-testing"
+  | "api-performance"
+  | "web-performance"
+  // Security
+  | "security"
+  // CLI
+  | "commander"
+  | "cli-commander"
+  | "oclif"
+  // Reviewing / Meta
+  | "reviewing"
+  | "cli-reviewing"
+  | "research-methodology"
+  // Methodology
+  | "investigation-requirements"
+  | "anti-over-engineering"
+  | "success-criteria"
+  | "write-verification"
+  | "improvement-protocol"
+  | "context-management";
+
+// =============================================================================
+// Template Literal Types - Derived from Base Types
+// =============================================================================
+
+/**
+ * Prefix segments used in skill IDs.
+ * Includes domains plus path-based prefixes (infra, meta, security)
+ * that appear in skill ID format but are not wizard domains.
+ */
+export type SkillIdPrefix = "web" | "api" | "cli" | "mobile" | "infra" | "meta" | "security";
+
+/**
+ * Skill ID format: prefix-subcategory-name segments in kebab-case.
+ * @example "web-framework-react", "api-database-drizzle", "meta-reviewing-reviewing"
+ */
+export type SkillId = `${SkillIdPrefix}-${string}`;
+
+/**
+ * Category ID format used in resolved skills.
+ * Either "prefix-subcategory" (e.g., "web-framework", "api-database") or a standalone subcategory (e.g., "testing").
+ * Includes "local" for user-defined local skills.
+ */
+export type CategoryPath =
+  | `${SkillIdPrefix}/${string}`
+  | `${SkillIdPrefix}-${string}`
+  | Subcategory
+  | "local";
+
 /** Root configuration from skills-matrix.yaml */
 export interface SkillsMatrixConfig {
   /** Semantic version of the matrix schema (e.g., "1.0.0") */
@@ -16,7 +242,7 @@ export interface SkillsMatrixConfig {
    * Maps short alias names to normalized skill IDs
    * @example { "react": "web-framework-react", "zustand": "web-state-zustand" }
    */
-  skill_aliases: Record<string, string>;
+  skill_aliases: Record<SkillAlias, SkillId>;
 }
 
 /**
@@ -25,7 +251,7 @@ export interface SkillsMatrixConfig {
  */
 export interface CategoryDefinition {
   /** Unique identifier (e.g., "styling", "state-management") */
-  id: string;
+  id: Subcategory;
 
   /** Human-readable display name (e.g., "State Management") */
   name: string;
@@ -37,13 +263,13 @@ export interface CategoryDefinition {
    * Domain this category belongs to, for wizard domain filtering
    * @example "web" for web categories, "api" for api categories
    */
-  domain?: "web" | "web-extras" | "api" | "cli" | "mobile" | "shared";
+  domain?: Domain;
 
   /**
    * Parent domain for display-only sub-domains (e.g., "web" for "web-extras").
    * Used to inherit framework selections from the parent domain.
    */
-  parent_domain?: string;
+  parent_domain?: Domain;
 
   /**
    * If true, only one skill from this category can be selected
@@ -203,13 +429,13 @@ export interface ExtractedSkillMetadata {
   /**
    * Directory path for filesystem access
    * Used for loading skill files from the filesystem
-   * @example "web/framework/react (@vince)"
+   * @example "web/framework/react"
    */
   directoryPath: string;
 
   /**
    * Display name derived from id
-   * @example "Zustand" from "zustand (@vince)"
+   * @example "Zustand" from "web-state-zustand"
    */
   name: string;
 
@@ -239,39 +465,39 @@ export interface ExtractedSkillMetadata {
 
   /**
    * Skills this works well with (soft recommendation)
-   * @example ["react (@vince)", "hono (@vince)"]
+   * @example ["web-framework-react", "api-framework-hono"]
    */
   compatibleWith: string[];
 
   /**
    * Skills that cannot coexist with this one
-   * @example ["mobx (@vince)", "redux (@vince)"]
+   * @example ["web-state-mobx", "web-state-redux"]
    */
   conflictsWith: string[];
 
   /**
    * Skills that must be present for this to work
-   * @example ["react (@vince)"] for zustand
+   * @example ["web-framework-react"] for web-state-zustand
    */
   requires: string[];
 
   /**
    * Setup skills that must be completed first
    * Links usage skills to their prerequisites
-   * @example ["posthog-setup (@vince)"] for posthog-analytics
+   * @example ["api-analytics-posthog-setup"] for api-analytics-posthog-analytics
    */
   requiresSetup: string[];
 
   /**
    * Usage skills this setup skill configures
    * Links setup skills to what they enable
-   * @example ["posthog-analytics (@vince)", "posthog-flags (@vince)"]
+   * @example ["api-analytics-posthog-analytics", "api-analytics-posthog-flags"]
    */
   providesSetupFor: string[];
 
   /**
    * Relative path from src/ to the skill directory
-   * @example "skills/web/client-state-management/zustand (@vince)"
+   * @example "skills/web/client-state/zustand/"
    */
   path: string;
 
@@ -324,13 +550,13 @@ export interface MergedSkillsMatrix {
 /** Single skill with all computed relationships resolved for CLI rendering */
 export interface ResolvedSkill {
   /** Full unique identifier in normalized format: "web-state-zustand" */
-  id: string;
+  id: SkillId;
 
   /**
    * Short alias if defined in skill_aliases
    * @example "zustand" for "web-state-zustand"
    */
-  alias?: string;
+  alias?: SkillAlias;
 
   /** Human-readable display name */
   name: string;
@@ -342,7 +568,7 @@ export interface ResolvedSkill {
   usageGuidance?: string;
 
   /** Primary category ID (matches key in matrix.categories) */
-  category: string;
+  category: CategoryPath;
 
   /** If true, only one skill from this category can be selected */
   categoryExclusive: boolean;
@@ -405,7 +631,7 @@ export interface ResolvedSkill {
 
 export interface SkillRelation {
   /** Full skill ID of the related skill */
-  skillId: string;
+  skillId: SkillId;
 
   /** Human-readable explanation of the relationship */
   reason: string;
@@ -413,7 +639,7 @@ export interface SkillRelation {
 
 export interface SkillRequirement {
   /** Full skill IDs that are required */
-  skillIds: string[];
+  skillIds: SkillId[];
 
   /**
    * If true, only ONE of skillIds is needed (OR)
@@ -428,7 +654,7 @@ export interface SkillRequirement {
 
 export interface SkillAlternative {
   /** Full skill ID of the alternative */
-  skillId: string;
+  skillId: SkillId;
 
   /** What purpose this alternative serves */
   purpose: string;
@@ -460,10 +686,10 @@ export interface ResolvedStack {
 /** Skill option as displayed in the wizard, computed based on current selections */
 export interface SkillOption {
   /** Full skill ID */
-  id: string;
+  id: SkillId;
 
   /** Short alias if available */
-  alias?: string;
+  alias?: SkillAlias;
 
   /** Display name */
   name: string;

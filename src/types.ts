@@ -2,6 +2,8 @@
  * TypeScript types for the Stack-Based Agent Compilation System
  */
 
+import type { SkillId } from "./cli/types-matrix";
+
 // =============================================================================
 // Skill Types
 // =============================================================================
@@ -23,7 +25,7 @@ export interface SkillDefinition {
  * Specifies whether a skill should be preloaded (embedded) or dynamic (loaded via Skill tool)
  */
 export interface SkillAssignment {
-  id: string;
+  id: SkillId;
   preloaded?: boolean; // Default: false (dynamic)
   /** True if this is a local skill from .claude/skills/ */
   local?: boolean;
@@ -36,7 +38,7 @@ export interface SkillAssignment {
  * References a skill by ID and provides context-specific usage
  */
 export interface SkillReference {
-  id: string;
+  id: SkillId;
   usage: string; // Context-specific description of when to use this skill
   preloaded?: boolean; // Whether skill content should be embedded in compiled agent
 }
@@ -46,7 +48,7 @@ export interface SkillReference {
  * This is what the compiler uses after merging
  */
 export interface Skill {
-  id: string;
+  id: SkillId;
   path: string;
   name: string;
   description: string;
@@ -193,7 +195,7 @@ export interface CustomAgentConfig {
 /**
  * Skill entry - can be a string (ID only) or full assignment
  */
-export type SkillEntry = string | SkillAssignment;
+export type SkillEntry = SkillId | SkillAssignment;
 
 /**
  * Per-agent skill configuration
@@ -359,7 +361,7 @@ export interface AgentYamlConfig {
   hooks?: Record<string, AgentHookDefinition[]>; // Lifecycle hooks
   output_format?: string;
   /** Skills available to this agent with inline preloaded flag */
-  skills?: Record<string, { id: string; preloaded: boolean }>;
+  skills?: Record<string, { id: SkillId; preloaded: boolean }>;
 }
 
 // =============================================================================
