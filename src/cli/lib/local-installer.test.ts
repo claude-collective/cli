@@ -104,7 +104,7 @@ describe("local-installer", () => {
     it("should create required directories", async () => {
       const matrix = createMockMatrix({});
       const wizardResult = createWizardResult({
-        selectedSkills: ["test-skill"],
+        selectedSkills: ["meta-test-skill"],
       });
       const sourceResult = createSourceResult(matrix, tempDir);
 
@@ -124,7 +124,7 @@ describe("local-installer", () => {
     it("should write config to .claude-src/config.yaml", async () => {
       const matrix = createMockMatrix({});
       const wizardResult = createWizardResult({
-        selectedSkills: ["test-skill"],
+        selectedSkills: ["meta-test-skill"],
       });
       const sourceResult = createSourceResult(matrix, tempDir);
 
@@ -146,7 +146,7 @@ describe("local-installer", () => {
     it("should include source in config from sourceFlag", async () => {
       const matrix = createMockMatrix({});
       const wizardResult = createWizardResult({
-        selectedSkills: ["test-skill"],
+        selectedSkills: ["meta-test-skill"],
       });
       const sourceResult = createSourceResult(matrix, tempDir);
 
@@ -167,7 +167,7 @@ describe("local-installer", () => {
     it("should include source from sourceResult when no sourceFlag", async () => {
       const matrix = createMockMatrix({});
       const wizardResult = createWizardResult({
-        selectedSkills: ["test-skill"],
+        selectedSkills: ["meta-test-skill"],
       });
       const sourceResult = createSourceResult(matrix, tempDir, {
         sourceConfig: {
@@ -192,7 +192,7 @@ describe("local-installer", () => {
     it("should include marketplace in config when available", async () => {
       const matrix = createMockMatrix({});
       const wizardResult = createWizardResult({
-        selectedSkills: ["test-skill"],
+        selectedSkills: ["meta-test-skill"],
       });
       const sourceResult = createSourceResult(matrix, tempDir, {
         marketplace: "my-marketplace",
@@ -214,7 +214,7 @@ describe("local-installer", () => {
     it("should return correct result structure", async () => {
       const matrix = createMockMatrix({});
       const wizardResult = createWizardResult({
-        selectedSkills: ["test-skill"],
+        selectedSkills: ["meta-test-skill"],
       });
       const sourceResult = createSourceResult(matrix, tempDir);
 
@@ -248,7 +248,7 @@ describe("local-installer", () => {
 
       const matrix = createMockMatrix({});
       const wizardResult = createWizardResult({
-        selectedSkills: ["test-skill"],
+        selectedSkills: ["meta-test-skill"],
       });
       const sourceResult = createSourceResult(matrix, tempDir);
 
@@ -269,7 +269,7 @@ describe("local-installer", () => {
     it("should set installMode on config", async () => {
       const matrix = createMockMatrix({});
       const wizardResult = createWizardResult({
-        selectedSkills: ["test-skill"],
+        selectedSkills: ["meta-test-skill"],
         installMode: "local",
       });
       const sourceResult = createSourceResult(matrix, tempDir);
@@ -286,7 +286,7 @@ describe("local-installer", () => {
     it("should not set wasMerged when no existing config", async () => {
       const matrix = createMockMatrix({});
       const wizardResult = createWizardResult({
-        selectedSkills: ["test-skill"],
+        selectedSkills: ["meta-test-skill"],
       });
       const sourceResult = createSourceResult(matrix, tempDir);
 

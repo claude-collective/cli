@@ -12,7 +12,8 @@ import type {
   AgentConfig,
   CompiledAgentData,
 } from "../types";
-import type { SkillId } from "../types-matrix";
+import type { AgentName, SkillAlias, SkillId, Subcategory } from "../types-matrix";
+import type { StackAgentConfig } from "../types-stacks";
 
 describe("resolveSkillReference", () => {
   const mockSkills: Record<string, SkillDefinition> = {
@@ -618,7 +619,7 @@ describe("resolveAgentSkillsFromStack", () => {
       agents: {
         "web-developer": {
           framework: "react",
-          styling: "unknown-style-lib",
+          styling: "unknown-style-lib" as SkillAlias,
         },
       },
     };

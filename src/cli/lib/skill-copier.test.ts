@@ -235,14 +235,14 @@ describe("skill-copier", () => {
       };
 
       const result = await copySkillsToPluginFromSource(
-        ["unknown-skill (@test)"],
+        ["web-unknown-skill"],
         pluginDir,
         matrix,
         sourceResult,
       );
 
       expect(result).toEqual([]);
-      expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining("unknown-skill (@test)"));
+      expect(consoleWarn).toHaveBeenCalledWith(expect.stringContaining("web-unknown-skill"));
 
       consoleWarn.mockRestore();
     });

@@ -186,7 +186,7 @@ export const OUTPUT_STRINGS = {
 export async function runCliCommand(args: string[]) {
   return runCommand(args, { root: CLI_ROOT });
 }
-import type { CategoryPath, MergedSkillsMatrix, ResolvedSkill, SkillId } from "../../types-matrix";
+import type { CategoryPath, MergedSkillsMatrix, ResolvedSkill, SkillAlias, SkillId, Subcategory } from "../../types-matrix";
 import type { AgentDefinition, ProjectConfig } from "../../../types";
 
 // =============================================================================
@@ -492,11 +492,11 @@ export function createMockMatrix(
 ): MergedSkillsMatrix {
   return {
     version: "1.0.0",
-    categories: {},
+    categories: {} as Record<Subcategory, import("../../types-matrix").CategoryDefinition>,
     skills,
     suggestedStacks: [],
-    aliases: {},
-    aliasesReverse: {},
+    aliases: {} as Record<SkillAlias, SkillId>,
+    aliasesReverse: {} as Record<SkillId, SkillAlias>,
     generatedAt: new Date().toISOString(),
     ...overrides,
   };
@@ -516,7 +516,7 @@ export function createMockMatrixWithMethodology(
   skills: Record<string, ResolvedSkill> = {},
   overrides?: Partial<MergedSkillsMatrix>,
 ): MergedSkillsMatrix {
-  const METHODOLOGY_CATEGORY = "methodology";
+  const METHODOLOGY_CATEGORY: Subcategory = "methodology";
   // Just one methodology skill is enough to test preselection
   // Using normalized skill ID format
   const methodologySkill = createMockSkill(
@@ -538,7 +538,7 @@ export function createMockMatrixWithMethodology(
           order: 0,
         },
         ...overrides?.categories,
-      },
+      } as Record<Subcategory, import("../../types-matrix").CategoryDefinition>,
       ...overrides,
     },
   );

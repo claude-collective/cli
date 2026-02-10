@@ -80,9 +80,9 @@ agents:
 skills:
   - id: ${"web-framework-react"}
     preloaded: true
-  - id: my-custom-skill
+  - id: web-custom-skill
     local: true
-    path: .claude/skills/my-custom-skill/
+    path: .claude/skills/web-custom-skill/
 agents:
   - web-developer
 `,
@@ -94,9 +94,9 @@ agents:
       expect(result!.config.skills).toEqual([
         { id: "web-framework-react", preloaded: true },
         {
-          id: "my-custom-skill",
+          id: "web-custom-skill",
           local: true,
-          path: ".claude/skills/my-custom-skill/",
+          path: ".claude/skills/web-custom-skill/",
         },
       ]);
     });

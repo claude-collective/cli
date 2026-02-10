@@ -22,7 +22,7 @@ import { useWizardStore } from "../../../stores/wizard-store";
 import { createMockMatrix, createMockSkill } from "../helpers";
 
 
-import type { MergedSkillsMatrix, ResolvedStack, CategoryDefinition } from "../../../types-matrix";
+import type { MergedSkillsMatrix, ResolvedStack, CategoryDefinition, Subcategory, SkillAlias, SkillId, AgentName } from "../../../types-matrix";
 import { ARROW_DOWN, ARROW_UP, ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../test-constants";
 
 // =============================================================================
@@ -92,7 +92,7 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
   };
 
   // Create categories with domain assignments
-  const categories: Record<string, CategoryDefinition> = {
+  const categories = {
     // Web domain categories
     ["framework"]: {
       id: "framework",
@@ -160,13 +160,13 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
       description: "Complete Next.js stack with React and Hono",
       audience: ["startups", "enterprise"],
       skills: {
-        web: {
+        "web-developer": {
           framework: "react",
-          state: "zustand",
+          "client-state": "zustand",
           styling: "scss-modules",
         },
-        api: {
-          framework: "hono",
+        "api-developer": {
+          api: "hono",
           database: "drizzle",
         },
       },
@@ -185,7 +185,7 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
       description: "Vue.js frontend stack",
       audience: ["startups"],
       skills: {
-        web: {
+        "web-developer": {
           framework: "vue",
         },
       },
@@ -195,7 +195,7 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
   ];
 
   // Create aliases mapping
-  const aliases: Record<string, string> = {
+  const aliases = {
     react: "web-framework-react",
     vue: "web-framework-vue",
     zustand: "web-state-zustand",
@@ -203,16 +203,16 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
     hono: "api-framework-hono",
     drizzle: "api-database-drizzle",
     vitest: "web-testing-vitest",
-  };
+  } as unknown as Record<SkillAlias, SkillId>;
 
   // Create reverse aliases
-  const aliasesReverse: Record<string, string> = {};
+  const aliasesReverse = {} as Record<SkillId, SkillAlias>;
   for (const [alias, fullId] of Object.entries(aliases)) {
-    aliasesReverse[fullId] = alias;
+    (aliasesReverse as Record<string, string>)[fullId] = alias;
   }
 
   return createMockMatrix(skills, {
-    categories,
+    categories: categories as Record<Subcategory, CategoryDefinition>,
     suggestedStacks,
     aliases,
     aliasesReverse,
@@ -303,7 +303,7 @@ const createBasicMatrix = (): MergedSkillsMatrix => {
         required: false,
         order: 0,
       },
-    },
+    } as Record<Subcategory, CategoryDefinition>,
   });
 };
 
@@ -675,7 +675,7 @@ describe("Wizard integration", () => {
         selectedDomains: ["web", "api"],
         currentDomainIndex: 0,
         domainSelections: {
-          web: { ["framework"]: ["web-framework-react"] },
+          web: { ["framework"]: ["react"] },
         },
       });
 

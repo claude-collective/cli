@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { generateProjectConfigFromSkills, buildStackProperty } from "./config-generator";
-import type { Stack } from "../types-stacks";
+import type { Stack, StackAgentConfig } from "../types-stacks";
+import type { AgentName, SkillAlias, SkillId } from "../types-matrix";
 import { createMockSkill, createMockMatrix } from "./__tests__/helpers";
 
 describe("config-generator", () => {
@@ -200,15 +201,16 @@ describe("config-generator", () => {
             api: "hono",
             database: "drizzle",
           },
-        },
+        } as Partial<Record<AgentName, StackAgentConfig>>,
       };
 
-      const skillAliases: Record<string, string> = {
+      // Boundary cast: test literals to proper union types
+      const skillAliases = {
         react: "web-framework-react",
         "scss-modules": "web-styling-scss-modules",
         hono: "api-framework-hono",
         drizzle: "api-database-drizzle",
-      };
+      } as Partial<Record<SkillAlias, SkillId>>;
 
       const result = buildStackProperty(stack, skillAliases);
 
@@ -235,12 +237,13 @@ describe("config-generator", () => {
           },
           "cli-tester": {},
           "web-pm": {},
-        },
+        } as Partial<Record<AgentName, StackAgentConfig>>,
       };
 
-      const skillAliases: Record<string, string> = {
+      // Boundary cast: test literals to proper union types
+      const skillAliases = {
         react: "web-framework-react",
-      };
+      } as Partial<Record<SkillAlias, SkillId>>;
 
       const result = buildStackProperty(stack, skillAliases);
 
@@ -262,13 +265,14 @@ describe("config-generator", () => {
           "web-developer": {
             framework: "react",
             custom: "some-unknown-alias",
-          },
-        },
+          } as StackAgentConfig,
+        } as Partial<Record<AgentName, StackAgentConfig>>,
       };
 
-      const skillAliases: Record<string, string> = {
+      // Boundary cast: test literals to proper union types
+      const skillAliases = {
         react: "web-framework-react",
-      };
+      } as Partial<Record<SkillAlias, SkillId>>;
 
       const result = buildStackProperty(stack, skillAliases);
 
@@ -285,7 +289,7 @@ describe("config-generator", () => {
         id: "empty-stack",
         name: "Empty Stack",
         description: "No agents",
-        agents: {},
+        agents: {} as Partial<Record<AgentName, StackAgentConfig>>,
       };
 
       const result = buildStackProperty(stack, {});

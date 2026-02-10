@@ -3,6 +3,7 @@ import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
 import { loadSkillsMatrixFromSource } from "./source-loader";
+import type { ResolvedSkill, CategoryDefinition } from "../types-matrix";
 
 // Skills are in claude-subagents repo, not CLI repo
 // CLI tests need to point to the skills repo for integration tests
@@ -157,8 +158,9 @@ describe("source-loader local skills integration", () => {
     });
 
     // Local skill should be in the matrix with normalized ID
-    expect(result.matrix.skills["my-local-skill"]).toBeDefined();
-    const localSkill = result.matrix.skills["my-local-skill"];
+    const skills = result.matrix.skills as Record<string, ResolvedSkill>;
+    expect(skills["my-local-skill"]).toBeDefined();
+    const localSkill = skills["my-local-skill"];
 
     expect(localSkill.id).toBe("my-local-skill");
     expect(localSkill.name).toBe("My Local Skill @local");
@@ -186,7 +188,7 @@ describe("source-loader local skills integration", () => {
 
     // Local skills should NOT cause fake "local" or "local/custom" categories to be injected
     // The skill uses whatever category it declared (or "local" default from local-skill-loader)
-    expect(result.matrix.categories["local/custom"]).toBeUndefined();
+    expect((result.matrix.categories as Record<string, CategoryDefinition>)["local/custom"]).toBeUndefined();
   });
 
   it("should not modify matrix when no local skills exist", async () => {
@@ -198,7 +200,7 @@ describe("source-loader local skills integration", () => {
     // Local categories should NOT be added if no local skills
     // (Matrix may already have local categories from previous tests,
     // so we check that no local skills are in the skills object)
-    const localSkills = Object.values(result.matrix.skills).filter((s) => s.local === true);
+    const localSkills = Object.values(result.matrix.skills).filter((s) => s!.local === true);
     expect(localSkills).toHaveLength(0);
   });
 
@@ -210,15 +212,17 @@ describe("source-loader local skills integration", () => {
     });
 
     // Find a skill that has a domain-based category
-    const targetSkillId = Object.keys(initialResult.matrix.skills).find((id) => {
-      const skill = initialResult.matrix.skills[id];
-      return skill.category !== "local" && initialResult.matrix.categories[skill.category]?.domain;
+    const skillsMap = initialResult.matrix.skills as Record<string, ResolvedSkill>;
+    const categoriesMap = initialResult.matrix.categories as Record<string, CategoryDefinition>;
+    const targetSkillId = Object.keys(skillsMap).find((id) => {
+      const skill = skillsMap[id];
+      return skill.category !== "local" && categoriesMap[skill.category]?.domain;
     });
 
     // Skip if no suitable skill found (defensive)
     if (!targetSkillId) return;
 
-    const originalSkill = initialResult.matrix.skills[targetSkillId];
+    const originalSkill = skillsMap[targetSkillId];
     const originalCategory = originalSkill.category;
 
     // Create a local skill with the SAME ID but no category in metadata
@@ -238,7 +242,7 @@ describe("source-loader local skills integration", () => {
       projectDir: tempDir,
     });
 
-    const overriddenSkill = result.matrix.skills[targetSkillId];
+    const overriddenSkill = (result.matrix.skills as Record<string, ResolvedSkill>)[targetSkillId];
     expect(overriddenSkill).toBeDefined();
     expect(overriddenSkill.local).toBe(true);
 
@@ -262,11 +266,11 @@ describe("source-loader local skills integration", () => {
     });
 
     // Existing marketplace skills should still be present
-    const marketplaceSkills = Object.values(result.matrix.skills).filter((s) => s.local !== true);
+    const marketplaceSkills = Object.values(result.matrix.skills).filter((s) => s!.local !== true);
     expect(marketplaceSkills.length).toBeGreaterThan(50);
 
     // Local skill should also be present with normalized ID
-    expect(result.matrix.skills["preserve-skill"]).toBeDefined();
+    expect((result.matrix.skills as Record<string, ResolvedSkill>)["preserve-skill"]).toBeDefined();
   });
 
   itIntegration("P1-19: local skill takes precedence over plugin skill with same ID", async () => {
@@ -279,7 +283,7 @@ describe("source-loader local skills integration", () => {
     // Pick an existing skill from the marketplace to override
     // Skill IDs are now normalized: web-testing-vitest
     const existingSkillId = "web-testing-vitest";
-    const existingSkill = initialResult.matrix.skills[existingSkillId];
+    const existingSkill = initialResult.matrix.skills[existingSkillId]!;
     expect(existingSkill).toBeDefined();
     expect(existingSkill.local).toBeUndefined(); // Should be a marketplace skill
     const originalDescription = existingSkill.description;
@@ -301,7 +305,7 @@ describe("source-loader local skills integration", () => {
     });
 
     // The skill should now be the LOCAL version, not the marketplace version
-    const overriddenSkill = result.matrix.skills[existingSkillId];
+    const overriddenSkill = result.matrix.skills[existingSkillId]!;
     expect(overriddenSkill).toBeDefined();
     expect(overriddenSkill.local).toBe(true);
     expect(overriddenSkill.description).toBe("My custom vitest configuration");
@@ -325,7 +329,7 @@ describe("source-loader integration", () => {
     expect(skillCount).toBeGreaterThan(50); // We know there are 70+ skills
 
     // Verify skills have required properties
-    const firstSkill = Object.values(result.matrix.skills)[0];
+    const firstSkill = Object.values(result.matrix.skills)[0]!;
     expect(firstSkill.id).toBeDefined();
     expect(firstSkill.name).toBeDefined();
     expect(firstSkill.category).toBeDefined();

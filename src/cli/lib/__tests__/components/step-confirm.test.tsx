@@ -11,7 +11,7 @@ import { useWizardStore } from "../../../stores/wizard-store";
 import { createMockMatrix, createMockSkill } from "../helpers";
 
 
-import type { MergedSkillsMatrix } from "../../../types-matrix";
+import type { CategoryDefinition, MergedSkillsMatrix, Subcategory } from "../../../types-matrix";
 import { ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../test-constants";
 
 // =============================================================================
@@ -234,7 +234,7 @@ describe("StepConfirm component", () => {
           selectedDomains={["web", "api"]}
           domainSelections={{
             web: { framework: ["react"], styling: ["scss-modules"] },
-            api: { "api-framework": ["hono"] },
+            api: { api: ["hono"] },
           }}
           technologyCount={3}
           skillCount={3}
@@ -260,7 +260,7 @@ describe("StepConfirm component", () => {
           selectedDomains={["web", "api"]}
           domainSelections={{
             web: { framework: ["react"], styling: ["scss-modules"] },
-            api: { "api-framework": ["hono"] },
+            api: { api: ["hono"] },
           }}
           technologyCount={3}
           skillCount={3}

@@ -7,6 +7,7 @@ import {
 } from "./custom-agent-resolver";
 import { createMockAgent } from "./__tests__/helpers";
 import type { CustomAgentConfig, AgentDefinition } from "../../types";
+import type { AgentName } from "../types-matrix";
 
 describe("custom-agent-resolver", () => {
   // Mock built-in agents for testing
@@ -225,7 +226,7 @@ describe("custom-agent-resolver", () => {
         const customConfig: CustomAgentConfig = {
           title: "Bad Agent",
           description: "Extends non-existent",
-          extends: "non-existent-agent",
+          extends: "non-existent-agent" as AgentName,
         };
 
         expect(() => resolveCustomAgent("bad-agent", customConfig, mockBuiltinAgents)).toThrow(
@@ -237,7 +238,7 @@ describe("custom-agent-resolver", () => {
         const customConfig: CustomAgentConfig = {
           title: "Bad Agent",
           description: "Extends non-existent",
-          extends: "non-existent-agent",
+          extends: "non-existent-agent" as AgentName,
         };
 
         expect(() => resolveCustomAgent("bad-agent", customConfig, mockBuiltinAgents)).toThrow(
@@ -281,7 +282,7 @@ describe("custom-agent-resolver", () => {
         "bad-agent": {
           title: "Bad Agent",
           description: "Extends non-existent",
-          extends: "non-existent",
+          extends: "non-existent" as AgentName,
         },
       };
 

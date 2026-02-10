@@ -415,8 +415,8 @@ describe("config-merger", () => {
           agents: ["web-developer"],
           stack: {
             "web-developer": {
-              framework: "react-existing",
-              styling: "scss-existing",
+              framework: "web-framework-react-existing",
+              styling: "web-styling-scss-existing",
             },
           },
         });
@@ -426,8 +426,8 @@ describe("config-merger", () => {
           agents: ["web-developer"],
           stack: {
             "web-developer": {
-              framework: "react-new",
-              state: "zustand-new",
+              framework: "web-framework-react-new",
+              "client-state": "web-state-zustand-new",
             },
           },
         };
@@ -438,12 +438,12 @@ describe("config-merger", () => {
 
         expect(result.merged).toBe(true);
         // Existing values take precedence (framework, styling kept)
-        // New values added where not existing (state added)
+        // New values added where not existing (client-state added)
         expect(result.config.stack).toEqual({
           "web-developer": {
-            framework: "react-existing",
-            styling: "scss-existing",
-            state: "zustand-new",
+            framework: "web-framework-react-existing",
+            styling: "web-styling-scss-existing",
+            "client-state": "web-state-zustand-new",
           },
         });
       });
@@ -454,7 +454,7 @@ describe("config-merger", () => {
           agents: ["web-developer"],
           stack: {
             "web-developer": {
-              framework: "react",
+              framework: "web-framework-react",
             },
           },
         });
@@ -464,10 +464,10 @@ describe("config-merger", () => {
           agents: ["web-developer", "api-developer"],
           stack: {
             "web-developer": {
-              framework: "vue",
+              framework: "web-framework-vue",
             },
             "api-developer": {
-              api: "hono",
+              api: "api-framework-hono",
             },
           },
         };
@@ -479,10 +479,10 @@ describe("config-merger", () => {
         expect(result.merged).toBe(true);
         expect(result.config.stack).toEqual({
           "web-developer": {
-            framework: "react", // existing takes precedence
+            framework: "web-framework-react", // existing takes precedence
           },
           "api-developer": {
-            api: "hono", // new agent added
+            api: "api-framework-hono", // new agent added
           },
         });
       });
@@ -498,7 +498,7 @@ describe("config-merger", () => {
           agents: ["web-developer"],
           stack: {
             "web-developer": {
-              framework: "react",
+              framework: "web-framework-react",
             },
           },
         };
@@ -510,7 +510,7 @@ describe("config-merger", () => {
         expect(result.merged).toBe(true);
         expect(result.config.stack).toEqual({
           "web-developer": {
-            framework: "react",
+            framework: "web-framework-react",
           },
         });
       });

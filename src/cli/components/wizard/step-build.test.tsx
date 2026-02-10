@@ -4,10 +4,11 @@
  * Tests domain-based technology selection using CategoryGrid.
  */
 import { render } from "ink-testing-library";
+import { indexBy, mapToObj } from "remeda";
 import { describe, expect, it, afterEach, vi } from "vitest";
 import { StepBuild, type StepBuildProps, validateBuildStep, getDisplayLabel } from "./step-build";
 import type { CategoryRow as GridCategoryRow } from "./category-grid";
-import type { CategoryPath, MergedSkillsMatrix, ResolvedSkill, CategoryDefinition, SkillId, Subcategory } from "../../types-matrix";
+import type { CategoryPath, MergedSkillsMatrix, ResolvedSkill, CategoryDefinition, SkillAlias, SkillId, Subcategory, SubcategorySelections } from "../../types-matrix";
 import {
   ENTER,
   ESCAPE,
@@ -77,11 +78,11 @@ const createTestMatrix = (
   skills: ResolvedSkill[],
 ): MergedSkillsMatrix => ({
   version: "1.0.0",
-  categories: Object.fromEntries(categories.map((c) => [c.id, c])),
-  skills: Object.fromEntries(skills.map((s) => [s.id, s])),
+  categories: indexBy(categories, (c) => c.id) as Record<Subcategory, CategoryDefinition>,
+  skills: indexBy(skills, (s) => s.id) as Record<SkillId, ResolvedSkill>,
   suggestedStacks: [],
-  aliases: Object.fromEntries(skills.filter((s) => s.alias).map((s) => [s.alias!, s.id])),
-  aliasesReverse: Object.fromEntries(skills.filter((s) => s.alias).map((s) => [s.id, s.alias!])),
+  aliases: mapToObj(skills.filter((s) => s.alias), (s) => [s.alias!, s.id]) as Record<SkillAlias, SkillId>,
+  aliasesReverse: mapToObj(skills.filter((s) => s.alias), (s) => [s.id, s.alias!]) as Record<SkillId, SkillAlias>,
   generatedAt: new Date().toISOString(),
 });
 
@@ -382,7 +383,7 @@ describe("StepBuild component", () => {
   describe("option states", () => {
     it("should show selected options correctly", () => {
       const { lastFrame, unmount } = renderStepBuild({
-        allSelections: ["web-framework-react"],
+        allSelections: ["react"],
         selections: { framework: ["react"] },
       });
       cleanup = unmount;
@@ -557,7 +558,7 @@ describe("StepBuild component", () => {
     it("should handle allSelections with skills from other domains", () => {
       const { lastFrame, unmount } = renderStepBuild({
         domain: "web",
-        allSelections: ["api-framework-hono", "api-database-postgres"], // API skills
+        allSelections: ["hono", "drizzle"], // API skills (aliases)
         selections: { framework: ["react"] }, // Need framework to see other categories
       });
       cleanup = unmount;
@@ -698,7 +699,7 @@ describe("StepBuild component", () => {
           options: [{ id: "web-framework-react", label: "React", state: "normal", selected: true }],
         },
       ];
-      const selections = { framework: ["web-framework-react"] };
+      const selections: SubcategorySelections = { framework: ["web-framework-react"] };
 
       const result = validateBuildStep(categories, selections);
       expect(result.valid).toBe(true);
@@ -715,7 +716,7 @@ describe("StepBuild component", () => {
           options: [{ id: "web-framework-react", label: "React", state: "normal", selected: false }],
         },
       ];
-      const selections = {};
+      const selections: SubcategorySelections = {};
 
       const result = validateBuildStep(categories, selections);
       expect(result.valid).toBe(false);
@@ -739,7 +740,7 @@ describe("StepBuild component", () => {
           ],
         },
       ];
-      const selections = {};
+      const selections: SubcategorySelections = {};
 
       const result = validateBuildStep(categories, selections);
       expect(result.valid).toBe(true);
@@ -762,7 +763,7 @@ describe("StepBuild component", () => {
           options: [],
         },
       ];
-      const selections = {};
+      const selections: SubcategorySelections = {};
 
       const result = validateBuildStep(categories, selections);
       expect(result.valid).toBe(false);

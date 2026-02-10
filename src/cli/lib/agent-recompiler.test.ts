@@ -123,14 +123,7 @@ agents:
           name: "custom-skill",
           description: "Custom skill",
           path: "custom-skill/",
-          canonicalId: "custom-skill (@test)",
-          content: "# Custom Skill\n\nCustom content.",
-          frontmatter: {
-            name: "custom-skill",
-            description: "Custom skill",
-          },
-          examples: {},
-          hasReference: false,
+          canonicalId: "web-custom-skill" as import("../types-matrix").SkillId,
         },
       };
 

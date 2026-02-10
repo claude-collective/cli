@@ -1,3 +1,4 @@
+import { mapToObj } from "remeda";
 import { describe, it, expect } from "vitest";
 import {
   resolveAlias,
@@ -12,7 +13,7 @@ import {
   getAvailableSkills,
   isCategoryAllDisabled,
 } from "./matrix-resolver";
-import type { CategoryPath, MergedSkillsMatrix, ResolvedSkill, SkillId } from "../types-matrix";
+import type { CategoryDefinition, CategoryPath, MergedSkillsMatrix, ResolvedSkill, SkillAlias, SkillId, Subcategory } from "../types-matrix";
 import { createMockSkill, createMockMatrix } from "./__tests__/helpers";
 
 /**
@@ -33,14 +34,12 @@ function createSkill(id: SkillId, overrides: Partial<ResolvedSkill> = {}): Resol
 function createMatrix(
   skills: Record<string, ResolvedSkill>,
   aliases: Record<string, string> = {},
-  categories: MergedSkillsMatrix["categories"] = {},
+  categories: MergedSkillsMatrix["categories"] = {} as Record<Subcategory, CategoryDefinition>,
 ): MergedSkillsMatrix {
   return createMockMatrix(skills, {
     categories,
-    aliases,
-    aliasesReverse: Object.fromEntries(
-      Object.entries(aliases).map(([alias, fullId]) => [fullId, alias]),
-    ),
+    aliases: aliases as Record<SkillAlias, SkillId>,
+    aliasesReverse: mapToObj(Object.entries(aliases), ([alias, fullId]) => [fullId, alias]) as Record<SkillId, SkillAlias>,
   });
 }
 
@@ -59,8 +58,8 @@ describe("resolveAlias", () => {
 
   it("should return unchanged if alias not found", () => {
     const matrix = createMatrix({}, {});
-    const result = resolveAlias("unknown", matrix);
-    expect(result).toBe("unknown");
+    const result = resolveAlias("web-unknown", matrix);
+    expect(result).toBe("web-unknown");
   });
 });
 
@@ -349,7 +348,7 @@ describe("validateSelection", () => {
           required: false,
           order: 1,
         },
-      },
+      } as Record<Subcategory, CategoryDefinition>,
     );
 
     const result = validateSelection(["web-skill-a", "web-skill-b"], matrix);
@@ -433,7 +432,7 @@ describe("Empty skill selection (P1-21)", () => {
             required: true,
             order: 1,
           },
-        },
+        } as Record<Subcategory, CategoryDefinition>,
       );
 
       const result = validateSelection([], matrix);
@@ -841,7 +840,7 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
             required: false,
             order: 1,
           },
-        },
+        } as Record<Subcategory, CategoryDefinition>,
       );
 
       // skill-x is selected, which conflicts with all skills in styling category
