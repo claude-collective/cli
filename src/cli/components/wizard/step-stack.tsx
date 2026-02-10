@@ -15,7 +15,7 @@ import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { Select } from "@inkjs/ui";
 import { useWizardStore } from "../../stores/wizard-store.js";
-import type { MergedSkillsMatrix, Domain } from "../../types-matrix.js";
+import type { MergedSkillsMatrix, Domain, Subcategory, SkillAlias } from "../../types-matrix.js";
 import { MenuItem } from "./menu-item.js";
 import { ViewTitle } from "./view-title.js";
 
@@ -85,14 +85,14 @@ const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
           // Build one pseudo-agent per skill so populateFromStack can handle
           // categories with multiple skills (e.g. testing: vitest + playwright-e2e)
           // without overwriting. populateFromStack deduplicates internally.
-          const pseudoAgents: Record<string, Record<string, string>> = {};
+          const pseudoAgents: Record<string, Partial<Record<Subcategory, SkillAlias>>> = {};
 
           for (let i = 0; i < resolvedStack.allSkillIds.length; i++) {
             const skillId = resolvedStack.allSkillIds[i];
             const skill = matrix.skills[skillId];
-            if (skill?.category) {
-              const displayId = skill.alias || skill.id;
-              pseudoAgents[`s${i}`] = { [skill.category]: displayId };
+            if (skill?.category && skill.alias) {
+              // Category is a Subcategory at the data boundary (YAML categories use bare IDs)
+              pseudoAgents[`s${i}`] = { [skill.category as Subcategory]: skill.alias };
             }
           }
 

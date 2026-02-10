@@ -201,7 +201,7 @@ const ResultItem: React.FC<ResultItemProps> = ({ skill, isSelected, isFocused })
 
 interface ResultsListProps {
   results: SourcedSkill[];
-  selectedIds: Set<string>;
+  selectedIds: Set<SkillId>;
   focusedIndex: number;
   scrollOffset: number;
 }
@@ -314,7 +314,7 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
 
   // State
   const [query, setQuery] = useState(initialQuery);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<SkillId>>(new Set());
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [copiedMessage, setCopiedMessage] = useState<string | null>(null);

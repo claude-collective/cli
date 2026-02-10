@@ -4,7 +4,7 @@ import type { MergedSkillsMatrix, Domain } from "../../types-matrix.js";
  * Get display name for a domain.
  */
 export function getDomainDisplayName(domain: Domain): string {
-  const displayNames: Record<string, string> = {
+  const displayNames: Record<Domain, string> = {
     web: "Web",
     "web-extras": "Web Extras",
     api: "API",

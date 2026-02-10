@@ -16,6 +16,7 @@
  */
 import React, { useCallback, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
+import { sortBy } from "remeda";
 import type { SkillId, Subcategory } from "../../types-matrix.js";
 
 // Types
@@ -88,9 +89,7 @@ const sortOptions = (options: CategoryOption[], expertMode: boolean): CategoryOp
     disabled: 3,
   };
 
-  return [...options].sort((a, b) => {
-    return stateOrder[a.state] - stateOrder[b.state];
-  });
+  return sortBy([...options], (o) => stateOrder[o.state]);
 };
 
 /**

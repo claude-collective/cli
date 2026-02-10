@@ -22,8 +22,8 @@ import { StepApproach } from "./step-approach.js";
 import { StepStack } from "./step-stack.js";
 import { StepBuild } from "./step-build.js";
 import { StepConfirm } from "./step-confirm.js";
-import { validateSelection } from "../../lib/matrix-resolver.js";
-import type { MergedSkillsMatrix, Domain } from "../../types-matrix.js";
+import { resolveAlias, validateSelection } from "../../lib/matrix-resolver.js";
+import type { MergedSkillsMatrix, DomainSelections, Domain, SkillId } from "../../types-matrix.js";
 import { getStackName } from "./utils.js";
 
 // =============================================================================
@@ -31,9 +31,9 @@ import { getStackName } from "./utils.js";
 // =============================================================================
 
 export interface WizardResultV2 {
-  selectedSkills: string[];
+  selectedSkills: SkillId[];
   selectedStackId: string | null;
-  domainSelections: Record<string, Record<string, string[]>>;
+  domainSelections: DomainSelections;
   expertMode: boolean;
   installMode: "plugin" | "local";
   cancelled: boolean;
@@ -48,7 +48,7 @@ interface WizardProps {
   matrix: MergedSkillsMatrix;
   onComplete: (result: WizardResultV2) => void;
   onCancel: () => void;
-  initialSkills?: string[];
+  initialSkills?: SkillId[];
   version?: string;
 }
 
@@ -115,7 +115,7 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
 
   // Handle wizard completion
   const handleComplete = useCallback(() => {
-    let allSkills: string[];
+    let allSkills: SkillId[];
 
     if (store.selectedStackId && store.stackAction === "defaults") {
       // Stack + defaults path: use stack's allSkillIds directly
@@ -129,13 +129,13 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
       const techNames = store.getAllSelectedTechnologies();
       // Resolve each technology name to its full skill ID via aliases
       allSkills = techNames.map((tech) => {
-        const resolved = matrix.aliases[tech];
-        if (!resolved && !matrix.skills[tech]) {
+        const resolved = resolveAlias(tech, matrix);
+        if (!matrix.skills[resolved]) {
           console.warn(
             `Warning: Technology '${tech}' could not be resolved to a skill ID — it may be missing from skill_aliases`,
           );
         }
-        return resolved || tech;
+        return resolved;
       });
     }
 

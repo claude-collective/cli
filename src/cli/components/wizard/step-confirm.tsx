@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
-import type { MergedSkillsMatrix, Domain } from "../../types-matrix.js";
+import type { MergedSkillsMatrix, DomainSelections, Domain } from "../../types-matrix.js";
 
 // =============================================================================
 // Types
@@ -11,7 +11,7 @@ export interface StepConfirmProps {
   onComplete: () => void;
   stackName?: string;
   selectedDomains?: Domain[];
-  domainSelections?: Record<string, Record<string, string[]>>;
+  domainSelections?: DomainSelections;
   technologyCount?: number;
   skillCount?: number;
   installMode?: "plugin" | "local";
@@ -26,7 +26,7 @@ export interface StepConfirmProps {
  * Format domain name for display.
  */
 const formatDomainName = (domain: Domain): string => {
-  const names: Record<string, string> = {
+  const names: Partial<Record<Domain, string>> = {
     web: "Web",
     "web-extras": "Web Extras",
     api: "API",

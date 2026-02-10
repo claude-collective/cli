@@ -9,8 +9,9 @@
  */
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
-import type { MergedSkillsMatrix, Domain, CategoryPath, Subcategory, SkillId } from "../../types-matrix.js";
-import { getAvailableSkills } from "../../lib/matrix-resolver.js";
+import { sortBy } from "remeda";
+import type { MergedSkillsMatrix, Domain, Subcategory, SkillId, SkillRef, SubcategorySelections } from "../../types-matrix.js";
+import { getAvailableSkills, resolveAlias } from "../../lib/matrix-resolver.js";
 import {
   CategoryGrid,
   type CategoryRow,
@@ -30,9 +31,9 @@ export interface StepBuildProps {
   /** All selected domains (for progress indicator) */
   selectedDomains: Domain[];
   /** Current selections by subcategory */
-  selections: Record<string, string[]>;
+  selections: SubcategorySelections;
   /** All current selections (for state calculation across domains) */
-  allSelections: string[];
+  allSelections: SkillRef[];
   /** Grid focus state */
   focusedRow: number;
   focusedCol: number;
@@ -40,7 +41,7 @@ export interface StepBuildProps {
   showDescriptions: boolean;
   expertMode: boolean;
   /** Parent domain selections for framework-first filtering on sub-domains (e.g., web-extras inherits from web) */
-  parentDomainSelections?: Record<string, string[]>;
+  parentDomainSelections?: SubcategorySelections;
   /** Callbacks */
   onToggle: (subcategoryId: Subcategory, technologyId: SkillId) => void;
   onFocusChange: (row: number, col: number) => void;
@@ -69,7 +70,7 @@ export interface BuildStepValidation {
  */
 export function validateBuildStep(
   categories: CategoryRow[],
-  selections: Record<string, string[]>,
+  selections: SubcategorySelections,
 ): BuildStepValidation {
   for (const category of categories) {
     if (category.required) {
@@ -148,7 +149,7 @@ function getStateReason(skill: {
  * Check if a framework is selected in the current selections.
  * Framework skills are in the "framework" subcategory.
  */
-function isFrameworkSelected(selections: Record<string, string[]>): boolean {
+function isFrameworkSelected(selections: SubcategorySelections): boolean {
   const frameworkSelections = selections[FRAMEWORK_SUBCATEGORY_ID] ?? [];
   return frameworkSelections.length > 0;
 }
@@ -158,14 +159,12 @@ function isFrameworkSelected(selections: Record<string, string[]>): boolean {
  * Returns the full skill IDs (e.g., "web-framework-react").
  */
 function getSelectedFrameworks(
-  selections: Record<string, string[]>,
+  selections: SubcategorySelections,
   matrix: MergedSkillsMatrix,
-): string[] {
+): SkillId[] {
   const frameworkSelections = selections[FRAMEWORK_SUBCATEGORY_ID] ?? [];
   // Resolve aliases to full skill IDs
-  return frameworkSelections.map((alias) => {
-    return matrix.aliases[alias] ?? alias;
-  });
+  return frameworkSelections.map((alias) => resolveAlias(alias, matrix));
 }
 
 /**
@@ -173,8 +172,8 @@ function getSelectedFrameworks(
  * Uses the skill's compatibleWith field from metadata.
  */
 function isCompatibleWithSelectedFrameworks(
-  skillId: string,
-  selectedFrameworkIds: string[],
+  skillId: SkillId,
+  selectedFrameworkIds: SkillId[],
   matrix: MergedSkillsMatrix,
 ): boolean {
   const skill = matrix.skills[skillId];
@@ -198,7 +197,7 @@ function isCompatibleWithSelectedFrameworks(
  * We do NOT hide sections.
  */
 function shouldShowSubcategory(
-  _subcategoryId: string,
+  _subcategoryId: Subcategory,
   _domain: Domain,
   _frameworkSelected: boolean,
 ): boolean {
@@ -217,11 +216,11 @@ function shouldShowSubcategory(
  */
 function buildCategoriesForDomain(
   domain: Domain,
-  allSelections: string[],
+  allSelections: SkillRef[],
   matrix: MergedSkillsMatrix,
   expertMode: boolean,
-  selections: Record<string, string[]>,
-  parentDomainSelections?: Record<string, string[]>,
+  selections: SubcategorySelections,
+  parentDomainSelections?: SubcategorySelections,
 ): CategoryRow[] {
   // Check framework selection for framework-first flow
   // For sub-domains (e.g., web-extras), use parent domain selections for framework checks
@@ -232,9 +231,10 @@ function buildCategoriesForDomain(
     : [];
 
   // Get categories for the current domain
-  const subcategories = Object.values(matrix.categories)
-    .filter((cat) => cat.domain === domain)
-    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const subcategories = sortBy(
+    Object.values(matrix.categories).filter((cat) => cat.domain === domain),
+    (cat) => cat.order ?? 0,
+  );
 
   // Filter subcategories based on framework-first flow
   const visibleSubcategories = subcategories.filter((cat) =>
@@ -244,7 +244,7 @@ function buildCategoriesForDomain(
   // Build CategoryRow for each visible subcategory
   const categoryRows: CategoryRow[] = visibleSubcategories.map((cat) => {
     // Get available skills with computed states
-    const skillOptions = getAvailableSkills(cat.id as CategoryPath, allSelections, matrix, {
+    const skillOptions = getAvailableSkills(cat.id, allSelections, matrix, {
       expertMode,
     });
 
