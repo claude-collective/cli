@@ -1,6 +1,7 @@
 import path from "path";
 import os from "os";
 import { fileURLToPath } from "url";
+import type { SkillId } from "./types-matrix.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -48,11 +49,11 @@ export const DEFAULT_DISPLAY_VERSION = "0.0.0";
  *
  * Note: Skill IDs are in normalized kebab-case format (no author suffix, slashes replaced with dashes).
  */
-export const DEFAULT_PRESELECTED_SKILLS = [
+export const DEFAULT_PRESELECTED_SKILLS: readonly SkillId[] = [
   "meta-methodology-anti-over-engineering",
   "meta-methodology-context-management",
   "meta-methodology-improvement-protocol",
   "meta-methodology-investigation-requirements",
   "meta-methodology-success-criteria",
   "meta-methodology-write-verification",
-] as const;
+];

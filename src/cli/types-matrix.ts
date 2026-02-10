@@ -197,6 +197,22 @@ export type SkillAlias =
   | "context-management";
 
 // =============================================================================
+// Shared Scalar Union Types
+// =============================================================================
+
+/** Valid AI model names for agents and skills */
+export type ModelName = "sonnet" | "opus" | "haiku" | "inherit";
+
+/** Valid permission modes for agent operations */
+export type PermissionMode =
+  | "default"
+  | "acceptEdits"
+  | "dontAsk"
+  | "bypassPermissions"
+  | "plan"
+  | "delegate";
+
+// =============================================================================
 // Template Literal Types - Derived from Base Types
 // =============================================================================
 
@@ -224,6 +240,36 @@ export type CategoryPath =
   | Subcategory
   | "local";
 
+/**
+ * A reference to a skill — either by short alias or full ID.
+ * Used in relationship rules, wizard selections, and pre-resolution contexts.
+ */
+export type SkillRef = SkillAlias | SkillId;
+
+/**
+ * Subcategory-keyed selections mapping to arrays of skill references.
+ * Used for wizard domain selections at the subcategory level.
+ */
+export type SubcategorySelections = Partial<Record<Subcategory, SkillRef[]>>;
+
+/**
+ * Full domain selections: Domain -> Subcategory -> SkillRef[].
+ * Used throughout the wizard pipeline (store, components, result).
+ */
+export type DomainSelections = Partial<Record<Domain, SubcategorySelections>>;
+
+/**
+ * Category definitions indexed by subcategory ID.
+ * Used in SkillsMatrixConfig and MergedSkillsMatrix.
+ */
+export type CategoryMap = Partial<Record<Subcategory, CategoryDefinition>>;
+
+/**
+ * Resolved subcategory-to-skill mappings after alias resolution.
+ * Maps each subcategory to its resolved SkillId.
+ */
+export type ResolvedSubcategorySkills = Partial<Record<Subcategory, SkillId>>;
+
 /** Root configuration from skills-matrix.yaml */
 export interface SkillsMatrixConfig {
   /** Semantic version of the matrix schema (e.g., "1.0.0") */
@@ -233,7 +279,7 @@ export interface SkillsMatrixConfig {
    * Category definitions indexed by category ID
    * Each category belongs to a domain (web, api, cli, mobile, shared)
    */
-  categories: Record<string, CategoryDefinition>;
+  categories: CategoryMap;
 
   /** Relationship rules between skills */
   relationships: RelationshipDefinitions;
@@ -242,7 +288,7 @@ export interface SkillsMatrixConfig {
    * Maps short alias names to normalized skill IDs
    * @example { "react": "web-framework-react", "zustand": "web-state-zustand" }
    */
-  skill_aliases: Record<SkillAlias, SkillId>;
+  skill_aliases: Partial<Record<SkillAlias, SkillId>>;
 }
 
 /**
@@ -320,7 +366,7 @@ export interface ConflictRule {
    * List of skill aliases/IDs that conflict with each other
    * Selecting any one disables ALL others in this list
    */
-  skills: string[];
+  skills: SkillRef[];
 
   /** Human-readable explanation shown when option is disabled */
   reason: string;
@@ -335,7 +381,7 @@ export interface DiscourageRule {
    * List of skill aliases/IDs that discourage each other
    * Selecting any one shows a warning for ALL others in this list
    */
-  skills: string[];
+  skills: SkillRef[];
 
   /** Human-readable explanation shown as a warning */
   reason: string;
@@ -346,10 +392,10 @@ export interface DiscourageRule {
  */
 export interface RecommendRule {
   /** Skill alias/ID that triggers this recommendation */
-  when: string;
+  when: SkillRef;
 
   /** List of skill aliases/IDs to highlight as recommended */
-  suggest: string[];
+  suggest: SkillRef[];
 
   /** Human-readable explanation shown with recommendation */
   reason: string;
@@ -360,10 +406,10 @@ export interface RecommendRule {
  */
 export interface RequireRule {
   /** Skill alias/ID that has requirements */
-  skill: string;
+  skill: SkillRef;
 
   /** Skills that must be selected before this one */
-  needs: string[];
+  needs: SkillRef[];
 
   /**
    * If true, only ONE of the `needs` skills is required (OR logic)
@@ -385,7 +431,7 @@ export interface AlternativeGroup {
   purpose: string;
 
   /** List of interchangeable skill aliases/IDs */
-  skills: string[];
+  skills: SkillRef[];
 }
 
 /**
@@ -406,9 +452,9 @@ export interface SuggestedStack {
 
   /**
    * Skill selections organized by category
-   * Structure: { category: { subcategory: skill_alias } }
+   * Structure: { agentName: { subcategory: skill_alias } }
    */
-  skills: Record<string, Record<string, string>>;
+  skills: Record<string, Partial<Record<Subcategory, SkillRef>>>;
 
   /** Guiding principle for this stack */
   philosophy: string;
@@ -424,7 +470,7 @@ export interface ExtractedSkillMetadata {
    * Format: "category-subcategory-name" (kebab-case, no author suffix)
    * @example "web-framework-react"
    */
-  id: string;
+  id: SkillId;
 
   /**
    * Directory path for filesystem access
@@ -449,7 +495,7 @@ export interface ExtractedSkillMetadata {
    * Primary category this skill belongs to
    * @example "state", "styling", "framework", "api"
    */
-  category: string;
+  category: CategoryPath;
 
   /**
    * If true, only one skill from this category can be active
@@ -467,33 +513,33 @@ export interface ExtractedSkillMetadata {
    * Skills this works well with (soft recommendation)
    * @example ["web-framework-react", "api-framework-hono"]
    */
-  compatibleWith: string[];
+  compatibleWith: SkillRef[];
 
   /**
    * Skills that cannot coexist with this one
    * @example ["web-state-mobx", "web-state-redux"]
    */
-  conflictsWith: string[];
+  conflictsWith: SkillRef[];
 
   /**
    * Skills that must be present for this to work
    * @example ["web-framework-react"] for web-state-zustand
    */
-  requires: string[];
+  requires: SkillRef[];
 
   /**
    * Setup skills that must be completed first
    * Links usage skills to their prerequisites
    * @example ["api-analytics-posthog-setup"] for api-analytics-posthog-analytics
    */
-  requiresSetup: string[];
+  requiresSetup: SkillRef[];
 
   /**
    * Usage skills this setup skill configures
    * Links setup skills to what they enable
    * @example ["api-analytics-posthog-analytics", "api-analytics-posthog-flags"]
    */
-  providesSetupFor: string[];
+  providesSetupFor: SkillRef[];
 
   /**
    * Relative path from src/ to the skill directory
@@ -520,13 +566,13 @@ export interface MergedSkillsMatrix {
   version: string;
 
   /** Category definitions for wizard navigation */
-  categories: Record<string, CategoryDefinition>;
+  categories: CategoryMap;
 
   /**
    * Fully resolved skills with computed relationship data
    * Indexed by full skill ID for O(1) lookup
    */
-  skills: Record<string, ResolvedSkill>;
+  skills: Partial<Record<SkillId, ResolvedSkill>>;
 
   /** Pre-configured stacks with resolved skill references */
   suggestedStacks: ResolvedStack[];
@@ -535,13 +581,13 @@ export interface MergedSkillsMatrix {
    * Alias lookup map (alias -> normalized skill ID)
    * @example { "react": "web-framework-react" }
    */
-  aliases: Record<string, string>;
+  aliases: Partial<Record<SkillAlias, SkillId>>;
 
   /**
    * Reverse alias lookup (normalized skill ID -> alias)
    * @example { "web-framework-react": "react" }
    */
-  aliasesReverse: Record<string, string>;
+  aliasesReverse: Partial<Record<SkillId, SkillAlias>>;
 
   /** Generated timestamp for cache invalidation */
   generatedAt: string;
@@ -608,13 +654,13 @@ export interface ResolvedSkill {
    * Used for framework-first filtering in the Build step.
    * @example ["web-framework-react", "web-framework-vue-composition-api"]
    */
-  compatibleWith: string[];
+  compatibleWith: SkillId[];
 
   /** Setup skills that must be completed before using this */
-  requiresSetup: string[];
+  requiresSetup: SkillId[];
 
   /** Usage skills that this setup skill configures */
-  providesSetupFor: string[];
+  providesSetupFor: SkillId[];
 
   /** Relative path to skill directory from src/ */
   path: string;
@@ -674,10 +720,10 @@ export interface ResolvedStack {
   audience: string[];
 
   /** Skill selections with resolved full skill IDs by category */
-  skills: Record<string, Record<string, string>>;
+  skills: Partial<Record<AgentName, Partial<Record<Subcategory, SkillRef>>>>;
 
   /** Flat list of all skill IDs in this stack */
-  allSkillIds: string[];
+  allSkillIds: SkillId[];
 
   /** Guiding principle */
   philosophy: string;
@@ -728,7 +774,7 @@ export interface SkillOption {
   selected: boolean;
 
   /** Alternative skills that serve the same purpose */
-  alternatives: string[];
+  alternatives: SkillId[];
 }
 
 export interface SelectionValidation {
@@ -750,7 +796,7 @@ export interface ValidationError {
   message: string;
 
   /** Skill IDs involved in the error */
-  skills: string[];
+  skills: SkillId[];
 }
 
 export interface ValidationWarning {
@@ -761,5 +807,5 @@ export interface ValidationWarning {
   message: string;
 
   /** Skill IDs involved */
-  skills: string[];
+  skills: SkillId[];
 }

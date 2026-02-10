@@ -3,25 +3,24 @@
  * Stacks define agent groupings with technology selections per agent
  */
 
+import type { AgentName, SkillAlias, Subcategory } from "./types-matrix";
+
 /**
  * Technology selections for a specific agent within a stack.
  * Maps subcategory IDs to technology aliases.
  *
  * @example
  * ```typescript
- * const webDevConfig: StackAgentConfig = {
+ * const webDevConfig: StackAgentConfig = Partial<Record<Subcategory, SkillAlias>>({
  *   framework: 'react',
  *   styling: 'scss-modules',
  *   'client-state': 'zustand',
  *   'server-state': 'react-query',
  *   testing: 'vitest'
- * };
+ * });
  * ```
  */
-export interface StackAgentConfig {
-  /** Maps subcategory ID to technology alias */
-  [subcategoryId: string]: string;
-}
+export type StackAgentConfig = Partial<Record<Subcategory, SkillAlias>>;
 
 /**
  * Stack definition from config/stacks.yaml
@@ -53,7 +52,7 @@ export interface Stack {
    * }
    * ```
    */
-  agents: Record<string, StackAgentConfig>;
+  agents: Partial<Record<AgentName, StackAgentConfig>>;
   /** Optional guiding philosophy for the stack */
   philosophy?: string;
 }

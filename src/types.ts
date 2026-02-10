@@ -2,31 +2,32 @@
  * TypeScript types for the Stack-Based Agent Compilation System
  */
 
-import type { SkillId } from "./cli/types-matrix";
-
-// =============================================================================
-// Skill Types
-// =============================================================================
+import type { AgentName, CategoryPath, ModelName, PermissionMode, ResolvedSubcategorySkills, SkillId, SkillRef } from "./cli/types-matrix";
 
 /**
- * Skill definition from registry.yaml
- * Contains static metadata that doesn't change per-agent
+ * Skill definition from registry.yaml.
+ * Contains static metadata that doesn't change per-agent.
  */
 export interface SkillDefinition {
+  /** Filesystem path to the skill directory */
   path: string;
+  /** Display name derived from skill ID */
   name: string;
+  /** Brief description of the skill's purpose */
   description: string;
   /** Canonical skill ID from frontmatter (e.g., "web-framework-react") */
-  canonicalId: string;
+  canonicalId: SkillId;
 }
 
 /**
- * Skill assignment in stack config.yaml
- * Specifies whether a skill should be preloaded (embedded) or dynamic (loaded via Skill tool)
+ * Skill assignment in stack config.yaml.
+ * Specifies whether a skill should be preloaded (embedded) or dynamic (loaded via Skill tool).
  */
 export interface SkillAssignment {
+  /** Canonical skill identifier */
   id: SkillId;
-  preloaded?: boolean; // Default: false (dynamic)
+  /** Whether skill content is embedded in the compiled agent. @default false */
+  preloaded?: boolean;
   /** True if this is a local skill from .claude/skills/ */
   local?: boolean;
   /** Relative path from project root for local skills (e.g., ".claude/skills/my-skill/") */
@@ -34,50 +35,64 @@ export interface SkillAssignment {
 }
 
 /**
- * Skill reference in config.yaml (agent-specific)
- * References a skill by ID and provides context-specific usage
+ * Skill reference in config.yaml (agent-specific).
+ * References a skill by ID and provides context-specific usage.
  */
 export interface SkillReference {
+  /** Canonical skill identifier */
   id: SkillId;
-  usage: string; // Context-specific description of when to use this skill
-  preloaded?: boolean; // Whether skill content should be embedded in compiled agent
+  /** Context-specific description of when to use this skill */
+  usage: string;
+  /** Whether skill content should be embedded in compiled agent */
+  preloaded?: boolean;
 }
 
 /**
- * Fully resolved skill (merged from registry.yaml + config.yaml)
- * This is what the compiler uses after merging
+ * Fully resolved skill (merged from registry.yaml + config.yaml).
+ * This is what the compiler uses after merging.
  */
 export interface Skill {
+  /** Canonical skill identifier */
   id: SkillId;
+  /** Filesystem path to the skill directory */
   path: string;
+  /** Display name derived from skill ID */
   name: string;
+  /** Brief description of the skill's purpose */
   description: string;
+  /** Context-specific usage guidance for this agent */
   usage: string;
-  preloaded: boolean; // Whether skill is listed in frontmatter (Claude Code loads automatically)
+  /** Whether skill is listed in frontmatter (Claude Code loads automatically) */
+  preloaded: boolean;
 }
 
-// SkillAssignment removed - now using flat Skill[] array
-
-// =============================================================================
-// Agent Definition Types (from agents.yaml - single source of truth)
-// =============================================================================
-
 /**
- * Base agent definition from agents.yaml
- * Skills are now defined in stacks, not agents (Phase 7)
+ * Base agent definition from agents.yaml.
+ * Skills are defined in stacks, not agents.
  */
 export interface AgentDefinition {
+  /** Display title (e.g., "Web Developer Agent") */
   title: string;
+  /** Brief description for Task tool */
   description: string;
-  model?: string;
+  /** AI model to use */
+  model?: ModelName;
+  /** Tools available to this agent */
   tools: string[];
-  disallowed_tools?: string[]; // Tools this agent cannot use
-  permission_mode?: string; // Permission mode for agent operations
-  hooks?: Record<string, AgentHookDefinition[]>; // Lifecycle hooks
-  output_format?: string; // Which output format file to use
-  path?: string; // Relative path to agent directory (e.g., "developer/api-developer")
-  sourceRoot?: string; // Root path where this agent was loaded from (for template resolution)
-  agentBaseDir?: string; // Base directory for agent files relative to sourceRoot (e.g., "src/agents" or ".claude-src/agents")
+  /** Tools this agent cannot use */
+  disallowed_tools?: string[];
+  /** Permission mode for agent operations */
+  permission_mode?: PermissionMode;
+  /** Lifecycle hooks */
+  hooks?: Record<string, AgentHookDefinition[]>;
+  /** Which output format file to use */
+  output_format?: string;
+  /** Relative path to agent directory (e.g., "developer/api-developer") */
+  path?: string;
+  /** Root path where this agent was loaded from (for template resolution) */
+  sourceRoot?: string;
+  /** Base directory for agent files relative to sourceRoot (e.g., "src/agents" or ".claude-src/agents") */
+  agentBaseDir?: string;
 }
 
 // =============================================================================
@@ -117,10 +132,10 @@ export interface AgentConfig {
   name: string;
   title: string;
   description: string;
-  model?: string;
+  model?: ModelName;
   tools: string[];
   disallowed_tools?: string[]; // Tools this agent cannot use
-  permission_mode?: string; // Permission mode for agent operations
+  permission_mode?: PermissionMode; // Permission mode for agent operations
   hooks?: Record<string, AgentHookDefinition[]>; // Lifecycle hooks
   output_format?: string;
   skills: Skill[]; // Unified skills list (loaded dynamically via Skill tool)
@@ -140,7 +155,7 @@ export interface CompiledAgentData {
   skills: Skill[]; // Flat array of all skills
   preloadedSkills: Skill[]; // Skills with content embedded
   dynamicSkills: Skill[]; // Skills loaded via Skill tool (metadata only)
-  preloadedSkillIds: string[]; // IDs for frontmatter and skill tool check
+  preloadedSkillIds: SkillId[]; // IDs for frontmatter and skill tool check
 }
 
 // =============================================================================
@@ -167,21 +182,15 @@ export interface CustomAgentConfig {
   /** Brief description for Task tool */
   description: string;
   /** Optional built-in agent to extend (inherits tools, model, permission_mode) */
-  extends?: string;
+  extends?: AgentName;
   /** Optional model override */
-  model?: "sonnet" | "opus" | "haiku" | "inherit";
+  model?: ModelName;
   /** Tools available to this agent (overrides inherited) */
   tools?: string[];
   /** Tools this agent cannot use */
   disallowed_tools?: string[];
   /** Permission mode for agent operations */
-  permission_mode?:
-    | "default"
-    | "acceptEdits"
-    | "dontAsk"
-    | "bypassPermissions"
-    | "plan"
-    | "delegate";
+  permission_mode?: PermissionMode;
   /** Agent-specific skill assignments */
   skills?: SkillAssignment[];
   /** Lifecycle hooks */
@@ -316,7 +325,7 @@ export interface ProjectConfig {
    *     database: api-database-drizzle
    * ```
    */
-  stack?: Record<string, Record<string, string>>;
+  stack?: Record<string, ResolvedSubcategorySkills>;
 
   /**
    * Skills source path or URL.
@@ -351,13 +360,13 @@ export interface ProjectConfig {
  * Supports official Claude Code plugin format fields
  */
 export interface AgentYamlConfig {
-  id: string;
+  id: AgentName;
   title: string;
   description: string;
-  model?: string;
+  model?: ModelName;
   tools: string[];
   disallowed_tools?: string[]; // Tools this agent cannot use
-  permission_mode?: string; // Permission mode for agent operations
+  permission_mode?: PermissionMode; // Permission mode for agent operations
   hooks?: Record<string, AgentHookDefinition[]>; // Lifecycle hooks
   output_format?: string;
   /** Skills available to this agent with inline preloaded flag */
@@ -376,7 +385,7 @@ export interface AgentYamlConfig {
  */
 export interface SkillFrontmatter {
   /** Skill identifier in kebab-case (e.g., "react", "api-hono"). Used as plugin name. */
-  name: string;
+  name: SkillId;
   /** Brief description of the skill's purpose for Claude agents */
   description: string;
   /** If true, prevents the AI model from invoking this skill. Default: false */
@@ -386,7 +395,7 @@ export interface SkillFrontmatter {
   /** Comma-separated list of tools this skill can use (e.g., "Read, Grep, Glob") */
   "allowed-tools"?: string;
   /** AI model to use for this skill */
-  model?: "sonnet" | "opus" | "haiku" | "inherit";
+  model?: ModelName;
   /** Context mode for skill execution */
   context?: "fork";
   /** Agent name to use when skill is invoked */
@@ -400,14 +409,14 @@ export interface SkillFrontmatter {
  * Identity (name, description) comes from SKILL.md frontmatter
  */
 export interface SkillMetadataConfig {
-  category?: string;
+  category?: CategoryPath;
   category_exclusive?: boolean;
   author?: string;
   version?: string;
   tags?: string[];
-  requires?: string[];
-  compatible_with?: string[];
-  conflicts_with?: string[];
+  requires?: SkillRef[];
+  compatible_with?: SkillRef[];
+  conflicts_with?: SkillRef[];
 }
 
 // =============================================================================
@@ -446,17 +455,11 @@ export interface AgentFrontmatter {
   /** Comma-separated list of tools this agent cannot use */
   disallowedTools?: string;
   /** AI model to use for this agent. Use "inherit" to use parent model. */
-  model?: "sonnet" | "opus" | "haiku" | "inherit";
+  model?: ModelName;
   /** Permission mode for agent operations */
-  permissionMode?:
-    | "default"
-    | "acceptEdits"
-    | "dontAsk"
-    | "bypassPermissions"
-    | "plan"
-    | "delegate";
+  permissionMode?: PermissionMode;
   /** Array of skill names that are preloaded for this agent */
-  skills?: string[];
+  skills?: SkillId[];
   /** Lifecycle hooks for agent execution */
   hooks?: Record<string, AgentHookDefinition[]>;
 }
