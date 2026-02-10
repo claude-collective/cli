@@ -481,3 +481,55 @@ Research findings: Converting Bibles to skills is **technically possible but str
   - Updated intro.md files to use generic language
 - [x] Keep technology details in SKILLS, not agent prompts
   - Agent prompts now use generic terms; specific tech is in skills config
+
+---
+
+## Type Narrowing (COMPLETE)
+
+Full audit and narrowing of all `string` types to union types across 37+ files.
+
+**Summary:**
+
+- All sections completed (1–4, plus test files, source types, lib files, commands, components, stores)
+- 86 remaining casts — all classified as legitimate boundary casts with comments
+- 0 type errors, 1149 tests passing
+
+**Key results:**
+
+- Union types added to `types-matrix.ts`: `SkillId`, `CategoryPath`, `SkillAlias`, `AgentName`, `Domain`, `Subcategory`
+- Template literal type: `SkillId = ${SkillIdPrefix}-${string}`
+- Named aliases: `SkillRef`, `SubcategorySelections`, `DomainSelections`, `CategoryMap`, `ResolvedSubcategorySkills`
+- Typed object utilities: `typedEntries<K,V>()`, `typedKeys<K>()` in `src/cli/utils/typed-object.ts`
+- Shared type aliases extracted: `ModelName`, `PermissionMode`
+- `Record<UnionType, X>` → `Partial<Record<UnionType, X>>` everywhere runtime is sparse
+- Pre-resolution types use `(SkillAlias | SkillId)[]`, post-resolution use `SkillId[]`
+- Source types (`RawMetadata`, `LocalRawMetadata`) typed at YAML boundary — downstream casts eliminated
+- All function signatures narrowed: matrix-loader, matrix-resolver, resolver, config-generator, skill-copier, source-loader, compiler, stacks-loader, stack-plugin-compiler, agent-recompiler, local-installer, defaults-loader, plugin-finder, skill-fetcher, loader
+- Cross-cutting types narrowed: `src/types.ts` (SkillDefinition, CompiledAgentData, CustomAgentConfig, AgentYamlConfig, AgentDefinition, AgentConfig, SkillMetadataConfig, AgentFrontmatter, SkillFrontmatter, ProjectConfig)
+- Stack types narrowed: `types-stacks.ts` (StackAgentConfig, Stack)
+- Wizard components narrowed: wizard-store, wizard.tsx, step-build.tsx, step-confirm.tsx, step-stack.tsx, category-grid.tsx, utils.ts
+- Command files narrowed: edit.tsx, search.tsx, info.ts, new/skill.ts, init.tsx
+- Test files: unnecessary casts removed, boundary casts kept with comments
+- `DEFAULT_PRESELECTED_SKILLS` typed as `readonly SkillId[]`
+
+**Boundary cast classification (86 total):**
+
+| Category | Count | Description |
+|---|---|---|
+| Object.keys/entries | ~20 | TS returns `string[]`, cast to union necessary |
+| CLI arg boundary | ~7 | User input from flags is `string` |
+| Test data construction | ~30 | Mock matrix, intentionally-invalid values |
+| YAML parse boundary | ~5 | Raw config parsing |
+| Type narrowing | ~4 | CategoryPath → Subcategory, SkillAlias lookup |
+| Store initialization | ~2 | Empty initial state |
+| Widening for indexing | ~4 | String indexing on Partial<Record<UnionType, X>> |
+
+**Most common patterns narrowed:**
+
+1. `Record<string, string>` → `Record<SkillAlias, SkillId>` (alias maps, ~15 instances)
+2. `string[]` → `SkillId[]` (skill ID arrays, ~12 instances)
+3. `string[]` → `AgentName[]` (agent name arrays, ~8 instances)
+4. `string` → `AgentName` (single agent name params, ~5 instances)
+5. `Set<string>` → `Set<SkillId>` (dedup sets, ~5 instances)
+
+For the full audit with every field decision, see the [TypeScript Types Bible](./typescript-types-bible.md).
