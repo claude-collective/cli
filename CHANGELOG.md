@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.0] - 2026-02-10
+
+### Added
+
+- **Zod runtime validation at all parse boundaries** — 30+ schemas in `schemas.ts` using bridge pattern (`z.ZodType<ExistingType>`) validate every `JSON.parse` and `parseYaml` call in production code. Eliminates all production `as T` casts at deserialization boundaries. Lenient loader schemas use `.passthrough()` at parse boundaries; strict schemas for validation.
+- **Typed object utilities** — `typedEntries<K,V>()` and `typedKeys<K>()` in `typed-object.ts` replace all `Object.entries/keys` boundary casts with type-safe helpers.
+- **Named type aliases** — `SkillRef`, `SubcategorySelections`, `DomainSelections`, `CategoryMap`, `ResolvedSubcategorySkills` in `types-matrix.ts` for recurring composite types.
+- **Scalar union types** — `ModelName` (`"sonnet" | "opus" | "haiku" | "inherit"`) and `PermissionMode` unions added to `types-matrix.ts`.
+- **Testing strategy document** — `testing-strategy.md` with conventions for test categories, co-location rules, Ink component testing, keyboard simulation timing, and fixture organization.
+
+### Changed
+
+- **Extended type narrowing across 33 library files** — `Record<string, X>` narrowed to `Record<AgentName|SkillId|Subcategory, X>` where keys are known. Function signatures narrowed for `compileAgent`, `compileAgentForPlugin`, `getPluginSkillIds`, `fetchSkills`, `buildStackProperty`, `buildAgentSkills`, `validateBuildStep`, `populateFromStack`. Return types narrowed for `CompiledStackPlugin`, `StackInstallResult`, `RecompileAgentsResult`.
+- **Replaced manual array operations with Remeda utilities** — `unique()`, `uniqueBy()`, `countBy()`, `sumBy()`, `sortBy()`, `indexBy()`, `mapToObj()`, `pipe()`, `flatMap()`, `filter()`, `mapValues()`, `difference()`, `groupBy()` across 20+ files.
+- **`types.ts` interface fields narrowed** — `SkillDefinition.canonicalId` to `SkillId`, `AgentDefinition`/`AgentConfig` model/permission fields to `ModelName`/`PermissionMode`, `ProjectConfig.stack` to `ResolvedSubcategorySkills`. Inline `//` comments converted to JSDoc.
+- **Wizard components and store narrowed** — Store selections use `DomainSelections`/`SubcategorySelections`, components use `typedEntries`/`typedKeys`.
+
+### Dependencies
+
+- Added `zod` v4.3.6 — runtime schema validation
+- Added `remeda` v2.33.6 — tree-shakeable TypeScript-first utility functions
+
 ## [0.22.0] - 2026-02-09
 
 ### Changed
