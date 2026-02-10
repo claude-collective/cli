@@ -172,6 +172,7 @@ export default class Update extends BaseCommand {
       // Build source skills map for lookup
       const sourceSkills: Record<string, { path: string }> = {};
       for (const [skillId, skill] of Object.entries(sourceResult.matrix.skills)) {
+        if (!skill) continue;
         if (!skill.local) {
           sourceSkills[skillId] = { path: skill.path };
         }

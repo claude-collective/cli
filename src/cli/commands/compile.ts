@@ -25,6 +25,8 @@ import { LOCAL_SKILLS_PATH } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
 import { detectInstallation } from "../lib/installation";
 import type { AgentSourcePaths, PluginManifest, ProjectConfig, SkillDefinition } from "../../types";
+import type { SkillId } from "../types-matrix";
+import { pluginManifestSchema, projectConfigLoaderSchema } from "../lib/schemas";
 
 async function loadSkillsFromDir(
   skillsDir: string,
@@ -64,7 +66,8 @@ async function loadSkillsFromDir(
       }
 
       const skillName = (metadata.name as string) || path.basename(skillDir);
-      const canonicalId = skillName;
+      // Skill name parsed from YAML frontmatter — cast at data boundary
+      const canonicalId = skillName as SkillId;
 
       const skill: SkillDefinition = {
         path: pathPrefix ? `${pathPrefix}/${relativePath}/` : `${relativePath}/`,
@@ -142,7 +145,7 @@ async function readPluginManifest(pluginDir: string): Promise<PluginManifest | n
 
   try {
     const content = await readFile(manifestPath);
-    return JSON.parse(content) as PluginManifest;
+    return pluginManifestSchema.parse(JSON.parse(content));
   } catch {
     return null;
   }
@@ -254,11 +257,17 @@ export default class Compile extends BaseCommand {
     if (hasConfig) {
       try {
         const configContent = await readFile(configPath);
-        const config = parseYaml(configContent) as ProjectConfig;
-        const agentCount = config.agents?.length ?? 0;
-        const configSkillCount = config.skills?.length ?? 0;
-        this.log(`Using config.yaml (${agentCount} agents, ${configSkillCount} skills)`);
-        verbose(`  Config: ${configPath}`);
+        const parsed = parseYaml(configContent);
+        const configResult = projectConfigLoaderSchema.safeParse(parsed);
+        if (configResult.success) {
+          const config = configResult.data as ProjectConfig;
+          const agentCount = config.agents?.length ?? 0;
+          const configSkillCount = config.skills?.length ?? 0;
+          this.log(`Using config.yaml (${agentCount} agents, ${configSkillCount} skills)`);
+          verbose(`  Config: ${configPath}`);
+        } else {
+          this.warn("config.yaml found but has invalid structure - using defaults");
+        }
       } catch {
         this.warn("config.yaml found but could not be parsed - using defaults");
       }

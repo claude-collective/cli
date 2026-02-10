@@ -4,6 +4,7 @@ import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { BaseCommand } from "../../base-command.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 import { fetchFromSource } from "../../lib/source-fetcher.js";
+import { importedSkillMetadataSchema } from "../../lib/schemas.js";
 import { getCurrentDate, hashFile } from "../../lib/versioning.js";
 import {
   copy,
@@ -374,7 +375,11 @@ export default class ImportSkill extends BaseCommand {
         yamlContent = lines.slice(1).join("\n");
       }
 
-      const metadata = parseYaml(yamlContent) as SkillMetadata;
+      const raw = parseYaml(yamlContent);
+      const parseResult = importedSkillMetadataSchema.safeParse(raw);
+      const metadata = parseResult.success
+        ? (parseResult.data as SkillMetadata)
+        : { forked_from: undefined };
       metadata.forked_from = forkedFrom;
 
       const newYamlContent = stringifyYaml(metadata, { lineWidth: 0 });
@@ -385,7 +390,11 @@ export default class ImportSkill extends BaseCommand {
     // Try to update existing metadata.json and convert to YAML
     if (await fileExists(metadataJsonPath)) {
       const rawContent = await readFile(metadataJsonPath);
-      const metadata = JSON.parse(rawContent) as SkillMetadata;
+      const jsonParsed = JSON.parse(rawContent);
+      const jsonResult = importedSkillMetadataSchema.safeParse(jsonParsed);
+      const metadata = jsonResult.success
+        ? (jsonResult.data as SkillMetadata)
+        : { forked_from: undefined };
       metadata.forked_from = forkedFrom;
 
       // Create metadata.yaml with converted content

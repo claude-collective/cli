@@ -11,7 +11,6 @@
  * - Keyboard navigation (arrows, vim keys)
  * - Copy skill link to clipboard
  */
-import React from "react";
 import { Args, Flags } from "@oclif/core";
 import { render } from "ink";
 import { printTable } from "@oclif/table";
@@ -21,6 +20,7 @@ import { loadSkillsMatrixFromSource } from "../lib/source-loader.js";
 import { resolveAllSources, type SourceEntry } from "../lib/config.js";
 import { fetchFromSource } from "../lib/source-fetcher.js";
 import { listDirectories, fileExists, copy, ensureDir } from "../utils/fs.js";
+import { sortBy } from "remeda";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { SkillSearch, type SkillSearchResult } from "../components/skill-search/index.js";
 import type { SourcedSkill } from "../components/skill-search/skill-search.js";
@@ -121,12 +121,14 @@ async function fetchSkillsFromSource(
       if (await fileExists(skillMdPath)) {
         // Create a minimal skill entry for third-party source
         skills.push({
+          // Directory name is an untyped string — cast at data boundary
           id: skillDir as SkillId,
           name: skillDir
             .split("-")
             .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
             .join(" "),
           description: `Skill from ${source.name}`,
+          // Synthetic category for third-party sources — not in CategoryPath union
           category: "imported" as CategoryPath,
           categoryExclusive: false,
           tags: [],
@@ -238,9 +240,9 @@ export default class Search extends BaseCommand {
       });
 
       // Convert to SourcedSkills
-      const primarySkills = Object.values(matrix.skills).map((skill) =>
-        toSourcedSkill(skill, "marketplace", sourcePath),
-      );
+      const primarySkills = Object.values(matrix.skills)
+        .filter((skill): skill is ResolvedSkill => skill !== undefined)
+        .map((skill) => toSourcedSkill(skill, "marketplace", sourcePath));
 
       // Get configured extra sources
       const { extras } = await resolveAllSources(projectDir);
@@ -336,19 +338,22 @@ export default class Search extends BaseCommand {
 
       this.log(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`);
 
-      // Get all skills as array
-      const allSkills = Object.values(matrix.skills);
+      // Get all skills as array (filter undefined from Partial record)
+      const allSkills = Object.values(matrix.skills).filter(
+        (skill): skill is ResolvedSkill => skill !== undefined,
+      );
 
       // Filter by query
       let results = allSkills.filter((skill) => matchesQuery(skill, query));
 
       // Apply category filter if provided
       if (flags.category) {
+        // CLI flag is an untyped string — cast at data boundary
         results = results.filter((skill) => matchesCategory(skill, flags.category as CategoryPath));
       }
 
       // Sort results by name
-      results.sort((a, b) => a.name.localeCompare(b.name));
+      results = sortBy(results, (r) => r.name);
 
       // Display results
       this.log("");

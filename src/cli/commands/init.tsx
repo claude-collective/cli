@@ -125,7 +125,7 @@ export default class Init extends BaseCommand {
   private async handleInstallation(
     result: WizardResultV2,
     sourceResult: SourceLoadResult,
-    flags: any,
+    flags: { "dry-run": boolean; source?: string; refresh: boolean },
   ): Promise<void> {
     const projectDir = process.cwd();
     const dryRun = flags["dry-run"];

@@ -3,12 +3,13 @@ import path from "path";
 import { BaseCommand } from "../base-command";
 import { setVerbose } from "../utils/logger";
 import { fileExists, glob, directoryExists } from "../utils/fs";
+import { unique } from "remeda";
 import { EXIT_CODES } from "../lib/exit-codes";
 import { loadProjectConfig, validateProjectConfig } from "../lib/project-config";
 import { loadSkillsMatrixFromSource } from "../lib/source-loader";
 import { discoverLocalSkills } from "../lib/local-skill-loader";
 import type { ProjectConfig } from "../../types";
-import type { MergedSkillsMatrix } from "../types-matrix";
+import type { MergedSkillsMatrix, SkillId } from "../types-matrix";
 
 // =============================================================================
 // Types
@@ -115,7 +116,7 @@ async function checkSkillsResolved(
   }
 
   // Dedupe skills
-  const uniqueSkills = [...new Set(configSkills)];
+  const uniqueSkills = unique(configSkills);
 
   if (uniqueSkills.length === 0) {
     return {
@@ -132,7 +133,8 @@ async function checkSkillsResolved(
   const missingSkills: string[] = [];
   for (const skillId of uniqueSkills) {
     const inMatrix = skillId in matrix.skills;
-    const inLocal = localSkillIds.has(skillId);
+    // uniqueSkills is string[] from config parsing — cast at data boundary
+    const inLocal = localSkillIds.has(skillId as SkillId);
     if (!inMatrix && !inLocal) {
       missingSkills.push(skillId);
     }

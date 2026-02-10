@@ -1,5 +1,6 @@
 import { Flags } from "@oclif/core";
 import path from "path";
+import { sortBy } from "remeda";
 import { BaseCommand } from "../../base-command";
 import { setVerbose } from "../../utils/logger";
 import {
@@ -101,7 +102,7 @@ export default class BuildMarketplace extends BaseCommand {
 
       this.log("");
       this.log("Category breakdown:");
-      const sortedCategories = Object.entries(stats.byCategory).sort(([, a], [, b]) => b - a);
+      const sortedCategories = sortBy(Object.entries(stats.byCategory), ([, count]) => -count);
       for (const [category, count] of sortedCategories) {
         this.log(`  ${category}: ${count}`);
       }

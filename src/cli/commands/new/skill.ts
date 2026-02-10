@@ -168,6 +168,7 @@ export default class NewSkill extends BaseCommand {
       author = (await resolveAuthor(projectDir)) || DEFAULT_AUTHOR;
     }
 
+    // CLI flag is an untyped string — cast at data boundary
     const category = flags.category as CategoryPath;
 
     // Determine skill directory path

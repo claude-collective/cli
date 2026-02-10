@@ -16,6 +16,7 @@ import { bumpPluginVersion } from "../lib/plugin-version.js";
 import { getAgentDefinitions } from "../lib/agent-fetcher.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { detectInstallation } from "../lib/installation.js";
+import type { SkillId } from "../types-matrix.js";
 
 export default class Edit extends BaseCommand {
   static summary = "Edit skills in the plugin";
@@ -71,7 +72,7 @@ export default class Edit extends BaseCommand {
 
     // Load current skills
     this.log("Reading current skills...");
-    let currentSkillIds: string[];
+    let currentSkillIds: SkillId[];
     try {
       currentSkillIds = await getPluginSkillIds(pluginSkillsDir, sourceResult.matrix);
       this.log(`✓ Current plugin has ${currentSkillIds.length} skills\n`);
@@ -117,8 +118,10 @@ export default class Edit extends BaseCommand {
     }
 
     // Calculate changes
-    const addedSkills = result.selectedSkills.filter((id: string) => !currentSkillIds.includes(id));
-    const removedSkills = currentSkillIds.filter((id) => !result.selectedSkills.includes(id));
+    const addedSkills = result.selectedSkills.filter((id) => !currentSkillIds.includes(id));
+    const removedSkills = currentSkillIds.filter(
+      (id) => !result.selectedSkills.includes(id),
+    );
 
     // Show warnings if any
     if (result.validation.warnings.length > 0) {

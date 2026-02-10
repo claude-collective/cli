@@ -4,7 +4,8 @@ import { BaseCommand } from "../base-command.js";
 import { loadSkillsMatrixFromSource } from "../lib/source-loader.js";
 import { discoverLocalSkills } from "../lib/local-skill-loader.js";
 import { fileExists, readFile } from "../utils/fs.js";
-import type { ResolvedSkill, SkillRelation, SkillRequirement } from "../types-matrix.js";
+import { EXIT_CODES } from "../lib/exit-codes.js";
+import type { ResolvedSkill, SkillAlias, SkillId, SkillRelation, SkillRequirement } from "../types-matrix.js";
 
 /**
  * Maximum number of lines to show in content preview
@@ -104,7 +105,7 @@ function formatTags(tags: string[]): string {
  * Find skills that match a partial query for suggestions
  */
 function findSuggestions(
-  skills: Record<string, ResolvedSkill>,
+  skills: Partial<Record<string, ResolvedSkill>>,
   query: string,
   maxSuggestions: number,
 ): string[] {
@@ -112,6 +113,7 @@ function findSuggestions(
   const matches: string[] = [];
 
   for (const skill of Object.values(skills)) {
+    if (!skill) continue;
     if (matches.length >= maxSuggestions) break;
     if (
       skill.id.toLowerCase().includes(lowerQuery) ||
@@ -193,11 +195,12 @@ export default class Info extends BaseCommand {
       this.log(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`);
 
       // Look up skill by ID or alias
-      let skill: ResolvedSkill | undefined = matrix.skills[args.skill];
+      // CLI arg is an untyped string — cast at data boundary
+      let skill: ResolvedSkill | undefined = matrix.skills[args.skill as SkillId];
 
       if (!skill) {
-        // Try alias lookup
-        const fullId = matrix.aliases[args.skill];
+        // Try alias lookup — CLI arg is an untyped string
+        const fullId = matrix.aliases[args.skill as SkillAlias];
         if (fullId) {
           skill = matrix.skills[fullId];
         }
@@ -221,7 +224,7 @@ export default class Info extends BaseCommand {
         this.log("");
         this.logInfo("Use 'cc search <query>' to find available skills.");
         this.log("");
-        this.exit(1);
+        this.exit(EXIT_CODES.ERROR);
       }
 
       // Check local installation status

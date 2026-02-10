@@ -8,6 +8,8 @@ import { CLAUDE_SRC_DIR, DIRS, LOCAL_SKILLS_PATH, PROJECT_ROOT } from "../consts
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/source-loader.js";
 import { copySkillsToLocalFlattened } from "../lib/skill-copier.js";
+import type { SkillId } from "../types-matrix.js";
+import { typedKeys } from "../utils/typed-object.js";
 import { loadProjectConfig, resolveSource } from "../lib/config.js";
 import { saveSourceToProjectConfig } from "../lib/config-saver.js";
 
@@ -298,8 +300,8 @@ export default class Eject extends BaseCommand {
     }
 
     // Get all non-local skill IDs from the source matrix
-    const skillIds = Object.keys(sourceResult.matrix.skills).filter(
-      (skillId) => !sourceResult.matrix.skills[skillId].local,
+    const skillIds = typedKeys<SkillId>(sourceResult.matrix.skills).filter(
+      (skillId) => !sourceResult.matrix.skills[skillId]?.local,
     );
 
     if (skillIds.length === 0) {

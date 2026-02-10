@@ -1,6 +1,7 @@
 import { Flags } from "@oclif/core";
 import { printTable } from "@oclif/table";
 import path from "path";
+import { countBy } from "remeda";
 import { BaseCommand } from "../base-command.js";
 import { loadSkillsMatrixFromSource } from "../lib/source-loader.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
@@ -21,10 +22,11 @@ interface ComparisonSummary {
  * Calculate summary counts from comparison results
  */
 function calculateSummary(results: SkillComparisonResult[]): ComparisonSummary {
+  const counts = countBy(results, (r) => r.status);
   return {
-    outdated: results.filter((r) => r.status === "outdated").length,
-    current: results.filter((r) => r.status === "current").length,
-    localOnly: results.filter((r) => r.status === "local-only").length,
+    outdated: counts["outdated"] ?? 0,
+    current: counts["current"] ?? 0,
+    localOnly: counts["local-only"] ?? 0,
   };
 }
 
@@ -88,6 +90,7 @@ export default class Outdated extends BaseCommand {
       // Build source skills map for lookup
       const sourceSkills: Record<string, { path: string }> = {};
       for (const [skillId, skill] of Object.entries(matrix.skills)) {
+        if (!skill) continue;
         if (!skill.local) {
           sourceSkills[skillId] = { path: skill.path };
         }

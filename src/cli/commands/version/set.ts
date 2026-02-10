@@ -9,6 +9,7 @@ import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts.js";
 import { readFile, writeFile } from "../../utils/fs.js";
 import { findPluginManifest } from "../../lib/plugin-manifest-finder.js";
 import type { PluginManifest } from "../../../types.js";
+import { pluginManifestSchema } from "../../lib/schemas.js";
 
 const SEMVER_REGEX = /^(\d+)\.(\d+)\.(\d+)$/;
 
@@ -61,7 +62,7 @@ export default class VersionSet extends BaseCommand {
     try {
       // Read current manifest
       const content = await readFile(manifestPath);
-      const manifest = JSON.parse(content) as PluginManifest;
+      const manifest = pluginManifestSchema.parse(JSON.parse(content));
       const oldVersion = manifest.version || "1.0.0";
       const pluginName = manifest.name || "unknown";
 
