@@ -1,3 +1,4 @@
+import { unique, mapValues } from "remeda";
 import type { CustomAgentConfig, AgentDefinition } from "../../types";
 
 /** Default tools for standalone custom agents (no extends) */
@@ -41,11 +42,10 @@ export function resolveCustomAgent(
   // Merge disallowed_tools: custom + inherited
   let disallowedTools: string[] | undefined;
   if (customConfig.disallowed_tools || baseAgent.disallowed_tools) {
-    const merged = new Set<string>([
+    disallowedTools = unique([
       ...(baseAgent.disallowed_tools || []),
       ...(customConfig.disallowed_tools || []),
     ]);
-    disallowedTools = [...merged];
   }
 
   // Merge hooks: custom hooks added to inherited
@@ -88,13 +88,7 @@ export function resolveCustomAgents(
   customAgents: Record<string, CustomAgentConfig>,
   builtinAgents: Record<string, AgentDefinition>,
 ): Record<string, AgentDefinition> {
-  const resolved: Record<string, AgentDefinition> = {};
-
-  for (const [id, config] of Object.entries(customAgents)) {
-    resolved[id] = resolveCustomAgent(id, config, builtinAgents);
-  }
-
-  return resolved;
+  return mapValues(customAgents, (config, id) => resolveCustomAgent(id, config, builtinAgents));
 }
 
 /**

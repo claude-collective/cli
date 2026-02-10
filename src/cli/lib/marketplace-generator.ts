@@ -1,7 +1,9 @@
 import path from "path";
+import { sortBy } from "remeda";
 import { readFile, writeFile, glob, ensureDir } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import type { Marketplace, MarketplacePlugin, PluginManifest } from "../../types";
+import { pluginManifestSchema } from "./schemas";
 
 const PLUGIN_MANIFEST_PATH = ".claude-plugin/plugin.json";
 const MARKETPLACE_SCHEMA_URL = "https://anthropic.com/claude-code/marketplace.schema.json";
@@ -53,7 +55,7 @@ async function readPluginManifest(pluginDir: string): Promise<PluginManifest | n
 
   try {
     const content = await readFile(manifestPath);
-    return JSON.parse(content) as PluginManifest;
+    return pluginManifestSchema.parse(JSON.parse(content));
   } catch {
     return null;
   }
@@ -112,7 +114,7 @@ export async function generateMarketplace(
     verbose(`  [OK] ${plugin.name}`);
   }
 
-  plugins.sort((a, b) => a.name.localeCompare(b.name));
+  const sortedPlugins = sortBy(plugins, (p) => p.name);
 
   const marketplace: Marketplace = {
     $schema: MARKETPLACE_SCHEMA_URL,
@@ -124,7 +126,7 @@ export async function generateMarketplace(
     metadata: {
       pluginRoot: options.pluginRoot,
     },
-    plugins,
+    plugins: sortedPlugins,
   };
 
   if (options.description) {

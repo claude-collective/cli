@@ -5,6 +5,7 @@ import {
   getPluginAgentsDir,
   readPluginManifest,
 } from "./plugin-finder";
+import { countBy } from "remeda";
 import { directoryExists } from "../utils/fs";
 import { DEFAULT_DISPLAY_VERSION } from "../consts";
 import { detectInstallation, type InstallMode } from "./installation";
@@ -51,7 +52,7 @@ export async function getPluginInfo(): Promise<PluginInfo | null> {
 
   if (await directoryExists(skillsDir)) {
     const skills = await readdir(skillsDir, { withFileTypes: true });
-    skillCount = skills.filter((s) => s.isDirectory()).length;
+    skillCount = countBy(skills, (s) => String(s.isDirectory()))["true"] ?? 0;
   }
 
   if (await directoryExists(agentsDir)) {

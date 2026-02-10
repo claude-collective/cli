@@ -3,6 +3,7 @@ import path from "path";
 import { stringify as stringifyYaml, parse as parseYaml } from "yaml";
 import { readFile, writeFile, glob, fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
+import { versionedMetadataSchema } from "./schemas";
 
 const HASH_PREFIX_LENGTH = 7;
 
@@ -85,7 +86,16 @@ async function readMetadata(
     yamlContent = lines.slice(1).join("\n");
   }
 
-  const metadata = parseYaml(yamlContent) as VersionedMetadata;
+  const raw = parseYaml(yamlContent);
+  const result = versionedMetadataSchema.safeParse(raw);
+
+  if (!result.success) {
+    throw new Error(
+      `Invalid metadata.yaml at ${skillPath}: ${result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
+    );
+  }
+
+  const metadata = result.data as VersionedMetadata;
   return { metadata, schemaComment };
 }
 

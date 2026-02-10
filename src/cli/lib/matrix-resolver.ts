@@ -1,21 +1,27 @@
+import { groupBy } from "remeda";
 import type {
   MergedSkillsMatrix,
   ResolvedSkill,
   SkillOption,
   SkillId,
+  SkillAlias,
+  SkillRef,
+  Subcategory,
   CategoryPath,
   SelectionValidation,
   ValidationError,
   ValidationWarning,
 } from "../types-matrix";
+import { typedEntries } from "../utils/typed-object";
 
-export function resolveAlias(aliasOrId: string, matrix: MergedSkillsMatrix): SkillId {
-  return (matrix.aliases[aliasOrId] || aliasOrId) as SkillId;
+export function resolveAlias(aliasOrId: SkillRef, matrix: MergedSkillsMatrix): SkillId {
+  // Partial<Record<SkillAlias, SkillId>> can't be indexed with SkillAlias | SkillId — narrow to SkillAlias for lookup, fall back to SkillId
+  return matrix.aliases[aliasOrId as SkillAlias] || (aliasOrId as SkillId);
 }
 
 export function getDependentSkills(
   skillId: SkillId,
-  currentSelections: string[],
+  currentSelections: SkillRef[],
   matrix: MergedSkillsMatrix,
 ): SkillId[] {
   const fullId = resolveAlias(skillId, matrix);
@@ -57,7 +63,7 @@ export interface SkillCheckOptions {
 
 export function isDisabled(
   skillId: SkillId,
-  currentSelections: string[],
+  currentSelections: SkillRef[],
   matrix: MergedSkillsMatrix,
   options?: SkillCheckOptions,
 ): boolean {
@@ -106,7 +112,7 @@ export function isDisabled(
 
 export function getDisableReason(
   skillId: SkillId,
-  currentSelections: string[],
+  currentSelections: SkillRef[],
   matrix: MergedSkillsMatrix,
 ): string | undefined {
   const fullId = resolveAlias(skillId, matrix);
@@ -161,7 +167,7 @@ export function getDisableReason(
 
 export function isDiscouraged(
   skillId: SkillId,
-  currentSelections: string[],
+  currentSelections: SkillRef[],
   matrix: MergedSkillsMatrix,
 ): boolean {
   const fullId = resolveAlias(skillId, matrix);
@@ -189,7 +195,7 @@ export function isDiscouraged(
 
 export function getDiscourageReason(
   skillId: SkillId,
-  currentSelections: string[],
+  currentSelections: SkillRef[],
   matrix: MergedSkillsMatrix,
 ): string | undefined {
   const fullId = resolveAlias(skillId, matrix);
@@ -221,7 +227,7 @@ export function getDiscourageReason(
 
 export function isRecommended(
   skillId: SkillId,
-  currentSelections: string[],
+  currentSelections: SkillRef[],
   matrix: MergedSkillsMatrix,
 ): boolean {
   const fullId = resolveAlias(skillId, matrix);
@@ -245,7 +251,7 @@ export function isRecommended(
 
 export function getRecommendReason(
   skillId: SkillId,
-  currentSelections: string[],
+  currentSelections: SkillRef[],
   matrix: MergedSkillsMatrix,
 ): string | undefined {
   const fullId = resolveAlias(skillId, matrix);
@@ -271,7 +277,7 @@ export function getRecommendReason(
 }
 
 export function validateSelection(
-  selections: string[],
+  selections: SkillRef[],
   matrix: MergedSkillsMatrix,
 ): SelectionValidation {
   const errors: ValidationError[] = [];
@@ -324,19 +330,16 @@ export function validateSelection(
     }
   }
 
-  const categorySelections = new Map<string, string[]>();
-  for (const skillId of resolvedSelections) {
-    const skill = matrix.skills[skillId];
-    if (!skill) continue;
+  const validSkills = resolvedSelections
+    .map((skillId) => ({ skillId, skill: matrix.skills[skillId] }))
+    .filter((entry): entry is { skillId: SkillId; skill: ResolvedSkill } => entry.skill != null);
+  const categorySelections = groupBy(validSkills, (entry) => entry.skill.category);
 
-    const existing = categorySelections.get(skill.category) || [];
-    existing.push(skillId);
-    categorySelections.set(skill.category, existing);
-  }
-
-  for (const [categoryId, skillIds] of categorySelections.entries()) {
-    if (skillIds.length > 1) {
-      const category = matrix.categories[categoryId];
+  for (const [categoryId, entries] of typedEntries(categorySelections)) {
+    if (entries.length > 1) {
+      const skillIds = entries.map((e) => e.skillId);
+      // CategoryPath → Subcategory: categories lookup uses bare subcategory names
+      const category = matrix.categories[categoryId as Subcategory];
       if (category?.exclusive) {
         errors.push({
           type: "category_exclusive",
@@ -375,7 +378,7 @@ export function validateSelection(
     if (!skill || skill.providesSetupFor.length === 0) continue;
 
     const hasUsageSkill = skill.providesSetupFor.some((usageId) =>
-      resolvedSelections.includes(usageId as SkillId),
+      resolvedSelections.includes(usageId),
     );
     if (!hasUsageSkill) {
       warnings.push({
@@ -395,7 +398,7 @@ export function validateSelection(
 
 export function getAvailableSkills(
   categoryId: CategoryPath,
-  currentSelections: string[],
+  currentSelections: SkillRef[],
   matrix: MergedSkillsMatrix,
   options?: SkillCheckOptions,
 ): SkillOption[] {
@@ -403,6 +406,7 @@ export function getAvailableSkills(
   const resolvedSelections = currentSelections.map((s) => resolveAlias(s, matrix));
 
   for (const skill of Object.values(matrix.skills)) {
+    if (!skill) continue;
     if (skill.category !== categoryId) {
       continue;
     }
@@ -442,6 +446,7 @@ export function getSkillsByCategory(
   const skills: ResolvedSkill[] = [];
 
   for (const skill of Object.values(matrix.skills)) {
+    if (!skill) continue;
     if (skill.category === categoryId) {
       skills.push(skill);
     }
@@ -452,7 +457,7 @@ export function getSkillsByCategory(
 
 export function isCategoryAllDisabled(
   categoryId: CategoryPath,
-  currentSelections: string[],
+  currentSelections: SkillRef[],
   matrix: MergedSkillsMatrix,
   options?: SkillCheckOptions,
 ): { disabled: boolean; reason?: string } {
@@ -466,7 +471,7 @@ export function isCategoryAllDisabled(
     return { disabled: false };
   }
 
-  const disabledSkills: Array<{ skillId: string; reason: string | undefined }> = [];
+  const disabledSkills: Array<{ skillId: SkillId; reason: string | undefined }> = [];
 
   for (const skill of skills) {
     if (isDisabled(skill.id, currentSelections, matrix, options)) {

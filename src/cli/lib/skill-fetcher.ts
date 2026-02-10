@@ -31,11 +31,11 @@ export async function fetchSkills(
   outputDir: string,
   sourcePath: string,
   _options: FetchSkillsOptions = {},
-): Promise<string[]> {
+): Promise<SkillId[]> {
   const skillsOutputDir = path.join(outputDir, "skills");
   await ensureDir(skillsOutputDir);
 
-  const copiedSkills: string[] = [];
+  const copiedSkills: SkillId[] = [];
 
   for (const skillId of skillIds) {
     const pluginName = `skill-${skillId}`;

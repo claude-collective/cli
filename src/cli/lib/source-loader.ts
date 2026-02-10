@@ -1,16 +1,17 @@
 import path from "path";
 import { PROJECT_ROOT, SKILLS_DIR_PATH, SKILLS_MATRIX_PATH } from "../consts";
 import type {
+  AgentName,
   MergedSkillsMatrix,
   ResolvedSkill,
   ResolvedStack,
   SkillId,
   SkillAlias,
-  CategoryPath,
 } from "../types-matrix";
 import type { Stack } from "../types-stacks";
 import { fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
+import { typedKeys } from "../utils/typed-object";
 import { isLocalSource, resolveSource, type ResolvedConfig } from "./config";
 import { discoverLocalSkills, type LocalSkillDiscoveryResult } from "./local-skill-loader";
 import { checkMatrixHealth } from "./matrix-health-check";
@@ -180,14 +181,14 @@ async function loadFromRemote(
  * Phase 7: Skills are defined in stacks per agent (subcategory -> technology alias).
  * Uses skill_aliases from the matrix to resolve aliases to full skill IDs.
  */
-function stackToResolvedStack(stack: Stack, skillAliases: Record<string, string>): ResolvedStack {
+function stackToResolvedStack(stack: Stack, skillAliases: Partial<Record<SkillAlias, SkillId>>): ResolvedStack {
   // Collect all unique skill IDs from agent configs in this stack
-  const allSkillIds: string[] = [];
-  const seenSkillIds = new Set<string>();
+  const allSkillIds: SkillId[] = [];
+  const seenSkillIds = new Set<SkillId>();
 
-  // stack.agents is Record<string, StackAgentConfig> - iterate over agent IDs
-  for (const agentId of Object.keys(stack.agents)) {
+  for (const agentId of typedKeys<AgentName>(stack.agents)) {
     const agentConfig = stack.agents[agentId];
+    if (!agentConfig) continue;
 
     // Resolve this agent's technology selections to skill IDs
     const skillRefs = resolveAgentConfigToSkills(agentConfig, skillAliases);
@@ -208,7 +209,7 @@ function stackToResolvedStack(stack: Stack, skillAliases: Record<string, string>
     name: stack.name,
     description: stack.description,
     audience: [], // Not used in new format
-    skills: {}, // Skills come from stack agent configs, resolved at runtime
+    skills: {} as ResolvedStack["skills"], // Skills come from stack agent configs, resolved at runtime
     allSkillIds,
     philosophy: stack.philosophy || "",
   };
@@ -224,12 +225,12 @@ function mergeLocalSkillsIntoMatrix(
 
     // If overwriting an existing remote skill, inherit its category unconditionally.
     // Otherwise, use whatever the local skill declared in its metadata.yaml.
-    const category = (existingSkill?.category ?? metadata.category) as CategoryPath;
+    const category = existingSkill?.category ?? metadata.category;
     const alias = existingSkill?.alias ?? matrix.aliasesReverse[metadata.id];
 
     const resolvedSkill: ResolvedSkill = {
-      id: metadata.id as SkillId,
-      alias: alias as SkillAlias | undefined,
+      id: metadata.id,
+      alias,
       name: metadata.name,
       description: metadata.description,
       usageGuidance: metadata.usageGuidance,

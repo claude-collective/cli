@@ -2,6 +2,7 @@ import path from "path";
 import { Text, Box } from "ink";
 import React from "react";
 import { fileExists, readFile } from "../utils/fs";
+import { settingsFileSchema } from "./schemas";
 
 interface PermissionConfig {
   allow?: string[];
@@ -26,7 +27,9 @@ export async function checkPermissions(projectRoot: string): Promise<React.React
     if (await fileExists(filePath)) {
       try {
         const content = await readFile(filePath);
-        const parsed = JSON.parse(content) as SettingsFile;
+        const raw = JSON.parse(content);
+        const result = settingsFileSchema.safeParse(raw);
+        const parsed: SettingsFile = result.success ? (result.data as SettingsFile) : {};
         if (parsed.permissions) {
           permissions = parsed.permissions;
           break;

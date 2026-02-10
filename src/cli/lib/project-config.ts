@@ -1,4 +1,5 @@
 import path from "path";
+import { mapValues } from "remeda";
 import { parse as parseYaml } from "yaml";
 import { readFile, fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
@@ -9,9 +10,8 @@ import type {
   SkillEntry,
   AgentSkillConfig,
   ValidationResult,
-  CustomAgentConfig,
 } from "../../types";
-import type { AgentName } from "../types-matrix";
+import { projectConfigLoaderSchema } from "./schemas";
 
 const CONFIG_PATH = `${CLAUDE_SRC_DIR}/config.yaml`;
 const LEGACY_CONFIG_PATH = `${CLAUDE_DIR}/config.yaml`;
@@ -52,9 +52,18 @@ export async function loadProjectConfig(projectDir: string): Promise<LoadedProje
       return null;
     }
 
+    // Validate YAML-parsed data structure using Zod (lenient: allows partial configs)
+    const result = projectConfigLoaderSchema.safeParse(parsed);
+    if (!result.success) {
+      verbose(`Invalid project config at ${configPath}: ${result.error.message}`);
+      return null;
+    }
+
     verbose(`Loaded project config from ${configPath}`);
     return {
-      config: parsed as ProjectConfig,
+      // Loader schema validates field types but allows partial configs;
+      // required field validation happens in validateProjectConfig()
+      config: result.data as ProjectConfig,
       configPath,
       isLegacy: false,
     };
@@ -119,7 +128,7 @@ export function validateProjectConfig(config: unknown): ValidationResult {
       errors.push("agent_skills must be an object");
     } else {
       for (const [agentName, agentSkills] of Object.entries(c.agent_skills)) {
-        const agentSkillsError = validateAgentSkillConfig(agentName as AgentName, agentSkills);
+        const agentSkillsError = validateAgentSkillConfig(agentName, agentSkills);
         if (agentSkillsError) {
           errors.push(agentSkillsError);
         }
@@ -355,7 +364,7 @@ function validateSkillEntry(skill: unknown): string | null {
 /**
  * Validate agent skill config (can be simple list or categorized)
  */
-function validateAgentSkillConfig(agentName: AgentName, agentSkills: unknown): string | null {
+function validateAgentSkillConfig(agentName: string, agentSkills: unknown): string | null {
   // Check if it's a simple list (array)
   if (Array.isArray(agentSkills)) {
     for (const skill of agentSkills) {
@@ -410,22 +419,12 @@ export function normalizeSkillEntry(entry: SkillEntry): SkillAssignment {
 export function normalizeAgentSkills(
   agentSkills: Record<string, AgentSkillConfig>,
 ): Record<string, Record<string, SkillAssignment[]>> {
-  const result: Record<string, Record<string, SkillAssignment[]>> = {};
-
-  for (const [agentName, skills] of Object.entries(agentSkills)) {
+  return mapValues(agentSkills, (skills) => {
     if (isSimpleAgentSkills(skills)) {
       // Simple list -> put under "uncategorized"
-      result[agentName] = {
-        uncategorized: skills.map(normalizeSkillEntry),
-      };
-    } else {
-      // Already categorized -> normalize entries
-      result[agentName] = {};
-      for (const [category, categorySkills] of Object.entries(skills)) {
-        result[agentName][category] = categorySkills.map(normalizeSkillEntry);
-      }
+      return { uncategorized: skills.map(normalizeSkillEntry) };
     }
-  }
-
-  return result;
+    // Already categorized -> normalize entries
+    return mapValues(skills, (categorySkills) => categorySkills.map(normalizeSkillEntry));
+  });
 }

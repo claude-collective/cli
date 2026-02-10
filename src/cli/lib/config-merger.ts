@@ -1,3 +1,4 @@
+import { difference } from "remeda";
 import type { ProjectConfig } from "../../types";
 import { loadProjectConfig as loadFullProjectConfig } from "./project-config";
 import { loadProjectConfig } from "./config";
@@ -68,8 +69,7 @@ export async function mergeWithExistingConfig(
 
     // Merge agents arrays (union of existing + new)
     if (existingConfig.agents && existingConfig.agents.length > 0) {
-      const existingAgentIds = new Set(existingConfig.agents);
-      const newAgentIds = localConfig.agents.filter((a) => !existingAgentIds.has(a));
+      const newAgentIds = difference(localConfig.agents, existingConfig.agents);
       localConfig.agents = [...existingConfig.agents, ...newAgentIds];
     }
 

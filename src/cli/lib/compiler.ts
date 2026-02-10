@@ -1,5 +1,6 @@
 import { Liquid } from "liquidjs";
 import path from "path";
+import { pipe, flatMap, filter, uniqueBy } from "remeda";
 import {
   readFile,
   readFileOptional,
@@ -12,20 +13,20 @@ import {
   directoryExists,
 } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, DIRS, OUTPUT_DIR, PROJECT_ROOT } from "../consts";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, DIRS, PROJECT_ROOT } from "../consts";
 import { resolveClaudeMd } from "./resolver";
 import { validateCompiledAgent, printOutputValidationResult } from "./output-validator";
 import type {
-  Skill,
   AgentConfig,
   CompiledAgentData,
   CompileConfig,
   CompileContext,
 } from "../types";
 import type { AgentName } from "../types-matrix";
+import { typedEntries } from "../utils/typed-object";
 
 async function compileAgent(
-  name: string,
+  name: AgentName,
   agent: AgentConfig,
   projectRoot: string,
   engine: Liquid,
@@ -89,7 +90,7 @@ async function compileAgent(
 
 export async function compileAllAgents(
   resolvedAgents: Record<string, AgentConfig>,
-  config: CompileConfig,
+  _config: CompileConfig,
   ctx: CompileContext,
   engine: Liquid,
 ): Promise<void> {
@@ -98,7 +99,7 @@ export async function compileAllAgents(
 
   let hasValidationIssues = false;
 
-  for (const [name, agent] of Object.entries(resolvedAgents)) {
+  for (const [name, agent] of typedEntries<AgentName, AgentConfig>(resolvedAgents)) {
     try {
       const output = await compileAgent(name, agent, ctx.projectRoot, engine);
       await writeFile(path.join(outDir, `${name}.md`), output);
@@ -107,7 +108,7 @@ export async function compileAllAgents(
       const validationResult = validateCompiledAgent(output);
       if (!validationResult.valid || validationResult.warnings.length > 0) {
         hasValidationIssues = true;
-        printOutputValidationResult(name as AgentName, validationResult);
+        printOutputValidationResult(name, validationResult);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -127,11 +128,13 @@ export async function compileAllSkills(
   resolvedAgents: Record<string, AgentConfig>,
   ctx: CompileContext,
 ): Promise<void> {
-  const allSkills = Object.values(resolvedAgents)
-    .flatMap((a) => a.skills)
-    .filter((s) => s.path);
+  const allSkills = pipe(
+    Object.values(resolvedAgents),
+    flatMap((a) => a.skills),
+    filter((s) => Boolean(s.path)),
+  );
 
-  const uniqueSkills = [...new Map(allSkills.map((s) => [s.id, s])).values()];
+  const uniqueSkills = uniqueBy(allSkills, (s) => s.id);
 
   for (const skill of uniqueSkills) {
     const id = skill.id.replace("/", "-");

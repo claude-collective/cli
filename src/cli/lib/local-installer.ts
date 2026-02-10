@@ -12,6 +12,7 @@ import type {
   CompileAgentConfig,
   ProjectConfig,
   AgentDefinition,
+  AgentConfig,
 } from "../../types";
 import type { SourceLoadResult } from "./source-loader";
 import type { WizardResultV2 } from "../components/wizard/wizard";
@@ -27,6 +28,7 @@ import { compileAgentForPlugin } from "./stack-plugin-compiler";
 import { createLiquidEngine } from "./compiler";
 import { generateProjectConfigFromSkills, buildStackProperty } from "./config-generator";
 import { ensureDir, writeFile } from "../utils/fs";
+import { typedEntries } from "../utils/typed-object";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, LOCAL_SKILLS_PATH, PROJECT_ROOT } from "../consts";
 
 const PLUGIN_NAME = "claude-collective";
@@ -42,7 +44,7 @@ interface LocalResolvedSkill {
   id: SkillId;
   name: string;
   description: string;
-  canonicalId: string;
+  canonicalId: SkillId;
   path: string;
   content: string;
 }
@@ -66,7 +68,7 @@ export interface LocalInstallResult {
   /** Path where config was saved */
   configPath: string;
   /** Names of compiled agents */
-  compiledAgents: string[];
+  compiledAgents: AgentName[];
   /** Whether config was merged with existing */
   wasMerged: boolean;
   /** Path to the existing config that was merged with, if any */
@@ -129,10 +131,10 @@ async function buildLocalConfig(
         name: PLUGIN_NAME,
         installMode: wizardResult.installMode,
         description: loadedStack.description,
-        skills: wizardResult.selectedSkills.map((id) => id as SkillId),
+        skills: wizardResult.selectedSkills,
         agents: agentIds,
         philosophy: loadedStack.philosophy,
-        stack: stackProperty,
+        stack: stackProperty as ProjectConfig["stack"],
       };
     } else {
       // Stack not found in CLI's config/stacks.yaml
@@ -193,6 +195,7 @@ function buildCompileAgents(
       // Phase 7: Skills come from stack's technology mappings
       if (loadedStack) {
         const skillRefs = resolveAgentSkillsFromStack(
+          // Boundary cast: ProjectConfig.agents is string[]
           agentId as AgentName,
           loadedStack,
           skillAliases,
@@ -200,6 +203,7 @@ function buildCompileAgents(
         compileAgents[agentId] = { skills: skillRefs };
       } else if (config.agent_skills?.[agentId]) {
         // Resolve skills from agent_skills config
+        // Boundary cast: ProjectConfig.agents is string[]
         const skillRefs = resolveStackSkills(config, agentId as AgentName, localSkills);
         compileAgents[agentId] = { skills: skillRefs };
       } else {
@@ -223,7 +227,7 @@ async function compileAndWriteAgents(
   skillAliases: Record<string, string>,
   projectDir: string,
   agentsDir: string,
-): Promise<string[]> {
+): Promise<AgentName[]> {
   const engine = await createLiquidEngine(projectDir);
   const resolvedAgents = await resolveAgents(
     agents,
@@ -234,8 +238,8 @@ async function compileAndWriteAgents(
     skillAliases,
   );
 
-  const compiledAgentNames: string[] = [];
-  for (const [name, agent] of Object.entries(resolvedAgents)) {
+  const compiledAgentNames: AgentName[] = [];
+  for (const [name, agent] of typedEntries<AgentName, AgentConfig>(resolvedAgents)) {
     const output = await compileAgentForPlugin(name, agent, sourceResult.sourcePath, engine);
     await writeFile(path.join(agentsDir, `${name}.md`), output);
     compiledAgentNames.push(name);

@@ -23,17 +23,19 @@ import { loadSkillsMatrix } from "./matrix-loader";
 import { SKILLS_MATRIX_PATH } from "../consts";
 import { resolveAgents, stackToCompileConfig } from "./resolver";
 import type { Stack } from "../types-stacks";
-import { hashString, getCurrentDate } from "./versioning";
+import { hashString } from "./versioning";
 import type {
   PluginManifest,
   ProjectConfig,
   AgentConfig,
   CompileConfig,
-  Skill,
   CompiledAgentData,
   AgentHookDefinition,
 } from "../../types";
-import type { SkillId } from "../types-matrix";
+import type { AgentName, SkillId } from "../types-matrix";
+import { pluginManifestSchema } from "./schemas";
+import { unique } from "remeda";
+import { typedEntries, typedKeys } from "../utils/typed-object";
 
 const CONTENT_HASH_FILE = ".content-hash";
 
@@ -58,7 +60,7 @@ async function readExistingManifest(
 
   try {
     const content = await readFile(manifestPath);
-    const manifest = JSON.parse(content) as PluginManifest;
+    const manifest = pluginManifestSchema.parse(JSON.parse(content));
 
     const hashFilePath = manifestPath.replace("plugin.json", CONTENT_HASH_FILE);
     let contentHash: string | undefined;
@@ -129,13 +131,13 @@ export interface CompiledStackPlugin {
   pluginPath: string;
   manifest: PluginManifest;
   stackName: string;
-  agents: string[];
-  skillPlugins: string[];
+  agents: AgentName[];
+  skillPlugins: SkillId[];
   hasHooks: boolean;
 }
 
 export async function compileAgentForPlugin(
-  name: string,
+  name: AgentName,
   agent: AgentConfig,
   fallbackRoot: string,
   engine: Liquid,
@@ -201,8 +203,8 @@ export async function compileAgentForPlugin(
 function generateStackReadme(
   stackId: string,
   stack: ProjectConfig,
-  agents: string[],
-  skillPlugins: string[],
+  agents: AgentName[],
+  skillPlugins: SkillId[],
 ): string {
   const lines: string[] = [];
 
@@ -243,7 +245,7 @@ function generateStackReadme(
     lines.push("");
     lines.push("This stack includes the following skills:");
     lines.push("");
-    const uniqueSkills = [...new Set(skillPlugins)].sort();
+    const uniqueSkills = unique(skillPlugins).sort();
     for (const skill of uniqueSkills) {
       lines.push(`- \`${skill}\``);
     }
@@ -321,9 +323,10 @@ export async function compileStackPlugin(
     verbose(`  Found stack: ${newStack.name}`);
 
     // Extract skills from stack's agent configurations (Phase 7: skills in stacks, not agents)
-    const agentSkillIds = new Set<string>();
-    for (const agentName of Object.keys(newStack.agents)) {
+    const agentSkillIds = new Set<SkillId>();
+    for (const agentName of typedKeys<AgentName>(newStack.agents)) {
       const agentConfig = newStack.agents[agentName];
+      if (!agentConfig) continue;
       const skillRefs = resolveAgentConfigToSkills(agentConfig, skillAliases);
       for (const ref of skillRefs) {
         agentSkillIds.add(ref.id);
@@ -334,7 +337,7 @@ export async function compileStackPlugin(
     stack = {
       name: newStack.name,
       description: newStack.description,
-      skills: Array.from(agentSkillIds).map((id) => ({ id: id as SkillId })),
+      skills: Array.from(agentSkillIds).map((id) => ({ id })),
       agents: Object.keys(newStack.agents),
       philosophy: newStack.philosophy,
     };
@@ -390,10 +393,10 @@ export async function compileStackPlugin(
 
   const engine = await createLiquidEngine();
 
-  const compiledAgentNames: string[] = [];
-  const allSkillPlugins: string[] = [];
+  const compiledAgentNames: AgentName[] = [];
+  const allSkillPlugins: SkillId[] = [];
 
-  for (const [name, agent] of Object.entries(resolvedAgents)) {
+  for (const [name, agent] of typedEntries<AgentName, AgentConfig>(resolvedAgents)) {
     const output = await compileAgentForPlugin(name, agent, PROJECT_ROOT, engine);
     await writeFile(path.join(agentsDir, `${name}.md`), output);
     compiledAgentNames.push(name);
@@ -424,7 +427,7 @@ export async function compileStackPlugin(
 
   const { version, contentHash } = await determineStackVersion(stack, pluginDir);
 
-  const uniqueSkillPlugins = [...new Set(allSkillPlugins)];
+  const uniqueSkillPlugins = unique(allSkillPlugins);
   const manifest = generateStackPluginManifest({
     stackName: stackId,
     description: stack.description,

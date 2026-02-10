@@ -1,5 +1,5 @@
 import { warn } from "../utils/logger";
-import type { MergedSkillsMatrix } from "../types-matrix";
+import type { MergedSkillsMatrix, Subcategory } from "../types-matrix";
 
 export interface MatrixHealthIssue {
   severity: "warning" | "error";
@@ -45,6 +45,7 @@ function checkRelationshipTargets(
   issues: MatrixHealthIssue[],
 ): void {
   for (const [skillId, skill] of Object.entries(matrix.skills)) {
+    if (!skill) continue;
     for (const conflict of skill.conflictsWith) {
       if (!skillIds.has(conflict.skillId)) {
         issues.push({
@@ -125,6 +126,7 @@ function checkRelationshipTargets(
  */
 function checkSubcategoryDomains(matrix: MergedSkillsMatrix, issues: MatrixHealthIssue[]): void {
   for (const [catId, cat] of Object.entries(matrix.categories)) {
+    if (!cat) continue;
     if (!cat.domain) {
       issues.push({
         severity: "warning",
@@ -140,7 +142,9 @@ function checkSubcategoryDomains(matrix: MergedSkillsMatrix, issues: MatrixHealt
  */
 function checkSkillCategories(matrix: MergedSkillsMatrix, issues: MatrixHealthIssue[]): void {
   for (const [skillId, skill] of Object.entries(matrix.skills)) {
-    if (!matrix.categories[skill.category]) {
+    if (!skill) continue;
+    // Narrowing cast: skill.category is CategoryPath which includes Subcategory | "local" | prefixed forms
+    if (!matrix.categories[skill.category as Subcategory]) {
       issues.push({
         severity: "warning",
         finding: "skill-unknown-category",
@@ -159,6 +163,7 @@ function checkCompatibleWithTargets(
   issues: MatrixHealthIssue[],
 ): void {
   for (const [skillId, skill] of Object.entries(matrix.skills)) {
+    if (!skill) continue;
     for (const compatId of skill.compatibleWith) {
       if (!skillIds.has(compatId)) {
         issues.push({

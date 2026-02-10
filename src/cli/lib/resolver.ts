@@ -15,7 +15,7 @@ import type {
   SkillReference,
 } from "../types";
 import type { Stack, StackAgentConfig } from "../types-stacks";
-import type { AgentName, SkillId } from "../types-matrix";
+import type { AgentName, SkillAlias, SkillId } from "../types-matrix";
 
 export async function resolveTemplate(
   projectRoot: string,
@@ -71,7 +71,7 @@ export function resolveSkillReferences(
     .filter((skill): skill is Skill => skill !== null);
 }
 
-function getStackSkillIds(stackSkills: SkillAssignment[]): string[] {
+function getStackSkillIds(stackSkills: SkillAssignment[]): SkillId[] {
   return stackSkills.map((s) => s.id);
 }
 
@@ -93,9 +93,9 @@ function normalizeSkillEntry(entry: SkillEntry): SkillAssignment {
 }
 
 function expandSkillIdIfDirectory(
-  skillId: string,
+  skillId: SkillId,
   skills: Record<string, SkillDefinition>,
-): string[] {
+): SkillId[] {
   if (skills[skillId]) {
     return [skillId];
   }
@@ -103,14 +103,15 @@ function expandSkillIdIfDirectory(
   // Use path as unique key to deduplicate (both frontmatter name and directory path map to same skill)
   const allSkillIds = Object.keys(skills);
   const seenPaths = new Set<string>();
-  const matchingSkills: string[] = [];
+  const matchingSkills: SkillId[] = [];
 
   for (const id of allSkillIds) {
     const skillDef = skills[id];
     if (skillDef.path.startsWith(`src/skills/${skillId}/`)) {
       if (!seenPaths.has(skillDef.path)) {
         seenPaths.add(skillDef.path);
-        matchingSkills.push(id);
+        // Boundary cast: Object.keys(skills) returns string[] but skills is Record<string, SkillDefinition>
+        matchingSkills.push(id as SkillId);
       }
     }
   }
@@ -162,7 +163,7 @@ const KEY_SUBCATEGORIES = new Set([
 export function resolveAgentSkillsFromStack(
   agentName: AgentName,
   stack: Stack,
-  skillAliases: Record<string, string>,
+  skillAliases: Partial<Record<SkillAlias, SkillId>>,
 ): SkillReference[] {
   const agentConfig = stack.agents[agentName];
 
@@ -181,7 +182,8 @@ export function resolveAgentSkillsFromStack(
   const skillRefs: SkillReference[] = [];
 
   for (const [subcategory, technologyAlias] of Object.entries(agentConfig)) {
-    const fullSkillId = skillAliases[technologyAlias];
+    // Boundary cast: Object.entries() loses Partial<Record<Subcategory, SkillAlias>> value type
+    const fullSkillId = skillAliases[technologyAlias as SkillAlias];
 
     if (!fullSkillId) {
       verbose(
@@ -193,7 +195,7 @@ export function resolveAgentSkillsFromStack(
     const isKeySkill = KEY_SUBCATEGORIES.has(subcategory);
 
     skillRefs.push({
-      id: fullSkillId as SkillId,
+      id: fullSkillId,
       usage: `when working with ${subcategory}`,
       preloaded: isKeySkill,
     });
@@ -231,7 +233,7 @@ export function resolveStackSkills(
     assignments = normalizedSkills;
   }
 
-  const validSkillIds = new Set<string>();
+  const validSkillIds = new Set<SkillId>();
   for (const s of normalizedSkills) {
     const expandedIds = expandSkillIdIfDirectory(s.id, skills);
     for (const id of expandedIds) {
@@ -239,7 +241,7 @@ export function resolveStackSkills(
     }
   }
 
-  const addedSkills = new Set<string>();
+  const addedSkills = new Set<SkillId>();
 
   for (const assignment of assignments) {
     const skillId = assignment.id;
@@ -264,7 +266,7 @@ export function resolveStackSkills(
 
       const skillDef = skills[expandedId];
       skillRefs.push({
-        id: expandedId as SkillId,
+        id: expandedId,
         usage: `when working with ${skillDef.name.toLowerCase()}`,
         preloaded: assignment.preloaded ?? false,
       });
@@ -294,7 +296,7 @@ export interface GetAgentSkillsOptions {
   /** Stack definition (Phase 7) */
   stack?: Stack;
   /** Skill aliases mapping (Phase 7) */
-  skillAliases?: Record<string, string>;
+  skillAliases?: Partial<Record<SkillAlias, SkillId>>;
 }
 
 /**
@@ -314,7 +316,7 @@ export async function getAgentSkills(
   _skills: Record<string, SkillDefinition>,
   _projectRoot: string,
   stack?: Stack,
-  skillAliases?: Record<string, string>,
+  skillAliases?: Partial<Record<SkillAlias, SkillId>>,
 ): Promise<SkillReference[]> {
   // Priority 1: Explicit skills in compile config
   if (agentConfig.skills && agentConfig.skills.length > 0) {
@@ -349,7 +351,7 @@ export interface ResolveAgentsOptions {
   /** Stack definition (Phase 7) - optional */
   stack?: Stack;
   /** Skill aliases mapping (Phase 7) - optional */
-  skillAliases?: Record<string, string>;
+  skillAliases?: Partial<Record<SkillAlias, SkillId>>;
 }
 
 export async function resolveAgents(
@@ -358,7 +360,7 @@ export async function resolveAgents(
   compileConfig: CompileConfig,
   projectRoot: string,
   stack?: Stack,
-  skillAliases?: Record<string, string>,
+  skillAliases?: Partial<Record<SkillAlias, SkillId>>,
 ): Promise<Record<string, AgentConfig>> {
   const resolved: Record<string, AgentConfig> = {};
   const agentNames = Object.keys(compileConfig.agents);
@@ -379,6 +381,7 @@ export async function resolveAgents(
     const agentConfig = compileConfig.agents[agentName];
 
     const skillRefs = await getAgentSkills(
+      // Boundary cast: Object.keys(compileConfig.agents) returns string[]
       agentName as AgentName,
       agentConfig,
       compileConfig,

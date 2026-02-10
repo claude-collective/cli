@@ -1,10 +1,12 @@
 import { parse as parseYaml } from "yaml";
 import path from "path";
+import { mapValues } from "remeda";
 import { readFile, fileExists } from "../utils/fs";
 import { verbose, warn } from "../utils/logger";
 import type { Stack, StacksConfig, StackAgentConfig } from "../types-stacks";
 import type { SkillReference } from "../types";
 import type { SkillId } from "../types-matrix";
+import { stacksConfigSchema } from "./schemas";
 
 const STACKS_FILE = "config/stacks.yaml";
 
@@ -28,12 +30,15 @@ export async function loadStacks(configDir: string): Promise<Stack[]> {
 
   try {
     const content = await readFile(stacksPath);
-    const config = parseYaml(content) as StacksConfig;
+    const result = stacksConfigSchema.safeParse(parseYaml(content));
 
-    if (!config.stacks || !Array.isArray(config.stacks)) {
-      verbose(`Invalid stacks.yaml format: missing stacks array`);
-      return [];
+    if (!result.success) {
+      throw new Error(
+        `Invalid stacks.yaml at ${stacksPath}: ${result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
+      );
     }
+
+    const config = result.data;
 
     stacksCache.set(cacheKey, config.stacks);
     verbose(`Loaded ${config.stacks.length} stacks from ${stacksPath}`);
@@ -85,7 +90,7 @@ const KEY_SUBCATEGORIES = new Set([
  */
 export function resolveAgentConfigToSkills(
   agentConfig: StackAgentConfig,
-  skillAliases: Record<string, string>,
+  skillAliases: Partial<Record<string, SkillId>>,
 ): SkillReference[] {
   const skillRefs: SkillReference[] = [];
 
@@ -102,7 +107,7 @@ export function resolveAgentConfigToSkills(
     const isKeySkill = KEY_SUBCATEGORIES.has(subcategory);
 
     skillRefs.push({
-      id: fullSkillId as SkillId,
+      id: fullSkillId,
       usage: `when working with ${subcategory}`,
       preloaded: isKeySkill,
     });
@@ -146,19 +151,11 @@ export function resolveAgentConfigToSkills(
  */
 export function resolveStackSkillsFromAliases(
   stack: Stack,
-  skillAliases: Record<string, string>,
+  skillAliases: Partial<Record<string, SkillId>>,
 ): Record<string, SkillReference[]> {
-  const result: Record<string, SkillReference[]> = {};
-
-  for (const [agentId, agentConfig] of Object.entries(stack.agents)) {
-    // Empty config {} means agent has no technology-specific skills
-    if (Object.keys(agentConfig).length === 0) {
-      result[agentId] = [];
-      continue;
-    }
-
-    result[agentId] = resolveAgentConfigToSkills(agentConfig, skillAliases);
-  }
+  const result = mapValues(stack.agents, (agentConfig) =>
+    resolveAgentConfigToSkills(agentConfig, skillAliases),
+  );
 
   verbose(`Resolved skills for ${Object.keys(result).length} agents in stack '${stack.id}'`);
 

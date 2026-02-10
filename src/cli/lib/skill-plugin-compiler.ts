@@ -11,6 +11,7 @@ import { parseFrontmatter } from "./loader";
 import { hashSkillFolder } from "./versioning";
 import { DEFAULT_VERSION } from "../consts";
 import type { PluginManifest, SkillFrontmatter, SkillMetadataConfig } from "../../types";
+import { skillMetadataConfigSchema, pluginManifestSchema } from "./schemas";
 
 export interface SkillPluginOptions {
   skillPath: string;
@@ -55,7 +56,7 @@ async function readExistingManifest(
 
   try {
     const content = await readFile(manifestPath);
-    const manifest = JSON.parse(content) as PluginManifest;
+    const manifest = pluginManifestSchema.parse(JSON.parse(content));
 
     const hashFilePath = manifestPath.replace("plugin.json", CONTENT_HASH_FILE);
     let contentHash: string | undefined;
@@ -114,7 +115,8 @@ async function readSkillMetadata(skillPath: string): Promise<SkillMetadataConfig
       ? lines.slice(1).join("\n")
       : content;
 
-    return parseYaml(yamlContent) as SkillMetadataConfig;
+    const result = skillMetadataConfigSchema.safeParse(parseYaml(yamlContent));
+    return result.success ? result.data : null;
   } catch {
     return null;
   }

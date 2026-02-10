@@ -1,6 +1,7 @@
 import type { ProjectConfig, SkillEntry, AgentSkillConfig } from "../../types";
-import type { AgentName, MergedSkillsMatrix, SkillId } from "../types-matrix";
+import type { AgentName, MergedSkillsMatrix, ResolvedSubcategorySkills, SkillAlias, SkillId, Subcategory } from "../types-matrix";
 import type { Stack, StackAgentConfig } from "../types-stacks";
+import { typedEntries } from "../utils/typed-object";
 import { getAgentsForSkill, shouldPreloadSkill } from "./skill-agent-mappings";
 
 /**
@@ -29,11 +30,11 @@ export interface ProjectConfigOptions {
  */
 export function generateProjectConfigFromSkills(
   name: string,
-  selectedSkillIds: string[],
+  selectedSkillIds: SkillId[],
   matrix: MergedSkillsMatrix,
   options?: ProjectConfigOptions,
 ): ProjectConfig {
-  const neededAgents = new Set<string>();
+  const neededAgents = new Set<AgentName>();
 
   // Derive agents from skills
   for (const skillId of selectedSkillIds) {
@@ -47,23 +48,23 @@ export function generateProjectConfigFromSkills(
     const agents = getAgentsForSkill(skillPath, category);
 
     for (const agentId of agents) {
-      neededAgents.add(agentId);
+      // Boundary cast: getAgentsForSkill() returns string[] from YAML-loaded mappings
+      neededAgents.add(agentId as AgentName);
     }
   }
 
   // Build minimal skills array (selectedSkillIds are data boundary from wizard)
   const skills: SkillEntry[] = selectedSkillIds.map((id) => {
-    const skillId = id as SkillId;
     const skill = matrix.skills[id];
     if (skill?.local && skill?.localPath) {
       return {
-        id: skillId,
+        id,
         local: true as const,
         path: skill.localPath,
       };
     }
     // For remote skills, just use string ID (minimal format)
-    return skillId;
+    return id;
   });
 
   // Build minimal config
@@ -106,11 +107,11 @@ export function generateProjectConfigFromSkills(
  * Uses simple list format for each agent (not categorized).
  */
 function buildAgentSkills(
-  selectedSkillIds: string[],
+  selectedSkillIds: SkillId[],
   matrix: MergedSkillsMatrix,
-  neededAgents: Set<string>,
-): Record<string, AgentSkillConfig> {
-  const agentSkills: Record<string, SkillEntry[]> = {};
+  neededAgents: Set<AgentName>,
+): Partial<Record<AgentName, AgentSkillConfig>> {
+  const agentSkills: Partial<Record<AgentName, SkillEntry[]>> = {};
 
   for (const skillId of selectedSkillIds) {
     const skill = matrix.skills[skillId];
@@ -123,25 +124,25 @@ function buildAgentSkills(
     const agents = getAgentsForSkill(skillPath, category);
 
     for (const agentId of agents) {
-      if (!neededAgents.has(agentId)) continue;
+      // Boundary cast: getAgentsForSkill() returns string[] from YAML-loaded mappings
+      const typedAgentId = agentId as AgentName;
+      if (!neededAgents.has(typedAgentId)) continue;
 
-      if (!agentSkills[agentId]) {
-        agentSkills[agentId] = [];
+      if (!agentSkills[typedAgentId]) {
+        agentSkills[typedAgentId] = [];
       }
-
-      const typedSkillId = skillId as SkillId;
       const isPreloaded = shouldPreloadSkill(
         skillPath,
-        typedSkillId,
+        skillId,
         category,
-        agentId as AgentName,
+        typedAgentId,
       );
 
       // Use minimal format: string for non-preloaded, object only if preloaded
       if (isPreloaded) {
-        agentSkills[agentId].push({ id: typedSkillId, preloaded: true });
+        agentSkills[typedAgentId]!.push({ id: skillId, preloaded: true });
       } else {
-        agentSkills[agentId].push(typedSkillId);
+        agentSkills[typedAgentId]!.push(skillId);
       }
     }
   }
@@ -170,26 +171,27 @@ function buildAgentSkills(
  */
 export function buildStackProperty(
   stack: Stack,
-  skillAliases: Record<string, string>,
-): Record<string, Record<string, string>> {
-  const result: Record<string, Record<string, string>> = {};
+  skillAliases: Partial<Record<SkillAlias, SkillId>>,
+): Partial<Record<AgentName, ResolvedSubcategorySkills>> {
+  const result: Partial<Record<AgentName, ResolvedSubcategorySkills>> = {};
 
-  for (const [agentId, agentConfig] of Object.entries(stack.agents)) {
+  for (const [agentId, agentConfig] of typedEntries<AgentName, StackAgentConfig>(stack.agents)) {
     // Skip agents with empty config
     if (!agentConfig || Object.keys(agentConfig).length === 0) {
       continue;
     }
 
-    const resolvedMappings: Record<string, string> = {};
+    const resolvedMappings: ResolvedSubcategorySkills = {};
 
-    for (const [subcategoryId, alias] of Object.entries(agentConfig as StackAgentConfig)) {
+    for (const [subcategoryId, alias] of typedEntries<Subcategory, SkillAlias>(agentConfig)) {
+      if (!alias) continue;
       // Resolve alias to full skill ID using skill_aliases from matrix
       const skillId = skillAliases[alias];
       if (skillId) {
         resolvedMappings[subcategoryId] = skillId;
       } else {
-        // If alias not found, use the alias as-is (might be a full skill ID already)
-        resolvedMappings[subcategoryId] = alias;
+        // Boundary cast: alias not found in skill_aliases, assumed to be a full skill ID already
+        resolvedMappings[subcategoryId] = alias as unknown as SkillId;
       }
     }
 

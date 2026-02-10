@@ -3,6 +3,7 @@ import { fileURLToPath } from "url";
 import { parse as parseYaml } from "yaml";
 import { readFile, fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
+import { defaultMappingsSchema } from "./schemas";
 
 /**
  * Default mappings loaded from agent-mappings.yaml
@@ -51,14 +52,15 @@ export async function loadDefaultMappings(): Promise<DefaultMappings | null> {
   try {
     const content = await readFile(defaultsPath);
     const parsed = parseYaml(content);
+    const result = defaultMappingsSchema.safeParse(parsed);
 
-    if (!isValidDefaultMappings(parsed)) {
-      verbose(`Invalid default mappings structure at ${defaultsPath}`);
+    if (!result.success) {
+      verbose(`Invalid default mappings structure at ${defaultsPath}: ${result.error.message}`);
       return null;
     }
 
     verbose(`Loaded default mappings from ${defaultsPath}`);
-    cachedDefaults = parsed;
+    cachedDefaults = result.data;
     return cachedDefaults;
   } catch (error) {
     verbose(`Failed to parse default mappings: ${error}`);
@@ -84,46 +86,3 @@ export function clearDefaultsCache(): void {
   cachedDefaults = null;
 }
 
-/**
- * Type guard to validate default mappings structure.
- */
-function isValidDefaultMappings(obj: unknown): obj is DefaultMappings {
-  if (typeof obj !== "object" || obj === null) return false;
-
-  const mappings = obj as Record<string, unknown>;
-
-  // Validate skill_to_agents
-  if (typeof mappings.skill_to_agents !== "object" || mappings.skill_to_agents === null) {
-    return false;
-  }
-
-  for (const [, agents] of Object.entries(mappings.skill_to_agents)) {
-    if (!Array.isArray(agents)) return false;
-    for (const agent of agents) {
-      if (typeof agent !== "string") return false;
-    }
-  }
-
-  // Validate preloaded_skills
-  if (typeof mappings.preloaded_skills !== "object" || mappings.preloaded_skills === null) {
-    return false;
-  }
-
-  for (const [, patterns] of Object.entries(mappings.preloaded_skills)) {
-    if (!Array.isArray(patterns)) return false;
-    for (const pattern of patterns) {
-      if (typeof pattern !== "string") return false;
-    }
-  }
-
-  // Validate subcategory_aliases
-  if (typeof mappings.subcategory_aliases !== "object" || mappings.subcategory_aliases === null) {
-    return false;
-  }
-
-  for (const [, aliasPath] of Object.entries(mappings.subcategory_aliases)) {
-    if (typeof aliasPath !== "string") return false;
-  }
-
-  return true;
-}

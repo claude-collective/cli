@@ -3,6 +3,7 @@ import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { readFile, writeFile, fileExists, ensureDir } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../consts";
+import { projectSourceConfigSchema } from "./schemas";
 
 export const DEFAULT_SOURCE = "github:claude-collective/skills";
 export const SOURCE_ENV_VAR = "CC_SOURCE";
@@ -38,30 +39,6 @@ export interface ResolvedConfig {
   marketplace?: string;
 }
 
-function isValidSourceEntry(entry: unknown): entry is SourceEntry {
-  if (typeof entry !== "object" || entry === null) return false;
-  const e = entry as Record<string, unknown>;
-  if (typeof e.name !== "string" || typeof e.url !== "string") return false;
-  if (e.description !== undefined && typeof e.description !== "string") return false;
-  if (e.ref !== undefined && typeof e.ref !== "string") return false;
-  return true;
-}
-
-function isValidSourcesArray(arr: unknown): arr is SourceEntry[] {
-  if (!Array.isArray(arr)) return false;
-  return arr.every(isValidSourceEntry);
-}
-
-function isValidProjectConfig(obj: unknown): obj is ProjectSourceConfig {
-  if (typeof obj !== "object" || obj === null) return false;
-  const config = obj as Record<string, unknown>;
-  if (config.source !== undefined && typeof config.source !== "string") return false;
-  if (config.author !== undefined && typeof config.author !== "string") return false;
-  if (config.marketplace !== undefined && typeof config.marketplace !== "string") return false;
-  if (config.agents_source !== undefined && typeof config.agents_source !== "string") return false;
-  if (config.sources !== undefined && !isValidSourcesArray(config.sources)) return false;
-  return true;
-}
 
 export function getProjectConfigPath(projectDir: string): string {
   return path.join(projectDir, CLAUDE_SRC_DIR, PROJECT_CONFIG_FILE);
@@ -87,12 +64,13 @@ export async function loadProjectConfig(projectDir: string): Promise<ProjectSour
   try {
     const content = await readFile(configPath);
     const parsed = parseYaml(content);
-    if (!isValidProjectConfig(parsed)) {
-      verbose(`Invalid project config structure at ${configPath}`);
+    const result = projectSourceConfigSchema.safeParse(parsed);
+    if (!result.success) {
+      verbose(`Invalid project config structure at ${configPath}: ${result.error.message}`);
       return null;
     }
     verbose(`Loaded project config from ${configPath}`);
-    return parsed;
+    return result.data as ProjectSourceConfig;
   } catch (error) {
     verbose(`Failed to parse project config: ${error}`);
     return null;

@@ -1,7 +1,7 @@
 import path from "path";
 import { readFile, writeFile } from "../utils/fs";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE, DEFAULT_VERSION } from "../consts";
-import type { PluginManifest } from "../../types";
+import { pluginManifestSchema } from "./schemas";
 
 export type VersionBumpType = "major" | "minor" | "patch";
 
@@ -13,7 +13,7 @@ function parseVersion(version: string): [number, number, number] {
 export async function bumpPluginVersion(pluginDir: string, type: VersionBumpType): Promise<string> {
   const manifestPath = path.join(pluginDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
   const content = await readFile(manifestPath);
-  const manifest = JSON.parse(content) as PluginManifest;
+  const manifest = pluginManifestSchema.parse(JSON.parse(content));
 
   const [major, minor, patch] = parseVersion(manifest.version || DEFAULT_VERSION);
 
@@ -39,6 +39,6 @@ export async function bumpPluginVersion(pluginDir: string, type: VersionBumpType
 export async function getPluginVersion(pluginDir: string): Promise<string> {
   const manifestPath = path.join(pluginDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
   const content = await readFile(manifestPath);
-  const manifest = JSON.parse(content) as PluginManifest;
+  const manifest = pluginManifestSchema.parse(JSON.parse(content));
   return manifest.version || DEFAULT_VERSION;
 }

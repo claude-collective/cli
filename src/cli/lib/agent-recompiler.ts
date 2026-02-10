@@ -9,6 +9,7 @@ import { createLiquidEngine } from "./compiler";
 import { loadProjectConfig, type LoadedProjectConfig } from "./project-config";
 import { resolveCustomAgents, validateCustomAgentIds } from "./custom-agent-resolver";
 import { parse as parseYaml } from "yaml";
+import { projectConfigLoaderSchema } from "./schemas";
 import type {
   CompileConfig,
   CompileAgentConfig,
@@ -17,7 +18,8 @@ import type {
   ProjectConfig,
   AgentDefinition,
 } from "../../types";
-import type { AgentName, SkillId } from "../types-matrix";
+import type { AgentName } from "../types-matrix";
+import { typedKeys } from "../utils/typed-object";
 
 export interface RecompileAgentsOptions {
   pluginDir: string;
@@ -29,15 +31,16 @@ export interface RecompileAgentsOptions {
 }
 
 export interface RecompileAgentsResult {
-  compiled: string[];
-  failed: string[];
+  compiled: AgentName[];
+  failed: AgentName[];
   warnings: string[];
 }
 
-async function getExistingAgentNames(pluginDir: string): Promise<string[]> {
+async function getExistingAgentNames(pluginDir: string): Promise<AgentName[]> {
   const agentsDir = getPluginAgentsDir(pluginDir);
   const files = await glob("*.md", agentsDir);
-  return files.map((f) => path.basename(f, ".md"));
+  // Boundary cast: directory names from filesystem are agent names by convention
+  return files.map((f) => path.basename(f, ".md") as AgentName);
 }
 
 /**
@@ -54,14 +57,19 @@ async function loadConfigWithFallback(pluginDir: string): Promise<LoadedProjectC
     try {
       const content = await readFile(legacyConfigPath);
       const parsed = parseYaml(content);
+      const result = projectConfigLoaderSchema.safeParse(parsed);
 
-      if (parsed && typeof parsed === "object") {
+      if (result.success) {
         verbose(`Loaded config.yaml from ${legacyConfigPath}`);
         return {
-          config: parsed as ProjectConfig,
+          // Loader schema validates field types but allows partial configs;
+          // required field validation happens in validateProjectConfig()
+          config: result.data as ProjectConfig,
           configPath: legacyConfigPath,
           isLegacy: false,
         };
+      } else {
+        verbose(`Invalid config.yaml at ${legacyConfigPath}: ${result.error.message}`);
       }
     } catch (error) {
       verbose(`Failed to parse config.yaml: ${error}`);
@@ -132,14 +140,16 @@ export async function recompileAgents(
     }
   }
 
-  let agentNames: string[];
+  let agentNames: AgentName[];
   if (specifiedAgents) {
-    agentNames = specifiedAgents;
+    // Boundary cast: user-specified agent names from CLI options
+    agentNames = specifiedAgents as AgentName[];
   } else if (projectConfig?.agents) {
-    agentNames = projectConfig.agents;
+    // Boundary cast: agent names from config.yaml
+    agentNames = projectConfig.agents as AgentName[];
     verbose(`Using agents from config.yaml: ${agentNames.join(", ")}`);
   } else if (outputDir) {
-    agentNames = Object.keys(allAgents);
+    agentNames = typedKeys<AgentName>(allAgents);
     verbose(`Using all available agents from source: ${agentNames.join(", ")}`);
   } else {
     agentNames = await getExistingAgentNames(pluginDir);
@@ -169,7 +179,7 @@ export async function recompileAgents(
         compileAgents[agentName] = { skills: skillRefs };
         verbose(`  Agent ${agentName}: ${skillRefs.length} skills from custom_agents`);
       } else if (projectConfig?.agent_skills?.[agentName]) {
-        const skillRefs = resolveStackSkills(projectConfig, agentName as AgentName, pluginSkills);
+        const skillRefs = resolveStackSkills(projectConfig, agentName, pluginSkills);
         compileAgents[agentName] = { skills: skillRefs };
         verbose(`  Agent ${agentName}: ${skillRefs.length} skills from config`);
       } else if (projectConfig?.skills) {
@@ -208,15 +218,17 @@ export async function recompileAgents(
   await ensureDir(agentsDir);
 
   for (const [name, agent] of Object.entries(resolvedAgents)) {
+    // Boundary cast: Object.entries keys are string, resolved agents keyed by AgentName
+    const agentName = name as AgentName;
     try {
-      const output = await compileAgentForPlugin(name, agent, sourcePath, engine);
-      await writeFile(path.join(agentsDir, `${name}.md`), output);
-      result.compiled.push(name);
-      verbose(`  Recompiled: ${name}`);
+      const output = await compileAgentForPlugin(agentName, agent, sourcePath, engine);
+      await writeFile(path.join(agentsDir, `${agentName}.md`), output);
+      result.compiled.push(agentName);
+      verbose(`  Recompiled: ${agentName}`);
     } catch (error) {
-      result.failed.push(name);
+      result.failed.push(agentName);
       result.warnings.push(
-        `Failed to compile ${name}: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to compile ${agentName}: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }

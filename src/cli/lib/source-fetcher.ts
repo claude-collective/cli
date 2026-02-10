@@ -4,7 +4,8 @@ import { verbose } from "../utils/logger";
 import { CACHE_DIR } from "../consts";
 import { ensureDir, directoryExists, readFile } from "../utils/fs";
 import { isLocalSource } from "./config";
-import type { Marketplace, MarketplaceFetchResult } from "../../types";
+import { marketplaceSchema } from "./schemas";
+import type { MarketplaceFetchResult } from "../../types";
 
 export interface FetchOptions {
   forceRefresh?: boolean;
@@ -165,7 +166,17 @@ export async function fetchMarketplace(
   }
 
   const content = await readFile(marketplacePath);
-  const marketplace = JSON.parse(content) as Marketplace;
+  const parsed = JSON.parse(content);
+  const validation = marketplaceSchema.safeParse(parsed);
+
+  if (!validation.success) {
+    throw new Error(
+      `Invalid marketplace.json at: ${marketplacePath}\n\n` +
+        `Validation errors: ${validation.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
+    );
+  }
+
+  const marketplace = validation.data;
 
   verbose(`Loaded marketplace: ${marketplace.name} v${marketplace.version}`);
 

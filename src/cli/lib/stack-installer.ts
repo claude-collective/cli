@@ -5,6 +5,7 @@ import { claudePluginInstall, isClaudeCLIAvailable } from "../utils/exec";
 import { remove, ensureDir } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import type { CompiledStackPlugin } from "./stack-plugin-compiler";
+import type { AgentName, SkillId } from "../types-matrix";
 
 export interface StackInstallOptions {
   stackId: string;
@@ -17,8 +18,8 @@ export interface StackInstallOptions {
 export interface StackInstallResult {
   pluginName: string;
   stackName: string;
-  agents: string[];
-  skills: string[];
+  agents: AgentName[];
+  skills: SkillId[];
   pluginPath: string;
   fromMarketplace: boolean;
 }

@@ -1,10 +1,12 @@
 import { parse as parseYaml } from "yaml";
 import path from "path";
+import { unique } from "remeda";
 import { glob, readFile, directoryExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import { CLAUDE_SRC_DIR, DIRS } from "../consts";
-import type { AgentDefinition, AgentYamlConfig, SkillDefinition, SkillFrontmatter } from "../types";
+import type { AgentDefinition, SkillDefinition, SkillFrontmatter } from "../types";
 import type { SkillId } from "../types-matrix";
+import { skillFrontmatterLoaderSchema, agentYamlConfigSchema } from "./schemas";
 
 export type CompileMode = "dev";
 
@@ -19,10 +21,11 @@ export function parseFrontmatter(content: string): SkillFrontmatter | null {
   if (!match) return null;
 
   const yamlContent = match[1];
-  const frontmatter = parseYaml(yamlContent) as SkillFrontmatter;
+  const parsed = skillFrontmatterLoaderSchema.safeParse(parseYaml(yamlContent));
 
-  if (!frontmatter.name || !frontmatter.description) return null;
-  return frontmatter;
+  if (!parsed.success) return null;
+  // Boundary cast: YAML name field may not match strict SkillId pattern (e.g., local skills)
+  return parsed.data as SkillFrontmatter;
 }
 
 function extractDisplayName(skillId: SkillId): string {
@@ -43,7 +46,7 @@ export async function loadAllAgents(projectRoot: string): Promise<Record<string,
   for (const file of files) {
     const fullPath = path.join(agentSourcesDir, file);
     const content = await readFile(fullPath);
-    const config = parseYaml(content) as AgentYamlConfig;
+    const config = agentYamlConfigSchema.parse(parseYaml(content));
     const agentPath = path.dirname(file);
 
     agents[config.id] = {
@@ -81,7 +84,7 @@ export async function loadProjectAgents(
   for (const file of files) {
     const fullPath = path.join(projectAgentsDir, file);
     const content = await readFile(fullPath);
-    const config = parseYaml(content) as AgentYamlConfig;
+    const config = agentYamlConfigSchema.parse(parseYaml(content));
     const agentPath = path.dirname(file);
 
     agents[config.id] = {
@@ -148,7 +151,7 @@ export async function loadSkillsByIds(
     }
   }
 
-  const uniqueSkillIds = [...new Set(expandedSkillIds)];
+  const uniqueSkillIds = unique(expandedSkillIds);
 
   for (const skillId of uniqueSkillIds) {
     const directoryPath = idToDirectoryPath[skillId];
@@ -172,7 +175,7 @@ export async function loadSkillsByIds(
       const canonicalId = frontmatter.name;
       const skillDef: SkillDefinition = {
         path: `${DIRS.skills}/${directoryPath}/`,
-        name: extractDisplayName(frontmatter.name as SkillId),
+        name: extractDisplayName(frontmatter.name),
         description: frontmatter.description,
         canonicalId,
       };
@@ -220,7 +223,7 @@ export async function loadPluginSkills(
 
     skills[skillId] = {
       path: skillPath,
-      name: extractDisplayName(frontmatter.name as SkillId),
+      name: extractDisplayName(frontmatter.name),
       description: frontmatter.description,
       canonicalId: skillId,
     };

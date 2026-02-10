@@ -1,10 +1,12 @@
 import path from "path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
+import { sortBy } from "remeda";
 import { fileExists, readFile, writeFile, listDirectories } from "../utils/fs";
 import { hashFile } from "./versioning";
 import { getCurrentDate } from "./versioning";
 import { LOCAL_SKILLS_PATH } from "../consts";
 import type { SkillId } from "../types-matrix";
+import { localSkillMetadataSchema } from "./schemas";
 
 /**
  * ForkedFrom metadata stored in local skill's metadata.yaml
@@ -46,9 +48,13 @@ export async function readForkedFromMetadata(skillDir: string): Promise<ForkedFr
   }
 
   const content = await readFile(metadataPath);
-  const metadata = parseYaml(content) as LocalSkillMetadata;
+  const result = localSkillMetadataSchema.safeParse(parseYaml(content));
 
-  return metadata.forked_from ?? null;
+  if (!result.success) {
+    return null;
+  }
+
+  return (result.data as LocalSkillMetadata).forked_from ?? null;
 }
 
 /**
@@ -109,6 +115,7 @@ export async function compareSkills(
   for (const [skillId, { dirName, forkedFrom }] of localSkills) {
     if (!forkedFrom) {
       // Local-only skill (no forked_from metadata)
+      // Boundary cast: skillId comes from Map<string, ...> keys (directory names or forkedFrom.skill_id)
       results.push({
         id: skillId as SkillId,
         localHash: null,
@@ -160,9 +167,7 @@ export async function compareSkills(
   }
 
   // Sort results by skill ID
-  results.sort((a, b) => a.id.localeCompare(b.id));
-
-  return results;
+  return sortBy(results, (r) => r.id);
 }
 
 /**
@@ -183,7 +188,10 @@ export async function injectForkedFromMetadata(
     yamlContent = lines.slice(1).join("\n");
   }
 
-  const metadata = parseYaml(yamlContent) as LocalSkillMetadata;
+  const parseResult = localSkillMetadataSchema.safeParse(parseYaml(yamlContent));
+  const metadata: LocalSkillMetadata = parseResult.success
+    ? (parseResult.data as LocalSkillMetadata)
+    : { forked_from: undefined };
 
   metadata.forked_from = {
     skill_id: skillId,

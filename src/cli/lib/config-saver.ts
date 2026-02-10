@@ -15,7 +15,10 @@ export async function saveSourceToProjectConfig(projectDir: string, source: stri
   let config: Record<string, unknown> = {};
   if (await fileExists(configPath)) {
     const content = await readFile(configPath);
-    config = (parseYaml(content) as Record<string, unknown>) || {};
+    const parsed = parseYaml(content);
+    config = (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed))
+      ? parsed as Record<string, unknown>
+      : {};
   }
 
   config.source = source;

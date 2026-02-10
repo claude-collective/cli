@@ -81,7 +81,7 @@ export async function copySkillFromSource(
 }
 
 export async function copySkillsToPluginFromSource(
-  selectedSkillIds: string[],
+  selectedSkillIds: SkillId[],
   pluginDir: string,
   matrix: MergedSkillsMatrix,
   sourceResult: SourceLoadResult,
@@ -153,7 +153,7 @@ async function copySkillToLocalFlattened(
 }
 
 export async function copySkillsToLocalFlattened(
-  selectedSkillIds: string[],
+  selectedSkillIds: SkillId[],
   localSkillsDir: string,
   matrix: MergedSkillsMatrix,
   sourceResult: SourceLoadResult,

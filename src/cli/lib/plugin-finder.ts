@@ -4,7 +4,8 @@ import { fileExists, readFile, glob } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import { CLAUDE_DIR, PLUGINS_SUBDIR, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../consts";
 import type { PluginManifest } from "../../types";
-import type { MergedSkillsMatrix } from "../types-matrix";
+import type { MergedSkillsMatrix, SkillId } from "../types-matrix";
+import { pluginManifestSchema } from "./schemas";
 
 export function getUserPluginsDir(): string {
   return path.join(os.homedir(), CLAUDE_DIR, PLUGINS_SUBDIR);
@@ -42,7 +43,7 @@ export async function readPluginManifest(pluginDir: string): Promise<PluginManif
 
   try {
     const content = await readFile(manifestPath);
-    const manifest = JSON.parse(content) as PluginManifest;
+    const manifest = pluginManifestSchema.parse(JSON.parse(content));
 
     if (!manifest.name || typeof manifest.name !== "string") {
       verbose(`  Invalid manifest at ${manifestPath}: missing name`);
@@ -59,27 +60,31 @@ export async function readPluginManifest(pluginDir: string): Promise<PluginManif
 export async function getPluginSkillIds(
   pluginSkillsDir: string,
   matrix: MergedSkillsMatrix,
-): Promise<string[]> {
+): Promise<SkillId[]> {
   const skillFiles = await glob("**/SKILL.md", pluginSkillsDir);
-  const skillIds: string[] = [];
+  const skillIds: SkillId[] = [];
 
-  const nameToId = new Map<string, string>();
+  // Boundary cast: Object.entries(matrix.skills) returns [string, ResolvedSkill][] but keys are SkillId
+  const nameToId = new Map<string, SkillId>();
   for (const [id, skill] of Object.entries(matrix.skills)) {
-    nameToId.set(skill.name.toLowerCase(), id);
+    if (!skill) continue;
+    nameToId.set(skill.name.toLowerCase(), id as SkillId);
     if (skill.alias) {
-      nameToId.set(skill.alias.toLowerCase(), id);
+      nameToId.set(skill.alias.toLowerCase(), id as SkillId);
     }
   }
 
-  const dirToId = new Map<string, string>();
+  // Boundary cast: Object.entries(matrix.skills) returns [string, ResolvedSkill][] but keys are SkillId
+  const dirToId = new Map<string, SkillId>();
   for (const [id, skill] of Object.entries(matrix.skills)) {
+    if (!skill) continue;
     const baseName = skill.name.toLowerCase().replace(/\s+/g, "-");
-    dirToId.set(baseName, id);
+    dirToId.set(baseName, id as SkillId);
 
     const idParts = id.split("/");
     const lastPart = idParts[idParts.length - 1];
     if (lastPart) {
-      dirToId.set(lastPart.toLowerCase(), id);
+      dirToId.set(lastPart.toLowerCase(), id as SkillId);
     }
   }
 

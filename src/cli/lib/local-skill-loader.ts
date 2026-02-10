@@ -4,24 +4,25 @@ import { directoryExists, listDirectories, fileExists, readFile } from "../utils
 import { verbose, warn } from "../utils/logger";
 import { LOCAL_SKILLS_PATH } from "../consts";
 import { parseFrontmatter } from "./loader";
-import type { ExtractedSkillMetadata } from "../types-matrix";
+import type { ExtractedSkillMetadata, CategoryPath, SkillRef } from "../types-matrix";
+import { localRawMetadataSchema } from "./schemas";
 
-const LOCAL_CATEGORY = "local";
+const LOCAL_CATEGORY: CategoryPath = "local";
 const LOCAL_AUTHOR = "@local";
 
 interface LocalRawMetadata {
   cli_name: string;
   cli_description?: string;
   /** Original skill category from source (e.g., "framework", "styling", "api") */
-  category?: string;
+  category?: CategoryPath;
   category_exclusive?: boolean;
   usage_guidance?: string;
   tags?: string[];
-  compatible_with?: string[];
-  conflicts_with?: string[];
-  requires?: string[];
-  requires_setup?: string[];
-  provides_setup_for?: string[];
+  compatible_with?: SkillRef[];
+  conflicts_with?: SkillRef[];
+  requires?: SkillRef[];
+  requires_setup?: SkillRef[];
+  provides_setup_for?: SkillRef[];
 }
 
 export interface LocalSkillDiscoveryResult {
@@ -76,7 +77,14 @@ async function extractLocalSkill(
   }
 
   const metadataContent = await readFile(metadataPath);
-  const metadata = parseYaml(metadataContent) as LocalRawMetadata;
+  const parsed = localRawMetadataSchema.safeParse(parseYaml(metadataContent));
+
+  if (!parsed.success) {
+    verbose(`Skipping local skill '${skillDirName}': Invalid metadata.yaml — ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`);
+    return null;
+  }
+
+  const metadata = parsed.data as LocalRawMetadata;
 
   if (!metadata.cli_name) {
     verbose(`Skipping local skill '${skillDirName}': Missing required 'cli_name' in metadata.yaml`);

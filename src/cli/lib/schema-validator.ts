@@ -1,3 +1,4 @@
+import { sumBy } from "remeda";
 import Ajv, { type ValidateFunction, type ErrorObject } from "ajv";
 import addFormats from "ajv-formats";
 import path from "path";
@@ -249,9 +250,9 @@ export async function validateAllSchemas(
 
   const summary = {
     totalSchemas: results.length,
-    totalFiles: results.reduce((sum, r) => sum + r.totalFiles, 0),
-    validFiles: results.reduce((sum, r) => sum + r.validFiles, 0),
-    invalidFiles: results.reduce((sum, r) => sum + r.invalidFiles.length, 0),
+    totalFiles: sumBy(results, (r) => r.totalFiles),
+    validFiles: sumBy(results, (r) => r.validFiles),
+    invalidFiles: sumBy(results, (r) => r.invalidFiles.length),
   };
 
   return {
