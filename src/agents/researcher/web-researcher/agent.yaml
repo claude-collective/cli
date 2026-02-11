@@ -1,4 +1,4 @@
-$schema: https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas/agent.schema.json
+# yaml-language-server: $schema=../../../schemas/agent.schema.json
 id: web-researcher
 title: Web Researcher Agent
 description: Read-only frontend research specialist - discovers UI component patterns, catalogs design systems, understands styling methodology and tokens, finds similar component implementations - produces structured findings for web-developer - invoke for frontend research before implementation
