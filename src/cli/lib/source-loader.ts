@@ -6,7 +6,7 @@ import type {
   ResolvedSkill,
   ResolvedStack,
   SkillId,
-  SkillAlias,
+  SkillDisplayName,
 } from "../types-matrix";
 import type { Stack } from "../types-stacks";
 import { fileExists } from "../utils/fs";
@@ -19,20 +19,20 @@ import { extractAllSkills, loadSkillsMatrix, mergeMatrixWithSkills } from "./mat
 import { fetchFromSource } from "./source-fetcher";
 import { loadStacks, resolveAgentConfigToSkills } from "./stacks-loader";
 
-export interface SourceLoadOptions {
+export type SourceLoadOptions = {
   sourceFlag?: string;
   projectDir?: string;
   forceRefresh?: boolean;
   devMode?: boolean;
-}
+};
 
-export interface SourceLoadResult {
+export type SourceLoadResult = {
   matrix: MergedSkillsMatrix;
   sourceConfig: ResolvedConfig;
   sourcePath: string;
   isLocal: boolean;
   marketplace?: string;
-}
+};
 
 export async function loadSkillsMatrixFromSource(
   options: SourceLoadOptions = {},
@@ -109,7 +109,7 @@ async function loadFromLocal(
     // Phase 7: Skills are defined in stacks (per agent, per subcategory), not in agent YAMLs
     // Use skill_aliases from the matrix to resolve technology aliases to full skill IDs
     mergedMatrix.suggestedStacks = stacks.map((stack) =>
-      stackToResolvedStack(stack, mergedMatrix.aliases),
+      stackToResolvedStack(stack, mergedMatrix.displayNameToId),
     );
     verbose(`Loaded ${stacks.length} stacks from config/stacks.yaml`);
   }
@@ -160,7 +160,7 @@ async function loadFromRemote(
     // Phase 7: Skills are defined in stacks (per agent, per subcategory), not in agent YAMLs
     // Use skill_aliases from the matrix to resolve technology aliases to full skill IDs
     mergedMatrix.suggestedStacks = stacks.map((stack) =>
-      stackToResolvedStack(stack, mergedMatrix.aliases),
+      stackToResolvedStack(stack, mergedMatrix.displayNameToId),
     );
     verbose(`Loaded ${stacks.length} stacks from config/stacks.yaml`);
   }
@@ -181,7 +181,10 @@ async function loadFromRemote(
  * Phase 7: Skills are defined in stacks per agent (subcategory -> technology alias).
  * Uses skill_aliases from the matrix to resolve aliases to full skill IDs.
  */
-function stackToResolvedStack(stack: Stack, skillAliases: Partial<Record<SkillAlias, SkillId>>): ResolvedStack {
+function stackToResolvedStack(
+  stack: Stack,
+  displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,
+): ResolvedStack {
   // Collect all unique skill IDs from agent configs in this stack
   const allSkillIds: SkillId[] = [];
   const seenSkillIds = new Set<SkillId>();
@@ -191,7 +194,7 @@ function stackToResolvedStack(stack: Stack, skillAliases: Partial<Record<SkillAl
     if (!agentConfig) continue;
 
     // Resolve this agent's technology selections to skill IDs
-    const skillRefs = resolveAgentConfigToSkills(agentConfig, skillAliases);
+    const skillRefs = resolveAgentConfigToSkills(agentConfig, displayNameToId);
 
     for (const ref of skillRefs) {
       if (!seenSkillIds.has(ref.id)) {
@@ -201,7 +204,7 @@ function stackToResolvedStack(stack: Stack, skillAliases: Partial<Record<SkillAl
     }
   }
 
-  const agentCount = Object.keys(stack.agents).length;
+  const agentCount = typedKeys<AgentName>(stack.agents).length;
   verbose(`Stack '${stack.id}' has ${allSkillIds.length} skills from ${agentCount} agents`);
 
   return {
@@ -226,12 +229,11 @@ function mergeLocalSkillsIntoMatrix(
     // If overwriting an existing remote skill, inherit its category unconditionally.
     // Otherwise, use whatever the local skill declared in its metadata.yaml.
     const category = existingSkill?.category ?? metadata.category;
-    const alias = existingSkill?.alias ?? matrix.aliasesReverse[metadata.id];
+    const displayName = existingSkill?.displayName ?? matrix.displayNames[metadata.id];
 
     const resolvedSkill: ResolvedSkill = {
       id: metadata.id,
-      alias,
-      name: metadata.name,
+      displayName,
       description: metadata.description,
       usageGuidance: metadata.usageGuidance,
 
@@ -243,9 +245,7 @@ function mergeLocalSkillsIntoMatrix(
 
       conflictsWith: existingSkill?.conflictsWith ?? [],
       recommends: existingSkill?.recommends ?? [],
-      recommendedBy: existingSkill?.recommendedBy ?? [],
       requires: existingSkill?.requires ?? [],
-      requiredBy: existingSkill?.requiredBy ?? [],
       alternatives: existingSkill?.alternatives ?? [],
       discourages: existingSkill?.discourages ?? [],
       compatibleWith: existingSkill?.compatibleWith ?? [],

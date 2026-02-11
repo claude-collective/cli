@@ -8,20 +8,20 @@ import fg from "fast-glob";
 import { PROJECT_ROOT } from "../consts";
 import { extractFrontmatter } from "../utils/frontmatter";
 
-export interface FileValidationError {
+export type FileValidationError = {
   file: string;
   errors: string[];
-}
+};
 
-export interface SchemaValidationResult {
+export type SchemaValidationResult = {
   schemaName: string;
   valid: boolean;
   totalFiles: number;
   validFiles: number;
   invalidFiles: FileValidationError[];
-}
+};
 
-export interface FullValidationResult {
+export type FullValidationResult = {
   valid: boolean;
   results: SchemaValidationResult[];
   summary: {
@@ -30,17 +30,17 @@ export interface FullValidationResult {
     validFiles: number;
     invalidFiles: number;
   };
-}
+};
 
 type ContentExtractor = (content: string) => unknown | null;
 
-interface ValidationTarget {
+type ValidationTarget = {
   name: string;
   schema: string;
   pattern: string;
   baseDir: string;
   extractor?: ContentExtractor;
-}
+};
 
 const VALIDATION_TARGETS: ValidationTarget[] = [
   {

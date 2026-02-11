@@ -4,14 +4,14 @@ import React from "react";
 import { fileExists, readFile } from "../utils/fs";
 import { settingsFileSchema } from "./schemas";
 
-interface PermissionConfig {
+type PermissionConfig = {
   allow?: string[];
   deny?: string[];
-}
+};
 
-interface SettingsFile {
+type SettingsFile = {
   permissions?: PermissionConfig;
-}
+};
 
 /**
  * Check permissions configuration and return warning component if needed.

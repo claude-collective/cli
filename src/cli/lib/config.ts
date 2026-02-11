@@ -13,7 +13,7 @@ export const PROJECT_CONFIG_FILE = "config.yaml";
  * Extra source entry for third-party skill repositories.
  * Used in project configs.
  */
-export interface SourceEntry {
+export type SourceEntry = {
   /** Short name for the source (e.g., "company", "team") */
   name: string;
   /** GitHub URL or path (e.g., "github:owner/repo") */
@@ -22,29 +22,30 @@ export interface SourceEntry {
   description?: string;
   /** Optional ref to pin to (branch, tag, or commit) */
   ref?: string;
-}
+};
 
-export interface ProjectSourceConfig {
+export type ProjectSourceConfig = {
   source?: string;
   author?: string;
   marketplace?: string;
   agents_source?: string;
   /** Extra sources for third-party skills */
   sources?: SourceEntry[];
-}
+};
 
-export interface ResolvedConfig {
+export type ResolvedConfig = {
   source: string;
   sourceOrigin: "flag" | "env" | "project" | "default";
   marketplace?: string;
-}
-
+};
 
 export function getProjectConfigPath(projectDir: string): string {
   return path.join(projectDir, CLAUDE_SRC_DIR, PROJECT_CONFIG_FILE);
 }
 
-export async function loadProjectConfig(projectDir: string): Promise<ProjectSourceConfig | null> {
+export async function loadProjectSourceConfig(
+  projectDir: string,
+): Promise<ProjectSourceConfig | null> {
   // Check .claude-src/config.yaml first (new location)
   const srcConfigPath = getProjectConfigPath(projectDir);
   // Fall back to .claude/config.yaml (legacy location)
@@ -94,7 +95,7 @@ export async function resolveSource(
   projectDir?: string,
 ): Promise<ResolvedConfig> {
   // Load project config for marketplace (marketplace is resolved separately from source)
-  const projectConfig = projectDir ? await loadProjectConfig(projectDir) : null;
+  const projectConfig = projectDir ? await loadProjectSourceConfig(projectDir) : null;
 
   // Resolve marketplace: project config only (no flag/env support for marketplace)
   const marketplace = projectConfig?.marketplace;
@@ -128,10 +129,10 @@ export async function resolveSource(
 
 export type AgentsSourceOrigin = "flag" | "project" | "default";
 
-export interface ResolvedAgentsSource {
+export type ResolvedAgentsSource = {
   agentsSource?: string;
   agentsSourceOrigin: AgentsSourceOrigin;
-}
+};
 
 /** Resolve agents_source with precedence: flag > project > default (undefined) */
 export async function resolveAgentsSource(
@@ -146,7 +147,7 @@ export async function resolveAgentsSource(
     return { agentsSource: flagValue, agentsSourceOrigin: "flag" };
   }
 
-  const projectConfig = projectDir ? await loadProjectConfig(projectDir) : null;
+  const projectConfig = projectDir ? await loadProjectSourceConfig(projectDir) : null;
   if (projectConfig?.agents_source) {
     verbose(`Agents source from project config: ${projectConfig.agents_source}`);
     return {
@@ -159,34 +160,45 @@ export async function resolveAgentsSource(
   return { agentsSource: undefined, agentsSourceOrigin: "default" };
 }
 
-export function formatAgentsSourceOrigin(origin: AgentsSourceOrigin): string {
+/** Shared origin label for project config */
+const PROJECT_ORIGIN_LABEL = "project config (.claude-src/config.yaml)";
+
+/**
+ * Format a human-readable label for a config origin.
+ * Consolidates source and agents-source formatting into one function.
+ */
+export function formatOrigin(
+  type: "source" | "agents",
+  origin: ResolvedConfig["sourceOrigin"] | AgentsSourceOrigin,
+): string {
+  if (origin === "project") return PROJECT_ORIGIN_LABEL;
+
+  if (type === "source") {
+    switch (origin) {
+      case "flag":
+        return "--source flag";
+      case "env":
+        return `${SOURCE_ENV_VAR} environment variable`;
+      case "default":
+        return "default";
+    }
+  }
+
+  // type === "agents"
   switch (origin) {
     case "flag":
       return "--agent-source flag";
-    case "project":
-      return "project config (.claude-src/config.yaml)";
     case "default":
       return "default (local CLI)";
   }
+
+  return origin;
 }
 
 /** Resolve author from project config */
 export async function resolveAuthor(projectDir?: string): Promise<string | undefined> {
-  const projectConfig = projectDir ? await loadProjectConfig(projectDir) : null;
+  const projectConfig = projectDir ? await loadProjectSourceConfig(projectDir) : null;
   return projectConfig?.author;
-}
-
-export function formatSourceOrigin(origin: ResolvedConfig["sourceOrigin"]): string {
-  switch (origin) {
-    case "flag":
-      return "--source flag";
-    case "env":
-      return `${SOURCE_ENV_VAR} environment variable`;
-    case "project":
-      return "project config (.claude-src/config.yaml)";
-    case "default":
-      return "default";
-  }
 }
 
 /**
@@ -196,7 +208,7 @@ export function formatSourceOrigin(origin: ResolvedConfig["sourceOrigin"]): stri
 export async function resolveAllSources(
   projectDir?: string,
 ): Promise<{ primary: SourceEntry; extras: SourceEntry[] }> {
-  const projectConfig = projectDir ? await loadProjectConfig(projectDir) : null;
+  const projectConfig = projectDir ? await loadProjectSourceConfig(projectDir) : null;
 
   // Get primary source
   const resolvedConfig = await resolveSource(undefined, projectDir);

@@ -16,12 +16,7 @@ import { verbose } from "../utils/logger";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, DIRS, PROJECT_ROOT } from "../consts";
 import { resolveClaudeMd } from "./resolver";
 import { validateCompiledAgent, printOutputValidationResult } from "./output-validator";
-import type {
-  AgentConfig,
-  CompiledAgentData,
-  CompileConfig,
-  CompileContext,
-} from "../types";
+import type { AgentConfig, CompiledAgentData, CompileContext } from "../types";
 import type { AgentName } from "../types-matrix";
 import { typedEntries } from "../utils/typed-object";
 
@@ -90,7 +85,6 @@ async function compileAgent(
 
 export async function compileAllAgents(
   resolvedAgents: Record<string, AgentConfig>,
-  _config: CompileConfig,
   ctx: CompileContext,
   engine: Liquid,
 ): Promise<void> {
@@ -183,7 +177,7 @@ export async function compileAllSkills(
 }
 
 export async function copyClaude(ctx: CompileContext): Promise<void> {
-  const claudePath = await resolveClaudeMd(ctx.projectRoot, ctx.stackId, ctx.mode);
+  const claudePath = await resolveClaudeMd(ctx.projectRoot, ctx.stackId);
 
   const content = await readFile(claudePath);
   const outputPath = path.join(ctx.outputDir, "..", "CLAUDE.md");

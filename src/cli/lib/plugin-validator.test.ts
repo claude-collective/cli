@@ -348,9 +348,6 @@ version: "1.0.0"
 name: test-skill
 description: A test skill
 model: sonnet
-allowed-tools: "Read, Grep, Glob"
-disable-model-invocation: false
-user-invocable: true
 ---
 
 # Test Skill

@@ -4,8 +4,7 @@ import type {
   ResolvedSkill,
   SkillOption,
   SkillId,
-  SkillAlias,
-  SkillRef,
+  SkillDisplayName,
   Subcategory,
   CategoryPath,
   SelectionValidation,
@@ -14,14 +13,22 @@ import type {
 } from "../types-matrix";
 import { typedEntries } from "../utils/typed-object";
 
-export function resolveAlias(aliasOrId: SkillRef, matrix: MergedSkillsMatrix): SkillId {
-  // Partial<Record<SkillAlias, SkillId>> can't be indexed with SkillAlias | SkillId — narrow to SkillAlias for lookup, fall back to SkillId
-  return matrix.aliases[aliasOrId as SkillAlias] || (aliasOrId as SkillId);
+/** Get a human-readable label for a skill, preferring display name over full ID */
+function getLabel(
+  skill: { displayName?: string; id: string } | undefined,
+  fallback: string,
+): string {
+  return skill?.displayName || skill?.id || fallback;
+}
+
+export function resolveAlias(aliasOrId: SkillId, matrix: MergedSkillsMatrix): SkillId {
+  // Boundary cast: aliasOrId may contain a display name from legacy contexts — try display name lookup first, fall back to SkillId
+  return matrix.displayNameToId[aliasOrId as unknown as SkillDisplayName] || aliasOrId;
 }
 
 export function getDependentSkills(
   skillId: SkillId,
-  currentSelections: SkillRef[],
+  currentSelections: SkillId[],
   matrix: MergedSkillsMatrix,
 ): SkillId[] {
   const fullId = resolveAlias(skillId, matrix);
@@ -57,13 +64,13 @@ export function getDependentSkills(
   return dependents;
 }
 
-export interface SkillCheckOptions {
+export type SkillCheckOptions = {
   expertMode?: boolean;
-}
+};
 
 export function isDisabled(
   skillId: SkillId,
-  currentSelections: SkillRef[],
+  currentSelections: SkillId[],
   matrix: MergedSkillsMatrix,
   options?: SkillCheckOptions,
 ): boolean {
@@ -112,7 +119,7 @@ export function isDisabled(
 
 export function getDisableReason(
   skillId: SkillId,
-  currentSelections: SkillRef[],
+  currentSelections: SkillId[],
   matrix: MergedSkillsMatrix,
 ): string | undefined {
   const fullId = resolveAlias(skillId, matrix);
@@ -128,16 +135,14 @@ export function getDisableReason(
     const conflict = skill.conflictsWith.find((c) => c.skillId === selectedId);
     if (conflict) {
       const selectedSkill = matrix.skills[selectedId];
-      const selectedName = selectedSkill?.name || selectedId;
-      return `${conflict.reason} (conflicts with ${selectedName})`;
+      return `${conflict.reason} (conflicts with ${getLabel(selectedSkill, selectedId)})`;
     }
 
     const selectedSkill = matrix.skills[selectedId];
     if (selectedSkill) {
       const reverseConflict = selectedSkill.conflictsWith.find((c) => c.skillId === fullId);
       if (reverseConflict) {
-        const selectedName = selectedSkill.name;
-        return `${reverseConflict.reason} (conflicts with ${selectedName})`;
+        return `${reverseConflict.reason} (conflicts with ${getLabel(selectedSkill, selectedId)})`;
       }
     }
   }
@@ -147,7 +152,7 @@ export function getDisableReason(
       const hasAny = requirement.skillIds.some((reqId) => resolvedSelections.includes(reqId));
       if (!hasAny) {
         const requiredNames = requirement.skillIds
-          .map((id) => matrix.skills[id]?.name || id)
+          .map((id) => getLabel(matrix.skills[id], id))
           .join(" or ");
         return `${requirement.reason} (requires ${requiredNames})`;
       }
@@ -156,7 +161,7 @@ export function getDisableReason(
         (reqId) => !resolvedSelections.includes(reqId),
       );
       if (missingIds.length > 0) {
-        const missingNames = missingIds.map((id) => matrix.skills[id]?.name || id).join(", ");
+        const missingNames = missingIds.map((id) => getLabel(matrix.skills[id], id)).join(", ");
         return `${requirement.reason} (requires ${missingNames})`;
       }
     }
@@ -167,7 +172,7 @@ export function getDisableReason(
 
 export function isDiscouraged(
   skillId: SkillId,
-  currentSelections: SkillRef[],
+  currentSelections: SkillId[],
   matrix: MergedSkillsMatrix,
 ): boolean {
   const fullId = resolveAlias(skillId, matrix);
@@ -195,7 +200,7 @@ export function isDiscouraged(
 
 export function getDiscourageReason(
   skillId: SkillId,
-  currentSelections: SkillRef[],
+  currentSelections: SkillId[],
   matrix: MergedSkillsMatrix,
 ): string | undefined {
   const fullId = resolveAlias(skillId, matrix);
@@ -227,7 +232,7 @@ export function getDiscourageReason(
 
 export function isRecommended(
   skillId: SkillId,
-  currentSelections: SkillRef[],
+  currentSelections: SkillId[],
   matrix: MergedSkillsMatrix,
 ): boolean {
   const fullId = resolveAlias(skillId, matrix);
@@ -251,7 +256,7 @@ export function isRecommended(
 
 export function getRecommendReason(
   skillId: SkillId,
-  currentSelections: SkillRef[],
+  currentSelections: SkillId[],
   matrix: MergedSkillsMatrix,
 ): string | undefined {
   const fullId = resolveAlias(skillId, matrix);
@@ -268,7 +273,7 @@ export function getRecommendReason(
     if (selectedSkill) {
       const recommendation = selectedSkill.recommends.find((r) => r.skillId === fullId);
       if (recommendation) {
-        return `${recommendation.reason} (recommended by ${selectedSkill.name})`;
+        return `${recommendation.reason} (recommended by ${getLabel(selectedSkill, selectedId)})`;
       }
     }
   }
@@ -277,7 +282,7 @@ export function getRecommendReason(
 }
 
 export function validateSelection(
-  selections: SkillRef[],
+  selections: SkillId[],
   matrix: MergedSkillsMatrix,
 ): SelectionValidation {
   const errors: ValidationError[] = [];
@@ -294,7 +299,7 @@ export function validateSelection(
       if (conflict) {
         errors.push({
           type: "conflict",
-          message: `${skillA.name} conflicts with ${matrix.skills[skillBId]?.name || skillBId}: ${conflict.reason}`,
+          message: `${getLabel(skillA, skillA.id)} conflicts with ${getLabel(matrix.skills[skillBId], skillBId)}: ${conflict.reason}`,
           skills: [skillA.id, skillBId],
         });
       }
@@ -311,7 +316,7 @@ export function validateSelection(
         if (!hasAny) {
           errors.push({
             type: "missing_requirement",
-            message: `${skill.name} requires one of: ${requirement.skillIds.map((id) => matrix.skills[id]?.name || id).join(", ")}`,
+            message: `${getLabel(skill, skillId)} requires one of: ${requirement.skillIds.map((id) => getLabel(matrix.skills[id], id)).join(", ")}`,
             skills: [skillId, ...requirement.skillIds],
           });
         }
@@ -322,7 +327,7 @@ export function validateSelection(
         if (missingIds.length > 0) {
           errors.push({
             type: "missing_requirement",
-            message: `${skill.name} requires: ${missingIds.map((id) => matrix.skills[id]?.name || id).join(", ")}`,
+            message: `${getLabel(skill, skillId)} requires: ${missingIds.map((id) => getLabel(matrix.skills[id], id)).join(", ")}`,
             skills: [skillId, ...missingIds],
           });
         }
@@ -343,7 +348,7 @@ export function validateSelection(
       if (category?.exclusive) {
         errors.push({
           type: "category_exclusive",
-          message: `Category "${category.name}" only allows one selection, but multiple selected: ${skillIds.map((id) => matrix.skills[id]?.name || id).join(", ")}`,
+          message: `Category "${category.displayName}" only allows one selection, but multiple selected: ${skillIds.map((id) => getLabel(matrix.skills[id], id)).join(", ")}`,
           skills: skillIds,
         });
       }
@@ -364,7 +369,7 @@ export function validateSelection(
           if (!hasConflict) {
             warnings.push({
               type: "missing_recommendation",
-              message: `${skill.name} recommends ${recommendedSkill.name}: ${recommendation.reason}`,
+              message: `${getLabel(skill, skillId)} recommends ${getLabel(recommendedSkill, recommendation.skillId)}: ${recommendation.reason}`,
               skills: [skillId, recommendation.skillId],
             });
           }
@@ -383,7 +388,7 @@ export function validateSelection(
     if (!hasUsageSkill) {
       warnings.push({
         type: "unused_setup",
-        message: `Setup skill "${skill.name}" selected but no corresponding usage skills: ${skill.providesSetupFor.map((id) => matrix.skills[id]?.name || id).join(", ")}`,
+        message: `Setup skill "${getLabel(skill, skillId)}" selected but no corresponding usage skills: ${skill.providesSetupFor.map((id) => getLabel(matrix.skills[id], id)).join(", ")}`,
         skills: [skillId, ...skill.providesSetupFor],
       });
     }
@@ -398,7 +403,7 @@ export function validateSelection(
 
 export function getAvailableSkills(
   categoryId: CategoryPath,
-  currentSelections: SkillRef[],
+  currentSelections: SkillId[],
   matrix: MergedSkillsMatrix,
   options?: SkillCheckOptions,
 ): SkillOption[] {
@@ -418,8 +423,7 @@ export function getAvailableSkills(
 
     skillOptions.push({
       id: skill.id,
-      alias: skill.alias,
-      name: skill.name,
+      displayName: skill.displayName,
       description: skill.description,
       disabled,
       disabledReason: disabled ? getDisableReason(skill.id, currentSelections, matrix) : undefined,
@@ -457,7 +461,7 @@ export function getSkillsByCategory(
 
 export function isCategoryAllDisabled(
   categoryId: CategoryPath,
-  currentSelections: SkillRef[],
+  currentSelections: SkillId[],
   matrix: MergedSkillsMatrix,
   options?: SkillCheckOptions,
 ): { disabled: boolean; reason?: string } {

@@ -11,31 +11,31 @@ import { localSkillMetadataSchema } from "./schemas";
 /**
  * ForkedFrom metadata stored in local skill's metadata.yaml
  */
-export interface ForkedFromMetadata {
+export type ForkedFromMetadata = {
   skill_id: SkillId;
   content_hash: string;
   date: string;
-}
+};
 
 /**
  * Local skill metadata structure
  */
-export interface LocalSkillMetadata {
+export type LocalSkillMetadata = {
   forked_from?: ForkedFromMetadata;
   [key: string]: unknown;
-}
+};
 
 /**
  * Result of comparing a local skill to its source
  */
-export interface SkillComparisonResult {
+export type SkillComparisonResult = {
   id: SkillId;
   localHash: string | null;
   sourceHash: string | null;
   status: "current" | "outdated" | "local-only";
   dirName: string;
   sourcePath?: string;
-}
+};
 
 /**
  * Read forked_from metadata from a local skill's metadata.yaml

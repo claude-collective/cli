@@ -5,10 +5,10 @@ import { PROJECT_ROOT, DIRS, CLAUDE_DIR } from "../consts";
 import { fetchFromSource, type FetchOptions } from "./source-fetcher";
 import type { AgentSourcePaths } from "../../types";
 
-export interface AgentDefinitionOptions extends FetchOptions {
+export type AgentDefinitionOptions = FetchOptions & {
   /** Project directory to check for local templates */
   projectDir?: string;
-}
+};
 
 export async function getAgentDefinitions(
   remoteSource?: string,

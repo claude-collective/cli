@@ -1,7 +1,7 @@
 import path from "path";
 import os from "os";
 import { fileURLToPath } from "url";
-import type { SkillId } from "./types-matrix.js";
+import type { SkillId, Subcategory } from "./types-matrix.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,3 +57,16 @@ export const DEFAULT_PRESELECTED_SKILLS: readonly SkillId[] = [
   "meta-methodology-success-criteria",
   "meta-methodology-write-verification",
 ];
+
+/**
+ * Subcategories considered "key" skills that should be preloaded.
+ * These are primary technology choices that define the stack's core.
+ */
+export const KEY_SUBCATEGORIES: ReadonlySet<Subcategory> = new Set<Subcategory>([
+  "framework",
+  "api",
+  "database",
+  "meta-framework",
+  "base-framework",
+  "platform",
+]);

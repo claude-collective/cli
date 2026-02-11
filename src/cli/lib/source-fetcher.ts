@@ -7,16 +7,16 @@ import { isLocalSource } from "./config";
 import { marketplaceSchema } from "./schemas";
 import type { MarketplaceFetchResult } from "../../types";
 
-export interface FetchOptions {
+export type FetchOptions = {
   forceRefresh?: boolean;
   subdir?: string;
-}
+};
 
-export interface FetchResult {
+export type FetchResult = {
   path: string;
   fromCache: boolean;
   source: string;
-}
+};
 
 export function sanitizeSourceForCache(source: string): string {
   return source.replace(/:/g, "-").replace(/[\/]/g, "-").replace(/--+/g, "-").replace(/^-|-$/g, "");
@@ -184,6 +184,5 @@ export async function fetchMarketplace(
     marketplace,
     sourcePath: result.path,
     fromCache: result.fromCache ?? false,
-    cacheKey: sanitizeSourceForCache(source),
   };
 }

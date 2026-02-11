@@ -8,11 +8,11 @@ import { defaultMappingsSchema } from "./schemas";
 /**
  * Default mappings loaded from agent-mappings.yaml
  */
-export interface DefaultMappings {
+export type DefaultMappings = {
   skill_to_agents: Record<string, string[]>;
   preloaded_skills: Record<string, string[]>;
   subcategory_aliases: Record<string, string>;
-}
+};
 
 // Cached defaults (loaded once per process)
 let cachedDefaults: DefaultMappings | null = null;
@@ -85,4 +85,3 @@ export function getCachedDefaults(): DefaultMappings | null {
 export function clearDefaultsCache(): void {
   cachedDefaults = null;
 }
-

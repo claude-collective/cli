@@ -4,7 +4,7 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { stringify as stringifyYaml } from "yaml";
 import { mergeWithExistingConfig } from "./config-merger";
-import type { AgentSkillConfig, ProjectConfig } from "../../types";
+import type { ProjectConfig } from "../../types";
 
 describe("config-merger", () => {
   let tempDir: string;
@@ -22,7 +22,6 @@ describe("config-merger", () => {
       const newConfig: ProjectConfig = {
         name: "new-project",
         agents: ["web-developer"],
-        skills: ["web-framework-react"],
         description: "A new project",
       };
 
@@ -33,21 +32,11 @@ describe("config-merger", () => {
       expect(result.merged).toBe(false);
       expect(result.config.name).toBe("new-project");
       expect(result.config.agents).toEqual(["web-developer"]);
-      expect(result.config.skills).toEqual(["web-framework-react"]);
       expect(result.config.description).toBe("A new project");
       expect(result.existingConfigPath).toBeUndefined();
     });
 
     it("should inherit author from simple project config when no full config exists", async () => {
-      // Create a simple project config in .claude/config.yaml (legacy location)
-      // but NOT in .claude-src/ - so loadFullProjectConfig can distinguish
-      // Actually, loadFullProjectConfig checks .claude-src first, then .claude.
-      // The simple loadProjectConfig from config.ts also checks .claude-src first.
-      // To test the fallback path, we need NO config file at all (so loadFullProjectConfig returns null)
-      // and have loadProjectConfig from config.ts return a config somehow.
-      //
-      // In practice, if .claude-src/config.yaml exists, loadFullProjectConfig will find it.
-      // So this test verifies the merge path where existing config has author.
       const configDir = path.join(tempDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
       await writeFile(
@@ -203,155 +192,6 @@ describe("config-merger", () => {
 
         expect(result.merged).toBe(true);
         expect(result.config.marketplace).toBe("existing-marketplace");
-      });
-
-      it("should preserve existing philosophy, framework, principles, tags", async () => {
-        await writeFullConfig({
-          name: "project",
-          agents: ["web-developer"],
-          philosophy: "Ship fast",
-          framework: "nextjs",
-          principles: ["KISS"],
-          tags: ["fullstack"],
-        });
-
-        const newConfig: ProjectConfig = {
-          name: "project",
-          agents: ["web-developer"],
-          philosophy: "New philosophy",
-          framework: "remix",
-          principles: ["DRY"],
-          tags: ["web"],
-        };
-
-        const result = await mergeWithExistingConfig(newConfig, {
-          projectDir: tempDir,
-        });
-
-        expect(result.merged).toBe(true);
-        expect(result.config.philosophy).toBe("Ship fast");
-        expect(result.config.framework).toBe("nextjs");
-        expect(result.config.principles).toEqual(["KISS"]);
-        expect(result.config.tags).toEqual(["fullstack"]);
-      });
-
-      it("should preserve existing hooks, agent_skills, preload_patterns, custom_agents", async () => {
-        const existingHooks = { PreToolUse: [{ matcher: "*" }] };
-        const existingAgentSkills: Record<string, AgentSkillConfig> = {
-          "web-developer": ["web-framework-react"],
-        };
-        const existingPreloadPatterns = {
-          "web-developer": ["framework"],
-        };
-        const existingCustomAgents = {
-          "my-reviewer": {
-            title: "Reviewer",
-            description: "Custom reviewer",
-          },
-        };
-
-        await writeFullConfig({
-          name: "project",
-          agents: ["web-developer"],
-          hooks: existingHooks,
-          agent_skills: existingAgentSkills,
-          preload_patterns: existingPreloadPatterns,
-          custom_agents: existingCustomAgents,
-        });
-
-        const newConfig: ProjectConfig = {
-          name: "project",
-          agents: ["web-developer"],
-        };
-
-        const result = await mergeWithExistingConfig(newConfig, {
-          projectDir: tempDir,
-        });
-
-        expect(result.merged).toBe(true);
-        expect(result.config.hooks).toEqual(existingHooks);
-        expect(result.config.agent_skills).toEqual(existingAgentSkills);
-        expect(result.config.preload_patterns).toEqual(existingPreloadPatterns);
-        expect(result.config.custom_agents).toEqual(existingCustomAgents);
-      });
-    });
-
-    describe("union of skills arrays", () => {
-      async function writeFullConfig(config: ProjectConfig): Promise<void> {
-        const configDir = path.join(tempDir, ".claude-src");
-        await mkdir(configDir, { recursive: true });
-        await writeFile(path.join(configDir, "config.yaml"), stringifyYaml(config));
-      }
-
-      it("should union skills (existing + new, deduplicated)", async () => {
-        await writeFullConfig({
-          name: "project",
-          agents: ["web-developer"],
-          skills: ["web-framework-react", "web-state-zustand"],
-        });
-
-        const newConfig: ProjectConfig = {
-          name: "project",
-          agents: ["web-developer"],
-          skills: ["web-framework-react", "web-styling-tailwind"], // react is duplicate
-        };
-
-        const result = await mergeWithExistingConfig(newConfig, {
-          projectDir: tempDir,
-        });
-
-        expect(result.merged).toBe(true);
-        // Existing skills come first, new unique skills appended
-        expect(result.config.skills).toEqual([
-          "web-framework-react",
-          "web-state-zustand",
-          "web-styling-tailwind",
-        ]);
-      });
-
-      it("should handle object-format skill entries in union", async () => {
-        await writeFullConfig({
-          name: "project",
-          agents: ["web-developer"],
-          skills: [{ id: "web-framework-react", preloaded: true }],
-        });
-
-        const newConfig: ProjectConfig = {
-          name: "project",
-          agents: ["web-developer"],
-          skills: ["web-framework-react", "web-state-zustand"], // "react" duplicates existing { id: "react" }
-        };
-
-        const result = await mergeWithExistingConfig(newConfig, {
-          projectDir: tempDir,
-        });
-
-        expect(result.merged).toBe(true);
-        // Existing object-format skill preserved, duplicate removed
-        expect(result.config.skills).toEqual([
-          { id: "web-framework-react", preloaded: true },
-          "web-state-zustand",
-        ]);
-      });
-
-      it("should use new config skills if existing has no skills", async () => {
-        await writeFullConfig({
-          name: "project",
-          agents: ["web-developer"],
-        });
-
-        const newConfig: ProjectConfig = {
-          name: "project",
-          agents: ["web-developer"],
-          skills: ["web-framework-react", "web-state-zustand"],
-        };
-
-        const result = await mergeWithExistingConfig(newConfig, {
-          projectDir: tempDir,
-        });
-
-        expect(result.merged).toBe(true);
-        expect(result.config.skills).toEqual(["web-framework-react", "web-state-zustand"]);
       });
     });
 

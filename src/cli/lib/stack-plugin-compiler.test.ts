@@ -392,40 +392,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       expect(readmeContent).toContain("`typescript`");
     });
 
-    it("should include philosophy in README when stack has philosophy", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
-
-      await createAgent(agentsDir, "web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
-        tools: ["Read"],
-      });
-
-      const stackId = uniqueStackId();
-      const stack = createStack(stackId, {
-        name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
-        agents: ["web-developer"],
-        philosophy: "Keep things simple and testable",
-        skills: [],
-      });
-
-      const result = await compileStackPlugin({
-        stackId,
-        outputDir,
-        projectRoot,
-        stack,
-      });
-
-      const readmePath = path.join(result.pluginPath, "README.md");
-      const readmeContent = await readFile(readmePath, "utf-8");
-
-      expect(readmeContent).toContain("## Philosophy");
-      expect(readmeContent).toContain("Keep things simple and testable");
-    });
-
-    // Skip: principles removed from new stack format (config/stacks.yaml)
+    // Skip: philosophy, principles, tags removed from ProjectConfig — dead fields
     it.skip("should include principles in README when stack has principles", async () => {
       const { agentsDir, configDir } = await createProjectStructure();
 

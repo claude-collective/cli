@@ -13,6 +13,7 @@ import type {
   ProjectConfig,
   AgentDefinition,
   AgentConfig,
+  SkillDefinition,
 } from "../../types";
 import type { SourceLoadResult } from "./source-loader";
 import type { WizardResultV2 } from "../components/wizard/wizard";
@@ -23,12 +24,12 @@ import { copySkillsToLocalFlattened } from "./skill-copier";
 import { mergeWithExistingConfig } from "./config-merger";
 import { loadAllAgents } from "./loader";
 import { loadStackById } from "./stacks-loader";
-import { resolveAgents, resolveStackSkills, resolveAgentSkillsFromStack } from "./resolver";
+import { resolveAgents, resolveAgentSkillsFromStack } from "./resolver";
 import { compileAgentForPlugin } from "./stack-plugin-compiler";
 import { createLiquidEngine } from "./compiler";
 import { generateProjectConfigFromSkills, buildStackProperty } from "./config-generator";
 import { ensureDir, writeFile } from "../utils/fs";
-import { typedEntries } from "../utils/typed-object";
+import { typedEntries, typedKeys } from "../utils/typed-object";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, LOCAL_SKILLS_PATH, PROJECT_ROOT } from "../consts";
 
 const PLUGIN_NAME = "claude-collective";
@@ -40,16 +41,11 @@ const YAML_LINE_WIDTH = 120;
  * Resolved local skill for agent compilation.
  * Extends SkillDefinition with content field.
  */
-interface LocalResolvedSkill {
-  id: SkillId;
-  name: string;
-  description: string;
-  canonicalId: SkillId;
-  path: string;
+type LocalResolvedSkill = SkillDefinition & {
   content: string;
-}
+};
 
-export interface LocalInstallOptions {
+export type LocalInstallOptions = {
   /** Wizard result with selected skills and mode */
   wizardResult: WizardResultV2;
   /** Source load result with matrix and paths */
@@ -58,9 +54,9 @@ export interface LocalInstallOptions {
   projectDir: string;
   /** Source flag value (if provided) */
   sourceFlag?: string;
-}
+};
 
-export interface LocalInstallResult {
+export type LocalInstallResult = {
   /** Skills that were copied */
   copiedSkills: CopiedSkill[];
   /** Final merged project config */
@@ -77,7 +73,7 @@ export interface LocalInstallResult {
   skillsDir: string;
   /** Local agents directory path */
   agentsDir: string;
-}
+};
 
 /**
  * Build a map of local skills for resolution during agent compilation.
@@ -85,16 +81,17 @@ export interface LocalInstallResult {
 function buildLocalSkillsMap(
   copiedSkills: CopiedSkill[],
   matrix: MergedSkillsMatrix,
-): Record<string, LocalResolvedSkill> {
-  const localSkillsForResolution: Record<string, LocalResolvedSkill> = {};
+): Record<SkillId, LocalResolvedSkill> {
+  const localSkillsForResolution: Record<SkillId, LocalResolvedSkill> = {} as Record<
+    SkillId,
+    LocalResolvedSkill
+  >;
   for (const copiedSkill of copiedSkills) {
     const skill = matrix.skills[copiedSkill.skillId];
     if (skill) {
       localSkillsForResolution[copiedSkill.skillId] = {
         id: copiedSkill.skillId,
-        name: skill.name,
         description: skill.description || "",
-        canonicalId: copiedSkill.skillId,
         path: copiedSkill.destPath,
         content: "", // Content not needed for skill references
       };
@@ -110,7 +107,7 @@ function buildLocalSkillsMap(
 async function buildLocalConfig(
   wizardResult: WizardResultV2,
   sourceResult: SourceLoadResult,
-  skillAliases: Record<string, string>,
+  displayNameToId: Record<string, string>,
 ): Promise<{ config: ProjectConfig; loadedStack: Stack | null }> {
   const loadedStack = wizardResult.selectedStackId
     ? await loadStackById(wizardResult.selectedStackId, PROJECT_ROOT)
@@ -120,20 +117,17 @@ async function buildLocalConfig(
 
   if (wizardResult.selectedStackId) {
     if (loadedStack) {
-      // Phase 7 format: Stack agents are Record<string, StackAgentConfig>
-      // Extract agent IDs as string[] for config
-      const agentIds = Object.keys(loadedStack.agents);
+      // Phase 7 format: Stack agents are Partial<Record<AgentName, StackAgentConfig>>
+      const agentIds = typedKeys<AgentName>(loadedStack.agents);
 
       // Build resolved stack property with agent->skill mappings
-      const stackProperty = buildStackProperty(loadedStack, skillAliases);
+      const stackProperty = buildStackProperty(loadedStack, displayNameToId);
 
       localConfig = {
         name: PLUGIN_NAME,
         installMode: wizardResult.installMode,
         description: loadedStack.description,
-        skills: wizardResult.selectedSkills,
         agents: agentIds,
-        philosophy: loadedStack.philosophy,
         stack: stackProperty as ProjectConfig["stack"],
       };
     } else {
@@ -184,30 +178,23 @@ function setConfigMetadata(
  */
 function buildCompileAgents(
   config: ProjectConfig,
-  agents: Record<string, AgentDefinition>,
+  agents: Record<AgentName, AgentDefinition>,
   loadedStack: Stack | null,
-  skillAliases: Record<string, string>,
-  localSkills: Record<string, LocalResolvedSkill>,
-): Record<string, CompileAgentConfig> {
-  const compileAgents: Record<string, CompileAgentConfig> = {};
+  displayNameToId: Record<string, string>,
+  localSkills: Record<SkillId, LocalResolvedSkill>,
+): Record<AgentName, CompileAgentConfig> {
+  const compileAgents: Record<AgentName, CompileAgentConfig> = {} as Record<
+    AgentName,
+    CompileAgentConfig
+  >;
   for (const agentId of config.agents) {
     if (agents[agentId]) {
       // Phase 7: Skills come from stack's technology mappings
       if (loadedStack) {
-        const skillRefs = resolveAgentSkillsFromStack(
-          // Boundary cast: ProjectConfig.agents is string[]
-          agentId as AgentName,
-          loadedStack,
-          skillAliases,
-        );
-        compileAgents[agentId] = { skills: skillRefs };
-      } else if (config.agent_skills?.[agentId]) {
-        // Resolve skills from agent_skills config
-        // Boundary cast: ProjectConfig.agents is string[]
-        const skillRefs = resolveStackSkills(config, agentId as AgentName, localSkills);
+        const skillRefs = resolveAgentSkillsFromStack(agentId, loadedStack, displayNameToId);
         compileAgents[agentId] = { skills: skillRefs };
       } else {
-        // No stack, no agent_skills: empty skills
+        // No stack: empty skills
         compileAgents[agentId] = {};
       }
     }
@@ -220,11 +207,11 @@ function buildCompileAgents(
  */
 async function compileAndWriteAgents(
   compileConfig: CompileConfig,
-  agents: Record<string, AgentDefinition>,
-  localSkills: Record<string, LocalResolvedSkill>,
+  agents: Record<AgentName, AgentDefinition>,
+  localSkills: Record<SkillId, LocalResolvedSkill>,
   sourceResult: SourceLoadResult,
   loadedStack: Stack | null,
-  skillAliases: Record<string, string>,
+  displayNameToId: Record<string, string>,
   projectDir: string,
   agentsDir: string,
 ): Promise<AgentName[]> {
@@ -235,7 +222,7 @@ async function compileAndWriteAgents(
     compileConfig,
     sourceResult.sourcePath,
     loadedStack ?? undefined,
-    skillAliases,
+    displayNameToId,
   );
 
   const compiledAgentNames: AgentName[] = [];
@@ -284,18 +271,19 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
 
   // 3. Build local skills map for resolution
   const localSkillsForResolution = buildLocalSkillsMap(copiedSkills, matrix);
-  const skillAliases = matrix.aliases || {};
+  const displayNameToId = matrix.displayNameToId || {};
 
   // 4. Load agents from both CLI and source, with source taking precedence
   const cliAgents = await loadAllAgents(PROJECT_ROOT);
   const localAgents = await loadAllAgents(sourceResult.sourcePath);
-  const agents = { ...cliAgents, ...localAgents };
+  // Boundary cast: loadAllAgents returns Record<string, AgentDefinition>, agent dirs are AgentName by convention
+  const agents = { ...cliAgents, ...localAgents } as Record<AgentName, AgentDefinition>;
 
   // 5. Build config
   const { config: builtConfig, loadedStack } = await buildLocalConfig(
     wizardResult,
     sourceResult,
-    skillAliases,
+    displayNameToId,
   );
 
   // 6. Set metadata
@@ -317,7 +305,7 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
     finalConfig,
     agents,
     loadedStack,
-    skillAliases,
+    displayNameToId,
     localSkillsForResolution,
   );
 
@@ -325,7 +313,6 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
     name: PLUGIN_NAME,
     description:
       finalConfig.description || `Local setup with ${wizardResult.selectedSkills.length} skills`,
-    claude_md: "",
     agents: compileAgentsConfig,
   };
 
@@ -336,7 +323,7 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
     localSkillsForResolution,
     sourceResult,
     loadedStack,
-    skillAliases,
+    displayNameToId,
     projectDir,
     localAgentsDir,
   );

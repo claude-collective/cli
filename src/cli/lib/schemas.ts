@@ -5,7 +5,7 @@
  * user input, API responses). They do NOT replace the TypeScript types in
  * types.ts and types-matrix.ts — those remain the single source of truth.
  *
- * For union types with many members (e.g., SkillAlias), we use z.enum([...])
+ * For union types with many members (e.g., SkillDisplayName), we use z.enum([...])
  * with the full value list to get runtime validation matching the TS types.
  *
  * For template-literal types (e.g., SkillId), we use z.string().regex()
@@ -19,12 +19,9 @@ import type {
   ProjectConfig,
   SkillFrontmatter,
   SkillMetadataConfig,
-  SkillEntry,
-  AgentSkillConfig,
   AgentHookAction,
   AgentHookDefinition,
   SkillAssignment,
-  CustomAgentConfig,
   PluginAuthor,
   ValidationResult,
   Marketplace,
@@ -47,9 +44,8 @@ import type {
   RecommendRule,
   RelationshipDefinitions,
   RequireRule,
-  SkillAlias,
+  SkillDisplayName,
   SkillId,
-  SkillRef,
   SkillsMatrixConfig,
   Subcategory,
 } from "../types-matrix";
@@ -163,10 +159,10 @@ export const permissionModeSchema = z.enum([
 ]) as z.ZodType<PermissionMode>;
 
 /**
- * Validates SkillAlias values: short names for skills.
- * Full list from types-matrix.ts SkillAlias union.
+ * Validates SkillDisplayName values: short display names for skills.
+ * Full list from types-matrix.ts SkillDisplayName union.
  */
-export const skillAliasSchema = z.enum([
+export const skillDisplayNameSchema = z.enum([
   // Frameworks
   "react",
   "vue",
@@ -272,7 +268,7 @@ export const skillAliasSchema = z.enum([
   "write-verification",
   "improvement-protocol",
   "context-management",
-]) as z.ZodType<SkillAlias>;
+]) as z.ZodType<SkillDisplayName>;
 
 // =============================================================================
 // Template Literal Type Schemas
@@ -287,7 +283,10 @@ const SKILL_ID_PATTERN = /^(web|api|cli|mobile|infra|meta|security)-.+$/;
  */
 export const skillIdSchema = z
   .string()
-  .regex(SKILL_ID_PATTERN, "Must be a valid skill ID (e.g., 'web-framework-react')") as z.ZodType<SkillId>;
+  .regex(
+    SKILL_ID_PATTERN,
+    "Must be a valid skill ID (e.g., 'web-framework-react')",
+  ) as z.ZodType<SkillId>;
 
 /**
  * Validates CategoryPath format.
@@ -304,17 +303,11 @@ export const categoryPathSchema = z.string().refine(
     // Bare subcategory — validated against the subcategory union
     return subcategorySchema.safeParse(val).success;
   },
-  { message: "Must be a valid category path (e.g., 'web/framework', 'web-framework', 'testing', or 'local')" },
+  {
+    message:
+      "Must be a valid category path (e.g., 'web/framework', 'web-framework', 'testing', or 'local')",
+  },
 ) as z.ZodType<CategoryPath>;
-
-/**
- * Validates SkillRef: either a SkillAlias or SkillId.
- * Tries alias first, then falls back to skill ID pattern.
- */
-export const skillRefSchema = z.union([
-  skillAliasSchema,
-  skillIdSchema,
-]) as z.ZodType<SkillRef>;
 
 // =============================================================================
 // Hook Schemas (shared by multiple interfaces)
@@ -349,18 +342,6 @@ export const skillAssignmentSchema: z.ZodType<SkillAssignment> = z.object({
   path: z.string().optional(),
 });
 
-/** Validates SkillEntry: either a bare SkillId string or a full SkillAssignment */
-export const skillEntrySchema = z.union([
-  skillIdSchema,
-  skillAssignmentSchema,
-]) as z.ZodType<SkillEntry>;
-
-/** Validates AgentSkillConfig: either a flat array or a categorized record */
-export const agentSkillConfigSchema = z.union([
-  z.array(skillEntrySchema),
-  z.record(z.string(), z.array(skillEntrySchema)),
-]) as z.ZodType<AgentSkillConfig>;
-
 // =============================================================================
 // Interface Schemas
 // =============================================================================
@@ -372,13 +353,7 @@ export const agentSkillConfigSchema = z.union([
 export const skillFrontmatterSchema: z.ZodType<SkillFrontmatter> = z.object({
   name: skillIdSchema,
   description: z.string(),
-  "disable-model-invocation": z.boolean().optional(),
-  "user-invocable": z.boolean().optional(),
-  "allowed-tools": z.string().optional(),
   model: modelNameSchema.optional(),
-  context: z.literal("fork").optional(),
-  agent: z.string().optional(),
-  "argument-hint": z.string().optional(),
 });
 
 /**
@@ -390,13 +365,7 @@ export const skillFrontmatterSchema: z.ZodType<SkillFrontmatter> = z.object({
 export const skillFrontmatterLoaderSchema = z.object({
   name: z.string(),
   description: z.string(),
-  "disable-model-invocation": z.boolean().optional(),
-  "user-invocable": z.boolean().optional(),
-  "allowed-tools": z.string().optional(),
   model: modelNameSchema.optional(),
-  context: z.literal("fork").optional(),
-  agent: z.string().optional(),
-  "argument-hint": z.string().optional(),
 });
 
 /**
@@ -409,9 +378,9 @@ export const skillMetadataConfigSchema: z.ZodType<SkillMetadataConfig> = z.objec
   author: z.string().optional(),
   version: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  requires: z.array(skillRefSchema).optional(),
-  compatible_with: z.array(skillRefSchema).optional(),
-  conflicts_with: z.array(skillRefSchema).optional(),
+  requires: z.array(skillIdSchema).optional(),
+  compatible_with: z.array(skillIdSchema).optional(),
+  conflicts_with: z.array(skillIdSchema).optional(),
 });
 
 /** Validates PluginAuthor */
@@ -429,15 +398,11 @@ export const pluginManifestSchema: z.ZodType<PluginManifest> = z.object({
   version: z.string().optional(),
   description: z.string().optional(),
   author: pluginAuthorSchema.optional(),
-  homepage: z.string().optional(),
-  repository: z.string().optional(),
-  license: z.string().optional(),
   keywords: z.array(z.string()).optional(),
   commands: z.union([z.string(), z.array(z.string())]).optional(),
   agents: z.union([z.string(), z.array(z.string())]).optional(),
   skills: z.union([z.string(), z.array(z.string())]).optional(),
   hooks: z.union([z.string(), hooksRecordSchema]).optional(),
-  mcpServers: z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
 });
 
 /**
@@ -454,23 +419,6 @@ export const agentYamlConfigSchema: z.ZodType<AgentYamlConfig> = z.object({
   permission_mode: permissionModeSchema.optional(),
   hooks: hooksRecordSchema.optional(),
   output_format: z.string().optional(),
-  skills: z.record(z.string(), z.object({
-    id: skillIdSchema,
-    preloaded: z.boolean(),
-  })).optional(),
-});
-
-/** Validates CustomAgentConfig for custom_agents in config.yaml */
-export const customAgentConfigSchema: z.ZodType<CustomAgentConfig> = z.object({
-  title: z.string(),
-  description: z.string(),
-  extends: agentNameSchema.optional(),
-  model: modelNameSchema.optional(),
-  tools: z.array(z.string()).optional(),
-  disallowed_tools: z.array(z.string()).optional(),
-  permission_mode: permissionModeSchema.optional(),
-  skills: z.array(skillAssignmentSchema).optional(),
-  hooks: hooksRecordSchema.optional(),
 });
 
 /**
@@ -481,17 +429,9 @@ export const projectConfigSchema: z.ZodType<ProjectConfig> = z.object({
   version: z.literal("1").optional(),
   name: z.string(),
   description: z.string().optional(),
-  skills: z.array(skillEntrySchema).optional(),
-  agents: z.array(z.string()),
-  agent_skills: z.record(z.string(), agentSkillConfigSchema).optional(),
-  preload_patterns: z.record(z.string(), z.array(z.string())).optional(),
-  hooks: hooksRecordSchema.optional(),
+  agents: z.array(z.string() as z.ZodType<AgentName>),
+
   author: z.string().optional(),
-  framework: z.string().optional(),
-  philosophy: z.string().optional(),
-  principles: z.array(z.string()).optional(),
-  tags: z.array(z.string()).optional(),
-  custom_agents: z.record(z.string(), customAgentConfigSchema).optional(),
   installMode: z.enum(["local", "plugin"]).optional(),
   stack: z.record(z.string(), z.record(subcategorySchema, skillIdSchema)).optional(),
   source: z.string().optional(),
@@ -507,29 +447,23 @@ export const projectConfigSchema: z.ZodType<ProjectConfig> = z.object({
  *
  * Uses .passthrough() to preserve unknown keys for forward compatibility.
  */
-export const projectConfigLoaderSchema = z.object({
-  version: z.literal("1").optional(),
-  name: z.string().optional(),
-  description: z.string().optional(),
-  skills: z.array(skillEntrySchema).optional(),
-  agents: z.array(z.string()).optional(),
-  agent_skills: z.record(z.string(), agentSkillConfigSchema).optional(),
-  preload_patterns: z.record(z.string(), z.array(z.string())).optional(),
-  hooks: hooksRecordSchema.optional(),
-  author: z.string().optional(),
-  framework: z.string().optional(),
-  philosophy: z.string().optional(),
-  principles: z.array(z.string()).optional(),
-  tags: z.array(z.string()).optional(),
-  custom_agents: z.record(z.string(), customAgentConfigSchema).optional(),
-  installMode: z.enum(["local", "plugin"]).optional(),
-  // Uses z.record(z.string(), ...) for stack keys since real-world stack
-  // data has sparse subcategory records (not all subcategories present)
-  stack: z.record(z.string(), z.record(z.string(), skillIdSchema)).optional(),
-  source: z.string().optional(),
-  marketplace: z.string().optional(),
-  agents_source: z.string().optional(),
-}).passthrough();
+export const projectConfigLoaderSchema = z
+  .object({
+    version: z.literal("1").optional(),
+    name: z.string().optional(),
+    description: z.string().optional(),
+    agents: z.array(z.string()).optional(),
+
+    author: z.string().optional(),
+    installMode: z.enum(["local", "plugin"]).optional(),
+    // Uses z.record(z.string(), ...) for stack keys since real-world stack
+    // data has sparse subcategory records (not all subcategories present)
+    stack: z.record(z.string(), z.record(z.string(), skillIdSchema)).optional(),
+    source: z.string().optional(),
+    marketplace: z.string().optional(),
+    agents_source: z.string().optional(),
+  })
+  .passthrough();
 
 /** Validates ValidationResult */
 export const validationResultSchema: z.ZodType<ValidationResult> = z.object({
@@ -545,7 +479,7 @@ export const validationResultSchema: z.ZodType<ValidationResult> = z.object({
 /** Validates CategoryDefinition from skills-matrix.yaml categories */
 export const categoryDefinitionSchema: z.ZodType<CategoryDefinition> = z.object({
   id: subcategorySchema,
-  name: z.string(),
+  displayName: z.string(),
   description: z.string(),
   domain: domainSchema.optional(),
   parent_domain: domainSchema.optional(),
@@ -555,29 +489,37 @@ export const categoryDefinitionSchema: z.ZodType<CategoryDefinition> = z.object(
   icon: z.string().optional(),
 });
 
+/**
+ * Lenient schema for skill references in YAML relationships.
+ * Accepts both SkillId ("web-framework-react") and SkillDisplayName ("react").
+ * Display names are resolved to canonical SkillIds by matrix-loader after parsing.
+ * Boundary cast: z.string() widens, cast narrows to SkillId post-resolution.
+ */
+const skillRefInYaml = z.string() as z.ZodType<SkillId>;
+
 /** Validates ConflictRule: mutual exclusion between skills */
 export const conflictRuleSchema: z.ZodType<ConflictRule> = z.object({
-  skills: z.array(skillRefSchema),
+  skills: z.array(skillRefInYaml),
   reason: z.string(),
 });
 
 /** Validates DiscourageRule: soft warning between skills */
 export const discourageRuleSchema: z.ZodType<DiscourageRule> = z.object({
-  skills: z.array(skillRefSchema),
+  skills: z.array(skillRefInYaml),
   reason: z.string(),
 });
 
 /** Validates RecommendRule: suggestion based on current selection */
 export const recommendRuleSchema: z.ZodType<RecommendRule> = z.object({
-  when: skillRefSchema,
-  suggest: z.array(skillRefSchema),
+  when: skillRefInYaml,
+  suggest: z.array(skillRefInYaml),
   reason: z.string(),
 });
 
 /** Validates RequireRule: hard dependency between skills */
 export const requireRuleSchema: z.ZodType<RequireRule> = z.object({
-  skill: skillRefSchema,
-  needs: z.array(skillRefSchema),
+  skill: skillRefInYaml,
+  needs: z.array(skillRefInYaml),
   needs_any: z.boolean().optional(),
   reason: z.string(),
 });
@@ -585,7 +527,7 @@ export const requireRuleSchema: z.ZodType<RequireRule> = z.object({
 /** Validates AlternativeGroup: interchangeable skills */
 export const alternativeGroupSchema: z.ZodType<AlternativeGroup> = z.object({
   purpose: z.string(),
-  skills: z.array(skillRefSchema),
+  skills: z.array(skillRefInYaml),
 });
 
 /** Validates RelationshipDefinitions: all relationship types */
@@ -603,9 +545,13 @@ export const relationshipDefinitionsSchema: z.ZodType<RelationshipDefinitions> =
  */
 export const skillsMatrixConfigSchema: z.ZodType<SkillsMatrixConfig> = z.object({
   version: z.string(),
-  categories: z.record(subcategorySchema, categoryDefinitionSchema) as z.ZodType<SkillsMatrixConfig["categories"]>,
+  categories: z.record(subcategorySchema, categoryDefinitionSchema) as z.ZodType<
+    SkillsMatrixConfig["categories"]
+  >,
   relationships: relationshipDefinitionsSchema,
-  skill_aliases: z.record(skillAliasSchema, skillIdSchema) as z.ZodType<SkillsMatrixConfig["skill_aliases"]>,
+  skill_aliases: z.record(skillDisplayNameSchema, skillIdSchema) as z.ZodType<
+    SkillsMatrixConfig["skill_aliases"]
+  >,
 });
 
 // =============================================================================
@@ -618,19 +564,21 @@ export const skillsMatrixConfigSchema: z.ZodType<SkillsMatrixConfig> = z.object(
  * `if (!metadata.cli_name)` after parsing. Uses .passthrough() for forward
  * compatibility with new fields.
  */
-export const localRawMetadataSchema = z.object({
-  cli_name: z.string().optional(),
-  cli_description: z.string().optional(),
-  category: categoryPathSchema.optional(),
-  category_exclusive: z.boolean().optional(),
-  usage_guidance: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  compatible_with: z.array(skillRefSchema).optional(),
-  conflicts_with: z.array(skillRefSchema).optional(),
-  requires: z.array(skillRefSchema).optional(),
-  requires_setup: z.array(skillRefSchema).optional(),
-  provides_setup_for: z.array(skillRefSchema).optional(),
-}).passthrough();
+export const localRawMetadataSchema = z
+  .object({
+    cli_name: z.string().optional(),
+    cli_description: z.string().optional(),
+    category: categoryPathSchema.optional(),
+    category_exclusive: z.boolean().optional(),
+    usage_guidance: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+    compatible_with: z.array(skillIdSchema).optional(),
+    conflicts_with: z.array(skillIdSchema).optional(),
+    requires: z.array(skillIdSchema).optional(),
+    requires_setup: z.array(skillIdSchema).optional(),
+    provides_setup_for: z.array(skillIdSchema).optional(),
+  })
+  .passthrough();
 
 /**
  * Lenient schema for LocalSkillMetadata from local skill metadata.yaml files.
@@ -639,13 +587,17 @@ export const localRawMetadataSchema = z.object({
  * to preserve all other metadata fields (cli_name, tags, etc.) through
  * round-trip serialization.
  */
-export const localSkillMetadataSchema = z.object({
-  forked_from: z.object({
-    skill_id: skillIdSchema,
-    content_hash: z.string(),
-    date: z.string(),
-  }).optional(),
-}).passthrough();
+export const localSkillMetadataSchema = z
+  .object({
+    forked_from: z
+      .object({
+        skill_id: skillIdSchema,
+        content_hash: z.string(),
+        date: z.string(),
+      })
+      .optional(),
+  })
+  .passthrough();
 
 // =============================================================================
 // Stacks Schemas (config/stacks.yaml)
@@ -737,11 +689,13 @@ export const marketplaceSchema: z.ZodType<Marketplace> = z.object({
  * Used by versioning.ts for version bumping. The version and content_hash
  * fields are the primary concern; other fields are preserved via passthrough.
  */
-export const versionedMetadataSchema = z.object({
-  version: z.number(),
-  content_hash: z.string().optional(),
-  updated: z.string().optional(),
-}).passthrough();
+export const versionedMetadataSchema = z
+  .object({
+    version: z.number(),
+    content_hash: z.string().optional(),
+    updated: z.string().optional(),
+  })
+  .passthrough();
 
 // =============================================================================
 // Default Mappings Schema (agent-mappings.yaml)
@@ -772,9 +726,11 @@ export const permissionConfigSchema = z.object({
  * Lenient schema for .claude/settings.json files.
  * Only validates the permissions field; other fields are preserved via passthrough.
  */
-export const settingsFileSchema = z.object({
-  permissions: permissionConfigSchema.optional(),
-}).passthrough();
+export const settingsFileSchema = z
+  .object({
+    permissions: permissionConfigSchema.optional(),
+  })
+  .passthrough();
 
 // =============================================================================
 // Import Skill Metadata Schema (for import command)
@@ -785,14 +741,18 @@ export const settingsFileSchema = z.object({
  * Used by the import command when injecting forked_from metadata.
  * Uses passthrough to preserve all existing fields through round-trip.
  */
-export const importedSkillMetadataSchema = z.object({
-  forked_from: z.object({
-    source: z.string(),
-    skill_name: z.string(),
-    content_hash: z.string(),
-    date: z.string(),
-  }).optional(),
-}).passthrough();
+export const importedSkillMetadataSchema = z
+  .object({
+    forked_from: z
+      .object({
+        source: z.string(),
+        skill_name: z.string(),
+        content_hash: z.string(),
+        date: z.string(),
+      })
+      .optional(),
+  })
+  .passthrough();
 
 /**
  * Lenient schema for ProjectSourceConfig loaded from config.yaml.
@@ -800,15 +760,21 @@ export const importedSkillMetadataSchema = z.object({
  * Uses passthrough to allow extra config.yaml fields (name, agents, etc.)
  * that ProjectSourceConfig doesn't define.
  */
-export const projectSourceConfigSchema = z.object({
-  source: z.string().optional(),
-  author: z.string().optional(),
-  marketplace: z.string().optional(),
-  agents_source: z.string().optional(),
-  sources: z.array(z.object({
-    name: z.string(),
-    url: z.string(),
-    description: z.string().optional(),
-    ref: z.string().optional(),
-  })).optional(),
-}).passthrough();
+export const projectSourceConfigSchema = z
+  .object({
+    source: z.string().optional(),
+    author: z.string().optional(),
+    marketplace: z.string().optional(),
+    agents_source: z.string().optional(),
+    sources: z
+      .array(
+        z.object({
+          name: z.string(),
+          url: z.string(),
+          description: z.string().optional(),
+          ref: z.string().optional(),
+        }),
+      )
+      .optional(),
+  })
+  .passthrough();

@@ -8,12 +8,6 @@ import type { AgentDefinition, SkillDefinition, SkillFrontmatter } from "../type
 import type { SkillId } from "../types-matrix";
 import { skillFrontmatterLoaderSchema, agentYamlConfigSchema } from "./schemas";
 
-export type CompileMode = "dev";
-
-export function getDirs(_mode: CompileMode) {
-  return DIRS;
-}
-
 const FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---/;
 
 export function parseFrontmatter(content: string): SkillFrontmatter | null {
@@ -26,15 +20,6 @@ export function parseFrontmatter(content: string): SkillFrontmatter | null {
   if (!parsed.success) return null;
   // Boundary cast: YAML name field may not match strict SkillId pattern (e.g., local skills)
   return parsed.data as SkillFrontmatter;
-}
-
-function extractDisplayName(skillId: SkillId): string {
-  const withoutCategory = skillId.split("/").pop() || skillId;
-  const withoutAuthor = withoutCategory.replace(/\s*\(@\w+\)$/, "").trim();
-  return withoutAuthor
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
 }
 
 export async function loadAllAgents(projectRoot: string): Promise<Record<string, AgentDefinition>> {
@@ -123,7 +108,7 @@ async function buildIdToDirectoryPathMap(skillsDir: string): Promise<Record<stri
 }
 
 export async function loadSkillsByIds(
-  skillIds: Array<{ id: string }>,
+  skillIds: Array<{ id: SkillId }>,
   projectRoot: string,
 ): Promise<Record<string, SkillDefinition>> {
   const skills: Record<string, SkillDefinition> = {};
@@ -131,7 +116,7 @@ export async function loadSkillsByIds(
 
   const idToDirectoryPath = await buildIdToDirectoryPathMap(skillsDir);
   const allSkillIds = Object.keys(idToDirectoryPath);
-  const expandedSkillIds: string[] = [];
+  const expandedSkillIds: SkillId[] = [];
 
   for (const { id: skillId } of skillIds) {
     if (idToDirectoryPath[skillId]) {
@@ -143,7 +128,8 @@ export async function loadSkillsByIds(
       });
 
       if (childSkills.length > 0) {
-        expandedSkillIds.push(...childSkills);
+        // Boundary cast: keys from buildIdToDirectoryPathMap are SkillId values from frontmatter
+        expandedSkillIds.push(...(childSkills as SkillId[]));
         verbose(`Expanded directory '${skillId}' to ${childSkills.length} skills`);
       } else {
         console.warn(`  Warning: Unknown skill reference '${skillId}'`);
@@ -174,10 +160,9 @@ export async function loadSkillsByIds(
 
       const canonicalId = frontmatter.name;
       const skillDef: SkillDefinition = {
+        id: canonicalId,
         path: `${DIRS.skills}/${directoryPath}/`,
-        name: extractDisplayName(frontmatter.name),
         description: frontmatter.description,
-        canonicalId,
       };
 
       skills[canonicalId] = skillDef;
@@ -222,10 +207,9 @@ export async function loadPluginSkills(
     const skillId = frontmatter.name;
 
     skills[skillId] = {
+      id: skillId,
       path: skillPath,
-      name: extractDisplayName(frontmatter.name),
       description: frontmatter.description,
-      canonicalId: skillId,
     };
 
     verbose(`Loaded plugin skill: ${skillId} from ${file}`);

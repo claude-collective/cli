@@ -163,7 +163,6 @@ describe("source-loader local skills integration", () => {
     const localSkill = skills["my-local-skill"];
 
     expect(localSkill.id).toBe("my-local-skill");
-    expect(localSkill.name).toBe("My Local Skill @local");
     // New local skill without a category in metadata.yaml gets "local" from local-skill-loader defaults
     expect(localSkill.category).toBe("local");
     expect(localSkill.author).toBe("@local");
@@ -188,7 +187,9 @@ describe("source-loader local skills integration", () => {
 
     // Local skills should NOT cause fake "local" or "local/custom" categories to be injected
     // The skill uses whatever category it declared (or "local" default from local-skill-loader)
-    expect((result.matrix.categories as Record<string, CategoryDefinition>)["local/custom"]).toBeUndefined();
+    expect(
+      (result.matrix.categories as Record<string, CategoryDefinition>)["local/custom"],
+    ).toBeUndefined();
   });
 
   it("should not modify matrix when no local skills exist", async () => {
@@ -331,7 +332,6 @@ describe("source-loader integration", () => {
     // Verify skills have required properties
     const firstSkill = Object.values(result.matrix.skills)[0]!;
     expect(firstSkill.id).toBeDefined();
-    expect(firstSkill.name).toBeDefined();
     expect(firstSkill.category).toBeDefined();
     expect(firstSkill.path).toBeDefined();
   });
@@ -352,18 +352,6 @@ describe("source-loader integration", () => {
     expect(firstStack.name).toBeDefined();
     // Note: allSkillIds is empty in new format - skills come from agents at compile time
     expect(firstStack.allSkillIds).toBeDefined();
-  });
-
-  // Skip: In Phase 6 agent-centric config, stacks no longer have allSkillIds.
-  // Skills come from agents at compile time, not from stack config.
-  it.skip("should resolve stack skill IDs to actual skill IDs in matrix", async () => {
-    // Test skipped - stacks no longer contain skill references
-  });
-
-  // Skip: In Phase 6 agent-centric config, stacks no longer have allSkillIds.
-  // Skills come from agents at compile time, not from stack config.
-  it.skip("should resolve stack skill IDs that can be used for selection tracking", async () => {
-    // Test skipped - stacks no longer contain skill references
   });
 
   it("should load categories", async () => {

@@ -13,21 +13,21 @@ const HASHABLE_FILES = ["SKILL.md", "reference.md"];
 
 const HASHABLE_DIRS = ["examples", "scripts"];
 
-interface VersionedMetadata {
+type VersionedMetadata = {
   version: number;
   content_hash?: string;
   updated?: string;
   [key: string]: unknown;
-}
+};
 
-export interface VersionCheckResult {
+export type VersionCheckResult = {
   skillPath: string;
   previousVersion: number;
   newVersion: number;
   previousHash: string | undefined;
   newHash: string;
   changed: boolean;
-}
+};
 
 export function getCurrentDate(): string {
   return new Date().toISOString().split("T")[0];

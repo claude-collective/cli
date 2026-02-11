@@ -13,7 +13,15 @@ import {
   getAvailableSkills,
   isCategoryAllDisabled,
 } from "./matrix-resolver";
-import type { CategoryDefinition, CategoryPath, MergedSkillsMatrix, ResolvedSkill, SkillAlias, SkillId, Subcategory } from "../types-matrix";
+import type {
+  CategoryDefinition,
+  CategoryPath,
+  MergedSkillsMatrix,
+  ResolvedSkill,
+  SkillDisplayName,
+  SkillId,
+  Subcategory,
+} from "../types-matrix";
 import { createMockSkill, createMockMatrix } from "./__tests__/helpers";
 
 /**
@@ -38,15 +46,19 @@ function createMatrix(
 ): MergedSkillsMatrix {
   return createMockMatrix(skills, {
     categories,
-    aliases: aliases as Record<SkillAlias, SkillId>,
-    aliasesReverse: mapToObj(Object.entries(aliases), ([alias, fullId]) => [fullId, alias]) as Record<SkillId, SkillAlias>,
+    displayNameToId: aliases as Record<SkillDisplayName, SkillId>,
+    displayNames: mapToObj(Object.entries(aliases), ([alias, fullId]) => [fullId, alias]) as Record<
+      SkillId,
+      SkillDisplayName
+    >,
   });
 }
 
 describe("resolveAlias", () => {
   it("should resolve an alias to full ID", () => {
     const matrix = createMatrix({}, { react: "web-framework-react" });
-    const result = resolveAlias("react", matrix);
+    // Boundary cast: testing display name resolution — "react" is a SkillDisplayName, not SkillId
+    const result = resolveAlias("react" as unknown as SkillId, matrix);
     expect(result).toBe("web-framework-react");
   });
 
@@ -336,20 +348,16 @@ describe("validateSelection", () => {
       category: "framework",
       categoryExclusive: true,
     });
-    const matrix = createMatrix(
-      { "web-skill-a": skillA, "web-skill-b": skillB },
-      {},
-      {
-        framework: {
-          id: "framework",
-          name: "Framework",
-          description: "Frameworks",
-          exclusive: true,
-          required: false,
-          order: 1,
-        },
-      } as Record<Subcategory, CategoryDefinition>,
-    );
+    const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB }, {}, {
+      framework: {
+        id: "framework",
+        displayName: "Framework",
+        description: "Frameworks",
+        exclusive: true,
+        required: false,
+        order: 1,
+      },
+    } as Record<Subcategory, CategoryDefinition>);
 
     const result = validateSelection(["web-skill-a", "web-skill-b"], matrix);
     expect(result.valid).toBe(false);
@@ -420,20 +428,16 @@ describe("Empty skill selection (P1-21)", () => {
 
     it("should not flag category requirements for empty selection", () => {
       // Required categories only matter when skills are selected
-      const matrix = createMatrix(
-        {},
-        {},
-        {
-          framework: {
-            id: "framework",
-            name: "Framework",
-            description: "Required framework",
-            exclusive: true,
-            required: true,
-            order: 1,
-          },
-        } as Record<Subcategory, CategoryDefinition>,
-      );
+      const matrix = createMatrix({}, {}, {
+        framework: {
+          id: "framework",
+          displayName: "Framework",
+          description: "Required framework",
+          exclusive: true,
+          required: true,
+          order: 1,
+        },
+      } as Record<Subcategory, CategoryDefinition>);
 
       const result = validateSelection([], matrix);
 
@@ -498,10 +502,9 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
   describe("validateSelection catches conflicts", () => {
     it("should return error when conflicting skills are both selected", () => {
       const skillA = createSkill("web-skill-a", {
-        name: "Skill A",
         conflictsWith: [{ skillId: "web-skill-b", reason: "These cannot work together" }],
       });
-      const skillB = createSkill("web-skill-b", { name: "Skill B" });
+      const skillB = createSkill("web-skill-b", {});
       const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
       const result = validateSelection(["web-skill-a", "web-skill-b"], matrix);
@@ -509,7 +512,7 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0].type).toBe("conflict");
-      expect(result.errors[0].message).toContain("Skill A conflicts with Skill B");
+      expect(result.errors[0].message).toContain("web-skill-a conflicts with web-skill-b");
       expect(result.errors[0].message).toContain("These cannot work together");
       expect(result.errors[0].skills).toContain("web-skill-a");
       expect(result.errors[0].skills).toContain("web-skill-b");
@@ -517,14 +520,13 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
 
     it("should return multiple errors for multiple conflicts", () => {
       const skillA = createSkill("web-skill-a", {
-        name: "Skill A",
         conflictsWith: [
           { skillId: "web-skill-b", reason: "Conflicts with B" },
           { skillId: "web-skill-c", reason: "Conflicts with C" },
         ],
       });
-      const skillB = createSkill("web-skill-b", { name: "Skill B" });
-      const skillC = createSkill("web-skill-c", { name: "Skill C" });
+      const skillB = createSkill("web-skill-b", {});
+      const skillC = createSkill("web-skill-c", {});
       const matrix = createMatrix({
         "web-skill-a": skillA,
         "web-skill-b": skillB,
@@ -540,10 +542,9 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
     it("should catch conflicts when declaring skill comes first in selection", () => {
       // Conflict is declared on skill-a, which is first in selection
       const skillA = createSkill("web-skill-a", {
-        name: "Skill A",
         conflictsWith: [{ skillId: "web-skill-b", reason: "A conflicts with B" }],
       });
-      const skillB = createSkill("web-skill-b", { name: "Skill B" });
+      const skillB = createSkill("web-skill-b", {});
       const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
       // Order: skill-a first (has the conflict), skill-b second
@@ -559,10 +560,9 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
       // This is a limitation - the primary protection is isDisabled() which
       // checks bidirectionally and prevents invalid selections in the first place.
       const skillA = createSkill("web-skill-a", {
-        name: "Skill A",
         conflictsWith: [{ skillId: "web-skill-b", reason: "A conflicts with B" }],
       });
-      const skillB = createSkill("web-skill-b", { name: "Skill B" });
+      const skillB = createSkill("web-skill-b", {});
       const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
       // Order: skill-b first, skill-a second (conflict declared on later skill)
@@ -602,17 +602,16 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
 
     it("should provide correct disable reason for conflicts", () => {
       const skillA = createSkill("web-skill-a", {
-        name: "Skill A",
         conflictsWith: [{ skillId: "web-skill-b", reason: "Incompatible architectures" }],
       });
-      const skillB = createSkill("web-skill-b", { name: "Skill B" });
+      const skillB = createSkill("web-skill-b", {});
       const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
       const reason = getDisableReason("web-skill-a", ["web-skill-b"], matrix);
 
       expect(reason).toContain("Incompatible architectures");
       expect(reason).toContain("conflicts with");
-      expect(reason).toContain("Skill B");
+      expect(reason).toContain("web-skill-b");
     });
 
     it("should not disable non-conflicting skills", () => {
@@ -636,12 +635,10 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
   describe("non-expert mode auto-disables conflicting skills in getAvailableSkills", () => {
     it("should mark conflicting skill as disabled in available skills list", () => {
       const skillA = createSkill("web-skill-a", {
-        name: "Skill A",
         category: "framework",
         conflictsWith: [{ skillId: "web-skill-b", reason: "Different paradigms" }],
       });
       const skillB = createSkill("web-skill-b", {
-        name: "Skill B",
         category: "framework",
       });
       const matrix = createMatrix(
@@ -650,7 +647,7 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
         {
           framework: {
             id: "framework",
-            name: "Framework",
+            displayName: "Framework",
             description: "Frameworks",
             exclusive: false,
             required: false,
@@ -718,10 +715,9 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
     // Expert mode affects isDisabled (during selection), not validateSelection
     it("should still report conflict errors even if user selected them in expert mode", () => {
       const skillA = createSkill("web-skill-a", {
-        name: "Skill A",
         conflictsWith: [{ skillId: "web-skill-b", reason: "These conflict" }],
       });
-      const skillB = createSkill("web-skill-b", { name: "Skill B" });
+      const skillB = createSkill("web-skill-b", {});
       const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
       // User selected both in expert mode, but validateSelection still catches it
@@ -737,12 +733,10 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
   describe("expert mode in getAvailableSkills", () => {
     it("should NOT disable conflicting skill in available skills list with expert mode", () => {
       const skillA = createSkill("web-skill-a", {
-        name: "Skill A",
         category: "framework",
         conflictsWith: [{ skillId: "web-skill-b", reason: "Different paradigms" }],
       });
       const skillB = createSkill("web-skill-b", {
-        name: "Skill B",
         category: "framework",
       });
       const matrix = createMatrix(
@@ -751,7 +745,7 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
         {
           framework: {
             id: "framework",
-            name: "Framework",
+            displayName: "Framework",
             description: "Frameworks",
             exclusive: false,
             required: false,
@@ -772,11 +766,9 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
 
     it("should still show selection status correctly in expert mode", () => {
       const skillA = createSkill("web-skill-a", {
-        name: "Skill A",
         category: "framework",
       });
       const skillB = createSkill("web-skill-b", {
-        name: "Skill B",
         category: "framework",
       });
       const matrix = createMatrix(
@@ -785,7 +777,7 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
         {
           framework: {
             id: "framework",
-            name: "Framework",
+            displayName: "Framework",
             description: "Frameworks",
             exclusive: false,
             required: false,
@@ -807,17 +799,14 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
   describe("isCategoryAllDisabled respects expert mode", () => {
     it("should return disabled=false in expert mode even when all skills conflict", () => {
       const skillA = createSkill("web-skill-a", {
-        name: "Skill A",
         category: "styling",
         conflictsWith: [{ skillId: "web-skill-x", reason: "Conflicts with X" }],
       });
       const skillB = createSkill("web-skill-b", {
-        name: "Skill B",
         category: "styling",
         conflictsWith: [{ skillId: "web-skill-x", reason: "Conflicts with X" }],
       });
       const skillX = createSkill("web-skill-x", {
-        name: "Skill X",
         category: "framework",
       });
       const matrix = createMatrix(
@@ -826,7 +815,7 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
         {
           styling: {
             id: "styling",
-            name: "Styling",
+            displayName: "Styling",
             description: "Styling options",
             exclusive: false,
             required: false,
@@ -834,7 +823,7 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
           },
           framework: {
             id: "framework",
-            name: "Framework",
+            displayName: "Framework",
             description: "Frameworks",
             exclusive: false,
             required: false,
@@ -994,10 +983,9 @@ describe("Missing skill dependencies (P1-24)", () => {
   describe("validation result includes which dependencies are missing", () => {
     it("should include missing skill IDs in the error skills array", () => {
       const skillA = createSkill("web-skill-a", {
-        name: "Skill A",
         requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "Needs B" }],
       });
-      const skillB = createSkill("web-skill-b", { name: "Skill B" });
+      const skillB = createSkill("web-skill-b", {});
       const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
       const result = validateSelection(["web-skill-a"], matrix);
@@ -1007,21 +995,19 @@ describe("Missing skill dependencies (P1-24)", () => {
 
     it("should include skill name in error message", () => {
       const skillA = createSkill("web-skill-a", {
-        name: "My Custom Skill",
         requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "Needs B" }],
       });
-      const skillB = createSkill("web-skill-b", { name: "Required Skill" });
+      const skillB = createSkill("web-skill-b", {});
       const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
       const result = validateSelection(["web-skill-a"], matrix);
 
-      expect(result.errors[0].message).toContain("My Custom Skill");
-      expect(result.errors[0].message).toContain("Required Skill");
+      expect(result.errors[0].message).toContain("web-skill-a");
+      expect(result.errors[0].message).toContain("web-skill-b");
     });
 
     it("should include all missing skill names when multiple are missing", () => {
       const skillA = createSkill("web-skill-a", {
-        name: "Consumer Skill",
         requires: [
           {
             skillIds: ["web-skill-b", "web-skill-c"],
@@ -1030,8 +1016,8 @@ describe("Missing skill dependencies (P1-24)", () => {
           },
         ],
       });
-      const skillB = createSkill("web-skill-b", { name: "First Required" });
-      const skillC = createSkill("web-skill-c", { name: "Second Required" });
+      const skillB = createSkill("web-skill-b", {});
+      const skillC = createSkill("web-skill-c", {});
       const matrix = createMatrix({
         "web-skill-a": skillA,
         "web-skill-b": skillB,
@@ -1040,18 +1026,17 @@ describe("Missing skill dependencies (P1-24)", () => {
 
       const result = validateSelection(["web-skill-a"], matrix);
 
-      expect(result.errors[0].message).toContain("First Required");
-      expect(result.errors[0].message).toContain("Second Required");
+      expect(result.errors[0].message).toContain("web-skill-b");
+      expect(result.errors[0].message).toContain("web-skill-c");
     });
   });
 
   describe("recommendation system suggests adding required dependencies", () => {
     it("should issue warning when recommended skill is not selected", () => {
       const skillA = createSkill("web-skill-a", {
-        name: "TypeScript",
         recommends: [{ skillId: "web-skill-b", reason: "Better type safety" }],
       });
-      const skillB = createSkill("web-skill-b", { name: "ESLint" });
+      const skillB = createSkill("web-skill-b", {});
       const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
       const result = validateSelection(["web-skill-a"], matrix);
@@ -1059,8 +1044,8 @@ describe("Missing skill dependencies (P1-24)", () => {
       expect(result.valid).toBe(true); // Recommendations are warnings, not errors
       expect(result.warnings).toHaveLength(1);
       expect(result.warnings[0].type).toBe("missing_recommendation");
-      expect(result.warnings[0].message).toContain("TypeScript");
-      expect(result.warnings[0].message).toContain("ESLint");
+      expect(result.warnings[0].message).toContain("web-skill-a");
+      expect(result.warnings[0].message).toContain("web-skill-b");
       expect(result.warnings[0].message).toContain("Better type safety");
     });
 
@@ -1148,14 +1133,14 @@ describe("Missing skill dependencies (P1-24)", () => {
           },
         ],
       });
-      const skillB = createSkill("web-skill-b", { name: "React" });
+      const skillB = createSkill("web-skill-b", {});
       const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
       const reason = getDisableReason("web-skill-a", [], matrix);
 
       expect(reason).toContain("Framework required");
       expect(reason).toContain("requires");
-      expect(reason).toContain("React");
+      expect(reason).toContain("web-skill-b");
     });
 
     it("should list all missing required skills (AND logic)", () => {
@@ -1168,8 +1153,8 @@ describe("Missing skill dependencies (P1-24)", () => {
           },
         ],
       });
-      const skillB = createSkill("web-skill-b", { name: "React" });
-      const skillC = createSkill("web-skill-c", { name: "TypeScript" });
+      const skillB = createSkill("web-skill-b", {});
+      const skillC = createSkill("web-skill-c", {});
       const matrix = createMatrix({
         "web-skill-a": skillA,
         "web-skill-b": skillB,
@@ -1178,8 +1163,8 @@ describe("Missing skill dependencies (P1-24)", () => {
 
       const reason = getDisableReason("web-skill-a", [], matrix);
 
-      expect(reason).toContain("React");
-      expect(reason).toContain("TypeScript");
+      expect(reason).toContain("web-skill-b");
+      expect(reason).toContain("web-skill-c");
     });
 
     it("should explain OR requirement options", () => {
@@ -1192,8 +1177,8 @@ describe("Missing skill dependencies (P1-24)", () => {
           },
         ],
       });
-      const skillB = createSkill("web-skill-b", { name: "React" });
-      const skillC = createSkill("web-skill-c", { name: "Vue" });
+      const skillB = createSkill("web-skill-b", {});
+      const skillC = createSkill("web-skill-c", {});
       const matrix = createMatrix({
         "web-skill-a": skillA,
         "web-skill-b": skillB,

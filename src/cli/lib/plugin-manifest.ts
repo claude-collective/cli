@@ -3,21 +3,20 @@ import { ensureDir, writeFile } from "../utils/fs";
 import { DEFAULT_VERSION } from "../consts";
 import type { PluginManifest, PluginAuthor } from "../../types";
 
-const DEFAULT_LICENSE = "MIT";
 const PLUGIN_DIR_NAME = ".claude-plugin";
 const PLUGIN_MANIFEST_FILE = "plugin.json";
 const SKILL_PLUGIN_PREFIX = "skill-";
 
-export interface SkillManifestOptions {
+export type SkillManifestOptions = {
   skillName: string;
   description?: string;
   author?: string;
   authorEmail?: string;
   version?: string;
   keywords?: string[];
-}
+};
 
-export interface StackManifestOptions {
+export type StackManifestOptions = {
   stackName: string;
   description?: string;
   author?: string;
@@ -27,7 +26,7 @@ export interface StackManifestOptions {
   hasSkills?: boolean;
   hasAgents?: boolean;
   hasHooks?: boolean;
-}
+};
 
 function buildAuthor(name?: string, email?: string): PluginAuthor | undefined {
   if (!name) {
@@ -44,7 +43,6 @@ export function generateSkillPluginManifest(options: SkillManifestOptions): Plug
   const manifest: PluginManifest = {
     name: `${SKILL_PLUGIN_PREFIX}${options.skillName}`,
     version: options.version ?? DEFAULT_VERSION,
-    license: DEFAULT_LICENSE,
     skills: "./skills/",
   };
 
@@ -68,7 +66,6 @@ export function generateStackPluginManifest(options: StackManifestOptions): Plug
   const manifest: PluginManifest = {
     name: options.stackName,
     version: options.version ?? DEFAULT_VERSION,
-    license: DEFAULT_LICENSE,
   };
 
   if (options.hasSkills) {

@@ -4,11 +4,10 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   DEFAULT_SOURCE,
-  formatSourceOrigin,
-  formatAgentsSourceOrigin,
+  formatOrigin,
   getProjectConfigPath,
   isLocalSource,
-  loadProjectConfig,
+  loadProjectSourceConfig,
   resolveSource,
   resolveAgentsSource,
   saveProjectConfig,
@@ -104,27 +103,43 @@ describe("config", () => {
     });
   });
 
-  describe("formatSourceOrigin", () => {
-    it("should format flag origin", () => {
-      expect(formatSourceOrigin("flag")).toBe("--source flag");
+  describe("formatOrigin", () => {
+    it("should format source flag origin", () => {
+      expect(formatOrigin("source", "flag")).toBe("--source flag");
     });
 
-    it("should format env origin", () => {
-      expect(formatSourceOrigin("env")).toContain(SOURCE_ENV_VAR);
+    it("should format source env origin", () => {
+      expect(formatOrigin("source", "env")).toContain(SOURCE_ENV_VAR);
     });
 
-    it("should format project origin", () => {
-      expect(formatSourceOrigin("project")).toContain("project config");
+    it("should format source project origin", () => {
+      expect(formatOrigin("source", "project")).toContain("project config");
     });
 
-    it("should format default origin", () => {
-      expect(formatSourceOrigin("default")).toBe("default");
+    it("should format source default origin", () => {
+      expect(formatOrigin("source", "default")).toBe("default");
+    });
+
+    it("should format agents flag origin", () => {
+      expect(formatOrigin("agents", "flag")).toBe("--agent-source flag");
+    });
+
+    it("should format agents project origin", () => {
+      expect(formatOrigin("agents", "project")).toContain("project config");
+    });
+
+    it("should format agents default origin", () => {
+      expect(formatOrigin("agents", "default")).toBe("default (local CLI)");
+    });
+
+    it("should return same project label for both source and agents", () => {
+      expect(formatOrigin("source", "project")).toBe(formatOrigin("agents", "project"));
     });
   });
 
-  describe("loadProjectConfig", () => {
+  describe("loadProjectSourceConfig", () => {
     it("should return null if config file does not exist", async () => {
-      const config = await loadProjectConfig(tempDir);
+      const config = await loadProjectSourceConfig(tempDir);
       expect(config).toBeNull();
     });
 
@@ -134,7 +149,7 @@ describe("config", () => {
       await mkdir(configDir, { recursive: true });
       await writeFile(path.join(configDir, "config.yaml"), "source: github:mycompany/skills\n");
 
-      const config = await loadProjectConfig(tempDir);
+      const config = await loadProjectSourceConfig(tempDir);
       expect(config).toEqual({ source: "github:mycompany/skills" });
     });
 
@@ -144,7 +159,7 @@ describe("config", () => {
       await mkdir(configDir, { recursive: true });
       await writeFile(path.join(configDir, "config.yaml"), "source: github:legacy/skills\n");
 
-      const config = await loadProjectConfig(tempDir);
+      const config = await loadProjectSourceConfig(tempDir);
       expect(config).toEqual({ source: "github:legacy/skills" });
     });
 
@@ -153,7 +168,7 @@ describe("config", () => {
       await mkdir(configDir, { recursive: true });
       await writeFile(path.join(configDir, "config.yaml"), "invalid: yaml: content: :");
 
-      const config = await loadProjectConfig(tempDir);
+      const config = await loadProjectSourceConfig(tempDir);
       // Should return null or throw - implementation dependent
       // Current implementation catches errors and returns null
       expect(config).toBeNull();
@@ -167,7 +182,7 @@ describe("config", () => {
         "marketplace: https://custom-marketplace.io\n",
       );
 
-      const config = await loadProjectConfig(tempDir);
+      const config = await loadProjectSourceConfig(tempDir);
       expect(config?.marketplace).toBe("https://custom-marketplace.io");
     });
   });
@@ -333,20 +348,6 @@ describe("config", () => {
     });
   });
 
-  describe("formatAgentsSourceOrigin", () => {
-    it("should format flag origin", () => {
-      expect(formatAgentsSourceOrigin("flag")).toBe("--agent-source flag");
-    });
-
-    it("should format project origin", () => {
-      expect(formatAgentsSourceOrigin("project")).toContain("project config");
-    });
-
-    it("should format default origin", () => {
-      expect(formatAgentsSourceOrigin("default")).toBe("default (local CLI)");
-    });
-  });
-
   describe("resolveAgentsSource", () => {
     it("should return flag value with highest priority", async () => {
       // Create project config with agents_source
@@ -404,7 +405,7 @@ describe("config", () => {
     });
   });
 
-  describe("loadProjectConfig with agents_source", () => {
+  describe("loadProjectSourceConfig with agents_source", () => {
     it("should load agents_source from project config", async () => {
       const configDir = path.join(tempDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
@@ -413,7 +414,7 @@ describe("config", () => {
         "agents_source: https://my-company.com/agents\n",
       );
 
-      const config = await loadProjectConfig(tempDir);
+      const config = await loadProjectSourceConfig(tempDir);
       expect(config?.agents_source).toBe("https://my-company.com/agents");
     });
 
@@ -425,7 +426,7 @@ describe("config", () => {
         "source: github:myorg/skills\nmarketplace: https://market.example.com\nagents_source: https://agents.example.com\n",
       );
 
-      const config = await loadProjectConfig(tempDir);
+      const config = await loadProjectSourceConfig(tempDir);
       expect(config?.source).toBe("github:myorg/skills");
       expect(config?.marketplace).toBe("https://market.example.com");
       expect(config?.agents_source).toBe("https://agents.example.com");

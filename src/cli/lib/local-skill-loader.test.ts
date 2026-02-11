@@ -51,7 +51,6 @@ describe("local-skill-loader", () => {
       expect(result).not.toBeNull();
       expect(result?.skills).toHaveLength(1);
       expect(result?.skills[0].id).toBe("my-normal-skill (@local)");
-      expect(result?.skills[0].name).toBe("My Normal Skill @local");
       expect(result?.skills[0].category).toBe("local");
       expect(result?.skills[0].author).toBe("@local");
       expect(result?.skills[0].local).toBe(true);
@@ -204,7 +203,6 @@ describe("local-skill-loader", () => {
       // Identity
       expect(skill?.id).toBe("full-skill (@local)");
       expect(skill?.directoryPath).toBe("full-skill");
-      expect(skill?.name).toBe("Full Skill @local");
       expect(skill?.description).toBe("Complete skill for testing");
 
       // Catalog data

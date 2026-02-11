@@ -13,17 +13,17 @@ import { DEFAULT_VERSION } from "../consts";
 import type { PluginManifest, SkillFrontmatter, SkillMetadataConfig } from "../../types";
 import { skillMetadataConfigSchema, pluginManifestSchema } from "./schemas";
 
-export interface SkillPluginOptions {
+export type SkillPluginOptions = {
   skillPath: string;
   outputDir: string;
   skillName?: string;
-}
+};
 
-export interface CompiledSkillPlugin {
+export type CompiledSkillPlugin = {
   pluginPath: string;
   manifest: PluginManifest;
   skillName: string;
-}
+};
 
 const SKILL_FILES = ["SKILL.md", "reference.md"] as const;
 

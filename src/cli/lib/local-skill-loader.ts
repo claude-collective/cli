@@ -4,13 +4,13 @@ import { directoryExists, listDirectories, fileExists, readFile } from "../utils
 import { verbose, warn } from "../utils/logger";
 import { LOCAL_SKILLS_PATH } from "../consts";
 import { parseFrontmatter } from "./loader";
-import type { ExtractedSkillMetadata, CategoryPath, SkillRef } from "../types-matrix";
+import type { ExtractedSkillMetadata, CategoryPath, SkillId } from "../types-matrix";
 import { localRawMetadataSchema } from "./schemas";
 
 const LOCAL_CATEGORY: CategoryPath = "local";
 const LOCAL_AUTHOR = "@local";
 
-interface LocalRawMetadata {
+type LocalRawMetadata = {
   cli_name: string;
   cli_description?: string;
   /** Original skill category from source (e.g., "framework", "styling", "api") */
@@ -18,17 +18,17 @@ interface LocalRawMetadata {
   category_exclusive?: boolean;
   usage_guidance?: string;
   tags?: string[];
-  compatible_with?: SkillRef[];
-  conflicts_with?: SkillRef[];
-  requires?: SkillRef[];
-  requires_setup?: SkillRef[];
-  provides_setup_for?: SkillRef[];
-}
+  compatible_with?: SkillId[];
+  conflicts_with?: SkillId[];
+  requires?: SkillId[];
+  requires_setup?: SkillId[];
+  provides_setup_for?: SkillId[];
+};
 
-export interface LocalSkillDiscoveryResult {
+export type LocalSkillDiscoveryResult = {
   skills: ExtractedSkillMetadata[];
   localSkillsPath: string;
-}
+};
 
 export async function discoverLocalSkills(
   projectDir: string,
@@ -80,7 +80,9 @@ async function extractLocalSkill(
   const parsed = localRawMetadataSchema.safeParse(parseYaml(metadataContent));
 
   if (!parsed.success) {
-    verbose(`Skipping local skill '${skillDirName}': Invalid metadata.yaml — ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`);
+    verbose(
+      `Skipping local skill '${skillDirName}': Invalid metadata.yaml — ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
+    );
     return null;
   }
 
@@ -115,7 +117,6 @@ async function extractLocalSkill(
   const extracted: ExtractedSkillMetadata = {
     id: skillId,
     directoryPath: skillDirName,
-    name: `${metadata.cli_name} ${LOCAL_AUTHOR}`,
     description: metadata.cli_description || frontmatter.description,
     usageGuidance: metadata.usage_guidance,
     category,

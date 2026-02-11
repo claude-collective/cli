@@ -7,9 +7,8 @@ import { DIRS } from "../consts";
 import { parseFrontmatter } from "./loader";
 import {
   skillsMatrixConfigSchema,
-  skillRefSchema,
   categoryPathSchema,
-  skillAliasSchema,
+  skillDisplayNameSchema,
   skillIdSchema,
 } from "./schemas";
 import type {
@@ -22,8 +21,7 @@ import type {
   SkillRequirement,
   SkillAlternative,
   SkillId,
-  SkillAlias,
-  SkillRef,
+  SkillDisplayName,
 } from "../types-matrix";
 
 /** Zod schema for RawMetadata from individual skill metadata.yaml files */
@@ -36,11 +34,12 @@ const rawMetadataSchema = z.object({
   cli_description: z.string().optional(),
   usage_guidance: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  compatible_with: z.array(skillRefSchema).optional(),
-  conflicts_with: z.array(skillRefSchema).optional(),
-  requires: z.array(skillRefSchema).optional(),
-  requires_setup: z.array(skillRefSchema).optional(),
-  provides_setup_for: z.array(skillRefSchema).optional(),
+  // Lenient: accepts display names and skill IDs from YAML, resolved to canonical IDs during matrix merge
+  compatible_with: z.array(z.string() as z.ZodType<SkillId>).optional(),
+  conflicts_with: z.array(z.string() as z.ZodType<SkillId>).optional(),
+  requires: z.array(z.string() as z.ZodType<SkillId>).optional(),
+  requires_setup: z.array(z.string() as z.ZodType<SkillId>).optional(),
+  provides_setup_for: z.array(z.string() as z.ZodType<SkillId>).optional(),
 });
 
 type RawMetadata = z.infer<typeof rawMetadataSchema>;
@@ -79,7 +78,9 @@ export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkil
     const metadataResult = rawMetadataSchema.safeParse(rawMetadata);
 
     if (!metadataResult.success) {
-      verbose(`Skipping ${metadataFile}: Invalid metadata.yaml — ${metadataResult.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`);
+      verbose(
+        `Skipping ${metadataFile}: Invalid metadata.yaml — ${metadataResult.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
+      );
       continue;
     }
 
@@ -103,7 +104,6 @@ export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkil
     const extracted: ExtractedSkillMetadata = {
       id: skillId,
       directoryPath: skillDir,
-      name: metadata.cli_name,
       description: metadata.cli_description || frontmatter.description,
       usageGuidance: metadata.usage_guidance,
       category: metadata.category,
@@ -125,16 +125,16 @@ export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkil
   return skills;
 }
 
-function buildReverseAliases(
-  aliases: Partial<Record<SkillAlias, SkillId>>,
-): Partial<Record<SkillId, SkillAlias>> {
-  const reverse: Partial<Record<SkillId, SkillAlias>> = {};
+function buildReverseDisplayNames(
+  displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,
+): Partial<Record<SkillId, SkillDisplayName>> {
+  const reverse: Partial<Record<SkillId, SkillDisplayName>> = {};
   // Object.entries returns [string, SkillId | undefined][] — validate with Zod at boundary
-  for (const [alias, fullId] of Object.entries(aliases)) {
-    const aliasResult = skillAliasSchema.safeParse(alias);
+  for (const [name, fullId] of Object.entries(displayNameToId)) {
+    const nameResult = skillDisplayNameSchema.safeParse(name);
     const idResult = skillIdSchema.safeParse(fullId);
-    if (aliasResult.success && idResult.success) {
-      reverse[idResult.data] = aliasResult.data;
+    if (nameResult.success && idResult.success) {
+      reverse[idResult.data] = nameResult.data;
     }
   }
   return reverse;
@@ -149,7 +149,7 @@ function buildReverseAliases(
  * - Old alias targets that may still exist in metadata files
  */
 function buildAliasTargetToSkillIdMap(
-  aliases: Partial<Record<SkillAlias, SkillId>>,
+  displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,
   skills: ExtractedSkillMetadata[],
 ): Record<string, SkillId> {
   const map: Record<string, SkillId> = {};
@@ -172,7 +172,7 @@ function buildAliasTargetToSkillIdMap(
   }
 
   // Also include any old-style alias targets that might still be referenced
-  const aliasTargets = new Set(Object.values(aliases));
+  const aliasTargets = new Set(Object.values(displayNameToId));
   for (const skill of skills) {
     for (const aliasTarget of aliasTargets) {
       if (
@@ -198,54 +198,53 @@ function buildDirectoryPathToIdMap(skills: ExtractedSkillMetadata[]): Record<str
 }
 
 function resolveToCanonicalId(
-  aliasOrId: SkillRef,
-  aliases: Partial<Record<SkillAlias, SkillId>>,
+  nameOrId: SkillId,
+  displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,
   directoryPathToId: Record<string, SkillId> = {},
   aliasTargetToSkillId: Record<string, SkillId> = {},
   context?: string,
 ): SkillId {
-  // Partial<Record<SkillAlias, SkillId>> can't be indexed with SkillAlias | SkillId — narrow to SkillAlias for lookup
-  const aliasResult = aliases[aliasOrId as SkillAlias];
-  if (aliasResult) {
-    return aliasResult;
+  // Boundary cast: nameOrId may contain a display name from YAML — narrow to SkillDisplayName for lookup
+  const displayNameResult = displayNameToId[nameOrId as unknown as SkillDisplayName];
+  if (displayNameResult) {
+    return displayNameResult;
   }
-  if (directoryPathToId[aliasOrId]) {
-    return directoryPathToId[aliasOrId];
+  if (directoryPathToId[nameOrId]) {
+    return directoryPathToId[nameOrId];
   }
   // Handle "short author" format like "react (@vince)" that maps to full ID
-  if (aliasTargetToSkillId[aliasOrId]) {
-    return aliasTargetToSkillId[aliasOrId];
+  if (aliasTargetToSkillId[nameOrId]) {
+    return aliasTargetToSkillId[nameOrId];
   }
   if (context) {
-    verbose(`Unresolved ID '${aliasOrId}' in ${context} — passing through as-is`);
+    verbose(`Unresolved ID '${nameOrId}' in ${context} — passing through as-is`);
   }
-  // Not found in aliases — treat as SkillId pass-through
-  return aliasOrId as SkillId;
+  // Not found in display names — treat as SkillId pass-through
+  return nameOrId;
 }
 
 export async function mergeMatrixWithSkills(
   matrix: SkillsMatrixConfig,
   skills: ExtractedSkillMetadata[],
 ): Promise<MergedSkillsMatrix> {
-  const aliases = matrix.skill_aliases;
-  const aliasesReverse = buildReverseAliases(aliases);
+  const displayNameToId = matrix.skill_aliases;
+  const displayNames = buildReverseDisplayNames(displayNameToId);
   const directoryPathToId = buildDirectoryPathToIdMap(skills);
-  const aliasTargetToSkillId = buildAliasTargetToSkillIdMap(aliases, skills);
+  const aliasTargetToSkillId = buildAliasTargetToSkillIdMap(displayNameToId, skills);
   const resolvedSkills: Partial<Record<SkillId, ResolvedSkill>> = {};
 
   for (const skill of skills) {
     const resolved = buildResolvedSkill(
       skill,
       matrix,
-      aliases,
-      aliasesReverse,
+      displayNameToId,
+      displayNames,
       directoryPathToId,
       aliasTargetToSkillId,
     );
     resolvedSkills[skill.id] = resolved;
   }
 
-  computeInverseRelationships(resolvedSkills);
   const suggestedStacks = resolveSuggestedStacks();
 
   const merged: MergedSkillsMatrix = {
@@ -253,8 +252,8 @@ export async function mergeMatrixWithSkills(
     categories: matrix.categories,
     skills: resolvedSkills,
     suggestedStacks,
-    aliases,
-    aliasesReverse,
+    displayNameToId,
+    displayNames,
     generatedAt: new Date().toISOString(),
   };
 
@@ -264,8 +263,8 @@ export async function mergeMatrixWithSkills(
 function buildResolvedSkill(
   skill: ExtractedSkillMetadata,
   matrix: SkillsMatrixConfig,
-  aliases: Partial<Record<SkillAlias, SkillId>>,
-  aliasesReverse: Partial<Record<SkillId, SkillAlias>>,
+  displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,
+  displayNames: Partial<Record<SkillId, SkillDisplayName>>,
   directoryPathToId: Record<string, SkillId>,
   aliasTargetToSkillId: Record<string, SkillId>,
 ): ResolvedSkill {
@@ -277,10 +276,10 @@ function buildResolvedSkill(
 
   // Helper to resolve with all maps, with context for diagnostics.
   // All canonical IDs follow the SkillId format (prefix-subcategory-name).
-  const resolve = (id: SkillRef, relationContext?: string): SkillId =>
+  const resolve = (id: SkillId, relationContext?: string): SkillId =>
     resolveToCanonicalId(
       id,
-      aliases,
+      displayNameToId,
       directoryPathToId,
       aliasTargetToSkillId,
       relationContext ? `${skill.id} ${relationContext}` : undefined,
@@ -389,8 +388,7 @@ function buildResolvedSkill(
 
   return {
     id: skill.id,
-    alias: aliasesReverse[skill.id],
-    name: skill.name,
+    displayName: displayNames[skill.id],
     description: skill.description,
     usageGuidance: skill.usageGuidance,
     category: skill.category,
@@ -399,9 +397,7 @@ function buildResolvedSkill(
     author: skill.author,
     conflictsWith,
     recommends,
-    recommendedBy: [],
     requires,
-    requiredBy: [],
     alternatives,
     discourages,
     compatibleWith,
@@ -409,33 +405,6 @@ function buildResolvedSkill(
     providesSetupFor: skill.providesSetupFor.map((id) => resolve(id, "providesSetupFor")),
     path: skill.path,
   };
-}
-
-function computeInverseRelationships(skills: Partial<Record<SkillId, ResolvedSkill>>): void {
-  for (const skill of Object.values(skills)) {
-    if (!skill) continue;
-    for (const recommend of skill.recommends) {
-      const targetSkill = skills[recommend.skillId];
-      if (targetSkill) {
-        targetSkill.recommendedBy.push({
-          skillId: skill.id,
-          reason: recommend.reason,
-        });
-      }
-    }
-
-    for (const requirement of skill.requires) {
-      for (const requiredId of requirement.skillIds) {
-        const targetSkill = skills[requiredId];
-        if (targetSkill) {
-          targetSkill.requiredBy.push({
-            skillId: skill.id,
-            reason: requirement.reason,
-          });
-        }
-      }
-    }
-  }
 }
 
 function resolveSuggestedStacks(): ResolvedStack[] {

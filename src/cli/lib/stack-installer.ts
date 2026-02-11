@@ -7,22 +7,22 @@ import { verbose } from "../utils/logger";
 import type { CompiledStackPlugin } from "./stack-plugin-compiler";
 import type { AgentName, SkillId } from "../types-matrix";
 
-export interface StackInstallOptions {
+export type StackInstallOptions = {
   stackId: string;
   projectDir: string;
   sourcePath: string;
   agentSourcePath: string;
   marketplace?: string;
-}
+};
 
-export interface StackInstallResult {
+export type StackInstallResult = {
   pluginName: string;
   stackName: string;
   agents: AgentName[];
   skills: SkillId[];
   pluginPath: string;
   fromMarketplace: boolean;
-}
+};
 
 /**
  * Compile a stack to a temporary directory

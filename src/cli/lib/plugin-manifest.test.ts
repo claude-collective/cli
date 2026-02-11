@@ -115,14 +115,6 @@ describe("plugin-manifest", () => {
 
       expect(manifest.version).toBe("1.0.0");
     });
-
-    it("should include MIT license by default", () => {
-      const manifest = generateSkillPluginManifest({
-        skillName: "react",
-      });
-
-      expect(manifest.license).toBe("MIT");
-    });
   });
 
   // =============================================================================

@@ -5,8 +5,9 @@ import { readFile, fileExists } from "../utils/fs";
 import { verbose, warn } from "../utils/logger";
 import type { Stack, StacksConfig, StackAgentConfig } from "../types-stacks";
 import type { SkillReference } from "../types";
-import type { SkillId } from "../types-matrix";
+import type { SkillId, Subcategory } from "../types-matrix";
 import { stacksConfigSchema } from "./schemas";
+import { KEY_SUBCATEGORIES } from "../consts";
 
 const STACKS_FILE = "config/stacks.yaml";
 
@@ -68,43 +69,31 @@ export async function loadStackById(stackId: string, configDir: string): Promise
 }
 
 /**
- * Subcategories considered "key" skills that should be preloaded.
- * These are primary technology choices that define the stack's core.
- */
-const KEY_SUBCATEGORIES = new Set([
-  "framework",
-  "api",
-  "database",
-  "meta-framework",
-  "base-framework",
-  "platform",
-]);
-
-/**
  * Resolve a single agent's technology config to skill references.
- * Looks up each technology alias in skill_aliases to get full skill ID.
+ * Looks up each technology display name in the display name map to get full skill ID.
  *
- * @param agentConfig - The agent's technology selections (subcategory -> alias)
- * @param skillAliases - Mapping from technology aliases to full skill IDs
+ * @param agentConfig - The agent's technology selections (subcategory -> display name)
+ * @param displayNameToId - Mapping from technology display names to full skill IDs
  * @returns Array of SkillReference objects
  */
 export function resolveAgentConfigToSkills(
   agentConfig: StackAgentConfig,
-  skillAliases: Partial<Record<string, SkillId>>,
+  displayNameToId: Partial<Record<string, SkillId>>,
 ): SkillReference[] {
   const skillRefs: SkillReference[] = [];
 
-  for (const [subcategory, technologyAlias] of Object.entries(agentConfig)) {
-    const fullSkillId = skillAliases[technologyAlias];
+  for (const [subcategory, technologyDisplayName] of Object.entries(agentConfig)) {
+    const fullSkillId = displayNameToId[technologyDisplayName];
 
     if (!fullSkillId) {
       warn(
-        `No skill alias found for '${technologyAlias}' (subcategory: ${subcategory}) in stack config. Skipping.`,
+        `No skill found for display name '${technologyDisplayName}' (subcategory: ${subcategory}) in stack config. Skipping.`,
       );
       continue;
     }
 
-    const isKeySkill = KEY_SUBCATEGORIES.has(subcategory);
+    // Boundary cast: Object.entries() loses StackAgentConfig key type
+    const isKeySkill = KEY_SUBCATEGORIES.has(subcategory as Subcategory);
 
     skillRefs.push({
       id: fullSkillId,
@@ -118,10 +107,10 @@ export function resolveAgentConfigToSkills(
 
 /**
  * Resolve all agents in a stack to their skill references.
- * Takes a Stack and skill_aliases, returns a mapping of agent IDs to their resolved skills.
+ * Takes a Stack and display name map, returns a mapping of agent IDs to their resolved skills.
  *
  * @param stack - The stack definition with agent technology selections
- * @param skillAliases - Mapping from technology aliases to full skill IDs
+ * @param displayNameToId - Mapping from technology display names to full skill IDs
  * @returns Record mapping agent IDs to their SkillReference arrays
  *
  * @example
@@ -135,13 +124,13 @@ export function resolveAgentConfigToSkills(
  *   }
  * };
  *
- * const aliases = {
+ * const displayNameToId = {
  *   react: 'web-framework-react',
  *   hono: 'api-framework-hono',
  *   // ...
  * };
  *
- * const result = resolveStackSkillsFromAliases(stack, aliases);
+ * const result = resolveStackSkillsFromDisplayNames(stack, displayNameToId);
  * // Returns:
  * // {
  * //   'web-developer': [{ id: 'web-framework-react', usage: '...', preloaded: true }, ...],
@@ -149,12 +138,12 @@ export function resolveAgentConfigToSkills(
  * // }
  * ```
  */
-export function resolveStackSkillsFromAliases(
+export function resolveStackSkillsFromDisplayNames(
   stack: Stack,
-  skillAliases: Partial<Record<string, SkillId>>,
+  displayNameToId: Partial<Record<string, SkillId>>,
 ): Record<string, SkillReference[]> {
   const result = mapValues(stack.agents, (agentConfig) =>
-    resolveAgentConfigToSkills(agentConfig, skillAliases),
+    resolveAgentConfigToSkills(agentConfig, displayNameToId),
   );
 
   verbose(`Resolved skills for ${Object.keys(result).length} agents in stack '${stack.id}'`);

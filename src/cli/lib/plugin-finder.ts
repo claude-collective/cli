@@ -64,23 +64,19 @@ export async function getPluginSkillIds(
   const skillFiles = await glob("**/SKILL.md", pluginSkillsDir);
   const skillIds: SkillId[] = [];
 
+  // Build alias-to-id and id-based lookups
   // Boundary cast: Object.entries(matrix.skills) returns [string, ResolvedSkill][] but keys are SkillId
-  const nameToId = new Map<string, SkillId>();
+  const aliasToId = new Map<string, SkillId>();
   for (const [id, skill] of Object.entries(matrix.skills)) {
     if (!skill) continue;
-    nameToId.set(skill.name.toLowerCase(), id as SkillId);
-    if (skill.alias) {
-      nameToId.set(skill.alias.toLowerCase(), id as SkillId);
+    if (skill.displayName) {
+      aliasToId.set(skill.displayName.toLowerCase(), id as SkillId);
     }
   }
 
   // Boundary cast: Object.entries(matrix.skills) returns [string, ResolvedSkill][] but keys are SkillId
   const dirToId = new Map<string, SkillId>();
-  for (const [id, skill] of Object.entries(matrix.skills)) {
-    if (!skill) continue;
-    const baseName = skill.name.toLowerCase().replace(/\s+/g, "-");
-    dirToId.set(baseName, id as SkillId);
-
+  for (const [id] of Object.entries(matrix.skills)) {
     const idParts = id.split("/");
     const lastPart = idParts[idParts.length - 1];
     if (lastPart) {
@@ -98,7 +94,12 @@ export async function getPluginSkillIds(
       const nameMatch = frontmatter.match(/^name:\s*["']?(.+?)["']?\s*$/m);
       if (nameMatch) {
         const skillName = nameMatch[1].trim();
-        const skillId = nameToId.get(skillName.toLowerCase());
+        // Try direct match as skill ID first, then alias lookup
+        if (matrix.skills[skillName as SkillId]) {
+          skillIds.push(skillName as SkillId);
+          continue;
+        }
+        const skillId = aliasToId.get(skillName.toLowerCase());
         if (skillId) {
           skillIds.push(skillId);
           continue;

@@ -12,22 +12,20 @@ import type {
   AgentConfig,
   CompiledAgentData,
 } from "../types";
-import type { AgentName, SkillAlias, SkillId, Subcategory } from "../types-matrix";
+import type { AgentName, SkillDisplayName, SkillId, Subcategory } from "../types-matrix";
 import type { StackAgentConfig } from "../types-stacks";
 
 describe("resolveSkillReference", () => {
   const mockSkills: Record<string, SkillDefinition> = {
     ["web-framework-react"]: {
       path: `skills/web/framework/${"web-framework-react"}/`,
-      name: "React",
       description: "React component patterns",
-      canonicalId: "web-framework-react",
+      id: "web-framework-react",
     },
     ["api-framework-hono"]: {
       path: `skills/api/api/${"api-framework-hono"}/`,
-      name: "Hono",
       description: "Hono API framework",
-      canonicalId: "api-framework-hono",
+      id: "api-framework-hono",
     },
   };
 
@@ -43,7 +41,6 @@ describe("resolveSkillReference", () => {
     expect(result).toEqual({
       id: "web-framework-react",
       path: `skills/web/framework/${"web-framework-react"}/`,
-      name: "React",
       description: "React component patterns",
       usage: "when building React components",
       preloaded: true,
@@ -77,15 +74,13 @@ describe("resolveSkillReferences", () => {
   const mockSkills: Record<string, SkillDefinition> = {
     ["web-framework-react"]: {
       path: `skills/web/framework/${"web-framework-react"}/`,
-      name: "React",
       description: "React component patterns",
-      canonicalId: "web-framework-react",
+      id: "web-framework-react",
     },
     ["web-state-zustand"]: {
       path: `skills/web/client-state-management/${"web-state-zustand"}/`,
-      name: "Zustand",
       description: "Lightweight state management",
-      canonicalId: "web-state-zustand",
+      id: "web-state-zustand",
     },
   };
 
@@ -122,7 +117,6 @@ describe("stackToCompileConfig", () => {
     expect(result).toEqual({
       name: "Test Stack",
       description: "A test stack",
-      claude_md: "",
       stack: "test-stack",
       agents: {
         "web-developer": {},
@@ -145,7 +139,7 @@ describe("stackToCompileConfig", () => {
   it("should use empty string for missing description", () => {
     const config: ProjectConfig = {
       name: "No Description",
-      agents: ["test-agent"],
+      agents: ["test-agent" as AgentName],
     };
 
     const result = stackToCompileConfig("no-desc", config);
@@ -222,7 +216,6 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
     return {
       id,
       path: `skills/${id}/`,
-      name: id.replace(/ \(@.*\)$/, ""),
       description: `${id} skill description`,
       usage,
       preloaded,
@@ -517,12 +510,12 @@ describe("resolveAgentSkillsFromStack", () => {
       },
     };
 
-    const skillAliases: Record<string, string> = {
+    const displayNameToId: Record<string, string> = {
       react: "web-framework-react",
       "scss-modules": "web-styling-scss-modules",
     };
 
-    const result = resolveAgentSkillsFromStack("web-developer", stack, skillAliases);
+    const result = resolveAgentSkillsFromStack("web-developer", stack, displayNameToId);
 
     expect(result).toHaveLength(2);
     expect(result.find((s) => s.id === "web-framework-react")).toBeDefined();
@@ -541,11 +534,11 @@ describe("resolveAgentSkillsFromStack", () => {
       },
     };
 
-    const skillAliases: Record<string, string> = {
+    const displayNameToId: Record<string, string> = {
       react: "web-framework-react",
     };
 
-    const result = resolveAgentSkillsFromStack("web-developer", stack, skillAliases);
+    const result = resolveAgentSkillsFromStack("web-developer", stack, displayNameToId);
 
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("web-framework-react");
@@ -564,11 +557,11 @@ describe("resolveAgentSkillsFromStack", () => {
       },
     };
 
-    const skillAliases: Record<string, string> = {
+    const displayNameToId: Record<string, string> = {
       "scss-modules": "web-styling-scss-modules",
     };
 
-    const result = resolveAgentSkillsFromStack("web-developer", stack, skillAliases);
+    const result = resolveAgentSkillsFromStack("web-developer", stack, displayNameToId);
 
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("web-styling-scss-modules");
@@ -585,11 +578,11 @@ describe("resolveAgentSkillsFromStack", () => {
       },
     };
 
-    const skillAliases: Record<string, string> = {
+    const displayNameToId: Record<string, string> = {
       hono: "api-framework-hono",
     };
 
-    const result = resolveAgentSkillsFromStack("web-developer", stack, skillAliases);
+    const result = resolveAgentSkillsFromStack("web-developer", stack, displayNameToId);
 
     expect(result).toEqual([]);
   });
@@ -604,9 +597,9 @@ describe("resolveAgentSkillsFromStack", () => {
       },
     };
 
-    const skillAliases: Record<string, string> = {};
+    const displayNameToId: Record<string, string> = {};
 
-    const result = resolveAgentSkillsFromStack("web-developer", stack, skillAliases);
+    const result = resolveAgentSkillsFromStack("web-developer", stack, displayNameToId);
 
     expect(result).toEqual([]);
   });
@@ -619,17 +612,17 @@ describe("resolveAgentSkillsFromStack", () => {
       agents: {
         "web-developer": {
           framework: "react",
-          styling: "unknown-style-lib" as SkillAlias,
+          styling: "unknown-style-lib" as SkillDisplayName,
         },
       },
     };
 
-    const skillAliases: Record<string, string> = {
+    const displayNameToId: Record<string, string> = {
       react: "web-framework-react",
       // "unknown-style-lib" is NOT in aliases
     };
 
-    const result = resolveAgentSkillsFromStack("web-developer", stack, skillAliases);
+    const result = resolveAgentSkillsFromStack("web-developer", stack, displayNameToId);
 
     // Should only include the resolved skill, not the unknown one
     expect(result).toHaveLength(1);
@@ -638,29 +631,8 @@ describe("resolveAgentSkillsFromStack", () => {
 });
 
 describe("getAgentSkills", () => {
-  const mockSkillDefinitions: Record<string, SkillDefinition> = {
-    ["web-framework-react"]: {
-      path: "skills/web/framework/react/",
-      name: "React",
-      description: "React framework",
-      canonicalId: "web-framework-react",
-    },
-    ["web-styling-scss-modules"]: {
-      path: "skills/web/styling/scss-modules/",
-      name: "SCSS Modules",
-      description: "SCSS Modules styling",
-      canonicalId: "web-styling-scss-modules",
-    },
-  };
-
-  it("should return skills from stack when stack and skillAliases provided", async () => {
+  it("should return skills from stack when stack and displayNameToId provided", async () => {
     const agentConfig: CompileAgentConfig = {};
-    const compileConfig: CompileConfig = {
-      name: "test",
-      description: "test",
-      claude_md: "",
-      agents: { "web-developer": {} },
-    };
 
     const stack: Stack = {
       id: "test-stack",
@@ -673,19 +645,11 @@ describe("getAgentSkills", () => {
       },
     };
 
-    const skillAliases: Record<string, string> = {
+    const displayNameToId: Record<string, string> = {
       react: "web-framework-react",
     };
 
-    const result = await getAgentSkills(
-      "web-developer",
-      agentConfig,
-      compileConfig,
-      mockSkillDefinitions,
-      "/test/path",
-      stack,
-      skillAliases,
-    );
+    const result = await getAgentSkills("web-developer", agentConfig, stack, displayNameToId);
 
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("web-framework-react");
@@ -702,12 +666,6 @@ describe("getAgentSkills", () => {
         },
       ],
     };
-    const compileConfig: CompileConfig = {
-      name: "test",
-      description: "test",
-      claude_md: "",
-      agents: { "web-developer": agentConfig },
-    };
 
     const stack: Stack = {
       id: "test-stack",
@@ -720,49 +678,32 @@ describe("getAgentSkills", () => {
       },
     };
 
-    const skillAliases: Record<string, string> = {
+    const displayNameToId: Record<string, string> = {
       react: "web-framework-react",
     };
 
-    const result = await getAgentSkills(
-      "web-developer",
-      agentConfig,
-      compileConfig,
-      mockSkillDefinitions,
-      "/test/path",
-      stack,
-      skillAliases,
-    );
+    const result = await getAgentSkills("web-developer", agentConfig, stack, displayNameToId);
 
     // Should use explicit skills, not stack skills
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("web-styling-scss-modules");
   });
 
-  it("should return empty array when no stack or skillAliases provided", async () => {
+  it("should return empty array when no stack or displayNameToId provided", async () => {
     const agentConfig: CompileAgentConfig = {};
-    const compileConfig: CompileConfig = {
-      name: "test",
-      description: "test",
-      claude_md: "",
-      agents: { "web-developer": {} },
-    };
 
     const result = await getAgentSkills(
       "web-developer",
       agentConfig,
-      compileConfig,
-      mockSkillDefinitions,
-      "/test/path",
       undefined, // no stack
-      undefined, // no skillAliases
+      undefined, // no displayNameToId
     );
 
     expect(result).toEqual([]);
   });
 });
 
-describe("resolveAgents with stack and skillAliases", () => {
+describe("resolveAgents with stack and displayNameToId", () => {
   const mockAgentDefinitions: Record<string, AgentDefinition> = {
     "web-developer": {
       title: "Web Developer",
@@ -783,27 +724,23 @@ describe("resolveAgents with stack and skillAliases", () => {
   const mockSkillDefinitions: Record<string, SkillDefinition> = {
     ["web-framework-react"]: {
       path: "skills/web/framework/react/",
-      name: "React",
       description: "React framework",
-      canonicalId: "web-framework-react",
+      id: "web-framework-react",
     },
     ["web-styling-scss-modules"]: {
       path: "skills/web/styling/scss-modules/",
-      name: "SCSS Modules",
       description: "SCSS Modules styling",
-      canonicalId: "web-styling-scss-modules",
+      id: "web-styling-scss-modules",
     },
     ["api-framework-hono"]: {
       path: "skills/api/api/hono/",
-      name: "Hono",
       description: "Hono API framework",
-      canonicalId: "api-framework-hono",
+      id: "api-framework-hono",
     },
     ["api-database-drizzle"]: {
       path: "skills/api/database/drizzle/",
-      name: "Drizzle",
       description: "Drizzle ORM",
-      canonicalId: "api-database-drizzle",
+      id: "api-database-drizzle",
     },
   };
 
@@ -811,7 +748,6 @@ describe("resolveAgents with stack and skillAliases", () => {
     const compileConfig: CompileConfig = {
       name: "Test Plugin",
       description: "Test description",
-      claude_md: "",
       agents: {
         "web-developer": {},
         "api-developer": {},
@@ -834,7 +770,7 @@ describe("resolveAgents with stack and skillAliases", () => {
       },
     };
 
-    const skillAliases: Record<string, string> = {
+    const displayNameToId: Record<string, string> = {
       react: "web-framework-react",
       "scss-modules": "web-styling-scss-modules",
       hono: "api-framework-hono",
@@ -847,7 +783,7 @@ describe("resolveAgents with stack and skillAliases", () => {
       compileConfig,
       "/test/path",
       stack,
-      skillAliases,
+      displayNameToId,
     );
 
     // Check web-developer has correct skills
@@ -885,11 +821,10 @@ describe("resolveAgents with stack and skillAliases", () => {
     expect(drizzleSkill?.preloaded).toBe(true);
   });
 
-  it("should return agents without skills when stack/skillAliases not provided", async () => {
+  it("should return agents without skills when stack/displayNameToId not provided", async () => {
     const compileConfig: CompileConfig = {
       name: "Test Plugin",
       description: "Test description",
-      claude_md: "",
       agents: {
         "web-developer": {},
       },
@@ -900,7 +835,7 @@ describe("resolveAgents with stack and skillAliases", () => {
       mockSkillDefinitions,
       compileConfig,
       "/test/path",
-      // NOT passing stack and skillAliases
+      // NOT passing stack and displayNameToId
     );
 
     expect(result["web-developer"]).toBeDefined();
@@ -911,7 +846,6 @@ describe("resolveAgents with stack and skillAliases", () => {
     const compileConfig: CompileConfig = {
       name: "Test Plugin",
       description: "Test description",
-      claude_md: "",
       agents: {
         "web-developer": {},
         "api-developer": {},
@@ -930,7 +864,7 @@ describe("resolveAgents with stack and skillAliases", () => {
       },
     };
 
-    const skillAliases: Record<string, string> = {
+    const displayNameToId: Record<string, string> = {
       react: "web-framework-react",
     };
 
@@ -940,7 +874,7 @@ describe("resolveAgents with stack and skillAliases", () => {
       compileConfig,
       "/test/path",
       stack,
-      skillAliases,
+      displayNameToId,
     );
 
     // web-developer should have skills from stack

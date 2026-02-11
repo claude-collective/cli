@@ -12,13 +12,13 @@ import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../consts";
 
 export type InstallMode = "local" | "plugin";
 
-export interface Installation {
+export type Installation = {
   mode: InstallMode;
   configPath: string;
   agentsDir: string;
   skillsDir: string;
   projectDir: string;
-}
+};
 
 /**
  * Detect the current installation mode by checking for local config first.

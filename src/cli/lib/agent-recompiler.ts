@@ -2,39 +2,38 @@ import path from "path";
 import { glob, writeFile, ensureDir, readFile, fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import { loadAllAgents, loadPluginSkills, loadProjectAgents } from "./loader";
-import { resolveAgents, resolveStackSkills } from "./resolver";
+import { resolveAgents } from "./resolver";
 import { compileAgentForPlugin } from "./stack-plugin-compiler";
 import { getPluginAgentsDir } from "./plugin-finder";
 import { createLiquidEngine } from "./compiler";
 import { loadProjectConfig, type LoadedProjectConfig } from "./project-config";
-import { resolveCustomAgents, validateCustomAgentIds } from "./custom-agent-resolver";
 import { parse as parseYaml } from "yaml";
 import { projectConfigLoaderSchema } from "./schemas";
 import type {
+  AgentConfig,
   CompileConfig,
   CompileAgentConfig,
-  SkillReference,
   SkillDefinition,
   ProjectConfig,
   AgentDefinition,
 } from "../../types";
 import type { AgentName } from "../types-matrix";
-import { typedKeys } from "../utils/typed-object";
+import { typedEntries, typedKeys } from "../utils/typed-object";
 
-export interface RecompileAgentsOptions {
+export type RecompileAgentsOptions = {
   pluginDir: string;
   sourcePath: string;
-  agents?: string[];
+  agents?: AgentName[];
   skills?: Record<string, SkillDefinition>;
   projectDir?: string;
   outputDir?: string;
-}
+};
 
-export interface RecompileAgentsResult {
+export type RecompileAgentsResult = {
   compiled: AgentName[];
   failed: AgentName[];
   warnings: string[];
-}
+};
 
 async function getExistingAgentNames(pluginDir: string): Promise<AgentName[]> {
   const agentsDir = getPluginAgentsDir(pluginDir);
@@ -66,7 +65,6 @@ async function loadConfigWithFallback(pluginDir: string): Promise<LoadedProjectC
           // required field validation happens in validateProjectConfig()
           config: result.data as ProjectConfig,
           configPath: legacyConfigPath,
-          isLegacy: false,
         };
       } else {
         verbose(`Invalid config.yaml at ${legacyConfigPath}: ${result.error.message}`);
@@ -112,41 +110,19 @@ export async function recompileAgents(
   // Load project agents from .claude-src/agents/ (if projectDir provided)
   const projectAgents = projectDir ? await loadProjectAgents(projectDir) : {};
 
-  // Resolve custom agents and merge with built-in agents
-  // Priority: custom_agents > project agents > built-in agents
-  let allAgents: Record<string, AgentDefinition> = {
+  // Merge built-in agents with project agents
+  // Priority: project agents > built-in agents
+  // Boundary cast: loadAllAgents returns Record<string, AgentDefinition>, agent dirs are AgentName by convention
+  const allAgents = {
     ...builtinAgents,
     ...projectAgents,
-  };
-  if (projectConfig?.custom_agents) {
-    // Validate custom agent IDs don't conflict with built-in agents
-    const idConflicts = validateCustomAgentIds(projectConfig.custom_agents, builtinAgents);
-    if (idConflicts.length > 0) {
-      for (const error of idConflicts) {
-        result.warnings.push(error);
-      }
-    }
-
-    // Resolve custom agents to AgentDefinition
-    try {
-      const resolvedCustomAgents = resolveCustomAgents(projectConfig.custom_agents, builtinAgents);
-      // Merge: custom agents can override built-in if same name (though we warn above)
-      allAgents = { ...builtinAgents, ...resolvedCustomAgents };
-      verbose(`Resolved ${Object.keys(resolvedCustomAgents).length} custom agents`);
-    } catch (error) {
-      result.warnings.push(
-        `Failed to resolve custom agents: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
+  } as Record<AgentName, AgentDefinition>;
 
   let agentNames: AgentName[];
   if (specifiedAgents) {
-    // Boundary cast: user-specified agent names from CLI options
-    agentNames = specifiedAgents as AgentName[];
+    agentNames = specifiedAgents;
   } else if (projectConfig?.agents) {
-    // Boundary cast: agent names from config.yaml
-    agentNames = projectConfig.agents as AgentName[];
+    agentNames = projectConfig.agents;
     verbose(`Using agents from config.yaml: ${agentNames.join(", ")}`);
   } else if (outputDir) {
     agentNames = typedKeys<AgentName>(allAgents);
@@ -164,41 +140,10 @@ export async function recompileAgents(
 
   const pluginSkills = providedSkills ?? (await loadPluginSkills(pluginDir));
 
-  const compileAgents: Record<string, CompileAgentConfig> = {};
+  const compileAgents = {} as Record<AgentName, CompileAgentConfig>;
   for (const agentName of agentNames) {
     if (allAgents[agentName]) {
-      // Check if this is a custom agent with its own skills defined
-      const customAgentConfig = projectConfig?.custom_agents?.[agentName];
-      if (customAgentConfig?.skills && customAgentConfig.skills.length > 0) {
-        // Custom agent has explicit skills defined
-        const skillRefs: SkillReference[] = customAgentConfig.skills.map((s) => ({
-          id: typeof s === "string" ? s : s.id,
-          usage: `when working with ${(typeof s === "string" ? s : s.id).split(" ")[0]}`,
-          preloaded: (typeof s === "object" && "preloaded" in s && s.preloaded) ?? false,
-        }));
-        compileAgents[agentName] = { skills: skillRefs };
-        verbose(`  Agent ${agentName}: ${skillRefs.length} skills from custom_agents`);
-      } else if (projectConfig?.agent_skills?.[agentName]) {
-        const skillRefs = resolveStackSkills(projectConfig, agentName, pluginSkills);
-        compileAgents[agentName] = { skills: skillRefs };
-        verbose(`  Agent ${agentName}: ${skillRefs.length} skills from config`);
-      } else if (projectConfig?.skills) {
-        // Fall back to all skills in the config
-        const skillRefs: SkillReference[] = projectConfig.skills.map((s) => {
-          const id = typeof s === "string" ? s : s.id;
-          const preloaded =
-            typeof s === "object" && "preloaded" in s ? (s.preloaded ?? false) : false;
-          return {
-            id,
-            usage: `when working with ${id.split(" ")[0]}`,
-            preloaded,
-          };
-        });
-        compileAgents[agentName] = { skills: skillRefs };
-        verbose(`  Agent ${agentName}: ${skillRefs.length} skills (all)`);
-      } else {
-        compileAgents[agentName] = {};
-      }
+      compileAgents[agentName] = {};
     } else {
       result.warnings.push(`Agent "${agentName}" not found in source definitions`);
     }
@@ -207,7 +152,6 @@ export async function recompileAgents(
   const compileConfig: CompileConfig = {
     name: projectConfig?.name || path.basename(pluginDir),
     description: projectConfig?.description || "Recompiled plugin",
-    claude_md: "",
     agents: compileAgents,
   };
 
@@ -217,9 +161,7 @@ export async function recompileAgents(
   const agentsDir = outputDir ?? getPluginAgentsDir(pluginDir);
   await ensureDir(agentsDir);
 
-  for (const [name, agent] of Object.entries(resolvedAgents)) {
-    // Boundary cast: Object.entries keys are string, resolved agents keyed by AgentName
-    const agentName = name as AgentName;
+  for (const [agentName, agent] of typedEntries<AgentName, AgentConfig>(resolvedAgents)) {
     try {
       const output = await compileAgentForPlugin(agentName, agent, sourcePath, engine);
       await writeFile(path.join(agentsDir, `${agentName}.md`), output);

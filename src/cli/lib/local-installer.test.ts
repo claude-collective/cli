@@ -67,7 +67,6 @@ vi.mock("./stacks-loader", () => ({
 
 vi.mock("./resolver", () => ({
   resolveAgents: vi.fn().mockResolvedValue({}),
-  resolveStackSkills: vi.fn().mockReturnValue([]),
   resolveAgentSkillsFromStack: vi.fn().mockReturnValue([]),
 }));
 

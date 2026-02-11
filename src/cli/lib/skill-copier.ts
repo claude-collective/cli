@@ -5,13 +5,13 @@ import type { MergedSkillsMatrix, ResolvedSkill, SkillId } from "../types-matrix
 import type { SourceLoadResult } from "./source-loader";
 import { injectForkedFromMetadata } from "./skill-metadata";
 
-export interface CopiedSkill {
+export type CopiedSkill = {
   skillId: SkillId;
   contentHash: string;
   sourcePath: string;
   destPath: string;
   local?: boolean;
-}
+};
 
 function getSkillSourcePath(skill: ResolvedSkill, registryRoot: string): string {
   return path.join(registryRoot, "src", skill.path);

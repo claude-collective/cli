@@ -13,15 +13,15 @@ import { loadProjectConfig } from "./project-config";
 
 const DEFAULT_NAME = "claude-collective";
 
-export interface PluginInfo {
+export type PluginInfo = {
   name: string;
   version: string;
   skillCount: number;
   agentCount: number;
   path: string;
-}
+};
 
-export interface InstallationInfo {
+export type InstallationInfo = {
   mode: InstallMode;
   name: string;
   version: string;
@@ -30,7 +30,7 @@ export interface InstallationInfo {
   configPath: string;
   agentsDir: string;
   skillsDir: string;
-}
+};
 
 export async function getPluginInfo(): Promise<PluginInfo | null> {
   const pluginDir = getCollectivePluginDir();

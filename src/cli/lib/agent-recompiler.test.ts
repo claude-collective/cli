@@ -4,6 +4,7 @@ import { mkdir, writeFile, readFile, readdir } from "fs/promises";
 import { recompileAgents } from "./agent-recompiler";
 import { createTestDirs, cleanupTestDirs, writeTestSkill, fileExists } from "./__tests__/helpers";
 import type { TestDirs } from "./__tests__/helpers";
+import type { AgentName } from "../types-matrix";
 
 // Path to CLI repo (agents, templates live here)
 // Skills repo (claude-subagents) only contains skills and stacks
@@ -59,7 +60,7 @@ describe("agent-recompiler", () => {
       const result = await recompileAgents({
         pluginDir: testDirs.pluginDir,
         sourcePath: CLI_REPO_PATH,
-        agents: ["non-existent-agent-xyz"],
+        agents: ["non-existent-agent-xyz" as AgentName],
       });
 
       expect(result.compiled).toEqual([]);
@@ -69,7 +70,7 @@ describe("agent-recompiler", () => {
     });
 
     it.skip("uses config.yaml agent list when present", async () => {
-      // Create a config.yaml with specific agents (no agent_skills to avoid skill resolution)
+      // Create a config.yaml with specific agents
       const configContent = `
 name: test-plugin
 version: 1.0.0
@@ -123,7 +124,7 @@ agents:
           name: "custom-skill",
           description: "Custom skill",
           path: "custom-skill/",
-          canonicalId: "web-custom-skill" as import("../types-matrix").SkillId,
+          id: "web-custom-skill" as import("../types-matrix").SkillId,
         },
       };
 

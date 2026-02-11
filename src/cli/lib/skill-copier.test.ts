@@ -18,7 +18,6 @@ function createMockSkill(
   overrides?: Partial<ResolvedSkill>,
 ): ResolvedSkill {
   return _createMockSkill(id, category, {
-    name: id.replace(/ \(@.*\)$/, ""),
     path: skillPath,
     ...overrides,
   });
@@ -287,7 +286,7 @@ describe("skill-copier", () => {
           "web/state",
           remoteSkillRelPath,
           {
-            alias: "zustand",
+            displayName: "zustand",
           },
         ),
       });
@@ -446,7 +445,7 @@ describe("skill-copier", () => {
           "web-framework-react",
           "web/framework",
           remoteSkillRelPath,
-          { alias: "react" },
+          { displayName: "react" },
         ),
       });
 
@@ -613,14 +612,14 @@ describe("skill-copier", () => {
           "web/framework",
           reactPath,
           {
-            alias: "react",
+            displayName: "react",
           },
         ),
         ["api-framework-hono"]: createMockSkill("api-framework-hono", "api/api", honoPath, {
-          alias: "hono",
+          displayName: "hono",
         }),
         ["web-testing-vitest"]: createMockSkill("web-testing-vitest", "testing", vitestPath, {
-          alias: "vitest",
+          displayName: "vitest",
         }),
       });
 

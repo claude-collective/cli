@@ -4,9 +4,9 @@ import { verbose } from "../utils/logger";
 import type { Marketplace, MarketplacePlugin } from "../../types";
 import type { SkillId } from "../types-matrix";
 
-export interface FetchSkillsOptions {
+export type FetchSkillsOptions = {
   forceRefresh?: boolean;
-}
+};
 
 function resolvePluginSource(plugin: MarketplacePlugin, _marketplace: Marketplace): string {
   if (typeof plugin.source === "object" && plugin.source.url) {

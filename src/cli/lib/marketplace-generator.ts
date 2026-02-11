@@ -32,14 +32,14 @@ const CATEGORY_PATTERNS: Array<{ pattern: RegExp; category: string }> = [
   { pattern: /^skill-security-/, category: "security" },
 ];
 
-export interface MarketplaceOptions {
+export type MarketplaceOptions = {
   name: string;
   version?: string;
   description?: string;
   ownerName: string;
   ownerEmail?: string;
   pluginRoot: string;
-}
+};
 
 function inferCategory(pluginName: string): string | undefined {
   for (const { pattern, category } of CATEGORY_PATTERNS) {

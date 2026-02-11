@@ -1,18 +1,18 @@
 import { difference } from "remeda";
 import type { ProjectConfig } from "../../types";
-import { loadProjectConfig as loadFullProjectConfig } from "./project-config";
-import { loadProjectConfig } from "./config";
+import { loadProjectConfig } from "./project-config";
+import { loadProjectSourceConfig } from "./config";
 
-export interface MergeContext {
+export type MergeContext = {
   projectDir: string;
-}
+};
 
-export interface MergeResult {
+export type MergeResult = {
   config: ProjectConfig;
   merged: boolean;
   /** Path to the existing config that was merged with, if any */
   existingConfigPath?: string;
-}
+};
 
 /**
  * Merge a newly generated ProjectConfig with any existing project config.
@@ -36,7 +36,7 @@ export async function mergeWithExistingConfig(
   // Clone to avoid mutating the input
   const localConfig = { ...newConfig };
 
-  const existingFullConfig = await loadFullProjectConfig(context.projectDir);
+  const existingFullConfig = await loadProjectConfig(context.projectDir);
   if (existingFullConfig) {
     const existingConfig = existingFullConfig.config;
 
@@ -53,18 +53,6 @@ export async function mergeWithExistingConfig(
     // Keep existing source if present (don't overwrite user's source)
     if (existingConfig.source) {
       localConfig.source = existingConfig.source;
-    }
-
-    // Merge skills arrays (union of existing + new)
-    if (existingConfig.skills && existingConfig.skills.length > 0) {
-      const existingSkillIds = new Set(
-        existingConfig.skills.map((s) => (typeof s === "string" ? s : s.id)),
-      );
-      const newSkillIds =
-        localConfig.skills?.filter(
-          (s) => !existingSkillIds.has(typeof s === "string" ? s : s.id),
-        ) || [];
-      localConfig.skills = [...existingConfig.skills, ...newSkillIds];
     }
 
     // Merge agents arrays (union of existing + new)
@@ -97,32 +85,6 @@ export async function mergeWithExistingConfig(
       localConfig.marketplace = existingConfig.marketplace;
     }
 
-    // Keep other existing fields
-    if (existingConfig.philosophy) {
-      localConfig.philosophy = existingConfig.philosophy;
-    }
-    if (existingConfig.framework) {
-      localConfig.framework = existingConfig.framework;
-    }
-    if (existingConfig.principles) {
-      localConfig.principles = existingConfig.principles;
-    }
-    if (existingConfig.tags) {
-      localConfig.tags = existingConfig.tags;
-    }
-    if (existingConfig.agent_skills) {
-      localConfig.agent_skills = existingConfig.agent_skills;
-    }
-    if (existingConfig.preload_patterns) {
-      localConfig.preload_patterns = existingConfig.preload_patterns;
-    }
-    if (existingConfig.custom_agents) {
-      localConfig.custom_agents = existingConfig.custom_agents;
-    }
-    if (existingConfig.hooks) {
-      localConfig.hooks = existingConfig.hooks;
-    }
-
     return {
       config: localConfig,
       merged: true,
@@ -130,8 +92,8 @@ export async function mergeWithExistingConfig(
     };
   }
 
-  // No existing full config, try simple project config for author/agents_source
-  const existingProjectConfig = await loadProjectConfig(context.projectDir);
+  // No existing full config, try simple project source config for author/agents_source
+  const existingProjectConfig = await loadProjectSourceConfig(context.projectDir);
   if (existingProjectConfig?.author) {
     localConfig.author = existingProjectConfig.author;
   }

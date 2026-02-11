@@ -1,11 +1,18 @@
 import { warn } from "../utils/logger";
-import type { MergedSkillsMatrix, Subcategory } from "../types-matrix";
+import type {
+  MergedSkillsMatrix,
+  ResolvedSkill,
+  SkillId,
+  Subcategory,
+  CategoryDefinition,
+} from "../types-matrix";
+import { typedEntries, typedKeys } from "../utils/typed-object";
 
-export interface MatrixHealthIssue {
+export type MatrixHealthIssue = {
   severity: "warning" | "error";
   finding: string;
   details: string;
-}
+};
 
 /**
  * Validate referential integrity of a merged skills matrix.
@@ -21,7 +28,7 @@ export interface MatrixHealthIssue {
  */
 export function checkMatrixHealth(matrix: MergedSkillsMatrix): MatrixHealthIssue[] {
   const issues: MatrixHealthIssue[] = [];
-  const skillIds = new Set(Object.keys(matrix.skills));
+  const skillIds = new Set(typedKeys<SkillId>(matrix.skills));
 
   checkRelationshipTargets(matrix, skillIds, issues);
   checkSubcategoryDomains(matrix, issues);
@@ -41,10 +48,10 @@ export function checkMatrixHealth(matrix: MergedSkillsMatrix): MatrixHealthIssue
  */
 function checkRelationshipTargets(
   matrix: MergedSkillsMatrix,
-  skillIds: Set<string>,
+  skillIds: Set<SkillId>,
   issues: MatrixHealthIssue[],
 ): void {
-  for (const [skillId, skill] of Object.entries(matrix.skills)) {
+  for (const [skillId, skill] of typedEntries<SkillId, ResolvedSkill>(matrix.skills)) {
     if (!skill) continue;
     for (const conflict of skill.conflictsWith) {
       if (!skillIds.has(conflict.skillId)) {
@@ -125,7 +132,7 @@ function checkRelationshipTargets(
  * Categories without a domain won't appear in any wizard domain view.
  */
 function checkSubcategoryDomains(matrix: MergedSkillsMatrix, issues: MatrixHealthIssue[]): void {
-  for (const [catId, cat] of Object.entries(matrix.categories)) {
+  for (const [catId, cat] of typedEntries<Subcategory, CategoryDefinition>(matrix.categories)) {
     if (!cat) continue;
     if (!cat.domain) {
       issues.push({
@@ -141,7 +148,7 @@ function checkSubcategoryDomains(matrix: MergedSkillsMatrix, issues: MatrixHealt
  * Check that all skills reference categories that exist in the matrix.
  */
 function checkSkillCategories(matrix: MergedSkillsMatrix, issues: MatrixHealthIssue[]): void {
-  for (const [skillId, skill] of Object.entries(matrix.skills)) {
+  for (const [skillId, skill] of typedEntries<SkillId, ResolvedSkill>(matrix.skills)) {
     if (!skill) continue;
     // Narrowing cast: skill.category is CategoryPath which includes Subcategory | "local" | prefixed forms
     if (!matrix.categories[skill.category as Subcategory]) {
@@ -159,10 +166,10 @@ function checkSkillCategories(matrix: MergedSkillsMatrix, issues: MatrixHealthIs
  */
 function checkCompatibleWithTargets(
   matrix: MergedSkillsMatrix,
-  skillIds: Set<string>,
+  skillIds: Set<SkillId>,
   issues: MatrixHealthIssue[],
 ): void {
-  for (const [skillId, skill] of Object.entries(matrix.skills)) {
+  for (const [skillId, skill] of typedEntries<SkillId, ResolvedSkill>(matrix.skills)) {
     if (!skill) continue;
     for (const compatId of skill.compatibleWith) {
       if (!skillIds.has(compatId)) {
@@ -181,7 +188,7 @@ function checkCompatibleWithTargets(
  */
 function checkStackSkillIds(
   matrix: MergedSkillsMatrix,
-  skillIds: Set<string>,
+  skillIds: Set<SkillId>,
   issues: MatrixHealthIssue[],
 ): void {
   for (const stack of matrix.suggestedStacks) {

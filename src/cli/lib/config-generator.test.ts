@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { generateProjectConfigFromSkills, buildStackProperty } from "./config-generator";
 import type { Stack, StackAgentConfig } from "../types-stacks";
-import type { AgentName, SkillAlias, SkillId } from "../types-matrix";
+import type { AgentName, SkillDisplayName, SkillId } from "../types-matrix";
 import { createMockSkill, createMockMatrix } from "./__tests__/helpers";
 
 describe("config-generator", () => {
   describe("generateProjectConfigFromSkills", () => {
-    it("returns a minimal ProjectConfig structure", () => {
+    it("returns a minimal ProjectConfig structure with stack", () => {
       const matrix = createMockMatrix({
         ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
       });
@@ -16,28 +16,36 @@ describe("config-generator", () => {
       expect(config.name).toBe("my-project");
       expect(config.agents).toBeDefined();
       expect(config.agents.length).toBeGreaterThan(0);
-      expect(config.skills).toEqual(["web-framework-react"]);
+      // Stack should contain agent->subcategory->skillId mappings
+      expect(config.stack).toBeDefined();
+      expect(
+        Object.values(config.stack!).some((agent) => agent.framework === "web-framework-react"),
+      ).toBe(true);
       // Should NOT have these fields by default
       expect(config.version).toBeUndefined();
       expect(config.author).toBeUndefined();
       expect(config.description).toBeUndefined();
-      expect(config.agent_skills).toBeUndefined();
-      expect(config.preload_patterns).toBeUndefined();
     });
 
-    it("uses string format for remote skills (minimal)", () => {
+    it("builds stack with subcategory->skillId mappings for multiple skills", () => {
       const matrix = createMockMatrix({
         ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
-        ["web-state-zustand"]: createMockSkill("web-state-zustand", "web/state"),
+        ["web-styling-scss-modules"]: createMockSkill("web-styling-scss-modules", "web/styling"),
       });
 
       const config = generateProjectConfigFromSkills(
         "my-project",
-        ["web-framework-react", "web-state-zustand"],
+        ["web-framework-react", "web-styling-scss-modules"],
         matrix,
       );
 
-      expect(config.skills).toEqual(["web-framework-react", "web-state-zustand"]);
+      // Stack should have agent entries with subcategory mappings
+      expect(config.stack).toBeDefined();
+      // web-developer should have both framework and styling subcategories
+      const webDev = config.stack!["web-developer"];
+      expect(webDev).toBeDefined();
+      expect(webDev.framework).toBe("web-framework-react");
+      expect(webDev.styling).toBe("web-styling-scss-modules");
     });
 
     it("derives agents from skills via getAgentsForSkill", () => {
@@ -59,10 +67,10 @@ describe("config-generator", () => {
 
       expect(config.name).toBe("my-project");
       expect(config.agents).toEqual([]);
-      expect(config.skills).toBeUndefined(); // No skills = undefined (minimal)
+      expect(config.stack).toBeUndefined(); // No skills = no stack
     });
 
-    it("includes local skills with proper path entries", () => {
+    it("skips local skills in stack (no subcategory)", () => {
       const matrix = createMockMatrix({
         "web-local-skill": createMockSkill("web-local-skill", "local", {
           local: true,
@@ -72,15 +80,18 @@ describe("config-generator", () => {
 
       const config = generateProjectConfigFromSkills("my-project", ["web-local-skill"], matrix);
 
-      expect(config.skills).toHaveLength(1);
-      expect(config.skills![0]).toEqual({
-        id: "web-local-skill",
-        local: true,
-        path: ".claude/skills/my-local-skill/",
-      });
+      // Local skills have category "local" which has no subcategory
+      // They still derive agents, but don't appear in stack subcategory mappings
+      expect(config.agents.length).toBeGreaterThan(0);
+      // Stack entries should not contain any "local" subcategory
+      if (config.stack) {
+        for (const agentConfig of Object.values(config.stack)) {
+          expect(agentConfig).not.toHaveProperty("local");
+        }
+      }
     });
 
-    it("mixes remote (string) and local (object) skills correctly", () => {
+    it("handles both remote and local skills", () => {
       const matrix = createMockMatrix({
         ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
         "meta-company-patterns": createMockSkill("meta-company-patterns", "local", {
@@ -95,15 +106,11 @@ describe("config-generator", () => {
         matrix,
       );
 
-      expect(config.skills).toHaveLength(2);
-      // Remote skill should be string
-      expect(config.skills![0]).toBe("web-framework-react");
-      // Local skill should be object
-      expect(config.skills![1]).toEqual({
-        id: "meta-company-patterns",
-        local: true,
-        path: ".claude/skills/company-patterns/",
-      });
+      // Stack should have framework mapping from remote skill
+      expect(config.stack).toBeDefined();
+      expect(
+        Object.values(config.stack!).some((agent) => agent.framework === "web-framework-react"),
+      ).toBe(true);
     });
 
     it("includes optional fields when provided", () => {
@@ -117,55 +124,12 @@ describe("config-generator", () => {
         matrix,
         {
           description: "My awesome project",
-          framework: "nextjs",
           author: "@vince",
         },
       );
 
       expect(config.description).toBe("My awesome project");
-      expect(config.framework).toBe("nextjs");
       expect(config.author).toBe("@vince");
-    });
-
-    it("includes agent_skills when includeAgentSkills is true", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
-      });
-
-      const config = generateProjectConfigFromSkills(
-        "my-project",
-        ["web-framework-react"],
-        matrix,
-        {
-          includeAgentSkills: true,
-        },
-      );
-
-      expect(config.agent_skills).toBeDefined();
-      // web-developer should have react skill
-      expect(config.agent_skills!["web-developer"]).toBeDefined();
-    });
-
-    it("agent_skills uses simple list format with preloaded flags", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
-      });
-
-      const config = generateProjectConfigFromSkills(
-        "my-project",
-        ["web-framework-react"],
-        matrix,
-        {
-          includeAgentSkills: true,
-        },
-      );
-
-      const webDevSkills = config.agent_skills!["web-developer"];
-      expect(Array.isArray(webDevSkills)).toBe(true);
-
-      // Skills should be in simple list format (string or {id, preloaded})
-      const skillsList = webDevSkills as (string | { id: string; preloaded?: boolean })[];
-      expect(skillsList.length).toBeGreaterThan(0);
     });
 
     it("skips unknown skills gracefully", () => {
@@ -179,8 +143,11 @@ describe("config-generator", () => {
         matrix,
       );
 
-      // Only react should be in skills
-      expect(config.skills).toEqual(["web-framework-react", "web-unknown-skill"]);
+      // Stack should only contain known skills
+      expect(config.stack).toBeDefined();
+      expect(
+        Object.values(config.stack!).some((agent) => agent.framework === "web-framework-react"),
+      ).toBe(true);
       // But agents should only be derived from known skills
       expect(config.agents.length).toBeGreaterThan(0);
     });
@@ -205,14 +172,14 @@ describe("config-generator", () => {
       };
 
       // Boundary cast: test literals to proper union types
-      const skillAliases = {
+      const displayNameToId = {
         react: "web-framework-react",
         "scss-modules": "web-styling-scss-modules",
         hono: "api-framework-hono",
         drizzle: "api-database-drizzle",
-      } as Partial<Record<SkillAlias, SkillId>>;
+      } as Partial<Record<SkillDisplayName, SkillId>>;
 
-      const result = buildStackProperty(stack, skillAliases);
+      const result = buildStackProperty(stack, displayNameToId);
 
       expect(result).toEqual({
         "web-developer": {
@@ -241,11 +208,11 @@ describe("config-generator", () => {
       };
 
       // Boundary cast: test literals to proper union types
-      const skillAliases = {
+      const displayNameToId = {
         react: "web-framework-react",
-      } as Partial<Record<SkillAlias, SkillId>>;
+      } as Partial<Record<SkillDisplayName, SkillId>>;
 
-      const result = buildStackProperty(stack, skillAliases);
+      const result = buildStackProperty(stack, displayNameToId);
 
       expect(result).toEqual({
         "web-developer": {
@@ -256,7 +223,7 @@ describe("config-generator", () => {
       expect(result["web-pm"]).toBeUndefined();
     });
 
-    it("uses alias as-is when not found in skillAliases", () => {
+    it("uses display name as-is when not found in displayNameToId", () => {
       const stack: Stack = {
         id: "test-stack",
         name: "Test Stack",
@@ -270,11 +237,11 @@ describe("config-generator", () => {
       };
 
       // Boundary cast: test literals to proper union types
-      const skillAliases = {
+      const displayNameToId = {
         react: "web-framework-react",
-      } as Partial<Record<SkillAlias, SkillId>>;
+      } as Partial<Record<SkillDisplayName, SkillId>>;
 
-      const result = buildStackProperty(stack, skillAliases);
+      const result = buildStackProperty(stack, displayNameToId);
 
       expect(result).toEqual({
         "web-developer": {
