@@ -538,19 +538,19 @@ For the full audit with every field decision, see the [TypeScript Types Bible](.
 
 ## Phase 7: Type Narrowing (COMPLETE)
 
-37 tasks completed. See [TODO-type-narrowing.md](./TODO-type-narrowing.md) for original scope.
+39 tasks completed. See [TODO-type-narrowing.md](./TODO-type-narrowing.md) for deferred items and notes.
 
 **Summary:**
 
-- T1-T28, T30-T31, T33-T37 completed
-- T29 deferred (co-locate type definitions)
-- T32 in progress (testing gaps)
-- 0 type errors, 1288 tests passing
+- T1-T37 all completed
+- 0 type errors, 1344 tests passing (68 test files, 34 skipped)
 - All `interface` → `type`, dead fields removed, agent types composed from shared base
 - `SkillEntry` union eliminated, `stack` is single source of truth for skill assignment
 - `SkillAlias` renamed to `SkillDisplayName`, `SkillRef` removed
 - Zod schemas at all parse boundaries
 - Remeda utilities across 20+ files
+- Types co-located into `src/cli/types/` (6 domain files + barrel index)
+- Testing gaps filled: 19 untested lib files covered, user journey tests, error paths, shared fixtures
 
 ### Completed Tasks
 
@@ -582,10 +582,43 @@ T25: Consolidate duplicate format functions in `config.ts`
 T26: Eliminate `SkillRef` and rename `SkillAlias` to display name
 T27: Rename `name` → `displayName` across non-skill types
 T28: Frontend cleanup — dead props, state, and code
+T29: Co-locate type definitions into `src/cli/types/` directory
 T30: Fix `string` arrays that should be `SkillId[]` (Remeda type inference)
 T31: Remove redundant test code (~2,100+ lines)
+T32: Fill testing gaps and reorganize test structure (Parts A-G)
 T33: Narrow `ProjectConfig.agents` from `string[]` to `AgentName[]`
 T34: Narrow `getAgentsForSkill()` return type to `AgentName[]`
 T35: Replace remaining `Object.entries`/`Object.keys` and narrow `Record<string, X>` keys
 T36: Harden all parse boundaries — throw or warn on every failure
 T37: Fix stack property ignoring user customizations + subcategory key mismatch
+
+### T29: Co-locate type definitions [DONE]
+
+Consolidated 4 scattered type files into `src/cli/types/` with 6 domain files + barrel index:
+
+- `skills.ts` — SkillId, SkillIdPrefix, SkillDisplayName, CategoryPath, SkillDefinition, etc.
+- `agents.ts` — AgentName, AgentDefinition, AgentConfig, AgentFrontmatter, etc.
+- `config.ts` — ProjectConfig, CompileConfig, CompileContext, ValidationResult
+- `matrix.ts` — Domain, Subcategory, CategoryDefinition, MergedSkillsMatrix, etc.
+- `stacks.ts` — Stack, StacksConfig, StackAgentConfig
+- `plugins.ts` — PluginManifest, Marketplace, MarketplaceFetchResult, etc.
+- `index.ts` — barrel re-export (`export type *`)
+
+Old files deleted: `src/types.ts`, `src/cli/types.ts`, `src/cli/types-matrix.ts`, `src/cli/types-stacks.ts`.
+60+ import paths updated across entire codebase.
+
+### T32: Fill testing gaps and reorganize test structure [DONE]
+
+**Part A:** Reorganized test file locations — component tests co-located, integration tests in `lib/__tests__/integration/`.
+
+**Part B:** Filled testing gaps — 19 previously untested lib files now have coverage (P1-P3 priority tiers).
+
+**Part C:** Added user journey tests — 71 tests across 4 files (compile-flow, edit-recompile, install-compile, config-precedence).
+
+**Part D:** Error path coverage — 12 error path tests added to `loader.test.ts`.
+
+**Part E:** Command test coverage — deferred (thin wrappers over well-tested lib functions).
+
+**Part F:** Removed external repo dependency from `compilation-pipeline.test.ts` — rewrote 17 tests using `createTestSource()` fixture.
+
+**Part G:** Consolidated hardcoded test fixtures into shared helpers — `createMockCategory`, `createMockResolvedStack`, `createComprehensiveMatrix`, `createBasicMatrix`.
