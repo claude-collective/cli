@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.0] - 2026-02-11
+
+### Changed
+
+- **Type system rewrite** — All `interface` declarations replaced with `type` aliases. `Skill` now extends `SkillDefinition` via intersection. Agent types composed from `BaseAgentFields` shared base. Inline `//` comments converted to JSDoc on type fields.
+- **`SkillAlias` renamed to `SkillDisplayName`** — `ResolvedSkill.alias` → `displayName`, `CategoryDefinition.name` → `displayName`. `SkillRef` union eliminated — all post-resolution sites use `SkillId` directly.
+- **`stack` is the single source of truth for skill assignment** — `skills` flat list, `agent_skills` per-agent overrides, and `preload_patterns` removed from `ProjectConfig`. When no predefined stack is selected, a stack is auto-generated from wizard selections.
+- **Config always uses `SkillAssignment` objects** — `SkillEntry` union (`string | SkillAssignment`) eliminated. Config YAML `skills` entries are always `{ id }` objects.
+- **`ProjectConfig.agents` narrowed** from `string[]` to `AgentName[]`. `getAgentsForSkill()` return type narrowed to `AgentName[]`.
+- **Remaining `Object.entries`/`Object.keys` replaced** with `typedEntries`/`typedKeys` across all files. `Record<string, X>` narrowed to `Record<SkillId|AgentName|Subcategory, X>` where keys are known.
+- **`loadProjectConfig` renamed** to `loadProjectSourceConfig` in `config.ts` to disambiguate from `project-config.ts` version.
+- **Format functions consolidated** — `formatSourceOrigin`/`formatAgentsSourceOrigin` merged into `formatOrigin(type, origin)`.
+- **`KEY_SUBCATEGORIES` deduplicated** — moved from `resolver.ts` and `stacks-loader.ts` into `consts.ts`.
+
+### Removed
+
+- **`name` field** from `SkillDefinition`, `Skill`, `ResolvedSkill`, `SkillOption` — `displayName` (formerly alias) replaces it. `extractDisplayName()` removed from `loader.ts`.
+- **`custom_agents` infrastructure** — `custom-agent-resolver.ts` deleted entirely. `CustomAgentConfig` type, validation, resolution, and compilation code paths removed.
+- **`agent_skills` config mechanism** — redundant with `stack`. All read/write/validation paths removed.
+- **`preload_patterns` config field** — redundant with `SkillAssignment.preloaded`.
+- **Dead `ProjectConfig` fields** — `philosophy`, `principles`, `tags`, `framework`, `hooks`.
+- **Dead `SkillFrontmatter` fields** — `agent`, `argument-hint`, `context`, `disable-model-invocation`, `user-invocable`, `allowed-tools`.
+- **Dead `PluginManifest` fields** — `homepage`, `license`, `repository`, `mcpServers`.
+- **`ResolvedSkill.recommendedBy` and `requiredBy`** — unused inverse relationship fields.
+- **`MarketplaceFetchResult.cacheKey`** — set but never read.
+- **`CompileConfig.claude_md`** — always empty string.
+- **`CompileMode` type and `getDirs()` function** — single-value enum.
+- **`LoadedProjectConfig.isLegacy`** — always `false`.
+- **`AgentYamlConfig.skills`** — parsed but never read.
+- **Dead `skill-agent-mappings.ts` code** — ~170 lines of hardcoded fallbacks, `shouldPreloadSkill`, `extractCategoryKey`, `hasAgentSkillsOverride`, `isSkillAssignedToAgent`, `normalizeAgentSkills`, `resolveAgentsForSkill`.
+- **Dead `resolver.ts` functions** — `resolveStackSkills`, `getStackSkillIds`, `flattenAgentSkills`, `expandSkillIdIfDirectory`, `normalizeSkillEntry`, unused interfaces.
+- **Unused `compileAllAgents()` `_config` parameter**.
+- **Dead wizard store actions/state** — `setDomainSelection`, `setSkillSource`, `setCurrentRefineIndex`, `setCurrentDomainIndex`, `toggleShowDescriptions`, `setFocus`, `currentRefineIndex`, `skillSources`.
+- **Dead wizard component code** — `shouldShowSubcategory()` (always true), unused props, redundant computations.
+- **~2,100 lines of redundant test code** for deleted features.
+
 ## [0.23.0] - 2026-02-10
 
 ### Added
