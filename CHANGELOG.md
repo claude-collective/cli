@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.1] - 2026-02-11
+
+### Fixed
+
+- **Stack config now respects user customizations** — `buildLocalConfig` generates stack config from the user's actual skill selections instead of hardcoding the original stack definition. Customizations like swapping `commander` for `oclif` are now preserved.
+- **Subcategory key `cli` corrected to `cli-framework`** in `stacks.yaml` to match the `CategoryPath` format used in production metadata files.
+- **Parse boundaries hardened** — All YAML/JSON parse boundaries now warn or throw with context on failure: `parseFrontmatter` includes file path in warnings, `loadAllAgents`/`loadProjectAgents` catch and warn on invalid `agent.yaml`, `config-saver` uses Zod validation, `versioning` wraps `parseYaml` in try/catch, `matrix-loader` warns on invalid skill alias mappings.
+
+### Changed
+
+- **Test structure reorganized** — Component tests co-located with source files. Integration tests grouped in `lib/__tests__/integration/`. Compilation pipeline tests rewritten to use `createTestSource()` instead of external repo dependency.
+- **Shared test factories added** — `createMockCategory()`, `createMockResolvedStack()`, `createComprehensiveMatrix()`, `createBasicMatrix()` in `helpers.ts` reduce ~300 lines of duplicate fixture code.
+- **17 previously untested lib files now have unit tests** — compiler, matrix-loader, stacks-loader, defaults-loader, config-saver, skill-plugin-compiler, plugin-info, plugin-finder, plugin-version, output-validator, schema-validator, installation, skill-fetcher, agent-fetcher, skill-metadata, matrix-health-check, stack-installer.
+- **Error path and user journey test coverage expanded** — 12 error path tests for loader functions, 8 edit-recompile journey tests, 17 install-compile journey tests.
+
 ## [0.24.0] - 2026-02-11
 
 ### Changed
