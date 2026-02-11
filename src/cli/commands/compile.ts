@@ -70,10 +70,9 @@ async function loadSkillsFromDir(
       const canonicalId = skillName as SkillId;
 
       const skill: SkillDefinition = {
+        id: canonicalId,
         path: pathPrefix ? `${pathPrefix}/${relativePath}/` : `${relativePath}/`,
-        name: skillName,
         description: (metadata.description as string) || "",
-        canonicalId,
       };
 
       skills[canonicalId] = skill;
@@ -262,8 +261,10 @@ export default class Compile extends BaseCommand {
         if (configResult.success) {
           const config = configResult.data as ProjectConfig;
           const agentCount = config.agents?.length ?? 0;
-          const configSkillCount = config.skills?.length ?? 0;
-          this.log(`Using config.yaml (${agentCount} agents, ${configSkillCount} skills)`);
+          const stackSkillCount = config.stack
+            ? new Set(Object.values(config.stack).flatMap((a) => Object.values(a))).size
+            : 0;
+          this.log(`Using config.yaml (${agentCount} agents, ${stackSkillCount} skills)`);
           verbose(`  Config: ${configPath}`);
         } else {
           this.warn("config.yaml found but has invalid structure - using defaults");

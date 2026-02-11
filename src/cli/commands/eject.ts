@@ -10,7 +10,7 @@ import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/source
 import { copySkillsToLocalFlattened } from "../lib/skill-copier.js";
 import type { SkillId } from "../types-matrix.js";
 import { typedKeys } from "../utils/typed-object.js";
-import { loadProjectConfig, resolveSource } from "../lib/config.js";
+import { loadProjectSourceConfig, resolveSource } from "../lib/config.js";
 import { saveSourceToProjectConfig } from "../lib/config-saver.js";
 
 const EJECT_TYPES = ["agent-partials", "skills", "all"] as const;
@@ -186,7 +186,7 @@ export default class Eject extends BaseCommand {
     }
 
     // Load project config to get author and agents_source
-    const existingProjectConfig = await loadProjectConfig(projectDir);
+    const existingProjectConfig = await loadProjectSourceConfig(projectDir);
     if (existingProjectConfig?.author) {
       config.author = existingProjectConfig.author;
     }

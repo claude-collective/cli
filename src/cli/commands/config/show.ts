@@ -2,10 +2,9 @@ import { BaseCommand } from "../../base-command.js";
 import {
   resolveSource,
   resolveAgentsSource,
-  loadProjectConfig,
+  loadProjectSourceConfig,
   getProjectConfigPath,
-  formatSourceOrigin,
-  formatAgentsSourceOrigin,
+  formatOrigin,
   DEFAULT_SOURCE,
   SOURCE_ENV_VAR,
 } from "../../lib/config.js";
@@ -30,7 +29,7 @@ export default class ConfigShow extends BaseCommand {
 
     this.log("Source:");
     this.log(`  ${resolved.source}`);
-    this.log(`  (from ${formatSourceOrigin(resolved.sourceOrigin)})`);
+    this.log(`  (from ${formatOrigin("source", resolved.sourceOrigin)})`);
     this.log("");
 
     this.log("Marketplace:");
@@ -45,7 +44,7 @@ export default class ConfigShow extends BaseCommand {
     this.log("Agents Source:");
     if (agentsResolved.agentsSource) {
       this.log(`  ${agentsResolved.agentsSource}`);
-      this.log(`  (from ${formatAgentsSourceOrigin(agentsResolved.agentsSourceOrigin)})`);
+      this.log(`  (from ${formatOrigin("agents", agentsResolved.agentsSourceOrigin)})`);
     } else {
       this.log(`  (not configured - using local CLI)`);
     }
@@ -62,7 +61,7 @@ export default class ConfigShow extends BaseCommand {
       this.log(`     (not set)`);
     }
 
-    const projectConfig = await loadProjectConfig(projectDir);
+    const projectConfig = await loadProjectSourceConfig(projectDir);
     const projectConfigPath = getProjectConfigPath(projectDir);
     this.log(`  2. Project config:`);
     this.log(`     ${projectConfigPath}`);

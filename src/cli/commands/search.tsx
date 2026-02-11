@@ -49,14 +49,11 @@ function truncate(str: string, maxLength: number): string {
 function matchesQuery(skill: ResolvedSkill, query: string): boolean {
   const lowerQuery = query.toLowerCase();
 
-  // Match against name
-  if (skill.name.toLowerCase().includes(lowerQuery)) return true;
-
   // Match against ID
   if (skill.id.toLowerCase().includes(lowerQuery)) return true;
 
-  // Match against alias
-  if (skill.alias?.toLowerCase().includes(lowerQuery)) return true;
+  // Match against display name
+  if (skill.displayName?.toLowerCase().includes(lowerQuery)) return true;
 
   // Match against description
   if (skill.description.toLowerCase().includes(lowerQuery)) return true;
@@ -123,10 +120,6 @@ async function fetchSkillsFromSource(
         skills.push({
           // Directory name is an untyped string — cast at data boundary
           id: skillDir as SkillId,
-          name: skillDir
-            .split("-")
-            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-            .join(" "),
           description: `Skill from ${source.name}`,
           // Synthetic category for third-party sources — not in CategoryPath union
           category: "imported" as CategoryPath,
@@ -135,9 +128,7 @@ async function fetchSkillsFromSource(
           author: "@" + source.name,
           conflictsWith: [],
           recommends: [],
-          recommendedBy: [],
           requires: [],
-          requiredBy: [],
           alternatives: [],
           discourages: [],
           compatibleWith: [],
@@ -160,7 +151,7 @@ async function fetchSkillsFromSource(
 export default class Search extends BaseCommand {
   static summary = "Search available skills";
   static description =
-    "Search skills by name, description, category, or tags. " +
+    "Search skills by ID, alias, description, category, or tags. " +
     "Run without arguments or with -i for interactive mode with multi-select.";
 
   static examples = [
@@ -353,7 +344,7 @@ export default class Search extends BaseCommand {
       }
 
       // Sort results by name
-      results = sortBy(results, (r) => r.name);
+      results = sortBy(results, (r) => r.displayName || r.id);
 
       // Display results
       this.log("");
@@ -374,7 +365,7 @@ export default class Search extends BaseCommand {
         // Use @oclif/table for table output
         printTable({
           data: results.map((skill) => ({
-            id: skill.alias || skill.id,
+            id: skill.displayName || skill.id,
             category: skill.category,
             description: truncate(skill.description, MAX_DESCRIPTION_WIDTH),
           })),

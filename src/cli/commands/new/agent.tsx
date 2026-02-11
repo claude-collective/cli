@@ -22,25 +22,25 @@ import { EXIT_CODES } from "../../lib/exit-codes.js";
 const META_AGENT_NAME = "agent-summoner";
 const AGENTS_SUBDIR = ".claude/agents";
 
-interface NewAgentInput {
+type NewAgentInput = {
   description: string;
   prompt: string;
   model?: string;
   tools?: string[];
-}
+};
 
-interface AgentSourceFrontmatter {
+type AgentSourceFrontmatter = {
   name: string;
   description: string;
   tools?: string;
   model?: string;
   permissionMode?: string;
-}
+};
 
-interface PurposeInputProps {
+type PurposeInputProps = {
   onSubmit: (purpose: string) => void;
   onCancel: () => void;
-}
+};
 
 const PurposeInput: React.FC<PurposeInputProps> = ({ onSubmit, onCancel }) => {
   const [error, setError] = useState<string | null>(null);

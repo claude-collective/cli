@@ -1,6 +1,5 @@
 import { Flags } from "@oclif/core";
 import { render } from "ink";
-import React from "react";
 import { BaseCommand } from "../base-command.js";
 import { Wizard, WizardResultV2 } from "../components/wizard/wizard.js";
 import { loadSkillsMatrixFromSource } from "../lib/source-loader.js";
@@ -87,7 +86,6 @@ export default class Edit extends BaseCommand {
       <Wizard
         matrix={sourceResult.matrix}
         version={this.config.version}
-        initialSkills={currentSkillIds}
         onComplete={(result) => {
           // Wizard always returns WizardResultV2 in the current implementation
           wizardResult = result as WizardResultV2;
@@ -143,11 +141,11 @@ export default class Edit extends BaseCommand {
     this.log("\nChanges:");
     for (const skillId of addedSkills) {
       const skill = sourceResult.matrix.skills[skillId];
-      this.log(`  + ${skill?.name || skillId}`);
+      this.log(`  + ${skill?.displayName || skillId}`);
     }
     for (const skillId of removedSkills) {
       const skill = sourceResult.matrix.skills[skillId];
-      this.log(`  - ${skill?.name || skillId}`);
+      this.log(`  - ${skill?.displayName || skillId}`);
     }
     this.log("");
 

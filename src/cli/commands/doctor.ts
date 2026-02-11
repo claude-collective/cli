@@ -9,17 +9,17 @@ import { loadProjectConfig, validateProjectConfig } from "../lib/project-config"
 import { loadSkillsMatrixFromSource } from "../lib/source-loader";
 import { discoverLocalSkills } from "../lib/local-skill-loader";
 import type { ProjectConfig } from "../../types";
-import type { MergedSkillsMatrix, SkillId } from "../types-matrix";
+import type { AgentName, MergedSkillsMatrix, SkillId } from "../types-matrix";
 
 // =============================================================================
 // Types
 // =============================================================================
 
-interface CheckResult {
+type CheckResult = {
   status: "pass" | "fail" | "warn" | "skip";
   message: string;
   details?: string[];
-}
+};
 
 // =============================================================================
 // Check Functions
@@ -73,44 +73,13 @@ async function checkSkillsResolved(
   matrix: MergedSkillsMatrix,
   projectDir: string,
 ): Promise<CheckResult> {
-  const configSkills: string[] = [];
+  const configSkills: SkillId[] = [];
 
-  // Collect skill IDs from config.skills
-  if (config.skills) {
-    for (const skill of config.skills) {
-      if (typeof skill === "string") {
-        configSkills.push(skill);
-      } else if (skill.id) {
-        configSkills.push(skill.id);
-      }
-    }
-  }
-
-  // Collect skill IDs from config.agent_skills
-  if (config.agent_skills) {
-    for (const agentSkills of Object.values(config.agent_skills)) {
-      if (Array.isArray(agentSkills)) {
-        // Simple list format
-        for (const skill of agentSkills) {
-          if (typeof skill === "string") {
-            configSkills.push(skill);
-          } else if (skill.id) {
-            configSkills.push(skill.id);
-          }
-        }
-      } else if (typeof agentSkills === "object") {
-        // Categorized format
-        for (const categorySkills of Object.values(agentSkills)) {
-          if (Array.isArray(categorySkills)) {
-            for (const skill of categorySkills) {
-              if (typeof skill === "string") {
-                configSkills.push(skill);
-              } else if (skill.id) {
-                configSkills.push(skill.id);
-              }
-            }
-          }
-        }
+  // Collect skill IDs from config.stack
+  if (config.stack) {
+    for (const agentConfig of Object.values(config.stack)) {
+      for (const skillId of Object.values(agentConfig)) {
+        configSkills.push(skillId);
       }
     }
   }
@@ -133,8 +102,7 @@ async function checkSkillsResolved(
   const missingSkills: string[] = [];
   for (const skillId of uniqueSkills) {
     const inMatrix = skillId in matrix.skills;
-    // uniqueSkills is string[] from config parsing — cast at data boundary
-    const inLocal = localSkillIds.has(skillId as SkillId);
+    const inLocal = localSkillIds.has(skillId);
     if (!inMatrix && !inLocal) {
       missingSkills.push(skillId);
     }
@@ -216,7 +184,8 @@ async function checkNoOrphans(config: ProjectConfig, projectDir: string): Promis
   const orphanedFiles: string[] = [];
   for (const file of mdFiles) {
     const agentName = file.replace(/\.md$/, "");
-    if (!configAgents.has(agentName)) {
+    // Boundary cast: filename from filesystem compared against typed config
+    if (!configAgents.has(agentName as AgentName)) {
       orphanedFiles.push(agentName);
     }
   }

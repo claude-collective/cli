@@ -12,12 +12,12 @@ import { LOCAL_SKILLS_PATH } from "../consts.js";
 /**
  * Result of diffing a local skill against its source
  */
-interface SkillDiffResult {
+type SkillDiffResult = {
   skillDirName: string;
   forkedFrom: ForkedFromMetadata | null;
   hasDiff: boolean;
   diffOutput: string;
-}
+};
 
 /**
  * Color the diff output for terminal display

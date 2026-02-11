@@ -1,7 +1,7 @@
 import { Args } from "@oclif/core";
 import { BaseCommand } from "../../base-command.js";
 import {
-  loadProjectConfig,
+  loadProjectSourceConfig,
   saveProjectConfig,
   type ProjectSourceConfig,
 } from "../../lib/config.js";
@@ -35,7 +35,7 @@ export default class ConfigUnsetProject extends BaseCommand {
       });
     }
 
-    const existingConfig = await loadProjectConfig(projectDir);
+    const existingConfig = await loadProjectSourceConfig(projectDir);
 
     if (!existingConfig) {
       this.logInfo("No project configuration exists.");

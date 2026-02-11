@@ -10,7 +10,6 @@ import path from "path";
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
 import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/source-loader.js";
-import { formatSourceOrigin } from "../lib/config.js";
 import { saveSourceToProjectConfig } from "../lib/config-saver.js";
 import { installLocal } from "../lib/local-installer.js";
 import { checkPermissions } from "../lib/permission-checker.js";
@@ -74,10 +73,7 @@ export default class Init extends BaseCommand {
         forceRefresh: flags.refresh,
       });
 
-      const sourceInfo = sourceResult.isLocal
-        ? "local"
-        : formatSourceOrigin(sourceResult.sourceConfig.sourceOrigin);
-      // this.log(`Loaded ${Object.keys(sourceResult.matrix.skills).length} skills (${sourceInfo})\n`)
+      // Skills matrix loaded successfully
     } catch (error) {
       this.error(error instanceof Error ? error.message : "Unknown error occurred", {
         exit: EXIT_CODES.ERROR,
@@ -316,7 +312,7 @@ export default class Init extends BaseCommand {
       this.log(`  ${installResult.skillsDir}`);
       for (const copiedSkill of installResult.copiedSkills) {
         const skill = matrix.skills[copiedSkill.skillId];
-        const displayName = skill?.alias || copiedSkill.skillId;
+        const displayName = skill?.displayName || copiedSkill.skillId;
         this.log(`    ${displayName}/`);
       }
       this.log("");

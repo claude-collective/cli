@@ -5,7 +5,13 @@ import { loadSkillsMatrixFromSource } from "../lib/source-loader.js";
 import { discoverLocalSkills } from "../lib/local-skill-loader.js";
 import { fileExists, readFile } from "../utils/fs.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
-import type { ResolvedSkill, SkillAlias, SkillId, SkillRelation, SkillRequirement } from "../types-matrix.js";
+import type {
+  ResolvedSkill,
+  SkillDisplayName,
+  SkillId,
+  SkillRelation,
+  SkillRequirement,
+} from "../types-matrix.js";
 
 /**
  * Maximum number of lines to show in content preview
@@ -105,7 +111,7 @@ function formatTags(tags: string[]): string {
  * Find skills that match a partial query for suggestions
  */
 function findSuggestions(
-  skills: Partial<Record<string, ResolvedSkill>>,
+  skills: Partial<Record<SkillId, ResolvedSkill>>,
   query: string,
   maxSuggestions: number,
 ): string[] {
@@ -117,8 +123,7 @@ function findSuggestions(
     if (matches.length >= maxSuggestions) break;
     if (
       skill.id.toLowerCase().includes(lowerQuery) ||
-      skill.alias?.toLowerCase().includes(lowerQuery) ||
-      skill.name.toLowerCase().includes(lowerQuery)
+      skill.displayName?.toLowerCase().includes(lowerQuery)
     ) {
       matches.push(skill.id);
     }
@@ -134,8 +139,8 @@ function formatSkillInfo(skill: ResolvedSkill, isInstalled: boolean): string {
   const lines: string[] = [];
 
   lines.push(`Skill: ${skill.id}`);
-  if (skill.alias) {
-    lines.push(`Alias: ${skill.alias}`);
+  if (skill.displayName) {
+    lines.push(`Alias: ${skill.displayName}`);
   }
   lines.push(`Author: ${skill.author}`);
   lines.push(`Category: ${skill.category}`);
@@ -200,7 +205,7 @@ export default class Info extends BaseCommand {
 
       if (!skill) {
         // Try alias lookup — CLI arg is an untyped string
-        const fullId = matrix.aliases[args.skill as SkillAlias];
+        const fullId = matrix.displayNameToId[args.skill as SkillDisplayName];
         if (fullId) {
           skill = matrix.skills[fullId];
         }

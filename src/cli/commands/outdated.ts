@@ -12,11 +12,11 @@ import { LOCAL_SKILLS_PATH } from "../consts.js";
 /**
  * Summary counts for the comparison results
  */
-interface ComparisonSummary {
+type ComparisonSummary = {
   outdated: number;
   current: number;
   localOnly: number;
-}
+};
 
 /**
  * Calculate summary counts from comparison results

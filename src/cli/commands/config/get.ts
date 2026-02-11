@@ -1,6 +1,6 @@
 import { Args } from "@oclif/core";
 import { BaseCommand } from "../../base-command.js";
-import { resolveSource, resolveAgentsSource, loadProjectConfig } from "../../lib/config.js";
+import { resolveSource, resolveAgentsSource, loadProjectSourceConfig } from "../../lib/config.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 
 export default class ConfigGet extends BaseCommand {
@@ -29,7 +29,7 @@ export default class ConfigGet extends BaseCommand {
       const resolved = await resolveSource(undefined, projectDir);
       this.log(resolved.source);
     } else if (key === "author") {
-      const projectConfig = await loadProjectConfig(projectDir);
+      const projectConfig = await loadProjectSourceConfig(projectDir);
       this.log(projectConfig?.author || "");
     } else if (key === "marketplace") {
       const resolved = await resolveSource(undefined, projectDir);

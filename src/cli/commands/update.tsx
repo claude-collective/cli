@@ -95,10 +95,10 @@ function findSimilarSkills(skillName: string, results: SkillComparisonResult[]):
 /**
  * Confirmation component for update operation
  */
-interface UpdateConfirmProps {
+type UpdateConfirmProps = {
   onConfirm: () => void;
   onCancel: () => void;
-}
+};
 
 const UpdateConfirm: React.FC<UpdateConfirmProps> = ({ onConfirm, onCancel }) => {
   return (

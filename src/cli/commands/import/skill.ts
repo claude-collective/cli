@@ -22,17 +22,17 @@ import { LOCAL_SKILLS_PATH } from "../../consts.js";
  * in skill-metadata.ts which tracks internal fork lineage (uses skill_id
  * instead of source/skill_name).
  */
-interface ImportedForkedFromMetadata {
+type ImportedForkedFromMetadata = {
   source: string;
   skill_name: string;
   content_hash: string;
   date: string;
-}
+};
 
-interface SkillMetadata {
+type SkillMetadata = {
   forked_from?: ImportedForkedFromMetadata;
   [key: string]: unknown;
-}
+};
 
 const SKILL_MD_FILE = "SKILL.md";
 const METADATA_YAML_FILE = "metadata.yaml";

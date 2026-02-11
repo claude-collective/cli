@@ -1,7 +1,7 @@
 import { Args } from "@oclif/core";
 import { BaseCommand } from "../../base-command.js";
 import {
-  loadProjectConfig,
+  loadProjectSourceConfig,
   saveProjectConfig,
   getProjectConfigPath,
   type ProjectSourceConfig,
@@ -41,7 +41,7 @@ export default class ConfigSetProject extends BaseCommand {
       });
     }
 
-    const existingConfig = (await loadProjectConfig(projectDir)) || {};
+    const existingConfig = (await loadProjectSourceConfig(projectDir)) || {};
 
     const newConfig: ProjectSourceConfig = {
       ...existingConfig,

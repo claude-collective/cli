@@ -13,10 +13,10 @@ import { loadStacks } from "../../lib/stacks-loader";
 
 const DEFAULT_OUTPUT_DIR = "dist/stacks";
 
-interface StackSelectorProps {
+type StackSelectorProps = {
   availableStacks: string[];
   onSelect: (stackId: string) => void;
-}
+};
 
 const StackSelector: React.FC<StackSelectorProps> = ({ availableStacks, onSelect }) => {
   return (

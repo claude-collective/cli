@@ -12,7 +12,7 @@ import { EXIT_CODES } from "../lib/exit-codes";
 
 const PLUGIN_NAME = "claude-collective";
 
-interface UninstallTarget {
+type UninstallTarget = {
   hasPlugin: boolean;
   hasLocalSkills: boolean;
   hasLocalAgents: boolean;
@@ -25,7 +25,7 @@ interface UninstallTarget {
   configPath: string;
   claudeDir: string;
   claudeSrcDir: string;
-}
+};
 
 async function detectInstallation(projectDir: string): Promise<UninstallTarget> {
   const pluginDir = getCollectivePluginDir(projectDir);
@@ -61,13 +61,13 @@ async function detectInstallation(projectDir: string): Promise<UninstallTarget> 
   };
 }
 
-interface UninstallConfirmProps {
+type UninstallConfirmProps = {
   target: UninstallTarget;
   uninstallPlugin: boolean;
   uninstallLocal: boolean;
   onConfirm: () => void;
   onCancel: () => void;
-}
+};
 
 const UninstallConfirm: React.FC<UninstallConfirmProps> = ({
   target,
