@@ -24,7 +24,7 @@ stacks:
         ci-cd: github-actions
         testing: api-testing
       cli-developer:
-        cli: cli-commander
+        cli-framework: cli-commander
       web-reviewer:
         reviewing: reviewing
       api-reviewer:

@@ -27,7 +27,7 @@ import { loadStackById } from "./stacks-loader";
 import { resolveAgents, resolveAgentSkillsFromStack } from "./resolver";
 import { compileAgentForPlugin } from "./stack-plugin-compiler";
 import { createLiquidEngine } from "./compiler";
-import { generateProjectConfigFromSkills, buildStackProperty } from "./config-generator";
+import { generateProjectConfigFromSkills } from "./config-generator";
 import { ensureDir, writeFile } from "../utils/fs";
 import { typedEntries, typedKeys } from "../utils/typed-object";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, LOCAL_SKILLS_PATH, PROJECT_ROOT } from "../consts";
@@ -107,7 +107,6 @@ function buildLocalSkillsMap(
 async function buildLocalConfig(
   wizardResult: WizardResultV2,
   sourceResult: SourceLoadResult,
-  displayNameToId: Record<string, string>,
 ): Promise<{ config: ProjectConfig; loadedStack: Stack | null }> {
   const loadedStack = wizardResult.selectedStackId
     ? await loadStackById(wizardResult.selectedStackId, PROJECT_ROOT)
@@ -117,19 +116,24 @@ async function buildLocalConfig(
 
   if (wizardResult.selectedStackId) {
     if (loadedStack) {
-      // Phase 7 format: Stack agents are Partial<Record<AgentName, StackAgentConfig>>
-      const agentIds = typedKeys<AgentName>(loadedStack.agents);
+      // Generate config from the user's actual skill selections (which may differ
+      // from the original stack if the user customized). This ensures the stack
+      // property reflects customizations (e.g., swapping commander for oclif).
+      localConfig = generateProjectConfigFromSkills(
+        PLUGIN_NAME,
+        wizardResult.selectedSkills,
+        sourceResult.matrix,
+      );
 
-      // Build resolved stack property with agent->skill mappings
-      const stackProperty = buildStackProperty(loadedStack, displayNameToId);
-
-      localConfig = {
-        name: PLUGIN_NAME,
-        installMode: wizardResult.installMode,
-        description: loadedStack.description,
-        agents: agentIds,
-        stack: stackProperty as ProjectConfig["stack"],
-      };
+      // Preserve the stack description and ensure all stack agents are included
+      localConfig.description = loadedStack.description;
+      const stackAgentIds = typedKeys<AgentName>(loadedStack.agents);
+      for (const agentId of stackAgentIds) {
+        if (!localConfig.agents.includes(agentId)) {
+          localConfig.agents.push(agentId);
+        }
+      }
+      localConfig.agents.sort();
     } else {
       // Stack not found in CLI's config/stacks.yaml
       throw new Error(
@@ -280,11 +284,7 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   const agents = { ...cliAgents, ...localAgents } as Record<AgentName, AgentDefinition>;
 
   // 5. Build config
-  const { config: builtConfig, loadedStack } = await buildLocalConfig(
-    wizardResult,
-    sourceResult,
-    displayNameToId,
-  );
+  const { config: builtConfig, loadedStack } = await buildLocalConfig(wizardResult, sourceResult);
 
   // 6. Set metadata
   setConfigMetadata(builtConfig, wizardResult, sourceResult, sourceFlag);
