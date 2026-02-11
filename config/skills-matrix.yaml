@@ -18,7 +18,7 @@ categories:
   # ─────────────────────────────────────────────────────────────────
   framework:
     id: framework
-    name: Framework
+    displayName: Framework
     description: Core UI framework (React, Vue, Angular, SolidJS)
     domain: web
     exclusive: true
@@ -27,7 +27,7 @@ categories:
 
   meta-framework:
     id: meta-framework
-    name: Meta-Framework
+    displayName: Meta-Framework
     description: Full-stack framework (Next.js, Remix, Nuxt)
     domain: web
     exclusive: true
@@ -36,7 +36,7 @@ categories:
 
   styling:
     id: styling
-    name: Styling
+    displayName: Styling
     description: CSS approach (SCSS Modules, Tailwind)
     domain: web
     exclusive: true
@@ -45,7 +45,7 @@ categories:
 
   client-state:
     id: client-state
-    name: Client State Management
+    displayName: Client State Management
     description: UI state, forms, local data (Zustand, Redux, MobX)
     domain: web
     exclusive: true
@@ -54,7 +54,7 @@ categories:
 
   server-state:
     id: server-state
-    name: Server State / Data Fetching
+    displayName: Server State / Data Fetching
     description: API data caching (React Query, SWR)
     domain: web
     exclusive: true
@@ -63,7 +63,7 @@ categories:
 
   forms:
     id: forms
-    name: Forms & Validation
+    displayName: Forms & Validation
     description: Form handling and schema validation
     domain: web
     exclusive: false
@@ -72,7 +72,7 @@ categories:
 
   testing:
     id: testing
-    name: Testing
+    displayName: Testing
     description: Unit, integration, and E2E testing
     domain: web
     exclusive: false
@@ -81,7 +81,7 @@ categories:
 
   ui-components:
     id: ui-components
-    name: UI Component Library
+    displayName: UI Component Library
     description: Pre-built component systems (Radix, shadcn)
     domain: web
     exclusive: false
@@ -90,7 +90,7 @@ categories:
 
   mocking:
     id: mocking
-    name: API Mocking
+    displayName: API Mocking
     description: Mock Service Worker for development and testing
     domain: web
     exclusive: false
@@ -99,7 +99,7 @@ categories:
 
   error-handling:
     id: error-handling
-    name: Error Handling
+    displayName: Error Handling
     description: Error boundaries, result types, and error patterns
     domain: web-extras
     parent_domain: web
@@ -109,7 +109,7 @@ categories:
 
   i18n:
     id: i18n
-    name: Internationalization
+    displayName: Internationalization
     description: i18n libraries (next-intl, react-intl, vue-i18n)
     domain: web
     exclusive: true
@@ -118,7 +118,7 @@ categories:
 
   file-upload:
     id: file-upload
-    name: File Upload
+    displayName: File Upload
     description: File upload patterns and handling
     domain: web-extras
     parent_domain: web
@@ -128,7 +128,7 @@ categories:
 
   files:
     id: files
-    name: Files & Images
+    displayName: Files & Images
     description: Image handling and file processing
     domain: web-extras
     parent_domain: web
@@ -138,7 +138,7 @@ categories:
 
   utilities:
     id: utilities
-    name: Utilities
+    displayName: Utilities
     description: Utility libraries (date-fns, native JS patterns)
     domain: web-extras
     parent_domain: web
@@ -148,7 +148,7 @@ categories:
 
   realtime:
     id: realtime
-    name: Realtime
+    displayName: Realtime
     description: WebSockets, SSE, and real-time communication
     domain: web-extras
     parent_domain: web
@@ -158,7 +158,7 @@ categories:
 
   animation:
     id: animation
-    name: Animation
+    displayName: Animation
     description: Animation libraries and CSS animations
     domain: web-extras
     parent_domain: web
@@ -168,7 +168,7 @@ categories:
 
   pwa:
     id: pwa
-    name: Progressive Web App
+    displayName: Progressive Web App
     description: Service workers, offline-first patterns, and PWA features
     domain: web-extras
     parent_domain: web
@@ -178,7 +178,7 @@ categories:
 
   accessibility:
     id: accessibility
-    name: Accessibility
+    displayName: Accessibility
     description: WCAG compliance, ARIA, and keyboard navigation
     domain: web-extras
     parent_domain: web
@@ -188,7 +188,7 @@ categories:
 
   web-performance:
     id: web-performance
-    name: Web Performance
+    displayName: Web Performance
     description: Bundle optimization, render performance, and code splitting
     domain: web
     exclusive: false
@@ -200,7 +200,7 @@ categories:
   # ─────────────────────────────────────────────────────────────────
   api:
     id: api
-    name: API Framework
+    displayName: API Framework
     description: Backend framework (Hono, Express, Fastify)
     domain: api
     exclusive: true
@@ -209,7 +209,7 @@ categories:
 
   database:
     id: database
-    name: Database ORM
+    displayName: Database ORM
     description: Database access layer (Drizzle, Prisma)
     domain: api
     exclusive: true
@@ -218,7 +218,7 @@ categories:
 
   auth:
     id: auth
-    name: Authentication
+    displayName: Authentication
     description: Auth solution (Better Auth, Auth.js)
     domain: api
     exclusive: true
@@ -227,7 +227,7 @@ categories:
 
   observability:
     id: observability
-    name: Observability
+    displayName: Observability
     description: Logging, monitoring, error tracking
     domain: api
     exclusive: false
@@ -236,7 +236,7 @@ categories:
 
   analytics:
     id: analytics
-    name: Analytics
+    displayName: Analytics
     description: Product analytics and tracking
     domain: api
     exclusive: false
@@ -245,7 +245,7 @@ categories:
 
   email:
     id: email
-    name: Email
+    displayName: Email
     description: Transactional email (Resend, Sendgrid)
     domain: api
     exclusive: true
@@ -254,7 +254,7 @@ categories:
 
   performance:
     id: performance
-    name: Performance
+    displayName: Performance
     description: API performance patterns and optimization
     domain: api
     exclusive: false
@@ -266,7 +266,7 @@ categories:
   # ─────────────────────────────────────────────────────────────────
   mobile-framework:
     id: mobile-framework
-    name: Mobile Framework
+    displayName: Mobile Framework
     description: Native mobile framework (React Native, Expo)
     domain: mobile
     exclusive: true
@@ -278,7 +278,7 @@ categories:
   # ─────────────────────────────────────────────────────────────────
   monorepo:
     id: monorepo
-    name: Monorepo
+    displayName: Monorepo
     description: Monorepo tooling (Turborepo, Nx)
     domain: shared
     exclusive: true
@@ -287,7 +287,7 @@ categories:
 
   tooling:
     id: tooling
-    name: Build Tooling
+    displayName: Build Tooling
     description: ESLint, Prettier, TypeScript, Vite
     domain: shared
     exclusive: false
@@ -296,7 +296,7 @@ categories:
 
   security:
     id: security
-    name: Security
+    displayName: Security
     description: Authentication security patterns and best practices
     domain: shared
     exclusive: false
@@ -305,7 +305,7 @@ categories:
 
   methodology:
     id: methodology
-    name: Methodology
+    displayName: Methodology
     description: Development methodology and engineering principles
     domain: shared
     exclusive: false
@@ -314,7 +314,7 @@ categories:
 
   research:
     id: research
-    name: Research
+    displayName: Research
     description: Codebase investigation and research methodology
     domain: shared
     exclusive: false
@@ -323,7 +323,7 @@ categories:
 
   reviewing:
     id: reviewing
-    name: Code Review
+    displayName: Code Review
     description: Code review patterns and guidance
     domain: shared
     exclusive: false
@@ -332,7 +332,7 @@ categories:
 
   ci-cd:
     id: ci-cd
-    name: CI/CD
+    displayName: CI/CD
     description: Continuous integration and deployment pipelines
     domain: shared
     exclusive: false
@@ -344,7 +344,7 @@ categories:
   # ─────────────────────────────────────────────────────────────────
   cli-framework:
     id: cli-framework
-    name: CLI Framework
+    displayName: CLI Framework
     description: CLI application framework (Commander, oclif)
     domain: cli
     exclusive: true
@@ -353,7 +353,7 @@ categories:
 
   cli-prompts:
     id: cli-prompts
-    name: CLI Prompts
+    displayName: CLI Prompts
     description: Interactive prompts and UI
     domain: cli
     exclusive: true
@@ -362,7 +362,7 @@ categories:
 
   cli-testing:
     id: cli-testing
-    name: CLI Testing
+    displayName: CLI Testing
     description: CLI testing utilities
     domain: cli
     exclusive: false

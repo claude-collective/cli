@@ -1,5 +1,4 @@
 # Default agent-skill mappings for Claude Collective CLI
-# Users can override these in .claude/config.yaml via agent_skills
 #
 # This file is bundled with the CLI and provides sensible defaults
 # for which agents should receive which skills based on skill category.
