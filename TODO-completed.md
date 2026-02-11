@@ -622,3 +622,67 @@ Old files deleted: `src/types.ts`, `src/cli/types.ts`, `src/cli/types-matrix.ts`
 **Part F:** Removed external repo dependency from `compilation-pipeline.test.ts` — rewrote 17 tests using `createTestSource()` fixture.
 
 **Part G:** Consolidated hardcoded test fixtures into shared helpers — `createMockCategory`, `createMockResolvedStack`, `createComprehensiveMatrix`, `createBasicMatrix`.
+
+---
+
+## D5: Drop AJV — Use Zod Exclusively (COMPLETE)
+
+Replaced AJV with Zod `.safeParse()` for all runtime validation. Single validation layer: TypeScript types + Zod schemas.
+
+| What                 | Details                                                                                   |
+| -------------------- | ----------------------------------------------------------------------------------------- |
+| Dependencies removed | `ajv` + `ajv-formats` (23 packages pruned)                                                |
+| schemas.ts           | +141 lines — 4 new strict validation schemas                                              |
+| schema-validator.ts  | Rewritten — AJV → Zod `.safeParse()`, schema file loading eliminated                      |
+| plugin-validator.ts  | Rewritten — AJV + remote schema fetching → Zod `.safeParse()`                             |
+| Tests                | Cleaned up — removed JSON schema file creation in temp dirs                               |
+| Verification         | `cc validate` passes against CLI repo (18/18 agents) and claude-subagents (174/174 files) |
+
+**New validation schemas added to `schemas.ts`:**
+
+- `agentFrontmatterValidationSchema` — strict, for agent .md frontmatter
+- `skillFrontmatterValidationSchema` — strict, for SKILL.md frontmatter
+- `metadataValidationSchema` — strict, for marketplace metadata.yaml
+- `stackConfigValidationSchema` — strict, for stack config.yaml
+
+**Key design:** Lenient loader schemas (`.passthrough()`) remain for loading; strict validation schemas (`.strict()`) added for `cc validate`. Dual schema pattern ensures loading is forgiving while validation catches errors.
+
+**Stats:** 0 type errors, 1344 tests passing, net -69 lines (249 added, 318 removed).
+
+---
+
+## D6: Generate JSON Schemas from Zod and Wire $schema References (COMPLETE)
+
+Generated 10 JSON Schema files from Zod schemas using `z.toJSONSchema()` (Zod v4 native). Replaced all remote `$schema` URLs with local relative paths for VS Code editor validation.
+
+| What              | Details                                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Script created    | `scripts/generate-json-schemas.ts` — generates 10 schema files from Zod                                            |
+| npm scripts       | `generate:schemas` (regenerate), `generate:schemas:check` (CI diff check)                                          |
+| Schemas generated | 10 files in `src/schemas/` from Zod source of truth                                                                |
+| Symlinks removed  | `metadata.schema.json` + `stack.schema.json` (were symlinks to claude-subagents)                                   |
+| $schema wiring    | 18 agent.yaml files: `$schema: https://...` → `# yaml-language-server: $schema=../../../schemas/agent.schema.json` |
+| New schema refs   | `config/skills-matrix.yaml` — added `# yaml-language-server` comment                                               |
+| Existing refs     | `config/stacks.yaml` — already correct, no change needed                                                           |
+| New schema added  | `agentYamlGenerationSchema` in schemas.ts — lenient `z.string()` for id (marketplace compatible)                   |
+| Dedup             | Inline `agentValidationSchema` in schema-validator.ts replaced with import from schemas.ts                         |
+| Verification      | `cc validate` passes: CLI repo (18/18), claude-subagents (174/174)                                                 |
+
+**Schema mapping (10 files):**
+
+| JSON Schema File                | Zod Source                         |
+| ------------------------------- | ---------------------------------- |
+| `agent.schema.json`             | `agentYamlGenerationSchema`        |
+| `agent-frontmatter.schema.json` | `agentFrontmatterValidationSchema` |
+| `hooks.schema.json`             | `hooksRecordSchema`                |
+| `marketplace.schema.json`       | `marketplaceSchema`                |
+| `metadata.schema.json`          | `metadataValidationSchema`         |
+| `plugin.schema.json`            | `pluginManifestSchema`             |
+| `skill-frontmatter.schema.json` | `skillFrontmatterValidationSchema` |
+| `skills-matrix.schema.json`     | `skillsMatrixConfigSchema`         |
+| `stacks.schema.json`            | `stacksConfigSchema`               |
+| `stack.schema.json`             | `stackConfigValidationSchema`      |
+
+**Known limitation:** `hooks.schema.json` generated from Zod lacks `if/then` conditionals (not expressible in Zod). The generated version provides basic structure validation but not conditional field requirements.
+
+**Stats:** 0 type errors, 1344 tests passing. Files: 4 modified + 1 created + 2 symlinks removed + 10 schema files regenerated + 19 YAML files updated.
