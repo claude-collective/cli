@@ -58,7 +58,6 @@ export interface TestProjectConfig {
   description?: string;
   agents?: string[];
   skills?: Array<string | { id: string }>;
-  agent_skills?: Record<string, unknown>;
   version?: string;
 }
 

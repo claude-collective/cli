@@ -8,61 +8,7 @@ import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StepConfirm } from "../../../components/wizard/step-confirm";
 import { useWizardStore } from "../../../stores/wizard-store";
-import { createMockMatrix, createMockSkill } from "../helpers";
-
-
-import type { CategoryDefinition, MergedSkillsMatrix, Subcategory } from "../../../types-matrix";
 import { ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../test-constants";
-
-// =============================================================================
-// Mock Data
-// =============================================================================
-
-const createTestMatrix = (): MergedSkillsMatrix => {
-  const skills = {
-    ["web-framework-react"]: createMockSkill("web-framework-react", "framework", {
-      name: "React",
-      description: "React framework",
-    }),
-    ["web-state-zustand"]: createMockSkill("web-state-zustand", "client-state", {
-      name: "Zustand",
-      description: "State management",
-    }),
-    ["web-testing-vitest"]: createMockSkill("web-testing-vitest", "testing", {
-      name: "Vitest",
-      description: "Testing framework",
-    }),
-  };
-
-  return createMockMatrix(skills, {
-    categories: {
-      ["framework"]: {
-        id: "framework",
-        name: "Framework",
-        description: "UI Frameworks",
-        exclusive: false,
-        required: false,
-        order: 1,
-      },
-      ["client-state"]: {
-        id: "client-state",
-        name: "State",
-        description: "State management",
-        exclusive: false,
-        required: false,
-        order: 2,
-      },
-      ["testing"]: {
-        id: "testing",
-        name: "Testing",
-        description: "Testing frameworks",
-        exclusive: false,
-        required: false,
-        order: 3,
-      },
-    },
-  });
-};
 
 // =============================================================================
 // Tests
@@ -70,11 +16,9 @@ const createTestMatrix = (): MergedSkillsMatrix => {
 
 describe("StepConfirm component", () => {
   let cleanup: (() => void) | undefined;
-  let mockMatrix: MergedSkillsMatrix;
 
   beforeEach(() => {
     useWizardStore.getState().reset();
-    mockMatrix = createTestMatrix();
   });
 
   afterEach(() => {
@@ -93,7 +37,7 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-          matrix={mockMatrix}
+
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -114,7 +58,7 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-          matrix={mockMatrix}
+
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -136,7 +80,7 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-          matrix={mockMatrix}
+
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -158,7 +102,7 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-          matrix={mockMatrix}
+
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -180,7 +124,7 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-          matrix={mockMatrix}
+
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -202,7 +146,7 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-          matrix={mockMatrix}
+
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -229,12 +173,12 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-          matrix={mockMatrix}
+
           onComplete={onComplete}
           selectedDomains={["web", "api"]}
           domainSelections={{
-            web: { framework: ["react"], styling: ["scss-modules"] },
-            api: { api: ["hono"] },
+            web: { framework: ["web-framework-react"], styling: ["web-styling-scss-modules"] },
+            api: { api: ["api-framework-hono"] },
           }}
           technologyCount={3}
           skillCount={3}
@@ -255,12 +199,12 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-          matrix={mockMatrix}
+
           onComplete={onComplete}
           selectedDomains={["web", "api"]}
           domainSelections={{
-            web: { framework: ["react"], styling: ["scss-modules"] },
-            api: { api: ["hono"] },
+            web: { framework: ["web-framework-react"], styling: ["web-styling-scss-modules"] },
+            api: { api: ["api-framework-hono"] },
           }}
           technologyCount={3}
           skillCount={3}
@@ -284,11 +228,11 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-          matrix={mockMatrix}
+
           onComplete={onComplete}
           selectedDomains={["web"]}
           domainSelections={{
-            web: { framework: ["react"] },
+            web: { framework: ["web-framework-react"] },
           }}
           technologyCount={1}
           skillCount={1}
@@ -309,11 +253,11 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-          matrix={mockMatrix}
+
           onComplete={onComplete}
           selectedDomains={["web", "api"]}
           domainSelections={{
-            web: { framework: ["react"] },
+            web: { framework: ["web-framework-react"] },
             api: {}, // Empty selections
           }}
           technologyCount={1}
@@ -345,7 +289,7 @@ describe("StepConfirm component", () => {
 
       const { stdin, unmount } = render(
         <StepConfirm
-          matrix={mockMatrix}
+
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -369,7 +313,7 @@ describe("StepConfirm component", () => {
 
       const { stdin, unmount } = render(
         <StepConfirm
-          matrix={mockMatrix}
+
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -393,7 +337,7 @@ describe("StepConfirm component", () => {
 
       const { stdin, unmount } = render(
         <StepConfirm
-          matrix={mockMatrix}
+
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -422,7 +366,7 @@ describe("StepConfirm component", () => {
       const onComplete = vi.fn();
 
       const { lastFrame, unmount } = render(
-        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
+        <StepConfirm onComplete={onComplete} />,
       );
       cleanup = unmount;
 
@@ -434,7 +378,7 @@ describe("StepConfirm component", () => {
       const onComplete = vi.fn();
 
       const { lastFrame, unmount } = render(
-        <StepConfirm matrix={mockMatrix} onComplete={onComplete} />,
+        <StepConfirm onComplete={onComplete} />,
       );
       cleanup = unmount;
 

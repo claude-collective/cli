@@ -22,7 +22,7 @@ import { useWizardStore } from "../../../stores/wizard-store";
 import { createMockMatrix, createMockSkill } from "../helpers";
 
 
-import type { MergedSkillsMatrix, ResolvedStack, CategoryDefinition, Subcategory, SkillAlias, SkillId, AgentName } from "../../../types-matrix";
+import type { MergedSkillsMatrix, ResolvedStack, CategoryDefinition, Subcategory, SkillDisplayName, SkillId, AgentName } from "../../../types-matrix";
 import { ARROW_DOWN, ARROW_UP, ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../test-constants";
 
 // =============================================================================
@@ -51,43 +51,36 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
   const skills = {
     // Web domain skills
     ["web-framework-react"]: createMockSkill("web-framework-react", "framework", {
-      name: "React",
       description: "React framework",
-      alias: "react",
+      displayName: "react",
     }),
     ["web-framework-vue"]: createMockSkill("web-framework-vue", "framework", {
-      name: "Vue",
       description: "Vue.js framework",
-      alias: "vue",
+      displayName: "vue",
       conflictsWith: [{ skillId: "web-framework-react", reason: "Choose one framework" }],
     }),
     ["web-state-zustand"]: createMockSkill("web-state-zustand", "client-state", {
-      name: "Zustand",
       description: "State management",
-      alias: "zustand",
+      displayName: "zustand",
       recommends: [{ skillId: "web-framework-react", reason: "Works great with React" }],
     }),
     ["web-styling-scss-modules"]: createMockSkill("web-styling-scss-modules", "styling", {
-      name: "SCSS Modules",
       description: "CSS Modules with SCSS",
-      alias: "scss-modules",
+      displayName: "scss-modules",
     }),
     // API domain skills
     ["api-framework-hono"]: createMockSkill("api-framework-hono", "api", {
-      name: "Hono",
       description: "Web framework for the edge",
-      alias: "hono",
+      displayName: "hono",
     }),
     ["api-database-drizzle"]: createMockSkill("api-database-drizzle", "database", {
-      name: "Drizzle",
       description: "TypeScript ORM",
-      alias: "drizzle",
+      displayName: "drizzle",
     }),
     // Testing (shared domain)
     ["web-testing-vitest"]: createMockSkill("web-testing-vitest", "testing", {
-      name: "Vitest",
       description: "Testing framework",
-      alias: "vitest",
+      displayName: "vitest",
     }),
   };
 
@@ -96,7 +89,7 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
     // Web domain categories
     ["framework"]: {
       id: "framework",
-      name: "Framework",
+      displayName: "Framework",
       description: "UI Frameworks",
       domain: "web",
       exclusive: true,
@@ -105,7 +98,7 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
     },
     ["client-state"]: {
       id: "client-state",
-      name: "State",
+      displayName: "State",
       description: "State management",
       domain: "web",
       exclusive: true,
@@ -114,7 +107,7 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
     },
     ["styling"]: {
       id: "styling",
-      name: "Styling",
+      displayName: "Styling",
       description: "CSS solutions",
       domain: "web",
       exclusive: true,
@@ -124,7 +117,7 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
     // API domain categories
     ["api"]: {
       id: "api",
-      name: "Backend Framework",
+      displayName: "Backend Framework",
       description: "Server frameworks",
       domain: "api",
       exclusive: true,
@@ -133,7 +126,7 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
     },
     ["database"]: {
       id: "database",
-      name: "Database",
+      displayName: "Database",
       description: "Database ORMs",
       domain: "api",
       exclusive: true,
@@ -143,7 +136,7 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
     // Shared domain
     ["testing"]: {
       id: "testing",
-      name: "Testing",
+      displayName: "Testing",
       description: "Testing tools",
       domain: "shared",
       exclusive: false,
@@ -161,13 +154,13 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
       audience: ["startups", "enterprise"],
       skills: {
         "web-developer": {
-          framework: "react",
-          "client-state": "zustand",
-          styling: "scss-modules",
+          framework: "web-framework-react",
+          "client-state": "web-state-zustand",
+          styling: "web-styling-scss-modules",
         },
         "api-developer": {
-          api: "hono",
-          database: "drizzle",
+          api: "api-framework-hono",
+          database: "api-database-drizzle",
         },
       },
       allSkillIds: [
@@ -186,7 +179,7 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
       audience: ["startups"],
       skills: {
         "web-developer": {
-          framework: "vue",
+          framework: "web-framework-vue",
         },
       },
       allSkillIds: ["web-framework-vue"],
@@ -194,8 +187,8 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
     },
   ];
 
-  // Create aliases mapping
-  const aliases = {
+  // Create display name mapping
+  const displayNameToId = {
     react: "web-framework-react",
     vue: "web-framework-vue",
     zustand: "web-state-zustand",
@@ -203,19 +196,19 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
     hono: "api-framework-hono",
     drizzle: "api-database-drizzle",
     vitest: "web-testing-vitest",
-  } as unknown as Record<SkillAlias, SkillId>;
+  } as unknown as Record<SkillDisplayName, SkillId>;
 
-  // Create reverse aliases
-  const aliasesReverse = {} as Record<SkillId, SkillAlias>;
-  for (const [alias, fullId] of Object.entries(aliases)) {
-    (aliasesReverse as Record<string, string>)[fullId] = alias;
+  // Create reverse display names
+  const displayNames = {} as Record<SkillId, SkillDisplayName>;
+  for (const [alias, fullId] of Object.entries(displayNameToId)) {
+    (displayNames as Record<string, string>)[fullId] = alias;
   }
 
   return createMockMatrix(skills, {
     categories: categories as Record<Subcategory, CategoryDefinition>,
     suggestedStacks,
-    aliases,
-    aliasesReverse,
+    displayNameToId,
+    displayNames,
   });
 };
 
@@ -226,19 +219,15 @@ const createComprehensiveMatrix = (): MergedSkillsMatrix => {
 const createBasicMatrix = (): MergedSkillsMatrix => {
   const skills = {
     ["web-framework-react"]: createMockSkill("web-framework-react", "framework", {
-      name: "React",
       description: "React framework",
     }),
     ["web-state-zustand"]: createMockSkill("web-state-zustand", "client-state", {
-      name: "Zustand",
       description: "State management",
     }),
     ["api-framework-hono"]: createMockSkill("api-framework-hono", "api", {
-      name: "Hono",
       description: "Web framework",
     }),
     ["web-testing-vitest"]: createMockSkill("web-testing-vitest", "testing", {
-      name: "Vitest",
       description: "Testing framework",
     }),
   };
@@ -269,7 +258,7 @@ const createBasicMatrix = (): MergedSkillsMatrix => {
     categories: {
       ["framework"]: {
         id: "framework",
-        name: "Framework",
+        displayName: "Framework",
         description: "UI Frameworks",
         domain: "web",
         exclusive: true,
@@ -278,7 +267,7 @@ const createBasicMatrix = (): MergedSkillsMatrix => {
       },
       ["client-state"]: {
         id: "client-state",
-        name: "State",
+        displayName: "State",
         description: "State management",
         domain: "web",
         exclusive: true,
@@ -287,7 +276,7 @@ const createBasicMatrix = (): MergedSkillsMatrix => {
       },
       ["api"]: {
         id: "api",
-        name: "Backend Framework",
+        displayName: "Backend Framework",
         description: "Backend frameworks",
         domain: "api",
         exclusive: true,
@@ -296,7 +285,7 @@ const createBasicMatrix = (): MergedSkillsMatrix => {
       },
       ["testing"]: {
         id: "testing",
-        name: "Testing Framework",
+        displayName: "Testing Framework",
         description: "Testing frameworks",
         domain: "shared",
         exclusive: false,
@@ -675,7 +664,7 @@ describe("Wizard integration", () => {
         selectedDomains: ["web", "api"],
         currentDomainIndex: 0,
         domainSelections: {
-          web: { ["framework"]: ["react"] },
+          web: { ["framework"]: ["web-framework-react"] },
         },
       });
 
@@ -707,7 +696,7 @@ describe("Wizard integration", () => {
         selectedDomains: ["web", "api"],
         currentDomainIndex: 1, // On API domain
         domainSelections: {
-          web: { ["framework"]: ["react"] },
+          web: { ["framework"]: ["web-framework-react"] },
         },
         history: ["approach", "stack", "build"],
       });
@@ -728,7 +717,7 @@ describe("Wizard integration", () => {
       expect(state.currentDomainIndex).toBe(0);
 
       // Web selections should be preserved
-      expect(state.domainSelections.web?.["framework"]).toContain("react");
+      expect(state.domainSelections.web?.["framework"]).toContain("web-framework-react");
     });
   });
 

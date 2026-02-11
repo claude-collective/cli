@@ -31,8 +31,6 @@ describe("test helpers", () => {
       const skill = createMockSkill("web-framework-react", "web/framework");
 
       expect(skill.id).toBe("web-framework-react");
-      // With normalized IDs, name is the same as ID unless overridden
-      expect(skill.name).toBe("web-framework-react");
       expect(skill.category).toBe("web/framework");
       expect(skill.author).toBe("@test");
     });
@@ -59,14 +57,14 @@ describe("test helpers", () => {
   });
 
   describe("createMockProjectConfig", () => {
-    it("creates a valid project config", () => {
+    it("creates a valid project config with stack", () => {
       const config = createMockProjectConfig("test-stack", [
         "web-framework-react",
         "web-state-zustand",
       ]);
 
       expect(config.name).toBe("test-stack");
-      expect(config.skills).toEqual([{ id: "web-framework-react" }, { id: "web-state-zustand" }]);
+      expect(config.stack).toBeDefined();
       expect(config.agents).toContain("web-developer");
     });
   });

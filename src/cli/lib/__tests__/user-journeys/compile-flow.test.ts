@@ -86,18 +86,6 @@ describe("User Journey: Compile Flow", () => {
         description: "Test project for compile flow",
         agents: ["web-developer", "api-developer"],
         skills: DEFAULT_TEST_SKILLS.map((s) => ({ id: s.id })),
-        agent_skills: {
-          "web-developer": {
-            default: DEFAULT_TEST_SKILLS.filter(
-              (s) => s.category.startsWith("web") || s.category === "testing",
-            ).map((s) => ({ id: s.id, preloaded: true })),
-          },
-          "api-developer": {
-            default: DEFAULT_TEST_SKILLS.filter(
-              (s) => s.category.startsWith("api") || s.category === "testing",
-            ).map((s) => ({ id: s.id, preloaded: true })),
-          },
-        },
       },
       asPlugin: true,
     });
@@ -380,14 +368,6 @@ Use this skill for project-specific patterns.
         description: "Project with local skills",
         agents: ["web-developer"],
         skills: [...DEFAULT_TEST_SKILLS.map((s) => ({ id: s.id })), { id: localSkill.id }],
-        agent_skills: {
-          "web-developer": {
-            default: [
-              { id: localSkill.id, preloaded: true },
-              { id: "react (@test)", preloaded: true },
-            ],
-          },
-        },
       },
       localSkills: [localSkill],
       asPlugin: true,
@@ -455,7 +435,6 @@ Use this skill for project-specific patterns.
         if (frontmatter?.skills) {
           const skills = frontmatter.skills as string[];
           // Local skill should potentially be included
-          // Note: depends on agent_skills configuration
           expect(Array.isArray(skills)).toBe(true);
         }
       }

@@ -17,7 +17,7 @@ import { stringify as stringifyYaml } from "yaml";
 import {
   resolveSource,
   resolveAgentsSource,
-  loadProjectConfig,
+  loadProjectSourceConfig,
   saveProjectConfig,
   getProjectConfigPath,
   SOURCE_ENV_VAR,
@@ -201,7 +201,7 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
       // Verify file exists where expected
       expect(await fileExists(configPath)).toBe(true);
 
-      const config = await loadProjectConfig(projectDir);
+      const config = await loadProjectSourceConfig(projectDir);
       expect(config?.source).toBe("github:my-company/internal-skills");
     });
 
@@ -212,7 +212,7 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
         agents_source: "https://agents.example.com",
       });
 
-      const config = await loadProjectConfig(projectDir);
+      const config = await loadProjectSourceConfig(projectDir);
 
       expect(config?.source).toBe("github:project/source");
       expect(config?.marketplace).toBe("https://marketplace.example.com");
@@ -221,7 +221,7 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
 
     it("should return null for missing project config", async () => {
       // No config file created
-      const config = await loadProjectConfig(projectDir);
+      const config = await loadProjectSourceConfig(projectDir);
       expect(config).toBeNull();
     });
 
@@ -230,7 +230,7 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
       await mkdir(configDir, { recursive: true });
       await writeFile(path.join(configDir, "config.yaml"), "invalid: yaml: content: :");
 
-      const config = await loadProjectConfig(projectDir);
+      const config = await loadProjectSourceConfig(projectDir);
       expect(config).toBeNull();
     });
   });
@@ -420,14 +420,14 @@ describe("User Journey: Project Config Save and Load", () => {
     });
   });
 
-  describe("loadProjectConfig", () => {
+  describe("loadProjectSourceConfig", () => {
     it("should load saved config correctly", async () => {
       await saveProjectConfig(projectDir, {
         source: "github:company/private-skills",
         marketplace: "https://internal-marketplace.company.com",
       });
 
-      const config = await loadProjectConfig(projectDir);
+      const config = await loadProjectSourceConfig(projectDir);
 
       expect(config?.source).toBe("github:company/private-skills");
       expect(config?.marketplace).toBe("https://internal-marketplace.company.com");
@@ -478,7 +478,7 @@ describe("User Journey: Config Precedence with CLI", () => {
     });
 
     // Verify project config was created
-    const config = await loadProjectConfig(dirs.projectDir);
+    const config = await loadProjectSourceConfig(dirs.projectDir);
     expect(config?.source).toBe("github:my-company/internal-skills");
   });
 
@@ -533,7 +533,7 @@ describe("User Journey: Config Edge Cases", () => {
       // No source field
     });
 
-    const config = await loadProjectConfig(projectDir);
+    const config = await loadProjectSourceConfig(projectDir);
     expect(config?.source).toBeUndefined();
     expect(config?.marketplace).toBe("https://marketplace.example.com");
 
@@ -550,7 +550,7 @@ describe("User Journey: Config Edge Cases", () => {
     await mkdir(configDir, { recursive: true });
     await writeFile(path.join(configDir, "config.yaml"), "");
 
-    const config = await loadProjectConfig(projectDir);
+    const config = await loadProjectSourceConfig(projectDir);
     // Empty file should result in null or empty config
     // Implementation returns null for empty file
     expect(config).toBeNull();
@@ -568,7 +568,7 @@ another_unknown: also_ignored
 `,
     );
 
-    const config = await loadProjectConfig(projectDir);
+    const config = await loadProjectSourceConfig(projectDir);
     expect(config?.source).toBe("github:valid/source");
     // Unknown fields should not cause errors
   });

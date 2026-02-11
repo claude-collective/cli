@@ -13,8 +13,8 @@ import { createMockSkill } from "./helpers";
 
 export function createTestReactSkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
   return createMockSkill("web-framework-react", "web/framework", {
-    alias: "react",
-    name: "React",
+    displayName: "react",
+
     description: "React framework for building user interfaces",
     tags: ["react", "web", "ui", "component"],
     ...overrides,
@@ -23,8 +23,8 @@ export function createTestReactSkill(overrides?: Partial<ResolvedSkill>): Resolv
 
 export function createTestZustandSkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
   return createMockSkill("web-state-zustand", "web/state", {
-    alias: "zustand",
-    name: "Zustand",
+    displayName: "zustand",
+
     description: "Bear necessities state management",
     tags: ["state", "react", "zustand"],
     ...overrides,
@@ -33,8 +33,8 @@ export function createTestZustandSkill(overrides?: Partial<ResolvedSkill>): Reso
 
 export function createTestHonoSkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
   return createMockSkill("api-framework-hono", "api/framework", {
-    alias: "hono",
-    name: "Hono",
+    displayName: "hono",
+
     description: "Lightweight web framework for the edge",
     tags: ["api", "api", "edge", "serverless"],
     ...overrides,
@@ -43,8 +43,8 @@ export function createTestHonoSkill(overrides?: Partial<ResolvedSkill>): Resolve
 
 export function createTestVitestSkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
   return createMockSkill("web-testing-vitest", "testing", {
-    alias: "vitest",
-    name: "Vitest",
+    displayName: "vitest",
+
     description: "Next generation testing framework",
     tags: ["testing", "vitest", "unit"],
     ...overrides,
@@ -53,8 +53,8 @@ export function createTestVitestSkill(overrides?: Partial<ResolvedSkill>): Resol
 
 export function createTestVueSkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
   return createMockSkill("web-framework-vue", "web/framework", {
-    alias: "vue",
-    name: "Vue",
+    displayName: "vue",
+
     description: "Progressive JavaScript framework",
     tags: ["vue", "web", "reactive"],
     ...overrides,
@@ -63,7 +63,6 @@ export function createTestVueSkill(overrides?: Partial<ResolvedSkill>): Resolved
 
 export function createTestAuthPatternsSkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
   return createMockSkill("api-security-auth-patterns", "api/security", {
-    name: "Auth Patterns",
     description: "Authentication and authorization patterns",
     tags: ["auth", "security", "jwt", "oauth"],
     ...overrides,
@@ -72,8 +71,8 @@ export function createTestAuthPatternsSkill(overrides?: Partial<ResolvedSkill>):
 
 export function createTestDrizzleSkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
   return createMockSkill("api-database-drizzle", "api/database", {
-    alias: "drizzle",
-    name: "Drizzle",
+    displayName: "drizzle",
+
     description: "TypeScript ORM for SQL databases",
     tags: ["database", "orm", "sql"],
     ...overrides,
@@ -90,7 +89,6 @@ export function createTestDrizzleSkill(overrides?: Partial<ResolvedSkill>): Reso
  */
 export function createTestMethodologySkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
   return createMockSkill("meta-methodology-anti-over-engineering", "meta/methodology", {
-    name: "Anti-Over-Engineering",
     description: "Surgical implementation, not architectural innovation",
     tags: ["methodology", "foundational"],
     ...overrides,

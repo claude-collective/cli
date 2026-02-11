@@ -186,7 +186,14 @@ export const OUTPUT_STRINGS = {
 export async function runCliCommand(args: string[]) {
   return runCommand(args, { root: CLI_ROOT });
 }
-import type { CategoryPath, MergedSkillsMatrix, ResolvedSkill, SkillAlias, SkillId, Subcategory } from "../../types-matrix";
+import type {
+  CategoryPath,
+  MergedSkillsMatrix,
+  ResolvedSkill,
+  SkillDisplayName,
+  SkillId,
+  Subcategory,
+} from "../../types-matrix";
 import type { AgentDefinition, ProjectConfig } from "../../../types";
 
 // =============================================================================
@@ -411,7 +418,7 @@ export async function cleanupTestDirs(dirs: TestDirs): Promise<void> {
  * @example Basic usage
  * ```typescript
  * const skill = createMockSkill('web-framework-react', 'web/framework');
- * expect(skill.name).toBe('web-framework-react');
+ * expect(skill.id).toBe('web-framework-react');
  * expect(skill.author).toBe('@test');
  * ```
  *
@@ -434,8 +441,6 @@ export function createMockSkill(
 ): ResolvedSkill {
   return {
     id,
-    // For normalized IDs, use the ID itself as the name (unless overridden)
-    name: id,
     description: `${id} skill`,
     category,
     categoryExclusive: false,
@@ -443,9 +448,7 @@ export function createMockSkill(
     author: "@test",
     conflictsWith: [],
     recommends: [],
-    recommendedBy: [],
     requires: [],
-    requiredBy: [],
     alternatives: [],
     discourages: [],
     compatibleWith: [],
@@ -476,7 +479,7 @@ export function createMockSkill(
  * ```typescript
  * const matrix = createMockMatrix(skills, {
  *   categories: {
- *     web: { name: 'Web', description: 'Web skills' },
+ *     web: { displayName: 'Web', description: 'Web skills' },
  *   },
  *   suggestedStacks: [
  *     { id: 'react-stack', name: 'React Stack', allSkillIds: ['web-framework-react'] },
@@ -495,8 +498,8 @@ export function createMockMatrix(
     categories: {} as Record<Subcategory, import("../../types-matrix").CategoryDefinition>,
     skills,
     suggestedStacks: [],
-    aliases: {} as Record<SkillAlias, SkillId>,
-    aliasesReverse: {} as Record<SkillId, SkillAlias>,
+    displayNameToId: {} as Record<SkillDisplayName, SkillId>,
+    displayNames: {} as Record<SkillId, SkillDisplayName>,
     generatedAt: new Date().toISOString(),
     ...overrides,
   };
@@ -522,7 +525,7 @@ export function createMockMatrixWithMethodology(
   const methodologySkill = createMockSkill(
     "meta-methodology-anti-over-engineering",
     METHODOLOGY_CATEGORY,
-    { name: "Anti-Over-Engineering", description: "Surgical implementation" },
+    { description: "Surgical implementation" },
   );
 
   return createMockMatrix(
@@ -531,7 +534,7 @@ export function createMockMatrixWithMethodology(
       categories: {
         [METHODOLOGY_CATEGORY]: {
           id: METHODOLOGY_CATEGORY,
-          name: "Methodology",
+          displayName: "Methodology",
           description: "Foundational development practices",
           exclusive: false,
           required: false,
@@ -548,7 +551,6 @@ export function createMockMatrixWithMethodology(
  * Create a minimal project config for testing.
  *
  * Creates a {@link ProjectConfig} representing a project skill configuration.
- * Automatically sets up agent_skills mappings.
  *
  * @param name - Config name (e.g., "nextjs-fullstack")
  * @param skills - Array of skill IDs to include
@@ -571,20 +573,23 @@ export function createMockProjectConfig(
   skills: SkillId[],
   overrides?: Partial<ProjectConfig>,
 ): ProjectConfig {
+  // Build stack from skills: each skill goes to all agents under its subcategory
+  const stack: Record<string, Record<string, SkillId>> = {};
+  for (const skillId of skills) {
+    // Extract a subcategory from the skill ID (e.g., "web-framework-react" -> "framework")
+    const parts = skillId.split("-");
+    const subcategory = parts.length >= 2 ? parts[1] : parts[0];
+    for (const agent of ["web-developer", "api-developer"]) {
+      if (!stack[agent]) stack[agent] = {};
+      stack[agent][subcategory] = skillId;
+    }
+  }
   return {
     name,
     description: `Test project: ${name}`,
     author: "@test",
-    skills: skills.map((s) => ({ id: s })),
     agents: ["web-developer", "api-developer"],
-    agent_skills: {
-      "web-developer": {
-        default: skills.filter((s) => !s.includes("api")).map((s) => ({ id: s })),
-      },
-      "api-developer": {
-        default: skills.filter((s) => !s.includes("web")).map((s) => ({ id: s })),
-      },
-    },
+    stack,
     ...overrides,
   };
 }

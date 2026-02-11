@@ -29,15 +29,12 @@ const SELECT_NAV_DELAY_MS = 100;
 const createMockStackWithSkills = (): MergedSkillsMatrix => {
   const skills = {
     ["web-framework-react"]: createMockSkill("web-framework-react", "framework", {
-      name: "React",
       description: "React framework",
     }),
     ["web-state-zustand"]: createMockSkill("web-state-zustand", "client-state", {
-      name: "Zustand",
       description: "State management",
     }),
     ["api-framework-hono"]: createMockSkill("api-framework-hono", "api", {
-      name: "Hono",
       description: "Web framework",
     }),
   };
@@ -68,7 +65,7 @@ const createMockStackWithSkills = (): MergedSkillsMatrix => {
     categories: {
       framework: {
         id: "framework",
-        name: "Web",
+        displayName: "Web",
         description: "Web skills",
         exclusive: false,
         required: false,
@@ -76,7 +73,7 @@ const createMockStackWithSkills = (): MergedSkillsMatrix => {
       },
       api: {
         id: "api",
-        name: "API",
+        displayName: "API",
         description: "API skills",
         exclusive: false,
         required: false,
