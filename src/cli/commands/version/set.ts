@@ -1,6 +1,3 @@
-/**
- * Set plugin version to a specific value.
- */
 import { BaseCommand } from "../../base-command.js";
 import { Args } from "@oclif/core";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
@@ -40,7 +37,6 @@ export default class VersionSet extends BaseCommand {
     const { args, flags } = await this.parse(VersionSet);
     const newVersion = args.version;
 
-    // Validate semver format
     if (!isValidSemver(newVersion)) {
       this.error(
         `Invalid version format: "${newVersion}". Must be semantic version (e.g., 1.0.0)`,
@@ -58,7 +54,6 @@ export default class VersionSet extends BaseCommand {
     }
 
     try {
-      // Read current manifest
       const content = await readFile(manifestPath);
       const manifest = pluginManifestSchema.parse(JSON.parse(content));
       const oldVersion = manifest.version || "1.0.0";
@@ -69,7 +64,6 @@ export default class VersionSet extends BaseCommand {
         return;
       }
 
-      // Update and write manifest
       manifest.version = newVersion;
       await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
 

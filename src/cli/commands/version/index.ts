@@ -1,7 +1,3 @@
-/**
- * Default version command - shows current plugin version.
- * Alias for `version show`.
- */
 import { BaseCommand } from "../../base-command.js";
 import { getPluginVersion, findPluginManifest } from "../../lib/plugins/index.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";

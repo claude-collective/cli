@@ -11,10 +11,6 @@ const DEFAULT_AUTHOR = "@local";
 const DEFAULT_CATEGORY = "local";
 const KEBAB_CASE_PATTERN = /^[a-z][a-z0-9-]*$/;
 
-/**
- * Validates that a skill name follows kebab-case convention.
- * Must start with lowercase letter, followed by lowercase letters, numbers, or hyphens.
- */
 export function validateSkillName(name: string): string | null {
   if (!name || name.trim() === "") {
     return "Skill name is required";
@@ -27,10 +23,6 @@ export function validateSkillName(name: string): string | null {
   return null;
 }
 
-/**
- * Converts kebab-case to Title Case.
- * e.g., "my-patterns" -> "My Patterns"
- */
 export function toTitleCase(kebabCase: string): string {
   return kebabCase
     .split("-")
@@ -38,9 +30,6 @@ export function toTitleCase(kebabCase: string): string {
     .join(" ");
 }
 
-/**
- * Generates the SKILL.md content with frontmatter.
- */
 export function generateSkillMd(name: string, author: string): string {
   const titleName = toTitleCase(name);
   const skillId = `${name} (${author})`;
@@ -98,9 +87,6 @@ Add your patterns here.
 `;
 }
 
-/**
- * Generates the metadata.yaml content.
- */
 export function generateMetadataYaml(name: string, author: string, category: CategoryPath): string {
   const titleName = toTitleCase(name);
 
@@ -156,7 +142,6 @@ export default class NewSkill extends BaseCommand {
     this.log("Create New Skill");
     this.log("");
 
-    // Validate skill name
     const validationError = validateSkillName(args.name);
     if (validationError) {
       this.error(validationError, { exit: EXIT_CODES.INVALID_ARGS });
@@ -171,10 +156,8 @@ export default class NewSkill extends BaseCommand {
     // CLI flag is an untyped string — cast at data boundary
     const category = flags.category as CategoryPath;
 
-    // Determine skill directory path
     const skillDir = path.join(projectDir, LOCAL_SKILLS_PATH, args.name);
 
-    // Check if directory already exists
     if (await directoryExists(skillDir)) {
       if (!flags.force) {
         this.error(`Skill directory already exists: ${skillDir}\nUse --force to overwrite.`, {
@@ -198,11 +181,9 @@ export default class NewSkill extends BaseCommand {
     this.log("Creating skill files...");
 
     try {
-      // Generate file contents
       const skillMdContent = generateSkillMd(args.name, author);
       const metadataContent = generateMetadataYaml(args.name, author, category);
 
-      // Write files (writeFile automatically creates parent directories)
       const skillMdPath = path.join(skillDir, "SKILL.md");
       const metadataPath = path.join(skillDir, "metadata.yaml");
 

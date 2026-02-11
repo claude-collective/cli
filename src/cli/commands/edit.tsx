@@ -34,7 +34,6 @@ export default class Edit extends BaseCommand {
   async run(): Promise<void> {
     const { flags } = await this.parse(Edit);
 
-    // Detect installation mode
     const installation = await detectInstallation();
 
     if (!installation) {
@@ -50,7 +49,6 @@ export default class Edit extends BaseCommand {
     const modeLabel = installation.mode === "local" ? "Local" : "Plugin";
     this.log(`Edit ${modeLabel} Skills\n`);
 
-    // Load skills matrix
     this.log("Resolving marketplace source...");
     let sourceResult;
     try {
@@ -68,7 +66,6 @@ export default class Edit extends BaseCommand {
       this.handleError(error);
     }
 
-    // Load current skills
     this.log("Reading current skills...");
     let currentSkillIds: SkillId[];
     try {
@@ -78,7 +75,6 @@ export default class Edit extends BaseCommand {
       this.handleError(error);
     }
 
-    // Run wizard with initial skills
     let wizardResult: WizardResultV2 | null = null;
 
     const { waitUntilExit } = render(
@@ -86,7 +82,6 @@ export default class Edit extends BaseCommand {
         matrix={sourceResult.matrix}
         version={this.config.version}
         onComplete={(result) => {
-          // Wizard always returns WizardResultV2 in the current implementation
           wizardResult = result as WizardResultV2;
         }}
         onCancel={() => {
@@ -97,16 +92,12 @@ export default class Edit extends BaseCommand {
 
     await waitUntilExit();
 
-    // Cast to WizardResultV2 since that's what the current wizard implementation returns
-    // Use non-null assertion here since we know the wizard has completed
     const result = wizardResult as WizardResultV2 | null;
 
-    // Handle cancellation - use error() which throws and TypeScript understands
     if (!result || result.cancelled) {
       this.error("Cancelled", { exit: EXIT_CODES.CANCELLED });
     }
 
-    // Validate selection - use error() which throws and TypeScript understands
     if (!result.validation.valid) {
       const errorMessages = result.validation.errors.map((e) => e.message).join("\n  ");
       this.error(`Selection has validation errors:\n  ${errorMessages}`, {
@@ -114,13 +105,11 @@ export default class Edit extends BaseCommand {
       });
     }
 
-    // Calculate changes
     const addedSkills = result.selectedSkills.filter((id) => !currentSkillIds.includes(id));
     const removedSkills = currentSkillIds.filter(
       (id) => !result.selectedSkills.includes(id),
     );
 
-    // Show warnings if any
     if (result.validation.warnings.length > 0) {
       this.log("\nWarnings:");
       for (const warning of result.validation.warnings) {
@@ -129,14 +118,12 @@ export default class Edit extends BaseCommand {
       this.log("");
     }
 
-    // Check if there are no changes
     if (addedSkills.length === 0 && removedSkills.length === 0) {
       this.log("No changes made.");
       this.log("Plugin unchanged\n");
       return;
     }
 
-    // Show changes
     this.log("\nChanges:");
     for (const skillId of addedSkills) {
       const skill = sourceResult.matrix.skills[skillId];
@@ -148,7 +135,6 @@ export default class Edit extends BaseCommand {
     }
     this.log("");
 
-    // Update plugin skills
     this.log("Updating plugin skills...");
     try {
       if (await directoryExists(pluginSkillsDir)) {
@@ -167,7 +153,6 @@ export default class Edit extends BaseCommand {
       this.handleError(error);
     }
 
-    // Fetch agent partials
     let sourcePath: string;
     this.log(flags["agent-source"] ? "Fetching agent partials..." : "Loading agent partials...");
     try {
@@ -180,7 +165,6 @@ export default class Edit extends BaseCommand {
       this.handleError(error);
     }
 
-    // Recompile agents
     this.log("Recompiling agents...");
     try {
       const recompileResult = await recompileAgents({
@@ -207,7 +191,6 @@ export default class Edit extends BaseCommand {
       this.log("You can manually recompile with 'cc compile'.\n");
     }
 
-    // Update plugin version
     this.log("Updating plugin version...");
     try {
       const newVersion = await bumpPluginVersion(pluginDir, "patch");

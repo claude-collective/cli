@@ -161,14 +161,11 @@ export default class Uninstall extends BaseCommand {
       this.log("");
     }
 
-    // Detect what's installed
     const target = await detectInstallation(projectDir);
 
-    // Determine what to uninstall based on flags
     const uninstallPlugin = !flags.local;
     const uninstallLocal = !flags.plugin;
 
-    // Check if there's anything to uninstall
     const hasPluginToRemove = uninstallPlugin && target.hasPlugin;
     const hasLocalToRemove = uninstallLocal && (target.hasClaudeDir || target.hasClaudeSrcDir);
 
@@ -191,7 +188,6 @@ export default class Uninstall extends BaseCommand {
       return;
     }
 
-    // Show what will be removed and get confirmation (unless --yes or --dry-run)
     if (!flags.yes && !flags["dry-run"]) {
       const confirmed = await new Promise<boolean>((resolve) => {
         const { waitUntilExit } = render(
@@ -213,7 +209,6 @@ export default class Uninstall extends BaseCommand {
         this.exit(EXIT_CODES.CANCELLED);
       }
     } else {
-      // In dry-run or --yes mode, just show what will be removed
       this.log("The following will be removed:");
       this.log("");
 
@@ -235,7 +230,6 @@ export default class Uninstall extends BaseCommand {
       this.log("");
     }
 
-    // Dry run - show what would happen
     if (flags["dry-run"]) {
       if (hasPluginToRemove) {
         this.log(`[dry-run] Would uninstall plugin "${PLUGIN_NAME}"`);
@@ -255,18 +249,15 @@ export default class Uninstall extends BaseCommand {
       return;
     }
 
-    // Uninstall plugin
     if (hasPluginToRemove) {
       this.log("Uninstalling plugin...");
 
       try {
-        // Try to use claude CLI to uninstall (handles settings.json)
         const cliAvailable = await isClaudeCLIAvailable();
         if (cliAvailable) {
           await claudePluginUninstall(PLUGIN_NAME, "project", projectDir);
         }
 
-        // Remove plugin directory
         await remove(target.pluginDir);
 
         this.logSuccess("Plugin uninstalled");
@@ -278,7 +269,6 @@ export default class Uninstall extends BaseCommand {
       }
     }
 
-    // Remove local directories
     if (hasLocalToRemove) {
       this.log("Removing local directories...");
 

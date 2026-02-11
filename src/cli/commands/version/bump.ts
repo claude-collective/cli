@@ -1,6 +1,3 @@
-/**
- * Bump plugin version (major, minor, or patch).
- */
 import { BaseCommand } from "../../base-command.js";
 import { Args, Flags } from "@oclif/core";
 import {
@@ -55,7 +52,6 @@ export default class VersionBump extends BaseCommand {
     const pluginDir = path.dirname(path.dirname(manifestPath));
 
     try {
-      // Read current version and plugin name
       const content = await readFile(manifestPath);
       const manifest = pluginManifestSchema.parse(JSON.parse(content));
       const oldVersion = manifest.version || "1.0.0";

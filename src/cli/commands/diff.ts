@@ -9,9 +9,6 @@ import { readForkedFromMetadata, type ForkedFromMetadata } from "../lib/skills/i
 import { fileExists, readFile, listDirectories } from "../utils/fs.js";
 import { LOCAL_SKILLS_PATH } from "../consts.js";
 
-/**
- * Result of diffing a local skill against its source
- */
 type SkillDiffResult = {
   skillDirName: string;
   forkedFrom: ForkedFromMetadata | null;
@@ -19,9 +16,6 @@ type SkillDiffResult = {
   diffOutput: string;
 };
 
-/**
- * Color the diff output for terminal display
- */
 function colorDiff(diffText: string): string {
   return diffText
     .split("\n")
@@ -43,9 +37,6 @@ function colorDiff(diffText: string): string {
     .join("\n");
 }
 
-/**
- * Generate diff for a single skill
- */
 async function diffSkill(
   localSkillsPath: string,
   skillDirName: string,
@@ -75,7 +66,6 @@ async function diffSkill(
     };
   }
 
-  // Load source SKILL.md
   const sourceSkillMdPath = path.join(sourcePath, "src", sourceSkill.path, "SKILL.md");
 
   if (!(await fileExists(sourceSkillMdPath))) {
@@ -89,7 +79,6 @@ async function diffSkill(
 
   const sourceContent = await readFile(sourceSkillMdPath);
 
-  // Load local SKILL.md
   const localSkillMdPath = path.join(skillDir, "SKILL.md");
 
   if (!(await fileExists(localSkillMdPath))) {
@@ -103,7 +92,6 @@ async function diffSkill(
 
   const localContent = await readFile(localSkillMdPath);
 
-  // Generate unified diff
   const sourceLabel = `source/${sourceSkill.path}/SKILL.md`;
   const localLabel = `local/${LOCAL_SKILLS_PATH}/${skillDirName}/SKILL.md`;
 
@@ -116,7 +104,6 @@ async function diffSkill(
     "", // No local header
   );
 
-  // Check if there are actual differences (not just the file headers)
   const hasDiff = diff.split("\n").some((line) => {
     return (
       (line.startsWith("+") || line.startsWith("-")) &&
@@ -159,7 +146,6 @@ export default class Diff extends BaseCommand {
     const projectDir = process.cwd();
     const localSkillsPath = path.join(projectDir, LOCAL_SKILLS_PATH);
 
-    // Check if local skills directory exists
     if (!(await fileExists(localSkillsPath))) {
       if (!flags.quiet) {
         this.warn("No local skills found. Run 'cc init' or 'cc edit' first.");
@@ -181,7 +167,6 @@ export default class Diff extends BaseCommand {
         this.log(chalk.dim(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`));
       }
 
-      // Build source skills map for lookup
       const sourceSkills: Record<string, { path: string }> = {};
       for (const [skillId, skill] of Object.entries(matrix.skills)) {
         if (!skill) continue;
@@ -190,10 +175,8 @@ export default class Diff extends BaseCommand {
         }
       }
 
-      // Get local skill directories
       let skillDirs = await listDirectories(localSkillsPath);
 
-      // Filter to specific skill if skill arg provided
       if (args.skill) {
         skillDirs = skillDirs.filter((dir) => dir === args.skill);
         if (skillDirs.length === 0) {
@@ -205,7 +188,6 @@ export default class Diff extends BaseCommand {
         }
       }
 
-      // Process each skill
       const results: SkillDiffResult[] = [];
       const skillsWithoutForkedFrom: string[] = [];
 
@@ -218,14 +200,11 @@ export default class Diff extends BaseCommand {
         }
       }
 
-      // Count skills with differences
       const skillsWithDiffs = results.filter((r) => r.hasDiff);
 
-      // Output results
       if (!flags.quiet) {
         this.log("");
 
-        // Warn about skills without forked_from
         if (skillsWithoutForkedFrom.length > 0) {
           for (const skillName of skillsWithoutForkedFrom) {
             this.warn(`Skill '${skillName}' has no forked_from metadata - cannot compare`);
@@ -233,7 +212,6 @@ export default class Diff extends BaseCommand {
           this.log("");
         }
 
-        // Check if any forked skills exist
         const forkedSkills = results.filter((r) => r.forkedFrom);
 
         if (forkedSkills.length === 0) {
@@ -241,7 +219,6 @@ export default class Diff extends BaseCommand {
         } else if (skillsWithDiffs.length === 0) {
           this.logSuccess(`All ${forkedSkills.length} forked skill(s) are up to date with source.`);
         } else {
-          // Show diffs
           for (const result of skillsWithDiffs) {
             this.log(
               chalk.bold(
@@ -260,7 +237,6 @@ export default class Diff extends BaseCommand {
         this.log("");
       }
 
-      // Exit with appropriate code
       if (skillsWithDiffs.length > 0) {
         this.exit(EXIT_CODES.ERROR);
       }

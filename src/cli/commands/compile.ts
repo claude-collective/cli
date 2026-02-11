@@ -194,7 +194,6 @@ export default class Compile extends BaseCommand {
 
     setVerbose(flags.verbose);
 
-    // If --output provided explicitly, use custom output mode
     if (flags.output) {
       await this.runCustomOutputCompile({
         ...flags,
@@ -203,7 +202,6 @@ export default class Compile extends BaseCommand {
       return;
     }
 
-    // Auto-detect installation mode
     const installation = await detectInstallation();
 
     if (!installation) {
@@ -213,7 +211,6 @@ export default class Compile extends BaseCommand {
     }
 
     if (installation.mode === "local") {
-      // Use local mode - output to .claude/agents
       this.log("");
       this.log("Local Mode Compile (auto-detected)");
       this.log("");
@@ -222,7 +219,6 @@ export default class Compile extends BaseCommand {
         output: installation.agentsDir,
       });
     } else {
-      // Use plugin mode
       await this.runPluginModeCompile(flags);
     }
   }
@@ -238,11 +234,9 @@ export default class Compile extends BaseCommand {
     this.log("Plugin Mode Compile");
     this.log("");
 
-    // 1. Get the collective plugin directory (always ~/.claude/plugins/claude-collective/)
     const pluginDir = getCollectivePluginDir();
     this.log("Finding plugin...");
 
-    // Check if plugin exists
     if (!(await directoryExists(pluginDir))) {
       this.log("No plugin found");
       this.error("No plugin found. Run 'cc init' first to create a plugin.", {

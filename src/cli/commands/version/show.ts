@@ -1,6 +1,3 @@
-/**
- * Show current plugin version.
- */
 import { BaseCommand } from "../../base-command.js";
 import { getPluginVersion, findPluginManifest } from "../../lib/plugins/index.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";

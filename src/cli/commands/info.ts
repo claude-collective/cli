@@ -13,24 +13,10 @@ import type {
   SkillRequirement,
 } from "../types/index.js";
 
-/**
- * Maximum number of lines to show in content preview
- */
 const CONTENT_PREVIEW_LINES = 10;
-
-/**
- * Maximum line length before truncation
- */
 const MAX_LINE_LENGTH = 80;
-
-/**
- * Maximum number of suggestions to show when skill not found
- */
 const MAX_SUGGESTIONS = 5;
 
-/**
- * Strip frontmatter from SKILL.md content and return body
- */
 function stripFrontmatter(content: string): string {
   const lines = content.split("\n");
   let inFrontmatter = false;
@@ -51,9 +37,6 @@ function stripFrontmatter(content: string): string {
   return lines.slice(frontmatterEndIndex).join("\n");
 }
 
-/**
- * Get first N non-empty lines from content
- */
 function getPreviewLines(content: string, maxLines: number): string[] {
   const body = stripFrontmatter(content);
   const lines = body.split("\n");
@@ -61,7 +44,6 @@ function getPreviewLines(content: string, maxLines: number): string[] {
 
   for (const line of lines) {
     if (result.length >= maxLines) break;
-    // Include non-empty lines or blank lines after content has started
     if (line.trim() || result.length > 0) {
       const truncated =
         line.length > MAX_LINE_LENGTH ? line.slice(0, MAX_LINE_LENGTH - 3) + "..." : line;
@@ -72,9 +54,6 @@ function getPreviewLines(content: string, maxLines: number): string[] {
   return result;
 }
 
-/**
- * Format an array of skill relations for display
- */
 function formatRelations(relations: SkillRelation[]): string {
   if (relations.length === 0) {
     return "(none)";
@@ -82,9 +61,6 @@ function formatRelations(relations: SkillRelation[]): string {
   return relations.map((r) => r.skillId).join(", ");
 }
 
-/**
- * Format an array of skill requirements for display
- */
 function formatRequirements(requirements: SkillRequirement[]): string {
   if (requirements.length === 0) {
     return "(none)";
@@ -97,9 +73,6 @@ function formatRequirements(requirements: SkillRequirement[]): string {
     .join("; ");
 }
 
-/**
- * Format tags array for display
- */
 function formatTags(tags: string[]): string {
   if (tags.length === 0) {
     return "(none)";
@@ -107,9 +80,6 @@ function formatTags(tags: string[]): string {
   return tags.join(", ");
 }
 
-/**
- * Find skills that match a partial query for suggestions
- */
 function findSuggestions(
   skills: Partial<Record<SkillId, ResolvedSkill>>,
   query: string,
@@ -132,9 +102,6 @@ function findSuggestions(
   return matches;
 }
 
-/**
- * Format skill info for display
- */
 function formatSkillInfo(skill: ResolvedSkill, isInstalled: boolean): string {
   const lines: string[] = [];
 
@@ -199,7 +166,6 @@ export default class Info extends BaseCommand {
 
       this.log(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`);
 
-      // Look up skill by ID or alias
       // CLI arg is an untyped string — cast at data boundary
       let skill: ResolvedSkill | undefined = matrix.skills[args.skill as SkillId];
 
@@ -212,7 +178,6 @@ export default class Info extends BaseCommand {
       }
 
       if (!skill) {
-        // Skill not found - show error with suggestions
         const suggestions = findSuggestions(matrix.skills, args.skill, MAX_SUGGESTIONS);
 
         this.log("");
@@ -232,25 +197,19 @@ export default class Info extends BaseCommand {
         this.exit(EXIT_CODES.ERROR);
       }
 
-      // Check local installation status
       const localSkillsResult = await discoverLocalSkills(process.cwd());
       const localSkillIds = localSkillsResult?.skills.map((s) => s.id) || [];
       const isInstalled = localSkillIds.includes(skill.id);
 
-      // Display skill info
       this.log("");
       this.log(formatSkillInfo(skill, isInstalled));
 
-      // Show content preview if enabled
       if (flags.preview) {
-        // Determine source path for SKILL.md
         let skillMdPath: string;
 
         if (skill.local && skill.localPath) {
-          // Local skill - path is relative to cwd
           skillMdPath = path.join(process.cwd(), skill.localPath, "SKILL.md");
         } else {
-          // Remote skill - path is relative to source
           const sourceDir = isLocal ? sourcePath : path.dirname(sourcePath);
           skillMdPath = path.join(sourceDir, skill.path, "SKILL.md");
         }

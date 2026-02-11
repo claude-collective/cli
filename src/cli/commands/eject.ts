@@ -67,16 +67,13 @@ export default class Eject extends BaseCommand {
       });
     }
 
-    // Resolve output base directory
     let outputBase: string;
     if (flags.output) {
-      // Expand ~ to home directory if present
       const expandedPath = flags.output.startsWith("~")
         ? path.join(os.homedir(), flags.output.slice(1))
         : flags.output;
       outputBase = path.resolve(projectDir, expandedPath);
 
-      // Validate output path is not an existing file
       if (await fileExists(outputBase)) {
         this.error(`Output path exists as a file: ${outputBase}`, {
           exit: EXIT_CODES.INVALID_ARGS,
@@ -90,7 +87,6 @@ export default class Eject extends BaseCommand {
     this.log("Claude Collective Eject");
     this.log("");
 
-    // Show output directory when using custom path
     if (flags.output) {
       this.log(`Output directory: ${outputBase}`);
     }
@@ -98,7 +94,6 @@ export default class Eject extends BaseCommand {
     const ejectType = args.type as EjectType;
     const directOutput = !!flags.output;
 
-    // Load source when ejecting skills or all
     let sourceResult: SourceLoadResult | undefined;
     if (ejectType === "skills" || ejectType === "all") {
       sourceResult = await loadSkillsMatrixFromSource({
@@ -133,13 +128,11 @@ export default class Eject extends BaseCommand {
         break;
     }
 
-    // Save source to project config if --source was provided
     if (flags.source) {
       await saveSourceToProjectConfig(projectDir, flags.source);
       this.log(`Source saved to .claude-src/config.yaml`);
     }
 
-    // Create minimal config.yaml if it doesn't exist
     await this.ensureMinimalConfig(projectDir, flags.source, sourceResult);
 
     this.log("");
@@ -147,11 +140,7 @@ export default class Eject extends BaseCommand {
     this.log("");
   }
 
-  /**
-   * Ensure a minimal config.yaml exists so that `cc compile` can work after eject.
-   * Only creates if config doesn't already exist.
-   * Includes all resolved config values: source, marketplace, author, agents_source.
-   */
+  // Ensures a minimal config.yaml exists so `cc compile` works after eject
   private async ensureMinimalConfig(
     projectDir: string,
     sourceFlag?: string,
@@ -159,36 +148,30 @@ export default class Eject extends BaseCommand {
   ): Promise<void> {
     const configPath = path.join(projectDir, CLAUDE_SRC_DIR, "config.yaml");
 
-    // Don't overwrite existing config
     if (await fileExists(configPath)) {
       return;
     }
 
     const projectName = path.basename(projectDir);
 
-    // Build config with all available values
     const config: Record<string, unknown> = {
       name: projectName,
       installMode: "local",
     };
 
-    // Get resolved source config
     const resolvedConfig =
       sourceResult?.sourceConfig ?? (await resolveSource(sourceFlag, projectDir));
 
-    // Add source (flag overrides resolved source, but always include it)
     if (sourceFlag) {
       config.source = sourceFlag;
     } else if (resolvedConfig.source) {
       config.source = resolvedConfig.source;
     }
 
-    // Add marketplace if available
     if (resolvedConfig.marketplace) {
       config.marketplace = resolvedConfig.marketplace;
     }
 
-    // Load project config to get author and agents_source
     const existingProjectConfig = await loadProjectSourceConfig(projectDir);
     if (existingProjectConfig?.author) {
       config.author = existingProjectConfig.author;
@@ -199,10 +182,8 @@ export default class Eject extends BaseCommand {
 
     await ensureDir(path.join(projectDir, CLAUDE_SRC_DIR));
 
-    // Build config YAML with commented example stack blueprint
     let configContent = stringifyYaml(config, { indent: 2 });
 
-    // Append commented example stack configuration as a blueprint for users
     const exampleStackComment = `
 # Example stack configuration (uncomment and customize):
 #
@@ -232,15 +213,6 @@ export default class Eject extends BaseCommand {
     this.logSuccess(`Created ${CLAUDE_SRC_DIR}/config.yaml`);
   }
 
-  /**
-   * Eject agent partials (templates + agent partial files).
-   *
-   * Combines the old templates and agents eject into a single operation:
-   * - Copies `PROJECT_ROOT/src/agents/_templates/` to `<dest>/_templates/`
-   * - Copies agent partials from `PROJECT_ROOT/src/agents/` (excluding `_templates`) to `<dest>/`
-   *
-   * Always copies from CLI's PROJECT_ROOT - the `--source` flag has no effect.
-   */
   private async ejectAgentPartials(
     outputBase: string,
     force: boolean,
@@ -253,9 +225,6 @@ export default class Eject extends BaseCommand {
       return;
     }
 
-    // Destination directory structure:
-    // When directOutput is true: write directly to outputBase
-    // When false (default): add "agents" subdirectory (to .claude-src/agents/)
     const destDir = directOutput ? outputBase : path.join(outputBase, "agents");
 
     if ((await directoryExists(destDir)) && !force) {
@@ -265,23 +234,12 @@ export default class Eject extends BaseCommand {
 
     await ensureDir(destDir);
 
-    // Copy entire agents directory (includes _templates and all agent partials)
     await copy(sourceDir, destDir);
 
     this.logSuccess(`Agent partials ejected to ${destDir}`);
     this.log("You can now customize templates, agent intro, workflow, and examples locally.");
   }
 
-  /**
-   * Eject skills from the configured source to local .claude/skills/ directory.
-   *
-   * Uses the source resolution system:
-   * - Default: Public marketplace
-   * - `--source /path`: Custom local source
-   * - `--source url`: Custom remote source
-   *
-   * Skills are copied in a flattened structure using their normalized skill IDs.
-   */
   private async ejectSkills(
     projectDir: string,
     force: boolean,
@@ -289,9 +247,6 @@ export default class Eject extends BaseCommand {
     sourceResult: SourceLoadResult,
     customOutputBase?: string,
   ): Promise<void> {
-    // Destination directory structure:
-    // When directOutput is true (custom --output): write directly to customOutputBase
-    // When false (default): use .claude/skills/ (skills are runtime files, not source files)
     const destDir =
       directOutput && customOutputBase
         ? customOutputBase
@@ -302,7 +257,6 @@ export default class Eject extends BaseCommand {
       return;
     }
 
-    // Get all non-local skill IDs from the source matrix
     const skillIds = typedKeys<SkillId>(sourceResult.matrix.skills).filter(
       (skillId) => !sourceResult.matrix.skills[skillId]?.local,
     );
@@ -314,7 +268,6 @@ export default class Eject extends BaseCommand {
 
     await ensureDir(destDir);
 
-    // Copy skills using flattened structure
     const copiedSkills = await copySkillsToLocalFlattened(
       skillIds,
       destDir,

@@ -39,20 +39,10 @@ const METADATA_YAML_FILE = "metadata.yaml";
 const METADATA_JSON_FILE = "metadata.json";
 const DEFAULT_SKILLS_SUBDIR = "skills";
 
-/**
- * Parse a GitHub source string into owner/repo and optional subdir.
- *
- * Supported formats:
- * - https://github.com/owner/repo
- * - github:owner/repo
- * - gh:owner/repo
- * - owner/repo (assumes GitHub)
- */
 function parseGitHubSource(source: string): {
   gigetSource: string;
   displaySource: string;
 } {
-  // Full GitHub URL
   if (source.startsWith("https://github.com/")) {
     const path = source.replace("https://github.com/", "");
     return {
@@ -61,7 +51,6 @@ function parseGitHubSource(source: string): {
     };
   }
 
-  // Already in giget format
   if (source.startsWith("github:") || source.startsWith("gh:")) {
     const normalized = source.replace(/^gh:/, "github:");
     return {
@@ -70,7 +59,6 @@ function parseGitHubSource(source: string): {
     };
   }
 
-  // Assume owner/repo format
   if (source.includes("/") && !source.includes(":")) {
     return {
       gigetSource: `github:${source}`,
@@ -78,7 +66,6 @@ function parseGitHubSource(source: string): {
     };
   }
 
-  // Return as-is for other sources (might be a local path or other provider)
   return {
     gigetSource: source,
     displaySource: source,
@@ -160,7 +147,6 @@ export default class ImportSkill extends BaseCommand {
     this.log("Import Third-Party Skill");
     this.log("");
 
-    // Validate flags
     if (!flags.list && !flags.skill && !flags.all) {
       this.error("Please specify --skill <name>, --all, or --list to list available skills", {
         exit: EXIT_CODES.INVALID_ARGS,
@@ -173,11 +159,9 @@ export default class ImportSkill extends BaseCommand {
       });
     }
 
-    // Parse the source
     const { gigetSource, displaySource } = parseGitHubSource(args.source);
     this.log(`Source: ${displaySource}`);
 
-    // Fetch the repository
     this.log("Fetching repository...");
 
     let repoPath: string;
@@ -193,7 +177,6 @@ export default class ImportSkill extends BaseCommand {
       });
     }
 
-    // Find skills directory
     const skillsDir = path.join(repoPath, flags.subdir);
     if (!(await directoryExists(skillsDir))) {
       this.error(
@@ -204,7 +187,6 @@ export default class ImportSkill extends BaseCommand {
       );
     }
 
-    // Discover available skills
     const skillDirs = await listDirectories(skillsDir);
     const availableSkills = await this.discoverValidSkills(skillsDir, skillDirs);
 
@@ -215,7 +197,6 @@ export default class ImportSkill extends BaseCommand {
       );
     }
 
-    // Handle --list
     if (flags.list) {
       this.log("");
       this.log(`Available skills (${availableSkills.length}):`);
@@ -228,13 +209,11 @@ export default class ImportSkill extends BaseCommand {
       return;
     }
 
-    // Determine which skills to import
     let skillsToImport: string[] = [];
 
     if (flags.all) {
       skillsToImport = availableSkills;
     } else if (flags.skill) {
-      // Validate the skill exists
       if (!availableSkills.includes(flags.skill)) {
         this.error(
           `Skill '${flags.skill}' not found in repository.\n` +
@@ -246,7 +225,6 @@ export default class ImportSkill extends BaseCommand {
       skillsToImport = [flags.skill];
     }
 
-    // Destination directory
     const destDir = path.join(projectDir, LOCAL_SKILLS_PATH);
 
     if (flags["dry-run"]) {
@@ -260,7 +238,6 @@ export default class ImportSkill extends BaseCommand {
       return;
     }
 
-    // Import skills
     this.log("");
     this.log(`Importing ${skillsToImport.length} skill(s)...`);
 
@@ -271,7 +248,6 @@ export default class ImportSkill extends BaseCommand {
       const sourcePath = path.join(skillsDir, skillName);
       const destPath = path.join(destDir, skillName);
 
-      // Check if already exists
       if (await directoryExists(destPath)) {
         if (!flags.force) {
           this.warn(`Skipping '${skillName}': already exists. Use --force to overwrite.`);
@@ -300,10 +276,6 @@ export default class ImportSkill extends BaseCommand {
     this.log("");
   }
 
-  /**
-   * Discover valid skills in a directory.
-   * A valid skill must have a SKILL.md file.
-   */
   private async discoverValidSkills(skillsDir: string, skillDirs: string[]): Promise<string[]> {
     const validSkills: string[] = [];
 
@@ -317,36 +289,25 @@ export default class ImportSkill extends BaseCommand {
     return validSkills.sort();
   }
 
-  /**
-   * Import a single skill to the destination directory.
-   */
   private async importSkill(
     sourcePath: string,
     destPath: string,
     skillName: string,
     source: string,
   ): Promise<void> {
-    // Validate SKILL.md exists
     const skillMdPath = path.join(sourcePath, SKILL_MD_FILE);
     if (!(await fileExists(skillMdPath))) {
       throw new Error("Missing required SKILL.md file");
     }
 
-    // Generate content hash from SKILL.md
     const contentHash = await hashFile(skillMdPath);
 
-    // Copy the entire skill directory
     await ensureDir(path.dirname(destPath));
     await copy(sourcePath, destPath);
 
-    // Inject forked_from metadata
     await this.injectForkedFromMetadata(destPath, skillName, source, contentHash);
   }
 
-  /**
-   * Inject forked_from metadata into the skill's metadata file.
-   * Creates metadata.yaml if it doesn't exist.
-   */
   private async injectForkedFromMetadata(
     destPath: string,
     skillName: string,
@@ -363,7 +324,6 @@ export default class ImportSkill extends BaseCommand {
       date: getCurrentDate(),
     };
 
-    // Try to update existing metadata.yaml
     if (await fileExists(metadataYamlPath)) {
       const rawContent = await readFile(metadataYamlPath);
       const lines = rawContent.split("\n");
@@ -387,7 +347,6 @@ export default class ImportSkill extends BaseCommand {
       return;
     }
 
-    // Try to update existing metadata.json and convert to YAML
     if (await fileExists(metadataJsonPath)) {
       const rawContent = await readFile(metadataJsonPath);
       const jsonParsed = JSON.parse(rawContent);
@@ -397,13 +356,11 @@ export default class ImportSkill extends BaseCommand {
         : { forked_from: undefined };
       metadata.forked_from = forkedFrom;
 
-      // Create metadata.yaml with converted content
       const yamlContent = stringifyYaml(metadata, { lineWidth: 0 });
       await writeFile(metadataYamlPath, yamlContent);
       return;
     }
 
-    // Create minimal metadata.yaml if neither exists
     const minimalMetadata: SkillMetadata = {
       cli_name: skillName
         .split("-")

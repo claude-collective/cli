@@ -10,24 +10,12 @@ import { loadSkillsMatrixFromSource } from "../lib/loading";
 import { discoverLocalSkills } from "../lib/skills";
 import type { AgentName, MergedSkillsMatrix, ProjectConfig, SkillId } from "../types";
 
-// =============================================================================
-// Types
-// =============================================================================
-
 type CheckResult = {
   status: "pass" | "fail" | "warn" | "skip";
   message: string;
   details?: string[];
 };
 
-// =============================================================================
-// Check Functions
-// =============================================================================
-
-/**
- * Check 1: Config Valid
- * Parse .claude/config.yaml without errors
- */
 async function checkConfigValid(projectDir: string): Promise<CheckResult> {
   const loaded = await loadProjectConfig(projectDir);
 
@@ -63,10 +51,6 @@ async function checkConfigValid(projectDir: string): Promise<CheckResult> {
   };
 }
 
-/**
- * Check 2: Skills Resolved
- * All skills in config exist in source or locally
- */
 async function checkSkillsResolved(
   config: ProjectConfig,
   matrix: MergedSkillsMatrix,
@@ -74,7 +58,6 @@ async function checkSkillsResolved(
 ): Promise<CheckResult> {
   const configSkills: SkillId[] = [];
 
-  // Collect skill IDs from config.stack
   if (config.stack) {
     for (const agentConfig of Object.values(config.stack)) {
       for (const skillId of Object.values(agentConfig)) {
@@ -83,7 +66,6 @@ async function checkSkillsResolved(
     }
   }
 
-  // Dedupe skills
   const uniqueSkills = unique(configSkills);
 
   if (uniqueSkills.length === 0) {
@@ -93,11 +75,9 @@ async function checkSkillsResolved(
     };
   }
 
-  // Check local skills
   const localResult = await discoverLocalSkills(projectDir);
   const localSkillIds = new Set(localResult?.skills.map((s) => s.id) ?? []);
 
-  // Check which skills are missing
   const missingSkills: string[] = [];
   for (const skillId of uniqueSkills) {
     const inMatrix = skillId in matrix.skills;
@@ -121,10 +101,6 @@ async function checkSkillsResolved(
   };
 }
 
-/**
- * Check 3: Agents Compiled
- * All agents in config have .md files in .claude/agents/
- */
 async function checkAgentsCompiled(
   config: ProjectConfig,
   projectDir: string,
@@ -162,10 +138,6 @@ async function checkAgentsCompiled(
   };
 }
 
-/**
- * Check 4: No Orphans
- * No extra files in .claude/agents/ not in config
- */
 async function checkNoOrphans(config: ProjectConfig, projectDir: string): Promise<CheckResult> {
   const agentsDir = path.join(projectDir, ".claude", "agents");
 
@@ -176,7 +148,6 @@ async function checkNoOrphans(config: ProjectConfig, projectDir: string): Promis
     };
   }
 
-  // Find all .md files in agents directory
   const mdFiles = await glob("*.md", agentsDir);
   const configAgents = new Set(config.agents ?? []);
 
@@ -203,10 +174,6 @@ async function checkNoOrphans(config: ProjectConfig, projectDir: string): Promis
   };
 }
 
-/**
- * Check 5: Source Reachable
- * Can load from configured source
- */
 async function checkSourceReachable(
   sourceFlag: string | undefined,
   projectDir: string,
@@ -235,10 +202,6 @@ async function checkSourceReachable(
   }
 }
 
-// =============================================================================
-// Output Formatting Helpers
-// =============================================================================
-
 const CHECK_WIDTH = 20;
 
 function formatCheckName(name: string): string {
@@ -265,7 +228,6 @@ function formatCheckLine(name: string, result: CheckResult, verbose: boolean): s
 
   lines.push(`  ${nameFormatted}${statusIcon}  ${result.message}`);
 
-  // Show details if verbose or if there are errors/warnings
   const shouldShowDetails =
     result.details &&
     result.details.length > 0 &&
@@ -342,10 +304,6 @@ function formatTips(results: CheckResult[]): string[] {
   return tips;
 }
 
-// =============================================================================
-// Command
-// =============================================================================
-
 export default class Doctor extends BaseCommand {
   static summary = "Diagnose common configuration issues";
 
@@ -385,12 +343,10 @@ export default class Doctor extends BaseCommand {
 
     const results: CheckResult[] = [];
 
-    // Check 1: Config Valid
     const configResult = await checkConfigValid(projectDir);
     results.push(configResult);
     formatCheckLine("Config Valid", configResult, flags.verbose).forEach((line) => this.log(line));
 
-    // Load config for remaining checks (if valid)
     let config: ProjectConfig | null = null;
     let matrix: MergedSkillsMatrix | null = null;
 
@@ -399,10 +355,8 @@ export default class Doctor extends BaseCommand {
       config = loaded?.config ?? null;
     }
 
-    // Check 5: Source Reachable (do this early to get matrix)
     const sourceResult = await checkSourceReachable(flags.source, projectDir);
 
-    // Try to get matrix even if source check failed with fallback
     try {
       const result = await loadSkillsMatrixFromSource({
         sourceFlag: flags.source,
@@ -413,7 +367,6 @@ export default class Doctor extends BaseCommand {
       // Matrix unavailable
     }
 
-    // Check 2: Skills Resolved
     if (config && matrix) {
       const skillsResult = await checkSkillsResolved(config, matrix, projectDir);
       results.push(skillsResult);
@@ -431,7 +384,6 @@ export default class Doctor extends BaseCommand {
       );
     }
 
-    // Check 3: Agents Compiled
     if (config) {
       const agentsResult = await checkAgentsCompiled(config, projectDir);
       results.push(agentsResult);
@@ -449,7 +401,6 @@ export default class Doctor extends BaseCommand {
       );
     }
 
-    // Check 4: No Orphans
     if (config) {
       const orphansResult = await checkNoOrphans(config, projectDir);
       results.push(orphansResult);
@@ -463,17 +414,14 @@ export default class Doctor extends BaseCommand {
       formatCheckLine("No Orphans", skipResult, flags.verbose).forEach((line) => this.log(line));
     }
 
-    // Check 5: Source Reachable (already ran, just print)
     results.push(sourceResult);
     formatCheckLine("Source Reachable", sourceResult, flags.verbose).forEach((line) =>
       this.log(line),
     );
 
-    // Summary
     this.log("");
     this.log(formatSummary(results));
 
-    // Tips
     const tips = formatTips(results);
     if (tips.length > 0) {
       this.log("");
@@ -482,7 +430,6 @@ export default class Doctor extends BaseCommand {
 
     this.log("");
 
-    // Exit code: 0 if all pass (warnings OK), 1 if any fail
     const hasErrors = results.some((r) => r.status === "fail");
     if (hasErrors) {
       this.exit(EXIT_CODES.ERROR);

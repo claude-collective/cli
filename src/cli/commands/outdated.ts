@@ -9,18 +9,12 @@ import { compareSkills, type SkillComparisonResult } from "../lib/skills/index.j
 import { fileExists } from "../utils/fs.js";
 import { LOCAL_SKILLS_PATH } from "../consts.js";
 
-/**
- * Summary counts for the comparison results
- */
 type ComparisonSummary = {
   outdated: number;
   current: number;
   localOnly: number;
 };
 
-/**
- * Calculate summary counts from comparison results
- */
 function calculateSummary(results: SkillComparisonResult[]): ComparisonSummary {
   const counts = countBy(results, (r) => r.status);
   return {
@@ -30,9 +24,6 @@ function calculateSummary(results: SkillComparisonResult[]): ComparisonSummary {
   };
 }
 
-/**
- * Format hash for display
- */
 function formatHash(hash: string | null, isLocal: boolean): string {
   if (hash === null) {
     return isLocal ? "(local)" : "-";
@@ -58,7 +49,6 @@ export default class Outdated extends BaseCommand {
     const projectDir = process.cwd();
 
     try {
-      // Check if local skills directory exists
       const localSkillsPath = path.join(projectDir, LOCAL_SKILLS_PATH);
       if (!(await fileExists(localSkillsPath))) {
         if (flags.json) {
@@ -87,7 +77,6 @@ export default class Outdated extends BaseCommand {
         this.log(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`);
       }
 
-      // Build source skills map for lookup
       const sourceSkills: Record<string, { path: string }> = {};
       for (const [skillId, skill] of Object.entries(matrix.skills)) {
         if (!skill) continue;
@@ -96,11 +85,9 @@ export default class Outdated extends BaseCommand {
         }
       }
 
-      // Compare local skills against source
       const results = await compareSkills(projectDir, sourcePath, sourceSkills);
       const summary = calculateSummary(results);
 
-      // Output results
       if (flags.json) {
         this.log(
           JSON.stringify(
@@ -126,7 +113,6 @@ export default class Outdated extends BaseCommand {
         if (results.length === 0) {
           this.logInfo("No local skills found to compare.");
         } else {
-          // Use @oclif/table for table output
           printTable({
             data: results.map((result) => ({
               skill: result.id,
@@ -145,7 +131,6 @@ export default class Outdated extends BaseCommand {
 
           this.log("");
 
-          // Display summary
           const parts: string[] = [];
           if (summary.outdated > 0) {
             parts.push(`${summary.outdated} outdated`);
@@ -161,7 +146,6 @@ export default class Outdated extends BaseCommand {
         this.log("");
       }
 
-      // Exit with appropriate code if there are outdated skills
       if (summary.outdated > 0) {
         this.error("Some skills are outdated", { exit: EXIT_CODES.ERROR });
       }

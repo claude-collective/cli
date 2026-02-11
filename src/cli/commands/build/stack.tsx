@@ -81,7 +81,6 @@ export default class BuildStack extends BaseCommand {
 
     let stackId = flags.stack;
 
-    // If no stack specified, prompt for selection
     if (!stackId) {
       const stacks = await loadStacks(projectRoot);
       const availableStacks = stacks.map((s) => s.id).sort();
@@ -92,7 +91,6 @@ export default class BuildStack extends BaseCommand {
         });
       }
 
-      // Render interactive selector
       stackId = await new Promise<string>((resolve, reject) => {
         const { waitUntilExit } = render(
           <StackSelector
@@ -115,7 +113,6 @@ export default class BuildStack extends BaseCommand {
     this.log(`  Output directory: ${outputDir}`);
     this.log("");
 
-    // Load agent partials
     let agentSourcePath: string;
     try {
       this.log(flags["agent-source"] ? "Fetching agent partials..." : "Loading agent partials...");
@@ -135,7 +132,6 @@ export default class BuildStack extends BaseCommand {
       });
     }
 
-    // Compile the stack
     try {
       this.log(`Compiling stack "${stackId}"...`);
 

@@ -1,9 +1,3 @@
-/**
- * Initialize Claude Collective in this project.
- *
- * Interactive wizard to select skills and configure installation mode.
- * Supports both Plugin Mode (native install) and Local Mode (copy to .claude/).
- */
 import { Flags } from "@oclif/core";
 import { render } from "ink";
 import path from "path";
@@ -52,7 +46,6 @@ export default class Init extends BaseCommand {
       this.log("[dry-run] Preview mode - no files will be created\n");
     }
 
-    // Check if already initialized
     const pluginDir = getCollectivePluginDir();
     const pluginExists = await directoryExists(pluginDir);
 
@@ -63,8 +56,6 @@ export default class Init extends BaseCommand {
       return;
     }
 
-    // Load skills matrix
-    // this.log("Loading skills matrix...");
     let sourceResult: SourceLoadResult;
     try {
       sourceResult = await loadSkillsMatrixFromSource({
@@ -73,14 +64,12 @@ export default class Init extends BaseCommand {
         forceRefresh: flags.refresh,
       });
 
-      // Skills matrix loaded successfully
     } catch (error) {
       this.error(error instanceof Error ? error.message : "Unknown error occurred", {
         exit: EXIT_CODES.ERROR,
       });
     }
 
-    // Store result from wizard
     let wizardResult: WizardResultV2 | null = null;
 
     const { waitUntilExit } = render(
@@ -98,26 +87,18 @@ export default class Init extends BaseCommand {
 
     await waitUntilExit();
 
-    // Handle cancellation or no result
-    // Use non-null assertion since waitUntilExit() ensures the callback has been invoked
     const result = wizardResult as WizardResultV2 | null;
     if (!result || result.cancelled) {
       return this.exit(EXIT_CODES.CANCELLED);
     }
 
-    // Validate selection
     if (result.selectedSkills.length === 0) {
       return this.error("No skills selected", { exit: EXIT_CODES.ERROR });
     }
 
-    // Handle installation based on mode
     await this.handleInstallation(result, sourceResult, flags);
   }
 
-  /**
-   * Handle installation based on wizard result.
-   * Supports Plugin Mode (with stack) and Local Mode (copy to .claude/).
-   */
   private async handleInstallation(
     result: WizardResultV2,
     sourceResult: SourceLoadResult,
@@ -126,17 +107,14 @@ export default class Init extends BaseCommand {
     const projectDir = process.cwd();
     const dryRun = flags["dry-run"];
 
-    // Show summary
     this.log("\n");
     this.log(`Selected ${result.selectedSkills.length} skills`);
     this.log(
       `Install mode: ${result.installMode === "plugin" ? "Plugin (native install)" : "Local (copy to .claude/skills/)"}`,
     );
 
-    // Dry run preview
     if (dryRun) {
       if (result.installMode === "plugin" && result.selectedStackId) {
-        // Plugin Mode with stack: install entire stack as ONE plugin
         const useMarketplace = !!sourceResult.marketplace;
         if (useMarketplace) {
           this.log(
@@ -157,7 +135,6 @@ export default class Init extends BaseCommand {
           );
         }
       } else {
-        // Local Mode (or Plugin Mode fallback when no stack selected)
         if (result.installMode === "plugin") {
           this.log(`[dry-run] Individual skill plugin installation not yet supported`);
           this.log(`[dry-run] Would fall back to Local Mode...`);
@@ -174,27 +151,20 @@ export default class Init extends BaseCommand {
       return;
     }
 
-    // Plugin Mode: Install stack as ONE native plugin
     if (result.installMode === "plugin") {
       if (result.selectedStackId) {
         await this.installPluginMode(result, sourceResult, flags);
         return;
       } else {
-        // No stack selected - individual skill installation not yet supported
         this.warn("Individual skill plugin installation not yet supported in Plugin Mode.");
         this.log(`Falling back to Local Mode (copying to .claude/skills/)...`);
         this.log("To use Plugin Mode, select a pre-built stack instead of individual skills.\n");
-        // Fall through to Local Mode below
       }
     }
 
-    // Local Mode: Copy skills and compile agents
     await this.installLocalMode(result, sourceResult, flags);
   }
 
-  /**
-   * Install in Plugin Mode: install stack as native plugin.
-   */
   private async installPluginMode(
     result: WizardResultV2,
     sourceResult: SourceLoadResult,
@@ -206,7 +176,6 @@ export default class Init extends BaseCommand {
 
     const projectDir = process.cwd();
 
-    // Register marketplace if needed
     if (sourceResult.marketplace) {
       const marketplaceExists = await claudePluginMarketplaceExists(sourceResult.marketplace);
 
@@ -257,7 +226,6 @@ export default class Init extends BaseCommand {
       }
       this.log("");
 
-      // Save source to project config if provided via --source flag
       if (flags.source) {
         await saveSourceToProjectConfig(projectDir, flags.source);
         this.log(`Source saved to .claude-src/config.yaml`);
@@ -275,9 +243,6 @@ export default class Init extends BaseCommand {
     }
   }
 
-  /**
-   * Install in Local Mode: copy skills and compile agents to .claude/.
-   */
   private async installLocalMode(
     result: WizardResultV2,
     sourceResult: SourceLoadResult,
@@ -306,7 +271,6 @@ export default class Init extends BaseCommand {
       this.log("Compiling agents...");
       this.log(`Compiled ${installResult.compiledAgents.length} agents to .claude/agents/\n`);
 
-      // Success summary
       this.log("Claude Collective initialized successfully!\n");
       this.log("Skills copied to:");
       this.log(`  ${installResult.skillsDir}`);

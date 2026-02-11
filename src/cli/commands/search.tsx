@@ -1,16 +1,3 @@
-/**
- * Search available skills command.
- *
- * Supports two modes:
- * - Static mode (with query arg): Traditional table output for scripting
- * - Interactive mode (no args or -i flag): Full-screen search with multi-select
- *
- * Interactive mode features:
- * - Live filtering as you type
- * - Multi-select for batch import
- * - Keyboard navigation (arrows, vim keys)
- * - Copy skill link to clipboard
- */
 import { Args, Flags } from "@oclif/core";
 import { render } from "ink";
 import { printTable } from "@oclif/table";
@@ -26,41 +13,22 @@ import type { SourcedSkill } from "../components/skill-search/skill-search.js";
 import type { CategoryPath, ResolvedSkill, SkillId } from "../types/index.js";
 import { LOCAL_SKILLS_PATH } from "../consts.js";
 
-/**
- * Maximum description width for table output
- */
 const MAX_DESCRIPTION_WIDTH = 50;
-
-/** Default skills subdirectory in third-party repos */
 const DEFAULT_SKILLS_SUBDIR = "skills";
 
-/**
- * Truncate a string to a maximum length with ellipsis
- */
 function truncate(str: string, maxLength: number): string {
   if (str.length <= maxLength) return str;
   return str.slice(0, maxLength - 3) + "...";
 }
 
-/**
- * Check if a skill matches the search query (case-insensitive)
- */
 function matchesQuery(skill: ResolvedSkill, query: string): boolean {
   const lowerQuery = query.toLowerCase();
 
-  // Match against ID
   if (skill.id.toLowerCase().includes(lowerQuery)) return true;
-
-  // Match against display name
   if (skill.displayName?.toLowerCase().includes(lowerQuery)) return true;
-
-  // Match against description
   if (skill.description.toLowerCase().includes(lowerQuery)) return true;
-
-  // Match against category
   if (skill.category.toLowerCase().includes(lowerQuery)) return true;
 
-  // Match against tags
   if (skill.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))) {
     return true;
   }
@@ -68,17 +36,11 @@ function matchesQuery(skill: ResolvedSkill, query: string): boolean {
   return false;
 }
 
-/**
- * Check if a skill matches the category filter (case-insensitive)
- */
 function matchesCategory(skill: ResolvedSkill, category: CategoryPath): boolean {
   const lowerCategory = category.toLowerCase();
   return skill.category.toLowerCase().includes(lowerCategory);
 }
 
-/**
- * Convert ResolvedSkill to SourcedSkill with source attribution
- */
 function toSourcedSkill(
   skill: ResolvedSkill,
   sourceName: string,
@@ -91,10 +53,6 @@ function toSourcedSkill(
   };
 }
 
-/**
- * Fetch skills from a third-party source.
- * Returns array of SourcedSkills with source attribution.
- */
 async function fetchSkillsFromSource(
   source: SourceEntry,
   forceRefresh: boolean,
@@ -103,19 +61,16 @@ async function fetchSkillsFromSource(
     const result = await fetchFromSource(source.url, { forceRefresh });
     const skillsDir = path.join(result.path, DEFAULT_SKILLS_SUBDIR);
 
-    // Check if skills directory exists
     if (!(await fileExists(skillsDir))) {
       return [];
     }
 
-    // List skill directories
     const skillDirs = await listDirectories(skillsDir);
     const skills: SourcedSkill[] = [];
 
     for (const skillDir of skillDirs) {
       const skillMdPath = path.join(skillsDir, skillDir, "SKILL.md");
       if (await fileExists(skillMdPath)) {
-        // Create a minimal skill entry for third-party source
         skills.push({
           // Directory name is an untyped string — cast at data boundary
           id: skillDir as SkillId,
@@ -201,7 +156,6 @@ export default class Search extends BaseCommand {
     const { args, flags } = await this.parse(Search);
     const projectDir = process.cwd();
 
-    // Determine mode: interactive if no query or -i flag
     const isInteractive = flags.interactive || !args.query;
 
     if (isInteractive) {
@@ -211,9 +165,6 @@ export default class Search extends BaseCommand {
     }
   }
 
-  /**
-   * Run interactive search mode with full-screen UI
-   */
   private async runInteractive(
     initialQuery: string | undefined,
     forceRefresh: boolean,
@@ -222,36 +173,28 @@ export default class Search extends BaseCommand {
     this.log("Loading skills from all sources...");
 
     try {
-      // Load primary source skills
       const { matrix, sourcePath } = await loadSkillsMatrixFromSource({
         sourceFlag: undefined,
         projectDir,
         forceRefresh,
       });
 
-      // Convert to SourcedSkills
       const primarySkills = Object.values(matrix.skills)
         .filter((skill): skill is ResolvedSkill => skill !== undefined)
         .map((skill) => toSourcedSkill(skill, "marketplace", sourcePath));
 
-      // Get configured extra sources
       const { extras } = await resolveAllSources(projectDir);
 
-      // Fetch skills from extra sources
       const extraSkillArrays = await Promise.all(
         extras.map((source) => fetchSkillsFromSource(source, forceRefresh)),
       );
 
-      // Merge all skills (primary first, then extras)
       const allSkills: SourcedSkill[] = [...primarySkills, ...extraSkillArrays.flat()];
-
-      // Total source count
       const sourceCount = 1 + extras.length;
 
       this.log(`Loaded ${allSkills.length} skills from ${sourceCount} source(s)`);
       this.log("");
 
-      // Render interactive search
       const searchResultPromise = new Promise<SkillSearchResult>((resolve) => {
         const { waitUntilExit } = render(
           <SkillSearch
@@ -267,7 +210,6 @@ export default class Search extends BaseCommand {
           />,
         );
 
-        // Also resolve on app exit
         waitUntilExit().then(() => {
           resolve({ selectedSkills: [], cancelled: true });
         });
@@ -275,7 +217,6 @@ export default class Search extends BaseCommand {
 
       const searchResult = await searchResultPromise;
 
-      // Handle result
       if (searchResult.cancelled) {
         this.log("Search cancelled");
         this.exit(EXIT_CODES.CANCELLED);
@@ -286,7 +227,6 @@ export default class Search extends BaseCommand {
         return;
       }
 
-      // Import selected skills
       this.log("");
       this.log(`Importing ${searchResult.selectedSkills.length} skill(s)...`);
 
@@ -312,9 +252,6 @@ export default class Search extends BaseCommand {
     }
   }
 
-  /**
-   * Run static search mode with table output
-   */
   private async runStatic(
     query: string,
     flags: { source?: string; category?: string },
@@ -328,24 +265,19 @@ export default class Search extends BaseCommand {
 
       this.log(`Loaded from ${isLocal ? "local" : "remote"}: ${sourcePath}`);
 
-      // Get all skills as array (filter undefined from Partial record)
       const allSkills = Object.values(matrix.skills).filter(
         (skill): skill is ResolvedSkill => skill !== undefined,
       );
 
-      // Filter by query
       let results = allSkills.filter((skill) => matchesQuery(skill, query));
 
-      // Apply category filter if provided
       if (flags.category) {
         // CLI flag is an untyped string — cast at data boundary
         results = results.filter((skill) => matchesCategory(skill, flags.category as CategoryPath));
       }
 
-      // Sort results by name
       results = sortBy(results, (r) => r.displayName || r.id);
 
-      // Display results
       this.log("");
       if (results.length === 0) {
         this.warn(`No skills found matching "${query}"`);
@@ -361,7 +293,6 @@ export default class Search extends BaseCommand {
         }
         this.log("");
 
-        // Use @oclif/table for table output
         printTable({
           data: results.map((skill) => ({
             id: skill.displayName || skill.id,

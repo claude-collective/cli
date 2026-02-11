@@ -1,9 +1,3 @@
-/**
- * Create a new custom agent using AI generation.
- *
- * This command uses the "agent-summoner" meta-agent to generate
- * a new agent scaffold with proper structure and documentation.
- */
 import { Args, Flags } from "@oclif/core";
 import { render, Box, Text, useInput } from "ink";
 import { TextInput } from "@inkjs/ui";
@@ -45,7 +39,6 @@ type PurposeInputProps = {
 const PurposeInput: React.FC<PurposeInputProps> = ({ onSubmit, onCancel }) => {
   const [error, setError] = useState<string | null>(null);
 
-  // Handle escape key for cancel
   useInput((_input, key) => {
     if (key.escape) {
       onCancel();
@@ -78,13 +71,11 @@ const PurposeInput: React.FC<PurposeInputProps> = ({ onSubmit, onCancel }) => {
 };
 
 async function fetchMetaAgent(source: string, forceRefresh: boolean): Promise<NewAgentInput> {
-  // Fetch the source repository
   const result = await fetchFromSource(source, {
     forceRefresh,
     subdir: AGENTS_SUBDIR,
   });
 
-  // Read the agent-summoner.md file
   const agentPath = path.join(result.path, `${META_AGENT_NAME}.md`);
 
   if (!(await fileExists(agentPath))) {
@@ -97,11 +88,9 @@ async function fetchMetaAgent(source: string, forceRefresh: boolean): Promise<Ne
 
   const content = await readFile(agentPath);
 
-  // Parse frontmatter and body
   const { data: frontmatter, content: body } = matter(content);
   const fm = frontmatter as AgentSourceFrontmatter;
 
-  // Construct agent definition
   const tools = fm.tools ? fm.tools.split(",").map((t: string) => t.trim()) : undefined;
 
   return {
@@ -133,7 +122,6 @@ async function invokeMetaAgent(
   prompt: string,
   nonInteractive: boolean,
 ): Promise<void> {
-  // Construct the agents JSON
   const agentsJson = JSON.stringify({
     [META_AGENT_NAME]: {
       description: agentDef.description,
@@ -143,7 +131,6 @@ async function invokeMetaAgent(
     },
   });
 
-  // Build the command arguments
   const args = ["--agents", agentsJson, "--agent", META_AGENT_NAME];
 
   if (nonInteractive) {
@@ -153,7 +140,6 @@ async function invokeMetaAgent(
     args.push("--prompt", prompt);
   }
 
-  // Spawn claude CLI
   return new Promise((resolve, reject) => {
     const child = spawn("claude", args, {
       stdio: "inherit",
@@ -209,7 +195,6 @@ export default class NewAgent extends BaseCommand {
     const { args, flags } = await this.parse(NewAgent);
     const projectDir = process.cwd();
 
-    // Check if claude CLI is available
     const cliAvailable = await isClaudeCLIAvailable();
     if (!cliAvailable) {
       this.error(
@@ -219,15 +204,12 @@ export default class NewAgent extends BaseCommand {
       );
     }
 
-    // Resolve source
     const sourceConfig = await resolveSource(flags.source, projectDir);
     const source = sourceConfig.source;
 
-    // Get purpose - either from flag or prompt
     let purpose = flags.purpose;
 
     if (!purpose) {
-      // Render interactive prompt
       let inputResult: string | null = null;
       let cancelled = false;
 
@@ -252,7 +234,6 @@ export default class NewAgent extends BaseCommand {
       purpose = inputResult;
     }
 
-    // Determine output directory
     const outputDir = path.join(projectDir, CLAUDE_DIR, "agents", "_custom");
 
     this.log("");
@@ -264,19 +245,16 @@ export default class NewAgent extends BaseCommand {
     this.log("Fetching agent-summoner from source...");
 
     try {
-      // Fetch the meta-agent
       const agentDef = await fetchMetaAgent(source, flags.refresh);
       this.log("Meta-agent loaded");
       this.log("");
 
-      // Build the prompt
       const agentPrompt = buildAgentPrompt(args.name, purpose, outputDir);
 
       this.log("Invoking agent-summoner to create your agent...");
       this.log("─".repeat(60));
       this.log("");
 
-      // Invoke the meta-agent
       await invokeMetaAgent(agentDef, agentPrompt, flags["non-interactive"]);
 
       this.log("");

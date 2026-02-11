@@ -17,9 +17,6 @@ import { LOCAL_SKILLS_PATH } from "../consts.js";
 import { getCollectivePluginDir } from "../lib/plugins/index.js";
 import { Confirm } from "../components/common/confirm.js";
 
-/**
- * Update a single skill from source
- */
 async function updateSkill(
   skill: SkillComparisonResult,
   projectDir: string,
@@ -34,10 +31,7 @@ async function updateSkill(
   const srcPath = path.join(sourceResult.sourcePath, "src", skill.sourcePath);
 
   try {
-    // Copy skill files from source to local
     await copy(srcPath, destPath);
-
-    // Update forked_from metadata
     await injectForkedFromMetadata(destPath, skill.id, skill.sourceHash);
 
     return { success: true, newHash: skill.sourceHash };
@@ -50,34 +44,25 @@ async function updateSkill(
   }
 }
 
-/**
- * Find a skill by partial name match
- */
 function findSkillByPartialMatch(
   skillName: string,
   results: SkillComparisonResult[],
 ): SkillComparisonResult | null {
-  // Exact match first
   const exact = results.find((r) => r.id === skillName);
   if (exact) return exact;
 
-  // Partial match (skill name without author)
   const partial = results.find((r) => {
     const nameWithoutAuthor = r.id.replace(/\s*\(@\w+\)$/, "").toLowerCase();
     return nameWithoutAuthor === skillName.toLowerCase();
   });
   if (partial) return partial;
 
-  // Directory name match
   const byDir = results.find((r) => r.dirName.toLowerCase() === skillName.toLowerCase());
   if (byDir) return byDir;
 
   return null;
 }
 
-/**
- * Find similar skill names for suggestions
- */
 function findSimilarSkills(skillName: string, results: SkillComparisonResult[]): string[] {
   const lowered = skillName.toLowerCase();
   return results
@@ -92,9 +77,6 @@ function findSimilarSkills(skillName: string, results: SkillComparisonResult[]):
     .slice(0, 3);
 }
 
-/**
- * Confirmation component for update operation
- */
 type UpdateConfirmProps = {
   onConfirm: () => void;
   onCancel: () => void;
@@ -151,7 +133,6 @@ export default class Update extends BaseCommand {
     const shouldRecompile = !flags["no-recompile"];
 
     try {
-      // Check if local skills directory exists
       const localSkillsPath = path.join(projectDir, LOCAL_SKILLS_PATH);
       if (!(await fileExists(localSkillsPath))) {
         this.warn("No local skills found. Run `cc init` or `cc edit` first.");
@@ -169,7 +150,6 @@ export default class Update extends BaseCommand {
         `Loaded from ${sourceResult.isLocal ? "local" : "remote"}: ${sourceResult.sourcePath}`,
       );
 
-      // Build source skills map for lookup
       const sourceSkills: Record<string, { path: string }> = {};
       for (const [skillId, skill] of Object.entries(sourceResult.matrix.skills)) {
         if (!skill) continue;
@@ -178,13 +158,10 @@ export default class Update extends BaseCommand {
         }
       }
 
-      // Compare local skills against source
       const allResults = await compareSkills(projectDir, sourceResult.sourcePath, sourceSkills);
 
-      // Filter to just outdated skills
       let outdatedSkills = allResults.filter((r) => r.status === "outdated");
 
-      // Handle specific skill argument
       if (args.skill) {
         const foundSkill = findSkillByPartialMatch(args.skill, allResults);
 
@@ -225,11 +202,9 @@ export default class Update extends BaseCommand {
           return;
         }
 
-        // Only update this specific skill
         outdatedSkills = [foundSkill];
       }
 
-      // Check if there are any outdated skills
       if (outdatedSkills.length === 0) {
         this.log("");
         this.logSuccess("All skills are up to date.");
@@ -237,7 +212,6 @@ export default class Update extends BaseCommand {
         return;
       }
 
-      // Show what will be updated
       this.log("");
       this.log("The following skills will be updated:");
       this.log("");
@@ -260,7 +234,6 @@ export default class Update extends BaseCommand {
       this.log(`${outdatedSkills.length} skill(s) will be updated.`);
       this.log("");
 
-      // Confirm unless --yes flag
       if (!flags.yes) {
         let confirmed = false;
         let cancelled = false;
@@ -291,7 +264,6 @@ export default class Update extends BaseCommand {
 
       this.log("");
 
-      // Update each skill
       const updated: string[] = [];
       const failed: string[] = [];
 
@@ -309,7 +281,6 @@ export default class Update extends BaseCommand {
         }
       }
 
-      // Recompile agents if needed
       let recompiledAgents: string[] = [];
 
       if (shouldRecompile && updated.length > 0) {
@@ -348,7 +319,6 @@ export default class Update extends BaseCommand {
         }
       }
 
-      // Final summary
       this.log("");
       if (failed.length === 0) {
         const agentMsg =
