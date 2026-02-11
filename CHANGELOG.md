@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.4] - 2026-02-11
+
+### Changed
+
+- **`lib/` restructured into domain subdirectories** — 62 files moved from flat `lib/` into 8 domain-organized subdirectories: `configuration/`, `loading/`, `matrix/`, `plugins/`, `skills/`, `agents/`, `stacks/`, `installation/`. Each domain has a barrel `index.ts` for clean imports. Cross-cutting files (`compiler`, `resolver`, `schemas`, etc.) remain at `lib/` root. ~140 import paths updated across commands, components, hooks, and tests.
+
 ## [0.24.3] - 2026-02-11
 
 ### Changed
