@@ -1,19 +1,19 @@
 import React from "react";
 import { Box, Text } from "ink";
 
-export interface WizardTabStep {
+export type WizardTabStep = {
   id: string;
   label: string;
   number: number;
-}
+};
 
-export interface WizardTabsProps {
+export type WizardTabsProps = {
   steps: WizardTabStep[];
   currentStep: string;
   completedSteps: string[];
   skippedSteps?: string[];
   version?: string;
-}
+};
 
 export const WIZARD_STEPS: WizardTabStep[] = [
   { id: "approach", label: "Intro", number: 1 },
@@ -36,10 +36,10 @@ const getStepState = (
   return "pending";
 };
 
-interface TabProps {
+type TabProps = {
   step: WizardTabStep;
   state: StepState;
-}
+};
 
 const Tab: React.FC<TabProps> = ({ step, state }) => {
   const label = `[${step.number}] ${step.label}`;

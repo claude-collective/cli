@@ -8,7 +8,7 @@ import { indexBy, mapToObj } from "remeda";
 import { describe, expect, it, afterEach, vi } from "vitest";
 import { StepBuild, type StepBuildProps, validateBuildStep, getDisplayLabel } from "./step-build";
 import type { CategoryRow as GridCategoryRow } from "./category-grid";
-import type { CategoryPath, MergedSkillsMatrix, ResolvedSkill, CategoryDefinition, SkillAlias, SkillId, Subcategory, SubcategorySelections } from "../../types-matrix";
+import type { CategoryPath, MergedSkillsMatrix, ResolvedSkill, CategoryDefinition, SkillDisplayName, SkillId, Subcategory, SubcategorySelections } from "../../types-matrix";
 import {
   ENTER,
   ESCAPE,
@@ -28,12 +28,12 @@ import {
  */
 const createCategory = (
   id: Subcategory,
-  name: string,
+  displayName: string,
   overrides: Partial<CategoryDefinition> = {},
 ): CategoryDefinition => ({
   id,
-  name,
-  description: `${name} category`,
+  displayName,
+  description: `${displayName} category`,
   exclusive: true,
   required: false,
   order: 0,
@@ -45,22 +45,19 @@ const createCategory = (
  */
 const createSkill = (
   id: SkillId,
-  name: string,
+  _name: string,
   category: CategoryPath,
   overrides: Partial<ResolvedSkill> = {},
 ): ResolvedSkill => ({
   id,
-  name,
-  description: `${name} skill`,
+  description: `${_name} skill`,
   category,
   categoryExclusive: true,
   tags: [],
   author: "test",
   conflictsWith: [],
   recommends: [],
-  recommendedBy: [],
   requires: [],
-  requiredBy: [],
   alternatives: [],
   discourages: [],
   compatibleWith: [],
@@ -78,11 +75,11 @@ const createTestMatrix = (
   skills: ResolvedSkill[],
 ): MergedSkillsMatrix => ({
   version: "1.0.0",
-  categories: indexBy(categories, (c) => c.id) as Record<Subcategory, CategoryDefinition>,
-  skills: indexBy(skills, (s) => s.id) as Record<SkillId, ResolvedSkill>,
+  categories: indexBy(categories, (c) => c.id),
+  skills: indexBy(skills, (s) => s.id),
   suggestedStacks: [],
-  aliases: mapToObj(skills.filter((s) => s.alias), (s) => [s.alias!, s.id]) as Record<SkillAlias, SkillId>,
-  aliasesReverse: mapToObj(skills.filter((s) => s.alias), (s) => [s.id, s.alias!]) as Record<SkillId, SkillAlias>,
+  displayNameToId: mapToObj(skills.filter((s) => s.displayName), (s) => [s.displayName!, s.id]),
+  displayNames: mapToObj(skills.filter((s) => s.displayName), (s) => [s.id, s.displayName!]),
   generatedAt: new Date().toISOString(),
 });
 
@@ -120,31 +117,31 @@ const databaseCategory = createCategory("database", "Database", {
 
 // Create test skills
 const reactSkill = createSkill("web-framework-react", "React", "framework", {
-  alias: "react",
+  displayName: "react",
 });
 
 const vueSkill = createSkill("web-framework-vue", "Vue", "framework", {
-  alias: "vue",
+  displayName: "vue",
 });
 
 const tailwindSkill = createSkill("web-styling-tailwind", "Tailwind", "styling", {
-  alias: "tailwind",
+  displayName: "tailwind",
 });
 
 const scssSkill = createSkill("web-styling-scss-modules", "SCSS Modules", "styling", {
-  alias: "scss-modules",
+  displayName: "scss-modules",
 });
 
 const zustandSkill = createSkill("web-state-zustand", "Zustand", "client-state", {
-  alias: "zustand",
+  displayName: "zustand",
 });
 
 const honoSkill = createSkill("api-framework-hono", "Hono", "api", {
-  alias: "hono",
+  displayName: "hono",
 });
 
 const expressSkill = createSkill("api-framework-express", "Express", "api", {
-  alias: "express",
+  displayName: "express",
 });
 
 const postgresSkill = createSkill("api-database-postgres", "PostgreSQL", "database", {
@@ -209,7 +206,7 @@ describe("StepBuild component", () => {
       // For web domain with framework-first flow, initially only shows Framework
       // To see other categories, need a framework selection
       const { lastFrame, unmount } = renderStepBuild({
-        selections: { framework: ["react"] }, // Framework selected to show other categories
+        selections: { framework: ["web-framework-react"] }, // Framework selected to show other categories
       });
       cleanup = unmount;
 
@@ -241,17 +238,17 @@ describe("StepBuild component", () => {
     it("should render skills as options", () => {
       // Need framework selected to see other categories in web domain
       const { lastFrame, unmount } = renderStepBuild({
-        selections: { framework: ["react"] },
+        selections: { framework: ["web-framework-react"] },
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Framework skills
-      expect(output).toContain("React");
-      expect(output).toContain("Vue");
+      // Framework skills (displayed as alias)
+      expect(output).toContain("react");
+      expect(output).toContain("vue");
       // Styling skills (visible after framework selected)
-      expect(output).toContain("Tailwind");
-      expect(output).toContain("SCSS");
+      expect(output).toContain("tailwind");
+      expect(output).toContain("scss-modules");
     });
 
     it("should show required indicator (*) for required categories", () => {
@@ -265,7 +262,7 @@ describe("StepBuild component", () => {
 
     it("should render categories for the domain", () => {
       const { lastFrame, unmount } = renderStepBuild({
-        selections: { framework: ["react"] },
+        selections: { framework: ["web-framework-react"] },
       });
       cleanup = unmount;
 
@@ -333,7 +330,7 @@ describe("StepBuild component", () => {
       // Web domain with framework selected (to bypass framework-first filter)
       const { lastFrame: webFrame, unmount: webUnmount } = renderStepBuild({
         domain: "web",
-        selections: { framework: ["react"] },
+        selections: { framework: ["web-framework-react"] },
       });
       const webOutput = webFrame();
       webUnmount();
@@ -360,7 +357,7 @@ describe("StepBuild component", () => {
     it("should sort categories by order", () => {
       // Need framework selected to see all categories
       const { lastFrame, unmount } = renderStepBuild({
-        selections: { framework: ["react"] },
+        selections: { framework: ["web-framework-react"] },
       });
       cleanup = unmount;
 
@@ -383,15 +380,15 @@ describe("StepBuild component", () => {
   describe("option states", () => {
     it("should show selected options correctly", () => {
       const { lastFrame, unmount } = renderStepBuild({
-        allSelections: ["react"],
-        selections: { framework: ["react"] },
+        allSelections: ["web-framework-react"],
+        selections: { framework: ["web-framework-react"] },
       });
       cleanup = unmount;
 
       const output = lastFrame();
       // Should show selected option (no circle symbol anymore, uses background)
-      // Just verify the selected label is present
-      expect(output).toContain("React");
+      // Just verify the selected label is present (displayed as alias)
+      expect(output).toContain("react");
     });
 
     it("should pass expertMode to CategoryGrid", () => {
@@ -430,8 +427,8 @@ describe("StepBuild component", () => {
       const { stdin, unmount } = renderStepBuild({
         onContinue,
         selections: {
-          framework: ["react"],
-          styling: ["tailwind"],
+          framework: ["web-framework-react"],
+          styling: ["web-styling-tailwind"],
         },
       });
       cleanup = unmount;
@@ -558,8 +555,8 @@ describe("StepBuild component", () => {
     it("should handle allSelections with skills from other domains", () => {
       const { lastFrame, unmount } = renderStepBuild({
         domain: "web",
-        allSelections: ["hono", "drizzle"], // API skills (aliases)
-        selections: { framework: ["react"] }, // Need framework to see other categories
+        allSelections: ["api-framework-hono", "api-database-drizzle"], // API skills (aliases)
+        selections: { framework: ["web-framework-react"] }, // Need framework to see other categories
       });
       cleanup = unmount;
 
@@ -605,7 +602,7 @@ describe("StepBuild component", () => {
         order: 0,
       });
       const commanderSkill = createSkill("cli-cli-framework-commander", "Commander", "cli-framework", {
-        alias: "commander",
+        displayName: "commander",
       });
 
       const matrixWithCli = createTestMatrix(
@@ -693,7 +690,7 @@ describe("StepBuild component", () => {
       const categories: GridCategoryRow[] = [
         {
           id: "framework",
-          name: "Framework",
+          displayName: "Framework",
           required: true,
           exclusive: true,
           options: [{ id: "web-framework-react", label: "React", state: "normal", selected: true }],
@@ -710,7 +707,7 @@ describe("StepBuild component", () => {
       const categories: GridCategoryRow[] = [
         {
           id: "framework",
-          name: "Framework",
+          displayName: "Framework",
           required: true,
           exclusive: true,
           options: [{ id: "web-framework-react", label: "React", state: "normal", selected: false }],
@@ -727,7 +724,7 @@ describe("StepBuild component", () => {
       const categories: GridCategoryRow[] = [
         {
           id: "client-state",
-          name: "State Management",
+          displayName: "State Management",
           required: false,
           exclusive: true,
           options: [
@@ -750,14 +747,14 @@ describe("StepBuild component", () => {
       const categories: GridCategoryRow[] = [
         {
           id: "framework",
-          name: "Framework",
+          displayName: "Framework",
           required: true,
           exclusive: true,
           options: [],
         },
         {
           id: "styling",
-          name: "Styling",
+          displayName: "Styling",
           required: true,
           exclusive: true,
           options: [],
@@ -797,8 +794,8 @@ describe("StepBuild component", () => {
       const { stdin, unmount } = renderStepBuild({
         onContinue,
         selections: {
-          framework: ["react"],
-          styling: ["tailwind"],
+          framework: ["web-framework-react"],
+          styling: ["web-styling-tailwind"],
         },
       });
       cleanup = unmount;
@@ -819,34 +816,17 @@ describe("StepBuild component", () => {
 // =============================================================================
 
 describe("getDisplayLabel", () => {
-  it("should strip author suffix from name", () => {
-    expect(getDisplayLabel({ name: "React (@vince)" })).toBe("React");
+  it("should return displayName when available", () => {
+    expect(getDisplayLabel({ displayName: "react", id: "web-framework-react" })).toBe("react");
   });
 
-  it("should preserve original capitalization", () => {
-    expect(getDisplayLabel({ name: "SCSS Modules (@vince)" })).toBe("SCSS Modules");
+  it("should return id when no displayName", () => {
+    expect(getDisplayLabel({ id: "web-framework-react" })).toBe("web-framework-react");
   });
 
-  it("should handle hyphenated author names", () => {
-    expect(getDisplayLabel({ name: "React (@vince-team)" })).toBe("React");
-  });
-
-  it("should handle names without author suffix", () => {
-    expect(getDisplayLabel({ name: "React" })).toBe("React");
-  });
-
-  it("should handle extra whitespace before author suffix", () => {
-    expect(getDisplayLabel({ name: "React  (@vince)" })).toBe("React");
-  });
-
-  it("should not strip non-author parentheses", () => {
-    expect(getDisplayLabel({ name: "React (library)" })).toBe("React (library)");
-  });
-
-  it("should ignore alias and use name for display", () => {
-    // alias is available but we use name for accurate capitalization
-    expect(getDisplayLabel({ alias: "scss-modules", name: "SCSS Modules (@vince)" })).toBe(
-      "SCSS Modules",
+  it("should prefer displayName over id", () => {
+    expect(getDisplayLabel({ displayName: "scss-modules", id: "web-styling-scss-modules" })).toBe(
+      "scss-modules",
     );
   });
 });

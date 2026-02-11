@@ -42,12 +42,12 @@ const createOption = (
 
 const createCategory = (
   id: Subcategory,
-  name: string,
+  displayName: string,
   options: CategoryOption[],
   overrides: Partial<CategoryRow> = {},
 ): CategoryRow => ({
   id,
-  name,
+  displayName,
   required: false,
   exclusive: true,
   options,

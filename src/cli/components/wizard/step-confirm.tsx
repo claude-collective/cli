@@ -1,13 +1,13 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
-import type { MergedSkillsMatrix, DomainSelections, Domain } from "../../types-matrix.js";
+import type { DomainSelections, Domain } from "../../types-matrix.js";
+import { getDomainDisplayName } from "./utils.js";
 
 // =============================================================================
 // Types
 // =============================================================================
 
-export interface StepConfirmProps {
-  matrix: MergedSkillsMatrix;
+export type StepConfirmProps = {
   onComplete: () => void;
   stackName?: string;
   selectedDomains?: Domain[];
@@ -16,24 +16,6 @@ export interface StepConfirmProps {
   skillCount?: number;
   installMode?: "plugin" | "local";
   onBack?: () => void;
-}
-
-// =============================================================================
-// Helper Functions
-// =============================================================================
-
-/**
- * Format domain name for display.
- */
-const formatDomainName = (domain: Domain): string => {
-  const names: Partial<Record<Domain, string>> = {
-    web: "Web",
-    "web-extras": "Web Extras",
-    api: "API",
-    cli: "CLI",
-    mobile: "Mobile",
-  };
-  return names[domain] || domain.charAt(0).toUpperCase() + domain.slice(1);
 };
 
 // =============================================================================
@@ -41,7 +23,6 @@ const formatDomainName = (domain: Domain): string => {
 // =============================================================================
 
 export const StepConfirm: React.FC<StepConfirmProps> = ({
-  matrix,
   onComplete,
   stackName,
   selectedDomains,
@@ -61,7 +42,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
   });
 
   // Build title based on stack vs scratch path
-  const domainsText = selectedDomains?.map(formatDomainName).join(" + ") || "";
+  const domainsText = selectedDomains?.map(getDomainDisplayName).join(" + ") || "";
   const title = stackName
     ? `Ready to install ${stackName}`
     : `Ready to install your custom stack${domainsText ? ` (${domainsText})` : ""}`;
@@ -82,7 +63,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
             if (techs.length === 0) return null;
             return (
               <Text key={domain}>
-                <Text bold>{formatDomainName(domain)}:</Text> <Text>{techs.join(", ")}</Text>
+                <Text bold>{getDomainDisplayName(domain)}:</Text> <Text>{techs.join(", ")}</Text>
               </Text>
             );
           })}

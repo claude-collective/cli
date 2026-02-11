@@ -4,12 +4,12 @@ import { Box, Text } from "ink";
 const CHEVRON = "\u276F";
 const CHEVRON_SPACER = " ";
 
-export interface MenuItemProps {
+export type MenuItemProps = {
   label: string;
   description?: string;
   isFocused?: boolean;
   isActive?: boolean;
-}
+};
 
 export const MenuItem: React.FC<MenuItemProps> = ({
   label,

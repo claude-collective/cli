@@ -2,12 +2,12 @@ import React from "react";
 import { Box, Text } from "ink";
 import { ConfirmInput } from "@inkjs/ui";
 
-interface ConfirmProps {
+type ConfirmProps = {
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
   defaultValue?: boolean;
-}
+};
 
 export const Confirm: React.FC<ConfirmProps> = ({
   message,

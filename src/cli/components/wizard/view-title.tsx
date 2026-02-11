@@ -1,9 +1,9 @@
 import React from "react";
 import { Text } from "ink";
 
-export interface ViewTitleProps {
+export type ViewTitleProps = {
   children: React.ReactNode;
-}
+};
 
 export const ViewTitle: React.FC<ViewTitleProps> = ({ children }) => {
   return (

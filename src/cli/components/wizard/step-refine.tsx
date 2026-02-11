@@ -18,7 +18,7 @@ import { Box, Text, useInput } from "ink";
 
 export type RefineAction = "all-recommended" | "customize" | null;
 
-export interface StepRefineProps {
+export type StepRefineProps = {
   /** Count of selected technologies */
   technologyCount: number;
   /** Current selection: use all recommended or customize */
@@ -29,7 +29,7 @@ export interface StepRefineProps {
   onContinue: () => void;
   /** Go back to build step */
   onBack: () => void;
-}
+};
 
 // =============================================================================
 // Main Component

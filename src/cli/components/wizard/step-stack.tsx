@@ -15,7 +15,7 @@ import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { Select } from "@inkjs/ui";
 import { useWizardStore } from "../../stores/wizard-store.js";
-import type { MergedSkillsMatrix, Domain, Subcategory, SkillAlias } from "../../types-matrix.js";
+import type { MergedSkillsMatrix, Domain, Subcategory, SkillDisplayName } from "../../types-matrix.js";
 import { MenuItem } from "./menu-item.js";
 import { ViewTitle } from "./view-title.js";
 
@@ -46,17 +46,17 @@ const AVAILABLE_DOMAINS: Array<{ id: Domain; label: string; description: string 
 // Types
 // =============================================================================
 
-interface StepStackProps {
+type StepStackProps = {
   matrix: MergedSkillsMatrix;
-}
+};
 
 // =============================================================================
 // Stack Selection Sub-component
 // =============================================================================
 
-interface StackSelectionProps {
+type StackSelectionProps = {
   matrix: MergedSkillsMatrix;
-}
+};
 
 const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
   const { selectStack, setStep, setStackAction, populateFromStack, goBack } = useWizardStore();
@@ -85,14 +85,14 @@ const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
           // Build one pseudo-agent per skill so populateFromStack can handle
           // categories with multiple skills (e.g. testing: vitest + playwright-e2e)
           // without overwriting. populateFromStack deduplicates internally.
-          const pseudoAgents: Record<string, Partial<Record<Subcategory, SkillAlias>>> = {};
+          const pseudoAgents: Record<string, Partial<Record<Subcategory, SkillDisplayName>>> = {};
 
           for (let i = 0; i < resolvedStack.allSkillIds.length; i++) {
             const skillId = resolvedStack.allSkillIds[i];
             const skill = matrix.skills[skillId];
-            if (skill?.category && skill.alias) {
+            if (skill?.category && skill.displayName) {
               // Category is a Subcategory at the data boundary (YAML categories use bare IDs)
-              pseudoAgents[`s${i}`] = { [skill.category as Subcategory]: skill.alias };
+              pseudoAgents[`s${i}`] = { [skill.category as Subcategory]: skill.displayName };
             }
           }
 

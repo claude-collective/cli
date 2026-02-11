@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Text } from "ink";
 
-export interface SectionProgressProps {
+export type SectionProgressProps = {
   /** Section label (e.g., "Domain" or "Skill") */
   label: string;
   /** Current item name (e.g., "Web" or "react") */
@@ -12,7 +12,7 @@ export interface SectionProgressProps {
   total: number;
   /** Next item name, or undefined if last */
   next?: string;
-}
+};
 
 export const SectionProgress: React.FC<SectionProgressProps> = ({
   label,

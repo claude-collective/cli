@@ -30,7 +30,7 @@ import { getStackName } from "./utils.js";
 // Types
 // =============================================================================
 
-export interface WizardResultV2 {
+export type WizardResultV2 = {
   selectedSkills: SkillId[];
   selectedStackId: string | null;
   domainSelections: DomainSelections;
@@ -42,15 +42,14 @@ export interface WizardResultV2 {
     errors: Array<{ message: string }>;
     warnings: Array<{ message: string }>;
   };
-}
+};
 
-interface WizardProps {
+type WizardProps = {
   matrix: MergedSkillsMatrix;
   onComplete: (result: WizardResultV2) => void;
   onCancel: () => void;
-  initialSkills?: SkillId[];
   version?: string;
-}
+};
 
 // =============================================================================
 // Helpers
@@ -222,15 +221,15 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
 
       case "confirm": {
         const stackName = getStackName(store.selectedStackId, matrix);
+        const selectedCount = store.getAllSelectedTechnologies().length;
         return (
           <StepConfirm
-            matrix={matrix}
             onComplete={handleComplete}
             stackName={stackName}
             selectedDomains={store.selectedDomains}
             domainSelections={store.domainSelections}
-            technologyCount={store.getAllSelectedTechnologies().length}
-            skillCount={store.getAllSelectedTechnologies().length}
+            technologyCount={selectedCount}
+            skillCount={selectedCount}
             installMode={store.installMode}
             onBack={store.goBack}
           />

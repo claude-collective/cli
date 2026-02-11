@@ -10,7 +10,7 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { sortBy } from "remeda";
-import type { MergedSkillsMatrix, Domain, Subcategory, SkillId, SkillRef, SubcategorySelections } from "../../types-matrix.js";
+import type { MergedSkillsMatrix, Domain, Subcategory, SkillId, SubcategorySelections } from "../../types-matrix.js";
 import { getAvailableSkills, resolveAlias } from "../../lib/matrix-resolver.js";
 import {
   CategoryGrid,
@@ -23,7 +23,7 @@ import { getDomainDisplayName } from "./utils.js";
 
 // Types
 
-export interface StepBuildProps {
+export type StepBuildProps = {
   /** Skills matrix for category/skill lookup */
   matrix: MergedSkillsMatrix;
   /** Current domain being configured (e.g., 'web', 'api') */
@@ -33,7 +33,7 @@ export interface StepBuildProps {
   /** Current selections by subcategory */
   selections: SubcategorySelections;
   /** All current selections (for state calculation across domains) */
-  allSelections: SkillRef[];
+  allSelections: SkillId[];
   /** Grid focus state */
   focusedRow: number;
   focusedCol: number;
@@ -48,7 +48,7 @@ export interface StepBuildProps {
   onToggleDescriptions: () => void;
   onContinue: () => void;
   onBack: () => void;
-}
+};
 
 // Constants
 
@@ -60,10 +60,10 @@ const WEB_DOMAIN_ID = "web";
 
 // Validation
 
-export interface BuildStepValidation {
+export type BuildStepValidation = {
   valid: boolean;
   message?: string;
-}
+};
 
 /**
  * Validate that required categories have at least one selection.
@@ -78,7 +78,7 @@ export function validateBuildStep(
       if (categorySelections.length === 0) {
         return {
           valid: false,
-          message: `Please select a ${category.name}`,
+          message: `Please select a ${category.displayName}`,
         };
       }
     }
@@ -110,14 +110,11 @@ function computeOptionState(skill: {
 
 /**
  * Get clean display label for a skill option.
- * Uses name with author suffix stripped for accurate display.
- * e.g., "React" from "web-framework-react", "SCSS Modules" from "web-styling-scss-modules"
+ * Uses displayName if available, otherwise falls back to the skill ID.
+ * e.g., "react" from displayName, "web-framework-react" from ID
  */
-export function getDisplayLabel(skill: { alias?: string; name: string }): string {
-  // Strip author suffix like " (@author)" from name if present (legacy data)
-  // This preserves the original capitalization (e.g., "SCSS Modules" stays as-is)
-  const authorPattern = /\s*\(@[^)]+\)\s*$/;
-  return skill.name.replace(authorPattern, "");
+export function getDisplayLabel(skill: { displayName?: string; id: string }): string {
+  return skill.displayName || skill.id;
 }
 
 /**
@@ -190,23 +187,6 @@ function isCompatibleWithSelectedFrameworks(
 }
 
 /**
- * Determine if a subcategory should be shown based on framework-first flow.
- *
- * IMPORTANT: All sections are ALWAYS visible. The "locked" state in CategoryGrid
- * handles dimming and preventing navigation until a framework is selected.
- * We do NOT hide sections.
- */
-function shouldShowSubcategory(
-  _subcategoryId: Subcategory,
-  _domain: Domain,
-  _frameworkSelected: boolean,
-): boolean {
-  // All sections are always visible
-  // Locking (dimming + preventing navigation) is handled by CategoryGrid
-  return true;
-}
-
-/**
  * Build CategoryRow[] from matrix for a specific domain.
  *
  * Filters subcategories by domain and builds options using getAvailableSkills.
@@ -216,7 +196,7 @@ function shouldShowSubcategory(
  */
 function buildCategoriesForDomain(
   domain: Domain,
-  allSelections: SkillRef[],
+  allSelections: SkillId[],
   matrix: MergedSkillsMatrix,
   expertMode: boolean,
   selections: SubcategorySelections,
@@ -236,13 +216,10 @@ function buildCategoriesForDomain(
     (cat) => cat.order ?? 0,
   );
 
-  // Filter subcategories based on framework-first flow
-  const visibleSubcategories = subcategories.filter((cat) =>
-    shouldShowSubcategory(cat.id, domain, frameworkSelected),
-  );
-
-  // Build CategoryRow for each visible subcategory
-  const categoryRows: CategoryRow[] = visibleSubcategories.map((cat) => {
+  // Build CategoryRow for each subcategory
+  // All sections are always visible — locking (dimming + preventing navigation)
+  // is handled by CategoryGrid when no framework is selected.
+  const categoryRows: CategoryRow[] = subcategories.map((cat) => {
     // Get available skills with computed states
     const skillOptions = getAvailableSkills(cat.id, allSelections, matrix, {
       expertMode,
@@ -272,7 +249,7 @@ function buildCategoriesForDomain(
 
     return {
       id: cat.id,
-      name: cat.name,
+      displayName: cat.displayName,
       required: cat.required ?? false,
       exclusive: cat.exclusive ?? true,
       options,
@@ -283,9 +260,9 @@ function buildCategoriesForDomain(
   return categoryRows.filter((row) => row.options.length > 0);
 }
 
-interface FooterProps {
+type FooterProps = {
   validationError?: string;
-}
+};
 
 const Footer: React.FC<FooterProps> = ({ validationError }) => {
   return (

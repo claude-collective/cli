@@ -3,12 +3,12 @@ import { Box, Text } from "ink";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import { WizardTabs, WIZARD_STEPS } from "./wizard-tabs.js";
 
-interface KeyHintProps {
+type KeyHintProps = {
   isVisible?: boolean;
   isActive?: boolean;
   label: string;
   values: string[];
-}
+};
 
 export const DefinitionItem: React.FC<KeyHintProps> = ({
   isVisible = true,
@@ -69,10 +69,10 @@ export const WizardFooter = () => {
   );
 };
 
-interface WizardLayoutProps {
+type WizardLayoutProps = {
   version?: string;
   children: React.ReactNode;
-}
+};
 
 export const WizardLayout: React.FC<WizardLayoutProps> = ({ version, children }) => {
   const store = useWizardStore();

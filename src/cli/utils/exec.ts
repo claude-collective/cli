@@ -1,10 +1,10 @@
 import { spawn } from "child_process";
 
-export interface ExecResult {
+export type ExecResult = {
   stdout: string;
   stderr: string;
   exitCode: number;
-}
+};
 
 /**
  * Execute a command and return the result
@@ -75,12 +75,12 @@ export async function isClaudeCLIAvailable(): Promise<boolean> {
   }
 }
 
-export interface MarketplaceInfo {
+export type MarketplaceInfo = {
   name: string;
   source: string;
   repo?: string;
   path?: string;
-}
+};
 
 /**
  * List configured marketplaces in Claude Code

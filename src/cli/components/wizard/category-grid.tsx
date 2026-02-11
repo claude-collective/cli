@@ -23,24 +23,24 @@ import type { SkillId, Subcategory } from "../../types-matrix.js";
 
 export type OptionState = "normal" | "recommended" | "discouraged" | "disabled";
 
-export interface CategoryOption {
+export type CategoryOption = {
   id: SkillId;
   label: string;
   state: OptionState;
   stateReason?: string;
   selected: boolean;
   local?: boolean;
-}
+};
 
-export interface CategoryRow {
+export type CategoryRow = {
   id: Subcategory;
-  name: string;
+  displayName: string;
   required: boolean;
   exclusive: boolean;
   options: CategoryOption[];
-}
+};
 
-export interface CategoryGridProps {
+export type CategoryGridProps = {
   /** Categories to display (filtered by domain from matrix) */
   categories: CategoryRow[];
   /** Focused row index (section index) */
@@ -57,7 +57,7 @@ export interface CategoryGridProps {
   onFocusChange: (row: number, col: number) => void;
   /** Called when show descriptions is toggled */
   onToggleDescriptions: () => void;
-}
+};
 
 // Constants
 
@@ -206,11 +206,11 @@ const findNextUnlockedSection = (
   return currentIndex;
 };
 
-interface SkillTagProps {
+type SkillTagProps = {
   option: CategoryOption;
   isFocused: boolean;
   isLocked: boolean;
-}
+};
 
 const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked }) => {
   const getColor = (): { text: string; border: string } | undefined => {
@@ -265,14 +265,14 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked }) => {
   );
 };
 
-interface CategorySectionProps {
+type CategorySectionProps = {
   category: CategoryRow;
   options: CategoryOption[];
   isLocked: boolean;
   isFocused: boolean;
   focusedOptionIndex: number;
   showDescriptions: boolean;
-}
+};
 
 const CategorySection: React.FC<CategorySectionProps> = ({
   category,
@@ -285,7 +285,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   return (
     <Box flexDirection="column" marginTop={1}>
       <Box flexDirection="row">
-        <Text dimColor={isLocked}>{category.name}</Text>
+        <Text dimColor={isLocked}>{category.displayName}</Text>
         {category.required && (
           <Text color={isLocked ? "gray" : "red"} dimColor={isLocked}>
             {" "}

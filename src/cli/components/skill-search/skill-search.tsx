@@ -24,21 +24,21 @@ import type { ResolvedSkill, SkillId } from "../../types-matrix.js";
 // Types
 // =============================================================================
 
-export interface SourcedSkill extends ResolvedSkill {
+export type SourcedSkill = ResolvedSkill & {
   /** Source name where this skill came from */
   sourceName: string;
   /** Source URL for reference */
   sourceUrl?: string;
-}
+};
 
-export interface SkillSearchResult {
+export type SkillSearchResult = {
   /** Skills selected for import */
   selectedSkills: SourcedSkill[];
   /** Whether the user cancelled */
   cancelled: boolean;
-}
+};
 
-export interface SkillSearchProps {
+export type SkillSearchProps = {
   /** All available skills from all sources */
   skills: SourcedSkill[];
   /** Total number of sources */
@@ -49,7 +49,7 @@ export interface SkillSearchProps {
   onComplete: (result: SkillSearchResult) => void;
   /** Called when user cancels (Esc) */
   onCancel: () => void;
-}
+};
 
 // =============================================================================
 // Constants
@@ -74,14 +74,11 @@ function matchesQuery(skill: SourcedSkill, query: string): boolean {
 
   const lowerQuery = query.toLowerCase();
 
-  // Match against name
-  if (skill.name.toLowerCase().includes(lowerQuery)) return true;
-
   // Match against ID
   if (skill.id.toLowerCase().includes(lowerQuery)) return true;
 
-  // Match against alias
-  if (skill.alias?.toLowerCase().includes(lowerQuery)) return true;
+  // Match against display name
+  if (skill.displayName?.toLowerCase().includes(lowerQuery)) return true;
 
   // Match against description
   if (skill.description.toLowerCase().includes(lowerQuery)) return true;
@@ -112,9 +109,9 @@ function truncate(text: string, maxLength: number): string {
 // Sub-Components
 // =============================================================================
 
-interface HeaderProps {
+type HeaderProps = {
   sourceCount: number;
-}
+};
 
 const Header: React.FC<HeaderProps> = ({ sourceCount }) => {
   return (
@@ -137,10 +134,10 @@ const Header: React.FC<HeaderProps> = ({ sourceCount }) => {
   );
 };
 
-interface SearchInputProps {
+type SearchInputProps = {
   value: string;
   onChange: (value: string) => void;
-}
+};
 
 const SearchInput: React.FC<SearchInputProps> = ({ value, onChange }) => {
   // Handle text input
@@ -165,15 +162,15 @@ const SearchInput: React.FC<SearchInputProps> = ({ value, onChange }) => {
   );
 };
 
-interface ResultItemProps {
+type ResultItemProps = {
   skill: SourcedSkill;
   isSelected: boolean;
   isFocused: boolean;
-}
+};
 
 const ResultItem: React.FC<ResultItemProps> = ({ skill, isSelected, isFocused }) => {
   const checkbox = isSelected ? CHECKBOX_CHECKED : CHECKBOX_UNCHECKED;
-  const displayName = skill.alias || skill.id;
+  const displayName = skill.displayName || skill.id;
   const descriptionWidth = 30;
 
   return (
@@ -199,12 +196,12 @@ const ResultItem: React.FC<ResultItemProps> = ({ skill, isSelected, isFocused })
   );
 };
 
-interface ResultsListProps {
+type ResultsListProps = {
   results: SourcedSkill[];
   selectedIds: Set<SkillId>;
   focusedIndex: number;
   scrollOffset: number;
-}
+};
 
 const ResultsList: React.FC<ResultsListProps> = ({
   results,
@@ -245,10 +242,10 @@ const ResultsList: React.FC<ResultsListProps> = ({
   );
 };
 
-interface StatusBarProps {
+type StatusBarProps = {
   resultCount: number;
   selectedCount: number;
-}
+};
 
 const StatusBar: React.FC<StatusBarProps> = ({ resultCount, selectedCount }) => {
   return (
@@ -261,9 +258,9 @@ const StatusBar: React.FC<StatusBarProps> = ({ resultCount, selectedCount }) => 
   );
 };
 
-interface FooterProps {
+type FooterProps = {
   hasSelection: boolean;
-}
+};
 
 const Footer: React.FC<FooterProps> = ({ hasSelection }) => {
   return (
