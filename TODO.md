@@ -23,10 +23,9 @@ _None currently. Add serious blockers here immediately when discovered._
 
 ### R1: Use Specialized Agents
 
-- **CLI Developer** (`cli-developer`) - All feature implementation work
-- **CLI Tester** (`web-tester`) - All test writing
-- **API Researcher** (`api-researcher`) - Backend/resolver research
-- **Web Researcher** (`web-researcher`) - Frontend/component research
+- **CLI Developer** (`cli-developer`) - All refators and features
+- **CLI Tester** (`cli-tester`) - All test writing
+- **Web Developer** (`web-developer`) - All react code
 
 Do NOT implement features or write tests directly. Always delegate to the appropriate agent.
 
@@ -222,6 +221,34 @@ Currently all testing skills (vitest, playwright-e2e, cypress-e2e) share the sin
 2. **Support array values** in stack agent configs (e.g. `testing: [vitest, playwright-e2e]`). Requires updating the stack schema and `resolveAgentConfigToSkills` in `source-loader.ts`.
 
 **Files:** `config/skills-matrix.yaml`, `config/stacks.yaml`, `src/schemas/stacks.schema.json`, `src/cli/lib/source-loader.ts`
+
+---
+
+#### U9: Fixed Height for Main CLI Content
+
+The main content area of the CLI application needs a fixed height so it doesn't cause the terminal to jump/reflow as content changes (e.g., when navigating wizard steps or toggling skills). Investigate how to constrain the Ink render area to a fixed height, potentially using `Box` with `height` prop or a viewport wrapper component.
+
+**Research needed:**
+
+- How Ink handles terminal height constraints
+- Whether `Box height={N}` clips or scrolls overflow
+- Best pattern for consistent layout across steps with varying content lengths
+
+---
+
+#### U10: Proper Effects for Active Skills
+
+Currently active/selected skills may not have proper visual effects or feedback. Need to implement clear visual indicators for skills that are actively selected/enabled, such as:
+
+- Highlight or background color for active skill entries
+- Transition or animation when toggling skill state
+- Clear differentiation between active, inactive, and disabled states
+
+**Research needed:**
+
+- Current skill rendering in `category-grid.tsx` and `step-build.tsx`
+- What visual feedback patterns work in terminal UIs (Ink limitations)
+- Consistent styling with existing theme (cyan/green/dim conventions)
 
 ---
 
