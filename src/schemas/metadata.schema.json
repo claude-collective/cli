@@ -1,1 +1,123 @@
-/home/vince/dev/claude-subagents/src/schemas/metadata.schema.json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude-collective.local/schemas/metadata.schema.json",
+  "title": "Skill Metadata",
+  "description": "Schema for skill metadata.yaml files.",
+  "type": "object",
+  "properties": {
+    "category": {
+      "type": "string"
+    },
+    "category_exclusive": {
+      "type": "boolean"
+    },
+    "author": {
+      "type": "string",
+      "pattern": "^@[a-z][a-z0-9-]*$"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "cli_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 30
+    },
+    "cli_description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 60
+    },
+    "usage_guidance": {
+      "type": "string",
+      "minLength": 10
+    },
+    "requires": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "compatible_with": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "conflicts_with": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "requires_setup": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "provides_setup_for": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "content_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{7}$"
+    },
+    "updated": {
+      "type": "string"
+    },
+    "forked_from": {
+      "type": "object",
+      "properties": {
+        "skill_id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "content_hash": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "skill_id",
+        "content_hash",
+        "date"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "category",
+    "author",
+    "cli_name",
+    "cli_description",
+    "usage_guidance"
+  ],
+  "additionalProperties": false
+}

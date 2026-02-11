@@ -2,87 +2,81 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://claude-collective.local/schemas/agent-frontmatter.schema.json",
   "title": "Agent Frontmatter",
-  "description": "YAML frontmatter for compiled agent.md files.",
+  "description": "Schema for agent .md file frontmatter fields.",
   "type": "object",
-  "required": ["name", "description"],
-  "additionalProperties": false,
   "properties": {
     "name": {
       "type": "string",
-      "description": "Agent identifier (kebab-case)",
-      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
       "minLength": 1,
-      "examples": ["web-developer"]
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
     },
     "description": {
       "type": "string",
-      "description": "Agent purpose (shown in Task tool)",
       "minLength": 1
     },
     "tools": {
-      "type": "string",
-      "description": "Comma-separated tools available to agent",
-      "examples": ["Read, Grep, Glob, Bash, Write, Edit"]
+      "type": "string"
     },
     "disallowedTools": {
-      "type": "string",
-      "description": "Comma-separated tools agent cannot use"
+      "type": "string"
     },
     "model": {
       "type": "string",
-      "description": "AI model to use",
-      "enum": ["sonnet", "opus", "haiku", "inherit"],
-      "default": "inherit"
+      "enum": ["sonnet", "opus", "haiku", "inherit"]
     },
     "permissionMode": {
       "type": "string",
-      "description": "How agent handles permissions",
-      "enum": ["default", "acceptEdits", "dontAsk", "bypassPermissions", "plan", "delegate"],
-      "default": "default"
+      "enum": ["default", "acceptEdits", "dontAsk", "bypassPermissions", "plan", "delegate"]
     },
     "skills": {
       "type": "array",
-      "description": "Preloaded skill names",
-      "items": { "type": "string", "minLength": 1 },
-      "uniqueItems": true
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
     "hooks": {
       "type": "object",
-      "description": "Lifecycle hooks keyed by event type",
+      "propertyNames": {
+        "type": "string"
+      },
       "additionalProperties": {
         "type": "array",
-        "items": { "$ref": "#/$defs/HookDefinition" }
+        "items": {
+          "type": "object",
+          "properties": {
+            "matcher": {
+              "type": "string"
+            },
+            "hooks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["command", "script", "prompt"]
+                  },
+                  "command": {
+                    "type": "string"
+                  },
+                  "script": {
+                    "type": "string"
+                  },
+                  "prompt": {
+                    "type": "string"
+                  }
+                },
+                "required": ["type"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        }
       }
     }
   },
-  "$defs": {
-    "HookDefinition": {
-      "type": "object",
-      "description": "Hook with matcher and actions",
-      "properties": {
-        "matcher": {
-          "type": "string",
-          "description": "Tool/event pattern to match"
-        },
-        "hooks": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/HookAction" }
-        }
-      }
-    },
-    "HookAction": {
-      "type": "object",
-      "description": "Hook action",
-      "required": ["type"],
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": ["command", "script", "prompt"]
-        },
-        "command": { "type": "string" },
-        "script": { "type": "string" },
-        "prompt": { "type": "string" }
-      }
-    }
-  }
+  "required": ["name", "description"],
+  "additionalProperties": false
 }

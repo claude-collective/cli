@@ -2,137 +2,89 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://claude-collective.local/schemas/agent.schema.json",
   "title": "Agent Definition",
-  "description": "Schema for agent.yaml files in agents/{category}/{id}/agent.yaml. Supports official Claude Code plugin format.",
+  "description": "Schema for agent.yaml files defining Claude Code agents.",
   "type": "object",
-  "required": ["id", "title", "description", "tools"],
-  "additionalProperties": false,
   "properties": {
     "$schema": {
-      "type": "string",
-      "description": "JSON Schema reference for editor validation",
-      "format": "uri"
+      "type": "string"
     },
     "id": {
       "type": "string",
-      "description": "Unique agent identifier (kebab-case)",
-      "minLength": 1,
-      "examples": ["web-developer", "api-reviewer", "web-pm"]
+      "minLength": 1
     },
     "title": {
       "type": "string",
-      "description": "Human-readable agent name",
-      "minLength": 1,
-      "examples": ["Frontend Developer Agent", "Backend Reviewer Agent"]
+      "minLength": 1
     },
     "description": {
       "type": "string",
-      "description": "Purpose and behavior - shown in Task tool description",
       "minLength": 1
     },
     "model": {
       "type": "string",
-      "description": "Claude model to use. Use 'inherit' to use parent model.",
-      "default": "inherit",
-      "enum": ["opus", "sonnet", "haiku", "inherit"]
+      "enum": ["sonnet", "opus", "haiku", "inherit"]
     },
     "tools": {
       "type": "array",
-      "description": "Tools available to this agent",
-      "minItems": 1,
-      "uniqueItems": true,
       "items": {
-        "type": "string",
-        "enum": [
-          "Read",
-          "Write",
-          "Edit",
-          "Grep",
-          "Glob",
-          "Bash",
-          "WebSearch",
-          "WebFetch",
-          "Task",
-          "TaskOutput"
-        ]
+        "type": "string"
       }
     },
     "disallowed_tools": {
       "type": "array",
-      "description": "Tools this agent cannot use (overrides tools list)",
-      "uniqueItems": true,
       "items": {
-        "type": "string",
-        "enum": [
-          "Read",
-          "Write",
-          "Edit",
-          "Grep",
-          "Glob",
-          "Bash",
-          "WebSearch",
-          "WebFetch",
-          "Task",
-          "TaskOutput"
-        ]
+        "type": "string"
       }
     },
     "permission_mode": {
       "type": "string",
-      "description": "Permission mode for agent operations",
-      "default": "default",
       "enum": ["default", "acceptEdits", "dontAsk", "bypassPermissions", "plan", "delegate"]
     },
     "hooks": {
       "type": "object",
-      "description": "Lifecycle hooks for agent execution",
+      "propertyNames": {
+        "type": "string"
+      },
       "additionalProperties": {
         "type": "array",
         "items": {
-          "$ref": "#/$defs/HookDefinition"
-        }
-      }
-    }
-  },
-  "$defs": {
-    "HookDefinition": {
-      "type": "object",
-      "description": "Hook definition with matcher and hook actions",
-      "properties": {
-        "matcher": {
-          "type": "string",
-          "description": "Tool name or pattern to match for this hook"
-        },
-        "hooks": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/HookAction"
-          }
+          "type": "object",
+          "properties": {
+            "matcher": {
+              "type": "string"
+            },
+            "hooks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["command", "script", "prompt"]
+                  },
+                  "command": {
+                    "type": "string"
+                  },
+                  "script": {
+                    "type": "string"
+                  },
+                  "prompt": {
+                    "type": "string"
+                  }
+                },
+                "required": ["type"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
         }
       }
     },
-    "HookAction": {
-      "type": "object",
-      "description": "Individual hook action to execute",
-      "required": ["type"],
-      "properties": {
-        "type": {
-          "type": "string",
-          "description": "Type of hook action",
-          "enum": ["command", "script", "prompt"]
-        },
-        "command": {
-          "type": "string",
-          "description": "Command to execute (for type: command)"
-        },
-        "script": {
-          "type": "string",
-          "description": "Script path to execute (for type: script)"
-        },
-        "prompt": {
-          "type": "string",
-          "description": "Prompt to display (for type: prompt)"
-        }
-      }
+    "output_format": {
+      "type": "string"
     }
-  }
+  },
+  "required": ["id", "title", "description", "tools"],
+  "additionalProperties": false
 }

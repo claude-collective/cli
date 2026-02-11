@@ -2,196 +2,461 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://claude-collective.local/schemas/skills-matrix.schema.json",
   "title": "Skills Matrix Configuration",
-  "description": "Categories, relationships, stacks, and aliases for CLI wizard.",
+  "description": "Schema for config/skills-matrix.yaml defining skill categories and relationships.",
   "type": "object",
-  "additionalProperties": false,
-  "required": ["version", "categories", "relationships", "skill_aliases"],
   "properties": {
     "version": {
-      "type": "string",
-      "description": "Matrix schema version",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-z0-9.-]+)?$"
+      "type": "string"
     },
     "categories": {
       "type": "object",
-      "description": "Category definitions by ID",
-      "additionalProperties": { "$ref": "#/$defs/CategoryDefinition" },
-      "minProperties": 1
+      "propertyNames": {
+        "type": "string",
+        "enum": [
+          "framework",
+          "meta-framework",
+          "styling",
+          "client-state",
+          "server-state",
+          "forms",
+          "testing",
+          "ui-components",
+          "mocking",
+          "error-handling",
+          "i18n",
+          "file-upload",
+          "files",
+          "utilities",
+          "realtime",
+          "animation",
+          "pwa",
+          "accessibility",
+          "web-performance",
+          "api",
+          "database",
+          "auth",
+          "observability",
+          "analytics",
+          "email",
+          "performance",
+          "mobile-framework",
+          "monorepo",
+          "tooling",
+          "security",
+          "methodology",
+          "research",
+          "reviewing",
+          "ci-cd",
+          "cli-framework",
+          "cli-prompts",
+          "cli-testing"
+        ]
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "framework",
+              "meta-framework",
+              "styling",
+              "client-state",
+              "server-state",
+              "forms",
+              "testing",
+              "ui-components",
+              "mocking",
+              "error-handling",
+              "i18n",
+              "file-upload",
+              "files",
+              "utilities",
+              "realtime",
+              "animation",
+              "pwa",
+              "accessibility",
+              "web-performance",
+              "api",
+              "database",
+              "auth",
+              "observability",
+              "analytics",
+              "email",
+              "performance",
+              "mobile-framework",
+              "monorepo",
+              "tooling",
+              "security",
+              "methodology",
+              "research",
+              "reviewing",
+              "ci-cd",
+              "cli-framework",
+              "cli-prompts",
+              "cli-testing"
+            ]
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string",
+            "enum": ["web", "web-extras", "api", "cli", "mobile", "shared"]
+          },
+          "parent_domain": {
+            "type": "string",
+            "enum": ["web", "web-extras", "api", "cli", "mobile", "shared"]
+          },
+          "exclusive": {
+            "type": "boolean"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "order": {
+            "type": "number"
+          },
+          "icon": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "displayName", "description", "exclusive", "required", "order"],
+        "additionalProperties": false
+      },
+      "required": [
+        "framework",
+        "meta-framework",
+        "styling",
+        "client-state",
+        "server-state",
+        "forms",
+        "testing",
+        "ui-components",
+        "mocking",
+        "error-handling",
+        "i18n",
+        "file-upload",
+        "files",
+        "utilities",
+        "realtime",
+        "animation",
+        "pwa",
+        "accessibility",
+        "web-performance",
+        "api",
+        "database",
+        "auth",
+        "observability",
+        "analytics",
+        "email",
+        "performance",
+        "mobile-framework",
+        "monorepo",
+        "tooling",
+        "security",
+        "methodology",
+        "research",
+        "reviewing",
+        "ci-cd",
+        "cli-framework",
+        "cli-prompts",
+        "cli-testing"
+      ]
     },
-    "relationships": { "$ref": "#/$defs/RelationshipDefinitions" },
-    "suggested_stacks": {
-      "type": "array",
-      "description": "Pre-configured stacks for quick setup",
-      "items": { "$ref": "#/$defs/SuggestedStack" }
-    },
-    "skill_aliases": {
+    "relationships": {
       "type": "object",
-      "description": "Short names to full skill IDs",
-      "additionalProperties": { "type": "string" }
-    }
-  },
-  "$defs": {
-    "CategoryDefinition": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "name", "description", "exclusive", "required", "order"],
-      "properties": {
-        "id": {
-          "type": "string",
-          "pattern": "^[a-z][a-z0-9-]*$"
-        },
-        "name": { "type": "string", "minLength": 1 },
-        "description": { "type": "string", "minLength": 1 },
-        "domain": {
-          "type": "string",
-          "description": "Domain grouping for wizard navigation (web, api, cli, mobile, shared). Only for subcategories.",
-          "enum": ["web", "api", "cli", "mobile", "shared"]
-        },
-        "exclusive": {
-          "type": "boolean",
-          "description": "Only one skill can be selected",
-          "default": true
-        },
-        "required": {
-          "type": "boolean",
-          "description": "Must select from this category",
-          "default": false
-        },
-        "order": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "icon": { "type": "string" }
-      }
-    },
-    "RelationshipDefinitions": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["conflicts", "recommends", "requires", "alternatives"],
       "properties": {
         "conflicts": {
           "type": "array",
-          "items": { "$ref": "#/$defs/ConflictRule" }
-        },
-        "recommends": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/RecommendRule" }
-        },
-        "requires": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/RequireRule" }
-        },
-        "alternatives": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/AlternativeGroup" }
+          "items": {
+            "type": "object",
+            "properties": {
+              "skills": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": ["skills", "reason"],
+            "additionalProperties": false
+          }
         },
         "discourages": {
           "type": "array",
-          "items": { "$ref": "#/$defs/DiscourageRule" }
-        }
-      }
-    },
-    "ConflictRule": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["skills", "reason"],
-      "properties": {
-        "skills": {
-          "type": "array",
-          "items": { "type": "string" },
-          "minItems": 2,
-          "uniqueItems": true
-        },
-        "reason": { "type": "string", "minLength": 1 }
-      }
-    },
-    "RecommendRule": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["when", "suggest", "reason"],
-      "properties": {
-        "when": { "type": "string" },
-        "suggest": {
-          "type": "array",
-          "items": { "type": "string" },
-          "minItems": 1,
-          "uniqueItems": true
-        },
-        "reason": { "type": "string", "minLength": 1 }
-      }
-    },
-    "RequireRule": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["skill", "needs", "reason"],
-      "properties": {
-        "skill": { "type": "string" },
-        "needs": {
-          "type": "array",
-          "items": { "type": "string" },
-          "minItems": 1
-        },
-        "needs_any": {
-          "type": "boolean",
-          "description": "OR logic if true, AND if false",
-          "default": false
-        },
-        "reason": { "type": "string", "minLength": 1 }
-      }
-    },
-    "AlternativeGroup": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["purpose", "skills"],
-      "properties": {
-        "purpose": { "type": "string", "minLength": 1 },
-        "skills": {
-          "type": "array",
-          "items": { "type": "string" },
-          "minItems": 1,
-          "uniqueItems": true
-        }
-      }
-    },
-    "DiscourageRule": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["skills", "reason"],
-      "properties": {
-        "skills": {
-          "type": "array",
-          "items": { "type": "string" },
-          "minItems": 2,
-          "uniqueItems": true
-        },
-        "reason": { "type": "string", "minLength": 1 }
-      }
-    },
-    "SuggestedStack": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "name", "description", "audience", "skills", "philosophy"],
-      "properties": {
-        "id": {
-          "type": "string",
-          "pattern": "^[a-z][a-z0-9-]*$"
-        },
-        "name": { "type": "string", "minLength": 1 },
-        "description": { "type": "string", "minLength": 1 },
-        "audience": {
-          "type": "array",
-          "items": { "type": "string" },
-          "minItems": 1
-        },
-        "skills": {
-          "type": "object",
-          "additionalProperties": {
+          "items": {
             "type": "object",
-            "additionalProperties": { "type": "string" }
+            "properties": {
+              "skills": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": ["skills", "reason"],
+            "additionalProperties": false
           }
         },
-        "philosophy": { "type": "string", "minLength": 1 }
-      }
+        "recommends": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "when": {
+                "type": "string"
+              },
+              "suggest": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": ["when", "suggest", "reason"],
+            "additionalProperties": false
+          }
+        },
+        "requires": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "skill": {
+                "type": "string"
+              },
+              "needs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "needs_any": {
+                "type": "boolean"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": ["skill", "needs", "reason"],
+            "additionalProperties": false
+          }
+        },
+        "alternatives": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "purpose": {
+                "type": "string"
+              },
+              "skills": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": ["purpose", "skills"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["conflicts", "discourages", "recommends", "requires", "alternatives"],
+      "additionalProperties": false
+    },
+    "skill_aliases": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "enum": [
+          "react",
+          "vue",
+          "angular",
+          "solidjs",
+          "nextjs-app-router",
+          "nextjs-server-actions",
+          "remix",
+          "nuxt",
+          "scss-modules",
+          "cva",
+          "tailwind",
+          "zustand",
+          "redux-toolkit",
+          "pinia",
+          "ngrx-signalstore",
+          "jotai",
+          "mobx",
+          "react-query",
+          "swr",
+          "graphql-apollo",
+          "graphql-urql",
+          "trpc",
+          "react-hook-form",
+          "vee-validate",
+          "zod-validation",
+          "vitest",
+          "playwright-e2e",
+          "cypress-e2e",
+          "react-testing-library",
+          "vue-test-utils",
+          "msw",
+          "shadcn-ui",
+          "tanstack-table",
+          "radix-ui",
+          "hono",
+          "express",
+          "fastify",
+          "drizzle",
+          "prisma",
+          "better-auth",
+          "axiom-pino-sentry",
+          "posthog",
+          "posthog-flags",
+          "resend",
+          "github-actions",
+          "react-native",
+          "expo",
+          "turborepo",
+          "tooling",
+          "posthog-setup",
+          "env",
+          "observability-setup",
+          "email-setup",
+          "framer-motion",
+          "css-animations",
+          "view-transitions",
+          "storybook",
+          "error-boundaries",
+          "accessibility",
+          "websockets",
+          "sse",
+          "socket-io",
+          "service-workers",
+          "file-upload",
+          "image-handling",
+          "date-fns",
+          "api-testing",
+          "api-performance",
+          "web-performance",
+          "security",
+          "commander",
+          "cli-commander",
+          "oclif",
+          "reviewing",
+          "cli-reviewing",
+          "research-methodology",
+          "investigation-requirements",
+          "anti-over-engineering",
+          "success-criteria",
+          "write-verification",
+          "improvement-protocol",
+          "context-management"
+        ]
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+$"
+      },
+      "required": [
+        "react",
+        "vue",
+        "angular",
+        "solidjs",
+        "nextjs-app-router",
+        "nextjs-server-actions",
+        "remix",
+        "nuxt",
+        "scss-modules",
+        "cva",
+        "tailwind",
+        "zustand",
+        "redux-toolkit",
+        "pinia",
+        "ngrx-signalstore",
+        "jotai",
+        "mobx",
+        "react-query",
+        "swr",
+        "graphql-apollo",
+        "graphql-urql",
+        "trpc",
+        "react-hook-form",
+        "vee-validate",
+        "zod-validation",
+        "vitest",
+        "playwright-e2e",
+        "cypress-e2e",
+        "react-testing-library",
+        "vue-test-utils",
+        "msw",
+        "shadcn-ui",
+        "tanstack-table",
+        "radix-ui",
+        "hono",
+        "express",
+        "fastify",
+        "drizzle",
+        "prisma",
+        "better-auth",
+        "axiom-pino-sentry",
+        "posthog",
+        "posthog-flags",
+        "resend",
+        "github-actions",
+        "react-native",
+        "expo",
+        "turborepo",
+        "tooling",
+        "posthog-setup",
+        "env",
+        "observability-setup",
+        "email-setup",
+        "framer-motion",
+        "css-animations",
+        "view-transitions",
+        "storybook",
+        "error-boundaries",
+        "accessibility",
+        "websockets",
+        "sse",
+        "socket-io",
+        "service-workers",
+        "file-upload",
+        "image-handling",
+        "date-fns",
+        "api-testing",
+        "api-performance",
+        "web-performance",
+        "security",
+        "commander",
+        "cli-commander",
+        "oclif",
+        "reviewing",
+        "cli-reviewing",
+        "research-methodology",
+        "investigation-requirements",
+        "anti-over-engineering",
+        "success-criteria",
+        "write-verification",
+        "improvement-protocol",
+        "context-management"
+      ]
     }
-  }
+  },
+  "required": ["version", "categories", "relationships", "skill_aliases"],
+  "additionalProperties": false
 }

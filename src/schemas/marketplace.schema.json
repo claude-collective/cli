@@ -1,107 +1,113 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "title": "Claude Code Marketplace",
-  "description": "Schema for marketplace.json files.",
+  "$id": "https://claude-collective.local/schemas/marketplace.schema.json",
+  "title": "Marketplace",
+  "description": "Schema for marketplace.json plugin listings.",
   "type": "object",
-  "required": ["name", "version", "owner", "plugins"],
-  "additionalProperties": false,
   "properties": {
     "$schema": {
-      "type": "string",
-      "format": "uri"
+      "type": "string"
     },
     "name": {
-      "type": "string",
-      "description": "Marketplace name (kebab-case)",
-      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
-      "minLength": 1
+      "type": "string"
     },
     "version": {
-      "type": "string",
-      "description": "Semantic version",
-      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+      "type": "string"
     },
     "description": {
-      "type": "string",
-      "minLength": 1
+      "type": "string"
     },
     "owner": {
-      "$ref": "#/$defs/Owner"
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      },
+      "required": ["name"],
+      "additionalProperties": false
     },
     "metadata": {
-      "$ref": "#/$defs/Metadata"
+      "type": "object",
+      "properties": {
+        "pluginRoot": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
     },
     "plugins": {
       "type": "array",
-      "description": "Plugins in marketplace",
-      "items": { "$ref": "#/$defs/MarketplacePlugin" },
-      "uniqueItems": true
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "enum": ["github", "url"]
+                  },
+                  "repo": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "ref": {
+                    "type": "string"
+                  }
+                },
+                "required": ["source"],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "author": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              }
+            },
+            "required": ["name"],
+            "additionalProperties": false
+          },
+          "category": {
+            "type": "string"
+          },
+          "keywords": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["name", "source"],
+        "additionalProperties": false
+      }
     }
   },
-  "$defs": {
-    "Owner": {
-      "type": "object",
-      "required": ["name"],
-      "additionalProperties": false,
-      "properties": {
-        "name": { "type": "string", "minLength": 1 },
-        "email": { "type": "string", "format": "email" }
-      }
-    },
-    "Metadata": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "pluginRoot": {
-          "type": "string",
-          "description": "Root directory for plugin sources"
-        }
-      }
-    },
-    "MarketplacePlugin": {
-      "type": "object",
-      "required": ["name", "source"],
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "type": "string",
-          "pattern": "^[a-z][a-z0-9]*(-[a-z0-9+]+)*$",
-          "minLength": 1
-        },
-        "source": {
-          "oneOf": [{ "type": "string" }, { "$ref": "#/$defs/RemoteSource" }]
-        },
-        "description": { "type": "string", "minLength": 1 },
-        "version": { "type": "string" },
-        "author": { "$ref": "#/$defs/Author" },
-        "category": { "type": "string" },
-        "keywords": {
-          "type": "array",
-          "items": { "type": "string", "minLength": 1 },
-          "uniqueItems": true
-        }
-      }
-    },
-    "RemoteSource": {
-      "type": "object",
-      "required": ["source"],
-      "additionalProperties": false,
-      "properties": {
-        "source": { "type": "string", "enum": ["github", "url"] },
-        "repo": { "type": "string" },
-        "url": { "type": "string", "format": "uri" },
-        "ref": { "type": "string" }
-      }
-    },
-    "Author": {
-      "type": "object",
-      "required": ["name"],
-      "additionalProperties": false,
-      "properties": {
-        "name": { "type": "string", "minLength": 1 },
-        "email": { "type": "string", "format": "email" }
-      }
-    }
-  }
+  "required": ["name", "version", "owner", "plugins"],
+  "additionalProperties": false
 }

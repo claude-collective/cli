@@ -73,6 +73,8 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit && echo '✓ No TypeScript errors'",
     "prepare": "husky",
+    "generate:schemas": "npx tsx scripts/generate-json-schemas.ts",
+    "generate:schemas:check": "npm run generate:schemas && git diff --exit-code src/schemas/",
     "prepublishOnly": "npm run format:check && npm run build && npm run test"
   },
   "lint-staged": {
@@ -96,8 +98,6 @@
     "@oclif/plugin-not-found": "^3.0.0",
     "@oclif/plugin-warn-if-update-available": "^3.0.0",
     "@oclif/table": "^0.5.0",
-    "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1",
     "diff": "^8.0.3",
     "execa": "^9.0.0",
     "fast-glob": "^3.3.0",

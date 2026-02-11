@@ -2,96 +2,44 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://claude-collective.local/schemas/hooks.schema.json",
   "title": "Hooks Configuration",
-  "description": "Schema for hooks.json in Claude Code plugins.",
+  "description": "Schema for agent hook definitions.",
   "type": "object",
-  "additionalProperties": false,
-  "properties": {
-    "hooks": {
-      "type": "object",
-      "description": "Hook handlers keyed by event name",
-      "additionalProperties": {
-        "type": "array",
-        "items": { "$ref": "#/$defs/HookDefinition" }
-      },
-      "propertyNames": {
-        "enum": [
-          "SessionStart",
-          "SessionEnd",
-          "UserPromptSubmit",
-          "PreToolUse",
-          "PostToolUse",
-          "PermissionRequest",
-          "Stop",
-          "SubagentStop",
-          "PreCompact",
-          "Setup"
-        ]
-      }
-    }
+  "propertyNames": {
+    "type": "string"
   },
-  "$defs": {
-    "HookDefinition": {
+  "additionalProperties": {
+    "type": "array",
+    "items": {
       "type": "object",
-      "description": "Hook with optional matcher",
-      "additionalProperties": false,
-      "required": ["hooks"],
       "properties": {
         "matcher": {
-          "type": "string",
-          "description": "Regex pattern (e.g., 'Write|Edit')"
+          "type": "string"
         },
         "hooks": {
           "type": "array",
-          "description": "Actions to execute",
-          "items": { "$ref": "#/$defs/HookAction" },
-          "minItems": 1
-        }
-      }
-    },
-    "HookAction": {
-      "type": "object",
-      "description": "Hook action",
-      "additionalProperties": false,
-      "required": ["type"],
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": ["command", "script", "prompt"]
-        },
-        "command": {
-          "type": "string",
-          "description": "Shell command (supports ${CLAUDE_PLUGIN_ROOT})"
-        },
-        "script": {
-          "type": "string",
-          "description": "Script path"
-        },
-        "prompt": {
-          "type": "string",
-          "description": "Prompt text"
-        },
-        "timeout": {
-          "type": "integer",
-          "description": "Timeout in seconds",
-          "minimum": 1,
-          "maximum": 300,
-          "default": 30
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["command", "script", "prompt"]
+              },
+              "command": {
+                "type": "string"
+              },
+              "script": {
+                "type": "string"
+              },
+              "prompt": {
+                "type": "string"
+              }
+            },
+            "required": ["type"],
+            "additionalProperties": false
+          }
         }
       },
-      "allOf": [
-        {
-          "if": { "properties": { "type": { "const": "command" } } },
-          "then": { "required": ["command"] }
-        },
-        {
-          "if": { "properties": { "type": { "const": "script" } } },
-          "then": { "required": ["script"] }
-        },
-        {
-          "if": { "properties": { "type": { "const": "prompt" } } },
-          "then": { "required": ["prompt"] }
-        }
-      ]
+      "additionalProperties": false
     }
   }
 }
