@@ -25,9 +25,7 @@ vi.mock("./plugin-finder", () => ({
   readPluginManifest: vi.fn(),
 }));
 
-vi.mock("../../utils/fs", () => ({
-  directoryExists: vi.fn(),
-}));
+vi.mock("../../utils/fs");
 
 vi.mock("../installation", () => ({
   detectInstallation: vi.fn(),
@@ -86,10 +84,6 @@ function createDirent(name: string, opts: { isDir?: boolean; isFile?: boolean })
 // =============================================================================
 
 describe("plugin-info", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   // ===========================================================================
   // getPluginInfo
   // ===========================================================================

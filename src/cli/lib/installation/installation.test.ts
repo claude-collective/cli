@@ -1,10 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock file system
-vi.mock("../../utils/fs", () => ({
-  fileExists: vi.fn(),
-  directoryExists: vi.fn(),
-}));
+// Mock file system (manual mock from __mocks__ directory)
+vi.mock("../../utils/fs");
 
 // Mock project-config
 vi.mock("../configuration", () => ({
@@ -27,7 +24,6 @@ import { getCollectivePluginDir } from "../plugins";
 
 describe("installation", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     // Default: plugin dir resolves to a standard path
     vi.mocked(getCollectivePluginDir).mockReturnValue("/project/.claude/plugins/claude-collective");
   });

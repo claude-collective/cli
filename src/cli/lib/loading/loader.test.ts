@@ -1,17 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock file system operations
-vi.mock("../../utils/fs", () => ({
-  readFile: vi.fn(),
-  glob: vi.fn().mockResolvedValue([]),
-  directoryExists: vi.fn().mockResolvedValue(false),
-}));
-
-// Mock logger
-vi.mock("../../utils/logger", () => ({
-  verbose: vi.fn(),
-  warn: vi.fn(),
-}));
+// Mock file system and logger (manual mocks from __mocks__ directories)
+vi.mock("../../utils/fs");
+vi.mock("../../utils/logger");
 
 import { parseFrontmatter, loadAllAgents, loadProjectAgents, loadSkillsByIds } from "./loader";
 import { readFile, glob, directoryExists } from "../../utils/fs";
@@ -188,10 +179,6 @@ Content`;
 // =============================================================================
 
 describe("loadAllAgents", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it("should warn and skip when agent.yaml has invalid YAML", async () => {
     vi.mocked(glob).mockResolvedValue(["bad-agent/agent.yaml"]);
     vi.mocked(readFile).mockResolvedValue("not: valid: yaml: [[[");
@@ -232,10 +219,6 @@ describe("loadAllAgents", () => {
 // =============================================================================
 
 describe("loadProjectAgents", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it("should return empty object when project agents directory does not exist", async () => {
     vi.mocked(directoryExists).mockResolvedValue(false);
 
@@ -286,10 +269,6 @@ describe("loadProjectAgents", () => {
 // =============================================================================
 
 describe("loadSkillsByIds", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it("should warn for unknown skill references", async () => {
     const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 

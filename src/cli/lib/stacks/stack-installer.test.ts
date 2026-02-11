@@ -12,14 +12,8 @@ vi.mock("../../utils/exec", () => ({
   isClaudeCLIAvailable: vi.fn(),
 }));
 
-vi.mock("../../utils/fs", () => ({
-  ensureDir: vi.fn(),
-  remove: vi.fn(),
-}));
-
-vi.mock("../../utils/logger", () => ({
-  verbose: vi.fn(),
-}));
+vi.mock("../../utils/fs");
+vi.mock("../../utils/logger");
 
 import { compileStackToTemp, installStackAsPlugin } from "./stack-installer";
 import { compileStackPlugin } from "./stack-plugin-compiler";
@@ -48,8 +42,7 @@ function createMockCompiledResult(overrides?: Partial<CompiledStackPlugin>): Com
 
 describe("stack-installer", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    // Set default mock return values after clearAllMocks
+    // Set default mock return values
     vi.mocked(isClaudeCLIAvailable).mockResolvedValue(true);
     vi.mocked(claudePluginInstall).mockResolvedValue(undefined);
     vi.mocked(ensureDir).mockResolvedValue(undefined);

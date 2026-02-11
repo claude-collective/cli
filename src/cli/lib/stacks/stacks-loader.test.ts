@@ -1,17 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { SkillDisplayName, SkillId, Stack, StackAgentConfig, Subcategory } from "../../types";
 
-// Mock file system
+// Mock file system — inline factory required because vi.resetModules() is used
+// (__mocks__ directory mocks create fresh vi.fn() instances on module reset)
 vi.mock("../../utils/fs", () => ({
   readFile: vi.fn(),
   fileExists: vi.fn(),
 }));
 
-// Mock logger
-vi.mock("../../utils/logger", () => ({
-  verbose: vi.fn(),
-  warn: vi.fn(),
-}));
+vi.mock("../../utils/logger");
 
 import {
   loadStacks,
@@ -62,7 +59,6 @@ name: invalid
 
 describe("stacks-loader", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     // Clear the internal cache between tests by re-importing
     // The module has a stacksCache Map that persists across calls
     vi.resetModules();

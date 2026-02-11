@@ -10,11 +10,8 @@ import type {
   Subcategory,
 } from "../../types";
 
-// Mock logger to suppress warnings during tests
-vi.mock("../../utils/logger", () => ({
-  verbose: vi.fn(),
-  warn: vi.fn(),
-}));
+// Mock logger to suppress warnings during tests (manual mock from __mocks__ directory)
+vi.mock("../../utils/logger");
 
 import { warn } from "../../utils/logger";
 
@@ -55,10 +52,6 @@ function createSkill(
 // =============================================================================
 
 describe("matrix-health-check", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   describe("checkMatrixHealth — healthy matrix", () => {
     it("returns no issues for a valid matrix with no broken references", () => {
       const reactSkill = createSkill("web-framework-react", "framework");

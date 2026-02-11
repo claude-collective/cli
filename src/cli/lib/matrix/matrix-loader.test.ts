@@ -19,10 +19,7 @@ vi.mock("../../utils/fs", () => ({
   glob: (...args: unknown[]) => mockGlob(...args),
 }));
 
-vi.mock("../../utils/logger", () => ({
-  verbose: vi.fn(),
-  warn: vi.fn(),
-}));
+vi.mock("../../utils/logger");
 
 vi.mock("../loading", () => ({
   parseFrontmatter: (...args: unknown[]) => mockParseFrontmatter(...args),
@@ -58,10 +55,6 @@ categories: {}
 // =============================================================================
 
 describe("matrix-loader", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   describe("loadSkillsMatrix", () => {
     it("loads and validates the real skills-matrix.yaml", async () => {
       const realContent = await loadRealMatrixYaml();

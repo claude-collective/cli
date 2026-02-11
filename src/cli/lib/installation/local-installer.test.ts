@@ -91,7 +91,6 @@ describe("local-installer", () => {
 
   beforeEach(async () => {
     tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-local-installer-test-"));
-    vi.clearAllMocks();
   });
 
   afterEach(async () => {

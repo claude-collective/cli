@@ -1,18 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { AgentConfig, AgentName, CompileContext, Skill, SkillId } from "../types";
 
-// Mock file system operations
-vi.mock("../utils/fs", () => ({
-  readFile: vi.fn(),
-  readFileOptional: vi.fn(),
-  writeFile: vi.fn().mockResolvedValue(undefined),
-  ensureDir: vi.fn().mockResolvedValue(undefined),
-  remove: vi.fn().mockResolvedValue(undefined),
-  copy: vi.fn().mockResolvedValue(undefined),
-  glob: vi.fn().mockResolvedValue([]),
-  fileExists: vi.fn().mockResolvedValue(false),
-  directoryExists: vi.fn().mockResolvedValue(false),
-}));
+// Mock file system (manual mock from __mocks__ directory)
+vi.mock("../utils/fs");
 
 // Mock resolver
 vi.mock("./resolver", () => ({
@@ -25,11 +15,8 @@ vi.mock("./output-validator", () => ({
   printOutputValidationResult: vi.fn(),
 }));
 
-// Mock logger
-vi.mock("../utils/logger", () => ({
-  verbose: vi.fn(),
-  warn: vi.fn(),
-}));
+// Mock logger (manual mock from __mocks__ directory)
+vi.mock("../utils/logger");
 
 import {
   compileAllAgents,
@@ -91,10 +78,6 @@ function createCompileContext(overrides?: Partial<CompileContext>): CompileConte
 // =============================================================================
 
 describe("compiler", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   describe("compileAllAgents", () => {
     it("creates output directory and writes compiled agents", async () => {
       // Setup: readFile returns agent file content, engine renders template

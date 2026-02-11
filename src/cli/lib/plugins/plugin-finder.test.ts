@@ -18,15 +18,8 @@ import { createMockMatrix, createMockSkill } from "../__tests__/helpers";
 // Mocks
 // =============================================================================
 
-vi.mock("../../utils/fs", () => ({
-  fileExists: vi.fn(),
-  readFile: vi.fn(),
-  glob: vi.fn(),
-}));
-
-vi.mock("../../utils/logger", () => ({
-  verbose: vi.fn(),
-}));
+vi.mock("../../utils/fs");
+vi.mock("../../utils/logger");
 
 // =============================================================================
 // Typed mock imports
@@ -50,10 +43,6 @@ const PLUGINS_SUBDIR = "plugins";
 // =============================================================================
 
 describe("plugin-finder", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   // ===========================================================================
   // getUserPluginsDir
   // ===========================================================================

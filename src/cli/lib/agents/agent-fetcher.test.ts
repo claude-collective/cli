@@ -1,14 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import path from "path";
 
-// Mock dependencies before importing the module under test
-vi.mock("../../utils/fs", () => ({
-  directoryExists: vi.fn(),
-}));
-
-vi.mock("../../utils/logger", () => ({
-  verbose: vi.fn(),
-}));
+// Mock dependencies before importing the module under test (manual mocks from __mocks__ directories)
+vi.mock("../../utils/fs");
+vi.mock("../../utils/logger");
 
 vi.mock("../loading", () => ({
   fetchFromSource: vi.fn(),
@@ -40,10 +35,6 @@ const mockDirectoryExists = vi.mocked(directoryExists);
 const mockFetchFromSource = vi.mocked(fetchFromSource);
 
 describe("agent-fetcher", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   describe("getLocalAgentDefinitions", () => {
     it("should return agent source paths when agents directory exists", async () => {
       // Both agents dir and templates dir exist

@@ -162,7 +162,6 @@ describe("StepBuild component", () => {
   afterEach(() => {
     cleanup?.();
     cleanup = undefined;
-    vi.clearAllMocks();
   });
 
   // ===========================================================================

@@ -159,7 +159,6 @@ describe("CategoryGrid component", () => {
   afterEach(() => {
     cleanup?.();
     cleanup = undefined;
-    vi.clearAllMocks();
   });
 
   // ===========================================================================

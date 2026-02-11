@@ -1,12 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock file system
+// Mock file system and logger — inline factories required because vi.resetModules() is used
+// (__mocks__ directory mocks create fresh vi.fn() instances on module reset)
 vi.mock("../../utils/fs", () => ({
   readFile: vi.fn(),
   fileExists: vi.fn(),
 }));
-
-// Mock logger
 vi.mock("../../utils/logger", () => ({
   verbose: vi.fn(),
   warn: vi.fn(),
@@ -59,7 +58,6 @@ function createMalformedYaml(): string {
 
 describe("defaults-loader", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     // Reset modules to clear the internal cachedDefaults between tests
     vi.resetModules();
   });

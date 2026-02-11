@@ -44,7 +44,6 @@ describe("StepRefine component", () => {
   afterEach(() => {
     cleanup?.();
     cleanup = undefined;
-    vi.clearAllMocks();
   });
 
   // ===========================================================================

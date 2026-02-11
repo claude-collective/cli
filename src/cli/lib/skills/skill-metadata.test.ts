@@ -1,18 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { SkillId } from "../../types";
 
-// Mock file system
-vi.mock("../../utils/fs", () => ({
-  fileExists: vi.fn(),
-  readFile: vi.fn(),
-  writeFile: vi.fn(),
-  listDirectories: vi.fn(),
-}));
-
-// Mock logger
-vi.mock("../../utils/logger", () => ({
-  warn: vi.fn(),
-}));
+// Mock file system and logger (manual mocks from __mocks__ directories)
+vi.mock("../../utils/fs");
+vi.mock("../../utils/logger");
 
 // Mock versioning
 vi.mock("../versioning", () => ({
@@ -62,10 +53,6 @@ function createMetadataWithSchemaComment(skillId: string, contentHash: string): 
 // =============================================================================
 
 describe("skill-metadata", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   describe("readForkedFromMetadata", () => {
     it("returns forked_from metadata when metadata.yaml exists and is valid", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);

@@ -2,17 +2,9 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import path from "path";
 import type { Marketplace, MarketplacePlugin, SkillId } from "../../types";
 
-// Mock dependencies before importing the module under test
-vi.mock("../../utils/fs", () => ({
-  copy: vi.fn().mockResolvedValue(undefined),
-  ensureDir: vi.fn().mockResolvedValue(undefined),
-  directoryExists: vi.fn(),
-  glob: vi.fn(),
-}));
-
-vi.mock("../../utils/logger", () => ({
-  verbose: vi.fn(),
-}));
+// Mock dependencies before importing the module under test (manual mocks from __mocks__ directories)
+vi.mock("../../utils/fs");
+vi.mock("../../utils/logger");
 
 import { fetchSkills } from "./skill-fetcher";
 import { copy, ensureDir, directoryExists, glob } from "../../utils/fs";
@@ -49,10 +41,6 @@ describe("skill-fetcher", () => {
   const OUTPUT_DIR = "/test/output";
   const SOURCE_PATH = "/test/source";
   const SKILLS_OUTPUT_DIR = path.join(OUTPUT_DIR, "skills");
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
 
   describe("fetchSkills", () => {
     it("should create skills output directory", async () => {
