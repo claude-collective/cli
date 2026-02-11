@@ -3,7 +3,7 @@ import path from "path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { BaseCommand } from "../../base-command.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
-import { fetchFromSource } from "../../lib/source-fetcher.js";
+import { fetchFromSource } from "../../lib/loading/index.js";
 import { importedSkillMetadataSchema } from "../../lib/schemas.js";
 import { getCurrentDate, hashFile } from "../../lib/versioning.js";
 import {

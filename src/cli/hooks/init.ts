@@ -1,6 +1,6 @@
 // Init hook - runs before each command
 import { Hook } from "@oclif/core";
-import { resolveSource } from "../lib/config.js";
+import { resolveSource } from "../lib/configuration/index.js";
 
 const hook: Hook<"init"> = async function (options) {
   // Detect project directory (current working directory)

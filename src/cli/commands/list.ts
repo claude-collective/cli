@@ -1,5 +1,5 @@
 import { BaseCommand } from "../base-command.js";
-import { getInstallationInfo, formatInstallationDisplay } from "../lib/plugin-info.js";
+import { getInstallationInfo, formatInstallationDisplay } from "../lib/plugins/index.js";
 
 export default class List extends BaseCommand {
   static summary = "Show installation information";

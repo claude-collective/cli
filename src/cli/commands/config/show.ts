@@ -7,7 +7,7 @@ import {
   formatOrigin,
   DEFAULT_SOURCE,
   SOURCE_ENV_VAR,
-} from "../../lib/config.js";
+} from "../../lib/configuration/index.js";
 
 export default class ConfigShow extends BaseCommand {
   static summary = "Show current effective configuration";

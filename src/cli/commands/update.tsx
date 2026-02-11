@@ -4,17 +4,17 @@ import { Flags, Args } from "@oclif/core";
 import { printTable } from "@oclif/table";
 import path from "path";
 import { BaseCommand } from "../base-command.js";
-import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/source-loader.js";
-import { recompileAgents } from "../lib/agent-recompiler.js";
+import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/loading/index.js";
+import { recompileAgents } from "../lib/agents/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import {
   compareSkills,
   injectForkedFromMetadata,
   type SkillComparisonResult,
-} from "../lib/skill-metadata.js";
+} from "../lib/skills/index.js";
 import { fileExists, copy } from "../utils/fs.js";
 import { LOCAL_SKILLS_PATH } from "../consts.js";
-import { getCollectivePluginDir } from "../lib/plugin-finder.js";
+import { getCollectivePluginDir } from "../lib/plugins/index.js";
 import { Confirm } from "../components/common/confirm.js";
 
 /**

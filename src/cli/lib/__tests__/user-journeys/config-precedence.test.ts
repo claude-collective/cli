@@ -23,7 +23,7 @@ import {
   SOURCE_ENV_VAR,
   DEFAULT_SOURCE,
   type ProjectSourceConfig,
-} from "../../config";
+} from "../../configuration";
 import {
   createTestSource,
   cleanupTestSource,

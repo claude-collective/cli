@@ -9,7 +9,7 @@
  */
 import { Command, Flags } from "@oclif/core";
 import { EXIT_CODES } from "./lib/exit-codes.js";
-import type { ResolvedConfig } from "./lib/config.js";
+import type { ResolvedConfig } from "./lib/configuration/index.js";
 
 export abstract class BaseCommand extends Command {
   /**

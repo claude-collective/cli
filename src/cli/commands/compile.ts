@@ -8,9 +8,9 @@ import {
   getPluginAgentsDir,
   getPluginManifestPath,
   getProjectPluginsDir,
-} from "../lib/plugin-finder";
-import { getAgentDefinitions } from "../lib/agent-fetcher";
-import { resolveSource } from "../lib/config";
+} from "../lib/plugins";
+import { getAgentDefinitions } from "../lib/agents";
+import { resolveSource } from "../lib/configuration";
 import {
   directoryExists,
   ensureDir,
@@ -19,8 +19,8 @@ import {
   fileExists,
   listDirectories,
 } from "../utils/fs";
-import { recompileAgents } from "../lib/agent-recompiler";
-import { loadPluginSkills } from "../lib/loader";
+import { recompileAgents } from "../lib/agents";
+import { loadPluginSkills } from "../lib/loading";
 import { LOCAL_SKILLS_PATH } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
 import { detectInstallation } from "../lib/installation";

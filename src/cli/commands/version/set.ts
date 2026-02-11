@@ -6,7 +6,7 @@ import { Args } from "@oclif/core";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts.js";
 import { readFile, writeFile } from "../../utils/fs.js";
-import { findPluginManifest } from "../../lib/plugin-manifest-finder.js";
+import { findPluginManifest } from "../../lib/plugins/index.js";
 import { pluginManifestSchema } from "../../lib/schemas.js";
 
 const SEMVER_REGEX = /^(\d+)\.(\d+)\.(\d+)$/;

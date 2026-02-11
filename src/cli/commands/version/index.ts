@@ -3,11 +3,10 @@
  * Alias for `version show`.
  */
 import { BaseCommand } from "../../base-command.js";
-import { getPluginVersion } from "../../lib/plugin-version.js";
+import { getPluginVersion, findPluginManifest } from "../../lib/plugins/index.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 import path from "path";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts.js";
-import { findPluginManifest } from "../../lib/plugin-manifest-finder.js";
 
 export default class Version extends BaseCommand {
   static summary = "Show current plugin version";

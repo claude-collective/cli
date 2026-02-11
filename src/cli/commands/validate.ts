@@ -7,7 +7,7 @@ import {
   validatePlugin,
   validateAllPlugins,
   printPluginValidationResult,
-} from "../lib/plugin-validator.js";
+} from "../lib/plugins/index.js";
 
 export default class Validate extends BaseCommand {
   static summary = "Validate YAML files against schemas or validate compiled plugins";

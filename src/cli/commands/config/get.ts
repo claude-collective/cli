@@ -1,6 +1,10 @@
 import { Args } from "@oclif/core";
 import { BaseCommand } from "../../base-command.js";
-import { resolveSource, resolveAgentsSource, loadProjectSourceConfig } from "../../lib/config.js";
+import {
+  resolveSource,
+  resolveAgentsSource,
+  loadProjectSourceConfig,
+} from "../../lib/configuration/index.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 
 export default class ConfigGet extends BaseCommand {

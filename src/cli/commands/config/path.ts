@@ -1,5 +1,5 @@
 import { BaseCommand } from "../../base-command.js";
-import { getProjectConfigPath } from "../../lib/config.js";
+import { getProjectConfigPath } from "../../lib/configuration/index.js";
 
 export default class ConfigPath extends BaseCommand {
   static summary = "Show configuration file paths";

@@ -11,7 +11,7 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFile, mkdir, writeFile } from "fs/promises";
 import { parse as parseYaml } from "yaml";
-import { recompileAgents, type RecompileAgentsOptions } from "../../agent-recompiler";
+import { recompileAgents, type RecompileAgentsOptions } from "../../agents";
 import {
   createTestSource,
   cleanupTestSource,

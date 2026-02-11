@@ -5,9 +5,9 @@ import { setVerbose } from "../utils/logger";
 import { fileExists, glob, directoryExists } from "../utils/fs";
 import { unique } from "remeda";
 import { EXIT_CODES } from "../lib/exit-codes";
-import { loadProjectConfig, validateProjectConfig } from "../lib/project-config";
-import { loadSkillsMatrixFromSource } from "../lib/source-loader";
-import { discoverLocalSkills } from "../lib/local-skill-loader";
+import { loadProjectConfig, validateProjectConfig } from "../lib/configuration";
+import { loadSkillsMatrixFromSource } from "../lib/loading";
+import { discoverLocalSkills } from "../lib/skills";
 import type { AgentName, MergedSkillsMatrix, ProjectConfig, SkillId } from "../types";
 
 // =============================================================================

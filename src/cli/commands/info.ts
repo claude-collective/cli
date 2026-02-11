@@ -1,8 +1,8 @@
 import { Args, Flags } from "@oclif/core";
 import path from "path";
 import { BaseCommand } from "../base-command.js";
-import { loadSkillsMatrixFromSource } from "../lib/source-loader.js";
-import { discoverLocalSkills } from "../lib/local-skill-loader.js";
+import { loadSkillsMatrixFromSource } from "../lib/loading/index.js";
+import { discoverLocalSkills } from "../lib/skills/index.js";
 import { fileExists, readFile } from "../utils/fs.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import type {

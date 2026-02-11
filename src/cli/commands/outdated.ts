@@ -3,9 +3,9 @@ import { printTable } from "@oclif/table";
 import path from "path";
 import { countBy } from "remeda";
 import { BaseCommand } from "../base-command.js";
-import { loadSkillsMatrixFromSource } from "../lib/source-loader.js";
+import { loadSkillsMatrixFromSource } from "../lib/loading/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
-import { compareSkills, type SkillComparisonResult } from "../lib/skill-metadata.js";
+import { compareSkills, type SkillComparisonResult } from "../lib/skills/index.js";
 import { fileExists } from "../utils/fs.js";
 import { LOCAL_SKILLS_PATH } from "../consts.js";
 

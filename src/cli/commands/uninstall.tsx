@@ -6,7 +6,7 @@ import { BaseCommand } from "../base-command";
 import { Confirm } from "../components/common/confirm";
 import { directoryExists, fileExists, remove } from "../utils/fs";
 import { claudePluginUninstall, isClaudeCLIAvailable } from "../utils/exec";
-import { getCollectivePluginDir } from "../lib/plugin-finder";
+import { getCollectivePluginDir } from "../lib/plugins";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
 

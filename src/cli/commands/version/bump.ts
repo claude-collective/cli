@@ -3,12 +3,15 @@
  */
 import { BaseCommand } from "../../base-command.js";
 import { Args, Flags } from "@oclif/core";
-import { bumpPluginVersion, type VersionBumpType } from "../../lib/plugin-version.js";
+import {
+  bumpPluginVersion,
+  type VersionBumpType,
+  findPluginManifest,
+} from "../../lib/plugins/index.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 import path from "path";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts.js";
 import { readFile } from "../../utils/fs.js";
-import { findPluginManifest } from "../../lib/plugin-manifest-finder.js";
 import type { PluginManifest } from "../../types/index.js";
 import { pluginManifestSchema } from "../../lib/schemas.js";
 

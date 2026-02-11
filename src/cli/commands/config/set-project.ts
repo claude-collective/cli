@@ -5,7 +5,7 @@ import {
   saveProjectConfig,
   getProjectConfigPath,
   type ProjectSourceConfig,
-} from "../../lib/config.js";
+} from "../../lib/configuration/index.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 
 export default class ConfigSetProject extends BaseCommand {

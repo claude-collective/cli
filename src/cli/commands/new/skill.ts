@@ -1,7 +1,7 @@
 import { Args, Flags } from "@oclif/core";
 import path from "path";
 import { BaseCommand } from "../../base-command.js";
-import { resolveAuthor } from "../../lib/config.js";
+import { resolveAuthor } from "../../lib/configuration/index.js";
 import { writeFile, directoryExists } from "../../utils/fs.js";
 import { LOCAL_SKILLS_PATH } from "../../consts.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";

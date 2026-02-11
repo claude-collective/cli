@@ -3,9 +3,9 @@ import chalk from "chalk";
 import path from "path";
 import { createTwoFilesPatch } from "diff";
 import { BaseCommand } from "../base-command.js";
-import { loadSkillsMatrixFromSource } from "../lib/source-loader.js";
+import { loadSkillsMatrixFromSource } from "../lib/loading/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
-import { readForkedFromMetadata, type ForkedFromMetadata } from "../lib/skill-metadata.js";
+import { readForkedFromMetadata, type ForkedFromMetadata } from "../lib/skills/index.js";
 import { fileExists, readFile, listDirectories } from "../utils/fs.js";
 import { LOCAL_SKILLS_PATH } from "../consts.js";
 

@@ -6,10 +6,9 @@ import path from "path";
 import { BaseCommand } from "../../base-command";
 import { setVerbose } from "../../utils/logger";
 import { PROJECT_ROOT } from "../../consts";
-import { compileStackPlugin, printStackCompilationSummary } from "../../lib/stack-plugin-compiler";
-import { getAgentDefinitions } from "../../lib/agent-fetcher";
+import { compileStackPlugin, printStackCompilationSummary, loadStacks } from "../../lib/stacks";
+import { getAgentDefinitions } from "../../lib/agents";
 import { EXIT_CODES } from "../../lib/exit-codes";
-import { loadStacks } from "../../lib/stacks-loader";
 
 const DEFAULT_OUTPUT_DIR = "dist/stacks";
 

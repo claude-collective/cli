@@ -12,7 +12,7 @@ import os from "os";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readFile, mkdir, mkdtemp, rm, stat, writeFile } from "fs/promises";
 import { parse as parseYaml } from "yaml";
-import { compileStackPlugin } from "../../stack-plugin-compiler";
+import { compileStackPlugin } from "../../stacks";
 import type { Stack, StackAgentConfig } from "../../../types";
 
 // =============================================================================

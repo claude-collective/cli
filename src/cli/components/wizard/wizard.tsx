@@ -22,7 +22,7 @@ import { StepApproach } from "./step-approach.js";
 import { StepStack } from "./step-stack.js";
 import { StepBuild } from "./step-build.js";
 import { StepConfirm } from "./step-confirm.js";
-import { resolveAlias, validateSelection } from "../../lib/matrix-resolver.js";
+import { resolveAlias, validateSelection } from "../../lib/matrix/index.js";
 import type { Domain, DomainSelections, MergedSkillsMatrix, SkillId } from "../../types/index.js";
 import { getStackName } from "./utils.js";
 

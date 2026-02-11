@@ -2,15 +2,14 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, readFile, stat } from "fs/promises";
-import { compileAllSkillPlugins } from "../../skill-plugin-compiler";
-import { compileStackPlugin } from "../../stack-plugin-compiler";
+import { compileAllSkillPlugins } from "../../skills";
+import { compileStackPlugin, loadStacks } from "../../stacks";
 import {
   generateMarketplace,
   writeMarketplace,
   getMarketplaceStats,
 } from "../../marketplace-generator";
-import { validateAllPlugins, validatePlugin } from "../../plugin-validator";
-import { loadStacks } from "../../stacks-loader";
+import { validateAllPlugins, validatePlugin } from "../../plugins";
 import type { Marketplace, PluginManifest, Stack } from "../../../types";
 import {
   createTestSource,

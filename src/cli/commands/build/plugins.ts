@@ -7,7 +7,7 @@ import {
   compileAllSkillPlugins,
   compileSkillPlugin,
   printCompilationSummary,
-} from "../../lib/skill-plugin-compiler";
+} from "../../lib/skills";
 import { EXIT_CODES } from "../../lib/exit-codes";
 
 const DEFAULT_OUTPUT_DIR = "dist/plugins";
