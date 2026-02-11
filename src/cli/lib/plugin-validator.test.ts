@@ -166,7 +166,7 @@ describe("plugin-validator", () => {
 
       const result = await validatePluginManifest(manifestPath);
 
-      // Schema enforces semver string type, so integer version is an error
+      // Zod schema expects version to be a string, so integer fails type validation
       expect(result.valid).toBe(false);
       expect(result.errors.some((e) => e.includes("version"))).toBe(true);
     });
@@ -335,7 +335,7 @@ version: "1.0.0"
 
       const result = await validateSkillFrontmatter(skillPath);
 
-      // Schema has additionalProperties: false, so extra fields cause errors
+      // Zod schema uses .strict(), so unrecognized fields cause errors
       expect(result.valid).toBe(false);
       expect(result.errors.some((e) => e.includes("Unrecognized key"))).toBe(true);
     });

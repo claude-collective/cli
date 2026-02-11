@@ -1,12 +1,16 @@
-import Ajv, { type ValidateFunction, type ErrorObject } from "ajv";
-import addFormats from "ajv-formats";
+import { z } from "zod";
 import path from "path";
 import fg from "fast-glob";
 import { fileExists, readFile, directoryExists, listDirectories } from "../utils/fs";
-import { PROJECT_ROOT } from "../consts";
 import type { ValidationResult } from "../types";
 import { countBy } from "remeda";
 import { extractFrontmatter } from "../utils/frontmatter";
+import {
+  pluginAuthorSchema,
+  hooksRecordSchema,
+  skillFrontmatterValidationSchema,
+  agentFrontmatterValidationSchema,
+} from "./schemas";
 
 const PLUGIN_DIR = ".claude-plugin";
 const PLUGIN_MANIFEST = "plugin.json";
@@ -14,100 +18,34 @@ const KEBAB_CASE_REGEX = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 const SEMVER_REGEX =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
 
-const schemaCache = new Map<string, object>();
-const validatorCache = new Map<string, ValidateFunction>();
+/**
+ * Strict version of pluginManifestSchema for validation.
+ * Rejects unrecognized keys (equivalent to additionalProperties: false
+ * in the original JSON Schema). Defined inline because the loader schema
+ * in schemas.ts is typed as z.ZodType<PluginManifest> which doesn't
+ * expose .strict().
+ */
+const pluginManifestValidationSchema = z
+  .object({
+    name: z.string(),
+    version: z.string().optional(),
+    description: z.string().optional(),
+    author: pluginAuthorSchema.optional(),
+    keywords: z.array(z.string()).optional(),
+    commands: z.union([z.string(), z.array(z.string())]).optional(),
+    agents: z.union([z.string(), z.array(z.string())]).optional(),
+    skills: z.union([z.string(), z.array(z.string())]).optional(),
+    hooks: z.union([z.string(), hooksRecordSchema]).optional(),
+  })
+  .strict();
 
-// Remote schemas hosted on GitHub (source of truth for skill schemas)
-const REMOTE_SCHEMAS: Record<string, string> = {
-  "skill-frontmatter.schema.json":
-    "https://raw.githubusercontent.com/claude-collective/skills/main/src/schemas/skill-frontmatter.schema.json",
-};
-
-async function loadSchema(schemaName: string): Promise<object> {
-  if (schemaCache.has(schemaName)) {
-    return schemaCache.get(schemaName)!;
-  }
-
-  // Try local locations first for CLI-owned schemas
-  const locations = [
-    path.join(PROJECT_ROOT, "src", "schemas", schemaName),
-    path.join(process.cwd(), "src", "schemas", schemaName),
-  ];
-
-  for (const schemaPath of locations) {
-    if (await fileExists(schemaPath)) {
-      const content = await readFile(schemaPath);
-      const schema = JSON.parse(content);
-      schemaCache.set(schemaName, schema);
-      return schema;
+function formatZodErrors(error: z.ZodError): string[] {
+  return error.issues.map((issue) => {
+    const path = issue.path.join(".");
+    if (issue.code === "unrecognized_keys") {
+      return `Unrecognized key: "${issue.keys.join('", "')}"`;
     }
-  }
-
-  // Fall back to remote schema from GitHub (for skill schemas)
-  const remoteUrl = REMOTE_SCHEMAS[schemaName];
-  if (remoteUrl) {
-    try {
-      const response = await fetch(remoteUrl);
-      if (response.ok) {
-        const schema = await response.json();
-        schemaCache.set(schemaName, schema);
-        return schema;
-      }
-    } catch {
-      // Fall through to error
-    }
-  }
-
-  throw new Error(
-    `Schema not found: ${schemaName}. Searched: ${locations.join(", ")}${remoteUrl ? ` and ${remoteUrl}` : ""}`,
-  );
-}
-
-async function getValidator(schemaName: string): Promise<ValidateFunction> {
-  if (validatorCache.has(schemaName)) {
-    return validatorCache.get(schemaName)!;
-  }
-
-  const ajv = new Ajv({ allErrors: true, strict: false });
-  addFormats(ajv);
-  const schema = await loadSchema(schemaName);
-  const validate = ajv.compile(schema);
-  validatorCache.set(schemaName, validate);
-  return validate;
-}
-
-function formatAjvErrors(errors: ErrorObject[] | null | undefined): string[] {
-  if (!errors) return [];
-
-  return errors.map((err) => {
-    const errorPath = err.instancePath
-      ? err.instancePath.replace(/^\//, "").replace(/\//g, ".")
-      : "";
-    const message = err.message || "Unknown error";
-
-    if (err.keyword === "additionalProperties") {
-      const prop = (err.params as { additionalProperty?: string }).additionalProperty;
-      return `Unrecognized key: "${prop}"`;
-    }
-
-    if (err.keyword === "enum") {
-      const allowed = (err.params as { allowedValues?: string[] }).allowedValues;
-      return errorPath
-        ? `${errorPath}: ${message}. Allowed: ${allowed?.join(", ")}`
-        : `${message}. Allowed: ${allowed?.join(", ")}`;
-    }
-
-    if (err.keyword === "pattern") {
-      let hint = "";
-      if (errorPath === "name") {
-        hint = " (must be kebab-case)";
-      } else if (errorPath === "version") {
-        hint = " (must be semver: x.y.z)";
-      }
-      return errorPath ? `${errorPath}: ${message}${hint}` : `${message}${hint}`;
-    }
-
-    return errorPath ? `${errorPath}: ${message}` : message;
+    return path ? `${path}: ${issue.message}` : issue.message;
   });
 }
 
@@ -178,11 +116,10 @@ export async function validatePluginManifest(manifestPath: string): Promise<Vali
     };
   }
 
-  const validate = await getValidator("plugin.schema.json");
-  const isValid = validate(manifest);
+  const result = pluginManifestValidationSchema.safeParse(manifest);
 
-  if (!isValid) {
-    errors.push(...formatAjvErrors(validate.errors));
+  if (!result.success) {
+    errors.push(...formatZodErrors(result.error));
   }
 
   if (manifest.name && typeof manifest.name === "string") {
@@ -193,7 +130,7 @@ export async function validatePluginManifest(manifestPath: string): Promise<Vali
 
   if (manifest.version && typeof manifest.version === "string") {
     if (!isValidSemver(manifest.version)) {
-      warnings.push(
+      errors.push(
         `version "${manifest.version}" is not valid semver (expected: major.minor.patch)`,
       );
     }
@@ -249,11 +186,10 @@ export async function validateSkillFrontmatter(skillPath: string): Promise<Valid
     };
   }
 
-  const validate = await getValidator("skill-frontmatter.schema.json");
-  const isValid = validate(frontmatter);
+  const result = skillFrontmatterValidationSchema.safeParse(frontmatter);
 
-  if (!isValid) {
-    errors.push(...formatAjvErrors(validate.errors));
+  if (!result.success) {
+    errors.push(...formatZodErrors(result.error));
   }
 
   return {
@@ -286,11 +222,10 @@ export async function validateAgentFrontmatter(agentPath: string): Promise<Valid
     };
   }
 
-  const validate = await getValidator("agent-frontmatter.schema.json");
-  const isValid = validate(frontmatter);
+  const result = agentFrontmatterValidationSchema.safeParse(frontmatter);
 
-  if (!isValid) {
-    errors.push(...formatAjvErrors(validate.errors));
+  if (!result.success) {
+    errors.push(...formatZodErrors(result.error));
   }
 
   const fm = frontmatter as Record<string, unknown>;

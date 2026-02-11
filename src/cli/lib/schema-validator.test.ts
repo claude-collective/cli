@@ -17,16 +17,6 @@ describe("schema-validator", () => {
   });
 
   // =============================================================================
-  // Helper: create a schema file in the temp directory
-  // =============================================================================
-
-  async function writeSchema(schemaName: string, schema: object): Promise<void> {
-    const schemasDir = path.join(tempDir, "src", "schemas");
-    await mkdir(schemasDir, { recursive: true });
-    await writeFile(path.join(schemasDir, schemaName), JSON.stringify(schema, null, 2));
-  }
-
-  // =============================================================================
   // validateAllSchemas
   // =============================================================================
 
@@ -61,23 +51,8 @@ describe("schema-validator", () => {
     });
 
     it("should validate a valid agent.yaml file", async () => {
-      // Write the agent schema to the temp directory
-      // The real agent.schema.json is in the CLI repo, but validateAllSchemas
-      // searches both PROJECT_ROOT/src/schemas and rootDir/src/schemas
-      await writeSchema("agent.schema.json", {
-        $schema: "http://json-schema.org/draft-07/schema#",
-        type: "object",
-        required: ["id", "title", "description", "tools"],
-        properties: {
-          id: { type: "string" },
-          title: { type: "string" },
-          description: { type: "string" },
-          tools: { type: "array", items: { type: "string" } },
-          model: { type: "string" },
-        },
-      });
-
-      // Create a valid agent.yaml file
+      // Create a valid agent.yaml matching the inline Zod agentValidationSchema
+      // Required fields: id, title, description, tools
       const agentDir = path.join(tempDir, "src", "agents", "test-agent");
       await mkdir(agentDir, { recursive: true });
       await writeFile(
@@ -104,20 +79,7 @@ describe("schema-validator", () => {
     });
 
     it("should detect invalid agent.yaml file", async () => {
-      // Write the agent schema
-      await writeSchema("agent.schema.json", {
-        $schema: "http://json-schema.org/draft-07/schema#",
-        type: "object",
-        required: ["id", "title", "description", "tools"],
-        properties: {
-          id: { type: "string" },
-          title: { type: "string" },
-          description: { type: "string" },
-          tools: { type: "array", items: { type: "string" } },
-        },
-      });
-
-      // Create an invalid agent.yaml (missing required "tools" field)
+      // Create an invalid agent.yaml (missing required "description" and "tools" fields)
       const agentDir = path.join(tempDir, "src", "agents", "bad-agent");
       await mkdir(agentDir, { recursive: true });
       await writeFile(
@@ -137,11 +99,8 @@ describe("schema-validator", () => {
     });
 
     it("should validate stack config files", async () => {
-      // Note: loadSchema checks PROJECT_ROOT/src/schemas first, so the real
-      // stack.schema.json (via symlink) is used. Test data must match it.
-      // Real schema requires: name, version, author, skills (array), agents (array)
-
-      // Stack config pattern: "*/config.yaml" in "src/stacks"
+      // Stack config validated by inline stackConfigValidationSchema (Zod)
+      // Required: name, version, author, skills (array of {id}), agents (array of kebab-case strings)
       const stackDir = path.join(tempDir, "src", "stacks", "my-stack");
       await mkdir(stackDir, { recursive: true });
       await writeFile(
@@ -169,18 +128,6 @@ describe("schema-validator", () => {
     });
 
     it("should validate multiple files and aggregate results", async () => {
-      await writeSchema("agent.schema.json", {
-        $schema: "http://json-schema.org/draft-07/schema#",
-        type: "object",
-        required: ["id", "title", "description", "tools"],
-        properties: {
-          id: { type: "string" },
-          title: { type: "string" },
-          description: { type: "string" },
-          tools: { type: "array", items: { type: "string" } },
-        },
-      });
-
       // Create two valid agents and one invalid
       for (const name of ["agent-one", "agent-two"]) {
         const dir = path.join(tempDir, "src", "agents", name);
@@ -219,18 +166,10 @@ describe("schema-validator", () => {
     });
 
     it("should set overall valid to false when any target has invalid files", async () => {
-      await writeSchema("agent.schema.json", {
-        $schema: "http://json-schema.org/draft-07/schema#",
-        type: "object",
-        required: ["id"],
-        properties: {
-          id: { type: "number" }, // wrong type to make data fail
-        },
-      });
-
-      const agentDir = path.join(tempDir, "src", "agents", "string-id-agent");
+      // Agent missing required fields (title, description, tools) will fail Zod validation
+      const agentDir = path.join(tempDir, "src", "agents", "incomplete-agent");
       await mkdir(agentDir, { recursive: true });
-      await writeFile(path.join(agentDir, "agent.yaml"), "id: string-not-number\n");
+      await writeFile(path.join(agentDir, "agent.yaml"), "id: incomplete-agent\n");
 
       const result = await validateAllSchemas(tempDir);
 
@@ -238,18 +177,6 @@ describe("schema-validator", () => {
     });
 
     it("should report correct summary totals", async () => {
-      await writeSchema("agent.schema.json", {
-        $schema: "http://json-schema.org/draft-07/schema#",
-        type: "object",
-        required: ["id", "title", "description", "tools"],
-        properties: {
-          id: { type: "string" },
-          title: { type: "string" },
-          description: { type: "string" },
-          tools: { type: "array", items: { type: "string" } },
-        },
-      });
-
       // 1 valid agent + 1 invalid agent
       const validDir = path.join(tempDir, "src", "agents", "valid-agent");
       await mkdir(validDir, { recursive: true });
@@ -270,12 +197,6 @@ describe("schema-validator", () => {
     });
 
     it("should handle YAML parse errors gracefully", async () => {
-      await writeSchema("agent.schema.json", {
-        $schema: "http://json-schema.org/draft-07/schema#",
-        type: "object",
-        properties: { id: { type: "string" } },
-      });
-
       const agentDir = path.join(tempDir, "src", "agents", "bad-yaml");
       await mkdir(agentDir, { recursive: true });
       await writeFile(path.join(agentDir, "agent.yaml"), "id: [invalid: yaml: :::");
@@ -290,17 +211,8 @@ describe("schema-validator", () => {
     });
 
     it("should validate skill frontmatter from SKILL.md files", async () => {
-      await writeSchema("skill-frontmatter.schema.json", {
-        $schema: "http://json-schema.org/draft-07/schema#",
-        type: "object",
-        required: ["name", "description"],
-        properties: {
-          name: { type: "string" },
-          description: { type: "string" },
-          model: { type: "string" },
-        },
-        additionalProperties: false,
-      });
+      // Validated by inline skillFrontmatterValidationSchema (Zod .strict())
+      // Required: name, description. Optional: model, disable-model-invocation, etc.
 
       // Create a SKILL.md with valid frontmatter in src/skills
       const skillDir = path.join(tempDir, "src", "skills", "test-skill");
@@ -329,18 +241,7 @@ describe("schema-validator", () => {
     });
 
     it("should detect invalid skill frontmatter", async () => {
-      await writeSchema("skill-frontmatter.schema.json", {
-        $schema: "http://json-schema.org/draft-07/schema#",
-        type: "object",
-        required: ["name", "description"],
-        properties: {
-          name: { type: "string" },
-          description: { type: "string" },
-        },
-        additionalProperties: false,
-      });
-
-      // Create a SKILL.md with missing description
+      // Create a SKILL.md with missing description (required by Zod schema)
       const skillDir = path.join(tempDir, "src", "skills", "bad-skill");
       await mkdir(skillDir, { recursive: true });
       await writeFile(
@@ -359,15 +260,6 @@ describe("schema-validator", () => {
     });
 
     it("should handle SKILL.md without frontmatter", async () => {
-      await writeSchema("skill-frontmatter.schema.json", {
-        $schema: "http://json-schema.org/draft-07/schema#",
-        type: "object",
-        required: ["name"],
-        properties: {
-          name: { type: "string" },
-        },
-      });
-
       const skillDir = path.join(tempDir, "src", "skills", "no-frontmatter");
       await mkdir(skillDir, { recursive: true });
       await writeFile(

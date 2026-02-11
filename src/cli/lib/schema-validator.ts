@@ -1,12 +1,17 @@
 import { sumBy } from "remeda";
-import Ajv, { type ValidateFunction, type ErrorObject } from "ajv";
-import addFormats from "ajv-formats";
+import { z } from "zod";
 import path from "path";
 import { readFile, fileExists } from "../utils/fs";
 import { parse as parseYaml } from "yaml";
 import fg from "fast-glob";
-import { PROJECT_ROOT } from "../consts";
 import { extractFrontmatter } from "../utils/frontmatter";
+import {
+  skillsMatrixConfigSchema,
+  metadataValidationSchema,
+  stackConfigValidationSchema,
+  skillFrontmatterValidationSchema,
+  agentYamlGenerationSchema,
+} from "./schemas";
 
 export type FileValidationError = {
   file: string;
@@ -36,7 +41,7 @@ type ContentExtractor = (content: string) => unknown | null;
 
 type ValidationTarget = {
   name: string;
-  schema: string;
+  schema: z.ZodType<unknown>;
   pattern: string;
   baseDir: string;
   extractor?: ContentExtractor;
@@ -45,124 +50,63 @@ type ValidationTarget = {
 const VALIDATION_TARGETS: ValidationTarget[] = [
   {
     name: "Skills Matrix",
-    schema: "skills-matrix.schema.json",
+    schema: skillsMatrixConfigSchema,
     pattern: "skills-matrix.yaml",
     baseDir: "src/config",
   },
   {
     name: "Skill Metadata",
-    schema: "metadata.schema.json",
+    schema: metadataValidationSchema,
     pattern: "**/metadata.yaml",
     baseDir: "src/skills",
   },
   {
     name: "Stack Skill Metadata",
-    schema: "metadata.schema.json",
+    schema: metadataValidationSchema,
     pattern: "**/skills/**/metadata.yaml",
     baseDir: "src/stacks",
   },
   {
     name: "Stack Config",
-    schema: "stack.schema.json",
+    schema: stackConfigValidationSchema,
     pattern: "*/config.yaml",
     baseDir: "src/stacks",
   },
   {
     name: "Agent Definition",
-    schema: "agent.schema.json",
+    schema: agentYamlGenerationSchema,
     pattern: "**/agent.yaml",
     baseDir: "src/agents",
   },
   {
     name: "Skill Frontmatter",
-    schema: "skill-frontmatter.schema.json",
+    schema: skillFrontmatterValidationSchema,
     pattern: "**/SKILL.md",
     baseDir: "src/skills",
     extractor: extractFrontmatter,
   },
   {
     name: "Stack Skill Frontmatter",
-    schema: "skill-frontmatter.schema.json",
+    schema: skillFrontmatterValidationSchema,
     pattern: "**/skills/**/SKILL.md",
     baseDir: "src/stacks",
     extractor: extractFrontmatter,
   },
 ];
 
-const schemaCache = new Map<string, object>();
-const validatorCache = new Map<string, ValidateFunction>();
-
-async function loadSchema(schemaName: string, rootDir: string = process.cwd()): Promise<object> {
-  const cacheKey = `${rootDir}:${schemaName}`;
-  if (schemaCache.has(cacheKey)) {
-    return schemaCache.get(cacheKey)!;
-  }
-
-  // Try multiple locations for schema files:
-  // 1. CLI repo's schemas (for agent schemas)
-  // 2. Target directory's schemas (for stack/skill schemas in claude-subagents)
-  const locations = [
-    path.join(PROJECT_ROOT, "src", "schemas", schemaName),
-    path.join(rootDir, "src", "schemas", schemaName),
-  ];
-
-  for (const schemaPath of locations) {
-    if (await fileExists(schemaPath)) {
-      const content = await readFile(schemaPath);
-      const schema = JSON.parse(content);
-      schemaCache.set(cacheKey, schema);
-      return schema;
+function formatZodErrors(error: z.ZodError): string[] {
+  return error.issues.map((issue) => {
+    const path = issue.path.join(".");
+    if (issue.code === "unrecognized_keys") {
+      return `Unrecognized key: "${issue.keys.join('", "')}"`;
     }
-  }
-
-  throw new Error(`Schema not found: ${schemaName}. Searched: ${locations.join(", ")}`);
-}
-
-async function getValidator(
-  schemaName: string,
-  rootDir: string = process.cwd(),
-): Promise<ValidateFunction> {
-  const cacheKey = `${rootDir}:${schemaName}`;
-  if (validatorCache.has(cacheKey)) {
-    return validatorCache.get(cacheKey)!;
-  }
-
-  const ajv = new Ajv({ allErrors: true, strict: false });
-  addFormats(ajv);
-  const schema = await loadSchema(schemaName, rootDir);
-  const validate = ajv.compile(schema);
-  validatorCache.set(cacheKey, validate);
-  return validate;
-}
-
-function formatAjvErrors(errors: ErrorObject[] | null | undefined): string[] {
-  if (!errors) return [];
-
-  return errors.map((err) => {
-    const errorPath = err.instancePath
-      ? err.instancePath.replace(/^\//, "").replace(/\//g, ".")
-      : "";
-    const message = err.message || "Unknown error";
-
-    if (err.keyword === "additionalProperties") {
-      const prop = (err.params as { additionalProperty?: string }).additionalProperty;
-      return `Unrecognized key: "${prop}"`;
-    }
-
-    if (err.keyword === "enum") {
-      const allowed = (err.params as { allowedValues?: string[] }).allowedValues;
-      return errorPath
-        ? `${errorPath}: ${message}. Allowed: ${allowed?.join(", ")}`
-        : `${message}. Allowed: ${allowed?.join(", ")}`;
-    }
-
-    return errorPath ? `${errorPath}: ${message}` : message;
+    return path ? `${path}: ${issue.message}` : issue.message;
   });
 }
 
 async function validateFile(
   filePath: string,
-  validate: ValidateFunction,
+  schema: z.ZodType<unknown>,
   extractor?: ContentExtractor,
 ): Promise<{ valid: boolean; errors: string[] }> {
   try {
@@ -185,13 +129,13 @@ async function validateFile(
       parsed = parseYaml(content);
     }
 
-    const isValid = validate(parsed);
+    const result = schema.safeParse(parsed);
 
-    if (isValid) {
+    if (result.success) {
       return { valid: true, errors: [] };
     }
 
-    return { valid: false, errors: formatAjvErrors(validate.errors) };
+    return { valid: false, errors: formatZodErrors(result.error) };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return { valid: false, errors: [`Failed to parse content: ${message}`] };
@@ -218,10 +162,8 @@ async function validateTarget(
     return result;
   }
 
-  const validate = await getValidator(target.schema, rootDir);
-
   for (const file of files) {
-    const validation = await validateFile(file, validate, target.extractor);
+    const validation = await validateFile(file, target.schema, target.extractor);
     const relativePath = path.relative(rootDir, file);
 
     if (validation.valid) {

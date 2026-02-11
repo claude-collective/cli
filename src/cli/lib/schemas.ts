@@ -778,3 +778,168 @@ export const projectSourceConfigSchema = z
       .optional(),
   })
   .passthrough();
+
+// =============================================================================
+// Validation Schemas (strict — used by cc validate / plugin-validator)
+// =============================================================================
+// These schemas match the hand-maintained JSON Schema files and use .strict()
+// (equivalent to additionalProperties: false) for marketplace validation.
+
+const KEBAB_CASE_PATTERN = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
+
+/**
+ * Lenient agent schema for JSON Schema generation and cc validate.
+ * Uses z.string() for `id` instead of strict agentNameSchema enum,
+ * since marketplace agents may have any kebab-case identifier.
+ * Includes $schema field for YAML editor validation.
+ */
+export const agentYamlGenerationSchema = z
+  .object({
+    $schema: z.string().optional(),
+    id: z.string().min(1),
+    title: z.string().min(1),
+    description: z.string().min(1),
+    model: modelNameSchema.optional(),
+    tools: z.array(z.string()),
+    disallowed_tools: z.array(z.string()).optional(),
+    permission_mode: permissionModeSchema.optional(),
+    hooks: hooksRecordSchema.optional(),
+    output_format: z.string().optional(),
+  })
+  .strict();
+
+/**
+ * Strict schema for agent .md frontmatter validation.
+ * Matches agent-frontmatter.schema.json shape.
+ * Used by plugin-validator.ts for compiled agent frontmatter.
+ */
+export const agentFrontmatterValidationSchema = z
+  .object({
+    name: z.string().regex(KEBAB_CASE_PATTERN).min(1),
+    description: z.string().min(1),
+    tools: z.string().optional(),
+    disallowedTools: z.string().optional(),
+    model: modelNameSchema.optional(),
+    permissionMode: permissionModeSchema.optional(),
+    skills: z.array(z.string().min(1)).optional(),
+    hooks: hooksRecordSchema.optional(),
+  })
+  .strict();
+
+/**
+ * Strict schema for SKILL.md frontmatter validation.
+ * Matches skill-frontmatter.schema.json shape (claude-subagents).
+ * Used by schema-validator.ts and plugin-validator.ts.
+ */
+export const skillFrontmatterValidationSchema = z
+  .object({
+    name: z.string().min(1),
+    description: z.string().min(1),
+    "disable-model-invocation": z.boolean().optional(),
+    "user-invocable": z.boolean().optional(),
+    "allowed-tools": z.string().optional(),
+    model: modelNameSchema.optional(),
+    context: z.enum(["fork"]).optional(),
+    agent: z.string().optional(),
+    "argument-hint": z.string().optional(),
+  })
+  .strict();
+
+/**
+ * Strict schema for marketplace metadata.yaml validation.
+ * Matches metadata.schema.json shape (claude-subagents).
+ * Used by schema-validator.ts for cc validate.
+ */
+export const metadataValidationSchema = z
+  .object({
+    category: z.string(),
+    category_exclusive: z.boolean().optional(),
+    author: z.string().regex(/^@[a-z][a-z0-9-]*$/),
+    version: z.number().int().min(1).optional(),
+    cli_name: z.string().min(1).max(30),
+    cli_description: z.string().min(1).max(60),
+    usage_guidance: z.string().min(10),
+    requires: z.array(z.string().min(1)).optional(),
+    compatible_with: z.array(z.string().min(1)).optional(),
+    conflicts_with: z.array(z.string().min(1)).optional(),
+    tags: z.array(z.string().regex(/^[a-z][a-z0-9-]*$/)).optional(),
+    requires_setup: z.array(z.string().min(1)).optional(),
+    provides_setup_for: z.array(z.string().min(1)).optional(),
+    content_hash: z
+      .string()
+      .regex(/^[a-f0-9]{7}$/)
+      .optional(),
+    updated: z.string().optional(),
+    forked_from: z
+      .object({
+        skill_id: z.string(),
+        version: z.number().int().min(1).optional(),
+        content_hash: z.string(),
+        source: z.string().optional(),
+        date: z.string(),
+      })
+      .optional(),
+  })
+  .strict();
+
+/** Skill assignment in stack config.yaml */
+const stackSkillAssignmentSchema = z
+  .object({
+    id: z.string().min(1),
+    preloaded: z.boolean().optional(),
+  })
+  .strict();
+
+/**
+ * Strict schema for stack config.yaml validation (claude-subagents).
+ * Matches stack.schema.json shape. Used by schema-validator.ts for cc validate.
+ */
+export const stackConfigValidationSchema = z
+  .object({
+    id: z.string().regex(KEBAB_CASE_PATTERN).optional(),
+    name: z.string().min(1),
+    version: z.string(),
+    author: z.string().min(1),
+    description: z.string().optional(),
+    created: z.string().optional(),
+    updated: z.string().optional(),
+    framework: z.string().optional(),
+    skills: z.array(stackSkillAssignmentSchema).min(1),
+    agents: z.array(z.string().regex(KEBAB_CASE_PATTERN)).min(1),
+    agent_skills: z
+      .record(z.string(), z.record(z.string(), z.array(stackSkillAssignmentSchema)))
+      .optional(),
+    philosophy: z.string().optional(),
+    principles: z.array(z.string().min(1)).optional(),
+    tags: z.array(z.string().regex(KEBAB_CASE_PATTERN)).optional(),
+    overrides: z
+      .record(
+        z.string(),
+        z
+          .object({
+            alternatives: z.array(z.string().min(1)).optional(),
+            locked: z.boolean().optional(),
+          })
+          .strict(),
+      )
+      .optional(),
+    metrics: z
+      .object({
+        upvotes: z.number().int().min(0).optional(),
+        downloads: z.number().int().min(0).optional(),
+      })
+      .strict()
+      .optional(),
+    hooks: z
+      .record(
+        z.string(),
+        z.array(
+          z.object({
+            matcher: z.string().optional(),
+            hooks: z.array(agentHookActionSchema).min(1),
+          }),
+        ),
+      )
+      .optional(),
+  })
+  .strict();
