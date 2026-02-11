@@ -1,9 +1,7 @@
 # CLI UX - Task Tracking
 
 > Dedicated tracking for CLI UX/UI improvements.
-> For the full redesign spec, see [docs/wizard-ux-redesign.md](./docs/wizard-ux-redesign.md).
-> For concerns and decisions, see [docs/wizard-ux-redesign-concerns.md](./docs/wizard-ux-redesign-concerns.md).
-> For research findings, see [docs/CLI-IMPROVEMENTS-RESEARCH.md](./docs/CLI-IMPROVEMENTS-RESEARCH.md).
+> For architecture details, see [docs/architecture.md](./docs/architecture.md).
 
 ---
 

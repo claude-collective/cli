@@ -1,7 +1,8 @@
 # Claude Collective CLI - Task Tracking
 
-> **Agent Compliance Tests**: Moved to [docs/bibles/AGENT-COMPLIANCE-BIBLE.md](./docs/bibles/AGENT-COMPLIANCE-BIBLE.md)
+> **Agent Compliance Tests**: See [docs/bibles/AGENT-COMPLIANCE-BIBLE.md](./docs/bibles/AGENT-COMPLIANCE-BIBLE.md)
 > Run these 30 tests periodically to verify agent alignment.
+> For architecture details, see [docs/architecture.md](./docs/architecture.md).
 
 ## Current Focus
 
@@ -9,7 +10,6 @@ Phase 7B complete. Ready for user testing.
 
 For completed tasks, see [TODO-completed.md](./TODO-completed.md).
 For deferred tasks, see [TODO-deferred.md](./TODO-deferred.md).
-For wizard architecture details, see [docs/wizard-index.md](./docs/wizard-index.md).
 
 ---
 
@@ -70,7 +70,7 @@ You may make changes in the claude-subagents directory (`/home/vince/dev/claude-
 
 ### CLI UX Improvements (Phase 8)
 
-See [docs/CLI-IMPROVEMENTS-RESEARCH.md](./docs/CLI-IMPROVEMENTS-RESEARCH.md) for full research findings.
+See [docs/architecture.md](./docs/architecture.md) for system architecture.
 
 #### U1: Progress Navigation Bar - Tab Styling [DONE]
 
@@ -107,8 +107,6 @@ See [docs/CLI-IMPROVEMENTS-RESEARCH.md](./docs/CLI-IMPROVEMENTS-RESEARCH.md) for
 ### Needs Discussion
 
 #### U4: Build Step - Framework-First Flow [DONE]
-
-See [docs/CLI-IMPROVEMENTS-RESEARCH.md#4](./docs/CLI-IMPROVEMENTS-RESEARCH.md) for requirements.
 
 - [x] Update `step-build.tsx` to implement framework-first filtering logic
 - [x] Update `category-grid.tsx` to remove circles/strikethrough, add background colors

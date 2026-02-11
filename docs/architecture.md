@@ -1,212 +1,894 @@
 # Architecture
 
+> Source of truth for the Claude Collective CLI codebase. Consult this document before
+> contributing code, adding tests, or performing refactors.
+
+---
+
+## Table of Contents
+
+1. [High-Level Overview](#high-level-overview)
+2. [Project Structure](#project-structure)
+3. [Data Flow](#data-flow)
+4. [Domain-Driven Library Organization](#domain-driven-library-organization)
+5. [Type System](#type-system)
+6. [Runtime Validation (Zod)](#runtime-validation-zod)
+7. [CLI Commands](#cli-commands)
+8. [Wizard & UI Components](#wizard--ui-components)
+9. [Test Infrastructure](#test-infrastructure)
+10. [Utility Patterns](#utility-patterns)
+11. [Configuration & Resolution](#configuration--resolution)
+12. [Agent Compilation](#agent-compilation)
+13. [Third-Party Dependencies](#third-party-dependencies)
+14. [Conventions & Philosophy](#conventions--philosophy)
+
+---
+
+## High-Level Overview
+
+Claude Collective CLI (`cc`) is a TypeScript CLI tool that manages AI agent configurations
+for Claude. It loads skill definitions from a marketplace, lets users select technology
+stacks via an interactive wizard, compiles agents with selected skills via Liquid templates,
+and installs them as Claude plugins or local files.
+
+**Key characteristics:**
+
+- **oclif** command framework with **Ink** (React) terminal UI
+- **TypeScript strict mode** with zero-`any` policy
+- **Zod** runtime validation at all parse boundaries
+- **Remeda** for functional, immutable data transformations
+- **Zustand** for wizard state management
+- **Domain-driven** library organization with barrel exports
+- **Three-tier test strategy**: unit, integration, command tests
+
+---
+
+## Project Structure
+
+```
+/
++-- bin/                          # Executable scripts (dev.js, run.js)
++-- config/                       # Data configuration files
+|   +-- skills-matrix.yaml        #   All skill definitions, categories, relationships (~35KB)
+|   +-- stacks.yaml               #   Pre-built stack definitions
++-- dist/                         # Build output (tsup)
++-- docs/                         # Documentation (you are here)
++-- src/
+|   +-- agents/                   # Agent source partials (YAML + markdown)
+|   |   +-- developer/            #   web-developer, api-developer, cli-developer, web-architecture
+|   |   +-- meta/                 #   agent-summoner, documentor, skill-summoner
+|   |   +-- migration/            #   cli-migrator
+|   |   +-- pattern/              #   pattern-scout, web-pattern-critique
+|   |   +-- planning/             #   web-pm
+|   |   +-- researcher/           #   api-researcher, web-researcher
+|   |   +-- reviewer/             #   api-reviewer, cli-reviewer, web-reviewer
+|   |   +-- tester/               #   cli-tester, web-tester
+|   +-- cli/                      # CLI application source
+|   |   +-- commands/             #   oclif commands (29 total)
+|   |   +-- components/           #   Ink React UI components
+|   |   |   +-- common/           #     Confirm, Message, Spinner
+|   |   |   +-- skill-search/     #     Interactive skill search
+|   |   |   +-- themes/           #     Terminal color themes
+|   |   |   +-- wizard/           #     Multi-step wizard (8+ components)
+|   |   +-- defaults/             #   Default data (agent-mappings.yaml)
+|   |   +-- hooks/                #   oclif lifecycle hooks (init.ts)
+|   |   +-- lib/                  #   Core business logic (domain-driven)
+|   |   |   +-- __tests__/        #     Integration, command, and user-journey tests
+|   |   |   +-- agents/           #     Agent fetching, recompilation
+|   |   |   +-- configuration/    #     Config loading, merging, saving, generation
+|   |   |   +-- installation/     #     Installation detection, local installer
+|   |   |   +-- loading/          #     Skills/agents/matrix/defaults loading
+|   |   |   +-- matrix/           #     Matrix loading, resolution, health checks
+|   |   |   +-- plugins/          #     Plugin finding, manifest, validation, versioning
+|   |   |   +-- skills/           #     Skill fetching, copying, metadata, compilation
+|   |   |   +-- stacks/           #     Stack loading, installation, compilation
+|   |   |   +-- compiler.ts       #     Liquid template compilation (cross-cutting)
+|   |   |   +-- resolver.ts       #     CLAUDE.md resolution (cross-cutting)
+|   |   |   +-- schemas.ts        #     All Zod schemas (cross-cutting, ~30KB)
+|   |   |   +-- schema-validator.ts   # Bulk YAML/JSON validation runner
+|   |   |   +-- exit-codes.ts     #     Named exit code constants
+|   |   |   +-- versioning.ts     #     Version management utilities
+|   |   |   +-- validator.ts      #     Agent file structure validation
+|   |   |   +-- output-validator.ts   # Compiled agent output validation
+|   |   |   +-- marketplace-generator.ts  # Marketplace metadata generation
+|   |   |   +-- permission-checker.tsx    # Installation permission checks
+|   |   +-- stores/               #   Zustand state (wizard-store.ts)
+|   |   +-- types/                #   TypeScript type definitions
+|   |   |   +-- index.ts          #     Barrel: re-exports all type modules
+|   |   |   +-- skills.ts         #     SkillId, SkillDefinition, ExtractedSkillMetadata
+|   |   |   +-- agents.ts         #     AgentName, AgentConfig, CompiledAgentData
+|   |   |   +-- config.ts         #     ProjectConfig, CompileConfig, ValidationResult
+|   |   |   +-- matrix.ts         #     Domain, Subcategory, CategoryDefinition, MergedSkillsMatrix
+|   |   |   +-- stacks.ts         #     Stack, StackAgentConfig, StacksConfig
+|   |   |   +-- plugins.ts        #     PluginManifest, Marketplace, MarketplacePlugin
+|   |   +-- utils/                #   Shared utilities
+|   |   |   +-- fs.ts             #     File system wrapper (fs-extra + fast-glob)
+|   |   |   +-- exec.ts           #     Process execution, Claude CLI integration
+|   |   |   +-- logger.ts         #     Verbose logging control
+|   |   |   +-- frontmatter.ts    #     YAML frontmatter extraction
+|   |   |   +-- typed-object.ts   #     Type-safe Object.entries/keys helpers
+|   |   |   +-- __mocks__/        #     Vitest auto-mocks (fs.ts, logger.ts)
+|   |   +-- base-command.ts       #   BaseCommand class (shared flags, error handling)
+|   |   +-- consts.ts             #   CLI constants (paths, preselected skills)
+|   |   +-- index.ts              #   Entry point (oclif run)
+|   +-- schemas/                  # JSON Schema files (generated from Zod)
+|       +-- agent.schema.json
+|       +-- agent-frontmatter.schema.json
+|       +-- hooks.schema.json
+|       +-- marketplace.schema.json
+|       +-- metadata.schema.json
+|       +-- plugin.schema.json
+|       +-- skill-frontmatter.schema.json
+|       +-- skills-matrix.schema.json
+|       +-- stack.schema.json
+|       +-- stacks.schema.json
++-- package.json                  # @claude-collective/cli, ESM, oclif config
++-- tsconfig.json                 # ES2022, strict, bundler resolution
++-- vitest.config.ts              # 3 test projects: unit, integration, commands
+```
+
+---
+
 ## Data Flow
+
+### Core Pipeline
 
 ```
 Source Resolution -> Skill Loading -> Matrix Merging -> Wizard Selection -> Config Generation -> Compilation -> Installation
 ```
 
-## Module Map
-
-### Commands (`src/cli/commands/`)
-
-| Command                | File                      | Purpose                               |
-| ---------------------- | ------------------------- | ------------------------------------- |
-| `init`                 | `init.tsx`                | Initialize project with wizard        |
-| `edit`                 | `edit.tsx`                | Modify existing installation          |
-| `compile`              | `compile.ts`              | Recompile agents from skills          |
-| `eject`                | `eject.ts`                | Export templates/config/skills/agents |
-| `uninstall`            | `uninstall.tsx`           | Remove plugin or local installation   |
-| `update`               | `update.tsx`              | Update installed skills/agents        |
-| `build plugins`        | `build/plugins.ts`        | Build individual skill plugins        |
-| `build stack`          | `build/stack.tsx`         | Build stack into plugin               |
-| `build marketplace`    | `build/marketplace.ts`    | Generate marketplace.json             |
-| `validate`             | `validate.ts`             | Validate YAML/plugins                 |
-| `list`                 | `list.ts`                 | Show plugin info                      |
-| `info`                 | `info.ts`                 | Display skill/agent information       |
-| `search`               | `search.ts`               | Search skills in marketplace          |
-| `outdated`             | `outdated.ts`             | Check for outdated skills             |
-| `diff`                 | `diff.ts`                 | Show differences in configurations    |
-| `doctor`               | `doctor.ts`               | Diagnose installation issues          |
-| `new agent`            | `new/agent.tsx`           | Create a new custom agent             |
-| `new skill`            | `new/skill.ts`            | Create a new custom skill             |
-| `config`               | `config/index.ts`         | Configuration management (parent)     |
-| `config show`          | `config/show.ts`          | Show current configuration            |
-| `config get`           | `config/get.ts`           | Get a specific config value           |
-| `config set`           | `config/set.ts`           | Set a global config value             |
-| `config unset`         | `config/unset.ts`         | Remove a global config value          |
-| `config set-project`   | `config/set-project.ts`   | Set a project-level config value      |
-| `config unset-project` | `config/unset-project.ts` | Remove a project-level config value   |
-| `config path`          | `config/path.ts`          | Show config file paths                |
-| `version`              | `version/index.ts`        | Version management (parent)           |
-| `version show`         | `version/show.ts`         | Show current version                  |
-| `version bump`         | `version/bump.ts`         | Bump plugin version                   |
-| `version set`          | `version/set.ts`          | Set specific version                  |
-
-### Library Modules (`src/cli/lib/`)
-
-| Module                     | Purpose                               |
-| -------------------------- | ------------------------------------- |
-| `loader.ts`                | Load agents, skills, stacks from YAML |
-| `resolver.ts`              | Resolve references between configs    |
-| `compiler.ts`              | Compile agents via Liquid templates   |
-| `source-loader.ts`         | Multi-source loading (local/remote)   |
-| `stack-installer.ts`       | Install stacks as Claude plugins      |
-| `wizard/` components       | Interactive selection wizard (Ink)    |
-| `skill-copier.ts`          | Copy skills with metadata             |
-| `config-generator.ts`      | Generate configs from selections      |
-| `plugin-finder.ts`         | Find plugin directories               |
-| `matrix-resolver.ts`       | Validate skill dependencies/conflicts |
-| `matrix-loader.ts`         | Load and merge skills matrix          |
-| `stack-plugin-compiler.ts` | Full plugin compilation               |
-| `project-config.ts`        | Parse unified ProjectConfig           |
-| `custom-agent-resolver.ts` | Resolve custom agents with extends    |
-| `defaults-loader.ts`       | Load YAML defaults for mappings       |
-| `skill-agent-mappings.ts`  | Agent-skill mappings resolution       |
-
-## Project Structure
+### Detailed Flow
 
 ```
-src/
-├── agents/           # Agent source files (partials)
-│   ├── developer/
-│   ├── planning/
-│   ├── researcher/
-│   ├── reviewer/
-│   └── tester/
-├── cli/              # CLI commands and utilities
-│   ├── commands/     # oclif commands
-│   ├── components/   # Ink React components
-│   ├── lib/          # Core library modules
-│   ├── stores/       # Wizard state (MobX)
-│   └── utils/        # Helper utilities
-├── schemas/          # JSON schemas for validation
-│   ├── agent.schema.json
-│   ├── plugin.schema.json
-│   └── ...
-└── types.ts          # Shared TypeScript types
+1. CONFIG RESOLUTION
+   --source flag > CC_SOURCE env > .claude-src/config.yaml > .claude/config.yaml > default
 
-config/
-├── skills-matrix.yaml  # Skills configuration matrix
-└── stacks.yaml         # Stack definitions
+2. SKILL LOADING
+   config/skills-matrix.yaml ──> parseYaml()
+                                     |
+                              skillsMatrixConfigSchema.safeParse()
+                                     |
+                              SkillsMatrixConfig (categories, relationships, aliases)
+                                     |
+   Source skills (SKILL.md) ──> parseFrontmatter() + skillMetadataConfigSchema
+                                     |
+                              ExtractedSkillMetadata[]
+                                     |
+                              mergeMatrixWithSkills()
+                                     |
+                              MergedSkillsMatrix (resolved skills, stacks, display names)
+
+3. WIZARD SELECTION
+   MergedSkillsMatrix ──> Wizard component (Ink/React)
+                              |
+                       Zustand store tracks: approach, domains, categories, skills
+                              |
+                       WizardResult: selected skills, stack, install mode
+
+4. CONFIG GENERATION
+   WizardResult ──> generateProjectConfig()
+                       |
+                 ProjectConfig (name, agents, stack mappings)
+
+5. COMPILATION
+   ProjectConfig + Agent partials + Skills ──> Liquid templates
+                                                   |
+                                            Compiled agent .md files
+                                                   |
+                                            Plugin manifest (plugin.json)
+
+6. INSTALLATION
+   Plugin mode: .claude/plugins/claude-collective/
+   Local mode:  .claude/agents/ + .claude/skills/
 ```
 
-## Marketplace Structure (`claude-subagents`)
+### Skill Metadata Flow
 
 ```
-src/
-├── skills/           # Hierarchical: category/subcategory/skill (@author)/
-│   ├── api/
-│   ├── cli/
-│   ├── infra/
-│   ├── meta/
-│   ├── security/
-│   └── web/
-└── stacks/           # Pre-built bundles
-    ├── nextjs-fullstack/
-    ├── vue-stack/
-    └── ...
+SKILL.md (frontmatter)                metadata.yaml
+        |                                    |
+skillFrontmatterLoaderSchema          skillMetadataConfigSchema
+   (lenient, any name)                   (strict skill IDs)
+        |                                    |
+SkillFrontmatter                      SkillMetadataConfig
+        |___________________  _______________|
+                            \/
+                  ExtractedSkillMetadata (normalized IDs)
+                            |
+                  Matrix Resolution
+                            |
+                  ResolvedSkill (full relationships, display names)
 ```
 
-## Skill Structure
+---
+
+## Domain-Driven Library Organization
+
+`src/cli/lib/` is organized into **8 domain subdirectories**, each with a barrel `index.ts`.
+Cross-cutting modules remain at the lib root.
+
+### Domain: `agents/`
+
+Agent definition loading and recompilation.
+
+| File                  | Key Exports                                                                                |
+| --------------------- | ------------------------------------------------------------------------------------------ |
+| `agent-fetcher.ts`    | `getAgentDefinitions()`, `getLocalAgentDefinitions()`, `fetchAgentDefinitionsFromRemote()` |
+| `agent-recompiler.ts` | `recompileAgents()`, `RecompileAgentsResult`                                               |
+
+### Domain: `configuration/`
+
+Config loading, generation, merging, and persistence.
+
+| File                  | Key Exports                                                                         |
+| --------------------- | ----------------------------------------------------------------------------------- |
+| `config.ts`           | `DEFAULT_SOURCE`, `resolveSource()`, `resolveAllSources()`, `resolveAgentsSource()` |
+| `config-generator.ts` | `generateProjectSourceConfig()`, `buildStackProperty()`                             |
+| `config-merger.ts`    | `mergeConfigWithExisting()`                                                         |
+| `config-saver.ts`     | `saveProjectConfig()`, `saveSourceToProjectConfig()`                                |
+| `project-config.ts`   | `loadProjectConfig()`, `loadProjectSourceConfig()`                                  |
+
+### Domain: `installation/`
+
+Installation mode detection and local installation.
+
+| File                 | Key Exports                                                                       |
+| -------------------- | --------------------------------------------------------------------------------- |
+| `installation.ts`    | `detectInstallation()`, `getInstallationOrThrow()`, `InstallMode`, `Installation` |
+| `local-installer.ts` | `installLocal()`, `LocalInstallOptions`, `LocalInstallResult`                     |
+
+### Domain: `loading/`
+
+Data loading from sources (skills, agents, matrix, defaults).
+
+| File                 | Key Exports                                                                         |
+| -------------------- | ----------------------------------------------------------------------------------- |
+| `loader.ts`          | `parseFrontmatter()`, `loadAllAgents()`, `loadProjectAgents()`, `loadSkillsByIds()` |
+| `source-loader.ts`   | `loadSkillsMatrixFromSource()`                                                      |
+| `source-fetcher.ts`  | `fetchFromSource()`, `fetchMarketplace()`, `sanitizeSourceForCache()`               |
+| `defaults-loader.ts` | `loadDefaultMappings()`, `getCachedDefaults()`                                      |
+
+### Domain: `matrix/`
+
+Skills matrix operations and validation.
+
+| File                     | Key Exports                                                                                                                |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `matrix-loader.ts`       | `loadSkillsMatrix()`, `extractAllSkills()`, `mergeMatrixWithSkills()`, `loadAndMergeSkillsMatrix()`                        |
+| `matrix-resolver.ts`     | `resolveAlias()`, `getDependentSkills()`, `isDisabled()`, `isRecommended()`, `validateSelection()`, `getAvailableSkills()` |
+| `matrix-health-check.ts` | `checkMatrixHealth()`                                                                                                      |
+
+### Domain: `plugins/`
+
+Plugin discovery, validation, manifest management, and versioning.
+
+| File                        | Key Exports                                                                                                            |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `plugin-finder.ts`          | `getUserPluginsDir()`, `getProjectPluginsDir()`, `getPluginSkillsDir()`, `readPluginManifest()`, `getPluginSkillIds()` |
+| `plugin-manifest.ts`        | `generateSkillPluginManifest()`, `generateStackPluginManifest()`, `writePluginManifest()`                              |
+| `plugin-manifest-finder.ts` | `findPluginManifest()`                                                                                                 |
+| `plugin-info.ts`            | `getPluginInfo()`, `formatPluginDisplay()`                                                                             |
+| `plugin-validator.ts`       | `validatePlugin()`, `validateAllPlugins()`, `validatePluginStructure()`                                                |
+| `plugin-version.ts`         | `bumpPluginVersion()`, `getPluginVersion()`                                                                            |
+
+### Domain: `skills/`
+
+Skill fetching, copying, metadata, compilation, and agent mappings.
+
+| File                       | Key Exports                                                                              |
+| -------------------------- | ---------------------------------------------------------------------------------------- |
+| `skill-fetcher.ts`         | `fetchSkills()`                                                                          |
+| `skill-copier.ts`          | `copySkill()`, `copySkillFromSource()`, `copySkillsToPluginFromSource()`                 |
+| `skill-metadata.ts`        | `readForkedFromMetadata()`, `getLocalSkillsWithMetadata()`, `injectForkedFromMetadata()` |
+| `skill-agent-mappings.ts`  | `SKILL_TO_AGENTS`, `getAgentsForSkill()`                                                 |
+| `skill-plugin-compiler.ts` | `compileSkillPlugin()`, `compileAllSkillPlugins()`                                       |
+| `local-skill-loader.ts`    | `discoverLocalSkills()`                                                                  |
+
+### Domain: `stacks/`
+
+Stack loading, resolution, installation, and compilation.
+
+| File                       | Key Exports                                                                                               |
+| -------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `stacks-loader.ts`         | `loadStacks()`, `loadStackById()`, `resolveAgentConfigToSkills()`, `resolveStackSkillsFromDisplayNames()` |
+| `stack-installer.ts`       | `compileStackToTemp()`, `installStackAsPlugin()`                                                          |
+| `stack-plugin-compiler.ts` | `compileAgentForPlugin()`, `compileStackPlugin()`                                                         |
+
+### Cross-Cutting Modules (lib root)
+
+| File                       | Purpose                                                                            |
+| -------------------------- | ---------------------------------------------------------------------------------- |
+| `compiler.ts`              | Liquid template compilation for agents                                             |
+| `resolver.ts`              | CLAUDE.md resolution from stacks                                                   |
+| `schemas.ts`               | All Zod runtime validation schemas (60+)                                           |
+| `schema-validator.ts`      | Bulk YAML/JSON validation runner                                                   |
+| `exit-codes.ts`            | Named exit codes: `SUCCESS`, `ERROR`, `INVALID_ARGS`, `NETWORK_ERROR`, `CANCELLED` |
+| `versioning.ts`            | Content hashing, version metadata                                                  |
+| `validator.ts`             | Agent file structure validation                                                    |
+| `output-validator.ts`      | Compiled agent output validation                                                   |
+| `marketplace-generator.ts` | Marketplace JSON generation                                                        |
+| `permission-checker.tsx`   | Installation permission checks                                                     |
+
+---
+
+## Type System
+
+Types live in `src/cli/types/` with a barrel `index.ts`. All types are exported as
+`export type` (type-only exports).
+
+### Foundation: Union Types
+
+All foundational union types are defined in the type files as the **single source of truth**.
+
+```typescript
+// src/cli/types/skills.ts
+type SkillIdPrefix = "web" | "api" | "cli" | "mobile" | "infra" | "meta" | "security";
+type SkillId = `${SkillIdPrefix}-${string}`;        // e.g., "web-framework-react"
+type SkillDisplayName = "react" | "vue" | ...;       // 137 values - human-readable labels
+type CategoryPath = `${SkillIdPrefix}/${string}` | `${SkillIdPrefix}-${string}` | Subcategory | "local";
+
+// src/cli/types/matrix.ts
+type Domain = "web" | "web-extras" | "api" | "cli" | "mobile" | "shared";
+type Subcategory = "framework" | "meta-framework" | "styling" | ...;  // 37 values
+type ModelName = "sonnet" | "opus" | "haiku" | "inherit";
+
+// src/cli/types/agents.ts
+type AgentName = "web-developer" | "api-developer" | "cli-developer" | ...;  // 18 values
+```
+
+### Named Aliases
+
+Complex nested types have named aliases for readability:
+
+```typescript
+type SubcategorySelections = Partial<Record<Subcategory, SkillId[]>>;
+type ResolvedSubcategorySkills = Partial<Record<Subcategory, SkillId>>;
+type CategoryMap = Partial<Record<Subcategory, CategoryDefinition>>;
+type DomainSelections = Partial<Record<Domain, Partial<Record<Subcategory, SkillId[]>>>>;
+```
+
+### Type-Safe Object Helpers
+
+`src/cli/utils/typed-object.ts` provides type-preserving wrappers:
+
+```typescript
+typedEntries<K, V>(obj); // replaces Object.entries(obj) as [K, V][]
+typedKeys<K>(obj); // replaces Object.keys(obj) as K[]
+```
+
+Use these **instead of** boundary casts on `Object.entries/keys`.
+
+### Key Interfaces
+
+| Type                 | File         | Purpose                                                |
+| -------------------- | ------------ | ------------------------------------------------------ |
+| `ResolvedSkill`      | `matrix.ts`  | Fully merged skill with all relationships              |
+| `MergedSkillsMatrix` | `matrix.ts`  | Complete matrix with skills, stacks, display name maps |
+| `CategoryDefinition` | `matrix.ts`  | Category metadata (domain, exclusive, required, order) |
+| `AgentConfig`        | `agents.ts`  | Agent definition merged with compile config            |
+| `CompiledAgentData`  | `agents.ts`  | Fully compiled agent with content sections             |
+| `ProjectConfig`      | `config.ts`  | User's project configuration                           |
+| `Stack`              | `stacks.ts`  | Stack with agent-subcategory-skill mappings            |
+| `PluginManifest`     | `plugins.ts` | Plugin metadata for .claude-plugin/plugin.json         |
+
+### Type Convention Rules
+
+1. **IDs use dashes**, never slashes: `web-framework-react`, not `web/framework/react`
+2. **No `(@author)` suffixes** in IDs - that's old filesystem format
+3. **Casts allowed ONLY at data entry boundaries** (YAML/JSON parsing)
+4. **No casts in consumer code** - if it doesn't type-check, fix the interface
+5. **Test strings are type-checked** - use valid SkillId patterns like `"web-test-a"`
+6. **Template literals validate at compile time** - `SkillId` rejects malformed strings
+
+---
+
+## Runtime Validation (Zod)
+
+All JSON/YAML parse boundaries use **Zod v4** schemas defined in `src/cli/lib/schemas.ts`.
+
+### Bridge Pattern
+
+Schemas are typed against existing TypeScript interfaces:
+
+```typescript
+export const skillIdSchema = z.string().regex(/^(web|api|cli|mobile|infra|meta|security)-.+$/)
+  as z.ZodType<SkillId>;
+```
+
+This ensures runtime validation matches compile-time types without duplicating definitions.
+
+### Lenient vs Strict Schemas
+
+| Strategy    | Modifier         | Use Case                                                                                          |
+| ----------- | ---------------- | ------------------------------------------------------------------------------------------------- |
+| **Lenient** | `.passthrough()` | Loading/parsing boundaries - allows unknown fields for forward compatibility                      |
+| **Strict**  | `.strict()`      | Validation boundaries - rejects unknown fields, matches JSON Schema `additionalProperties: false` |
+
+```typescript
+// LENIENT: Loading a config file (may have new fields from newer versions)
+export const projectConfigLoaderSchema = z
+  .object({
+    name: z.string().optional(),
+    agents: z.array(z.string()).optional(),
+  })
+  .passthrough();
+
+// STRICT: Validating a plugin manifest (must match expected shape exactly)
+export const agentFrontmatterValidationSchema = z
+  .object({
+    name: z.string(),
+    description: z.string(),
+  })
+  .strict();
+```
+
+### Post-Parse Boundary Casts
+
+After `safeParse()`, casting the result is intentional and correct:
+
+```typescript
+const result = projectConfigLoaderSchema.safeParse(parsed);
+if (!result.success) return null;
+return result.data as ProjectConfig; // OK: Zod validated; cast narrows from passthrough type
+```
+
+### Schema Categories (60+ schemas)
+
+1. **Union type schemas**: `domainSchema`, `subcategorySchema`, `agentNameSchema`, `modelNameSchema`
+2. **Template literal schemas**: `skillIdSchema`, `categoryPathSchema`
+3. **Hook schemas**: `agentHookActionSchema`, `agentHookDefinitionSchema`
+4. **Skill schemas**: `skillFrontmatterSchema` (strict), `skillFrontmatterLoaderSchema` (lenient)
+5. **Plugin schemas**: `pluginManifestSchema`
+6. **Config schemas**: `projectConfigSchema` (strict), `projectConfigLoaderSchema` (lenient)
+7. **Matrix schemas**: `categoryDefinitionSchema`, relationship rule schemas
+8. **Stack schemas**: `stackSchema`, `stacksConfigSchema`
+9. **Marketplace schemas**: `marketplaceSchema`
+10. **Validation schemas**: `*ValidationSchema` variants (all strict)
+
+---
+
+## CLI Commands
+
+### Framework
+
+- **oclif** command framework with pattern-based auto-discovery
+- All commands extend `BaseCommand` (`src/cli/base-command.ts`)
+- `BaseCommand` provides: `--dry-run`, `--source` flags + `handleError()`, `logSuccess()`, `logWarning()`
+- **Init hook** (`src/cli/hooks/init.ts`) runs before each command to resolve source config
+- **Exit codes**: Named constants from `exit-codes.ts` (SUCCESS=0, ERROR=1, INVALID_ARGS=2, NETWORK_ERROR=3, CANCELLED=130)
+
+### Command Inventory (29 commands)
+
+| Command                | File                      | Type                    | Complexity |
+| ---------------------- | ------------------------- | ----------------------- | ---------- |
+| `init`                 | `init.tsx`                | Interactive wizard      | High       |
+| `edit`                 | `edit.tsx`                | Interactive wizard      | High       |
+| `compile`              | `compile.ts`              | Logic-heavy             | High       |
+| `search`               | `search.tsx`              | Interactive + static    | High       |
+| `update`               | `update.tsx`              | Interactive confirm     | High       |
+| `uninstall`            | `uninstall.tsx`           | Interactive confirm     | High       |
+| `doctor`               | `doctor.ts`               | Health checks           | High       |
+| `info`                 | `info.ts`                 | Display                 | Medium     |
+| `diff`                 | `diff.ts`                 | Comparison              | Medium     |
+| `eject`                | `eject.ts`                | File operations         | Medium     |
+| `outdated`             | `outdated.ts`             | Comparison              | Medium     |
+| `validate`             | `validate.ts`             | Validation              | Medium     |
+| `list`                 | `list.ts`                 | Display (alias: `ls`)   | Thin       |
+| `new skill`            | `new/skill.ts`            | File generation         | Medium     |
+| `new agent`            | `new/agent.tsx`           | Interactive + spawn     | High       |
+| `import skill`         | `import/skill.ts`         | Network + files         | High       |
+| `build plugins`        | `build/plugins.ts`        | Compilation             | Medium     |
+| `build stack`          | `build/stack.tsx`         | Interactive select      | Medium     |
+| `build marketplace`    | `build/marketplace.ts`    | Generation              | Medium     |
+| `config`               | `config/index.ts`         | Alias to `config show`  | Thin       |
+| `config show`          | `config/show.ts`          | Display                 | Thin       |
+| `config get`           | `config/get.ts`           | Display                 | Thin       |
+| `config path`          | `config/path.ts`          | Display                 | Thin       |
+| `config set-project`   | `config/set-project.ts`   | File write              | Thin       |
+| `config unset-project` | `config/unset-project.ts` | File write              | Thin       |
+| `version`              | `version/index.ts`        | Alias to `version show` | Thin       |
+| `version show`         | `version/show.ts`         | Display                 | Thin       |
+| `version bump`         | `version/bump.ts`         | File write              | Thin       |
+| `version set`          | `version/set.ts`          | File write + validation | Thin       |
+
+### Command Execution Flow
 
 ```
-{category}/{subcategory}/{skill-name} (@{author})/
-├── SKILL.md          # Main content with frontmatter
-├── metadata.yaml     # CLI metadata (category, requires, conflicts)
-├── reference.md      # Decision frameworks (optional)
-└── examples/         # Extended examples (optional)
+User: cc <command> [args] [flags]
+  |
+  v
+oclif loads dist/commands/<command>.js
+  |
+  v
+Init hook runs: resolve source config from flags/env/project
+  |
+  v
+Command.run(): parse args/flags, execute logic
+  |
+  v
+Return or throw with exit code
 ```
 
-## Stack Structure
+---
+
+## Wizard & UI Components
+
+### Component Hierarchy
 
 ```
-{stack-name}/
-├── config.yaml       # Stack definition
-└── skills/           # Stack-specific skill overrides (optional)
+Wizard (src/cli/components/wizard/wizard.tsx)
++-- StepApproach     choose: stack template or build from scratch
++-- StepStack        select pre-built stack OR choose domains (scratch)
++-- StepBuild        technology selection per domain via CategoryGrid
+|   +-- CategoryGrid    2D grid: rows=categories, cols=skills
++-- StepRefine       fine-tune selections
++-- StepConfirm      review and install
 ```
 
-## Plugin Output Structure
+### State Management: Zustand
 
-```
-{plugin}/
-├── .claude-plugin/
-│   └── plugin.json   # Manifest
-├── agents/
-│   └── {agent}.md
-├── skills/
-│   └── {skillId}/
-├── hooks/
-│   └── hooks.json
-├── CLAUDE.md
-└── README.md
-```
+`src/cli/stores/wizard-store.ts` manages all wizard state:
 
-## Local Installation Structure
-
-The CLI supports two configuration locations:
-
-### Primary: `.claude-src/` (Recommended)
-
-```
-.claude-src/
-├── config.yaml       # Project config (primary location)
-├── agents/           # Custom agent overrides (optional)
-└── skills/           # Custom local skills (optional)
-
-.claude/
-├── agents/
-│   ├── {agent}.md    # Compiled agents
-│   └── _partials/    # Ejected agent partials (optional)
-│       └── {agent}/
-│           ├── intro.md
-│           └── workflow.md
-├── skills/
-│   └── {skillId}/
-│       └── SKILL.md
-└── templates/        # Ejected Liquid templates (optional)
-    └── agent.liquid
+```typescript
+type WizardState = {
+  step: WizardStep;
+  approach: "stack" | "scratch" | null;
+  selectedStackId: string | null;
+  selectedDomains: Domain[];
+  domainSelections: DomainSelections;
+  focusedRow: number;
+  focusedCol: number;
+  showDescriptions: boolean;
+  expertMode: boolean;
+  installMode: "plugin" | "local";
+  history: WizardStep[]; // enables back navigation
+  // ... actions
+};
 ```
 
-### Legacy: `.claude/config.yaml`
+### Keyboard Navigation
 
-The CLI also supports configuration in `.claude/config.yaml` for backward compatibility.
+- Arrow keys + vim keys (h/j/k/l) for grid navigation
+- Enter to select/continue
+- Escape to go back (history-based)
+- Tab to cycle domains
+- `d` to toggle descriptions
+- `a` to accept defaults (stack flow)
+- `e` to toggle expert mode
 
-## Config Resolution Precedence
+### Web-Extras Domain
+
+`web-extras` is a UI-only domain that groups 8 categories (error-handling, file-upload, files,
+utilities, realtime, animation, pwa, accessibility) to reduce vertical space. It uses
+`parent_domain: web` to inherit framework-first filtering from the `web` domain.
+
+---
+
+## Test Infrastructure
+
+### Configuration (`vitest.config.ts`)
+
+Three test projects with separate patterns:
+
+| Project         | Pattern                                                     | Purpose               |
+| --------------- | ----------------------------------------------------------- | --------------------- |
+| **unit**        | `src/**/*.test.ts(x)` excluding **tests**/ subdirs          | Co-located unit tests |
+| **integration** | `src/cli/lib/__tests__/integration/**` + `user-journeys/**` | Multi-module flows    |
+| **commands**    | `src/cli/lib/__tests__/commands/**`                         | CLI command execution |
+
+**Settings:** globals enabled, mocks auto-cleared, 10s timeout, console intercept disabled
+(required for oclif/ink test libraries).
+
+### Statistics
+
+- **68 test files**, **1,344 tests** (34 skipped), all passing
+- **Execution time:** ~18 seconds
+
+### Mock Infrastructure
+
+**Auto-mocks** in `src/cli/utils/__mocks__/`:
+
+- `fs.ts` - All file operations as `vi.fn()`
+- `logger.ts` - `verbose()`, `warn()`, `setVerbose()` as `vi.fn()`
+
+**Pattern:** Declare `vi.mock()` before module imports:
+
+```typescript
+vi.mock("../../utils/fs");
+vi.mock("../../utils/logger");
+
+import { someFunction } from "./module";
+import { readFile } from "../../utils/fs";
+
+// Configure per test:
+vi.mocked(readFile).mockResolvedValue("content");
+```
+
+### Test Helpers (`src/cli/lib/__tests__/`)
+
+| File                                          | Purpose                                                                                                                                                                         |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `helpers.ts` (~1,120 lines)                   | `runCliCommand()`, `createMockSkill()`, `createMockMatrix()`, `createComprehensiveMatrix()`, `createBasicMatrix()`, `writeTestSkill()`, `writeTestAgent()`, temp dir management |
+| `test-fixtures.ts` (~106 lines)               | Pre-built skill factories: `createTestReactSkill()`, `createTestZustandSkill()`, etc.                                                                                           |
+| `test-constants.ts` (~69 lines)               | Keyboard sequences (`ARROW_UP`, `ENTER`, `ESCAPE`), timing constants (`INPUT_DELAY_MS=50`, `RENDER_DELAY_MS=100`)                                                               |
+| `fixtures/create-test-source.ts` (~546 lines) | Complete project structure generator for integration tests                                                                                                                      |
+
+### Test Patterns
+
+**1. Unit tests with mocks** (most lib files):
+
+```typescript
+vi.mock("../../utils/fs");
+import { compile } from "./compiler";
+it("creates output directory", async () => {
+  vi.mocked(readFile).mockResolvedValue("# content");
+  await compile(agents, ctx);
+  expect(ensureDir).toHaveBeenCalledWith(expectedPath);
+});
+```
+
+**2. Component tests with ink-testing-library** (wizard components):
+
+```typescript
+const { lastFrame, stdin } = render(<CategoryGrid {...props} />);
+expect(lastFrame()).toContain("Framework");
+stdin.write(ARROW_DOWN);
+await delay(INPUT_DELAY_MS);
+expect(onFocusChange).toHaveBeenCalledWith(1, 0);
+```
+
+**3. Store tests** (Zustand):
+
+```typescript
+beforeEach(() => useWizardStore.getState().reset());
+it("tracks navigation history", () => {
+  const store = useWizardStore.getState();
+  store.setStep("stack");
+  expect(useWizardStore.getState().history).toEqual(["approach"]);
+});
+```
+
+**4. Integration tests with real file system**:
+
+```typescript
+let tempDir: string;
+beforeEach(async () => { tempDir = await mkdtemp(...); });
+afterEach(async () => { await rm(tempDir, { recursive: true, force: true }); });
+it("detects local installation", async () => {
+  await mkdir(path.join(tempDir, ".claude-src"), { recursive: true });
+  const result = await detectInstallation(tempDir);
+  expect(result?.mode).toBe("local");
+});
+```
+
+**5. CLI command tests** (oclif runCommand):
+
+```typescript
+beforeEach(async () => {
+  process.chdir(projectDir);
+});
+it("accepts --verbose flag", async () => {
+  const { error } = await runCliCommand(["compile", "--verbose"]);
+  expect(error?.message?.toLowerCase()).not.toContain("unknown flag");
+});
+```
+
+### Test Data Convention
+
+Test skill IDs **must** match the `SkillId` pattern:
+
+```typescript
+// CORRECT
+createMockSkill("web-test-a", "framework");
+
+// WRONG (won't type-check)
+createMockSkill("test-skill-a", "framework");
+```
+
+---
+
+## Utility Patterns
+
+### File System (`utils/fs.ts`)
+
+Thin wrapper around `fs-extra` + `fast-glob`:
+
+```typescript
+readFile(path); // Read UTF-8 file
+readFileOptional(path, ""); // Read with fallback (no throw)
+writeFile(path, content); // Write with auto-ensureDir
+fileExists(path); // Check file exists
+directoryExists(path); // Check directory exists
+listDirectories(path); // List subdirectories
+glob(pattern, cwd); // fast-glob file matching
+ensureDir(path); // Create directory tree
+remove(path); // Delete file/directory
+copy(src, dest); // Copy file/directory
+```
+
+### Process Execution (`utils/exec.ts`)
+
+```typescript
+execCommand(cmd, args, opts); // Generic process execution
+isClaudeCLIAvailable(); // Check claude CLI exists
+claudePluginInstall(path, scope); // Install plugin
+claudePluginUninstall(name, scope); // Remove plugin
+claudePluginMarketplaceAdd(repo); // Add marketplace
+claudePluginMarketplaceExists(name); // Check marketplace
+```
+
+### Remeda Utilities
+
+Tree-shakeable functional transforms used across 20+ files:
+
+| Function       | Usage                             |
+| -------------- | --------------------------------- |
+| `sortBy()`     | Sort arrays by property (6 files) |
+| `unique()`     | Deduplicate arrays (3 files)      |
+| `uniqueBy()`   | Deduplicate by predicate (1 file) |
+| `countBy()`    | Count grouped elements (3 files)  |
+| `sumBy()`      | Sum element properties (2 files)  |
+| `groupBy()`    | Group elements by key (2 files)   |
+| `mapValues()`  | Transform object values (3 files) |
+| `mapToObj()`   | Map array to object (2 files)     |
+| `indexBy()`    | Create object index (1 file)      |
+| `pipe()`       | Function composition (1 file)     |
+| `flatMap()`    | Map + flatten (1 file)            |
+| `filter()`     | Conditional filtering (1 file)    |
+| `difference()` | Set difference (1 file)           |
+
+---
+
+## Configuration & Resolution
+
+### Precedence
 
 ```
---source flag > CC_SOURCE env > project .claude-src/config.yaml > project .claude/config.yaml > global ~/.claude-collective/config.yaml > default
+--source flag > CC_SOURCE env > .claude-src/config.yaml > .claude/config.yaml > default
 ```
 
-For agents_source:
+For agents source:
 
 ```
 --agent-source flag > project config agents_source > global config agents_source > bundled agents
 ```
 
+### Installation Modes
+
+| Mode       | Location                               | Managed By             |
+| ---------- | -------------------------------------- | ---------------------- |
+| **Plugin** | `~/.claude/plugins/claude-collective/` | Native Claude CLI      |
+| **Local**  | `.claude/agents/` + `.claude/skills/`  | Direct file operations |
+
+Detection: `detectInstallation()` checks plugin dir first, then local dirs.
+
+### Project Config Schema
+
+```yaml
+# .claude-src/config.yaml
+version: "1"
+name: my-project
+description: Optional description
+agents:
+  - web-developer
+  - api-developer
+stack:
+  web-developer:
+    framework: web-framework-react
+    styling: web-styling-scss-modules
+  api-developer:
+    framework: api-framework-hono
+    database: api-database-drizzle
+source: https://github.com/org/skills
+marketplace: my-marketplace
+agents_source: https://github.com/org/agents
+```
+
+---
+
 ## Agent Compilation
 
-Agent parts read from `src/agents/{agentPath}/`:
+### Source Structure
 
-- `intro.md` (required)
-- `workflow.md` (required)
-- `examples.md` (optional)
-- `critical-requirements.md` (optional)
-- `critical-reminders.md` (optional)
-- `output-format.md` (optional)
+Each agent in `src/agents/{category}/{agent-name}/`:
 
-Compiled via Liquid template with skills injected as preloaded (embedded) or dynamic (via Skill tool).
+```
+agent.yaml           # Agent definition (title, description, model, tools, permissions)
+intro.md             # Required: introduction section
+workflow.md          # Required: workflow section
+examples.md          # Optional: examples section
+critical-requirements.md  # Optional: injected at top of compiled output
+critical-reminders.md     # Optional: injected at bottom
+output-format.md          # Optional: output format section
+```
 
-## Custom Agents
+### Compilation Process
 
-Custom agents defined in `config.yaml` can:
+1. Load agent definition from `agent.yaml` (validated by `agentYamlConfigSchema`)
+2. Read all markdown partials (intro, workflow, examples, etc.)
+3. Resolve skills: preloaded (embedded) vs dynamic (via Skill tool)
+4. Render through **liquidjs** Liquid template
+5. Generate frontmatter (name, description, tools, model, permissions, hooks)
+6. Write compiled `.md` file to output directory
+7. Generate `plugin.json` manifest if plugin mode
 
-- Define entirely new agents with full configuration
-- Extend built-in agents with `extends: agent-name`
+### Skill Injection
 
-Resolution:
+- **Preloaded skills**: Full SKILL.md content embedded directly in the agent
+- **Dynamic skills**: Listed in frontmatter `skills:` array, loaded via Skill tool at runtime
 
-1. Parse custom agent config
-2. If `extends`, load base agent definition
-3. Merge: custom overrides base
-4. Compile with resolved skills
+---
+
+## Third-Party Dependencies
+
+| Package       | Version | Purpose                                             |
+| ------------- | ------- | --------------------------------------------------- |
+| `@oclif/core` | 4.x     | CLI command framework                               |
+| `ink`         | 5.x     | React terminal rendering                            |
+| `@inkjs/ui`   | 2.x     | Terminal UI components (Select, TextInput, Spinner) |
+| `react`       | 18.x    | UI component model                                  |
+| `zustand`     | 5.x     | Wizard state management                             |
+| `zod`         | 4.3.x   | Runtime schema validation                           |
+| `remeda`      | 2.33.x  | Functional utilities                                |
+| `liquidjs`    | 10.x    | Agent template rendering                            |
+| `yaml`        | 2.8.x   | YAML parsing/serialization                          |
+| `fs-extra`    | 11.x    | Enhanced file system operations                     |
+| `fast-glob`   | 3.3.x   | File pattern matching                               |
+| `giget`       | 1.2.x   | GitHub repository cloning/downloading               |
+| `diff`        | 8.x     | Text diffing                                        |
+| `gray-matter` | 4.x     | Markdown frontmatter parsing                        |
+
+**Testing:**
+
+| Package               | Purpose                  |
+| --------------------- | ------------------------ |
+| `vitest`              | Test runner + assertions |
+| `@vitest/coverage-v8` | Code coverage            |
+| `ink-testing-library` | Ink component testing    |
+| `@oclif/test`         | CLI command testing      |
+
+---
+
+## Conventions & Philosophy
+
+### Code Style
+
+- **TypeScript strict mode** with zero `any` (justify with comment if unavoidable)
+- **Named exports only** (no default exports in library code)
+- **kebab-case** file and directory names
+- **SCREAMING_SNAKE_CASE** for constants
+- **No magic numbers** - all numbers as named constants
+- **Import ordering**: React > external > internal > relative > styles
+
+### Architecture Principles
+
+- **Domain-driven modules** with barrel exports for clean imports
+- **Zod at boundaries, types everywhere else** - validate once, trust downstream
+- **Lenient loading, strict validation** - accept partial data, validate before use
+- **Remeda over manual loops** - immutable, composable, tree-shakeable
+- **Type safety over casts** - fix interfaces, don't cast in consumer code
+- **Functional composition** - `pipe()`, `flatMap()`, `filter()` chains
+- **Error tolerance** - `safeParse` with warnings, not crashes, at data boundaries
+
+### Testing Philosophy
+
+- **Unit tests** for pure functions and isolated modules (mock fs/logger)
+- **Integration tests** for multi-module flows (real file system, temp dirs)
+- **Command tests** for CLI wiring (oclif test runner, flag/arg validation)
+- **Component tests** for Ink UI (ink-testing-library, keyboard simulation)
+- **User journey tests** for end-to-end workflows
+- Co-locate unit tests with source (`*.test.ts` alongside `*.ts`)
+- Integration/command/journey tests in `lib/__tests__/`
+
+### Evolution History
+
+| Phase | What Changed                                                                    |
+| ----- | ------------------------------------------------------------------------------- |
+| P1-P4 | Core commands, test coverage from 384 to 1160 tests                             |
+| P5    | Commander.js + @clack/prompts migrated to oclif + Ink                           |
+| P6    | Agent-centric configuration (skills in stacks, not agents)                      |
+| P7A   | Architecture fix (stack-based skill resolution)                                 |
+| P7B   | Wizard UX redesign (2D grid, domain-based, vim keys)                            |
+| D5    | Type simplification (types over interfaces, shared base, display names)         |
+| D6    | Type narrowing (union types, named aliases, Zod schemas, Remeda, typed helpers) |
+| D7    | Domain restructuring (8 lib subdirectories, barrel exports, ~140 import paths)  |

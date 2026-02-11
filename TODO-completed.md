@@ -126,11 +126,11 @@ Detailed specifications for completed tasks are preserved in TODO.md under "Deta
 
 | Document                                                                    | Topic                             | Date       |
 | --------------------------------------------------------------------------- | --------------------------------- | ---------- |
-| [oclif-ink-research.md](./docs/oclif-ink-research.md)                       | oclif + Ink framework evaluation  | 2026-01-31 |
-| [web-ui-research.md](./docs/web-ui-research.md)                             | Web UI for private marketplace    | 2026-01-31 |
+| oclif-ink-research.md (archived)                                            | oclif + Ink framework evaluation  | 2026-01-31 |
+| web-ui-research.md (archived)                                               | Web UI for private marketplace    | 2026-01-31 |
 | [cli-agent-invocation-research.md](./docs/cli-agent-invocation-research.md) | Meta-agent invocation via CLI     | 2026-01-22 |
-| [cli-testing-research.md](./docs/cli-testing-research.md)                   | CLI integration test strategy     | 2026-01-31 |
-| [stack-simplification-research.md](./docs/stack-simplification-research.md) | Stack architecture simplification | 2026-01-31 |
+| cli-testing-research.md (archived)                                          | CLI integration test strategy     | 2026-01-31 |
+| stack-simplification-research.md (archived)                                 | Stack architecture simplification | 2026-01-31 |
 
 ---
 
@@ -532,7 +532,7 @@ Full audit and narrowing of all `string` types to union types across 37+ files.
 4. `string` → `AgentName` (single agent name params, ~5 instances)
 5. `Set<string>` → `Set<SkillId>` (dedup sets, ~5 instances)
 
-For the full audit with every field decision, see the [TypeScript Types Bible](./typescript-types-bible.md).
+For the full audit with every field decision, see the [TypeScript Types Bible](./typescript-types-bible.md). For the project-specific type system, see the [Architecture document](./docs/architecture.md#type-system).
 
 ---
 
@@ -686,3 +686,32 @@ Generated 10 JSON Schema files from Zod schemas using `z.toJSONSchema()` (Zod v4
 **Known limitation:** `hooks.schema.json` generated from Zod lacks `if/then` conditionals (not expressible in Zod). The generated version provides basic structure validation but not conditional field requirements.
 
 **Stats:** 0 type errors, 1344 tests passing. Files: 4 modified + 1 created + 2 symlinks removed + 10 schema files regenerated + 19 YAML files updated.
+
+---
+
+## Deferred
+
+### D4: Create a tracking-documentation sub-agent [DEFERRED]
+
+**Goal:** Create a specialized sub-agent that generates and maintains project tracking documentation — NOT code-level documentation (JSDoc, READMEs), but operational tracking artifacts.
+
+**Scope:**
+
+- TODO file formatting conventions (how to structure TODO files)
+- Task lifecycle documentation (status labels, archival rules, how to move completed tasks)
+- Changelog formatting (Keep a Changelog conventions, what goes in each section)
+- Version bump decisions (when to use major/minor/patch)
+- Progress summaries (how to write phase completion summaries)
+- Commit message conventions (conventional commits format)
+
+**Why a dedicated agent:**
+
+- Current agents (cli-developer, web-developer, etc.) focus on code implementation
+- Tracking documentation has its own conventions that are easy to get wrong (e.g., forgetting to archive tasks, inconsistent changelog entries, wrong version bump type)
+- A dedicated agent could enforce consistency across sessions
+
+**Implementation approach:**
+
+- Create as a skill (not a full agent) since it's advisory, not tool-wielding
+- Include templates for each document type
+- Reference the project's actual files as canonical examples
