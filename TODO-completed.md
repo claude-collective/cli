@@ -514,15 +514,15 @@ Full audit and narrowing of all `string` types to union types across 37+ files.
 
 **Boundary cast classification (86 total):**
 
-| Category | Count | Description |
-|---|---|---|
-| Object.keys/entries | ~20 | TS returns `string[]`, cast to union necessary |
-| CLI arg boundary | ~7 | User input from flags is `string` |
-| Test data construction | ~30 | Mock matrix, intentionally-invalid values |
-| YAML parse boundary | ~5 | Raw config parsing |
-| Type narrowing | ~4 | CategoryPath → Subcategory, SkillAlias lookup |
-| Store initialization | ~2 | Empty initial state |
-| Widening for indexing | ~4 | String indexing on Partial<Record<UnionType, X>> |
+| Category               | Count | Description                                      |
+| ---------------------- | ----- | ------------------------------------------------ |
+| Object.keys/entries    | ~20   | TS returns `string[]`, cast to union necessary   |
+| CLI arg boundary       | ~7    | User input from flags is `string`                |
+| Test data construction | ~30   | Mock matrix, intentionally-invalid values        |
+| YAML parse boundary    | ~5    | Raw config parsing                               |
+| Type narrowing         | ~4    | CategoryPath → Subcategory, SkillAlias lookup    |
+| Store initialization   | ~2    | Empty initial state                              |
+| Widening for indexing  | ~4    | String indexing on Partial<Record<UnionType, X>> |
 
 **Most common patterns narrowed:**
 
@@ -533,3 +533,59 @@ Full audit and narrowing of all `string` types to union types across 37+ files.
 5. `Set<string>` → `Set<SkillId>` (dedup sets, ~5 instances)
 
 For the full audit with every field decision, see the [TypeScript Types Bible](./typescript-types-bible.md).
+
+---
+
+## Phase 7: Type Narrowing (COMPLETE)
+
+37 tasks completed. See [TODO-type-narrowing.md](./TODO-type-narrowing.md) for original scope.
+
+**Summary:**
+
+- T1-T28, T30-T31, T33-T37 completed
+- T29 deferred (co-locate type definitions)
+- T32 in progress (testing gaps)
+- 0 type errors, 1288 tests passing
+- All `interface` → `type`, dead fields removed, agent types composed from shared base
+- `SkillEntry` union eliminated, `stack` is single source of truth for skill assignment
+- `SkillAlias` renamed to `SkillDisplayName`, `SkillRef` removed
+- Zod schemas at all parse boundaries
+- Remeda utilities across 20+ files
+
+### Completed Tasks
+
+T1: Replace `interface` with `type` across codebase
+T2: Remove `name` field from `SkillDefinition` and `Skill`
+T3: Unify `Skill` and `SkillDefinition`
+T4: Convert inline `//` comments to JSDoc on type fields
+T5: Compose agent types from a shared base
+T6: Eliminate `SkillEntry` union — always use `SkillAssignment`
+T7: Remove dead `ProjectConfig` fields
+T8: Remove dead `custom_agents` infrastructure
+T9: Remove `agent_skills` — redundant with `stack`
+T10: Remove `preload_patterns` — redundant with `SkillAssignment.preloaded`
+T11: Make `stack` the single source of truth for skill assignment
+T12: Remove `CompileConfig.claude_md` — always empty string
+T13: Remove `CompileMode` type and `getDirs()` function
+T14: Remove `LoadedProjectConfig.isLegacy` — always `false`
+T15: Remove `ProjectConfig.hooks` — dead field
+T16: Remove `ResolvedSkill.recommendedBy` and `requiredBy` — unused inverse fields
+T17: Remove dead `SkillFrontmatter` fields — spec fields with no implementation
+T18: Remove dead `PluginManifest` metadata fields
+T19: Remove `MarketplaceFetchResult.cacheKey` — set but never read
+T20: Remove dead `skill-agent-mappings.ts` code
+T21: Remove dead `resolver.ts` functions and unused interfaces
+T22: Deduplicate `KEY_SUBCATEGORIES` constant
+T23: Remove unused `compileAllAgents()` `_config` parameter
+T24: Rename/consolidate duplicate `loadProjectConfig` functions
+T25: Consolidate duplicate format functions in `config.ts`
+T26: Eliminate `SkillRef` and rename `SkillAlias` to display name
+T27: Rename `name` → `displayName` across non-skill types
+T28: Frontend cleanup — dead props, state, and code
+T30: Fix `string` arrays that should be `SkillId[]` (Remeda type inference)
+T31: Remove redundant test code (~2,100+ lines)
+T33: Narrow `ProjectConfig.agents` from `string[]` to `AgentName[]`
+T34: Narrow `getAgentsForSkill()` return type to `AgentName[]`
+T35: Replace remaining `Object.entries`/`Object.keys` and narrow `Record<string, X>` keys
+T36: Harden all parse boundaries — throw or warn on every failure
+T37: Fix stack property ignoring user customizations + subcategory key mismatch
