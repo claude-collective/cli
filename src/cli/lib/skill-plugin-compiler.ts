@@ -1,7 +1,7 @@
 import path from "path";
 import { parse as parseYaml } from "yaml";
 import { readFile, writeFile, ensureDir, glob, fileExists, copy } from "../utils/fs";
-import { verbose } from "../utils/logger";
+import { verbose, warn } from "../utils/logger";
 import {
   generateSkillPluginManifest,
   writePluginManifest,
@@ -116,7 +116,13 @@ async function readSkillMetadata(skillPath: string): Promise<SkillMetadataConfig
       : content;
 
     const result = skillMetadataConfigSchema.safeParse(parseYaml(yamlContent));
-    return result.success ? result.data : null;
+    if (!result.success) {
+      warn(
+        `Invalid metadata.yaml at ${skillPath}: ${result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
+      );
+      return null;
+    }
+    return result.data;
   } catch {
     return null;
   }
@@ -185,7 +191,7 @@ export async function compileSkillPlugin(
   }
 
   const skillMdContent = await readFile(skillMdPath);
-  const frontmatter = parseFrontmatter(skillMdContent);
+  const frontmatter = parseFrontmatter(skillMdContent, skillMdPath);
 
   if (!frontmatter) {
     throw new Error(

@@ -2,7 +2,7 @@ import { parse as parseYaml } from "yaml";
 import path from "path";
 import { unique } from "remeda";
 import { glob, readFile, directoryExists } from "../utils/fs";
-import { verbose } from "../utils/logger";
+import { verbose, warn } from "../utils/logger";
 import { CLAUDE_SRC_DIR, DIRS } from "../consts";
 import type { AgentDefinition, SkillDefinition, SkillFrontmatter } from "../types";
 import type { SkillId } from "../types-matrix";
@@ -10,14 +10,20 @@ import { skillFrontmatterLoaderSchema, agentYamlConfigSchema } from "./schemas";
 
 const FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---/;
 
-export function parseFrontmatter(content: string): SkillFrontmatter | null {
+export function parseFrontmatter(content: string, filePath?: string): SkillFrontmatter | null {
   const match = content.match(FRONTMATTER_REGEX);
   if (!match) return null;
 
   const yamlContent = match[1];
   const parsed = skillFrontmatterLoaderSchema.safeParse(parseYaml(yamlContent));
 
-  if (!parsed.success) return null;
+  if (!parsed.success) {
+    const location = filePath ?? "unknown file";
+    warn(
+      `Invalid SKILL.md frontmatter in ${location}: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
+    );
+    return null;
+  }
   // Boundary cast: YAML name field may not match strict SkillId pattern (e.g., local skills)
   return parsed.data as SkillFrontmatter;
 }
@@ -30,20 +36,26 @@ export async function loadAllAgents(projectRoot: string): Promise<Record<string,
 
   for (const file of files) {
     const fullPath = path.join(agentSourcesDir, file);
-    const content = await readFile(fullPath);
-    const config = agentYamlConfigSchema.parse(parseYaml(content));
-    const agentPath = path.dirname(file);
+    try {
+      const content = await readFile(fullPath);
+      const config = agentYamlConfigSchema.parse(parseYaml(content));
+      const agentPath = path.dirname(file);
 
-    agents[config.id] = {
-      title: config.title,
-      description: config.description,
-      model: config.model,
-      tools: config.tools,
-      path: agentPath,
-      sourceRoot: projectRoot,
-    };
+      agents[config.id] = {
+        title: config.title,
+        description: config.description,
+        model: config.model,
+        tools: config.tools,
+        path: agentPath,
+        sourceRoot: projectRoot,
+      };
 
-    verbose(`Loaded agent: ${config.id} from ${file}`);
+      verbose(`Loaded agent: ${config.id} from ${file}`);
+    } catch (error) {
+      warn(
+        `Skipping invalid agent.yaml at ${fullPath}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 
   return agents;
@@ -68,21 +80,27 @@ export async function loadProjectAgents(
 
   for (const file of files) {
     const fullPath = path.join(projectAgentsDir, file);
-    const content = await readFile(fullPath);
-    const config = agentYamlConfigSchema.parse(parseYaml(content));
-    const agentPath = path.dirname(file);
+    try {
+      const content = await readFile(fullPath);
+      const config = agentYamlConfigSchema.parse(parseYaml(content));
+      const agentPath = path.dirname(file);
 
-    agents[config.id] = {
-      title: config.title,
-      description: config.description,
-      model: config.model,
-      tools: config.tools,
-      path: agentPath,
-      sourceRoot: projectRoot,
-      agentBaseDir: `${CLAUDE_SRC_DIR}/agents`, // Project agents are in .claude-src/agents/
-    };
+      agents[config.id] = {
+        title: config.title,
+        description: config.description,
+        model: config.model,
+        tools: config.tools,
+        path: agentPath,
+        sourceRoot: projectRoot,
+        agentBaseDir: `${CLAUDE_SRC_DIR}/agents`, // Project agents are in .claude-src/agents/
+      };
 
-    verbose(`Loaded project agent: ${config.id} from ${file}`);
+      verbose(`Loaded project agent: ${config.id} from ${file}`);
+    } catch (error) {
+      warn(
+        `Skipping invalid agent.yaml at ${fullPath}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 
   return agents;
@@ -95,7 +113,7 @@ async function buildIdToDirectoryPathMap(skillsDir: string): Promise<Record<stri
   for (const file of files) {
     const fullPath = path.join(skillsDir, file);
     const content = await readFile(fullPath);
-    const frontmatter = parseFrontmatter(content);
+    const frontmatter = parseFrontmatter(content, fullPath);
 
     if (frontmatter?.name) {
       const directoryPath = file.replace("/SKILL.md", "");
@@ -151,10 +169,10 @@ export async function loadSkillsByIds(
 
     try {
       const content = await readFile(skillMdPath);
-      const frontmatter = parseFrontmatter(content);
+      const frontmatter = parseFrontmatter(content, skillMdPath);
 
       if (!frontmatter) {
-        console.warn(`  Warning: Skipping ${skillId}: Missing or invalid frontmatter`);
+        warn(`Skipping ${skillId}: Missing or invalid frontmatter`);
         continue;
       }
 
@@ -196,9 +214,9 @@ export async function loadPluginSkills(
     const fullPath = path.join(pluginSkillsDir, file);
     const content = await readFile(fullPath);
 
-    const frontmatter = parseFrontmatter(content);
+    const frontmatter = parseFrontmatter(content, fullPath);
     if (!frontmatter) {
-      console.warn(`  Warning: Skipping ${file}: Missing or invalid frontmatter`);
+      warn(`Skipping ${file}: Missing or invalid frontmatter`);
       continue;
     }
 

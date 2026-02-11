@@ -2,7 +2,7 @@ import { parse as parseYaml } from "yaml";
 import path from "path";
 import { z } from "zod";
 import { glob, readFile, fileExists } from "../utils/fs";
-import { verbose } from "../utils/logger";
+import { verbose, warn } from "../utils/logger";
 import { DIRS } from "../consts";
 import { parseFrontmatter } from "./loader";
 import {
@@ -86,7 +86,7 @@ export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkil
 
     const metadata = metadataResult.data;
     const skillMdContent = await readFile(skillMdPath);
-    const frontmatter = parseFrontmatter(skillMdContent);
+    const frontmatter = parseFrontmatter(skillMdContent, skillMdPath);
 
     if (!frontmatter) {
       verbose(`Skipping ${metadataFile}: Invalid SKILL.md frontmatter`);
@@ -135,6 +135,10 @@ function buildReverseDisplayNames(
     const idResult = skillIdSchema.safeParse(fullId);
     if (nameResult.success && idResult.success) {
       reverse[idResult.data] = nameResult.data;
+    } else {
+      warn(
+        `Invalid skill alias mapping: '${name}' -> '${fullId}'${!nameResult.success ? ` (invalid display name: ${nameResult.error.message})` : ""}${!idResult.success ? ` (invalid skill ID: ${idResult.error.message})` : ""}`,
+      );
     }
   }
   return reverse;

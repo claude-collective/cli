@@ -7,6 +7,7 @@ import { getCurrentDate } from "./versioning";
 import { LOCAL_SKILLS_PATH } from "../consts";
 import type { SkillId } from "../types-matrix";
 import { localSkillMetadataSchema } from "./schemas";
+import { warn } from "../utils/logger";
 
 /**
  * ForkedFrom metadata stored in local skill's metadata.yaml
@@ -51,6 +52,9 @@ export async function readForkedFromMetadata(skillDir: string): Promise<ForkedFr
   const result = localSkillMetadataSchema.safeParse(parseYaml(content));
 
   if (!result.success) {
+    warn(
+      `Invalid metadata.yaml at ${metadataPath}: ${result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
+    );
     return null;
   }
 

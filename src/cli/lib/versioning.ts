@@ -86,7 +86,15 @@ async function readMetadata(
     yamlContent = lines.slice(1).join("\n");
   }
 
-  const raw = parseYaml(yamlContent);
+  let raw: unknown;
+  try {
+    raw = parseYaml(yamlContent);
+  } catch (error) {
+    throw new Error(
+      `Failed to parse metadata.yaml at ${skillPath}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
   const result = versionedMetadataSchema.safeParse(raw);
 
   if (!result.success) {

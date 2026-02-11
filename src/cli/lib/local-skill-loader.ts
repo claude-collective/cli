@@ -94,7 +94,7 @@ async function extractLocalSkill(
   }
 
   const skillMdContent = await readFile(skillMdPath);
-  const frontmatter = parseFrontmatter(skillMdContent);
+  const frontmatter = parseFrontmatter(skillMdContent, skillMdPath);
 
   if (!frontmatter) {
     verbose(`Skipping local skill '${skillDirName}': Invalid SKILL.md frontmatter`);
