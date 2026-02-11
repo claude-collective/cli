@@ -22,38 +22,65 @@
       "type": "string",
       "minLength": 1
     },
-    "author": { "$ref": "#/$defs/Author" },
-    "homepage": {
-      "type": "string",
-      "format": "uri"
-    },
-    "repository": {
-      "type": "string",
-      "format": "uri"
-    },
-    "license": {
-      "type": "string",
-      "description": "SPDX license identifier"
+    "author": {
+      "$ref": "#/$defs/Author"
     },
     "keywords": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "uniqueItems": true
     },
     "commands": {
-      "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
     },
     "agents": {
-      "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
     },
     "skills": {
-      "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
     },
     "hooks": {
-      "oneOf": [{ "type": "string" }, { "$ref": "#/$defs/HooksConfig" }]
-    },
-    "mcpServers": {
-      "oneOf": [{ "type": "string" }, { "type": "object", "additionalProperties": true }]
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/HooksConfig"
+        }
+      ]
     }
   },
   "$defs": {
@@ -62,24 +89,36 @@
       "required": ["name"],
       "additionalProperties": false,
       "properties": {
-        "name": { "type": "string", "minLength": 1 },
-        "email": { "type": "string", "format": "email" }
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        }
       }
     },
     "HooksConfig": {
       "type": "object",
       "additionalProperties": {
         "type": "array",
-        "items": { "$ref": "#/$defs/HookDefinition" }
+        "items": {
+          "$ref": "#/$defs/HookDefinition"
+        }
       }
     },
     "HookDefinition": {
       "type": "object",
       "properties": {
-        "matcher": { "type": "string" },
+        "matcher": {
+          "type": "string"
+        },
         "hooks": {
           "type": "array",
-          "items": { "$ref": "#/$defs/HookAction" }
+          "items": {
+            "$ref": "#/$defs/HookAction"
+          }
         }
       }
     },
@@ -87,10 +126,19 @@
       "type": "object",
       "required": ["type"],
       "properties": {
-        "type": { "type": "string", "enum": ["command", "script", "prompt"] },
-        "command": { "type": "string" },
-        "script": { "type": "string" },
-        "prompt": { "type": "string" }
+        "type": {
+          "type": "string",
+          "enum": ["command", "script", "prompt"]
+        },
+        "command": {
+          "type": "string"
+        },
+        "script": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        }
       }
     }
   }

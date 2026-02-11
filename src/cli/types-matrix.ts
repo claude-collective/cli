@@ -40,6 +40,8 @@ export type Subcategory =
   | "performance"
   // Mobile
   | "mobile-framework"
+  | "base-framework"
+  | "platform"
   // Shared / Infrastructure
   | "monorepo"
   | "tooling"
@@ -86,10 +88,11 @@ export type AgentName =
   | "web-tester";
 
 /**
- * Skill alias short names used in wizard/store operations and relationships.
+ * Skill display names — short human-readable labels for skills.
  * These are the keys in skills-matrix.yaml `skill_aliases` section.
+ * Display names are resolved to canonical SkillId at the YAML parse boundary.
  */
-export type SkillAlias =
+export type SkillDisplayName =
   // Frameworks
   | "react"
   | "vue"
@@ -241,19 +244,13 @@ export type CategoryPath =
   | "local";
 
 /**
- * A reference to a skill — either by short alias or full ID.
- * Used in relationship rules, wizard selections, and pre-resolution contexts.
- */
-export type SkillRef = SkillAlias | SkillId;
-
-/**
- * Subcategory-keyed selections mapping to arrays of skill references.
+ * Subcategory-keyed selections mapping to arrays of canonical skill IDs.
  * Used for wizard domain selections at the subcategory level.
  */
-export type SubcategorySelections = Partial<Record<Subcategory, SkillRef[]>>;
+export type SubcategorySelections = Partial<Record<Subcategory, SkillId[]>>;
 
 /**
- * Full domain selections: Domain -> Subcategory -> SkillRef[].
+ * Full domain selections: Domain -> Subcategory -> SkillId[].
  * Used throughout the wizard pipeline (store, components, result).
  */
 export type DomainSelections = Partial<Record<Domain, SubcategorySelections>>;
@@ -271,7 +268,7 @@ export type CategoryMap = Partial<Record<Subcategory, CategoryDefinition>>;
 export type ResolvedSubcategorySkills = Partial<Record<Subcategory, SkillId>>;
 
 /** Root configuration from skills-matrix.yaml */
-export interface SkillsMatrixConfig {
+export type SkillsMatrixConfig = {
   /** Semantic version of the matrix schema (e.g., "1.0.0") */
   version: string;
 
@@ -285,22 +282,22 @@ export interface SkillsMatrixConfig {
   relationships: RelationshipDefinitions;
 
   /**
-   * Maps short alias names to normalized skill IDs
+   * Maps short display names to normalized skill IDs
    * @example { "react": "web-framework-react", "zustand": "web-state-zustand" }
    */
-  skill_aliases: Partial<Record<SkillAlias, SkillId>>;
-}
+  skill_aliases: Partial<Record<SkillDisplayName, SkillId>>;
+};
 
 /**
  * Category definition from skills-matrix.yaml
  * Each category belongs to a domain (web, api, cli, mobile, shared) for wizard grouping
  */
-export interface CategoryDefinition {
+export type CategoryDefinition = {
   /** Unique identifier (e.g., "styling", "state-management") */
   id: Subcategory;
 
   /** Human-readable display name (e.g., "State Management") */
-  name: string;
+  displayName: string;
 
   /** Brief description shown in wizard */
   description: string;
@@ -336,12 +333,12 @@ export interface CategoryDefinition {
 
   /** Optional emoji icon for display */
   icon?: string;
-}
+};
 
 /**
  * All relationship types between skills
  */
-export interface RelationshipDefinitions {
+export type RelationshipDefinitions = {
   /** Mutual exclusion rules - selecting one disables the others */
   conflicts: ConflictRule[];
 
@@ -356,60 +353,62 @@ export interface RelationshipDefinitions {
 
   /** Groups of interchangeable skills for the same purpose */
   alternatives: AlternativeGroup[];
-}
+};
 
 /**
  * Conflict rule - skills that cannot be selected together
  */
-export interface ConflictRule {
+export type ConflictRule = {
   /**
-   * List of skill aliases/IDs that conflict with each other
-   * Selecting any one disables ALL others in this list
+   * List of skill IDs that conflict with each other.
+   * Aliases are resolved to canonical IDs at the YAML parse boundary.
+   * Selecting any one disables ALL others in this list.
    */
-  skills: SkillRef[];
+  skills: SkillId[];
 
   /** Human-readable explanation shown when option is disabled */
   reason: string;
-}
+};
 
 /**
  * Discourage rule - skills that show a warning when selected together
  * Unlike conflicts, these can still be selected but show a "not recommended" warning
  */
-export interface DiscourageRule {
+export type DiscourageRule = {
   /**
-   * List of skill aliases/IDs that discourage each other
-   * Selecting any one shows a warning for ALL others in this list
+   * List of skill IDs that discourage each other.
+   * Aliases are resolved to canonical IDs at the YAML parse boundary.
+   * Selecting any one shows a warning for ALL others in this list.
    */
-  skills: SkillRef[];
+  skills: SkillId[];
 
   /** Human-readable explanation shown as a warning */
   reason: string;
-}
+};
 
 /**
  * Recommendation rule - suggests skills based on current selection
  */
-export interface RecommendRule {
-  /** Skill alias/ID that triggers this recommendation */
-  when: SkillRef;
+export type RecommendRule = {
+  /** Skill ID that triggers this recommendation */
+  when: SkillId;
 
-  /** List of skill aliases/IDs to highlight as recommended */
-  suggest: SkillRef[];
+  /** List of skill IDs to highlight as recommended */
+  suggest: SkillId[];
 
   /** Human-readable explanation shown with recommendation */
   reason: string;
-}
+};
 
 /**
  * Requirement rule - enforces hard dependencies between skills
  */
-export interface RequireRule {
-  /** Skill alias/ID that has requirements */
-  skill: SkillRef;
+export type RequireRule = {
+  /** Skill ID that has requirements */
+  skill: SkillId;
 
   /** Skills that must be selected before this one */
-  needs: SkillRef[];
+  needs: SkillId[];
 
   /**
    * If true, only ONE of the `needs` skills is required (OR logic)
@@ -420,24 +419,24 @@ export interface RequireRule {
 
   /** Human-readable explanation shown when requirement not met */
   reason: string;
-}
+};
 
 /**
  * Alternative group - skills that serve the same purpose
  * Used for display grouping and "similar options" suggestions
  */
-export interface AlternativeGroup {
+export type AlternativeGroup = {
   /** Description of what these skills are for */
   purpose: string;
 
-  /** List of interchangeable skill aliases/IDs */
-  skills: SkillRef[];
-}
+  /** List of interchangeable skill IDs */
+  skills: SkillId[];
+};
 
 /**
  * Pre-configured stack of skills for a specific use case
  */
-export interface SuggestedStack {
+export type SuggestedStack = {
   /** Unique identifier for this stack */
   id: string;
 
@@ -452,19 +451,19 @@ export interface SuggestedStack {
 
   /**
    * Skill selections organized by category
-   * Structure: { agentName: { subcategory: skill_alias } }
+   * Structure: { agentName: { subcategory: skillId } }
    */
-  skills: Record<string, Partial<Record<Subcategory, SkillRef>>>;
+  skills: Record<string, Partial<Record<Subcategory, SkillId>>>;
 
   /** Guiding principle for this stack */
   philosophy: string;
-}
+};
 
 /**
  * Skill metadata extracted from individual skill directories.
  * Combines SKILL.md frontmatter with metadata.yaml before merging with skills-matrix.yaml.
  */
-export interface ExtractedSkillMetadata {
+export type ExtractedSkillMetadata = {
   /**
    * Unique skill identifier (normalized from frontmatter name)
    * Format: "category-subcategory-name" (kebab-case, no author suffix)
@@ -478,12 +477,6 @@ export interface ExtractedSkillMetadata {
    * @example "web/framework/react"
    */
   directoryPath: string;
-
-  /**
-   * Display name derived from id
-   * @example "Zustand" from "web-state-zustand"
-   */
-  name: string;
 
   /** Brief description of the skill's purpose (for CLI display) */
   description: string;
@@ -510,36 +503,41 @@ export interface ExtractedSkillMetadata {
   tags: string[];
 
   /**
-   * Skills this works well with (soft recommendation)
+   * Skills this works well with (soft recommendation).
+   * May contain display names at parse time; resolved to canonical IDs during matrix merge.
    * @example ["web-framework-react", "api-framework-hono"]
    */
-  compatibleWith: SkillRef[];
+  compatibleWith: SkillId[];
 
   /**
-   * Skills that cannot coexist with this one
+   * Skills that cannot coexist with this one.
+   * May contain display names at parse time; resolved to canonical IDs during matrix merge.
    * @example ["web-state-mobx", "web-state-redux"]
    */
-  conflictsWith: SkillRef[];
+  conflictsWith: SkillId[];
 
   /**
-   * Skills that must be present for this to work
+   * Skills that must be present for this to work.
+   * May contain display names at parse time; resolved to canonical IDs during matrix merge.
    * @example ["web-framework-react"] for web-state-zustand
    */
-  requires: SkillRef[];
+  requires: SkillId[];
 
   /**
-   * Setup skills that must be completed first
-   * Links usage skills to their prerequisites
+   * Setup skills that must be completed first.
+   * May contain display names at parse time; resolved to canonical IDs during matrix merge.
+   * Links usage skills to their prerequisites.
    * @example ["api-analytics-posthog-setup"] for api-analytics-posthog-analytics
    */
-  requiresSetup: SkillRef[];
+  requiresSetup: SkillId[];
 
   /**
-   * Usage skills this setup skill configures
-   * Links setup skills to what they enable
+   * Usage skills this setup skill configures.
+   * May contain display names at parse time; resolved to canonical IDs during matrix merge.
+   * Links setup skills to what they enable.
    * @example ["api-analytics-posthog-analytics", "api-analytics-posthog-flags"]
    */
-  providesSetupFor: SkillRef[];
+  providesSetupFor: SkillId[];
 
   /**
    * Relative path from src/ to the skill directory
@@ -555,13 +553,13 @@ export interface ExtractedSkillMetadata {
    * @example ".claude/skills/my-skill/"
    */
   localPath?: string;
-}
+};
 
 /**
  * Fully merged skills matrix for CLI consumption.
  * Output of mergeMatrixWithSkills() combining skills-matrix.yaml with extracted metadata.
  */
-export interface MergedSkillsMatrix {
+export type MergedSkillsMatrix = {
   /** Schema version for compatibility checking */
   version: string;
 
@@ -578,34 +576,31 @@ export interface MergedSkillsMatrix {
   suggestedStacks: ResolvedStack[];
 
   /**
-   * Alias lookup map (alias -> normalized skill ID)
+   * Display name to skill ID lookup map
    * @example { "react": "web-framework-react" }
    */
-  aliases: Partial<Record<SkillAlias, SkillId>>;
+  displayNameToId: Partial<Record<SkillDisplayName, SkillId>>;
 
   /**
-   * Reverse alias lookup (normalized skill ID -> alias)
+   * Skill ID to display name lookup (reverse map)
    * @example { "web-framework-react": "react" }
    */
-  aliasesReverse: Partial<Record<SkillId, SkillAlias>>;
+  displayNames: Partial<Record<SkillId, SkillDisplayName>>;
 
   /** Generated timestamp for cache invalidation */
   generatedAt: string;
-}
+};
 
 /** Single skill with all computed relationships resolved for CLI rendering */
-export interface ResolvedSkill {
+export type ResolvedSkill = {
   /** Full unique identifier in normalized format: "web-state-zustand" */
   id: SkillId;
 
   /**
-   * Short alias if defined in skill_aliases
+   * Short display name if defined in skill_aliases
    * @example "zustand" for "web-state-zustand"
    */
-  alias?: SkillAlias;
-
-  /** Human-readable display name */
-  name: string;
+  displayName?: SkillDisplayName;
 
   /** Brief description (for CLI display) */
   description: string;
@@ -634,14 +629,8 @@ export interface ResolvedSkill {
   /** Skills that are recommended when this is selected */
   recommends: SkillRelation[];
 
-  /** Skills that recommend THIS skill when THEY are selected (inverse of recommends) */
-  recommendedBy: SkillRelation[];
-
   /** Skills that THIS skill requires (must select first) */
   requires: SkillRequirement[];
-
-  /** Skills that require THIS skill (inverse of requires) */
-  requiredBy: SkillRelation[];
 
   /** Alternative skills that serve the same purpose */
   alternatives: SkillAlternative[];
@@ -673,17 +662,17 @@ export interface ResolvedSkill {
    * @example ".claude/skills/my-skill/"
    */
   localPath?: string;
-}
+};
 
-export interface SkillRelation {
+export type SkillRelation = {
   /** Full skill ID of the related skill */
   skillId: SkillId;
 
   /** Human-readable explanation of the relationship */
   reason: string;
-}
+};
 
-export interface SkillRequirement {
+export type SkillRequirement = {
   /** Full skill IDs that are required */
   skillIds: SkillId[];
 
@@ -696,17 +685,17 @@ export interface SkillRequirement {
 
   /** Human-readable explanation */
   reason: string;
-}
+};
 
-export interface SkillAlternative {
+export type SkillAlternative = {
   /** Full skill ID of the alternative */
   skillId: SkillId;
 
   /** What purpose this alternative serves */
   purpose: string;
-}
+};
 
-export interface ResolvedStack {
+export type ResolvedStack = {
   /** Stack identifier */
   id: string;
 
@@ -720,25 +709,22 @@ export interface ResolvedStack {
   audience: string[];
 
   /** Skill selections with resolved full skill IDs by category */
-  skills: Partial<Record<AgentName, Partial<Record<Subcategory, SkillRef>>>>;
+  skills: Partial<Record<AgentName, Partial<Record<Subcategory, SkillId>>>>;
 
   /** Flat list of all skill IDs in this stack */
   allSkillIds: SkillId[];
 
   /** Guiding principle */
   philosophy: string;
-}
+};
 
 /** Skill option as displayed in the wizard, computed based on current selections */
-export interface SkillOption {
+export type SkillOption = {
   /** Full skill ID */
   id: SkillId;
 
-  /** Short alias if available */
-  alias?: SkillAlias;
-
-  /** Display name */
-  name: string;
+  /** Short display name if available */
+  displayName?: SkillDisplayName;
 
   /** Description */
   description: string;
@@ -775,9 +761,9 @@ export interface SkillOption {
 
   /** Alternative skills that serve the same purpose */
   alternatives: SkillId[];
-}
+};
 
-export interface SelectionValidation {
+export type SelectionValidation = {
   /** Whether the selection is valid */
   valid: boolean;
 
@@ -786,9 +772,9 @@ export interface SelectionValidation {
 
   /** Warning messages (valid but with caveats) */
   warnings: ValidationWarning[];
-}
+};
 
-export interface ValidationError {
+export type ValidationError = {
   /** Type of error */
   type: "conflict" | "missing_requirement" | "category_exclusive";
 
@@ -797,9 +783,9 @@ export interface ValidationError {
 
   /** Skill IDs involved in the error */
   skills: SkillId[];
-}
+};
 
-export interface ValidationWarning {
+export type ValidationWarning = {
   /** Type of warning */
   type: "missing_recommendation" | "unused_setup";
 
@@ -808,4 +794,4 @@ export interface ValidationWarning {
 
   /** Skill IDs involved */
   skills: SkillId[];
-}
+};
