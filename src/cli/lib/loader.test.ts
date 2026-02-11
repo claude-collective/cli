@@ -16,7 +16,7 @@ vi.mock("../utils/logger", () => ({
 import { parseFrontmatter, loadAllAgents, loadProjectAgents, loadSkillsByIds } from "./loader";
 import { readFile, glob, directoryExists } from "../utils/fs";
 import { warn } from "../utils/logger";
-import type { SkillId } from "../types-matrix";
+import type { SkillId } from "../types";
 
 // =============================================================================
 // Helpers

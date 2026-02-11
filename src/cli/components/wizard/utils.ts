@@ -1,4 +1,4 @@
-import type { MergedSkillsMatrix, Domain } from "../../types-matrix.js";
+import type { Domain, MergedSkillsMatrix } from "../../types/index.js";
 
 /**
  * Get display name for a domain.

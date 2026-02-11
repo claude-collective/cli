@@ -3,8 +3,7 @@ import os from "os";
 import { fileExists, readFile, glob } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import { CLAUDE_DIR, PLUGINS_SUBDIR, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../consts";
-import type { PluginManifest } from "../../types";
-import type { MergedSkillsMatrix, SkillId } from "../types-matrix";
+import type { MergedSkillsMatrix, PluginManifest, SkillId } from "../types";
 import { pluginManifestSchema } from "./schemas";
 
 export function getUserPluginsDir(): string {

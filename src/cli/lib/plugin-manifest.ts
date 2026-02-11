@@ -1,7 +1,7 @@
 import path from "path";
 import { ensureDir, writeFile } from "../utils/fs";
 import { DEFAULT_VERSION } from "../consts";
-import type { PluginManifest, PluginAuthor } from "../../types";
+import type { PluginAuthor, PluginManifest } from "../types";
 
 const PLUGIN_DIR_NAME = ".claude-plugin";
 const PLUGIN_MANIFEST_FILE = "plugin.json";

@@ -11,8 +11,7 @@ import {
   readPluginManifest,
   getPluginSkillIds,
 } from "./plugin-finder";
-import type { PluginManifest } from "../../types";
-import type { SkillId } from "../types-matrix";
+import type { PluginManifest, SkillId } from "../types";
 import { createMockMatrix, createMockSkill } from "./__tests__/helpers";
 
 // =============================================================================

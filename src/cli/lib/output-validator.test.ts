@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { validateCompiledAgent, printOutputValidationResult } from "./output-validator";
-import type { ValidationResult } from "../../types";
-import type { AgentName } from "../types-matrix";
+import type { AgentName, ValidationResult } from "../types";
 
 // =============================================================================
 // Helpers

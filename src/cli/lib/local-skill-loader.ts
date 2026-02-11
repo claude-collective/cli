@@ -4,7 +4,7 @@ import { directoryExists, listDirectories, fileExists, readFile } from "../utils
 import { verbose, warn } from "../utils/logger";
 import { LOCAL_SKILLS_PATH } from "../consts";
 import { parseFrontmatter } from "./loader";
-import type { ExtractedSkillMetadata, CategoryPath, SkillId } from "../types-matrix";
+import type { CategoryPath, ExtractedSkillMetadata, SkillId } from "../types";
 import { localRawMetadataSchema } from "./schemas";
 
 const LOCAL_CATEGORY: CategoryPath = "local";

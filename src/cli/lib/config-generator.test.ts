@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { generateProjectConfigFromSkills, buildStackProperty } from "./config-generator";
-import type { Stack, StackAgentConfig } from "../types-stacks";
-import type { AgentName, SkillDisplayName, SkillId } from "../types-matrix";
+import type { AgentName, SkillDisplayName, SkillId, Stack, StackAgentConfig } from "../types";
 import { createMockSkill, createMockMatrix } from "./__tests__/helpers";
 
 describe("config-generator", () => {

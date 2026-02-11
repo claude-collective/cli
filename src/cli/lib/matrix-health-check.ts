@@ -1,11 +1,11 @@
 import { warn } from "../utils/logger";
 import type {
+  CategoryDefinition,
   MergedSkillsMatrix,
   ResolvedSkill,
   SkillId,
   Subcategory,
-  CategoryDefinition,
-} from "../types-matrix";
+} from "../types";
 import { typedEntries, typedKeys } from "../utils/typed-object";
 
 export type MatrixHealthIssue = {

@@ -8,7 +8,7 @@ import type {
   ResolvedSkill,
   SkillId,
   Subcategory,
-} from "../types-matrix";
+} from "../types";
 
 // Mock logger to suppress warnings during tests
 vi.mock("../utils/logger", () => ({

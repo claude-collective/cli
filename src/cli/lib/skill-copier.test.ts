@@ -3,7 +3,7 @@ import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
 import { copySkillsToPluginFromSource, copySkillsToLocalFlattened } from "./skill-copier";
-import type { CategoryPath, ResolvedSkill, SkillId } from "../types-matrix";
+import type { CategoryPath, ResolvedSkill, SkillId } from "../types";
 import type { SourceLoadResult } from "./source-loader";
 import { PROJECT_ROOT } from "../consts";
 import { createMockSkill as _createMockSkill, createMockMatrix } from "./__tests__/helpers";

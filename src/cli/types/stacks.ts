@@ -3,7 +3,9 @@
  * Stacks define agent groupings with technology selections per agent
  */
 
-import type { AgentName, SkillDisplayName, Subcategory } from "./types-matrix";
+import type { AgentName } from "./agents";
+import type { SkillDisplayName } from "./skills";
+import type { Subcategory } from "./matrix";
 
 /**
  * Technology selections for a specific agent within a stack.

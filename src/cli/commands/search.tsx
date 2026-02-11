@@ -24,7 +24,7 @@ import { sortBy } from "remeda";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { SkillSearch, type SkillSearchResult } from "../components/skill-search/index.js";
 import type { SourcedSkill } from "../components/skill-search/skill-search.js";
-import type { ResolvedSkill, SkillId, CategoryPath } from "../types-matrix.js";
+import type { CategoryPath, ResolvedSkill, SkillId } from "../types/index.js";
 import { LOCAL_SKILLS_PATH } from "../consts.js";
 
 /**

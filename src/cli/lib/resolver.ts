@@ -5,15 +5,18 @@ import { verbose } from "../utils/logger";
 import type {
   AgentConfig,
   AgentDefinition,
+  AgentName,
   CompileAgentConfig,
   CompileConfig,
   ProjectConfig,
   Skill,
   SkillDefinition,
+  SkillDisplayName,
+  SkillId,
   SkillReference,
+  Stack,
+  Subcategory,
 } from "../types";
-import type { Stack } from "../types-stacks";
-import type { AgentName, SkillDisplayName, SkillId, Subcategory } from "../types-matrix";
 import { typedEntries, typedKeys } from "../utils/typed-object";
 
 export async function resolveTemplate(projectRoot: string, stackId: string): Promise<string> {

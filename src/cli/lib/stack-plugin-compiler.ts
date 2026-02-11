@@ -23,18 +23,19 @@ import { loadSkillsMatrix } from "./matrix-loader";
 import { SKILLS_MATRIX_PATH } from "../consts";
 import { resolveAgents, stackToCompileConfig } from "./resolver";
 import { buildStackProperty } from "./config-generator";
-import type { Stack } from "../types-stacks";
-import { hashString } from "./versioning";
 import type {
-  AgentDefinition,
-  PluginManifest,
-  ProjectConfig,
   AgentConfig,
+  AgentDefinition,
+  AgentName,
   CompileConfig,
   CompiledAgentData,
+  PluginManifest,
+  ProjectConfig,
   SkillDefinition,
-} from "../../types";
-import type { AgentName, SkillId } from "../types-matrix";
+  SkillId,
+  Stack,
+} from "../types";
+import { hashString } from "./versioning";
 import { pluginManifestSchema } from "./schemas";
 import { unique } from "remeda";
 import { typedEntries, typedKeys } from "../utils/typed-object";

@@ -18,7 +18,7 @@ import React, { useState, useCallback, useMemo } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import { ThemeProvider } from "@inkjs/ui";
 import { cliTheme } from "../themes/default.js";
-import type { ResolvedSkill, SkillId } from "../../types-matrix.js";
+import type { ResolvedSkill, SkillId } from "../../types/index.js";
 
 // =============================================================================
 // Types

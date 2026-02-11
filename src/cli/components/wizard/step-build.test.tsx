@@ -8,7 +8,7 @@ import { indexBy, mapToObj } from "remeda";
 import { describe, expect, it, afterEach, vi } from "vitest";
 import { StepBuild, type StepBuildProps, validateBuildStep, getDisplayLabel } from "./step-build";
 import type { CategoryRow as GridCategoryRow } from "./category-grid";
-import type { CategoryDefinition, ResolvedSkill, SkillDisplayName, SkillId, Subcategory, SubcategorySelections } from "../../types-matrix";
+import type { CategoryDefinition, ResolvedSkill, SkillDisplayName, SkillId, Subcategory, SubcategorySelections } from "../../types";
 import {
   ENTER,
   ESCAPE,

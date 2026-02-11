@@ -1,3 +1,12 @@
+/**
+ * Matrix types — domain/category/relationship definitions for the skills matrix.
+ * Includes base union types (Domain, Subcategory, ModelName, PermissionMode)
+ * and all structural types from skills-matrix.yaml.
+ */
+
+import type { CategoryPath, SkillDisplayName, SkillId } from "./skills";
+import type { AgentName } from "./agents";
+
 // =============================================================================
 // Base Union Types - Single Source of Truth
 // =============================================================================
@@ -55,150 +64,6 @@ export type Subcategory =
   | "cli-prompts"
   | "cli-testing";
 
-/**
- * Valid built-in agent names in the system.
- * Derived from src/agents/ directory structure and stacks.yaml.
- */
-export type AgentName =
-  // Developers
-  | "web-developer"
-  | "api-developer"
-  | "cli-developer"
-  | "web-architecture"
-  // Meta
-  | "agent-summoner"
-  | "documentor"
-  | "skill-summoner"
-  // Migration
-  | "cli-migrator"
-  // Pattern
-  | "pattern-scout"
-  | "web-pattern-critique"
-  // Planning
-  | "web-pm"
-  // Researchers
-  | "api-researcher"
-  | "web-researcher"
-  // Reviewers
-  | "api-reviewer"
-  | "cli-reviewer"
-  | "web-reviewer"
-  // Testers
-  | "cli-tester"
-  | "web-tester";
-
-/**
- * Skill display names — short human-readable labels for skills.
- * These are the keys in skills-matrix.yaml `skill_aliases` section.
- * Display names are resolved to canonical SkillId at the YAML parse boundary.
- */
-export type SkillDisplayName =
-  // Frameworks
-  | "react"
-  | "vue"
-  | "angular"
-  | "solidjs"
-  // Meta-frameworks
-  | "nextjs-app-router"
-  | "nextjs-server-actions"
-  | "remix"
-  | "nuxt"
-  // Styling
-  | "scss-modules"
-  | "cva"
-  | "tailwind"
-  // Client State
-  | "zustand"
-  | "redux-toolkit"
-  | "pinia"
-  | "ngrx-signalstore"
-  | "jotai"
-  | "mobx"
-  // Server State / Data Fetching
-  | "react-query"
-  | "swr"
-  | "graphql-apollo"
-  | "graphql-urql"
-  | "trpc"
-  // Forms & Validation
-  | "react-hook-form"
-  | "vee-validate"
-  | "zod-validation"
-  // Testing
-  | "vitest"
-  | "playwright-e2e"
-  | "cypress-e2e"
-  | "react-testing-library"
-  | "vue-test-utils"
-  | "msw"
-  // UI Components
-  | "shadcn-ui"
-  | "tanstack-table"
-  | "radix-ui"
-  // Backend - API Framework
-  | "hono"
-  | "express"
-  | "fastify"
-  // Backend - Database
-  | "drizzle"
-  | "prisma"
-  // Backend - Auth
-  | "better-auth"
-  // Backend - Observability
-  | "axiom-pino-sentry"
-  // Backend - Analytics
-  | "posthog"
-  | "posthog-flags"
-  // Backend - Email
-  | "resend"
-  // Backend - CI/CD
-  | "github-actions"
-  // Mobile
-  | "react-native"
-  | "expo"
-  // Setup / Infrastructure
-  | "turborepo"
-  | "tooling"
-  | "posthog-setup"
-  | "env"
-  | "observability-setup"
-  | "email-setup"
-  // Animation / PWA / Realtime / etc.
-  | "framer-motion"
-  | "css-animations"
-  | "view-transitions"
-  | "storybook"
-  | "error-boundaries"
-  | "accessibility"
-  | "websockets"
-  | "sse"
-  | "socket-io"
-  | "service-workers"
-  | "file-upload"
-  | "image-handling"
-  | "date-fns"
-  // Backend-specific category skills
-  | "api-testing"
-  | "api-performance"
-  | "web-performance"
-  // Security
-  | "security"
-  // CLI
-  | "commander"
-  | "cli-commander"
-  | "oclif"
-  // Reviewing / Meta
-  | "reviewing"
-  | "cli-reviewing"
-  | "research-methodology"
-  // Methodology
-  | "investigation-requirements"
-  | "anti-over-engineering"
-  | "success-criteria"
-  | "write-verification"
-  | "improvement-protocol"
-  | "context-management";
-
 // =============================================================================
 // Shared Scalar Union Types
 // =============================================================================
@@ -216,44 +81,8 @@ export type PermissionMode =
   | "delegate";
 
 // =============================================================================
-// Template Literal Types - Derived from Base Types
+// Category & Relationship Types
 // =============================================================================
-
-/**
- * Prefix segments used in skill IDs.
- * Includes domains plus path-based prefixes (infra, meta, security)
- * that appear in skill ID format but are not wizard domains.
- */
-export type SkillIdPrefix = "web" | "api" | "cli" | "mobile" | "infra" | "meta" | "security";
-
-/**
- * Skill ID format: prefix-subcategory-name segments in kebab-case.
- * @example "web-framework-react", "api-database-drizzle", "meta-reviewing-reviewing"
- */
-export type SkillId = `${SkillIdPrefix}-${string}`;
-
-/**
- * Category ID format used in resolved skills.
- * Either "prefix-subcategory" (e.g., "web-framework", "api-database") or a standalone subcategory (e.g., "testing").
- * Includes "local" for user-defined local skills.
- */
-export type CategoryPath =
-  | `${SkillIdPrefix}/${string}`
-  | `${SkillIdPrefix}-${string}`
-  | Subcategory
-  | "local";
-
-/**
- * Subcategory-keyed selections mapping to arrays of canonical skill IDs.
- * Used for wizard domain selections at the subcategory level.
- */
-export type SubcategorySelections = Partial<Record<Subcategory, SkillId[]>>;
-
-/**
- * Full domain selections: Domain -> Subcategory -> SkillId[].
- * Used throughout the wizard pipeline (store, components, result).
- */
-export type DomainSelections = Partial<Record<Domain, SubcategorySelections>>;
 
 /**
  * Category definitions indexed by subcategory ID.
@@ -262,31 +91,10 @@ export type DomainSelections = Partial<Record<Domain, SubcategorySelections>>;
 export type CategoryMap = Partial<Record<Subcategory, CategoryDefinition>>;
 
 /**
- * Resolved subcategory-to-skill mappings after alias resolution.
- * Maps each subcategory to its resolved SkillId.
+ * Full domain selections: Domain -> Subcategory -> SkillId[].
+ * Used throughout the wizard pipeline (store, components, result).
  */
-export type ResolvedSubcategorySkills = Partial<Record<Subcategory, SkillId>>;
-
-/** Root configuration from skills-matrix.yaml */
-export type SkillsMatrixConfig = {
-  /** Semantic version of the matrix schema (e.g., "1.0.0") */
-  version: string;
-
-  /**
-   * Category definitions indexed by category ID
-   * Each category belongs to a domain (web, api, cli, mobile, shared)
-   */
-  categories: CategoryMap;
-
-  /** Relationship rules between skills */
-  relationships: RelationshipDefinitions;
-
-  /**
-   * Maps short display names to normalized skill IDs
-   * @example { "react": "web-framework-react", "zustand": "web-state-zustand" }
-   */
-  skill_aliases: Partial<Record<SkillDisplayName, SkillId>>;
-};
+export type DomainSelections = Partial<Record<Domain, Partial<Record<Subcategory, SkillId[]>>>>;
 
 /**
  * Category definition from skills-matrix.yaml
@@ -433,6 +241,31 @@ export type AlternativeGroup = {
   skills: SkillId[];
 };
 
+/** Root configuration from skills-matrix.yaml */
+export type SkillsMatrixConfig = {
+  /** Semantic version of the matrix schema (e.g., "1.0.0") */
+  version: string;
+
+  /**
+   * Category definitions indexed by category ID
+   * Each category belongs to a domain (web, api, cli, mobile, shared)
+   */
+  categories: CategoryMap;
+
+  /** Relationship rules between skills */
+  relationships: RelationshipDefinitions;
+
+  /**
+   * Maps short display names to normalized skill IDs
+   * @example { "react": "web-framework-react", "zustand": "web-state-zustand" }
+   */
+  skill_aliases: Partial<Record<SkillDisplayName, SkillId>>;
+};
+
+// =============================================================================
+// Resolved Matrix Types
+// =============================================================================
+
 /**
  * Pre-configured stack of skills for a specific use case
  */
@@ -457,102 +290,6 @@ export type SuggestedStack = {
 
   /** Guiding principle for this stack */
   philosophy: string;
-};
-
-/**
- * Skill metadata extracted from individual skill directories.
- * Combines SKILL.md frontmatter with metadata.yaml before merging with skills-matrix.yaml.
- */
-export type ExtractedSkillMetadata = {
-  /**
-   * Unique skill identifier (normalized from frontmatter name)
-   * Format: "category-subcategory-name" (kebab-case, no author suffix)
-   * @example "web-framework-react"
-   */
-  id: SkillId;
-
-  /**
-   * Directory path for filesystem access
-   * Used for loading skill files from the filesystem
-   * @example "web/framework/react"
-   */
-  directoryPath: string;
-
-  /** Brief description of the skill's purpose (for CLI display) */
-  description: string;
-
-  /** When an AI agent should invoke this skill (decision criteria) */
-  usageGuidance?: string;
-
-  /**
-   * Primary category this skill belongs to
-   * @example "state", "styling", "framework", "api"
-   */
-  category: CategoryPath;
-
-  /**
-   * If true, only one skill from this category can be active
-   * @default true
-   */
-  categoryExclusive: boolean;
-
-  /** Author handle for attribution */
-  author: string;
-
-  /** Tags for search and filtering */
-  tags: string[];
-
-  /**
-   * Skills this works well with (soft recommendation).
-   * May contain display names at parse time; resolved to canonical IDs during matrix merge.
-   * @example ["web-framework-react", "api-framework-hono"]
-   */
-  compatibleWith: SkillId[];
-
-  /**
-   * Skills that cannot coexist with this one.
-   * May contain display names at parse time; resolved to canonical IDs during matrix merge.
-   * @example ["web-state-mobx", "web-state-redux"]
-   */
-  conflictsWith: SkillId[];
-
-  /**
-   * Skills that must be present for this to work.
-   * May contain display names at parse time; resolved to canonical IDs during matrix merge.
-   * @example ["web-framework-react"] for web-state-zustand
-   */
-  requires: SkillId[];
-
-  /**
-   * Setup skills that must be completed first.
-   * May contain display names at parse time; resolved to canonical IDs during matrix merge.
-   * Links usage skills to their prerequisites.
-   * @example ["api-analytics-posthog-setup"] for api-analytics-posthog-analytics
-   */
-  requiresSetup: SkillId[];
-
-  /**
-   * Usage skills this setup skill configures.
-   * May contain display names at parse time; resolved to canonical IDs during matrix merge.
-   * Links setup skills to what they enable.
-   * @example ["api-analytics-posthog-analytics", "api-analytics-posthog-flags"]
-   */
-  providesSetupFor: SkillId[];
-
-  /**
-   * Relative path from src/ to the skill directory
-   * @example "skills/web/client-state/zustand/"
-   */
-  path: string;
-
-  /** True if this skill is from .claude/skills/ (user-defined local skill) */
-  local?: boolean;
-
-  /**
-   * Relative path from project root for local skills
-   * @example ".claude/skills/my-skill/"
-   */
-  localPath?: string;
 };
 
 /**
@@ -794,4 +531,100 @@ export type ValidationWarning = {
 
   /** Skill IDs involved */
   skills: SkillId[];
+};
+
+/**
+ * Skill metadata extracted from individual skill directories.
+ * Combines SKILL.md frontmatter with metadata.yaml before merging with skills-matrix.yaml.
+ */
+export type ExtractedSkillMetadata = {
+  /**
+   * Unique skill identifier (normalized from frontmatter name)
+   * Format: "category-subcategory-name" (kebab-case, no author suffix)
+   * @example "web-framework-react"
+   */
+  id: SkillId;
+
+  /**
+   * Directory path for filesystem access
+   * Used for loading skill files from the filesystem
+   * @example "web/framework/react"
+   */
+  directoryPath: string;
+
+  /** Brief description of the skill's purpose (for CLI display) */
+  description: string;
+
+  /** When an AI agent should invoke this skill (decision criteria) */
+  usageGuidance?: string;
+
+  /**
+   * Primary category this skill belongs to
+   * @example "state", "styling", "framework", "api"
+   */
+  category: CategoryPath;
+
+  /**
+   * If true, only one skill from this category can be active
+   * @default true
+   */
+  categoryExclusive: boolean;
+
+  /** Author handle for attribution */
+  author: string;
+
+  /** Tags for search and filtering */
+  tags: string[];
+
+  /**
+   * Skills this works well with (soft recommendation).
+   * May contain display names at parse time; resolved to canonical IDs during matrix merge.
+   * @example ["web-framework-react", "api-framework-hono"]
+   */
+  compatibleWith: SkillId[];
+
+  /**
+   * Skills that cannot coexist with this one.
+   * May contain display names at parse time; resolved to canonical IDs during matrix merge.
+   * @example ["web-state-mobx", "web-state-redux"]
+   */
+  conflictsWith: SkillId[];
+
+  /**
+   * Skills that must be present for this to work.
+   * May contain display names at parse time; resolved to canonical IDs during matrix merge.
+   * @example ["web-framework-react"] for web-state-zustand
+   */
+  requires: SkillId[];
+
+  /**
+   * Setup skills that must be completed first.
+   * May contain display names at parse time; resolved to canonical IDs during matrix merge.
+   * Links usage skills to their prerequisites.
+   * @example ["api-analytics-posthog-setup"] for api-analytics-posthog-analytics
+   */
+  requiresSetup: SkillId[];
+
+  /**
+   * Usage skills this setup skill configures.
+   * May contain display names at parse time; resolved to canonical IDs during matrix merge.
+   * Links setup skills to what they enable.
+   * @example ["api-analytics-posthog-analytics", "api-analytics-posthog-flags"]
+   */
+  providesSetupFor: SkillId[];
+
+  /**
+   * Relative path from src/ to the skill directory
+   * @example "skills/web/client-state/zustand/"
+   */
+  path: string;
+
+  /** True if this skill is from .claude/skills/ (user-defined local skill) */
+  local?: boolean;
+
+  /**
+   * Relative path from project root for local skills
+   * @example ".claude/skills/my-skill/"
+   */
+  localPath?: string;
 };

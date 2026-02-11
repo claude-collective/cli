@@ -14,41 +14,41 @@
 
 import { z } from "zod";
 import type {
-  AgentYamlConfig,
-  PluginManifest,
-  ProjectConfig,
-  SkillFrontmatter,
-  SkillMetadataConfig,
   AgentHookAction,
   AgentHookDefinition,
-  SkillAssignment,
-  PluginAuthor,
-  ValidationResult,
-  Marketplace,
-  MarketplaceOwner,
-  MarketplaceMetadata,
-  MarketplacePlugin,
-  MarketplaceRemoteSource,
-} from "../../types";
-import type { Stack, StacksConfig, StackAgentConfig } from "../types-stacks";
-import type {
   AgentName,
+  AgentYamlConfig,
   AlternativeGroup,
   CategoryDefinition,
   CategoryPath,
   ConflictRule,
   DiscourageRule,
   Domain,
+  Marketplace,
+  MarketplaceMetadata,
+  MarketplaceOwner,
+  MarketplacePlugin,
+  MarketplaceRemoteSource,
   ModelName,
   PermissionMode,
+  PluginAuthor,
+  PluginManifest,
+  ProjectConfig,
   RecommendRule,
   RelationshipDefinitions,
   RequireRule,
+  SkillAssignment,
   SkillDisplayName,
+  SkillFrontmatter,
   SkillId,
+  SkillMetadataConfig,
   SkillsMatrixConfig,
+  Stack,
+  StackAgentConfig,
+  StacksConfig,
   Subcategory,
-} from "../types-matrix";
+  ValidationResult,
+} from "../types";
 
 // =============================================================================
 // Base Union Type Schemas

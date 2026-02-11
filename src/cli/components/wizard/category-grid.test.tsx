@@ -12,7 +12,7 @@ import {
   type CategoryRow,
   type CategoryOption,
 } from "./category-grid";
-import type { SkillId, Subcategory } from "../../types-matrix";
+import type { SkillId, Subcategory } from "../../types";
 import {
   ARROW_UP,
   ARROW_DOWN,

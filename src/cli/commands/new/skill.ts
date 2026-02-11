@@ -5,7 +5,7 @@ import { resolveAuthor } from "../../lib/config.js";
 import { writeFile, directoryExists } from "../../utils/fs.js";
 import { LOCAL_SKILLS_PATH } from "../../consts.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
-import type { CategoryPath } from "../../types-matrix.js";
+import type { CategoryPath } from "../../types/index.js";
 
 const DEFAULT_AUTHOR = "@local";
 const DEFAULT_CATEGORY = "local";

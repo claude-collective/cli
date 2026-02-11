@@ -1,5 +1,4 @@
-import type { ValidationResult } from "../../types";
-import type { AgentName } from "../types-matrix";
+import type { AgentName, ValidationResult } from "../types";
 import { extractFrontmatter } from "../utils/frontmatter";
 
 function checkXmlTagBalance(content: string): string[] {

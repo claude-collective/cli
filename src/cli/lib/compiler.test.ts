@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { AgentConfig, CompileContext, Skill } from "../types";
-import type { AgentName, SkillId } from "../types-matrix";
+import type { AgentConfig, AgentName, CompileContext, Skill, SkillId } from "../types";
 
 // Mock file system operations
 vi.mock("../utils/fs", () => ({

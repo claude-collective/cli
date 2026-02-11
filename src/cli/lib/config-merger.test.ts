@@ -4,7 +4,7 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { stringify as stringifyYaml } from "yaml";
 import { mergeWithExistingConfig } from "./config-merger";
-import type { ProjectConfig } from "../../types";
+import type { ProjectConfig } from "../types";
 
 describe("config-merger", () => {
   let tempDir: string;

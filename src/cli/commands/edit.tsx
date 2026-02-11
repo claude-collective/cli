@@ -15,7 +15,7 @@ import { bumpPluginVersion } from "../lib/plugin-version.js";
 import { getAgentDefinitions } from "../lib/agent-fetcher.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { detectInstallation } from "../lib/installation.js";
-import type { SkillId } from "../types-matrix.js";
+import type { SkillId } from "../types/index.js";
 
 export default class Edit extends BaseCommand {
   static summary = "Edit skills in the plugin";

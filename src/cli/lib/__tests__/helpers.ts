@@ -187,17 +187,18 @@ export async function runCliCommand(args: string[]) {
   return runCommand(args, { root: CLI_ROOT });
 }
 import type {
+  AgentDefinition,
   CategoryDefinition,
   CategoryPath,
   Domain,
   MergedSkillsMatrix,
+  ProjectConfig,
   ResolvedSkill,
   ResolvedStack,
   SkillDisplayName,
   SkillId,
   Subcategory,
-} from "../../types-matrix";
-import type { AgentDefinition, ProjectConfig } from "../../../types";
+} from "../../types";
 import {
   createTestReactSkill,
   createTestVueSkill,
@@ -507,7 +508,7 @@ export function createMockMatrix(
 ): MergedSkillsMatrix {
   return {
     version: "1.0.0",
-    categories: {} as Record<Subcategory, import("../../types-matrix").CategoryDefinition>,
+    categories: {} as Record<Subcategory, import("../../types").CategoryDefinition>,
     skills,
     suggestedStacks: [],
     displayNameToId: {} as Record<SkillDisplayName, SkillId>,
@@ -553,7 +554,7 @@ export function createMockMatrixWithMethodology(
           order: 0,
         },
         ...overrides?.categories,
-      } as Record<Subcategory, import("../../types-matrix").CategoryDefinition>,
+      } as Record<Subcategory, import("../../types").CategoryDefinition>,
       ...overrides,
     },
   );

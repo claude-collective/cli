@@ -1,14 +1,15 @@
-import type { ProjectConfig } from "../../types";
 import type {
   AgentName,
   CategoryPath,
   MergedSkillsMatrix,
+  ProjectConfig,
   ResolvedSubcategorySkills,
   SkillDisplayName,
   SkillId,
+  Stack,
+  StackAgentConfig,
   Subcategory,
-} from "../types-matrix";
-import type { Stack, StackAgentConfig } from "../types-stacks";
+} from "../types";
 import { typedEntries } from "../utils/typed-object";
 import { getAgentsForSkill } from "./skill-agent-mappings";
 

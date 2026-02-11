@@ -12,17 +12,17 @@ import {
   skillIdSchema,
 } from "./schemas";
 import type {
-  SkillsMatrixConfig,
   ExtractedSkillMetadata,
   MergedSkillsMatrix,
   ResolvedSkill,
   ResolvedStack,
+  SkillAlternative,
+  SkillDisplayName,
+  SkillId,
   SkillRelation,
   SkillRequirement,
-  SkillAlternative,
-  SkillId,
-  SkillDisplayName,
-} from "../types-matrix";
+  SkillsMatrixConfig,
+} from "../types";
 
 /** Zod schema for RawMetadata from individual skill metadata.yaml files */
 const rawMetadataSchema = z.object({

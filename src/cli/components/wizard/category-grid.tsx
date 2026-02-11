@@ -17,7 +17,7 @@
 import React, { useCallback, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
 import { sortBy } from "remeda";
-import type { SkillId, Subcategory } from "../../types-matrix.js";
+import type { SkillId, Subcategory } from "../../types/index.js";
 
 // Types
 

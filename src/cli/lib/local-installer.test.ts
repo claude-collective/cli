@@ -6,8 +6,7 @@ import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { installLocal, type LocalInstallOptions } from "./local-installer";
 import type { WizardResultV2 } from "../components/wizard/wizard";
 import type { SourceLoadResult } from "./source-loader";
-import type { MergedSkillsMatrix } from "../types-matrix";
-import type { ProjectConfig } from "../../types";
+import type { MergedSkillsMatrix, ProjectConfig } from "../types";
 import { createMockMatrix } from "./__tests__/helpers";
 
 /**

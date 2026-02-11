@@ -11,7 +11,7 @@ import type {
   SkillId,
   SkillRelation,
   SkillRequirement,
-} from "../types-matrix.js";
+} from "../types/index.js";
 
 /**
  * Maximum number of lines to show in content preview

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { SkillId } from "../types-matrix";
+import type { SkillId } from "../types";
 
 // Mock file system
 vi.mock("../utils/fs", () => ({

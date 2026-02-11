@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { SKILL_TO_AGENTS, getAgentsForSkill } from "./skill-agent-mappings";
 import { loadDefaultMappings, clearDefaultsCache, getCachedDefaults } from "./defaults-loader";
 
-import type { ProjectConfig } from "../../types";
+import type { ProjectConfig } from "../types";
 
 // =============================================================================
 // P1-18: Test Agent-skill mapping from skill-agent-mappings.ts

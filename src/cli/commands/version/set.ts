@@ -2,13 +2,11 @@
  * Set plugin version to a specific value.
  */
 import { BaseCommand } from "../../base-command.js";
-import { Args, Flags } from "@oclif/core";
+import { Args } from "@oclif/core";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
-import path from "path";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts.js";
 import { readFile, writeFile } from "../../utils/fs.js";
 import { findPluginManifest } from "../../lib/plugin-manifest-finder.js";
-import type { PluginManifest } from "../../../types.js";
 import { pluginManifestSchema } from "../../lib/schemas.js";
 
 const SEMVER_REGEX = /^(\d+)\.(\d+)\.(\d+)$/;

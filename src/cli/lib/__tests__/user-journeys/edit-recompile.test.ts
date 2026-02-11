@@ -22,7 +22,7 @@ import {
   DEFAULT_TEST_SKILLS,
   DEFAULT_TEST_AGENTS,
 } from "../fixtures/create-test-source";
-import type { AgentName, SkillId } from "../../../types-matrix";
+import type { AgentName, SkillId } from "../../../types";
 
 // =============================================================================
 // Constants

@@ -4,8 +4,7 @@ import { unique } from "remeda";
 import { glob, readFile, directoryExists } from "../utils/fs";
 import { verbose, warn } from "../utils/logger";
 import { CLAUDE_SRC_DIR, DIRS } from "../consts";
-import type { AgentDefinition, SkillDefinition, SkillFrontmatter } from "../types";
-import type { SkillId } from "../types-matrix";
+import type { AgentDefinition, SkillDefinition, SkillFrontmatter, SkillId } from "../types";
 import { skillFrontmatterLoaderSchema, agentYamlConfigSchema } from "./schemas";
 
 const FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---/;

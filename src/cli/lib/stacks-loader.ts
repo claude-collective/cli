@@ -3,9 +3,7 @@ import path from "path";
 import { mapValues } from "remeda";
 import { readFile, fileExists } from "../utils/fs";
 import { verbose, warn } from "../utils/logger";
-import type { Stack, StacksConfig, StackAgentConfig } from "../types-stacks";
-import type { SkillReference } from "../types";
-import type { SkillId, Subcategory } from "../types-matrix";
+import type { SkillId, SkillReference, Stack, StackAgentConfig, Subcategory } from "../types";
 import { stacksConfigSchema } from "./schemas";
 import { KEY_SUBCATEGORIES } from "../consts";
 

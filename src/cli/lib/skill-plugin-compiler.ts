@@ -10,7 +10,7 @@ import {
 import { parseFrontmatter } from "./loader";
 import { hashSkillFolder } from "./versioning";
 import { DEFAULT_VERSION } from "../consts";
-import type { PluginManifest, SkillFrontmatter, SkillMetadataConfig } from "../../types";
+import type { PluginManifest, SkillFrontmatter, SkillMetadataConfig } from "../types";
 import { skillMetadataConfigSchema, pluginManifestSchema } from "./schemas";
 
 export type SkillPluginOptions = {

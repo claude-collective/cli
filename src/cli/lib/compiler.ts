@@ -16,8 +16,7 @@ import { verbose } from "../utils/logger";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, DIRS, PROJECT_ROOT } from "../consts";
 import { resolveClaudeMd } from "./resolver";
 import { validateCompiledAgent, printOutputValidationResult } from "./output-validator";
-import type { AgentConfig, CompiledAgentData, CompileContext } from "../types";
-import type { AgentName } from "../types-matrix";
+import type { AgentConfig, AgentName, CompiledAgentData, CompileContext } from "../types";
 import { typedEntries } from "../utils/typed-object";
 
 async function compileAgent(

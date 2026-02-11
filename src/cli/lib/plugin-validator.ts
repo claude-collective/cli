@@ -4,7 +4,7 @@ import path from "path";
 import fg from "fast-glob";
 import { fileExists, readFile, directoryExists, listDirectories } from "../utils/fs";
 import { PROJECT_ROOT } from "../consts";
-import type { ValidationResult } from "../../types";
+import type { ValidationResult } from "../types";
 import { countBy } from "remeda";
 import { extractFrontmatter } from "../utils/frontmatter";
 

@@ -1,7 +1,7 @@
 import path from "path";
 import os from "os";
 import { fileURLToPath } from "url";
-import type { SkillId, Subcategory } from "./types-matrix.js";
+import type { SkillId, Subcategory } from "./types/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

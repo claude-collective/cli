@@ -1,6 +1,6 @@
 import path from "path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { SkillsMatrixConfig } from "../types-matrix";
+import type { SkillsMatrixConfig } from "../types";
 
 // =============================================================================
 // Module-level mock setup

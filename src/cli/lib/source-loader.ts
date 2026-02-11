@@ -5,10 +5,10 @@ import type {
   MergedSkillsMatrix,
   ResolvedSkill,
   ResolvedStack,
-  SkillId,
   SkillDisplayName,
-} from "../types-matrix";
-import type { Stack } from "../types-stacks";
+  SkillId,
+  Stack,
+} from "../types";
 import { fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import { typedKeys } from "../utils/typed-object";

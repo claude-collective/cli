@@ -3,7 +3,7 @@ import { parse as parseYaml } from "yaml";
 import { readFile, fileExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../consts";
-import type { ProjectConfig, ValidationResult } from "../../types";
+import type { ProjectConfig, ValidationResult } from "../types";
 import { projectConfigLoaderSchema } from "./schemas";
 
 const CONFIG_PATH = `${CLAUDE_SRC_DIR}/config.yaml`;

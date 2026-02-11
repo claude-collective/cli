@@ -21,7 +21,7 @@ import type {
   SkillDisplayName,
   SkillId,
   Subcategory,
-} from "../types-matrix";
+} from "../types";
 import { createMockSkill, createMockMatrix } from "./__tests__/helpers";
 
 /**

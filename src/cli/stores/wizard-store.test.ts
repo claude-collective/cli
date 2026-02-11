@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { useWizardStore } from "./wizard-store";
 import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
-import type { Domain, Subcategory } from "../types-matrix";
+import type { Domain, Subcategory } from "../types";
 
 // =============================================================================
 // Tests

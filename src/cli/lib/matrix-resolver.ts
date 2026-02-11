@@ -1,16 +1,16 @@
 import { groupBy } from "remeda";
 import type {
+  CategoryPath,
   MergedSkillsMatrix,
   ResolvedSkill,
-  SkillOption,
-  SkillId,
-  SkillDisplayName,
-  Subcategory,
-  CategoryPath,
   SelectionValidation,
+  SkillDisplayName,
+  SkillId,
+  SkillOption,
+  Subcategory,
   ValidationError,
   ValidationWarning,
-} from "../types-matrix";
+} from "../types";
 import { typedEntries } from "../utils/typed-object";
 
 /** Get a human-readable label for a skill, preferring display name over full ID */

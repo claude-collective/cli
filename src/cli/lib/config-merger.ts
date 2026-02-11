@@ -1,5 +1,5 @@
 import { difference } from "remeda";
-import type { ProjectConfig } from "../../types";
+import type { ProjectConfig } from "../types";
 import { loadProjectConfig } from "./project-config";
 import { loadProjectSourceConfig } from "./config";
 

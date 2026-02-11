@@ -11,8 +11,7 @@
  * to use the new agent-centric approach.
  */
 
-import type { ProjectConfig } from "../../types";
-import type { AgentName, CategoryPath } from "../types-matrix";
+import type { AgentName, CategoryPath, ProjectConfig } from "../types";
 import { getCachedDefaults } from "./defaults-loader";
 
 // =============================================================================

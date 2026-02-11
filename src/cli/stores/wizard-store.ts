@@ -6,7 +6,7 @@ import type {
   SkillDisplayName,
   SkillId,
   Subcategory,
-} from "../types-matrix.js";
+} from "../types/index.js";
 import { typedKeys } from "../utils/typed-object.js";
 
 /** All available domains that the build step should cycle through */

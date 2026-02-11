@@ -20,7 +20,7 @@ import { Wizard } from "../../../components/wizard/wizard";
 import { useWizardStore } from "../../../stores/wizard-store";
 import { createComprehensiveMatrix, createBasicMatrix } from "../helpers";
 
-import type { MergedSkillsMatrix } from "../../../types-matrix";
+import type { MergedSkillsMatrix } from "../../../types";
 import { ARROW_DOWN, ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../test-constants";
 
 // =============================================================================

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { CompiledStackPlugin } from "./stack-plugin-compiler";
-import type { AgentName, SkillId } from "../types-matrix";
+import type { AgentName, SkillId } from "../types";
 
 // Mock dependencies before imports
 vi.mock("./stack-plugin-compiler", () => ({

@@ -5,7 +5,7 @@ import { CACHE_DIR } from "../consts";
 import { ensureDir, directoryExists, readFile } from "../utils/fs";
 import { isLocalSource } from "./config";
 import { marketplaceSchema } from "./schemas";
-import type { MarketplaceFetchResult } from "../../types";
+import type { MarketplaceFetchResult } from "../types";
 
 export type FetchOptions = {
   forceRefresh?: boolean;

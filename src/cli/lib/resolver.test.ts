@@ -5,15 +5,18 @@ import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
 import { Liquid } from "liquidjs";
 import { resolveSkillReference, resolveSkillReferences, stackToCompileConfig } from "./resolver";
 import type {
-  SkillDefinition,
-  SkillReference,
+  AgentConfig,
+  AgentName,
+  CompiledAgentData,
   ProjectConfig,
   Skill,
-  AgentConfig,
-  CompiledAgentData,
+  SkillDefinition,
+  SkillDisplayName,
+  SkillId,
+  SkillReference,
+  StackAgentConfig,
+  Subcategory,
 } from "../types";
-import type { AgentName, SkillDisplayName, SkillId, Subcategory } from "../types-matrix";
-import type { StackAgentConfig } from "../types-stacks";
 
 describe("resolveSkillReference", () => {
   const mockSkills: Record<string, SkillDefinition> = {
@@ -493,8 +496,7 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
 // =============================================================================
 
 import { resolveAgentSkillsFromStack, getAgentSkills, resolveAgents } from "./resolver";
-import type { CompileAgentConfig, CompileConfig, AgentDefinition } from "../types";
-import type { Stack } from "../types-stacks";
+import type { AgentDefinition, CompileAgentConfig, CompileConfig, Stack } from "../types";
 
 describe("resolveAgentSkillsFromStack", () => {
   it("should return skill references from stack agent config", () => {

@@ -5,7 +5,7 @@ import { fileExists, readFile, writeFile, listDirectories } from "../utils/fs";
 import { hashFile } from "./versioning";
 import { getCurrentDate } from "./versioning";
 import { LOCAL_SKILLS_PATH } from "../consts";
-import type { SkillId } from "../types-matrix";
+import type { SkillId } from "../types";
 import { localSkillMetadataSchema } from "./schemas";
 import { warn } from "../utils/logger";
 

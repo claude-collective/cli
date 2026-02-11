@@ -3,7 +3,7 @@ import { directoryExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
 import { PROJECT_ROOT, DIRS, CLAUDE_DIR } from "../consts";
 import { fetchFromSource, type FetchOptions } from "./source-fetcher";
-import type { AgentSourcePaths } from "../../types";
+import type { AgentSourcePaths } from "../types";
 
 export type AgentDefinitionOptions = FetchOptions & {
   /** Project directory to check for local templates */

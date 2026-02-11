@@ -3,7 +3,7 @@ import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
 import { loadSkillsMatrixFromSource } from "./source-loader";
-import type { ResolvedSkill, CategoryDefinition } from "../types-matrix";
+import type { CategoryDefinition, ResolvedSkill } from "../types";
 
 // Skills are in claude-subagents repo, not CLI repo
 // CLI tests need to point to the skills repo for integration tests

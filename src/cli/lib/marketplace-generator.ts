@@ -2,7 +2,7 @@ import path from "path";
 import { sortBy } from "remeda";
 import { readFile, writeFile, glob, ensureDir } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import type { Marketplace, MarketplacePlugin, PluginManifest } from "../../types";
+import type { Marketplace, MarketplacePlugin, PluginManifest } from "../types";
 import { pluginManifestSchema } from "./schemas";
 
 const PLUGIN_MANIFEST_PATH = ".claude-plugin/plugin.json";

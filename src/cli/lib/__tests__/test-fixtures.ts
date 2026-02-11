@@ -4,7 +4,7 @@
  * Skill IDs and categories use literal strings that are type-checked
  * by the SkillId and CategoryPath union types at compile time.
  */
-import type { ResolvedSkill } from "../../types-matrix";
+import type { ResolvedSkill } from "../../types";
 import { createMockSkill } from "./helpers";
 
 // =============================================================================

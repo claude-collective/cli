@@ -11,14 +11,13 @@ import {
 } from "../../marketplace-generator";
 import { validateAllPlugins, validatePlugin } from "../../plugin-validator";
 import { loadStacks } from "../../stacks-loader";
-import type { Marketplace, PluginManifest } from "../../../../types";
+import type { Marketplace, PluginManifest, Stack } from "../../../types";
 import {
   createTestSource,
   cleanupTestSource,
   type TestDirs,
   type TestSkill,
 } from "../fixtures/create-test-source";
-import type { Stack } from "../../../types-stacks";
 
 // =============================================================================
 // Constants

@@ -16,7 +16,7 @@ import { useWizardStore } from "../../stores/wizard-store";
 import { createMockCategory, createMockMatrix, createMockResolvedStack, createMockSkill } from "../../lib/__tests__/helpers";
 
 
-import type { MergedSkillsMatrix } from "../../types-matrix";
+import type { MergedSkillsMatrix } from "../../types";
 import { ARROW_DOWN, ARROW_UP, ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../../lib/__tests__/test-constants";
 
 // Delay between key presses for input processing

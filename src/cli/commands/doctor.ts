@@ -8,8 +8,7 @@ import { EXIT_CODES } from "../lib/exit-codes";
 import { loadProjectConfig, validateProjectConfig } from "../lib/project-config";
 import { loadSkillsMatrixFromSource } from "../lib/source-loader";
 import { discoverLocalSkills } from "../lib/local-skill-loader";
-import type { ProjectConfig } from "../../types";
-import type { AgentName, MergedSkillsMatrix, SkillId } from "../types-matrix";
+import type { AgentName, MergedSkillsMatrix, ProjectConfig, SkillId } from "../types";
 
 // =============================================================================
 // Types

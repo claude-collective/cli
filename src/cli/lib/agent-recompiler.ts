@@ -11,13 +11,13 @@ import { parse as parseYaml } from "yaml";
 import { projectConfigLoaderSchema } from "./schemas";
 import type {
   AgentConfig,
-  CompileConfig,
-  CompileAgentConfig,
-  SkillDefinition,
-  ProjectConfig,
   AgentDefinition,
-} from "../../types";
-import type { AgentName } from "../types-matrix";
+  AgentName,
+  CompileAgentConfig,
+  CompileConfig,
+  ProjectConfig,
+  SkillDefinition,
+} from "../types";
 import { typedEntries, typedKeys } from "../utils/typed-object";
 
 export type RecompileAgentsOptions = {

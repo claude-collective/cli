@@ -10,7 +10,7 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { sortBy } from "remeda";
-import type { MergedSkillsMatrix, Domain, Subcategory, SkillId, SubcategorySelections } from "../../types-matrix.js";
+import type { Domain, MergedSkillsMatrix, SkillId, Subcategory, SubcategorySelections } from "../../types/index.js";
 import { getAvailableSkills, resolveAlias } from "../../lib/matrix-resolver.js";
 import {
   CategoryGrid,

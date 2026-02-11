@@ -1,7 +1,7 @@
 import path from "path";
 import { copy, ensureDir } from "../utils/fs";
 import { hashFile } from "./versioning";
-import type { MergedSkillsMatrix, ResolvedSkill, SkillId } from "../types-matrix";
+import type { MergedSkillsMatrix, ResolvedSkill, SkillId } from "../types";
 import type { SourceLoadResult } from "./source-loader";
 import { injectForkedFromMetadata } from "./skill-metadata";
 

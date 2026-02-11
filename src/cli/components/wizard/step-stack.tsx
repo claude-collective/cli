@@ -15,7 +15,7 @@ import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { Select } from "@inkjs/ui";
 import { useWizardStore } from "../../stores/wizard-store.js";
-import type { MergedSkillsMatrix, Domain, Subcategory, SkillDisplayName } from "../../types-matrix.js";
+import type { Domain, MergedSkillsMatrix, SkillDisplayName, Subcategory } from "../../types/index.js";
 import { MenuItem } from "./menu-item.js";
 import { ViewTitle } from "./view-title.js";
 

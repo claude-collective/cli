@@ -8,18 +8,20 @@
 import path from "path";
 import { stringify as stringifyYaml } from "yaml";
 import type {
-  CompileConfig,
-  CompileAgentConfig,
-  ProjectConfig,
-  AgentDefinition,
   AgentConfig,
+  AgentDefinition,
+  AgentName,
+  CompileAgentConfig,
+  CompileConfig,
+  MergedSkillsMatrix,
+  ProjectConfig,
   SkillDefinition,
-} from "../../types";
+  SkillId,
+  Stack,
+} from "../types";
 import type { SourceLoadResult } from "./source-loader";
 import type { WizardResultV2 } from "../components/wizard/wizard";
 import type { CopiedSkill } from "./skill-copier";
-import type { Stack } from "../types-stacks";
-import type { AgentName, MergedSkillsMatrix, SkillId } from "../types-matrix";
 import { copySkillsToLocalFlattened } from "./skill-copier";
 import { mergeWithExistingConfig } from "./config-merger";
 import { loadAllAgents } from "./loader";

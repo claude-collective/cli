@@ -4,7 +4,7 @@ import { mkdir, writeFile, readFile, readdir } from "fs/promises";
 import { recompileAgents } from "./agent-recompiler";
 import { createTestDirs, cleanupTestDirs, writeTestSkill, fileExists } from "./__tests__/helpers";
 import type { TestDirs } from "./__tests__/helpers";
-import type { AgentName } from "../types-matrix";
+import type { AgentName } from "../types";
 
 // Path to CLI repo (agents, templates live here)
 // Skills repo (claude-subagents) only contains skills and stacks
@@ -124,7 +124,7 @@ agents:
           name: "custom-skill",
           description: "Custom skill",
           path: "custom-skill/",
-          id: "web-custom-skill" as import("../types-matrix").SkillId,
+          id: "web-custom-skill" as import("../types").SkillId,
         },
       };
 

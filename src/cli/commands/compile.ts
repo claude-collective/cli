@@ -24,8 +24,13 @@ import { loadPluginSkills } from "../lib/loader";
 import { LOCAL_SKILLS_PATH } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
 import { detectInstallation } from "../lib/installation";
-import type { AgentSourcePaths, PluginManifest, ProjectConfig, SkillDefinition } from "../../types";
-import type { SkillId } from "../types-matrix";
+import type {
+  AgentSourcePaths,
+  PluginManifest,
+  ProjectConfig,
+  SkillDefinition,
+  SkillId,
+} from "../types";
 import { pluginManifestSchema, projectConfigLoaderSchema } from "../lib/schemas";
 
 async function loadSkillsFromDir(

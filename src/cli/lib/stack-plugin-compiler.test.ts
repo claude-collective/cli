@@ -8,7 +8,7 @@ import {
   type CompiledStackPlugin,
 } from "./stack-plugin-compiler";
 
-import type { Stack, StackAgentConfig } from "../types-stacks";
+import type { Stack, StackAgentConfig } from "../types";
 
 describe("stack-plugin-compiler", () => {
   let tempDir: string;

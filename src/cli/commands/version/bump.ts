@@ -9,7 +9,7 @@ import path from "path";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts.js";
 import { readFile } from "../../utils/fs.js";
 import { findPluginManifest } from "../../lib/plugin-manifest-finder.js";
-import type { PluginManifest } from "../../../types.js";
+import type { PluginManifest } from "../../types/index.js";
 import { pluginManifestSchema } from "../../lib/schemas.js";
 
 export default class VersionBump extends BaseCommand {

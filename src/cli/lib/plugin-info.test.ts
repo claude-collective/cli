@@ -7,7 +7,7 @@ import {
   type PluginInfo,
   type InstallationInfo,
 } from "./plugin-info";
-import type { PluginManifest } from "../../types";
+import type { PluginManifest } from "../types";
 import type { InstallMode, Installation } from "./installation";
 
 // =============================================================================

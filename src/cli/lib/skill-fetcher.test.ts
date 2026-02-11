@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import path from "path";
-import type { Marketplace, MarketplacePlugin } from "../../types";
-import type { SkillId } from "../types-matrix";
+import type { Marketplace, MarketplacePlugin, SkillId } from "../types";
 
 // Mock dependencies before importing the module under test
 vi.mock("../utils/fs", () => ({

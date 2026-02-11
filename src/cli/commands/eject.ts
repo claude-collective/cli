@@ -8,7 +8,7 @@ import { CLAUDE_SRC_DIR, DIRS, LOCAL_SKILLS_PATH, PROJECT_ROOT } from "../consts
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/source-loader.js";
 import { copySkillsToLocalFlattened } from "../lib/skill-copier.js";
-import type { SkillId } from "../types-matrix.js";
+import type { SkillId } from "../types/index.js";
 import { typedKeys } from "../utils/typed-object.js";
 import { loadProjectSourceConfig, resolveSource } from "../lib/config.js";
 import { saveSourceToProjectConfig } from "../lib/config-saver.js";

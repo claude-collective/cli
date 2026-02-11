@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
-import type { DomainSelections, Domain } from "../../types-matrix.js";
+import type { DomainSelections, Domain } from "../../types/index.js";
 import { getDomainDisplayName } from "./utils.js";
 
 // =============================================================================

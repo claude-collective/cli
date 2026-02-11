@@ -1,8 +1,7 @@
 import path from "path";
 import { copy, ensureDir, directoryExists, glob } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import type { Marketplace, MarketplacePlugin } from "../../types";
-import type { SkillId } from "../types-matrix";
+import type { Marketplace, MarketplacePlugin, SkillId } from "../types";
 
 export type FetchSkillsOptions = {
   forceRefresh?: boolean;
