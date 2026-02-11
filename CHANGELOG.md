@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.5] - 2026-02-11
+
+### Added
+
+- **Command tests for all 12 previously untested CLI commands** — ~158 new tests across 9 test files covering config:set-project, config:unset-project, version (index), version:set, version:bump, new:skill, new:agent, import:skill, update, uninstall, init, and edit. Total test count: 1512 passing (up from ~1344).
+- **Vitest auto-mocks for fs and logger** — Manual mock files (`src/cli/utils/__mocks__/fs.ts`, `logger.ts`) replace inline `vi.mock()` factory functions across 15 existing test files. `clearMocks: true` enabled globally.
+- **Vitest test projects** — Config split into 3 projects (`unit`, `integration`, `commands`) for clearer test organization and selective running.
+
+### Changed
+
+- **`docs/architecture.md` expanded** to comprehensive reference covering project structure, data flow, domain organization, type system, Zod validation, CLI commands, wizard components, test infrastructure, utility patterns, and conventions.
+- **`docs/index.md` updated** with bibles section and UX research section.
+
+### Removed
+
+- **21 outdated documentation files removed** — Completed migration plans (Commander.js→oclif), implemented feature plans (skill-id normalization, Phase 7 wizard redesign, init refactor), superseded research (integration testing, oclif ecosystem evaluation, CLI improvements), and resolved UX research. `cli-command-testing-plan.md` also removed (all tests implemented). Bibles and active UX research retained.
+
 ## [0.24.4] - 2026-02-11
 
 ### Changed
