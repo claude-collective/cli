@@ -1,7 +1,8 @@
 /**
  * Integration tests for config commands.
  *
- * Tests: cc config, cc config:show, cc config:get, cc config:path
+ * Tests: cc config, cc config:show, cc config:get, cc config:path,
+ *        cc config:set-project, cc config:unset-project
  *
  * NOTE: Many tests are skipped because stdout capture is limited in the oclif/bun
  * test environment. The commands work correctly (output visible in test logs),
@@ -11,8 +12,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
-import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
-import { stringify as stringifyYaml } from "yaml";
+import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
+import { stringify as stringifyYaml, parse as parseYaml } from "yaml";
 import { runCliCommand } from "../../helpers";
 
 // =============================================================================
@@ -199,6 +200,157 @@ describe("config commands", () => {
 
       expect(stdout).toContain("Claude Collective Configuration");
       expect(stdout).toContain("Source:");
+    });
+  });
+
+  // ===========================================================================
+  // config:set-project
+  // ===========================================================================
+
+  describe("config:set-project", () => {
+    const PROJECT_CONFIG_DIR = ".claude-src";
+    const PROJECT_CONFIG_FILE = "config.yaml";
+
+    it("should set source value and create config file", async () => {
+      const { error } = await runCliCommand([
+        "config:set-project",
+        "source",
+        "github:my-org/my-skills",
+      ]);
+
+      expect(error?.oclif?.exit).toBeUndefined();
+
+      // Verify file was created with correct content
+      const configPath = path.join(projectDir, PROJECT_CONFIG_DIR, PROJECT_CONFIG_FILE);
+      const content = await readFile(configPath, "utf-8");
+      const parsed = parseYaml(content);
+      expect(parsed).toHaveProperty("source", "github:my-org/my-skills");
+    });
+
+    it("should set marketplace value", async () => {
+      const { error } = await runCliCommand([
+        "config:set-project",
+        "marketplace",
+        "https://marketplace.example.com",
+      ]);
+
+      expect(error?.oclif?.exit).toBeUndefined();
+
+      const configPath = path.join(projectDir, PROJECT_CONFIG_DIR, PROJECT_CONFIG_FILE);
+      const content = await readFile(configPath, "utf-8");
+      const parsed = parseYaml(content);
+      expect(parsed).toHaveProperty("marketplace", "https://marketplace.example.com");
+    });
+
+    it("should set agents_source value", async () => {
+      const { error } = await runCliCommand([
+        "config:set-project",
+        "agents_source",
+        "/custom/agents",
+      ]);
+
+      expect(error?.oclif?.exit).toBeUndefined();
+
+      const configPath = path.join(projectDir, PROJECT_CONFIG_DIR, PROJECT_CONFIG_FILE);
+      const content = await readFile(configPath, "utf-8");
+      const parsed = parseYaml(content);
+      expect(parsed).toHaveProperty("agents_source", "/custom/agents");
+    });
+
+    it("should overwrite existing value", async () => {
+      // Set initial value
+      const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
+      await mkdir(configDir, { recursive: true });
+      await writeFile(
+        path.join(configDir, PROJECT_CONFIG_FILE),
+        stringifyYaml({ source: "old-source", marketplace: "keep-this" }),
+      );
+
+      // Overwrite source
+      const { error } = await runCliCommand(["config:set-project", "source", "new-source"]);
+
+      expect(error?.oclif?.exit).toBeUndefined();
+
+      const configPath = path.join(projectDir, PROJECT_CONFIG_DIR, PROJECT_CONFIG_FILE);
+      const content = await readFile(configPath, "utf-8");
+      const parsed = parseYaml(content);
+      expect(parsed).toHaveProperty("source", "new-source");
+      // Other keys should be preserved
+      expect(parsed).toHaveProperty("marketplace", "keep-this");
+    });
+
+    it("should reject invalid key with exit code 2", async () => {
+      const { error } = await runCliCommand(["config:set-project", "invalid_key", "some-value"]);
+
+      expect(error?.oclif?.exit).toBe(2); // INVALID_ARGS
+    });
+
+    it("should error when key argument is missing", async () => {
+      const { error } = await runCliCommand(["config:set-project"]);
+
+      // oclif validates required args and returns an error
+      expect(error).toBeDefined();
+    });
+
+    it("should error when value argument is missing", async () => {
+      const { error } = await runCliCommand(["config:set-project", "source"]);
+
+      // oclif validates required args and returns an error
+      expect(error).toBeDefined();
+    });
+  });
+
+  // ===========================================================================
+  // config:unset-project
+  // ===========================================================================
+
+  describe("config:unset-project", () => {
+    const PROJECT_CONFIG_DIR = ".claude-src";
+    const PROJECT_CONFIG_FILE = "config.yaml";
+
+    it("should remove key from project config", async () => {
+      // Create config with multiple keys
+      const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
+      await mkdir(configDir, { recursive: true });
+      await writeFile(
+        path.join(configDir, PROJECT_CONFIG_FILE),
+        stringifyYaml({
+          source: "github:my-org/skills",
+          marketplace: "https://marketplace.example.com",
+        }),
+      );
+
+      const { error } = await runCliCommand(["config:unset-project", "source"]);
+
+      expect(error?.oclif?.exit).toBeUndefined();
+
+      // Verify source was removed but marketplace preserved
+      const configPath = path.join(projectDir, PROJECT_CONFIG_DIR, PROJECT_CONFIG_FILE);
+      const content = await readFile(configPath, "utf-8");
+      const parsed = parseYaml(content);
+      expect(parsed).not.toHaveProperty("source");
+      expect(parsed).toHaveProperty("marketplace", "https://marketplace.example.com");
+    });
+
+    it("should handle config file not existing without error", async () => {
+      // No config file exists - command should handle gracefully
+      const { error } = await runCliCommand(["config:unset-project", "source"]);
+
+      // Should not error - shows info message and returns
+      expect(error?.oclif?.exit).toBeUndefined();
+    });
+
+    it("should reject invalid key with exit code 2", async () => {
+      const { error } = await runCliCommand(["config:unset-project", "invalid_key"]);
+
+      expect(error?.oclif?.exit).toBe(2); // INVALID_ARGS
+    });
+
+    it("should error when key argument is missing", async () => {
+      const { error } = await runCliCommand(["config:unset-project"]);
+
+      // oclif validates required args and returns an error
+      expect(error).toBeDefined();
     });
   });
 });

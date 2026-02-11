@@ -1,0 +1,177 @@
+/**
+ * Integration tests for the init command.
+ *
+ * Tests: cc init, cc init --refresh, cc init --source, cc init --dry-run
+ *
+ * The init command initializes Claude Collective in a project:
+ * - Checks if already initialized (plugin dir exists)
+ * - Loads skills matrix from source
+ * - Renders interactive Wizard component (Ink)
+ * - Handles installation based on wizard result
+ *
+ * Note: Since init renders an interactive Ink Wizard component, runCommand cannot
+ * interact with it. Tests focus on scenarios that resolve BEFORE the wizard renders:
+ * - Already initialized (plugin dir check exits early)
+ * - Flag validation (parsed before wizard)
+ * - Source loading failure (errors before wizard)
+ *
+ * The wizard component itself is tested separately in:
+ *   src/cli/components/wizard/
+ */
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import path from "path";
+import os from "os";
+import { mkdtemp, rm, mkdir } from "fs/promises";
+import { runCliCommand } from "../helpers";
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+const PLUGIN_DIR_RELATIVE = ".claude/plugins/claude-collective";
+
+// =============================================================================
+// Tests
+// =============================================================================
+
+describe("init command", () => {
+  let tempDir: string;
+  let projectDir: string;
+  let originalCwd: string;
+
+  beforeEach(async () => {
+    originalCwd = process.cwd();
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-init-test-"));
+    projectDir = path.join(tempDir, "project");
+    await mkdir(projectDir, { recursive: true });
+    process.chdir(projectDir);
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    await rm(tempDir, { recursive: true, force: true });
+  });
+
+  // ===========================================================================
+  // Flag Validation
+  // ===========================================================================
+
+  describe("flag validation", () => {
+    it("should accept --refresh flag", async () => {
+      const { error } = await runCliCommand(["init", "--refresh"]);
+
+      // Should not error on --refresh flag parsing
+      const output = error?.message || "";
+      expect(output.toLowerCase()).not.toContain("unknown flag");
+      expect(output.toLowerCase()).not.toContain("unexpected argument");
+    });
+
+    it("should accept --source flag with path", async () => {
+      const { error } = await runCliCommand(["init", "--source", "/some/path"]);
+
+      // Should not error on --source flag parsing
+      const output = error?.message || "";
+      expect(output.toLowerCase()).not.toContain("unknown flag");
+      expect(output.toLowerCase()).not.toContain("unexpected argument");
+    });
+
+    it("should accept -s shorthand for source", async () => {
+      const { error } = await runCliCommand(["init", "-s", "/some/path"]);
+
+      // Should accept -s shorthand
+      const output = error?.message || "";
+      expect(output.toLowerCase()).not.toContain("unknown flag");
+    });
+
+    it("should accept --dry-run flag", async () => {
+      const { error } = await runCliCommand(["init", "--dry-run"]);
+
+      // Should not error on --dry-run flag parsing
+      const output = error?.message || "";
+      expect(output.toLowerCase()).not.toContain("unknown flag");
+      expect(output.toLowerCase()).not.toContain("unexpected argument");
+    });
+  });
+
+  // ===========================================================================
+  // Combined Flags
+  // ===========================================================================
+
+  describe("combined flags", () => {
+    it("should accept multiple flags together", async () => {
+      const { error } = await runCliCommand([
+        "init",
+        "--refresh",
+        "--dry-run",
+        "--source",
+        "/custom/source",
+      ]);
+
+      // Should accept all flags
+      const output = error?.message || "";
+      expect(output.toLowerCase()).not.toContain("unknown flag");
+    });
+
+    it("should accept shorthand flags together", async () => {
+      const { error } = await runCliCommand(["init", "-s", "/custom/source"]);
+
+      // Should accept shorthand flags
+      const output = error?.message || "";
+      expect(output.toLowerCase()).not.toContain("unknown flag");
+    });
+  });
+
+  // ===========================================================================
+  // Already Initialized
+  // ===========================================================================
+
+  describe("already initialized", () => {
+    it("should warn and exit when plugin directory already exists", async () => {
+      // Create the plugin directory to simulate an existing installation
+      const pluginDir = path.join(projectDir, PLUGIN_DIR_RELATIVE);
+      await mkdir(pluginDir, { recursive: true });
+
+      const { stdout, stderr, error } = await runCliCommand(["init"]);
+
+      // Should NOT have an error exit code - the command warns and returns
+      expect(error?.oclif?.exit).toBeUndefined();
+
+      // this.warn() sends to stderr, this.log() sends to stdout
+      const combinedOutput = stdout + stderr + (error?.message || "");
+      expect(combinedOutput).toContain("already initialized");
+      expect(combinedOutput).toContain("edit");
+    });
+
+    it("should not modify existing plugin directory", async () => {
+      const pluginDir = path.join(projectDir, PLUGIN_DIR_RELATIVE);
+      await mkdir(pluginDir, { recursive: true });
+
+      await runCliCommand(["init"]);
+
+      // Plugin dir should still exist unchanged
+      const { stat } = await import("fs/promises");
+      const dirStat = await stat(pluginDir);
+      expect(dirStat.isDirectory()).toBe(true);
+    });
+  });
+
+  // ===========================================================================
+  // Error Handling
+  // ===========================================================================
+
+  describe("error handling", () => {
+    it("should handle invalid source path gracefully", async () => {
+      const { error } = await runCliCommand(["init", "--source", "/definitely/not/real/path/xyz"]);
+
+      // Should error but not crash
+      expect(error).toBeDefined();
+    });
+
+    it("should reject unknown flags", async () => {
+      const { error } = await runCliCommand(["init", "--nonexistent-flag"]);
+
+      // Should error on unknown flag
+      expect(error).toBeDefined();
+    });
+  });
+});
