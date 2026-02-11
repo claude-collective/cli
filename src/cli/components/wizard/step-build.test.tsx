@@ -8,7 +8,7 @@ import { indexBy, mapToObj } from "remeda";
 import { describe, expect, it, afterEach, vi } from "vitest";
 import { StepBuild, type StepBuildProps, validateBuildStep, getDisplayLabel } from "./step-build";
 import type { CategoryRow as GridCategoryRow } from "./category-grid";
-import type { CategoryPath, MergedSkillsMatrix, ResolvedSkill, CategoryDefinition, SkillDisplayName, SkillId, Subcategory, SubcategorySelections } from "../../types-matrix";
+import type { CategoryDefinition, ResolvedSkill, SkillDisplayName, SkillId, Subcategory, SubcategorySelections } from "../../types-matrix";
 import {
   ENTER,
   ESCAPE,
@@ -16,139 +16,107 @@ import {
   INPUT_DELAY_MS,
   delay,
 } from "../../lib/__tests__/test-constants";
-
-
+import { createMockCategory, createMockSkill, createMockMatrix } from "../../lib/__tests__/helpers";
 
 // =============================================================================
 // Test Fixtures
 // =============================================================================
 
-/**
- * Create a minimal category definition.
- */
-const createCategory = (
-  id: Subcategory,
-  displayName: string,
-  overrides: Partial<CategoryDefinition> = {},
-): CategoryDefinition => ({
-  id,
-  displayName,
-  description: `${displayName} category`,
-  exclusive: true,
-  required: false,
-  order: 0,
-  ...overrides,
-});
+/** Shared overrides to match the original local createSkill defaults. */
+const SKILL_DEFAULTS: Partial<ResolvedSkill> = { categoryExclusive: true };
 
 /**
- * Create a minimal skill definition.
+ * Build a test matrix from category and skill arrays, with display-name maps.
  */
-const createSkill = (
-  id: SkillId,
-  _name: string,
-  category: CategoryPath,
-  overrides: Partial<ResolvedSkill> = {},
-): ResolvedSkill => ({
-  id,
-  description: `${_name} skill`,
-  category,
-  categoryExclusive: true,
-  tags: [],
-  author: "test",
-  conflictsWith: [],
-  recommends: [],
-  requires: [],
-  alternatives: [],
-  discourages: [],
-  compatibleWith: [],
-  requiresSetup: [],
-  providesSetupFor: [],
-  path: `test/${id}`,
-  ...overrides,
-});
-
-/**
- * Create a minimal matrix for testing.
- */
-const createTestMatrix = (
+const buildTestMatrix = (
   categories: CategoryDefinition[],
   skills: ResolvedSkill[],
-): MergedSkillsMatrix => ({
-  version: "1.0.0",
-  categories: indexBy(categories, (c) => c.id),
-  skills: indexBy(skills, (s) => s.id),
-  suggestedStacks: [],
-  displayNameToId: mapToObj(skills.filter((s) => s.displayName), (s) => [s.displayName!, s.id]),
-  displayNames: mapToObj(skills.filter((s) => s.displayName), (s) => [s.id, s.displayName!]),
-  generatedAt: new Date().toISOString(),
-});
+) => {
+  const withDisplayName = skills.filter((s) => s.displayName);
+  return createMockMatrix(
+    indexBy(skills, (s) => s.id),
+    {
+      categories: indexBy(categories, (c) => c.id) as Record<Subcategory, CategoryDefinition>,
+      displayNameToId: mapToObj(withDisplayName, (s) => [s.displayName!, s.id]) as Record<SkillDisplayName, SkillId>,
+      displayNames: mapToObj(withDisplayName, (s) => [s.id, s.displayName!]) as Record<SkillId, SkillDisplayName>,
+    },
+  );
+};
 
 // Create test categories
 
-const frameworkCategory = createCategory("framework", "Framework", {
+const frameworkCategory = createMockCategory("framework", "Framework", {
   domain: "web",
   required: true,
   order: 0,
 });
 
-const stylingCategory = createCategory("styling", "Styling", {
+const stylingCategory = createMockCategory("styling", "Styling", {
   domain: "web",
   required: true,
   order: 1,
 });
 
-const stateCategory = createCategory("client-state", "Client State", {
+const stateCategory = createMockCategory("client-state", "Client State", {
   domain: "web",
   required: false,
   order: 2,
 });
 
-const apiFrameworkCategory = createCategory("api", "API Framework", {
+const apiFrameworkCategory = createMockCategory("api", "API Framework", {
   domain: "api",
   required: true,
   order: 0,
 });
 
-const databaseCategory = createCategory("database", "Database", {
+const databaseCategory = createMockCategory("database", "Database", {
   domain: "api",
   required: false,
   order: 1,
 });
 
 // Create test skills
-const reactSkill = createSkill("web-framework-react", "React", "framework", {
+const reactSkill = createMockSkill("web-framework-react", "framework", {
+  ...SKILL_DEFAULTS,
   displayName: "react",
 });
 
-const vueSkill = createSkill("web-framework-vue", "Vue", "framework", {
+const vueSkill = createMockSkill("web-framework-vue", "framework", {
+  ...SKILL_DEFAULTS,
   displayName: "vue",
 });
 
-const tailwindSkill = createSkill("web-styling-tailwind", "Tailwind", "styling", {
+const tailwindSkill = createMockSkill("web-styling-tailwind", "styling", {
+  ...SKILL_DEFAULTS,
   displayName: "tailwind",
 });
 
-const scssSkill = createSkill("web-styling-scss-modules", "SCSS Modules", "styling", {
+const scssSkill = createMockSkill("web-styling-scss-modules", "styling", {
+  ...SKILL_DEFAULTS,
   displayName: "scss-modules",
 });
 
-const zustandSkill = createSkill("web-state-zustand", "Zustand", "client-state", {
+const zustandSkill = createMockSkill("web-state-zustand", "client-state", {
+  ...SKILL_DEFAULTS,
   displayName: "zustand",
 });
 
-const honoSkill = createSkill("api-framework-hono", "Hono", "api", {
+const honoSkill = createMockSkill("api-framework-hono", "api", {
+  ...SKILL_DEFAULTS,
   displayName: "hono",
 });
 
-const expressSkill = createSkill("api-framework-express", "Express", "api", {
+const expressSkill = createMockSkill("api-framework-express", "api", {
+  ...SKILL_DEFAULTS,
   displayName: "express",
 });
 
-const postgresSkill = createSkill("api-database-postgres", "PostgreSQL", "database", {
+const postgresSkill = createMockSkill("api-database-postgres", "database", {
+  ...SKILL_DEFAULTS,
 });
 
 // Default test matrix with web and API domains
-const defaultMatrix = createTestMatrix(
+const defaultMatrix = buildTestMatrix(
   [frameworkCategory, stylingCategory, stateCategory, apiFrameworkCategory, databaseCategory],
   [
     reactSkill,
@@ -596,16 +564,17 @@ describe("StepBuild component", () => {
 
     it("should show ViewTitle for current domain in three-domain flow", () => {
       // Add cli category to matrix
-      const cliFrameworkCategory = createCategory("cli-framework", "CLI Framework", {
+      const cliFrameworkCategory = createMockCategory("cli-framework", "CLI Framework", {
         domain: "cli",
         required: true,
         order: 0,
       });
-      const commanderSkill = createSkill("cli-cli-framework-commander", "Commander", "cli-framework", {
+      const commanderSkill = createMockSkill("cli-cli-framework-commander", "cli-framework", {
+        ...SKILL_DEFAULTS,
         displayName: "commander",
       });
 
-      const matrixWithCli = createTestMatrix(
+      const matrixWithCli = buildTestMatrix(
         [
           frameworkCategory,
           stylingCategory,

@@ -1,54 +1,95 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
 import os from "os";
-import { mkdtemp, rm, mkdir, writeFile, readFile, stat } from "fs/promises";
-import fg from "fast-glob";
-import { compileAllSkillPlugins } from "../skill-plugin-compiler";
-import { compileStackPlugin } from "../stack-plugin-compiler";
+import { mkdtemp, rm, mkdir, readFile, stat } from "fs/promises";
+import { compileAllSkillPlugins } from "../../skill-plugin-compiler";
+import { compileStackPlugin } from "../../stack-plugin-compiler";
 import {
   generateMarketplace,
   writeMarketplace,
   getMarketplaceStats,
-} from "../marketplace-generator";
-import { validateAllPlugins, validatePlugin } from "../plugin-validator";
-import { loadStacks } from "../stacks-loader";
-import type { Marketplace, PluginManifest } from "../../../types";
+} from "../../marketplace-generator";
+import { validateAllPlugins, validatePlugin } from "../../plugin-validator";
+import { loadStacks } from "../../stacks-loader";
+import type { Marketplace, PluginManifest } from "../../../../types";
+import {
+  createTestSource,
+  cleanupTestSource,
+  type TestDirs,
+  type TestSkill,
+} from "../fixtures/create-test-source";
+import type { Stack } from "../../../types-stacks";
 
 // =============================================================================
 // Constants
 // =============================================================================
 
-// Skills are in claude-subagents repo
-const SKILLS_REPO =
-  process.env.CC_TEST_SKILLS_SOURCE || path.resolve(__dirname, "../../../../../claude-subagents");
-const SKILLS_DIR = path.join(SKILLS_REPO, "src", "skills");
+const TEST_AUTHOR = "@test";
 
-// Agents and stacks are in the CLI repo (Phase 6: agent-centric config)
-const CLI_REPO = path.resolve(__dirname, "../../../..");
+/** Number of default test skills created by createTestSource */
+const DEFAULT_SKILL_COUNT = 4;
 
-// These are true integration tests that require the external claude-subagents
-// repo. Opt in by setting CC_TEST_SKILLS_SOURCE=/path/to/skills-repo
-const describeIntegration = process.env.CC_TEST_SKILLS_SOURCE ? describe : describe.skip;
+/**
+ * Skills with frontmatter names matching real skill_aliases resolutions.
+ * These are used for stack pipeline tests where the stack compiler resolves
+ * display names (e.g., "react") through the real CLI's skill_aliases
+ * (e.g., react -> "web-framework-react").
+ */
+const STACK_TEST_SKILLS: TestSkill[] = [
+  {
+    id: "web-framework-react (@test)",
+    name: "web-framework-react",
+    description: "React framework skill for stack testing",
+    category: "web/framework",
+    author: TEST_AUTHOR,
+    tags: ["react", "web"],
+    content: `---
+name: web-framework-react
+description: React framework skill for stack testing
+---
+
+# React
+
+React is a JavaScript library for building user interfaces.
+`,
+  },
+  {
+    id: "api-framework-hono (@test)",
+    name: "api-framework-hono",
+    description: "Hono API framework skill for stack testing",
+    category: "api/framework",
+    author: TEST_AUTHOR,
+    tags: ["hono", "api"],
+    content: `---
+name: api-framework-hono
+description: Hono API framework skill for stack testing
+---
+
+# Hono
+
+Hono is a fast web framework for the edge.
+`,
+  },
+];
+
+/** Test stack referencing display names that resolve via real skill_aliases */
+const TEST_STACK: Stack = {
+  id: "test-stack",
+  name: "Test Stack",
+  description: "A test stack for integration testing",
+  agents: {
+    "web-developer": {
+      framework: "react",
+    },
+    "api-developer": {
+      api: "hono",
+    },
+  },
+};
 
 // =============================================================================
 // Test Helpers
 // =============================================================================
-
-/**
- * Count SKILL.md files in a directory
- */
-async function countSkillFiles(dir: string): Promise<number> {
-  const files = await fg("**/SKILL.md", { cwd: dir });
-  return files.length;
-}
-
-/**
- * List available stacks from CLI's config/stacks.yaml
- */
-async function listStackIds(): Promise<string[]> {
-  const stacks = await loadStacks(CLI_REPO);
-  return stacks.map((s) => s.id);
-}
 
 /**
  * Read plugin.json from a plugin directory
@@ -79,38 +120,31 @@ async function pathExists(p: string): Promise<boolean> {
 // Test 1: Full Skill Pipeline
 // =============================================================================
 
-describeIntegration("Integration: Full Skill Pipeline", () => {
+describe("Integration: Full Skill Pipeline", () => {
+  let dirs: TestDirs;
   let tempDir: string;
   let outputDir: string;
 
   beforeEach(async () => {
+    dirs = await createTestSource();
     tempDir = await mkdtemp(path.join(os.tmpdir(), "skill-pipeline-test-"));
     outputDir = path.join(tempDir, "plugins");
     await mkdir(outputDir, { recursive: true });
   });
 
   afterEach(async () => {
+    await cleanupTestSource(dirs);
     await rm(tempDir, { recursive: true, force: true });
   });
 
   it("should compile all skills to plugins without errors", async () => {
-    // Suppress console output during test
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    // Get expected skill count before compilation
-    const expectedSkillCount = await countSkillFiles(SKILLS_DIR);
-    expect(expectedSkillCount).toBeGreaterThan(0);
+    const results = await compileAllSkillPlugins(dirs.skillsDir, outputDir);
 
-    // Compile all skills
-    const results = await compileAllSkillPlugins(SKILLS_DIR, outputDir);
-
-    // Should compile at least most skills (some may fail due to missing frontmatter)
-    // Use 90% threshold to allow for a few failures
-    const MIN_SUCCESS_RATE = 0.9;
-    expect(results.length).toBeGreaterThanOrEqual(
-      Math.floor(expectedSkillCount * MIN_SUCCESS_RATE),
-    );
+    // All 4 default test skills should compile successfully
+    expect(results).toHaveLength(DEFAULT_SKILL_COUNT);
 
     // Each result should have valid structure
     for (const result of results) {
@@ -124,57 +158,39 @@ describeIntegration("Integration: Full Skill Pipeline", () => {
   });
 
   it("should validate all compiled skill plugins", async () => {
-    // Suppress console output during test
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    // Compile all skills
-    await compileAllSkillPlugins(SKILLS_DIR, outputDir);
+    await compileAllSkillPlugins(dirs.skillsDir, outputDir);
 
-    // Validate all plugins
     const validationResult = await validateAllPlugins(outputDir);
 
-    // All compiled plugins should be valid
-    expect(validationResult.summary.total).toBeGreaterThan(0);
+    expect(validationResult.summary.total).toBe(DEFAULT_SKILL_COUNT);
     expect(validationResult.summary.invalid).toBe(0);
-
-    // Log any warnings for debugging (but don't fail on warnings)
-    if (validationResult.summary.withWarnings > 0) {
-      const warnings = validationResult.results
-        .filter((r) => r.result.warnings.length > 0)
-        .map((r) => `${r.name}: ${r.result.warnings.join(", ")}`);
-      console.log("Warnings found:", warnings.slice(0, 5)); // Log first 5
-    }
 
     consoleSpy.mockRestore();
     warnSpy.mockRestore();
   });
 
   it("should generate marketplace with correct plugin count", async () => {
-    // Suppress console output during test
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    // Compile all skills
-    const compileResults = await compileAllSkillPlugins(SKILLS_DIR, outputDir);
+    const compileResults = await compileAllSkillPlugins(dirs.skillsDir, outputDir);
 
-    // Generate marketplace
     const marketplace = await generateMarketplace(outputDir, {
       name: "test-marketplace",
       ownerName: "Test Owner",
       pluginRoot: "./plugins",
     });
 
-    // Marketplace should have same number of plugins as compiled
     expect(marketplace.plugins.length).toBe(compileResults.length);
 
-    // All plugins should have valid names
     for (const plugin of marketplace.plugins) {
       expect(plugin.name).toMatch(/^skill-/);
       expect(plugin.source).toBeTruthy();
     }
 
-    // Get stats
     const stats = getMarketplaceStats(marketplace);
     expect(stats.total).toBe(compileResults.length);
     expect(Object.keys(stats.byCategory).length).toBeGreaterThan(0);
@@ -184,14 +200,11 @@ describeIntegration("Integration: Full Skill Pipeline", () => {
   });
 
   it("should produce plugins with unique names", async () => {
-    // Suppress console output during test
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    // Compile all skills
-    const results = await compileAllSkillPlugins(SKILLS_DIR, outputDir);
+    const results = await compileAllSkillPlugins(dirs.skillsDir, outputDir);
 
-    // Check for duplicate names
     const names = results.map((r) => r.manifest.name);
     const uniqueNames = new Set(names);
 
@@ -206,45 +219,57 @@ describeIntegration("Integration: Full Skill Pipeline", () => {
 // Test 2: Full Stack Pipeline
 // =============================================================================
 
-describeIntegration("Integration: Full Stack Pipeline", () => {
+describe("Integration: Full Stack Pipeline", () => {
+  let dirs: TestDirs;
   let tempDir: string;
   let outputDir: string;
 
   beforeEach(async () => {
+    // Create source with skills whose frontmatter names match real skill_aliases resolutions
+    dirs = await createTestSource({ skills: STACK_TEST_SKILLS });
     tempDir = await mkdtemp(path.join(os.tmpdir(), "stack-pipeline-test-"));
     outputDir = path.join(tempDir, "stacks");
     await mkdir(outputDir, { recursive: true });
   });
 
   afterEach(async () => {
+    await cleanupTestSource(dirs);
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  it("should list available stacks", async () => {
-    const stacks = await listStackIds();
+  it("should list available stacks from fixture", async () => {
+    // Create a source with stacks defined in config/stacks.yaml
+    const stackDirs = await createTestSource({
+      skills: STACK_TEST_SKILLS,
+      stacks: [
+        {
+          id: TEST_STACK.id,
+          name: TEST_STACK.name,
+          description: TEST_STACK.description,
+          agents: TEST_STACK.agents as Record<string, Record<string, string>>,
+        },
+      ],
+    });
 
-    // Should have at least one stack
+    const stacks = await loadStacks(stackDirs.sourceDir);
+
     expect(stacks.length).toBeGreaterThan(0);
+    expect(stacks.map((s) => s.id)).toContain("test-stack");
 
-    // Known stacks that should exist
-    const expectedStacks = ["nextjs-fullstack", "angular-stack"];
-    for (const expected of expectedStacks) {
-      expect(stacks).toContain(expected);
-    }
+    await cleanupTestSource(stackDirs);
   });
 
-  it("should compile nextjs-fullstack stack successfully", async () => {
-    const stackId = "nextjs-fullstack";
-
+  it("should compile test stack successfully", async () => {
     const result = await compileStackPlugin({
-      stackId,
+      stackId: TEST_STACK.id,
       outputDir,
-      projectRoot: SKILLS_REPO,
-      agentSourcePath: CLI_REPO,
+      projectRoot: dirs.sourceDir,
+      agentSourcePath: dirs.sourceDir,
+      stack: TEST_STACK,
     });
 
     // Verify result structure
-    expect(result.pluginPath).toBe(path.join(outputDir, stackId));
+    expect(result.pluginPath).toBe(path.join(outputDir, TEST_STACK.id));
     expect(result.stackName).toBeTruthy();
     expect(result.agents.length).toBeGreaterThan(0);
 
@@ -259,44 +284,18 @@ describeIntegration("Integration: Full Stack Pipeline", () => {
     // Verify manifest
     const manifest = await readPluginManifest(result.pluginPath);
     expect(manifest).not.toBeNull();
-    expect(manifest!.name).toBe(stackId);
+    expect(manifest!.name).toBe(TEST_STACK.id);
     // Claude Code discovers agents automatically from ./agents/ directory
     expect(manifest!.agents).toBeUndefined();
   });
 
-  it("should compile angular-stack successfully", async () => {
-    const stackId = "angular-stack";
-
-    const result = await compileStackPlugin({
-      stackId,
-      outputDir,
-      projectRoot: SKILLS_REPO,
-      agentSourcePath: CLI_REPO,
-    });
-
-    // Verify result structure
-    expect(result.pluginPath).toBe(path.join(outputDir, stackId));
-    expect(result.stackName).toBeTruthy();
-    expect(result.agents.length).toBeGreaterThan(0);
-
-    // Verify plugin directory structure
-    expect(await pathExists(result.pluginPath)).toBe(true);
-    expect(await pathExists(path.join(result.pluginPath, "agents"))).toBe(true);
-
-    // Verify manifest
-    const manifest = await readPluginManifest(result.pluginPath);
-    expect(manifest).not.toBeNull();
-    expect(manifest!.name).toBe(stackId);
-  });
-
   it("should generate README with agent list", async () => {
-    const stackId = "nextjs-fullstack";
-
     const result = await compileStackPlugin({
-      stackId,
+      stackId: TEST_STACK.id,
       outputDir,
-      projectRoot: SKILLS_REPO,
-      agentSourcePath: CLI_REPO,
+      projectRoot: dirs.sourceDir,
+      agentSourcePath: dirs.sourceDir,
+      stack: TEST_STACK,
     });
 
     const readmePath = path.join(result.pluginPath, "README.md");
@@ -314,39 +313,35 @@ describeIntegration("Integration: Full Stack Pipeline", () => {
   });
 
   it("should include skill plugin references in manifest", async () => {
-    const stackId = "nextjs-fullstack";
-
     const result = await compileStackPlugin({
-      stackId,
+      stackId: TEST_STACK.id,
       outputDir,
-      projectRoot: SKILLS_REPO,
-      agentSourcePath: CLI_REPO,
+      projectRoot: dirs.sourceDir,
+      agentSourcePath: dirs.sourceDir,
+      stack: TEST_STACK,
     });
 
     // Should reference skill plugins
     expect(result.skillPlugins.length).toBeGreaterThan(0);
 
-    // Skill references now use normalized kebab-case format (e.g., "web-framework-react")
+    // Skill references should be in normalized kebab-case format
     for (const skillPlugin of result.skillPlugins) {
-      // Should be in normalized kebab-case format: lowercase with dashes, no author suffix
       expect(skillPlugin).toMatch(/^[a-z0-9-]+$/);
     }
   });
 
   it("should validate compiled stack plugins", async () => {
-    const stackId = "nextjs-fullstack";
-
     await compileStackPlugin({
-      stackId,
+      stackId: TEST_STACK.id,
       outputDir,
-      projectRoot: SKILLS_REPO,
-      agentSourcePath: CLI_REPO,
+      projectRoot: dirs.sourceDir,
+      agentSourcePath: dirs.sourceDir,
+      stack: TEST_STACK,
     });
 
-    const pluginPath = path.join(outputDir, stackId);
+    const pluginPath = path.join(outputDir, TEST_STACK.id);
     const validationResult = await validatePlugin(pluginPath);
 
-    // Stack plugin should be valid
     expect(validationResult.valid).toBe(true);
     expect(validationResult.errors).toHaveLength(0);
   });
@@ -356,12 +351,15 @@ describeIntegration("Integration: Full Stack Pipeline", () => {
 // Test 3: Marketplace Integrity
 // =============================================================================
 
-describeIntegration("Integration: Marketplace Integrity", () => {
+describe("Integration: Marketplace Integrity", () => {
+  let dirs: TestDirs;
   let tempDir: string;
   let pluginsDir: string;
   let marketplacePath: string;
 
   beforeEach(async () => {
+    // Use STACK_TEST_SKILLS so plugin names match category patterns (e.g., skill-web-framework-react -> "web")
+    dirs = await createTestSource({ skills: STACK_TEST_SKILLS });
     tempDir = await mkdtemp(path.join(os.tmpdir(), "marketplace-test-"));
     pluginsDir = path.join(tempDir, "plugins");
     marketplacePath = path.join(tempDir, "marketplace.json");
@@ -369,18 +367,16 @@ describeIntegration("Integration: Marketplace Integrity", () => {
   });
 
   afterEach(async () => {
+    await cleanupTestSource(dirs);
     await rm(tempDir, { recursive: true, force: true });
   });
 
   it("should generate valid marketplace.json", async () => {
-    // Suppress console output during test
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    // Compile all skills
-    await compileAllSkillPlugins(SKILLS_DIR, pluginsDir);
+    await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
 
-    // Generate and write marketplace
     const marketplace = await generateMarketplace(pluginsDir, {
       name: "claude-collective",
       version: "1.0.0",
@@ -392,39 +388,33 @@ describeIntegration("Integration: Marketplace Integrity", () => {
 
     await writeMarketplace(marketplacePath, marketplace);
 
-    // Read and parse the written file
     const content = await readFile(marketplacePath, "utf-8");
     const parsed = JSON.parse(content) as Marketplace;
 
-    // Verify structure
     expect(parsed.$schema).toBe("https://anthropic.com/claude-code/marketplace.schema.json");
     expect(parsed.name).toBe("claude-collective");
     expect(parsed.version).toBe("1.0.0");
     expect(parsed.owner.name).toBe("Claude Collective");
     expect(parsed.owner.email).toBe("hello@example.com");
     expect(parsed.metadata?.pluginRoot).toBe("./plugins");
-    expect(parsed.plugins.length).toBeGreaterThan(0);
+    expect(parsed.plugins.length).toBe(STACK_TEST_SKILLS.length);
 
     consoleSpy.mockRestore();
     warnSpy.mockRestore();
   });
 
   it("should have no duplicate plugin names", async () => {
-    // Suppress console output during test
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    // Compile all skills
-    await compileAllSkillPlugins(SKILLS_DIR, pluginsDir);
+    await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
 
-    // Generate marketplace
     const marketplace = await generateMarketplace(pluginsDir, {
       name: "test-marketplace",
       ownerName: "Test Owner",
       pluginRoot: "./plugins",
     });
 
-    // Check for duplicate names
     const names = marketplace.plugins.map((p) => p.name);
     const uniqueNames = new Set(names);
 
@@ -435,25 +425,19 @@ describeIntegration("Integration: Marketplace Integrity", () => {
   });
 
   it("should have all plugin source paths resolvable", async () => {
-    // Suppress console output during test
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    // Compile all skills
-    await compileAllSkillPlugins(SKILLS_DIR, pluginsDir);
+    await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
 
-    // Generate marketplace
     const marketplace = await generateMarketplace(pluginsDir, {
       name: "test-marketplace",
       ownerName: "Test Owner",
       pluginRoot: "./plugins",
     });
 
-    // Verify each source path resolves
     for (const plugin of marketplace.plugins) {
       if (typeof plugin.source === "string") {
-        // Convert marketplace relative path to absolute path
-        // Source is like "./plugins/skill-react" -> need to resolve from tempDir
         const relativePath = plugin.source.replace("./plugins/", "");
         const absolutePath = path.join(pluginsDir, relativePath);
 
@@ -467,21 +451,17 @@ describeIntegration("Integration: Marketplace Integrity", () => {
   });
 
   it("should have plugins sorted alphabetically", async () => {
-    // Suppress console output during test
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    // Compile all skills
-    await compileAllSkillPlugins(SKILLS_DIR, pluginsDir);
+    await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
 
-    // Generate marketplace
     const marketplace = await generateMarketplace(pluginsDir, {
       name: "test-marketplace",
       ownerName: "Test Owner",
       pluginRoot: "./plugins",
     });
 
-    // Verify alphabetical order
     const names = marketplace.plugins.map((p) => p.name);
     const sortedNames = [...names].sort((a, b) => a.localeCompare(b));
 
@@ -492,14 +472,11 @@ describeIntegration("Integration: Marketplace Integrity", () => {
   });
 
   it("should categorize plugins correctly", async () => {
-    // Suppress console output during test
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    // Compile all skills
-    await compileAllSkillPlugins(SKILLS_DIR, pluginsDir);
+    await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
 
-    // Generate marketplace
     const marketplace = await generateMarketplace(pluginsDir, {
       name: "test-marketplace",
       ownerName: "Test Owner",
@@ -508,10 +485,10 @@ describeIntegration("Integration: Marketplace Integrity", () => {
 
     const stats = getMarketplaceStats(marketplace);
 
-    // Should have multiple categories
+    // Should have multiple categories (web from web-framework-react, api from api-framework-hono)
     expect(Object.keys(stats.byCategory).length).toBeGreaterThan(1);
 
-    // Common categories that should exist
+    // Categories from our test skills
     const expectedCategories = ["web", "api"];
     for (const category of expectedCategories) {
       expect(stats.byCategory[category]).toBeGreaterThan(0);
@@ -526,12 +503,15 @@ describeIntegration("Integration: Marketplace Integrity", () => {
 // Test 4: End-to-End Pipeline (Skills + Stacks + Marketplace)
 // =============================================================================
 
-describeIntegration("Integration: End-to-End Pipeline", () => {
+describe("Integration: End-to-End Pipeline", () => {
+  let dirs: TestDirs;
   let tempDir: string;
   let pluginsDir: string;
   let stacksDir: string;
 
   beforeEach(async () => {
+    // Use stack test skills so both skill and stack pipelines work with same source
+    dirs = await createTestSource({ skills: STACK_TEST_SKILLS });
     tempDir = await mkdtemp(path.join(os.tmpdir(), "e2e-pipeline-test-"));
     pluginsDir = path.join(tempDir, "plugins");
     stacksDir = path.join(tempDir, "stacks");
@@ -540,17 +520,17 @@ describeIntegration("Integration: End-to-End Pipeline", () => {
   });
 
   afterEach(async () => {
+    await cleanupTestSource(dirs);
     await rm(tempDir, { recursive: true, force: true });
   });
 
   it("should compile skills then stacks in sequence", async () => {
-    // Suppress console output during test
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     // Step 1: Compile all skills
-    const skillResults = await compileAllSkillPlugins(SKILLS_DIR, pluginsDir);
-    expect(skillResults.length).toBeGreaterThan(0);
+    const skillResults = await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
+    expect(skillResults.length).toBe(STACK_TEST_SKILLS.length);
 
     // Step 2: Validate skill plugins
     const skillValidation = await validateAllPlugins(pluginsDir);
@@ -558,10 +538,11 @@ describeIntegration("Integration: End-to-End Pipeline", () => {
 
     // Step 3: Compile a stack
     const stackResult = await compileStackPlugin({
-      stackId: "nextjs-fullstack",
+      stackId: TEST_STACK.id,
       outputDir: stacksDir,
-      projectRoot: SKILLS_REPO,
-      agentSourcePath: CLI_REPO,
+      projectRoot: dirs.sourceDir,
+      agentSourcePath: dirs.sourceDir,
+      stack: TEST_STACK,
     });
     expect(stackResult.agents.length).toBeGreaterThan(0);
 
@@ -582,24 +563,21 @@ describeIntegration("Integration: End-to-End Pipeline", () => {
   });
 
   it("should have valid skill plugin reference format", async () => {
-    // Suppress console output during test
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    // Compile stack
     const stackResult = await compileStackPlugin({
-      stackId: "nextjs-fullstack",
+      stackId: TEST_STACK.id,
       outputDir: stacksDir,
-      projectRoot: SKILLS_REPO,
-      agentSourcePath: CLI_REPO,
+      projectRoot: dirs.sourceDir,
+      agentSourcePath: dirs.sourceDir,
+      stack: TEST_STACK,
     });
 
-    // Skill references now use normalized kebab-case format (e.g., "web-framework-react")
     expect(stackResult.skillPlugins.length).toBeGreaterThan(0);
 
     for (const skillPlugin of stackResult.skillPlugins) {
-      // Should be in normalized kebab-case format: lowercase with dashes, no author suffix
-      // Examples: "web-framework-react", "api-framework-hono", "web-accessibility-web-accessibility"
+      // Should be in normalized kebab-case format
       expect(skillPlugin).toMatch(/^[a-z0-9-]+$/);
     }
 
@@ -608,46 +586,36 @@ describeIntegration("Integration: End-to-End Pipeline", () => {
   });
 
   it("should compile skills and stacks that share common patterns", async () => {
-    // Suppress console output during test
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     // Compile skills
-    const skillResults = await compileAllSkillPlugins(SKILLS_DIR, pluginsDir);
+    const skillResults = await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
 
     // Compile stack
     const stackResult = await compileStackPlugin({
-      stackId: "nextjs-fullstack",
+      stackId: TEST_STACK.id,
       outputDir: stacksDir,
-      projectRoot: SKILLS_REPO,
-      agentSourcePath: CLI_REPO,
+      projectRoot: dirs.sourceDir,
+      agentSourcePath: dirs.sourceDir,
+      stack: TEST_STACK,
     });
 
     // Get skill plugin names from compiled plugins (format: "skill-xxx")
-    const compiledPluginNames = new Set(skillResults.map((r) => r.manifest.name));
-
-    // Stack skill references now use normalized kebab-case format (e.g., "web-framework-react")
-    // Compiled plugins use "skill-xxx" format (e.g., "skill-web-framework-react")
-    // To compare, extract the base name from both:
-    // - Stack: "web-framework-react" (already normalized)
-    // - Plugin: "skill-web-framework-react" -> "web-framework-react"
     const extractBaseName = (id: string) => {
-      // For plugin names like "skill-web-framework-react"
       if (id.startsWith("skill-")) {
         return id.replace(/^skill-/, "");
       }
-      // For normalized IDs - already in correct format
       return id;
     };
 
     const stackBaseNames = new Set(stackResult.skillPlugins.map(extractBaseName));
     const compiledBaseNames = new Set(skillResults.map((r) => extractBaseName(r.manifest.name)));
 
-    // There should be SOME overlap between stack skill references and compiled skills
-    // (e.g., both should have "web-framework-react", "web-state-zustand", etc.)
+    // There should be overlap between stack skill references and compiled skills
     const commonSkills = [...stackBaseNames].filter((name) => compiledBaseNames.has(name));
 
-    // Expect at least a few common skills (core framework skills like react)
+    // Expect at least one common skill (e.g., web-framework-react)
     expect(commonSkills.length).toBeGreaterThan(0);
 
     consoleSpy.mockRestore();

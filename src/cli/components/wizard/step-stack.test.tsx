@@ -11,13 +11,13 @@
  */
 import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { StepStack } from "../../../components/wizard/step-stack";
-import { useWizardStore } from "../../../stores/wizard-store";
-import { createMockMatrix, createMockSkill } from "../helpers";
+import { StepStack } from "./step-stack";
+import { useWizardStore } from "../../stores/wizard-store";
+import { createMockCategory, createMockMatrix, createMockResolvedStack, createMockSkill } from "../../lib/__tests__/helpers";
 
 
-import type { CategoryDefinition, MergedSkillsMatrix, ResolvedStack, Subcategory } from "../../../types-matrix";
-import { ARROW_DOWN, ARROW_UP, ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../test-constants";
+import type { MergedSkillsMatrix } from "../../types-matrix";
+import { ARROW_DOWN, ARROW_UP, ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../../lib/__tests__/test-constants";
 
 // Delay between key presses for input processing
 const SELECT_NAV_DELAY_MS = 100;
@@ -39,46 +39,29 @@ const createMockStackWithSkills = (): MergedSkillsMatrix => {
     }),
   };
 
-  const suggestedStacks: ResolvedStack[] = [
-    {
-      id: "react-fullstack",
-      name: "React Fullstack",
+  const suggestedStacks = [
+    createMockResolvedStack("react-fullstack", "React Fullstack", {
       description: "Full React stack with Zustand and Hono",
-      audience: [],
-      skills: {},
       allSkillIds: ["web-framework-react", "web-state-zustand", "api-framework-hono"],
-      philosophy: "",
-    },
-    {
-      id: "react-minimal",
-      name: "React Minimal",
+    }),
+    createMockResolvedStack("react-minimal", "React Minimal", {
       description: "Minimal React setup",
-      audience: [],
-      skills: {},
       allSkillIds: ["web-framework-react"],
-      philosophy: "",
-    },
+    }),
   ];
 
   return createMockMatrix(skills, {
     suggestedStacks,
     categories: {
-      framework: {
-        id: "framework",
-        displayName: "Web",
+      framework: createMockCategory("framework", "Web", {
         description: "Web skills",
         exclusive: false,
-        required: false,
-        order: 0,
-      },
-      api: {
-        id: "api",
-        displayName: "API",
+      }),
+      api: createMockCategory("api", "API", {
         description: "API skills",
         exclusive: false,
-        required: false,
         order: 1,
-      },
+      }),
     },
   });
 };

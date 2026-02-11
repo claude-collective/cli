@@ -8,7 +8,7 @@ import {
   getInstallationOrThrow,
   type InstallMode,
   type Installation,
-} from "../installation";
+} from "../../installation";
 
 describe("installation", () => {
   let tempDir: string;

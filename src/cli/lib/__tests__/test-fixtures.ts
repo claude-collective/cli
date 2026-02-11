@@ -94,3 +94,12 @@ export function createTestMethodologySkill(overrides?: Partial<ResolvedSkill>): 
     ...overrides,
   });
 }
+
+export function createTestScssModulesSkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
+  return createMockSkill("web-styling-scss-modules", "web/styling", {
+    displayName: "scss-modules",
+    description: "CSS Modules with SCSS",
+    tags: ["css", "scss", "modules"],
+    ...overrides,
+  });
+}

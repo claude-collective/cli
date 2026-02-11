@@ -18,7 +18,7 @@ import {
   WizardTabs,
   WIZARD_STEPS,
   type WizardTabsProps,
-} from "../../../components/wizard/wizard-tabs";
+} from "./wizard-tabs";
 
 // =============================================================================
 // Test Helpers

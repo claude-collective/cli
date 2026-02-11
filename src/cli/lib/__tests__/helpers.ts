@@ -187,14 +187,26 @@ export async function runCliCommand(args: string[]) {
   return runCommand(args, { root: CLI_ROOT });
 }
 import type {
+  CategoryDefinition,
   CategoryPath,
+  Domain,
   MergedSkillsMatrix,
   ResolvedSkill,
+  ResolvedStack,
   SkillDisplayName,
   SkillId,
   Subcategory,
 } from "../../types-matrix";
 import type { AgentDefinition, ProjectConfig } from "../../../types";
+import {
+  createTestReactSkill,
+  createTestVueSkill,
+  createTestZustandSkill,
+  createTestScssModulesSkill,
+  createTestHonoSkill,
+  createTestDrizzleSkill,
+  createTestVitestSkill,
+} from "./test-fixtures";
 
 // =============================================================================
 // File System Helpers
@@ -809,6 +821,264 @@ export async function writeTestAgent(
 }
 
 // =============================================================================
+// Shared Matrix Factories
+// =============================================================================
+
+/**
+ * Create a minimal category definition for testing.
+ *
+ * @param id - Subcategory identifier
+ * @param displayName - Human-readable display name
+ * @param overrides - Optional partial definition to override defaults
+ * @returns Complete CategoryDefinition object
+ *
+ * @example
+ * ```typescript
+ * const cat = createMockCategory("framework", "Framework", {
+ *   domain: "web",
+ *   exclusive: true,
+ *   required: true,
+ * });
+ * ```
+ */
+export function createMockCategory(
+  id: Subcategory,
+  displayName: string,
+  overrides?: Partial<CategoryDefinition>,
+): CategoryDefinition {
+  return {
+    id,
+    displayName,
+    description: `${displayName} category`,
+    exclusive: true,
+    required: false,
+    order: 0,
+    ...overrides,
+  };
+}
+
+/**
+ * Create a minimal resolved stack for testing.
+ *
+ * @param id - Stack identifier
+ * @param name - Human-readable stack name
+ * @param overrides - Optional partial stack to override defaults
+ * @returns Complete ResolvedStack object
+ *
+ * @example
+ * ```typescript
+ * const stack = createMockResolvedStack("react-fullstack", "React Fullstack", {
+ *   allSkillIds: ["web-framework-react", "web-state-zustand"],
+ * });
+ * ```
+ */
+export function createMockResolvedStack(
+  id: string,
+  name: string,
+  overrides?: Partial<ResolvedStack>,
+): ResolvedStack {
+  return {
+    id,
+    name,
+    description: `${name} stack`,
+    audience: [],
+    skills: {},
+    allSkillIds: [],
+    philosophy: "",
+    ...overrides,
+  };
+}
+
+/**
+ * Create a comprehensive merged skills matrix for testing wizard flows.
+ *
+ * Includes 7 skills across 6 categories, 2 stacks, and display name mappings.
+ * Skills include relationship data (conflicts, recommends).
+ *
+ * @param overrides - Optional partial matrix to override defaults
+ * @returns Complete MergedSkillsMatrix with realistic test data
+ *
+ * @example
+ * ```typescript
+ * const matrix = createComprehensiveMatrix();
+ * expect(Object.keys(matrix.skills)).toHaveLength(7);
+ * expect(matrix.suggestedStacks).toHaveLength(2);
+ * ```
+ */
+export function createComprehensiveMatrix(
+  overrides?: Partial<MergedSkillsMatrix>,
+): MergedSkillsMatrix {
+  // Skill categories use bare Subcategory IDs (matching production metadata.yaml
+  // and the categories map keys). The test fixture factories default to "web/framework"
+  // CategoryPath format, but the wizard's populateFromStack needs bare IDs to match
+  // the categories map lookup (e.g., "framework" not "web/framework").
+  const skills = {
+    "web-framework-react": createTestReactSkill({ category: "framework" }),
+    "web-framework-vue": createTestVueSkill({
+      category: "framework",
+      conflictsWith: [{ skillId: "web-framework-react", reason: "Choose one framework" }],
+    }),
+    "web-state-zustand": createTestZustandSkill({
+      category: "client-state",
+      recommends: [{ skillId: "web-framework-react", reason: "Works great with React" }],
+    }),
+    "web-styling-scss-modules": createTestScssModulesSkill({ category: "styling" }),
+    "api-framework-hono": createTestHonoSkill({ category: "api" }),
+    "api-database-drizzle": createTestDrizzleSkill({ category: "database" }),
+    "web-testing-vitest": createTestVitestSkill({ category: "testing" }),
+  };
+
+  const categories = {
+    framework: createMockCategory("framework" as Subcategory, "Framework", {
+      domain: "web" as Domain,
+      exclusive: true,
+      required: true,
+    }),
+    "client-state": createMockCategory("client-state" as Subcategory, "State", {
+      domain: "web" as Domain,
+      order: 1,
+    }),
+    styling: createMockCategory("styling" as Subcategory, "Styling", {
+      domain: "web" as Domain,
+      order: 2,
+    }),
+    api: createMockCategory("api" as Subcategory, "Backend Framework", {
+      domain: "api" as Domain,
+      exclusive: true,
+      required: true,
+    }),
+    database: createMockCategory("database" as Subcategory, "Database", {
+      domain: "api" as Domain,
+      order: 1,
+    }),
+    testing: createMockCategory("testing" as Subcategory, "Testing", {
+      domain: "shared" as Domain,
+      exclusive: false,
+      order: 10,
+    }),
+  } as Record<Subcategory, CategoryDefinition>;
+
+  const suggestedStacks: ResolvedStack[] = [
+    createMockResolvedStack("nextjs-fullstack", "Next.js Fullstack", {
+      description: "Complete Next.js stack with React and Hono",
+      audience: ["startups", "enterprise"],
+      skills: {
+        "web-developer": {
+          framework: "web-framework-react",
+          "client-state": "web-state-zustand",
+          styling: "web-styling-scss-modules",
+        },
+        "api-developer": {
+          api: "api-framework-hono",
+          database: "api-database-drizzle",
+        },
+      } as ResolvedStack["skills"],
+      allSkillIds: [
+        "web-framework-react",
+        "web-state-zustand",
+        "web-styling-scss-modules",
+        "api-framework-hono",
+        "api-database-drizzle",
+      ],
+      philosophy: "Modern, type-safe fullstack development",
+    }),
+    createMockResolvedStack("vue-stack", "Vue Stack", {
+      description: "Vue.js frontend stack",
+      audience: ["startups"],
+      skills: {
+        "web-developer": {
+          framework: "web-framework-vue",
+        },
+      } as ResolvedStack["skills"],
+      allSkillIds: ["web-framework-vue"],
+      philosophy: "Progressive framework approach",
+    }),
+  ];
+
+  const displayNameToId = {
+    react: "web-framework-react",
+    vue: "web-framework-vue",
+    zustand: "web-state-zustand",
+    "scss-modules": "web-styling-scss-modules",
+    hono: "api-framework-hono",
+    drizzle: "api-database-drizzle",
+    vitest: "web-testing-vitest",
+  } as unknown as Record<SkillDisplayName, SkillId>;
+
+  const displayNames = {} as Record<SkillId, SkillDisplayName>;
+  for (const [displayName, fullId] of Object.entries(displayNameToId)) {
+    (displayNames as Record<string, string>)[fullId] = displayName;
+  }
+
+  return createMockMatrix(skills, {
+    categories,
+    suggestedStacks,
+    displayNameToId,
+    displayNames,
+    ...overrides,
+  });
+}
+
+/**
+ * Create a basic merged skills matrix for simpler tests.
+ *
+ * Includes 4 skills, 4 categories, and 2 stacks. Lighter than
+ * {@link createComprehensiveMatrix} for tests that don't need full coverage.
+ *
+ * @param overrides - Optional partial matrix to override defaults
+ * @returns Complete MergedSkillsMatrix with basic test data
+ *
+ * @example
+ * ```typescript
+ * const matrix = createBasicMatrix();
+ * expect(Object.keys(matrix.skills)).toHaveLength(4);
+ * ```
+ */
+export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): MergedSkillsMatrix {
+  // Bare Subcategory IDs — see createComprehensiveMatrix comment
+  const skills = {
+    "web-framework-react": createTestReactSkill({ category: "framework" }),
+    "web-state-zustand": createTestZustandSkill({ category: "client-state" }),
+    "api-framework-hono": createTestHonoSkill({ category: "api" }),
+    "web-testing-vitest": createTestVitestSkill({ category: "testing" }),
+  };
+
+  const suggestedStacks: ResolvedStack[] = [
+    createMockResolvedStack("react-fullstack", "React Fullstack", {
+      allSkillIds: ["web-framework-react", "web-state-zustand", "api-framework-hono"],
+    }),
+    createMockResolvedStack("testing-stack", "Testing Stack", {
+      allSkillIds: ["web-testing-vitest"],
+    }),
+  ];
+
+  return createMockMatrix(skills, {
+    suggestedStacks,
+    categories: {
+      framework: createMockCategory("framework" as Subcategory, "Framework", {
+        domain: "web" as Domain,
+        exclusive: true,
+        required: true,
+      }),
+      "client-state": createMockCategory("client-state" as Subcategory, "State", {
+        domain: "web" as Domain,
+        order: 1,
+      }),
+      api: createMockCategory("api" as Subcategory, "Backend Framework", {
+        domain: "api" as Domain,
+        exclusive: true,
+        required: true,
+      }),
+      testing: createMockCategory("testing" as Subcategory, "Testing Framework", {
+        domain: "shared" as Domain,
+        exclusive: false,
+      }),
+    } as Record<Subcategory, CategoryDefinition>,
+    ...overrides,
+  });
+}
+
+// =============================================================================
 // Re-export from test-fixtures for convenience
 // =============================================================================
 
@@ -843,4 +1113,6 @@ export {
   createTestAuthPatternsSkill,
   /** Create a pre-configured Drizzle skill */
   createTestDrizzleSkill,
+  /** Create a pre-configured SCSS Modules skill */
+  createTestScssModulesSkill,
 } from "./test-fixtures";

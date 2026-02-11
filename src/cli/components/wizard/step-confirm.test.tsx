@@ -6,9 +6,9 @@
 import React from "react";
 import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { StepConfirm } from "../../../components/wizard/step-confirm";
-import { useWizardStore } from "../../../stores/wizard-store";
-import { ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../test-constants";
+import { StepConfirm } from "./step-confirm";
+import { useWizardStore } from "../../stores/wizard-store";
+import { ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../../lib/__tests__/test-constants";
 
 // =============================================================================
 // Tests

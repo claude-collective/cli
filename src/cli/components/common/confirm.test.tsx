@@ -10,8 +10,8 @@
 import React from "react";
 import { render } from "ink-testing-library";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Confirm } from "../../../components/common/confirm";
-import { KEY_Y, KEY_N, ENTER, RENDER_DELAY_MS, delay } from "../test-constants";
+import { Confirm } from "./confirm";
+import { KEY_Y, KEY_N, ENTER, RENDER_DELAY_MS, delay } from "../../lib/__tests__/test-constants";
 
 // Longer delay for ConfirmInput key processing
 const CONFIRM_INPUT_DELAY_MS = 100;

@@ -67,6 +67,14 @@ export interface TestPluginManifest {
   description?: string;
 }
 
+export interface TestStack {
+  id: string;
+  name: string;
+  description: string;
+  agents: Record<string, Record<string, string>>;
+  philosophy?: string;
+}
+
 export interface TestSourceOptions {
   skills?: TestSkill[];
   agents?: TestAgent[];
@@ -77,6 +85,8 @@ export interface TestSourceOptions {
   asPlugin?: boolean;
   /** Create local skills in .claude/skills/ */
   localSkills?: TestSkill[];
+  /** Create config/stacks.yaml with these stack definitions */
+  stacks?: TestStack[];
 }
 
 export interface TestDirs {
@@ -304,6 +314,11 @@ export async function createTestSource(options: TestSourceOptions = {}): Promise
   // Write skills-matrix.yaml
   await writeFile(path.join(configDir, "skills-matrix.yaml"), stringifyYaml(matrix));
 
+  // Write config/stacks.yaml if stacks provided
+  if (options.stacks && options.stacks.length > 0) {
+    await writeFile(path.join(configDir, "stacks.yaml"), stringifyYaml({ stacks: options.stacks }));
+  }
+
   // Write skill files
   for (const skill of skills) {
     const categoryPath = skill.category.replace(/\//g, path.sep);
@@ -361,9 +376,9 @@ permissionMode: {{ agent.permission_mode }}
     const agentDir = path.join(agentsDir, agent.name);
     await mkdir(agentDir, { recursive: true });
 
-    // agent.yaml
+    // agent.yaml (uses "id" field to match agentYamlConfigSchema)
     const agentYaml = {
-      name: agent.name,
+      id: agent.name,
       title: agent.title,
       description: agent.description,
       tools: agent.tools ?? ["Read", "Write", "Edit"],
