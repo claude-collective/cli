@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.3] - 2026-02-11
+
+### Changed
+
+- **AJV replaced with Zod for all schema validation** — `schema-validator.ts` and `plugin-validator.ts` rewritten to use Zod `.safeParse()`. AJV and ajv-formats dependencies removed (23 packages pruned). Strict validation schemas added for `cc validate`: `metadataValidationSchema`, `stackConfigValidationSchema`, `skillFrontmatterValidationSchema`, `agentFrontmatterValidationSchema`.
+- **JSON Schema files now generated from Zod** — `scripts/generate-json-schemas.ts` uses `z.toJSONSchema()` (Zod v4 native) to generate 10 schema files from Zod source of truth. Hand-maintained JSON schemas and symlinks to claude-subagents removed. New npm scripts: `generate:schemas`, `generate:schemas:check`.
+- **YAML `$schema` references use local relative paths** — All 18 `agent.yaml` files switched from remote `raw.githubusercontent.com` URLs to `# yaml-language-server: $schema=` comments with relative paths. Schema reference added to `config/skills-matrix.yaml`. VS Code YAML validation now works offline.
+
 ## [0.24.2] - 2026-02-11
 
 ### Changed
