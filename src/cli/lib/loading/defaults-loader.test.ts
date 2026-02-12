@@ -12,7 +12,7 @@ vi.mock("../../utils/logger", () => ({
 }));
 
 import { readFile, fileExists } from "../../utils/fs";
-import { verbose } from "../../utils/logger";
+import { verbose, warn } from "../../utils/logger";
 
 function createValidMappingsYaml(): string {
   return `
@@ -96,7 +96,7 @@ describe("defaults-loader", () => {
       const result = await loadDefaultMappings();
 
       expect(result).toBeNull();
-      expect(verbose).toHaveBeenCalledWith(expect.stringContaining("Invalid default mappings"));
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid default mappings"));
     });
 
     it("returns null for malformed YAML that throws parse error", async () => {
