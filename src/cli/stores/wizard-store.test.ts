@@ -1,26 +1,12 @@
-/**
- * Unit tests for the wizard store (Zustand state management).
- *
- * Tests state transitions without UI rendering for fast feedback.
- */
 import { describe, it, expect, beforeEach } from "vitest";
 import { useWizardStore } from "./wizard-store";
 import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
 import type { Domain, Subcategory } from "../types";
 
-// =============================================================================
-// Tests
-// =============================================================================
-
 describe("WizardStore", () => {
   beforeEach(() => {
-    // Reset store to initial state before each test
     useWizardStore.getState().reset();
   });
-
-  // ===========================================================================
-  // Initial State
-  // ===========================================================================
 
   describe("initial state", () => {
     it("should start at approach step", () => {
@@ -64,10 +50,6 @@ describe("WizardStore", () => {
     });
   });
 
-  // ===========================================================================
-  // Step Navigation
-  // ===========================================================================
-
   describe("step navigation", () => {
     it("should update step with setStep", () => {
       const store = useWizardStore.getState();
@@ -104,7 +86,7 @@ describe("WizardStore", () => {
 
       store.setStep("stack");
       store.goBack();
-      store.goBack(); // Extra goBack when already at approach
+      store.goBack();
 
       const { step } = useWizardStore.getState();
       expect(step).toBe("approach");
@@ -120,10 +102,6 @@ describe("WizardStore", () => {
       expect(focusedCol).toBe(0);
     });
   });
-
-  // ===========================================================================
-  // Approach Selection
-  // ===========================================================================
 
   describe("approach selection", () => {
     it("should set approach to stack", () => {
@@ -143,10 +121,6 @@ describe("WizardStore", () => {
     });
   });
 
-  // ===========================================================================
-  // Stack Selection
-  // ===========================================================================
-
   describe("stack selection", () => {
     it("should select stack by id", () => {
       const store = useWizardStore.getState();
@@ -165,10 +139,6 @@ describe("WizardStore", () => {
       expect(selectedStackId).toBeNull();
     });
   });
-
-  // ===========================================================================
-  // Domain Selection
-  // ===========================================================================
 
   describe("domain selection", () => {
     it("should toggle domain on", () => {
@@ -198,10 +168,6 @@ describe("WizardStore", () => {
       expect(selectedDomains).toEqual(["web", "api", "cli"]);
     });
   });
-
-  // ===========================================================================
-  // Technology Selection
-  // ===========================================================================
 
   describe("technology selection", () => {
     it("should toggle technology in exclusive mode", () => {
@@ -253,10 +219,6 @@ describe("WizardStore", () => {
     });
   });
 
-  // ===========================================================================
-  // Domain Navigation
-  // ===========================================================================
-
   describe("domain navigation", () => {
     it("should move to next domain", () => {
       const store = useWizardStore.getState();
@@ -283,7 +245,7 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleDomain("web");
       store.toggleDomain("api");
-      store.nextDomain(); // Move to index 1
+      store.nextDomain();
 
       const result = store.prevDomain();
 
@@ -305,7 +267,7 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
       store.toggleDomain("web");
       store.toggleDomain("api");
-      store.nextDomain(); // Move to index 1
+      store.nextDomain();
 
       const domain = store.getCurrentDomain();
       expect(domain).toBe("api");
@@ -317,10 +279,6 @@ describe("WizardStore", () => {
       expect(domain).toBeNull();
     });
   });
-
-  // ===========================================================================
-  // Mode Toggles
-  // ===========================================================================
 
   describe("mode toggles", () => {
     it("should toggle expert mode on", () => {
@@ -371,10 +329,6 @@ describe("WizardStore", () => {
     });
   });
 
-  // ===========================================================================
-  // Computed Getters
-  // ===========================================================================
-
   describe("computed getters", () => {
     it("should get all selected technologies", () => {
       const store = useWizardStore.getState();
@@ -393,29 +347,22 @@ describe("WizardStore", () => {
 
       const skills = store.getSelectedSkills();
 
-      // Should include preselected skills
       for (const skill of DEFAULT_PRESELECTED_SKILLS) {
         expect(skills).toContain(skill);
       }
     });
   });
 
-  // ===========================================================================
-  // Reset
-  // ===========================================================================
-
   describe("reset", () => {
     it("should reset to initial state", () => {
       const store = useWizardStore.getState();
 
-      // Make some changes
       store.setStep("stack");
       store.setApproach("scratch");
       store.selectStack("nextjs-fullstack");
       store.toggleDomain("web");
       store.toggleExpertMode();
 
-      // Reset
       store.reset();
 
       const state = useWizardStore.getState();
@@ -429,15 +376,10 @@ describe("WizardStore", () => {
     });
   });
 
-  // ===========================================================================
-  // populateFromStack
-  // ===========================================================================
-
   describe("populateFromStack", () => {
     it("should set selectedDomains to all domains regardless of stack contents", () => {
       const store = useWizardStore.getState();
 
-      // Stack only has web-domain skills
       const stack = {
         agents: {
           web: { framework: "react" },
@@ -451,10 +393,8 @@ describe("WizardStore", () => {
 
       const { selectedDomains, domainSelections } = useWizardStore.getState();
 
-      // selectedDomains should include ALL domains, not just the stack's
       expect(selectedDomains).toEqual(["web", "web-extras", "api", "cli", "mobile", "shared"]);
 
-      // domainSelections should only contain the stack's actual mappings
       expect(domainSelections.web).toBeDefined();
       expect(domainSelections.web!.framework).toEqual(["react"]);
       expect(domainSelections.api).toBeUndefined();
@@ -493,39 +433,30 @@ describe("WizardStore", () => {
         },
       } as const;
       const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
-        methodology: {}, // No domain
+        methodology: {},
       };
 
       store.populateFromStack(stack, categories);
 
       const { domainSelections } = useWizardStore.getState();
 
-      // No domain selections should be created for domain-less categories
       expect(Object.keys(domainSelections)).toHaveLength(0);
     });
   });
-
-  // ===========================================================================
-  // Complex Flows
-  // ===========================================================================
 
   describe("complex flows", () => {
     it("should handle complete stack selection flow", () => {
       const store = useWizardStore.getState();
 
-      // Step 1: Choose stack approach
       store.setApproach("stack");
       store.setStep("stack");
 
-      // Step 2: Select stack and go directly to build
       store.selectStack("nextjs-fullstack");
       store.setStackAction("customize");
       store.setStep("build");
 
-      // Step 3: Continue to confirm
       store.setStep("confirm");
 
-      // Verify final state
       const state = useWizardStore.getState();
       expect(state.step).toBe("confirm");
       expect(state.approach).toBe("stack");
@@ -537,22 +468,18 @@ describe("WizardStore", () => {
     it("should handle complete scratch flow", () => {
       const store = useWizardStore.getState();
 
-      // Step 1: Choose scratch approach
       store.setApproach("scratch");
-      store.setStep("stack"); // Domain selection
+      store.setStep("stack");
 
-      // Step 2: Select domains
       store.toggleDomain("web");
       store.toggleDomain("api");
       store.setStep("build");
 
-      // Step 3: Select technologies
       store.toggleTechnology("web", "framework", "web-framework-react", true);
       store.toggleTechnology("web", "styling", "web-styling-scss-modules", true);
       store.toggleTechnology("api", "api", "api-framework-hono", true);
       store.setStep("confirm");
 
-      // Verify final state
       const state = useWizardStore.getState();
       expect(state.step).toBe("confirm");
       expect(state.approach).toBe("scratch");
@@ -565,18 +492,15 @@ describe("WizardStore", () => {
     it("should preserve selections when going back", () => {
       const store = useWizardStore.getState();
 
-      // Make selections
       store.setApproach("scratch");
       store.setStep("stack");
       store.toggleDomain("web");
       store.setStep("build");
       store.toggleTechnology("web", "framework", "web-framework-react", true);
 
-      // Go back
       store.goBack();
       store.goBack();
 
-      // Selections should be preserved
       const state = useWizardStore.getState();
       expect(state.selectedDomains).toContain("web");
       expect(state.domainSelections.web!.framework).toEqual(["web-framework-react"]);

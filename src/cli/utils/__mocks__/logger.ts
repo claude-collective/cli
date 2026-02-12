@@ -1,8 +1,4 @@
-/**
- * Manual mock for src/cli/utils/logger.ts.
- *
- * Used automatically when test files call vi.mock("../../utils/logger") without a factory.
- */
+// Auto-mock for src/cli/utils/logger.ts.
 import { vi } from "vitest";
 
 export const verbose = vi.fn();

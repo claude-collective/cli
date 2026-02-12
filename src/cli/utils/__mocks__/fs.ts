@@ -1,10 +1,5 @@
-/**
- * Manual mock for src/cli/utils/fs.ts.
- *
- * Used automatically when test files call vi.mock("../../utils/fs") without a factory.
- * All functions return undefined by default; configure return values with vi.mocked()
- * in beforeEach blocks.
- */
+// Auto-mock for src/cli/utils/fs.ts.
+// All functions return undefined by default; configure with vi.mocked() in beforeEach.
 import { vi } from "vitest";
 
 export const readFile = vi.fn();

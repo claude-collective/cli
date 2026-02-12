@@ -6,9 +6,6 @@ export type ExecResult = {
   exitCode: number;
 };
 
-/**
- * Execute a command and return the result
- */
 export async function execCommand(
   command: string,
   args: string[],
@@ -46,9 +43,6 @@ export async function execCommand(
   });
 }
 
-/**
- * Install a plugin using the native claude CLI
- */
 export async function claudePluginInstall(
   pluginPath: string,
   scope: "project" | "user",
@@ -63,9 +57,6 @@ export async function claudePluginInstall(
   }
 }
 
-/**
- * Check if the claude CLI is available
- */
 export async function isClaudeCLIAvailable(): Promise<boolean> {
   try {
     const result = await execCommand("claude", ["--version"], {});
@@ -82,9 +73,6 @@ export type MarketplaceInfo = {
   path?: string;
 };
 
-/**
- * List configured marketplaces in Claude Code
- */
 export async function claudePluginMarketplaceList(): Promise<MarketplaceInfo[]> {
   try {
     const result = await execCommand("claude", ["plugin", "marketplace", "list", "--json"], {});
@@ -95,22 +83,15 @@ export async function claudePluginMarketplaceList(): Promise<MarketplaceInfo[]> 
 
     return JSON.parse(result.stdout);
   } catch {
-    // Returns empty array if claude CLI is not available or parsing fails
     return [];
   }
 }
 
-/**
- * Check if a marketplace with the given name exists
- */
 export async function claudePluginMarketplaceExists(name: string): Promise<boolean> {
   const marketplaces = await claudePluginMarketplaceList();
   return marketplaces.some((m) => m.name === name);
 }
 
-/**
- * Add a marketplace to Claude Code from a GitHub repository
- */
 export async function claudePluginMarketplaceAdd(githubRepo: string, name: string): Promise<void> {
   const args = ["plugin", "marketplace", "add", githubRepo, "--name", name];
   let result;
@@ -131,9 +112,6 @@ export async function claudePluginMarketplaceAdd(githubRepo: string, name: strin
   }
 }
 
-/**
- * Uninstall a plugin using the native claude CLI
- */
 export async function claudePluginUninstall(
   pluginName: string,
   scope: "project" | "user",

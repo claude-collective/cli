@@ -40,15 +40,10 @@ export const DIRS = {
 
 export const DEFAULT_VERSION = "1.0.0";
 
-/** Uses "0.0.0" to clearly indicate "no version was explicitly set" */
+// "0.0.0" indicates no version was explicitly set
 export const DEFAULT_DISPLAY_VERSION = "0.0.0";
 
-/**
- * Skills that are preselected by default in the wizard.
- * These are foundational methodology skills that apply to all projects.
- *
- * Note: Skill IDs are in normalized kebab-case format (no author suffix, slashes replaced with dashes).
- */
+// Foundational methodology skills preselected by default in the wizard
 export const DEFAULT_PRESELECTED_SKILLS: readonly SkillId[] = [
   "meta-methodology-anti-over-engineering",
   "meta-methodology-context-management",
@@ -58,10 +53,7 @@ export const DEFAULT_PRESELECTED_SKILLS: readonly SkillId[] = [
   "meta-methodology-write-verification",
 ];
 
-/**
- * Subcategories considered "key" skills that should be preloaded.
- * These are primary technology choices that define the stack's core.
- */
+// Primary technology subcategories that should be preloaded (define the stack's core)
 export const KEY_SUBCATEGORIES: ReadonlySet<Subcategory> = new Set<Subcategory>([
   "framework",
   "api",

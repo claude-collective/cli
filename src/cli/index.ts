@@ -1,4 +1,3 @@
-// oclif entry point - to be implemented
 import { run, flush, Errors } from "@oclif/core";
 
 run(undefined, import.meta.url)

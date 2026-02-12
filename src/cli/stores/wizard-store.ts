@@ -9,10 +9,8 @@ import type {
 } from "../types/index.js";
 import { typedKeys } from "../utils/typed-object.js";
 
-/** All available domains that the build step should cycle through */
 const ALL_DOMAINS: Domain[] = ["web", "web-extras", "api", "cli", "mobile", "shared"];
 
-// Step types for the wizard
 export type WizardStep =
   | "approach" // Choose stack template or build from scratch
   | "stack" // Select pre-built stack (if approach=stack) or domains (if approach=scratch)
@@ -20,56 +18,27 @@ export type WizardStep =
   | "confirm"; // Final confirmation
 
 export type WizardState = {
-  // ─────────────────────────────────────────────────────────────────
-  // Current step
-  // ─────────────────────────────────────────────────────────────────
   step: WizardStep;
 
-  // ─────────────────────────────────────────────────────────────────
-  // Flow tracking
-  // ─────────────────────────────────────────────────────────────────
   approach: "stack" | "scratch" | null;
   selectedStackId: string | null;
-  stackAction: "defaults" | "customize" | null; // For stack flow after selection
+  stackAction: "defaults" | "customize" | null;
 
-  // ─────────────────────────────────────────────────────────────────
-  // Domain selection (scratch flow or customize flow)
-  // ─────────────────────────────────────────────────────────────────
-  selectedDomains: Domain[]; // ['web', 'api', 'cli', 'mobile']
+  selectedDomains: Domain[];
 
-  // ─────────────────────────────────────────────────────────────────
-  // Build step state
-  // ─────────────────────────────────────────────────────────────────
-  currentDomainIndex: number; // Which domain we're configuring (0-based)
+  currentDomainIndex: number;
   domainSelections: DomainSelections;
-  // e.g., { web: { framework: ['react'], styling: ['scss-modules'] } }
-  // Note: array supports multi-select categories
 
-  // ─────────────────────────────────────────────────────────────────
-  // Grid navigation state
-  // ─────────────────────────────────────────────────────────────────
   focusedRow: number;
   focusedCol: number;
 
-  // ─────────────────────────────────────────────────────────────────
-  // UI state
-  // ─────────────────────────────────────────────────────────────────
   showDescriptions: boolean;
   expertMode: boolean;
 
-  // ─────────────────────────────────────────────────────────────────
-  // Modes
-  // ─────────────────────────────────────────────────────────────────
   installMode: "plugin" | "local";
 
-  // ─────────────────────────────────────────────────────────────────
-  // Navigation history
-  // ─────────────────────────────────────────────────────────────────
   history: WizardStep[];
 
-  // ─────────────────────────────────────────────────────────────────
-  // Actions
-  // ─────────────────────────────────────────────────────────────────
   setStep: (step: WizardStep) => void;
   setApproach: (approach: "stack" | "scratch") => void;
   selectStack: (stackId: string | null) => void;
@@ -86,8 +55,8 @@ export type WizardState = {
     technology: SkillId,
     exclusive: boolean,
   ) => void;
-  nextDomain: () => boolean; // Returns true if moved to next domain, false if at end
-  prevDomain: () => boolean; // Returns true if moved to prev domain, false if at start
+  nextDomain: () => boolean;
+  prevDomain: () => boolean;
   setFocus: (row: number, col: number) => void;
   toggleShowDescriptions: () => void;
   toggleExpertMode: () => void;
@@ -95,12 +64,9 @@ export type WizardState = {
   goBack: () => void;
   reset: () => void;
 
-  // ─────────────────────────────────────────────────────────────────
-  // Computed getters (derive from state)
-  // ─────────────────────────────────────────────────────────────────
   getAllSelectedTechnologies: () => SkillId[];
   getCurrentDomain: () => Domain | null;
-  getSelectedSkills: () => SkillId[]; // All selected skills including preselected
+  getSelectedSkills: () => SkillId[];
 };
 
 const createInitialState = () => ({
@@ -126,7 +92,6 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     set((state) => ({
       step,
       history: [...state.history, state.step],
-      // Reset focus when changing steps
       focusedRow: 0,
       focusedCol: 0,
     })),
@@ -142,9 +107,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const domainSelections: DomainSelections = {};
       const domains = new Set<Domain>();
 
-      // Iterate through all agents in the stack
       for (const agentConfig of Object.values(stack.agents)) {
-        // Each agent has subcategory -> technology alias mappings
         for (const [subcategoryId, technologyAlias] of Object.entries(agentConfig)) {
           // Boundary cast: Object.entries returns string keys, but agentConfig is Record<Subcategory, ...>
           const subcat = subcategoryId as Subcategory;
@@ -153,23 +116,19 @@ export const useWizardStore = create<WizardState>((set, get) => ({
           const tech = technologyAlias;
 
           if (!domain) {
-            // Skip if subcategory doesn't have a domain (top-level categories)
             continue;
           }
 
           domains.add(domain);
 
-          // Initialize domain if needed
           if (!domainSelections[domain]) {
             domainSelections[domain] = {};
           }
 
-          // Initialize subcategory array if needed
           if (!domainSelections[domain][subcat]) {
             domainSelections[domain][subcat] = [];
           }
 
-          // Add technology if not already present
           // Boundary cast: display names from stack are resolved to SkillId downstream by resolveAlias
           const techAsId = tech as unknown as SkillId;
           if (!domainSelections[domain][subcat].includes(techAsId)) {
@@ -201,10 +160,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
       let newSelections: SkillId[];
       if (exclusive) {
-        // For exclusive categories, toggle off if already selected, otherwise select only this one
         newSelections = isSelected ? [] : [technology];
       } else {
-        // For multi-select categories, toggle the selection
         newSelections = isSelected
           ? currentSelections.filter((t) => t !== technology)
           : [...currentSelections, technology];
@@ -272,9 +229,6 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   reset: () => set(createInitialState()),
 
-  // ─────────────────────────────────────────────────────────────────
-  // Computed getters
-  // ─────────────────────────────────────────────────────────────────
   getAllSelectedTechnologies: () => {
     const state = get();
     const technologies: SkillId[] = [];
@@ -295,7 +249,6 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   getSelectedSkills: () => {
-    // Return preselected methodology skills (always included)
     return [...DEFAULT_PRESELECTED_SKILLS];
   },
 }));
