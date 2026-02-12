@@ -23,10 +23,6 @@ import { hashFile } from "../versioning";
 import { warn } from "../../utils/logger";
 import { stringify as stringifyYaml } from "yaml";
 
-// =============================================================================
-// Fixtures
-// =============================================================================
-
 function createValidMetadataYaml(skillId: string, contentHash: string, date: string): string {
   return stringifyYaml({
     forked_from: {
@@ -47,10 +43,6 @@ function createMetadataWithoutForkedFrom(): string {
 function createMetadataWithSchemaComment(skillId: string, contentHash: string): string {
   return `# yaml-language-server: $schema=../schema.json\n${createValidMetadataYaml(skillId, contentHash, "2026-01-01")}`;
 }
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("skill-metadata", () => {
   describe("readForkedFromMetadata", () => {

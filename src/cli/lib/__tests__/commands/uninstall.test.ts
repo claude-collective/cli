@@ -1,49 +1,17 @@
-/**
- * Integration tests for the uninstall command.
- *
- * Tests: cc uninstall, cc uninstall --yes, cc uninstall --dry-run,
- *        cc uninstall --plugin, cc uninstall --local
- *
- * The uninstall command removes Claude Collective from a project:
- * - Detects plugin dir (.claude/plugins/claude-collective/)
- * - Detects local dirs (.claude/, .claude-src/)
- * - Shows what will be removed
- * - Asks for confirmation (interactive Ink prompt)
- * - Removes directories
- *
- * Tests focus on non-interactive paths to avoid Ink render complexities:
- * - Nothing to uninstall (exits before prompt)
- * - --yes flag (bypasses prompt)
- * - --dry-run flag (previews without prompt)
- * - --plugin / --local flag targeting
- * - Flag validation
- */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir } from "fs/promises";
 import { runCliCommand, directoryExists } from "../helpers";
 
-// =============================================================================
-// Mocks
-// =============================================================================
-
 vi.mock("../../../utils/exec.js", () => ({
   claudePluginUninstall: vi.fn(),
   isClaudeCLIAvailable: vi.fn().mockResolvedValue(true),
 }));
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const CLAUDE_DIR = ".claude";
 const CLAUDE_SRC_DIR = ".claude-src";
 const PLUGIN_SUBPATH = path.join(CLAUDE_DIR, "plugins", "claude-collective");
-
-// =============================================================================
-// Helpers
-// =============================================================================
 
 async function createPluginDir(projectDir: string): Promise<string> {
   const pluginDir = path.join(projectDir, PLUGIN_SUBPATH);
@@ -60,10 +28,6 @@ async function createLocalDirs(
   await mkdir(claudeSrcDir, { recursive: true });
   return { claudeDir, claudeSrcDir };
 }
-
-// =============================================================================
-// Test Setup
-// =============================================================================
 
 describe("uninstall command", () => {
   let tempDir: string;
@@ -82,10 +46,6 @@ describe("uninstall command", () => {
     process.chdir(originalCwd);
     await rm(tempDir, { recursive: true, force: true });
   });
-
-  // ===========================================================================
-  // Flag Validation
-  // ===========================================================================
 
   describe("flag validation", () => {
     it("should run without arguments", async () => {
@@ -133,10 +93,6 @@ describe("uninstall command", () => {
     });
   });
 
-  // ===========================================================================
-  // Nothing to Uninstall
-  // ===========================================================================
-
   describe("nothing to uninstall", () => {
     it("should show nothing to uninstall when project is empty", async () => {
       const { stdout, stderr } = await runCliCommand(["uninstall", "--yes"]);
@@ -166,10 +122,6 @@ describe("uninstall command", () => {
       expect(output).toContain("No local installation found");
     });
   });
-
-  // ===========================================================================
-  // Dry Run Mode
-  // ===========================================================================
 
   describe("dry-run mode", () => {
     it("should show preview header in dry-run", async () => {
@@ -221,10 +173,6 @@ describe("uninstall command", () => {
     });
   });
 
-  // ===========================================================================
-  // Uninstall with --yes (Plugin)
-  // ===========================================================================
-
   describe("uninstall with --yes (plugin)", () => {
     it("should remove plugin directory", async () => {
       const pluginDir = await createPluginDir(projectDir);
@@ -258,10 +206,6 @@ describe("uninstall command", () => {
     });
   });
 
-  // ===========================================================================
-  // Uninstall with --yes (Local)
-  // ===========================================================================
-
   describe("uninstall with --yes (local directories)", () => {
     it("should remove .claude and .claude-src directories", async () => {
       const { claudeDir, claudeSrcDir } = await createLocalDirs(projectDir);
@@ -288,10 +232,6 @@ describe("uninstall command", () => {
       expect(stdout).toContain("Removed 1 directory");
     });
   });
-
-  // ===========================================================================
-  // Flag Targeting (--plugin / --local)
-  // ===========================================================================
 
   describe("flag targeting", () => {
     it("should only remove plugin with --plugin flag", async () => {
@@ -336,10 +276,6 @@ describe("uninstall command", () => {
       expect(output).toContain("No local installation found");
     });
   });
-
-  // ===========================================================================
-  // Dry Run with Flag Targeting
-  // ===========================================================================
 
   describe("dry-run with flag targeting", () => {
     it("should preview only plugin removal with --dry-run --plugin", async () => {

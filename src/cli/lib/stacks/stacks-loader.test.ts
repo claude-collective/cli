@@ -19,10 +19,6 @@ import {
 import { readFile, fileExists } from "../../utils/fs";
 import { warn } from "../../utils/logger";
 
-// =============================================================================
-// Fixtures
-// =============================================================================
-
 function createValidStacksYaml(): string {
   return `
 stacks:
@@ -52,10 +48,6 @@ function createInvalidStacksYaml(): string {
 name: invalid
 `;
 }
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("stacks-loader", () => {
   beforeEach(() => {

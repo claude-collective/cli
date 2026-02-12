@@ -2,14 +2,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { validateCompiledAgent, printOutputValidationResult } from "./output-validator";
 import type { AgentName, ValidationResult } from "../types";
 
-// =============================================================================
-// Helpers
-// =============================================================================
-
-/**
- * Generate valid compiled agent content with all required sections.
- * Uses enough lines to exceed the 50-line minimum.
- */
 function createValidAgentContent(overrides?: {
   name?: string;
   description?: string;
@@ -65,16 +57,8 @@ function createValidAgentContent(overrides?: {
   return lines.join("\n");
 }
 
-// =============================================================================
-// Tests
-// =============================================================================
-
 describe("output-validator", () => {
   describe("validateCompiledAgent", () => {
-    // =========================================================================
-    // Valid content
-    // =========================================================================
-
     it("should return valid for well-formed compiled agent content", () => {
       const content = createValidAgentContent();
 
@@ -98,10 +82,6 @@ describe("output-validator", () => {
       expect(result.errors).toEqual([]);
     });
 
-    // =========================================================================
-    // Empty / missing content
-    // =========================================================================
-
     it("should return invalid for empty string", () => {
       const result = validateCompiledAgent("");
 
@@ -116,10 +96,6 @@ describe("output-validator", () => {
       expect(result.valid).toBe(false);
       expect(result.errors).toContain("Compiled output is empty");
     });
-
-    // =========================================================================
-    // Frontmatter validation
-    // =========================================================================
 
     it("should report error when frontmatter is missing", () => {
       const content = "# No frontmatter\n" + "Some content\n".repeat(60);
@@ -205,10 +181,6 @@ describe("output-validator", () => {
       expect(result.errors).toContain("Failed to parse YAML frontmatter");
     });
 
-    // =========================================================================
-    // XML tag balance
-    // =========================================================================
-
     it("should report error for unclosed XML tags", () => {
       const content = createValidAgentContent();
       // Add an unclosed tag
@@ -254,10 +226,6 @@ describe("output-validator", () => {
       expect(testTagErrors).toHaveLength(0);
     });
 
-    // =========================================================================
-    // Template artifacts
-    // =========================================================================
-
     it("should warn about unprocessed {{ }} template variables", () => {
       const content = createValidAgentContent();
       const contentWithTemplate = content + "\nHello {{ user_name }}!\n";
@@ -292,10 +260,6 @@ describe("output-validator", () => {
       const templateWarnings = result.warnings.filter((w) => w.includes("Template artifacts"));
       expect(templateWarnings).toHaveLength(0);
     });
-
-    // =========================================================================
-    // Required patterns
-    // =========================================================================
 
     it("should warn when <role> section is missing", () => {
       const content = createValidAgentContent({ includeRole: false });
@@ -357,10 +321,6 @@ describe("output-validator", () => {
       expect(lengthWarnings).toHaveLength(0);
     });
 
-    // =========================================================================
-    // Validity flag
-    // =========================================================================
-
     it("should be valid when only warnings are present (no errors)", () => {
       // Missing description and tools produce warnings, not errors
       const content = [
@@ -404,10 +364,6 @@ describe("output-validator", () => {
       expect(result.errors.length).toBeGreaterThan(0);
     });
 
-    // =========================================================================
-    // Multiple issues combined
-    // =========================================================================
-
     it("should collect multiple errors and warnings together", () => {
       // Missing name (error) + missing role (warning) + template artifact (warning) + short (warning)
       const content = [
@@ -428,10 +384,6 @@ describe("output-validator", () => {
       expect(result.warnings.length).toBeGreaterThanOrEqual(3);
     });
   });
-
-  // ===========================================================================
-  // printOutputValidationResult
-  // ===========================================================================
 
   describe("printOutputValidationResult", () => {
     let consoleSpy: ReturnType<typeof vi.spyOn>;

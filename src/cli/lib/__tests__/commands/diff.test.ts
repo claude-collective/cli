@@ -1,29 +1,8 @@
-/**
- * Integration tests for the diff command.
- *
- * Tests: cc diff, cc diff <skill>, cc diff --quiet
- *
- * The diff command compares local forked skills against their source versions:
- * - Shows unified diff output with colored formatting
- * - Requires forked_from metadata in local skill's metadata.yaml
- * - Exit codes indicate whether differences were found
- *
- * Note: The diff command requires local skills with forked_from metadata.
- * Tests focus on:
- * - Argument validation (optional skill name)
- * - Flag handling (--quiet, --source)
- * - Behavior when no local skills exist
- * - Error handling
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
 import { runCliCommand } from "../helpers";
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("diff command", () => {
   let tempDir: string;
@@ -42,10 +21,6 @@ describe("diff command", () => {
     process.chdir(originalCwd);
     await rm(tempDir, { recursive: true, force: true });
   });
-
-  // ===========================================================================
-  // Basic Execution
-  // ===========================================================================
 
   describe("basic execution", () => {
     it("should run without arguments", async () => {
@@ -75,10 +50,6 @@ describe("diff command", () => {
       expect(output.toLowerCase()).not.toContain("unexpected argument");
     });
   });
-
-  // ===========================================================================
-  // Flag Validation
-  // ===========================================================================
 
   describe("flag validation", () => {
     it("should accept --quiet flag", async () => {
@@ -114,10 +85,6 @@ describe("diff command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
-
-  // ===========================================================================
-  // With Local Skills
-  // ===========================================================================
 
   describe("with local skills", () => {
     beforeEach(async () => {
@@ -165,10 +132,6 @@ author: "@test"
       expect(error).toBeDefined();
     });
   });
-
-  // ===========================================================================
-  // With Forked Skills
-  // ===========================================================================
 
   describe("with forked skills", () => {
     beforeEach(async () => {
@@ -221,10 +184,6 @@ forked_from:
     });
   });
 
-  // ===========================================================================
-  // Combined Flags
-  // ===========================================================================
-
   describe("combined flags", () => {
     it("should accept --quiet with --source", async () => {
       const { error } = await runCliCommand(["diff", "--quiet", "--source", "/custom/path"]);
@@ -256,10 +215,6 @@ forked_from:
       expect(output.toLowerCase()).not.toContain("unexpected argument");
     });
   });
-
-  // ===========================================================================
-  // Error Handling
-  // ===========================================================================
 
   describe("error handling", () => {
     it("should handle invalid source path gracefully", async () => {

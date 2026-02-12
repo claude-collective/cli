@@ -25,10 +25,6 @@ describe("skill-plugin-compiler", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  // =============================================================================
-  // compileSkillPlugin (integration tests)
-  // =============================================================================
-
   describe("compileSkillPlugin", () => {
     async function createTestSkill(
       dirName: string,
@@ -321,10 +317,6 @@ description: Simple skill
     });
   });
 
-  // =============================================================================
-  // compileAllSkillPlugins
-  // =============================================================================
-
   describe("compileAllSkillPlugins", () => {
     async function createTestSkill(
       dirName: string,
@@ -484,10 +476,6 @@ description: Simple skill
       }
     });
   });
-
-  // =============================================================================
-  // printCompilationSummary
-  // =============================================================================
 
   describe("printCompilationSummary", () => {
     it("should print count of compiled plugins", () => {

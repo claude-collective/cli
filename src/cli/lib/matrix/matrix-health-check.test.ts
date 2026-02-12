@@ -15,10 +15,6 @@ vi.mock("../../utils/logger");
 
 import { warn } from "../../utils/logger";
 
-// =============================================================================
-// Helpers
-// =============================================================================
-
 function createCategory(
   id: Subcategory,
   overrides?: Partial<CategoryDefinition>,
@@ -46,10 +42,6 @@ function createSkill(
     ...overrides,
   });
 }
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("matrix-health-check", () => {
   describe("checkMatrixHealth — healthy matrix", () => {

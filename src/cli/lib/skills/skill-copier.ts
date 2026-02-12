@@ -116,15 +116,7 @@ export async function copySkillsToPluginFromSource(
   return copiedSkills;
 }
 
-/**
- * Get the destination path for a skill when copying to local flattened structure.
- *
- * Uses the normalized skill ID (kebab-case) as the folder name.
- *
- * @example
- * // skill.id = "web-framework-react"
- * // Returns: "{localSkillsDir}/web-framework-react"
- */
+// Uses the skill ID as the folder name (flattened, not nested)
 function getFlattenedSkillDestPath(skill: ResolvedSkill, localSkillsDir: string): string {
   return path.join(localSkillsDir, skill.id);
 }

@@ -1,12 +1,3 @@
-/**
- * User journey tests for the install -> compile -> verify flow.
- *
- * Tests the complete workflow where a user:
- * 1. Installs a stack as a plugin (compileStackPlugin)
- * 2. Verifies the plugin directory structure and manifest
- * 3. Compiles the project via CLI compile command
- * 4. Verifies compiled agent files contain stack skills
- */
 import path from "path";
 import os from "os";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -15,20 +6,9 @@ import { parse as parseYaml } from "yaml";
 import { compileStackPlugin } from "../../stacks";
 import type { Stack, StackAgentConfig } from "../../../types";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const PLUGIN_MANIFEST_DIR = ".claude-plugin";
 const PLUGIN_MANIFEST_FILE = "plugin.json";
 
-// =============================================================================
-// Test Helpers
-// =============================================================================
-
-/**
- * Parse YAML frontmatter from markdown content
- */
 function parseFrontmatter(content: string): Record<string, unknown> | null {
   if (!content.startsWith("---")) {
     return null;
@@ -47,9 +27,6 @@ function parseFrontmatter(content: string): Record<string, unknown> | null {
   }
 }
 
-/**
- * Check if a file exists at the given path
- */
 async function fileExists(filePath: string): Promise<boolean> {
   try {
     const s = await stat(filePath);
@@ -59,9 +36,6 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
-/**
- * Check if a directory exists at the given path
- */
 async function directoryExists(dirPath: string): Promise<boolean> {
   try {
     const s = await stat(dirPath);
@@ -71,10 +45,6 @@ async function directoryExists(dirPath: string): Promise<boolean> {
   }
 }
 
-/**
- * Create a project structure with agents, skills, and templates for stack compilation.
- * Matches the pattern from stack-plugin-compiler.test.ts.
- */
 async function createProjectStructure(projectRoot: string) {
   const agentsDir = path.join(projectRoot, "src/agents");
   const templatesDir = path.join(projectRoot, "src/agents/_templates");
@@ -111,9 +81,6 @@ Core principles are embedded directly in the template.
   return { agentsDir, templatesDir, configDir, skillsDir };
 }
 
-/**
- * Create an agent directory with agent.yaml, intro.md, and workflow.md
- */
 async function createAgent(
   agentsDir: string,
   agentId: string,
@@ -149,12 +116,6 @@ ${config.tools.map((t) => `  - ${t}`).join("\n")}
   );
 }
 
-/**
- * Create a skill in src/skills/ (new architecture).
- * @param projectRoot - project root path
- * @param directoryPath - filesystem path like "web/framework/react (@vince)"
- * @param config.name - frontmatter name (canonical ID) like "web-framework-react"
- */
 async function createSkill(
   projectRoot: string,
   directoryPath: string,
@@ -175,10 +136,6 @@ ${config.content ?? `# ${config.name}\n\nSkill content here.`}
   );
 }
 
-/**
- * Create a Stack object for testing.
- * Converts agents array to proper Record format.
- */
 function createStack(
   stackId: string,
   config: {
@@ -196,10 +153,6 @@ function createStack(
     philosophy: config.philosophy,
   };
 }
-
-// =============================================================================
-// Tests: Install -> Compile -> Verify
-// =============================================================================
 
 describe("User Journey: Install -> Compile -> Verify", () => {
   let tempDir: string;
@@ -225,10 +178,6 @@ describe("User Journey: Install -> Compile -> Verify", () => {
   afterEach(async () => {
     await rm(tempDir, { recursive: true, force: true });
   });
-
-  // ===========================================================================
-  // Test: Stack plugin is installed to correct location
-  // ===========================================================================
 
   it("should install stack plugin to correct location", async () => {
     const { agentsDir } = await createProjectStructure(projectRoot);
@@ -265,10 +214,6 @@ describe("User Journey: Install -> Compile -> Verify", () => {
     const skillsDirOutput = path.join(result.pluginPath, "skills");
     expect(await directoryExists(skillsDirOutput)).toBe(true);
   });
-
-  // ===========================================================================
-  // Test: Valid plugin manifest is created after install
-  // ===========================================================================
 
   it("should create valid plugin manifest after install", async () => {
     const { agentsDir } = await createProjectStructure(projectRoot);
@@ -307,10 +252,6 @@ describe("User Journey: Install -> Compile -> Verify", () => {
     // Stack plugins with skills declare skills path
     expect(manifest.skills).toBe("./skills/");
   });
-
-  // ===========================================================================
-  // Test: Stack agents are compiled with installed skills
-  // ===========================================================================
 
   it("should compile stack agents with installed skills", async () => {
     const { agentsDir } = await createProjectStructure(projectRoot);
@@ -353,10 +294,6 @@ describe("User Journey: Install -> Compile -> Verify", () => {
     expect(agentContent).toContain("Build components");
   });
 
-  // ===========================================================================
-  // Test: Stack skill content is included in compiled agents
-  // ===========================================================================
-
   it("should include stack skill content in compiled agents", async () => {
     const { agentsDir } = await createProjectStructure(projectRoot);
 
@@ -397,10 +334,6 @@ describe("User Journey: Install -> Compile -> Verify", () => {
     // The skill directory structure should still exist
     expect(await directoryExists(path.join(result.pluginPath, "skills"))).toBe(true);
   });
-
-  // ===========================================================================
-  // Test: Stack with multiple agents
-  // ===========================================================================
 
   it("should handle stack with multiple agents", async () => {
     const { agentsDir } = await createProjectStructure(projectRoot);
@@ -474,10 +407,6 @@ describe("User Journey: Install -> Compile -> Verify", () => {
     expect(readmeContent).toContain("`web-tester`");
   });
 });
-
-// =============================================================================
-// Tests: Plugin Structure Verification
-// =============================================================================
 
 describe("User Journey: Plugin Structure Verification", () => {
   let tempDir: string;
@@ -660,10 +589,6 @@ describe("User Journey: Plugin Structure Verification", () => {
   });
 });
 
-// =============================================================================
-// Tests: Agent Content Verification
-// =============================================================================
-
 describe("User Journey: Agent Content Verification", () => {
   let tempDir: string;
   let projectRoot: string;
@@ -839,10 +764,6 @@ You are a specialized web developer with deep expertise in:
     expect(agentContent).toContain("</core_principles>");
   });
 });
-
-// =============================================================================
-// Tests: Error Handling in Install -> Compile Flow
-// =============================================================================
 
 describe("User Journey: Install -> Compile Error Handling", () => {
   let tempDir: string;

@@ -34,10 +34,6 @@ describe("marketplace-generator", () => {
     await writeFile(path.join(pluginDir, "README.md"), `# ${name}`);
   }
 
-  // =============================================================================
-  // generateMarketplace
-  // =============================================================================
-
   describe("generateMarketplace", () => {
     it("should include all plugins from directory", async () => {
       await createPlugin("skill-react", {
@@ -257,10 +253,6 @@ describe("marketplace-generator", () => {
     });
   });
 
-  // =============================================================================
-  // writeMarketplace
-  // =============================================================================
-
   describe("writeMarketplace", () => {
     it("should create parent directories", async () => {
       const marketplace: Marketplace = {
@@ -357,10 +349,6 @@ describe("marketplace-generator", () => {
       expect(content.endsWith("\n")).toBe(true);
     });
   });
-
-  // =============================================================================
-  // getMarketplaceStats
-  // =============================================================================
 
   describe("getMarketplaceStats", () => {
     it("should count total plugins", () => {

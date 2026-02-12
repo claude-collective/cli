@@ -13,24 +13,11 @@ import type {
 import { typedEntries } from "../../utils/typed-object";
 import { getAgentsForSkill } from "../skills";
 
-/**
- * Options for generating a ProjectConfig
- */
 export type ProjectConfigOptions = {
-  /** Brief description of the project */
   description?: string;
-  /** Author handle */
   author?: string;
 };
 
-/**
- * Extract the subcategory from a CategoryPath.
- *
- * @example
- * "web/framework" -> "framework"
- * "framework" -> "framework"
- * "local" -> undefined (not a subcategory)
- */
 function extractSubcategory(categoryPath: CategoryPath): Subcategory | undefined {
   if (categoryPath === "local") return undefined;
   const parts = categoryPath.split("/");
@@ -38,13 +25,6 @@ function extractSubcategory(categoryPath: CategoryPath): Subcategory | undefined
   return (parts.length >= 2 ? parts[1] : parts[0]) as Subcategory;
 }
 
-/**
- * Generate a minimal ProjectConfig from selected skills.
- * Returns a config with just the essentials:
- * - name
- * - stack (agent->subcategory->skillId mappings derived via getAgentsForSkill)
- * - agents array (derived from skills via getAgentsForSkill)
- */
 export function generateProjectConfigFromSkills(
   name: string,
   selectedSkillIds: SkillId[],
@@ -102,25 +82,7 @@ export function generateProjectConfigFromSkills(
   return config;
 }
 
-/**
- * Build resolved stack property for ProjectConfig.
- * Maps each agent to its subcategory->skill ID mappings.
- *
- * @param stack - The Stack with agent technology mappings (display names)
- * @param displayNameToId - Display name -> skill ID mappings from skills-matrix.yaml
- * @returns Record<agentId, Record<subcategoryId, skillId>>
- *
- * @example
- * Input stack.agents:
- *   web-developer:
- *     framework: react
- *     styling: scss-modules
- *
- * Output:
- *   web-developer:
- *     framework: web-framework-react
- *     styling: web-styling-scss-modules
- */
+// Resolves display names in stack.agents to full skill IDs using skill_aliases
 export function buildStackProperty(
   stack: Stack,
   displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,

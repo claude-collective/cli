@@ -80,7 +80,6 @@ async function readExistingManifest(
 }
 
 function hashStackConfig(stack: ProjectConfig): string {
-  // Collect unique skill IDs from stack property
   const stackSkillIds = stack.stack
     ? [...new Set(Object.values(stack.stack).flatMap((a) => Object.values(a)))].sort()
     : [];

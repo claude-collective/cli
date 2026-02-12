@@ -178,13 +178,8 @@ async function loadFromRemote(
   };
 }
 
-/**
- * Convert a Stack (from config/stacks.yaml) to ResolvedStack format
- * for compatibility with the wizard.
- *
- * Phase 7: Skills are defined in stacks per agent (subcategory -> technology alias).
- * Uses skill_aliases from the matrix to resolve aliases to full skill IDs.
- */
+// Convert a Stack to ResolvedStack for wizard compatibility.
+// Resolves technology aliases to full skill IDs via displayNameToId.
 function stackToResolvedStack(
   stack: Stack,
   displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,

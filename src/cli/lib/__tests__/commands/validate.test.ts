@@ -1,26 +1,8 @@
-/**
- * Integration tests for validate command.
- *
- * Tests: cc validate, cc validate --plugins, cc validate <path>
- *
- * The validate command has two modes:
- * 1. Schema validation (default) - validates YAML files against JSON schemas
- * 2. Plugin validation (--plugins or path arg) - validates compiled plugin structure
- *
- * Note: stdout capture is limited in oclif test environment, so tests focus on:
- * - Command execution (no unhandled errors)
- * - Flag/argument validation
- * - Exit codes for error conditions
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
 import { runCliCommand } from "../helpers";
-
-// =============================================================================
-// Test Setup
-// =============================================================================
 
 describe("validate command", () => {
   let tempDir: string;
@@ -39,10 +21,6 @@ describe("validate command", () => {
     process.chdir(originalCwd);
     await rm(tempDir, { recursive: true, force: true });
   });
-
-  // ===========================================================================
-  // Schema Validation (default mode)
-  // ===========================================================================
 
   describe("schema validation (default)", () => {
     it("should run schema validation when no args provided", async () => {
@@ -63,10 +41,6 @@ describe("validate command", () => {
       expect(output.toLowerCase()).not.toContain("parse");
     });
   });
-
-  // ===========================================================================
-  // Plugin Validation
-  // ===========================================================================
 
   describe("plugin validation (--plugins flag)", () => {
     it("should accept --plugins flag", async () => {
@@ -107,10 +81,6 @@ describe("validate command", () => {
       expect(output.toLowerCase()).not.toContain("missing .claude-plugin");
     });
   });
-
-  // ===========================================================================
-  // Plugin Validation with Path Argument
-  // ===========================================================================
 
   describe("plugin validation (path argument)", () => {
     it("should accept path as first argument", async () => {
@@ -171,10 +141,6 @@ describe("validate command", () => {
     });
   });
 
-  // ===========================================================================
-  // Verbose Mode
-  // ===========================================================================
-
   describe("verbose mode", () => {
     it("should accept --verbose flag", async () => {
       const { error } = await runCliCommand(["validate", "--verbose"]);
@@ -208,10 +174,6 @@ describe("validate command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
-
-  // ===========================================================================
-  // Error Handling
-  // ===========================================================================
 
   describe("error handling", () => {
     it("should exit with error for non-existent plugin path", async () => {

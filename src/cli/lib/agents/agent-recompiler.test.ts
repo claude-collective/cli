@@ -1,13 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import { mkdir, writeFile, readFile, readdir } from "fs/promises";
+import { mkdir, writeFile, readFile } from "fs/promises";
 import { recompileAgents } from "./agent-recompiler";
 import { createTestDirs, cleanupTestDirs, writeTestSkill, fileExists } from "../__tests__/helpers";
 import type { TestDirs } from "../__tests__/helpers";
 import type { AgentName } from "../../types";
 
-// Path to CLI repo (agents, templates live here)
-// Skills repo (claude-subagents) only contains skills and stacks
 const CLI_REPO_PATH = path.resolve(__dirname, "../../..");
 
 describe("agent-recompiler", () => {
@@ -39,7 +37,6 @@ describe("agent-recompiler", () => {
     });
 
     it.skip("recompiles a single agent specified in options", async () => {
-      // Write a test skill
       await writeTestSkill(testDirs.skillsDir, "test-skill");
 
       const result = await recompileAgents({
@@ -51,7 +48,6 @@ describe("agent-recompiler", () => {
       expect(result.compiled).toContain("web-pm");
       expect(result.failed).toEqual([]);
 
-      // Verify the agent file was created
       const agentPath = path.join(testDirs.agentsDir, "web-pm.md");
       expect(await fileExists(agentPath)).toBe(true);
     });
@@ -70,7 +66,6 @@ describe("agent-recompiler", () => {
     });
 
     it.skip("uses config.yaml agent list when present", async () => {
-      // Create a config.yaml with specific agents
       const configContent = `
 name: test-plugin
 version: 1.0.0
@@ -90,7 +85,6 @@ agents:
     });
 
     it.skip("uses existing compiled agents when no config exists", async () => {
-      // Create an existing agent file
       await writeFile(path.join(testDirs.agentsDir, "web-pm.md"), "# Existing PM Agent\n");
 
       const result = await recompileAgents({
@@ -98,7 +92,6 @@ agents:
         sourcePath: CLI_REPO_PATH,
       });
 
-      // Should detect and recompile the existing agent
       expect(result.compiled).toContain("web-pm");
     });
 
@@ -150,18 +143,13 @@ agents:
       const agentPath = path.join(testDirs.agentsDir, "web-developer.md");
       const content = await readFile(agentPath, "utf-8");
 
-      // Should have YAML frontmatter
       expect(content).toMatch(/^---\n/);
       expect(content).toContain("name: web-developer");
       expect(content).toContain("description:");
-
-      // Should have core principles section
       expect(content).toContain("<core_principles>");
     });
 
     it.skip("respects projectDir for local template resolution", async () => {
-      // Create a local templates directory (but don't add templates)
-      // This just tests the option is passed through correctly
       const localTemplatesDir = path.join(testDirs.projectDir, ".claude", "templates");
       await mkdir(localTemplatesDir, { recursive: true });
 
@@ -172,7 +160,6 @@ agents:
         projectDir: testDirs.projectDir,
       });
 
-      // Should still compile (falls back to bundled templates)
       expect(result.compiled).toContain("web-pm");
     });
   });

@@ -10,10 +10,6 @@ import {
 import type { PluginManifest } from "../../types";
 import type { InstallMode, Installation } from "../installation";
 
-// =============================================================================
-// Mocks
-// =============================================================================
-
 vi.mock("fs/promises", () => ({
   readdir: vi.fn(),
 }));
@@ -35,10 +31,6 @@ vi.mock("../configuration", () => ({
   loadProjectConfig: vi.fn(),
 }));
 
-// =============================================================================
-// Typed mock imports
-// =============================================================================
-
 import { readdir } from "fs/promises";
 import {
   getCollectivePluginDir,
@@ -59,11 +51,6 @@ const mockedDirectoryExists = vi.mocked(directoryExists);
 const mockedDetectInstallation = vi.mocked(detectInstallation);
 const mockedLoadProjectConfig = vi.mocked(loadProjectConfig);
 
-// =============================================================================
-// Helpers
-// =============================================================================
-
-/** Create a fake Dirent-like object for readdir({ withFileTypes: true }) */
 function createDirent(name: string, opts: { isDir?: boolean; isFile?: boolean }) {
   return {
     name,
@@ -79,15 +66,7 @@ function createDirent(name: string, opts: { isDir?: boolean; isFile?: boolean })
   } as unknown as import("fs").Dirent;
 }
 
-// =============================================================================
-// Tests
-// =============================================================================
-
 describe("plugin-info", () => {
-  // ===========================================================================
-  // getPluginInfo
-  // ===========================================================================
-
   describe("getPluginInfo", () => {
     it("should return null when plugin directory does not exist", async () => {
       mockedGetCollectivePluginDir.mockReturnValue("/project/.claude/plugins/claude-collective");
@@ -124,7 +103,6 @@ describe("plugin-info", () => {
       mockedGetPluginSkillsDir.mockReturnValue(`${pluginDir}/skills`);
       mockedGetPluginAgentsDir.mockReturnValue(`${pluginDir}/agents`);
 
-      // Skills directory has 2 skill directories and 1 file (should only count dirs)
       mockedReaddir.mockImplementation((dirPath) => {
         const dir = dirPath as string;
         if (dir.endsWith("/skills")) {
@@ -168,7 +146,6 @@ describe("plugin-info", () => {
       mockedGetPluginSkillsDir.mockReturnValue(`${pluginDir}/skills`);
       mockedGetPluginAgentsDir.mockReturnValue(`${pluginDir}/agents`);
 
-      // Empty directories
       mockedReaddir.mockResolvedValue([] as unknown as Awaited<ReturnType<typeof readdir>>);
 
       const result = await getPluginInfo();
@@ -189,7 +166,6 @@ describe("plugin-info", () => {
       mockedGetPluginSkillsDir.mockReturnValue(`${pluginDir}/skills`);
       mockedGetPluginAgentsDir.mockReturnValue(`${pluginDir}/agents`);
 
-      // Empty directories
       mockedReaddir.mockResolvedValue([] as unknown as Awaited<ReturnType<typeof readdir>>);
 
       const result = await getPluginInfo();
@@ -210,7 +186,6 @@ describe("plugin-info", () => {
       mockedGetPluginAgentsDir.mockReturnValue(`${pluginDir}/agents`);
       mockedReadPluginManifest.mockResolvedValue(manifest);
 
-      // First call: plugin dir exists, subsequent calls: skills/agents dirs don't
       mockedDirectoryExists.mockImplementation((dirPath) => {
         if (dirPath === pluginDir) return Promise.resolve(true);
         return Promise.resolve(false);
@@ -254,10 +229,6 @@ describe("plugin-info", () => {
     });
   });
 
-  // ===========================================================================
-  // formatPluginDisplay
-  // ===========================================================================
-
   describe("formatPluginDisplay", () => {
     it("should format plugin info correctly", () => {
       const info: PluginInfo = {
@@ -292,10 +263,6 @@ describe("plugin-info", () => {
     });
   });
 
-  // ===========================================================================
-  // getInstallationInfo
-  // ===========================================================================
-
   describe("getInstallationInfo", () => {
     it("should return null when no installation is detected", async () => {
       mockedDetectInstallation.mockResolvedValue(null);
@@ -317,8 +284,6 @@ describe("plugin-info", () => {
       mockedDetectInstallation.mockResolvedValue(installation);
       mockedDirectoryExists.mockResolvedValue(true);
 
-      // Skills: 2 directories
-      // Agents: 1 .md file
       mockedReaddir.mockImplementation((dirPath) => {
         const dir = dirPath as string;
         if (dir.endsWith("/skills")) {
@@ -483,7 +448,6 @@ describe("plugin-info", () => {
         configPath: "/project/.claude-src/config.yaml",
       });
 
-      // readdir throws for both skills and agents
       mockedReaddir.mockRejectedValue(new Error("EACCES permission denied"));
 
       const result = await getInstallationInfo();
@@ -493,10 +457,6 @@ describe("plugin-info", () => {
       expect(result!.agentCount).toBe(0);
     });
   });
-
-  // ===========================================================================
-  // formatInstallationDisplay
-  // ===========================================================================
 
   describe("formatInstallationDisplay", () => {
     it("should format local installation info", () => {

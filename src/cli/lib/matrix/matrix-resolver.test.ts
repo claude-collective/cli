@@ -24,9 +24,6 @@ import type {
 } from "../../types";
 import { createMockSkill, createMockMatrix } from "../__tests__/helpers";
 
-/**
- * Create a minimal ResolvedSkill for testing (wraps shared helper with local defaults)
- */
 function createSkill(id: SkillId, overrides: Partial<ResolvedSkill> = {}): ResolvedSkill {
   return createMockSkill(id, "framework", {
     description: `Description for ${id}`,
@@ -36,9 +33,6 @@ function createSkill(id: SkillId, overrides: Partial<ResolvedSkill> = {}): Resol
   });
 }
 
-/**
- * Create a minimal MergedSkillsMatrix for testing (wraps shared helper with alias support)
- */
 function createMatrix(
   skills: Record<string, ResolvedSkill>,
   aliases: Record<string, string> = {},
@@ -846,12 +840,6 @@ describe("Conflicting skills with expert mode on (P1-23)", () => {
   });
 });
 
-/**
- * P1-24: Test Missing Skill Dependencies
- *
- * Tests that validation catches when a skill requires another skill that isn't selected,
- * includes which dependencies are missing, and the recommendation system suggests adding them.
- */
 describe("Missing skill dependencies (P1-24)", () => {
   describe("validateSelection catches missing dependencies", () => {
     it("should return error when required skill is not selected (single dependency)", () => {

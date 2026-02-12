@@ -1,28 +1,8 @@
-/**
- * Integration tests for the build:plugins command.
- *
- * Tests: cc build:plugins, cc build:plugins --skills-dir, cc build:plugins --output-dir, etc.
- *
- * The build:plugins command compiles skills into standalone plugins:
- * - Default: Compile all skills from src/skills
- * - --skills-dir: Custom skills source directory
- * - --output-dir: Custom output directory
- * - --skill: Compile only a specific skill
- * - --verbose: Enable verbose logging
- *
- * Note: Tests focus on:
- * - Flag validation (--skills-dir, --output-dir, --skill, --verbose)
- * - Error handling when skills directory not found
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir } from "fs/promises";
 import { runCliCommand } from "../../helpers";
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("build:plugins command", () => {
   let tempDir: string;
@@ -41,10 +21,6 @@ describe("build:plugins command", () => {
     process.chdir(originalCwd);
     await rm(tempDir, { recursive: true, force: true });
   });
-
-  // ===========================================================================
-  // Basic Execution
-  // ===========================================================================
 
   describe("basic execution", () => {
     it("should run without arguments", async () => {
@@ -66,10 +42,6 @@ describe("build:plugins command", () => {
       expect(output.toLowerCase()).not.toContain("missing required arg");
     });
   });
-
-  // ===========================================================================
-  // Flag Validation
-  // ===========================================================================
 
   describe("flag validation", () => {
     it("should accept --skills-dir flag with path", async () => {
@@ -139,10 +111,6 @@ describe("build:plugins command", () => {
     });
   });
 
-  // ===========================================================================
-  // Combined Flags
-  // ===========================================================================
-
   describe("combined flags", () => {
     it("should accept multiple flags together", async () => {
       const skillsPath = path.join(tempDir, "skills");
@@ -204,10 +172,6 @@ describe("build:plugins command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
-
-  // ===========================================================================
-  // Error Handling
-  // ===========================================================================
 
   describe("error handling", () => {
     it("should handle missing skills directory gracefully", async () => {

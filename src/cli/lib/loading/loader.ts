@@ -60,10 +60,6 @@ export async function loadAllAgents(projectRoot: string): Promise<Record<string,
   return agents;
 }
 
-/**
- * Load agents from project's .claude-src/agents/ directory.
- * Returns empty object if directory doesn't exist.
- */
 export async function loadProjectAgents(
   projectRoot: string,
 ): Promise<Record<string, AgentDefinition>> {

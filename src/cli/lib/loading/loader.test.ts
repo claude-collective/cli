@@ -9,10 +9,6 @@ import { readFile, glob, directoryExists } from "../../utils/fs";
 import { warn } from "../../utils/logger";
 import type { SkillId } from "../../types";
 
-// =============================================================================
-// Helpers
-// =============================================================================
-
 function makeSkillMd(name: string, description: string): string {
   return `---
 name: ${name}
@@ -32,10 +28,6 @@ tools:
   - Read
   - Write`;
 }
-
-// =============================================================================
-// parseFrontmatter
-// =============================================================================
 
 describe("parseFrontmatter", () => {
   it("should parse valid frontmatter with name and description", () => {
@@ -174,10 +166,6 @@ Content`;
   });
 });
 
-// =============================================================================
-// loadAllAgents — error handling
-// =============================================================================
-
 describe("loadAllAgents", () => {
   it("should warn and skip when agent.yaml has invalid YAML", async () => {
     vi.mocked(glob).mockResolvedValue(["bad-agent/agent.yaml"]);
@@ -213,10 +201,6 @@ describe("loadAllAgents", () => {
     expect(warn).toHaveBeenCalledTimes(1);
   });
 });
-
-// =============================================================================
-// loadProjectAgents — error handling
-// =============================================================================
 
 describe("loadProjectAgents", () => {
   it("should return empty object when project agents directory does not exist", async () => {
@@ -263,10 +247,6 @@ describe("loadProjectAgents", () => {
     expect(warn).toHaveBeenCalledTimes(1);
   });
 });
-
-// =============================================================================
-// loadSkillsByIds — error handling
-// =============================================================================
 
 describe("loadSkillsByIds", () => {
   it("should warn for unknown skill references", async () => {

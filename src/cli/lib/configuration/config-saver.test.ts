@@ -5,16 +5,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { saveSourceToProjectConfig } from "./config-saver";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const CLAUDE_SRC_DIR = ".claude-src";
 const CONFIG_FILE = "config.yaml";
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("config-saver", () => {
   let tempDir: string;

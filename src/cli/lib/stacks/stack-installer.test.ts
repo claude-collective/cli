@@ -20,10 +20,6 @@ import { compileStackPlugin } from "./stack-plugin-compiler";
 import { claudePluginInstall, isClaudeCLIAvailable } from "../../utils/exec";
 import { ensureDir, remove } from "../../utils/fs";
 
-// =============================================================================
-// Helpers
-// =============================================================================
-
 function createMockCompiledResult(overrides?: Partial<CompiledStackPlugin>): CompiledStackPlugin {
   return {
     pluginPath: "/tmp/cc-stack-123456/test-stack",
@@ -36,10 +32,6 @@ function createMockCompiledResult(overrides?: Partial<CompiledStackPlugin>): Com
   };
 }
 
-// =============================================================================
-// Tests
-// =============================================================================
-
 describe("stack-installer", () => {
   beforeEach(() => {
     // Set default mock return values
@@ -48,10 +40,6 @@ describe("stack-installer", () => {
     vi.mocked(ensureDir).mockResolvedValue(undefined);
     vi.mocked(remove).mockResolvedValue(undefined);
   });
-
-  // ===========================================================================
-  // compileStackToTemp
-  // ===========================================================================
 
   describe("compileStackToTemp", () => {
     it("should create a temp directory and compile the stack", async () => {
@@ -137,15 +125,7 @@ describe("stack-installer", () => {
     });
   });
 
-  // ===========================================================================
-  // installStackAsPlugin
-  // ===========================================================================
-
   describe("installStackAsPlugin", () => {
-    // =========================================================================
-    // Claude CLI availability
-    // =========================================================================
-
     it("should throw when Claude CLI is not available", async () => {
       vi.mocked(isClaudeCLIAvailable).mockResolvedValue(false);
 
@@ -177,10 +157,6 @@ describe("stack-installer", () => {
       // compileStackPlugin should NOT have been called
       expect(compileStackPlugin).not.toHaveBeenCalled();
     });
-
-    // =========================================================================
-    // Marketplace installation
-    // =========================================================================
 
     it("should install from marketplace when marketplace option is provided", async () => {
       const result = await installStackAsPlugin({
@@ -216,10 +192,6 @@ describe("stack-installer", () => {
       // Should NOT compile locally
       expect(compileStackPlugin).not.toHaveBeenCalled();
     });
-
-    // =========================================================================
-    // Local compilation and installation
-    // =========================================================================
 
     it("should compile locally and install when no marketplace is specified", async () => {
       const mockResult = createMockCompiledResult({

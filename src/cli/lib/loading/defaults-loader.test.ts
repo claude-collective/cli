@@ -14,10 +14,6 @@ vi.mock("../../utils/logger", () => ({
 import { readFile, fileExists } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 
-// =============================================================================
-// Fixtures
-// =============================================================================
-
 function createValidMappingsYaml(): string {
   return `
 skill_to_agents:
@@ -51,10 +47,6 @@ function createMalformedYaml(): string {
     not properly: closed
 `;
 }
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("defaults-loader", () => {
   beforeEach(() => {

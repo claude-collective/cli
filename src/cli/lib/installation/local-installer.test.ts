@@ -9,9 +9,6 @@ import type { SourceLoadResult } from "../loading";
 import type { MergedSkillsMatrix, ProjectConfig } from "../../types";
 import { createMockMatrix } from "../__tests__/helpers";
 
-/**
- * Helper to create a minimal wizard result
- */
 function createWizardResult(overrides?: Partial<WizardResultV2>): WizardResultV2 {
   return {
     selectedSkills: [],
@@ -29,11 +26,6 @@ function createWizardResult(overrides?: Partial<WizardResultV2>): WizardResultV2
   };
 }
 
-/**
- * Helper to create a minimal source load result.
- * Uses a real source path from the project (PROJECT_ROOT) so that
- * loadAllAgents and other loaders can find real agent definitions.
- */
 function createSourceResult(
   matrix: MergedSkillsMatrix,
   sourcePath: string,

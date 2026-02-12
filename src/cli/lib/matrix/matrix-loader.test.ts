@@ -2,10 +2,6 @@ import path from "path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { SkillsMatrixConfig } from "../../types";
 
-// =============================================================================
-// Module-level mock setup
-// =============================================================================
-
 // For extractAllSkills tests, we mock fs/loader. For loadSkillsMatrix, we
 // use the real fs to load the actual config file for the happy path.
 const mockReadFile = vi.fn();
@@ -29,14 +25,6 @@ import { loadSkillsMatrix, extractAllSkills, mergeMatrixWithSkills } from "./mat
 import { warn } from "../../utils/logger";
 import { readFile as realReadFile } from "fs/promises";
 
-// =============================================================================
-// Fixtures
-// =============================================================================
-
-/**
- * Read the actual skills-matrix.yaml from the repo.
- * This ensures the happy path test validates against real config.
- */
 async function loadRealMatrixYaml(): Promise<string> {
   const matrixPath = path.resolve(__dirname, "../../../../config/skills-matrix.yaml");
   return realReadFile(matrixPath, "utf-8");
@@ -49,10 +37,6 @@ version: "1.0.0"
 categories: {}
 `;
 }
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("matrix-loader", () => {
   describe("loadSkillsMatrix", () => {

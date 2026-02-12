@@ -1,28 +1,8 @@
-/**
- * Integration tests for the compile command.
- *
- * Tests: cc compile, cc compile --verbose, cc compile --output, cc compile --dry-run
- *
- * The compile command compiles agents using local skills and agent definitions:
- * - Default: Compiles to Claude plugin directory (~/.claude/plugins/claude-collective/)
- * - --output: Compiles to custom directory
- * - --dry-run: Preview without writing files
- * - --verbose: Show detailed logging
- *
- * Note: Tests focus on:
- * - Flag validation (--verbose, --output, --dry-run, --source, --agent-source, --refresh)
- * - Error handling when plugin doesn't exist
- * - Dry-run behavior
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
 import { runCliCommand } from "../helpers";
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("compile command", () => {
   let tempDir: string;
@@ -42,10 +22,6 @@ describe("compile command", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  // ===========================================================================
-  // Basic Execution
-  // ===========================================================================
-
   describe("basic execution", () => {
     it("should run without arguments", async () => {
       const { error } = await runCliCommand(["compile"]);
@@ -64,10 +40,6 @@ describe("compile command", () => {
       expect(error?.oclif?.exit).toBeDefined();
     });
   });
-
-  // ===========================================================================
-  // Flag Validation
-  // ===========================================================================
 
   describe("flag validation", () => {
     it("should accept --verbose flag", async () => {
@@ -153,10 +125,6 @@ describe("compile command", () => {
     });
   });
 
-  // ===========================================================================
-  // Dry Run Mode
-  // ===========================================================================
-
   describe("dry-run mode", () => {
     it("should accept --dry-run flag and process without errors", async () => {
       const { error } = await runCliCommand(["compile", "--dry-run"]);
@@ -196,10 +164,6 @@ Content.
     });
   });
 
-  // ===========================================================================
-  // Output Mode
-  // ===========================================================================
-
   describe("output mode", () => {
     it("should show custom output directory in message", async () => {
       const outputPath = path.join(tempDir, "custom-output");
@@ -217,10 +181,6 @@ Content.
       expect(output).toBeTruthy();
     });
   });
-
-  // ===========================================================================
-  // Verbose Mode
-  // ===========================================================================
 
   describe("verbose mode", () => {
     it("should accept --verbose with --dry-run", async () => {
@@ -241,10 +201,6 @@ Content.
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
-
-  // ===========================================================================
-  // Combined Flags
-  // ===========================================================================
 
   describe("combined flags", () => {
     it("should accept multiple flags together", async () => {
@@ -304,10 +260,6 @@ Content.
     });
   });
 
-  // ===========================================================================
-  // Error Handling
-  // ===========================================================================
-
   describe("error handling", () => {
     it("should error when no skills found", async () => {
       // Note: We can't easily create the plugin dir in the global location
@@ -337,10 +289,6 @@ Content.
       expect(error).toBeDefined();
     });
   });
-
-  // ===========================================================================
-  // Plugin Mode vs Custom Output Mode
-  // ===========================================================================
 
   describe("plugin mode vs custom output mode", () => {
     it("should use plugin mode when no output flag provided", async () => {

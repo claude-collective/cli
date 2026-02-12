@@ -1,16 +1,3 @@
-/**
- * Tests for new:skill command.
- *
- * Tests: cc new:skill <name>, flags (--author, --category, --force, --dry-run)
- *
- * The new:skill command creates a local skill scaffold with SKILL.md and metadata.yaml.
- * It exports pure functions for validation and content generation that are unit tested directly.
- *
- * Note: stdout capture is limited in oclif test environment, so command tests focus on:
- * - Argument/flag validation and exit codes
- * - File system side effects (created files and their contents)
- * - Error handling for invalid names and existing directories
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
@@ -23,15 +10,7 @@ import {
   generateMetadataYaml,
 } from "../../../../commands/new/skill";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const LOCAL_SKILLS_DIR = ".claude/skills";
-
-// =============================================================================
-// Unit Tests: Pure Functions
-// =============================================================================
 
 describe("validateSkillName", () => {
   it("should return null for valid kebab-case name", () => {
@@ -142,10 +121,6 @@ describe("generateMetadataYaml", () => {
   });
 });
 
-// =============================================================================
-// Command Tests
-// =============================================================================
-
 describe("new:skill command", () => {
   let tempDir: string;
   let projectDir: string;
@@ -163,10 +138,6 @@ describe("new:skill command", () => {
     process.chdir(originalCwd);
     await rm(tempDir, { recursive: true, force: true });
   });
-
-  // ===========================================================================
-  // Argument Validation
-  // ===========================================================================
 
   describe("argument validation", () => {
     it("should reject missing name argument", async () => {
@@ -189,10 +160,6 @@ describe("new:skill command", () => {
       expect(error?.oclif?.exit).toBeDefined();
     });
   });
-
-  // ===========================================================================
-  // File Creation
-  // ===========================================================================
 
   describe("file creation", () => {
     it("should create SKILL.md and metadata.yaml in .claude/skills/{name}/", async () => {
@@ -235,10 +202,6 @@ describe("new:skill command", () => {
     });
   });
 
-  // ===========================================================================
-  // Flags
-  // ===========================================================================
-
   describe("flags", () => {
     it("should accept --author flag and use it in generated files", async () => {
       await runCliCommand(["new:skill", "custom-skill", "--author", "@vince"]);
@@ -265,10 +228,6 @@ describe("new:skill command", () => {
       expect(await directoryExists(skillDir)).toBe(false);
     });
   });
-
-  // ===========================================================================
-  // Existing Skill Handling
-  // ===========================================================================
 
   describe("existing skill handling", () => {
     it("should error if skill directory already exists without --force", async () => {

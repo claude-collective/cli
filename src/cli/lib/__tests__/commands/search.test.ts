@@ -1,27 +1,8 @@
-/**
- * Integration tests for the search command.
- *
- * Tests: cc search <query> [--category <category>]
- *
- * Note: The search command requires a valid skills-matrix.yaml with specific schema.
- * Creating a minimal test fixture is complex, so these tests focus on:
- * - Command argument validation
- * - Output format validation
- * - Error handling
- *
- * Full search tests would require either:
- * - Network access to the default source
- * - A complete test fixture matching the skills-matrix schema
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir } from "fs/promises";
 import { runCliCommand } from "../helpers";
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("search command", () => {
   let tempDir: string;

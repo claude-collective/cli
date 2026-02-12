@@ -16,10 +16,6 @@ describe("plugin-version", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  /**
-   * Helper: write a plugin manifest file to the temp directory.
-   * Creates the .claude-plugin directory and writes plugin.json.
-   */
   async function writeManifest(manifest: Record<string, unknown>): Promise<void> {
     const manifestDir = path.join(tempDir, PLUGIN_MANIFEST_DIR);
     await mkdir(manifestDir, { recursive: true });
@@ -29,18 +25,11 @@ describe("plugin-version", () => {
     );
   }
 
-  /**
-   * Helper: read the current manifest from disk.
-   */
   async function readManifest(): Promise<Record<string, unknown>> {
     const manifestPath = path.join(tempDir, PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE);
     const content = await readFile(manifestPath, "utf-8");
     return JSON.parse(content);
   }
-
-  // =============================================================================
-  // getPluginVersion
-  // =============================================================================
 
   describe("getPluginVersion", () => {
     it("should return version from manifest", async () => {
@@ -79,10 +68,6 @@ describe("plugin-version", () => {
       expect(version).toBe("1.0.0");
     });
   });
-
-  // =============================================================================
-  // bumpPluginVersion
-  // =============================================================================
 
   describe("bumpPluginVersion", () => {
     describe("patch bump", () => {
@@ -154,7 +139,6 @@ describe("plugin-version", () => {
 
         const newVersion = await bumpPluginVersion(tempDir, "patch");
 
-        // DEFAULT_VERSION is "1.0.0", so patch bump gives "1.0.1"
         expect(newVersion).toBe("1.0.1");
       });
 

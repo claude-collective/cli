@@ -42,15 +42,8 @@ async function getExistingAgentNames(pluginDir: string): Promise<AgentName[]> {
   return files.map((f) => path.basename(f, ".md") as AgentName);
 }
 
-/**
- * Load config from either:
- * 1. pluginDir/config.yaml (legacy plugin location)
- * 2. pluginDir/.claude/config.yaml (new project config location)
- *
- * This provides backward compatibility with existing plugins.
- */
+// Tries pluginDir/config.yaml (legacy) then pluginDir/.claude/config.yaml
 async function loadConfigWithFallback(pluginDir: string): Promise<LoadedProjectConfig | null> {
-  // First try the legacy plugin location (pluginDir/config.yaml)
   const legacyConfigPath = path.join(pluginDir, "config.yaml");
   if (await fileExists(legacyConfigPath)) {
     try {
@@ -96,23 +89,17 @@ export async function recompileAgents(
     warnings: [],
   };
 
-  // Load project config (handles both legacy plugin config and new ProjectConfig)
-  // Try plugin dir first, then fall back to project dir for local mode
   let loadedConfig = await loadConfigWithFallback(pluginDir);
   if (!loadedConfig && projectDir) {
     loadedConfig = await loadConfigWithFallback(projectDir);
   }
   const projectConfig = loadedConfig?.config ?? null;
 
-  // Load built-in agents from source
   const builtinAgents = await loadAllAgents(sourcePath);
-
-  // Load project agents from .claude-src/agents/ (if projectDir provided)
   const projectAgents = projectDir ? await loadProjectAgents(projectDir) : {};
 
-  // Merge built-in agents with project agents
-  // Priority: project agents > built-in agents
   // Boundary cast: loadAllAgents returns Record<string, AgentDefinition>, agent dirs are AgentName by convention
+  // Priority: project agents > built-in agents
   const allAgents = {
     ...builtinAgents,
     ...projectAgents,

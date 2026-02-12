@@ -1,32 +1,8 @@
-/**
- * Integration tests for the build:marketplace command.
- *
- * Tests: cc build:marketplace, cc build:marketplace --plugins-dir, etc.
- *
- * The build:marketplace command generates marketplace.json from built plugins:
- * - Default: Scans dist/plugins directory
- * - --plugins-dir: Custom plugins source directory
- * - --output: Custom output file path
- * - --name: Marketplace name
- * - --version: Marketplace version
- * - --description: Marketplace description
- * - --owner-name: Owner name
- * - --owner-email: Owner email
- * - --verbose: Enable verbose logging
- *
- * Note: Tests focus on:
- * - Flag validation (--plugins-dir, --output, --name, --version, --verbose)
- * - Error handling when plugins directory not found
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir } from "fs/promises";
 import { runCliCommand } from "../../helpers";
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("build:marketplace command", () => {
   let tempDir: string;
@@ -45,10 +21,6 @@ describe("build:marketplace command", () => {
     process.chdir(originalCwd);
     await rm(tempDir, { recursive: true, force: true });
   });
-
-  // ===========================================================================
-  // Basic Execution
-  // ===========================================================================
 
   describe("basic execution", () => {
     it("should run without arguments", async () => {
@@ -69,10 +41,6 @@ describe("build:marketplace command", () => {
       expect(output.toLowerCase()).not.toContain("missing required arg");
     });
   });
-
-  // ===========================================================================
-  // Flag Validation
-  // ===========================================================================
 
   describe("flag validation", () => {
     it("should accept --plugins-dir flag with path", async () => {
@@ -182,10 +150,6 @@ describe("build:marketplace command", () => {
     });
   });
 
-  // ===========================================================================
-  // Combined Flags
-  // ===========================================================================
-
   describe("combined flags", () => {
     it("should accept multiple flags together", async () => {
       const pluginsPath = path.join(tempDir, "plugins");
@@ -257,10 +221,6 @@ describe("build:marketplace command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
-
-  // ===========================================================================
-  // Error Handling
-  // ===========================================================================
 
   describe("error handling", () => {
     it("should handle missing plugins directory gracefully", async () => {

@@ -1,19 +1,3 @@
-/**
- * Integration tests for the full Wizard component (v2).
- *
- * Tests complete user flows through the wizard from start to finish.
- * V2 wizard flow: approach -> stack -> build -> confirm
- *
- * Flow coverage:
- * - Flow A1: Stack -> Build -> Accept Defaults (A shortcut) -> Confirm
- * - Flow A2: Stack -> Build (pre-populated) -> Confirm
- * - Flow B: Scratch -> Single Domain (Web) -> Build -> Confirm
- * - Flow C: Scratch -> Multi-Domain (Web + API) -> Build/Web -> Build/API -> Confirm
- * - Flow D: Back Navigation with selection preservation
- * - Flow E: Cancel from First Step
- *
- * Note: Select component requires consistent delays between operations.
- */
 import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Wizard } from "../../../components/wizard/wizard";
@@ -23,19 +7,8 @@ import { createComprehensiveMatrix, createBasicMatrix } from "../helpers";
 import type { MergedSkillsMatrix } from "../../../types";
 import { ARROW_DOWN, ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../test-constants";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
-// Longer delay for wizard step transitions
 const STEP_TRANSITION_DELAY_MS = 150;
-
-// Space key for toggling selections in CategoryGrid
 const SPACE = " ";
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("Wizard integration", () => {
   let cleanup: (() => void) | undefined;
@@ -50,10 +23,6 @@ describe("Wizard integration", () => {
     cleanup?.();
     cleanup = undefined;
   });
-
-  // ===========================================================================
-  // Flow A1: Stack -> Continue with Defaults -> Confirm
-  // ===========================================================================
 
   describe("Flow A1: Stack path with defaults", () => {
     it("should complete full stack -> build -> accept defaults -> confirm flow", async () => {
@@ -128,10 +97,6 @@ describe("Wizard integration", () => {
     });
   });
 
-  // ===========================================================================
-  // Flow A2: Stack -> Customize -> Build -> Confirm
-  // ===========================================================================
-
   describe("Flow A2: Stack path with customize", () => {
     it("should navigate stack -> build step (pre-populated from stack)", async () => {
       const comprehensiveMatrix = createComprehensiveMatrix();
@@ -164,10 +129,6 @@ describe("Wizard integration", () => {
       expect(Object.keys(state.domainSelections).length).toBeGreaterThan(0);
     });
   });
-
-  // ===========================================================================
-  // Flow B: Scratch -> Single Domain (Web) -> Build -> Confirm
-  // ===========================================================================
 
   describe("Flow B: Scratch path with single domain (Web)", () => {
     it("should start scratch flow from approach", async () => {
@@ -284,10 +245,6 @@ describe("Wizard integration", () => {
       expect(state.step).toBe("confirm");
     });
   });
-
-  // ===========================================================================
-  // Flow C: Scratch -> Multi-Domain (Web + API) -> Build/Web -> Build/API -> Confirm
-  // ===========================================================================
 
   describe("Flow C: Scratch path with multi-domain (Web + API)", () => {
     it("should correctly set approach when selecting scratch", async () => {
@@ -458,10 +415,6 @@ describe("Wizard integration", () => {
     });
   });
 
-  // ===========================================================================
-  // Flow D: Back Navigation
-  // ===========================================================================
-
   describe("Flow D: Back navigation", () => {
     it("should navigate back through multiple steps preserving selections", async () => {
       const onComplete = vi.fn();
@@ -561,10 +514,6 @@ describe("Wizard integration", () => {
     });
   });
 
-  // ===========================================================================
-  // Flow E: Cancel from First Step
-  // ===========================================================================
-
   describe("Flow E: Cancel from first step", () => {
     it("should call onCancel when escape pressed at approach", async () => {
       const onComplete = vi.fn();
@@ -616,10 +565,6 @@ describe("Wizard integration", () => {
       expect(onCancel).toHaveBeenCalledTimes(1);
     });
   });
-
-  // ===========================================================================
-  // Legacy Tests (migrated from original file)
-  // ===========================================================================
 
   describe("stack selection flow", () => {
     it("should navigate through approach -> stack -> build", async () => {
@@ -910,10 +855,6 @@ describe("Wizard integration", () => {
     });
   });
 
-  // ===========================================================================
-  // Result Verification
-  // ===========================================================================
-
   describe("result verification", () => {
     it("should return correct result structure on completion", async () => {
       const onComplete = vi.fn();
@@ -981,10 +922,6 @@ describe("Wizard integration", () => {
       expect(Array.isArray(result.selectedSkills)).toBe(true);
     });
   });
-
-  // ===========================================================================
-  // Edge Case Tests
-  // ===========================================================================
 
   describe("edge cases", () => {
     it("should show keyboard help text on approach step", async () => {

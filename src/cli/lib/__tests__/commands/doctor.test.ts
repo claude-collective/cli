@@ -1,30 +1,9 @@
-/**
- * Integration tests for doctor command.
- *
- * Tests: cc doctor, cc doctor --verbose, cc doctor --source
- *
- * The doctor command runs diagnostic checks on the project configuration:
- * - Config Valid: Parse .claude/config.yaml without errors
- * - Skills Resolved: All skills in config exist in source or locally
- * - Agents Compiled: All agents have .md files in .claude/agents/
- * - No Orphans: No extra files in .claude/agents/ not in config
- * - Source Reachable: Can load from configured source
- *
- * Note: stdout capture is limited in oclif test environment, so tests focus on:
- * - Command execution (no unhandled errors)
- * - Flag/argument validation
- * - Exit codes based on check results
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
 import { runCliCommand } from "../helpers";
-
-// =============================================================================
-// Test Setup
-// =============================================================================
 
 describe("doctor command", () => {
   let tempDir: string;
@@ -43,10 +22,6 @@ describe("doctor command", () => {
     process.chdir(originalCwd);
     await rm(tempDir, { recursive: true, force: true });
   });
-
-  // ===========================================================================
-  // Basic Command Execution
-  // ===========================================================================
 
   describe("basic execution", () => {
     it("should run without arguments", async () => {
@@ -87,10 +62,6 @@ describe("doctor command", () => {
     });
   });
 
-  // ===========================================================================
-  // Flag Validation
-  // ===========================================================================
-
   describe("flag validation", () => {
     it("should accept --verbose flag", async () => {
       const { error } = await runCliCommand(["doctor", "--verbose"]);
@@ -125,10 +96,6 @@ describe("doctor command", () => {
     });
   });
 
-  // ===========================================================================
-  // Config Validation Check
-  // ===========================================================================
-
   describe("config validation", () => {
     it("should fail when config.yaml has syntax errors", async () => {
       const claudeDir = path.join(projectDir, ".claude");
@@ -159,10 +126,6 @@ describe("doctor command", () => {
       expect(output.toLowerCase()).not.toContain("config.yaml has errors");
     });
   });
-
-  // ===========================================================================
-  // Agents Check
-  // ===========================================================================
 
   describe("agents check", () => {
     it("should pass when agents are compiled", async () => {
@@ -214,10 +177,6 @@ describe("doctor command", () => {
     });
   });
 
-  // ===========================================================================
-  // Orphans Check
-  // ===========================================================================
-
   describe("orphans check", () => {
     it("should detect orphaned agent files", async () => {
       const claudeDir = path.join(projectDir, ".claude");
@@ -246,10 +205,6 @@ describe("doctor command", () => {
       expect(output.toLowerCase()).not.toContain("unexpected argument");
     });
   });
-
-  // ===========================================================================
-  // Combined Flags
-  // ===========================================================================
 
   describe("combined flags", () => {
     it("should accept --verbose with --source", async () => {

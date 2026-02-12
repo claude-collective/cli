@@ -14,11 +14,7 @@
 import type { AgentName, CategoryPath, ProjectConfig } from "../../types";
 import { getCachedDefaults } from "../loading";
 
-// =============================================================================
-// Hardcoded Fallback Defaults (DEPRECATED)
-// These are used when YAML defaults cannot be loaded (bundled fallback)
-// Skills should now be defined in agent.yaml files directly.
-// =============================================================================
+// Hardcoded fallback defaults — used when YAML defaults cannot be loaded
 
 // Boundary cast: literal strings are valid AgentName values at this data definition boundary
 export const SKILL_TO_AGENTS: Record<string, AgentName[]> = {
@@ -135,21 +131,10 @@ export const SKILL_TO_AGENTS: Record<string, AgentName[]> = {
   "web/mocks": ["web-tester", "web-developer", "web-reviewer"],
 };
 
-// =============================================================================
-// Default Agents for Unknown Categories
-// =============================================================================
-
 // Boundary cast: literal strings are valid AgentName values
 const DEFAULT_AGENTS: AgentName[] = ["agent-summoner", "skill-summoner", "documentor"];
 
-// =============================================================================
-// Helper Functions to Get Effective Mappings
-// =============================================================================
-
-/**
- * Get the effective skill_to_agents mappings.
- * Priority: YAML defaults (if loaded) > hardcoded fallback
- */
+// Priority: YAML defaults (if loaded) > hardcoded fallback
 function getEffectiveSkillToAgents(): Record<string, AgentName[]> {
   const defaults = getCachedDefaults();
   if (defaults?.skill_to_agents) {
@@ -159,22 +144,6 @@ function getEffectiveSkillToAgents(): Record<string, AgentName[]> {
   return SKILL_TO_AGENTS;
 }
 
-// =============================================================================
-// Public API
-// =============================================================================
-
-/**
- * Get agents that should receive a skill based on its path and category.
- *
- * Resolution priority:
- * 1. YAML defaults (if loaded)
- * 2. Hardcoded fallback
- *
- * @param skillPath - Full path to the skill (e.g., "skills/web/framework/react")
- * @param category - Skill category (e.g., "web/*" or "web/testing")
- * @param projectConfig - Optional project config for overrides
- * @returns Array of agent IDs that should receive this skill
- */
 export function getAgentsForSkill(
   skillPath: string,
   category: CategoryPath,
@@ -182,22 +151,18 @@ export function getAgentsForSkill(
 ): AgentName[] {
   const normalizedPath = skillPath.replace(/^skills\//, "").replace(/\/$/, "");
 
-  // Get effective mappings (YAML defaults or hardcoded fallback)
   const skillToAgents = getEffectiveSkillToAgents();
 
-  // Check direct category match
   if (skillToAgents[category]) {
     return skillToAgents[category];
   }
 
-  // Check exact path match or path prefix match
   for (const [pattern, agents] of Object.entries(skillToAgents)) {
     if (normalizedPath === pattern || normalizedPath.startsWith(`${pattern}/`)) {
       return agents;
     }
   }
 
-  // Check wildcard pattern match
   for (const [pattern, agents] of Object.entries(skillToAgents)) {
     if (pattern.endsWith("/*")) {
       const prefix = pattern.slice(0, -2);

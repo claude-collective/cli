@@ -24,7 +24,6 @@ import type {
   SkillsMatrixConfig,
 } from "../../types";
 
-/** Zod schema for RawMetadata from individual skill metadata.yaml files */
 const rawMetadataSchema = z.object({
   category: categoryPathSchema,
   category_exclusive: z.boolean().optional(),
@@ -144,14 +143,7 @@ function buildReverseDisplayNames(
   return reverse;
 }
 
-/**
- * Build a map from short names to actual skill IDs.
- *
- * This handles multiple formats used in skill metadata:
- * - "react" -> "web-framework-react" (alias resolution)
- * - Directory paths -> normalized skill IDs
- * - Old alias targets that may still exist in metadata files
- */
+// Maps short names, directory paths, and old alias targets to canonical skill IDs
 function buildAliasTargetToSkillIdMap(
   displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,
   skills: ExtractedSkillMetadata[],

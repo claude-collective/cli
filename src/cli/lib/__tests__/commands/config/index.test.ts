@@ -1,24 +1,9 @@
-/**
- * Integration tests for config commands.
- *
- * Tests: cc config, cc config:show, cc config:get, cc config:path,
- *        cc config:set-project, cc config:unset-project
- *
- * NOTE: Many tests are skipped because stdout capture is limited in the oclif/bun
- * test environment. The commands work correctly (output visible in test logs),
- * but the `stdout` variable returned by runCliCommand is empty. Tests that only
- * check error/exit codes still work and are kept active.
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
 import { stringify as stringifyYaml, parse as parseYaml } from "yaml";
 import { runCliCommand } from "../../helpers";
-
-// =============================================================================
-// Test Setup
-// =============================================================================
 
 describe("config commands", () => {
   let tempDir: string;
@@ -54,10 +39,6 @@ describe("config commands", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  // ===========================================================================
-  // config:path
-  // ===========================================================================
-
   // Skip: stdout capture limited in oclif/bun test environment
   describe("config:path", () => {
     it.skip("should display project config path", async () => {
@@ -75,10 +56,6 @@ describe("config commands", () => {
       expect(stdout).toContain(".claude/config.yaml");
     });
   });
-
-  // ===========================================================================
-  // config:show
-  // ===========================================================================
 
   // Skip: stdout capture limited in oclif/bun test environment
   describe("config:show", () => {
@@ -141,10 +118,6 @@ describe("config commands", () => {
     });
   });
 
-  // ===========================================================================
-  // config:get
-  // ===========================================================================
-
   describe("config:get", () => {
     // Skip: stdout capture limited in oclif/bun test environment
     it.skip("should get source value", async () => {
@@ -189,10 +162,6 @@ describe("config commands", () => {
     });
   });
 
-  // ===========================================================================
-  // config (alias for config:show)
-  // ===========================================================================
-
   // Skip: stdout capture limited in oclif/bun test environment
   describe("config (index)", () => {
     it.skip("should display configuration overview", async () => {
@@ -202,10 +171,6 @@ describe("config commands", () => {
       expect(stdout).toContain("Source:");
     });
   });
-
-  // ===========================================================================
-  // config:set-project
-  // ===========================================================================
 
   describe("config:set-project", () => {
     const PROJECT_CONFIG_DIR = ".claude-src";
@@ -299,10 +264,6 @@ describe("config commands", () => {
       expect(error).toBeDefined();
     });
   });
-
-  // ===========================================================================
-  // config:unset-project
-  // ===========================================================================
 
   describe("config:unset-project", () => {
     const PROJECT_CONFIG_DIR = ".claude-src";

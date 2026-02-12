@@ -60,30 +60,7 @@ export function resolveSkillReferences(
     .filter((skill): skill is Skill => skill !== null);
 }
 
-/**
- * Resolve skills for an agent from a Stack definition (Phase 7 format).
- * Takes a stack and skill aliases, returns skill references for the specified agent.
- *
- * @param agentName - The agent ID to resolve skills for
- * @param stack - The stack definition with agent technology selections
- * @param displayNameToId - Mapping from technology display names to full skill IDs
- * @returns Array of SkillReference objects for the agent
- *
- * @example
- * ```typescript
- * const stack = {
- *   id: 'nextjs-fullstack',
- *   agents: {
- *     'web-developer': { framework: 'react', styling: 'scss-modules' }
- *   }
- * };
- *
- * const displayNameToId = { react: 'web-framework-react', ... };
- *
- * const skills = resolveAgentSkillsFromStack('web-developer', stack, displayNameToId);
- * // Returns: [{ id: 'web-framework-react', usage: '...', preloaded: true }, ...]
- * ```
- */
+// Resolve skills for an agent from a Stack definition using display-name-to-ID mappings.
 export function resolveAgentSkillsFromStack(
   agentName: AgentName,
   stack: Stack,
@@ -131,19 +108,7 @@ export function resolveAgentSkillsFromStack(
   return skillRefs;
 }
 
-/**
- * Get skill references for an agent.
- * Supports multiple resolution strategies with the following priority:
- *
- * 1. Explicit skills in compile config (agentConfig.skills)
- * 2. Stack-based skills (Phase 7) if stack and skillAliases provided
- *
- * @param agentName - The agent ID to resolve skills for
- * @param agentConfig - Per-agent compile config (may have explicit skills)
- * @param stack - Stack definition (Phase 7) - optional
- * @param displayNameToId - Display name to skill ID mapping (Phase 7) - optional
- * @returns Array of SkillReference objects
- */
+// Priority: explicit agentConfig.skills > stack-based skills
 export async function getAgentSkills(
   agentName: AgentName,
   agentConfig: CompileAgentConfig,

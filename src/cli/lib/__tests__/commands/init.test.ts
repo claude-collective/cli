@@ -1,38 +1,10 @@
-/**
- * Integration tests for the init command.
- *
- * Tests: cc init, cc init --refresh, cc init --source, cc init --dry-run
- *
- * The init command initializes Claude Collective in a project:
- * - Checks if already initialized (plugin dir exists)
- * - Loads skills matrix from source
- * - Renders interactive Wizard component (Ink)
- * - Handles installation based on wizard result
- *
- * Note: Since init renders an interactive Ink Wizard component, runCommand cannot
- * interact with it. Tests focus on scenarios that resolve BEFORE the wizard renders:
- * - Already initialized (plugin dir check exits early)
- * - Flag validation (parsed before wizard)
- * - Source loading failure (errors before wizard)
- *
- * The wizard component itself is tested separately in:
- *   src/cli/components/wizard/
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir } from "fs/promises";
 import { runCliCommand } from "../helpers";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const PLUGIN_DIR_RELATIVE = ".claude/plugins/claude-collective";
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("init command", () => {
   let tempDir: string;
@@ -51,10 +23,6 @@ describe("init command", () => {
     process.chdir(originalCwd);
     await rm(tempDir, { recursive: true, force: true });
   });
-
-  // ===========================================================================
-  // Flag Validation
-  // ===========================================================================
 
   describe("flag validation", () => {
     it("should accept --refresh flag", async () => {
@@ -93,10 +61,6 @@ describe("init command", () => {
     });
   });
 
-  // ===========================================================================
-  // Combined Flags
-  // ===========================================================================
-
   describe("combined flags", () => {
     it("should accept multiple flags together", async () => {
       const { error } = await runCliCommand([
@@ -120,10 +84,6 @@ describe("init command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
-
-  // ===========================================================================
-  // Already Initialized
-  // ===========================================================================
 
   describe("already initialized", () => {
     it("should warn and exit when plugin directory already exists", async () => {
@@ -154,10 +114,6 @@ describe("init command", () => {
       expect(dirStat.isDirectory()).toBe(true);
     });
   });
-
-  // ===========================================================================
-  // Error Handling
-  // ===========================================================================
 
   describe("error handling", () => {
     it("should handle invalid source path gracefully", async () => {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import path from "path";
 import os from "os";
 import {
@@ -14,16 +14,8 @@ import {
 import type { PluginManifest, SkillId } from "../../types";
 import { createMockMatrix, createMockSkill } from "../__tests__/helpers";
 
-// =============================================================================
-// Mocks
-// =============================================================================
-
 vi.mock("../../utils/fs");
 vi.mock("../../utils/logger");
-
-// =============================================================================
-// Typed mock imports
-// =============================================================================
 
 import { fileExists, readFile, glob } from "../../utils/fs";
 
@@ -31,22 +23,10 @@ const mockedFileExists = vi.mocked(fileExists);
 const mockedReadFile = vi.mocked(readFile);
 const mockedGlob = vi.mocked(glob);
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const CLAUDE_DIR = ".claude";
 const PLUGINS_SUBDIR = "plugins";
 
-// =============================================================================
-// Tests
-// =============================================================================
-
 describe("plugin-finder", () => {
-  // ===========================================================================
-  // getUserPluginsDir
-  // ===========================================================================
-
   describe("getUserPluginsDir", () => {
     it("should return path under user home directory", () => {
       const result = getUserPluginsDir();
@@ -54,10 +34,6 @@ describe("plugin-finder", () => {
       expect(result).toBe(path.join(os.homedir(), CLAUDE_DIR, PLUGINS_SUBDIR));
     });
   });
-
-  // ===========================================================================
-  // getCollectivePluginDir
-  // ===========================================================================
 
   describe("getCollectivePluginDir", () => {
     it("should return path under provided project directory", () => {
@@ -77,10 +53,6 @@ describe("plugin-finder", () => {
     });
   });
 
-  // ===========================================================================
-  // getProjectPluginsDir
-  // ===========================================================================
-
   describe("getProjectPluginsDir", () => {
     it("should return plugins directory under provided project directory", () => {
       const result = getProjectPluginsDir("/my/project");
@@ -95,10 +67,6 @@ describe("plugin-finder", () => {
     });
   });
 
-  // ===========================================================================
-  // getPluginSkillsDir
-  // ===========================================================================
-
   describe("getPluginSkillsDir", () => {
     it("should return skills subdirectory of plugin directory", () => {
       const result = getPluginSkillsDir("/path/to/plugin");
@@ -106,10 +74,6 @@ describe("plugin-finder", () => {
       expect(result).toBe(path.join("/path/to/plugin", "skills"));
     });
   });
-
-  // ===========================================================================
-  // getPluginAgentsDir
-  // ===========================================================================
 
   describe("getPluginAgentsDir", () => {
     it("should return agents subdirectory of plugin directory", () => {
@@ -119,10 +83,6 @@ describe("plugin-finder", () => {
     });
   });
 
-  // ===========================================================================
-  // getPluginManifestPath
-  // ===========================================================================
-
   describe("getPluginManifestPath", () => {
     it("should return manifest path within .claude-plugin directory", () => {
       const result = getPluginManifestPath("/path/to/plugin");
@@ -130,10 +90,6 @@ describe("plugin-finder", () => {
       expect(result).toBe(path.join("/path/to/plugin", ".claude-plugin", "plugin.json"));
     });
   });
-
-  // ===========================================================================
-  // readPluginManifest
-  // ===========================================================================
 
   describe("readPluginManifest", () => {
     it("should return null when manifest file does not exist", async () => {
@@ -187,7 +143,6 @@ describe("plugin-finder", () => {
 
       const result = await readPluginManifest("/path/to/plugin");
 
-      // Zod schema requires name to be a string, missing name fails parse
       expect(result).toBeNull();
     });
 
@@ -235,10 +190,6 @@ describe("plugin-finder", () => {
       expect(result!.agents).toBe("./agents/");
     });
   });
-
-  // ===========================================================================
-  // getPluginSkillIds
-  // ===========================================================================
 
   describe("getPluginSkillIds", () => {
     it("should return empty array when no SKILL.md files exist", async () => {
@@ -292,7 +243,6 @@ describe("plugin-finder", () => {
         [skillId]: createMockSkill(skillId, "web/framework"),
       });
 
-      // No frontmatter match
       mockedReadFile.mockResolvedValue("# React\n\nA skill for React development.");
 
       const result = await getPluginSkillIds("/plugin/skills", matrix);
@@ -301,11 +251,8 @@ describe("plugin-finder", () => {
     });
 
     it("should match skill by directory name using last part of ID", async () => {
-      // The skill ID is "web-framework-react" but the dir is named by last part
       mockedGlob.mockResolvedValue(["subdir/SKILL.md"]);
 
-      // The matrix has a skill whose last ID part is "subdir" - this won't match
-      // But if the dir matches the last part of a skill ID after splitting by /
       const skillId = "web-framework-react" as SkillId;
       const matrix = createMockMatrix({
         [skillId]: createMockSkill(skillId, "web/framework"),
@@ -315,7 +262,6 @@ describe("plugin-finder", () => {
 
       const result = await getPluginSkillIds("/plugin/skills", matrix);
 
-      // "subdir" doesn't match any skill's last part
       expect(result).toEqual([]);
     });
 
@@ -383,7 +329,6 @@ describe("plugin-finder", () => {
         }),
       });
 
-      // Name in frontmatter uses different casing
       mockedReadFile.mockResolvedValue("---\nname: react\ndescription: React\n---\nContent");
 
       const result = await getPluginSkillIds("/plugin/skills", matrix);
@@ -399,7 +344,6 @@ describe("plugin-finder", () => {
         [skillId]: createMockSkill(skillId, "web/framework"),
       });
 
-      // No frontmatter match, but directory name should match case-insensitively
       mockedReadFile.mockResolvedValue("# No frontmatter");
 
       const result = await getPluginSkillIds("/plugin/skills", matrix);
@@ -415,7 +359,6 @@ describe("plugin-finder", () => {
         [skillId]: createMockSkill(skillId, "web/framework"),
       });
 
-      // Name uses single quotes
       mockedReadFile.mockResolvedValue(
         "---\nname: 'web-framework-react'\ndescription: React\n---\nContent",
       );
@@ -433,7 +376,6 @@ describe("plugin-finder", () => {
         [skillId]: createMockSkill(skillId, "web/framework"),
       });
 
-      // Name uses double quotes
       mockedReadFile.mockResolvedValue(
         '---\nname: "web-framework-react"\ndescription: React\n---\nContent',
       );
@@ -444,7 +386,6 @@ describe("plugin-finder", () => {
     });
 
     it("should handle nested directory paths in SKILL.md glob results", async () => {
-      // SKILL.md is in a nested path like "category/skill-name/SKILL.md"
       mockedGlob.mockResolvedValue(["framework/web-framework-react/SKILL.md"]);
 
       const skillId = "web-framework-react" as SkillId;
@@ -452,14 +393,10 @@ describe("plugin-finder", () => {
         [skillId]: createMockSkill(skillId, "web/framework"),
       });
 
-      // No frontmatter match, relies on directory name
       mockedReadFile.mockResolvedValue("# No frontmatter");
 
       const result = await getPluginSkillIds("/plugin/skills", matrix);
 
-      // The dir name is the basename of the parent directory of SKILL.md
-      // path.dirname("framework/web-framework-react/SKILL.md") = "framework/web-framework-react"
-      // path.basename(...) = "web-framework-react"
       expect(result).toEqual(["web-framework-react"]);
     });
   });

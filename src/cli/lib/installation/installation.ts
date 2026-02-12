@@ -1,9 +1,3 @@
-/**
- * Installation detection utilities for Claude Collective.
- *
- * Detects whether a project uses local mode (.claude-src/config.yaml) or
- * plugin mode (.claude/plugins/claude-collective/).
- */
 import path from "path";
 import { directoryExists, fileExists } from "../../utils/fs";
 import { loadProjectConfig } from "../configuration";
@@ -20,10 +14,7 @@ export type Installation = {
   projectDir: string;
 };
 
-/**
- * Detect the current installation mode by checking for local config first.
- * Priority: Local (.claude-src/config.yaml with installMode: local) > Plugin
- */
+// Priority: Local (.claude-src/config.yaml) > Plugin (.claude/plugins/claude-collective/)
 export async function detectInstallation(
   projectDir: string = process.cwd(),
 ): Promise<Installation | null> {
@@ -75,9 +66,6 @@ export async function detectInstallation(
   return null;
 }
 
-/**
- * Get installation or throw with helpful error message
- */
 export async function getInstallationOrThrow(
   projectDir: string = process.cwd(),
 ): Promise<Installation> {

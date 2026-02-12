@@ -6,7 +6,6 @@ import { fetchFromSource, type FetchOptions } from "../loading";
 import type { AgentSourcePaths } from "../../types";
 
 export type AgentDefinitionOptions = FetchOptions & {
-  /** Project directory to check for local templates */
   projectDir?: string;
 };
 

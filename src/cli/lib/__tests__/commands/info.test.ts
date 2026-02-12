@@ -1,30 +1,8 @@
-/**
- * Integration tests for the info command.
- *
- * Tests: cc info <skill>, cc info --preview, cc info --no-preview
- *
- * The info command displays detailed information about a skill including:
- * - Skill metadata (id, alias, author, category)
- * - Description and tags
- * - Requirements and relationships
- * - Installation status
- * - Content preview from SKILL.md
- *
- * Note: The info command requires a skill argument and loads from skills source.
- * Tests focus on:
- * - Argument validation (skill required)
- * - Flag handling (--preview, --no-preview)
- * - Error handling for non-existent skills
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir } from "fs/promises";
 import { runCliCommand } from "../helpers";
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("info command", () => {
   let tempDir: string;
@@ -44,10 +22,6 @@ describe("info command", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  // ===========================================================================
-  // Argument Validation
-  // ===========================================================================
-
   describe("argument validation", () => {
     it("should require skill argument", async () => {
       const { error } = await runCliCommand(["info"]);
@@ -66,10 +40,6 @@ describe("info command", () => {
       expect(output.toLowerCase()).not.toContain("missing required arg");
     });
   });
-
-  // ===========================================================================
-  // Flag Validation
-  // ===========================================================================
 
   describe("flag validation", () => {
     it("should accept --preview flag", async () => {
@@ -109,10 +79,6 @@ describe("info command", () => {
     });
   });
 
-  // ===========================================================================
-  // Output Behavior
-  // ===========================================================================
-
   // Skip: stdout capture limited in oclif/bun test environment
   describe("output behavior", () => {
     it.skip("should process skill lookup and produce output or error", async () => {
@@ -125,10 +91,6 @@ describe("info command", () => {
       expect(output.length).toBeGreaterThan(0);
     });
   });
-
-  // ===========================================================================
-  // Error Handling
-  // ===========================================================================
 
   describe("error handling", () => {
     it("should exit with error for non-existent skill", async () => {
@@ -151,10 +113,6 @@ describe("info command", () => {
       expect(error).toBeDefined();
     });
   });
-
-  // ===========================================================================
-  // Combined Flags
-  // ===========================================================================
 
   describe("combined flags", () => {
     it("should accept --no-preview with --source", async () => {

@@ -18,21 +18,11 @@ import {
   type TestSkill,
 } from "../fixtures/create-test-source";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const TEST_AUTHOR = "@test";
-
-/** Number of default test skills created by createTestSource */
 const DEFAULT_SKILL_COUNT = 4;
 
-/**
- * Skills with frontmatter names matching real skill_aliases resolutions.
- * These are used for stack pipeline tests where the stack compiler resolves
- * display names (e.g., "react") through the real CLI's skill_aliases
- * (e.g., react -> "web-framework-react").
- */
+// Frontmatter names match real skill_aliases so the stack compiler can resolve
+// display names (e.g., "react") through skill_aliases (e.g., react -> "web-framework-react")
 const STACK_TEST_SKILLS: TestSkill[] = [
   {
     id: "web-framework-react (@test)",
@@ -70,7 +60,6 @@ Hono is a fast web framework for the edge.
   },
 ];
 
-/** Test stack referencing display names that resolve via real skill_aliases */
 const TEST_STACK: Stack = {
   id: "test-stack",
   name: "Test Stack",
@@ -85,13 +74,6 @@ const TEST_STACK: Stack = {
   },
 };
 
-// =============================================================================
-// Test Helpers
-// =============================================================================
-
-/**
- * Read plugin.json from a plugin directory
- */
 async function readPluginManifest(pluginDir: string): Promise<PluginManifest | null> {
   const manifestPath = path.join(pluginDir, ".claude-plugin", "plugin.json");
   try {
@@ -102,9 +84,6 @@ async function readPluginManifest(pluginDir: string): Promise<PluginManifest | n
   }
 }
 
-/**
- * Check if a path exists
- */
 async function pathExists(p: string): Promise<boolean> {
   try {
     await stat(p);
@@ -113,10 +92,6 @@ async function pathExists(p: string): Promise<boolean> {
     return false;
   }
 }
-
-// =============================================================================
-// Test 1: Full Skill Pipeline
-// =============================================================================
 
 describe("Integration: Full Skill Pipeline", () => {
   let dirs: TestDirs;
@@ -212,10 +187,6 @@ describe("Integration: Full Skill Pipeline", () => {
     warnSpy.mockRestore();
   });
 });
-
-// =============================================================================
-// Test 2: Full Stack Pipeline
-// =============================================================================
 
 describe("Integration: Full Stack Pipeline", () => {
   let dirs: TestDirs;
@@ -344,10 +315,6 @@ describe("Integration: Full Stack Pipeline", () => {
     expect(validationResult.errors).toHaveLength(0);
   });
 });
-
-// =============================================================================
-// Test 3: Marketplace Integrity
-// =============================================================================
 
 describe("Integration: Marketplace Integrity", () => {
   let dirs: TestDirs;
@@ -496,10 +463,6 @@ describe("Integration: Marketplace Integrity", () => {
     warnSpy.mockRestore();
   });
 });
-
-// =============================================================================
-// Test 4: End-to-End Pipeline (Skills + Stacks + Marketplace)
-// =============================================================================
 
 describe("Integration: End-to-End Pipeline", () => {
   let dirs: TestDirs;

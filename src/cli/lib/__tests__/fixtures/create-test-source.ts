@@ -1,17 +1,7 @@
-/**
- * Test fixture creator for CLI integration tests.
- *
- * Creates minimal skill/agent source structures for testing commands.
- * Use this instead of relying on external repositories.
- */
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile, readFile, stat } from "fs/promises";
 import { stringify as stringifyYaml, parse as parseYaml } from "yaml";
-
-// =============================================================================
-// Types
-// =============================================================================
 
 export interface TestSkill {
   id: string;
@@ -98,10 +88,6 @@ export interface TestDirs {
   pluginDir?: string;
   configDir?: string;
 }
-
-// =============================================================================
-// Constants
-// =============================================================================
 
 const TEST_AUTHOR = "@test";
 
@@ -217,13 +203,6 @@ export const DEFAULT_TEST_AGENTS: TestAgent[] = [
   },
 ];
 
-// =============================================================================
-// File System Helpers
-// =============================================================================
-
-/**
- * Check if a file exists
- */
 export async function fileExists(filePath: string): Promise<boolean> {
   try {
     const s = await stat(filePath);
@@ -233,9 +212,6 @@ export async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
-/**
- * Check if a directory exists
- */
 export async function directoryExists(dirPath: string): Promise<boolean> {
   try {
     const s = await stat(dirPath);
@@ -245,13 +221,6 @@ export async function directoryExists(dirPath: string): Promise<boolean> {
   }
 }
 
-// =============================================================================
-// Matrix Generator
-// =============================================================================
-
-/**
- * Generate a skills-matrix.yaml content from test skills
- */
 function generateMatrix(skills: TestSkill[], overrides?: Partial<TestMatrix>): TestMatrix {
   const skillsMap: Record<string, TestSkill> = {};
   const aliases: Record<string, string> = {};
@@ -286,13 +255,6 @@ function generateMatrix(skills: TestSkill[], overrides?: Partial<TestMatrix>): T
   };
 }
 
-// =============================================================================
-// Source Creator
-// =============================================================================
-
-/**
- * Create a test source directory structure
- */
 export async function createTestSource(options: TestSourceOptions = {}): Promise<TestDirs> {
   const skills = options.skills ?? DEFAULT_TEST_SKILLS;
   const agents = options.agents ?? DEFAULT_TEST_AGENTS;
@@ -498,47 +460,29 @@ ${skill.description}
   return dirs;
 }
 
-/**
- * Clean up test directories
- */
 export async function cleanupTestSource(dirs: TestDirs): Promise<void> {
   await rm(dirs.tempDir, { recursive: true, force: true });
 }
 
-/**
- * Read file content
- */
 export async function readTestFile(filePath: string): Promise<string> {
   return readFile(filePath, "utf-8");
 }
 
-/**
- * Parse YAML file
- */
 export async function readTestYaml<T>(filePath: string): Promise<T> {
   const content = await readFile(filePath, "utf-8");
   return parseYaml(content) as T;
 }
 
-/**
- * Parse JSON file
- */
 export async function readTestJson<T>(filePath: string): Promise<T> {
   const content = await readFile(filePath, "utf-8");
   return JSON.parse(content) as T;
 }
 
-/**
- * Write a file to the test source
- */
 export async function writeTestFile(filePath: string, content: string): Promise<void> {
   await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, content);
 }
 
-/**
- * Write YAML to a file
- */
 export async function writeTestYaml(filePath: string, data: unknown): Promise<void> {
   await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, stringifyYaml(data));

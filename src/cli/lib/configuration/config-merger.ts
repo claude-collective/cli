@@ -10,25 +10,10 @@ export type MergeContext = {
 export type MergeResult = {
   config: ProjectConfig;
   merged: boolean;
-  /** Path to the existing config that was merged with, if any */
   existingConfigPath?: string;
 };
 
-/**
- * Merge a newly generated ProjectConfig with any existing project config.
- *
- * Merge strategy:
- * - Existing values take precedence for identity fields (name, description, source, author)
- * - Skills arrays are unioned (existing + new, deduplicated)
- * - Agents arrays are unioned
- * - Stack is deep-merged (existing agent configs take precedence)
- * - Other optional fields preserved from existing if present
- *
- * If no existing full config is found, falls back to simple project config
- * to inherit author and agents_source.
- *
- * Returns the merged config and whether an existing config was found.
- */
+// Existing values take precedence for identity fields; arrays are unioned; stack is deep-merged
 export async function mergeWithExistingConfig(
   newConfig: ProjectConfig,
   context: MergeContext,

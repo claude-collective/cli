@@ -9,26 +9,17 @@ import type { SkillId } from "../../types";
 import { localSkillMetadataSchema } from "../schemas";
 import { warn } from "../../utils/logger";
 
-/**
- * ForkedFrom metadata stored in local skill's metadata.yaml
- */
 export type ForkedFromMetadata = {
   skill_id: SkillId;
   content_hash: string;
   date: string;
 };
 
-/**
- * Local skill metadata structure
- */
 export type LocalSkillMetadata = {
   forked_from?: ForkedFromMetadata;
   [key: string]: unknown;
 };
 
-/**
- * Result of comparing a local skill to its source
- */
 export type SkillComparisonResult = {
   id: SkillId;
   localHash: string | null;
@@ -38,9 +29,6 @@ export type SkillComparisonResult = {
   sourcePath?: string;
 };
 
-/**
- * Read forked_from metadata from a local skill's metadata.yaml
- */
 export async function readForkedFromMetadata(skillDir: string): Promise<ForkedFromMetadata | null> {
   const metadataPath = path.join(skillDir, "metadata.yaml");
 
@@ -61,9 +49,6 @@ export async function readForkedFromMetadata(skillDir: string): Promise<ForkedFr
   return (result.data as LocalSkillMetadata).forked_from ?? null;
 }
 
-/**
- * Get local skills with their forked_from metadata
- */
 export async function getLocalSkillsWithMetadata(
   projectDir: string,
 ): Promise<Map<string, { dirName: string; forkedFrom: ForkedFromMetadata | null }>> {
@@ -89,9 +74,6 @@ export async function getLocalSkillsWithMetadata(
   return result;
 }
 
-/**
- * Compute source hash for a skill's SKILL.md file
- */
 export async function computeSourceHash(
   sourcePath: string,
   skillPath: string,
@@ -105,9 +87,6 @@ export async function computeSourceHash(
   return hashFile(skillMdPath);
 }
 
-/**
- * Compare local skills against source and determine status
- */
 export async function compareSkills(
   projectDir: string,
   sourcePath: string,
@@ -174,9 +153,6 @@ export async function compareSkills(
   return sortBy(results, (r) => r.id);
 }
 
-/**
- * Inject or update forked_from metadata in a skill's metadata.yaml.
- */
 export async function injectForkedFromMetadata(
   destPath: string,
   skillId: SkillId,

@@ -1,10 +1,3 @@
-/**
- * Local mode installation: copy skills, build config, compile agents.
- *
- * This module extracts the local installation logic from init.tsx into
- * a pure function that does the work and returns a result object.
- * The command file handles all logging based on the result.
- */
 import path from "path";
 import { stringify as stringifyYaml } from "yaml";
 import type {
@@ -36,47 +29,28 @@ const PLUGIN_NAME = "claude-collective";
 const YAML_INDENT = 2;
 const YAML_LINE_WIDTH = 120;
 
-/**
- * Resolved local skill for agent compilation.
- * Extends SkillDefinition with content field.
- */
 type LocalResolvedSkill = SkillDefinition & {
   content: string;
 };
 
 export type LocalInstallOptions = {
-  /** Wizard result with selected skills and mode */
   wizardResult: WizardResultV2;
-  /** Source load result with matrix and paths */
   sourceResult: SourceLoadResult;
-  /** Project directory (cwd) */
   projectDir: string;
-  /** Source flag value (if provided) */
   sourceFlag?: string;
 };
 
 export type LocalInstallResult = {
-  /** Skills that were copied */
   copiedSkills: CopiedSkill[];
-  /** Final merged project config */
   config: ProjectConfig;
-  /** Path where config was saved */
   configPath: string;
-  /** Names of compiled agents */
   compiledAgents: AgentName[];
-  /** Whether config was merged with existing */
   wasMerged: boolean;
-  /** Path to the existing config that was merged with, if any */
   mergedConfigPath?: string;
-  /** Local skills directory path */
   skillsDir: string;
-  /** Local agents directory path */
   agentsDir: string;
 };
 
-/**
- * Build a map of local skills for resolution during agent compilation.
- */
 function buildLocalSkillsMap(
   copiedSkills: CopiedSkill[],
   matrix: MergedSkillsMatrix,
@@ -99,10 +73,6 @@ function buildLocalSkillsMap(
   return localSkillsForResolution;
 }
 
-/**
- * Build the initial ProjectConfig from wizard result.
- * Uses stack config if a stack was selected, otherwise generates from individual skills.
- */
 async function buildLocalConfig(
   wizardResult: WizardResultV2,
   sourceResult: SourceLoadResult,
@@ -151,34 +121,26 @@ async function buildLocalConfig(
   return { config: localConfig, loadedStack };
 }
 
-/**
- * Set metadata fields on the config (installMode, source, marketplace).
- */
 function setConfigMetadata(
   config: ProjectConfig,
   wizardResult: WizardResultV2,
   sourceResult: SourceLoadResult,
   sourceFlag?: string,
 ): void {
-  // Add installMode to config
   config.installMode = wizardResult.installMode;
 
-  // Add source to config (flag overrides resolved source, but always include it)
+  // Flag overrides resolved source
   if (sourceFlag) {
     config.source = sourceFlag;
   } else if (sourceResult.sourceConfig.source) {
     config.source = sourceResult.sourceConfig.source;
   }
 
-  // Add marketplace if available from resolved config
   if (sourceResult.marketplace) {
     config.marketplace = sourceResult.marketplace;
   }
 }
 
-/**
- * Build CompileAgentConfig map for agent compilation.
- */
 function buildCompileAgents(
   config: ProjectConfig,
   agents: Record<AgentName, AgentDefinition>,
@@ -205,9 +167,6 @@ function buildCompileAgents(
   return compileAgents;
 }
 
-/**
- * Compile agents and write them to the agents directory.
- */
 async function compileAndWriteAgents(
   compileConfig: CompileConfig,
   agents: Record<AgentName, AgentDefinition>,
@@ -238,20 +197,6 @@ async function compileAndWriteAgents(
   return compiledAgentNames;
 }
 
-/**
- * Install in Local Mode: copy skills, generate config, compile agents.
- *
- * Steps:
- * 1. Create directories (.claude/skills, .claude/agents, .claude-src/)
- * 2. Copy selected skills to .claude/skills/ (flattened)
- * 3. Generate project config from skills/stack selection
- * 4. Set source, marketplace, installMode on config
- * 5. Merge with existing project config (if any)
- * 6. Write config to .claude-src/config.yaml
- * 7. Compile agents to .claude/agents/
- *
- * Returns structured result for the caller to format output.
- */
 export async function installLocal(options: LocalInstallOptions): Promise<LocalInstallResult> {
   const { wizardResult, sourceResult, projectDir, sourceFlag } = options;
   const matrix = sourceResult.matrix;

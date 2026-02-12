@@ -13,10 +13,6 @@ type SettingsFile = {
   permissions?: PermissionConfig;
 };
 
-/**
- * Check permissions configuration and return warning component if needed.
- * Returns null if permissions are properly configured.
- */
 export async function checkPermissions(projectRoot: string): Promise<React.ReactElement | null> {
   const settingsPath = path.join(projectRoot, ".claude", "settings.json");
   const localSettingsPath = path.join(projectRoot, ".claude", "settings.local.json");

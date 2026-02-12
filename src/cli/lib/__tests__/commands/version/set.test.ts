@@ -1,35 +1,11 @@
-/**
- * Integration tests for version (index) and version:set commands.
- *
- * Tests: cc version, cc version:set
- *
- * The version (index) command displays the current plugin version.
- * The version:set command sets the plugin version to an explicit semver value.
- * Both look for plugin.json in .claude-plugin/ directory starting from
- * current directory and walking up to parent directories.
- *
- * Note: stdout capture is limited in oclif test environment, so tests focus on:
- * - Command execution (no unhandled errors)
- * - Error handling when plugin.json is missing
- * - Exit codes
- * - File system verification (plugin.json contents after mutation)
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
 import { runCliCommand } from "../../helpers";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const EXIT_CODE_ERROR = 1;
 const EXIT_CODE_INVALID_ARGS = 2;
-
-// =============================================================================
-// version (index) command
-// =============================================================================
 
 describe("version command (index)", () => {
   let tempDir: string;
@@ -78,10 +54,6 @@ describe("version command (index)", () => {
   });
 });
 
-// =============================================================================
-// version:set command
-// =============================================================================
-
 describe("version:set command", () => {
   let tempDir: string;
   let projectDir: string;
@@ -99,10 +71,6 @@ describe("version:set command", () => {
     process.chdir(originalCwd);
     await rm(tempDir, { recursive: true, force: true });
   });
-
-  // ===========================================================================
-  // Argument Validation
-  // ===========================================================================
 
   describe("argument validation", () => {
     it("should accept a valid version argument", async () => {
@@ -164,10 +132,6 @@ describe("version:set command", () => {
     });
   });
 
-  // ===========================================================================
-  // File System Verification
-  // ===========================================================================
-
   describe("file system updates", () => {
     it("should update plugin.json with new version", async () => {
       const pluginDir = path.join(projectDir, ".claude-plugin");
@@ -201,10 +165,6 @@ describe("version:set command", () => {
     });
   });
 
-  // ===========================================================================
-  // Error Handling
-  // ===========================================================================
-
   describe("error handling", () => {
     it("should error when no plugin.json found", async () => {
       const { error } = await runCliCommand(["version:set", "1.0.0"]);
@@ -212,10 +172,6 @@ describe("version:set command", () => {
       expect(error?.oclif?.exit).toBe(EXIT_CODE_ERROR);
     });
   });
-
-  // ===========================================================================
-  // Dry Run
-  // ===========================================================================
 
   describe("--dry-run flag", () => {
     it("should not modify plugin.json with --dry-run", async () => {

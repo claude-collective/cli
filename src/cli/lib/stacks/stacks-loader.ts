@@ -11,10 +11,6 @@ const STACKS_FILE = "config/stacks.yaml";
 
 const stacksCache = new Map<string, Stack[]>();
 
-/**
- * Load all stacks from config/stacks.yaml
- * Stacks are simple agent groupings without skill mappings
- */
 export async function loadStacks(configDir: string): Promise<Stack[]> {
   const cacheKey = configDir;
   const cached = stacksCache.get(cacheKey);
@@ -49,10 +45,6 @@ export async function loadStacks(configDir: string): Promise<Stack[]> {
   }
 }
 
-/**
- * Load a specific stack by ID
- * Returns null if stack not found
- */
 export async function loadStackById(stackId: string, configDir: string): Promise<Stack | null> {
   const stacks = await loadStacks(configDir);
   const stack = stacks.find((s) => s.id === stackId);
@@ -66,14 +58,7 @@ export async function loadStackById(stackId: string, configDir: string): Promise
   return stack;
 }
 
-/**
- * Resolve a single agent's technology config to skill references.
- * Looks up each technology display name in the display name map to get full skill ID.
- *
- * @param agentConfig - The agent's technology selections (subcategory -> display name)
- * @param displayNameToId - Mapping from technology display names to full skill IDs
- * @returns Array of SkillReference objects
- */
+// Resolves each technology display name in the agent config to a full skill ID
 export function resolveAgentConfigToSkills(
   agentConfig: StackAgentConfig,
   displayNameToId: Partial<Record<string, SkillId>>,
@@ -103,39 +88,6 @@ export function resolveAgentConfigToSkills(
   return skillRefs;
 }
 
-/**
- * Resolve all agents in a stack to their skill references.
- * Takes a Stack and display name map, returns a mapping of agent IDs to their resolved skills.
- *
- * @param stack - The stack definition with agent technology selections
- * @param displayNameToId - Mapping from technology display names to full skill IDs
- * @returns Record mapping agent IDs to their SkillReference arrays
- *
- * @example
- * ```typescript
- * const stack = {
- *   id: 'nextjs-fullstack',
- *   name: 'Next.js Fullstack',
- *   agents: {
- *     'web-developer': { framework: 'react', styling: 'scss-modules' },
- *     'api-developer': { api: 'hono', database: 'drizzle' }
- *   }
- * };
- *
- * const displayNameToId = {
- *   react: 'web-framework-react',
- *   hono: 'api-framework-hono',
- *   // ...
- * };
- *
- * const result = resolveStackSkillsFromDisplayNames(stack, displayNameToId);
- * // Returns:
- * // {
- * //   'web-developer': [{ id: 'web-framework-react', usage: '...', preloaded: true }, ...],
- * //   'api-developer': [{ id: 'api-framework-hono', usage: '...', preloaded: true }, ...]
- * // }
- * ```
- */
 export function resolveStackSkillsFromDisplayNames(
   stack: Stack,
   displayNameToId: Partial<Record<string, SkillId>>,

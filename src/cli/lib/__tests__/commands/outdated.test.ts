@@ -1,28 +1,8 @@
-/**
- * Integration tests for the outdated command.
- *
- * Tests: cc outdated, cc outdated --json, cc outdated --source
- *
- * The outdated command checks which local skills are out of date compared to source:
- * - Compares content hashes from forked_from metadata
- * - Shows table output with skill status (current, outdated, local-only)
- * - Supports JSON output for scripting
- * - Exit code 1 if any skills are outdated
- *
- * Note: stdout capture is limited in oclif test environment, so tests focus on:
- * - Flag validation (--json, --source)
- * - Command execution (no unhandled errors)
- * - Exit codes for error conditions
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
 import { runCliCommand } from "../helpers";
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("outdated command", () => {
   let tempDir: string;
@@ -41,10 +21,6 @@ describe("outdated command", () => {
     process.chdir(originalCwd);
     await rm(tempDir, { recursive: true, force: true });
   });
-
-  // ===========================================================================
-  // Basic Execution
-  // ===========================================================================
 
   describe("basic execution", () => {
     it("should run without arguments", async () => {
@@ -66,10 +42,6 @@ describe("outdated command", () => {
       expect(output.toLowerCase()).not.toContain("unexpected argument");
     });
   });
-
-  // ===========================================================================
-  // Flag Validation
-  // ===========================================================================
 
   describe("flag validation", () => {
     it("should accept --json flag", async () => {
@@ -98,10 +70,6 @@ describe("outdated command", () => {
     });
   });
 
-  // ===========================================================================
-  // JSON Output Mode
-  // ===========================================================================
-
   describe("JSON output mode", () => {
     it("should accept --json flag and process request", async () => {
       const { error } = await runCliCommand(["outdated", "--json"]);
@@ -120,10 +88,6 @@ describe("outdated command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
-
-  // ===========================================================================
-  // With Local Skills
-  // ===========================================================================
 
   describe("with local skills", () => {
     beforeEach(async () => {
@@ -171,10 +135,6 @@ author: "@test"
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
-
-  // ===========================================================================
-  // With Forked Skills
-  // ===========================================================================
 
   describe("with forked skills", () => {
     beforeEach(async () => {
@@ -234,10 +194,6 @@ forked_from:
     });
   });
 
-  // ===========================================================================
-  // Combined Flags
-  // ===========================================================================
-
   describe("combined flags", () => {
     it("should accept --json with --source", async () => {
       const { error } = await runCliCommand(["outdated", "--json", "--source", "/custom/path"]);
@@ -255,10 +211,6 @@ forked_from:
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
-
-  // ===========================================================================
-  // Error Handling
-  // ===========================================================================
 
   describe("error handling", () => {
     beforeEach(async () => {

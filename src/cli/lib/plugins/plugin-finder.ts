@@ -68,8 +68,7 @@ export async function getPluginSkillIds(
   const skillFiles = await glob("**/SKILL.md", pluginSkillsDir);
   const skillIds: SkillId[] = [];
 
-  // Build alias-to-id and id-based lookups
-  // Boundary cast: Object.entries(matrix.skills) returns [string, ResolvedSkill][] but keys are SkillId
+  // Boundary cast: Object.entries keys are SkillId
   const aliasToId = new Map<string, SkillId>();
   for (const [id, skill] of Object.entries(matrix.skills)) {
     if (!skill) continue;
@@ -78,7 +77,6 @@ export async function getPluginSkillIds(
     }
   }
 
-  // Boundary cast: Object.entries(matrix.skills) returns [string, ResolvedSkill][] but keys are SkillId
   const dirToId = new Map<string, SkillId>();
   for (const [id] of Object.entries(matrix.skills)) {
     const idParts = id.split("/");
@@ -98,7 +96,6 @@ export async function getPluginSkillIds(
       const nameMatch = frontmatter.match(/^name:\s*["']?(.+?)["']?\s*$/m);
       if (nameMatch) {
         const skillName = nameMatch[1].trim();
-        // Try direct match as skill ID first, then alias lookup
         if (matrix.skills[skillName as SkillId]) {
           skillIds.push(skillName as SkillId);
           continue;

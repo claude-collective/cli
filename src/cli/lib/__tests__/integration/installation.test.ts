@@ -21,10 +21,6 @@ describe("installation", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  // ===========================================================================
-  // detectInstallation - local mode
-  // ===========================================================================
-
   describe("detectInstallation - local mode", () => {
     it("should return local installation when .claude-src/config.yaml exists", async () => {
       // Create local config in new location
@@ -108,10 +104,6 @@ agents:
     });
   });
 
-  // ===========================================================================
-  // detectInstallation - plugin mode
-  // ===========================================================================
-
   describe("detectInstallation - plugin mode", () => {
     it("should return plugin installation when only plugin directory exists", async () => {
       // Create plugin directory (without local config)
@@ -139,10 +131,6 @@ agents:
     });
   });
 
-  // ===========================================================================
-  // detectInstallation - no installation
-  // ===========================================================================
-
   describe("detectInstallation - no installation", () => {
     it("should return null when neither local nor plugin exists", async () => {
       // Empty temp directory - no .claude folder at all
@@ -161,10 +149,6 @@ agents:
       expect(result).toBeNull();
     });
   });
-
-  // ===========================================================================
-  // detectInstallation - priority (local over plugin)
-  // ===========================================================================
 
   describe("detectInstallation - priority", () => {
     it("should prioritize local installation over plugin when both exist", async () => {
@@ -189,10 +173,6 @@ agents:
       expect(result?.mode).toBe("local");
     });
   });
-
-  // ===========================================================================
-  // getInstallationOrThrow
-  // ===========================================================================
 
   describe("getInstallationOrThrow", () => {
     it("should throw helpful error when no installation found", async () => {
@@ -238,10 +218,6 @@ agents:
       expect(result.projectDir).toBe(tempDir);
     });
   });
-
-  // ===========================================================================
-  // Edge cases
-  // ===========================================================================
 
   describe("edge cases", () => {
     it("should handle config with explicit installMode: plugin but no plugin dir", async () => {

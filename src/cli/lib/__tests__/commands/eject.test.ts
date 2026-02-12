@@ -1,28 +1,8 @@
-/**
- * Integration tests for eject command.
- *
- * Tests: cc eject agent-partials, cc eject skills, cc eject all
- *
- * The eject command copies bundled content to the project for local customization:
- * - agent-partials: Copy agent partials and templates from CLI
- * - skills: Copy skills from source marketplace
- * - all: Copy all of the above
- *
- * Note: stdout capture is limited in oclif test environment, so tests focus on:
- * - Argument validation (type is required)
- * - Flag validation (--force, --output, --refresh)
- * - Error handling for invalid types
- * - Exit codes
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, stat } from "fs/promises";
 import { runCliCommand } from "../helpers";
-
-// =============================================================================
-// Helpers
-// =============================================================================
 
 async function pathExists(p: string): Promise<boolean> {
   try {
@@ -32,10 +12,6 @@ async function pathExists(p: string): Promise<boolean> {
     return false;
   }
 }
-
-// =============================================================================
-// Test Setup
-// =============================================================================
 
 describe("eject command", () => {
   let tempDir: string;
@@ -54,10 +30,6 @@ describe("eject command", () => {
     process.chdir(originalCwd);
     await rm(tempDir, { recursive: true, force: true });
   });
-
-  // ===========================================================================
-  // Argument Validation
-  // ===========================================================================
 
   describe("argument validation", () => {
     it("should require type argument", async () => {
@@ -120,10 +92,6 @@ describe("eject command", () => {
     });
   });
 
-  // ===========================================================================
-  // Flag Validation
-  // ===========================================================================
-
   describe("flag validation", () => {
     it("should accept --force flag", async () => {
       const { error } = await runCliCommand(["eject", "agent-partials", "--force"]);
@@ -169,10 +137,6 @@ describe("eject command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
-
-  // ===========================================================================
-  // Eject Agent Partials
-  // ===========================================================================
 
   describe("eject agent-partials", () => {
     it("should eject agent partials to .claude/agents/_partials by default", async () => {
@@ -267,10 +231,6 @@ describe("eject command", () => {
     });
   });
 
-  // ===========================================================================
-  // Eject Skills
-  // ===========================================================================
-
   describe("eject skills", () => {
     it("should load skills from source", async () => {
       const { error } = await runCliCommand(["eject", "skills"]);
@@ -300,10 +260,6 @@ describe("eject command", () => {
     });
   });
 
-  // ===========================================================================
-  // Eject All
-  // ===========================================================================
-
   describe("eject all", () => {
     it("should eject all content types", async () => {
       const { error } = await runCliCommand(["eject", "all"]);
@@ -331,10 +287,6 @@ describe("eject command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
-
-  // ===========================================================================
-  // Error Handling
-  // ===========================================================================
 
   describe("error handling", () => {
     it("should error when output path is an existing file", async () => {

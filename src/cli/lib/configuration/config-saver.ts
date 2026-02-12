@@ -7,10 +7,6 @@ import { projectSourceConfigSchema } from "../schemas";
 
 const YAML_INDENT = 2;
 
-/**
- * Save source to project-level .claude-src/config.yaml.
- * Creates the config file if it doesn't exist, or merges with existing config.
- */
 export async function saveSourceToProjectConfig(projectDir: string, source: string): Promise<void> {
   const configPath = path.join(projectDir, CLAUDE_SRC_DIR, "config.yaml");
 

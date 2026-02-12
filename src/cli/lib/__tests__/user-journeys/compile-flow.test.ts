@@ -1,12 +1,3 @@
-/**
- * User journey tests for the compile command flow.
- *
- * Tests the complete compile workflow with file system verification:
- * - Agent files are created in output directory
- * - Agent frontmatter contains skill references
- * - Agent markdown includes skill content
- * - Correct folder structure is created
- */
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFile, mkdir, writeFile, stat } from "fs/promises";
@@ -23,19 +14,8 @@ import {
 } from "../fixtures/create-test-source";
 import { runCliCommand, CLI_ROOT } from "../helpers";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const COLLECTIVE_PLUGIN_NAME = "claude-collective";
 
-// =============================================================================
-// Test Helpers
-// =============================================================================
-
-/**
- * Parse YAML frontmatter from markdown content
- */
 function parseFrontmatter(content: string): Record<string, unknown> | null {
   if (!content.startsWith("---")) {
     return null;
@@ -54,9 +34,6 @@ function parseFrontmatter(content: string): Record<string, unknown> | null {
   }
 }
 
-/**
- * Extract frontmatter skills array from agent markdown
- */
 function extractFrontmatterSkills(content: string): string[] {
   const frontmatter = parseFrontmatter(content);
   if (!frontmatter || !frontmatter.skills) {
@@ -64,10 +41,6 @@ function extractFrontmatterSkills(content: string): string[] {
   }
   return frontmatter.skills as string[];
 }
-
-// =============================================================================
-// Tests: Compile Flow with Output Directory
-// =============================================================================
 
 describe("User Journey: Compile Flow", () => {
   let dirs: TestDirs;
@@ -101,10 +74,6 @@ describe("User Journey: Compile Flow", () => {
     process.chdir(originalCwd);
     await cleanupTestSource(dirs);
   });
-
-  // ===========================================================================
-  // Test: Agent Files Created in Output Directory
-  // ===========================================================================
 
   describe("agent file creation", () => {
     it("should create agent markdown files in output directory", async () => {
@@ -182,10 +151,6 @@ describe("User Journey: Compile Flow", () => {
     });
   });
 
-  // ===========================================================================
-  // Test: Agent Frontmatter Contains Skill References
-  // ===========================================================================
-
   describe("frontmatter skill references", () => {
     it("should include preloaded skills in agent frontmatter", async () => {
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
@@ -249,10 +214,6 @@ describe("User Journey: Compile Flow", () => {
     });
   });
 
-  // ===========================================================================
-  // Test: Dry Run Mode
-  // ===========================================================================
-
   describe("dry-run mode", () => {
     it("should not create files in dry-run mode", async () => {
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
@@ -302,10 +263,6 @@ describe("User Journey: Compile Flow", () => {
     });
   });
 
-  // ===========================================================================
-  // Test: Verbose Output
-  // ===========================================================================
-
   describe("verbose mode", () => {
     it("should provide detailed output with --verbose flag", async () => {
       const { stdout, error } = await runCliCommand([
@@ -324,10 +281,6 @@ describe("User Journey: Compile Flow", () => {
     });
   });
 });
-
-// =============================================================================
-// Tests: Compile with Local Skills
-// =============================================================================
 
 describe("User Journey: Compile with Local Skills", () => {
   let dirs: TestDirs;
@@ -444,10 +397,6 @@ Use this skill for project-specific patterns.
     }
   });
 });
-
-// =============================================================================
-// Tests: Compile Error Handling
-// =============================================================================
 
 describe("User Journey: Compile Error Handling", () => {
   let dirs: TestDirs;

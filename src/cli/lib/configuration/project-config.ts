@@ -14,9 +14,6 @@ export type LoadedProjectConfig = {
   configPath: string;
 };
 
-/**
- * Load project config from .claude-src/config.yaml (with fallback to .claude/config.yaml)
- */
 export async function loadProjectConfig(projectDir: string): Promise<LoadedProjectConfig | null> {
   // Check .claude-src/config.yaml first (new location)
   const srcConfigPath = path.join(projectDir, CONFIG_PATH);
@@ -43,7 +40,6 @@ export async function loadProjectConfig(projectDir: string): Promise<LoadedProje
       return null;
     }
 
-    // Validate YAML-parsed data structure using Zod (lenient: allows partial configs)
     const result = projectConfigLoaderSchema.safeParse(parsed);
     if (!result.success) {
       verbose(`Invalid project config at ${configPath}: ${result.error.message}`);
@@ -63,10 +59,6 @@ export async function loadProjectConfig(projectDir: string): Promise<LoadedProje
   }
 }
 
-/**
- * Validate project config structure.
- * Returns validation result with errors and warnings.
- */
 export function validateProjectConfig(config: unknown): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];

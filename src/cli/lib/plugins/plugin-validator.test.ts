@@ -15,22 +15,15 @@ describe("plugin-validator", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    // Create a temporary directory for testing
     tempDir = await mkdtemp(path.join(os.tmpdir(), "plugin-validator-test-"));
   });
 
   afterEach(async () => {
-    // Clean up temporary directory
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  // =============================================================================
-  // validatePluginStructure
-  // =============================================================================
-
   describe("validatePluginStructure", () => {
     it("should pass for valid plugin structure", async () => {
-      // Create valid plugin structure
       await mkdir(path.join(tempDir, ".claude-plugin"), { recursive: true });
       await writeFile(
         path.join(tempDir, ".claude-plugin", "plugin.json"),
@@ -53,7 +46,6 @@ describe("plugin-validator", () => {
     });
 
     it("should fail if .claude-plugin/plugin.json missing", async () => {
-      // Create directory but no .claude-plugin
       const result = await validatePluginStructure(tempDir);
 
       expect(result.valid).toBe(false);
@@ -61,7 +53,6 @@ describe("plugin-validator", () => {
     });
 
     it("should fail if plugin.json is missing but .claude-plugin exists", async () => {
-      // Create .claude-plugin directory without plugin.json
       await mkdir(path.join(tempDir, ".claude-plugin"), { recursive: true });
 
       const result = await validatePluginStructure(tempDir);
@@ -71,7 +62,6 @@ describe("plugin-validator", () => {
     });
 
     it("should warn if README.md is missing", async () => {
-      // Create valid structure without README
       await mkdir(path.join(tempDir, ".claude-plugin"), { recursive: true });
       await writeFile(
         path.join(tempDir, ".claude-plugin", "plugin.json"),
@@ -84,10 +74,6 @@ describe("plugin-validator", () => {
       expect(result.warnings).toContain("Missing README.md (recommended for documentation)");
     });
   });
-
-  // =============================================================================
-  // validatePluginManifest
-  // =============================================================================
 
   describe("validatePluginManifest", () => {
     it("should pass for valid manifest", async () => {
@@ -166,7 +152,6 @@ describe("plugin-validator", () => {
 
       const result = await validatePluginManifest(manifestPath);
 
-      // Zod schema expects version to be a string, so integer fails type validation
       expect(result.valid).toBe(false);
       expect(result.errors.some((e) => e.includes("version"))).toBe(true);
     });
@@ -219,7 +204,6 @@ describe("plugin-validator", () => {
     });
 
     it("should fail if skills path does not exist", async () => {
-      // Create directory structure
       await mkdir(path.join(tempDir, ".claude-plugin"), { recursive: true });
       const manifestPath = path.join(tempDir, ".claude-plugin", "plugin.json");
       await writeFile(
@@ -237,7 +221,6 @@ describe("plugin-validator", () => {
     });
 
     it("should pass if skills path exists", async () => {
-      // Create directory structure with skills
       await mkdir(path.join(tempDir, ".claude-plugin"), { recursive: true });
       await mkdir(path.join(tempDir, "skills"), { recursive: true });
       const manifestPath = path.join(tempDir, ".claude-plugin", "plugin.json");
@@ -255,10 +238,6 @@ describe("plugin-validator", () => {
       expect(result.valid).toBe(true);
     });
   });
-
-  // =============================================================================
-  // validateSkillFrontmatter
-  // =============================================================================
 
   describe("validateSkillFrontmatter", () => {
     it("should pass for valid frontmatter", async () => {
@@ -335,7 +314,6 @@ version: "1.0.0"
 
       const result = await validateSkillFrontmatter(skillPath);
 
-      // Zod schema uses .strict(), so unrecognized fields cause errors
       expect(result.valid).toBe(false);
       expect(result.errors.some((e) => e.includes("Unrecognized key"))).toBe(true);
     });
@@ -360,10 +338,6 @@ model: sonnet
       expect(result.errors).toHaveLength(0);
     });
   });
-
-  // =============================================================================
-  // validateAgentFrontmatter
-  // =============================================================================
 
   describe("validateAgentFrontmatter", () => {
     it("should pass for valid frontmatter", async () => {
@@ -472,20 +446,14 @@ permissionMode: acceptEdits
     });
   });
 
-  // =============================================================================
-  // validatePlugin (full validation)
-  // =============================================================================
-
   describe("validatePlugin", () => {
     it("should pass for complete valid plugin", async () => {
-      // Create complete plugin structure
       await mkdir(path.join(tempDir, ".claude-plugin"), { recursive: true });
       await mkdir(path.join(tempDir, "skills", "test-skill"), {
         recursive: true,
       });
       await mkdir(path.join(tempDir, "agents"), { recursive: true });
 
-      // Write manifest
       await writeFile(
         path.join(tempDir, ".claude-plugin", "plugin.json"),
         JSON.stringify({
@@ -497,10 +465,7 @@ permissionMode: acceptEdits
         }),
       );
 
-      // Write README
       await writeFile(path.join(tempDir, "README.md"), "# Test Plugin");
-
-      // Write skill
       await writeFile(
         path.join(tempDir, "skills", "test-skill", "SKILL.md"),
         `---
@@ -512,7 +477,6 @@ description: A test skill
 `,
       );
 
-      // Write agent
       await writeFile(
         path.join(tempDir, "agents", "test-agent.md"),
         `---
@@ -532,13 +496,11 @@ tools: Read, Write
     });
 
     it("should aggregate errors from all validations", async () => {
-      // Create plugin with multiple issues
       await mkdir(path.join(tempDir, ".claude-plugin"), { recursive: true });
       await mkdir(path.join(tempDir, "skills", "bad-skill"), {
         recursive: true,
       });
 
-      // Manifest with invalid name
       await writeFile(
         path.join(tempDir, ".claude-plugin", "plugin.json"),
         JSON.stringify({
@@ -547,7 +509,6 @@ tools: Read, Write
         }),
       );
 
-      // Skill with missing description
       await writeFile(
         path.join(tempDir, "skills", "bad-skill", "SKILL.md"),
         `---
@@ -561,7 +522,6 @@ name: bad-skill
       const result = await validatePlugin(tempDir);
 
       expect(result.valid).toBe(false);
-      // Should have errors from manifest (bad name) and skill (missing description)
       expect(result.errors.length).toBeGreaterThanOrEqual(2);
     });
 
@@ -586,13 +546,8 @@ name: bad-skill
     });
   });
 
-  // =============================================================================
-  // validateAllPlugins
-  // =============================================================================
-
   describe("validateAllPlugins", () => {
     it("should validate multiple plugins", async () => {
-      // Create two plugins
       for (const name of ["plugin-one", "plugin-two"]) {
         const pluginDir = path.join(tempDir, name);
         await mkdir(path.join(pluginDir, ".claude-plugin"), {
@@ -621,7 +576,6 @@ name: bad-skill
     });
 
     it("should report mix of valid and invalid plugins", async () => {
-      // Create one valid and one invalid plugin
       const validDir = path.join(tempDir, "valid-plugin");
       await mkdir(path.join(validDir, ".claude-plugin"), { recursive: true });
       await writeFile(
@@ -632,7 +586,6 @@ name: bad-skill
 
       const invalidDir = path.join(tempDir, "invalid-plugin");
       await mkdir(path.join(invalidDir, ".claude-plugin"), { recursive: true });
-      // Invalid plugin.json (missing required name field)
       await writeFile(
         path.join(invalidDir, ".claude-plugin", "plugin.json"),
         JSON.stringify({ description: "Invalid - missing name" }),
@@ -647,7 +600,6 @@ name: bad-skill
     });
 
     it("should count plugins with warnings", async () => {
-      // Create plugin with warnings (missing description)
       const pluginDir = path.join(tempDir, "warn-plugin");
       await mkdir(path.join(pluginDir, ".claude-plugin"), { recursive: true });
       await writeFile(

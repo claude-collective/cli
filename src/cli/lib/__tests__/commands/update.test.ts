@@ -1,31 +1,8 @@
-/**
- * Integration tests for the update command.
- *
- * Tests: cc update, cc update <skill>, cc update --yes, cc update --no-recompile
- *
- * The update command updates local skills from their source repository:
- * - Checks if .claude/skills directory exists
- * - Loads the skills matrix from source
- * - Compares local skill hashes against source hashes
- * - Shows table of outdated skills
- * - Prompts for confirmation (bypassed with --yes)
- * - Updates outdated skills and recompiles agents
- *
- * Note: The update command uses Ink's render() for an interactive confirm prompt.
- * Since oclif's runCommand can't interact with Ink components, tests focus on:
- * - Flag/argument validation
- * - Early exit scenarios (no local skills, all up to date, skill not found)
- * - Behavior with --yes flag to skip the interactive prompt
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
 import { runCliCommand } from "../helpers";
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("update command", () => {
   let tempDir: string;
@@ -44,10 +21,6 @@ describe("update command", () => {
     process.chdir(originalCwd);
     await rm(tempDir, { recursive: true, force: true });
   });
-
-  // ===========================================================================
-  // Basic Execution
-  // ===========================================================================
 
   describe("basic execution", () => {
     it("should run without arguments", async () => {
@@ -79,10 +52,6 @@ describe("update command", () => {
       expect(error?.oclif?.exit).toBeUndefined();
     });
   });
-
-  // ===========================================================================
-  // Flag Validation
-  // ===========================================================================
 
   describe("flag validation", () => {
     it("should accept --yes flag", async () => {
@@ -127,10 +96,6 @@ describe("update command", () => {
     });
   });
 
-  // ===========================================================================
-  // Combined Flags
-  // ===========================================================================
-
   describe("combined flags", () => {
     it("should accept --yes with --no-recompile", async () => {
       const { error } = await runCliCommand(["update", "--yes", "--no-recompile"]);
@@ -172,10 +137,6 @@ describe("update command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
-
-  // ===========================================================================
-  // With Local Skills
-  // ===========================================================================
 
   describe("with local skills", () => {
     beforeEach(async () => {
@@ -234,10 +195,6 @@ forked_from:
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
-
-  // ===========================================================================
-  // Error Handling
-  // ===========================================================================
 
   describe("error handling", () => {
     it("should handle source path flag gracefully", async () => {

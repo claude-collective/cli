@@ -36,10 +36,6 @@ describe("stack-plugin-compiler", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  // =============================================================================
-  // Helper Functions
-  // =============================================================================
-
   async function createProjectStructure() {
     // Create directories
     const agentsDir = path.join(projectRoot, "src/agents");
@@ -177,11 +173,6 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     );
   }
 
-  /**
-   * Create a skill in src/skills/ (new architecture)
-   * @param directoryPath - filesystem path like "web/framework/react (@vince)"
-   * @param config.name - frontmatter name (canonical ID) like "web-framework-react"
-   */
   async function createSkillInSource(
     directoryPath: string,
     config: { name: string; description: string; content?: string },
@@ -200,10 +191,6 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
 `,
     );
   }
-
-  // =============================================================================
-  // compileStackPlugin - Main Function Tests
-  // =============================================================================
 
   describe("compileStackPlugin", () => {
     it("should create plugin directory structure", async () => {
@@ -618,10 +605,6 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
   });
 
-  // =============================================================================
-  // compileStackPlugin - Error Handling Tests
-  // =============================================================================
-
   describe("compileStackPlugin - error handling", () => {
     it("should throw error when stack config is missing", async () => {
       await createProjectStructure();
@@ -660,10 +643,6 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       // Test skipped - skill references now in agent YAMLs
     });
   });
-
-  // =============================================================================
-  // compileStackPlugin - Edge Cases
-  // =============================================================================
 
   describe("compileStackPlugin - edge cases", () => {
     it("should handle stack with no skills", async () => {
@@ -972,10 +951,6 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
   });
 
-  // =============================================================================
-  // printStackCompilationSummary Tests
-  // =============================================================================
-
   describe("printStackCompilationSummary", () => {
     it("should print stack name and path", () => {
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
@@ -1102,11 +1077,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
   });
 
-  // =============================================================================
-  // compileStackPlugin - Hooks Tests
   // Skip: hooks removed from new stack format (config/stacks.yaml)
-  // =============================================================================
-
   describe.skip("compileStackPlugin - hooks", () => {
     it("should generate hooks/hooks.json when stack has hooks", async () => {
       const { agentsDir, configDir } = await createProjectStructure();

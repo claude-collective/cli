@@ -18,10 +18,6 @@ import { fileExists, directoryExists } from "../../utils/fs";
 import { loadProjectConfig } from "../configuration";
 import { getCollectivePluginDir } from "../plugins";
 
-// =============================================================================
-// Tests
-// =============================================================================
-
 describe("installation", () => {
   beforeEach(() => {
     // Default: plugin dir resolves to a standard path

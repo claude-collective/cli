@@ -1,28 +1,3 @@
-/**
- * Integration tests for import:skill command.
- *
- * Tests: cc import skill <source> --skill, --all, --list, --force, --subdir, --refresh, --dry-run
- *
- * The import skill command downloads skills from external GitHub repositories
- * into .claude/skills/ for local use. It supports:
- * - Listing available skills from a repo (--list)
- * - Importing a specific skill (--skill <name>)
- * - Importing all skills (--all)
- * - Custom subdirectory (--subdir)
- * - Force overwrite (--force)
- * - Dry run preview (--dry-run)
- *
- * Integration tests use a local directory as the source. The command's
- * parseGitHubSource function passes through source names without slashes or
- * colons as-is, and fetchFromSource detects them as local sources. We create
- * a "testrepo" directory in cwd with a skills/ subdirectory to simulate
- * a repository without requiring network mocks.
- *
- * stdout capture is unreliable in oclif test environment, so tests focus on:
- * - Argument/flag validation and exit codes
- * - File system verification (skills created, metadata injected)
- * - Error handling for invalid inputs
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
@@ -30,41 +5,16 @@ import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
 import { parse as parseYaml } from "yaml";
 import { runCliCommand, fileExists, directoryExists } from "../../helpers";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const EXIT_CODE_ERROR = 1;
 const EXIT_CODE_INVALID_ARGS = 2;
 const LOCAL_SKILLS_DIR = ".claude/skills";
 const SKILL_MD_FILE = "SKILL.md";
 const METADATA_YAML_FILE = "metadata.yaml";
 
-/**
- * Local source directory name. Using a name without slashes or colons ensures
- * parseGitHubSource passes it through as-is and fetchFromSource treats it as
- * a local path resolved relative to cwd.
- */
+// Plain directory name (no slashes/colons) so parseGitHubSource passes it
+// through as-is and fetchFromSource treats it as a local path relative to cwd
 const LOCAL_SOURCE_NAME = "testrepo";
 
-// =============================================================================
-// Helpers
-// =============================================================================
-
-/**
- * Create a local source directory structure in the project working directory.
- *
- * The source name is a plain directory name (no slashes or colons) so that
- * parseGitHubSource returns it as-is and fetchFromSource resolves it as a
- * local path relative to cwd.
- *
- * The directory structure matches what a remote repo would have:
- *   testrepo/
- *     skills/
- *       skill-name/
- *         SKILL.md
- *         metadata.yaml (optional)
- */
 async function createLocalSource(
   projectDir: string,
   skills: string[],
@@ -87,10 +37,6 @@ async function createLocalSource(
   }
 }
 
-// =============================================================================
-// Tests
-// =============================================================================
-
 describe("import:skill command", () => {
   let tempDir: string;
   let projectDir: string;
@@ -108,10 +54,6 @@ describe("import:skill command", () => {
     process.chdir(originalCwd);
     await rm(tempDir, { recursive: true, force: true });
   });
-
-  // ===========================================================================
-  // Argument Validation
-  // ===========================================================================
 
   describe("argument validation", () => {
     it("should reject missing source argument", async () => {
@@ -138,10 +80,6 @@ describe("import:skill command", () => {
       expect(error?.oclif?.exit).toBe(EXIT_CODE_INVALID_ARGS);
     });
   });
-
-  // ===========================================================================
-  // Flag Validation
-  // ===========================================================================
 
   describe("flag validation", () => {
     it("should accept --subdir flag", async () => {
@@ -215,10 +153,6 @@ describe("import:skill command", () => {
     });
   });
 
-  // ===========================================================================
-  // Source Format Parsing (via command execution)
-  // ===========================================================================
-
   describe("source format parsing", () => {
     // These tests verify parseGitHubSource behavior indirectly by checking
     // that the command does not error on format parsing for different source styles.
@@ -259,10 +193,6 @@ describe("import:skill command", () => {
     });
   });
 
-  // ===========================================================================
-  // List Mode (--list)
-  // ===========================================================================
-
   describe("--list mode", () => {
     it("should list available skills without error", async () => {
       await createLocalSource(projectDir, ["react-patterns", "testing-utils"]);
@@ -283,10 +213,6 @@ describe("import:skill command", () => {
       expect(error?.oclif?.exit).toBe(EXIT_CODE_ERROR);
     });
   });
-
-  // ===========================================================================
-  // Import Specific Skill (--skill)
-  // ===========================================================================
 
   describe("--skill import", () => {
     it("should import a specific skill to .claude/skills/", async () => {
@@ -371,10 +297,6 @@ describe("import:skill command", () => {
     });
   });
 
-  // ===========================================================================
-  // Import All Skills (--all)
-  // ===========================================================================
-
   describe("--all import", () => {
     it("should import all skills from the repository", async () => {
       const skillNames = ["skill-alpha", "skill-beta", "skill-gamma"];
@@ -403,10 +325,6 @@ describe("import:skill command", () => {
       expect(error?.oclif?.exit).toBe(EXIT_CODE_ERROR);
     });
   });
-
-  // ===========================================================================
-  // Force Overwrite (--force)
-  // ===========================================================================
 
   describe("--force flag behavior", () => {
     it("should skip existing skills without --force", async () => {
@@ -457,10 +375,6 @@ describe("import:skill command", () => {
     });
   });
 
-  // ===========================================================================
-  // Custom Subdirectory (--subdir)
-  // ===========================================================================
-
   describe("--subdir flag behavior", () => {
     it("should look for skills in custom subdirectory", async () => {
       await createLocalSource(projectDir, ["custom-skill"], { subdir: "custom-dir" });
@@ -495,10 +409,6 @@ describe("import:skill command", () => {
     });
   });
 
-  // ===========================================================================
-  // Dry Run (--dry-run)
-  // ===========================================================================
-
   describe("--dry-run mode", () => {
     it("should not create files in dry-run mode", async () => {
       await createLocalSource(projectDir, ["dry-run-skill"]);
@@ -517,10 +427,6 @@ describe("import:skill command", () => {
       expect(await directoryExists(destDir)).toBe(false);
     });
   });
-
-  // ===========================================================================
-  // Error Handling
-  // ===========================================================================
 
   describe("error handling", () => {
     it("should error when source directory does not exist", async () => {

@@ -13,7 +13,6 @@ import type {
 } from "../../types";
 import { typedEntries } from "../../utils/typed-object";
 
-/** Get a human-readable label for a skill, preferring display name over full ID */
 function getLabel(
   skill: { displayName?: string; id: string } | undefined,
   fallback: string,

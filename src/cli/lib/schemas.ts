@@ -1,17 +1,3 @@
-/**
- * Zod schemas for validating CLI data structures.
- *
- * DESIGN: These schemas validate data at runtime boundaries (YAML parsing,
- * user input, API responses). They do NOT replace the TypeScript types in
- * types.ts and types-matrix.ts — those remain the single source of truth.
- *
- * For union types with many members (e.g., SkillDisplayName), we use z.enum([...])
- * with the full value list to get runtime validation matching the TS types.
- *
- * For template-literal types (e.g., SkillId), we use z.string().regex()
- * since Zod cannot express template-literal patterns natively.
- */
-
 import { z } from "zod";
 import type {
   AgentHookAction,
@@ -50,11 +36,6 @@ import type {
   ValidationResult,
 } from "../types";
 
-// =============================================================================
-// Base Union Type Schemas
-// =============================================================================
-
-/** Validates Domain values: wizard grouping domains */
 export const domainSchema = z.enum([
   "web",
   "web-extras",
@@ -64,7 +45,6 @@ export const domainSchema = z.enum([
   "shared",
 ]) as z.ZodType<Domain>;
 
-/** Validates Subcategory values: category IDs within domains */
 export const subcategorySchema = z.enum([
   // Web
   "framework",
@@ -110,7 +90,6 @@ export const subcategorySchema = z.enum([
   "cli-testing",
 ]) as z.ZodType<Subcategory>;
 
-/** Validates AgentName values: built-in agent identifiers */
 export const agentNameSchema = z.enum([
   // Developers
   "web-developer",
@@ -140,7 +119,6 @@ export const agentNameSchema = z.enum([
   "web-tester",
 ]) as z.ZodType<AgentName>;
 
-/** Validates ModelName values: AI model identifiers */
 export const modelNameSchema = z.enum([
   "sonnet",
   "opus",
@@ -148,7 +126,6 @@ export const modelNameSchema = z.enum([
   "inherit",
 ]) as z.ZodType<ModelName>;
 
-/** Validates PermissionMode values: agent operation permissions */
 export const permissionModeSchema = z.enum([
   "default",
   "acceptEdits",
@@ -158,10 +135,6 @@ export const permissionModeSchema = z.enum([
   "delegate",
 ]) as z.ZodType<PermissionMode>;
 
-/**
- * Validates SkillDisplayName values: short display names for skills.
- * Full list from types-matrix.ts SkillDisplayName union.
- */
 export const skillDisplayNameSchema = z.enum([
   // Frameworks
   "react",
@@ -270,17 +243,9 @@ export const skillDisplayNameSchema = z.enum([
   "context-management",
 ]) as z.ZodType<SkillDisplayName>;
 
-// =============================================================================
-// Template Literal Type Schemas
-// =============================================================================
-
-/** Regex pattern for SkillId: prefix-name format */
 const SKILL_ID_PATTERN = /^(web|api|cli|mobile|infra|meta|security)-.+$/;
 
-/**
- * Validates SkillId format: `${SkillIdPrefix}-${string}`.
- * Uses regex since Zod cannot express template literal types natively.
- */
+// Regex-based since Zod cannot express template literal types natively
 export const skillIdSchema = z
   .string()
   .regex(
@@ -288,10 +253,7 @@ export const skillIdSchema = z
     "Must be a valid skill ID (e.g., 'web-framework-react')",
   ) as z.ZodType<SkillId>;
 
-/**
- * Validates CategoryPath format.
- * Accepts: "prefix/subcategory", "prefix-subcategory", bare subcategory, or "local".
- */
+// Accepts: "prefix/subcategory", "prefix-subcategory", bare subcategory, or "local"
 export const categoryPathSchema = z.string().refine(
   (val): val is CategoryPath => {
     // "local" literal
@@ -309,11 +271,6 @@ export const categoryPathSchema = z.string().refine(
   },
 ) as z.ZodType<CategoryPath>;
 
-// =============================================================================
-// Hook Schemas (shared by multiple interfaces)
-// =============================================================================
-
-/** Validates AgentHookAction */
 export const agentHookActionSchema: z.ZodType<AgentHookAction> = z.object({
   type: z.enum(["command", "script", "prompt"]),
   command: z.string().optional(),
@@ -321,20 +278,13 @@ export const agentHookActionSchema: z.ZodType<AgentHookAction> = z.object({
   prompt: z.string().optional(),
 });
 
-/** Validates AgentHookDefinition */
 export const agentHookDefinitionSchema: z.ZodType<AgentHookDefinition> = z.object({
   matcher: z.string().optional(),
   hooks: z.array(agentHookActionSchema).optional(),
 });
 
-/** Validates a hooks record: Record<string, AgentHookDefinition[]> */
 export const hooksRecordSchema = z.record(z.string(), z.array(agentHookDefinitionSchema));
 
-// =============================================================================
-// Skill Schemas
-// =============================================================================
-
-/** Validates SkillAssignment */
 export const skillAssignmentSchema: z.ZodType<SkillAssignment> = z.object({
   id: skillIdSchema,
   preloaded: z.boolean().optional(),
@@ -342,36 +292,19 @@ export const skillAssignmentSchema: z.ZodType<SkillAssignment> = z.object({
   path: z.string().optional(),
 });
 
-// =============================================================================
-// Interface Schemas
-// =============================================================================
-
-/**
- * Validates SkillFrontmatter from SKILL.md files.
- * Fields match the official Claude Code plugin format.
- */
 export const skillFrontmatterSchema: z.ZodType<SkillFrontmatter> = z.object({
   name: skillIdSchema,
   description: z.string(),
   model: modelNameSchema.optional(),
 });
 
-/**
- * Lenient version of skillFrontmatterSchema for parsing SKILL.md files.
- * Accepts any string for `name` since local skills and custom skill plugins
- * may not follow the strict SkillId pattern (e.g., "my-custom-skill (@local)").
- * Strict ID validation happens downstream in matrix resolution.
- */
+// Lenient: accepts any string for `name` since local/custom skills may not follow strict SkillId pattern
 export const skillFrontmatterLoaderSchema = z.object({
   name: z.string(),
   description: z.string(),
   model: modelNameSchema.optional(),
 });
 
-/**
- * Validates SkillMetadataConfig from metadata.yaml files.
- * Contains relationship and catalog data for skills.
- */
 export const skillMetadataConfigSchema: z.ZodType<SkillMetadataConfig> = z.object({
   category: categoryPathSchema.optional(),
   category_exclusive: z.boolean().optional(),
@@ -383,16 +316,11 @@ export const skillMetadataConfigSchema: z.ZodType<SkillMetadataConfig> = z.objec
   conflicts_with: z.array(skillIdSchema).optional(),
 });
 
-/** Validates PluginAuthor */
 export const pluginAuthorSchema: z.ZodType<PluginAuthor> = z.object({
   name: z.string(),
   email: z.string().optional(),
 });
 
-/**
- * Validates PluginManifest for Claude Code plugins (plugin.json).
- * Defines the structure and content of a plugin package.
- */
 export const pluginManifestSchema: z.ZodType<PluginManifest> = z.object({
   name: z.string(),
   version: z.string().optional(),
@@ -405,10 +333,6 @@ export const pluginManifestSchema: z.ZodType<PluginManifest> = z.object({
   hooks: z.union([z.string(), hooksRecordSchema]).optional(),
 });
 
-/**
- * Validates AgentYamlConfig from co-located agent.yaml files.
- * Supports official Claude Code plugin format fields.
- */
 export const agentYamlConfigSchema: z.ZodType<AgentYamlConfig> = z.object({
   id: agentNameSchema,
   title: z.string(),
@@ -421,10 +345,6 @@ export const agentYamlConfigSchema: z.ZodType<AgentYamlConfig> = z.object({
   output_format: z.string().optional(),
 });
 
-/**
- * Validates ProjectConfig from .claude/config.yaml.
- * Unified project configuration for Claude Collective.
- */
 export const projectConfigSchema: z.ZodType<ProjectConfig> = z.object({
   version: z.literal("1").optional(),
   name: z.string(),
@@ -439,14 +359,8 @@ export const projectConfigSchema: z.ZodType<ProjectConfig> = z.object({
   agents_source: z.string().optional(),
 });
 
-/**
- * Lenient version of projectConfigSchema for loading YAML files.
- * Makes `name` and `agents` optional since partial configs (e.g., with only
- * `source` and `author`) are valid at load time. Full validation of required
- * fields happens in validateProjectConfig().
- *
- * Uses .passthrough() to preserve unknown keys for forward compatibility.
- */
+// Lenient: name/agents optional since partial configs are valid at load time.
+// Full validation happens in validateProjectConfig().
 export const projectConfigLoaderSchema = z
   .object({
     version: z.literal("1").optional(),
@@ -456,8 +370,6 @@ export const projectConfigLoaderSchema = z
 
     author: z.string().optional(),
     installMode: z.enum(["local", "plugin"]).optional(),
-    // Uses z.record(z.string(), ...) for stack keys since real-world stack
-    // data has sparse subcategory records (not all subcategories present)
     stack: z.record(z.string(), z.record(z.string(), skillIdSchema)).optional(),
     source: z.string().optional(),
     marketplace: z.string().optional(),
@@ -465,18 +377,12 @@ export const projectConfigLoaderSchema = z
   })
   .passthrough();
 
-/** Validates ValidationResult */
 export const validationResultSchema: z.ZodType<ValidationResult> = z.object({
   valid: z.boolean(),
   errors: z.array(z.string()),
   warnings: z.array(z.string()),
 });
 
-// =============================================================================
-// Skills Matrix Schemas (skills-matrix.yaml)
-// =============================================================================
-
-/** Validates CategoryDefinition from skills-matrix.yaml categories */
 export const categoryDefinitionSchema: z.ZodType<CategoryDefinition> = z.object({
   id: subcategorySchema,
   displayName: z.string(),
@@ -489,34 +395,25 @@ export const categoryDefinitionSchema: z.ZodType<CategoryDefinition> = z.object(
   icon: z.string().optional(),
 });
 
-/**
- * Lenient schema for skill references in YAML relationships.
- * Accepts both SkillId ("web-framework-react") and SkillDisplayName ("react").
- * Display names are resolved to canonical SkillIds by matrix-loader after parsing.
- * Boundary cast: z.string() widens, cast narrows to SkillId post-resolution.
- */
+// Lenient: accepts both SkillId and SkillDisplayName, resolved to canonical IDs by matrix-loader
 const skillRefInYaml = z.string() as z.ZodType<SkillId>;
 
-/** Validates ConflictRule: mutual exclusion between skills */
 export const conflictRuleSchema: z.ZodType<ConflictRule> = z.object({
   skills: z.array(skillRefInYaml),
   reason: z.string(),
 });
 
-/** Validates DiscourageRule: soft warning between skills */
 export const discourageRuleSchema: z.ZodType<DiscourageRule> = z.object({
   skills: z.array(skillRefInYaml),
   reason: z.string(),
 });
 
-/** Validates RecommendRule: suggestion based on current selection */
 export const recommendRuleSchema: z.ZodType<RecommendRule> = z.object({
   when: skillRefInYaml,
   suggest: z.array(skillRefInYaml),
   reason: z.string(),
 });
 
-/** Validates RequireRule: hard dependency between skills */
 export const requireRuleSchema: z.ZodType<RequireRule> = z.object({
   skill: skillRefInYaml,
   needs: z.array(skillRefInYaml),
@@ -524,13 +421,11 @@ export const requireRuleSchema: z.ZodType<RequireRule> = z.object({
   reason: z.string(),
 });
 
-/** Validates AlternativeGroup: interchangeable skills */
 export const alternativeGroupSchema: z.ZodType<AlternativeGroup> = z.object({
   purpose: z.string(),
   skills: z.array(skillRefInYaml),
 });
 
-/** Validates RelationshipDefinitions: all relationship types */
 export const relationshipDefinitionsSchema: z.ZodType<RelationshipDefinitions> = z.object({
   conflicts: z.array(conflictRuleSchema),
   discourages: z.array(discourageRuleSchema),
@@ -539,10 +434,6 @@ export const relationshipDefinitionsSchema: z.ZodType<RelationshipDefinitions> =
   alternatives: z.array(alternativeGroupSchema),
 });
 
-/**
- * Validates SkillsMatrixConfig from skills-matrix.yaml.
- * Root configuration containing categories, relationships, and alias mappings.
- */
 export const skillsMatrixConfigSchema: z.ZodType<SkillsMatrixConfig> = z.object({
   version: z.string(),
   categories: z.record(subcategorySchema, categoryDefinitionSchema) as z.ZodType<
@@ -554,16 +445,7 @@ export const skillsMatrixConfigSchema: z.ZodType<SkillsMatrixConfig> = z.object(
   >,
 });
 
-// =============================================================================
-// Local Skill Schemas
-// =============================================================================
-
-/**
- * Lenient schema for LocalRawMetadata from local skill metadata.yaml files.
- * All fields optional (including cli_name) since the loader already checks
- * `if (!metadata.cli_name)` after parsing. Uses .passthrough() for forward
- * compatibility with new fields.
- */
+// All fields optional — the loader validates cli_name after parsing
 export const localRawMetadataSchema = z
   .object({
     cli_name: z.string().optional(),
@@ -580,13 +462,6 @@ export const localRawMetadataSchema = z
   })
   .passthrough();
 
-/**
- * Lenient schema for LocalSkillMetadata from local skill metadata.yaml files.
- * Used by skill-metadata.ts to parse forked_from metadata. The forked_from
- * field is optional since not all local skills are forked. Uses .passthrough()
- * to preserve all other metadata fields (cli_name, tags, etc.) through
- * round-trip serialization.
- */
 export const localSkillMetadataSchema = z
   .object({
     forked_from: z
@@ -599,26 +474,12 @@ export const localSkillMetadataSchema = z
   })
   .passthrough();
 
-// =============================================================================
-// Stacks Schemas (config/stacks.yaml)
-// =============================================================================
-
-/**
- * Validates StackAgentConfig: maps subcategory IDs to technology aliases.
- * Uses lenient z.string() keys/values since real-world YAML contains
- * subcategory keys (e.g., "base-framework", "platform", "methodology")
- * and alias values not always present in the strict enums.
- */
+// Lenient z.string() keys/values for forward compatibility with new subcategories/aliases
 export const stackAgentConfigSchema = z.record(
   z.string(),
   z.string(),
 ) as z.ZodType<StackAgentConfig>;
 
-/**
- * Validates Stack definition from config/stacks.yaml.
- * Uses lenient z.string() for agent keys since stacks may reference agents
- * not in the strict AgentName enum (forward compatibility).
- */
 export const stackSchema: z.ZodType<Stack> = z.object({
   id: z.string(),
   name: z.string(),
@@ -627,16 +488,10 @@ export const stackSchema: z.ZodType<Stack> = z.object({
   philosophy: z.string().optional(),
 });
 
-/** Validates StacksConfig: top-level structure of config/stacks.yaml */
 export const stacksConfigSchema: z.ZodType<StacksConfig> = z.object({
   stacks: z.array(stackSchema),
 });
 
-// =============================================================================
-// Marketplace Schemas (marketplace.json)
-// =============================================================================
-
-/** Validates MarketplaceRemoteSource for remote plugin sources */
 export const marketplaceRemoteSourceSchema: z.ZodType<MarketplaceRemoteSource> = z.object({
   source: z.enum(["github", "url"]),
   repo: z.string().optional(),
@@ -644,7 +499,6 @@ export const marketplaceRemoteSourceSchema: z.ZodType<MarketplaceRemoteSource> =
   ref: z.string().optional(),
 });
 
-/** Validates MarketplacePlugin entry in marketplace.json */
 export const marketplacePluginSchema: z.ZodType<MarketplacePlugin> = z.object({
   name: z.string(),
   source: z.union([z.string(), marketplaceRemoteSourceSchema]),
@@ -655,21 +509,15 @@ export const marketplacePluginSchema: z.ZodType<MarketplacePlugin> = z.object({
   keywords: z.array(z.string()).optional(),
 });
 
-/** Validates MarketplaceOwner information */
 export const marketplaceOwnerSchema: z.ZodType<MarketplaceOwner> = z.object({
   name: z.string(),
   email: z.string().optional(),
 });
 
-/** Validates MarketplaceMetadata */
 export const marketplaceMetadataSchema: z.ZodType<MarketplaceMetadata> = z.object({
   pluginRoot: z.string().optional(),
 });
 
-/**
- * Validates Marketplace from marketplace.json.
- * Contains plugin listings and marketplace metadata.
- */
 export const marketplaceSchema: z.ZodType<Marketplace> = z.object({
   $schema: z.string().optional(),
   name: z.string(),
@@ -680,15 +528,6 @@ export const marketplaceSchema: z.ZodType<Marketplace> = z.object({
   plugins: z.array(marketplacePluginSchema),
 });
 
-// =============================================================================
-// Versioned Metadata Schema (metadata.yaml with version tracking)
-// =============================================================================
-
-/**
- * Lenient schema for VersionedMetadata from skill metadata.yaml files.
- * Used by versioning.ts for version bumping. The version and content_hash
- * fields are the primary concern; other fields are preserved via passthrough.
- */
 export const versionedMetadataSchema = z
   .object({
     version: z.number(),
@@ -697,50 +536,23 @@ export const versionedMetadataSchema = z
   })
   .passthrough();
 
-// =============================================================================
-// Default Mappings Schema (agent-mappings.yaml)
-// =============================================================================
-
-/**
- * Validates DefaultMappings from agent-mappings.yaml.
- * Contains skill-to-agent assignments, preloaded skill patterns,
- * and subcategory alias mappings.
- */
 export const defaultMappingsSchema = z.object({
   skill_to_agents: z.record(z.string(), z.array(z.string())),
   preloaded_skills: z.record(z.string(), z.array(z.string())),
   subcategory_aliases: z.record(z.string(), z.string()),
 });
 
-// =============================================================================
-// Settings File Schema (.claude/settings.json)
-// =============================================================================
-
-/** Validates permission configuration in settings.json */
 export const permissionConfigSchema = z.object({
   allow: z.array(z.string()).optional(),
   deny: z.array(z.string()).optional(),
 });
 
-/**
- * Lenient schema for .claude/settings.json files.
- * Only validates the permissions field; other fields are preserved via passthrough.
- */
 export const settingsFileSchema = z
   .object({
     permissions: permissionConfigSchema.optional(),
   })
   .passthrough();
 
-// =============================================================================
-// Import Skill Metadata Schema (for import command)
-// =============================================================================
-
-/**
- * Lenient schema for imported skill metadata.yaml files.
- * Used by the import command when injecting forked_from metadata.
- * Uses passthrough to preserve all existing fields through round-trip.
- */
 export const importedSkillMetadataSchema = z
   .object({
     forked_from: z
@@ -754,12 +566,6 @@ export const importedSkillMetadataSchema = z
   })
   .passthrough();
 
-/**
- * Lenient schema for ProjectSourceConfig loaded from config.yaml.
- * Used by config.ts for source/author resolution.
- * Uses passthrough to allow extra config.yaml fields (name, agents, etc.)
- * that ProjectSourceConfig doesn't define.
- */
 export const projectSourceConfigSchema = z
   .object({
     source: z.string().optional(),
@@ -779,20 +585,10 @@ export const projectSourceConfigSchema = z
   })
   .passthrough();
 
-// =============================================================================
-// Validation Schemas (strict — used by cc validate / plugin-validator)
-// =============================================================================
-// These schemas match the hand-maintained JSON Schema files and use .strict()
-// (equivalent to additionalProperties: false) for marketplace validation.
-
+// Strict validation schemas — used by cc validate / plugin-validator
 const KEBAB_CASE_PATTERN = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 
-/**
- * Lenient agent schema for JSON Schema generation and cc validate.
- * Uses z.string() for `id` instead of strict agentNameSchema enum,
- * since marketplace agents may have any kebab-case identifier.
- * Includes $schema field for YAML editor validation.
- */
+// Lenient `id` (any string) since marketplace agents may have any kebab-case identifier
 export const agentYamlGenerationSchema = z
   .object({
     $schema: z.string().optional(),
@@ -808,11 +604,6 @@ export const agentYamlGenerationSchema = z
   })
   .strict();
 
-/**
- * Strict schema for agent .md frontmatter validation.
- * Matches agent-frontmatter.schema.json shape.
- * Used by plugin-validator.ts for compiled agent frontmatter.
- */
 export const agentFrontmatterValidationSchema = z
   .object({
     name: z.string().regex(KEBAB_CASE_PATTERN).min(1),
@@ -826,11 +617,6 @@ export const agentFrontmatterValidationSchema = z
   })
   .strict();
 
-/**
- * Strict schema for SKILL.md frontmatter validation.
- * Matches skill-frontmatter.schema.json shape (claude-subagents).
- * Used by schema-validator.ts and plugin-validator.ts.
- */
 export const skillFrontmatterValidationSchema = z
   .object({
     name: z.string().min(1),
@@ -845,11 +631,6 @@ export const skillFrontmatterValidationSchema = z
   })
   .strict();
 
-/**
- * Strict schema for marketplace metadata.yaml validation.
- * Matches metadata.schema.json shape (claude-subagents).
- * Used by schema-validator.ts for cc validate.
- */
 export const metadataValidationSchema = z
   .object({
     category: z.string(),
@@ -882,7 +663,6 @@ export const metadataValidationSchema = z
   })
   .strict();
 
-/** Skill assignment in stack config.yaml */
 const stackSkillAssignmentSchema = z
   .object({
     id: z.string().min(1),
@@ -890,10 +670,6 @@ const stackSkillAssignmentSchema = z
   })
   .strict();
 
-/**
- * Strict schema for stack config.yaml validation (claude-subagents).
- * Matches stack.schema.json shape. Used by schema-validator.ts for cc validate.
- */
 export const stackConfigValidationSchema = z
   .object({
     id: z.string().regex(KEBAB_CASE_PATTERN).optional(),

@@ -9,18 +9,10 @@ export const DEFAULT_SOURCE = "github:claude-collective/skills";
 export const SOURCE_ENV_VAR = "CC_SOURCE";
 export const PROJECT_CONFIG_FILE = "config.yaml";
 
-/**
- * Extra source entry for third-party skill repositories.
- * Used in project configs.
- */
 export type SourceEntry = {
-  /** Short name for the source (e.g., "company", "team") */
   name: string;
-  /** GitHub URL or path (e.g., "github:owner/repo") */
   url: string;
-  /** Optional description */
   description?: string;
-  /** Optional ref to pin to (branch, tag, or commit) */
   ref?: string;
 };
 
@@ -29,7 +21,6 @@ export type ProjectSourceConfig = {
   author?: string;
   marketplace?: string;
   agents_source?: string;
-  /** Extra sources for third-party skills */
   sources?: SourceEntry[];
 };
 
@@ -89,15 +80,12 @@ export async function saveProjectConfig(
   verbose(`Saved project config to ${configPath}`);
 }
 
-/** Resolve source with precedence: flag > env > project > default */
+// Precedence: flag > env > project > default
 export async function resolveSource(
   flagValue?: string,
   projectDir?: string,
 ): Promise<ResolvedConfig> {
-  // Load project config for marketplace (marketplace is resolved separately from source)
   const projectConfig = projectDir ? await loadProjectSourceConfig(projectDir) : null;
-
-  // Resolve marketplace: project config only (no flag/env support for marketplace)
   const marketplace = projectConfig?.marketplace;
 
   if (flagValue !== undefined) {
@@ -134,7 +122,7 @@ export type ResolvedAgentsSource = {
   agentsSourceOrigin: AgentsSourceOrigin;
 };
 
-/** Resolve agents_source with precedence: flag > project > default (undefined) */
+// Precedence: flag > project > default (undefined)
 export async function resolveAgentsSource(
   flagValue?: string,
   projectDir?: string,
@@ -160,13 +148,8 @@ export async function resolveAgentsSource(
   return { agentsSource: undefined, agentsSourceOrigin: "default" };
 }
 
-/** Shared origin label for project config */
 const PROJECT_ORIGIN_LABEL = "project config (.claude-src/config.yaml)";
 
-/**
- * Format a human-readable label for a config origin.
- * Consolidates source and agents-source formatting into one function.
- */
 export function formatOrigin(
   type: "source" | "agents",
   origin: ResolvedConfig["sourceOrigin"] | AgentsSourceOrigin,
@@ -195,16 +178,11 @@ export function formatOrigin(
   return origin;
 }
 
-/** Resolve author from project config */
 export async function resolveAuthor(projectDir?: string): Promise<string | undefined> {
   const projectConfig = projectDir ? await loadProjectSourceConfig(projectDir) : null;
   return projectConfig?.author;
 }
 
-/**
- * Resolve all configured sources for skill search.
- * Returns primary source plus any extra sources from project config.
- */
 export async function resolveAllSources(
   projectDir?: string,
 ): Promise<{ primary: SourceEntry; extras: SourceEntry[] }> {

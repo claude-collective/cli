@@ -14,18 +14,6 @@ export type MatrixHealthIssue = {
   details: string;
 };
 
-/**
- * Validate referential integrity of a merged skills matrix.
- *
- * Checks for:
- * - Skill IDs in relationships that don't resolve to existing skills (ghost IDs)
- * - Categories missing a `domain` field (invisible in wizard)
- * - Skills referencing categories that don't exist in the matrix
- * - `compatibleWith` entries that reference non-existent skill IDs
- * - Stack `allSkillIds` entries that reference non-existent skill IDs
- *
- * Returns a list of issues found. Also logs warnings for each issue.
- */
 export function checkMatrixHealth(matrix: MergedSkillsMatrix): MatrixHealthIssue[] {
   const issues: MatrixHealthIssue[] = [];
   const skillIds = new Set(typedKeys<SkillId>(matrix.skills));
@@ -43,9 +31,6 @@ export function checkMatrixHealth(matrix: MergedSkillsMatrix): MatrixHealthIssue
   return issues;
 }
 
-/**
- * Check that all skill IDs referenced in relationships point to real skills.
- */
 function checkRelationshipTargets(
   matrix: MergedSkillsMatrix,
   skillIds: Set<SkillId>,
@@ -127,10 +112,7 @@ function checkRelationshipTargets(
   }
 }
 
-/**
- * Check that all categories have a domain field.
- * Categories without a domain won't appear in any wizard domain view.
- */
+// Categories without a domain won't appear in any wizard domain view
 function checkSubcategoryDomains(matrix: MergedSkillsMatrix, issues: MatrixHealthIssue[]): void {
   for (const [catId, cat] of typedEntries<Subcategory, CategoryDefinition>(matrix.categories)) {
     if (!cat) continue;
@@ -144,9 +126,6 @@ function checkSubcategoryDomains(matrix: MergedSkillsMatrix, issues: MatrixHealt
   }
 }
 
-/**
- * Check that all skills reference categories that exist in the matrix.
- */
 function checkSkillCategories(matrix: MergedSkillsMatrix, issues: MatrixHealthIssue[]): void {
   for (const [skillId, skill] of typedEntries<SkillId, ResolvedSkill>(matrix.skills)) {
     if (!skill) continue;
@@ -161,9 +140,6 @@ function checkSkillCategories(matrix: MergedSkillsMatrix, issues: MatrixHealthIs
   }
 }
 
-/**
- * Check that all compatibleWith entries reference real skill IDs.
- */
 function checkCompatibleWithTargets(
   matrix: MergedSkillsMatrix,
   skillIds: Set<SkillId>,
@@ -183,9 +159,6 @@ function checkCompatibleWithTargets(
   }
 }
 
-/**
- * Check that all stack allSkillIds reference real skills in the matrix.
- */
 function checkStackSkillIds(
   matrix: MergedSkillsMatrix,
   skillIds: Set<SkillId>,

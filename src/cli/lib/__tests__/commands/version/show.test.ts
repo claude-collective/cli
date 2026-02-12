@@ -1,26 +1,8 @@
-/**
- * Integration tests for version:show command.
- *
- * Tests: cc version:show
- *
- * The version:show command displays the current plugin version.
- * It looks for plugin.json in .claude-plugin/ directory starting from
- * current directory and walking up to parent directories.
- *
- * Note: stdout capture is limited in oclif test environment, so tests focus on:
- * - Command execution (no unhandled errors)
- * - Error handling when plugin.json is missing
- * - Exit codes
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
 import { runCliCommand } from "../../helpers";
-
-// =============================================================================
-// Test Setup
-// =============================================================================
 
 describe("version:show command", () => {
   let tempDir: string;
@@ -39,10 +21,6 @@ describe("version:show command", () => {
     process.chdir(originalCwd);
     await rm(tempDir, { recursive: true, force: true });
   });
-
-  // ===========================================================================
-  // Basic Execution
-  // ===========================================================================
 
   describe("basic execution", () => {
     it("should run without arguments", async () => {
@@ -79,10 +57,6 @@ describe("version:show command", () => {
       expect(error?.oclif?.exit).toBeUndefined();
     });
   });
-
-  // ===========================================================================
-  // Version Display
-  // ===========================================================================
 
   describe("version display", () => {
     it("should find plugin.json in current directory", async () => {
@@ -145,10 +119,6 @@ describe("version:show command", () => {
     });
   });
 
-  // ===========================================================================
-  // Error Handling
-  // ===========================================================================
-
   describe("error handling", () => {
     it("should error with helpful message when plugin.json not found", async () => {
       const { error } = await runCliCommand(["version:show"]);
@@ -190,10 +160,6 @@ describe("version:show command", () => {
       expect(output.toLowerCase()).not.toContain("cannot read");
     });
   });
-
-  // ===========================================================================
-  // Alias Check
-  // ===========================================================================
 
   describe("command aliases", () => {
     it("should be accessible as version:show", async () => {

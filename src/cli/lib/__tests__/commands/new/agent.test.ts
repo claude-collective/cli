@@ -1,34 +1,8 @@
-/**
- * Tests for new:agent command.
- *
- * Tests: cc new:agent <name>, flags (--purpose, --refresh, --source, --non-interactive)
- *
- * The new:agent command creates a new custom agent using AI generation via
- * the agent-summoner meta-agent. It checks for Claude CLI availability,
- * resolves the source config, gets the purpose, fetches the meta-agent,
- * and invokes the claude CLI.
- *
- * Note: The full agent creation flow spawns a real claude CLI process and
- * may render Ink components for interactive purpose input. Additionally,
- * oclif's dynamic module loading bypasses vitest's vi.mock for utils imported
- * by command modules. Tests focus on:
- * - Argument/flag validation and exit codes
- * - Missing required name argument (oclif validation)
- * - Command execution error paths that don't require mocking
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir } from "fs/promises";
 import { runCliCommand } from "../../helpers";
-
-// =============================================================================
-// Constants
-// =============================================================================
-
-// =============================================================================
-// Command Tests
-// =============================================================================
 
 describe("new:agent command", () => {
   let tempDir: string;
@@ -48,10 +22,6 @@ describe("new:agent command", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  // ===========================================================================
-  // Argument Validation
-  // ===========================================================================
-
   describe("argument validation", () => {
     it("should reject missing name argument", async () => {
       const { error } = await runCliCommand(["new:agent"]);
@@ -69,10 +39,6 @@ describe("new:agent command", () => {
       expect(output.toLowerCase()).not.toContain("unexpected argument");
     });
   });
-
-  // ===========================================================================
-  // Flag Acceptance
-  // ===========================================================================
 
   describe("flag acceptance", () => {
     it("should accept --purpose flag without parsing error", async () => {
@@ -136,10 +102,6 @@ describe("new:agent command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
-
-  // ===========================================================================
-  // Error Handling
-  // ===========================================================================
 
   describe("error handling", () => {
     it("should error when source path does not exist", async () => {

@@ -1,34 +1,11 @@
-/**
- * Integration tests for version:bump command.
- *
- * Tests: cc version:bump <type>
- *
- * The version:bump command increments the plugin version by a specified
- * bump type (major, minor, or patch). It uses `bumpPluginVersion` from
- * plugin-version.ts which reads, increments, and writes plugin.json.
- *
- * Note: stdout capture is limited in oclif test environment, so tests focus on:
- * - Command execution (no unhandled errors)
- * - Argument validation (valid/invalid bump types)
- * - Exit codes
- * - File system verification (plugin.json contents after bump)
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
 import { runCliCommand } from "../../helpers";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const EXIT_CODE_ERROR = 1;
 const EXIT_CODE_INVALID_ARGS = 2;
-
-// =============================================================================
-// Test Setup
-// =============================================================================
 
 describe("version:bump command", () => {
   let tempDir: string;
@@ -47,10 +24,6 @@ describe("version:bump command", () => {
     process.chdir(originalCwd);
     await rm(tempDir, { recursive: true, force: true });
   });
-
-  // ===========================================================================
-  // Argument Validation
-  // ===========================================================================
 
   describe("argument validation", () => {
     it("should accept 'patch' bump type", async () => {
@@ -105,10 +78,6 @@ describe("version:bump command", () => {
     });
   });
 
-  // ===========================================================================
-  // Version Incrementing
-  // ===========================================================================
-
   describe("version incrementing", () => {
     it("should increment patch version (1.0.0 -> 1.0.1)", async () => {
       const pluginDir = path.join(projectDir, ".claude-plugin");
@@ -153,10 +122,6 @@ describe("version:bump command", () => {
     });
   });
 
-  // ===========================================================================
-  // Error Handling
-  // ===========================================================================
-
   describe("error handling", () => {
     it("should error when no plugin.json found", async () => {
       const { error } = await runCliCommand(["version:bump", "patch"]);
@@ -164,10 +129,6 @@ describe("version:bump command", () => {
       expect(error?.oclif?.exit).toBe(EXIT_CODE_ERROR);
     });
   });
-
-  // ===========================================================================
-  // Dry Run
-  // ===========================================================================
 
   describe("--dry-run flag", () => {
     it("should not modify plugin.json with --dry-run", async () => {

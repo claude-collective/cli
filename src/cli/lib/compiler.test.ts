@@ -38,10 +38,6 @@ import {
 } from "../utils/fs";
 import { validateCompiledAgent } from "./output-validator";
 
-// =============================================================================
-// Helpers
-// =============================================================================
-
 function createMockAgent(name: string, skills: Skill[] = []): AgentConfig {
   return {
     name,
@@ -72,10 +68,6 @@ function createCompileContext(overrides?: Partial<CompileContext>): CompileConte
     ...overrides,
   };
 }
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("compiler", () => {
   describe("compileAllAgents", () => {

@@ -1,15 +1,5 @@
-/**
- * Shared test fixtures for pre-built mock skills.
- *
- * Skill IDs and categories use literal strings that are type-checked
- * by the SkillId and CategoryPath union types at compile time.
- */
 import type { ResolvedSkill } from "../../types";
 import { createMockSkill } from "./helpers";
-
-// =============================================================================
-// Pre-built Mock Skills
-// =============================================================================
 
 export function createTestReactSkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
   return createMockSkill("web-framework-react", "web/framework", {
@@ -79,14 +69,6 @@ export function createTestDrizzleSkill(overrides?: Partial<ResolvedSkill>): Reso
   });
 }
 
-// =============================================================================
-// Methodology Skills (Preselected by Default)
-// =============================================================================
-
-/**
- * Creates one methodology skill for testing preselection behavior.
- * Use createMockMatrixWithMethodology() helper which includes this automatically.
- */
 export function createTestMethodologySkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
   return createMockSkill("meta-methodology-anti-over-engineering", "meta/methodology", {
     description: "Surgical implementation, not architectural innovation",

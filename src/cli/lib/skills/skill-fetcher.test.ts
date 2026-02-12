@@ -14,10 +14,6 @@ const mockGlob = vi.mocked(glob);
 const mockCopy = vi.mocked(copy);
 const mockEnsureDir = vi.mocked(ensureDir);
 
-// =============================================================================
-// Test Fixtures
-// =============================================================================
-
 function createMarketplace(plugins: MarketplacePlugin[] = []): Marketplace {
   return {
     name: "test-marketplace",

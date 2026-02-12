@@ -4,10 +4,6 @@ import { loadDefaultMappings, clearDefaultsCache, getCachedDefaults } from "../l
 
 import type { ProjectConfig } from "../../types";
 
-// =============================================================================
-// P1-18: Test Agent-skill mapping from skill-agent-mappings.ts
-// =============================================================================
-
 describe("SKILL_TO_AGENTS mappings", () => {
   it("should return correct agent list for web/* pattern", () => {
     const agents = SKILL_TO_AGENTS["web/*"];
@@ -165,10 +161,6 @@ describe("getAgentsForSkill", () => {
   });
 });
 
-// =============================================================================
-// P2-05: YAML Defaults Loader Tests
-// =============================================================================
-
 describe("defaults-loader", () => {
   beforeEach(() => {
     // Clear cache before each test to ensure isolation
@@ -251,10 +243,6 @@ describe("defaults-loader", () => {
   });
 });
 
-// =============================================================================
-// P2-05: YAML Defaults Match Hardcoded Fallbacks
-// =============================================================================
-
 describe("YAML defaults match hardcoded fallbacks", () => {
   beforeEach(async () => {
     clearDefaultsCache();
@@ -275,10 +263,6 @@ describe("YAML defaults match hardcoded fallbacks", () => {
     }
   });
 });
-
-// =============================================================================
-// P2-05: Project Config Override Tests
-// =============================================================================
 
 describe("project config overrides", () => {
   beforeEach(async () => {
@@ -309,10 +293,6 @@ describe("project config overrides", () => {
     });
   });
 });
-
-// =============================================================================
-// P2-05: Fallback Behavior Tests
-// =============================================================================
 
 describe("fallback to hardcoded when YAML not loaded", () => {
   beforeEach(() => {

@@ -8,9 +8,6 @@ import type { SourceLoadResult } from "../loading";
 import { PROJECT_ROOT } from "../../consts";
 import { createMockSkill as _createMockSkill, createMockMatrix } from "../__tests__/helpers";
 
-/**
- * Helper to create a mock skill with an explicit path (wraps shared helper)
- */
 function createMockSkill(
   id: SkillId,
   category: CategoryPath,

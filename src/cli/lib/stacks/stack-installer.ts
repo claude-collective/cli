@@ -24,9 +24,6 @@ export type StackInstallResult = {
   fromMarketplace: boolean;
 };
 
-/**
- * Compile a stack to a temporary directory
- */
 export async function compileStackToTemp(options: {
   stackId: string;
   projectRoot: string;
@@ -86,7 +83,6 @@ export async function installStackAsPlugin(
   });
 
   try {
-    // Install using native claude plugin install
     await claudePluginInstall(result.pluginPath, "project", projectDir);
 
     return {
@@ -98,7 +94,6 @@ export async function installStackAsPlugin(
       fromMarketplace: false,
     };
   } finally {
-    // Clean up temp directory
     await cleanup();
   }
 }

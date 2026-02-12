@@ -16,10 +16,6 @@ describe("schema-validator", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  // =============================================================================
-  // validateAllSchemas
-  // =============================================================================
-
   describe("validateAllSchemas", () => {
     it("should return valid result when no data files exist", async () => {
       // Empty directory - no files to validate means all targets pass with 0 files
@@ -276,10 +272,6 @@ describe("schema-validator", () => {
       expect(frontmatterResult!.invalidFiles[0].errors[0]).toContain("frontmatter");
     });
   });
-
-  // =============================================================================
-  // printValidationResults
-  // =============================================================================
 
   describe("printValidationResults", () => {
     it("should print summary header", () => {

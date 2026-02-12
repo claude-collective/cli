@@ -1,37 +1,10 @@
-/**
- * Integration tests for the edit command.
- *
- * Tests: cc edit, cc edit --refresh, cc edit --source, cc edit --agent-source
- *
- * The edit command modifies currently installed skills via an interactive wizard:
- * - Detects installation mode (plugin or local)
- * - Loads skills matrix from source
- * - Gets current plugin skill IDs
- * - Renders Wizard component for interactive selection
- * - Calculates added/removed skills and updates plugin
- *
- * Note: Tests focus on pre-wizard scenarios since the wizard itself requires
- * interactive Ink rendering (tested separately in wizard component tests).
- * Specifically:
- * - Flag validation (--refresh, --source, --agent-source)
- * - Error handling when no installation exists
- * - Exit codes for error scenarios
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir } from "fs/promises";
 import { runCliCommand } from "../helpers";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const EXIT_CODE_ERROR = 1;
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("edit command", () => {
   let tempDir: string;
@@ -51,10 +24,6 @@ describe("edit command", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  // ===========================================================================
-  // No Installation Error
-  // ===========================================================================
-
   describe("no installation found", () => {
     it("should error when no installation exists", async () => {
       // Clean temp dir has no .claude/ or .claude-src/ directories
@@ -71,10 +40,6 @@ describe("edit command", () => {
       expect(error?.message).toContain("No installation found");
     });
   });
-
-  // ===========================================================================
-  // Flag Validation
-  // ===========================================================================
 
   describe("flag validation", () => {
     it("should accept --refresh flag", async () => {
@@ -124,10 +89,6 @@ describe("edit command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
-
-  // ===========================================================================
-  // Combined Flags
-  // ===========================================================================
 
   describe("combined flags", () => {
     it("should accept multiple flags together", async () => {

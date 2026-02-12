@@ -18,13 +18,7 @@ const KEBAB_CASE_REGEX = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 const SEMVER_REGEX =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
 
-/**
- * Strict version of pluginManifestSchema for validation.
- * Rejects unrecognized keys (equivalent to additionalProperties: false
- * in the original JSON Schema). Defined inline because the loader schema
- * in schemas.ts is typed as z.ZodType<PluginManifest> which doesn't
- * expose .strict().
- */
+// Strict schema that rejects unrecognized keys (loader schema in schemas.ts uses .passthrough())
 const pluginManifestValidationSchema = z
   .object({
     name: z.string(),

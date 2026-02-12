@@ -151,11 +151,6 @@ describe("stackToCompileConfig", () => {
   });
 });
 
-// =============================================================================
-// P1-16: Preloaded skills appear in agent frontmatter
-// P1-17: Dynamic skills referenced in agent body
-// =============================================================================
-
 describe("preloaded vs dynamic skills in compiled agent output", () => {
   let tempDir: string;
   let engine: Liquid;
@@ -489,11 +484,6 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
     });
   });
 });
-
-// =============================================================================
-// Phase 7: Stack-based skill resolution tests
-// Bug: cc init compiles agents without preloaded_skills in frontmatter
-// =============================================================================
 
 import { resolveAgentSkillsFromStack, getAgentSkills, resolveAgents } from "./resolver";
 import type { AgentDefinition, CompileAgentConfig, CompileConfig, Stack } from "../types";

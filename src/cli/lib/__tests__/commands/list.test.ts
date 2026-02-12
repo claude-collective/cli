@@ -1,21 +1,8 @@
-/**
- * Integration tests for the list command.
- *
- * Tests: cc list, cc ls (alias)
- *
- * The list command displays installation information (local or plugin mode).
- * Note: oclif's test runner doesn't capture stdout/stderr reliably,
- * so we focus on testing that commands execute without errors.
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
 import { runCliCommand } from "../helpers";
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("list command", () => {
   let tempDir: string;

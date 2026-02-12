@@ -1,29 +1,8 @@
-/**
- * Integration tests for the build:stack command.
- *
- * Tests: cc build:stack, cc build:stack --stack, cc build:stack --output-dir, etc.
- *
- * The build:stack command compiles a stack into a standalone plugin:
- * - Default: Interactive selection if no stack specified
- * - --stack: Compile specific stack
- * - --output-dir: Custom output directory
- * - --agent-source: Remote agent partials source
- * - --refresh: Force refresh remote source
- * - --verbose: Enable verbose logging
- *
- * Note: Tests focus on:
- * - Flag validation (--stack, --output-dir, --agent-source, --refresh, --verbose)
- * - Error handling when no stacks found
- */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir } from "fs/promises";
 import { runCliCommand } from "../../helpers";
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("build:stack command", () => {
   let tempDir: string;
@@ -43,10 +22,6 @@ describe("build:stack command", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  // ===========================================================================
-  // Argument Validation
-  // ===========================================================================
-
   describe("argument validation", () => {
     it("should require --stack flag when no stacks directory exists", async () => {
       // No stacks directory means command should error
@@ -56,10 +31,6 @@ describe("build:stack command", () => {
       expect(error).toBeDefined();
     });
   });
-
-  // ===========================================================================
-  // Flag Validation
-  // ===========================================================================
 
   describe("flag validation", () => {
     it("should accept --stack flag", async () => {
@@ -137,10 +108,6 @@ describe("build:stack command", () => {
     });
   });
 
-  // ===========================================================================
-  // Combined Flags
-  // ===========================================================================
-
   describe("combined flags", () => {
     it("should accept multiple flags together", async () => {
       const outputPath = path.join(tempDir, "combined-output");
@@ -205,10 +172,6 @@ describe("build:stack command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
-
-  // ===========================================================================
-  // Error Handling
-  // ===========================================================================
 
   describe("error handling", () => {
     it("should error when stack not found", async () => {

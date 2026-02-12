@@ -1,14 +1,3 @@
-/**
- * User journey tests for configuration precedence.
- *
- * Tests the configuration layer hierarchy:
- * - Flag overrides everything
- * - Environment variable overrides project config
- * - Project config provides project-level settings
- * - Default is the fallback
- *
- * Precedence order: flag > env > project > default
- */
 import path from "path";
 import os from "os";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -33,19 +22,8 @@ import {
   type TestDirs,
 } from "../fixtures/create-test-source";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const PROJECT_CONFIG_DIR = ".claude-src";
 
-// =============================================================================
-// Test Helpers
-// =============================================================================
-
-/**
- * Create a project config in the specified directory
- */
 async function createProjectConfig(
   projectDir: string,
   config: ProjectSourceConfig,
@@ -56,10 +34,6 @@ async function createProjectConfig(
   await writeFile(configPath, stringifyYaml(config));
   return configPath;
 }
-
-// =============================================================================
-// Tests: Source Resolution Precedence
-// =============================================================================
 
 describe("User Journey: Config Precedence - Source Resolution", () => {
   let tempDir: string;
@@ -82,10 +56,6 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
     // Clean up temp directory
     await rm(tempDir, { recursive: true, force: true });
   });
-
-  // ===========================================================================
-  // Precedence Layer 1: Flag
-  // ===========================================================================
 
   describe("flag precedence (highest)", () => {
     it("should use --source flag value over environment variable", async () => {
@@ -132,10 +102,6 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
     });
   });
 
-  // ===========================================================================
-  // Precedence Layer 2: Environment Variable
-  // ===========================================================================
-
   describe("environment variable precedence", () => {
     it("should use CC_SOURCE when no flag provided", async () => {
       process.env[SOURCE_ENV_VAR] = "github:env/source";
@@ -176,10 +142,6 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
       }
     });
   });
-
-  // ===========================================================================
-  // Precedence Layer 3: Project Config
-  // ===========================================================================
 
   describe("project config precedence", () => {
     it("should use project config when no flag or env", async () => {
@@ -235,10 +197,6 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
     });
   });
 
-  // ===========================================================================
-  // Precedence Layer 4: Default
-  // ===========================================================================
-
   describe("default precedence (lowest)", () => {
     it("should use default source when no config exists", async () => {
       // No flag, no env, no project config
@@ -255,10 +213,6 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
       expect(result.source).toBe(DEFAULT_SOURCE);
     });
   });
-
-  // ===========================================================================
-  // Marketplace Resolution
-  // ===========================================================================
 
   describe("marketplace resolution", () => {
     it("should resolve marketplace from project config", async () => {
@@ -305,10 +259,6 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
     });
   });
 });
-
-// =============================================================================
-// Tests: Agent Source Resolution Precedence
-// =============================================================================
 
 describe("User Journey: Config Precedence - Agent Source Resolution", () => {
   let tempDir: string;
@@ -362,10 +312,6 @@ describe("User Journey: Config Precedence - Agent Source Resolution", () => {
     });
   });
 });
-
-// =============================================================================
-// Tests: Project Config Save/Load
-// =============================================================================
 
 describe("User Journey: Project Config Save and Load", () => {
   let tempDir: string;
@@ -440,10 +386,6 @@ describe("User Journey: Project Config Save and Load", () => {
   });
 });
 
-// =============================================================================
-// Tests: Integration with CLI Commands
-// =============================================================================
-
 describe("User Journey: Config Precedence with CLI", () => {
   let dirs: TestDirs;
   let originalCwd: string;
@@ -505,10 +447,6 @@ describe("User Journey: Config Precedence with CLI", () => {
     expect(result.sourceOrigin).toBe("env");
   });
 });
-
-// =============================================================================
-// Tests: Edge Cases
-// =============================================================================
 
 describe("User Journey: Config Edge Cases", () => {
   let tempDir: string;

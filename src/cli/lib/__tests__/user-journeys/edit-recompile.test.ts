@@ -1,12 +1,3 @@
-/**
- * User journey tests for the edit -> recompile -> verify flow.
- *
- * Tests the complete workflow where a user:
- * 1. Has an installed plugin with compiled agents
- * 2. Edits skill content in the plugin directory
- * 3. Recompiles agents
- * 4. Verifies the output reflects the changes
- */
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFile, mkdir, writeFile } from "fs/promises";
@@ -24,34 +15,10 @@ import {
 } from "../fixtures/create-test-source";
 import type { AgentName, SkillId } from "../../../types";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
-/**
- * Path to the CLI repo root. Agent definitions (intro.md, workflow.md, etc.)
- * and Liquid templates live here.
- */
 const CLI_REPO_PATH = path.resolve(__dirname, "../../../../..");
-
-/**
- * Marker text added to skill content during edits, used to verify recompilation
- * picks up changes.
- */
 const EDIT_MARKER = "EDITED-SKILL-CONTENT-MARKER";
-
-/**
- * Content appended to a skill file during the "edit" step.
- */
 const APPENDED_SKILL_SECTION = `\n\n## Added Section\n\nThis section was added after initial compilation. ${EDIT_MARKER}\n`;
 
-// =============================================================================
-// Test Helpers
-// =============================================================================
-
-/**
- * Parse YAML frontmatter from markdown content.
- */
 function parseFrontmatter(content: string): Record<string, unknown> | null {
   if (!content.startsWith("---")) {
     return null;
@@ -70,9 +37,6 @@ function parseFrontmatter(content: string): Record<string, unknown> | null {
   }
 }
 
-/**
- * Build recompile options from test dirs, targeting a specific output directory.
- */
 function buildRecompileOptions(
   dirs: TestDirs,
   outputDir: string,
@@ -86,10 +50,6 @@ function buildRecompileOptions(
     ...overrides,
   };
 }
-
-// =============================================================================
-// Tests: Edit -> Recompile -> Verify
-// =============================================================================
 
 describe("User Journey: Edit -> Recompile -> Verify", () => {
   let dirs: TestDirs;
@@ -125,10 +85,6 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     await cleanupTestSource(dirs);
   });
 
-  // ===========================================================================
-  // Test: Initial compilation produces valid output
-  // ===========================================================================
-
   it("should produce valid initial compilation", async () => {
     const options = buildRecompileOptions(dirs, outputDir, {
       agents: ["web-pm" as AgentName],
@@ -149,10 +105,6 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     expect(content).toMatch(/^---\n/);
     expect(content).toContain("web-pm");
   });
-
-  // ===========================================================================
-  // Test: Detect and incorporate skill edits on recompile
-  // ===========================================================================
 
   it("should detect and incorporate skill edits on recompile", async () => {
     const pluginDir = dirs.pluginDir!;
@@ -201,10 +153,6 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     expect(recompiledContent).toMatch(/^---\n/);
   });
 
-  // ===========================================================================
-  // Test: Preserve unchanged agents during recompile
-  // ===========================================================================
-
   it("should preserve unchanged agents during recompile", async () => {
     // Compile two agents
     const options = buildRecompileOptions(dirs, outputDir, {
@@ -226,10 +174,6 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     const secondContent = await readTestFile(agentPath);
     expect(secondContent).toBe(firstContent);
   });
-
-  // ===========================================================================
-  // Test: Handle adding new skills to existing agents
-  // ===========================================================================
 
   it("should handle adding new skills to existing agents", async () => {
     const pluginDir = dirs.pluginDir!;
@@ -282,10 +226,6 @@ Use this for verifying recompilation picks up new skills.
     expect(recompiledContent).toMatch(/^---\n/);
   });
 
-  // ===========================================================================
-  // Test: Handle removing skills from agents
-  // ===========================================================================
-
   it("should handle removing skills from agents", async () => {
     const pluginDir = dirs.pluginDir!;
 
@@ -336,10 +276,6 @@ Use this for verifying recompilation picks up new skills.
     expect(content).toMatch(/^---\n/);
   });
 
-  // ===========================================================================
-  // Test: Recompile result reports correct agent names
-  // ===========================================================================
-
   it("should report correct compiled and failed agent lists", async () => {
     // Compile a valid agent and an invalid one
     const options = buildRecompileOptions(dirs, outputDir, {
@@ -354,10 +290,6 @@ Use this for verifying recompilation picks up new skills.
       expect.arrayContaining([expect.stringContaining("non-existent-agent-xyz")]),
     );
   });
-
-  // ===========================================================================
-  // Test: Recompile with output directory creates files in correct location
-  // ===========================================================================
 
   it("should write recompiled agents to the specified output directory", async () => {
     const customOutputDir = path.join(dirs.tempDir, "custom-output");
@@ -378,10 +310,6 @@ Use this for verifying recompilation picks up new skills.
     expect(content).toMatch(/^---\n/);
     expect(content).toContain("web-pm");
   });
-
-  // ===========================================================================
-  // Test: Multiple recompiles converge to same output
-  // ===========================================================================
 
   it("should produce identical output on consecutive recompiles without changes", async () => {
     const options = buildRecompileOptions(dirs, outputDir, {

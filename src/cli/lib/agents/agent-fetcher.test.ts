@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import path from "path";
 
-// Mock dependencies before importing the module under test (manual mocks from __mocks__ directories)
 vi.mock("../../utils/fs");
 vi.mock("../../utils/logger");
 
@@ -9,7 +8,6 @@ vi.mock("../loading", () => ({
   fetchFromSource: vi.fn(),
 }));
 
-// Mock consts - provide stable values for test assertions
 const MOCK_PROJECT_ROOT = "/mock/cli/root";
 vi.mock("../../consts", () => ({
   PROJECT_ROOT: "/mock/cli/root",
@@ -37,7 +35,6 @@ const mockFetchFromSource = vi.mocked(fetchFromSource);
 describe("agent-fetcher", () => {
   describe("getLocalAgentDefinitions", () => {
     it("should return agent source paths when agents directory exists", async () => {
-      // Both agents dir and templates dir exist
       mockDirectoryExists.mockResolvedValue(true);
 
       const result = await getLocalAgentDefinitions();
@@ -50,7 +47,6 @@ describe("agent-fetcher", () => {
     });
 
     it("should throw when agents directory does not exist", async () => {
-      // First call (agentsDir check) returns false
       mockDirectoryExists.mockResolvedValueOnce(false);
 
       await expect(getLocalAgentDefinitions()).rejects.toThrow("Agent partials not found at:");
@@ -58,11 +54,8 @@ describe("agent-fetcher", () => {
 
     it("should use local templates when projectDir is provided and local templates exist", async () => {
       const projectDir = "/test/project";
-      // agentsDir exists (first call)
-      mockDirectoryExists.mockResolvedValueOnce(true);
-      // localTemplatesDir exists (second call)
-      mockDirectoryExists.mockResolvedValueOnce(true);
-      // templatesDir check (third call) - not reached since local templates found
+      mockDirectoryExists.mockResolvedValueOnce(true); // agentsDir
+      mockDirectoryExists.mockResolvedValueOnce(true); // localTemplatesDir
       mockDirectoryExists.mockResolvedValueOnce(true);
 
       const result = await getLocalAgentDefinitions({ projectDir });
@@ -74,12 +67,9 @@ describe("agent-fetcher", () => {
 
     it("should fall back to default templates when local templates directory does not exist", async () => {
       const projectDir = "/test/project";
-      // agentsDir exists
-      mockDirectoryExists.mockResolvedValueOnce(true);
-      // localTemplatesDir does NOT exist
-      mockDirectoryExists.mockResolvedValueOnce(false);
-      // default templatesDir exists
-      mockDirectoryExists.mockResolvedValueOnce(true);
+      mockDirectoryExists.mockResolvedValueOnce(true); // agentsDir
+      mockDirectoryExists.mockResolvedValueOnce(false); // localTemplatesDir
+      mockDirectoryExists.mockResolvedValueOnce(true); // default templatesDir
 
       const result = await getLocalAgentDefinitions({ projectDir });
 
@@ -87,14 +77,10 @@ describe("agent-fetcher", () => {
     });
 
     it("should still succeed when templates directory does not exist", async () => {
-      // agentsDir exists
-      mockDirectoryExists.mockResolvedValueOnce(true);
-      // templatesDir does NOT exist (verbose warning logged, no error)
-      mockDirectoryExists.mockResolvedValueOnce(false);
+      mockDirectoryExists.mockResolvedValueOnce(true); // agentsDir
+      mockDirectoryExists.mockResolvedValueOnce(false); // templatesDir
 
       const result = await getLocalAgentDefinitions();
-
-      // Should still return paths without throwing
       expect(result.agentsDir).toBe(path.join(MOCK_PROJECT_ROOT, "src/agents"));
       expect(result.templatesDir).toBe(path.join(MOCK_PROJECT_ROOT, "src/agents/_templates"));
     });
@@ -110,10 +96,8 @@ describe("agent-fetcher", () => {
         fromCache: false,
         source: REMOTE_SOURCE,
       });
-      // agentsDir exists
-      mockDirectoryExists.mockResolvedValueOnce(true);
-      // templatesDir exists
-      mockDirectoryExists.mockResolvedValueOnce(true);
+      mockDirectoryExists.mockResolvedValueOnce(true); // agentsDir
+      mockDirectoryExists.mockResolvedValueOnce(true); // templatesDir
 
       const result = await fetchAgentDefinitionsFromRemote(REMOTE_SOURCE);
 
@@ -152,7 +136,6 @@ describe("agent-fetcher", () => {
         fromCache: false,
         source: REMOTE_SOURCE,
       });
-      // agentsDir does NOT exist
       mockDirectoryExists.mockResolvedValueOnce(false);
 
       await expect(fetchAgentDefinitionsFromRemote(REMOTE_SOURCE)).rejects.toThrow(
@@ -176,10 +159,8 @@ describe("agent-fetcher", () => {
         fromCache: false,
         source: REMOTE_SOURCE,
       });
-      // agentsDir exists
-      mockDirectoryExists.mockResolvedValueOnce(true);
-      // templatesDir does NOT exist (verbose warning, no error)
-      mockDirectoryExists.mockResolvedValueOnce(false);
+      mockDirectoryExists.mockResolvedValueOnce(true); // agentsDir
+      mockDirectoryExists.mockResolvedValueOnce(false); // templatesDir
 
       const result = await fetchAgentDefinitionsFromRemote(REMOTE_SOURCE);
 
@@ -246,11 +227,8 @@ describe("agent-fetcher", () => {
     it("should pass projectDir option through to getLocalAgentDefinitions", async () => {
       const projectDir = "/test/project";
 
-      // agentsDir exists
-      mockDirectoryExists.mockResolvedValueOnce(true);
-      // localTemplatesDir exists
-      mockDirectoryExists.mockResolvedValueOnce(true);
-      // default templatesDir (not reached)
+      mockDirectoryExists.mockResolvedValueOnce(true); // agentsDir
+      mockDirectoryExists.mockResolvedValueOnce(true); // localTemplatesDir
       mockDirectoryExists.mockResolvedValueOnce(true);
 
       const result = await getAgentDefinitions(undefined, { projectDir });

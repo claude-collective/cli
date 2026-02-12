@@ -21,10 +21,6 @@ describe("plugin-manifest", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  // =============================================================================
-  // generateSkillPluginManifest
-  // =============================================================================
-
   describe("generateSkillPluginManifest", () => {
     it("should generate manifest with skill- prefix", () => {
       const manifest = generateSkillPluginManifest({
@@ -117,10 +113,6 @@ describe("plugin-manifest", () => {
     });
   });
 
-  // =============================================================================
-  // generateStackPluginManifest
-  // =============================================================================
-
   describe("generateStackPluginManifest", () => {
     it("should generate manifest without skill- prefix", () => {
       const manifest = generateStackPluginManifest({
@@ -136,8 +128,6 @@ describe("plugin-manifest", () => {
         hasAgents: true,
       });
 
-      // Claude Code plugins don't support agents field in manifest
-      // Agents are discovered from ./agents/ directory automatically
       expect(manifest.agents).toBeUndefined();
     });
 
@@ -242,10 +232,6 @@ describe("plugin-manifest", () => {
     });
   });
 
-  // =============================================================================
-  // writePluginManifest
-  // =============================================================================
-
   describe("writePluginManifest", () => {
     it("should create .claude-plugin directory", async () => {
       const manifest = generateSkillPluginManifest({ skillName: "test" });
@@ -310,15 +296,10 @@ describe("plugin-manifest", () => {
       const manifestPath = path.join(tempDir, ".claude-plugin", "plugin.json");
       const content = await readFile(manifestPath, "utf-8");
 
-      // Check for 2-space indentation pattern
       expect(content).toContain('  "name"');
       expect(content).toContain('  "description"');
     });
   });
-
-  // =============================================================================
-  // getPluginDir
-  // =============================================================================
 
   describe("getPluginDir", () => {
     it("should return .claude-plugin subdirectory", () => {
@@ -339,10 +320,6 @@ describe("plugin-manifest", () => {
       expect(result).toBe(path.join("dist/plugins", ".claude-plugin"));
     });
   });
-
-  // =============================================================================
-  // getPluginManifestPath
-  // =============================================================================
 
   describe("getPluginManifestPath", () => {
     it("should return path to plugin.json", () => {
