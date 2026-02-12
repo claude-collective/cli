@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.7] - 2026-02-12
+
+### Added
+
+- **Sources step in wizard flow** — New step between Build and Confirm lets users choose between recommended skills (verified by Claude Collective) or customizing skill sources per technology. Wizard tabs updated to 5 steps.
+- **Edit command starts at Build step** — `cc edit` now skips Intro/Stack and opens directly at the Build step with currently installed skills pre-populated via new `populateFromSkillIds` store action.
+
+### Changed
+
+- **Parse boundary error handling hardened across 11 files** — All `verbose()` calls for malformed user-facing data (project config, local skills, default mappings, skill metadata) promoted to `warn()` so errors are visible without `--verbose`. Bare `JSON.parse` in skill import wrapped in try/catch. Empty `catch {}` in permission checker now warns on malformed `settings.json`. Manual frontmatter parsing in `compile.ts` replaced with `parseFrontmatter()` utility. Missing `name` field in project config now falls back to directory name with a warning.
+- **Marketplace list JSON parsing hardened** — `claudePluginMarketplaceList` now validates JSON parse and array type before returning.
+
+### Refactored
+
+- **Replaced pseudo-agents pattern with `populateFromSkillIds`** — Stack selection no longer constructs fake agent objects to feed into `populateFromStack`. New `populateFromSkillIds` store action maps skill IDs directly to domain/subcategory selections with warnings for missing or unresolvable skills.
+
 ## [0.24.6] - 2026-02-12
 
 ### Changed
