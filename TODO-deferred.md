@@ -36,9 +36,6 @@ Plugin mode only supports stacks. Would need to support installing individual sk
 
 ## Phase 4 Deferred
 
-**S | P4-16 | Test: All tests use shared fixtures**
-Depends on P4-15. Consolidate test fixtures for consistency.
-
 **M | P4-17 | Feature: `cc new skill/agent` supports multiple items**
 Deferred until after migration. Allow creating multiple skills/agents in one command.
 
@@ -62,13 +59,6 @@ Measure and validate startup time is within acceptable range
 **M | D-01 | Update skill documentation conventions**
 Replace `examples-*.md` files with folder structure. Split examples vs patterns. Namespace files (e.g., `examples/core.md`, `patterns/testing.md`). Update `docs/skill-extraction-criteria.md` accordingly.
 
-**M | D-04 | Create missing skills referenced in stack configs**
-The following skills are referenced in stack configs but don't exist in the marketplace:
-
-- `web/styling/tailwind (@vince)` - referenced by: nuxt-stack, remix-stack, solidjs-stack, vue-stack
-
-These stacks will fail to build until the missing skills are created.
-
 **S | D-05 | Improve `cc init` behavior when already initialized**
 Currently, running `cc init` a second time just warns "already initialized" and suggests `cc edit`. This is not discoverable.
 
@@ -81,15 +71,6 @@ Currently, running `cc init` a second time just warns "already initialized" and 
 - Uninstall
 
 This follows the pattern of CLIs like `npm init` (asks about overwriting) and provides better discoverability of available actions. The current behavior requires users to know about `cc edit`, `cc compile`, etc.
-
-**M | D-07 | Use full skill path as folder name when compiling**
-When skills are copied locally, use the full path as the folder name instead of the short name. For example, `react (@vince)` should become `web/framework/react (@vince)`. This provides better organization and avoids potential naming conflicts between skills with the same short name in different categories.
-
----
-
-## ~~Phase 7C - Build Step UX Improvements~~ DONE
-
-D-10 completed. Framework-first locking flow implemented in step-build.tsx. Expert mode retained as-is.
 
 ---
 
@@ -128,38 +109,6 @@ Add configurable development hooks that can run commands like `tsc --noEmit` aft
 - [ ] This repo has tsc hook enabled by default
 - [ ] Hook failures can either warn or block the action
 - [ ] Easy to disable hooks temporarily (env var or flag)
-
----
-
-## D-17: Config YAML Merging Strategy
-
-**S | D-17 | Determine simplest way to merge config.yaml updates**
-
-When `eject` or other commands need to update `.claude-src/config.yaml`, we need a strategy for merging new values with existing config without losing user customizations.
-
-**Current approach (simple):**
-Append new values to the end of the file with a comment marker:
-
-```yaml
-# Existing user config above...
-source: /path/to/marketplace
-agents:
-  - web-developer
-
-# --- New values added by cc (merge with above) ---
-installMode: local
-agent_skills:
-  web-developer:
-    framework: web-framework-react
-```
-
-User is expected to manually merge and remove the comment.
-
-**Future improvements to investigate:**
-
-- YAML library that preserves comments for proper merge
-- Deep merge of objects/arrays
-- Interactive merge prompt
 
 ---
 
@@ -210,52 +159,6 @@ skills:
 
 - `src/cli/commands/init.tsx` - Update config generation in `installLocalMode()` and `installPluginMode()`
 - `src/cli/lib/config-generator.ts` - May need to add source fields to generated config
-
----
-
-## D-15: Investigate TypeScript for Config Files
-
-**M | D-15 | Replace YAML config with TypeScript for better skill alias resolution**
-
-Investigate whether `config/stacks.yaml` and `config/skills-matrix.yaml` would be better as TypeScript files. This could enable:
-
-1. **Function-based alias mapping** - Instead of maintaining a static `skill_aliases` map, use a function to resolve aliases to full skill IDs:
-
-   ```typescript
-   export function resolveSkillAlias(alias: string): string {
-     // Could include fuzzy matching, validation, etc.
-     return skillAliasMap[alias] ?? alias;
-   }
-   ```
-
-2. **Type safety** - TypeScript would catch invalid skill references at build time
-
-3. **Computed values** - Stacks could dynamically compose skills based on logic:
-
-   ```typescript
-   export const stacks: Stack[] = [
-     {
-       id: "nextjs-fullstack",
-       skills: getFrameworkSkills("nextjs").concat(getCommonSkills()),
-     },
-   ];
-   ```
-
-4. **IDE support** - Better autocomplete and refactoring for skill IDs
-
-### Questions to Investigate
-
-- How would this affect the marketplace distribution? (TypeScript would need compilation)
-- Should the matrix be generated from TypeScript → YAML for distribution?
-- Would this complicate the `cc new skill` workflow?
-- How to handle remote sources that may not have TypeScript?
-
-### Files Affected
-
-- `config/stacks.yaml` → `config/stacks.ts`
-- `config/skills-matrix.yaml` → `config/skills-matrix.ts`
-- `src/cli/lib/stacks-loader.ts`
-- `src/cli/lib/matrix-loader.ts`
 
 ---
 
