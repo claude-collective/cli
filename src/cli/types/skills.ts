@@ -1,33 +1,12 @@
-/**
- * Skill types — definitions, assignments, references, and ID types.
- * Contains template literal types (SkillId, CategoryPath) and
- * skill-specific structures used across the compilation pipeline.
- */
-
 import type { ModelName, Subcategory } from "./matrix";
 
-// =============================================================================
-// Template Literal Types - Derived from Base Types
-// =============================================================================
-
-/**
- * Prefix segments used in skill IDs.
- * Includes domains plus path-based prefixes (infra, meta, security)
- * that appear in skill ID format but are not wizard domains.
- */
+/** Prefix segments used in skill IDs, including non-domain prefixes (infra, meta, security) */
 export type SkillIdPrefix = "web" | "api" | "cli" | "mobile" | "infra" | "meta" | "security";
 
-/**
- * Skill ID format: prefix-subcategory-name segments in kebab-case.
- * @example "web-framework-react", "api-database-drizzle", "meta-reviewing-reviewing"
- */
+/** Skill ID format: prefix-subcategory-name segments in kebab-case */
 export type SkillId = `${SkillIdPrefix}-${string}`;
 
-/**
- * Skill display names — short human-readable labels for skills.
- * These are the keys in skills-matrix.yaml `skill_aliases` section.
- * Display names are resolved to canonical SkillId at the YAML parse boundary.
- */
+/** Short human-readable labels resolved to canonical SkillId at the YAML parse boundary */
 export type SkillDisplayName =
   // Frameworks
   | "react"
@@ -136,9 +115,8 @@ export type SkillDisplayName =
   | "context-management";
 
 /**
- * Category ID format used in resolved skills.
- * Either "prefix-subcategory" (e.g., "web-framework", "api-database") or a standalone subcategory (e.g., "testing").
- * Includes "local" for user-defined local skills.
+ * Either "prefix-subcategory" (e.g., "web-framework"), a standalone subcategory,
+ * or "local" for user-defined local skills.
  */
 export type CategoryPath =
   | `${SkillIdPrefix}/${string}`
@@ -146,68 +124,39 @@ export type CategoryPath =
   | Subcategory
   | "local";
 
-/**
- * Subcategory-keyed selections mapping to arrays of canonical skill IDs.
- * Used for wizard domain selections at the subcategory level.
- */
+/** Subcategory-keyed selections mapping to arrays of canonical skill IDs */
 export type SubcategorySelections = Partial<Record<Subcategory, SkillId[]>>;
 
-/**
- * Resolved subcategory-to-skill mappings after alias resolution.
- * Maps each subcategory to its resolved SkillId.
- */
+/** Resolved subcategory-to-skill mappings after alias resolution */
 export type ResolvedSubcategorySkills = Partial<Record<Subcategory, SkillId>>;
 
-// =============================================================================
-// Skill Data Types
-// =============================================================================
-
-/**
- * Skill definition from registry.yaml.
- * Contains static metadata that doesn't change per-agent.
- */
+/** Skill definition from registry.yaml (static metadata that doesn't change per-agent) */
 export type SkillDefinition = {
-  /** Canonical skill identifier (e.g., "web-framework-react") */
   id: SkillId;
-  /** Filesystem path to the skill directory */
   path: string;
-  /** Brief description of the skill's purpose */
   description: string;
 };
 
-/**
- * Skill assignment in stack config.yaml.
- * Specifies whether a skill should be preloaded (embedded) or dynamic (loaded via Skill tool).
- */
+/** Skill assignment in stack config.yaml, specifies preloaded (embedded) vs dynamic (Skill tool) */
 export type SkillAssignment = {
-  /** Canonical skill identifier */
   id: SkillId;
-  /** Whether skill content is embedded in the compiled agent. @default false */
+  /** @default false */
   preloaded?: boolean;
   /** True if this is a local skill from .claude/skills/ */
   local?: boolean;
-  /** Relative path from project root for local skills (e.g., ".claude/skills/my-skill/") */
+  /** Relative path from project root for local skills */
   path?: string;
 };
 
-/**
- * Skill reference in config.yaml (agent-specific).
- * References a skill by ID and provides context-specific usage.
- */
+/** Skill reference in config.yaml (agent-specific) */
 export type SkillReference = {
-  /** Canonical skill identifier */
   id: SkillId;
   /** Context-specific description of when to use this skill */
   usage: string;
-  /** Whether skill content should be embedded in compiled agent */
   preloaded?: boolean;
 };
 
-/**
- * Fully resolved skill (merged from registry.yaml + config.yaml).
- * Extends SkillDefinition with agent-specific fields.
- * This is what the compiler uses after merging.
- */
+/** Fully resolved skill used by the compiler (merged from registry.yaml + config.yaml) */
 export type Skill = SkillDefinition & {
   /** Context-specific usage guidance for this agent */
   usage: string;
@@ -216,24 +165,17 @@ export type Skill = SkillDefinition & {
 };
 
 /**
- * SKILL.md frontmatter - matches official Claude Code plugin format
- * Contains: name (kebab-case identifier), description, and optional runtime behavior
- *
- * Note: `author` and `version` are in metadata.yaml (for marketplace.json), NOT here
+ * SKILL.md frontmatter - matches official Claude Code plugin format.
+ * Note: `author` and `version` are in metadata.yaml (for marketplace.json), NOT here.
  */
 export type SkillFrontmatter = {
-  /** Skill identifier in kebab-case (e.g., "react", "api-hono"). Used as plugin name. */
+  /** Skill identifier in kebab-case (e.g., "react", "api-hono") */
   name: SkillId;
-  /** Brief description of the skill's purpose for Claude agents */
   description: string;
-  /** AI model to use for this skill */
   model?: ModelName;
 };
 
-/**
- * metadata.yaml - relationship and catalog data for skills
- * Identity (name, description) comes from SKILL.md frontmatter
- */
+/** metadata.yaml fields - relationship and catalog data (identity comes from SKILL.md frontmatter) */
 export type SkillMetadataConfig = {
   category?: CategoryPath;
   category_exclusive?: boolean;
