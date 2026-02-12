@@ -81,6 +81,8 @@ export default class Edit extends BaseCommand {
       <Wizard
         matrix={sourceResult.matrix}
         version={this.config.version}
+        initialStep="build"
+        installedSkillIds={currentSkillIds}
         onComplete={(result) => {
           wizardResult = result as WizardResultV2;
         }}
