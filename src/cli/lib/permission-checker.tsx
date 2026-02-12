@@ -2,6 +2,7 @@ import path from "path";
 import { Text, Box } from "ink";
 import React from "react";
 import { fileExists, readFile } from "../utils/fs";
+import { warn } from "../utils/logger";
 import { settingsFileSchema } from "./schemas";
 
 type PermissionConfig = {
@@ -30,7 +31,9 @@ export async function checkPermissions(projectRoot: string): Promise<React.React
           permissions = parsed.permissions;
           break;
         }
-      } catch {}
+      } catch {
+        warn(`Malformed settings file at ${filePath} — skipping`);
+      }
     }
   }
 

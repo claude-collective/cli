@@ -20,7 +20,7 @@ import {
   listDirectories,
 } from "../utils/fs";
 import { recompileAgents } from "../lib/agents";
-import { loadPluginSkills } from "../lib/loading";
+import { loadPluginSkills, parseFrontmatter } from "../lib/loading";
 import { LOCAL_SKILLS_PATH } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
 import { detectInstallation } from "../lib/installation";
@@ -52,32 +52,15 @@ async function loadSkillsFromDir(
 
     try {
       const content = await readFile(skillPath);
-      let metadata: Record<string, unknown> = {};
+      const frontmatter = parseFrontmatter(content, skillPath);
 
-      if (content.startsWith("---")) {
-        const endIndex = content.indexOf("---", 3);
-        if (endIndex > 0) {
-          const yamlContent = content.slice(3, endIndex).trim();
-          const lines = yamlContent.split("\n");
-          for (const line of lines) {
-            const colonIndex = line.indexOf(":");
-            if (colonIndex > 0) {
-              const key = line.slice(0, colonIndex).trim();
-              const value = line.slice(colonIndex + 1).trim();
-              metadata[key] = value.replace(/^["']|["']$/g, "");
-            }
-          }
-        }
-      }
-
-      const skillName = (metadata.name as string) || path.basename(skillDir);
-      // Skill name parsed from YAML frontmatter — cast at data boundary
+      const skillName = frontmatter?.name || path.basename(skillDir);
       const canonicalId = skillName as SkillId;
 
       const skill: SkillDefinition = {
         id: canonicalId,
         path: pathPrefix ? `${pathPrefix}/${relativePath}/` : `${relativePath}/`,
-        description: (metadata.description as string) || "",
+        description: frontmatter?.description || "",
       };
 
       skills[canonicalId] = skill;

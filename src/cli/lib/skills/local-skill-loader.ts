@@ -80,7 +80,7 @@ async function extractLocalSkill(
   const parsed = localRawMetadataSchema.safeParse(parseYaml(metadataContent));
 
   if (!parsed.success) {
-    verbose(
+    warn(
       `Skipping local skill '${skillDirName}': Invalid metadata.yaml — ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
     );
     return null;
@@ -89,7 +89,7 @@ async function extractLocalSkill(
   const metadata = parsed.data as LocalRawMetadata;
 
   if (!metadata.cli_name) {
-    verbose(`Skipping local skill '${skillDirName}': Missing required 'cli_name' in metadata.yaml`);
+    warn(`Skipping local skill '${skillDirName}': Missing required 'cli_name' in metadata.yaml`);
     return null;
   }
 
@@ -97,7 +97,7 @@ async function extractLocalSkill(
   const frontmatter = parseFrontmatter(skillMdContent, skillMdPath);
 
   if (!frontmatter) {
-    verbose(`Skipping local skill '${skillDirName}': Invalid SKILL.md frontmatter`);
+    warn(`Skipping local skill '${skillDirName}': Invalid SKILL.md frontmatter`);
     return null;
   }
 

@@ -77,7 +77,7 @@ export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkil
     const metadataResult = rawMetadataSchema.safeParse(rawMetadata);
 
     if (!metadataResult.success) {
-      verbose(
+      warn(
         `Skipping ${metadataFile}: Invalid metadata.yaml — ${metadataResult.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
       );
       continue;

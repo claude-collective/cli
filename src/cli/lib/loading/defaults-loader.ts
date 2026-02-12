@@ -2,7 +2,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { parse as parseYaml } from "yaml";
 import { readFile, fileExists } from "../../utils/fs";
-import { verbose } from "../../utils/logger";
+import { verbose, warn } from "../../utils/logger";
 import { defaultMappingsSchema } from "../schemas";
 
 export type DefaultMappings = {
@@ -39,7 +39,7 @@ export async function loadDefaultMappings(): Promise<DefaultMappings | null> {
     const result = defaultMappingsSchema.safeParse(parsed);
 
     if (!result.success) {
-      verbose(`Invalid default mappings structure at ${defaultsPath}: ${result.error.message}`);
+      warn(`Invalid default mappings at ${defaultsPath}: ${result.error.message}`);
       return null;
     }
 

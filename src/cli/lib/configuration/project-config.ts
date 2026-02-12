@@ -1,7 +1,7 @@
 import path from "path";
 import { parse as parseYaml } from "yaml";
 import { readFile, fileExists } from "../../utils/fs";
-import { verbose } from "../../utils/logger";
+import { verbose, warn } from "../../utils/logger";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../../consts";
 import type { ProjectConfig, ValidationResult } from "../../types";
 import { projectConfigLoaderSchema } from "../schemas";
@@ -36,25 +36,31 @@ export async function loadProjectConfig(projectDir: string): Promise<LoadedProje
     const parsed = parseYaml(content);
 
     if (!parsed || typeof parsed !== "object") {
-      verbose(`Invalid project config structure at ${configPath}`);
+      warn(`Invalid project config structure at ${configPath}`);
       return null;
     }
 
     const result = projectConfigLoaderSchema.safeParse(parsed);
     if (!result.success) {
-      verbose(`Invalid project config at ${configPath}: ${result.error.message}`);
+      warn(`Invalid project config at ${configPath}: ${result.error.message}`);
       return null;
+    }
+
+    const config = result.data as ProjectConfig;
+    if (!config.name) {
+      warn(
+        `Project config at ${configPath} is missing required 'name' field — defaulting to directory name`,
+      );
+      config.name = path.basename(projectDir);
     }
 
     verbose(`Loaded project config from ${configPath}`);
     return {
-      // Loader schema validates field types but allows partial configs;
-      // required field validation happens in validateProjectConfig()
-      config: result.data as ProjectConfig,
+      config,
       configPath,
     };
   } catch (error) {
-    verbose(`Failed to parse project config: ${error}`);
+    warn(`Failed to parse project config at ${configPath}: ${error}`);
     return null;
   }
 }

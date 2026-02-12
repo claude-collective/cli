@@ -337,6 +337,9 @@ export default class ImportSkill extends BaseCommand {
 
       const raw = parseYaml(yamlContent);
       const parseResult = importedSkillMetadataSchema.safeParse(raw);
+      if (!parseResult.success) {
+        this.warn(`Malformed metadata.yaml at ${metadataYamlPath} — existing fields may be lost`);
+      }
       const metadata = parseResult.success
         ? (parseResult.data as SkillMetadata)
         : { forked_from: undefined };
@@ -349,7 +352,13 @@ export default class ImportSkill extends BaseCommand {
 
     if (await fileExists(metadataJsonPath)) {
       const rawContent = await readFile(metadataJsonPath);
-      const jsonParsed = JSON.parse(rawContent);
+      let jsonParsed: unknown;
+      try {
+        jsonParsed = JSON.parse(rawContent);
+      } catch {
+        this.warn(`Malformed JSON in ${metadataJsonPath} — skipping metadata injection`);
+        return;
+      }
       const jsonResult = importedSkillMetadataSchema.safeParse(jsonParsed);
       const metadata = jsonResult.success
         ? (jsonResult.data as SkillMetadata)

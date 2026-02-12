@@ -1,7 +1,7 @@
 import path from "path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { readFile, writeFile, fileExists, ensureDir } from "../../utils/fs";
-import { verbose } from "../../utils/logger";
+import { verbose, warn } from "../../utils/logger";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../../consts";
 import { projectSourceConfigSchema } from "../schemas";
 
@@ -58,13 +58,13 @@ export async function loadProjectSourceConfig(
     const parsed = parseYaml(content);
     const result = projectSourceConfigSchema.safeParse(parsed);
     if (!result.success) {
-      verbose(`Invalid project config structure at ${configPath}: ${result.error.message}`);
+      warn(`Invalid project config at ${configPath}: ${result.error.message}`);
       return null;
     }
     verbose(`Loaded project config from ${configPath}`);
     return result.data as ProjectSourceConfig;
   } catch (error) {
-    verbose(`Failed to parse project config: ${error}`);
+    warn(`Failed to parse project config at ${configPath}: ${error}`);
     return null;
   }
 }

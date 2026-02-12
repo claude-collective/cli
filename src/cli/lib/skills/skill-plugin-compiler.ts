@@ -123,7 +123,8 @@ async function readSkillMetadata(skillPath: string): Promise<SkillMetadataConfig
       return null;
     }
     return result.data;
-  } catch {
+  } catch (error) {
+    warn(`Failed to read metadata.yaml at ${skillPath}: ${error}`);
     return null;
   }
 }

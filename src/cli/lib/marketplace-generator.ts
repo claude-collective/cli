@@ -1,7 +1,7 @@
 import path from "path";
 import { sortBy } from "remeda";
 import { readFile, writeFile, glob, ensureDir } from "../utils/fs";
-import { verbose } from "../utils/logger";
+import { verbose, warn } from "../utils/logger";
 import type { Marketplace, MarketplacePlugin, PluginManifest } from "../types";
 import { pluginManifestSchema } from "./schemas";
 
@@ -101,7 +101,7 @@ export async function generateMarketplace(
 
     const manifest = await readPluginManifest(pluginDir);
     if (!manifest) {
-      verbose(`  [WARN] Could not read manifest: ${manifestFile}`);
+      warn(`Could not read plugin manifest: ${manifestFile}`);
       continue;
     }
 

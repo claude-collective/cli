@@ -169,6 +169,9 @@ export async function injectForkedFromMetadata(
   }
 
   const parseResult = localSkillMetadataSchema.safeParse(parseYaml(yamlContent));
+  if (!parseResult.success) {
+    warn(`Malformed metadata.yaml at ${metadataPath} — existing fields may be lost`);
+  }
   const metadata: LocalSkillMetadata = parseResult.success
     ? (parseResult.data as LocalSkillMetadata)
     : { forked_from: undefined };
