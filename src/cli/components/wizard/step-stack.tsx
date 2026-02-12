@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { Select } from "@inkjs/ui";
 import { useWizardStore } from "../../stores/wizard-store.js";
-import type { Domain, MergedSkillsMatrix, SkillDisplayName, Subcategory } from "../../types/index.js";
+import type { Domain, MergedSkillsMatrix } from "../../types/index.js";
 import { MenuItem } from "./menu-item.js";
 import { ViewTitle } from "./view-title.js";
 
@@ -31,7 +31,7 @@ type StackSelectionProps = {
 };
 
 const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
-  const { selectStack, setStep, setStackAction, populateFromStack, goBack } = useWizardStore();
+  const { selectStack, setStep, setStackAction, populateFromSkillIds, goBack } = useWizardStore();
   const [focusedIndex, setFocusedIndex] = useState(INITIAL_FOCUSED_INDEX);
 
   const stacks = matrix.suggestedStacks;
@@ -51,21 +51,7 @@ const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
 
         const resolvedStack = matrix.suggestedStacks.find((s) => s.id === focusedStack.id);
         if (resolvedStack) {
-          // Build one pseudo-agent per skill so populateFromStack can handle
-          // categories with multiple skills (e.g. testing: vitest + playwright-e2e)
-          // without overwriting. populateFromStack deduplicates internally.
-          const pseudoAgents: Record<string, Partial<Record<Subcategory, SkillDisplayName>>> = {};
-
-          for (let i = 0; i < resolvedStack.allSkillIds.length; i++) {
-            const skillId = resolvedStack.allSkillIds[i];
-            const skill = matrix.skills[skillId];
-            if (skill?.category && skill.displayName) {
-              // Category is a Subcategory at the data boundary (YAML categories use bare IDs)
-              pseudoAgents[`s${i}`] = { [skill.category as Subcategory]: skill.displayName };
-            }
-          }
-
-          populateFromStack({ agents: pseudoAgents }, matrix.categories);
+          populateFromSkillIds(resolvedStack.allSkillIds, matrix.skills, matrix.categories);
         }
 
         setStep("build");
