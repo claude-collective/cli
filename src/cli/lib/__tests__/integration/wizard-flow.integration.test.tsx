@@ -50,15 +50,15 @@ describe("Wizard integration", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Step 3: Build - now goes directly to build (pre-populated from stack)
-      // Press "A" to accept defaults and skip to confirm
+      // Press "A" to accept defaults and skip to sources
       await stdin.write("A");
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Step 4: Confirm - should show confirmation with stack name
-      expect(lastFrame()).toContain("React Fullstack");
-      expect(lastFrame()).toContain("Confirm");
+      // Step 4: Sources - should show source selection
+      expect(lastFrame()).toContain("recommended");
+      expect(lastFrame()).toContain("Sources");
 
-      // Complete the wizard
+      // Complete the wizard (ENTER on sources triggers completion)
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
@@ -72,7 +72,7 @@ describe("Wizard integration", () => {
       expect(result.cancelled).toBe(false);
     });
 
-    it("should show stack name on confirm step", async () => {
+    it("should show sources step after accepting defaults", async () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -83,7 +83,7 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Navigate through: approach -> stack -> build -> [A] accept defaults -> confirm
+      // Navigate through: approach -> stack -> build -> [A] accept defaults -> sources
       await stdin.write(ENTER); // Stack approach
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Select first stack (card UI, already focused)
@@ -91,9 +91,13 @@ describe("Wizard integration", () => {
       await stdin.write("A"); // Accept defaults
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Verify confirm step shows stack info
+      // Should be on sources step
+      const state = useWizardStore.getState();
+      expect(state.step).toBe("sources");
+
+      // Verify sources step renders StepRefine content
       const frame = lastFrame();
-      expect(frame).toContain("React Fullstack");
+      expect(frame).toContain("Customize skill sources");
     });
   });
 
@@ -236,13 +240,13 @@ describe("Wizard integration", () => {
       await stdin.write(SPACE);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Continue to confirm
+      // Continue to sources
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Should be at confirm step
+      // Should be at sources step (between build and confirm)
       const state = useWizardStore.getState();
-      expect(state.step).toBe("confirm");
+      expect(state.step).toBe("sources");
     });
   });
 
@@ -469,8 +473,8 @@ describe("Wizard integration", () => {
       await stdin.write("A"); // Accept defaults
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Should be at confirm
-      expect(lastFrame()).toContain("Confirm");
+      // Should be at sources step
+      expect(lastFrame()).toContain("Sources");
     });
 
     it("should preserve domain selections when navigating back in scratch flow", async () => {
@@ -617,8 +621,8 @@ describe("Wizard integration", () => {
       await stdin.write("A");
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Step 4: Confirm - should show confirm step
-      expect(lastFrame()).toContain("Confirm");
+      // Step 4: Sources - should show sources step
+      expect(lastFrame()).toContain("Sources");
     });
   });
 
@@ -867,14 +871,14 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Complete full flow: approach -> stack -> build -> [A] -> confirm
+      // Complete full flow: approach -> stack -> build -> [A] -> sources -> complete
       await stdin.write(ENTER); // Stack approach
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Select first stack (card UI, already focused)
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write("A"); // Accept defaults
       await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER); // Confirm
+      await stdin.write(ENTER); // Sources → complete
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Verify result structure
@@ -906,14 +910,14 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Complete full flow: approach -> stack -> build -> [A] -> confirm
+      // Complete full flow: approach -> stack -> build -> [A] -> sources -> complete
       await stdin.write(ENTER); // Stack approach
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Select first stack (already focused)
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write("A"); // Accept defaults
       await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ENTER); // Confirm
+      await stdin.write(ENTER); // Sources → complete
       await delay(STEP_TRANSITION_DELAY_MS);
 
       const result = onComplete.mock.calls[0][0];

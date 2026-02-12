@@ -91,12 +91,13 @@ describe("StepRefine component", () => {
       expect(output).toContain("Customize skill sources");
     });
 
-    it("should show '(coming soon)' label on customize option", () => {
+    it("should show customize option without coming soon label", () => {
       const { lastFrame, unmount } = renderStepRefine();
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("(coming soon)");
+      expect(output).toContain("Customize skill sources");
+      expect(output).not.toContain("(coming soon)");
     });
 
     it("should show customize description", () => {
@@ -146,21 +147,27 @@ describe("StepRefine component", () => {
       expect(onBack).toHaveBeenCalledTimes(1);
     });
 
-    it("should call onSelectAction with 'all-recommended' on arrow up", async () => {
+    it("should toggle to 'customize' on arrow up when recommended is selected", async () => {
       const onSelectAction = vi.fn();
-      const { stdin, unmount } = renderStepRefine({ onSelectAction });
+      const { stdin, unmount } = renderStepRefine({
+        onSelectAction,
+        refineAction: "all-recommended",
+      });
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
       stdin.write(ARROW_UP);
       await delay(INPUT_DELAY_MS);
 
-      expect(onSelectAction).toHaveBeenCalledWith("all-recommended");
+      expect(onSelectAction).toHaveBeenCalledWith("customize");
     });
 
-    it("should call onSelectAction with 'all-recommended' on arrow down", async () => {
+    it("should toggle to 'all-recommended' on arrow down when customize is selected", async () => {
       const onSelectAction = vi.fn();
-      const { stdin, unmount } = renderStepRefine({ onSelectAction });
+      const { stdin, unmount } = renderStepRefine({
+        onSelectAction,
+        refineAction: "customize",
+      });
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);

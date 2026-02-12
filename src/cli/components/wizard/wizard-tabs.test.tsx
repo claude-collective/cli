@@ -27,7 +27,7 @@ describe("WizardTabs component", () => {
   });
 
   describe("rendering", () => {
-    it("should render all 4 tabs", () => {
+    it("should render all 5 tabs", () => {
       const { lastFrame, unmount } = renderWizardTabs();
       cleanup = unmount;
 
@@ -35,7 +35,8 @@ describe("WizardTabs component", () => {
       expect(output).toContain("[1] Intro");
       expect(output).toContain("[2] Stack");
       expect(output).toContain("[3] Build");
-      expect(output).toContain("[4] Confirm");
+      expect(output).toContain("[4] Sources");
+      expect(output).toContain("[5] Confirm");
     });
 
     it("should render all step numbers", () => {
@@ -47,6 +48,7 @@ describe("WizardTabs component", () => {
       expect(output).toContain("[2]");
       expect(output).toContain("[3]");
       expect(output).toContain("[4]");
+      expect(output).toContain("[5]");
     });
 
     it("should render with custom steps", () => {
@@ -108,7 +110,7 @@ describe("WizardTabs component", () => {
 
       const output = lastFrame();
       // Should show confirm step
-      expect(output).toContain("[4] Confirm");
+      expect(output).toContain("[5] Confirm");
     });
   });
 
@@ -172,7 +174,7 @@ describe("WizardTabs component", () => {
 
       const output = lastFrame();
       // Pending step (confirm) should be rendered
-      expect(output).toContain("[4] Confirm");
+      expect(output).toContain("[5] Confirm");
     });
   });
 
@@ -291,7 +293,7 @@ describe("WizardTabs component", () => {
       const output = lastFrame();
       // Should still render all tabs
       expect(output).toContain("[1] Intro");
-      expect(output).toContain("[4] Confirm");
+      expect(output).toContain("[5] Confirm");
     });
 
     it("should handle empty skipped steps", () => {
@@ -321,7 +323,7 @@ describe("WizardTabs component", () => {
       expect(output).toContain("[1] Intro");
       expect(output).toContain("[2] Stack");
       expect(output).toContain("[3] Build");
-      expect(output).toContain("[4] Confirm");
+      expect(output).toContain("[5] Confirm");
     });
 
     it("should handle single step", () => {
