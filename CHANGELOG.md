@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.6] - 2026-02-12
+
+### Changed
+
+- **Codebase-wide comment cleanup** — Removed AI-generated banner separators (`// ====...`), obvious JSDoc that restated function/variable names, file-level header comments, and verbose multi-line blocks across 150+ files (~5,600 lines removed). Comments explaining WHY, boundary casts, edge cases, and TODOs preserved.
+- **Standardized JSDoc on all type definitions** — All exported types in `src/cli/types/` now use consistent `/** */` JSDoc format. Union grouping comments kept as `//`. Obvious property comments removed, meaningful annotations (`@default`, deprecation, logic notes) preserved.
+- **Unused imports cleaned up** — Removed unused `beforeEach` in `plugin-finder.test.ts` and unused `readdir` in `agent-recompiler.test.ts`.
+
 ## [0.24.5] - 2026-02-11
 
 ### Added
