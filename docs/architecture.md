@@ -227,6 +227,7 @@ Config loading, generation, merging, and persistence.
 | `config-merger.ts`    | `mergeConfigWithExisting()`                                                         |
 | `config-saver.ts`     | `saveProjectConfig()`, `saveSourceToProjectConfig()`                                |
 | `project-config.ts`   | `loadProjectConfig()`, `loadProjectSourceConfig()`                                  |
+| `source-manager.ts`   | `addSource()`, `removeSource()`, `getSourceSummary()` — CRUD for configured sources |
 
 ### Domain: `installation/`
 
@@ -241,12 +242,13 @@ Installation mode detection and local installation.
 
 Data loading from sources (skills, agents, matrix, defaults).
 
-| File                 | Key Exports                                                                         |
-| -------------------- | ----------------------------------------------------------------------------------- |
-| `loader.ts`          | `parseFrontmatter()`, `loadAllAgents()`, `loadProjectAgents()`, `loadSkillsByIds()` |
-| `source-loader.ts`   | `loadSkillsMatrixFromSource()`                                                      |
-| `source-fetcher.ts`  | `fetchFromSource()`, `fetchMarketplace()`, `sanitizeSourceForCache()`               |
-| `defaults-loader.ts` | `loadDefaultMappings()`, `getCachedDefaults()`                                      |
+| File                     | Key Exports                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------------- |
+| `loader.ts`              | `parseFrontmatter()`, `loadAllAgents()`, `loadProjectAgents()`, `loadSkillsByIds()` |
+| `source-loader.ts`       | `loadSkillsMatrixFromSource()`                                                      |
+| `multi-source-loader.ts` | `loadSkillsFromAllSources()` — tags skills with provenance from all sources         |
+| `source-fetcher.ts`      | `fetchFromSource()`, `fetchMarketplace()`, `sanitizeSourceForCache()`               |
+| `defaults-loader.ts`     | `loadDefaultMappings()`, `getCachedDefaults()`                                      |
 
 ### Domain: `matrix/`
 
@@ -283,6 +285,7 @@ Skill fetching, copying, metadata, compilation, and agent mappings.
 | `skill-agent-mappings.ts`  | `SKILL_TO_AGENTS`, `getAgentsForSkill()`                                                 |
 | `skill-plugin-compiler.ts` | `compileSkillPlugin()`, `compileAllSkillPlugins()`                                       |
 | `local-skill-loader.ts`    | `discoverLocalSkills()`                                                                  |
+| `source-switcher.ts`       | `archiveLocalSkill()`, `restoreArchivedSkill()`, `hasArchivedSkill()`                    |
 
 ### Domain: `stacks/`
 
@@ -323,7 +326,7 @@ All foundational union types are defined in the type files as the **single sourc
 ```typescript
 // src/cli/types/skills.ts
 type SkillIdPrefix = "web" | "api" | "cli" | "mobile" | "infra" | "meta" | "security";
-type SkillId = `${SkillIdPrefix}-${string}`;        // e.g., "web-framework-react"
+type SkillId = `${SkillIdPrefix}-${string}-${string}`;  // e.g., "web-framework-react" (3+ segments)
 type SkillDisplayName = "react" | "vue" | ...;       // 137 values - human-readable labels
 type CategoryPath = `${SkillIdPrefix}/${string}` | `${SkillIdPrefix}-${string}` | Subcategory | "local";
 
@@ -331,6 +334,7 @@ type CategoryPath = `${SkillIdPrefix}/${string}` | `${SkillIdPrefix}-${string}` 
 type Domain = "web" | "web-extras" | "api" | "cli" | "mobile" | "shared";
 type Subcategory = "framework" | "meta-framework" | "styling" | ...;  // 37 values
 type ModelName = "sonnet" | "opus" | "haiku" | "inherit";
+type SkillSourceType = "public" | "private" | "local" | "plugin";  // skill provenance
 
 // src/cli/types/agents.ts
 type AgentName = "web-developer" | "api-developer" | "cli-developer" | ...;  // 18 values
@@ -360,16 +364,17 @@ Use these **instead of** boundary casts on `Object.entries/keys`.
 
 ### Key Interfaces
 
-| Type                 | File         | Purpose                                                |
-| -------------------- | ------------ | ------------------------------------------------------ |
-| `ResolvedSkill`      | `matrix.ts`  | Fully merged skill with all relationships              |
-| `MergedSkillsMatrix` | `matrix.ts`  | Complete matrix with skills, stacks, display name maps |
-| `CategoryDefinition` | `matrix.ts`  | Category metadata (domain, exclusive, required, order) |
-| `AgentConfig`        | `agents.ts`  | Agent definition merged with compile config            |
-| `CompiledAgentData`  | `agents.ts`  | Fully compiled agent with content sections             |
-| `ProjectConfig`      | `config.ts`  | User's project configuration                           |
-| `Stack`              | `stacks.ts`  | Stack with agent-subcategory-skill mappings            |
-| `PluginManifest`     | `plugins.ts` | Plugin metadata for .claude-plugin/plugin.json         |
+| Type                 | File         | Purpose                                                 |
+| -------------------- | ------------ | ------------------------------------------------------- |
+| `ResolvedSkill`      | `matrix.ts`  | Fully merged skill with all relationships               |
+| `MergedSkillsMatrix` | `matrix.ts`  | Complete matrix with skills, stacks, display name maps  |
+| `CategoryDefinition` | `matrix.ts`  | Category metadata (domain, exclusive, required, order)  |
+| `AgentConfig`        | `agents.ts`  | Agent definition merged with compile config             |
+| `CompiledAgentData`  | `agents.ts`  | Fully compiled agent with content sections              |
+| `ProjectConfig`      | `config.ts`  | User's project configuration                            |
+| `Stack`              | `stacks.ts`  | Stack with agent-subcategory-skill mappings             |
+| `PluginManifest`     | `plugins.ts` | Plugin metadata for .claude-plugin/plugin.json          |
+| `SkillSource`        | `matrix.ts`  | Source provenance (name, type, url, version, installed) |
 
 ### Type Convention Rules
 
@@ -391,7 +396,7 @@ All JSON/YAML parse boundaries use **Zod v4** schemas defined in `src/cli/lib/sc
 Schemas are typed against existing TypeScript interfaces:
 
 ```typescript
-export const skillIdSchema = z.string().regex(/^(web|api|cli|mobile|infra|meta|security)-.+$/)
+export const skillIdSchema = z.string().regex(/^(web|api|cli|mobile|infra|meta|security)-.+-.+$/)
   as z.ZodType<SkillId>;
 ```
 
@@ -520,8 +525,10 @@ Wizard (src/cli/components/wizard/wizard.tsx)
 +-- StepApproach     choose: stack template or build from scratch
 +-- StepStack        select pre-built stack OR choose domains (scratch)
 +-- StepBuild        technology selection per domain via CategoryGrid
-|   +-- CategoryGrid    2D grid: rows=categories, cols=skills
-+-- StepRefine       fine-tune selections
+|   +-- CategoryGrid    2D grid: rows=categories, cols=skills (✓ installed indicator)
++-- StepSources      choose skill sources (recommended vs per-skill customize)
+|   +-- SourceGrid      per-skill source variant grid (arrow keys, space to select)
+|   +-- StepSettings    source management overlay (G hotkey, add/remove sources)
 +-- StepConfirm      review and install
 ```
 
@@ -531,7 +538,7 @@ Wizard (src/cli/components/wizard/wizard.tsx)
 
 ```typescript
 type WizardState = {
-  step: WizardStep;
+  step: WizardStep; // "approach" | "stack" | "build" | "sources" | "confirm"
   approach: "stack" | "scratch" | null;
   selectedStackId: string | null;
   selectedDomains: Domain[];
@@ -541,6 +548,10 @@ type WizardState = {
   showDescriptions: boolean;
   expertMode: boolean;
   installMode: "plugin" | "local";
+  sourceSelections: Partial<Record<SkillId, string>>; // per-skill source choices
+  customizeSources: boolean;
+  showSettings: boolean;
+  enabledSources: Record<string, boolean>;
   history: WizardStep[]; // enables back navigation
   // ... actions
 };
@@ -555,6 +566,8 @@ type WizardState = {
 - `d` to toggle descriptions
 - `a` to accept defaults (stack flow)
 - `e` to toggle expert mode
+- `g` to open source settings (Sources step only)
+- `p` to toggle install mode
 
 ### Web-Extras Domain
 
@@ -581,8 +594,8 @@ Three test projects with separate patterns:
 
 ### Statistics
 
-- **68 test files**, **1,344 tests** (34 skipped), all passing
-- **Execution time:** ~18 seconds
+- **83 test files**, **1,598 tests** (34 skipped), all passing
+- **Execution time:** ~19 seconds
 
 ### Mock Infrastructure
 
