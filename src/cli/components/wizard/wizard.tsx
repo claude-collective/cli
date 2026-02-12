@@ -1,13 +1,14 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { Box, Text, useApp, useInput, useStdout } from "ink";
 import { ThemeProvider } from "@inkjs/ui";
-import { useWizardStore } from "../../stores/wizard-store.js";
+import { useWizardStore, type WizardStep } from "../../stores/wizard-store.js";
 import { cliTheme } from "../themes/default.js";
 import { WizardLayout } from "./wizard-layout.js";
 import { StepApproach } from "./step-approach.js";
 import { StepStack } from "./step-stack.js";
 import { StepBuild } from "./step-build.js";
 import { StepConfirm } from "./step-confirm.js";
+import { StepRefine } from "./step-refine.js";
 import { resolveAlias, validateSelection } from "../../lib/matrix/index.js";
 import type { Domain, DomainSelections, MergedSkillsMatrix, SkillId } from "../../types/index.js";
 import { getStackName } from "./utils.js";
@@ -31,6 +32,8 @@ type WizardProps = {
   onComplete: (result: WizardResultV2) => void;
   onCancel: () => void;
   version?: string;
+  initialStep?: WizardStep;
+  installedSkillIds?: SkillId[];
 };
 
 function getParentDomain(domain: Domain, matrix: MergedSkillsMatrix): Domain | undefined {
@@ -40,7 +43,7 @@ function getParentDomain(domain: Domain, matrix: MergedSkillsMatrix): Domain | u
 
 const MIN_TERMINAL_WIDTH = 80;
 
-export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, version }) => {
+export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, version, initialStep, installedSkillIds }) => {
   const store = useWizardStore();
   const { exit } = useApp();
   const { stdout } = useStdout();
@@ -48,14 +51,24 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
   const terminalWidth = stdout.columns || MIN_TERMINAL_WIDTH;
   const isNarrowTerminal = terminalWidth < MIN_TERMINAL_WIDTH;
 
+  const [initialized] = useState(() => {
+    if (initialStep) {
+      if (installedSkillIds?.length) {
+        useWizardStore.getState().populateFromSkillIds(installedSkillIds, matrix.skills, matrix.categories);
+      }
+      useWizardStore.setState({ step: initialStep, approach: "scratch" });
+    }
+    return true;
+  });
+
   useInput((input, key) => {
     if (key.escape) {
       if (store.step === "approach") {
         onCancel();
         exit();
-      } else if (store.step !== "build" && store.step !== "confirm") {
+      } else if (store.step !== "build" && store.step !== "confirm" && store.step !== "sources") {
         // Only handle escape globally for steps that don't have their own escape handler.
-        // Build and confirm handle escape via their onBack props.
+        // Build, sources, and confirm handle escape via their onBack props.
         store.goBack();
       }
       return;
@@ -64,7 +77,7 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
     // Accept defaults shortcut (stack path only, during build step)
     if ((input === "a" || input === "A") && store.step === "build" && store.selectedStackId) {
       store.setStackAction("defaults");
-      store.setStep("confirm");
+      store.setStep("sources");
       return;
     }
 
@@ -166,7 +179,7 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
             onToggleDescriptions={store.toggleShowDescriptions}
             onContinue={() => {
               if (!store.nextDomain()) {
-                store.setStep("confirm");
+                store.setStep("sources");
               }
             }}
             onBack={() => {
@@ -174,6 +187,21 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
                 store.goBack();
               }
             }}
+          />
+        );
+      }
+
+      case "sources": {
+        const selectedCount = store.getAllSelectedTechnologies().length;
+        return (
+          <StepRefine
+            technologyCount={selectedCount}
+            refineAction={store.customizeSources ? "customize" : "all-recommended"}
+            onSelectAction={(action) => {
+              store.setCustomizeSources(action === "customize");
+            }}
+            onContinue={handleComplete}
+            onBack={store.goBack}
           />
         );
       }

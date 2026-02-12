@@ -15,6 +15,7 @@ export type WizardStep =
   | "approach" // Choose stack template or build from scratch
   | "stack" // Select pre-built stack (if approach=stack) or domains (if approach=scratch)
   | "build" // CategoryGrid for technology selection
+  | "sources" // Choose skill sources (recommended vs custom)
   | "confirm"; // Final confirmation
 
 export type WizardState = {
@@ -37,6 +38,9 @@ export type WizardState = {
 
   installMode: "plugin" | "local";
 
+  sourceSelections: Partial<Record<SkillId, string>>;
+  customizeSources: boolean;
+
   history: WizardStep[];
 
   setStep: (step: WizardStep) => void;
@@ -46,6 +50,11 @@ export type WizardState = {
   /** Pre-populate domainSelections from a stack's technology mappings */
   populateFromStack: (
     stack: { agents: Record<string, Partial<Record<Subcategory, SkillDisplayName>>> },
+    categories: Partial<Record<Subcategory, { domain?: Domain }>>,
+  ) => void;
+  populateFromSkillIds: (
+    skillIds: SkillId[],
+    skills: Partial<Record<SkillId, { category: string; displayName?: string }>>,
     categories: Partial<Record<Subcategory, { domain?: Domain }>>,
   ) => void;
   toggleDomain: (domain: Domain) => void;
@@ -61,6 +70,8 @@ export type WizardState = {
   toggleShowDescriptions: () => void;
   toggleExpertMode: () => void;
   toggleInstallMode: () => void;
+  setSourceSelection: (skillId: SkillId, sourceId: string) => void;
+  setCustomizeSources: (customize: boolean) => void;
   goBack: () => void;
   reset: () => void;
 
@@ -82,6 +93,8 @@ const createInitialState = () => ({
   showDescriptions: false,
   expertMode: false,
   installMode: "local" as "plugin" | "local",
+  sourceSelections: {} as Partial<Record<SkillId, string>>,
+  customizeSources: false,
   history: [] as WizardStep[],
 });
 
@@ -141,6 +154,44 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         domainSelections,
         selectedDomains: ALL_DOMAINS,
       };
+    }),
+
+  populateFromSkillIds: (skillIds, skills, categories) =>
+    set(() => {
+      const domainSelections: DomainSelections = {};
+      const domains = new Set<Domain>();
+
+      for (const skillId of skillIds) {
+        const skill = skills[skillId];
+        if (!skill?.category || !skill.displayName) {
+          console.warn(
+            `Installed skill '${skillId}' is missing from the marketplace — it may have been removed or renamed`,
+          );
+          continue;
+        }
+
+        // Boundary cast: category is a Subcategory at the data boundary
+        const subcat = skill.category as Subcategory;
+        const domain = categories[subcat]?.domain;
+        if (!domain) {
+          console.warn(
+            `Installed skill '${skillId}' has unknown category '${skill.category}' — skipping`,
+          );
+          continue;
+        }
+
+        domains.add(domain);
+        if (!domainSelections[domain]) domainSelections[domain] = {};
+        if (!domainSelections[domain][subcat]) domainSelections[domain][subcat] = [];
+
+        // Boundary cast: display name resolved to SkillId downstream by resolveAlias
+        const techAsId = skill.displayName as SkillId;
+        if (!domainSelections[domain][subcat].includes(techAsId)) {
+          domainSelections[domain][subcat].push(techAsId);
+        }
+      }
+
+      return { domainSelections, selectedDomains: ALL_DOMAINS };
     }),
 
   toggleDomain: (domain) =>
@@ -214,6 +265,13 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     set((state) => ({
       installMode: state.installMode === "plugin" ? "local" : "plugin",
     })),
+
+  setSourceSelection: (skillId, sourceId) =>
+    set((state) => ({
+      sourceSelections: { ...state.sourceSelections, [skillId]: sourceId },
+    })),
+
+  setCustomizeSources: (customize) => set({ customizeSources: customize }),
 
   goBack: () =>
     set((state) => {

@@ -26,7 +26,7 @@ export const StepRefine: React.FC<StepRefineProps> = ({
       onBack();
     }
     if (key.upArrow || key.downArrow) {
-      onSelectAction("all-recommended");
+      onSelectAction(refineAction === "all-recommended" ? "customize" : "all-recommended");
     }
   });
 
@@ -51,8 +51,8 @@ export const StepRefine: React.FC<StepRefineProps> = ({
         marginBottom={1}
       >
         <Box flexDirection="column">
-          <Text color="green" bold>
-            {">"} Use all recommended skills (verified)
+          <Text color={isRecommendedSelected ? "green" : undefined} bold={isRecommendedSelected}>
+            {isRecommendedSelected ? ">" : "○"} Use all recommended skills (verified)
           </Text>
           <Text> </Text>
           <Text dimColor>This is the fastest option. All skills are verified and</Text>
@@ -60,13 +60,19 @@ export const StepRefine: React.FC<StepRefineProps> = ({
         </Box>
       </Box>
 
-      <Box paddingLeft={2}>
-        <Text dimColor>
-          {"○"} Customize skill sources <Text color="gray">(coming soon)</Text>
-        </Text>
-      </Box>
-      <Box paddingLeft={4}>
-        <Text dimColor>Choose alternative skills for each technology</Text>
+      <Box
+        borderStyle="round"
+        borderColor={!isRecommendedSelected ? "green" : "gray"}
+        paddingX={2}
+        paddingY={1}
+      >
+        <Box flexDirection="column">
+          <Text color={!isRecommendedSelected ? "green" : undefined} bold={!isRecommendedSelected}>
+            {!isRecommendedSelected ? ">" : "○"} Customize skill sources
+          </Text>
+          <Text> </Text>
+          <Text dimColor>Choose alternative skills for each technology</Text>
+        </Box>
       </Box>
     </Box>
   );

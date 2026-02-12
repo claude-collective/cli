@@ -89,10 +89,14 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({ version, children })
       completed.push("stack");
     }
 
-    // Stack path with defaults skips build
+    // Stack path with defaults skips build and sources
     if (store.approach === "stack" && store.selectedStackId && store.stackAction === "defaults") {
       skipped.push("build");
+      skipped.push("sources");
     } else if (store.step === "confirm") {
+      completed.push("build");
+      completed.push("sources");
+    } else if (store.step === "sources") {
       completed.push("build");
     }
 
