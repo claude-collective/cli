@@ -2,15 +2,11 @@ import React from "react";
 import { Box, Text } from "ink";
 
 export type SectionProgressProps = {
-  /** Section label (e.g., "Domain" or "Skill") */
   label: string;
-  /** Current item name (e.g., "Web" or "react") */
   current: string;
-  /** 1-based index */
+  /** 1-based */
   index: number;
-  /** Total count */
   total: number;
-  /** Next item name, or undefined if last */
   next?: string;
 };
 

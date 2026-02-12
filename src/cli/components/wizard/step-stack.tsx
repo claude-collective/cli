@@ -1,16 +1,3 @@
-/**
- * StepStack component - Dual-purpose step for stack selection or domain selection.
- *
- * Stack path (approach === "stack"):
- *   - Shows list of pre-built stacks using MenuItem for chevron + label pattern
- *   - Keyboard navigation with arrow keys, Enter to select, Escape to go back
- *   - Focused item has cyan chevron and label
- *
- * Scratch path (approach === "scratch"):
- *   - Shows multi-select of domains (Web, API, CLI, Mobile)
- *   - User selects which domains to configure
- *   - Continue goes to build step for first selected domain
- */
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { Select } from "@inkjs/ui";
@@ -19,17 +6,10 @@ import type { Domain, MergedSkillsMatrix, SkillDisplayName, Subcategory } from "
 import { MenuItem } from "./menu-item.js";
 import { ViewTitle } from "./view-title.js";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
 const BACK_VALUE = "_back";
 const CONTINUE_VALUE = "_continue";
-
-/** Default focused index starts at first stack item (0) */
 const INITIAL_FOCUSED_INDEX = 0;
 
-/** Available domains for scratch path */
 const AVAILABLE_DOMAINS: Array<{ id: Domain; label: string; description: string }> = [
   { id: "web", label: "Web", description: "Frontend web applications" },
   {
@@ -42,17 +22,9 @@ const AVAILABLE_DOMAINS: Array<{ id: Domain; label: string; description: string 
   { id: "mobile", label: "Mobile", description: "Mobile applications" },
 ];
 
-// =============================================================================
-// Types
-// =============================================================================
-
 type StepStackProps = {
   matrix: MergedSkillsMatrix;
 };
-
-// =============================================================================
-// Stack Selection Sub-component
-// =============================================================================
 
 type StackSelectionProps = {
   matrix: MergedSkillsMatrix;
@@ -66,20 +38,17 @@ const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
   const stackCount = stacks.length;
 
   useInput((input, key) => {
-    // Escape to go back
     if (key.escape) {
       goBack();
       return;
     }
 
-    // Enter to select the focused stack
     if (key.return && stackCount > 0) {
       const focusedStack = stacks[focusedIndex];
       if (focusedStack) {
         selectStack(focusedStack.id);
         setStackAction("customize");
 
-        // Pre-populate domainSelections from the stack's skill mappings
         const resolvedStack = matrix.suggestedStacks.find((s) => s.id === focusedStack.id);
         if (resolvedStack) {
           // Build one pseudo-agent per skill so populateFromStack can handle
@@ -104,7 +73,6 @@ const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
       return;
     }
 
-    // Arrow key navigation (clamped at boundaries)
     if (key.upArrow || input === "k") {
       setFocusedIndex((prev) => Math.max(0, prev - 1));
       return;
@@ -132,14 +100,9 @@ const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
   );
 };
 
-// =============================================================================
-// Domain Selection Sub-component
-// =============================================================================
-
 const DomainSelection: React.FC = () => {
   const { selectedDomains, toggleDomain, setStep, goBack } = useWizardStore();
 
-  // Build options with checkboxes showing selection state
   const domainOptions = AVAILABLE_DOMAINS.map((domain) => {
     const isSelected = selectedDomains.includes(domain.id);
     const checkbox = isSelected ? "[\u2713]" : "[ ]";
@@ -205,10 +168,6 @@ const DomainSelection: React.FC = () => {
     </Box>
   );
 };
-
-// =============================================================================
-// Main Component
-// =============================================================================
 
 export const StepStack: React.FC<StepStackProps> = ({ matrix }) => {
   const { approach } = useWizardStore();

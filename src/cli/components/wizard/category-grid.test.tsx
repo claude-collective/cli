@@ -1,8 +1,3 @@
-/**
- * Tests for the CategoryGrid component.
- *
- * Tests section-based rendering and keyboard navigation for wizard Build step.
- */
 import React from "react";
 import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, vi } from "vitest";
@@ -23,10 +18,6 @@ import {
   INPUT_DELAY_MS,
   delay,
 } from "../../lib/__tests__/test-constants";
-
-// =============================================================================
-// Test Fixtures
-// =============================================================================
 
 const createOption = (
   id: SkillId,
@@ -54,7 +45,6 @@ const createCategory = (
   ...overrides,
 });
 
-// Default categories with framework-first scenario
 const defaultCategories: CategoryRow[] = [
   createCategory(
     "framework",
@@ -98,7 +88,6 @@ const defaultCategories: CategoryRow[] = [
   createCategory("analytics", "Analytics", [createOption("web-posthog", "PostHog")]),
 ];
 
-// Categories with framework selected (unlocks other sections)
 const categoriesWithFramework: CategoryRow[] = [
   createCategory(
     "framework",
@@ -149,10 +138,6 @@ const renderGrid = (props: Partial<CategoryGridProps> = {}) => {
   return render(<CategoryGrid {...defaultProps} {...props} />);
 };
 
-// =============================================================================
-// Tests
-// =============================================================================
-
 describe("CategoryGrid component", () => {
   let cleanup: (() => void) | undefined;
 
@@ -160,10 +145,6 @@ describe("CategoryGrid component", () => {
     cleanup?.();
     cleanup = undefined;
   });
-
-  // ===========================================================================
-  // Basic Rendering
-  // ===========================================================================
 
   describe("rendering", () => {
     it("should render all categories as sections", () => {
@@ -230,10 +211,6 @@ describe("CategoryGrid component", () => {
     });
   });
 
-  // ===========================================================================
-  // Visual States (No Stars)
-  // ===========================================================================
-
   describe("visual states", () => {
     it("should show selected options with label text", () => {
       const { lastFrame, unmount } = renderGrid();
@@ -290,10 +267,6 @@ describe("CategoryGrid component", () => {
     });
   });
 
-  // ===========================================================================
-  // Locked Sections (Framework-First Flow)
-  // ===========================================================================
-
   describe("locked sections", () => {
     it("should show all categories including locked ones", () => {
       // No framework selected, so non-framework sections should be locked but visible
@@ -338,10 +311,6 @@ describe("CategoryGrid component", () => {
       expect(output).toContain("State");
     });
   });
-
-  // ===========================================================================
-  // Focus Indicator (Background-based, no > symbol)
-  // ===========================================================================
 
   describe("focus indicator", () => {
     it("should render focused option with label text", () => {
@@ -391,10 +360,6 @@ describe("CategoryGrid component", () => {
       expect(output).toContain("Styling");
     });
   });
-
-  // ===========================================================================
-  // Keyboard Navigation - Arrow Keys
-  // ===========================================================================
 
   describe("keyboard navigation - arrow keys", () => {
     it("should call onFocusChange when pressing left arrow", async () => {
@@ -518,10 +483,6 @@ describe("CategoryGrid component", () => {
     });
   });
 
-  // ===========================================================================
-  // Keyboard Navigation - Vim Keys
-  // ===========================================================================
-
   describe("keyboard navigation - vim keys", () => {
     it("should move left with h key", async () => {
       const onFocusChange = vi.fn();
@@ -589,10 +550,6 @@ describe("CategoryGrid component", () => {
       expect(onFocusChange).toHaveBeenCalledWith(1, 0);
     });
   });
-
-  // ===========================================================================
-  // Selection Toggle
-  // ===========================================================================
 
   describe("selection toggle", () => {
     it("should call onToggle when pressing space on a normal option", async () => {
@@ -682,10 +639,6 @@ describe("CategoryGrid component", () => {
     });
   });
 
-  // ===========================================================================
-  // Disabled Options Navigation
-  // ===========================================================================
-
   describe("disabled options navigation", () => {
     it("should skip disabled options when navigating right", async () => {
       const onFocusChange = vi.fn();
@@ -771,10 +724,6 @@ describe("CategoryGrid component", () => {
     });
   });
 
-  // ===========================================================================
-  // Exclusive Categories
-  // ===========================================================================
-
   describe("exclusive categories", () => {
     it("should render exclusive category correctly", () => {
       const { lastFrame, unmount } = renderGrid();
@@ -789,10 +738,6 @@ describe("CategoryGrid component", () => {
     // by the parent component via onToggle. CategoryGrid just displays
     // the current state.
   });
-
-  // ===========================================================================
-  // Tab Navigation (Section Jumping)
-  // ===========================================================================
 
   describe("tab navigation", () => {
     it("should jump to next section when pressing Tab", async () => {
@@ -831,10 +776,6 @@ describe("CategoryGrid component", () => {
       expect(onFocusChange).not.toHaveBeenCalled();
     });
   });
-
-  // ===========================================================================
-  // Show Descriptions Toggle
-  // ===========================================================================
 
   describe("show descriptions toggle", () => {
     it("should call onToggleDescriptions when pressing d key", async () => {
@@ -882,10 +823,6 @@ describe("CategoryGrid component", () => {
     });
   });
 
-  // ===========================================================================
-  // Expert Mode (now handled globally in wizard.tsx)
-  // ===========================================================================
-
   describe("expert mode", () => {
     it("should not handle expert mode toggle locally (handled globally)", () => {
       // Expert mode toggle is now handled at wizard.tsx level via global useInput
@@ -898,10 +835,6 @@ describe("CategoryGrid component", () => {
       expect(output).not.toContain("[e] Expert Mode");
     });
   });
-
-  // ===========================================================================
-  // Option Ordering
-  // ===========================================================================
 
   describe("option ordering", () => {
     it("should sort options by state when expertMode is false", () => {
@@ -924,10 +857,6 @@ describe("CategoryGrid component", () => {
       expect(output).toBeDefined();
     });
   });
-
-  // ===========================================================================
-  // Edge Cases
-  // ===========================================================================
 
   describe("edge cases", () => {
     it("should handle single category", () => {
@@ -1008,10 +937,6 @@ describe("CategoryGrid component", () => {
       expect(output).toContain("Category 3");
     });
   });
-
-  // ===========================================================================
-  // Column Adjustment on Row Change
-  // ===========================================================================
 
   describe("column adjustment", () => {
     it("should adjust focusedCol when changing to row with fewer options", async () => {

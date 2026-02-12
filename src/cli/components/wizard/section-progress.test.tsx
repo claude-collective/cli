@@ -1,8 +1,3 @@
-/**
- * Tests for the SectionProgress component.
- *
- * Tests sub-step progress display within wizard steps (e.g., multi-domain Build).
- */
 import React from "react";
 import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach } from "vitest";
@@ -15,10 +10,6 @@ describe("SectionProgress component", () => {
     cleanup?.();
     cleanup = undefined;
   });
-
-  // ===========================================================================
-  // Basic Rendering
-  // ===========================================================================
 
   describe("rendering", () => {
     it("should render label and current value", () => {
@@ -53,10 +44,6 @@ describe("SectionProgress component", () => {
     });
   });
 
-  // ===========================================================================
-  // Next Item Display
-  // ===========================================================================
-
   describe("next item display", () => {
     it("should show 'Next: X' when not last item", () => {
       const { lastFrame, unmount } = render(
@@ -90,10 +77,6 @@ describe("SectionProgress component", () => {
       expect(output).toContain("Last step");
     });
   });
-
-  // ===========================================================================
-  // Text Styling
-  // ===========================================================================
 
   describe("text styling", () => {
     it("should render label in bold", () => {
@@ -131,10 +114,6 @@ describe("SectionProgress component", () => {
       expect(output).toContain("[2/3]");
     });
   });
-
-  // ===========================================================================
-  // Edge Cases
-  // ===========================================================================
 
   describe("edge cases", () => {
     it("should handle long label and current value", () => {
@@ -183,10 +162,6 @@ describe("SectionProgress component", () => {
       expect(output).not.toContain("undefined");
     });
   });
-
-  // ===========================================================================
-  // Display Variants (from spec examples)
-  // ===========================================================================
 
   describe("display variants from spec", () => {
     it("should match multi-domain Build step format", () => {

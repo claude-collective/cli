@@ -1,12 +1,3 @@
-/**
- * StepBuild component - Main Build step for domain-based technology selection.
- *
- * Uses CategoryGrid for 2D grid selection and SectionProgress for multi-domain
- * progress indication. Replaces the old linear category->subcategory flow.
- *
- * This component is stateless - all state is managed via props from the parent
- * wizard component, following React's controlled component pattern.
- */
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { sortBy } from "remeda";
@@ -21,28 +12,18 @@ import {
 import { ViewTitle } from "./view-title.js";
 import { getDomainDisplayName } from "./utils.js";
 
-// Types
-
 export type StepBuildProps = {
-  /** Skills matrix for category/skill lookup */
   matrix: MergedSkillsMatrix;
-  /** Current domain being configured (e.g., 'web', 'api') */
   domain: Domain;
-  /** All selected domains (for progress indicator) */
   selectedDomains: Domain[];
-  /** Current selections by subcategory */
   selections: SubcategorySelections;
-  /** All current selections (for state calculation across domains) */
   allSelections: SkillId[];
-  /** Grid focus state */
   focusedRow: number;
   focusedCol: number;
-  /** UI toggles */
   showDescriptions: boolean;
   expertMode: boolean;
-  /** Parent domain selections for framework-first filtering on sub-domains (e.g., web-extras inherits from web) */
+  /** For framework-first filtering on sub-domains (e.g., web-extras inherits from web) */
   parentDomainSelections?: SubcategorySelections;
-  /** Callbacks */
   onToggle: (subcategoryId: Subcategory, technologyId: SkillId) => void;
   onFocusChange: (row: number, col: number) => void;
   onToggleDescriptions: () => void;
@@ -50,24 +31,14 @@ export type StepBuildProps = {
   onBack: () => void;
 };
 
-// Constants
-
-/** Framework subcategory ID for web domain (framework-first filtering) */
 const FRAMEWORK_SUBCATEGORY_ID = "framework";
-
-/** Web domain ID where framework-first flow applies */
 const WEB_DOMAIN_ID = "web";
-
-// Validation
 
 export type BuildStepValidation = {
   valid: boolean;
   message?: string;
 };
 
-/**
- * Validate that required categories have at least one selection.
- */
 export function validateBuildStep(
   categories: CategoryRow[],
   selections: SubcategorySelections,
@@ -86,11 +57,6 @@ export function validateBuildStep(
   return { valid: true };
 }
 
-// Helper Functions
-
-/**
- * Compute option state from skill flags.
- */
 function computeOptionState(skill: {
   disabled: boolean;
   discouraged: boolean;
@@ -108,18 +74,10 @@ function computeOptionState(skill: {
   return "normal";
 }
 
-/**
- * Get clean display label for a skill option.
- * Uses displayName if available, otherwise falls back to the skill ID.
- * e.g., "react" from displayName, "web-framework-react" from ID
- */
 export function getDisplayLabel(skill: { displayName?: string; id: string }): string {
   return skill.displayName || skill.id;
 }
 
-/**
- * Get state reason from skill flags.
- */
 function getStateReason(skill: {
   disabled: boolean;
   disabledReason?: string;
@@ -140,21 +98,11 @@ function getStateReason(skill: {
   return undefined;
 }
 
-// Framework-First Flow (Web Domain)
-
-/**
- * Check if a framework is selected in the current selections.
- * Framework skills are in the "framework" subcategory.
- */
 function isFrameworkSelected(selections: SubcategorySelections): boolean {
   const frameworkSelections = selections[FRAMEWORK_SUBCATEGORY_ID] ?? [];
   return frameworkSelections.length > 0;
 }
 
-/**
- * Get the selected framework skill ID(s) from selections.
- * Returns the full skill IDs (e.g., "web-framework-react").
- */
 function getSelectedFrameworks(
   selections: SubcategorySelections,
   matrix: MergedSkillsMatrix,
@@ -164,10 +112,6 @@ function getSelectedFrameworks(
   return frameworkSelections.map((alias) => resolveAlias(alias, matrix));
 }
 
-/**
- * Check if a skill is compatible with any of the selected frameworks.
- * Uses the skill's compatibleWith field from metadata.
- */
 function isCompatibleWithSelectedFrameworks(
   skillId: SkillId,
   selectedFrameworkIds: SkillId[],
@@ -176,24 +120,15 @@ function isCompatibleWithSelectedFrameworks(
   const skill = matrix.skills[skillId];
   if (!skill) return false;
 
-  // If skill has no compatibleWith defined, assume it's compatible with all
-  // (this allows legacy skills without metadata to still appear)
+  // No compatibleWith = compatible with all (allows legacy skills to appear)
   if (skill.compatibleWith.length === 0) {
     return true;
   }
 
-  // Check if any selected framework is in the skill's compatibleWith list
   return selectedFrameworkIds.some((frameworkId) => skill.compatibleWith.includes(frameworkId));
 }
 
-/**
- * Build CategoryRow[] from matrix for a specific domain.
- *
- * Filters subcategories by domain and builds options using getAvailableSkills.
- * For web domain, implements framework-first flow:
- * - Initially shows only "framework" subcategory
- * - After framework selection, shows skills compatible with selected framework
- */
+// Build CategoryRow[] from matrix for a domain, with framework-first filtering for web
 function buildCategoriesForDomain(
   domain: Domain,
   allSelections: SkillId[],
@@ -202,7 +137,6 @@ function buildCategoriesForDomain(
   selections: SubcategorySelections,
   parentDomainSelections?: SubcategorySelections,
 ): CategoryRow[] {
-  // Check framework selection for framework-first flow
   // For sub-domains (e.g., web-extras), use parent domain selections for framework checks
   const frameworkSource = parentDomainSelections ?? selections;
   const frameworkSelected = isFrameworkSelected(frameworkSource);
@@ -210,23 +144,18 @@ function buildCategoriesForDomain(
     ? getSelectedFrameworks(frameworkSource, matrix)
     : [];
 
-  // Get categories for the current domain
   const subcategories = sortBy(
     Object.values(matrix.categories).filter((cat) => cat.domain === domain),
     (cat) => cat.order ?? 0,
   );
 
-  // Build CategoryRow for each subcategory
-  // All sections are always visible — locking (dimming + preventing navigation)
-  // is handled by CategoryGrid when no framework is selected.
+  // All sections always visible; locking is handled by CategoryGrid
   const categoryRows: CategoryRow[] = subcategories.map((cat) => {
-    // Get available skills with computed states
     const skillOptions = getAvailableSkills(cat.id, allSelections, matrix, {
       expertMode,
     });
 
-    // For web domain or sub-domains with parent selections, filter by framework compatibility
-    // Framework category itself doesn't need filtering
+    // Filter by framework compatibility (skip framework category itself)
     const useFrameworkFilter =
       (domain === WEB_DOMAIN_ID || parentDomainSelections !== undefined) &&
       cat.id !== FRAMEWORK_SUBCATEGORY_ID &&
@@ -237,10 +166,9 @@ function buildCategoriesForDomain(
         )
       : skillOptions;
 
-    // Map skills to CategoryOption[]
     const options: CategoryOption[] = filteredSkillOptions.map((skill) => ({
       id: skill.id,
-      label: getDisplayLabel(skill), // Clean display name without author
+      label: getDisplayLabel(skill),
       state: computeOptionState(skill),
       stateReason: getStateReason(skill),
       selected: skill.selected,
@@ -256,7 +184,6 @@ function buildCategoriesForDomain(
     };
   });
 
-  // Filter out categories with no options (after compatibility filtering)
   return categoryRows.filter((row) => row.options.length > 0);
 }
 
@@ -304,10 +231,8 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   onContinue,
   onBack,
 }) => {
-  // Validation state for showing error messages
   const [validationError, setValidationError] = useState<string | undefined>(undefined);
 
-  // Build categories for the current domain (with framework-first filtering)
   const categories = buildCategoriesForDomain(
     activeDomain,
     allSelections,
@@ -317,10 +242,8 @@ export const StepBuild: React.FC<StepBuildProps> = ({
     parentDomainSelections,
   );
 
-  // Handle keyboard input for Enter and Escape
   useInput((_input, key) => {
     if (key.return) {
-      // Validate before continuing
       const validation = validateBuildStep(categories, selections);
       if (validation.valid) {
         setValidationError(undefined);

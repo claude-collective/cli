@@ -1,8 +1,3 @@
-/**
- * Tests for the StepBuild component.
- *
- * Tests domain-based technology selection using CategoryGrid.
- */
 import { render } from "ink-testing-library";
 import { indexBy, mapToObj } from "remeda";
 import { describe, expect, it, afterEach, vi } from "vitest";
@@ -18,16 +13,8 @@ import {
 } from "../../lib/__tests__/test-constants";
 import { createMockCategory, createMockSkill, createMockMatrix } from "../../lib/__tests__/helpers";
 
-// =============================================================================
-// Test Fixtures
-// =============================================================================
-
-/** Shared overrides to match the original local createSkill defaults. */
 const SKILL_DEFAULTS: Partial<ResolvedSkill> = { categoryExclusive: true };
 
-/**
- * Build a test matrix from category and skill arrays, with display-name maps.
- */
 const buildTestMatrix = (
   categories: CategoryDefinition[],
   skills: ResolvedSkill[],
@@ -42,8 +29,6 @@ const buildTestMatrix = (
     },
   );
 };
-
-// Create test categories
 
 const frameworkCategory = createMockCategory("framework", "Framework", {
   domain: "web",
@@ -75,7 +60,6 @@ const databaseCategory = createMockCategory("database", "Database", {
   order: 1,
 });
 
-// Create test skills
 const reactSkill = createMockSkill("web-framework-react", "framework", {
   ...SKILL_DEFAULTS,
   displayName: "react",
@@ -115,7 +99,6 @@ const postgresSkill = createMockSkill("api-database-postgres", "database", {
   ...SKILL_DEFAULTS,
 });
 
-// Default test matrix with web and API domains
 const defaultMatrix = buildTestMatrix(
   [frameworkCategory, stylingCategory, stateCategory, apiFrameworkCategory, databaseCategory],
   [
@@ -130,7 +113,6 @@ const defaultMatrix = buildTestMatrix(
   ],
 );
 
-// Default props
 const defaultProps: StepBuildProps = {
   matrix: defaultMatrix,
   domain: "web",
@@ -152,10 +134,6 @@ const renderStepBuild = (props: Partial<StepBuildProps> = {}) => {
   return render(<StepBuild {...defaultProps} {...props} />);
 };
 
-// =============================================================================
-// Tests
-// =============================================================================
-
 describe("StepBuild component", () => {
   let cleanup: (() => void) | undefined;
 
@@ -163,10 +141,6 @@ describe("StepBuild component", () => {
     cleanup?.();
     cleanup = undefined;
   });
-
-  // ===========================================================================
-  // Basic Rendering
-  // ===========================================================================
 
   describe("rendering", () => {
     it("should render CategoryGrid with correct categories for domain", () => {
@@ -240,10 +214,6 @@ describe("StepBuild component", () => {
     });
   });
 
-  // ===========================================================================
-  // Progress Indicator
-  // ===========================================================================
-
   describe("domain header", () => {
     it("should show ViewTitle with current domain when multiple domains selected", () => {
       const { lastFrame, unmount } = renderStepBuild({
@@ -287,10 +257,6 @@ describe("StepBuild component", () => {
       expect(output).toContain("Customise your API stack");
     });
   });
-
-  // ===========================================================================
-  // Category Filtering
-  // ===========================================================================
 
   describe("category filtering", () => {
     it("should filter categories correctly by domain", () => {
@@ -340,10 +306,6 @@ describe("StepBuild component", () => {
     });
   });
 
-  // ===========================================================================
-  // Option States
-  // ===========================================================================
-
   describe("option states", () => {
     it("should show selected options correctly", () => {
       const { lastFrame, unmount } = renderStepBuild({
@@ -382,10 +344,6 @@ describe("StepBuild component", () => {
       expect(output).toBeDefined();
     });
   });
-
-  // ===========================================================================
-  // Keyboard Navigation
-  // ===========================================================================
 
   describe("keyboard navigation", () => {
     it("should call onContinue when Enter is pressed with valid selections", async () => {
@@ -454,10 +412,6 @@ describe("StepBuild component", () => {
     });
   });
 
-  // ===========================================================================
-  // Toggle Callbacks
-  // ===========================================================================
-
   describe("toggle callbacks", () => {
     it("should pass onToggleDescriptions to CategoryGrid", async () => {
       const onToggleDescriptions = vi.fn();
@@ -481,10 +435,6 @@ describe("StepBuild component", () => {
       expect(output).toBeDefined();
     });
   });
-
-  // ===========================================================================
-  // Edge Cases
-  // ===========================================================================
 
   describe("edge cases", () => {
     it("should handle domain with no categories", () => {
@@ -533,10 +483,6 @@ describe("StepBuild component", () => {
       expect(output).toContain("Styling");
     });
   });
-
-  // ===========================================================================
-  // Multi-domain Scenarios
-  // ===========================================================================
 
   describe("multi-domain scenarios", () => {
     it("should show ViewTitle for current domain in multi-domain flow", () => {
@@ -607,10 +553,6 @@ describe("StepBuild component", () => {
     });
   });
 
-  // ===========================================================================
-  // Header and Selection Count
-  // ===========================================================================
-
   describe("header and selection count", () => {
     it("should show ViewTitle with domain name", () => {
       const { lastFrame, unmount } = renderStepBuild();
@@ -631,10 +573,6 @@ describe("StepBuild component", () => {
     });
   });
 
-  // ===========================================================================
-  // Keyboard Help Text
-  // ===========================================================================
-
   describe("keyboard help text", () => {
     it("should respond to d key for toggling descriptions", async () => {
       const onToggleDescriptions = vi.fn();
@@ -648,10 +586,6 @@ describe("StepBuild component", () => {
       expect(onToggleDescriptions).toHaveBeenCalled();
     });
   });
-
-  // ===========================================================================
-  // Validation
-  // ===========================================================================
 
   describe("validateBuildStep", () => {
     it("should return valid when required categories have selections", () => {
@@ -778,10 +712,6 @@ describe("StepBuild component", () => {
     });
   });
 });
-
-// =============================================================================
-// getDisplayLabel Tests
-// =============================================================================
 
 describe("getDisplayLabel", () => {
   it("should return displayName when available", () => {

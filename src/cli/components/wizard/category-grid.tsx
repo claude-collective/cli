@@ -1,25 +1,7 @@
-/**
- * CategoryGrid component - Section-based selection for wizard Build step.
- *
- * Displays categories as sections with technology options as horizontal tags.
- * Supports keyboard navigation (arrows, vim keys) and visual states.
- *
- * Visual states:
- * - Selected: cyan background + black text
- * - Recommended: cyan text (no background)
- * - Focused: gray background
- * - Disabled: dimmed text
- * - Normal: plain text
- * - Locked section: visible but dimmed, not navigable
- *
- * Section layout: Each category is a section with header, underline, and flowing tags.
- */
 import React, { useCallback, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
 import { sortBy } from "remeda";
 import type { SkillId, Subcategory } from "../../types/index.js";
-
-// Types
 
 export type OptionState = "normal" | "recommended" | "discouraged" | "disabled";
 
@@ -41,42 +23,22 @@ export type CategoryRow = {
 };
 
 export type CategoryGridProps = {
-  /** Categories to display (filtered by domain from matrix) */
   categories: CategoryRow[];
-  /** Focused row index (section index) */
   focusedRow: number;
-  /** Focused column index (option index within section) */
   focusedCol: number;
-  /** Show descriptions under each technology */
   showDescriptions: boolean;
-  /** Expert mode - shows all options, disables smart ordering */
   expertMode: boolean;
-  /** Called when user toggles a technology */
   onToggle: (categoryId: Subcategory, technologyId: SkillId) => void;
-  /** Called when focus changes */
   onFocusChange: (row: number, col: number) => void;
-  /** Called when show descriptions is toggled */
   onToggleDescriptions: () => void;
 };
 
-// Constants
-
-/** Required indicator */
 const SYMBOL_REQUIRED = "*";
-
-/** Background colors for different states */
-const BG_SELECTED = "cyan"; // Cyan background for selected
-const BG_FOCUSED = "#333"; // Dark gray for focused
-
-/** Framework category ID for locking logic */
+const BG_SELECTED = "cyan";
+const BG_FOCUSED = "#333";
 const FRAMEWORK_CATEGORY_ID = "framework";
 
-// Helper Functions
-
-/**
- * Sort options based on state (recommended first, discouraged last).
- * In expert mode, returns options as-is.
- */
+// Recommended first, discouraged last. Expert mode preserves original order.
 const sortOptions = (options: CategoryOption[], expertMode: boolean): CategoryOption[] => {
   if (expertMode) {
     return options;
@@ -92,10 +54,6 @@ const sortOptions = (options: CategoryOption[], expertMode: boolean): CategoryOp
   return sortBy([...options], (o) => stateOrder[o.state]);
 };
 
-/**
- * Find the next non-disabled option index in a direction.
- * Returns current index if no valid option found.
- */
 const findNextValidOption = (
   options: CategoryOption[],
   currentIndex: number,
@@ -132,10 +90,6 @@ const findNextValidOption = (
   return currentIndex;
 };
 
-/**
- * Find a valid starting column for a row.
- * Returns 0 if all options are disabled.
- */
 const findValidStartColumn = (options: CategoryOption[]): number => {
   for (let i = 0; i < options.length; i++) {
     if (options[i] && options[i].state !== "disabled") {
@@ -145,36 +99,18 @@ const findValidStartColumn = (options: CategoryOption[]): number => {
   return 0;
 };
 
-/**
- * Check if a section is locked (for framework-first flow).
- * A section is locked if:
- * - It's not the framework section
- * - No framework has been selected yet
- */
+// Locked = non-framework section when no framework is selected
 const isSectionLocked = (categoryId: Subcategory, categories: CategoryRow[]): boolean => {
-  // Framework section is never locked
   if (categoryId === FRAMEWORK_CATEGORY_ID) {
     return false;
   }
 
-  // Find framework category and check if any option is selected
   const frameworkCategory = categories.find((cat) => cat.id === FRAMEWORK_CATEGORY_ID);
+  if (!frameworkCategory) return false;
 
-  if (!frameworkCategory) {
-    // No framework category exists, nothing is locked
-    return false;
-  }
-
-  // Check if any framework option is selected
-  const hasFrameworkSelected = frameworkCategory.options.some((opt) => opt.selected);
-
-  // Lock if no framework is selected
-  return !hasFrameworkSelected;
+  return !frameworkCategory.options.some((opt) => opt.selected);
 };
 
-/**
- * Find the next unlocked section index in a direction.
- */
 const findNextUnlockedSection = (
   categories: { id: Subcategory; sortedOptions: CategoryOption[] }[],
   currentIndex: number,
@@ -190,7 +126,6 @@ const findNextUnlockedSection = (
   while (attempts < length) {
     index += direction;
 
-    // Wrap around
     if (index < 0) index = length - 1;
     if (index >= length) index = 0;
 
@@ -202,7 +137,6 @@ const findNextUnlockedSection = (
     attempts++;
   }
 
-  // All sections are locked (shouldn't happen), return current
   return currentIndex;
 };
 
@@ -316,8 +250,6 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   );
 };
 
-// Main Component
-
 export const CategoryGrid: React.FC<CategoryGridProps> = ({
   categories,
   focusedRow,
@@ -328,28 +260,23 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
   onFocusChange,
   onToggleDescriptions,
 }) => {
-  // Process categories with sorted options
   const processedCategories = categories.map((category) => ({
     ...category,
     sortedOptions: sortOptions(category.options, expertMode),
   }));
 
-  // Get current row and its options
   const currentRow = processedCategories[focusedRow];
   const currentOptions = currentRow?.sortedOptions || [];
   const currentLocked = currentRow ? isSectionLocked(currentRow.id, categories) : false;
 
-  // Ensure focusedCol is valid when row changes or options change
   useEffect(() => {
     if (!currentRow) return;
 
     const maxCol = currentOptions.length - 1;
     if (focusedCol > maxCol) {
-      // Clamp to max column
       const newCol = Math.max(0, maxCol);
       onFocusChange(focusedRow, newCol);
     } else if (currentOptions[focusedCol]?.state === "disabled") {
-      // Current option is disabled, find a valid one
       const validCol = findValidStartColumn(currentOptions);
       if (validCol !== focusedCol) {
         onFocusChange(focusedRow, validCol);
@@ -357,7 +284,6 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
     }
   }, [focusedRow, currentOptions, focusedCol, onFocusChange, currentRow]);
 
-  // If current section is locked, move to first unlocked section
   useEffect(() => {
     if (currentRow && currentLocked) {
       const unlockedIndex = findNextUnlockedSection(processedCategories, focusedRow, 1, categories);
@@ -369,7 +295,6 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
     }
   }, [currentRow, currentLocked, focusedRow, processedCategories, categories, onFocusChange]);
 
-  // Handle keyboard navigation
   useInput(
     useCallback(
       (
@@ -383,13 +308,11 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
           shift: boolean;
         },
       ) => {
-        // Toggle descriptions with Shift+Tab (Tab now jumps sections)
         if (key.tab && key.shift) {
           onToggleDescriptions();
           return;
         }
 
-        // Tab jumps to next unlocked section
         if (key.tab && !key.shift) {
           const nextSection = findNextUnlockedSection(
             processedCategories,
@@ -405,13 +328,11 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
           return;
         }
 
-        // Toggle descriptions with 'd'
         if (input === "d" || input === "D") {
           onToggleDescriptions();
           return;
         }
 
-        // Toggle selection with Space (only if section is unlocked)
         if (input === " ") {
           if (currentLocked) return;
           const currentOption = currentOptions[focusedCol];
@@ -421,7 +342,6 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
           return;
         }
 
-        // Navigation
         const isLeft = key.leftArrow || input === "h";
         const isRight = key.rightArrow || input === "l";
         const isUp = key.upArrow || input === "k";
@@ -436,20 +356,16 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
           const newCol = findNextValidOption(currentOptions, focusedCol, 1, true);
           onFocusChange(focusedRow, newCol);
         } else if (isUp) {
-          // Move to previous unlocked section
           const newRow = findNextUnlockedSection(processedCategories, focusedRow, -1, categories);
           const newRowOptions = processedCategories[newRow]?.sortedOptions || [];
-          // Try to keep same column, or find valid one
           let newCol = Math.min(focusedCol, newRowOptions.length - 1);
           if (newRowOptions[newCol]?.state === "disabled") {
             newCol = findValidStartColumn(newRowOptions);
           }
           onFocusChange(newRow, newCol);
         } else if (isDown) {
-          // Move to next unlocked section
           const newRow = findNextUnlockedSection(processedCategories, focusedRow, 1, categories);
           const newRowOptions = processedCategories[newRow]?.sortedOptions || [];
-          // Try to keep same column, or find valid one
           let newCol = Math.min(focusedCol, newRowOptions.length - 1);
           if (newRowOptions[newCol]?.state === "disabled") {
             newCol = findValidStartColumn(newRowOptions);

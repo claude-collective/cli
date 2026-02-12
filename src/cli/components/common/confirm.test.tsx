@@ -1,24 +1,11 @@
-/**
- * Tests for the Confirm component.
- *
- * Tests keyboard interaction with ConfirmInput from @inkjs/ui.
- *
- * Note: Keyboard interaction tests for ConfirmInput require careful timing
- * and may need longer delays than other components due to how useInput
- * processes stdin events.
- */
+// ConfirmInput requires longer delays than other components for useInput processing
 import React from "react";
 import { render } from "ink-testing-library";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Confirm } from "./confirm";
 import { KEY_Y, KEY_N, ENTER, RENDER_DELAY_MS, delay } from "../../lib/__tests__/test-constants";
 
-// Longer delay for ConfirmInput key processing
 const CONFIRM_INPUT_DELAY_MS = 100;
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("Confirm component", () => {
   let cleanup: (() => void) | undefined;
@@ -27,10 +14,6 @@ describe("Confirm component", () => {
     cleanup?.();
     cleanup = undefined;
   });
-
-  // ===========================================================================
-  // Rendering
-  // ===========================================================================
 
   describe("rendering", () => {
     it("should render the message", () => {
@@ -79,10 +62,6 @@ describe("Confirm component", () => {
       expect(output).toContain("y/N");
     });
   });
-
-  // ===========================================================================
-  // Keyboard Interactions
-  // ===========================================================================
 
   describe("keyboard interactions", () => {
     it("should call onConfirm when pressing y", async () => {
@@ -200,10 +179,6 @@ describe("Confirm component", () => {
       expect(onCancel).toHaveBeenCalled();
     });
   });
-
-  // ===========================================================================
-  // Default Value Behavior
-  // ===========================================================================
 
   describe("default value", () => {
     it("should default to false when not specified", () => {

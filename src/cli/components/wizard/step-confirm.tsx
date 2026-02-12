@@ -3,10 +3,6 @@ import { Box, Text, useInput } from "ink";
 import type { DomainSelections, Domain } from "../../types/index.js";
 import { getDomainDisplayName } from "./utils.js";
 
-// =============================================================================
-// Types
-// =============================================================================
-
 export type StepConfirmProps = {
   onComplete: () => void;
   stackName?: string;
@@ -17,10 +13,6 @@ export type StepConfirmProps = {
   installMode?: "plugin" | "local";
   onBack?: () => void;
 };
-
-// =============================================================================
-// Component
-// =============================================================================
 
 export const StepConfirm: React.FC<StepConfirmProps> = ({
   onComplete,
@@ -41,7 +33,6 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
     }
   });
 
-  // Build title based on stack vs scratch path
   const domainsText = selectedDomains?.map(getDomainDisplayName).join(" + ") || "";
   const title = stackName
     ? `Ready to install ${stackName}`
@@ -54,7 +45,6 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
       </Text>
       <Text> </Text>
 
-      {/* Domain breakdown (for scratch path) */}
       {domainSelections && selectedDomains && !stackName && (
         <Box flexDirection="column" marginBottom={1}>
           {selectedDomains.map((domain) => {
@@ -70,7 +60,6 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
         </Box>
       )}
 
-      {/* Summary stats */}
       <Box flexDirection="column" marginY={1}>
         {technologyCount !== undefined && (
           <Text>

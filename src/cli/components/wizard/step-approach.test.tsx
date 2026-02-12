@@ -1,11 +1,3 @@
-/**
- * Tests for the StepApproach wizard component.
- *
- * Tests rendering and keyboard navigation for approach selection.
- *
- * Note: Select component from @inkjs/ui requires an initial render delay
- * before accepting keyboard input to avoid render loops.
- */
 import React from "react";
 import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -13,12 +5,7 @@ import { StepApproach } from "./step-approach";
 import { useWizardStore } from "../../stores/wizard-store";
 import { ARROW_DOWN, ARROW_UP, ENTER, RENDER_DELAY_MS, delay } from "../../lib/__tests__/test-constants";
 
-// Delay between arrow key presses for Select component
 const SELECT_NAV_DELAY_MS = 100;
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("StepApproach component", () => {
   let cleanup: (() => void) | undefined;
@@ -31,10 +18,6 @@ describe("StepApproach component", () => {
     cleanup?.();
     cleanup = undefined;
   });
-
-  // ===========================================================================
-  // Rendering
-  // ===========================================================================
 
   describe("rendering", () => {
     it("should render approach options", () => {
@@ -55,10 +38,6 @@ describe("StepApproach component", () => {
       expect(output).not.toContain("Install Mode");
     });
   });
-
-  // ===========================================================================
-  // Navigation Options
-  // ===========================================================================
 
   describe("navigation options", () => {
     it("should navigate to stack step when selecting template", async () => {
@@ -95,10 +74,6 @@ describe("StepApproach component", () => {
       expect(approach).toBe("scratch");
     });
   });
-
-  // ===========================================================================
-  // Arrow Key Navigation
-  // ===========================================================================
 
   describe("arrow key navigation", () => {
     it("should navigate down through options", async () => {

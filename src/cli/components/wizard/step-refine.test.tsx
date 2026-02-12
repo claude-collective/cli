@@ -1,9 +1,3 @@
-/**
- * Tests for the StepRefine component.
- *
- * Tests the Refine step where users can choose skill sources.
- * For Phase 7, only "Use all recommended" is implemented.
- */
 import React from "react";
 import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, vi } from "vitest";
@@ -18,10 +12,6 @@ import {
   delay,
 } from "../../lib/__tests__/test-constants";
 
-// =============================================================================
-// Test Fixtures
-// =============================================================================
-
 const defaultProps: StepRefineProps = {
   technologyCount: 12,
   refineAction: "all-recommended",
@@ -34,10 +24,6 @@ const renderStepRefine = (props: Partial<StepRefineProps> = {}) => {
   return render(<StepRefine {...defaultProps} {...props} />);
 };
 
-// =============================================================================
-// Tests
-// =============================================================================
-
 describe("StepRefine component", () => {
   let cleanup: (() => void) | undefined;
 
@@ -45,10 +31,6 @@ describe("StepRefine component", () => {
     cleanup?.();
     cleanup = undefined;
   });
-
-  // ===========================================================================
-  // Basic Rendering
-  // ===========================================================================
 
   describe("rendering", () => {
     it("should render technology count correctly", () => {
@@ -100,10 +82,6 @@ describe("StepRefine component", () => {
     });
   });
 
-  // ===========================================================================
-  // Customize Option Display
-  // ===========================================================================
-
   describe("customize option", () => {
     it("should show 'Customize' option as disabled/grayed", () => {
       const { lastFrame, unmount } = renderStepRefine();
@@ -130,10 +108,6 @@ describe("StepRefine component", () => {
     });
   });
 
-  // ===========================================================================
-  // Keyboard Shortcuts Display
-  // ===========================================================================
-
   describe("keyboard shortcuts display", () => {
     it("should render recommended option content", () => {
       const { lastFrame, unmount } = renderStepRefine();
@@ -146,10 +120,6 @@ describe("StepRefine component", () => {
       expect(output).toContain("Customize skill sources");
     });
   });
-
-  // ===========================================================================
-  // Keyboard Navigation
-  // ===========================================================================
 
   describe("keyboard navigation", () => {
     it("should call onContinue when Enter key is pressed", async () => {
@@ -201,10 +171,6 @@ describe("StepRefine component", () => {
     });
   });
 
-  // ===========================================================================
-  // Selection State
-  // ===========================================================================
-
   describe("selection state", () => {
     it("should handle null refineAction (defaults to recommended)", () => {
       const { lastFrame, unmount } = renderStepRefine({ refineAction: null });
@@ -239,10 +205,6 @@ describe("StepRefine component", () => {
     });
   });
 
-  // ===========================================================================
-  // Edge Cases
-  // ===========================================================================
-
   describe("edge cases", () => {
     it("should handle zero technology count", () => {
       const { lastFrame, unmount } = renderStepRefine({ technologyCount: 0 });
@@ -272,10 +234,6 @@ describe("StepRefine component", () => {
       expect(output).toContain("technologies");
     });
   });
-
-  // ===========================================================================
-  // Multiple Keyboard Events
-  // ===========================================================================
 
   describe("multiple keyboard events", () => {
     it("should allow multiple Enter presses", async () => {

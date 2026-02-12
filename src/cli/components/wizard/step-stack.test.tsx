@@ -1,14 +1,3 @@
-/**
- * Tests for the StepStack wizard component.
- *
- * Tests rendering and keyboard navigation for stack selection (stack path)
- * and domain selection (scratch path).
- *
- * Stack selection uses a custom card-based UI with useInput for navigation.
- * Domain selection still uses the Select component from @inkjs/ui.
- *
- * Note: Select component requires initial render delay before accepting input.
- */
 import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { StepStack } from "./step-stack";
@@ -19,12 +8,7 @@ import { createMockCategory, createMockMatrix, createMockResolvedStack, createMo
 import type { MergedSkillsMatrix } from "../../types";
 import { ARROW_DOWN, ARROW_UP, ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../../lib/__tests__/test-constants";
 
-// Delay between key presses for input processing
 const SELECT_NAV_DELAY_MS = 100;
-
-// =============================================================================
-// Mock Data
-// =============================================================================
 
 const createMockStackWithSkills = (): MergedSkillsMatrix => {
   const skills = {
@@ -66,10 +50,6 @@ const createMockStackWithSkills = (): MergedSkillsMatrix => {
   });
 };
 
-// =============================================================================
-// Tests
-// =============================================================================
-
 describe("StepStack component", () => {
   let cleanup: (() => void) | undefined;
   let mockMatrix: MergedSkillsMatrix;
@@ -83,10 +63,6 @@ describe("StepStack component", () => {
     cleanup?.();
     cleanup = undefined;
   });
-
-  // ===========================================================================
-  // Stack Selection Mode (approach === "stack")
-  // ===========================================================================
 
   describe("stack selection mode", () => {
     beforeEach(() => {
@@ -317,10 +293,6 @@ describe("StepStack component", () => {
       });
     });
   });
-
-  // ===========================================================================
-  // Domain Selection Mode (approach === "scratch")
-  // ===========================================================================
 
   describe("domain selection mode", () => {
     beforeEach(() => {

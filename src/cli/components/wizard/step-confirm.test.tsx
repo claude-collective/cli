@@ -1,18 +1,9 @@
-/**
- * Tests for the StepConfirm wizard component.
- *
- * Tests rendering and keyboard navigation for the confirm step.
- */
 import React from "react";
 import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StepConfirm } from "./step-confirm";
 import { useWizardStore } from "../../stores/wizard-store";
 import { ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../../lib/__tests__/test-constants";
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 describe("StepConfirm component", () => {
   let cleanup: (() => void) | undefined;
@@ -25,10 +16,6 @@ describe("StepConfirm component", () => {
     cleanup?.();
     cleanup = undefined;
   });
-
-  // ===========================================================================
-  // Stack Path
-  // ===========================================================================
 
   describe("stack path", () => {
     it("should render stack name in title", () => {
@@ -162,10 +149,6 @@ describe("StepConfirm component", () => {
     });
   });
 
-  // ===========================================================================
-  // Scratch Path
-  // ===========================================================================
-
   describe("scratch path", () => {
     it("should render custom stack title with domain names", () => {
       const onComplete = vi.fn();
@@ -278,10 +261,6 @@ describe("StepConfirm component", () => {
     });
   });
 
-  // ===========================================================================
-  // Keyboard Navigation
-  // ===========================================================================
-
   describe("keyboard navigation", () => {
     it("should call onComplete when Enter is pressed", async () => {
       const onComplete = vi.fn();
@@ -356,10 +335,6 @@ describe("StepConfirm component", () => {
       expect(onComplete).not.toHaveBeenCalled();
     });
   });
-
-  // ===========================================================================
-  // Default Props
-  // ===========================================================================
 
   describe("default props", () => {
     it("should render custom stack title when no stack name provided", () => {

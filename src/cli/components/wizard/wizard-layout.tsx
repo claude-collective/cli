@@ -77,22 +77,18 @@ type WizardLayoutProps = {
 export const WizardLayout: React.FC<WizardLayoutProps> = ({ version, children }) => {
   const store = useWizardStore();
 
-  // Compute completed and skipped steps for WizardTabs
   const { completedSteps, skippedSteps } = useMemo(() => {
     const completed: string[] = [];
     const skipped: string[] = [];
 
-    // Approach is complete when we've moved past it
     if (store.step !== "approach") {
       completed.push("approach");
     }
 
-    // Stack step handling
     if (store.step !== "approach" && store.step !== "stack") {
       completed.push("stack");
     }
 
-    // Build step handling
     // Stack path with defaults skips build
     if (store.approach === "stack" && store.selectedStackId && store.stackAction === "defaults") {
       skipped.push("build");

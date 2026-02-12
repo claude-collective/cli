@@ -1,17 +1,3 @@
-/**
- * Wizard component - Main orchestrator for the skill selection wizard.
- *
- * V2 Flow:
- * - approach: Choose stack template or build from scratch
- * - stack: Select pre-built stack (stack path) OR domains (scratch path)
- * - build: CategoryGrid for technology selection (pre-populated from stack if stack path)
- * - confirm: Final confirmation
- *
- * Navigation:
- * - ESC goes back through history
- * - ESC at approach cancels wizard
- * - Ctrl+C cancels at any point
- */
 import React, { useCallback } from "react";
 import { Box, Text, useApp, useInput, useStdout } from "ink";
 import { ThemeProvider } from "@inkjs/ui";
@@ -25,10 +11,6 @@ import { StepConfirm } from "./step-confirm.js";
 import { resolveAlias, validateSelection } from "../../lib/matrix/index.js";
 import type { Domain, DomainSelections, MergedSkillsMatrix, SkillId } from "../../types/index.js";
 import { getStackName } from "./utils.js";
-
-// =============================================================================
-// Types
-// =============================================================================
 
 export type WizardResultV2 = {
   selectedSkills: SkillId[];
@@ -51,36 +33,21 @@ type WizardProps = {
   version?: string;
 };
 
-// =============================================================================
-// Helpers
-// =============================================================================
-
 function getParentDomain(domain: Domain, matrix: MergedSkillsMatrix): Domain | undefined {
   const cat = Object.values(matrix.categories).find((c) => c.domain === domain && c.parent_domain);
   return cat?.parent_domain;
 }
 
-// =============================================================================
-// Constants
-// =============================================================================
-
-/** Minimum terminal width required for the wizard */
 const MIN_TERMINAL_WIDTH = 80;
-
-// =============================================================================
-// Main Component
-// =============================================================================
 
 export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, version }) => {
   const store = useWizardStore();
   const { exit } = useApp();
   const { stdout } = useStdout();
 
-  // Check terminal width
   const terminalWidth = stdout.columns || MIN_TERMINAL_WIDTH;
   const isNarrowTerminal = terminalWidth < MIN_TERMINAL_WIDTH;
 
-  // Global keyboard shortcut handler
   useInput((input, key) => {
     if (key.escape) {
       if (store.step === "approach") {
@@ -112,21 +79,17 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
     }
   });
 
-  // Handle wizard completion
   const handleComplete = useCallback(() => {
     let allSkills: SkillId[];
 
     if (store.selectedStackId && store.stackAction === "defaults") {
-      // Stack + defaults path: use stack's allSkillIds directly
       const stack = matrix.suggestedStacks.find((s) => s.id === store.selectedStackId);
       if (!stack) {
         console.warn(`Stack not found in matrix: ${store.selectedStackId}`);
       }
       allSkills = [...(stack?.allSkillIds || [])];
     } else {
-      // Scratch / Customize path: resolve domainSelections via aliases
       const techNames = store.getAllSelectedTechnologies();
-      // Resolve each technology name to its full skill ID via aliases
       allSkills = techNames.map((tech) => {
         const resolved = resolveAlias(tech, matrix);
         if (!matrix.skills[resolved]) {
@@ -138,7 +101,6 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
       });
     }
 
-    // Add methodology skills (always included)
     const methodologySkills = store.getSelectedSkills();
     for (const skill of methodologySkills) {
       if (!allSkills.includes(skill)) {
@@ -162,7 +124,6 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
     exit();
   }, [store, matrix, onComplete, exit]);
 
-  // Render current step
   const renderStep = () => {
     switch (store.step) {
       case "approach":
@@ -173,8 +134,6 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
 
       case "build": {
         const currentDomain = store.getCurrentDomain();
-        // For stack path with customize, use all domains from stack
-        // For scratch path, use selectedDomains
         const defaultDomains: Domain[] = ["web"];
         const effectiveDomains = store.selectedDomains.length > 0 ? store.selectedDomains : defaultDomains;
 
@@ -241,7 +200,6 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
     }
   };
 
-  // Show warning if terminal is too narrow
   if (isNarrowTerminal) {
     return (
       <ThemeProvider theme={cliTheme}>

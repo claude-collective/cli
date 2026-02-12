@@ -1,113 +1,50 @@
-/**
- * Interactive skill search component.
- *
- * Features:
- * - Live text filtering as you type
- * - Multi-select checkboxes
- * - Keyboard navigation (arrows, vim keys, space, enter, c, esc)
- * - Source attribution for each skill
- *
- * Keyboard controls:
- * - Up/Down/k/j: Navigate results
- * - Space: Toggle selection
- * - Enter: Import selected skills
- * - c: Copy link of focused skill
- * - Esc: Cancel/exit
- */
 import React, { useState, useCallback, useMemo } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import { ThemeProvider } from "@inkjs/ui";
 import { cliTheme } from "../themes/default.js";
 import type { ResolvedSkill, SkillId } from "../../types/index.js";
 
-// =============================================================================
-// Types
-// =============================================================================
-
 export type SourcedSkill = ResolvedSkill & {
-  /** Source name where this skill came from */
   sourceName: string;
-  /** Source URL for reference */
   sourceUrl?: string;
 };
 
 export type SkillSearchResult = {
-  /** Skills selected for import */
   selectedSkills: SourcedSkill[];
-  /** Whether the user cancelled */
   cancelled: boolean;
 };
 
 export type SkillSearchProps = {
-  /** All available skills from all sources */
   skills: SourcedSkill[];
-  /** Total number of sources */
   sourceCount: number;
-  /** Initial search query (from command args) */
   initialQuery?: string;
-  /** Called when user completes selection (Enter) */
   onComplete: (result: SkillSearchResult) => void;
-  /** Called when user cancels (Esc) */
   onCancel: () => void;
 };
 
-// =============================================================================
-// Constants
-// =============================================================================
-
-/** Maximum results to show at once */
 const MAX_VISIBLE_RESULTS = 10;
-
-/** Checkbox display */
 const CHECKBOX_CHECKED = "[x]";
 const CHECKBOX_UNCHECKED = "[ ]";
 
-// =============================================================================
-// Helper Functions
-// =============================================================================
-
-/**
- * Match skill against search query (case-insensitive substring)
- */
 function matchesQuery(skill: SourcedSkill, query: string): boolean {
   if (!query.trim()) return true;
 
   const lowerQuery = query.toLowerCase();
 
-  // Match against ID
   if (skill.id.toLowerCase().includes(lowerQuery)) return true;
-
-  // Match against display name
   if (skill.displayName?.toLowerCase().includes(lowerQuery)) return true;
-
-  // Match against description
   if (skill.description.toLowerCase().includes(lowerQuery)) return true;
-
-  // Match against category
   if (skill.category.toLowerCase().includes(lowerQuery)) return true;
-
-  // Match against tags
-  if (skill.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))) {
-    return true;
-  }
-
-  // Match against source name
+  if (skill.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))) return true;
   if (skill.sourceName.toLowerCase().includes(lowerQuery)) return true;
 
   return false;
 }
 
-/**
- * Truncate text with ellipsis
- */
 function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength - 3) + "...";
 }
-
-// =============================================================================
-// Sub-Components
-// =============================================================================
 
 type HeaderProps = {
   sourceCount: number;
@@ -140,7 +77,6 @@ type SearchInputProps = {
 };
 
 const SearchInput: React.FC<SearchInputProps> = ({ value, onChange }) => {
-  // Handle text input
   useInput((input, key) => {
     if (key.backspace || key.delete) {
       onChange(value.slice(0, -1));
@@ -296,10 +232,6 @@ const Footer: React.FC<FooterProps> = ({ hasSelection }) => {
   );
 };
 
-// =============================================================================
-// Main Component
-// =============================================================================
-
 export const SkillSearch: React.FC<SkillSearchProps> = ({
   skills,
   sourceCount,
@@ -309,32 +241,25 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
 }) => {
   const { exit } = useApp();
 
-  // State
   const [query, setQuery] = useState(initialQuery);
   const [selectedIds, setSelectedIds] = useState<Set<SkillId>>(new Set());
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [copiedMessage, setCopiedMessage] = useState<string | null>(null);
 
-  // Filter results based on query
   const filteredResults = useMemo(() => {
     return skills.filter((skill) => matchesQuery(skill, query));
   }, [skills, query]);
 
-  // Ensure focus stays in bounds when results change
   const safeFocusedIndex = Math.min(focusedIndex, Math.max(0, filteredResults.length - 1));
-
-  // Get the currently focused skill
   const focusedSkill = filteredResults[safeFocusedIndex];
 
-  // Handle query change
   const handleQueryChange = useCallback((newQuery: string) => {
     setQuery(newQuery);
     setFocusedIndex(0);
     setScrollOffset(0);
   }, []);
 
-  // Toggle selection
   const toggleSelection = useCallback((skillId: SkillId) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -347,13 +272,11 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
     });
   }, []);
 
-  // Copy skill link to clipboard
   const copySkillLink = useCallback(async (skill: SourcedSkill) => {
     const link = skill.sourceUrl ? `${skill.sourceUrl}/${skill.id}` : skill.id;
 
     try {
-      // Use native clipboard API via process.stdout.write with OSC 52
-      // This is a cross-platform terminal clipboard method
+      // OSC 52 terminal clipboard escape sequence
       const encoded = Buffer.from(link).toString("base64");
       process.stdout.write(`\x1b]52;c;${encoded}\x07`);
       setCopiedMessage(`Copied: ${link}`);
@@ -364,16 +287,13 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
     }
   }, []);
 
-  // Handle keyboard navigation
   useInput((input, key) => {
-    // Escape to cancel
     if (key.escape) {
       onCancel();
       exit();
       return;
     }
 
-    // Enter to import selected
     if (key.return) {
       if (selectedIds.size > 0) {
         const selectedSkills = filteredResults.filter((s) => selectedIds.has(s.id));
@@ -386,26 +306,22 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
       return;
     }
 
-    // Space to toggle selection
     if (input === " " && focusedSkill) {
       toggleSelection(focusedSkill.id);
       return;
     }
 
-    // c to copy link
     if ((input === "c" || input === "C") && focusedSkill) {
       void copySkillLink(focusedSkill);
       return;
     }
 
-    // Navigation
     const isUp = key.upArrow || input === "k";
     const isDown = key.downArrow || input === "j";
 
     if (isUp && safeFocusedIndex > 0) {
       const newIndex = safeFocusedIndex - 1;
       setFocusedIndex(newIndex);
-      // Scroll up if needed
       if (newIndex < scrollOffset) {
         setScrollOffset(newIndex);
       }
@@ -414,7 +330,6 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
     if (isDown && safeFocusedIndex < filteredResults.length - 1) {
       const newIndex = safeFocusedIndex + 1;
       setFocusedIndex(newIndex);
-      // Scroll down if needed
       if (newIndex >= scrollOffset + MAX_VISIBLE_RESULTS) {
         setScrollOffset(newIndex - MAX_VISIBLE_RESULTS + 1);
       }

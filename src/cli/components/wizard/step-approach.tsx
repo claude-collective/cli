@@ -4,14 +4,8 @@ import { useWizardStore } from "../../stores/wizard-store.js";
 import { MenuItem } from "./menu-item.js";
 import { ViewTitle } from "./view-title.js";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
-/** Initial focused index for approach options */
 const INITIAL_FOCUSED_INDEX = 0;
 
-/** Approach options for the wizard intro step */
 const APPROACH_OPTIONS = [
   {
     value: "stack",
@@ -23,10 +17,6 @@ const APPROACH_OPTIONS = [
   },
 ] as const;
 
-// =============================================================================
-// Component
-// =============================================================================
-
 export const StepApproach: React.FC = () => {
   const { setStep, setApproach } = useWizardStore();
   const [focusedIndex, setFocusedIndex] = useState(INITIAL_FOCUSED_INDEX);
@@ -34,7 +24,6 @@ export const StepApproach: React.FC = () => {
   const optionCount = APPROACH_OPTIONS.length;
 
   useInput((input, key) => {
-    // Enter to select the focused option
     if (key.return) {
       const option = APPROACH_OPTIONS[focusedIndex];
       if (option) {
@@ -49,7 +38,6 @@ export const StepApproach: React.FC = () => {
       return;
     }
 
-    // Arrow key navigation (wrapping)
     if (key.upArrow || input === "k") {
       setFocusedIndex((prev) => (prev - 1 + optionCount) % optionCount);
       return;

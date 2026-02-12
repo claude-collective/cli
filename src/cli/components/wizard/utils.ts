@@ -1,8 +1,5 @@
 import type { Domain, MergedSkillsMatrix } from "../../types/index.js";
 
-/**
- * Get display name for a domain.
- */
 export function getDomainDisplayName(domain: Domain): string {
   const displayNames: Record<Domain, string> = {
     web: "Web",
@@ -15,9 +12,6 @@ export function getDomainDisplayName(domain: Domain): string {
   return displayNames[domain] || domain.charAt(0).toUpperCase() + domain.slice(1);
 }
 
-/**
- * Get stack name from matrix by stack ID.
- */
 export function getStackName(
   stackId: string | null,
   matrix: MergedSkillsMatrix,

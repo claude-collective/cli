@@ -1,16 +1,3 @@
-/**
- * Tests for the WizardTabs component.
- *
- * Tests rendering of progress tabs with visual states:
- * - Active step: green background with padding
- * - Completed steps: white background, dark text
- * - Pending steps: default text, no background
- * - Skipped: dimmed text, no background
- *
- * Note: The new tab-style UI uses background colors instead of symbols.
- * Testing for specific ANSI color codes is fragile, so we focus on
- * structural tests (labels present, correct step count) and basic state logic.
- */
 import React from "react";
 import { render } from "ink-testing-library";
 import { afterEach, describe, expect, it } from "vitest";
@@ -19,10 +6,6 @@ import {
   WIZARD_STEPS,
   type WizardTabsProps,
 } from "./wizard-tabs";
-
-// =============================================================================
-// Test Helpers
-// =============================================================================
 
 const renderWizardTabs = (props: Partial<WizardTabsProps> = {}) => {
   const defaultProps: WizardTabsProps = {
@@ -35,10 +18,6 @@ const renderWizardTabs = (props: Partial<WizardTabsProps> = {}) => {
   return render(<WizardTabs {...defaultProps} />);
 };
 
-// =============================================================================
-// Tests
-// =============================================================================
-
 describe("WizardTabs component", () => {
   let cleanup: (() => void) | undefined;
 
@@ -46,10 +25,6 @@ describe("WizardTabs component", () => {
     cleanup?.();
     cleanup = undefined;
   });
-
-  // ===========================================================================
-  // Rendering All Tabs
-  // ===========================================================================
 
   describe("rendering", () => {
     it("should render all 4 tabs", () => {
@@ -101,10 +76,6 @@ describe("WizardTabs component", () => {
     });
   });
 
-  // ===========================================================================
-  // Current Step (Green Background)
-  // ===========================================================================
-
   describe("current step", () => {
     it("should render current step label", () => {
       const { lastFrame, unmount } = renderWizardTabs({
@@ -140,10 +111,6 @@ describe("WizardTabs component", () => {
       expect(output).toContain("[4] Confirm");
     });
   });
-
-  // ===========================================================================
-  // Completed Steps (White Background)
-  // ===========================================================================
 
   describe("completed steps", () => {
     it("should render completed step labels", () => {
@@ -182,10 +149,6 @@ describe("WizardTabs component", () => {
     });
   });
 
-  // ===========================================================================
-  // Pending Steps (Default Text)
-  // ===========================================================================
-
   describe("pending steps", () => {
     it("should render pending step labels", () => {
       const { lastFrame, unmount } = renderWizardTabs({
@@ -212,10 +175,6 @@ describe("WizardTabs component", () => {
       expect(output).toContain("[4] Confirm");
     });
   });
-
-  // ===========================================================================
-  // Skipped Steps (Dimmed)
-  // ===========================================================================
 
   describe("skipped steps", () => {
     it("should render skipped step labels", () => {
@@ -259,10 +218,6 @@ describe("WizardTabs component", () => {
     });
   });
 
-  // ===========================================================================
-  // State Priority
-  // ===========================================================================
-
   describe("state priority", () => {
     it("should prioritize completed over current", () => {
       const { lastFrame, unmount } = renderWizardTabs({
@@ -303,10 +258,6 @@ describe("WizardTabs component", () => {
     });
   });
 
-  // ===========================================================================
-  // Visual Layout
-  // ===========================================================================
-
   describe("visual layout", () => {
     it("should render tabs horizontally", () => {
       const { lastFrame, unmount } = renderWizardTabs();
@@ -328,10 +279,6 @@ describe("WizardTabs component", () => {
       });
     });
   });
-
-  // ===========================================================================
-  // Edge Cases
-  // ===========================================================================
 
   describe("edge cases", () => {
     it("should handle empty completed steps", () => {
