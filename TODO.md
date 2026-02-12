@@ -250,6 +250,22 @@ Currently active/selected skills may not have proper visual effects or feedback.
 
 ---
 
+#### U11: Update stacks.yaml agent configs with full skill distributions
+
+The `config/stacks.yaml` stack definitions have many agents with empty configs (`web-pm: {}`, `agent-summoner: {}`, `cli-tester: {}`, etc.). While `generateProjectConfigFromSkills` + `getAgentsForSkill` now distributes skills broadly at init time, the stacks.yaml itself should reflect the intended skill assignments so it serves as readable documentation of what each stack provides.
+
+For example, the `nextjs-fullstack` stack's `cli-developer` should know about React, Hono, etc. — not just `cli-framework`. Similarly, `web-pm` should have the full set of web + api skills since it needs context about the entire stack to write specs.
+
+**What to do:**
+
+- Review `SKILL_TO_AGENTS` mappings in `skill-agent-mappings.ts` for each domain
+- Populate empty agent configs in all stacks with the skills they should know about
+- Ensure consistency between stacks.yaml and the runtime `getAgentsForSkill` mappings
+
+**Files:** `config/stacks.yaml`
+
+---
+
 ## Notes
 
 - Test target directory: `/home/vince/dev/cv-launch`
