@@ -305,6 +305,7 @@ export async function compileStackPlugin(
       name: newStack.name,
       description: newStack.description,
       agents: typedKeys<AgentName>(newStack.agents),
+      skills: [...agentSkillIds],
       stack: buildStackProperty(newStack, skillAliases) as ProjectConfig["stack"],
     };
   } else {

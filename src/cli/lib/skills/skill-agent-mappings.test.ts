@@ -279,6 +279,7 @@ describe("project config overrides", () => {
       const projectConfig: ProjectConfig = {
         name: "test-project",
         agents: ["web-developer"],
+        skills: [],
       };
 
       // getAgentsForSkill uses YAML defaults or hardcoded fallback

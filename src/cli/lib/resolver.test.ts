@@ -113,6 +113,7 @@ describe("stackToCompileConfig", () => {
       name: "Test Stack",
       description: "A test stack",
       agents: ["web-developer", "api-developer"],
+      skills: [],
     };
 
     const result = stackToCompileConfig("test-stack", config);
@@ -132,6 +133,7 @@ describe("stackToCompileConfig", () => {
     const config: ProjectConfig = {
       name: "Empty Stack",
       agents: [],
+      skills: [],
     };
 
     const result = stackToCompileConfig("empty-stack", config);
@@ -143,6 +145,7 @@ describe("stackToCompileConfig", () => {
     const config: ProjectConfig = {
       name: "No Description",
       agents: ["test-agent" as AgentName],
+      skills: [],
     };
 
     const result = stackToCompileConfig("no-desc", config);

@@ -22,6 +22,7 @@ describe("config-merger", () => {
       const newConfig: ProjectConfig = {
         name: "new-project",
         agents: ["web-developer"],
+        skills: [],
         description: "A new project",
       };
 
@@ -47,6 +48,7 @@ describe("config-merger", () => {
       const newConfig: ProjectConfig = {
         name: "new-project",
         agents: ["web-developer"],
+        skills: [],
       };
 
       const result = await mergeWithExistingConfig(newConfig, {
@@ -73,6 +75,7 @@ describe("config-merger", () => {
       const newConfig: ProjectConfig = {
         name: "new-project",
         agents: ["web-developer"],
+        skills: [],
       };
 
       const result = await mergeWithExistingConfig(newConfig, {
@@ -95,11 +98,13 @@ describe("config-merger", () => {
         await writeFullConfig({
           name: "existing-project",
           agents: ["web-developer"],
+          skills: [],
         });
 
         const newConfig: ProjectConfig = {
           name: "new-project",
           agents: ["web-developer"],
+          skills: [],
         };
 
         const result = await mergeWithExistingConfig(newConfig, {
@@ -114,12 +119,14 @@ describe("config-merger", () => {
         await writeFullConfig({
           name: "project",
           agents: ["web-developer"],
+          skills: [],
           description: "Existing description",
         });
 
         const newConfig: ProjectConfig = {
           name: "project",
           agents: ["web-developer"],
+          skills: [],
           description: "New description",
         };
 
@@ -135,12 +142,14 @@ describe("config-merger", () => {
         await writeFullConfig({
           name: "project",
           agents: ["web-developer"],
+          skills: [],
           source: "github:existing/source",
         });
 
         const newConfig: ProjectConfig = {
           name: "project",
           agents: ["web-developer"],
+          skills: [],
           source: "github:new/source",
         };
 
@@ -156,12 +165,14 @@ describe("config-merger", () => {
         await writeFullConfig({
           name: "project",
           agents: ["web-developer"],
+          skills: [],
           author: "@existing-author",
         });
 
         const newConfig: ProjectConfig = {
           name: "project",
           agents: ["web-developer"],
+          skills: [],
           author: "@new-author",
         };
 
@@ -177,12 +188,14 @@ describe("config-merger", () => {
         await writeFullConfig({
           name: "project",
           agents: ["web-developer"],
+          skills: [],
           marketplace: "existing-marketplace",
         });
 
         const newConfig: ProjectConfig = {
           name: "project",
           agents: ["web-developer"],
+          skills: [],
           marketplace: "new-marketplace",
         };
 
@@ -206,11 +219,13 @@ describe("config-merger", () => {
         await writeFullConfig({
           name: "project",
           agents: ["web-developer", "api-developer"],
+          skills: [],
         });
 
         const newConfig: ProjectConfig = {
           name: "project",
           agents: ["web-developer", "cli-developer"], // web-developer is duplicate
+          skills: [],
         };
 
         const result = await mergeWithExistingConfig(newConfig, {
@@ -225,11 +240,13 @@ describe("config-merger", () => {
         await writeFullConfig({
           name: "project",
           agents: [],
+          skills: [],
         });
 
         const newConfig: ProjectConfig = {
           name: "project",
           agents: ["web-developer"],
+          skills: [],
         };
 
         const result = await mergeWithExistingConfig(newConfig, {
@@ -253,6 +270,7 @@ describe("config-merger", () => {
         await writeFullConfig({
           name: "project",
           agents: ["web-developer"],
+          skills: [],
           stack: {
             "web-developer": {
               framework: "web-framework-react-existing",
@@ -264,6 +282,7 @@ describe("config-merger", () => {
         const newConfig: ProjectConfig = {
           name: "project",
           agents: ["web-developer"],
+          skills: [],
           stack: {
             "web-developer": {
               framework: "web-framework-react-new",
@@ -292,6 +311,7 @@ describe("config-merger", () => {
         await writeFullConfig({
           name: "project",
           agents: ["web-developer"],
+          skills: [],
           stack: {
             "web-developer": {
               framework: "web-framework-react",
@@ -302,6 +322,7 @@ describe("config-merger", () => {
         const newConfig: ProjectConfig = {
           name: "project",
           agents: ["web-developer", "api-developer"],
+          skills: [],
           stack: {
             "web-developer": {
               framework: "web-framework-vue",
@@ -331,11 +352,13 @@ describe("config-merger", () => {
         await writeFullConfig({
           name: "project",
           agents: ["web-developer"],
+          skills: [],
         });
 
         const newConfig: ProjectConfig = {
           name: "project",
           agents: ["web-developer"],
+          skills: [],
           stack: {
             "web-developer": {
               framework: "web-framework-react",
@@ -364,6 +387,7 @@ describe("config-merger", () => {
         stringifyYaml({
           name: "existing",
           agents: ["web-developer"],
+          skills: [],
           author: "@existing",
         }),
       );
@@ -371,6 +395,7 @@ describe("config-merger", () => {
       const newConfig: ProjectConfig = {
         name: "new-project",
         agents: ["api-developer"],
+        skills: [],
       };
 
       await mergeWithExistingConfig(newConfig, { projectDir: tempDir });
@@ -395,6 +420,7 @@ describe("config-merger", () => {
       const newConfig: ProjectConfig = {
         name: "new-project",
         agents: ["web-developer"],
+        skills: [],
       };
 
       const result = await mergeWithExistingConfig(newConfig, {

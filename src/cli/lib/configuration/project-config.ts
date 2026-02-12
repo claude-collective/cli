@@ -53,6 +53,10 @@ export async function loadProjectConfig(projectDir: string): Promise<LoadedProje
       );
       config.name = path.basename(projectDir);
     }
+    if (!config.skills) {
+      warn(`Project config at ${configPath} is missing 'skills' array — defaulting to empty`);
+      config.skills = [];
+    }
 
     verbose(`Loaded project config from ${configPath}`);
     return {

@@ -1,5 +1,5 @@
 import type { AgentName } from "./agents";
-import type { ResolvedSubcategorySkills, SkillReference } from "./skills";
+import type { ResolvedSubcategorySkills, SkillId, SkillReference } from "./skills";
 
 /** Agent configuration for compilation - contains skills for a specific agent */
 export type CompileAgentConfig = {
@@ -42,6 +42,8 @@ export type ProjectConfig = {
   description?: string;
 
   agents: AgentName[];
+
+  skills: SkillId[];
 
   /** Author handle (e.g., "@vince") */
   author?: string;

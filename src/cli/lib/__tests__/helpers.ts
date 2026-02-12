@@ -218,6 +218,7 @@ export function createMockProjectConfig(
     description: `Test project: ${name}`,
     author: "@test",
     agents: ["web-developer", "api-developer"],
+    skills,
     stack,
     ...overrides,
   };

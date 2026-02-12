@@ -350,6 +350,7 @@ export const projectConfigSchema: z.ZodType<ProjectConfig> = z.object({
   name: z.string(),
   description: z.string().optional(),
   agents: z.array(z.string() as z.ZodType<AgentName>),
+  skills: z.array(skillIdSchema),
 
   author: z.string().optional(),
   installMode: z.enum(["local", "plugin"]).optional(),
@@ -367,6 +368,7 @@ export const projectConfigLoaderSchema = z
     name: z.string().optional(),
     description: z.string().optional(),
     agents: z.array(z.string()).optional(),
+    skills: z.array(skillIdSchema).optional(),
 
     author: z.string().optional(),
     installMode: z.enum(["local", "plugin"]).optional(),

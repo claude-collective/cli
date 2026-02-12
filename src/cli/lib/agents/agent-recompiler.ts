@@ -2,7 +2,7 @@ import path from "path";
 import { glob, writeFile, ensureDir, readFile, fileExists } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { loadAllAgents, loadPluginSkills, loadProjectAgents } from "../loading";
-import { resolveAgents } from "../resolver";
+import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
 import { compileAgentForPlugin } from "../stacks";
 import { getPluginAgentsDir } from "../plugins";
 import { createLiquidEngine } from "../compiler";
@@ -17,6 +17,7 @@ import type {
   CompileConfig,
   ProjectConfig,
   SkillDefinition,
+  SkillId,
 } from "../../types";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
 
@@ -130,7 +131,8 @@ export async function recompileAgents(
   const compileAgents = {} as Record<AgentName, CompileAgentConfig>;
   for (const agentName of agentNames) {
     if (allAgents[agentName]) {
-      compileAgents[agentName] = {};
+      const agentStack = projectConfig?.stack?.[agentName];
+      compileAgents[agentName] = agentStack ? { skills: buildSkillRefsFromConfig(agentStack) } : {};
     } else {
       result.warnings.push(`Agent "${agentName}" not found in source definitions`);
     }

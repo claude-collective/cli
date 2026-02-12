@@ -304,6 +304,7 @@ describe("plugin-info", () => {
         config: {
           name: "my-local-project",
           agents: ["web-developer"],
+          skills: [],
         },
         configPath: "/project/.claude-src/config.yaml",
       });
@@ -381,6 +382,7 @@ describe("plugin-info", () => {
         config: {
           name: "",
           agents: [],
+          skills: [],
         },
         configPath: "/project/.claude-src/config.yaml",
       });
@@ -444,7 +446,7 @@ describe("plugin-info", () => {
       mockedDetectInstallation.mockResolvedValue(installation);
       mockedDirectoryExists.mockResolvedValue(true);
       mockedLoadProjectConfig.mockResolvedValue({
-        config: { name: "test", agents: [] },
+        config: { name: "test", agents: [], skills: [] },
         configPath: "/project/.claude-src/config.yaml",
       });
 

@@ -34,6 +34,7 @@ describe("installation", () => {
         config: {
           name: "my-project",
           agents: ["web-developer"],
+          skills: [],
           installMode: "local",
         },
         configPath: "/project/.claude-src/config.yaml",
@@ -58,6 +59,7 @@ describe("installation", () => {
         config: {
           name: "my-project",
           agents: ["web-developer"],
+          skills: [],
         },
         configPath: "/project/.claude/config.yaml",
       });
@@ -77,6 +79,7 @@ describe("installation", () => {
         config: {
           name: "my-project",
           agents: ["web-developer"],
+          skills: [],
           // No installMode set — should default to "local"
         },
         configPath: "/project/.claude-src/config.yaml",
@@ -120,6 +123,7 @@ describe("installation", () => {
         config: {
           name: "my-project",
           agents: ["web-developer"],
+          skills: [],
         },
         configPath: "/project/.claude-src/config.yaml",
       });
@@ -160,6 +164,7 @@ describe("installation", () => {
         config: {
           name: "my-project",
           agents: ["web-developer"],
+          skills: [],
         },
         configPath: "/project/.claude-src/config.yaml",
       });
@@ -194,6 +199,7 @@ describe("installation", () => {
         config: {
           name: "my-project",
           agents: ["web-developer"],
+          skills: [],
         },
         configPath: "/project/.claude-src/config.yaml",
       });

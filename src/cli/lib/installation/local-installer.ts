@@ -17,7 +17,7 @@ import { type CopiedSkill, copySkillsToLocalFlattened } from "../skills";
 import { mergeWithExistingConfig } from "../configuration";
 import { loadAllAgents, type SourceLoadResult } from "../loading";
 import { loadStackById, compileAgentForPlugin } from "../stacks";
-import { resolveAgents, resolveAgentSkillsFromStack } from "../resolver";
+import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
 import { createLiquidEngine } from "../compiler";
 import { generateProjectConfigFromSkills } from "../configuration";
 import { ensureDir, writeFile } from "../../utils/fs";
@@ -144,9 +144,6 @@ function setConfigMetadata(
 function buildCompileAgents(
   config: ProjectConfig,
   agents: Record<AgentName, AgentDefinition>,
-  loadedStack: Stack | null,
-  displayNameToId: Record<string, string>,
-  localSkills: Record<SkillId, LocalResolvedSkill>,
 ): Record<AgentName, CompileAgentConfig> {
   const compileAgents: Record<AgentName, CompileAgentConfig> = {} as Record<
     AgentName,
@@ -154,14 +151,8 @@ function buildCompileAgents(
   >;
   for (const agentId of config.agents) {
     if (agents[agentId]) {
-      // Phase 7: Skills come from stack's technology mappings
-      if (loadedStack) {
-        const skillRefs = resolveAgentSkillsFromStack(agentId, loadedStack, displayNameToId);
-        compileAgents[agentId] = { skills: skillRefs };
-      } else {
-        // No stack: empty skills
-        compileAgents[agentId] = {};
-      }
+      const agentStack = config.stack?.[agentId];
+      compileAgents[agentId] = agentStack ? { skills: buildSkillRefsFromConfig(agentStack) } : {};
     }
   }
   return compileAgents;
@@ -172,8 +163,6 @@ async function compileAndWriteAgents(
   agents: Record<AgentName, AgentDefinition>,
   localSkills: Record<SkillId, LocalResolvedSkill>,
   sourceResult: SourceLoadResult,
-  loadedStack: Stack | null,
-  displayNameToId: Record<string, string>,
   projectDir: string,
   agentsDir: string,
 ): Promise<AgentName[]> {
@@ -183,8 +172,6 @@ async function compileAndWriteAgents(
     localSkills,
     compileConfig,
     sourceResult.sourcePath,
-    loadedStack ?? undefined,
-    displayNameToId,
   );
 
   const compiledAgentNames: AgentName[] = [];
@@ -219,7 +206,6 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
 
   // 3. Build local skills map for resolution
   const localSkillsForResolution = buildLocalSkillsMap(copiedSkills, matrix);
-  const displayNameToId = matrix.displayNameToId || {};
 
   // 4. Load agents from both CLI and source, with source taking precedence
   const cliAgents = await loadAllAgents(PROJECT_ROOT);
@@ -228,7 +214,7 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   const agents = { ...cliAgents, ...localAgents } as Record<AgentName, AgentDefinition>;
 
   // 5. Build config
-  const { config: builtConfig, loadedStack } = await buildLocalConfig(wizardResult, sourceResult);
+  const { config: builtConfig } = await buildLocalConfig(wizardResult, sourceResult);
 
   // 6. Set metadata
   setConfigMetadata(builtConfig, wizardResult, sourceResult, sourceFlag);
@@ -245,13 +231,7 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   await writeFile(localConfigPath, configYaml);
 
   // 9. Build compile agents config
-  const compileAgentsConfig = buildCompileAgents(
-    finalConfig,
-    agents,
-    loadedStack,
-    displayNameToId,
-    localSkillsForResolution,
-  );
+  const compileAgentsConfig = buildCompileAgents(finalConfig, agents);
 
   const compileConfig: CompileConfig = {
     name: PLUGIN_NAME,
@@ -266,8 +246,6 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
     agents,
     localSkillsForResolution,
     sourceResult,
-    loadedStack,
-    displayNameToId,
     projectDir,
     localAgentsDir,
   );

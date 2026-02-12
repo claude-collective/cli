@@ -61,6 +61,20 @@ export function resolveSkillReferences(
 }
 
 // Resolve skills for an agent from a Stack definition using display-name-to-ID mappings.
+export function buildSkillRefsFromConfig(
+  agentStack: Partial<Record<Subcategory, SkillId>>,
+): SkillReference[] {
+  const skillRefs: SkillReference[] = [];
+  for (const [subcategory, skillId] of typedEntries<Subcategory, SkillId>(agentStack)) {
+    skillRefs.push({
+      id: skillId,
+      usage: `when working with ${subcategory}`,
+      preloaded: KEY_SUBCATEGORIES.has(subcategory),
+    });
+  }
+  return skillRefs;
+}
+
 export function resolveAgentSkillsFromStack(
   agentName: AgentName,
   stack: Stack,

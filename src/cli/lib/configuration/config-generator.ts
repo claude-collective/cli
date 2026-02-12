@@ -63,6 +63,7 @@ export function generateProjectConfigFromSkills(
   const config: ProjectConfig = {
     name,
     agents: Array.from(neededAgents).sort(),
+    skills: [...selectedSkillIds],
   };
 
   // Only include stack if there are any mappings
