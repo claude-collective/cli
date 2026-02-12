@@ -1,4 +1,5 @@
 import { spawn } from "child_process";
+import { warn } from "./logger";
 
 export type ExecResult = {
   stdout: string;
@@ -81,7 +82,20 @@ export async function claudePluginMarketplaceList(): Promise<MarketplaceInfo[]> 
       return [];
     }
 
-    return JSON.parse(result.stdout);
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(result.stdout);
+    } catch {
+      warn("Failed to parse marketplace list output as JSON");
+      return [];
+    }
+
+    if (!Array.isArray(parsed)) {
+      warn("Unexpected marketplace list format — expected an array");
+      return [];
+    }
+
+    return parsed as MarketplaceInfo[];
   } catch {
     return [];
   }
