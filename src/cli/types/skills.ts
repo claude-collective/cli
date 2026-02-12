@@ -3,8 +3,8 @@ import type { ModelName, Subcategory } from "./matrix";
 /** Prefix segments used in skill IDs, including non-domain prefixes (infra, meta, security) */
 export type SkillIdPrefix = "web" | "api" | "cli" | "mobile" | "infra" | "meta" | "security";
 
-/** Skill ID format: prefix-subcategory-name segments in kebab-case */
-export type SkillId = `${SkillIdPrefix}-${string}`;
+/** Skill ID format: prefix-subcategory-name segments in kebab-case (at least 3 segments) */
+export type SkillId = `${SkillIdPrefix}-${string}-${string}`;
 
 /** Short human-readable labels resolved to canonical SkillId at the YAML parse boundary */
 export type SkillDisplayName =

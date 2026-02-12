@@ -21,6 +21,7 @@ import {
   mergeMatrixWithSkills,
 } from "../matrix";
 import { fetchFromSource } from "./source-fetcher";
+import { loadSkillsFromAllSources } from "./multi-source-loader";
 import { loadStacks, resolveAgentConfigToSkills } from "../stacks";
 
 export type SourceLoadOptions = {
@@ -66,6 +67,9 @@ export async function loadSkillsMatrixFromSource(
     );
     result.matrix = mergeLocalSkillsIntoMatrix(result.matrix, localSkillsResult);
   }
+
+  // Annotate skills with available sources (public, local, plugin, private)
+  await loadSkillsFromAllSources(result.matrix, sourceConfig, resolvedProjectDir);
 
   // Run matrix health check to surface referential integrity issues
   checkMatrixHealth(result.matrix);

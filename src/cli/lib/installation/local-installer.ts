@@ -13,7 +13,7 @@ import type {
   Stack,
 } from "../../types";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
-import { type CopiedSkill, copySkillsToLocalFlattened } from "../skills";
+import { type CopiedSkill, copySkillsToLocalFlattened, archiveLocalSkill } from "../skills";
 import { mergeWithExistingConfig } from "../configuration";
 import { loadAllAgents, type SourceLoadResult } from "../loading";
 import { loadStackById, compileAgentForPlugin } from "../stacks";
@@ -21,6 +21,7 @@ import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
 import { createLiquidEngine } from "../compiler";
 import { generateProjectConfigFromSkills } from "../configuration";
 import { ensureDir, writeFile } from "../../utils/fs";
+import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, LOCAL_SKILLS_PATH, PROJECT_ROOT } from "../../consts";
 
@@ -196,7 +197,16 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   await ensureDir(localAgentsDir);
   await ensureDir(path.dirname(localConfigPath));
 
-  // 2. Copy selected skills
+  // 2. Archive local skills that are switching to a different source
+  for (const skillId of wizardResult.selectedSkills) {
+    const selectedSource = wizardResult.sourceSelections?.[skillId];
+    if (selectedSource && selectedSource !== "public") {
+      verbose(`Using alternate source '${selectedSource}' for ${skillId}`);
+      await archiveLocalSkill(projectDir, skillId);
+    }
+  }
+
+  // 3. Copy selected skills
   const copiedSkills = await copySkillsToLocalFlattened(
     wizardResult.selectedSkills,
     localSkillsDir,
@@ -204,33 +214,32 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
     sourceResult,
   );
 
-  // 3. Build local skills map for resolution
+  // 4. Build local skills map for resolution
   const localSkillsForResolution = buildLocalSkillsMap(copiedSkills, matrix);
-
-  // 4. Load agents from both CLI and source, with source taking precedence
+  // 5. Load agents from both CLI and source, with source taking precedence
   const cliAgents = await loadAllAgents(PROJECT_ROOT);
   const localAgents = await loadAllAgents(sourceResult.sourcePath);
   // Boundary cast: loadAllAgents returns Record<string, AgentDefinition>, agent dirs are AgentName by convention
   const agents = { ...cliAgents, ...localAgents } as Record<AgentName, AgentDefinition>;
 
-  // 5. Build config
+  // 6. Build config
   const { config: builtConfig } = await buildLocalConfig(wizardResult, sourceResult);
 
-  // 6. Set metadata
+  // 7. Set metadata
   setConfigMetadata(builtConfig, wizardResult, sourceResult, sourceFlag);
 
-  // 7. Merge with existing config
+  // 8. Merge with existing config
   const mergeResult = await mergeWithExistingConfig(builtConfig, { projectDir });
   const finalConfig = mergeResult.config;
 
-  // 8. Write config
+  // 9. Write config
   const configYaml = stringifyYaml(finalConfig, {
     indent: YAML_INDENT,
     lineWidth: YAML_LINE_WIDTH,
   });
   await writeFile(localConfigPath, configYaml);
 
-  // 9. Build compile agents config
+  // 10. Build compile agents config
   const compileAgentsConfig = buildCompileAgents(finalConfig, agents);
 
   const compileConfig: CompileConfig = {
@@ -240,7 +249,7 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
     agents: compileAgentsConfig,
   };
 
-  // 10. Compile and write agents
+  // 11. Compile and write agents
   const compiledAgentNames = await compileAndWriteAgents(
     compileConfig,
     agents,

@@ -14,6 +14,7 @@ function createWizardResult(overrides?: Partial<WizardResultV2>): WizardResultV2
     selectedSkills: [],
     selectedStackId: null,
     domainSelections: {},
+    sourceSelections: {},
     expertMode: false,
     installMode: "local",
     cancelled: false,

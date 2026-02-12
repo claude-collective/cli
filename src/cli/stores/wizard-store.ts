@@ -41,6 +41,9 @@ export type WizardState = {
   sourceSelections: Partial<Record<SkillId, string>>;
   customizeSources: boolean;
 
+  showSettings: boolean;
+  enabledSources: Record<string, boolean>;
+
   history: WizardStep[];
 
   setStep: (step: WizardStep) => void;
@@ -72,6 +75,8 @@ export type WizardState = {
   toggleInstallMode: () => void;
   setSourceSelection: (skillId: SkillId, sourceId: string) => void;
   setCustomizeSources: (customize: boolean) => void;
+  toggleSettings: () => void;
+  setEnabledSources: (sources: Record<string, boolean>) => void;
   goBack: () => void;
   reset: () => void;
 
@@ -95,6 +100,8 @@ const createInitialState = () => ({
   installMode: "local" as "plugin" | "local",
   sourceSelections: {} as Partial<Record<SkillId, string>>,
   customizeSources: false,
+  showSettings: false,
+  enabledSources: {} as Record<string, boolean>,
   history: [] as WizardStep[],
 });
 
@@ -272,6 +279,10 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     })),
 
   setCustomizeSources: (customize) => set({ customizeSources: customize }),
+
+  toggleSettings: () => set((state) => ({ showSettings: !state.showSettings })),
+
+  setEnabledSources: (sources) => set({ enabledSources: sources }),
 
   goBack: () =>
     set((state) => {

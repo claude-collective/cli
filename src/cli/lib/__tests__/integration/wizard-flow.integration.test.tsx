@@ -50,15 +50,14 @@ describe("Wizard integration", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Step 3: Build - now goes directly to build (pre-populated from stack)
-      // Press "A" to accept defaults and skip to sources
+      // Press "A" to accept defaults and skip to confirm
       await stdin.write("A");
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Step 4: Sources - should show source selection
-      expect(lastFrame()).toContain("recommended");
-      expect(lastFrame()).toContain("Sources");
+      // Step 4: Confirm - sources is skipped on defaults path
+      expect(lastFrame()).toContain("Confirm");
 
-      // Complete the wizard (ENTER on sources triggers completion)
+      // Complete the wizard (ENTER on confirm triggers completion)
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
@@ -72,7 +71,7 @@ describe("Wizard integration", () => {
       expect(result.cancelled).toBe(false);
     });
 
-    it("should show sources step after accepting defaults", async () => {
+    it("should skip sources step and go to confirm after accepting defaults", async () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
 
@@ -83,7 +82,7 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Navigate through: approach -> stack -> build -> [A] accept defaults -> sources
+      // Navigate through: approach -> stack -> build -> [A] accept defaults -> confirm
       await stdin.write(ENTER); // Stack approach
       await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER); // Select first stack (card UI, already focused)
@@ -91,13 +90,13 @@ describe("Wizard integration", () => {
       await stdin.write("A"); // Accept defaults
       await delay(STEP_TRANSITION_DELAY_MS);
 
-      // Should be on sources step
+      // Should skip sources and go directly to confirm
       const state = useWizardStore.getState();
-      expect(state.step).toBe("sources");
+      expect(state.step).toBe("confirm");
 
-      // Verify sources step renders StepRefine content
+      // Verify confirm step renders
       const frame = lastFrame();
-      expect(frame).toContain("Customize skill sources");
+      expect(frame).toContain("Confirm");
     });
   });
 
@@ -888,6 +887,7 @@ describe("Wizard integration", () => {
       expect(result).toHaveProperty("selectedSkills");
       expect(result).toHaveProperty("selectedStackId");
       expect(result).toHaveProperty("domainSelections");
+      expect(result).toHaveProperty("sourceSelections");
       expect(result).toHaveProperty("expertMode");
       expect(result).toHaveProperty("installMode");
       expect(result).toHaveProperty("cancelled");

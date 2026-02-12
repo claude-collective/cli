@@ -64,8 +64,8 @@ describe("resolveAlias", () => {
 
   it("should return unchanged if alias not found", () => {
     const matrix = createMatrix({}, {});
-    const result = resolveAlias("web-unknown", matrix);
-    expect(result).toBe("web-unknown");
+    const result = resolveAlias("web-test-unknown", matrix);
+    expect(result).toBe("web-test-unknown");
   });
 });
 

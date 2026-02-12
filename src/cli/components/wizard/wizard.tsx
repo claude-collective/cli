@@ -8,7 +8,8 @@ import { StepApproach } from "./step-approach.js";
 import { StepStack } from "./step-stack.js";
 import { StepBuild } from "./step-build.js";
 import { StepConfirm } from "./step-confirm.js";
-import { StepRefine } from "./step-refine.js";
+import { StepSources } from "./step-sources.js";
+import { StepSettings } from "./step-settings.js";
 import { resolveAlias, validateSelection } from "../../lib/matrix/index.js";
 import type { Domain, DomainSelections, MergedSkillsMatrix, SkillId } from "../../types/index.js";
 import { getStackName } from "./utils.js";
@@ -17,6 +18,7 @@ export type WizardResultV2 = {
   selectedSkills: SkillId[];
   selectedStackId: string | null;
   domainSelections: DomainSelections;
+  sourceSelections: Partial<Record<SkillId, string>>;
   expertMode: boolean;
   installMode: "plugin" | "local";
   cancelled: boolean;
@@ -34,6 +36,7 @@ type WizardProps = {
   version?: string;
   initialStep?: WizardStep;
   installedSkillIds?: SkillId[];
+  projectDir?: string;
 };
 
 function getParentDomain(domain: Domain, matrix: MergedSkillsMatrix): Domain | undefined {
@@ -43,7 +46,7 @@ function getParentDomain(domain: Domain, matrix: MergedSkillsMatrix): Domain | u
 
 const MIN_TERMINAL_WIDTH = 80;
 
-export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, version, initialStep, installedSkillIds }) => {
+export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, version, initialStep, installedSkillIds, projectDir }) => {
   const store = useWizardStore();
   const { exit } = useApp();
   const { stdout } = useStdout();
@@ -62,6 +65,9 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
   });
 
   useInput((input, key) => {
+    // Disable global hotkeys when settings overlay is active
+    if (store.showSettings) return;
+
     if (key.escape) {
       if (store.step === "approach") {
         onCancel();
@@ -77,7 +83,13 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
     // Accept defaults shortcut (stack path only, during build step)
     if ((input === "a" || input === "A") && store.step === "build" && store.selectedStackId) {
       store.setStackAction("defaults");
-      store.setStep("sources");
+      store.setStep("confirm");
+      return;
+    }
+
+    // Settings overlay (sources step only)
+    if ((input === "g" || input === "G") && store.step === "sources") {
+      store.toggleSettings();
       return;
     }
 
@@ -127,6 +139,7 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
       selectedSkills: allSkills,
       selectedStackId: store.selectedStackId,
       domainSelections: store.domainSelections,
+      sourceSelections: store.sourceSelections,
       expertMode: store.expertMode,
       installMode: store.installMode,
       cancelled: false,
@@ -170,6 +183,7 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
             showDescriptions={store.showDescriptions}
             expertMode={store.expertMode}
             parentDomainSelections={parentDomainSelections}
+            installedSkillIds={installedSkillIds}
             onToggle={(subcategoryId, techId) => {
               const domain: Domain = store.getCurrentDomain() || "web";
               const cat = matrix.categories[subcategoryId];
@@ -192,20 +206,25 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
       }
 
       case "sources": {
-        const selectedCount = store.getAllSelectedTechnologies().length;
+        if (store.showSettings) {
+          return (
+            <StepSettings
+              projectDir={projectDir || process.cwd()}
+              onClose={() => store.toggleSettings()}
+            />
+          );
+        }
         return (
-          <StepRefine
-            technologyCount={selectedCount}
-            refineAction={store.customizeSources ? "customize" : "all-recommended"}
-            onSelectAction={(action) => {
-              store.setCustomizeSources(action === "customize");
-            }}
+          <StepSources
+            matrix={matrix}
             onContinue={handleComplete}
             onBack={store.goBack}
           />
         );
       }
 
+      // NOTE: Currently unreachable — sources step calls handleComplete directly.
+      // Kept for future use when confirm step is wired back in.
       case "confirm": {
         const stackName = getStackName(store.selectedStackId, matrix);
         const selectedCount = store.getAllSelectedTechnologies().length;

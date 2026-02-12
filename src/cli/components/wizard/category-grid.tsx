@@ -12,6 +12,7 @@ export type CategoryOption = {
   stateReason?: string;
   selected: boolean;
   local?: boolean;
+  installed?: boolean;
 };
 
 export type CategoryRow = {
@@ -192,6 +193,9 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked }) => {
           <>
             <Text backgroundColor="gray"> L </Text>{" "}
           </>
+        )}
+        {option.installed && (
+          <Text dimColor>✓ </Text>
         )}
         {option.label}{" "}
       </Text>

@@ -126,6 +126,12 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({ version, children })
           values={["P"]}
           isActive={store.installMode === "plugin"}
         />
+        <DefinitionItem
+          label="Settings"
+          values={["G"]}
+          isVisible={store.step === "sources"}
+          isActive={store.showSettings}
+        />
       </Box>
       <WizardFooter />
     </Box>

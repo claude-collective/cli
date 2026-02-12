@@ -209,6 +209,10 @@ export type ResolvedSkill = {
   local?: boolean;
   /** Relative path from project root for local skills */
   localPath?: string;
+  /** All known sources that provide this skill */
+  availableSources?: SkillSource[];
+  /** Currently active/installed source (if any) */
+  activeSource?: SkillSource;
 };
 
 /** Skill-to-skill relationship with reason */
@@ -246,6 +250,24 @@ export type ResolvedStack = {
   /** Flat list of all skill IDs in this stack */
   allSkillIds: SkillId[];
   philosophy: string;
+};
+
+/** Source type classification for skill provenance (where the skill comes from) */
+export type SkillSourceType = "public" | "private" | "local";
+
+/** A single source from which a skill can be obtained */
+export type SkillSource = {
+  /** Source identifier: "public", marketplace name, "local" */
+  name: string;
+  type: SkillSourceType;
+  /** Source URL for remote sources (e.g., "github:acme-corp/claude-skills") */
+  url?: string;
+  /** Skill content version from metadata.yaml */
+  version?: string;
+  /** Whether this source's version is currently installed on disk */
+  installed: boolean;
+  /** How the skill was installed on disk (separate from provenance) */
+  installMode?: "plugin" | "local";
 };
 
 /** Skill option as displayed in the wizard, computed based on current selections */

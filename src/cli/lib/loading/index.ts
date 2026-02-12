@@ -26,3 +26,5 @@ export {
   getCachedDefaults,
   clearDefaultsCache,
 } from "./defaults-loader";
+
+export { loadSkillsFromAllSources } from "./multi-source-loader";

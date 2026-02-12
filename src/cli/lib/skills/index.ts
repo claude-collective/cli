@@ -30,3 +30,5 @@ export {
 } from "./skill-plugin-compiler";
 
 export { type LocalSkillDiscoveryResult, discoverLocalSkills } from "./local-skill-loader";
+
+export { archiveLocalSkill, restoreArchivedSkill, hasArchivedSkill } from "./source-switcher";

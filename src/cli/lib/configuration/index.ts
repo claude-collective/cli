@@ -33,3 +33,5 @@ export {
   loadProjectConfig,
   validateProjectConfig,
 } from "./project-config";
+
+export { type SourceSummary, addSource, removeSource, getSourceSummary } from "./source-manager";

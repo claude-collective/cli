@@ -28,6 +28,8 @@ import type {
   SkillFrontmatter,
   SkillId,
   SkillMetadataConfig,
+  SkillSource,
+  SkillSourceType,
   SkillsMatrixConfig,
   Stack,
   StackAgentConfig,
@@ -44,6 +46,23 @@ export const domainSchema = z.enum([
   "mobile",
   "shared",
 ]) as z.ZodType<Domain>;
+
+export const skillSourceTypeSchema = z.enum([
+  "public",
+  "private",
+  "local",
+]) as z.ZodType<SkillSourceType>;
+
+export const skillSourceSchema = z
+  .object({
+    name: z.string(),
+    type: skillSourceTypeSchema,
+    url: z.string().optional(),
+    version: z.string().optional(),
+    installed: z.boolean(),
+    installMode: z.enum(["plugin", "local"]).optional(),
+  })
+  .passthrough();
 
 export const subcategorySchema = z.enum([
   // Web
@@ -243,7 +262,7 @@ export const skillDisplayNameSchema = z.enum([
   "context-management",
 ]) as z.ZodType<SkillDisplayName>;
 
-const SKILL_ID_PATTERN = /^(web|api|cli|mobile|infra|meta|security)-.+$/;
+const SKILL_ID_PATTERN = /^(web|api|cli|mobile|infra|meta|security)-.+-.+$/;
 
 // Regex-based since Zod cannot express template literal types natively
 export const skillIdSchema = z

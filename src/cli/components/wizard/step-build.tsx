@@ -24,6 +24,8 @@ export type StepBuildProps = {
   expertMode: boolean;
   /** For framework-first filtering on sub-domains (e.g., web-extras inherits from web) */
   parentDomainSelections?: SubcategorySelections;
+  /** Skill IDs already installed on disk, shown with a dimmed checkmark */
+  installedSkillIds?: SkillId[];
   onToggle: (subcategoryId: Subcategory, technologyId: SkillId) => void;
   onFocusChange: (row: number, col: number) => void;
   onToggleDescriptions: () => void;
@@ -136,6 +138,7 @@ function buildCategoriesForDomain(
   expertMode: boolean,
   selections: SubcategorySelections,
   parentDomainSelections?: SubcategorySelections,
+  installedSkillIds?: SkillId[],
 ): CategoryRow[] {
   // For sub-domains (e.g., web-extras), use parent domain selections for framework checks
   const frameworkSource = parentDomainSelections ?? selections;
@@ -173,6 +176,7 @@ function buildCategoriesForDomain(
       stateReason: getStateReason(skill),
       selected: skill.selected,
       local: matrix.skills[skill.id]?.local,
+      installed: installedSkillIds?.includes(skill.id) || false,
     }));
 
     return {
@@ -225,6 +229,7 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   showDescriptions,
   expertMode,
   parentDomainSelections,
+  installedSkillIds,
   onToggle,
   onFocusChange,
   onToggleDescriptions,
@@ -240,6 +245,7 @@ export const StepBuild: React.FC<StepBuildProps> = ({
     expertMode,
     selections,
     parentDomainSelections,
+    installedSkillIds,
   );
 
   useInput((_input, key) => {

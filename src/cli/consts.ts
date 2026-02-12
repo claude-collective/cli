@@ -29,6 +29,7 @@ export const CACHE_DIR = path.join(os.homedir(), ".cache", "claude-collective");
 export const SKILLS_MATRIX_PATH = "config/skills-matrix.yaml";
 export const SKILLS_DIR_PATH = "src/skills";
 export const LOCAL_SKILLS_PATH = ".claude/skills";
+export const ARCHIVED_SKILLS_DIR_NAME = "_archived";
 
 export const DIRS = {
   agents: "src/agents",

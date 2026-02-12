@@ -50,13 +50,13 @@ const defaultCategories: CategoryRow[] = [
     "framework",
     "Framework",
     [
-      createOption("web-react", "React", {
+      createOption("web-test-react", "React", {
         state: "recommended",
         stateReason: "Popular choice",
       }),
-      createOption("web-vue", "Vue"),
-      createOption("web-angular", "Angular"),
-      createOption("web-svelte", "Svelte"),
+      createOption("web-test-vue", "Vue"),
+      createOption("web-test-angular", "Angular"),
+      createOption("web-test-svelte", "Svelte"),
     ],
     { required: true },
   ),
@@ -65,27 +65,27 @@ const defaultCategories: CategoryRow[] = [
     "Styling",
     [
       createOption("web-scss-mod", "SCSS Modules", { selected: true }),
-      createOption("web-tailwind", "Tailwind", { state: "recommended" }),
-      createOption("web-styled", "Styled Components"),
-      createOption("web-vanilla", "Vanilla CSS"),
+      createOption("web-test-tailwind", "Tailwind", { state: "recommended" }),
+      createOption("web-test-styled", "Styled Components"),
+      createOption("web-test-vanilla", "Vanilla CSS"),
     ],
     { required: true },
   ),
   createCategory("client-state", "Client State", [
-    createOption("web-zustand", "Zustand", { state: "recommended" }),
-    createOption("web-jotai", "Jotai"),
-    createOption("web-redux", "Redux", {
+    createOption("web-test-zustand", "Zustand", { state: "recommended" }),
+    createOption("web-test-jotai", "Jotai"),
+    createOption("web-test-redux", "Redux", {
       state: "discouraged",
       stateReason: "Complex for most apps",
     }),
-    createOption("web-mobx", "MobX"),
+    createOption("web-test-mobx", "MobX"),
   ]),
   createCategory("server-state", "Server State", [
     createOption("web-react-query", "React Query", { selected: true }),
-    createOption("web-swr", "SWR"),
-    createOption("web-apollo", "Apollo"),
+    createOption("web-test-swr", "SWR"),
+    createOption("web-test-apollo", "Apollo"),
   ]),
-  createCategory("analytics", "Analytics", [createOption("web-posthog", "PostHog")]),
+  createCategory("analytics", "Analytics", [createOption("web-test-posthog", "PostHog")]),
 ];
 
 const categoriesWithFramework: CategoryRow[] = [
@@ -93,14 +93,14 @@ const categoriesWithFramework: CategoryRow[] = [
     "framework",
     "Framework",
     [
-      createOption("web-react", "React", {
+      createOption("web-test-react", "React", {
         state: "recommended",
         stateReason: "Popular choice",
         selected: true, // Framework selected
       }),
-      createOption("web-vue", "Vue"),
-      createOption("web-angular", "Angular"),
-      createOption("web-svelte", "Svelte"),
+      createOption("web-test-vue", "Vue"),
+      createOption("web-test-angular", "Angular"),
+      createOption("web-test-svelte", "Svelte"),
     ],
     { required: true },
   ),
@@ -109,17 +109,17 @@ const categoriesWithFramework: CategoryRow[] = [
     "Styling",
     [
       createOption("web-scss-mod", "SCSS Modules"),
-      createOption("web-tailwind", "Tailwind", { state: "recommended" }),
-      createOption("web-styled", "Styled Components"),
-      createOption("web-vanilla", "Vanilla CSS"),
+      createOption("web-test-tailwind", "Tailwind", { state: "recommended" }),
+      createOption("web-test-styled", "Styled Components"),
+      createOption("web-test-vanilla", "Vanilla CSS"),
     ],
     { required: true },
   ),
   createCategory("client-state", "Client State", [
-    createOption("web-zustand", "Zustand", { state: "recommended" }),
-    createOption("web-jotai", "Jotai"),
-    createOption("web-redux", "Redux", { state: "discouraged" }),
-    createOption("web-mobx", "MobX"),
+    createOption("web-test-zustand", "Zustand", { state: "recommended" }),
+    createOption("web-test-jotai", "Jotai"),
+    createOption("web-test-redux", "Redux", { state: "discouraged" }),
+    createOption("web-test-mobx", "MobX"),
   ]),
 ];
 
@@ -253,8 +253,8 @@ describe("CategoryGrid component", () => {
     it("should show disabled options with dimmed styling", () => {
       const categories: CategoryRow[] = [
         createCategory("testing", "Test", [
-          createOption("web-opt1", "Option 1"),
-          createOption("web-opt2", "Option 2", { state: "disabled" }),
+          createOption("web-test-opt1", "Option 1"),
+          createOption("web-test-opt2", "Option 2", { state: "disabled" }),
         ]),
       ];
 
@@ -295,10 +295,10 @@ describe("CategoryGrid component", () => {
     it("should not lock any sections when no framework category exists", () => {
       const categoriesNoFramework: CategoryRow[] = [
         createCategory("styling", "Styling", [
-          createOption("web-scss", "SCSS"),
-          createOption("web-tailwind", "Tailwind"),
+          createOption("web-test-scss", "SCSS"),
+          createOption("web-test-tailwind", "Tailwind"),
         ]),
-        createCategory("client-state", "State", [createOption("web-zustand", "Zustand")]),
+        createCategory("client-state", "State", [createOption("web-test-zustand", "Zustand")]),
       ];
 
       const { lastFrame, unmount } = renderGrid({
@@ -565,7 +565,7 @@ describe("CategoryGrid component", () => {
       await stdin.write(" "); // Space
       await delay(INPUT_DELAY_MS);
 
-      expect(onToggle).toHaveBeenCalledWith("framework", "web-vue");
+      expect(onToggle).toHaveBeenCalledWith("framework", "web-test-vue");
     });
 
     it("should call onToggle when pressing space on a selected option", async () => {
@@ -575,7 +575,7 @@ describe("CategoryGrid component", () => {
         createCategory(
           "framework",
           "Framework",
-          [createOption("web-react", "React", { selected: true }), createOption("web-vue", "Vue")],
+          [createOption("web-test-react", "React", { selected: true }), createOption("web-test-vue", "Vue")],
           { required: true },
         ),
       ];
@@ -592,15 +592,15 @@ describe("CategoryGrid component", () => {
       await stdin.write(" ");
       await delay(INPUT_DELAY_MS);
 
-      expect(onToggle).toHaveBeenCalledWith("framework", "web-react");
+      expect(onToggle).toHaveBeenCalledWith("framework", "web-test-react");
     });
 
     it("should NOT call onToggle when pressing space on a disabled option", async () => {
       const onToggle = vi.fn();
       const categories: CategoryRow[] = [
         createCategory("testing", "Test", [
-          createOption("web-opt1", "Option 1", { state: "disabled" }),
-          createOption("web-opt2", "Option 2"),
+          createOption("web-test-opt1", "Option 1", { state: "disabled" }),
+          createOption("web-test-opt2", "Option 2"),
         ]),
       ];
 
@@ -644,9 +644,9 @@ describe("CategoryGrid component", () => {
       const onFocusChange = vi.fn();
       const categories: CategoryRow[] = [
         createCategory("testing", "Test", [
-          createOption("web-opt1", "Option 1"),
-          createOption("web-opt2", "Option 2", { state: "disabled" }),
-          createOption("web-opt3", "Option 3"),
+          createOption("web-test-opt1", "Option 1"),
+          createOption("web-test-opt2", "Option 2", { state: "disabled" }),
+          createOption("web-test-opt3", "Option 3"),
         ]),
       ];
 
@@ -672,9 +672,9 @@ describe("CategoryGrid component", () => {
       const onFocusChange = vi.fn();
       const categories: CategoryRow[] = [
         createCategory("testing", "Test", [
-          createOption("web-opt1", "Option 1"),
-          createOption("web-opt2", "Option 2", { state: "disabled" }),
-          createOption("web-opt3", "Option 3"),
+          createOption("web-test-opt1", "Option 1"),
+          createOption("web-test-opt2", "Option 2", { state: "disabled" }),
+          createOption("web-test-opt3", "Option 3"),
         ]),
       ];
 
@@ -700,8 +700,8 @@ describe("CategoryGrid component", () => {
       const onFocusChange = vi.fn();
       const categories: CategoryRow[] = [
         createCategory("testing", "Test", [
-          createOption("web-opt1", "Option 1", { state: "disabled" }),
-          createOption("web-opt2", "Option 2", { state: "disabled" }),
+          createOption("web-test-opt1", "Option 1", { state: "disabled" }),
+          createOption("web-test-opt2", "Option 2", { state: "disabled" }),
         ]),
       ];
 
@@ -861,7 +861,7 @@ describe("CategoryGrid component", () => {
   describe("edge cases", () => {
     it("should handle single category", () => {
       const categories: CategoryRow[] = [
-        createCategory("forms", "Single Category", [createOption("web-opt1", "Option 1")]),
+        createCategory("forms", "Single Category", [createOption("web-test-opt1", "Option 1")]),
       ];
 
       const { lastFrame, unmount } = renderGrid({ categories });
@@ -874,7 +874,7 @@ describe("CategoryGrid component", () => {
 
     it("should handle single option in category", () => {
       const categories: CategoryRow[] = [
-        createCategory("forms", "Single", [createOption("web-only", "Only Option")]),
+        createCategory("forms", "Single", [createOption("web-test-only", "Only Option")]),
       ];
 
       const { lastFrame, unmount } = renderGrid({ categories });
@@ -885,7 +885,7 @@ describe("CategoryGrid component", () => {
     });
 
     it("should handle category with many options (flows naturally)", () => {
-      const options = Array.from({ length: 10 }, (_, i) => createOption(`web-opt${i}`, `Option ${i}`));
+      const options = Array.from({ length: 10 }, (_, i) => createOption(`web-test-opt${i}`, `Option ${i}`));
       const categories: CategoryRow[] = [createCategory("mocking", "Many Options", options)];
 
       const { lastFrame, unmount } = renderGrid({ categories });
@@ -901,8 +901,8 @@ describe("CategoryGrid component", () => {
     it("should handle long option labels", () => {
       const categories: CategoryRow[] = [
         createCategory("i18n", "Long Labels", [
-          createOption("web-long1", "Very Long Option Name"),
-          createOption("web-long2", "Another Long Name"),
+          createOption("web-test-long1", "Very Long Option Name"),
+          createOption("web-test-long2", "Another Long Name"),
         ]),
       ];
 
@@ -917,14 +917,14 @@ describe("CategoryGrid component", () => {
     it("should handle categories with different option counts", () => {
       const categories: CategoryRow[] = [
         createCategory("framework", "Category 1", [
-          createOption("web-opt1", "Option 1"),
-          createOption("web-opt2", "Option 2"),
+          createOption("web-test-opt1", "Option 1"),
+          createOption("web-test-opt2", "Option 2"),
         ]),
-        createCategory("styling", "Category 2", [createOption("web-opt3", "Option 3")]),
+        createCategory("styling", "Category 2", [createOption("web-test-opt3", "Option 3")]),
         createCategory("client-state", "Category 3", [
-          createOption("web-opt4", "Option 4"),
-          createOption("web-opt5", "Option 5"),
-          createOption("web-opt6", "Option 6"),
+          createOption("web-test-opt4", "Option 4"),
+          createOption("web-test-opt5", "Option 5"),
+          createOption("web-test-opt6", "Option 6"),
         ]),
       ];
 
@@ -946,13 +946,13 @@ describe("CategoryGrid component", () => {
           "framework",
           "Framework",
           [
-            createOption("web-opt1", "Option 1", { selected: true }), // Framework selected
-            createOption("web-opt2", "Option 2"),
-            createOption("web-opt3", "Option 3"),
+            createOption("web-test-opt1", "Option 1", { selected: true }), // Framework selected
+            createOption("web-test-opt2", "Option 2"),
+            createOption("web-test-opt3", "Option 3"),
           ],
           { required: true },
         ),
-        createCategory("styling", "Category 2", [createOption("web-opt4", "Option 4")]),
+        createCategory("styling", "Category 2", [createOption("web-test-opt4", "Option 4")]),
       ];
 
       const { stdin, unmount } = renderGrid({
@@ -969,6 +969,69 @@ describe("CategoryGrid component", () => {
 
       // Should move to row 1, and col should be clamped to 0 (only option)
       expect(onFocusChange).toHaveBeenCalledWith(1, 0);
+    });
+  });
+
+  describe("installed indicator", () => {
+    it("should show checkmark for installed skill", () => {
+      const categories: CategoryRow[] = [
+        createCategory("forms", "Forms", [
+          createOption("web-test-opt1", "Option 1", { installed: true }),
+        ]),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ categories });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("✓");
+      expect(output).toContain("Option 1");
+    });
+
+    it("should NOT show checkmark for non-installed skill", () => {
+      const categories: CategoryRow[] = [
+        createCategory("forms", "Forms", [
+          createOption("web-test-opt1", "Option 1"),
+        ]),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ categories });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).not.toContain("✓");
+      expect(output).toContain("Option 1");
+    });
+
+    it("should show both checkmark and cyan styling when installed and selected", () => {
+      const categories: CategoryRow[] = [
+        createCategory("forms", "Forms", [
+          createOption("web-test-opt1", "Option 1", { installed: true, selected: true }),
+        ]),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ categories });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("✓");
+      expect(output).toContain("Option 1");
+    });
+
+    it("should show both L badge and checkmark when local and installed", () => {
+      const categories: CategoryRow[] = [
+        createCategory("forms", "Forms", [
+          createOption("web-test-opt1", "Option 1", { local: true, installed: true }),
+        ]),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ categories });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("L");
+      expect(output).toContain("✓");
+      expect(output).toContain("Option 1");
     });
   });
 });
