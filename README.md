@@ -31,29 +31,31 @@ requires node 18+ and [Claude Code](https://docs.anthropic.com/en/docs/claude-co
 
 ## commands
 
-```bash
-cc init              # interactive setup - pick skills, configure agents
-cc edit              # modify your skill selection
-cc compile           # recompile agents after changes
-cc list              # show what's installed
-cc config            # manage settings
-cc validate          # check your setup is correct
-cc new skill         # create a custom skill
-cc new agent         # create a custom agent
-cc import skill      # import a skill from a remote source
-cc update            # update local skills from source
-cc uninstall         # remove Claude Collective from project
-cc doctor            # diagnose setup issues
-cc eject             # eject skills/agent partials for customization
-cc build marketplace # generate marketplace.json
-cc build plugins     # build plugins
-cc build stack       # build stacks
-cc version           # show/manage versions
-cc diff              # show skill differences
-cc search            # search for skills
-cc info              # show skill information
-cc outdated          # check outdated skills
-```
+| command                | what it does                                                  |
+| ---------------------- | ------------------------------------------------------------- |
+| `init`                 | interactive setup - pick skills, configure agents             |
+| `edit`                 | modify your skill selection                                   |
+| `compile`              | recompile agents after changes                                |
+| `update`               | update local skills from source                               |
+| `list`                 | show what's installed                                         |
+| `doctor`               | diagnose setup issues                                         |
+| `search`               | search for skills                                             |
+| `info <skill>`         | show skill details                                            |
+| `diff`                 | show skill differences vs source                              |
+| `outdated`             | check for outdated skills                                     |
+| `validate`             | check your setup is correct                                   |
+| `new skill`            | create a custom skill                                         |
+| `new agent`            | create a custom agent                                         |
+| `import skill`         | import a skill from a remote source                           |
+| `eject`                | eject skills/agent partials for customization                 |
+| `uninstall`            | remove Claude Collective from project                         |
+| `config`               | manage settings (show, get, set-project, unset-project, path) |
+| `version`              | show/manage plugin versions (show, set, bump)                 |
+| `build marketplace`    | generate marketplace.json                                     |
+| `build plugins`        | build individual skill plugins                                |
+| `build stack`          | build a stack plugin                                          |
+
+every command supports `--dry-run` and `--source` flags. run `npx @claude-collective/cli <command> --help` for full options.
 
 ## how skills work
 
@@ -90,7 +92,7 @@ each stack includes agents like `web-developer`, `api-developer`, `web-reviewer`
 **as a plugin** (recommended for personal use):
 
 ```bash
-cc init
+npx @claude-collective/cli init
 # interactive wizard lets you choose: plugin mode, local mode, or marketplace setup
 # plugin mode installs to ./.claude/plugins/claude-collective/
 ```
@@ -98,7 +100,7 @@ cc init
 **locally in your project** (for team sharing):
 
 ```bash
-cc init
+npx @claude-collective/cli init
 # select "local" mode in the wizard
 # installs to ./.claude/ in your repo
 ```
@@ -106,7 +108,7 @@ cc init
 **your own marketplace** (for orgs):
 
 ```bash
-cc init
+npx @claude-collective/cli init
 # select "marketplace" mode in the wizard
 # scaffolds a marketplace you can customize and host
 ```
@@ -116,10 +118,22 @@ cc init
 if the existing skills don't cover what you need:
 
 ```bash
-cc new skill my-custom-skill
+npx @claude-collective/cli new skill my-custom-skill
 ```
 
 this scaffolds the structure. a skill is just markdown with examples - no special tooling required.
+
+## architecture
+
+built with TypeScript (strict mode), oclif for commands, Ink (React) for terminal UI, Zod for runtime validation, and Zustand for wizard state. the core pipeline:
+
+```
+source resolution → skill loading → matrix merging → wizard selection → config generation → agent compilation → installation
+```
+
+the codebase is organized into domain-driven library modules (`agents/`, `configuration/`, `loading/`, `matrix/`, `plugins/`, `skills/`, `stacks/`, `installation/`) with barrel exports. agents are compiled from YAML definitions + markdown partials through Liquid templates.
+
+see [docs/architecture.md](./docs/architecture.md) for the full reference.
 
 ## links
 
