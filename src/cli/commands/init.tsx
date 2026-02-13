@@ -9,7 +9,7 @@ import { installLocal } from "../lib/installation/index.js";
 import { checkPermissions } from "../lib/permission-checker.js";
 import { installStackAsPlugin } from "../lib/stacks/index.js";
 import { getCollectivePluginDir } from "../lib/plugins/index.js";
-import { claudePluginMarketplaceExists, claudePluginMarketplaceAdd } from "../utils/exec.js";
+import { claudePluginInstall, claudePluginMarketplaceExists, claudePluginMarketplaceAdd } from "../utils/exec.js";
 import { directoryExists } from "../utils/fs.js";
 import { CLAUDE_DIR, LOCAL_SKILLS_PATH } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
@@ -134,10 +134,23 @@ export default class Init extends BaseCommand {
             `[dry-run] Stack includes ${result.selectedSkills.length} skills and agents bundled together`,
           );
         }
+      } else if (result.installMode === "plugin" && sourceResult.marketplace) {
+        this.log(
+          `[dry-run] Would install ${result.selectedSkills.length} skills as individual plugins from "${sourceResult.marketplace}"`,
+        );
+        for (const skillId of result.selectedSkills) {
+          this.log(
+            `[dry-run]   claude plugin install ${skillId}@${sourceResult.marketplace} --scope project`,
+          );
+        }
+        const localAgentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+        this.log(`[dry-run] Would compile agents to ${localAgentsDir}`);
+        this.log(`[dry-run] Would save config to .claude-src/config.yaml`);
       } else {
         if (result.installMode === "plugin") {
-          this.log(`[dry-run] Individual skill plugin installation not yet supported`);
-          this.log(`[dry-run] Would fall back to Local Mode...`);
+          this.log(
+            `[dry-run] Plugin Mode requires a marketplace for individual skills — would fall back to Local Mode`,
+          );
         }
         const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
         const localAgentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
@@ -154,12 +167,17 @@ export default class Init extends BaseCommand {
     if (result.installMode === "plugin") {
       if (result.selectedStackId) {
         await this.installPluginMode(result, sourceResult, flags);
-        return;
+      } else if (sourceResult.marketplace) {
+        await this.installIndividualPlugins(result, sourceResult, flags);
       } else {
-        this.warn("Individual skill plugin installation not yet supported in Plugin Mode.");
+        this.warn("Plugin Mode requires a marketplace for individual skill installation.");
         this.log(`Falling back to Local Mode (copying to .claude/skills/)...`);
-        this.log("To use Plugin Mode, select a pre-built stack instead of individual skills.\n");
+        this.log(
+          "To use Plugin Mode, either select a stack or configure a marketplace source.\n",
+        );
+        await this.installLocalMode(result, sourceResult, flags);
       }
+      return;
     }
 
     await this.installLocalMode(result, sourceResult, flags);
@@ -241,6 +259,55 @@ export default class Init extends BaseCommand {
         exit: EXIT_CODES.ERROR,
       });
     }
+  }
+
+  private async installIndividualPlugins(
+    result: WizardResultV2,
+    sourceResult: SourceLoadResult,
+    flags: { source?: string },
+  ): Promise<void> {
+    const projectDir = process.cwd();
+
+    // 1. Register marketplace if needed (same pattern as installPluginMode)
+    if (sourceResult.marketplace) {
+      const marketplaceExists = await claudePluginMarketplaceExists(sourceResult.marketplace);
+
+      if (!marketplaceExists) {
+        this.log(`Registering marketplace "${sourceResult.marketplace}"...`);
+        try {
+          await claudePluginMarketplaceAdd(
+            sourceResult.sourceConfig.source,
+            sourceResult.marketplace,
+          );
+          this.log(`Registered marketplace: ${sourceResult.marketplace}`);
+        } catch (error) {
+          this.error(error instanceof Error ? error.message : "Unknown error", {
+            exit: EXIT_CODES.ERROR,
+          });
+        }
+      }
+    }
+
+    // 2. Install each skill as a native plugin
+    this.log("Installing skill plugins...");
+    for (const skillId of result.selectedSkills) {
+      const pluginRef = `${skillId}@${sourceResult.marketplace}`;
+      try {
+        await claudePluginInstall(pluginRef, "project", projectDir);
+        this.log(`  Installed ${pluginRef}`);
+      } catch (error) {
+        this.error(
+          `Failed to install plugin ${pluginRef}: ${error instanceof Error ? error.message : "Unknown error"}`,
+          { exit: EXIT_CODES.ERROR },
+        );
+      }
+    }
+
+    this.log(`Installed ${result.selectedSkills.length} skill plugins\n`);
+
+    // 3. Run local installation for config generation + agent compilation
+    // Skills are also copied to .claude/skills/ as a local reference for the compiler
+    await this.installLocalMode(result, sourceResult, flags);
   }
 
   private async installLocalMode(
