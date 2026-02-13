@@ -6,6 +6,9 @@ export type SkillIdPrefix = "web" | "api" | "cli" | "mobile" | "infra" | "meta" 
 /** Skill ID format: prefix-subcategory-name segments in kebab-case (at least 3 segments) */
 export type SkillId = `${SkillIdPrefix}-${string}-${string}`;
 
+/** Fully-qualified plugin skill reference: "plugin-name:skill-name" for Claude Code plugin resolution */
+export type PluginSkillRef = `${SkillId}:${SkillId}`;
+
 /** Short human-readable labels resolved to canonical SkillId at the YAML parse boundary */
 export type SkillDisplayName =
   // Frameworks
@@ -162,6 +165,8 @@ export type Skill = SkillDefinition & {
   usage: string;
   /** Whether skill is listed in frontmatter (Claude Code loads automatically) */
   preloaded: boolean;
+  /** Fully-qualified plugin reference (e.g., "web-framework-react:web-framework-react") for plugin mode */
+  pluginRef?: PluginSkillRef;
 };
 
 /**

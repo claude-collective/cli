@@ -6,7 +6,7 @@ import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { installLocal, type LocalInstallOptions } from "./local-installer";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import type { SourceLoadResult } from "../loading";
-import type { MergedSkillsMatrix, ProjectConfig } from "../../types";
+import type { AgentConfig, AgentName, MergedSkillsMatrix, ProjectConfig } from "../../types";
 import { createMockMatrix } from "../__tests__/helpers";
 
 function createWizardResult(overrides?: Partial<WizardResultV2>): WizardResultV2 {
@@ -59,7 +59,7 @@ vi.mock("../stacks/stacks-loader", () => ({
 
 vi.mock("../resolver", () => ({
   resolveAgents: vi.fn().mockResolvedValue({}),
-  resolveAgentSkillsFromStack: vi.fn().mockReturnValue([]),
+  buildSkillRefsFromConfig: vi.fn().mockReturnValue([]),
 }));
 
 vi.mock("../stacks/stack-plugin-compiler", () => ({
@@ -78,6 +78,11 @@ vi.mock("../configuration/config-generator", () => ({
   }),
   buildStackProperty: vi.fn().mockReturnValue({}),
 }));
+
+// Access the mock to verify installMode is passed through
+const mockCompileAgentForPlugin = vi.mocked(
+  (await import("../stacks/stack-plugin-compiler")).compileAgentForPlugin,
+);
 
 describe("local-installer", () => {
   let tempDir: string;
@@ -288,6 +293,82 @@ describe("local-installer", () => {
 
       expect(result.wasMerged).toBe(false);
       expect(result.mergedConfigPath).toBeUndefined();
+    });
+
+    it("should pass installMode to compileAgentForPlugin", async () => {
+      // resolveAgents returns one agent so compileAgentForPlugin gets called
+      const mockResolveAgents = vi.mocked((await import("../resolver")).resolveAgents);
+      // Boundary cast: test provides partial agents record; mock only needs the test agent
+      mockResolveAgents.mockResolvedValueOnce({
+        "web-developer": {
+          name: "web-developer",
+          title: "Web Dev",
+          description: "A dev",
+          tools: ["Read"],
+          skills: [],
+        },
+      } as unknown as Record<AgentName, AgentConfig>);
+
+      const matrix = createMockMatrix({});
+      const wizardResult = createWizardResult({
+        selectedSkills: ["meta-test-skill"],
+        installMode: "plugin",
+      });
+      const sourceResult = createSourceResult(matrix, tempDir);
+
+      mockCompileAgentForPlugin.mockClear();
+
+      await installLocal({
+        wizardResult,
+        sourceResult,
+        projectDir: tempDir,
+      });
+
+      // compileAgentForPlugin should have been called with installMode as the 5th arg
+      expect(mockCompileAgentForPlugin).toHaveBeenCalledWith(
+        "web-developer",
+        expect.any(Object),
+        expect.any(String),
+        expect.any(Object),
+        "plugin",
+      );
+    });
+
+    it("should pass local installMode to compileAgentForPlugin", async () => {
+      const mockResolveAgents = vi.mocked((await import("../resolver")).resolveAgents);
+      // Boundary cast: test provides partial agents record; mock only needs the test agent
+      mockResolveAgents.mockResolvedValueOnce({
+        "web-developer": {
+          name: "web-developer",
+          title: "Web Dev",
+          description: "A dev",
+          tools: ["Read"],
+          skills: [],
+        },
+      } as unknown as Record<AgentName, AgentConfig>);
+
+      const matrix = createMockMatrix({});
+      const wizardResult = createWizardResult({
+        selectedSkills: ["meta-test-skill"],
+        installMode: "local",
+      });
+      const sourceResult = createSourceResult(matrix, tempDir);
+
+      mockCompileAgentForPlugin.mockClear();
+
+      await installLocal({
+        wizardResult,
+        sourceResult,
+        projectDir: tempDir,
+      });
+
+      expect(mockCompileAgentForPlugin).toHaveBeenCalledWith(
+        "web-developer",
+        expect.any(Object),
+        expect.any(String),
+        expect.any(Object),
+        "local",
+      );
     });
   });
 });

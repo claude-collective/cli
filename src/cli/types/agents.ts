@@ -1,5 +1,5 @@
 import type { ModelName, PermissionMode } from "./matrix";
-import type { Skill, SkillId } from "./skills";
+import type { PluginSkillRef, Skill, SkillId } from "./skills";
 
 /** Valid built-in agent names derived from src/agents/ directory structure and stacks.yaml */
 export type AgentName =
@@ -118,8 +118,8 @@ export type CompiledAgentData = {
   preloadedSkills: Skill[];
   /** Skills loaded via Skill tool (metadata only) */
   dynamicSkills: Skill[];
-  /** Skill IDs for frontmatter and skill tool check */
-  preloadedSkillIds: SkillId[];
+  /** Skill IDs (local mode) or plugin refs (plugin mode) for frontmatter */
+  preloadedSkillIds: (SkillId | PluginSkillRef)[];
 };
 
 /** Paths to fetched agent definition sources (directory paths, not agent data) */

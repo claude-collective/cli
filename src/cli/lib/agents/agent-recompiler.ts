@@ -152,7 +152,13 @@ export async function recompileAgents(
 
   for (const [agentName, agent] of typedEntries<AgentName, AgentConfig>(resolvedAgents)) {
     try {
-      const output = await compileAgentForPlugin(agentName, agent, sourcePath, engine);
+      const output = await compileAgentForPlugin(
+        agentName,
+        agent,
+        sourcePath,
+        engine,
+        projectConfig?.installMode,
+      );
       await writeFile(path.join(agentsDir, `${agentName}.md`), output);
       result.compiled.push(agentName);
       verbose(`  Recompiled: ${agentName}`);

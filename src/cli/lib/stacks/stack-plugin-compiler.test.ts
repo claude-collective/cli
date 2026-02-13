@@ -3,12 +3,13 @@ import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile, readFile, stat } from "fs/promises";
 import {
+  compileAgentForPlugin,
   compileStackPlugin,
   printStackCompilationSummary,
   type CompiledStackPlugin,
 } from "./stack-plugin-compiler";
 
-import type { Stack, StackAgentConfig } from "../../types";
+import type { AgentConfig, Skill, Stack, StackAgentConfig } from "../../types";
 
 describe("stack-plugin-compiler", () => {
   let tempDir: string;
@@ -1074,6 +1075,170 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       expect(calls).not.toContain("Hooks:");
 
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe("compileAgentForPlugin - plugin-aware skill references", () => {
+    // Use the real agent.liquid template (includes dynamic skills section)
+    const realTemplateDir = path.resolve(__dirname, "../../../../src/agents/_templates");
+
+    it("should emit pluginRef format in frontmatter when installMode is plugin", async () => {
+      const { agentsDir } = await createProjectStructure();
+
+      await createAgent(agentsDir, "web-developer", {
+        title: "Frontend Developer",
+        description: "A frontend developer agent",
+        tools: ["Read", "Write"],
+        intro: "# Frontend Dev\n\nIntro.",
+        workflow: "## Workflow\n\n1. Build",
+      });
+
+      const { Liquid } = await import("liquidjs");
+      const engine = new Liquid({
+        root: [realTemplateDir],
+        extname: ".liquid",
+        strictVariables: false,
+        strictFilters: true,
+      });
+
+      const preloadedSkill: Skill = {
+        id: "web-framework-react",
+        path: "src/skills/web/framework/react",
+        description: "React patterns",
+        usage: "when working with framework",
+        preloaded: true,
+      };
+
+      const dynamicSkill: Skill = {
+        id: "web-testing-vitest",
+        path: "src/skills/web/testing/vitest",
+        description: "Vitest testing",
+        usage: "when working with testing",
+        preloaded: false,
+      };
+
+      const agent: AgentConfig = {
+        name: "web-developer",
+        title: "Frontend Developer",
+        description: "A frontend developer agent",
+        tools: ["Read", "Write"],
+        skills: [preloadedSkill, dynamicSkill],
+      };
+
+      const output = await compileAgentForPlugin(
+        "web-developer",
+        agent,
+        projectRoot,
+        engine,
+        "plugin",
+      );
+
+      // Frontmatter should contain pluginRef format
+      expect(output).toContain("web-framework-react:web-framework-react");
+      // Dynamic skill invocation should use pluginRef format
+      expect(output).toContain('skill: "web-testing-vitest:web-testing-vitest"');
+    });
+
+    it("should emit bare skill IDs when installMode is local", async () => {
+      const { agentsDir } = await createProjectStructure();
+
+      await createAgent(agentsDir, "web-developer", {
+        title: "Frontend Developer",
+        description: "A frontend developer agent",
+        tools: ["Read", "Write"],
+        intro: "# Frontend Dev\n\nIntro.",
+        workflow: "## Workflow\n\n1. Build",
+      });
+
+      const { Liquid } = await import("liquidjs");
+      const engine = new Liquid({
+        root: [realTemplateDir],
+        extname: ".liquid",
+        strictVariables: false,
+        strictFilters: true,
+      });
+
+      const preloadedSkill: Skill = {
+        id: "web-framework-react",
+        path: "src/skills/web/framework/react",
+        description: "React patterns",
+        usage: "when working with framework",
+        preloaded: true,
+      };
+
+      const dynamicSkill: Skill = {
+        id: "web-testing-vitest",
+        path: "src/skills/web/testing/vitest",
+        description: "Vitest testing",
+        usage: "when working with testing",
+        preloaded: false,
+      };
+
+      const agent: AgentConfig = {
+        name: "web-developer",
+        title: "Frontend Developer",
+        description: "A frontend developer agent",
+        tools: ["Read", "Write"],
+        skills: [preloadedSkill, dynamicSkill],
+      };
+
+      const output = await compileAgentForPlugin(
+        "web-developer",
+        agent,
+        projectRoot,
+        engine,
+        "local",
+      );
+
+      // Frontmatter should contain bare skill IDs (no colon format)
+      expect(output).toContain("web-framework-react");
+      expect(output).not.toContain("web-framework-react:web-framework-react");
+      // Dynamic skill invocation should use bare ID
+      expect(output).toContain('skill: "web-testing-vitest"');
+      expect(output).not.toContain('skill: "web-testing-vitest:web-testing-vitest"');
+    });
+
+    it("should emit bare skill IDs when installMode is undefined", async () => {
+      const { agentsDir } = await createProjectStructure();
+
+      await createAgent(agentsDir, "web-developer", {
+        title: "Frontend Developer",
+        description: "A frontend developer agent",
+        tools: ["Read", "Write"],
+        intro: "# Frontend Dev\n\nIntro.",
+        workflow: "## Workflow\n\n1. Build",
+      });
+
+      const { Liquid } = await import("liquidjs");
+      const engine = new Liquid({
+        root: [realTemplateDir],
+        extname: ".liquid",
+        strictVariables: false,
+        strictFilters: true,
+      });
+
+      const skill: Skill = {
+        id: "web-framework-react",
+        path: "src/skills/web/framework/react",
+        description: "React patterns",
+        usage: "when working with framework",
+        preloaded: true,
+      };
+
+      const agent: AgentConfig = {
+        name: "web-developer",
+        title: "Frontend Developer",
+        description: "A frontend developer agent",
+        tools: ["Read", "Write"],
+        skills: [skill],
+      };
+
+      // No installMode (default behavior)
+      const output = await compileAgentForPlugin("web-developer", agent, projectRoot, engine);
+
+      // Should use bare IDs when no installMode specified
+      expect(output).toContain("web-framework-react");
+      expect(output).not.toContain("web-framework-react:web-framework-react");
     });
   });
 

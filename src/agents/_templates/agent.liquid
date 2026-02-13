@@ -96,7 +96,7 @@ Your evaluation in Step 1 is **COMPLETELY WORTHLESS** unless you actually **ACTI
 {% for skill in dynamicSkills %}
 ### {{ skill.id }}
 - Description: {{ skill.description }}
-- Invoke: `skill: "{{ skill.id }}"`
+- Invoke: `skill: "{{ skill.pluginRef | default: skill.id }}"`
 - Use when: {{ skill.usage }}
 
 {% endfor %}
