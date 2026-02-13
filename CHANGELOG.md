@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.0] - 2026-02-12
+
+### Added
+
+- **Multi-source skill selection** — New Sources step between Build and Confirm lets users choose between recommended (public) and custom skill sources per technology. Source grid displays variant cards for each available source with installed indicators. Customize view shows per-skill source options.
+- **Source settings management** — `G` hotkey opens settings panel to add/remove extra skill sources with URL validation. Sources persist to `.claude-src/config.yaml`.
+- **Source switching in `cc edit`** — Edit command detects source changes and applies archive/restore for Local↔Public transitions via `source-switcher.ts`. Shows `~ skillId (From → To)` for source switches.
+- **Bound skill search** — Search pill in source grid triggers immediate search across configured extra marketplaces on Space. Results appear in modal overlay with keyboard navigation. Selected results become bound skills persisted in config.
+- **BoundSkill types and schema** — `BoundSkill`, `BoundSkillCandidate`, `SkillAlias` types with Zod `boundSkillSchema` for config persistence. `boundSkills` field added to `ProjectSourceConfig`.
+- **Multi-source loader** — `tagExtraSources` enriches resolved skills with available sources from configured marketplaces. `searchExtraSources` queries all extra sources for skills matching a subcategory alias.
+- **Installed skill indicators** — Dimmed `✓` prefix on skill tags for already-installed technologies.
+- **Scroll viewport spec** — UX spec for wizard grid navigation with viewport-based scrolling.
+
+### Fixed
+
+- **Uninstall plugin removal resilient** — `claudePluginUninstall` wrapped in inner try-catch so directory removal proceeds even if Claude CLI plugin unregister fails.
+- **Config skills array restored** — Fixed skill-to-agent compilation when `skills` array was missing from project config.
+
+### Changed
+
+- **SkillId format tightened** — `${SkillIdPrefix}-${string}-${string}` now enforces 3+ segments.
+- **Architecture docs updated** for multi-source features.
+
 ## [0.24.7] - 2026-02-12
 
 ### Added
