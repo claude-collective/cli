@@ -9,7 +9,11 @@ import { installLocal } from "../lib/installation/index.js";
 import { checkPermissions } from "../lib/permission-checker.js";
 import { installStackAsPlugin } from "../lib/stacks/index.js";
 import { getCollectivePluginDir } from "../lib/plugins/index.js";
-import { claudePluginInstall, claudePluginMarketplaceExists, claudePluginMarketplaceAdd } from "../utils/exec.js";
+import {
+  claudePluginInstall,
+  claudePluginMarketplaceExists,
+  claudePluginMarketplaceAdd,
+} from "../utils/exec.js";
 import { directoryExists } from "../utils/fs.js";
 import { CLAUDE_DIR, LOCAL_SKILLS_PATH } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
@@ -172,9 +176,7 @@ export default class Init extends BaseCommand {
       } else {
         this.warn("Plugin Mode requires a marketplace for individual skill installation.");
         this.log(`Falling back to Local Mode (copying to .claude/skills/)...`);
-        this.log(
-          "To use Plugin Mode, either select a stack or configure a marketplace source.\n",
-        );
+        this.log("To use Plugin Mode, either select a stack or configure a marketplace source.\n");
         await this.installLocalMode(result, sourceResult, flags);
       }
       return;
