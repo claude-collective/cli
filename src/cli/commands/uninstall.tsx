@@ -255,7 +255,12 @@ export default class Uninstall extends BaseCommand {
       try {
         const cliAvailable = await isClaudeCLIAvailable();
         if (cliAvailable) {
-          await claudePluginUninstall(PLUGIN_NAME, "project", projectDir);
+          try {
+            await claudePluginUninstall(PLUGIN_NAME, "project", projectDir);
+          } catch {
+            // Best-effort: Claude CLI plugin unregister may fail (e.g., plugin
+            // not registered). We still proceed to remove the plugin directory.
+          }
         }
 
         await remove(target.pluginDir);
