@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.1] - 2026-02-13
+
+### Fixed
+
+- **Metadata version coercion** — `cc build plugins` no longer warns on `version: 1` in metadata.yaml. Added lenient `skillMetadataLoaderSchema` that coerces YAML numeric versions to strings.
+- **Stack lookup from source in plugin mode** — `compileStackPlugin` now resolves stacks from the source's `config/stacks.yaml` before falling back to the CLI's built-in stacks. Fixes "stack not found" error when running `cc init --source` with a private marketplace in plugin mode.
+- **Skills matrix fallback** — Stack compiler gracefully falls back to CLI matrix when the source's `config/skills-matrix.yaml` is missing or invalid.
+
 ## [0.26.0] - 2026-02-13
 
 ### Added
