@@ -37,7 +37,7 @@ export async function fetchSkills(
   const copiedSkills: SkillId[] = [];
 
   for (const skillId of skillIds) {
-    const pluginName = `skill-${skillId}`;
+    const pluginName = skillId;
     const plugin = marketplace.plugins.find((p) => p.name === pluginName);
 
     if (plugin) {

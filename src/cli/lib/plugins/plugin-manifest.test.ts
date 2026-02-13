@@ -22,12 +22,12 @@ describe("plugin-manifest", () => {
   });
 
   describe("generateSkillPluginManifest", () => {
-    it("should generate manifest with skill- prefix", () => {
+    it("should generate manifest with skill name as plugin name (no prefix)", () => {
       const manifest = generateSkillPluginManifest({
         skillName: "react",
       });
 
-      expect(manifest.name).toBe("skill-react");
+      expect(manifest.name).toBe("react");
     });
 
     it("should include skills path", () => {
@@ -255,7 +255,7 @@ describe("plugin-manifest", () => {
       const content = await readFile(manifestPath, "utf-8");
       const parsed = JSON.parse(content);
 
-      expect(parsed.name).toBe("skill-test");
+      expect(parsed.name).toBe("test");
       expect(parsed.description).toBe("Test skill");
     });
 
@@ -274,7 +274,7 @@ describe("plugin-manifest", () => {
       const content = await readFile(manifestPath, "utf-8");
       const parsed = JSON.parse(content);
 
-      expect(parsed.name).toBe("skill-updated");
+      expect(parsed.name).toBe("updated");
     });
 
     it("should return the manifest path", async () => {

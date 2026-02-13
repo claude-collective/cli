@@ -36,13 +36,13 @@ describe("marketplace-generator", () => {
 
   describe("generateMarketplace", () => {
     it("should include all plugins from directory", async () => {
-      await createPlugin("skill-react", {
-        name: "skill-react",
+      await createPlugin("web-framework-react", {
+        name: "web-framework-react",
         description: "React skills",
         version: "1.0.0",
       });
-      await createPlugin("skill-vue", {
-        name: "skill-vue",
+      await createPlugin("web-framework-vue", {
+        name: "web-framework-vue",
         description: "Vue skills",
         version: "1.0.0",
       });
@@ -55,16 +55,16 @@ describe("marketplace-generator", () => {
 
       expect(marketplace.plugins).toHaveLength(2);
       const names = marketplace.plugins.map((p) => p.name);
-      expect(names).toContain("skill-react");
-      expect(names).toContain("skill-vue");
+      expect(names).toContain("web-framework-react");
+      expect(names).toContain("web-framework-vue");
     });
 
-    it("should extract category from normalized skill ID", async () => {
-      // With normalized skill IDs, category is inferred from the ID prefix
-      // skill-web-* -> web
-      // skill-api-* -> api
-      await createPlugin("skill-web-framework-react", {
-        name: "skill-web-framework-react",
+    it("should extract category from skill ID prefix", async () => {
+      // Plugin name = skill ID, category is inferred from ID prefix
+      // web-* -> web
+      // api-* -> api
+      await createPlugin("web-framework-react", {
+        name: "web-framework-react",
         description: "React framework",
         version: "1.0.0",
       });
@@ -75,24 +75,23 @@ describe("marketplace-generator", () => {
         pluginRoot: "./plugins",
       });
 
-      // skill-web-* should match web category pattern
-      const reactPlugin = marketplace.plugins.find((p) => p.name === "skill-web-framework-react");
+      const reactPlugin = marketplace.plugins.find((p) => p.name === "web-framework-react");
       expect(reactPlugin?.category).toBe("web");
     });
 
     it("should sort plugins alphabetically", async () => {
-      await createPlugin("skill-zustand", {
-        name: "skill-zustand",
+      await createPlugin("web-state-zustand", {
+        name: "web-state-zustand",
         description: "Zustand state",
         version: "1.0.0",
       });
-      await createPlugin("skill-axios", {
-        name: "skill-axios",
+      await createPlugin("api-http-axios", {
+        name: "api-http-axios",
         description: "Axios HTTP",
         version: "1.0.0",
       });
-      await createPlugin("skill-mobx", {
-        name: "skill-mobx",
+      await createPlugin("web-state-mobx", {
+        name: "web-state-mobx",
         description: "MobX state",
         version: "1.0.0",
       });
@@ -104,12 +103,12 @@ describe("marketplace-generator", () => {
       });
 
       const names = marketplace.plugins.map((p) => p.name);
-      expect(names).toEqual(["skill-axios", "skill-mobx", "skill-zustand"]);
+      expect(names).toEqual(["api-http-axios", "web-state-mobx", "web-state-zustand"]);
     });
 
     it("should include marketplace metadata", async () => {
-      await createPlugin("skill-test", {
-        name: "skill-test",
+      await createPlugin("web-test-a", {
+        name: "web-test-a",
         description: "Test",
         version: "1.0.0",
       });
@@ -132,8 +131,8 @@ describe("marketplace-generator", () => {
     });
 
     it("should include $schema field", async () => {
-      await createPlugin("skill-test", {
-        name: "skill-test",
+      await createPlugin("web-test-a", {
+        name: "web-test-a",
         description: "Test",
         version: "1.0.0",
       });
@@ -148,8 +147,8 @@ describe("marketplace-generator", () => {
     });
 
     it("should use default version 1.0.0 when not specified", async () => {
-      await createPlugin("skill-test", {
-        name: "skill-test",
+      await createPlugin("web-test-a", {
+        name: "web-test-a",
         description: "Test",
         version: "1.0.0",
       });
@@ -175,8 +174,8 @@ describe("marketplace-generator", () => {
 
     it("should skip directories without valid plugin.json", async () => {
       // Create a valid plugin
-      await createPlugin("skill-valid", {
-        name: "skill-valid",
+      await createPlugin("web-valid-a", {
+        name: "web-valid-a",
         description: "Valid plugin",
         version: "1.0.0",
       });
@@ -192,12 +191,12 @@ describe("marketplace-generator", () => {
       });
 
       expect(marketplace.plugins).toHaveLength(1);
-      expect(marketplace.plugins[0].name).toBe("skill-valid");
+      expect(marketplace.plugins[0].name).toBe("web-valid-a");
     });
 
     it("should include plugin author in marketplace entry", async () => {
-      await createPlugin("skill-with-author", {
-        name: "skill-with-author",
+      await createPlugin("web-with-author", {
+        name: "web-with-author",
         description: "Plugin with author",
         version: "1.0.0",
         author: {
@@ -218,8 +217,8 @@ describe("marketplace-generator", () => {
     });
 
     it("should include plugin keywords in marketplace entry", async () => {
-      await createPlugin("skill-with-keywords", {
-        name: "skill-with-keywords",
+      await createPlugin("web-with-keywords", {
+        name: "web-with-keywords",
         description: "Plugin with keywords",
         version: "1.0.0",
         keywords: ["web", "react", "ui"],
@@ -236,8 +235,8 @@ describe("marketplace-generator", () => {
     });
 
     it("should generate correct source paths for plugins", async () => {
-      await createPlugin("skill-test", {
-        name: "skill-test",
+      await createPlugin("web-test-a", {
+        name: "web-test-a",
         description: "Test plugin",
         version: "1.0.0",
       });
@@ -249,7 +248,7 @@ describe("marketplace-generator", () => {
       });
 
       const plugin = marketplace.plugins[0];
-      expect(plugin.source).toBe("./dist/plugins/skill-test");
+      expect(plugin.source).toBe("./dist/plugins/web-test-a");
     });
   });
 
@@ -279,8 +278,8 @@ describe("marketplace-generator", () => {
         owner: { name: "Test Owner", email: "test@example.com" },
         plugins: [
           {
-            name: "skill-react",
-            source: "./plugins/skill-react",
+            name: "web-framework-react",
+            source: "./plugins/web-framework-react",
             description: "React skills",
             version: "1.0.0",
           },
@@ -296,7 +295,7 @@ describe("marketplace-generator", () => {
       expect(parsed.name).toBe("valid-marketplace");
       expect(parsed.version).toBe("1.0.0");
       expect(parsed.plugins).toHaveLength(1);
-      expect(parsed.plugins[0].name).toBe("skill-react");
+      expect(parsed.plugins[0].name).toBe("web-framework-react");
     });
 
     it("should include $schema field", async () => {
@@ -373,10 +372,10 @@ describe("marketplace-generator", () => {
         version: "1.0.0",
         owner: { name: "Test" },
         plugins: [
-          { name: "skill-react", source: "./p1", category: "web" },
-          { name: "skill-vue", source: "./p2", category: "web" },
-          { name: "skill-express", source: "./p3", category: "api" },
-          { name: "skill-vitest", source: "./p4", category: "testing" },
+          { name: "web-framework-react", source: "./p1", category: "web" },
+          { name: "web-framework-vue", source: "./p2", category: "web" },
+          { name: "api-framework-express", source: "./p3", category: "api" },
+          { name: "web-testing-vitest", source: "./p4", category: "testing" },
         ],
       };
 
@@ -393,9 +392,9 @@ describe("marketplace-generator", () => {
         version: "1.0.0",
         owner: { name: "Test" },
         plugins: [
-          { name: "skill-react", source: "./p1", category: "web" },
-          { name: "skill-unknown", source: "./p2" }, // No category
-          { name: "skill-misc", source: "./p3" }, // No category
+          { name: "web-framework-react", source: "./p1", category: "web" },
+          { name: "unknown-thing", source: "./p2" }, // No category
+          { name: "misc-thing", source: "./p3" }, // No category
         ],
       };
 
@@ -424,7 +423,7 @@ describe("marketplace-generator", () => {
         name: "test",
         version: "1.0.0",
         owner: { name: "Test" },
-        plugins: [{ name: "skill-solo", source: "./p1", category: "tools" }],
+        plugins: [{ name: "web-solo-a", source: "./p1", category: "tools" }],
       };
 
       const stats = getMarketplaceStats(marketplace);

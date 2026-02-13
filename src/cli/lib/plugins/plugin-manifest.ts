@@ -5,7 +5,8 @@ import type { PluginAuthor, PluginManifest } from "../../types";
 
 const PLUGIN_DIR_NAME = ".claude-plugin";
 const PLUGIN_MANIFEST_FILE = "plugin.json";
-const SKILL_PLUGIN_PREFIX = "skill-";
+const SKILL_PLUGIN_PREFIX = "";
+const AGENT_PLUGIN_PREFIX = "agent-";
 
 export type SkillManifestOptions = {
   skillName: string;
@@ -14,6 +15,12 @@ export type SkillManifestOptions = {
   authorEmail?: string;
   version?: string;
   keywords?: string[];
+};
+
+export type AgentManifestOptions = {
+  agentName: string;
+  description?: string;
+  version?: string;
 };
 
 export type StackManifestOptions = {
@@ -57,6 +64,20 @@ export function generateSkillPluginManifest(options: SkillManifestOptions): Plug
 
   if (options.keywords && options.keywords.length > 0) {
     manifest.keywords = options.keywords;
+  }
+
+  return manifest;
+}
+
+export function generateAgentPluginManifest(options: AgentManifestOptions): PluginManifest {
+  const manifest: PluginManifest = {
+    name: `${AGENT_PLUGIN_PREFIX}${options.agentName}`,
+    version: options.version ?? DEFAULT_VERSION,
+    agents: "./agents/",
+  };
+
+  if (options.description) {
+    manifest.description = options.description;
   }
 
   return manifest;

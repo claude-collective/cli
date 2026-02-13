@@ -122,7 +122,7 @@ describe("Integration: Full Skill Pipeline", () => {
     // Each result should have valid structure
     for (const result of results) {
       expect(result.pluginPath).toBeTruthy();
-      expect(result.manifest.name).toMatch(/^skill-/);
+      expect(result.manifest.name).toBe(result.skillName);
       expect(result.skillName).toBeTruthy();
     }
 
@@ -160,7 +160,7 @@ describe("Integration: Full Skill Pipeline", () => {
     expect(marketplace.plugins.length).toBe(compileResults.length);
 
     for (const plugin of marketplace.plugins) {
-      expect(plugin.name).toMatch(/^skill-/);
+      expect(plugin.name).toBeTruthy();
       expect(plugin.source).toBeTruthy();
     }
 
@@ -562,13 +562,8 @@ describe("Integration: End-to-End Pipeline", () => {
       stack: TEST_STACK,
     });
 
-    // Get skill plugin names from compiled plugins (format: "skill-xxx")
-    const extractBaseName = (id: string) => {
-      if (id.startsWith("skill-")) {
-        return id.replace(/^skill-/, "");
-      }
-      return id;
-    };
+    // Get skill base names from compiled plugins (plugin name = skill ID)
+    const extractBaseName = (id: string) => id;
 
     const stackBaseNames = new Set(stackResult.skillPlugins.map(extractBaseName));
     const compiledBaseNames = new Set(skillResults.map((r) => extractBaseName(r.manifest.name)));

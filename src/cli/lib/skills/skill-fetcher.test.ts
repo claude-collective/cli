@@ -180,7 +180,7 @@ describe("skill-fetcher", () => {
 
     it("should resolve plugin source URL from marketplace when plugin exists", async () => {
       const marketplace = createMarketplace([
-        createMarketplacePlugin("skill-web-framework-react", {
+        createMarketplacePlugin("web-framework-react", {
           source: "url",
           url: "https://example.com/react-skill.tar.gz",
         }),
@@ -200,7 +200,7 @@ describe("skill-fetcher", () => {
 
     it("should resolve plugin source from github repo format", async () => {
       const marketplace = createMarketplace([
-        createMarketplacePlugin("skill-web-framework-react", {
+        createMarketplacePlugin("web-framework-react", {
           repo: "my-org/react-skill",
           ref: "v1.0.0",
           source: "github",
@@ -218,7 +218,7 @@ describe("skill-fetcher", () => {
 
     it("should resolve plugin source from string source", async () => {
       const marketplace = createMarketplace([
-        createMarketplacePlugin("skill-web-framework-react", "github:my-org/react-skill"),
+        createMarketplacePlugin("web-framework-react", "github:my-org/react-skill"),
       ]);
       const skillId: SkillId = "web-framework-react";
 
@@ -289,7 +289,7 @@ describe("skill-fetcher", () => {
 
     it("should handle marketplace plugin with repo source but no ref", async () => {
       const marketplace = createMarketplace([
-        createMarketplacePlugin("skill-web-framework-react", {
+        createMarketplacePlugin("web-framework-react", {
           repo: "my-org/react-skill",
           source: "github",
         }),
@@ -306,7 +306,7 @@ describe("skill-fetcher", () => {
 
     it("should use plugin name as fallback source when source is an object without url or repo", async () => {
       const marketplace = createMarketplace([
-        createMarketplacePlugin("skill-web-framework-react", {
+        createMarketplacePlugin("web-framework-react", {
           source: "github",
           // No url and no repo - falls through to plugin.name fallback
         } as MarketplacePlugin["source"]),
@@ -321,9 +321,9 @@ describe("skill-fetcher", () => {
       expect(result).toEqual([skillId]);
     });
 
-    it("should not match marketplace plugin when plugin name does not match skill-{skillId}", async () => {
+    it("should not match marketplace plugin when plugin name does not match skillId", async () => {
       const marketplace = createMarketplace([
-        createMarketplacePlugin("skill-other-plugin", "local"),
+        createMarketplacePlugin("other-plugin-name", "local"),
       ]);
       const skillId: SkillId = "web-framework-react";
 

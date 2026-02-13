@@ -11,25 +11,24 @@ const MARKETPLACE_SCHEMA_URL = "https://anthropic.com/claude-code/marketplace.sc
 /**
  * Category patterns for marketplace plugins.
  *
- * With normalized skill IDs (e.g., "web-framework-react"), the category
- * is typically the first segment of the normalized ID:
- * - skill-web-* -> web
- * - skill-api-* -> api
- * - skill-cli-* -> cli
- * - skill-meta-* -> methodology
- * - skill-infra-* -> infra
- * - skill-mobile-* -> mobile
- * - skill-security-* -> security
+ * Plugin names match skill IDs directly (e.g., "web-framework-react").
+ * The category is the first segment of the ID:
+ * - web-* -> web
+ * - api-* -> api
+ * - cli-* -> cli
+ * - meta-* -> methodology
+ * - infra-* -> infra
+ * - mobile-* -> mobile
+ * - security-* -> security
  */
 const CATEGORY_PATTERNS: Array<{ pattern: RegExp; category: string }> = [
-  // Primary patterns based on normalized ID category prefix
-  { pattern: /^skill-web-/, category: "web" },
-  { pattern: /^skill-api-/, category: "api" },
-  { pattern: /^skill-cli-/, category: "cli" },
-  { pattern: /^skill-meta-/, category: "methodology" },
-  { pattern: /^skill-infra-/, category: "infra" },
-  { pattern: /^skill-mobile-/, category: "mobile" },
-  { pattern: /^skill-security-/, category: "security" },
+  { pattern: /^web-/, category: "web" },
+  { pattern: /^api-/, category: "api" },
+  { pattern: /^cli-/, category: "cli" },
+  { pattern: /^meta-/, category: "methodology" },
+  { pattern: /^infra-/, category: "infra" },
+  { pattern: /^mobile-/, category: "mobile" },
+  { pattern: /^security-/, category: "security" },
 ];
 
 export type MarketplaceOptions = {
