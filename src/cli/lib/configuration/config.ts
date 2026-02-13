@@ -4,6 +4,7 @@ import { readFile, writeFile, fileExists, ensureDir } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../../consts";
 import { projectSourceConfigSchema } from "../schemas";
+import type { BoundSkill } from "../../types";
 
 export const DEFAULT_SOURCE = "github:claude-collective/skills";
 export const SOURCE_ENV_VAR = "CC_SOURCE";
@@ -22,6 +23,7 @@ export type ProjectSourceConfig = {
   marketplace?: string;
   agents_source?: string;
   sources?: SourceEntry[];
+  boundSkills?: BoundSkill[];
 };
 
 export type ResolvedConfig = {

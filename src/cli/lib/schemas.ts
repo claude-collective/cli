@@ -5,6 +5,7 @@ import type {
   AgentName,
   AgentYamlConfig,
   AlternativeGroup,
+  BoundSkill,
   CategoryDefinition,
   CategoryPath,
   ConflictRule,
@@ -63,6 +64,14 @@ export const skillSourceSchema = z
     installMode: z.enum(["plugin", "local"]).optional(),
   })
   .passthrough();
+
+export const boundSkillSchema: z.ZodType<BoundSkill> = z.object({
+  id: z.string() as z.ZodType<SkillId>,
+  sourceUrl: z.string(),
+  sourceName: z.string(),
+  boundTo: z.string(),
+  description: z.string().optional(),
+});
 
 export const subcategorySchema = z.enum([
   // Web
@@ -603,6 +612,7 @@ export const projectSourceConfigSchema = z
         }),
       )
       .optional(),
+    boundSkills: z.array(boundSkillSchema).optional(),
   })
   .passthrough();
 

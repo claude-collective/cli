@@ -252,6 +252,9 @@ export type ResolvedStack = {
   philosophy: string;
 };
 
+/** Short alias used for subcategory-level search (e.g., "react", "zustand") */
+export type SkillAlias = string;
+
 /** Source type classification for skill provenance (where the skill comes from) */
 export type SkillSourceType = "public" | "private" | "local";
 
@@ -268,6 +271,36 @@ export type SkillSource = {
   installed: boolean;
   /** How the skill was installed on disk (separate from provenance) */
   installMode?: "plugin" | "local";
+};
+
+/** A foreign skill explicitly bound to a subcategory via search */
+export type BoundSkill = {
+  /** The foreign skill's actual ID */
+  id: SkillId;
+  /** Source URL (e.g., "github:awesome-dev/skills") */
+  sourceUrl: string;
+  /** Display name of the source (e.g., "awesome-dev") */
+  sourceName: string;
+  /** Subcategory alias this skill is bound to (e.g., "react") */
+  boundTo: SkillAlias;
+  /** Skill description from the source */
+  description?: string;
+};
+
+/** Search result candidate before being bound to a subcategory */
+export type BoundSkillCandidate = {
+  /** The foreign skill's actual ID */
+  id: SkillId;
+  /** Source URL (e.g., "github:awesome-dev/skills") */
+  sourceUrl: string;
+  /** Display name of the source (e.g., "awesome-dev") */
+  sourceName: string;
+  /** Skill alias / display name from the source */
+  alias: SkillAlias;
+  /** Skill content version from metadata */
+  version?: number;
+  /** Skill description from the source */
+  description?: string;
 };
 
 /** Skill option as displayed in the wizard, computed based on current selections */
