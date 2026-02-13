@@ -344,6 +344,21 @@ export const skillMetadataConfigSchema: z.ZodType<SkillMetadataConfig> = z.objec
   conflicts_with: z.array(skillIdSchema).optional(),
 });
 
+// Lenient version coercion: YAML parses bare `1` as number, not string.
+// All other fields remain strict — invalid category/skillId warnings are legitimate.
+export const skillMetadataLoaderSchema = z
+  .object({
+    category: categoryPathSchema.optional(),
+    category_exclusive: z.boolean().optional(),
+    author: z.string().optional(),
+    version: z.union([z.string(), z.number()]).transform(String).optional(),
+    tags: z.array(z.string()).optional(),
+    requires: z.array(skillIdSchema).optional(),
+    compatible_with: z.array(skillIdSchema).optional(),
+    conflicts_with: z.array(skillIdSchema).optional(),
+  })
+  .passthrough();
+
 export const pluginAuthorSchema: z.ZodType<PluginAuthor> = z.object({
   name: z.string(),
   email: z.string().optional(),

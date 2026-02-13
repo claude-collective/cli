@@ -10,7 +10,7 @@ import {
 import { parseFrontmatter } from "../loading";
 import { hashSkillFolder, determinePluginVersion, writeContentHash } from "../versioning";
 import type { PluginManifest, SkillFrontmatter, SkillMetadataConfig } from "../../types";
-import { skillMetadataConfigSchema } from "../schemas";
+import { skillMetadataLoaderSchema } from "../schemas";
 
 export type SkillPluginOptions = {
   skillPath: string;
@@ -46,7 +46,7 @@ async function readSkillMetadata(skillPath: string): Promise<SkillMetadataConfig
       ? lines.slice(1).join("\n")
       : content;
 
-    const result = skillMetadataConfigSchema.safeParse(parseYaml(yamlContent));
+    const result = skillMetadataLoaderSchema.safeParse(parseYaml(yamlContent));
     if (!result.success) {
       warn(
         `Invalid metadata.yaml at ${skillPath}: ${result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
