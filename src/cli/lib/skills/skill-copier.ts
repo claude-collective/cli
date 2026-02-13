@@ -85,6 +85,7 @@ export async function copySkillsToPluginFromSource(
   pluginDir: string,
   matrix: MergedSkillsMatrix,
   sourceResult: SourceLoadResult,
+  sourceSelections?: Partial<Record<SkillId, string>>,
 ): Promise<CopiedSkill[]> {
   const copiedSkills: CopiedSkill[] = [];
 
@@ -95,7 +96,10 @@ export async function copySkillsToPluginFromSource(
       continue;
     }
 
-    if (skill.local && skill.localPath) {
+    const selectedSource = sourceSelections?.[skillId];
+    const userSelectedRemote = selectedSource && selectedSource !== "local";
+
+    if (skill.local && skill.localPath && !userSelectedRemote) {
       const localSkillPath = path.join(process.cwd(), skill.localPath);
       const contentHash = await generateSkillHash(localSkillPath);
 
@@ -149,6 +153,7 @@ export async function copySkillsToLocalFlattened(
   localSkillsDir: string,
   matrix: MergedSkillsMatrix,
   sourceResult: SourceLoadResult,
+  sourceSelections?: Partial<Record<SkillId, string>>,
 ): Promise<CopiedSkill[]> {
   const copiedSkills: CopiedSkill[] = [];
 
@@ -159,7 +164,10 @@ export async function copySkillsToLocalFlattened(
       continue;
     }
 
-    if (skill.local && skill.localPath) {
+    const selectedSource = sourceSelections?.[skillId];
+    const userSelectedRemote = selectedSource && selectedSource !== "local";
+
+    if (skill.local && skill.localPath && !userSelectedRemote) {
       const localSkillPath = path.join(process.cwd(), skill.localPath);
       const contentHash = await generateSkillHash(localSkillPath);
 

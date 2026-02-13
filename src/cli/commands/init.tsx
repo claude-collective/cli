@@ -76,6 +76,7 @@ export default class Init extends BaseCommand {
       <Wizard
         matrix={sourceResult.matrix}
         version={this.config.version}
+        projectDir={process.cwd()}
         onComplete={(result) => {
           wizardResult = result as WizardResultV2;
         }}

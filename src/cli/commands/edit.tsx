@@ -10,11 +10,21 @@ import {
   getPluginSkillIds,
   bumpPluginVersion,
 } from "../lib/plugins/index.js";
-import { copySkillsToPluginFromSource } from "../lib/skills/index.js";
+import { copySkillsToPluginFromSource, archiveLocalSkill, restoreArchivedSkill } from "../lib/skills/index.js";
 import { recompileAgents, getAgentDefinitions } from "../lib/agents/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { detectInstallation } from "../lib/installation/index.js";
 import type { SkillId } from "../types/index.js";
+import { typedEntries } from "../utils/typed-object.js";
+
+const SOURCE_DISPLAY_NAMES: Record<string, string> = {
+  public: "Public",
+  local: "Local",
+};
+
+function formatSourceDisplayName(sourceName: string): string {
+  return SOURCE_DISPLAY_NAMES[sourceName] ?? sourceName;
+}
 
 export default class Edit extends BaseCommand {
   static summary = "Edit skills in the plugin";
@@ -83,6 +93,7 @@ export default class Edit extends BaseCommand {
         version={this.config.version}
         initialStep="build"
         installedSkillIds={currentSkillIds}
+        projectDir={process.cwd()}
         onComplete={(result) => {
           wizardResult = result as WizardResultV2;
         }}
@@ -112,6 +123,21 @@ export default class Edit extends BaseCommand {
       (id) => !result.selectedSkills.includes(id),
     );
 
+    // Detect source changes (user changed which source provides a skill)
+    const sourceChanges = new Map<SkillId, { from: string; to: string }>();
+    for (const [skillId, selectedSource] of typedEntries<SkillId, string>(result.sourceSelections)) {
+      const skill = sourceResult.matrix.skills[skillId];
+      if (skill?.activeSource && skill.activeSource.name !== selectedSource) {
+        sourceChanges.set(skillId, {
+          from: skill.activeSource.name,
+          to: selectedSource,
+        });
+      }
+    }
+
+    const hasSourceChanges = sourceChanges.size > 0;
+    const hasSkillChanges = addedSkills.length > 0 || removedSkills.length > 0;
+
     if (result.validation.warnings.length > 0) {
       this.log("\nWarnings:");
       for (const warning of result.validation.warnings) {
@@ -120,7 +146,7 @@ export default class Edit extends BaseCommand {
       this.log("");
     }
 
-    if (addedSkills.length === 0 && removedSkills.length === 0) {
+    if (!hasSkillChanges && !hasSourceChanges) {
       this.log("No changes made.");
       this.log("Plugin unchanged\n");
       return;
@@ -135,7 +161,23 @@ export default class Edit extends BaseCommand {
       const skill = sourceResult.matrix.skills[skillId];
       this.log(`  - ${skill?.displayName || skillId}`);
     }
+    for (const [skillId, change] of sourceChanges) {
+      const fromLabel = formatSourceDisplayName(change.from);
+      const toLabel = formatSourceDisplayName(change.to);
+      this.log(`  ~ ${skillId} (${fromLabel} \u2192 ${toLabel})`);
+    }
     this.log("");
+
+    // Apply source switches (archive/restore local skills)
+    const projectDir = process.cwd();
+    for (const [skillId, change] of sourceChanges) {
+      if (change.from === "local") {
+        await archiveLocalSkill(projectDir, skillId);
+      }
+      if (change.to === "local") {
+        await restoreArchivedSkill(projectDir, skillId);
+      }
+    }
 
     this.log("Updating plugin skills...");
     try {
@@ -149,6 +191,7 @@ export default class Edit extends BaseCommand {
         pluginDir,
         sourceResult.matrix,
         sourceResult,
+        result.sourceSelections,
       );
       this.log(`✓ Plugin updated with ${result.selectedSkills.length} skills\n`);
     } catch (error) {
@@ -201,8 +244,13 @@ export default class Edit extends BaseCommand {
       this.handleError(error);
     }
 
-    this.log(
-      `\n✓ Plugin updated! (${addedSkills.length} added, ${removedSkills.length} removed)\n`,
-    );
+    const summaryParts = [
+      `${addedSkills.length} added`,
+      `${removedSkills.length} removed`,
+    ];
+    if (hasSourceChanges) {
+      summaryParts.push(`${sourceChanges.size} source${sourceChanges.size > 1 ? "s" : ""} changed`);
+    }
+    this.log(`\n\u2713 Plugin updated! (${summaryParts.join(", ")})\n`);
   }
 }

@@ -257,6 +257,115 @@ describe("skill-copier", () => {
 
       expect(result).toEqual([]);
     });
+
+    it("overrides local-skip when sourceSelections selects remote source", async () => {
+      // Create local skill
+      const localSkillPath = ".claude/skills/web-framework-react/";
+      const localSkillDir = path.join(projectDir, localSkillPath);
+      await mkdir(localSkillDir, { recursive: true });
+      await writeFile(
+        path.join(localSkillDir, "SKILL.md"),
+        `---\nname: web-framework-react (@local)\ndescription: Local React\n---\nLocal React content`,
+      );
+
+      // Create remote skill in source
+      const remoteSkillRelPath = "skills/web/framework/web-framework-react/";
+      const remoteSkillDir = path.join(projectDir, "src", remoteSkillRelPath);
+      await mkdir(remoteSkillDir, { recursive: true });
+      await writeFile(
+        path.join(remoteSkillDir, "SKILL.md"),
+        `---\nname: web-framework-react\ndescription: Remote React\n---\nRemote React content`,
+      );
+      await writeFile(
+        path.join(remoteSkillDir, "metadata.yaml"),
+        `cli_name: React\nauthor: "@vince"`,
+      );
+
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill(
+          "web-framework-react",
+          "web/framework",
+          remoteSkillRelPath,
+          { local: true, localPath: localSkillPath },
+        ),
+      });
+
+      const sourceResult: SourceLoadResult = {
+        matrix,
+        sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
+        sourcePath: projectDir,
+        isLocal: true,
+      };
+
+      const originalCwd = process.cwd();
+      process.chdir(projectDir);
+
+      try {
+        const result = await copySkillsToPluginFromSource(
+          ["web-framework-react"],
+          pluginDir,
+          matrix,
+          sourceResult,
+          { "web-framework-react": "public" } as Partial<Record<SkillId, string>>,
+        );
+
+        // Should copy from remote, NOT preserve local
+        expect(result).toHaveLength(1);
+        expect(result[0].local).toBeUndefined();
+        expect(result[0].destPath).toContain(pluginDir);
+      } finally {
+        process.chdir(originalCwd);
+      }
+    });
+
+    it("preserves local skill when sourceSelections selects local", async () => {
+      const localSkillPath = ".claude/skills/web-framework-react/";
+      const localSkillDir = path.join(projectDir, localSkillPath);
+      await mkdir(localSkillDir, { recursive: true });
+      await writeFile(
+        path.join(localSkillDir, "SKILL.md"),
+        `---\nname: web-framework-react (@local)\ndescription: Local React\n---\nLocal`,
+      );
+
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill(
+          "web-framework-react",
+          "web/framework",
+          localSkillPath,
+          {
+            local: true,
+            localPath: localSkillPath,
+          },
+        ),
+      });
+
+      const sourceResult: SourceLoadResult = {
+        matrix,
+        sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
+        sourcePath: projectDir,
+        isLocal: true,
+      };
+
+      const originalCwd = process.cwd();
+      process.chdir(projectDir);
+
+      try {
+        const result = await copySkillsToPluginFromSource(
+          ["web-framework-react"],
+          pluginDir,
+          matrix,
+          sourceResult,
+          { "web-framework-react": "local" } as Partial<Record<SkillId, string>>,
+        );
+
+        // Should preserve local
+        expect(result).toHaveLength(1);
+        expect(result[0].local).toBe(true);
+        expect(result[0].sourcePath).toBe(localSkillPath);
+      } finally {
+        process.chdir(originalCwd);
+      }
+    });
   });
 
   describe("copySkillsToLocalFlattened", () => {
@@ -701,6 +810,175 @@ describe("skill-copier", () => {
       expect(result).toHaveLength(1);
       // With normalized IDs, the full ID is used as the folder name when no alias
       expect(result[0].destPath).toBe(path.join(localSkillsDir, "web-tooling-vite"));
+    });
+
+    it("overrides local-skip when sourceSelections selects remote source", async () => {
+      // Create local skill
+      const localSkillPath = ".claude/skills/web-framework-react/";
+      const localSkillDir = path.join(projectDir, localSkillPath);
+      await mkdir(localSkillDir, { recursive: true });
+      await writeFile(
+        path.join(localSkillDir, "SKILL.md"),
+        `---\nname: web-framework-react (@local)\ndescription: Local React\n---\nLocal React content`,
+      );
+
+      // Create remote skill in source
+      const remoteSkillRelPath = "skills/web/framework/web-framework-react/";
+      const remoteSkillDir = path.join(projectDir, "src", remoteSkillRelPath);
+      await mkdir(remoteSkillDir, { recursive: true });
+      await writeFile(
+        path.join(remoteSkillDir, "SKILL.md"),
+        `---\nname: web-framework-react\ndescription: Remote React\n---\nRemote React content`,
+      );
+      await writeFile(
+        path.join(remoteSkillDir, "metadata.yaml"),
+        `cli_name: React\nauthor: "@vince"`,
+      );
+
+      const localSkillsDir = path.join(projectDir, ".claude", "skills");
+
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill(
+          "web-framework-react",
+          "web/framework",
+          remoteSkillRelPath,
+          { local: true, localPath: localSkillPath },
+        ),
+      });
+
+      const sourceResult: SourceLoadResult = {
+        matrix,
+        sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
+        sourcePath: projectDir,
+        isLocal: true,
+      };
+
+      const originalCwd = process.cwd();
+      process.chdir(projectDir);
+
+      try {
+        const result = await copySkillsToLocalFlattened(
+          ["web-framework-react"],
+          localSkillsDir,
+          matrix,
+          sourceResult,
+          { "web-framework-react": "public" } as Partial<Record<SkillId, string>>,
+        );
+
+        // Should copy from remote, NOT preserve local
+        expect(result).toHaveLength(1);
+        expect(result[0].local).toBeUndefined();
+        expect(result[0].destPath).toBe(path.join(localSkillsDir, "web-framework-react"));
+
+        // Verify the remote content was copied
+        const copiedContent = await readFile(
+          path.join(localSkillsDir, "web-framework-react", "SKILL.md"),
+          "utf-8",
+        );
+        expect(copiedContent).toContain("Remote React content");
+      } finally {
+        process.chdir(originalCwd);
+      }
+    });
+
+    it("preserves local skill when sourceSelections selects local", async () => {
+      const localSkillPath = ".claude/skills/web-framework-react/";
+      const localSkillDir = path.join(projectDir, localSkillPath);
+      await mkdir(localSkillDir, { recursive: true });
+      await writeFile(
+        path.join(localSkillDir, "SKILL.md"),
+        `---\nname: web-framework-react (@local)\ndescription: Local React\n---\nLocal`,
+      );
+
+      const localSkillsDir = path.join(projectDir, ".claude", "skills");
+
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill(
+          "web-framework-react",
+          "web/framework",
+          localSkillPath,
+          {
+            local: true,
+            localPath: localSkillPath,
+          },
+        ),
+      });
+
+      const sourceResult: SourceLoadResult = {
+        matrix,
+        sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
+        sourcePath: projectDir,
+        isLocal: true,
+      };
+
+      const originalCwd = process.cwd();
+      process.chdir(projectDir);
+
+      try {
+        const result = await copySkillsToLocalFlattened(
+          ["web-framework-react"],
+          localSkillsDir,
+          matrix,
+          sourceResult,
+          { "web-framework-react": "local" } as Partial<Record<SkillId, string>>,
+        );
+
+        // Should preserve local
+        expect(result).toHaveLength(1);
+        expect(result[0].local).toBe(true);
+        expect(result[0].sourcePath).toBe(localSkillPath);
+      } finally {
+        process.chdir(originalCwd);
+      }
+    });
+
+    it("works without sourceSelections (backward compatible)", async () => {
+      const localSkillPath = ".claude/skills/web-framework-react/";
+      const localSkillDir = path.join(projectDir, localSkillPath);
+      await mkdir(localSkillDir, { recursive: true });
+      await writeFile(
+        path.join(localSkillDir, "SKILL.md"),
+        `---\nname: web-framework-react (@local)\ndescription: Local React\n---\nLocal`,
+      );
+
+      const localSkillsDir = path.join(projectDir, ".claude", "skills");
+
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill(
+          "web-framework-react",
+          "web/framework",
+          localSkillPath,
+          {
+            local: true,
+            localPath: localSkillPath,
+          },
+        ),
+      });
+
+      const sourceResult: SourceLoadResult = {
+        matrix,
+        sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
+        sourcePath: projectDir,
+        isLocal: true,
+      };
+
+      const originalCwd = process.cwd();
+      process.chdir(projectDir);
+
+      try {
+        // No sourceSelections passed — should behave as before (preserve local)
+        const result = await copySkillsToLocalFlattened(
+          ["web-framework-react"],
+          localSkillsDir,
+          matrix,
+          sourceResult,
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].local).toBe(true);
+      } finally {
+        process.chdir(originalCwd);
+      }
     });
   });
 });
