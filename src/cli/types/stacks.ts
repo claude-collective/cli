@@ -1,9 +1,9 @@
 import type { AgentName } from "./agents";
-import type { SkillDisplayName } from "./skills";
+import type { SkillId } from "./skills";
 import type { Subcategory } from "./matrix";
 
-/** Maps subcategory IDs to technology display names (resolved to SkillId at load time) */
-export type StackAgentConfig = Partial<Record<Subcategory, SkillDisplayName>>;
+/** Maps subcategory IDs to skill IDs (e.g., { framework: "web-framework-react" }) */
+export type StackAgentConfig = Partial<Record<Subcategory, SkillId>>;
 
 /** Stack definition from config/stacks.yaml */
 export type Stack = {

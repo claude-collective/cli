@@ -271,7 +271,7 @@ export const skillDisplayNameSchema = z.enum([
   "context-management",
 ]) as z.ZodType<SkillDisplayName>;
 
-const SKILL_ID_PATTERN = /^(web|api|cli|mobile|infra|meta|security)-.+-.+$/;
+export const SKILL_ID_PATTERN = /^(web|api|cli|mobile|infra|meta|security)-.+-.+$/;
 
 // Regex-based since Zod cannot express template literal types natively
 export const skillIdSchema = z
@@ -519,7 +519,7 @@ export const localSkillMetadataSchema = z
   })
   .passthrough();
 
-// Lenient z.string() keys/values for forward compatibility with new subcategories/aliases
+// Lenient z.string() keys for forward compatibility with new subcategories; values are skill IDs
 export const stackAgentConfigSchema = z.record(
   z.string(),
   z.string(),
@@ -628,6 +628,10 @@ export const projectSourceConfigSchema = z
       )
       .optional(),
     boundSkills: z.array(boundSkillSchema).optional(),
+    skills_dir: z.string().optional(),
+    agents_dir: z.string().optional(),
+    stacks_file: z.string().optional(),
+    matrix_file: z.string().optional(),
   })
   .passthrough();
 
