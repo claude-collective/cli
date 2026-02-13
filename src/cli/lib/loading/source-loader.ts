@@ -12,6 +12,7 @@ import { fileExists } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedKeys } from "../../utils/typed-object";
 import {
+  DEFAULT_SOURCE,
   isLocalSource,
   loadProjectSourceConfig,
   resolveSource,
@@ -204,6 +205,53 @@ function stackToResolvedStack(stack: Stack): ResolvedStack {
     allSkillIds,
     philosophy: stack.philosophy || "",
   };
+}
+
+/**
+ * Extract a human-readable name from a source URL.
+ * e.g. "github:claude-collective/skills" -> "claude-collective"
+ *      "github:acme-corp/claude-skills" -> "acme-corp"
+ */
+function extractSourceName(source: string): string {
+  // Strip protocol prefix (github:, gh:, https://, etc.)
+  const withoutProtocol = source.replace(/^(?:github|gh|gitlab|bitbucket|sourcehut):/, "");
+  const withoutUrl = withoutProtocol.replace(/^https?:\/\/[^/]+\//, "");
+
+  // Take the first path segment (org/owner name)
+  const firstSegment = withoutUrl.split("/")[0];
+  return firstSegment || source;
+}
+
+/**
+ * Compute a display label for the marketplace indicator in the wizard.
+ *
+ * Returns undefined when the source is local (no marketplace to display).
+ *
+ * Format examples:
+ *   "Photoroom + 1 public"   — private marketplace with public also available
+ *   "Photoroom"              — private marketplace only
+ *   "claude-collective (public)" — default public marketplace
+ */
+export function getMarketplaceLabel(sourceResult: SourceLoadResult): string | undefined {
+  if (sourceResult.isLocal) return undefined;
+
+  const { marketplace } = sourceResult;
+
+  if (!marketplace) {
+    // No private marketplace — show source name as public
+    const name = extractSourceName(sourceResult.sourceConfig.source);
+    return `${name} (public)`;
+  }
+
+  // Private marketplace is active.
+  // When using a non-default source, the public marketplace is also available.
+  const PUBLIC_MARKETPLACE_COUNT = 1;
+  const isDefaultSource = sourceResult.sourceConfig.source === DEFAULT_SOURCE;
+  if (!isDefaultSource) {
+    return `${marketplace} + ${PUBLIC_MARKETPLACE_COUNT} public`;
+  }
+
+  return marketplace;
 }
 
 function mergeLocalSkillsIntoMatrix(

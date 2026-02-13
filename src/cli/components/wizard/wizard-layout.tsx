@@ -71,10 +71,11 @@ export const WizardFooter = () => {
 
 type WizardLayoutProps = {
   version?: string;
+  marketplaceLabel?: string;
   children: React.ReactNode;
 };
 
-export const WizardLayout: React.FC<WizardLayoutProps> = ({ version, children }) => {
+export const WizardLayout: React.FC<WizardLayoutProps> = ({ version, marketplaceLabel, children }) => {
   const store = useWizardStore();
 
   const { completedSteps, skippedSteps } = useMemo(() => {
@@ -112,6 +113,12 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({ version, children })
         skippedSteps={skippedSteps}
         version={version}
       />
+      {marketplaceLabel && (
+        <Box paddingLeft={1} marginTop={1}>
+          <Text dimColor>Marketplace: </Text>
+          <Text bold>{marketplaceLabel}</Text>
+        </Box>
+      )}
       <Box marginTop={1}>{children}</Box>
       <Box paddingX={1} columnGap={2} marginTop={2}>
         <DefinitionItem label="Expert mode" values={["E"]} isActive={store.expertMode} />

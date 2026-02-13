@@ -420,7 +420,7 @@ describe("source-loader config-driven paths", () => {
     await mkdir(dataDir, { recursive: true });
     await writeFile(
       path.join(dataDir, "stacks.yaml"),
-      `stacks:\n  - id: custom-path-stack\n    name: Custom Path Stack\n    description: Stack from custom path\n    agents:\n      web-developer:\n        framework: react\n`,
+      `stacks:\n  - id: custom-path-stack\n    name: Custom Path Stack\n    description: Stack from custom path\n    agents:\n      web-developer:\n        framework: web-framework-react\n`,
     );
 
     // Create empty skills dir
@@ -531,7 +531,7 @@ describe("source-loader integration", () => {
     description: A test stack from the source
     agents:
       web-developer:
-        framework: react
+        framework: web-framework-react
 `,
     );
 

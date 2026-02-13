@@ -34,7 +34,9 @@ type WizardProps = {
   onComplete: (result: WizardResultV2) => void;
   onCancel: () => void;
   version?: string;
+  marketplaceLabel?: string;
   initialStep?: WizardStep;
+  initialInstallMode?: "plugin" | "local";
   installedSkillIds?: SkillId[];
   projectDir?: string;
 };
@@ -51,7 +53,9 @@ export const Wizard: React.FC<WizardProps> = ({
   onComplete,
   onCancel,
   version,
+  marketplaceLabel,
   initialStep,
+  initialInstallMode,
   installedSkillIds,
   projectDir,
 }) => {
@@ -70,6 +74,9 @@ export const Wizard: React.FC<WizardProps> = ({
           .populateFromSkillIds(installedSkillIds, matrix.skills, matrix.categories);
       }
       useWizardStore.setState({ step: initialStep, approach: "scratch" });
+    }
+    if (initialInstallMode) {
+      useWizardStore.setState({ installMode: initialInstallMode });
     }
     return true;
   });
@@ -277,7 +284,7 @@ export const Wizard: React.FC<WizardProps> = ({
 
   return (
     <ThemeProvider theme={cliTheme}>
-      <WizardLayout version={version}>{renderStep()}</WizardLayout>
+      <WizardLayout version={version} marketplaceLabel={marketplaceLabel}>{renderStep()}</WizardLayout>
     </ThemeProvider>
   );
 };

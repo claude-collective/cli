@@ -2,7 +2,7 @@ import { Flags } from "@oclif/core";
 import { render } from "ink";
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
-import { loadSkillsMatrixFromSource } from "../lib/loading/index.js";
+import { loadSkillsMatrixFromSource, getMarketplaceLabel } from "../lib/loading/index.js";
 import { directoryExists, ensureDir, remove } from "../utils/fs.js";
 import {
   getCollectivePluginDir,
@@ -91,12 +91,15 @@ export default class Edit extends BaseCommand {
     }
 
     let wizardResult: WizardResultV2 | null = null;
+    const marketplaceLabel = getMarketplaceLabel(sourceResult);
 
     const { waitUntilExit } = render(
       <Wizard
         matrix={sourceResult.matrix}
         version={this.config.version}
+        marketplaceLabel={marketplaceLabel}
         initialStep="build"
+        initialInstallMode={sourceResult.marketplace ? "plugin" : "local"}
         installedSkillIds={currentSkillIds}
         projectDir={process.cwd()}
         onComplete={(result) => {

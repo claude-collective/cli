@@ -3,7 +3,7 @@ import { render } from "ink";
 import path from "path";
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
-import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/loading/index.js";
+import { loadSkillsMatrixFromSource, getMarketplaceLabel, type SourceLoadResult } from "../lib/loading/index.js";
 import { saveSourceToProjectConfig } from "../lib/configuration/index.js";
 import { installLocal } from "../lib/installation/index.js";
 import { checkPermissions } from "../lib/permission-checker.js";
@@ -75,11 +75,15 @@ export default class Init extends BaseCommand {
 
     let wizardResult: WizardResultV2 | null = null;
 
+    const marketplaceLabel = getMarketplaceLabel(sourceResult);
+
     const { waitUntilExit } = render(
       <Wizard
         matrix={sourceResult.matrix}
         version={this.config.version}
+        marketplaceLabel={marketplaceLabel}
         projectDir={process.cwd()}
+        initialInstallMode={sourceResult.marketplace ? "plugin" : "local"}
         onComplete={(result) => {
           wizardResult = result as WizardResultV2;
         }}
