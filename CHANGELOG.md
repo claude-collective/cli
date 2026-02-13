@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.28.0] - 2026-02-13
+
+### Added
+
+- **Explicit preloaded booleans in stacks** — `StackAgentConfig` uses `SkillAssignment[]` with explicit `preloaded: true/false` on each skill instead of inferring from `KEY_SUBCATEGORIES`. Normalization at the `loadStacks()` parse boundary accepts bare strings, objects, or arrays.
+- **Auto-default plugin mode** — Wizard defaults to plugin install mode when a marketplace source is detected. `initialInstallMode` prop passed from `cc init`.
+- **Marketplace indicator** — Wizard header shows marketplace label (e.g., "Photoroom + 1 public") via `getMarketplaceLabel()` utility.
+- **Published JSON schemas** — `src/schemas/` included in npm package. IDE-friendly `# yaml-language-server: $schema=...` comments embedded in generated config files (`.claude-src/config.yaml`, `metadata.yaml`). `SCHEMA_PATHS` constants and `yamlSchemaComment()` helper in `consts.ts`.
+- **Project-source-config JSON schema** — New `project-source-config.schema.json` for `.claude-src/config.yaml` validation in editors.
+- **Extended `cc validate`** — 6 new validation targets: stacks config, project source config, project skill metadata/frontmatter, project agent frontmatter, and plugin manifests. Total 7 → 13 targets. Works in both CLI repo and user projects.
+
+### Changed
+
+- **`StackAgentConfig` type** — Changed from `Partial<Record<Subcategory, SkillId[]>>` to `Partial<Record<Subcategory, SkillAssignment[]>>`.
+- **`KEY_SUBCATEGORIES` removed** — Replaced by explicit `preloaded` field on each skill assignment in `config/stacks.yaml`.
+- **JSON schema `$id` URLs** — Changed from placeholder `claude-collective.local` domain to relative `schemas/*.schema.json` paths.
+- **Stack domain filtering spec rewritten** — Unified wizard first step with stacks and scratch as peers in the same list.
+
 ## [0.27.0] - 2026-02-13
 
 ### Added
