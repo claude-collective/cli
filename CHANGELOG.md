@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.0] - 2026-02-13
+
+### Added
+
+- **Stacks use skill IDs** — `config/stacks.yaml` agent configs now reference skills by full skill ID (e.g., `web-framework-react`) instead of display name alias (e.g., `react`). This eliminates the `displayNameToId` resolution step at every stack loading call site.
+- **Config-driven source loading** — Marketplace repos can declare custom resource paths (`skills_dir`, `agents_dir`, `stacks_file`, `matrix_file`) in `.claude-src/config.yaml` instead of following the default layout conventions. Source loader reads path overrides and falls back to convention defaults.
+- **Stack domain filtering spec** — `docs/stack-domain-filtering-spec.md` details the planned domain selection UX after stack choice.
+- **Multi-skill categories findings** — `docs/multi-skill-categories-findings.md` documents analysis of skills that span multiple categories.
+
+### Changed
+
+- **`StackAgentConfig` value type** — Changed from `SkillDisplayName` to `SkillId`, matching the stacks.yaml data migration.
+- **`resolveStackSkillsFromDisplayNames` renamed** — Now `resolveStackSkills`, reflecting that no alias resolution is needed.
+- **`displayNameToId` threading removed** — Removed from `resolveAgentConfigToSkills`, `buildStackProperty`, `getAgentSkills`, `resolveAgents`, `stackToResolvedStack`, and `populateFromStack`. Net ~70 lines removed.
+- **Source loader DRYed** — Extracted shared `loadAndMergeFromBasePath` to eliminate duplicated local/remote loading logic.
+
 ## [0.26.1] - 2026-02-13
 
 ### Fixed
