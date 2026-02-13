@@ -8,20 +8,22 @@ import {
   compileSkillPlugin,
   printCompilationSummary,
 } from "../../lib/skills";
+import { compileAllAgentPlugins, printAgentCompilationSummary } from "../../lib/agents";
 import { EXIT_CODES } from "../../lib/exit-codes";
 
 const DEFAULT_OUTPUT_DIR = "dist/plugins";
 
 export default class BuildPlugins extends BaseCommand {
-  static summary = "Build skills into standalone plugins (requires skills repo)";
+  static summary = "Build skills and agents into standalone plugins";
 
   static description =
-    "Build skills into standalone plugins. By default, compiles all skills. Use --skill to compile a specific skill only.";
+    "Build skills and agents into standalone plugins. By default, compiles all skills. Use --skill to compile a specific skill only. Use --agents-dir to also compile agents.";
 
   static examples = [
     "<%= config.bin %> <%= command.id %>",
     "<%= config.bin %> <%= command.id %> --skill cli-commander",
     "<%= config.bin %> <%= command.id %> --skills-dir ./src/skills --output-dir ./plugins",
+    "<%= config.bin %> <%= command.id %> --agents-dir ./agents",
     "<%= config.bin %> <%= command.id %> --verbose",
   ];
 
@@ -31,6 +33,10 @@ export default class BuildPlugins extends BaseCommand {
       char: "s",
       description: "Skills source directory",
       default: DIRS.skills,
+    }),
+    "agents-dir": Flags.string({
+      char: "a",
+      description: "Agents source directory (builds one plugin per agent)",
     }),
     "output-dir": Flags.string({
       char: "o",
@@ -72,7 +78,7 @@ export default class BuildPlugins extends BaseCommand {
           outputDir,
         });
 
-        this.log(`Compiled skill-${result.skillName}`);
+        this.log(`Compiled ${result.skillName}`);
         this.log(`  Plugin path: ${result.pluginPath}`);
       } else {
         this.log("Finding and compiling all skills...");
@@ -81,6 +87,22 @@ export default class BuildPlugins extends BaseCommand {
 
         this.log(`Compiled ${results.length} skill plugins`);
         printCompilationSummary(results);
+      }
+
+      if (flags["agents-dir"]) {
+        const agentsDir = path.resolve(projectRoot, flags["agents-dir"]);
+
+        this.log("");
+        this.log("Compiling agent plugins");
+        this.log(`  Agents directory: ${agentsDir}`);
+        this.log("");
+
+        this.log("Finding and compiling all agents...");
+
+        const agentResults = await compileAllAgentPlugins(agentsDir, outputDir);
+
+        this.log(`Compiled ${agentResults.length} agent plugins`);
+        printAgentCompilationSummary(agentResults);
       }
 
       this.log("");

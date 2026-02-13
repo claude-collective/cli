@@ -10,3 +10,11 @@ export {
   type RecompileAgentsResult,
   recompileAgents,
 } from "./agent-recompiler";
+
+export {
+  type AgentPluginOptions,
+  type CompiledAgentPlugin,
+  compileAgentPlugin,
+  compileAllAgentPlugins,
+  printAgentCompilationSummary,
+} from "./agent-plugin-compiler";

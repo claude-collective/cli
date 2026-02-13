@@ -1,7 +1,9 @@
 export {
   type SkillManifestOptions,
+  type AgentManifestOptions,
   type StackManifestOptions,
   generateSkillPluginManifest,
+  generateAgentPluginManifest,
   generateStackPluginManifest,
   writePluginManifest,
   getPluginDir,
