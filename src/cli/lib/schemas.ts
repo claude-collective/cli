@@ -32,9 +32,6 @@ import type {
   SkillSource,
   SkillSourceType,
   SkillsMatrixConfig,
-  Stack,
-  StackAgentConfig,
-  StacksConfig,
   Subcategory,
   ValidationResult,
 } from "../types";
@@ -519,21 +516,28 @@ export const localSkillMetadataSchema = z
   })
   .passthrough();
 
-// Lenient z.string() keys for forward compatibility with new subcategories; values are skill IDs
+// Single skill assignment element: either a bare SkillId string or an object { id, preloaded? }
+const skillAssignmentElementSchema = z.union([skillIdSchema, skillAssignmentSchema]);
+
+// Lenient: accepts bare string, object, array of either, from YAML.
+// Pre-normalization schema: loadStacks() normalizes all values to SkillAssignment[] after parsing.
+// Keys are lenient strings for forward compat with custom subcategories/agents.
 export const stackAgentConfigSchema = z.record(
   z.string(),
-  z.string(),
-) as z.ZodType<StackAgentConfig>;
+  z.union([skillAssignmentElementSchema, z.array(skillAssignmentElementSchema)]),
+);
 
-export const stackSchema: z.ZodType<Stack> = z.object({
+export const stackSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
-  agents: z.record(z.string(), stackAgentConfigSchema) as z.ZodType<Stack["agents"]>,
+  agents: z.record(z.string(), stackAgentConfigSchema),
   philosophy: z.string().optional(),
 });
 
-export const stacksConfigSchema: z.ZodType<StacksConfig> = z.object({
+// Pre-normalization schema: values may be string or string[].
+// loadStacks() normalizes to StacksConfig (all values SkillId[]) after parsing.
+export const stacksConfigSchema = z.object({
   stacks: z.array(stackSchema),
 });
 

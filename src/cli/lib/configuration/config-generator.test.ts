@@ -1,7 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { generateProjectConfigFromSkills, buildStackProperty } from "./config-generator";
-import type { AgentName, SkillId, Stack, StackAgentConfig } from "../../types";
+import type { AgentName, SkillAssignment, SkillId, Stack, StackAgentConfig } from "../../types";
 import { createMockSkill, createMockMatrix } from "../__tests__/helpers";
+
+/** Shorthand: creates a SkillAssignment from an id and optional preloaded flag */
+function sa(id: SkillId, preloaded = false): SkillAssignment {
+  return { id, preloaded };
+}
 
 describe("config-generator", () => {
   describe("generateProjectConfigFromSkills", () => {
@@ -160,12 +165,12 @@ describe("config-generator", () => {
         description: "Test stack for unit tests",
         agents: {
           "web-developer": {
-            framework: "web-framework-react",
-            styling: "web-styling-scss-modules",
+            framework: [sa("web-framework-react", true)],
+            styling: [sa("web-styling-scss-modules")],
           },
           "api-developer": {
-            api: "api-framework-hono",
-            database: "api-database-drizzle",
+            api: [sa("api-framework-hono", true)],
+            database: [sa("api-database-drizzle", true)],
           },
         } as Partial<Record<AgentName, StackAgentConfig>>,
       };
@@ -191,7 +196,7 @@ describe("config-generator", () => {
         description: "Test stack",
         agents: {
           "web-developer": {
-            framework: "web-framework-react",
+            framework: [sa("web-framework-react", true)],
           },
           "cli-tester": {},
           "web-pm": {},
@@ -209,15 +214,15 @@ describe("config-generator", () => {
       expect(result["web-pm"]).toBeUndefined();
     });
 
-    it("passes through skill IDs directly", () => {
+    it("takes first skill ID from arrays", () => {
       const stack: Stack = {
         id: "test-stack",
         name: "Test Stack",
         description: "Test stack",
         agents: {
           "web-developer": {
-            framework: "web-framework-react",
-            styling: "web-styling-tailwind",
+            framework: [sa("web-framework-react", true)],
+            styling: [sa("web-styling-tailwind")],
           } as StackAgentConfig,
         } as Partial<Record<AgentName, StackAgentConfig>>,
       };
@@ -243,6 +248,58 @@ describe("config-generator", () => {
       const result = buildStackProperty(stack);
 
       expect(result).toEqual({});
+    });
+
+    it("takes first skill ID from multi-element arrays", () => {
+      const stack: Stack = {
+        id: "test-stack",
+        name: "Test Stack",
+        description: "Test stack",
+        agents: {
+          "pattern-scout": {
+            methodology: [
+              sa("meta-methodology-investigation-requirements", true),
+              sa("meta-methodology-anti-over-engineering", true),
+              sa("meta-methodology-success-criteria", true),
+            ],
+            research: [sa("meta-research-research-methodology", true)],
+          } as StackAgentConfig,
+        } as Partial<Record<AgentName, StackAgentConfig>>,
+      };
+
+      const result = buildStackProperty(stack);
+
+      expect(result).toEqual({
+        "pattern-scout": {
+          // First skill from array
+          methodology: "meta-methodology-investigation-requirements",
+          research: "meta-research-research-methodology",
+        },
+      });
+    });
+
+    it("handles empty array in subcategory", () => {
+      const stack: Stack = {
+        id: "test-stack",
+        name: "Test Stack",
+        description: "Test stack",
+        agents: {
+          "web-developer": {
+            framework: [sa("web-framework-react", true)],
+            methodology: [],
+          } as StackAgentConfig,
+        } as Partial<Record<AgentName, StackAgentConfig>>,
+      };
+
+      const result = buildStackProperty(stack);
+
+      expect(result).toEqual({
+        "web-developer": {
+          framework: "web-framework-react",
+          // Empty array -> first element is undefined -> filtered
+          methodology: undefined,
+        },
+      });
     });
   });
 });

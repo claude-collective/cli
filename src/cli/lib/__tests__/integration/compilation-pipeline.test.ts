@@ -65,10 +65,10 @@ const TEST_STACK: Stack = {
   description: "A test stack for integration testing",
   agents: {
     "web-developer": {
-      framework: "web-framework-react",
+      framework: [{ id: "web-framework-react", preloaded: true }],
     },
     "api-developer": {
-      api: "api-framework-hono",
+      api: [{ id: "api-framework-hono", preloaded: true }],
     },
   },
 };

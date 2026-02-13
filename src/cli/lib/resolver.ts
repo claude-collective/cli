@@ -1,6 +1,6 @@
 import path from "path";
 import { fileExists } from "../utils/fs";
-import { DIRS, KEY_SUBCATEGORIES } from "../consts";
+import { DIRS } from "../consts";
 import { verbose } from "../utils/logger";
 import type {
   AgentConfig,
@@ -10,6 +10,7 @@ import type {
   CompileConfig,
   ProjectConfig,
   Skill,
+  SkillAssignment,
   SkillDefinition,
   SkillId,
   SkillReference,
@@ -59,23 +60,27 @@ export function resolveSkillReferences(
     .filter((skill): skill is Skill => skill !== null);
 }
 
-// Resolve skills for an agent from a Stack definition.
+// Resolve skills for an agent from a ResolvedSubcategorySkills map (ProjectConfig.stack).
+// Values are single SkillId per subcategory (post-resolution from buildStackProperty).
+// Note: preloaded defaults to false here because ProjectConfig.stack loses the preloaded info
+// from the original StackAgentConfig (it only stores SkillId per subcategory).
 export function buildSkillRefsFromConfig(
   agentStack: Partial<Record<Subcategory, SkillId>>,
 ): SkillReference[] {
   const skillRefs: SkillReference[] = [];
   for (const [subcategory, skillId] of typedEntries<Subcategory, SkillId>(agentStack)) {
+    if (!skillId) continue;
     skillRefs.push({
       id: skillId,
       usage: `when working with ${subcategory}`,
-      preloaded: KEY_SUBCATEGORIES.has(subcategory),
+      preloaded: false,
     });
   }
   return skillRefs;
 }
 
 // Resolve skills for an agent from a Stack definition.
-// Stack values are already skill IDs — no alias resolution needed.
+// Stack values are already SkillAssignment[] normalized by loadStacks().
 export function resolveAgentSkillsFromStack(agentName: AgentName, stack: Stack): SkillReference[] {
   const agentConfig = stack.agents[agentName];
 
@@ -93,16 +98,18 @@ export function resolveAgentSkillsFromStack(agentName: AgentName, stack: Stack):
 
   const skillRefs: SkillReference[] = [];
 
-  for (const [subcategory, skillId] of typedEntries<Subcategory, SkillId>(agentConfig)) {
-    if (!skillId) continue;
+  for (const [subcategory, assignments] of typedEntries<Subcategory, SkillAssignment[]>(
+    agentConfig,
+  )) {
+    if (!assignments) continue;
 
-    const isKeySkill = KEY_SUBCATEGORIES.has(subcategory);
-
-    skillRefs.push({
-      id: skillId,
-      usage: `when working with ${subcategory}`,
-      preloaded: isKeySkill,
-    });
+    for (const assignment of assignments) {
+      skillRefs.push({
+        id: assignment.id,
+        usage: `when working with ${subcategory}`,
+        preloaded: assignment.preloaded ?? false,
+      });
+    }
   }
 
   verbose(`Resolved ${skillRefs.length} skills for agent '${agentName}' from stack '${stack.id}'`);

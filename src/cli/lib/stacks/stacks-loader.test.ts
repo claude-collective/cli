@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Stack, StackAgentConfig } from "../../types";
+import type { SkillAssignment, SkillId, Stack, StackAgentConfig } from "../../types";
 
 // Mock file system — inline factory required because vi.resetModules() is used
 // (__mocks__ directory mocks create fresh vi.fn() instances on module reset)
@@ -18,6 +18,11 @@ import {
 } from "./stacks-loader";
 import { readFile, fileExists } from "../../utils/fs";
 import { warn } from "../../utils/logger";
+
+/** Shorthand: creates a SkillAssignment from an id and optional preloaded flag */
+function sa(id: SkillId, preloaded = false): SkillAssignment {
+  return { id, preloaded };
+}
 
 function createValidStacksYaml(): string {
   return `
@@ -39,6 +44,46 @@ stacks:
       web-developer:
         framework: web-framework-vue-composition-api
         styling: web-styling-tailwind
+`;
+}
+
+function createStacksYamlWithArrays(): string {
+  return `
+stacks:
+  - id: multi-select-stack
+    name: Multi-Select Stack
+    description: Stack with array-valued subcategories
+    agents:
+      web-developer:
+        framework: web-framework-react
+        methodology:
+          - meta-methodology-investigation-requirements
+          - meta-methodology-anti-over-engineering
+          - meta-methodology-success-criteria
+      pattern-scout:
+        methodology:
+          - meta-methodology-investigation-requirements
+          - meta-methodology-anti-over-engineering
+        research: meta-research-research-methodology
+`;
+}
+
+function createStacksYamlWithObjects(): string {
+  return `
+stacks:
+  - id: object-stack
+    name: Object Stack
+    description: Stack with object-form skill assignments
+    agents:
+      web-developer:
+        framework:
+          - id: web-framework-react
+            preloaded: true
+        styling: web-styling-scss-modules
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - meta-methodology-anti-over-engineering
 `;
 }
 
@@ -147,7 +192,7 @@ describe("stacks-loader", () => {
       expect(readFile).toHaveBeenCalledTimes(2);
     });
 
-    it("parses agent configurations within stacks", async () => {
+    it("normalizes bare string values to SkillAssignment[] with preloaded: false", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
       vi.mocked(readFile).mockResolvedValue(createValidStacksYaml());
 
@@ -155,14 +200,63 @@ describe("stacks-loader", () => {
       const stacks = await freshLoadStacks("/project");
 
       const nextjsStack = stacks[0];
+      // Bare YAML strings are normalized to SkillAssignment[] with preloaded: false
       expect(nextjsStack.agents["web-developer"]).toEqual({
-        framework: "web-framework-react",
-        styling: "web-styling-scss-modules",
+        framework: [sa("web-framework-react")],
+        styling: [sa("web-styling-scss-modules")],
       });
       expect(nextjsStack.agents["api-developer"]).toEqual({
-        api: "api-framework-hono",
-        database: "api-database-drizzle",
+        api: [sa("api-framework-hono")],
+        database: [sa("api-database-drizzle")],
       });
+    });
+
+    it("normalizes bare string arrays to SkillAssignment[] with preloaded: false", async () => {
+      vi.mocked(fileExists).mockResolvedValue(true);
+      vi.mocked(readFile).mockResolvedValue(createStacksYamlWithArrays());
+
+      const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
+      const stacks = await freshLoadStacks("/project");
+
+      expect(stacks).toHaveLength(1);
+      const stack = stacks[0];
+      expect(stack.id).toBe("multi-select-stack");
+
+      // Array values should be normalized to SkillAssignment[]
+      expect(stack.agents["web-developer"]!.methodology).toEqual([
+        sa("meta-methodology-investigation-requirements"),
+        sa("meta-methodology-anti-over-engineering"),
+        sa("meta-methodology-success-criteria"),
+      ]);
+
+      // Single YAML values normalized to SkillAssignment[]
+      expect(stack.agents["web-developer"]!.framework).toEqual([sa("web-framework-react")]);
+      expect(stack.agents["pattern-scout"]!.research).toEqual([
+        sa("meta-research-research-methodology"),
+      ]);
+    });
+
+    it("preserves object-form assignments with preloaded: true", async () => {
+      vi.mocked(fileExists).mockResolvedValue(true);
+      vi.mocked(readFile).mockResolvedValue(createStacksYamlWithObjects());
+
+      const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
+      const stacks = await freshLoadStacks("/project");
+
+      const stack = stacks[0];
+      expect(stack.id).toBe("object-stack");
+
+      // Object-form with preloaded: true preserved
+      expect(stack.agents["web-developer"]!.framework).toEqual([sa("web-framework-react", true)]);
+
+      // Bare string normalized to preloaded: false
+      expect(stack.agents["web-developer"]!.styling).toEqual([sa("web-styling-scss-modules")]);
+
+      // Mixed array: object + bare string
+      expect(stack.agents["web-developer"]!.methodology).toEqual([
+        sa("meta-methodology-investigation-requirements", true),
+        sa("meta-methodology-anti-over-engineering"),
+      ]);
     });
   });
 
@@ -200,10 +294,10 @@ describe("stacks-loader", () => {
   });
 
   describe("resolveAgentConfigToSkills", () => {
-    it("converts skill IDs to skill references", () => {
+    it("converts skill assignments to skill references", () => {
       const agentConfig: StackAgentConfig = {
-        framework: "web-framework-react",
-        styling: "web-styling-scss-modules",
+        framework: [sa("web-framework-react", true)],
+        styling: [sa("web-styling-scss-modules")],
       };
 
       const skills = resolveAgentConfigToSkills(agentConfig);
@@ -213,26 +307,26 @@ describe("stacks-loader", () => {
       expect(skills.find((s) => s.id === "web-styling-scss-modules")).toBeDefined();
     });
 
-    it("marks key subcategories as preloaded", () => {
+    it("reads preloaded from assignment directly", () => {
       const agentConfig: StackAgentConfig = {
-        framework: "web-framework-react",
-        styling: "web-styling-scss-modules",
+        framework: [sa("web-framework-react", true)],
+        styling: [sa("web-styling-scss-modules")],
       };
 
       const skills = resolveAgentConfigToSkills(agentConfig);
 
-      // "framework" is a KEY_SUBCATEGORY, so it should be preloaded
+      // preloaded: true set explicitly on framework assignment
       const frameworkSkill = skills.find((s) => s.id === "web-framework-react");
       expect(frameworkSkill!.preloaded).toBe(true);
 
-      // "styling" is NOT a KEY_SUBCATEGORY
+      // preloaded defaults to false when not set
       const stylingSkill = skills.find((s) => s.id === "web-styling-scss-modules");
       expect(stylingSkill!.preloaded).toBe(false);
     });
 
     it("includes usage description with subcategory context", () => {
       const agentConfig: StackAgentConfig = {
-        database: "api-database-drizzle",
+        database: [sa("api-database-drizzle", true)],
       };
 
       const skills = resolveAgentConfigToSkills(agentConfig);
@@ -243,7 +337,7 @@ describe("stacks-loader", () => {
     it("warns and skips invalid skill IDs", () => {
       // Boundary cast: intentionally invalid skill ID to test validation
       const agentConfig = {
-        framework: "not-a-valid-id",
+        framework: [{ id: "not-a-valid-id", preloaded: false }],
       } as unknown as StackAgentConfig;
 
       const skills = resolveAgentConfigToSkills(agentConfig);
@@ -260,8 +354,8 @@ describe("stacks-loader", () => {
 
     it("resolves full skill IDs directly", () => {
       const agentConfig: StackAgentConfig = {
-        framework: "web-framework-react",
-        database: "api-database-drizzle",
+        framework: [sa("web-framework-react", true)],
+        database: [sa("api-database-drizzle", true)],
       };
 
       const skills = resolveAgentConfigToSkills(agentConfig);
@@ -269,6 +363,96 @@ describe("stacks-loader", () => {
       expect(skills).toHaveLength(2);
       expect(skills.find((s) => s.id === "web-framework-react")).toBeDefined();
       expect(skills.find((s) => s.id === "api-database-drizzle")).toBeDefined();
+    });
+
+    it("resolves array of skill assignments for multi-select categories", () => {
+      const agentConfig: StackAgentConfig = {
+        methodology: [
+          sa("meta-methodology-investigation-requirements", true),
+          sa("meta-methodology-anti-over-engineering", true),
+          sa("meta-methodology-success-criteria", true),
+        ],
+      };
+
+      const skills = resolveAgentConfigToSkills(agentConfig);
+
+      expect(skills).toHaveLength(3);
+      expect(
+        skills.find((s) => s.id === "meta-methodology-investigation-requirements"),
+      ).toBeDefined();
+      expect(skills.find((s) => s.id === "meta-methodology-anti-over-engineering")).toBeDefined();
+      expect(skills.find((s) => s.id === "meta-methodology-success-criteria")).toBeDefined();
+    });
+
+    it("handles single-element arrays", () => {
+      const agentConfig: StackAgentConfig = {
+        framework: [sa("web-framework-react", true)],
+        methodology: [
+          sa("meta-methodology-investigation-requirements", true),
+          sa("meta-methodology-anti-over-engineering", true),
+        ],
+        styling: [sa("web-styling-scss-modules")],
+      };
+
+      const skills = resolveAgentConfigToSkills(agentConfig);
+
+      expect(skills).toHaveLength(4);
+      expect(skills.find((s) => s.id === "web-framework-react")).toBeDefined();
+      expect(
+        skills.find((s) => s.id === "meta-methodology-investigation-requirements"),
+      ).toBeDefined();
+      expect(skills.find((s) => s.id === "meta-methodology-anti-over-engineering")).toBeDefined();
+      expect(skills.find((s) => s.id === "web-styling-scss-modules")).toBeDefined();
+    });
+
+    it("handles empty array", () => {
+      const agentConfig: StackAgentConfig = {
+        methodology: [],
+      };
+
+      const skills = resolveAgentConfigToSkills(agentConfig);
+
+      expect(skills).toEqual([]);
+    });
+
+    it("warns and skips invalid skill IDs within arrays", () => {
+      // Boundary cast: intentionally invalid skill ID within array to test validation
+      const agentConfig = {
+        methodology: [
+          { id: "meta-methodology-investigation-requirements", preloaded: true },
+          { id: "not-a-valid-id", preloaded: false },
+          { id: "meta-methodology-anti-over-engineering", preloaded: true },
+        ],
+      } as unknown as StackAgentConfig;
+
+      const skills = resolveAgentConfigToSkills(agentConfig);
+
+      // Should include valid IDs and skip invalid one
+      expect(skills).toHaveLength(2);
+      expect(
+        skills.find((s) => s.id === "meta-methodology-investigation-requirements"),
+      ).toBeDefined();
+      expect(skills.find((s) => s.id === "meta-methodology-anti-over-engineering")).toBeDefined();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("not-a-valid-id"));
+    });
+
+    it("reads preloaded from each assignment individually", () => {
+      const agentConfig: StackAgentConfig = {
+        methodology: [
+          sa("meta-methodology-investigation-requirements", true),
+          sa("meta-methodology-anti-over-engineering", false),
+        ],
+      };
+
+      const skills = resolveAgentConfigToSkills(agentConfig);
+
+      const preloadedSkill = skills.find(
+        (s) => s.id === "meta-methodology-investigation-requirements",
+      );
+      expect(preloadedSkill!.preloaded).toBe(true);
+
+      const dynamicSkill = skills.find((s) => s.id === "meta-methodology-anti-over-engineering");
+      expect(dynamicSkill!.preloaded).toBe(false);
     });
   });
 
@@ -280,11 +464,11 @@ describe("stacks-loader", () => {
         description: "Test",
         agents: {
           "web-developer": {
-            framework: "web-framework-react",
+            framework: [sa("web-framework-react", true)],
           },
           "api-developer": {
-            api: "api-framework-hono",
-            database: "api-database-drizzle",
+            api: [sa("api-framework-hono", true)],
+            database: [sa("api-database-drizzle", true)],
           },
         },
       };
@@ -308,6 +492,38 @@ describe("stacks-loader", () => {
       const result = resolveStackSkills(stack);
 
       expect(Object.keys(result)).toHaveLength(0);
+    });
+
+    it("resolves agents with array-valued subcategories", () => {
+      const stack: Stack = {
+        id: "test-stack",
+        name: "Test Stack",
+        description: "Test",
+        agents: {
+          "pattern-scout": {
+            methodology: [
+              sa("meta-methodology-investigation-requirements", true),
+              sa("meta-methodology-anti-over-engineering", true),
+            ],
+            research: [sa("meta-research-research-methodology", true)],
+          },
+        },
+      };
+
+      const result = resolveStackSkills(stack);
+
+      expect(Object.keys(result)).toHaveLength(1);
+      // 2 methodology skills + 1 research skill = 3 total
+      expect(result["pattern-scout"]).toHaveLength(3);
+      expect(
+        result["pattern-scout"].find((s) => s.id === "meta-methodology-investigation-requirements"),
+      ).toBeDefined();
+      expect(
+        result["pattern-scout"].find((s) => s.id === "meta-methodology-anti-over-engineering"),
+      ).toBeDefined();
+      expect(
+        result["pattern-scout"].find((s) => s.id === "meta-research-research-methodology"),
+      ).toBeDefined();
     });
   });
 });

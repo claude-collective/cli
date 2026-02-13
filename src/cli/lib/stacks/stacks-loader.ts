@@ -3,9 +3,16 @@ import path from "path";
 import { mapValues } from "remeda";
 import { readFile, fileExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
-import type { SkillId, SkillReference, Stack, StackAgentConfig, Subcategory } from "../../types";
+import type {
+  AgentName,
+  SkillAssignment,
+  SkillId,
+  SkillReference,
+  Stack,
+  StackAgentConfig,
+  Subcategory,
+} from "../../types";
 import { SKILL_ID_PATTERN, stacksConfigSchema } from "../schemas";
-import { KEY_SUBCATEGORIES } from "../../consts";
 import { typedEntries } from "../../utils/typed-object";
 
 const STACKS_FILE = "config/stacks.yaml";
@@ -35,12 +42,28 @@ export async function loadStacks(configDir: string, stacksFile?: string): Promis
       );
     }
 
-    const config = result.data;
+    // Normalize: all values to SkillAssignment[] so StackAgentConfig is always SkillAssignment[]
+    const stacks: Stack[] = result.data.stacks.map((stack) => ({
+      ...stack,
+      agents: mapValues(
+        stack.agents as Partial<Record<AgentName, Record<string, unknown>>>,
+        (agentConfig) =>
+          mapValues(agentConfig, (value) => {
+            const items = Array.isArray(value) ? value : [value];
+            return items.map(
+              (item): SkillAssignment =>
+                typeof item === "string"
+                  ? { id: item as SkillId, preloaded: false }
+                  : (item as SkillAssignment),
+            );
+          }) as StackAgentConfig,
+      ) as Stack["agents"],
+    }));
 
-    stacksCache.set(cacheKey, config.stacks);
-    verbose(`Loaded ${config.stacks.length} stacks from ${stacksPath}`);
+    stacksCache.set(cacheKey, stacks);
+    verbose(`Loaded ${stacks.length} stacks from ${stacksPath}`);
 
-    return config.stacks;
+    return stacks;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to load stacks from '${stacksPath}': ${errorMessage}`);
@@ -60,28 +83,30 @@ export async function loadStackById(stackId: string, configDir: string): Promise
   return stack;
 }
 
-// Converts a StackAgentConfig (subcategory -> SkillId) to an array of SkillReferences.
-// Values are already full skill IDs (e.g., "web-framework-react").
+// Converts a StackAgentConfig (subcategory -> SkillAssignment[]) to an array of SkillReferences.
+// Values are already normalized to SkillAssignment[] by loadStacks().
 export function resolveAgentConfigToSkills(agentConfig: StackAgentConfig): SkillReference[] {
   const skillRefs: SkillReference[] = [];
 
-  for (const [subcategory, skillId] of typedEntries<Subcategory, SkillId>(agentConfig)) {
-    if (!skillId) continue;
+  for (const [subcategory, assignments] of typedEntries<Subcategory, SkillAssignment[]>(
+    agentConfig,
+  )) {
+    if (!assignments) continue;
 
-    if (!SKILL_ID_PATTERN.test(skillId)) {
-      warn(
-        `Invalid skill ID '${skillId}' for subcategory '${subcategory}' in stack config. Skipping.`,
-      );
-      continue;
+    for (const assignment of assignments) {
+      if (!SKILL_ID_PATTERN.test(assignment.id)) {
+        warn(
+          `Invalid skill ID '${assignment.id}' for subcategory '${subcategory}' in stack config. Skipping.`,
+        );
+        continue;
+      }
+
+      skillRefs.push({
+        id: assignment.id,
+        usage: `when working with ${subcategory}`,
+        preloaded: assignment.preloaded ?? false,
+      });
     }
-
-    const isKeySkill = KEY_SUBCATEGORIES.has(subcategory);
-
-    skillRefs.push({
-      id: skillId,
-      usage: `when working with ${subcategory}`,
-      preloaded: isKeySkill,
-    });
   }
 
   return skillRefs;

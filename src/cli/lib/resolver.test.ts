@@ -486,7 +486,18 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
 });
 
 import { resolveAgentSkillsFromStack, getAgentSkills, resolveAgents } from "./resolver";
-import type { AgentDefinition, CompileAgentConfig, CompileConfig, Stack } from "../types";
+import type {
+  AgentDefinition,
+  CompileAgentConfig,
+  CompileConfig,
+  SkillAssignment,
+  Stack,
+} from "../types";
+
+/** Shorthand: creates a SkillAssignment from an id and optional preloaded flag */
+function sa(id: SkillId, preloaded = false): SkillAssignment {
+  return { id, preloaded };
+}
 
 describe("resolveAgentSkillsFromStack", () => {
   it("should return skill references from stack agent config", () => {
@@ -496,8 +507,8 @@ describe("resolveAgentSkillsFromStack", () => {
       description: "A test stack",
       agents: {
         "web-developer": {
-          framework: "web-framework-react",
-          styling: "web-styling-scss-modules",
+          framework: [sa("web-framework-react", true)],
+          styling: [sa("web-styling-scss-modules")],
         },
       },
     };
@@ -509,14 +520,14 @@ describe("resolveAgentSkillsFromStack", () => {
     expect(result.find((s) => s.id === "web-styling-scss-modules")).toBeDefined();
   });
 
-  it("should mark framework subcategory skills as preloaded", () => {
+  it("should read preloaded from assignment directly", () => {
     const stack: Stack = {
       id: "test-stack",
       name: "Test Stack",
       description: "A test stack",
       agents: {
         "web-developer": {
-          framework: "web-framework-react",
+          framework: [sa("web-framework-react", true)],
         },
       },
     };
@@ -528,14 +539,14 @@ describe("resolveAgentSkillsFromStack", () => {
     expect(result[0].preloaded).toBe(true);
   });
 
-  it("should NOT mark non-key subcategory skills as preloaded", () => {
+  it("should NOT mark skills as preloaded when assignment has preloaded: false", () => {
     const stack: Stack = {
       id: "test-stack",
       name: "Test Stack",
       description: "A test stack",
       agents: {
         "web-developer": {
-          styling: "web-styling-scss-modules",
+          styling: [sa("web-styling-scss-modules")],
         },
       },
     };
@@ -553,7 +564,7 @@ describe("resolveAgentSkillsFromStack", () => {
       name: "Test Stack",
       description: "A test stack",
       agents: {
-        "api-developer": { api: "api-framework-hono" },
+        "api-developer": { api: [sa("api-framework-hono", true)] },
       },
     };
 
@@ -588,7 +599,7 @@ describe("getAgentSkills", () => {
       description: "A test stack",
       agents: {
         "web-developer": {
-          framework: "web-framework-react",
+          framework: [sa("web-framework-react", true)],
         },
       },
     };
@@ -617,7 +628,7 @@ describe("getAgentSkills", () => {
       description: "A test stack",
       agents: {
         "web-developer": {
-          framework: "web-framework-react",
+          framework: [sa("web-framework-react", true)],
         },
       },
     };
@@ -699,12 +710,12 @@ describe("resolveAgents with stack", () => {
       description: "A fullstack development stack",
       agents: {
         "web-developer": {
-          framework: "web-framework-react",
-          styling: "web-styling-scss-modules",
+          framework: [sa("web-framework-react", true)],
+          styling: [sa("web-styling-scss-modules")],
         },
         "api-developer": {
-          api: "api-framework-hono",
-          database: "api-database-drizzle",
+          api: [sa("api-framework-hono", true)],
+          database: [sa("api-database-drizzle", true)],
         },
       },
     };
@@ -725,7 +736,7 @@ describe("resolveAgents with stack", () => {
     expect(webSkillIds).toContain("web-framework-react");
     expect(webSkillIds).toContain("web-styling-scss-modules");
 
-    // React (framework) should be preloaded, scss-modules (styling) should not
+    // React (framework) should be preloaded (explicit), scss-modules (styling) should not
     const reactSkill = result["web-developer"].skills.find((s) => s.id === "web-framework-react");
     expect(reactSkill?.preloaded).toBe(true);
 
@@ -742,7 +753,7 @@ describe("resolveAgents with stack", () => {
     expect(apiSkillIds).toContain("api-framework-hono");
     expect(apiSkillIds).toContain("api-database-drizzle");
 
-    // Hono (api) should be preloaded, drizzle (database) should be preloaded
+    // Hono (api) should be preloaded (explicit), drizzle (database) should be preloaded (explicit)
     const honoSkill = result["api-developer"].skills.find((s) => s.id === "api-framework-hono");
     expect(honoSkill?.preloaded).toBe(true);
 
@@ -790,7 +801,7 @@ describe("resolveAgents with stack", () => {
       description: "A web-only stack",
       agents: {
         "web-developer": {
-          framework: "web-framework-react",
+          framework: [sa("web-framework-react", true)],
         },
       },
     };

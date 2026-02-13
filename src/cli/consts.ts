@@ -1,7 +1,7 @@
 import path from "path";
 import os from "os";
 import { fileURLToPath } from "url";
-import type { SkillId, Subcategory } from "./types/index.js";
+import type { SkillId } from "./types/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,6 +44,23 @@ export const DEFAULT_VERSION = "1.0.0";
 // "0.0.0" indicates no version was explicitly set
 export const DEFAULT_DISPLAY_VERSION = "0.0.0";
 
+// JSON Schema paths relative to package root (used in yaml-language-server $schema comments)
+const SCHEMA_PKG_PREFIX = "node_modules/@claude-collective/cli/src/schemas";
+
+export const SCHEMA_PATHS = {
+  projectSourceConfig: `${SCHEMA_PKG_PREFIX}/project-source-config.schema.json`,
+  metadata: `${SCHEMA_PKG_PREFIX}/metadata.schema.json`,
+  marketplace: `${SCHEMA_PKG_PREFIX}/marketplace.schema.json`,
+} as const;
+
+/**
+ * Generates a yaml-language-server schema comment for the top of YAML files.
+ * The path should be relative from the YAML file's location to the schema file.
+ */
+export function yamlSchemaComment(schemaPath: string): string {
+  return `# yaml-language-server: $schema=${schemaPath}`;
+}
+
 // Foundational methodology skills preselected by default in the wizard
 export const DEFAULT_PRESELECTED_SKILLS: readonly SkillId[] = [
   "meta-methodology-anti-over-engineering",
@@ -53,13 +70,3 @@ export const DEFAULT_PRESELECTED_SKILLS: readonly SkillId[] = [
   "meta-methodology-success-criteria",
   "meta-methodology-write-verification",
 ];
-
-// Primary technology subcategories that should be preloaded (define the stack's core)
-export const KEY_SUBCATEGORIES: ReadonlySet<Subcategory> = new Set<Subcategory>([
-  "framework",
-  "api",
-  "database",
-  "meta-framework",
-  "base-framework",
-  "platform",
-]);

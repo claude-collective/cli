@@ -4,6 +4,7 @@ import type {
   MergedSkillsMatrix,
   ProjectConfig,
   ResolvedSubcategorySkills,
+  SkillAssignment,
   SkillId,
   Stack,
   StackAgentConfig,
@@ -83,7 +84,9 @@ export function generateProjectConfigFromSkills(
 }
 
 // Extracts the stack property (agent -> subcategory -> skillId) from a Stack definition.
-// Values are already full skill IDs — no alias resolution needed.
+// Values are already normalized to SkillId[] by loadStacks().
+// Takes the first skill ID per subcategory since ResolvedSubcategorySkills only holds one.
+// All skills are still preserved in ProjectConfig.skills via resolveAgentConfigToSkills.
 export function buildStackProperty(
   stack: Stack,
 ): Partial<Record<AgentName, ResolvedSubcategorySkills>> {
@@ -97,9 +100,12 @@ export function buildStackProperty(
 
     const resolvedMappings: ResolvedSubcategorySkills = {};
 
-    for (const [subcategoryId, skillId] of typedEntries<Subcategory, SkillId>(agentConfig)) {
-      if (!skillId) continue;
-      resolvedMappings[subcategoryId] = skillId;
+    for (const [subcategoryId, assignments] of typedEntries<Subcategory, SkillAssignment[]>(
+      agentConfig,
+    )) {
+      if (!assignments) continue;
+      // Take the first skill ID — ResolvedSubcategorySkills holds one per subcategory
+      resolvedMappings[subcategoryId] = assignments[0]?.id;
     }
 
     // Only add agent if it has resolved mappings

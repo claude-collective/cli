@@ -1,7 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { useWizardStore } from "./wizard-store";
 import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
-import type { Domain, Subcategory } from "../types";
+import type { Domain, SkillAssignment, SkillId, Subcategory } from "../types";
+
+/** Shorthand: creates a SkillAssignment from an id and optional preloaded flag */
+function sa(id: SkillId, preloaded = false): SkillAssignment {
+  return { id, preloaded };
+}
 
 describe("WizardStore", () => {
   beforeEach(() => {
@@ -329,6 +334,41 @@ describe("WizardStore", () => {
     });
   });
 
+  describe("install mode auto-defaulting", () => {
+    it("should default installMode to plugin when set via setState (marketplace available)", () => {
+      // Simulates what Wizard component does when initialInstallMode="plugin"
+      useWizardStore.setState({ installMode: "plugin" });
+
+      const { installMode } = useWizardStore.getState();
+      expect(installMode).toBe("plugin");
+    });
+
+    it("should keep installMode as local when set via setState (no marketplace)", () => {
+      // Simulates what Wizard component does when initialInstallMode="local"
+      useWizardStore.setState({ installMode: "local" });
+
+      const { installMode } = useWizardStore.getState();
+      expect(installMode).toBe("local");
+    });
+
+    it("should allow toggling installMode after auto-defaulting to plugin", () => {
+      // Simulates: marketplace sets plugin, then user presses P to switch back
+      useWizardStore.setState({ installMode: "plugin" });
+      useWizardStore.getState().toggleInstallMode();
+
+      const { installMode } = useWizardStore.getState();
+      expect(installMode).toBe("local");
+    });
+
+    it("should reset installMode to local after reset even if previously set to plugin", () => {
+      useWizardStore.setState({ installMode: "plugin" });
+      useWizardStore.getState().reset();
+
+      const { installMode } = useWizardStore.getState();
+      expect(installMode).toBe("local");
+    });
+  });
+
   describe("computed getters", () => {
     it("should get all selected technologies", () => {
       const store = useWizardStore.getState();
@@ -380,11 +420,11 @@ describe("WizardStore", () => {
     it("should set selectedDomains to all domains regardless of stack contents", () => {
       const store = useWizardStore.getState();
 
-      const stack = {
+      const stack: Parameters<typeof store.populateFromStack>[0] = {
         agents: {
-          web: { framework: "web-framework-react" },
+          web: { framework: [sa("web-framework-react", true)] },
         },
-      } as const;
+      };
       const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
         framework: { domain: "web" },
       };
@@ -403,12 +443,15 @@ describe("WizardStore", () => {
     it("should populate domainSelections from stack agents", () => {
       const store = useWizardStore.getState();
 
-      const stack = {
+      const stack: Parameters<typeof store.populateFromStack>[0] = {
         agents: {
-          web: { framework: "web-framework-react", "client-state": "web-state-zustand" },
-          api: { api: "api-framework-hono" },
+          web: {
+            framework: [sa("web-framework-react", true)],
+            "client-state": [sa("web-state-zustand")],
+          },
+          api: { api: [sa("api-framework-hono", true)] },
         },
-      } as const;
+      };
       const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
         framework: { domain: "web" },
         "client-state": { domain: "web" },
@@ -427,11 +470,11 @@ describe("WizardStore", () => {
     it("should skip entries without a domain", () => {
       const store = useWizardStore.getState();
 
-      const stack = {
+      const stack: Parameters<typeof store.populateFromStack>[0] = {
         agents: {
-          misc: { methodology: "meta-methodology-vitest" },
+          misc: { methodology: [sa("meta-methodology-vitest" as SkillId)] },
         },
-      } as const;
+      };
       const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
         methodology: {},
       };
@@ -441,6 +484,103 @@ describe("WizardStore", () => {
       const { domainSelections } = useWizardStore.getState();
 
       expect(Object.keys(domainSelections)).toHaveLength(0);
+    });
+
+    it("should populate multiple skills from array-valued subcategories", () => {
+      const store = useWizardStore.getState();
+
+      const stack: Parameters<typeof store.populateFromStack>[0] = {
+        agents: {
+          "pattern-scout": {
+            methodology: [
+              sa("meta-methodology-investigation-requirements", true),
+              sa("meta-methodology-anti-over-engineering", true),
+              sa("meta-methodology-success-criteria", true),
+            ],
+          },
+        },
+      };
+      const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
+        methodology: { domain: "shared" },
+      };
+
+      store.populateFromStack(stack, categories);
+
+      const { domainSelections } = useWizardStore.getState();
+
+      expect(domainSelections.shared!.methodology).toEqual([
+        "meta-methodology-investigation-requirements",
+        "meta-methodology-anti-over-engineering",
+        "meta-methodology-success-criteria",
+      ]);
+    });
+
+    it("should handle single-element and multi-element arrays across agents", () => {
+      const store = useWizardStore.getState();
+
+      const stack: Parameters<typeof store.populateFromStack>[0] = {
+        agents: {
+          web: {
+            framework: [sa("web-framework-react", true)],
+            methodology: [
+              sa("meta-methodology-investigation-requirements", true),
+              sa("meta-methodology-anti-over-engineering", true),
+            ],
+          },
+          api: { api: [sa("api-framework-hono", true)] },
+        },
+      };
+      const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
+        framework: { domain: "web" },
+        methodology: { domain: "shared" },
+        api: { domain: "api" },
+      };
+
+      store.populateFromStack(stack, categories);
+
+      const { domainSelections } = useWizardStore.getState();
+
+      expect(domainSelections.web!.framework).toEqual(["web-framework-react"]);
+      expect(domainSelections.shared!.methodology).toEqual([
+        "meta-methodology-investigation-requirements",
+        "meta-methodology-anti-over-engineering",
+      ]);
+      expect(domainSelections.api!.api).toEqual(["api-framework-hono"]);
+    });
+
+    it("should deduplicate skills from arrays across multiple agents", () => {
+      const store = useWizardStore.getState();
+
+      const stack: Parameters<typeof store.populateFromStack>[0] = {
+        agents: {
+          agent1: {
+            methodology: [
+              sa("meta-methodology-investigation-requirements", true),
+              sa("meta-methodology-anti-over-engineering", true),
+            ],
+          },
+          agent2: {
+            methodology: [
+              sa("meta-methodology-anti-over-engineering", true),
+              sa("meta-methodology-success-criteria", true),
+            ],
+          },
+        },
+      };
+      const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
+        methodology: { domain: "shared" },
+      };
+
+      store.populateFromStack(stack, categories);
+
+      const { domainSelections } = useWizardStore.getState();
+
+      // Should deduplicate: anti-over-engineering appears in both agents
+      expect(domainSelections.shared!.methodology).toEqual([
+        "meta-methodology-investigation-requirements",
+        "meta-methodology-anti-over-engineering",
+        "meta-methodology-success-criteria",
+      ]);
     });
   });
 

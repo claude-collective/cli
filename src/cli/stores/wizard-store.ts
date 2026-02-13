@@ -1,6 +1,13 @@
 import { create } from "zustand";
 import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
-import type { BoundSkill, Domain, DomainSelections, SkillId, Subcategory } from "../types/index.js";
+import type {
+  BoundSkill,
+  Domain,
+  DomainSelections,
+  SkillAssignment,
+  SkillId,
+  Subcategory,
+} from "../types/index.js";
 import { typedEntries, typedKeys } from "../utils/typed-object.js";
 
 const ALL_DOMAINS: Domain[] = ["web", "web-extras", "api", "cli", "mobile", "shared"];
@@ -48,7 +55,7 @@ export type WizardState = {
   setStackAction: (action: "defaults" | "customize") => void;
   /** Pre-populate domainSelections from a stack's technology mappings */
   populateFromStack: (
-    stack: { agents: Record<string, Partial<Record<Subcategory, SkillId>>> },
+    stack: { agents: Record<string, Partial<Record<Subcategory, SkillAssignment[]>>> },
     categories: Partial<Record<Subcategory, { domain?: Domain }>>,
   ) => void;
   populateFromSkillIds: (
@@ -126,11 +133,13 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const domains = new Set<Domain>();
 
       for (const agentConfig of Object.values(stack.agents)) {
-        for (const [subcat, skillId] of typedEntries<Subcategory, SkillId>(agentConfig)) {
+        for (const [subcat, assignments] of typedEntries<Subcategory, SkillAssignment[]>(
+          agentConfig,
+        )) {
           const category = categories[subcat];
           const domain = category?.domain;
 
-          if (!domain || !skillId) {
+          if (!domain || !assignments) {
             continue;
           }
 
@@ -144,9 +153,10 @@ export const useWizardStore = create<WizardState>((set, get) => ({
             domainSelections[domain][subcat] = [];
           }
 
-          // Values are already SkillId — no boundary cast needed
-          if (!domainSelections[domain][subcat].includes(skillId)) {
-            domainSelections[domain][subcat].push(skillId);
+          for (const assignment of assignments) {
+            if (!domainSelections[domain][subcat].includes(assignment.id)) {
+              domainSelections[domain][subcat].push(assignment.id);
+            }
           }
         }
       }
