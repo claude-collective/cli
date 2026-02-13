@@ -153,6 +153,35 @@ describe("agent-fetcher", () => {
       );
     });
 
+    it("should use custom agentsDir when provided", async () => {
+      mockFetchFromSource.mockResolvedValue({
+        path: FETCHED_PATH,
+        fromCache: false,
+        source: REMOTE_SOURCE,
+      });
+      mockDirectoryExists.mockResolvedValue(true);
+
+      const result = await fetchAgentDefinitionsFromRemote(REMOTE_SOURCE, {
+        agentsDir: "lib/agents",
+      });
+
+      expect(result.agentsDir).toBe(path.join(FETCHED_PATH, "lib/agents"));
+      expect(result.templatesDir).toBe(path.join(FETCHED_PATH, "lib/agents", "_templates"));
+    });
+
+    it("should use default DIRS.agents when agentsDir is not provided", async () => {
+      mockFetchFromSource.mockResolvedValue({
+        path: FETCHED_PATH,
+        fromCache: false,
+        source: REMOTE_SOURCE,
+      });
+      mockDirectoryExists.mockResolvedValue(true);
+
+      const result = await fetchAgentDefinitionsFromRemote(REMOTE_SOURCE);
+
+      expect(result.agentsDir).toBe(path.join(FETCHED_PATH, "src/agents"));
+    });
+
     it("should succeed even when remote templates directory does not exist", async () => {
       mockFetchFromSource.mockResolvedValue({
         path: FETCHED_PATH,

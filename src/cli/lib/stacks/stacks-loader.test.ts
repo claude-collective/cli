@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { SkillDisplayName, SkillId, Stack, StackAgentConfig, Subcategory } from "../../types";
+import type { Stack, StackAgentConfig } from "../../types";
 
 // Mock file system — inline factory required because vi.resetModules() is used
 // (__mocks__ directory mocks create fresh vi.fn() instances on module reset)
@@ -14,7 +14,7 @@ import {
   loadStacks,
   loadStackById,
   resolveAgentConfigToSkills,
-  resolveStackSkillsFromDisplayNames,
+  resolveStackSkills,
 } from "./stacks-loader";
 import { readFile, fileExists } from "../../utils/fs";
 import { warn } from "../../utils/logger";
@@ -27,18 +27,18 @@ stacks:
     description: Full-stack Next.js with Hono API
     agents:
       web-developer:
-        framework: react
-        styling: scss-modules
+        framework: web-framework-react
+        styling: web-styling-scss-modules
       api-developer:
-        api: hono
-        database: drizzle
+        api: api-framework-hono
+        database: api-database-drizzle
   - id: vue-spa
     name: Vue SPA
     description: Vue single-page application
     agents:
       web-developer:
-        framework: vue
-        styling: tailwind
+        framework: web-framework-vue-composition-api
+        styling: web-styling-tailwind
 `;
 }
 
@@ -113,6 +113,40 @@ describe("stacks-loader", () => {
       expect(first).toBe(second);
     });
 
+    it("loads stacks from custom stacksFile path", async () => {
+      vi.mocked(fileExists).mockResolvedValue(true);
+      vi.mocked(readFile).mockResolvedValue(createValidStacksYaml());
+
+      const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
+      const stacks = await freshLoadStacks("/project", "data/my-stacks.yaml");
+
+      expect(stacks).toHaveLength(2);
+      expect(fileExists).toHaveBeenCalledWith("/project/data/my-stacks.yaml");
+    });
+
+    it("uses default STACKS_FILE when stacksFile is undefined", async () => {
+      vi.mocked(fileExists).mockResolvedValue(true);
+      vi.mocked(readFile).mockResolvedValue(createValidStacksYaml());
+
+      const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
+      await freshLoadStacks("/project");
+
+      expect(fileExists).toHaveBeenCalledWith("/project/config/stacks.yaml");
+    });
+
+    it("caches separately for different stacksFile values", async () => {
+      vi.mocked(fileExists).mockResolvedValue(true);
+      vi.mocked(readFile).mockResolvedValue(createValidStacksYaml());
+
+      const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
+
+      await freshLoadStacks("/project");
+      await freshLoadStacks("/project", "custom/stacks.yaml");
+
+      // readFile should be called twice — different cache keys
+      expect(readFile).toHaveBeenCalledTimes(2);
+    });
+
     it("parses agent configurations within stacks", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
       vi.mocked(readFile).mockResolvedValue(createValidStacksYaml());
@@ -122,12 +156,12 @@ describe("stacks-loader", () => {
 
       const nextjsStack = stacks[0];
       expect(nextjsStack.agents["web-developer"]).toEqual({
-        framework: "react",
-        styling: "scss-modules",
+        framework: "web-framework-react",
+        styling: "web-styling-scss-modules",
       });
       expect(nextjsStack.agents["api-developer"]).toEqual({
-        api: "hono",
-        database: "drizzle",
+        api: "api-framework-hono",
+        database: "api-database-drizzle",
       });
     });
   });
@@ -166,18 +200,13 @@ describe("stacks-loader", () => {
   });
 
   describe("resolveAgentConfigToSkills", () => {
-    it("resolves display names to full skill IDs", () => {
+    it("converts skill IDs to skill references", () => {
       const agentConfig: StackAgentConfig = {
-        framework: "react" as SkillDisplayName,
-        styling: "scss-modules" as SkillDisplayName,
+        framework: "web-framework-react",
+        styling: "web-styling-scss-modules",
       };
 
-      const displayNameToId: Partial<Record<string, SkillId>> = {
-        react: "web-framework-react",
-        "scss-modules": "web-styling-scss-modules",
-      };
-
-      const skills = resolveAgentConfigToSkills(agentConfig, displayNameToId);
+      const skills = resolveAgentConfigToSkills(agentConfig);
 
       expect(skills).toHaveLength(2);
       expect(skills.find((s) => s.id === "web-framework-react")).toBeDefined();
@@ -186,16 +215,11 @@ describe("stacks-loader", () => {
 
     it("marks key subcategories as preloaded", () => {
       const agentConfig: StackAgentConfig = {
-        framework: "react" as SkillDisplayName,
-        styling: "scss-modules" as SkillDisplayName,
+        framework: "web-framework-react",
+        styling: "web-styling-scss-modules",
       };
 
-      const displayNameToId: Partial<Record<string, SkillId>> = {
-        react: "web-framework-react",
-        "scss-modules": "web-styling-scss-modules",
-      };
-
-      const skills = resolveAgentConfigToSkills(agentConfig, displayNameToId);
+      const skills = resolveAgentConfigToSkills(agentConfig);
 
       // "framework" is a KEY_SUBCATEGORY, so it should be preloaded
       const frameworkSkill = skills.find((s) => s.id === "web-framework-react");
@@ -206,41 +230,49 @@ describe("stacks-loader", () => {
       expect(stylingSkill!.preloaded).toBe(false);
     });
 
-    it("skips display names not found in lookup map and warns", () => {
-      const agentConfig: StackAgentConfig = {
-        framework: "unknown-framework" as SkillDisplayName,
-      };
-
-      const displayNameToId: Partial<Record<string, SkillId>> = {};
-
-      const skills = resolveAgentConfigToSkills(agentConfig, displayNameToId);
-
-      expect(skills).toHaveLength(0);
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("unknown-framework"));
-    });
-
     it("includes usage description with subcategory context", () => {
       const agentConfig: StackAgentConfig = {
-        database: "drizzle" as SkillDisplayName,
+        database: "api-database-drizzle",
       };
 
-      const displayNameToId: Partial<Record<string, SkillId>> = {
-        drizzle: "api-database-drizzle",
-      };
-
-      const skills = resolveAgentConfigToSkills(agentConfig, displayNameToId);
+      const skills = resolveAgentConfigToSkills(agentConfig);
 
       expect(skills[0].usage).toContain("database");
     });
 
+    it("warns and skips invalid skill IDs", () => {
+      // Boundary cast: intentionally invalid skill ID to test validation
+      const agentConfig = {
+        framework: "not-a-valid-id",
+      } as unknown as StackAgentConfig;
+
+      const skills = resolveAgentConfigToSkills(agentConfig);
+
+      expect(skills).toHaveLength(0);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("not-a-valid-id"));
+    });
+
     it("handles empty agent config", () => {
-      const skills = resolveAgentConfigToSkills({}, {});
+      const skills = resolveAgentConfigToSkills({});
 
       expect(skills).toEqual([]);
     });
+
+    it("resolves full skill IDs directly", () => {
+      const agentConfig: StackAgentConfig = {
+        framework: "web-framework-react",
+        database: "api-database-drizzle",
+      };
+
+      const skills = resolveAgentConfigToSkills(agentConfig);
+
+      expect(skills).toHaveLength(2);
+      expect(skills.find((s) => s.id === "web-framework-react")).toBeDefined();
+      expect(skills.find((s) => s.id === "api-database-drizzle")).toBeDefined();
+    });
   });
 
-  describe("resolveStackSkillsFromDisplayNames", () => {
+  describe("resolveStackSkills", () => {
     it("resolves all agents in a stack", () => {
       const stack: Stack = {
         id: "test-stack",
@@ -248,22 +280,16 @@ describe("stacks-loader", () => {
         description: "Test",
         agents: {
           "web-developer": {
-            framework: "react" as SkillDisplayName,
-          } as StackAgentConfig,
+            framework: "web-framework-react",
+          },
           "api-developer": {
-            api: "hono" as SkillDisplayName,
-            database: "drizzle" as SkillDisplayName,
-          } as StackAgentConfig,
+            api: "api-framework-hono",
+            database: "api-database-drizzle",
+          },
         },
       };
 
-      const displayNameToId: Partial<Record<string, SkillId>> = {
-        react: "web-framework-react",
-        hono: "api-framework-hono",
-        drizzle: "api-database-drizzle",
-      };
-
-      const result = resolveStackSkillsFromDisplayNames(stack, displayNameToId);
+      const result = resolveStackSkills(stack);
 
       expect(Object.keys(result)).toHaveLength(2);
       expect(result["web-developer"]).toHaveLength(1);
@@ -279,7 +305,7 @@ describe("stacks-loader", () => {
         agents: {},
       };
 
-      const result = resolveStackSkillsFromDisplayNames(stack, {});
+      const result = resolveStackSkills(stack);
 
       expect(Object.keys(result)).toHaveLength(0);
     });

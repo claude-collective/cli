@@ -382,7 +382,7 @@ describe("WizardStore", () => {
 
       const stack = {
         agents: {
-          web: { framework: "react" },
+          web: { framework: "web-framework-react" },
         },
       } as const;
       const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
@@ -396,7 +396,7 @@ describe("WizardStore", () => {
       expect(selectedDomains).toEqual(["web", "web-extras", "api", "cli", "mobile", "shared"]);
 
       expect(domainSelections.web).toBeDefined();
-      expect(domainSelections.web!.framework).toEqual(["react"]);
+      expect(domainSelections.web!.framework).toEqual(["web-framework-react"]);
       expect(domainSelections.api).toBeUndefined();
     });
 
@@ -405,8 +405,8 @@ describe("WizardStore", () => {
 
       const stack = {
         agents: {
-          web: { framework: "react", "client-state": "zustand" },
-          api: { api: "hono" },
+          web: { framework: "web-framework-react", "client-state": "web-state-zustand" },
+          api: { api: "api-framework-hono" },
         },
       } as const;
       const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
@@ -419,9 +419,9 @@ describe("WizardStore", () => {
 
       const { domainSelections } = useWizardStore.getState();
 
-      expect(domainSelections.web!.framework).toEqual(["react"]);
-      expect(domainSelections.web!["client-state"]).toEqual(["zustand"]);
-      expect(domainSelections.api!.api).toEqual(["hono"]);
+      expect(domainSelections.web!.framework).toEqual(["web-framework-react"]);
+      expect(domainSelections.web!["client-state"]).toEqual(["web-state-zustand"]);
+      expect(domainSelections.api!.api).toEqual(["api-framework-hono"]);
     });
 
     it("should skip entries without a domain", () => {
@@ -429,7 +429,7 @@ describe("WizardStore", () => {
 
       const stack = {
         agents: {
-          misc: { methodology: "vitest" },
+          misc: { methodology: "meta-methodology-vitest" },
         },
       } as const;
       const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {

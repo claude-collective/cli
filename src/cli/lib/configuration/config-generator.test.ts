@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { generateProjectConfigFromSkills, buildStackProperty } from "./config-generator";
-import type { AgentName, SkillDisplayName, SkillId, Stack, StackAgentConfig } from "../../types";
+import type { AgentName, SkillId, Stack, StackAgentConfig } from "../../types";
 import { createMockSkill, createMockMatrix } from "../__tests__/helpers";
 
 describe("config-generator", () => {
@@ -153,32 +153,24 @@ describe("config-generator", () => {
   });
 
   describe("buildStackProperty", () => {
-    it("resolves aliases to full skill IDs", () => {
+    it("extracts agent-to-subcategory-to-skillId mappings from stack", () => {
       const stack: Stack = {
         id: "test-stack",
         name: "Test Stack",
         description: "Test stack for unit tests",
         agents: {
           "web-developer": {
-            framework: "react",
-            styling: "scss-modules",
+            framework: "web-framework-react",
+            styling: "web-styling-scss-modules",
           },
           "api-developer": {
-            api: "hono",
-            database: "drizzle",
+            api: "api-framework-hono",
+            database: "api-database-drizzle",
           },
         } as Partial<Record<AgentName, StackAgentConfig>>,
       };
 
-      // Boundary cast: test literals to proper union types
-      const displayNameToId = {
-        react: "web-framework-react",
-        "scss-modules": "web-styling-scss-modules",
-        hono: "api-framework-hono",
-        drizzle: "api-database-drizzle",
-      } as Partial<Record<SkillDisplayName, SkillId>>;
-
-      const result = buildStackProperty(stack, displayNameToId);
+      const result = buildStackProperty(stack);
 
       expect(result).toEqual({
         "web-developer": {
@@ -199,19 +191,14 @@ describe("config-generator", () => {
         description: "Test stack",
         agents: {
           "web-developer": {
-            framework: "react",
+            framework: "web-framework-react",
           },
           "cli-tester": {},
           "web-pm": {},
         } as Partial<Record<AgentName, StackAgentConfig>>,
       };
 
-      // Boundary cast: test literals to proper union types
-      const displayNameToId = {
-        react: "web-framework-react",
-      } as Partial<Record<SkillDisplayName, SkillId>>;
-
-      const result = buildStackProperty(stack, displayNameToId);
+      const result = buildStackProperty(stack);
 
       expect(result).toEqual({
         "web-developer": {
@@ -222,30 +209,25 @@ describe("config-generator", () => {
       expect(result["web-pm"]).toBeUndefined();
     });
 
-    it("uses display name as-is when not found in displayNameToId", () => {
+    it("passes through skill IDs directly", () => {
       const stack: Stack = {
         id: "test-stack",
         name: "Test Stack",
         description: "Test stack",
         agents: {
           "web-developer": {
-            framework: "react",
-            custom: "some-unknown-alias",
+            framework: "web-framework-react",
+            styling: "web-styling-tailwind",
           } as StackAgentConfig,
         } as Partial<Record<AgentName, StackAgentConfig>>,
       };
 
-      // Boundary cast: test literals to proper union types
-      const displayNameToId = {
-        react: "web-framework-react",
-      } as Partial<Record<SkillDisplayName, SkillId>>;
-
-      const result = buildStackProperty(stack, displayNameToId);
+      const result = buildStackProperty(stack);
 
       expect(result).toEqual({
         "web-developer": {
           framework: "web-framework-react",
-          custom: "some-unknown-alias",
+          styling: "web-styling-tailwind",
         },
       });
     });
@@ -258,7 +240,7 @@ describe("config-generator", () => {
         agents: {} as Partial<Record<AgentName, StackAgentConfig>>,
       };
 
-      const result = buildStackProperty(stack, {});
+      const result = buildStackProperty(stack);
 
       expect(result).toEqual({});
     });

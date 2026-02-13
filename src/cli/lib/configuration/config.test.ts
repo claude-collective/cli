@@ -405,6 +405,78 @@ describe("config", () => {
     });
   });
 
+  describe("loadProjectSourceConfig with path overrides", () => {
+    it("should load skills_dir from project config", async () => {
+      const configDir = path.join(tempDir, ".claude-src");
+      await mkdir(configDir, { recursive: true });
+      await writeFile(path.join(configDir, "config.yaml"), "skills_dir: lib/skills\n");
+
+      const config = await loadProjectSourceConfig(tempDir);
+      expect(config?.skills_dir).toBe("lib/skills");
+    });
+
+    it("should load agents_dir from project config", async () => {
+      const configDir = path.join(tempDir, ".claude-src");
+      await mkdir(configDir, { recursive: true });
+      await writeFile(path.join(configDir, "config.yaml"), "agents_dir: lib/agents\n");
+
+      const config = await loadProjectSourceConfig(tempDir);
+      expect(config?.agents_dir).toBe("lib/agents");
+    });
+
+    it("should load stacks_file from project config", async () => {
+      const configDir = path.join(tempDir, ".claude-src");
+      await mkdir(configDir, { recursive: true });
+      await writeFile(path.join(configDir, "config.yaml"), "stacks_file: data/stacks.yaml\n");
+
+      const config = await loadProjectSourceConfig(tempDir);
+      expect(config?.stacks_file).toBe("data/stacks.yaml");
+    });
+
+    it("should load matrix_file from project config", async () => {
+      const configDir = path.join(tempDir, ".claude-src");
+      await mkdir(configDir, { recursive: true });
+      await writeFile(path.join(configDir, "config.yaml"), "matrix_file: data/matrix.yaml\n");
+
+      const config = await loadProjectSourceConfig(tempDir);
+      expect(config?.matrix_file).toBe("data/matrix.yaml");
+    });
+
+    it("should return undefined for missing path fields (defaults applied by consumer)", async () => {
+      const configDir = path.join(tempDir, ".claude-src");
+      await mkdir(configDir, { recursive: true });
+      await writeFile(path.join(configDir, "config.yaml"), "source: github:myorg/skills\n");
+
+      const config = await loadProjectSourceConfig(tempDir);
+      expect(config?.skills_dir).toBeUndefined();
+      expect(config?.agents_dir).toBeUndefined();
+      expect(config?.stacks_file).toBeUndefined();
+      expect(config?.matrix_file).toBeUndefined();
+    });
+
+    it("should load all path fields together", async () => {
+      const configDir = path.join(tempDir, ".claude-src");
+      await mkdir(configDir, { recursive: true });
+      await writeFile(
+        path.join(configDir, "config.yaml"),
+        [
+          "source: github:myorg/skills",
+          "skills_dir: lib/skills",
+          "agents_dir: lib/agents",
+          "stacks_file: data/stacks.yaml",
+          "matrix_file: data/matrix.yaml",
+        ].join("\n") + "\n",
+      );
+
+      const config = await loadProjectSourceConfig(tempDir);
+      expect(config?.source).toBe("github:myorg/skills");
+      expect(config?.skills_dir).toBe("lib/skills");
+      expect(config?.agents_dir).toBe("lib/agents");
+      expect(config?.stacks_file).toBe("data/stacks.yaml");
+      expect(config?.matrix_file).toBe("data/matrix.yaml");
+    });
+  });
+
   describe("loadProjectSourceConfig with agents_source", () => {
     it("should load agents_source from project config", async () => {
       const configDir = path.join(tempDir, ".claude-src");
