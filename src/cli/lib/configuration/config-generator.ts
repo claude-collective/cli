@@ -4,7 +4,6 @@ import type {
   MergedSkillsMatrix,
   ProjectConfig,
   ResolvedSubcategorySkills,
-  SkillDisplayName,
   SkillId,
   Stack,
   StackAgentConfig,
@@ -83,10 +82,10 @@ export function generateProjectConfigFromSkills(
   return config;
 }
 
-// Resolves display names in stack.agents to full skill IDs using skill_aliases
+// Extracts the stack property (agent -> subcategory -> skillId) from a Stack definition.
+// Values are already full skill IDs — no alias resolution needed.
 export function buildStackProperty(
   stack: Stack,
-  displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,
 ): Partial<Record<AgentName, ResolvedSubcategorySkills>> {
   const result: Partial<Record<AgentName, ResolvedSubcategorySkills>> = {};
 
@@ -98,18 +97,9 @@ export function buildStackProperty(
 
     const resolvedMappings: ResolvedSubcategorySkills = {};
 
-    for (const [subcategoryId, displayName] of typedEntries<Subcategory, SkillDisplayName>(
-      agentConfig,
-    )) {
-      if (!displayName) continue;
-      // Resolve display name to full skill ID using skill_aliases from matrix
-      const skillId = displayNameToId[displayName];
-      if (skillId) {
-        resolvedMappings[subcategoryId] = skillId;
-      } else {
-        // Boundary cast: display name not found in lookup, assumed to be a full skill ID already
-        resolvedMappings[subcategoryId] = displayName as unknown as SkillId;
-      }
+    for (const [subcategoryId, skillId] of typedEntries<Subcategory, SkillId>(agentConfig)) {
+      if (!skillId) continue;
+      resolvedMappings[subcategoryId] = skillId;
     }
 
     // Only add agent if it has resolved mappings

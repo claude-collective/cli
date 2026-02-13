@@ -4,19 +4,21 @@ import { mapValues } from "remeda";
 import { readFile, fileExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
 import type { SkillId, SkillReference, Stack, StackAgentConfig, Subcategory } from "../../types";
-import { stacksConfigSchema } from "../schemas";
+import { SKILL_ID_PATTERN, stacksConfigSchema } from "../schemas";
 import { KEY_SUBCATEGORIES } from "../../consts";
+import { typedEntries } from "../../utils/typed-object";
 
 const STACKS_FILE = "config/stacks.yaml";
 
 const stacksCache = new Map<string, Stack[]>();
 
-export async function loadStacks(configDir: string): Promise<Stack[]> {
-  const cacheKey = configDir;
+export async function loadStacks(configDir: string, stacksFile?: string): Promise<Stack[]> {
+  const resolvedStacksFile = stacksFile ?? STACKS_FILE;
+  const cacheKey = `${configDir}:${resolvedStacksFile}`;
   const cached = stacksCache.get(cacheKey);
   if (cached) return cached;
 
-  const stacksPath = path.join(configDir, STACKS_FILE);
+  const stacksPath = path.join(configDir, resolvedStacksFile);
 
   if (!(await fileExists(stacksPath))) {
     verbose(`No stacks file found at ${stacksPath}`);
@@ -58,28 +60,25 @@ export async function loadStackById(stackId: string, configDir: string): Promise
   return stack;
 }
 
-// Resolves each technology display name in the agent config to a full skill ID
-export function resolveAgentConfigToSkills(
-  agentConfig: StackAgentConfig,
-  displayNameToId: Partial<Record<string, SkillId>>,
-): SkillReference[] {
+// Converts a StackAgentConfig (subcategory -> SkillId) to an array of SkillReferences.
+// Values are already full skill IDs (e.g., "web-framework-react").
+export function resolveAgentConfigToSkills(agentConfig: StackAgentConfig): SkillReference[] {
   const skillRefs: SkillReference[] = [];
 
-  for (const [subcategory, technologyDisplayName] of Object.entries(agentConfig)) {
-    const fullSkillId = displayNameToId[technologyDisplayName];
+  for (const [subcategory, skillId] of typedEntries<Subcategory, SkillId>(agentConfig)) {
+    if (!skillId) continue;
 
-    if (!fullSkillId) {
+    if (!SKILL_ID_PATTERN.test(skillId)) {
       warn(
-        `No skill found for display name '${technologyDisplayName}' (subcategory: ${subcategory}) in stack config. Skipping.`,
+        `Invalid skill ID '${skillId}' for subcategory '${subcategory}' in stack config. Skipping.`,
       );
       continue;
     }
 
-    // Boundary cast: Object.entries() loses StackAgentConfig key type
-    const isKeySkill = KEY_SUBCATEGORIES.has(subcategory as Subcategory);
+    const isKeySkill = KEY_SUBCATEGORIES.has(subcategory);
 
     skillRefs.push({
-      id: fullSkillId,
+      id: skillId,
       usage: `when working with ${subcategory}`,
       preloaded: isKeySkill,
     });
@@ -88,13 +87,8 @@ export function resolveAgentConfigToSkills(
   return skillRefs;
 }
 
-export function resolveStackSkillsFromDisplayNames(
-  stack: Stack,
-  displayNameToId: Partial<Record<string, SkillId>>,
-): Record<string, SkillReference[]> {
-  const result = mapValues(stack.agents, (agentConfig) =>
-    resolveAgentConfigToSkills(agentConfig, displayNameToId),
-  );
+export function resolveStackSkills(stack: Stack): Record<string, SkillReference[]> {
+  const result = mapValues(stack.agents, (agentConfig) => resolveAgentConfigToSkills(agentConfig));
 
   verbose(`Resolved skills for ${Object.keys(result).length} agents in stack '${stack.id}'`);
 

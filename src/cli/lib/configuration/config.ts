@@ -24,6 +24,11 @@ export type ProjectSourceConfig = {
   agents_source?: string;
   sources?: SourceEntry[];
   boundSkills?: BoundSkill[];
+  // Resource path overrides (all relative to repo root, all optional)
+  skills_dir?: string; // default: src/skills (SKILLS_DIR_PATH)
+  agents_dir?: string; // default: src/agents (DIRS.agents)
+  stacks_file?: string; // default: config/stacks.yaml (STACKS_FILE)
+  matrix_file?: string; // default: config/skills-matrix.yaml (SKILLS_MATRIX_PATH)
 };
 
 export type ResolvedConfig = {

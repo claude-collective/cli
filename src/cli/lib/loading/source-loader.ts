@@ -5,14 +5,18 @@ import type {
   MergedSkillsMatrix,
   ResolvedSkill,
   ResolvedStack,
-  SkillDisplayName,
   SkillId,
   Stack,
 } from "../../types";
 import { fileExists } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedKeys } from "../../utils/typed-object";
-import { isLocalSource, resolveSource, type ResolvedConfig } from "../configuration";
+import {
+  isLocalSource,
+  loadProjectSourceConfig,
+  resolveSource,
+  type ResolvedConfig,
+} from "../configuration";
 import { discoverLocalSkills, type LocalSkillDiscoveryResult } from "../skills";
 import {
   checkMatrixHealth,
@@ -91,36 +95,7 @@ async function loadFromLocal(
 
   verbose(`Loading skills from local path: ${skillsPath}`);
 
-  // Check if source has its own matrix, otherwise fallback to CLI matrix
-  const sourceMatrixPath = path.join(skillsPath, SKILLS_MATRIX_PATH);
-  const cliMatrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
-
-  let matrixPath: string;
-  if (await fileExists(sourceMatrixPath)) {
-    matrixPath = sourceMatrixPath;
-    verbose(`Matrix from source: ${matrixPath}`);
-  } else {
-    matrixPath = cliMatrixPath;
-    verbose(`Matrix from CLI (source has no matrix): ${matrixPath}`);
-  }
-
-  const skillsDir = path.join(skillsPath, SKILLS_DIR_PATH);
-  verbose(`Skills from source: ${skillsDir}`);
-
-  const matrix = await loadSkillsMatrix(matrixPath);
-  const skills = await extractAllSkills(skillsDir);
-  const mergedMatrix = await mergeMatrixWithSkills(matrix, skills);
-
-  // Load stacks from source first, fall back to CLI's config/stacks.yaml
-  const sourceStacks = await loadStacks(skillsPath);
-  const stacks = sourceStacks.length > 0 ? sourceStacks : await loadStacks(PROJECT_ROOT);
-  if (stacks.length > 0) {
-    mergedMatrix.suggestedStacks = stacks.map((stack) =>
-      stackToResolvedStack(stack, mergedMatrix.displayNameToId),
-    );
-    const stackSource = sourceStacks.length > 0 ? "source" : "CLI";
-    verbose(`Loaded ${stacks.length} stacks from ${stackSource}`);
-  }
+  const mergedMatrix = await loadAndMergeFromBasePath(skillsPath);
 
   return {
     matrix: mergedMatrix,
@@ -142,8 +117,29 @@ async function loadFromRemote(
 
   verbose(`Fetched to: ${fetchResult.path}`);
 
+  const mergedMatrix = await loadAndMergeFromBasePath(fetchResult.path);
+
+  return {
+    matrix: mergedMatrix,
+    sourceConfig,
+    sourcePath: fetchResult.path,
+    isLocal: false,
+    marketplace: sourceConfig.marketplace,
+  };
+}
+
+// Shared logic: reads source config overrides, resolves matrix/skills/stacks from basePath
+async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsMatrix> {
+  // Read source's own config for path overrides
+  const sourceProjectConfig = await loadProjectSourceConfig(basePath);
+
+  // Resolve paths: config value > convention default
+  const matrixRelPath = sourceProjectConfig?.matrix_file ?? SKILLS_MATRIX_PATH;
+  const skillsDirRelPath = sourceProjectConfig?.skills_dir ?? SKILLS_DIR_PATH;
+  const stacksRelFile = sourceProjectConfig?.stacks_file;
+
   // Check if source has its own matrix, otherwise fallback to CLI matrix
-  const sourceMatrixPath = path.join(fetchResult.path, SKILLS_MATRIX_PATH);
+  const sourceMatrixPath = path.join(basePath, matrixRelPath);
   const cliMatrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
 
   let matrixPath: string;
@@ -155,7 +151,7 @@ async function loadFromRemote(
     verbose(`Matrix from CLI (source has no matrix): ${matrixPath}`);
   }
 
-  const skillsDir = path.join(fetchResult.path, SKILLS_DIR_PATH);
+  const skillsDir = path.join(basePath, skillsDirRelPath);
   verbose(`Skills from source: ${skillsDir}`);
 
   const matrix = await loadSkillsMatrix(matrixPath);
@@ -163,31 +159,20 @@ async function loadFromRemote(
   const mergedMatrix = await mergeMatrixWithSkills(matrix, skills);
 
   // Load stacks from source first, fall back to CLI's config/stacks.yaml
-  const sourceStacks = await loadStacks(fetchResult.path);
+  const sourceStacks = await loadStacks(basePath, stacksRelFile);
   const stacks = sourceStacks.length > 0 ? sourceStacks : await loadStacks(PROJECT_ROOT);
   if (stacks.length > 0) {
-    mergedMatrix.suggestedStacks = stacks.map((stack) =>
-      stackToResolvedStack(stack, mergedMatrix.displayNameToId),
-    );
+    mergedMatrix.suggestedStacks = stacks.map((stack) => stackToResolvedStack(stack));
     const stackSource = sourceStacks.length > 0 ? "source" : "CLI";
     verbose(`Loaded ${stacks.length} stacks from ${stackSource}`);
   }
 
-  return {
-    matrix: mergedMatrix,
-    sourceConfig,
-    sourcePath: fetchResult.path,
-    isLocal: false,
-    marketplace: sourceConfig.marketplace,
-  };
+  return mergedMatrix;
 }
 
 // Convert a Stack to ResolvedStack for wizard compatibility.
-// Resolves technology aliases to full skill IDs via displayNameToId.
-function stackToResolvedStack(
-  stack: Stack,
-  displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,
-): ResolvedStack {
+// Stack values are already skill IDs — no alias resolution needed.
+function stackToResolvedStack(stack: Stack): ResolvedStack {
   // Collect all unique skill IDs from agent configs in this stack
   const allSkillIds: SkillId[] = [];
   const seenSkillIds = new Set<SkillId>();
@@ -196,8 +181,8 @@ function stackToResolvedStack(
     const agentConfig = stack.agents[agentId];
     if (!agentConfig) continue;
 
-    // Resolve this agent's technology selections to skill IDs
-    const skillRefs = resolveAgentConfigToSkills(agentConfig, displayNameToId);
+    // Values are already skill IDs — extract directly
+    const skillRefs = resolveAgentConfigToSkills(agentConfig);
 
     for (const ref of skillRefs) {
       if (!seenSkillIds.has(ref.id)) {

@@ -10,7 +10,7 @@ import {
   directoryExists,
 } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
-import { DIRS, PROJECT_ROOT, SKILLS_MATRIX_PATH } from "../../consts";
+import { DIRS, PROJECT_ROOT } from "../../consts";
 import { createLiquidEngine } from "../compiler";
 import {
   generateStackPluginManifest,
@@ -19,7 +19,6 @@ import {
 } from "../plugins";
 import { loadSkillsByIds, loadAllAgents } from "../loading";
 import { loadStackById, resolveAgentConfigToSkills } from "./stacks-loader";
-import { loadSkillsMatrix } from "../matrix";
 import { resolveAgents, stackToCompileConfig } from "../resolver";
 import { buildStackProperty } from "../configuration";
 import type {
@@ -220,31 +219,16 @@ export async function compileStackPlugin(
     newStack = await loadStackById(stackId, PROJECT_ROOT);
   }
 
-  // Load skill aliases from the matrix to resolve technology aliases to skill IDs
-  // This is needed for Phase 7 skill resolution in resolveAgents
-  // Try source's matrix first, fall back to CLI matrix if missing or invalid
-  const sourceMatrixPath = path.join(projectRoot, SKILLS_MATRIX_PATH);
-  const cliMatrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
-  let matrix: Awaited<ReturnType<typeof loadSkillsMatrix>>;
-  try {
-    matrix = await loadSkillsMatrix(
-      (await fileExists(sourceMatrixPath)) ? sourceMatrixPath : cliMatrixPath,
-    );
-  } catch {
-    matrix = await loadSkillsMatrix(cliMatrixPath);
-  }
-  const skillAliases = matrix.skill_aliases || {};
-
   let stack: ProjectConfig;
   if (newStack) {
     verbose(`  Found stack: ${newStack.name}`);
 
-    // Extract skills from stack's agent configurations (Phase 7: skills in stacks, not agents)
+    // Extract skills from stack's agent configurations — values are already skill IDs
     const agentSkillIds = new Set<SkillId>();
     for (const agentName of typedKeys<AgentName>(newStack.agents)) {
       const agentConfig = newStack.agents[agentName];
       if (!agentConfig) continue;
-      const skillRefs = resolveAgentConfigToSkills(agentConfig, skillAliases);
+      const skillRefs = resolveAgentConfigToSkills(agentConfig);
       for (const ref of skillRefs) {
         agentSkillIds.add(ref.id);
       }
@@ -256,7 +240,7 @@ export async function compileStackPlugin(
       description: newStack.description,
       agents: typedKeys<AgentName>(newStack.agents),
       skills: [...agentSkillIds],
-      stack: buildStackProperty(newStack, skillAliases) as ProjectConfig["stack"],
+      stack: buildStackProperty(newStack) as ProjectConfig["stack"],
     };
   } else {
     throw new Error(`Stack '${stackId}' not found in config/stacks.yaml`);
@@ -274,15 +258,8 @@ export async function compileStackPlugin(
 
   const compileConfig: CompileConfig = stackToCompileConfig(stackId, stack);
 
-  // Pass newStack and skillAliases for Phase 7 skill resolution
-  const resolvedAgents = await resolveAgents(
-    agents,
-    skills,
-    compileConfig,
-    projectRoot,
-    newStack,
-    skillAliases,
-  );
+  // Stack values are already skill IDs — no alias resolution needed
+  const resolvedAgents = await resolveAgents(agents, skills, compileConfig, projectRoot, newStack);
 
   const pluginDir = path.join(outputDir, stackId);
   const agentsDir = path.join(pluginDir, "agents");

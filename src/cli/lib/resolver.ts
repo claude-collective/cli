@@ -11,7 +11,6 @@ import type {
   ProjectConfig,
   Skill,
   SkillDefinition,
-  SkillDisplayName,
   SkillId,
   SkillReference,
   Stack,
@@ -60,7 +59,7 @@ export function resolveSkillReferences(
     .filter((skill): skill is Skill => skill !== null);
 }
 
-// Resolve skills for an agent from a Stack definition using display-name-to-ID mappings.
+// Resolve skills for an agent from a Stack definition.
 export function buildSkillRefsFromConfig(
   agentStack: Partial<Record<Subcategory, SkillId>>,
 ): SkillReference[] {
@@ -75,11 +74,9 @@ export function buildSkillRefsFromConfig(
   return skillRefs;
 }
 
-export function resolveAgentSkillsFromStack(
-  agentName: AgentName,
-  stack: Stack,
-  displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,
-): SkillReference[] {
+// Resolve skills for an agent from a Stack definition.
+// Stack values are already skill IDs — no alias resolution needed.
+export function resolveAgentSkillsFromStack(agentName: AgentName, stack: Stack): SkillReference[] {
   const agentConfig = stack.agents[agentName];
 
   // Agent not in this stack
@@ -96,22 +93,13 @@ export function resolveAgentSkillsFromStack(
 
   const skillRefs: SkillReference[] = [];
 
-  for (const [subcategory, technologyDisplayName] of typedEntries<Subcategory, SkillDisplayName>(
-    agentConfig,
-  )) {
-    const fullSkillId = displayNameToId[technologyDisplayName];
-
-    if (!fullSkillId) {
-      verbose(
-        `Warning: No skill found for display name '${technologyDisplayName}' (agent: ${agentName}, subcategory: ${subcategory}). Skipping.`,
-      );
-      continue;
-    }
+  for (const [subcategory, skillId] of typedEntries<Subcategory, SkillId>(agentConfig)) {
+    if (!skillId) continue;
 
     const isKeySkill = KEY_SUBCATEGORIES.has(subcategory);
 
     skillRefs.push({
-      id: fullSkillId,
+      id: skillId,
       usage: `when working with ${subcategory}`,
       preloaded: isKeySkill,
     });
@@ -127,16 +115,15 @@ export async function getAgentSkills(
   agentName: AgentName,
   agentConfig: CompileAgentConfig,
   stack?: Stack,
-  displayNameToId?: Partial<Record<SkillDisplayName, SkillId>>,
 ): Promise<SkillReference[]> {
   // Priority 1: Explicit skills in compile config
   if (agentConfig.skills && agentConfig.skills.length > 0) {
     return agentConfig.skills;
   }
 
-  // Priority 2: Stack-based skills (Phase 7)
-  if (stack && displayNameToId) {
-    const stackSkills = resolveAgentSkillsFromStack(agentName, stack, displayNameToId);
+  // Priority 2: Stack-based skills — values are already skill IDs
+  if (stack) {
+    const stackSkills = resolveAgentSkillsFromStack(agentName, stack);
     if (stackSkills.length > 0) {
       verbose(`Resolved ${stackSkills.length} skills from stack for ${agentName}`);
       return stackSkills;
@@ -153,7 +140,6 @@ export async function resolveAgents(
   compileConfig: CompileConfig,
   _projectRoot: string,
   stack?: Stack,
-  displayNameToId?: Partial<Record<SkillDisplayName, SkillId>>,
 ): Promise<Record<AgentName, AgentConfig>> {
   const resolved: Record<AgentName, AgentConfig> = {} as Record<AgentName, AgentConfig>;
   const agentNames = typedKeys<AgentName>(compileConfig.agents);
@@ -173,7 +159,7 @@ export async function resolveAgents(
 
     const agentConfig = compileConfig.agents[agentName];
 
-    const skillRefs = await getAgentSkills(agentName, agentConfig, stack, displayNameToId);
+    const skillRefs = await getAgentSkills(agentName, agentConfig, stack);
 
     const resolvedSkills = resolveSkillReferences(skillRefs, skills);
 

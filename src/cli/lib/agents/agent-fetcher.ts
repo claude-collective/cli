@@ -56,7 +56,7 @@ export async function getLocalAgentDefinitions(
 
 export async function fetchAgentDefinitionsFromRemote(
   source: string,
-  options: FetchOptions = {},
+  options: FetchOptions & { agentsDir?: string } = {},
 ): Promise<AgentSourcePaths> {
   verbose(`Fetching agent partials from remote: ${source}`);
 
@@ -65,7 +65,7 @@ export async function fetchAgentDefinitionsFromRemote(
     subdir: "",
   });
 
-  const agentsDir = path.join(result.path, "src", "agents");
+  const agentsDir = path.join(result.path, options.agentsDir ?? DIRS.agents);
   const templatesDir = path.join(agentsDir, "_templates");
 
   if (!(await directoryExists(agentsDir))) {
