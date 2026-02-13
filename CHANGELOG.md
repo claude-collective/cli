@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.0] - 2026-02-13
+
+### Added
+
+- **Plugin-aware agent compilation** — `compileAgentForPlugin()` accepts `installMode` parameter. When `"plugin"`, emits fully-qualified `PluginSkillRef` format (`skill-id:skill-id`) in both preloaded frontmatter and dynamic skill invocations. New `PluginSkillRef` template literal type enforces the format at compile time.
+- **Stacks from source** — Source loader loads `config/stacks.yaml` from the marketplace source repository before falling back to the CLI's built-in stacks. Private marketplaces can now define custom stack configurations visible to consumers.
+- **Individual skill plugin installation** — New `installIndividualPlugins()` in `cc init` installs each selected skill as a native Claude Code plugin via `claude plugin install {id}@{marketplace}` when Plugin Mode is used without a stack.
+- **Plugin-aware edit flow** — `cc edit` installs new skill plugins and uninstalls removed ones when in Plugin Mode with a marketplace. Uses non-fatal warnings for individual install failures.
+- **Agent plugin compiler** — New `agent-plugin-compiler.ts` compiles agent partials into standalone Claude Code plugins. `cc build plugins --agents-dir` flag enables building agent plugins alongside skill plugins.
+- **Shared plugin versioning** — Content-hash version bumping utilities extracted to `versioning.ts` and shared across skill, agent, and stack plugin compilers.
+- **Marketplace creation guide** — `docs/creating-a-marketplace.md` covers manual and automated marketplace creation, consumer installation flow, and private repo authentication.
+- **Marketplace migration guide** — `docs/migrate-to-marketplace.md` with step-by-step instructions for converting an existing CC repo into a publishable marketplace.
+
+### Changed
+
+- **Plugin names match skill IDs** — `SKILL_PLUGIN_PREFIX` changed from `"skill-"` to `""`. Plugin names are now bare skill IDs (e.g., `web-framework-react` instead of `skill-web-framework-react`). Marketplace generator category patterns updated to match unprefixed names.
+- **`installMode` threaded through compilation** — `installMode` flows from `wizardResult.installMode` through `local-installer.ts` and from `projectConfig.installMode` through `agent-recompiler.ts` to `compileAgentForPlugin()`.
+
 ## [0.25.1] - 2026-02-13
 
 ### Changed
