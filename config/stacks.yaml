@@ -7,32 +7,32 @@ stacks:
     description: Production-ready Next.js with complete backend infrastructure
     agents:
       web-developer:
-        framework: react
-        styling: scss-modules
-        client-state: zustand
-        server-state: react-query
-        testing: vitest
-        mocking: msw
-        accessibility: accessibility
+        framework: web-framework-react
+        styling: web-styling-scss-modules
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        mocking: web-mocks-msw
+        accessibility: web-accessibility-web-accessibility
       api-developer:
-        api: hono
-        database: drizzle
-        auth: better-auth
-        observability: axiom-pino-sentry
-        analytics: posthog
-        email: resend
-        ci-cd: github-actions
-        testing: api-testing
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        analytics: api-analytics-posthog-analytics
+        email: api-email-resend-react-email
+        ci-cd: api-ci-cd-github-actions
+        testing: api-testing-api-testing
       cli-developer:
-        cli-framework: cli-commander
+        cli-framework: cli-framework-cli-commander
       web-reviewer:
-        reviewing: reviewing
+        reviewing: meta-reviewing-reviewing
       api-reviewer:
-        reviewing: reviewing
+        reviewing: meta-reviewing-reviewing
       cli-reviewer:
-        reviewing: cli-reviewing
+        reviewing: meta-reviewing-cli-reviewing
       web-tester:
-        testing: playwright-e2e
+        testing: web-testing-playwright-e2e
       cli-tester: {}
       web-pm: {}
       skill-summoner: {}
@@ -51,20 +51,20 @@ stacks:
     description: Angular 19 with Signals and NgRx SignalStore
     agents:
       web-developer:
-        framework: angular
-        client-state: ngrx-signalstore
-        testing: vitest
+        framework: web-framework-angular-standalone
+        client-state: web-state-ngrx-signalstore
+        testing: web-testing-vitest
       api-developer:
-        api: hono
-        database: drizzle
-        auth: better-auth
-        observability: axiom-pino-sentry
-        testing: api-testing
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        testing: api-testing-api-testing
       web-architecture: {}
       web-reviewer:
-        reviewing: reviewing
+        reviewing: meta-reviewing-reviewing
       api-reviewer:
-        reviewing: reviewing
+        reviewing: meta-reviewing-reviewing
       web-researcher: {}
       api-researcher: {}
       web-pm: {}
@@ -74,7 +74,7 @@ stacks:
       skill-summoner: {}
       documentor: {}
       web-tester:
-        testing: playwright-e2e
+        testing: web-testing-playwright-e2e
     philosophy: Enterprise-grade and type-safe
 
   - id: nuxt-stack
@@ -82,21 +82,21 @@ stacks:
     description: Vue 3 with Nuxt for full-stack Vue development
     agents:
       web-developer:
-        framework: nuxt
-        meta-framework: vue
-        client-state: pinia
-        testing: vitest
+        framework: web-framework-nuxt
+        meta-framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
       api-developer:
-        api: hono
-        database: drizzle
-        auth: better-auth
-        observability: axiom-pino-sentry
-        testing: api-testing
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        testing: api-testing-api-testing
       web-architecture: {}
       web-reviewer:
-        reviewing: reviewing
+        reviewing: meta-reviewing-reviewing
       api-reviewer:
-        reviewing: reviewing
+        reviewing: meta-reviewing-reviewing
       web-researcher: {}
       api-researcher: {}
       web-pm: {}
@@ -106,7 +106,7 @@ stacks:
       skill-summoner: {}
       documentor: {}
       web-tester:
-        testing: playwright-e2e
+        testing: web-testing-playwright-e2e
     philosophy: Progressive Vue with Nuxt power
 
   - id: remix-stack
@@ -114,20 +114,20 @@ stacks:
     description: Remix for form-heavy applications with excellent DX
     agents:
       web-developer:
-        framework: remix
-        base-framework: react
-        testing: vitest
+        framework: web-framework-remix
+        base-framework: web-framework-react
+        testing: web-testing-vitest
       api-developer:
-        api: hono
-        database: drizzle
-        auth: better-auth
-        observability: axiom-pino-sentry
-        testing: api-testing
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        testing: api-testing-api-testing
       web-architecture: {}
       web-reviewer:
-        reviewing: reviewing
+        reviewing: meta-reviewing-reviewing
       api-reviewer:
-        reviewing: reviewing
+        reviewing: meta-reviewing-reviewing
       web-researcher: {}
       api-researcher: {}
       web-pm: {}
@@ -137,7 +137,7 @@ stacks:
       skill-summoner: {}
       documentor: {}
       web-tester:
-        testing: playwright-e2e
+        testing: web-testing-playwright-e2e
     philosophy: Web standards and excellent forms handling
 
   - id: vue-stack
@@ -145,20 +145,20 @@ stacks:
     description: Vue 3 with Composition API, Pinia, and Tailwind
     agents:
       web-developer:
-        framework: vue
-        client-state: pinia
-        testing: vitest
+        framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
       api-developer:
-        api: hono
-        database: drizzle
-        auth: better-auth
-        observability: axiom-pino-sentry
-        testing: api-testing
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        testing: api-testing-api-testing
       web-architecture: {}
       web-reviewer:
-        reviewing: reviewing
+        reviewing: meta-reviewing-reviewing
       api-reviewer:
-        reviewing: reviewing
+        reviewing: meta-reviewing-reviewing
       web-researcher: {}
       api-researcher: {}
       web-pm: {}
@@ -168,7 +168,7 @@ stacks:
       skill-summoner: {}
       documentor: {}
       web-tester:
-        testing: playwright-e2e
+        testing: web-testing-playwright-e2e
     philosophy: Progressive and approachable
 
   - id: solidjs-stack
@@ -176,19 +176,19 @@ stacks:
     description: High-performance SolidJS with Tailwind and Hono backend
     agents:
       web-developer:
-        framework: solidjs
-        testing: vitest
+        framework: web-framework-solidjs
+        testing: web-testing-vitest
       api-developer:
-        api: hono
-        database: drizzle
-        auth: better-auth
-        observability: axiom-pino-sentry
-        testing: api-testing
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        testing: api-testing-api-testing
       web-architecture: {}
       web-reviewer:
-        reviewing: reviewing
+        reviewing: meta-reviewing-reviewing
       api-reviewer:
-        reviewing: reviewing
+        reviewing: meta-reviewing-reviewing
       web-researcher: {}
       api-researcher: {}
       web-pm: {}
@@ -198,7 +198,7 @@ stacks:
       skill-summoner: {}
       documentor: {}
       web-tester:
-        testing: playwright-e2e
+        testing: web-testing-playwright-e2e
     philosophy: Maximum performance with minimal overhead
 
   - id: react-native-stack
@@ -206,15 +206,15 @@ stacks:
     description: Cross-platform mobile with React Native and Expo
     agents:
       web-developer:
-        framework: react-native
-        platform: expo
-        base-framework: react
-        client-state: zustand
-        server-state: react-query
-        testing: vitest
+        framework: mobile-framework-react-native
+        platform: mobile-framework-expo
+        base-framework: web-framework-react
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
       web-architecture: {}
       web-reviewer:
-        reviewing: reviewing
+        reviewing: meta-reviewing-reviewing
       web-researcher: {}
       web-pm: {}
       pattern-scout: {}
@@ -223,7 +223,7 @@ stacks:
       skill-summoner: {}
       documentor: {}
       web-tester:
-        testing: vitest
+        testing: web-testing-vitest
     philosophy: One codebase, iOS and Android
 
   - id: meta-stack
@@ -231,18 +231,18 @@ stacks:
     description: Agents for creating agents, skills, documentation, and extracting patterns - invoke for meta-level development work
     agents:
       skill-summoner:
-        methodology: improvement-protocol
-        research: research-methodology
+        methodology: meta-methodology-improvement-protocol
+        research: meta-research-research-methodology
       agent-summoner:
-        methodology: improvement-protocol
-        research: research-methodology
+        methodology: meta-methodology-improvement-protocol
+        research: meta-research-research-methodology
       documentor:
-        methodology: context-management
-        research: research-methodology
+        methodology: meta-methodology-context-management
+        research: meta-research-research-methodology
       pattern-scout:
-        methodology: investigation-requirements
-        research: research-methodology
+        methodology: meta-methodology-investigation-requirements
+        research: meta-research-research-methodology
       web-pattern-critique:
-        methodology: anti-over-engineering
-        reviewing: reviewing
+        methodology: meta-methodology-anti-over-engineering
+        reviewing: meta-reviewing-reviewing
     philosophy: Build tools that build tools
