@@ -952,6 +952,75 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
   });
 
+  describe("compileStackPlugin - remote source (projectRoot differs from CLI)", () => {
+    async function createStacksYaml(dir: string, stackId: string, agentIds: string[]) {
+      const configDir = path.join(dir, "config");
+      await mkdir(configDir, { recursive: true });
+      const agentsYaml = agentIds.map((a) => `      ${a}: {}`).join("\n");
+      await writeFile(
+        path.join(configDir, "stacks.yaml"),
+        `stacks:
+  - id: ${stackId}
+    name: Remote Source Stack
+    description: A stack from a remote source
+    agents:
+${agentsYaml}
+`,
+      );
+    }
+
+    it("should load stack from projectRoot when not in CLI stacks.yaml", async () => {
+      const { agentsDir } = await createProjectStructure();
+
+      await createAgent(agentsDir, "web-developer", {
+        title: "Frontend Developer",
+        description: "A frontend developer agent",
+        tools: ["Read", "Write"],
+      });
+
+      const stackId = uniqueStackId("remote-stack");
+
+      // Create stacks.yaml in projectRoot (simulates a remote/private source)
+      // No skills matrix in projectRoot — falls back to CLI matrix
+      await createStacksYaml(projectRoot, stackId, ["web-developer"]);
+
+      // No stack option passed — must load from projectRoot's stacks.yaml
+      const result = await compileStackPlugin({
+        stackId,
+        outputDir,
+        projectRoot,
+      });
+
+      expect(result.stackName).toBe("Remote Source Stack");
+      expect(result.agents).toContain("web-developer");
+    });
+
+    it("should fall back to CLI matrix when projectRoot has no skills matrix", async () => {
+      const { agentsDir } = await createProjectStructure();
+
+      await createAgent(agentsDir, "web-developer", {
+        title: "Frontend Developer",
+        description: "A frontend developer agent",
+        tools: ["Read"],
+      });
+
+      const stackId = uniqueStackId("matrix-fallback-stack");
+
+      // Create stacks.yaml in projectRoot but no skills-matrix.yaml
+      await createStacksYaml(projectRoot, stackId, ["web-developer"]);
+
+      // Should succeed using CLI's skills matrix as fallback
+      const result = await compileStackPlugin({
+        stackId,
+        outputDir,
+        projectRoot,
+      });
+
+      expect(result.stackName).toBe("Remote Source Stack");
+      expect(result.pluginPath).toBeDefined();
+    });
+  });
+
   describe("printStackCompilationSummary", () => {
     it("should print stack name and path", () => {
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});

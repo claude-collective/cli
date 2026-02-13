@@ -214,13 +214,25 @@ export async function compileStackPlugin(
     `  Loaded ${Object.keys(localAgents).length} local agents, ${Object.keys(cliAgents).length} CLI agents`,
   );
 
-  // Use provided stack or load from CLI's config/stacks.yaml
-  const newStack = options.stack || (await loadStackById(stackId, PROJECT_ROOT));
+  // Use provided stack or load from source's config/stacks.yaml, falling back to CLI
+  let newStack = options.stack || (await loadStackById(stackId, projectRoot));
+  if (!newStack) {
+    newStack = await loadStackById(stackId, PROJECT_ROOT);
+  }
 
   // Load skill aliases from the matrix to resolve technology aliases to skill IDs
   // This is needed for Phase 7 skill resolution in resolveAgents
-  const matrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
-  const matrix = await loadSkillsMatrix(matrixPath);
+  // Try source's matrix first, fall back to CLI matrix if missing or invalid
+  const sourceMatrixPath = path.join(projectRoot, SKILLS_MATRIX_PATH);
+  const cliMatrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
+  let matrix: Awaited<ReturnType<typeof loadSkillsMatrix>>;
+  try {
+    matrix = await loadSkillsMatrix(
+      (await fileExists(sourceMatrixPath)) ? sourceMatrixPath : cliMatrixPath,
+    );
+  } catch {
+    matrix = await loadSkillsMatrix(cliMatrixPath);
+  }
   const skillAliases = matrix.skill_aliases || {};
 
   let stack: ProjectConfig;
