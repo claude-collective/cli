@@ -31,26 +31,30 @@ const ResultRow: React.FC<ResultRowProps> = ({ candidate, isFocused }) => {
         {sourceLabel}
       </Text>
       {versionLabel && (
-        <Text dimColor>{"   "}{versionLabel}</Text>
+        <Text dimColor>
+          {"   "}
+          {versionLabel}
+        </Text>
       )}
       {candidate.description && (
-        <Text dimColor>{"   "}{candidate.description}</Text>
+        <Text dimColor>
+          {"   "}
+          {candidate.description}
+        </Text>
       )}
     </Box>
   );
 };
 
-export const SearchModal: React.FC<SearchModalProps> = ({
-  results,
-  alias,
-  onBind,
-  onClose,
-}) => {
+export const SearchModal: React.FC<SearchModalProps> = ({ results, alias, onBind, onClose }) => {
   const [focusedIndex, setFocusedIndex] = useState(0);
 
   useInput(
     useCallback(
-      (_input: string, key: { upArrow: boolean; downArrow: boolean; return: boolean; escape: boolean }) => {
+      (
+        _input: string,
+        key: { upArrow: boolean; downArrow: boolean; return: boolean; escape: boolean },
+      ) => {
         if (key.escape) {
           onClose();
           return;
@@ -87,9 +91,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
       paddingY={0}
       marginTop={1}
     >
-      <Text bold>
-        Search results for &quot;{alias}&quot;
-      </Text>
+      <Text bold>Search results for &quot;{alias}&quot;</Text>
       <Text> </Text>
 
       {results.length === 0 ? (
@@ -106,7 +108,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
 
       <Text> </Text>
       <Text dimColor>
-        {"\u2191"}/{"\u2193"} navigate   ENTER bind   ESC close
+        {"\u2191"}/{"\u2193"} navigate ENTER bind ESC close
       </Text>
     </Box>
   );

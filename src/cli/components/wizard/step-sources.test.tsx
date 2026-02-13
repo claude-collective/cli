@@ -19,12 +19,10 @@ import { createTestReactSkill, createTestZustandSkill } from "../../lib/__tests_
 const reactSkill = createTestReactSkill();
 const zustandSkill = createTestZustandSkill();
 
-const mockMatrix = createMockMatrix(
-  {
-    [reactSkill.id]: reactSkill,
-    [zustandSkill.id]: zustandSkill,
-  },
-);
+const mockMatrix = createMockMatrix({
+  [reactSkill.id]: reactSkill,
+  [zustandSkill.id]: zustandSkill,
+});
 
 const defaultProps: StepSourcesProps = {
   matrix: mockMatrix,

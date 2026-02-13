@@ -3,7 +3,14 @@ import { indexBy, mapToObj } from "remeda";
 import { describe, expect, it, afterEach, vi } from "vitest";
 import { StepBuild, type StepBuildProps, validateBuildStep, getDisplayLabel } from "./step-build";
 import type { CategoryRow as GridCategoryRow } from "./category-grid";
-import type { CategoryDefinition, ResolvedSkill, SkillDisplayName, SkillId, Subcategory, SubcategorySelections } from "../../types";
+import type {
+  CategoryDefinition,
+  ResolvedSkill,
+  SkillDisplayName,
+  SkillId,
+  Subcategory,
+  SubcategorySelections,
+} from "../../types";
 import {
   ENTER,
   ESCAPE,
@@ -15,17 +22,20 @@ import { createMockCategory, createMockSkill, createMockMatrix } from "../../lib
 
 const SKILL_DEFAULTS: Partial<ResolvedSkill> = { categoryExclusive: true };
 
-const buildTestMatrix = (
-  categories: CategoryDefinition[],
-  skills: ResolvedSkill[],
-) => {
+const buildTestMatrix = (categories: CategoryDefinition[], skills: ResolvedSkill[]) => {
   const withDisplayName = skills.filter((s) => s.displayName);
   return createMockMatrix(
     indexBy(skills, (s) => s.id),
     {
       categories: indexBy(categories, (c) => c.id) as Record<Subcategory, CategoryDefinition>,
-      displayNameToId: mapToObj(withDisplayName, (s) => [s.displayName!, s.id]) as Record<SkillDisplayName, SkillId>,
-      displayNames: mapToObj(withDisplayName, (s) => [s.id, s.displayName!]) as Record<SkillId, SkillDisplayName>,
+      displayNameToId: mapToObj(withDisplayName, (s) => [s.displayName!, s.id]) as Record<
+        SkillDisplayName,
+        SkillId
+      >,
+      displayNames: mapToObj(withDisplayName, (s) => [s.id, s.displayName!]) as Record<
+        SkillId,
+        SkillDisplayName
+      >,
     },
   );
 };
@@ -612,7 +622,9 @@ describe("StepBuild component", () => {
           displayName: "Framework",
           required: true,
           exclusive: true,
-          options: [{ id: "web-framework-react", label: "React", state: "normal", selected: false }],
+          options: [
+            { id: "web-framework-react", label: "React", state: "normal", selected: false },
+          ],
         },
       ];
       const selections: SubcategorySelections = {};

@@ -575,7 +575,10 @@ describe("CategoryGrid component", () => {
         createCategory(
           "framework",
           "Framework",
-          [createOption("web-test-react", "React", { selected: true }), createOption("web-test-vue", "Vue")],
+          [
+            createOption("web-test-react", "React", { selected: true }),
+            createOption("web-test-vue", "Vue"),
+          ],
           { required: true },
         ),
       ];
@@ -885,7 +888,9 @@ describe("CategoryGrid component", () => {
     });
 
     it("should handle category with many options (flows naturally)", () => {
-      const options = Array.from({ length: 10 }, (_, i) => createOption(`web-test-opt${i}`, `Option ${i}`));
+      const options = Array.from({ length: 10 }, (_, i) =>
+        createOption(`web-test-opt${i}`, `Option ${i}`),
+      );
       const categories: CategoryRow[] = [createCategory("mocking", "Many Options", options)];
 
       const { lastFrame, unmount } = renderGrid({ categories });
@@ -990,9 +995,7 @@ describe("CategoryGrid component", () => {
 
     it("should NOT show checkmark for non-installed skill", () => {
       const categories: CategoryRow[] = [
-        createCategory("forms", "Forms", [
-          createOption("web-test-opt1", "Option 1"),
-        ]),
+        createCategory("forms", "Forms", [createOption("web-test-opt1", "Option 1")]),
       ];
 
       const { lastFrame, unmount } = renderGrid({ categories });

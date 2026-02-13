@@ -31,29 +31,29 @@ requires node 18+ and [Claude Code](https://docs.anthropic.com/en/docs/claude-co
 
 ## commands
 
-| command                | what it does                                                  |
-| ---------------------- | ------------------------------------------------------------- |
-| `init`                 | interactive setup - pick skills, configure agents             |
-| `edit`                 | modify your skill selection                                   |
-| `compile`              | recompile agents after changes                                |
-| `update`               | update local skills from source                               |
-| `list`                 | show what's installed                                         |
-| `doctor`               | diagnose setup issues                                         |
-| `search`               | search for skills                                             |
-| `info <skill>`         | show skill details                                            |
-| `diff`                 | show skill differences vs source                              |
-| `outdated`             | check for outdated skills                                     |
-| `validate`             | check your setup is correct                                   |
-| `new skill`            | create a custom skill                                         |
-| `new agent`            | create a custom agent                                         |
-| `import skill`         | import a skill from a remote source                           |
-| `eject`                | eject skills/agent partials for customization                 |
-| `uninstall`            | remove Claude Collective from project                         |
-| `config`               | manage settings (show, get, set-project, unset-project, path) |
-| `version`              | show/manage plugin versions (show, set, bump)                 |
-| `build marketplace`    | generate marketplace.json                                     |
-| `build plugins`        | build individual skill plugins                                |
-| `build stack`          | build a stack plugin                                          |
+| command             | what it does                                                  |
+| ------------------- | ------------------------------------------------------------- |
+| `init`              | interactive setup - pick skills, configure agents             |
+| `edit`              | modify your skill selection                                   |
+| `compile`           | recompile agents after changes                                |
+| `update`            | update local skills from source                               |
+| `list`              | show what's installed                                         |
+| `doctor`            | diagnose setup issues                                         |
+| `search`            | search for skills                                             |
+| `info <skill>`      | show skill details                                            |
+| `diff`              | show skill differences vs source                              |
+| `outdated`          | check for outdated skills                                     |
+| `validate`          | check your setup is correct                                   |
+| `new skill`         | create a custom skill                                         |
+| `new agent`         | create a custom agent                                         |
+| `import skill`      | import a skill from a remote source                           |
+| `eject`             | eject skills/agent partials for customization                 |
+| `uninstall`         | remove Claude Collective from project                         |
+| `config`            | manage settings (show, get, set-project, unset-project, path) |
+| `version`           | show/manage plugin versions (show, set, bump)                 |
+| `build marketplace` | generate marketplace.json                                     |
+| `build plugins`     | build individual skill plugins                                |
+| `build stack`       | build a stack plugin                                          |
 
 every command supports `--dry-run` and `--source` flags. run `npx @claude-collective/cli <command> --help` for full options.
 

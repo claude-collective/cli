@@ -3,7 +3,13 @@ import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { StepApproach } from "./step-approach";
 import { useWizardStore } from "../../stores/wizard-store";
-import { ARROW_DOWN, ARROW_UP, ENTER, RENDER_DELAY_MS, delay } from "../../lib/__tests__/test-constants";
+import {
+  ARROW_DOWN,
+  ARROW_UP,
+  ENTER,
+  RENDER_DELAY_MS,
+  delay,
+} from "../../lib/__tests__/test-constants";
 
 const SELECT_NAV_DELAY_MS = 100;
 

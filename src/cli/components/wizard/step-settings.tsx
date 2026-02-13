@@ -27,7 +27,11 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
       const result = await getSourceSummary(projectDir);
       setSummary(result);
     } catch {
-      setSummary({ sources: [{ name: DEFAULT_SOURCE_NAME, url: DEFAULT_SOURCE, enabled: true }], localSkillCount: 0, pluginSkillCount: 0 });
+      setSummary({
+        sources: [{ name: DEFAULT_SOURCE_NAME, url: DEFAULT_SOURCE, enabled: true }],
+        localSkillCount: 0,
+        pluginSkillCount: 0,
+      });
     }
     setIsLoading(false);
   }, [projectDir]);
@@ -116,7 +120,10 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
     setAddSourceInput("");
     try {
       const result = await addSource(projectDir, url);
-      setStatusMessage({ text: `Added "${result.name}" (${result.skillCount} skills)`, color: "green" });
+      setStatusMessage({
+        text: `Added "${result.name}" (${result.skillCount} skills)`,
+        color: "green",
+      });
       await loadSummary();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -174,7 +181,13 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
         })}
       </Box>
 
-      <Box flexDirection="column" borderStyle="round" borderColor={isAddingSource ? "cyan" : "gray"} paddingX={1} marginTop={1}>
+      <Box
+        flexDirection="column"
+        borderStyle="round"
+        borderColor={isAddingSource ? "cyan" : "gray"}
+        paddingX={1}
+        marginTop={1}
+      >
         <Text color={isAddingSource ? "cyan" : undefined}>
           + Add source: {isAddingSource ? addSourceInput : ""}
           {isAddingSource ? "\u2588" : ""}
@@ -188,19 +201,13 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
       )}
 
       <Box marginTop={1} flexDirection="column">
-        <Text dimColor>
-          Local skills:  {summary?.localSkillCount ?? 0} in .claude/skills/
-        </Text>
-        <Text dimColor>
-          Plugins:       {summary?.pluginSkillCount ?? 0} in .claude/plugins/
-        </Text>
+        <Text dimColor>Local skills: {summary?.localSkillCount ?? 0} in .claude/skills/</Text>
+        <Text dimColor>Plugins: {summary?.pluginSkillCount ?? 0} in .claude/plugins/</Text>
       </Box>
 
       <Box marginTop={1}>
         <Text dimColor>
-          {isAddingSource
-            ? "ENTER submit  ESC cancel"
-            : "A add  DEL remove  ESC close"}
+          {isAddingSource ? "ENTER submit  ESC cancel" : "A add  DEL remove  ESC close"}
         </Text>
       </Box>
     </Box>

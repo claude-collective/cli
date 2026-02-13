@@ -691,13 +691,13 @@ Generated 10 JSON Schema files from Zod schemas using `z.toJSONSchema()` (Zod v4
 
 ## Deferred TODOs Resolved (2026-02-11)
 
-| Task ID | Task | Resolution |
-|---------|------|------------|
-| P4-16 | Shared test fixtures | **DONE** — T32 Part G consolidated fixtures into `helpers.ts` (~1120 lines), `test-fixtures.ts`, `test-constants.ts`, `create-test-source.ts` |
-| D-04 | Missing tailwind skill | **DONE** — `web-styling-tailwind` exists in marketplace. Stacks no longer reference it in agent mappings (only in description text). |
-| D-07 | Full skill path as folder name | **OBSOLETE** — D-12 normalized skill IDs to kebab-case (`web-framework-react`). Full category path is encoded in the ID itself. |
-| D-15 | TypeScript for config files | **OBSOLETE** — Zod schemas + union types + generated JSON schemas achieve the original goals (type safety, IDE support, validation). YAML remains for marketplace distribution compatibility. |
-| D-17 | Config YAML merging strategy | **DONE** — `config-merger.ts` implements deep merge with identity field precedence, skill/agent array union, and stack deep-merge. 15 tests. |
+| Task ID | Task                           | Resolution                                                                                                                                                                                    |
+| ------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P4-16   | Shared test fixtures           | **DONE** — T32 Part G consolidated fixtures into `helpers.ts` (~1120 lines), `test-fixtures.ts`, `test-constants.ts`, `create-test-source.ts`                                                 |
+| D-04    | Missing tailwind skill         | **DONE** — `web-styling-tailwind` exists in marketplace. Stacks no longer reference it in agent mappings (only in description text).                                                          |
+| D-07    | Full skill path as folder name | **OBSOLETE** — D-12 normalized skill IDs to kebab-case (`web-framework-react`). Full category path is encoded in the ID itself.                                                               |
+| D-15    | TypeScript for config files    | **OBSOLETE** — Zod schemas + union types + generated JSON schemas achieve the original goals (type safety, IDE support, validation). YAML remains for marketplace distribution compatibility. |
+| D-17    | Config YAML merging strategy   | **DONE** — `config-merger.ts` implements deep merge with identity field precedence, skill/agent array union, and stack deep-merge. 15 tests.                                                  |
 
 ---
 

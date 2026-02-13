@@ -40,7 +40,8 @@ const SearchPill: React.FC<SearchPillProps> = ({ isFocused }) => {
   return (
     <Box marginRight={1} borderColor={borderColor} borderStyle="single" borderDimColor={!isFocused}>
       <Text dimColor={!isFocused} bold={isFocused}>
-        {" "}{SEARCH_PILL_LABEL}{" "}
+        {" "}
+        {SEARCH_PILL_LABEL}{" "}
       </Text>
     </Box>
   );
@@ -53,7 +54,10 @@ type SourceSectionProps = {
   showSearchPill: boolean;
 };
 
-const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean }> = ({ option, isFocused }) => {
+const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean }> = ({
+  option,
+  isFocused,
+}) => {
   const borderColor = option.selected ? "cyan" : isFocused ? "white" : "gray";
   const textColor = option.selected ? "cyan" : undefined;
   const isBold = isFocused || option.selected;
@@ -68,7 +72,12 @@ const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean }> = ({ opt
   );
 };
 
-const SourceSection: React.FC<SourceSectionProps> = ({ row, isFocused, focusedOptionIndex, showSearchPill }) => {
+const SourceSection: React.FC<SourceSectionProps> = ({
+  row,
+  isFocused,
+  focusedOptionIndex,
+  showSearchPill,
+}) => {
   const searchPillIndex = row.options.length;
 
   return (
@@ -151,7 +160,16 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
 
   useInput(
     useCallback(
-      (input: string, key: { leftArrow: boolean; rightArrow: boolean; upArrow: boolean; downArrow: boolean; return: boolean }) => {
+      (
+        input: string,
+        key: {
+          leftArrow: boolean;
+          rightArrow: boolean;
+          upArrow: boolean;
+          downArrow: boolean;
+          return: boolean;
+        },
+      ) => {
         // Don't handle grid input while search modal is open
         if (isSearchActive) return;
 
@@ -206,7 +224,16 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
           onFocusChange(newRow, Math.max(0, newCol));
         }
       },
-      [rows, focusedRow, focusedCol, onSelect, onFocusChange, showSearchPill, isSearchActive, handleSearchTrigger],
+      [
+        rows,
+        focusedRow,
+        focusedCol,
+        onSelect,
+        onFocusChange,
+        showSearchPill,
+        isSearchActive,
+        handleSearchTrigger,
+      ],
     ),
   );
 

@@ -10,7 +10,11 @@ import {
   getPluginSkillIds,
   bumpPluginVersion,
 } from "../lib/plugins/index.js";
-import { copySkillsToPluginFromSource, archiveLocalSkill, restoreArchivedSkill } from "../lib/skills/index.js";
+import {
+  copySkillsToPluginFromSource,
+  archiveLocalSkill,
+  restoreArchivedSkill,
+} from "../lib/skills/index.js";
 import { recompileAgents, getAgentDefinitions } from "../lib/agents/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { detectInstallation } from "../lib/installation/index.js";
@@ -119,13 +123,13 @@ export default class Edit extends BaseCommand {
     }
 
     const addedSkills = result.selectedSkills.filter((id) => !currentSkillIds.includes(id));
-    const removedSkills = currentSkillIds.filter(
-      (id) => !result.selectedSkills.includes(id),
-    );
+    const removedSkills = currentSkillIds.filter((id) => !result.selectedSkills.includes(id));
 
     // Detect source changes (user changed which source provides a skill)
     const sourceChanges = new Map<SkillId, { from: string; to: string }>();
-    for (const [skillId, selectedSource] of typedEntries<SkillId, string>(result.sourceSelections)) {
+    for (const [skillId, selectedSource] of typedEntries<SkillId, string>(
+      result.sourceSelections,
+    )) {
       const skill = sourceResult.matrix.skills[skillId];
       if (skill?.activeSource && skill.activeSource.name !== selectedSource) {
         sourceChanges.set(skillId, {
@@ -244,10 +248,7 @@ export default class Edit extends BaseCommand {
       this.handleError(error);
     }
 
-    const summaryParts = [
-      `${addedSkills.length} added`,
-      `${removedSkills.length} removed`,
-    ];
+    const summaryParts = [`${addedSkills.length} added`, `${removedSkills.length} removed`];
     if (hasSourceChanges) {
       summaryParts.push(`${sourceChanges.size} source${sourceChanges.size > 1 ? "s" : ""} changed`);
     }

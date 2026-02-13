@@ -8,12 +8,12 @@
 
 Four categories, defined by scope and execution method:
 
-| Category | What it tests | How it runs | Location | Speed |
-|----------|--------------|-------------|----------|-------|
-| **Unit** | Single function/component in isolation | Direct import, mock dependencies | Co-located with source | Fast (<1s) |
-| **Command** | oclif command handler (flags, args, errors) | `runCliCommand()` (in-process) | `lib/__tests__/commands/` | Medium (1-3s) |
-| **Integration** | Multiple modules working together | Direct import or `runCliCommand()` + real dependencies | `lib/__tests__/integration/` | Medium (2-5s) |
-| **User Journey** | Full workflows with file system verification | `runCliCommand()` + fs assertions | `lib/__tests__/user-journeys/` | Slow (5-15s) |
+| Category         | What it tests                                | How it runs                                            | Location                       | Speed         |
+| ---------------- | -------------------------------------------- | ------------------------------------------------------ | ------------------------------ | ------------- |
+| **Unit**         | Single function/component in isolation       | Direct import, mock dependencies                       | Co-located with source         | Fast (<1s)    |
+| **Command**      | oclif command handler (flags, args, errors)  | `runCliCommand()` (in-process)                         | `lib/__tests__/commands/`      | Medium (1-3s) |
+| **Integration**  | Multiple modules working together            | Direct import or `runCliCommand()` + real dependencies | `lib/__tests__/integration/`   | Medium (2-5s) |
+| **User Journey** | Full workflows with file system verification | `runCliCommand()` + fs assertions                      | `lib/__tests__/user-journeys/` | Slow (5-15s)  |
 
 No subprocess/smoke test category. `runCliCommand()` gives equivalent coverage without the overhead. If subprocess tests are ever needed (signal handling, exit codes in production builds), add a single `lib/__tests__/smoke.test.ts` — not per-command.
 
@@ -92,12 +92,14 @@ src/cli/
 ## 3. Co-location Rules
 
 **Co-locate when ALL of these are true:**
+
 1. The test exercises a single source file
 2. The test does not require `runCliCommand()`
 3. The test does not require complex multi-directory file system scaffolding
 4. The test imports from `./module-under-test` (relative, same directory)
 
 **Centralize when ANY of these are true:**
+
 1. The test uses `runCliCommand()` to execute an oclif command
 2. The test imports from 3+ different modules in different directories
 3. The test sets up a realistic file system tree (multiple directories, multiple files)
@@ -106,16 +108,16 @@ src/cli/
 
 ### Current misplacements to fix
 
-| File | Current Location | Should Be | Reason |
-|------|-----------------|-----------|--------|
-| `step-confirm.test.tsx` | `__tests__/components/` | `components/wizard/` | Tests single component |
-| `step-approach.test.tsx` | `__tests__/components/` | `components/wizard/` | Tests single component |
-| `step-stack.test.tsx` | `__tests__/components/` | `components/wizard/` | Tests single component |
-| `wizard-tabs.test.tsx` | `__tests__/components/` | `components/wizard/` | Tests single component |
-| `confirm.test.tsx` | `__tests__/components/` | Co-locate with confirm component | Tests single component |
-| `wizard.integration.test.tsx` | `__tests__/components/` | `__tests__/integration/` | Multi-component integration test |
-| `integration.test.ts` | `__tests__/` | `__tests__/integration/` | Integration test |
-| `installation.test.ts` | `__tests__/` | `__tests__/integration/` | Integration test |
+| File                          | Current Location        | Should Be                        | Reason                           |
+| ----------------------------- | ----------------------- | -------------------------------- | -------------------------------- |
+| `step-confirm.test.tsx`       | `__tests__/components/` | `components/wizard/`             | Tests single component           |
+| `step-approach.test.tsx`      | `__tests__/components/` | `components/wizard/`             | Tests single component           |
+| `step-stack.test.tsx`         | `__tests__/components/` | `components/wizard/`             | Tests single component           |
+| `wizard-tabs.test.tsx`        | `__tests__/components/` | `components/wizard/`             | Tests single component           |
+| `confirm.test.tsx`            | `__tests__/components/` | Co-locate with confirm component | Tests single component           |
+| `wizard.integration.test.tsx` | `__tests__/components/` | `__tests__/integration/`         | Multi-component integration test |
+| `integration.test.ts`         | `__tests__/`            | `__tests__/integration/`         | Integration test                 |
+| `installation.test.ts`        | `__tests__/`            | `__tests__/integration/`         | Integration test                 |
 
 ---
 
@@ -123,12 +125,12 @@ src/cli/
 
 All test files use `*.test.ts` or `*.test.tsx`. No `.spec.ts`.
 
-| Test type | Naming pattern | Example |
-|-----------|---------------|---------|
-| Unit test | `{module}.test.ts` | `matrix-resolver.test.ts` |
-| Integration test | `{feature}.integration.test.ts` | `wizard-flow.integration.test.tsx` |
-| User journey test | `{scenario}.test.ts` in `user-journeys/` | `compile-flow.test.ts` |
-| Command test | `{command}.test.ts` in `commands/` | `compile.test.ts` |
+| Test type         | Naming pattern                           | Example                            |
+| ----------------- | ---------------------------------------- | ---------------------------------- |
+| Unit test         | `{module}.test.ts`                       | `matrix-resolver.test.ts`          |
+| Integration test  | `{feature}.integration.test.ts`          | `wizard-flow.integration.test.tsx` |
+| User journey test | `{scenario}.test.ts` in `user-journeys/` | `compile-flow.test.ts`             |
+| Command test      | `{command}.test.ts` in `commands/`       | `compile.test.ts`                  |
 
 The `.integration.` infix disambiguates when a centralized test dir contains a mix. The directory location is the primary signal.
 
@@ -139,18 +141,21 @@ The `.integration.` infix disambiguates when a centralized test dir contains a m
 Follow existing patterns:
 
 **Top-level describe block:**
+
 - Lib modules: `describe("module-name", ...)`
 - Components: `describe("ComponentName component", ...)`
 - Stores: `describe("StoreName", ...)`
 - Commands: `describe("command-name command", ...)`
 
 **Nested describe blocks:** Group by behavior area:
+
 - `describe("rendering", ...)`
 - `describe("keyboard navigation", ...)`
 - `describe("edge cases", ...)`
 - `describe("validation on continue", ...)`
 
 **Individual tests:** Start with `should` for behavioral assertions, verb for state:
+
 - `it("should render approach options", ...)`
 - `it("returns a minimal ProjectConfig structure", ...)`
 - `it("should fail when no plugin exists", ...)`
@@ -161,14 +166,15 @@ Follow existing patterns:
 
 Four tiers — already well-structured, keep as-is:
 
-| Tier | File | What goes here |
-|------|------|---------------|
-| 1 | `test-constants.ts` | Keyboard codes (`ARROW_UP`, `ENTER`), timing values (`INPUT_DELAY_MS`), `delay()` utility |
-| 2 | `test-fixtures.ts` | Pre-built mock objects (`createTestReactSkill()`, `createTestZustandSkill()`) |
-| 3 | `helpers.ts` | Parameterized builders (`createMockSkill(id, cat, overrides)`), fs helpers, `runCliCommand()` |
-| 4 | `fixtures/create-test-source.ts` | Full multi-directory project scaffolding for user journeys |
+| Tier | File                             | What goes here                                                                                |
+| ---- | -------------------------------- | --------------------------------------------------------------------------------------------- |
+| 1    | `test-constants.ts`              | Keyboard codes (`ARROW_UP`, `ENTER`), timing values (`INPUT_DELAY_MS`), `delay()` utility     |
+| 2    | `test-fixtures.ts`               | Pre-built mock objects (`createTestReactSkill()`, `createTestZustandSkill()`)                 |
+| 3    | `helpers.ts`                     | Parameterized builders (`createMockSkill(id, cat, overrides)`), fs helpers, `runCliCommand()` |
+| 4    | `fixtures/create-test-source.ts` | Full multi-directory project scaffolding for user journeys                                    |
 
 **Rules:**
+
 - Import `createMockSkill` / `createMockMatrix` from `helpers.ts` for boilerplate reduction
 - Build test-specific matrices and props locally in each test file
 - Never share fixture instances across test files — each file creates its own
@@ -213,13 +219,14 @@ All keyboard constants live in `test-constants.ts`. Never inline escape sequence
 
 **Timing tiers:**
 
-| Constant | Value | When to use |
-|----------|-------|-------------|
-| `INPUT_DELAY_MS` | 50ms | Between keystrokes within the same step |
-| `RENDER_DELAY_MS` | 100ms | After render before first interaction; after interactions that cause rerender |
-| `STEP_TRANSITION_DELAY_MS` | 150ms | After interactions that change wizard steps |
+| Constant                   | Value | When to use                                                                   |
+| -------------------------- | ----- | ----------------------------------------------------------------------------- |
+| `INPUT_DELAY_MS`           | 50ms  | Between keystrokes within the same step                                       |
+| `RENDER_DELAY_MS`          | 100ms | After render before first interaction; after interactions that cause rerender |
+| `STEP_TRANSITION_DELAY_MS` | 150ms | After interactions that change wizard steps                                   |
 
 **Rules:**
+
 1. Always `await stdin.write()` — it is async
 2. Always `await delay(RENDER_DELAY_MS)` before the first interaction after render
 3. Test-specific timing constants stay local to the test file
@@ -233,6 +240,7 @@ All keyboard constants live in `test-constants.ts`. Never inline escape sequence
 Three patterns, matching the existing split:
 
 **Flag validation errors** — test via `runCliCommand()` in command tests:
+
 ```typescript
 it("should require skill argument", async () => {
   const { error } = await runCliCommand(["info"]);
@@ -242,6 +250,7 @@ it("should require skill argument", async () => {
 ```
 
 **Missing config/plugin errors** — test via `runCliCommand()` with bare project dir:
+
 ```typescript
 it("should fail when no plugin exists", async () => {
   const { error } = await runCliCommand(["compile"]);
@@ -250,6 +259,7 @@ it("should fail when no plugin exists", async () => {
 ```
 
 **Data validation errors** (corrupt YAML, missing fields, invalid schemas) — test via direct lib function calls in co-located unit tests:
+
 ```typescript
 it("should return null for invalid YAML", async () => {
   await writeFile(configPath, "invalid: yaml: content: :");
@@ -276,6 +286,7 @@ it("should return null for invalid YAML", async () => {
 After dead code removal (T7-T21), fill gaps in this order:
 
 **Priority 1 — Core compilation pipeline (most impact):**
+
 - `compiler.ts` — agent template compilation
 - `loader.ts` — skill/agent loading from disk
 - `matrix-loader.ts` — skills matrix YAML parsing
@@ -283,18 +294,22 @@ After dead code removal (T7-T21), fill gaps in this order:
 - `source-loader.ts` — remote/local source loading
 
 **Priority 2 — Plugin system:**
+
 - `skill-plugin-compiler.ts`, `stack-plugin-compiler.ts`
 - `plugin-info.ts`, `plugin-finder.ts`, `plugin-validator.ts`, `plugin-version.ts`
 
 **Priority 3 — Secondary systems:**
+
 - `installation.ts`, `local-skill-loader.ts`, `defaults-loader.ts`
 - `source-fetcher.ts`, `skill-fetcher.ts`
 - `schema-validator.ts`, `marketplace-generator.ts`
 
 **Priority 4 — Commands (cover via user journeys first):**
+
 - Add user journey tests for init, edit, update flows
 - Individual command tests for untested non-interactive commands
 
 **Priority 5 — Error paths:**
+
 - Missing error path coverage across existing tested files
 - Malformed YAML, missing fields, circular dependencies, network failures

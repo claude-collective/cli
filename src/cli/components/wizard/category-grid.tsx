@@ -194,9 +194,7 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked }) => {
             <Text backgroundColor="gray"> L </Text>{" "}
           </>
         )}
-        {option.installed && (
-          <Text dimColor>✓ </Text>
-        )}
+        {option.installed && <Text dimColor>✓ </Text>}
         {option.label}{" "}
       </Text>
     </Box>

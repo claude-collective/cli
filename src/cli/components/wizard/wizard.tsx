@@ -46,7 +46,15 @@ function getParentDomain(domain: Domain, matrix: MergedSkillsMatrix): Domain | u
 
 const MIN_TERMINAL_WIDTH = 80;
 
-export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, version, initialStep, installedSkillIds, projectDir }) => {
+export const Wizard: React.FC<WizardProps> = ({
+  matrix,
+  onComplete,
+  onCancel,
+  version,
+  initialStep,
+  installedSkillIds,
+  projectDir,
+}) => {
   const store = useWizardStore();
   const { exit } = useApp();
   const { stdout } = useStdout();
@@ -57,7 +65,9 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
   const [initialized] = useState(() => {
     if (initialStep) {
       if (installedSkillIds?.length) {
-        useWizardStore.getState().populateFromSkillIds(installedSkillIds, matrix.skills, matrix.categories);
+        useWizardStore
+          .getState()
+          .populateFromSkillIds(installedSkillIds, matrix.skills, matrix.categories);
       }
       useWizardStore.setState({ step: initialStep, approach: "scratch" });
     }
@@ -161,7 +171,8 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
       case "build": {
         const currentDomain = store.getCurrentDomain();
         const defaultDomains: Domain[] = ["web"];
-        const effectiveDomains = store.selectedDomains.length > 0 ? store.selectedDomains : defaultDomains;
+        const effectiveDomains =
+          store.selectedDomains.length > 0 ? store.selectedDomains : defaultDomains;
 
         const allSelections = store.getAllSelectedTechnologies();
 

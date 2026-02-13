@@ -1,7 +1,13 @@
 import React, { useState, useCallback } from "react";
 import { Box, Text, useInput } from "ink";
 import { useWizardStore } from "../../stores/wizard-store.js";
-import type { BoundSkill, BoundSkillCandidate, MergedSkillsMatrix, SkillAlias, SkillId } from "../../types/index.js";
+import type {
+  BoundSkill,
+  BoundSkillCandidate,
+  MergedSkillsMatrix,
+  SkillAlias,
+  SkillId,
+} from "../../types/index.js";
 import { SourceGrid, type SourceRow } from "./source-grid.js";
 import { ViewTitle } from "./view-title.js";
 import { resolveAlias } from "../../lib/matrix/index.js";
@@ -33,7 +39,11 @@ const SOURCE_DISPLAY_NAMES: Record<string, string> = {
   local: "Local",
 };
 
-function formatSourceLabel(source: { name: string; version?: string; installed?: boolean }): string {
+function formatSourceLabel(source: {
+  name: string;
+  version?: string;
+  installed?: boolean;
+}): string {
   const displayName = SOURCE_DISPLAY_NAMES[source.name] ?? source.name;
   const prefix = source.installed ? "\u2713 " : "";
   const versionSuffix = source.version ? ` \u00B7 v${source.version}` : "";
@@ -60,7 +70,8 @@ function buildSourceRows(
   return selectedTechnologies.map((tech) => {
     const skillId = resolveAlias(tech, matrix);
     const skill = matrix.skills[skillId];
-    const selectedSource = sourceSelections[skillId] || skill?.activeSource?.name || DEFAULT_SOURCE_ID;
+    const selectedSource =
+      sourceSelections[skillId] || skill?.activeSource?.name || DEFAULT_SOURCE_ID;
     const alias = getSkillAlias(skillId, matrix);
 
     const sortedSources = [...(skill?.availableSources || [])].sort(
@@ -71,7 +82,11 @@ function buildSourceRows(
       sortedSources.length > 0
         ? sortedSources.map((source) => ({
             id: source.name,
-            label: formatSourceLabel({ name: source.name, version: source.version, installed: source.installed }),
+            label: formatSourceLabel({
+              name: source.name,
+              version: source.version,
+              installed: source.installed,
+            }),
             selected: selectedSource === source.name,
             installed: source.installed,
           }))
@@ -102,7 +117,12 @@ function buildSourceRows(
   });
 }
 
-export const StepSources: React.FC<StepSourcesProps> = ({ matrix, projectDir, onContinue, onBack }) => {
+export const StepSources: React.FC<StepSourcesProps> = ({
+  matrix,
+  projectDir,
+  onContinue,
+  onBack,
+}) => {
   const store = useWizardStore();
   const [view, setView] = useState<SourcesView>("choice");
   const [choiceIndex, setChoiceIndex] = useState(0);
@@ -111,7 +131,12 @@ export const StepSources: React.FC<StepSourcesProps> = ({ matrix, projectDir, on
   const [isGridSearching, setIsGridSearching] = useState(false);
 
   const selectedTechnologies = store.getAllSelectedTechnologies();
-  const rows = buildSourceRows(selectedTechnologies, matrix, store.sourceSelections, store.boundSkills);
+  const rows = buildSourceRows(
+    selectedTechnologies,
+    matrix,
+    store.sourceSelections,
+    store.boundSkills,
+  );
 
   const handleGridSelect = useCallback(
     (skillId: SkillId, sourceId: string) => {
@@ -206,7 +231,9 @@ export const StepSources: React.FC<StepSourcesProps> = ({ matrix, projectDir, on
   }
 
   const isRecommendedSelected = choiceIndex === 0;
-  const hasLocalSkills = rows.some((row) => row.options.some((o) => o.installed && o.id === "local"));
+  const hasLocalSkills = rows.some((row) =>
+    row.options.some((o) => o.installed && o.id === "local"),
+  );
 
   return (
     <Box flexDirection="column" paddingX={2}>

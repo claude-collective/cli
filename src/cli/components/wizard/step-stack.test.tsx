@@ -2,11 +2,22 @@ import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { StepStack } from "./step-stack";
 import { useWizardStore } from "../../stores/wizard-store";
-import { createMockCategory, createMockMatrix, createMockResolvedStack, createMockSkill } from "../../lib/__tests__/helpers";
-
+import {
+  createMockCategory,
+  createMockMatrix,
+  createMockResolvedStack,
+  createMockSkill,
+} from "../../lib/__tests__/helpers";
 
 import type { MergedSkillsMatrix } from "../../types";
-import { ARROW_DOWN, ARROW_UP, ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../../lib/__tests__/test-constants";
+import {
+  ARROW_DOWN,
+  ARROW_UP,
+  ENTER,
+  ESCAPE,
+  RENDER_DELAY_MS,
+  delay,
+} from "../../lib/__tests__/test-constants";
 
 const SELECT_NAV_DELAY_MS = 100;
 

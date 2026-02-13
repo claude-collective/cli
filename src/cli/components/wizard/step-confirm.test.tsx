@@ -24,7 +24,6 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -45,7 +44,6 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -67,7 +65,6 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -89,7 +86,6 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -111,7 +107,6 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -133,7 +128,6 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -156,7 +150,6 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-
           onComplete={onComplete}
           selectedDomains={["web", "api"]}
           domainSelections={{
@@ -182,7 +175,6 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-
           onComplete={onComplete}
           selectedDomains={["web", "api"]}
           domainSelections={{
@@ -211,7 +203,6 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-
           onComplete={onComplete}
           selectedDomains={["web"]}
           domainSelections={{
@@ -236,7 +227,6 @@ describe("StepConfirm component", () => {
 
       const { lastFrame, unmount } = render(
         <StepConfirm
-
           onComplete={onComplete}
           selectedDomains={["web", "api"]}
           domainSelections={{
@@ -268,7 +258,6 @@ describe("StepConfirm component", () => {
 
       const { stdin, unmount } = render(
         <StepConfirm
-
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -292,7 +281,6 @@ describe("StepConfirm component", () => {
 
       const { stdin, unmount } = render(
         <StepConfirm
-
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -316,7 +304,6 @@ describe("StepConfirm component", () => {
 
       const { stdin, unmount } = render(
         <StepConfirm
-
           onComplete={onComplete}
           stackName="nextjs-fullstack"
           technologyCount={12}
@@ -340,9 +327,7 @@ describe("StepConfirm component", () => {
     it("should render custom stack title when no stack name provided", () => {
       const onComplete = vi.fn();
 
-      const { lastFrame, unmount } = render(
-        <StepConfirm onComplete={onComplete} />,
-      );
+      const { lastFrame, unmount } = render(<StepConfirm onComplete={onComplete} />);
       cleanup = unmount;
 
       const output = lastFrame();
@@ -352,9 +337,7 @@ describe("StepConfirm component", () => {
     it("should not show stats when not provided", () => {
       const onComplete = vi.fn();
 
-      const { lastFrame, unmount } = render(
-        <StepConfirm onComplete={onComplete} />,
-      );
+      const { lastFrame, unmount } = render(<StepConfirm onComplete={onComplete} />);
       cleanup = unmount;
 
       const output = lastFrame();

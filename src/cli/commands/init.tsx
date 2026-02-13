@@ -63,7 +63,6 @@ export default class Init extends BaseCommand {
         projectDir,
         forceRefresh: flags.refresh,
       });
-
     } catch (error) {
       this.error(error instanceof Error ? error.message : "Unknown error occurred", {
         exit: EXIT_CODES.ERROR,
