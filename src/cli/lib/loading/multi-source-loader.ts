@@ -1,7 +1,13 @@
-import type { MergedSkillsMatrix, SkillId, SkillSource } from "../../types";
+import type {
+  BoundSkillCandidate,
+  MergedSkillsMatrix,
+  SkillAlias,
+  SkillId,
+  SkillSource,
+} from "../../types";
 import { verbose, warn } from "../../utils/logger";
 import { typedEntries } from "../../utils/typed-object";
-import { resolveAllSources, type ResolvedConfig } from "../configuration";
+import { resolveAllSources, type ResolvedConfig, type SourceEntry } from "../configuration";
 import { extractAllSkills } from "../matrix";
 import { fetchFromSource } from "./source-fetcher";
 import { SKILLS_DIR_PATH } from "../../consts";
@@ -36,13 +42,12 @@ export async function loadSkillsFromAllSources(
   setActiveSources(primaryMatrix);
 }
 
-/** Tag all non-local skills in the primary matrix as "public" source */
+/** Tag all skills in the primary matrix as "public" source */
 function tagPrimarySourceSkills(matrix: MergedSkillsMatrix): void {
   for (const [, skill] of typedEntries<SkillId, NonNullable<(typeof matrix.skills)[SkillId]>>(
     matrix.skills as Record<SkillId, NonNullable<(typeof matrix.skills)[SkillId]>>,
   )) {
     if (!skill) continue;
-    if (skill.local) continue;
 
     const source: SkillSource = {
       name: PUBLIC_SOURCE_NAME,
@@ -58,6 +63,7 @@ function tagPrimarySourceSkills(matrix: MergedSkillsMatrix): void {
 
 /** Tag local skills with "local" source and mark as installed */
 function tagLocalSkills(matrix: MergedSkillsMatrix): void {
+  let count = 0;
   for (const [, skill] of typedEntries<SkillId, NonNullable<(typeof matrix.skills)[SkillId]>>(
     matrix.skills as Record<SkillId, NonNullable<(typeof matrix.skills)[SkillId]>>,
   )) {
@@ -73,7 +79,10 @@ function tagLocalSkills(matrix: MergedSkillsMatrix): void {
 
     skill.availableSources = skill.availableSources ?? [];
     skill.availableSources.push(source);
+    count++;
   }
+
+  verbose(`Tagged ${count} local skills with local source`);
 }
 
 /** Detect plugin-installed skills and tag them */
@@ -185,4 +194,50 @@ function setActiveSources(matrix: MergedSkillsMatrix): void {
     const installedSource = skill.availableSources.find((s) => s.installed);
     skill.activeSource = installedSource ?? skill.availableSources[0];
   }
+}
+
+/**
+ * Search configured extra sources for skills matching a given alias.
+ * Returns candidates with source name, skill ID, and description.
+ * Errors per-source are warned and skipped (never throws).
+ */
+export async function searchExtraSources(
+  alias: SkillAlias,
+  configuredSources: SourceEntry[],
+): Promise<BoundSkillCandidate[]> {
+  const candidates: BoundSkillCandidate[] = [];
+
+  if (configuredSources.length === 0) {
+    return candidates;
+  }
+
+  const lowerAlias = alias.toLowerCase();
+
+  for (const source of configuredSources) {
+    try {
+      const fetchResult = await fetchFromSource(source.url, { forceRefresh: false });
+      const skillsDir = path.join(fetchResult.path, SKILLS_DIR_PATH);
+      const skills = await extractAllSkills(skillsDir);
+
+      for (const skill of skills) {
+        // Match by last segment of directory path (the alias/display-name convention)
+        const segments = skill.directoryPath.split("/");
+        const lastSegment = segments[segments.length - 1]?.toLowerCase();
+
+        if (lastSegment === lowerAlias) {
+          candidates.push({
+            id: skill.id,
+            sourceUrl: source.url,
+            sourceName: source.name,
+            alias,
+            description: skill.description,
+          });
+        }
+      }
+    } catch (error) {
+      warn(`Failed to search extra source '${source.name}' (${source.url}): ${error}`);
+    }
+  }
+
+  return candidates;
 }

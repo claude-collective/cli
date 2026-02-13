@@ -7,6 +7,7 @@ export const ENTER = "\r";
 export const ESCAPE = "\x1B";
 export const CTRL_C = "\x03";
 export const TAB = "\t";
+export const SPACE = " ";
 export const BACKSPACE = "\x7F";
 export const KEY_Y = "y";
 export const KEY_N = "n";

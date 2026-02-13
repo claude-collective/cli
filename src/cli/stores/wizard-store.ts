@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
 import type {
+  BoundSkill,
   Domain,
   DomainSelections,
   SkillDisplayName,
@@ -44,6 +45,8 @@ export type WizardState = {
   showSettings: boolean;
   enabledSources: Record<string, boolean>;
 
+  boundSkills: BoundSkill[];
+
   history: WizardStep[];
 
   setStep: (step: WizardStep) => void;
@@ -77,6 +80,7 @@ export type WizardState = {
   setCustomizeSources: (customize: boolean) => void;
   toggleSettings: () => void;
   setEnabledSources: (sources: Record<string, boolean>) => void;
+  bindSkill: (skill: BoundSkill) => void;
   goBack: () => void;
   reset: () => void;
 
@@ -102,6 +106,7 @@ const createInitialState = () => ({
   customizeSources: false,
   showSettings: false,
   enabledSources: {} as Record<string, boolean>,
+  boundSkills: [] as BoundSkill[],
   history: [] as WizardStep[],
 });
 
@@ -283,6 +288,15 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   toggleSettings: () => set((state) => ({ showSettings: !state.showSettings })),
 
   setEnabledSources: (sources) => set({ enabledSources: sources }),
+
+  bindSkill: (skill) =>
+    set((state) => {
+      const exists = state.boundSkills.some(
+        (b) => b.id === skill.id && b.sourceUrl === skill.sourceUrl,
+      );
+      if (exists) return state;
+      return { boundSkills: [...state.boundSkills, skill] };
+    }),
 
   goBack: () =>
     set((state) => {

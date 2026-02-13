@@ -2,12 +2,15 @@ import React from "react";
 import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, vi } from "vitest";
 import { SourceGrid, type SourceGridProps, type SourceRow, type SourceOption } from "./source-grid";
-import type { SkillId } from "../../types";
+import type { BoundSkillCandidate, SkillId } from "../../types";
 import {
   ARROW_UP,
   ARROW_DOWN,
   ARROW_LEFT,
   ARROW_RIGHT,
+  ENTER,
+  SPACE,
+  ESCAPE,
   RENDER_DELAY_MS,
   INPUT_DELAY_MS,
   delay,
@@ -32,6 +35,7 @@ const createSourceRow = (
 ): SourceRow => ({
   skillId,
   displayName,
+  alias: displayName,
   options,
 });
 
@@ -368,6 +372,217 @@ describe("SourceGrid component", () => {
       const output = lastFrame();
       expect(output).toContain("test-0");
       expect(output).toContain("test-9");
+    });
+  });
+
+  describe("search pill", () => {
+    const mockSearch = vi.fn<(alias: string) => Promise<BoundSkillCandidate[]>>();
+    const mockBind = vi.fn();
+    const mockSearchStateChange = vi.fn();
+
+    const searchCandidates: BoundSkillCandidate[] = [
+      {
+        id: "web-framework-react-pro" as SkillId,
+        sourceUrl: "github:awesome-dev/skills",
+        sourceName: "awesome-dev",
+        alias: "react",
+        version: 3,
+        description: "Opinionated React with strict TS",
+      },
+      {
+        id: "web-framework-react-strict" as SkillId,
+        sourceUrl: "github:team-xyz/skills",
+        sourceName: "team-xyz",
+        alias: "react",
+        version: 1,
+        description: "Strict mode React",
+      },
+    ];
+
+    afterEach(() => {
+      mockSearch.mockReset();
+      mockBind.mockReset();
+      mockSearchStateChange.mockReset();
+    });
+
+    it("should render search pill at end of each row when onSearch is provided", () => {
+      const { lastFrame, unmount } = renderGrid({
+        onSearch: mockSearch,
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Search");
+    });
+
+    it("should not render search pill when onSearch is not provided", () => {
+      const { lastFrame, unmount } = renderGrid();
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).not.toContain("Search");
+    });
+
+    it("should navigate to search pill with arrow right", async () => {
+      const onFocusChange = vi.fn();
+      const { stdin, unmount } = renderGrid({
+        rows: defaultRows,
+        focusedRow: 0,
+        focusedCol: 0, // On the only option (Public)
+        onFocusChange,
+        onSearch: mockSearch,
+      });
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      stdin.write(ARROW_RIGHT);
+      await delay(INPUT_DELAY_MS);
+
+      // Public is at index 0, search pill at index 1
+      expect(onFocusChange).toHaveBeenCalledWith(0, 1);
+    });
+
+    it("should not call onSelect when space is pressed on search pill", async () => {
+      const onSelect = vi.fn();
+      const { stdin, unmount } = renderGrid({
+        rows: defaultRows,
+        focusedRow: 0,
+        focusedCol: 1, // Search pill position (after Public)
+        onSelect,
+        onSearch: mockSearch,
+      });
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      stdin.write(" ");
+      await delay(INPUT_DELAY_MS);
+
+      expect(onSelect).not.toHaveBeenCalled();
+    });
+
+    it("should trigger search on Space when search pill is focused", async () => {
+      mockSearch.mockResolvedValue(searchCandidates);
+
+      const { stdin, unmount } = renderGrid({
+        rows: defaultRows,
+        focusedRow: 0,
+        focusedCol: 1, // Search pill position
+        onSearch: mockSearch,
+        onSearchStateChange: mockSearchStateChange,
+      });
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      stdin.write(SPACE);
+      await delay(INPUT_DELAY_MS);
+
+      expect(mockSearch).toHaveBeenCalledWith("react");
+      expect(mockSearchStateChange).toHaveBeenCalledWith(true);
+    });
+
+    it("should render modal with results after search completes", async () => {
+      mockSearch.mockResolvedValue(searchCandidates);
+
+      const { stdin, lastFrame, unmount } = renderGrid({
+        rows: defaultRows,
+        focusedRow: 0,
+        focusedCol: 1,
+        onSearch: mockSearch,
+      });
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      stdin.write(SPACE);
+      // Wait for async search to resolve
+      await delay(RENDER_DELAY_MS);
+
+      const output = lastFrame();
+      expect(output).toContain("react");
+      expect(output).toContain("awesome-dev");
+      expect(output).toContain("team-xyz");
+    });
+
+    it("should close modal on Escape without binding", async () => {
+      mockSearch.mockResolvedValue(searchCandidates);
+
+      const { stdin, lastFrame, unmount } = renderGrid({
+        rows: defaultRows,
+        focusedRow: 0,
+        focusedCol: 1,
+        onSearch: mockSearch,
+        onBind: mockBind,
+        onSearchStateChange: mockSearchStateChange,
+      });
+      cleanup = unmount;
+
+      // Open modal
+      await delay(RENDER_DELAY_MS);
+      stdin.write(SPACE);
+      await delay(RENDER_DELAY_MS);
+
+      // Close modal
+      stdin.write(ESCAPE);
+      await delay(INPUT_DELAY_MS);
+
+      expect(mockBind).not.toHaveBeenCalled();
+      expect(mockSearchStateChange).toHaveBeenLastCalledWith(false);
+
+      const output = lastFrame();
+      expect(output).not.toContain("awesome-dev");
+    });
+
+    it("should not respond to grid navigation while modal is open", async () => {
+      mockSearch.mockResolvedValue(searchCandidates);
+      const onFocusChange = vi.fn();
+
+      const { stdin, unmount } = renderGrid({
+        rows: defaultRows,
+        focusedRow: 0,
+        focusedCol: 1,
+        onSearch: mockSearch,
+        onFocusChange,
+      });
+      cleanup = unmount;
+
+      // Open modal
+      await delay(RENDER_DELAY_MS);
+      stdin.write(SPACE);
+      await delay(RENDER_DELAY_MS);
+
+      // Try grid navigation while modal is open
+      onFocusChange.mockClear();
+      stdin.write(ARROW_LEFT);
+      await delay(INPUT_DELAY_MS);
+      stdin.write(ARROW_RIGHT);
+      await delay(INPUT_DELAY_MS);
+
+      expect(onFocusChange).not.toHaveBeenCalled();
+    });
+
+    it("should bind result on Enter in modal", async () => {
+      mockSearch.mockResolvedValue(searchCandidates);
+
+      const { stdin, unmount } = renderGrid({
+        rows: defaultRows,
+        focusedRow: 0,
+        focusedCol: 1,
+        onSearch: mockSearch,
+        onBind: mockBind,
+        onSearchStateChange: mockSearchStateChange,
+      });
+      cleanup = unmount;
+
+      // Open modal with Space
+      await delay(RENDER_DELAY_MS);
+      stdin.write(SPACE);
+      await delay(RENDER_DELAY_MS);
+
+      // Bind first result
+      stdin.write(ENTER);
+      await delay(INPUT_DELAY_MS);
+
+      expect(mockBind).toHaveBeenCalledWith(searchCandidates[0]);
+      expect(mockSearchStateChange).toHaveBeenLastCalledWith(false);
     });
   });
 });

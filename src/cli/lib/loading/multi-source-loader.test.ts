@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { loadSkillsFromAllSources } from "./multi-source-loader";
+import { loadSkillsFromAllSources, searchExtraSources } from "./multi-source-loader";
 import type { MergedSkillsMatrix, ResolvedSkill, SkillId, SkillSource } from "../../types";
-import type { ResolvedConfig } from "../configuration";
+import type { ResolvedConfig, SourceEntry } from "../configuration";
 
 // Mock external dependencies
 vi.mock("../../utils/logger", () => ({
@@ -110,7 +110,7 @@ describe("multi-source-loader", () => {
       expect(vitest.availableSources![0].type).toBe("public");
     });
 
-    it("should not tag local skills as public", async () => {
+    it("should tag local skills with both public and local sources", async () => {
       const { resolveAllSources } = await import("../configuration");
       vi.mocked(resolveAllSources).mockResolvedValue({
         primary: { name: "marketplace", url: "github:claude-collective/skills" },
@@ -127,12 +127,21 @@ describe("multi-source-loader", () => {
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
 
       const react = matrix.skills["web-framework-react" as SkillId]!;
-      // Should have "local" source, not "public"
       expect(react.availableSources).toBeDefined();
-      const publicSources = react.availableSources!.filter((s) => s.type === "public");
-      expect(publicSources).toHaveLength(0);
-      const localSources = react.availableSources!.filter((s) => s.type === "local");
-      expect(localSources).toHaveLength(1);
+      expect(react.availableSources).toHaveLength(2);
+
+      const publicSource = react.availableSources!.find((s) => s.type === "public");
+      expect(publicSource).toBeDefined();
+      expect(publicSource!.installed).toBe(false);
+
+      const localSource = react.availableSources!.find((s) => s.type === "local");
+      expect(localSource).toBeDefined();
+      expect(localSource!.installed).toBe(true);
+      expect(localSource!.installMode).toBe("local");
+
+      // activeSource should be the local source (installed)
+      expect(react.activeSource).toBeDefined();
+      expect(react.activeSource!.type).toBe("local");
     });
   });
 
@@ -326,6 +335,251 @@ describe("multi-source-loader", () => {
       expect(publicSource.type).toBe("public");
       expect(publicSource.installed).toBe(true);
       expect(publicSource.installMode).toBe("plugin");
+    });
+  });
+
+  describe("searchExtraSources", () => {
+    it("should return empty array when no sources configured", async () => {
+      const result = await searchExtraSources("react", []);
+      expect(result).toEqual([]);
+    });
+
+    it("should find matching skills by alias from a single source", async () => {
+      const { fetchFromSource } = await import("./source-fetcher");
+      const { extractAllSkills } = await import("../matrix");
+
+      vi.mocked(fetchFromSource).mockResolvedValue({
+        path: "/tmp/cached/acme-corp",
+        fromCache: true,
+        source: "github:acme-corp/skills",
+      });
+
+      vi.mocked(extractAllSkills).mockResolvedValue([
+        {
+          id: "web-framework-react-pro" as SkillId,
+          directoryPath: "web/framework/react",
+          description: "Opinionated React with strict TS",
+          category: "framework",
+          categoryExclusive: true,
+          author: "@acme",
+          tags: [],
+          compatibleWith: [],
+          conflictsWith: [],
+          requires: [],
+          requiresSetup: [],
+          providesSetupFor: [],
+          path: "skills/web/framework/react/",
+        },
+        {
+          id: "web-framework-vue-pro" as SkillId,
+          directoryPath: "web/framework/vue",
+          description: "Acme Vue",
+          category: "framework",
+          categoryExclusive: true,
+          author: "@acme",
+          tags: [],
+          compatibleWith: [],
+          conflictsWith: [],
+          requires: [],
+          requiresSetup: [],
+          providesSetupFor: [],
+          path: "skills/web/framework/vue/",
+        },
+      ]);
+
+      const sources: SourceEntry[] = [{ name: "acme-corp", url: "github:acme-corp/skills" }];
+
+      const result = await searchExtraSources("react", sources);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("web-framework-react-pro");
+      expect(result[0].sourceName).toBe("acme-corp");
+      expect(result[0].sourceUrl).toBe("github:acme-corp/skills");
+      expect(result[0].alias).toBe("react");
+      expect(result[0].description).toBe("Opinionated React with strict TS");
+    });
+
+    it("should find matching skills from multiple sources", async () => {
+      const { fetchFromSource } = await import("./source-fetcher");
+      const { extractAllSkills } = await import("../matrix");
+
+      vi.mocked(fetchFromSource)
+        .mockResolvedValueOnce({
+          path: "/tmp/cached/acme-corp",
+          fromCache: true,
+          source: "github:acme-corp/skills",
+        })
+        .mockResolvedValueOnce({
+          path: "/tmp/cached/team-xyz",
+          fromCache: true,
+          source: "github:team-xyz/skills",
+        });
+
+      vi.mocked(extractAllSkills)
+        .mockResolvedValueOnce([
+          {
+            id: "web-framework-react-pro" as SkillId,
+            directoryPath: "web/framework/react",
+            description: "Acme React Pro",
+            category: "framework",
+            categoryExclusive: true,
+            author: "@acme",
+            tags: [],
+            compatibleWith: [],
+            conflictsWith: [],
+            requires: [],
+            requiresSetup: [],
+            providesSetupFor: [],
+            path: "skills/web/framework/react/",
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            id: "web-framework-react-strict" as SkillId,
+            directoryPath: "web/framework/react",
+            description: "Strict React",
+            category: "framework",
+            categoryExclusive: true,
+            author: "@team-xyz",
+            tags: [],
+            compatibleWith: [],
+            conflictsWith: [],
+            requires: [],
+            requiresSetup: [],
+            providesSetupFor: [],
+            path: "skills/web/framework/react/",
+          },
+        ]);
+
+      const sources: SourceEntry[] = [
+        { name: "acme-corp", url: "github:acme-corp/skills" },
+        { name: "team-xyz", url: "github:team-xyz/skills" },
+      ];
+
+      const result = await searchExtraSources("react", sources);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].sourceName).toBe("acme-corp");
+      expect(result[0].id).toBe("web-framework-react-pro");
+      expect(result[1].sourceName).toBe("team-xyz");
+      expect(result[1].id).toBe("web-framework-react-strict");
+    });
+
+    it("should handle failed sources gracefully without throwing", async () => {
+      const { fetchFromSource } = await import("./source-fetcher");
+      const { extractAllSkills } = await import("../matrix");
+      const { warn } = await import("../../utils/logger");
+
+      vi.mocked(fetchFromSource)
+        .mockRejectedValueOnce(new Error("Network timeout"))
+        .mockResolvedValueOnce({
+          path: "/tmp/cached/team-xyz",
+          fromCache: true,
+          source: "github:team-xyz/skills",
+        });
+
+      vi.mocked(extractAllSkills).mockResolvedValueOnce([
+        {
+          id: "web-framework-react-strict" as SkillId,
+          directoryPath: "web/framework/react",
+          description: "Strict React",
+          category: "framework",
+          categoryExclusive: true,
+          author: "@team-xyz",
+          tags: [],
+          compatibleWith: [],
+          conflictsWith: [],
+          requires: [],
+          requiresSetup: [],
+          providesSetupFor: [],
+          path: "skills/web/framework/react/",
+        },
+      ]);
+
+      const sources: SourceEntry[] = [
+        { name: "broken-source", url: "github:broken/skills" },
+        { name: "team-xyz", url: "github:team-xyz/skills" },
+      ];
+
+      const result = await searchExtraSources("react", sources);
+
+      // Should still return results from the working source
+      expect(result).toHaveLength(1);
+      expect(result[0].sourceName).toBe("team-xyz");
+
+      // Should have warned about the failed source
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining("Failed to search extra source 'broken-source'"),
+      );
+    });
+
+    it("should return empty array when no skills match the alias", async () => {
+      const { fetchFromSource } = await import("./source-fetcher");
+      const { extractAllSkills } = await import("../matrix");
+
+      vi.mocked(fetchFromSource).mockResolvedValue({
+        path: "/tmp/cached/acme-corp",
+        fromCache: true,
+        source: "github:acme-corp/skills",
+      });
+
+      vi.mocked(extractAllSkills).mockResolvedValue([
+        {
+          id: "web-framework-vue-pro" as SkillId,
+          directoryPath: "web/framework/vue",
+          description: "Acme Vue",
+          category: "framework",
+          categoryExclusive: true,
+          author: "@acme",
+          tags: [],
+          compatibleWith: [],
+          conflictsWith: [],
+          requires: [],
+          requiresSetup: [],
+          providesSetupFor: [],
+          path: "skills/web/framework/vue/",
+        },
+      ]);
+
+      const sources: SourceEntry[] = [{ name: "acme-corp", url: "github:acme-corp/skills" }];
+
+      const result = await searchExtraSources("react", sources);
+      expect(result).toHaveLength(0);
+    });
+
+    it("should match alias case-insensitively", async () => {
+      const { fetchFromSource } = await import("./source-fetcher");
+      const { extractAllSkills } = await import("../matrix");
+
+      vi.mocked(fetchFromSource).mockResolvedValue({
+        path: "/tmp/cached/acme-corp",
+        fromCache: true,
+        source: "github:acme-corp/skills",
+      });
+
+      vi.mocked(extractAllSkills).mockResolvedValue([
+        {
+          id: "web-framework-react-pro" as SkillId,
+          directoryPath: "web/framework/React",
+          description: "Acme React Pro",
+          category: "framework",
+          categoryExclusive: true,
+          author: "@acme",
+          tags: [],
+          compatibleWith: [],
+          conflictsWith: [],
+          requires: [],
+          requiresSetup: [],
+          providesSetupFor: [],
+          path: "skills/web/framework/React/",
+        },
+      ]);
+
+      const sources: SourceEntry[] = [{ name: "acme-corp", url: "github:acme-corp/skills" }];
+
+      const result = await searchExtraSources("react", sources);
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("web-framework-react-pro");
     });
   });
 });

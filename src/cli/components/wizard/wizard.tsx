@@ -217,6 +217,7 @@ export const Wizard: React.FC<WizardProps> = ({ matrix, onComplete, onCancel, ve
         return (
           <StepSources
             matrix={matrix}
+            projectDir={projectDir}
             onContinue={handleComplete}
             onBack={store.goBack}
           />
