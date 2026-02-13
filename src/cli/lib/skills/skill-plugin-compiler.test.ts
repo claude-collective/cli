@@ -97,7 +97,7 @@ describe("skill-plugin-compiler", () => {
       const content = await readFile(manifestPath, "utf-8");
       const manifest = JSON.parse(content);
 
-      expect(manifest.name).toBe("skill-zustand");
+      expect(manifest.name).toBe("zustand");
       expect(manifest.version).toBe("1.0.0");
       // content_hash and updated are no longer in manifest - stored internally
       expect(manifest.content_hash).toBeUndefined();
@@ -171,7 +171,7 @@ describe("skill-plugin-compiler", () => {
       expect(content).toContain("# mobx");
       expect(content).toContain("State management with MobX");
       expect(content).toContain("## Installation");
-      expect(content).toContain("skill-mobx");
+      expect(content).toContain('"mobx"');
     });
 
     it("should include tags in README when metadata has tags", async () => {
@@ -212,7 +212,7 @@ describe("skill-plugin-compiler", () => {
       });
 
       expect(result.skillName).toBe("custom-name");
-      expect(result.manifest.name).toBe("skill-custom-name");
+      expect(result.manifest.name).toBe("custom-name");
     });
 
     it("should throw error when SKILL.md is missing", async () => {
@@ -451,7 +451,7 @@ description: Simple skill
       await compileAllSkillPlugins(skillsDir, outputDir);
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("[OK]"));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("skill-web-framework-react"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("web-framework-react"));
 
       consoleSpy.mockRestore();
     });
@@ -471,7 +471,8 @@ description: Simple skill
       const results = await compileAllSkillPlugins(skillsDir, outputDir);
 
       for (const result of results) {
-        expect(result.manifest.name).toMatch(/^skill-/);
+        // Plugin name = skill name (no prefix)
+        expect(result.manifest.name).toBe(result.skillName);
         expect(result.manifest.version).toBe("1.0.0");
       }
     });
@@ -483,18 +484,18 @@ description: Simple skill
 
       const results = [
         {
-          pluginPath: "/out/skill-react",
-          manifest: { name: "skill-react", version: "1.0.0" },
+          pluginPath: "/out/react",
+          manifest: { name: "react", version: "1.0.0" },
           skillName: "react",
         },
         {
-          pluginPath: "/out/skill-zustand",
-          manifest: { name: "skill-zustand", version: "2.0.0" },
+          pluginPath: "/out/zustand",
+          manifest: { name: "zustand", version: "2.0.0" },
           skillName: "zustand",
         },
         {
-          pluginPath: "/out/skill-hono",
-          manifest: { name: "skill-hono", version: "3.0.0" },
+          pluginPath: "/out/hono",
+          manifest: { name: "hono", version: "3.0.0" },
           skillName: "hono",
         },
       ];
@@ -511,22 +512,22 @@ description: Simple skill
 
       const results = [
         {
-          pluginPath: "/out/skill-react",
-          manifest: { name: "skill-react", version: "1.0.0" },
+          pluginPath: "/out/react",
+          manifest: { name: "react", version: "1.0.0" },
           skillName: "react",
         },
         {
-          pluginPath: "/out/skill-zustand",
-          manifest: { name: "skill-zustand", version: "5.0.0" },
+          pluginPath: "/out/zustand",
+          manifest: { name: "zustand", version: "5.0.0" },
           skillName: "zustand",
         },
       ];
 
       printCompilationSummary(results);
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("skill-react"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("react"));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("v1.0.0"));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("skill-zustand"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("zustand"));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("v5.0.0"));
 
       consoleSpy.mockRestore();
@@ -547,8 +548,8 @@ description: Simple skill
 
       const results = [
         {
-          pluginPath: "/out/skill-react",
-          manifest: { name: "skill-react", version: "1.0.0" },
+          pluginPath: "/out/react",
+          manifest: { name: "react", version: "1.0.0" },
           skillName: "react",
         },
       ];
@@ -556,7 +557,7 @@ description: Simple skill
       printCompilationSummary(results);
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Compiled 1 skill plugins"));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("skill-react"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("react"));
 
       consoleSpy.mockRestore();
     });

@@ -10,7 +10,7 @@ import {
   directoryExists,
 } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
-import { DIRS, PROJECT_ROOT, DEFAULT_VERSION, SKILLS_MATRIX_PATH } from "../../consts";
+import { DIRS, PROJECT_ROOT, SKILLS_MATRIX_PATH } from "../../consts";
 import { createLiquidEngine } from "../compiler";
 import {
   generateStackPluginManifest,
@@ -34,50 +34,9 @@ import type {
   SkillId,
   Stack,
 } from "../../types";
-import { hashString } from "../versioning";
-import { pluginManifestSchema } from "../schemas";
+import { hashString, determinePluginVersion, writeContentHash } from "../versioning";
 import { unique } from "remeda";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
-
-const CONTENT_HASH_FILE = ".content-hash";
-
-function parseMajorVersion(version: string): number {
-  const match = version.match(/^(\d+)\./);
-  return match ? parseInt(match[1], 10) : 1;
-}
-
-function bumpMajorVersion(version: string): string {
-  const major = parseMajorVersion(version);
-  return `${major + 1}.0.0`;
-}
-
-async function readExistingManifest(
-  pluginDir: string,
-): Promise<{ version: string; contentHash: string | undefined } | null> {
-  const manifestPath = getPluginManifestPath(pluginDir);
-
-  if (!(await fileExists(manifestPath))) {
-    return null;
-  }
-
-  try {
-    const content = await readFile(manifestPath);
-    const manifest = pluginManifestSchema.parse(JSON.parse(content));
-
-    const hashFilePath = manifestPath.replace("plugin.json", CONTENT_HASH_FILE);
-    let contentHash: string | undefined;
-    if (await fileExists(hashFilePath)) {
-      contentHash = (await readFile(hashFilePath)).trim();
-    }
-
-    return {
-      version: manifest.version ?? DEFAULT_VERSION,
-      contentHash,
-    };
-  } catch {
-    return null;
-  }
-}
 
 function hashStackConfig(stack: ProjectConfig): string {
   const stackSkillIds = stack.stack
@@ -90,34 +49,6 @@ function hashStackConfig(stack: ProjectConfig): string {
     `agents:${(stack.agents || []).sort().join(",")}`,
   ];
   return hashString(parts.join("\n"));
-}
-
-async function determineStackVersion(
-  stack: ProjectConfig,
-  pluginDir: string,
-): Promise<{ version: string; contentHash: string }> {
-  const newHash = hashStackConfig(stack);
-
-  const existing = await readExistingManifest(pluginDir);
-
-  if (!existing) {
-    return {
-      version: DEFAULT_VERSION,
-      contentHash: newHash,
-    };
-  }
-
-  if (existing.contentHash !== newHash) {
-    return {
-      version: bumpMajorVersion(existing.version),
-      contentHash: newHash,
-    };
-  }
-
-  return {
-    version: existing.version,
-    contentHash: newHash,
-  };
 }
 
 export type StackPluginOptions = {
@@ -143,6 +74,7 @@ export async function compileAgentForPlugin(
   agent: AgentConfig,
   fallbackRoot: string,
   engine: Liquid,
+  installMode?: "plugin" | "local",
 ): Promise<string> {
   verbose(`Compiling agent: ${name}`);
 
@@ -176,10 +108,16 @@ export async function compileAgentForPlugin(
     outputFormat = await readFileOptional(path.join(categoryDir, "output-format.md"), "");
   }
 
-  const preloadedSkills = agent.skills.filter((s) => s.preloaded);
-  const dynamicSkills = agent.skills.filter((s) => !s.preloaded);
+  // In plugin mode, skills are installed as individual plugins — use pluginRef format.
+  // Create new skill objects to avoid mutating the caller's data.
+  const skills =
+    installMode === "plugin"
+      ? agent.skills.map((s) => ({ ...s, pluginRef: `${s.id}:${s.id}` as const }))
+      : agent.skills;
 
-  const preloadedSkillIds = preloadedSkills.map((s) => s.id);
+  const preloadedSkills = skills.filter((s) => s.preloaded);
+  const dynamicSkills = skills.filter((s) => !s.preloaded);
+  const preloadedSkillIds = preloadedSkills.map((s) => s.pluginRef ?? s.id);
 
   verbose(
     `Skills for ${name}: ${preloadedSkills.length} preloaded, ${dynamicSkills.length} dynamic`,
@@ -193,7 +131,7 @@ export async function compileAgentForPlugin(
     criticalRequirementsTop,
     criticalReminders,
     outputFormat,
-    skills: agent.skills,
+    skills,
     preloadedSkills,
     dynamicSkills,
     preloadedSkillIds,
@@ -345,7 +283,7 @@ export async function compileStackPlugin(
 
   const copiedSourcePaths = new Set<string>();
 
-  for (const [, resolvedSkill] of Object.entries(skills)) {
+  for (const resolvedSkill of Object.values(skills)) {
     const sourceSkillDir = path.join(projectRoot, resolvedSkill.path);
 
     if (copiedSourcePaths.has(resolvedSkill.path)) {
@@ -388,7 +326,12 @@ export async function compileStackPlugin(
     verbose(`  Copied CLAUDE.md`);
   }
 
-  const { version, contentHash } = await determineStackVersion(stack, pluginDir);
+  const newHash = hashStackConfig(stack);
+  const { version, contentHash } = await determinePluginVersion(
+    newHash,
+    pluginDir,
+    getPluginManifestPath,
+  );
 
   const uniqueSkillPlugins = unique(allSkillPlugins);
   const manifest = generateStackPluginManifest({
@@ -404,8 +347,7 @@ export async function compileStackPlugin(
 
   await writePluginManifest(pluginDir, manifest);
 
-  const hashFilePath = getPluginManifestPath(pluginDir).replace("plugin.json", CONTENT_HASH_FILE);
-  await writeFile(hashFilePath, contentHash);
+  await writeContentHash(pluginDir, contentHash, getPluginManifestPath);
 
   verbose(`  Wrote plugin.json (v${version})`);
 

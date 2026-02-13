@@ -8,10 +8,9 @@ import {
   getPluginManifestPath,
 } from "../plugins";
 import { parseFrontmatter } from "../loading";
-import { hashSkillFolder } from "../versioning";
-import { DEFAULT_VERSION } from "../../consts";
+import { hashSkillFolder, determinePluginVersion, writeContentHash } from "../versioning";
 import type { PluginManifest, SkillFrontmatter, SkillMetadataConfig } from "../../types";
-import { skillMetadataConfigSchema, pluginManifestSchema } from "../schemas";
+import { skillMetadataConfigSchema } from "../schemas";
 
 export type SkillPluginOptions = {
   skillPath: string;
@@ -31,74 +30,6 @@ const SKILL_DIRS = ["examples", "scripts"] as const;
 
 function sanitizeSkillName(name: string): string {
   return name.replace(/\+/g, "-");
-}
-
-function parseMajorVersion(version: string): number {
-  const match = version.match(/^(\d+)\./);
-  return match ? parseInt(match[1], 10) : 1;
-}
-
-function bumpMajorVersion(version: string): string {
-  const major = parseMajorVersion(version);
-  return `${major + 1}.0.0`;
-}
-
-const CONTENT_HASH_FILE = ".content-hash";
-
-async function readExistingManifest(
-  pluginDir: string,
-): Promise<{ version: string; contentHash: string | undefined } | null> {
-  const manifestPath = getPluginManifestPath(pluginDir);
-
-  if (!(await fileExists(manifestPath))) {
-    return null;
-  }
-
-  try {
-    const content = await readFile(manifestPath);
-    const manifest = pluginManifestSchema.parse(JSON.parse(content));
-
-    const hashFilePath = manifestPath.replace("plugin.json", CONTENT_HASH_FILE);
-    let contentHash: string | undefined;
-    if (await fileExists(hashFilePath)) {
-      contentHash = (await readFile(hashFilePath)).trim();
-    }
-
-    return {
-      version: manifest.version ?? DEFAULT_VERSION,
-      contentHash,
-    };
-  } catch {
-    return null;
-  }
-}
-
-async function determineVersion(
-  skillPath: string,
-  pluginDir: string,
-): Promise<{ version: string; contentHash: string }> {
-  const newHash = await hashSkillFolder(skillPath);
-
-  const existing = await readExistingManifest(pluginDir);
-
-  if (!existing) {
-    return {
-      version: DEFAULT_VERSION,
-      contentHash: newHash,
-    };
-  }
-
-  if (existing.contentHash !== newHash) {
-    return {
-      version: bumpMajorVersion(existing.version),
-      contentHash: newHash,
-    };
-  }
-
-  return {
-    version: existing.version,
-    contentHash: newHash,
-  };
 }
 
 async function readSkillMetadata(skillPath: string): Promise<SkillMetadataConfig | null> {
@@ -154,7 +85,7 @@ function generateReadme(
   lines.push("");
   lines.push("```json");
   lines.push(`{`);
-  lines.push(`  "plugins": ["skill-${skillName}"]`);
+  lines.push(`  "plugins": ["${skillName}"]`);
   lines.push(`}`);
   lines.push("```");
   lines.push("");
@@ -209,13 +140,18 @@ export async function compileSkillPlugin(
 
   const metadata = await readSkillMetadata(skillPath);
 
-  const pluginDir = path.join(outputDir, `skill-${skillName}`);
+  const pluginDir = path.join(outputDir, skillName);
   const skillsDir = path.join(pluginDir, "skills", skillName);
 
   await ensureDir(pluginDir);
   await ensureDir(skillsDir);
 
-  const { version, contentHash } = await determineVersion(skillPath, pluginDir);
+  const newHash = await hashSkillFolder(skillPath);
+  const { version, contentHash } = await determinePluginVersion(
+    newHash,
+    pluginDir,
+    getPluginManifestPath,
+  );
 
   const manifest = generateSkillPluginManifest({
     skillName,
@@ -227,8 +163,7 @@ export async function compileSkillPlugin(
 
   await writePluginManifest(pluginDir, manifest);
 
-  const hashFilePath = getPluginManifestPath(pluginDir).replace("plugin.json", CONTENT_HASH_FILE);
-  await writeFile(hashFilePath, contentHash);
+  await writeContentHash(pluginDir, contentHash, getPluginManifestPath);
 
   verbose(`  Wrote plugin.json for ${skillName} (v${version})`);
 
@@ -283,7 +218,7 @@ export async function compileAllSkillPlugins(
         outputDir,
       });
       results.push(result);
-      console.log(`  [OK] skill-${result.skillName}`);
+      console.log(`  [OK] ${result.skillName}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const dirBasename = path.basename(skillPath);
@@ -297,6 +232,6 @@ export async function compileAllSkillPlugins(
 export function printCompilationSummary(results: CompiledSkillPlugin[]): void {
   console.log(`\nCompiled ${results.length} skill plugins:`);
   for (const result of results) {
-    console.log(`  - skill-${result.skillName} (v${result.manifest.version})`);
+    console.log(`  - ${result.skillName} (v${result.manifest.version})`);
   }
 }
