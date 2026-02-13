@@ -10,8 +10,13 @@ import {
   metadataValidationSchema,
   stackConfigValidationSchema,
   skillFrontmatterValidationSchema,
+  agentFrontmatterValidationSchema,
   agentYamlGenerationSchema,
+  stacksConfigSchema,
+  projectSourceConfigSchema,
+  pluginManifestSchema,
 } from "./schemas";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../consts";
 
 export type FileValidationError = {
   file: string;
@@ -91,6 +96,45 @@ const VALIDATION_TARGETS: ValidationTarget[] = [
     pattern: "**/skills/**/SKILL.md",
     baseDir: "src/stacks",
     extractor: extractFrontmatter,
+  },
+  {
+    name: "Stacks Config",
+    schema: stacksConfigSchema,
+    pattern: "stacks.yaml",
+    baseDir: "config",
+  },
+  {
+    name: "Project Source Config",
+    schema: projectSourceConfigSchema,
+    pattern: "config.yaml",
+    baseDir: CLAUDE_SRC_DIR,
+  },
+  {
+    name: "Project Skill Metadata",
+    schema: metadataValidationSchema,
+    pattern: "*/metadata.yaml",
+    baseDir: `${CLAUDE_DIR}/skills`,
+  },
+  {
+    name: "Project Skill Frontmatter",
+    schema: skillFrontmatterValidationSchema,
+    pattern: "*/SKILL.md",
+    baseDir: `${CLAUDE_DIR}/skills`,
+    extractor: extractFrontmatter,
+  },
+  {
+    name: "Project Agent Frontmatter",
+    schema: agentFrontmatterValidationSchema,
+    pattern: "*.md",
+    baseDir: `${CLAUDE_DIR}/agents`,
+    extractor: extractFrontmatter,
+  },
+  {
+    name: "Plugin Manifest",
+    schema: pluginManifestSchema,
+    pattern: "*/plugin.json",
+    baseDir: `${CLAUDE_DIR}/plugins`,
+    extractor: (content: string) => JSON.parse(content) as unknown,
   },
 ];
 

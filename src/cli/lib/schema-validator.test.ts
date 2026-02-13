@@ -30,8 +30,8 @@ describe("schema-validator", () => {
     it("should return results for all VALIDATION_TARGETS", async () => {
       const result = await validateAllSchemas(tempDir);
 
-      // There are 7 validation targets defined in schema-validator.ts
-      const EXPECTED_TARGET_COUNT = 7;
+      // There are 13 validation targets defined in schema-validator.ts
+      const EXPECTED_TARGET_COUNT = 13;
       expect(result.results).toHaveLength(EXPECTED_TARGET_COUNT);
       expect(result.summary.totalSchemas).toBe(EXPECTED_TARGET_COUNT);
     });
