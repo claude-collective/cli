@@ -320,6 +320,16 @@ describe("source-loader local skills integration", () => {
 });
 
 describe("source-loader integration", () => {
+  let tempDir: string;
+
+  beforeEach(async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-integration-test-"));
+  });
+
+  afterEach(async () => {
+    await rm(tempDir, { recursive: true, force: true });
+  });
+
   it("should load all skills from local source", async () => {
     const result = await loadSkillsMatrixFromSource({
       sourceFlag: SKILLS_SOURCE,
@@ -341,17 +351,64 @@ describe("source-loader integration", () => {
       sourceFlag: SKILLS_SOURCE,
     });
 
-    // Phase 6: stacks loaded from config/stacks.yaml
+    // Stacks loaded from source or CLI fallback
     expect(result.matrix.suggestedStacks).toBeDefined();
-    // Stacks should be loaded from CLI's config/stacks.yaml
     expect(result.matrix.suggestedStacks.length).toBeGreaterThan(0);
 
     // Verify stack structure
     const firstStack = result.matrix.suggestedStacks[0];
     expect(firstStack.id).toBeDefined();
     expect(firstStack.name).toBeDefined();
-    // Note: allSkillIds is empty in new format - skills come from agents at compile time
     expect(firstStack.allSkillIds).toBeDefined();
+  });
+
+  it("should load stacks from source when source has config/stacks.yaml", async () => {
+    // Create a source directory with its own stacks.yaml
+    const sourceDir = path.join(tempDir, "custom-source");
+    const configDir = path.join(sourceDir, "config");
+    await mkdir(configDir, { recursive: true });
+
+    // Write a minimal custom stacks.yaml with a unique stack ID
+    await writeFile(
+      path.join(configDir, "stacks.yaml"),
+      `stacks:
+  - id: custom-test-stack
+    name: Custom Test Stack
+    description: A test stack from the source
+    agents:
+      web-developer:
+        framework: react
+`,
+    );
+
+    // Create an empty src/skills dir so extractAllSkills doesn't fail
+    await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
+
+    const result = await loadSkillsMatrixFromSource({
+      sourceFlag: sourceDir,
+      projectDir: tempDir,
+    });
+
+    // Should load the custom stack from source, not CLI stacks
+    expect(result.matrix.suggestedStacks).toBeDefined();
+    expect(result.matrix.suggestedStacks.length).toBe(1);
+    expect(result.matrix.suggestedStacks[0].id).toBe("custom-test-stack");
+    expect(result.matrix.suggestedStacks[0].name).toBe("Custom Test Stack");
+  });
+
+  it("should fall back to CLI stacks when source has no config/stacks.yaml", async () => {
+    // Create a source directory without stacks.yaml
+    const sourceDir = path.join(tempDir, "no-stacks-source");
+    await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
+
+    const result = await loadSkillsMatrixFromSource({
+      sourceFlag: sourceDir,
+      projectDir: tempDir,
+    });
+
+    // Should fall back to CLI's stacks (which has multiple stacks)
+    expect(result.matrix.suggestedStacks).toBeDefined();
+    expect(result.matrix.suggestedStacks.length).toBeGreaterThan(1);
   });
 
   it("should load categories", async () => {

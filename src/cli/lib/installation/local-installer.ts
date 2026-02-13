@@ -78,9 +78,14 @@ async function buildLocalConfig(
   wizardResult: WizardResultV2,
   sourceResult: SourceLoadResult,
 ): Promise<{ config: ProjectConfig; loadedStack: Stack | null }> {
-  const loadedStack = wizardResult.selectedStackId
-    ? await loadStackById(wizardResult.selectedStackId, PROJECT_ROOT)
-    : null;
+  // Try loading stack from source first, fall back to CLI
+  let loadedStack: Stack | null = null;
+  if (wizardResult.selectedStackId) {
+    loadedStack = await loadStackById(wizardResult.selectedStackId, sourceResult.sourcePath);
+    if (!loadedStack) {
+      loadedStack = await loadStackById(wizardResult.selectedStackId, PROJECT_ROOT);
+    }
+  }
 
   let localConfig: ProjectConfig;
 
@@ -166,6 +171,7 @@ async function compileAndWriteAgents(
   sourceResult: SourceLoadResult,
   projectDir: string,
   agentsDir: string,
+  installMode?: "plugin" | "local",
 ): Promise<AgentName[]> {
   const engine = await createLiquidEngine(projectDir);
   const resolvedAgents = await resolveAgents(
@@ -177,7 +183,13 @@ async function compileAndWriteAgents(
 
   const compiledAgentNames: AgentName[] = [];
   for (const [name, agent] of typedEntries<AgentName, AgentConfig>(resolvedAgents)) {
-    const output = await compileAgentForPlugin(name, agent, sourceResult.sourcePath, engine);
+    const output = await compileAgentForPlugin(
+      name,
+      agent,
+      sourceResult.sourcePath,
+      engine,
+      installMode,
+    );
     await writeFile(path.join(agentsDir, `${name}.md`), output);
     compiledAgentNames.push(name);
   }
@@ -257,6 +269,7 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
     sourceResult,
     projectDir,
     localAgentsDir,
+    wizardResult.installMode,
   );
 
   return {

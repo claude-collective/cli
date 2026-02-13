@@ -111,15 +111,15 @@ async function loadFromLocal(
   const skills = await extractAllSkills(skillsDir);
   const mergedMatrix = await mergeMatrixWithSkills(matrix, skills);
 
-  // Load stacks from CLI's config/stacks.yaml (Phase 6: agent-centric config)
-  const stacks = await loadStacks(PROJECT_ROOT);
+  // Load stacks from source first, fall back to CLI's config/stacks.yaml
+  const sourceStacks = await loadStacks(skillsPath);
+  const stacks = sourceStacks.length > 0 ? sourceStacks : await loadStacks(PROJECT_ROOT);
   if (stacks.length > 0) {
-    // Phase 7: Skills are defined in stacks (per agent, per subcategory), not in agent YAMLs
-    // Use skill_aliases from the matrix to resolve technology aliases to full skill IDs
     mergedMatrix.suggestedStacks = stacks.map((stack) =>
       stackToResolvedStack(stack, mergedMatrix.displayNameToId),
     );
-    verbose(`Loaded ${stacks.length} stacks from config/stacks.yaml`);
+    const stackSource = sourceStacks.length > 0 ? "source" : "CLI";
+    verbose(`Loaded ${stacks.length} stacks from ${stackSource}`);
   }
 
   return {
@@ -162,15 +162,15 @@ async function loadFromRemote(
   const skills = await extractAllSkills(skillsDir);
   const mergedMatrix = await mergeMatrixWithSkills(matrix, skills);
 
-  // Load stacks from CLI's config/stacks.yaml (Phase 6: agent-centric config)
-  const stacks = await loadStacks(PROJECT_ROOT);
+  // Load stacks from source first, fall back to CLI's config/stacks.yaml
+  const sourceStacks = await loadStacks(fetchResult.path);
+  const stacks = sourceStacks.length > 0 ? sourceStacks : await loadStacks(PROJECT_ROOT);
   if (stacks.length > 0) {
-    // Phase 7: Skills are defined in stacks (per agent, per subcategory), not in agent YAMLs
-    // Use skill_aliases from the matrix to resolve technology aliases to full skill IDs
     mergedMatrix.suggestedStacks = stacks.map((stack) =>
       stackToResolvedStack(stack, mergedMatrix.displayNameToId),
     );
-    verbose(`Loaded ${stacks.length} stacks from config/stacks.yaml`);
+    const stackSource = sourceStacks.length > 0 ? "source" : "CLI";
+    verbose(`Loaded ${stacks.length} stacks from ${stackSource}`);
   }
 
   return {
