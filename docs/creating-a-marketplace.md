@@ -576,6 +576,54 @@ All key gaps have been resolved. The end-to-end private marketplace flow is comp
 
 ### Deferred
 
+- **Stacks use skill IDs instead of display names** -- see implementation plan below.
+
+#### Stacks Skill ID Migration Plan
+
+`config/stacks.yaml` agent configs currently reference skills by display name alias (`react`, `zustand`, `hono`), requiring `displayNameToId` / `skill_aliases` resolution at every call site. Stacks should use full skill IDs (`web-framework-react`, `web-state-zustand`) directly. Display name aliases remain a UI/CLI-only concern (wizard, `cc info`, etc.).
+
+**Pre-condition (DONE):** `resolveAgentConfigToSkills` in `stacks-loader.ts` already accepts both display names and full skill IDs (dual-format support via `SKILL_ID_PATTERN` fallback). This makes the migration safe — each phase can land independently.
+
+**Phase 1 — Data only (safe, no code changes)**
+
+Convert `config/stacks.yaml` values from display names to skill IDs (~75 replacements). All existing tests pass immediately because of dual-format support.
+
+| Before                  | After                               |
+| ----------------------- | ----------------------------------- |
+| `framework: react`      | `framework: web-framework-react`    |
+| `styling: scss-modules` | `styling: web-styling-scss-modules` |
+| `api: hono`             | `api: api-framework-hono`           |
+| `database: drizzle`     | `database: api-database-drizzle`    |
+
+**Phase 2 — Types + code cleanup**
+
+Change `StackAgentConfig` from `Partial<Record<Subcategory, SkillDisplayName>>` to `Partial<Record<Subcategory, SkillId>>`.
+
+Production files (~8):
+
+| File                                            | Change                                                                                                                                  |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/cli/types-matrix.ts`                       | `StackAgentConfig` value type → `SkillId`                                                                                               |
+| `src/cli/lib/schemas.ts`                        | `stackAgentConfigSchema` value → `skillIdSchema`                                                                                        |
+| `src/cli/lib/stacks/stacks-loader.ts`           | Remove `displayNameToId` param from `resolveAgentConfigToSkills` and `resolveStackSkillsFromDisplayNames`; values are already skill IDs |
+| `src/cli/lib/stacks/stack-plugin-compiler.ts`   | Remove matrix loading (~13 lines) that only existed for alias resolution; remove `displayNameToId` threading                            |
+| `src/cli/lib/loading/source-loader.ts`          | Remove `displayNameToId` / `skillAliases` from stack resolution calls                                                                   |
+| `src/cli/lib/configuration/config-generator.ts` | Remove `displayNameToId` param from `buildStackProperty`; simplify to direct ID usage                                                   |
+| `src/cli/lib/resolver/resolver.ts`              | Remove `displayNameToId` from `resolveAgentSkillsFromStack`                                                                             |
+| `src/cli/components/wizard/wizard-store.ts`     | Update `populateFromStack` to pass skill IDs directly                                                                                   |
+
+Test files (~25): Mechanical replacement of display name strings → skill ID strings in `StackAgentConfig` test fixtures. Tests that verify display name → ID resolution (Category B, ~8 files) and UI rendering (Category C, ~14 files) keep display names — they test the mapping/UI layer, not stacks.
+
+**Phase 3 — Rename cleanup**
+
+- Rename `resolveStackSkillsFromDisplayNames` → `resolveStackSkills`
+- Remove dead `displayNameToId` imports across all files
+- Net result: ~40-50 lines removed
+
+**Scope:** ~8 production files, ~25 test files, net ~40-50 lines removed. Wizard/UI code is unaffected — `displayNameToId` stays on `MergedSkillsMatrix` for display purposes.
+
+- **Domain filtering after stack selection** -- After selecting a stack in step 1, show a multi-choice section letting the user pick which domains to include (e.g., web + api). Only selected domains appear in the build step; unselected domains (cli, web-extras, etc.) are hidden. See `docs/stack-domain-filtering-spec.md` for the full implementation spec.
+- **`cc commit` command** -- Automate the commit workflow: run `git status` + `git diff --stat` to understand changes, group them into logical conventional commits (feat/fix/refactor/test/docs/chore), stage specific files per commit (never `git add -A`), use HEREDOC format for messages, run tests before the first and last commit, update CHANGELOG.md, and bump the version. Should support `--dry-run` to preview the commit plan without executing. No co-author line added by default.
 - **`cc marketplace add` command** -- allow registering a marketplace via the CC CLI instead of requiring the native Claude Code `/plugin marketplace add` command. Would wrap `claudePluginMarketplaceAdd()` which already exists in `utils/exec.ts`.
 - **Inline search (Phase 6 from UX 2.0)** -- deferred per multi-source UX 2.0 implementation notes.
 
@@ -833,21 +881,23 @@ if (installation.mode === "plugin" && sourceResult.marketplace) {
 
 ---
 
-### Phase 5: Config-driven source loading (optional, deferred)
+### Phase 5: Config-driven source loading -- IMPLEMENTED
 
 **Goal:** The source's `.claude-src/config.yaml` declares paths to all resources, replacing hardcoded assumptions.
 
-**Status:** This is a nice-to-have. The current convention-based approach (skills in `src/skills/`, agents in `src/agents/`, stacks in `config/stacks.yaml`, matrix in `config/skills-matrix.yaml`) works if marketplace repos follow the same layout. Config-driven loading is useful when a marketplace uses non-standard paths.
+**Status:** Implemented. Marketplace repos can declare custom paths in their `.claude-src/config.yaml` instead of following the default layout conventions.
 
-**Changes (if implemented):**
+**Changes:**
 
-| File                                   | Change                                            |
-| -------------------------------------- | ------------------------------------------------- |
-| `src/cli/lib/configuration/config.ts`  | Add optional path fields to `ProjectSourceConfig` |
-| `src/cli/lib/schemas.ts`               | Extend `projectSourceConfigSchema`                |
-| `src/cli/lib/loading/source-loader.ts` | Read source's config, use paths from it           |
+| File                                   | Change                                                         |
+| -------------------------------------- | -------------------------------------------------------------- |
+| `src/cli/lib/configuration/config.ts`  | Added 4 optional path fields to `ProjectSourceConfig`          |
+| `src/cli/lib/schemas.ts`               | Extended `projectSourceConfigSchema` with path fields          |
+| `src/cli/lib/loading/source-loader.ts` | Reads source's config, uses path overrides with defaults       |
+| `src/cli/lib/stacks/stacks-loader.ts`  | `loadStacks` accepts optional `stacksFile` parameter           |
+| `src/cli/lib/agents/agent-fetcher.ts`  | `fetchAgentDefinitionsFromRemote` accepts optional `agentsDir` |
 
-**New fields on `ProjectSourceConfig`:**
+**Fields on `ProjectSourceConfig`:**
 
 ```typescript
 export type ProjectSourceConfig = {
@@ -867,7 +917,15 @@ export type ProjectSourceConfig = {
 
 **Resolution precedence:** Explicit config value > convention-based default > CLI fallback.
 
-This phase is deferred because Phases 1-4 provide a complete working flow as long as marketplace repos follow the standard layout.
+**Example `.claude-src/config.yaml` for a marketplace with non-standard layout:**
+
+```yaml
+source: github:myorg/marketplace
+skills_dir: lib/skills
+agents_dir: lib/agents
+stacks_file: data/stacks.yaml
+matrix_file: data/matrix.yaml
+```
 
 ---
 

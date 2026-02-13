@@ -291,11 +291,11 @@ Skill fetching, copying, metadata, compilation, and agent mappings.
 
 Stack loading, resolution, installation, and compilation.
 
-| File                       | Key Exports                                                                                               |
-| -------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `stacks-loader.ts`         | `loadStacks()`, `loadStackById()`, `resolveAgentConfigToSkills()`, `resolveStackSkillsFromDisplayNames()` |
-| `stack-installer.ts`       | `compileStackToTemp()`, `installStackAsPlugin()`                                                          |
-| `stack-plugin-compiler.ts` | `compileAgentForPlugin()`, `compileStackPlugin()`                                                         |
+| File                       | Key Exports                                                                               |
+| -------------------------- | ----------------------------------------------------------------------------------------- |
+| `stacks-loader.ts`         | `loadStacks()`, `loadStackById()`, `resolveAgentConfigToSkills()`, `resolveStackSkills()` |
+| `stack-installer.ts`       | `compileStackToTemp()`, `installStackAsPlugin()`                                          |
+| `stack-plugin-compiler.ts` | `compileAgentForPlugin()`, `compileStackPlugin()`                                         |
 
 ### Cross-Cutting Modules (lib root)
 
