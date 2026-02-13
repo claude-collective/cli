@@ -16,6 +16,7 @@
     "dist/",
     "config/",
     "src/agents/",
+    "src/schemas/",
     "LICENSE",
     "README.md",
     "CHANGELOG.md"

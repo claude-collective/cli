@@ -4,7 +4,7 @@ import { sortBy } from "remeda";
 import { fileExists, readFile, writeFile, listDirectories } from "../../utils/fs";
 import { hashFile } from "../versioning";
 import { getCurrentDate } from "../versioning";
-import { LOCAL_SKILLS_PATH } from "../../consts";
+import { LOCAL_SKILLS_PATH, SCHEMA_PATHS, yamlSchemaComment } from "../../consts";
 import type { SkillId } from "../../types";
 import { localSkillMetadataSchema } from "../schemas";
 import { warn } from "../../utils/logger";
@@ -182,6 +182,7 @@ export async function injectForkedFromMetadata(
     date: getCurrentDate(),
   };
 
+  const schemaComment = yamlSchemaComment(SCHEMA_PATHS.metadata) + "\n";
   const newYamlContent = stringifyYaml(metadata, { lineWidth: 0 });
-  await writeFile(metadataPath, newYamlContent);
+  await writeFile(metadataPath, schemaComment + newYamlContent);
 }

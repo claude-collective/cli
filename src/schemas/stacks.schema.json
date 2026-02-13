@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://claude-collective.local/schemas/stacks.schema.json",
+  "$id": "schemas/stacks.schema.json",
   "title": "Stacks Configuration",
   "description": "Schema for config/stacks.yaml defining agent groupings.",
   "type": "object",
@@ -30,7 +30,67 @@
                 "type": "string"
               },
               "additionalProperties": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+-.+$"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+-.+$"
+                          },
+                          "preloaded": {
+                            "type": "boolean"
+                          },
+                          "local": {
+                            "type": "boolean"
+                          },
+                          "path": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id"],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+-.+$"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+-.+$"
+                            },
+                            "preloaded": {
+                              "type": "boolean"
+                            },
+                            "local": {
+                              "type": "boolean"
+                            },
+                            "path": {
+                              "type": "string"
+                            }
+                          },
+                          "required": ["id"],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  }
+                ]
               }
             }
           },

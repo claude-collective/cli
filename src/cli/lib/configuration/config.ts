@@ -2,7 +2,7 @@ import path from "path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { readFile, writeFile, fileExists, ensureDir } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../../consts";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, SCHEMA_PATHS, yamlSchemaComment } from "../../consts";
 import { projectSourceConfigSchema } from "../schemas";
 import type { BoundSkill } from "../../types";
 
@@ -82,8 +82,9 @@ export async function saveProjectConfig(
 ): Promise<void> {
   const configPath = getProjectConfigPath(projectDir);
   await ensureDir(path.join(projectDir, CLAUDE_SRC_DIR));
+  const schemaComment = yamlSchemaComment(SCHEMA_PATHS.projectSourceConfig) + "\n";
   const content = stringifyYaml(config, { lineWidth: 0 });
-  await writeFile(configPath, content);
+  await writeFile(configPath, schemaComment + content);
   verbose(`Saved project config to ${configPath}`);
 }
 

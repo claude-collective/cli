@@ -23,7 +23,14 @@ import { generateProjectConfigFromSkills } from "../configuration";
 import { ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, LOCAL_SKILLS_PATH, PROJECT_ROOT } from "../../consts";
+import {
+  CLAUDE_DIR,
+  CLAUDE_SRC_DIR,
+  LOCAL_SKILLS_PATH,
+  PROJECT_ROOT,
+  SCHEMA_PATHS,
+  yamlSchemaComment,
+} from "../../consts";
 
 const PLUGIN_NAME = "claude-collective";
 
@@ -245,11 +252,12 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   const finalConfig = mergeResult.config;
 
   // 9. Write config
+  const schemaComment = yamlSchemaComment(SCHEMA_PATHS.projectSourceConfig) + "\n";
   const configYaml = stringifyYaml(finalConfig, {
     indent: YAML_INDENT,
     lineWidth: YAML_LINE_WIDTH,
   });
-  await writeFile(localConfigPath, configYaml);
+  await writeFile(localConfigPath, schemaComment + configYaml);
 
   // 10. Build compile agents config
   const compileAgentsConfig = buildCompileAgents(finalConfig, agents);

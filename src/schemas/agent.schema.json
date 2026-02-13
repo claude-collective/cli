@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://claude-collective.local/schemas/agent.schema.json",
+  "$id": "schemas/agent.schema.json",
   "title": "Agent Definition",
   "description": "Schema for agent.yaml files defining Claude Code agents.",
   "type": "object",

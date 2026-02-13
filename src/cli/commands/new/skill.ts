@@ -3,7 +3,7 @@ import path from "path";
 import { BaseCommand } from "../../base-command.js";
 import { resolveAuthor } from "../../lib/configuration/index.js";
 import { writeFile, directoryExists } from "../../utils/fs.js";
-import { LOCAL_SKILLS_PATH } from "../../consts.js";
+import { LOCAL_SKILLS_PATH, SCHEMA_PATHS, yamlSchemaComment } from "../../consts.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 import type { CategoryPath } from "../../types/index.js";
 
@@ -90,7 +90,7 @@ Add your patterns here.
 export function generateMetadataYaml(name: string, author: string, category: CategoryPath): string {
   const titleName = toTitleCase(name);
 
-  return `# yaml-language-server: $schema=https://raw.githubusercontent.com/claude-collective/skills/main/schemas/metadata.schema.json
+  return `${yamlSchemaComment(SCHEMA_PATHS.metadata)}
 category: ${category}
 category_exclusive: false
 author: "${author}"

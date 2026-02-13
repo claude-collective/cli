@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://claude-collective.local/schemas/skills-matrix.schema.json",
+  "$id": "schemas/skills-matrix.schema.json",
   "title": "Skills Matrix Configuration",
   "description": "Schema for config/skills-matrix.yaml defining skill categories and relationships.",
   "type": "object",
@@ -369,7 +369,7 @@
       },
       "additionalProperties": {
         "type": "string",
-        "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+$"
+        "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+-.+$"
       },
       "required": [
         "react",

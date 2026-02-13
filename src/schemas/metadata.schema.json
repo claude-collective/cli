@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://claude-collective.local/schemas/metadata.schema.json",
+  "$id": "schemas/metadata.schema.json",
   "title": "Skill Metadata",
   "description": "Schema for skill metadata.yaml files.",
   "type": "object",

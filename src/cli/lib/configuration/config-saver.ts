@@ -2,7 +2,7 @@ import path from "path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { fileExists, readFile, writeFile, ensureDir } from "../../utils/fs";
 import { warn } from "../../utils/logger";
-import { CLAUDE_SRC_DIR } from "../../consts";
+import { CLAUDE_SRC_DIR, SCHEMA_PATHS, yamlSchemaComment } from "../../consts";
 import { projectSourceConfigSchema } from "../schemas";
 
 const YAML_INDENT = 2;
@@ -32,6 +32,7 @@ export async function saveSourceToProjectConfig(projectDir: string, source: stri
   config.source = source;
 
   await ensureDir(path.join(projectDir, CLAUDE_SRC_DIR));
+  const schemaComment = yamlSchemaComment(SCHEMA_PATHS.projectSourceConfig) + "\n";
   const configYaml = stringifyYaml(config, { indent: YAML_INDENT });
-  await writeFile(configPath, configYaml);
+  await writeFile(configPath, schemaComment + configYaml);
 }
