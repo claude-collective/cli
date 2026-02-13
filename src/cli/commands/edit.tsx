@@ -1,7 +1,7 @@
 import { Flags } from "@oclif/core";
 import { render } from "ink";
 import { BaseCommand } from "../base-command.js";
-import { Wizard, WizardResultV2 } from "../components/wizard/wizard.js";
+import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
 import { loadSkillsMatrixFromSource } from "../lib/loading/index.js";
 import { directoryExists, ensureDir, remove } from "../utils/fs.js";
 import {
@@ -18,6 +18,7 @@ import {
 import { recompileAgents, getAgentDefinitions } from "../lib/agents/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { detectInstallation } from "../lib/installation/index.js";
+import { claudePluginInstall, claudePluginUninstall } from "../utils/exec.js";
 import type { SkillId } from "../types/index.js";
 import { typedEntries } from "../utils/typed-object.js";
 
@@ -180,6 +181,31 @@ export default class Edit extends BaseCommand {
       }
       if (change.to === "local") {
         await restoreArchivedSkill(projectDir, skillId);
+      }
+    }
+
+    // Install/uninstall individual skill plugins when in plugin mode with a marketplace
+    if (installation.mode === "plugin" && sourceResult.marketplace) {
+      for (const skillId of addedSkills) {
+        const pluginRef = `${skillId}@${sourceResult.marketplace}`;
+        this.log(`Installing plugin: ${pluginRef}...`);
+        try {
+          await claudePluginInstall(pluginRef, "project", projectDir);
+        } catch (error) {
+          this.warn(
+            `Failed to install plugin ${pluginRef}: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+      }
+      for (const skillId of removedSkills) {
+        this.log(`Uninstalling plugin: ${skillId}...`);
+        try {
+          await claudePluginUninstall(skillId, "project", projectDir);
+        } catch (error) {
+          this.warn(
+            `Failed to uninstall plugin ${skillId}: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
       }
     }
 
