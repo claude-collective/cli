@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.4] - 2026-02-15
+
+### Fixed
+
+- **Strict JSON schema validation** — All 12 generated JSON schemas now enforce meaningful constraints for IDE autocomplete and validation via `yaml-language-server`. Previously, schemas like `project-config` accepted anything due to `.passthrough()` and missing `required` fields.
+  - Hook definitions require `hooks` array with at least 1 action
+  - Agent `tools` requires at least 1 entry
+  - Marketplace `name`/`version` reject empty strings; `plugins` requires at least 1 entry
+  - Stack `id`/`name` reject empty strings; `stacks` array requires at least 1 entry
+  - Relationship rules enforce minimum skill counts (`conflicts`/`discourages` need 2+)
+  - Plugin manifest uses strict validation schema (rejects unknown fields)
+  - Project config and source config use dedicated validation schemas with `required` fields and `additionalProperties: false`
+
 ## [0.29.3] - 2026-02-15
 
 ### Fixed
