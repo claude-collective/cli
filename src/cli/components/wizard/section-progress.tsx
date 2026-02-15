@@ -1,7 +1,8 @@
 import React from "react";
 import { Box, Text } from "ink";
+import { CLI_COLORS } from "../../consts.js";
 
-export type SectionProgressProps = {
+type SectionProgressProps = {
   label: string;
   current: string;
   /** 1-based */
@@ -23,7 +24,7 @@ export const SectionProgress: React.FC<SectionProgressProps> = ({
   return (
     <Box flexDirection="row" justifyContent="space-between" marginBottom={1}>
       <Text>
-        <Text bold>{label}:</Text> <Text color="cyan">{current}</Text>
+        <Text bold>{label}:</Text> <Text color={CLI_COLORS.PRIMARY}>{current}</Text>
       </Text>
       <Text>
         <Text dimColor>

@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Box, Text, useInput } from "ink";
+import { CLI_COLORS } from "../../consts.js";
 import { ViewTitle } from "./view-title.js";
 import { getSourceSummary, type SourceSummary } from "../../lib/configuration/source-manager.js";
-import { addSource, removeSource } from "../../lib/configuration/source-manager.js";
 import { DEFAULT_SOURCE } from "../../lib/configuration/config.js";
+import { useKeyboardNavigation } from "../hooks/use-keyboard-navigation.js";
+import { useModalState } from "../hooks/use-modal-state.js";
+import { useSourceOperations } from "../hooks/use-source-operations.js";
+import { useTextInput } from "../hooks/use-text-input.js";
 
 const DEFAULT_SOURCE_NAME = "public";
-const MIN_PRINTABLE_CHAR_CODE = 32;
-const MAX_PRINTABLE_CHAR_CODE = 126;
 
 export type StepSettingsProps = {
   projectDir: string;
@@ -16,10 +18,8 @@ export type StepSettingsProps = {
 
 export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose }) => {
   const [summary, setSummary] = useState<SourceSummary | null>(null);
-  const [focusedIndex, setFocusedIndex] = useState(0);
-  const [isAddingSource, setIsAddingSource] = useState(false);
-  const [addSourceInput, setAddSourceInput] = useState("");
-  const [statusMessage, setStatusMessage] = useState<{ text: string; color: string } | null>(null);
+  const addModal = useModalState();
+  const { value: addSourceInput, setValue: setAddSourceInput, handleInput: handleTextInput } = useTextInput("");
   const [isLoading, setIsLoading] = useState(true);
 
   const loadSummary = useCallback(async () => {
@@ -40,58 +40,42 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
     void loadSummary();
   }, [loadSummary]);
 
+  const { handleAdd, handleRemove, statusMessage, clearStatus } = useSourceOperations(projectDir, loadSummary);
+
   const sourceCount = summary?.sources.length ?? 0;
 
+  const { focusedIndex, setFocusedIndex } = useKeyboardNavigation(
+    sourceCount,
+    { onEscape: onClose },
+    { wrap: false, vimKeys: false, active: !addModal.isOpen },
+  );
+
   useInput((input, key) => {
-    // Clear status message on any input
     if (statusMessage) {
-      setStatusMessage(null);
+      clearStatus();
     }
 
-    if (isAddingSource) {
+    if (addModal.isOpen) {
       if (key.escape) {
-        setIsAddingSource(false);
+        addModal.close();
         setAddSourceInput("");
         return;
       }
 
       if (key.return) {
         if (addSourceInput.trim()) {
-          void handleAddSource(addSourceInput.trim());
+          addModal.close();
+          setAddSourceInput("");
+          void handleAdd(addSourceInput.trim());
         }
         return;
       }
 
-      if (key.backspace || key.delete) {
-        setAddSourceInput((prev) => prev.slice(0, -1));
-        return;
-      }
-
-      // Capture printable characters
-      if (input && input.length === 1) {
-        const code = input.charCodeAt(0);
-        if (code >= MIN_PRINTABLE_CHAR_CODE && code <= MAX_PRINTABLE_CHAR_CODE) {
-          setAddSourceInput((prev) => prev + input);
-        }
-      }
+      handleTextInput(input, key);
       return;
     }
 
-    // Non-adding mode keyboard handling
-    if (key.escape) {
-      onClose();
-      return;
-    }
-
-    if (key.upArrow) {
-      setFocusedIndex((prev) => Math.max(0, prev - 1));
-      return;
-    }
-
-    if (key.downArrow) {
-      setFocusedIndex((prev) => Math.min(sourceCount - 1, prev - 0 + 1));
-      return;
-    }
+    // Non-adding mode: up/down/escape handled by useKeyboardNavigation hook
 
     if (key.return) {
       // Toggle enabled/disabled is a placeholder for future enabledSources store integration
@@ -102,46 +86,22 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
       if (summary && summary.sources[focusedIndex]) {
         const source = summary.sources[focusedIndex];
         if (source.name !== DEFAULT_SOURCE_NAME) {
-          void handleRemoveSource(source.name);
+          void handleRemove(source.name).then((success) => {
+            if (success) {
+              setFocusedIndex((prev) => Math.max(0, prev - 1));
+            }
+          });
         }
       }
       return;
     }
 
     if (input === "a" || input === "A") {
-      setIsAddingSource(true);
+      addModal.open(true);
       setAddSourceInput("");
       return;
     }
   });
-
-  const handleAddSource = async (url: string) => {
-    setIsAddingSource(false);
-    setAddSourceInput("");
-    try {
-      const result = await addSource(projectDir, url);
-      setStatusMessage({
-        text: `Added "${result.name}" (${result.skillCount} skills)`,
-        color: "green",
-      });
-      await loadSummary();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      setStatusMessage({ text: `Failed to add source: ${message}`, color: "red" });
-    }
-  };
-
-  const handleRemoveSource = async (name: string) => {
-    try {
-      await removeSource(projectDir, name);
-      setStatusMessage({ text: `Removed "${name}"`, color: "green" });
-      setFocusedIndex((prev) => Math.max(0, prev - 1));
-      await loadSummary();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      setStatusMessage({ text: `Failed to remove: ${message}`, color: "red" });
-    }
-  };
 
   if (isLoading) {
     return (
@@ -158,9 +118,9 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
       <Box marginTop={1} />
 
       <Text bold>Configured marketplaces:</Text>
-      <Box flexDirection="column" borderStyle="round" borderColor="gray" paddingX={1} marginTop={1}>
+      <Box flexDirection="column" borderStyle="round" borderColor={CLI_COLORS.NEUTRAL} paddingX={1} marginTop={1}>
         {summary?.sources.map((source, index) => {
-          const isFocused = index === focusedIndex && !isAddingSource;
+          const isFocused = index === focusedIndex && !addModal.isOpen;
           const isDefault = source.name === DEFAULT_SOURCE_NAME;
           const checkmark = source.enabled ? "\u2713" : " ";
           const displayName = isDefault ? "Public" : source.name;
@@ -168,7 +128,7 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
 
           return (
             <Box key={source.name}>
-              <Text color={isFocused ? "cyan" : undefined} bold={isFocused}>
+              <Text color={isFocused ? CLI_COLORS.PRIMARY : undefined} bold={isFocused}>
                 {isFocused ? ">" : " "} {checkmark} {displayName}
               </Text>
               <Text dimColor>
@@ -184,13 +144,13 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
       <Box
         flexDirection="column"
         borderStyle="round"
-        borderColor={isAddingSource ? "cyan" : "gray"}
+        borderColor={addModal.isOpen ? CLI_COLORS.PRIMARY : CLI_COLORS.NEUTRAL}
         paddingX={1}
         marginTop={1}
       >
-        <Text color={isAddingSource ? "cyan" : undefined}>
-          + Add source: {isAddingSource ? addSourceInput : ""}
-          {isAddingSource ? "\u2588" : ""}
+        <Text color={addModal.isOpen ? CLI_COLORS.PRIMARY : undefined}>
+          + Add source: {addModal.isOpen ? addSourceInput : ""}
+          {addModal.isOpen ? "\u2588" : ""}
         </Text>
       </Box>
 
@@ -207,7 +167,7 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
 
       <Box marginTop={1}>
         <Text dimColor>
-          {isAddingSource ? "ENTER submit  ESC cancel" : "A add  DEL remove  ESC close"}
+          {addModal.isOpen ? "ENTER submit  ESC cancel" : "A add  DEL remove  ESC close"}
         </Text>
       </Box>
     </Box>

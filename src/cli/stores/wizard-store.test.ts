@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { useWizardStore } from "./wizard-store";
 import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
-import type { Domain, SkillAssignment, SkillId, Subcategory } from "../types";
+import type { Domain, MergedSkillsMatrix, SkillAssignment, SkillId, Subcategory } from "../types";
 
 /** Shorthand: creates a SkillAssignment from an id and optional preloaded flag */
 function sa(id: SkillId, preloaded = false): SkillAssignment {
@@ -86,7 +86,7 @@ describe("WizardStore", () => {
       expect(history).toEqual(["approach"]);
     });
 
-    it("should return to approach when history is empty", () => {
+    it("when goBack is called with empty history, should return to approach step", () => {
       const store = useWizardStore.getState();
 
       store.setStep("stack");
@@ -95,16 +95,6 @@ describe("WizardStore", () => {
 
       const { step } = useWizardStore.getState();
       expect(step).toBe("approach");
-    });
-
-    it("should reset focus when changing steps", () => {
-      const store = useWizardStore.getState();
-      store.setFocus(2, 3);
-      store.setStep("stack");
-
-      const { focusedRow, focusedCol } = useWizardStore.getState();
-      expect(focusedRow).toBe(0);
-      expect(focusedCol).toBe(0);
     });
   });
 
@@ -135,7 +125,7 @@ describe("WizardStore", () => {
       expect(selectedStackId).toBe("nextjs-fullstack");
     });
 
-    it("should clear stack when null is passed", () => {
+    it("when selectStack is called with null, should clear previously selected stack", () => {
       const store = useWizardStore.getState();
       store.selectStack("nextjs-fullstack");
       store.selectStack(null);
@@ -237,7 +227,7 @@ describe("WizardStore", () => {
       expect(currentDomainIndex).toBe(1);
     });
 
-    it("should return false when at last domain", () => {
+    it("when already at the last domain, should return false from nextDomain", () => {
       const store = useWizardStore.getState();
       store.toggleDomain("web");
 
@@ -259,7 +249,7 @@ describe("WizardStore", () => {
       expect(currentDomainIndex).toBe(0);
     });
 
-    it("should return false when at first domain", () => {
+    it("when already at the first domain, should return false from prevDomain", () => {
       const store = useWizardStore.getState();
       store.toggleDomain("web");
 
@@ -382,14 +372,183 @@ describe("WizardStore", () => {
       expect(technologies).toContain("api-framework-hono");
     });
 
-    it("should get selected skills including preselected", () => {
+    it("should get default methodology skills", () => {
       const store = useWizardStore.getState();
 
-      const skills = store.getSelectedSkills();
+      const skills = store.getDefaultMethodologySkills();
 
       for (const skill of DEFAULT_PRESELECTED_SKILLS) {
         expect(skills).toContain(skill);
       }
+    });
+
+    it("should get selected technologies per domain", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "framework", "web-framework-react", true);
+      store.toggleTechnology("web", "styling", "web-styling-scss-modules", true);
+      store.toggleTechnology("api", "api", "api-framework-hono", true);
+
+      const perDomain = store.getSelectedTechnologiesPerDomain();
+      expect(perDomain.web).toEqual(["web-framework-react", "web-styling-scss-modules"]);
+      expect(perDomain.api).toEqual(["api-framework-hono"]);
+      expect(perDomain.cli).toBeUndefined();
+    });
+
+    it("should return empty object for getSelectedTechnologiesPerDomain with no selections", () => {
+      const store = useWizardStore.getState();
+      const perDomain = store.getSelectedTechnologiesPerDomain();
+      expect(perDomain).toEqual({});
+    });
+
+    it("should omit domains with empty subcategory arrays from getSelectedTechnologiesPerDomain", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "framework", "web-framework-react", true);
+      store.toggleTechnology("web", "framework", "web-framework-react", true); // toggle off
+
+      const perDomain = store.getSelectedTechnologiesPerDomain();
+      expect(perDomain.web).toBeUndefined();
+    });
+
+    it("should get technology count", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "framework", "web-framework-react", true);
+      store.toggleTechnology("web", "styling", "web-styling-scss-modules", true);
+      store.toggleTechnology("api", "api", "api-framework-hono", true);
+
+      expect(store.getTechnologyCount()).toBe(3);
+    });
+
+    it("should return 0 for getTechnologyCount with no selections", () => {
+      const store = useWizardStore.getState();
+      expect(store.getTechnologyCount()).toBe(0);
+    });
+  });
+
+  describe("navigation guards", () => {
+    it("canGoToNextDomain should return true when not at last domain", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+      store.toggleDomain("api");
+
+      expect(store.canGoToNextDomain()).toBe(true);
+    });
+
+    it("canGoToNextDomain should return false when at last domain", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+
+      expect(store.canGoToNextDomain()).toBe(false);
+    });
+
+    it("canGoToNextDomain should return false with no domains", () => {
+      const store = useWizardStore.getState();
+      expect(store.canGoToNextDomain()).toBe(false);
+    });
+
+    it("canGoToPreviousDomain should return false when at first domain", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+      store.toggleDomain("api");
+
+      expect(store.canGoToPreviousDomain()).toBe(false);
+    });
+
+    it("canGoToPreviousDomain should return true when past first domain", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+      store.toggleDomain("api");
+      store.nextDomain();
+
+      expect(store.canGoToPreviousDomain()).toBe(true);
+    });
+
+    it("canGoToPreviousDomain should return false with no domains", () => {
+      const store = useWizardStore.getState();
+      expect(store.canGoToPreviousDomain()).toBe(false);
+    });
+  });
+
+  describe("parent domain selectors", () => {
+    const matrixWithParentDomain: Pick<MergedSkillsMatrix, "categories"> = {
+      categories: {
+        "error-handling": {
+          id: "error-handling",
+          displayName: "Error Handling",
+          description: "Error handling tools",
+          domain: "web-extras",
+          parent_domain: "web",
+          exclusive: false,
+          required: false,
+          order: 0,
+        },
+        framework: {
+          id: "framework",
+          displayName: "Framework",
+          description: "Web frameworks",
+          domain: "web",
+          exclusive: true,
+          required: false,
+          order: 0,
+        },
+      },
+    };
+
+    const matrixWithoutParent: Pick<MergedSkillsMatrix, "categories"> = {
+      categories: {
+        framework: {
+          id: "framework",
+          displayName: "Framework",
+          description: "Web frameworks",
+          domain: "web",
+          exclusive: true,
+          required: false,
+          order: 0,
+        },
+      },
+    };
+
+    it("should find parent domain for a domain with parent_domain", () => {
+      const store = useWizardStore.getState();
+      const parent = store.getParentDomain(
+        "web-extras",
+        matrixWithParentDomain as MergedSkillsMatrix,
+      );
+      expect(parent).toBe("web");
+    });
+
+    it("should return undefined for a domain without parent_domain", () => {
+      const store = useWizardStore.getState();
+      const parent = store.getParentDomain("web", matrixWithoutParent as MergedSkillsMatrix);
+      expect(parent).toBeUndefined();
+    });
+
+    it("should get parent domain selections when parent exists", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "framework", "web-framework-react", true);
+
+      const parentSelections = store.getParentDomainSelections(
+        "web-extras",
+        matrixWithParentDomain as MergedSkillsMatrix,
+      );
+      expect(parentSelections).toEqual({ framework: ["web-framework-react"] });
+    });
+
+    it("should return undefined for getParentDomainSelections when no parent", () => {
+      const store = useWizardStore.getState();
+      const parentSelections = store.getParentDomainSelections(
+        "web",
+        matrixWithoutParent as MergedSkillsMatrix,
+      );
+      expect(parentSelections).toBeUndefined();
+    });
+
+    it("should return undefined for getParentDomainSelections when parent has no selections", () => {
+      const store = useWizardStore.getState();
+      const parentSelections = store.getParentDomainSelections(
+        "web-extras",
+        matrixWithParentDomain as MergedSkillsMatrix,
+      );
+      expect(parentSelections).toBeUndefined();
     });
   });
 

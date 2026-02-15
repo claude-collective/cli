@@ -1,11 +1,8 @@
 // ConfirmInput requires longer delays than other components for useInput processing
-import React from "react";
 import { render } from "ink-testing-library";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Confirm } from "./confirm";
-import { KEY_Y, KEY_N, ENTER, RENDER_DELAY_MS, delay } from "../../lib/__tests__/test-constants";
-
-const CONFIRM_INPUT_DELAY_MS = 100;
+import { KEY_Y, KEY_N, ENTER, RENDER_DELAY_MS, CONFIRM_INPUT_DELAY_MS, delay } from "../../lib/__tests__/test-constants";
 
 describe("Confirm component", () => {
   let cleanup: (() => void) | undefined;

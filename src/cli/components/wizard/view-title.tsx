@@ -1,13 +1,14 @@
 import React from "react";
 import { Text } from "ink";
+import { CLI_COLORS } from "../../consts.js";
 
-export type ViewTitleProps = {
+type ViewTitleProps = {
   children: React.ReactNode;
 };
 
 export const ViewTitle: React.FC<ViewTitleProps> = ({ children }) => {
   return (
-    <Text backgroundColor="yellow" bold color="#000">
+    <Text backgroundColor={CLI_COLORS.WARNING} bold color="#000">
       {" "}
       {children}{" "}
     </Text>

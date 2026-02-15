@@ -1,7 +1,16 @@
-import React, { useCallback, useEffect } from "react";
-import { Box, Text, useInput } from "ink";
+import React, { useCallback, useMemo } from "react";
+
+import { Box, Text } from "ink";
 import { sortBy } from "remeda";
+
 import type { SkillId, Subcategory } from "../../types/index.js";
+import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
+import {
+  findValidStartColumn,
+  isSectionLocked,
+  useCategoryGridInput,
+} from "../hooks/use-category-grid-input.js";
+import { useFocusedListItem } from "../hooks/use-focused-list-item.js";
 
 export type OptionState = "normal" | "recommended" | "discouraged" | "disabled";
 
@@ -25,19 +34,19 @@ export type CategoryRow = {
 
 export type CategoryGridProps = {
   categories: CategoryRow[];
-  focusedRow: number;
-  focusedCol: number;
   showDescriptions: boolean;
   expertMode: boolean;
   onToggle: (categoryId: Subcategory, technologyId: SkillId) => void;
-  onFocusChange: (row: number, col: number) => void;
   onToggleDescriptions: () => void;
+  /** Optional initial focus row (default: 0). Use with React `key` to reset. */
+  defaultFocusedRow?: number;
+  /** Optional initial focus col (default: 0). Use with React `key` to reset. */
+  defaultFocusedCol?: number;
+  /** Optional callback fired whenever the focused position changes */
+  onFocusChange?: (row: number, col: number) => void;
 };
 
 const SYMBOL_REQUIRED = "*";
-const BG_SELECTED = "cyan";
-const BG_FOCUSED = "#333";
-const FRAMEWORK_CATEGORY_ID = "framework";
 
 // Recommended first, discouraged last. Expert mode preserves original order.
 const sortOptions = (options: CategoryOption[], expertMode: boolean): CategoryOption[] => {
@@ -71,67 +80,14 @@ const findNextValidOption = (
     index += direction;
 
     if (wrap) {
-      // Wrap around
       if (index < 0) index = length - 1;
       if (index >= length) index = 0;
     } else {
-      // Clamp to bounds
       if (index < 0) index = 0;
       if (index >= length) index = length - 1;
     }
 
     if (options[index] && options[index].state !== "disabled") {
-      return index;
-    }
-
-    attempts++;
-  }
-
-  // All options are disabled, return current
-  return currentIndex;
-};
-
-const findValidStartColumn = (options: CategoryOption[]): number => {
-  for (let i = 0; i < options.length; i++) {
-    if (options[i] && options[i].state !== "disabled") {
-      return i;
-    }
-  }
-  return 0;
-};
-
-// Locked = non-framework section when no framework is selected
-const isSectionLocked = (categoryId: Subcategory, categories: CategoryRow[]): boolean => {
-  if (categoryId === FRAMEWORK_CATEGORY_ID) {
-    return false;
-  }
-
-  const frameworkCategory = categories.find((cat) => cat.id === FRAMEWORK_CATEGORY_ID);
-  if (!frameworkCategory) return false;
-
-  return !frameworkCategory.options.some((opt) => opt.selected);
-};
-
-const findNextUnlockedSection = (
-  categories: { id: Subcategory; sortedOptions: CategoryOption[] }[],
-  currentIndex: number,
-  direction: 1 | -1,
-  allCategories: CategoryRow[],
-): number => {
-  const length = categories.length;
-  if (length === 0) return currentIndex;
-
-  let index = currentIndex;
-  let attempts = 0;
-
-  while (attempts < length) {
-    index += direction;
-
-    if (index < 0) index = length - 1;
-    if (index >= length) index = 0;
-
-    const category = categories[index];
-    if (category && !isSectionLocked(category.id, allCategories)) {
       return index;
     }
 
@@ -147,30 +103,44 @@ type SkillTagProps = {
   isLocked: boolean;
 };
 
+const getStateSuffix = (state: OptionState, isLocked: boolean): string | null => {
+  if (isLocked || state === "disabled") return "(disabled)";
+  if (state === "recommended") return "(recommended)";
+  if (state === "discouraged") return "(discouraged)";
+  return null;
+};
+
+const getStateSymbol = (option: CategoryOption, isLocked: boolean): string => {
+  if (isLocked || option.state === "disabled") return UI_SYMBOLS.DISABLED;
+  if (option.selected) return UI_SYMBOLS.SELECTED;
+  if (option.state === "discouraged") return UI_SYMBOLS.DISCOURAGED;
+  return UI_SYMBOLS.UNSELECTED;
+};
+
 const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked }) => {
   const getColor = (): { text: string; border: string } | undefined => {
     if (isLocked || option.state === "disabled") {
       return {
-        text: "gray",
-        border: "gray",
+        text: CLI_COLORS.NEUTRAL,
+        border: CLI_COLORS.NEUTRAL,
       };
     }
     if (option.selected) {
       return {
-        text: "cyan",
-        border: "cyan",
+        text: CLI_COLORS.PRIMARY,
+        border: CLI_COLORS.PRIMARY,
       };
     }
     if (option.state === "recommended") {
       return {
-        text: "white",
-        border: "gray",
+        text: CLI_COLORS.UNFOCUSED,
+        border: CLI_COLORS.NEUTRAL,
       };
     }
     if (option.state === "discouraged") {
       return {
-        text: "yellow",
-        border: "yellow",
+        text: CLI_COLORS.WARNING,
+        border: CLI_COLORS.WARNING,
       };
     }
     return undefined;
@@ -178,7 +148,9 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked }) => {
 
   const isBold = isFocused || option.selected;
   const isDimmed = isLocked || option.state === "disabled";
-  const focusBorderColor = option.selected ? "cyan" : "white";
+  const focusBorderColor = option.selected ? CLI_COLORS.PRIMARY : CLI_COLORS.UNFOCUSED;
+  const stateSuffix = getStateSuffix(option.state, isLocked);
+  const stateSymbol = getStateSymbol(option, isLocked);
 
   return (
     <Box
@@ -191,11 +163,14 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked }) => {
         {" "}
         {option.local && (
           <>
-            <Text backgroundColor="gray"> L </Text>{" "}
+            <Text backgroundColor={CLI_COLORS.NEUTRAL}> L </Text>{" "}
           </>
         )}
-        {option.installed && <Text dimColor>✓ </Text>}
-        {option.label}{" "}
+        {option.installed && <Text dimColor>{UI_SYMBOLS.SELECTED} </Text>}
+        {!option.installed && <Text dimColor={isDimmed}>{stateSymbol} </Text>}
+        {option.label}
+        {stateSuffix && <Text dimColor> {stateSuffix}</Text>}
+        {" "}
       </Text>
     </Box>
   );
@@ -223,7 +198,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
       <Box flexDirection="row">
         <Text dimColor={isLocked}>{category.displayName}</Text>
         {category.required && (
-          <Text color={isLocked ? "gray" : "red"} dimColor={isLocked}>
+          <Text color={isLocked ? CLI_COLORS.NEUTRAL : CLI_COLORS.ERROR} dimColor={isLocked}>
             {" "}
             {SYMBOL_REQUIRED}
           </Text>
@@ -254,141 +229,81 @@ const CategorySection: React.FC<CategorySectionProps> = ({
 
 export const CategoryGrid: React.FC<CategoryGridProps> = ({
   categories,
-  focusedRow,
-  focusedCol,
   showDescriptions,
   expertMode,
   onToggle,
-  onFocusChange,
   onToggleDescriptions,
+  defaultFocusedRow = 0,
+  defaultFocusedCol = 0,
+  onFocusChange,
 }) => {
-  const processedCategories = categories.map((category) => ({
-    ...category,
-    sortedOptions: sortOptions(category.options, expertMode),
-  }));
-
-  const currentRow = processedCategories[focusedRow];
-  const currentOptions = currentRow?.sortedOptions || [];
-  const currentLocked = currentRow ? isSectionLocked(currentRow.id, categories) : false;
-
-  useEffect(() => {
-    if (!currentRow) return;
-
-    const maxCol = currentOptions.length - 1;
-    if (focusedCol > maxCol) {
-      const newCol = Math.max(0, maxCol);
-      onFocusChange(focusedRow, newCol);
-    } else if (currentOptions[focusedCol]?.state === "disabled") {
-      const validCol = findValidStartColumn(currentOptions);
-      if (validCol !== focusedCol) {
-        onFocusChange(focusedRow, validCol);
-      }
-    }
-  }, [focusedRow, currentOptions, focusedCol, onFocusChange, currentRow]);
-
-  useEffect(() => {
-    if (currentRow && currentLocked) {
-      const unlockedIndex = findNextUnlockedSection(processedCategories, focusedRow, 1, categories);
-      if (unlockedIndex !== focusedRow) {
-        const newRowOptions = processedCategories[unlockedIndex]?.sortedOptions || [];
-        const newCol = findValidStartColumn(newRowOptions);
-        onFocusChange(unlockedIndex, newCol);
-      }
-    }
-  }, [currentRow, currentLocked, focusedRow, processedCategories, categories, onFocusChange]);
-
-  useInput(
-    useCallback(
-      (
-        input: string,
-        key: {
-          leftArrow: boolean;
-          rightArrow: boolean;
-          upArrow: boolean;
-          downArrow: boolean;
-          tab: boolean;
-          shift: boolean;
-        },
-      ) => {
-        if (key.tab && key.shift) {
-          onToggleDescriptions();
-          return;
-        }
-
-        if (key.tab && !key.shift) {
-          const nextSection = findNextUnlockedSection(
-            processedCategories,
-            focusedRow,
-            1,
-            categories,
-          );
-          if (nextSection !== focusedRow) {
-            const newRowOptions = processedCategories[nextSection]?.sortedOptions || [];
-            const newCol = findValidStartColumn(newRowOptions);
-            onFocusChange(nextSection, newCol);
-          }
-          return;
-        }
-
-        if (input === "d" || input === "D") {
-          onToggleDescriptions();
-          return;
-        }
-
-        if (input === " ") {
-          if (currentLocked) return;
-          const currentOption = currentOptions[focusedCol];
-          if (currentOption && currentOption.state !== "disabled") {
-            onToggle(currentRow.id, currentOption.id);
-          }
-          return;
-        }
-
-        const isLeft = key.leftArrow || input === "h";
-        const isRight = key.rightArrow || input === "l";
-        const isUp = key.upArrow || input === "k";
-        const isDown = key.downArrow || input === "j";
-
-        if (isLeft) {
-          if (currentLocked) return;
-          const newCol = findNextValidOption(currentOptions, focusedCol, -1, true);
-          onFocusChange(focusedRow, newCol);
-        } else if (isRight) {
-          if (currentLocked) return;
-          const newCol = findNextValidOption(currentOptions, focusedCol, 1, true);
-          onFocusChange(focusedRow, newCol);
-        } else if (isUp) {
-          const newRow = findNextUnlockedSection(processedCategories, focusedRow, -1, categories);
-          const newRowOptions = processedCategories[newRow]?.sortedOptions || [];
-          let newCol = Math.min(focusedCol, newRowOptions.length - 1);
-          if (newRowOptions[newCol]?.state === "disabled") {
-            newCol = findValidStartColumn(newRowOptions);
-          }
-          onFocusChange(newRow, newCol);
-        } else if (isDown) {
-          const newRow = findNextUnlockedSection(processedCategories, focusedRow, 1, categories);
-          const newRowOptions = processedCategories[newRow]?.sortedOptions || [];
-          let newCol = Math.min(focusedCol, newRowOptions.length - 1);
-          if (newRowOptions[newCol]?.state === "disabled") {
-            newCol = findValidStartColumn(newRowOptions);
-          }
-          onFocusChange(newRow, newCol);
-        }
-      },
-      [
-        focusedRow,
-        focusedCol,
-        currentOptions,
-        currentRow,
-        currentLocked,
-        processedCategories,
-        categories,
-        onToggle,
-        onFocusChange,
-        onToggleDescriptions,
-      ],
-    ),
+  const processedCategories = useMemo(
+    () =>
+      categories.map((category) => ({
+        ...category,
+        sortedOptions: sortOptions(category.options, expertMode),
+      })),
+    [categories, expertMode],
   );
+
+  const getColCount = useCallback(
+    (row: number): number => processedCategories[row]?.sortedOptions.length ?? 0,
+    [processedCategories],
+  );
+
+  const isRowLocked = useCallback(
+    (row: number): boolean => {
+      const cat = processedCategories[row];
+      return cat ? isSectionLocked(cat.id, categories) : false;
+    },
+    [processedCategories, categories],
+  );
+
+  const findValidCol = useCallback(
+    (row: number, currentCol: number, direction: 1 | -1): number => {
+      const options = processedCategories[row]?.sortedOptions || [];
+      const catId = processedCategories[row]?.id;
+      if (catId && isSectionLocked(catId, categories)) return currentCol;
+      return findNextValidOption(options, currentCol, direction, true);
+    },
+    [processedCategories, categories],
+  );
+
+  const adjustCol = useCallback(
+    (row: number, clampedCol: number): number => {
+      const options = processedCategories[row]?.sortedOptions || [];
+      if (options[clampedCol]?.state === "disabled") {
+        return findValidStartColumn(options);
+      }
+      return clampedCol;
+    },
+    [processedCategories],
+  );
+
+  const { focusedRow, focusedCol, setFocused, moveFocus } = useFocusedListItem(
+    processedCategories.length,
+    getColCount,
+    {
+      wrap: true,
+      isRowLocked,
+      findValidCol,
+      adjustCol,
+      onChange: onFocusChange,
+      initialRow: defaultFocusedRow,
+      initialCol: defaultFocusedCol,
+    },
+  );
+
+  useCategoryGridInput({
+    processedCategories,
+    categories,
+    focusedRow,
+    focusedCol,
+    setFocused,
+    moveFocus,
+    onToggle,
+    onToggleDescriptions,
+  });
 
   if (categories.length === 0) {
     return (

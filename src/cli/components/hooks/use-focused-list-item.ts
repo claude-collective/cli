@@ -1,0 +1,154 @@
+import { useState, useCallback, useEffect, useRef } from "react";
+
+type Direction = "up" | "down" | "left" | "right";
+
+type UseFocusedListItemOptions = {
+  /** Wrap around when reaching boundaries (default: true) */
+  wrap?: boolean;
+  /** Returns true if a row should be skipped during vertical navigation */
+  isRowLocked?: (row: number) => boolean;
+  /** Custom column finder for skipping disabled items on horizontal nav.
+   *  Receives the row, current column, and direction (+1 right, -1 left).
+   *  Should return the next valid column index. */
+  findValidCol?: (row: number, currentCol: number, direction: 1 | -1) => number;
+  /** Called after vertical navigation to adjust the clamped column
+   *  (e.g. to skip disabled items). Returns the adjusted column index. */
+  adjustCol?: (row: number, clampedCol: number) => number;
+  /** Called whenever focused position changes */
+  onChange?: (row: number, col: number) => void;
+  /** Initial row index (default: 0) */
+  initialRow?: number;
+  /** Initial col index (default: 0) */
+  initialCol?: number;
+};
+
+type UseFocusedListItemResult = {
+  focusedRow: number;
+  focusedCol: number;
+  setFocused: (row: number, col: number) => void;
+  moveFocus: (direction: Direction) => void;
+};
+
+/**
+ * 2D grid focus management: tracks (row, col) position and handles
+ * directional movement with wrapping, column clamping, row locking,
+ * and optional disabled-column skipping.
+ */
+export function useFocusedListItem(
+  rowCount: number,
+  getColCount: (row: number) => number,
+  options: UseFocusedListItemOptions = {},
+): UseFocusedListItemResult {
+  const {
+    wrap = true,
+    isRowLocked,
+    findValidCol,
+    adjustCol,
+    onChange,
+    initialRow = 0,
+    initialCol = 0,
+  } = options;
+
+  const [focusedRow, setFocusedRow] = useState(initialRow);
+  const [focusedCol, setFocusedCol] = useState(initialCol);
+
+  // Refs for stable callback access without stale closures
+  const focusedRowRef = useRef(focusedRow);
+  const focusedColRef = useRef(focusedCol);
+  const onChangeRef = useRef(onChange);
+
+  useEffect(() => {
+    focusedRowRef.current = focusedRow;
+  }, [focusedRow]);
+
+  useEffect(() => {
+    focusedColRef.current = focusedCol;
+  }, [focusedCol]);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  const applyFocus = useCallback((row: number, col: number) => {
+    setFocusedRow(row);
+    setFocusedCol(col);
+    onChangeRef.current?.(row, col);
+  }, []);
+
+  const setFocused = applyFocus;
+
+  const findNextUnlockedRow = useCallback(
+    (fromRow: number, direction: 1 | -1): number => {
+      if (!isRowLocked || rowCount === 0) {
+        if (wrap) {
+          return (fromRow + direction + rowCount) % rowCount;
+        }
+        const next = fromRow + direction;
+        return Math.max(0, Math.min(rowCount - 1, next));
+      }
+
+      let index = fromRow;
+      let attempts = 0;
+
+      while (attempts < rowCount) {
+        index += direction;
+
+        if (wrap) {
+          if (index < 0) index = rowCount - 1;
+          if (index >= rowCount) index = 0;
+        } else {
+          if (index < 0) index = 0;
+          if (index >= rowCount) index = rowCount - 1;
+        }
+
+        if (!isRowLocked(index)) {
+          return index;
+        }
+
+        attempts++;
+      }
+
+      return fromRow;
+    },
+    [rowCount, wrap, isRowLocked],
+  );
+
+  const moveFocus = useCallback(
+    (direction: Direction) => {
+      const currentRow = focusedRowRef.current;
+      const currentCol = focusedColRef.current;
+
+      if (direction === "left" || direction === "right") {
+        const colCount = getColCount(currentRow);
+        if (colCount === 0) return;
+
+        const step = direction === "right" ? 1 : -1;
+
+        if (findValidCol) {
+          const newCol = findValidCol(currentRow, currentCol, step);
+          applyFocus(currentRow, newCol);
+        } else if (wrap) {
+          const newCol = (currentCol + step + colCount) % colCount;
+          applyFocus(currentRow, newCol);
+        } else {
+          const newCol = Math.max(0, Math.min(colCount - 1, currentCol + step));
+          applyFocus(currentRow, newCol);
+        }
+      } else {
+        const step = direction === "down" ? 1 : -1;
+        const newRow = findNextUnlockedRow(currentRow, step);
+        const newRowColCount = getColCount(newRow);
+        let finalCol = Math.min(currentCol, Math.max(0, newRowColCount - 1));
+
+        if (adjustCol) {
+          finalCol = adjustCol(newRow, finalCol);
+        }
+
+        applyFocus(newRow, finalCol);
+      }
+    },
+    [getColCount, wrap, findValidCol, adjustCol, findNextUnlockedRow, applyFocus],
+  );
+
+  return { focusedRow, focusedCol, setFocused, moveFocus };
+}

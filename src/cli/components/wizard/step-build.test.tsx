@@ -1,7 +1,8 @@
 import { render } from "ink-testing-library";
 import { indexBy, mapToObj } from "remeda";
 import { describe, expect, it, afterEach, vi } from "vitest";
-import { StepBuild, type StepBuildProps, validateBuildStep, getDisplayLabel } from "./step-build";
+import { StepBuild, type StepBuildProps } from "./step-build";
+import { validateBuildStep, getSkillDisplayLabel } from "../../lib/wizard/index";
 import type { CategoryRow as GridCategoryRow } from "./category-grid";
 import type {
   CategoryDefinition,
@@ -129,12 +130,9 @@ const defaultProps: StepBuildProps = {
   selectedDomains: ["web"],
   selections: {},
   allSelections: [],
-  focusedRow: 0,
-  focusedCol: 0,
   showDescriptions: false,
   expertMode: false,
   onToggle: vi.fn(),
-  onFocusChange: vi.fn(),
   onToggleDescriptions: vi.fn(),
   onContinue: vi.fn(),
   onBack: vi.fn(),
@@ -232,7 +230,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customise your Web stack");
+      expect(output).toContain("Customize your Web stack");
     });
 
     it("should show ViewTitle with domain when only one selected", () => {
@@ -242,7 +240,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customise your Web stack");
+      expect(output).toContain("Customize your Web stack");
     });
 
     it("should show ViewTitle for current domain on final domain", () => {
@@ -253,7 +251,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customise your API stack");
+      expect(output).toContain("Customize your API stack");
     });
 
     it("should show correct domain display names", () => {
@@ -264,7 +262,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customise your API stack");
+      expect(output).toContain("Customize your API stack");
     });
   });
 
@@ -387,29 +385,10 @@ describe("StepBuild component", () => {
       expect(onBack).toHaveBeenCalled();
     });
 
-    it("should pass focus callbacks to CategoryGrid", async () => {
-      const onFocusChange = vi.fn();
-      const { stdin, unmount } = renderStepBuild({
-        onFocusChange,
-        focusedRow: 0,
-        focusedCol: 0,
-      });
-      cleanup = unmount;
-
-      await delay(RENDER_DELAY_MS);
-      // Arrow down should trigger focus change
-      stdin.write("\x1B[B"); // Arrow down
-      await delay(INPUT_DELAY_MS);
-
-      expect(onFocusChange).toHaveBeenCalled();
-    });
-
     it("should pass toggle callback to CategoryGrid", async () => {
       const onToggle = vi.fn();
       const { stdin, unmount } = renderStepBuild({
         onToggle,
-        focusedRow: 0,
-        focusedCol: 0,
       });
       cleanup = unmount;
 
@@ -503,7 +482,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customise your Web stack");
+      expect(output).toContain("Customize your Web stack");
     });
 
     it("should show ViewTitle for last domain in multi-domain flow", () => {
@@ -514,7 +493,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customise your API stack");
+      expect(output).toContain("Customize your API stack");
     });
 
     it("should show ViewTitle for current domain in three-domain flow", () => {
@@ -559,7 +538,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customise your API stack");
+      expect(output).toContain("Customize your API stack");
     });
   });
 
@@ -569,7 +548,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customise your Web stack");
+      expect(output).toContain("Customize your Web stack");
     });
 
     it("should render ViewTitle with domain display name", () => {
@@ -579,7 +558,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customise your API stack");
+      expect(output).toContain("Customize your API stack");
     });
   });
 
@@ -699,7 +678,7 @@ describe("StepBuild component", () => {
 
       // Should show validation error and NOT call onContinue
       const output = lastFrame();
-      expect(output).toContain("Please select");
+      expect(output).toContain("Select at least one skill");
       expect(onContinue).not.toHaveBeenCalled();
     });
 
@@ -725,17 +704,17 @@ describe("StepBuild component", () => {
   });
 });
 
-describe("getDisplayLabel", () => {
+describe("getSkillDisplayLabel", () => {
   it("should return displayName when available", () => {
-    expect(getDisplayLabel({ displayName: "react", id: "web-framework-react" })).toBe("react");
+    expect(getSkillDisplayLabel({ displayName: "react", id: "web-framework-react" })).toBe("react");
   });
 
   it("should return id when no displayName", () => {
-    expect(getDisplayLabel({ id: "web-framework-react" })).toBe("web-framework-react");
+    expect(getSkillDisplayLabel({ id: "web-framework-react" })).toBe("web-framework-react");
   });
 
   it("should prefer displayName over id", () => {
-    expect(getDisplayLabel({ displayName: "scss-modules", id: "web-styling-scss-modules" })).toBe(
+    expect(getSkillDisplayLabel({ displayName: "scss-modules", id: "web-styling-scss-modules" })).toBe(
       "scss-modules",
     );
   });

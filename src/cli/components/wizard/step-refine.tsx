@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
+import { CLI_COLORS } from "../../consts.js";
 
 export type RefineAction = "all-recommended" | "customize" | null;
 
@@ -18,7 +19,7 @@ export const StepRefine: React.FC<StepRefineProps> = ({
   onContinue,
   onBack,
 }) => {
-  useInput((input, key) => {
+  useInput((_input, key) => {
     if (key.return) {
       onContinue();
     }
@@ -36,7 +37,7 @@ export const StepRefine: React.FC<StepRefineProps> = ({
     <Box flexDirection="column" paddingX={2}>
       <Text>
         Your stack includes{" "}
-        <Text color="cyan" bold>
+        <Text color={CLI_COLORS.PRIMARY} bold>
           {technologyCount}
         </Text>{" "}
         technologies.
@@ -45,14 +46,15 @@ export const StepRefine: React.FC<StepRefineProps> = ({
 
       <Box
         borderStyle="round"
-        borderColor={isRecommendedSelected ? "green" : "gray"}
+        borderColor={isRecommendedSelected ? CLI_COLORS.SUCCESS : CLI_COLORS.NEUTRAL}
         paddingX={2}
         paddingY={1}
         marginBottom={1}
       >
         <Box flexDirection="column">
-          <Text color={isRecommendedSelected ? "green" : undefined} bold={isRecommendedSelected}>
-            {isRecommendedSelected ? ">" : "○"} Use all recommended skills (verified)
+          <Text color={isRecommendedSelected ? CLI_COLORS.SUCCESS : undefined} bold={isRecommendedSelected}>
+            {isRecommendedSelected ? ">" : "○"} Use all recommended skills (verified){" "}
+            <Text dimColor>{isRecommendedSelected ? "(Selected)" : "(Not selected)"}</Text>
           </Text>
           <Text> </Text>
           <Text dimColor>This is the fastest option. All skills are verified and</Text>
@@ -62,17 +64,24 @@ export const StepRefine: React.FC<StepRefineProps> = ({
 
       <Box
         borderStyle="round"
-        borderColor={!isRecommendedSelected ? "green" : "gray"}
+        borderColor={!isRecommendedSelected ? CLI_COLORS.SUCCESS : CLI_COLORS.NEUTRAL}
         paddingX={2}
         paddingY={1}
       >
         <Box flexDirection="column">
-          <Text color={!isRecommendedSelected ? "green" : undefined} bold={!isRecommendedSelected}>
-            {!isRecommendedSelected ? ">" : "○"} Customize skill sources
+          <Text color={!isRecommendedSelected ? CLI_COLORS.SUCCESS : undefined} bold={!isRecommendedSelected}>
+            {!isRecommendedSelected ? ">" : "○"} Customize skill sources{" "}
+            <Text dimColor>{!isRecommendedSelected ? "(Selected)" : "(Not selected)"}</Text>
           </Text>
           <Text> </Text>
           <Text dimColor>Choose alternative skills for each technology</Text>
         </Box>
+      </Box>
+
+      <Box marginTop={1}>
+        <Text dimColor>
+          {"\u2191"}/{"\u2193"} navigate  ENTER continue  ESC back
+        </Text>
       </Box>
     </Box>
   );

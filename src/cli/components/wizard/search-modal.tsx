@@ -1,6 +1,8 @@
-import React, { useCallback, useState } from "react";
-import { Box, Text, useInput } from "ink";
+import React, { useCallback } from "react";
+import { Box, Text } from "ink";
 import type { BoundSkillCandidate } from "../../types/index.js";
+import { CLI_COLORS } from "../../consts.js";
+import { useKeyboardNavigation } from "../hooks/use-keyboard-navigation.js";
 
 export type SearchModalProps = {
   results: BoundSkillCandidate[];
@@ -24,10 +26,10 @@ const ResultRow: React.FC<ResultRowProps> = ({ candidate, isFocused }) => {
 
   return (
     <Box>
-      <Text bold={isFocused} color={isFocused ? "cyan" : undefined}>
+      <Text bold={isFocused} color={isFocused ? CLI_COLORS.PRIMARY : undefined}>
         {marker}{" "}
       </Text>
-      <Text bold={isFocused} color={isFocused ? "cyan" : undefined}>
+      <Text bold={isFocused} color={isFocused ? CLI_COLORS.PRIMARY : undefined}>
         {sourceLabel}
       </Text>
       {versionLabel && (
@@ -47,46 +49,29 @@ const ResultRow: React.FC<ResultRowProps> = ({ candidate, isFocused }) => {
 };
 
 export const SearchModal: React.FC<SearchModalProps> = ({ results, alias, onBind, onClose }) => {
-  const [focusedIndex, setFocusedIndex] = useState(0);
-
-  useInput(
-    useCallback(
-      (
-        _input: string,
-        key: { upArrow: boolean; downArrow: boolean; return: boolean; escape: boolean },
-      ) => {
-        if (key.escape) {
-          onClose();
-          return;
+  const handleEnter = useCallback(
+    (index: number) => {
+      if (results.length > 0) {
+        const selected = results[index];
+        if (selected) {
+          onBind(selected);
         }
+      }
+    },
+    [results, onBind],
+  );
 
-        if (key.return && results.length > 0) {
-          const selected = results[focusedIndex];
-          if (selected) {
-            onBind(selected);
-          }
-          return;
-        }
-
-        if (key.upArrow) {
-          setFocusedIndex((prev) => (prev <= 0 ? results.length - 1 : prev - 1));
-          return;
-        }
-
-        if (key.downArrow) {
-          setFocusedIndex((prev) => (prev >= results.length - 1 ? 0 : prev + 1));
-          return;
-        }
-      },
-      [results, focusedIndex, onBind, onClose],
-    ),
+  const { focusedIndex } = useKeyboardNavigation(
+    results.length,
+    { onEnter: handleEnter, onEscape: onClose },
+    { vimKeys: false },
   );
 
   return (
     <Box
       flexDirection="column"
       borderStyle="single"
-      borderColor="gray"
+      borderColor={CLI_COLORS.NEUTRAL}
       paddingX={1}
       paddingY={0}
       marginTop={1}

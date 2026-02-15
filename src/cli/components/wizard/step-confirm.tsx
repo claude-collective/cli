@@ -1,9 +1,10 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
 import type { DomainSelections, Domain } from "../../types/index.js";
+import { CLI_COLORS } from "../../consts.js";
 import { getDomainDisplayName } from "./utils.js";
 
-export type StepConfirmProps = {
+type StepConfirmProps = {
   onComplete: () => void;
   stackName?: string;
   selectedDomains?: Domain[];
@@ -24,7 +25,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
   installMode,
   onBack,
 }) => {
-  useInput((input, key) => {
+  useInput((_input, key) => {
     if (key.return) {
       onComplete();
     }
@@ -40,7 +41,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
 
   return (
     <Box flexDirection="column" paddingX={2}>
-      <Text bold color="green">
+      <Text bold color={CLI_COLORS.SUCCESS}>
         {title}
       </Text>
       <Text> </Text>
@@ -69,7 +70,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
         {skillCount !== undefined && (
           <Text>
             <Text dimColor>Skills:</Text> <Text bold>{skillCount}</Text>{" "}
-            <Text color="green">(all verified)</Text>
+            <Text color={CLI_COLORS.SUCCESS}>(all verified)</Text>
           </Text>
         )}
         {installMode && (
@@ -78,6 +79,10 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
             <Text bold>{installMode === "plugin" ? "Plugin" : "Local"}</Text>
           </Text>
         )}
+      </Box>
+
+      <Box marginTop={1}>
+        <Text dimColor>ENTER install  ESC go back</Text>
       </Box>
     </Box>
   );

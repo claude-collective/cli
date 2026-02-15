@@ -1,4 +1,3 @@
-import React from "react";
 import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, vi } from "vitest";
 import {
@@ -125,8 +124,8 @@ const categoriesWithFramework: CategoryRow[] = [
 
 const defaultProps: CategoryGridProps = {
   categories: defaultCategories,
-  focusedRow: 0,
-  focusedCol: 0,
+  defaultFocusedRow: 0,
+  defaultFocusedCol: 0,
   showDescriptions: false,
   expertMode: false,
   onToggle: vi.fn(),
@@ -315,8 +314,8 @@ describe("CategoryGrid component", () => {
   describe("focus indicator", () => {
     it("should render focused option with label text", () => {
       const { lastFrame, unmount } = renderGrid({
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
       });
       cleanup = unmount;
 
@@ -328,16 +327,16 @@ describe("CategoryGrid component", () => {
     it("should render correctly when focusedRow changes", () => {
       const { lastFrame: frame1, unmount: unmount1 } = renderGrid({
         categories: categoriesWithFramework,
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
       });
       const output1 = frame1();
       unmount1();
 
       const { lastFrame: frame2, unmount: unmount2 } = renderGrid({
         categories: categoriesWithFramework,
-        focusedRow: 1,
-        focusedCol: 0,
+        defaultFocusedRow: 1,
+        defaultFocusedCol: 0,
       });
       cleanup = unmount2;
       const output2 = frame2();
@@ -350,8 +349,8 @@ describe("CategoryGrid component", () => {
     it("should highlight focused category name", () => {
       const { lastFrame, unmount } = renderGrid({
         categories: categoriesWithFramework,
-        focusedRow: 1,
-        focusedCol: 0,
+        defaultFocusedRow: 1,
+        defaultFocusedCol: 0,
       });
       cleanup = unmount;
 
@@ -365,8 +364,8 @@ describe("CategoryGrid component", () => {
     it("should call onFocusChange when pressing left arrow", async () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
-        focusedRow: 0,
-        focusedCol: 1,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 1,
         onFocusChange,
       });
       cleanup = unmount;
@@ -381,8 +380,8 @@ describe("CategoryGrid component", () => {
     it("should call onFocusChange when pressing right arrow", async () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         onFocusChange,
       });
       cleanup = unmount;
@@ -398,8 +397,8 @@ describe("CategoryGrid component", () => {
       const onFocusChange = vi.fn();
       // No framework selected, so navigation stays on framework row
       const { stdin, unmount } = renderGrid({
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         onFocusChange,
       });
       cleanup = unmount;
@@ -416,8 +415,8 @@ describe("CategoryGrid component", () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
         categories: categoriesWithFramework,
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         onFocusChange,
       });
       cleanup = unmount;
@@ -433,8 +432,8 @@ describe("CategoryGrid component", () => {
     it("should wrap horizontally when pressing left at first column", async () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         onFocusChange,
       });
       cleanup = unmount;
@@ -450,8 +449,8 @@ describe("CategoryGrid component", () => {
     it("should wrap horizontally when pressing right at last column", async () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
-        focusedRow: 0,
-        focusedCol: 3, // Last option in framework
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 3, // Last option in framework
         onFocusChange,
       });
       cleanup = unmount;
@@ -468,8 +467,8 @@ describe("CategoryGrid component", () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
         categories: categoriesWithFramework,
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         onFocusChange,
       });
       cleanup = unmount;
@@ -487,8 +486,8 @@ describe("CategoryGrid component", () => {
     it("should move left with h key", async () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
-        focusedRow: 0,
-        focusedCol: 1,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 1,
         onFocusChange,
       });
       cleanup = unmount;
@@ -503,8 +502,8 @@ describe("CategoryGrid component", () => {
     it("should move right with l key", async () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         onFocusChange,
       });
       cleanup = unmount;
@@ -520,8 +519,8 @@ describe("CategoryGrid component", () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
         categories: categoriesWithFramework,
-        focusedRow: 1,
-        focusedCol: 0,
+        defaultFocusedRow: 1,
+        defaultFocusedCol: 0,
         onFocusChange,
       });
       cleanup = unmount;
@@ -537,8 +536,8 @@ describe("CategoryGrid component", () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
         categories: categoriesWithFramework,
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         onFocusChange,
       });
       cleanup = unmount;
@@ -555,8 +554,8 @@ describe("CategoryGrid component", () => {
     it("should call onToggle when pressing space on a normal option", async () => {
       const onToggle = vi.fn();
       const { stdin, unmount } = renderGrid({
-        focusedRow: 0,
-        focusedCol: 1, // vue (normal state)
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 1, // vue (normal state)
         onToggle,
       });
       cleanup = unmount;
@@ -584,8 +583,8 @@ describe("CategoryGrid component", () => {
       ];
       const { stdin, unmount } = renderGrid({
         categories,
-        focusedRow: 0,
-        focusedCol: 0, // react (selected)
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0, // react (selected)
         expertMode: true,
         onToggle,
       });
@@ -598,20 +597,19 @@ describe("CategoryGrid component", () => {
       expect(onToggle).toHaveBeenCalledWith("framework", "web-test-react");
     });
 
-    it("should NOT call onToggle when pressing space on a disabled option", async () => {
+    it("should NOT call onToggle when all options in a category are disabled", async () => {
       const onToggle = vi.fn();
       const categories: CategoryRow[] = [
         createCategory("testing", "Test", [
           createOption("web-test-opt1", "Option 1", { state: "disabled" }),
-          createOption("web-test-opt2", "Option 2"),
+          createOption("web-test-opt2", "Option 2", { state: "disabled" }),
         ]),
       ];
 
-      // Use expertMode to preserve original option order (disabled at index 0)
       const { stdin, unmount } = renderGrid({
         categories,
-        focusedRow: 0,
-        focusedCol: 0, // Disabled option (first in expert mode)
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         expertMode: true,
         onToggle,
       });
@@ -624,21 +622,20 @@ describe("CategoryGrid component", () => {
       expect(onToggle).not.toHaveBeenCalled();
     });
 
-    it("should NOT call onToggle when section is locked", async () => {
-      const onToggle = vi.fn();
+    it("should bounce focus away from locked sections on mount", async () => {
+      const onFocusChange = vi.fn();
       // No framework selected, styling section is locked
-      const { stdin, unmount } = renderGrid({
-        focusedRow: 1, // Styling (locked)
-        focusedCol: 0,
-        onToggle,
+      const { unmount } = renderGrid({
+        defaultFocusedRow: 1, // Styling (locked)
+        defaultFocusedCol: 0,
+        onFocusChange,
       });
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
-      await stdin.write(" ");
-      await delay(INPUT_DELAY_MS);
 
-      expect(onToggle).not.toHaveBeenCalled();
+      // Focus should have bounced from locked row 1 to unlocked row 0 (framework)
+      expect(onFocusChange).toHaveBeenCalledWith(0, 0);
     });
   });
 
@@ -656,8 +653,8 @@ describe("CategoryGrid component", () => {
       // Use expertMode to preserve original option order
       const { stdin, unmount } = renderGrid({
         categories,
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         expertMode: true,
         onFocusChange,
       });
@@ -684,8 +681,8 @@ describe("CategoryGrid component", () => {
       // Use expertMode to preserve original option order
       const { stdin, unmount } = renderGrid({
         categories,
-        focusedRow: 0,
-        focusedCol: 2, // Start at opt3
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 2, // Start at opt3
         expertMode: true,
         onFocusChange,
       });
@@ -711,8 +708,8 @@ describe("CategoryGrid component", () => {
       // Use expertMode to preserve original option order
       const { stdin, unmount } = renderGrid({
         categories,
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         expertMode: true,
         onFocusChange,
       });
@@ -747,8 +744,8 @@ describe("CategoryGrid component", () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
         categories: categoriesWithFramework,
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         onFocusChange,
       });
       cleanup = unmount;
@@ -765,8 +762,8 @@ describe("CategoryGrid component", () => {
       const onFocusChange = vi.fn();
       // No framework selected, so Tab should stay on framework
       const { stdin, unmount } = renderGrid({
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         onFocusChange,
       });
       cleanup = unmount;
@@ -962,8 +959,8 @@ describe("CategoryGrid component", () => {
 
       const { stdin, unmount } = renderGrid({
         categories,
-        focusedRow: 0,
-        focusedCol: 2, // Last option in first row
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 2, // Last option in first row
         onFocusChange,
       });
       cleanup = unmount;

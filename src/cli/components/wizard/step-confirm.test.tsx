@@ -1,4 +1,3 @@
-import React from "react";
 import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StepConfirm } from "./step-confirm";

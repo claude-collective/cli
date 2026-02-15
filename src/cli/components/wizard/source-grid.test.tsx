@@ -1,4 +1,3 @@
-import React from "react";
 import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, vi } from "vitest";
 import { SourceGrid, type SourceGridProps, type SourceRow, type SourceOption } from "./source-grid";
@@ -65,8 +64,8 @@ const multiSourceRows: SourceRow[] = [
 
 const defaultProps: SourceGridProps = {
   rows: defaultRows,
-  focusedRow: 0,
-  focusedCol: 0,
+  defaultFocusedRow: 0,
+  defaultFocusedCol: 0,
   onSelect: vi.fn(),
   onFocusChange: vi.fn(),
 };
@@ -139,8 +138,8 @@ describe("SourceGrid component", () => {
     it("should move down with arrow down", async () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         onFocusChange,
       });
       cleanup = unmount;
@@ -155,8 +154,8 @@ describe("SourceGrid component", () => {
     it("should move up with arrow up", async () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
-        focusedRow: 1,
-        focusedCol: 0,
+        defaultFocusedRow: 1,
+        defaultFocusedCol: 0,
         onFocusChange,
       });
       cleanup = unmount;
@@ -171,8 +170,8 @@ describe("SourceGrid component", () => {
     it("should wrap down to first row from last row", async () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
-        focusedRow: 2, // Last row (Vitest)
-        focusedCol: 0,
+        defaultFocusedRow: 2, // Last row (Vitest)
+        defaultFocusedCol: 0,
         onFocusChange,
       });
       cleanup = unmount;
@@ -187,8 +186,8 @@ describe("SourceGrid component", () => {
     it("should wrap up to last row from first row", async () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         onFocusChange,
       });
       cleanup = unmount;
@@ -204,8 +203,8 @@ describe("SourceGrid component", () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
         rows: multiSourceRows,
-        focusedRow: 1, // Zustand has 3 options
-        focusedCol: 2, // Internal (index 2)
+        defaultFocusedRow: 1, // Zustand has 3 options
+        defaultFocusedCol: 2, // Internal (index 2)
         onFocusChange,
       });
       cleanup = unmount;
@@ -224,8 +223,8 @@ describe("SourceGrid component", () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
         rows: multiSourceRows,
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         onFocusChange,
       });
       cleanup = unmount;
@@ -241,8 +240,8 @@ describe("SourceGrid component", () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
         rows: multiSourceRows,
-        focusedRow: 0,
-        focusedCol: 1,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 1,
         onFocusChange,
       });
       cleanup = unmount;
@@ -258,8 +257,8 @@ describe("SourceGrid component", () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
         rows: multiSourceRows,
-        focusedRow: 0,
-        focusedCol: 1, // Last option in React row
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 1, // Last option in React row
         onFocusChange,
       });
       cleanup = unmount;
@@ -275,8 +274,8 @@ describe("SourceGrid component", () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
         rows: multiSourceRows,
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         onFocusChange,
       });
       cleanup = unmount;
@@ -293,8 +292,8 @@ describe("SourceGrid component", () => {
     it("should call onSelect when pressing space", async () => {
       const onSelect = vi.fn();
       const { stdin, unmount } = renderGrid({
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         onSelect,
       });
       cleanup = unmount;
@@ -310,8 +309,8 @@ describe("SourceGrid component", () => {
       const onSelect = vi.fn();
       const { stdin, unmount } = renderGrid({
         rows: multiSourceRows,
-        focusedRow: 0,
-        focusedCol: 1, // Acme Corp
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 1, // Acme Corp
         onSelect,
       });
       cleanup = unmount;
@@ -327,8 +326,8 @@ describe("SourceGrid component", () => {
       const onSelect = vi.fn();
       const { stdin, unmount } = renderGrid({
         rows: multiSourceRows,
-        focusedRow: 1,
-        focusedCol: 2, // Internal
+        defaultFocusedRow: 1,
+        defaultFocusedCol: 2, // Internal
         onSelect,
       });
       cleanup = unmount;
@@ -345,8 +344,8 @@ describe("SourceGrid component", () => {
     it("should handle single option per row", async () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
-        focusedRow: 0,
-        focusedCol: 0,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0,
         onFocusChange,
       });
       cleanup = unmount;
@@ -427,8 +426,8 @@ describe("SourceGrid component", () => {
       const onFocusChange = vi.fn();
       const { stdin, unmount } = renderGrid({
         rows: defaultRows,
-        focusedRow: 0,
-        focusedCol: 0, // On the only option (Public)
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 0, // On the only option (Public)
         onFocusChange,
         onSearch: mockSearch,
       });
@@ -446,8 +445,8 @@ describe("SourceGrid component", () => {
       const onSelect = vi.fn();
       const { stdin, unmount } = renderGrid({
         rows: defaultRows,
-        focusedRow: 0,
-        focusedCol: 1, // Search pill position (after Public)
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 1, // Search pill position (after Public)
         onSelect,
         onSearch: mockSearch,
       });
@@ -465,8 +464,8 @@ describe("SourceGrid component", () => {
 
       const { stdin, unmount } = renderGrid({
         rows: defaultRows,
-        focusedRow: 0,
-        focusedCol: 1, // Search pill position
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 1, // Search pill position
         onSearch: mockSearch,
         onSearchStateChange: mockSearchStateChange,
       });
@@ -485,8 +484,8 @@ describe("SourceGrid component", () => {
 
       const { stdin, lastFrame, unmount } = renderGrid({
         rows: defaultRows,
-        focusedRow: 0,
-        focusedCol: 1,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 1,
         onSearch: mockSearch,
       });
       cleanup = unmount;
@@ -507,8 +506,8 @@ describe("SourceGrid component", () => {
 
       const { stdin, lastFrame, unmount } = renderGrid({
         rows: defaultRows,
-        focusedRow: 0,
-        focusedCol: 1,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 1,
         onSearch: mockSearch,
         onBind: mockBind,
         onSearchStateChange: mockSearchStateChange,
@@ -537,8 +536,8 @@ describe("SourceGrid component", () => {
 
       const { stdin, unmount } = renderGrid({
         rows: defaultRows,
-        focusedRow: 0,
-        focusedCol: 1,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 1,
         onSearch: mockSearch,
         onFocusChange,
       });
@@ -564,8 +563,8 @@ describe("SourceGrid component", () => {
 
       const { stdin, unmount } = renderGrid({
         rows: defaultRows,
-        focusedRow: 0,
-        focusedCol: 1,
+        defaultFocusedRow: 0,
+        defaultFocusedCol: 1,
         onSearch: mockSearch,
         onBind: mockBind,
         onSearchStateChange: mockSearchStateChange,

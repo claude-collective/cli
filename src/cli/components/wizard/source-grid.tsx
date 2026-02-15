@@ -1,6 +1,9 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import { Box, Text, useInput } from "ink";
 import type { BoundSkillCandidate, SkillAlias, SkillId } from "../../types/index.js";
+import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
+import { useFocusedListItem } from "../hooks/use-focused-list-item.js";
+import { useSourceGridSearchModal } from "../hooks/use-source-grid-search-modal.js";
 import { SearchModal } from "./search-modal.js";
 
 const SEARCH_PILL_LABEL = "\u2315 Search";
@@ -21,13 +24,16 @@ export type SourceRow = {
 
 export type SourceGridProps = {
   rows: SourceRow[];
-  focusedRow: number;
-  focusedCol: number;
   onSelect: (skillId: SkillId, sourceId: string) => void;
-  onFocusChange: (row: number, col: number) => void;
   onSearch?: (alias: SkillAlias) => Promise<BoundSkillCandidate[]>;
   onBind?: (candidate: BoundSkillCandidate) => void;
   onSearchStateChange?: (active: boolean) => void;
+  /** Optional initial focus row (default: 0). Use with React `key` to reset. */
+  defaultFocusedRow?: number;
+  /** Optional initial focus col (default: 0). Use with React `key` to reset. */
+  defaultFocusedCol?: number;
+  /** Optional callback fired whenever the focused position changes */
+  onFocusChange?: (row: number, col: number) => void;
 };
 
 type SearchPillProps = {
@@ -35,7 +41,7 @@ type SearchPillProps = {
 };
 
 const SearchPill: React.FC<SearchPillProps> = ({ isFocused }) => {
-  const borderColor = isFocused ? "white" : "gray";
+  const borderColor = isFocused ? CLI_COLORS.UNFOCUSED : CLI_COLORS.NEUTRAL;
 
   return (
     <Box marginRight={1} borderColor={borderColor} borderStyle="single" borderDimColor={!isFocused}>
@@ -58,15 +64,18 @@ const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean }> = ({
   option,
   isFocused,
 }) => {
-  const borderColor = option.selected ? "cyan" : isFocused ? "white" : "gray";
-  const textColor = option.selected ? "cyan" : undefined;
+  const borderColor = option.selected ? CLI_COLORS.PRIMARY : isFocused ? CLI_COLORS.UNFOCUSED : CLI_COLORS.NEUTRAL;
+  const textColor = option.selected ? CLI_COLORS.PRIMARY : undefined;
   const isBold = isFocused || option.selected;
+  const symbol = option.selected ? UI_SYMBOLS.SELECTED : UI_SYMBOLS.UNSELECTED;
 
   return (
     <Box marginRight={1} borderColor={borderColor} borderStyle="single">
       <Text color={textColor} bold={isBold}>
         {" "}
-        {option.label}{" "}
+        <Text dimColor={!option.selected}>{symbol}</Text> {option.label}
+        {option.selected && <Text dimColor> (active)</Text>}
+        {" "}
       </Text>
     </Box>
   );
@@ -109,54 +118,39 @@ const getNavigableCount = (row: SourceRow, showSearchPill: boolean): number => {
 
 export const SourceGrid: React.FC<SourceGridProps> = ({
   rows,
-  focusedRow,
-  focusedCol,
   onSelect,
-  onFocusChange,
   onSearch,
   onBind,
   onSearchStateChange,
+  defaultFocusedRow = 0,
+  defaultFocusedCol = 0,
+  onFocusChange,
 }) => {
-  const [searchingRow, setSearchingRow] = useState<number | null>(null);
-  const [searchResults, setSearchResults] = useState<BoundSkillCandidate[]>([]);
-  const [searchAlias, setSearchAlias] = useState("");
+  const {
+    searchModal,
+    searchResults,
+    searchAlias,
+    handleSearchTrigger,
+    handleBind,
+    handleCloseSearch,
+  } = useSourceGridSearchModal({ rows, onSearch, onBind, onSearchStateChange });
 
   const showSearchPill = !!onSearch;
-  const isSearchActive = searchingRow !== null;
 
-  const handleSearchTrigger = useCallback(
-    async (rowIndex: number) => {
-      const row = rows[rowIndex];
-      if (!row || !onSearch) return;
-
-      const alias = row.alias;
-      setSearchAlias(alias);
-      setSearchingRow(rowIndex);
-      onSearchStateChange?.(true);
-
-      const results = await onSearch(alias);
-      setSearchResults(results);
+  const getColCount = useCallback(
+    (row: number): number => {
+      const rowData = rows[row];
+      return rowData ? getNavigableCount(rowData, showSearchPill) : 0;
     },
-    [rows, onSearch, onSearchStateChange],
+    [rows, showSearchPill],
   );
 
-  const handleBind = useCallback(
-    (candidate: BoundSkillCandidate) => {
-      onBind?.(candidate);
-      setSearchingRow(null);
-      setSearchResults([]);
-      setSearchAlias("");
-      onSearchStateChange?.(false);
-    },
-    [onBind, onSearchStateChange],
-  );
-
-  const handleCloseSearch = useCallback(() => {
-    setSearchingRow(null);
-    setSearchResults([]);
-    setSearchAlias("");
-    onSearchStateChange?.(false);
-  }, [onSearchStateChange]);
+  const { focusedRow, focusedCol, moveFocus } = useFocusedListItem(rows.length, getColCount, {
+    wrap: true,
+    onChange: onFocusChange,
+    initialRow: defaultFocusedRow,
+    initialCol: defaultFocusedCol,
+  });
 
   useInput(
     useCallback(
@@ -171,7 +165,7 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
         },
       ) => {
         // Don't handle grid input while search modal is open
-        if (isSearchActive) return;
+        if (searchModal.isOpen) return;
 
         if (input === " ") {
           const currentRow = rows[focusedRow];
@@ -197,31 +191,13 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
         const isDown = key.downArrow;
 
         if (isLeft) {
-          const currentRow = rows[focusedRow];
-          if (!currentRow) return;
-          const length = getNavigableCount(currentRow, showSearchPill);
-          const newCol = focusedCol <= 0 ? length - 1 : focusedCol - 1;
-          onFocusChange(focusedRow, newCol);
+          moveFocus("left");
         } else if (isRight) {
-          const currentRow = rows[focusedRow];
-          if (!currentRow) return;
-          const length = getNavigableCount(currentRow, showSearchPill);
-          const newCol = focusedCol >= length - 1 ? 0 : focusedCol + 1;
-          onFocusChange(focusedRow, newCol);
+          moveFocus("right");
         } else if (isUp) {
-          const length = rows.length;
-          const newRow = focusedRow <= 0 ? length - 1 : focusedRow - 1;
-          const newRowData = rows[newRow];
-          const maxCol = newRowData ? getNavigableCount(newRowData, showSearchPill) - 1 : 0;
-          const newCol = Math.min(focusedCol, maxCol);
-          onFocusChange(newRow, Math.max(0, newCol));
+          moveFocus("up");
         } else if (isDown) {
-          const length = rows.length;
-          const newRow = focusedRow >= length - 1 ? 0 : focusedRow + 1;
-          const newRowData = rows[newRow];
-          const maxCol = newRowData ? getNavigableCount(newRowData, showSearchPill) - 1 : 0;
-          const newCol = Math.min(focusedCol, maxCol);
-          onFocusChange(newRow, Math.max(0, newCol));
+          moveFocus("down");
         }
       },
       [
@@ -229,10 +205,10 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
         focusedRow,
         focusedCol,
         onSelect,
-        onFocusChange,
         showSearchPill,
-        isSearchActive,
+        searchModal.isOpen,
         handleSearchTrigger,
+        moveFocus,
       ],
     ),
   );
@@ -256,7 +232,7 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
           showSearchPill={showSearchPill}
         />
       ))}
-      {isSearchActive && (
+      {searchModal.isOpen && (
         <SearchModal
           results={searchResults}
           alias={searchAlias}

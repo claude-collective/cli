@@ -1,7 +1,6 @@
-import React from "react";
 import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, vi } from "vitest";
-import { StepRefine, type StepRefineProps, type RefineAction } from "./step-refine";
+import { StepRefine, type StepRefineProps } from "./step-refine";
 import {
   ENTER,
   ESCAPE,

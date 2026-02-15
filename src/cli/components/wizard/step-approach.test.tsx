@@ -1,4 +1,3 @@
-import React from "react";
 import { render } from "ink-testing-library";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { StepApproach } from "./step-approach";
@@ -8,10 +7,9 @@ import {
   ARROW_UP,
   ENTER,
   RENDER_DELAY_MS,
+  SELECT_NAV_DELAY_MS,
   delay,
 } from "../../lib/__tests__/test-constants";
-
-const SELECT_NAV_DELAY_MS = 100;
 
 describe("StepApproach component", () => {
   let cleanup: (() => void) | undefined;
@@ -31,7 +29,7 @@ describe("StepApproach component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Use a pre-built template");
+      expect(output).toContain("Use a stack");
       expect(output).toContain("Start from scratch");
     });
 
@@ -53,7 +51,7 @@ describe("StepApproach component", () => {
       // Wait for component to be ready
       await delay(RENDER_DELAY_MS);
 
-      // First option should be "Use a pre-built template" (stack)
+      // First option should be "Use a stack" (stack)
       await stdin.write(ENTER);
       await delay(SELECT_NAV_DELAY_MS);
 
@@ -113,7 +111,7 @@ describe("StepApproach component", () => {
       await stdin.write(ARROW_UP);
       await delay(SELECT_NAV_DELAY_MS);
 
-      // Select (should be back to "Use a pre-built template")
+      // Select (should be back to "Use a stack")
       await stdin.write(ENTER);
       await delay(SELECT_NAV_DELAY_MS);
 
