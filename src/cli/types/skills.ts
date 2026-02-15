@@ -127,10 +127,18 @@ export type CategoryPath =
   | Subcategory
   | "local";
 
-/** Subcategory-keyed selections mapping to arrays of canonical skill IDs */
+/**
+ * Subcategory-keyed selections mapping to arrays of canonical skill IDs.
+ * Used in the wizard Build step for single-domain selections.
+ * Partial because only subcategories the user has interacted with will have entries.
+ */
 export type SubcategorySelections = Partial<Record<Subcategory, SkillId[]>>;
 
-/** Resolved subcategory-to-skill mappings after alias resolution */
+/**
+ * Resolved subcategory-to-skill mappings after alias resolution.
+ * Maps each subcategory to a single canonical skill ID (used in stack configs
+ * where each subcategory has exactly one skill per agent).
+ */
 export type ResolvedSubcategorySkills = Partial<Record<Subcategory, SkillId>>;
 
 /** Skill definition from registry.yaml (static metadata that doesn't change per-agent) */
@@ -143,7 +151,11 @@ export type SkillDefinition = {
 /** Skill assignment in stack config.yaml, specifies preloaded (embedded) vs dynamic (Skill tool) */
 export type SkillAssignment = {
   id: SkillId;
-  /** @default false */
+  /**
+   * If true, skill content is embedded directly in the compiled agent prompt.
+   * If false, the agent loads the skill via Claude Code's Skill tool at runtime.
+   * @default false
+   */
   preloaded?: boolean;
   /** True if this is a local skill from .claude/skills/ */
   local?: boolean;
@@ -180,14 +192,25 @@ export type SkillFrontmatter = {
   model?: ModelName;
 };
 
-/** metadata.yaml fields - relationship and catalog data (identity comes from SKILL.md frontmatter) */
+/**
+ * metadata.yaml fields - relationship and catalog data (identity comes from SKILL.md frontmatter).
+ * All fields optional because metadata.yaml is supplementary; SKILL.md is the primary source.
+ */
 export type SkillMetadataConfig = {
+  /** Which subcategory this skill belongs to (e.g., "web-framework" or "testing") */
   category?: CategoryPath;
+  /** If true, only one skill from this category can be selected. Overrides CategoryDefinition. */
   category_exclusive?: boolean;
+  /** Author handle (e.g., "@vince") */
   author?: string;
+  /** Content version integer as string; now DEPRECATED in favor of plugin.json version */
   version?: string;
+  /** Searchable tags for filtering (e.g., ["react", "hooks", "state"]) */
   tags?: string[];
+  /** Skill IDs that must be selected before this skill (dependency) */
   requires?: SkillId[];
+  /** Framework skill IDs this skill works with (for framework-first filtering) */
   compatible_with?: SkillId[];
+  /** Skill IDs that cannot be selected alongside this skill (mutual exclusion) */
   conflicts_with?: SkillId[];
 };
