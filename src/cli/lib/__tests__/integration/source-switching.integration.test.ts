@@ -312,8 +312,6 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
 
   describe("Scenario 2: Local to marketplace switching (local -> public)", () => {
     it("should archive local skills when switching to marketplace source", async () => {
-      const matrix = buildMatrix(SWITCHABLE_SKILLS);
-
       // Mark skills as having both local and marketplace sources
       const reactSkillId = "web-framework-react" as SkillId;
       const zustandSkillId = "web-state-zustand" as SkillId;
@@ -463,7 +461,6 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
     });
 
     it("should install from restored local skills and recompile agents", async () => {
-      const matrix = buildMatrix(SWITCHABLE_SKILLS);
       // Boundary cast: test skill names are SkillIds by convention
       const allSkillNames = SWITCHABLE_SKILLS.map((s) => s.name) as unknown as SkillId[];
 
@@ -549,7 +546,6 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
     });
 
     it("should handle full pipeline round-trip with compile verification", async () => {
-      const matrix = buildMatrix(SWITCHABLE_SKILLS);
       // Boundary cast: test skill names are SkillIds by convention
       const allSkillNames = SWITCHABLE_SKILLS.map((s) => s.name) as unknown as SkillId[];
 

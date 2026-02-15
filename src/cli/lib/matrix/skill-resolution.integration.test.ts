@@ -32,7 +32,6 @@ import type { SourceLoadResult } from "../loading/source-loader";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const SKILL_COUNT_PER_SOURCE = 5;
 const TOTAL_SOURCE_COUNT = 3;
 const SELECTED_SKILL_COUNT = 10;
 
@@ -106,15 +105,6 @@ function createPrivateSource(name: string, url: string, installed = false): Skil
     url,
     installed,
     ...(installed ? { installMode: "local" as const } : {}),
-  };
-}
-
-function createLocalSource(): SkillSource {
-  return {
-    name: "local",
-    type: "local",
-    installed: true,
-    installMode: "local",
   };
 }
 

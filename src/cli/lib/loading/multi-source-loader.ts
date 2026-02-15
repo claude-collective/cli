@@ -1,13 +1,7 @@
 import path from "path";
 
 import { SKILLS_DIR_PATH } from "../../consts";
-import type {
-  BoundSkillCandidate,
-  MergedSkillsMatrix,
-  SkillAlias,
-  SkillId,
-  SkillSource,
-} from "../../types";
+import type { BoundSkillCandidate, MergedSkillsMatrix, SkillAlias, SkillSource } from "../../types";
 import { directoryExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
 import { typedEntries } from "../../utils/typed-object";

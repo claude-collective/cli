@@ -59,7 +59,6 @@ import type {
   Domain,
   DomainSelections,
   MergedSkillsMatrix,
-  ProjectConfig,
   ResolvedSkill,
   ResolvedStack,
   Skill,

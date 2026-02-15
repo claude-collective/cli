@@ -12,7 +12,7 @@ vi.mock("../../utils/logger", () => ({
   warn: vi.fn(),
 }));
 
-import { readFile, readFileSafe, fileExists } from "../../utils/fs";
+import { readFileSafe, fileExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
 
 function createValidMappingsYaml(): string {
