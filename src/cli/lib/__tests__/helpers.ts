@@ -1,7 +1,8 @@
 import path from "path";
 import os from "os";
 import { fileURLToPath } from "url";
-import { mkdtemp, rm, mkdir, writeFile, stat } from "fs/promises";
+import { mkdtemp, rm, mkdir, writeFile, readFile, stat } from "fs/promises";
+import { parse as parseYaml } from "yaml";
 import { runCommand } from "@oclif/test";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -50,27 +51,26 @@ export async function runCliCommand(args: string[]) {
   return runCommand(args, { root: CLI_ROOT });
 }
 import type {
+  AgentConfig,
   AgentDefinition,
   CategoryDefinition,
   CategoryPath,
+  CompileContext,
   Domain,
+  DomainSelections,
   MergedSkillsMatrix,
   ProjectConfig,
   ResolvedSkill,
   ResolvedStack,
+  Skill,
   SkillDisplayName,
   SkillId,
   Subcategory,
 } from "../../types";
-import {
-  createTestReactSkill,
-  createTestVueSkill,
-  createTestZustandSkill,
-  createTestScssModulesSkill,
-  createTestHonoSkill,
-  createTestDrizzleSkill,
-  createTestVitestSkill,
-} from "./test-fixtures";
+import type { WizardResultV2 } from "../../components/wizard/wizard";
+import type { SourceLoadResult } from "../loading/source-loader";
+import type { ResolvedConfig } from "../configuration/config";
+import { getTestSkill } from "./test-fixtures";
 
 export async function fileExists(filePath: string): Promise<boolean> {
   try {
@@ -87,6 +87,69 @@ export async function directoryExists(dirPath: string): Promise<boolean> {
     return s.isDirectory();
   } catch {
     return false;
+  }
+}
+
+export async function readTestYaml<T>(filePath: string): Promise<T> {
+  const content = await readFile(filePath, "utf-8");
+  return parseYaml(content) as T;
+}
+
+export function buildWizardResult(
+  selectedSkills: SkillId[],
+  overrides?: Partial<WizardResultV2>,
+): WizardResultV2 {
+  return {
+    selectedSkills,
+    selectedStackId: null,
+    domainSelections: {} as DomainSelections,
+    sourceSelections: {},
+    expertMode: false,
+    installMode: "local",
+    cancelled: false,
+    validation: { valid: true, errors: [], warnings: [] },
+    ...overrides,
+  };
+}
+
+export function buildSourceResult(
+  matrix: MergedSkillsMatrix,
+  sourcePath: string,
+  overrides?: Partial<SourceLoadResult>,
+): SourceLoadResult {
+  const sourceConfig: ResolvedConfig = {
+    source: sourcePath,
+    sourceOrigin: "flag",
+  };
+  return {
+    matrix,
+    sourceConfig,
+    sourcePath,
+    isLocal: true,
+    ...overrides,
+  };
+}
+
+/**
+ * Lightweight frontmatter parser for test assertions.
+ * Returns raw key-value pairs (unlike the production parseFrontmatter which
+ * returns typed SkillFrontmatter with Zod validation).
+ */
+export function parseTestFrontmatter(content: string): Record<string, unknown> | null {
+  if (!content.startsWith("---")) {
+    return null;
+  }
+
+  const endIndex = content.indexOf("---", 3);
+  if (endIndex === -1) {
+    return null;
+  }
+
+  const yamlContent = content.slice(3, endIndex).trim();
+  try {
+    return parseYaml(yamlContent) as Record<string, unknown>;
+  } catch {
+    return null;
   }
 }
 
@@ -164,66 +227,6 @@ export function createMockMatrix(
   };
 }
 
-// Includes one methodology skill to test preselection behavior
-export function createMockMatrixWithMethodology(
-  skills: Record<string, ResolvedSkill> = {},
-  overrides?: Partial<MergedSkillsMatrix>,
-): MergedSkillsMatrix {
-  const METHODOLOGY_CATEGORY: Subcategory = "methodology";
-  // Just one methodology skill is enough to test preselection
-  // Using normalized skill ID format
-  const methodologySkill = createMockSkill(
-    "meta-methodology-anti-over-engineering",
-    METHODOLOGY_CATEGORY,
-    { description: "Surgical implementation" },
-  );
-
-  return createMockMatrix(
-    { [methodologySkill.id]: methodologySkill, ...skills },
-    {
-      categories: {
-        [METHODOLOGY_CATEGORY]: {
-          id: METHODOLOGY_CATEGORY,
-          displayName: "Methodology",
-          description: "Foundational development practices",
-          exclusive: false,
-          required: false,
-          order: 0,
-        },
-        ...overrides?.categories,
-      } as Record<Subcategory, import("../../types").CategoryDefinition>,
-      ...overrides,
-    },
-  );
-}
-
-export function createMockProjectConfig(
-  name: string,
-  skills: SkillId[],
-  overrides?: Partial<ProjectConfig>,
-): ProjectConfig {
-  // Build stack from skills: each skill goes to all agents under its subcategory
-  const stack: Record<string, Record<string, SkillId>> = {};
-  for (const skillId of skills) {
-    // Extract a subcategory from the skill ID (e.g., "web-framework-react" -> "framework")
-    const parts = skillId.split("-");
-    const subcategory = parts.length >= 2 ? parts[1] : parts[0];
-    for (const agent of ["web-developer", "api-developer"]) {
-      if (!stack[agent]) stack[agent] = {};
-      stack[agent][subcategory] = skillId;
-    }
-  }
-  return {
-    name,
-    description: `Test project: ${name}`,
-    author: "@test",
-    agents: ["web-developer", "api-developer"],
-    skills,
-    stack,
-    ...overrides,
-  };
-}
-
 export function createMockAgent(
   name: string,
   overrides?: Partial<AgentDefinition>,
@@ -238,7 +241,48 @@ export function createMockAgent(
   };
 }
 
-export function createSkillContent(name: string, description = "A test skill"): string {
+export function createMockAgentConfig(
+  name: string,
+  skills: Skill[] = [],
+  overrides?: Partial<AgentConfig>,
+): AgentConfig {
+  return {
+    name,
+    title: `${name} agent`,
+    description: `Test ${name}`,
+    tools: ["Read", "Write"],
+    skills,
+    path: name,
+    ...overrides,
+  };
+}
+
+export function createMockSkillEntry(
+  id: SkillId,
+  preloaded = false,
+  overrides?: Partial<Skill>,
+): Skill {
+  return {
+    id,
+    path: `skills/${id}/`,
+    description: `${id} skill`,
+    usage: `when working with ${id}`,
+    preloaded,
+    ...overrides,
+  };
+}
+
+export function createCompileContext(overrides?: Partial<CompileContext>): CompileContext {
+  return {
+    stackId: "test-stack",
+    verbose: false,
+    projectRoot: "/project",
+    outputDir: "/project/.claude/plugins/claude-collective",
+    ...overrides,
+  };
+}
+
+function createSkillContent(name: string, description = "A test skill"): string {
   return `---
 name: ${name}
 description: ${description}
@@ -251,13 +295,13 @@ This is a test skill.
 `;
 }
 
-export function createMetadataContent(author = "@test"): string {
+function createMetadataContent(author = "@test"): string {
   return `version: 1
 author: ${author}
 `;
 }
 
-export function createAgentYamlContent(name: string, description = "A test agent"): string {
+function createAgentYamlContent(name: string, description = "A test agent"): string {
   return `name: ${name}
 description: ${description}
 tools: Read, Write, Edit
@@ -342,19 +386,19 @@ export function createComprehensiveMatrix(
   // CategoryPath format, but the wizard's populateFromStack needs bare IDs to match
   // the categories map lookup (e.g., "framework" not "web/framework").
   const skills = {
-    "web-framework-react": createTestReactSkill({ category: "framework" }),
-    "web-framework-vue": createTestVueSkill({
+    "web-framework-react": getTestSkill("react", { category: "framework" }),
+    "web-framework-vue": getTestSkill("vue", {
       category: "framework",
       conflictsWith: [{ skillId: "web-framework-react", reason: "Choose one framework" }],
     }),
-    "web-state-zustand": createTestZustandSkill({
+    "web-state-zustand": getTestSkill("zustand", {
       category: "client-state",
       recommends: [{ skillId: "web-framework-react", reason: "Works great with React" }],
     }),
-    "web-styling-scss-modules": createTestScssModulesSkill({ category: "styling" }),
-    "api-framework-hono": createTestHonoSkill({ category: "api" }),
-    "api-database-drizzle": createTestDrizzleSkill({ category: "database" }),
-    "web-testing-vitest": createTestVitestSkill({ category: "testing" }),
+    "web-styling-scss-modules": getTestSkill("scss-modules", { category: "styling" }),
+    "api-framework-hono": getTestSkill("hono", { category: "api" }),
+    "api-database-drizzle": getTestSkill("drizzle", { category: "database" }),
+    "web-testing-vitest": getTestSkill("vitest", { category: "testing" }),
   };
 
   const categories = {
@@ -452,10 +496,10 @@ export function createComprehensiveMatrix(
 export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): MergedSkillsMatrix {
   // Bare Subcategory IDs — see createComprehensiveMatrix comment
   const skills = {
-    "web-framework-react": createTestReactSkill({ category: "framework" }),
-    "web-state-zustand": createTestZustandSkill({ category: "client-state" }),
-    "api-framework-hono": createTestHonoSkill({ category: "api" }),
-    "web-testing-vitest": createTestVitestSkill({ category: "testing" }),
+    "web-framework-react": getTestSkill("react", { category: "framework" }),
+    "web-state-zustand": getTestSkill("zustand", { category: "client-state" }),
+    "api-framework-hono": getTestSkill("hono", { category: "api" }),
+    "web-testing-vitest": getTestSkill("vitest", { category: "testing" }),
   };
 
   const suggestedStacks: ResolvedStack[] = [
@@ -493,13 +537,5 @@ export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): Merg
   });
 }
 
-export {
-  createTestReactSkill,
-  createTestZustandSkill,
-  createTestHonoSkill,
-  createTestVitestSkill,
-  createTestVueSkill,
-  createTestAuthPatternsSkill,
-  createTestDrizzleSkill,
-  createTestScssModulesSkill,
-} from "./test-fixtures";
+export { getTestSkill } from "./test-fixtures";
+export type { TestSkillName } from "./test-fixtures";

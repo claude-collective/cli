@@ -3,12 +3,7 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
-import {
-  detectInstallation,
-  getInstallationOrThrow,
-  type InstallMode,
-  type Installation,
-} from "../../installation";
+import { detectInstallation, getInstallationOrThrow } from "../../installation";
 
 describe("installation", () => {
   let tempDir: string;

@@ -1,7 +1,6 @@
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { readFile, mkdir, writeFile } from "fs/promises";
-import { parse as parseYaml } from "yaml";
+import { mkdir, writeFile } from "fs/promises";
 import { recompileAgents, type RecompileAgentsOptions } from "../../agents";
 import {
   createTestSource,
@@ -18,24 +17,6 @@ import type { AgentName, SkillId } from "../../../types";
 const CLI_REPO_PATH = path.resolve(__dirname, "../../../../..");
 const EDIT_MARKER = "EDITED-SKILL-CONTENT-MARKER";
 const APPENDED_SKILL_SECTION = `\n\n## Added Section\n\nThis section was added after initial compilation. ${EDIT_MARKER}\n`;
-
-function parseFrontmatter(content: string): Record<string, unknown> | null {
-  if (!content.startsWith("---")) {
-    return null;
-  }
-
-  const endIndex = content.indexOf("---", 3);
-  if (endIndex === -1) {
-    return null;
-  }
-
-  const yamlContent = content.slice(3, endIndex).trim();
-  try {
-    return parseYaml(yamlContent) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
 
 function buildRecompileOptions(
   dirs: TestDirs,
@@ -128,7 +109,6 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     expect(initialResult.compiled).toContain("web-pm");
 
     const agentPath = path.join(outputDir, "web-pm.md");
-    const initialContent = await readTestFile(agentPath);
 
     // Step 2: Edit a skill file in the plugin directory
     const reactSkillPath = path.join(pluginSkillsDir, "react", "SKILL.md");
@@ -189,7 +169,6 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     expect(initialResult.compiled).toContain("web-pm");
 
     const agentPath = path.join(outputDir, "web-pm.md");
-    const initialContent = await readTestFile(agentPath);
 
     // Step 2: Add a brand new skill to the plugin skills directory
     const newSkillDir = path.join(pluginSkillsDir, "new-testing-skill");
@@ -227,8 +206,6 @@ Use this for verifying recompilation picks up new skills.
   });
 
   it("should handle removing skills from agents", async () => {
-    const pluginDir = dirs.pluginDir!;
-
     // Step 1: Initial compile with explicit skills
     const initialSkills = {
       react: {

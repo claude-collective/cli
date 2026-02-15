@@ -5,10 +5,7 @@ import { useWizardStore } from "../../../stores/wizard-store";
 import { createComprehensiveMatrix, createBasicMatrix } from "../helpers";
 
 import type { MergedSkillsMatrix } from "../../../types";
-import { ARROW_DOWN, ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../test-constants";
-
-const STEP_TRANSITION_DELAY_MS = 150;
-const SPACE = " ";
+import { ARROW_DOWN, ENTER, ESCAPE, RENDER_DELAY_MS, SPACE, STEP_TRANSITION_DELAY_MS, delay } from "../test-constants";
 
 describe("Wizard integration", () => {
   let cleanup: (() => void) | undefined;
@@ -37,10 +34,10 @@ describe("Wizard integration", () => {
       await delay(RENDER_DELAY_MS);
 
       // Step 1: Approach - verify we're on approach step
-      expect(lastFrame()).toContain("pre-built template");
+      expect(lastFrame()).toContain("Use a stack");
       expect(lastFrame()).toContain("Intro");
 
-      // Select "Use a pre-built template" (stack path)
+      // Select "Use a stack" (stack path)
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
@@ -346,7 +343,7 @@ describe("Wizard integration", () => {
 
       // Should show ViewTitle for current domain
       const frame = lastFrame();
-      expect(frame).toContain("Customise your Web stack");
+      expect(frame).toContain("Customize your Web stack");
     });
 
     it("should advance to next domain when validation passes", async () => {
@@ -460,7 +457,7 @@ describe("Wizard integration", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Should be at approach
-      expect(lastFrame()).toContain("pre-built template");
+      expect(lastFrame()).toContain("Use a stack");
       state = useWizardStore.getState();
       expect(state.step).toBe("approach");
 
@@ -509,7 +506,7 @@ describe("Wizard integration", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Should be at approach
-      expect(lastFrame()).toContain("pre-built template");
+      expect(lastFrame()).toContain("Use a stack");
 
       // Domain selection should be preserved
       state = useWizardStore.getState();
@@ -558,7 +555,7 @@ describe("Wizard integration", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Should be back at approach, not cancelled
-      expect(lastFrame()).toContain("pre-built template");
+      expect(lastFrame()).toContain("Use a stack");
       expect(onCancel).not.toHaveBeenCalled();
 
       // Now escape at approach should cancel
@@ -581,8 +578,8 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
-      // Step 1: Approach - select "Use a pre-built template"
-      expect(lastFrame()).toContain("pre-built template");
+      // Step 1: Approach - select "Use a stack"
+      expect(lastFrame()).toContain("Use a stack");
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
@@ -666,7 +663,7 @@ describe("Wizard integration", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Should be back at approach
-      expect(lastFrame()).toContain("pre-built template");
+      expect(lastFrame()).toContain("Use a stack");
       expect(onCancel).not.toHaveBeenCalled();
     });
   });

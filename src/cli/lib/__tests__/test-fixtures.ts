@@ -1,87 +1,85 @@
-import type { ResolvedSkill } from "../../types";
+import type { CategoryPath, ResolvedSkill, SkillDisplayName, SkillId } from "../../types";
 import { createMockSkill } from "./helpers";
 
-export function createTestReactSkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
-  return createMockSkill("web-framework-react", "web/framework", {
-    displayName: "react",
+interface SkillFixtureConfig {
+  id: SkillId;
+  category: CategoryPath;
+  displayName?: SkillDisplayName;
+  description: string;
+  tags: string[];
+}
 
+const SKILL_FIXTURES: Record<string, SkillFixtureConfig> = {
+  react: {
+    id: "web-framework-react",
+    category: "web/framework",
+    displayName: "react",
     description: "React framework for building user interfaces",
     tags: ["react", "web", "ui", "component"],
-    ...overrides,
-  });
-}
-
-export function createTestZustandSkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
-  return createMockSkill("web-state-zustand", "web/state", {
+  },
+  zustand: {
+    id: "web-state-zustand",
+    category: "web/state",
     displayName: "zustand",
-
     description: "Bear necessities state management",
     tags: ["state", "react", "zustand"],
-    ...overrides,
-  });
-}
-
-export function createTestHonoSkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
-  return createMockSkill("api-framework-hono", "api/framework", {
+  },
+  hono: {
+    id: "api-framework-hono",
+    category: "api/framework",
     displayName: "hono",
-
     description: "Lightweight web framework for the edge",
     tags: ["api", "api", "edge", "serverless"],
-    ...overrides,
-  });
-}
-
-export function createTestVitestSkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
-  return createMockSkill("web-testing-vitest", "testing", {
+  },
+  vitest: {
+    id: "web-testing-vitest",
+    category: "testing",
     displayName: "vitest",
-
     description: "Next generation testing framework",
     tags: ["testing", "vitest", "unit"],
-    ...overrides,
-  });
-}
-
-export function createTestVueSkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
-  return createMockSkill("web-framework-vue", "web/framework", {
+  },
+  vue: {
+    id: "web-framework-vue",
+    category: "web/framework",
     displayName: "vue",
-
     description: "Progressive JavaScript framework",
     tags: ["vue", "web", "reactive"],
-    ...overrides,
-  });
-}
-
-export function createTestAuthPatternsSkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
-  return createMockSkill("api-security-auth-patterns", "api/security", {
+  },
+  "auth-patterns": {
+    id: "api-security-auth-patterns",
+    category: "api/security",
     description: "Authentication and authorization patterns",
     tags: ["auth", "security", "jwt", "oauth"],
-    ...overrides,
-  });
-}
-
-export function createTestDrizzleSkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
-  return createMockSkill("api-database-drizzle", "api/database", {
+  },
+  drizzle: {
+    id: "api-database-drizzle",
+    category: "api/database",
     displayName: "drizzle",
-
     description: "TypeScript ORM for SQL databases",
     tags: ["database", "orm", "sql"],
-    ...overrides,
-  });
-}
-
-export function createTestMethodologySkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
-  return createMockSkill("meta-methodology-anti-over-engineering", "meta/methodology", {
+  },
+  methodology: {
+    id: "meta-methodology-anti-over-engineering",
+    category: "meta/methodology",
     description: "Surgical implementation, not architectural innovation",
     tags: ["methodology", "foundational"],
-    ...overrides,
-  });
-}
-
-export function createTestScssModulesSkill(overrides?: Partial<ResolvedSkill>): ResolvedSkill {
-  return createMockSkill("web-styling-scss-modules", "web/styling", {
+  },
+  "scss-modules": {
+    id: "web-styling-scss-modules",
+    category: "web/styling",
     displayName: "scss-modules",
     description: "CSS Modules with SCSS",
     tags: ["css", "scss", "modules"],
-    ...overrides,
-  });
+  },
+} as const;
+
+export type TestSkillName = keyof typeof SKILL_FIXTURES;
+
+export function getTestSkill(
+  name: TestSkillName,
+  overrides?: Partial<ResolvedSkill>,
+): ResolvedSkill {
+  const config = SKILL_FIXTURES[name];
+  const { id, category, ...defaults } = config;
+  return createMockSkill(id, category, { ...defaults, ...overrides });
 }

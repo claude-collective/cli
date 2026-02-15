@@ -1,0 +1,5 @@
+name: my-project
+agents:
+  - web-developer
+skills: []
+installMode: local

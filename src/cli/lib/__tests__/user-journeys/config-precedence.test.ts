@@ -17,8 +17,6 @@ import {
   createTestSource,
   cleanupTestSource,
   fileExists,
-  directoryExists,
-  readTestFile,
   type TestDirs,
 } from "../fixtures/create-test-source";
 

@@ -1,7 +1,6 @@
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { readFile, mkdir, writeFile, stat } from "fs/promises";
-import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
+import { mkdir } from "fs/promises";
 import {
   createTestSource,
   cleanupTestSource,
@@ -12,35 +11,7 @@ import {
   DEFAULT_TEST_SKILLS,
   DEFAULT_TEST_AGENTS,
 } from "../fixtures/create-test-source";
-import { runCliCommand, CLI_ROOT } from "../helpers";
-
-const COLLECTIVE_PLUGIN_NAME = "claude-collective";
-
-function parseFrontmatter(content: string): Record<string, unknown> | null {
-  if (!content.startsWith("---")) {
-    return null;
-  }
-
-  const endIndex = content.indexOf("---", 3);
-  if (endIndex === -1) {
-    return null;
-  }
-
-  const yamlContent = content.slice(3, endIndex).trim();
-  try {
-    return parseYaml(yamlContent) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-function extractFrontmatterSkills(content: string): string[] {
-  const frontmatter = parseFrontmatter(content);
-  if (!frontmatter || !frontmatter.skills) {
-    return [];
-  }
-  return frontmatter.skills as string[];
-}
+import { runCliCommand, parseTestFrontmatter } from "../helpers";
 
 describe("User Journey: Compile Flow", () => {
   let dirs: TestDirs;
@@ -163,7 +134,7 @@ describe("User Journey: Compile Flow", () => {
 
         if (await fileExists(webDevPath)) {
           const content = await readTestFile(webDevPath);
-          const frontmatter = parseFrontmatter(content);
+          const frontmatter = parseTestFrontmatter(content);
 
           // If frontmatter has skills, they should be skill IDs
           if (frontmatter?.skills) {
@@ -193,7 +164,7 @@ describe("User Journey: Compile Flow", () => {
 
         if (await fileExists(webDevPath)) {
           const content = await readTestFile(webDevPath);
-          const frontmatter = parseFrontmatter(content);
+          const frontmatter = parseTestFrontmatter(content);
 
           // Frontmatter should be valid
           expect(frontmatter).not.toBeNull();
@@ -382,7 +353,7 @@ Use this skill for project-specific patterns.
 
       if (await fileExists(webDevPath)) {
         const content = await readTestFile(webDevPath);
-        const frontmatter = parseFrontmatter(content);
+        const frontmatter = parseTestFrontmatter(content);
 
         // If skills are in frontmatter, check for local skill
         if (frontmatter?.skills) {
@@ -443,11 +414,7 @@ describe("User Journey: Compile Error Handling", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     try {
-      const { error, stdout } = await runCliCommand([
-        "compile",
-        "--source",
-        "/nonexistent/invalid/path/xyz",
-      ]);
+      await runCliCommand(["compile", "--source", "/nonexistent/invalid/path/xyz"]);
 
       // Command should complete without crashing
       // It may succeed (source is just a hint) or error gracefully

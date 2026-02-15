@@ -15,7 +15,10 @@ export const KEY_N = "n";
 // Timing constants (ms)
 export const INPUT_DELAY_MS = 50;
 export const RENDER_DELAY_MS = 100;
+export const SELECT_NAV_DELAY_MS = 100;
+export const CONFIRM_INPUT_DELAY_MS = 100;
 export const OPERATION_DELAY_MS = 150;
+export const STEP_TRANSITION_DELAY_MS = 150;
 
 export const delay = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
