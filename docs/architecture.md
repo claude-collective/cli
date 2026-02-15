@@ -134,7 +134,7 @@ and installs them as Claude plugins or local files.
 ### Core Pipeline
 
 ```
-Source Resolution -> Skill Loading -> Matrix Merging -> Wizard Selection -> Config Generation -> Compilation -> Installation
+Source Resolution -> Skill Loading -> Matrix Merging -> Multi-Source Annotation -> Wizard Selection -> Config Generation -> Compilation -> Installation
 ```
 
 ### Detailed Flow
@@ -158,28 +158,37 @@ Source Resolution -> Skill Loading -> Matrix Merging -> Wizard Selection -> Conf
                                      |
                               MergedSkillsMatrix (resolved skills, stacks, display names)
 
-3. WIZARD SELECTION
+3. MULTI-SOURCE ANNOTATION
+   MergedSkillsMatrix ──> loadSkillsFromAllSources()
+                              |
+                       5-phase tagging pipeline (public -> local -> plugin -> extras -> active)
+                              |
+                       Each skill gets: availableSources[], activeSource
+
+4. WIZARD SELECTION
    MergedSkillsMatrix ──> Wizard component (Ink/React)
                               |
-                       Zustand store tracks: approach, domains, categories, skills
+                       Zustand store tracks: approach, domains, categories, skills,
+                                             sourceSelections, boundSkills
                               |
-                       WizardResult: selected skills, stack, install mode
+                       WizardResultV2: selected skills, stack, install mode, sourceSelections
 
-4. CONFIG GENERATION
-   WizardResult ──> generateProjectConfig()
-                       |
-                 ProjectConfig (name, agents, stack mappings)
+5. CONFIG GENERATION
+   WizardResultV2 ──> generateProjectConfig()
+                         |
+                   ProjectConfig (name, agents, stack mappings)
 
-5. COMPILATION
+6. COMPILATION
    ProjectConfig + Agent partials + Skills ──> Liquid templates
                                                    |
                                             Compiled agent .md files
                                                    |
                                             Plugin manifest (plugin.json)
 
-6. INSTALLATION
+7. INSTALLATION
    Plugin mode: .claude/plugins/claude-collective/
    Local mode:  .claude/agents/ + .claude/skills/
+   Source switching: archiveLocalSkill() / restoreArchivedSkill() for local skills
 ```
 
 ### Skill Metadata Flow
@@ -199,6 +208,156 @@ SkillFrontmatter                      SkillMetadataConfig
                             |
                   ResolvedSkill (full relationships, display names)
 ```
+
+### Multi-Source System
+
+Skills can come from multiple sources: the public marketplace, private repositories, local
+files, or installed plugins. The multi-source system tracks where each skill is available
+and lets users choose which source to use per skill.
+
+**Why multi-source exists:** Teams often maintain private skill forks with company-specific
+conventions (e.g., internal API patterns, proprietary tooling). Multi-source lets users mix
+public skills with private alternatives without forking the entire marketplace.
+
+#### Source Types
+
+```typescript
+type SkillSourceType = "public" | "private" | "local";
+
+type SkillSource = {
+  name: string; // "public", marketplace name, "local"
+  type: SkillSourceType;
+  url?: string; // For remote sources (e.g., "github:acme-corp/claude-skills")
+  version?: string; // Skill content version from metadata.yaml
+  installed: boolean; // Whether this source's version is currently on disk
+  installMode?: "plugin" | "local"; // How it was installed (separate from provenance)
+};
+```
+
+Each `ResolvedSkill` carries:
+
+- `availableSources: SkillSource[]` -- all known sources providing this skill
+- `activeSource: SkillSource` -- the currently installed or preferred source
+
+#### Multi-Source Loading Pipeline
+
+`loadSkillsFromAllSources()` in `src/cli/lib/loading/multi-source-loader.ts` runs a
+five-phase tagging pipeline that mutates `MergedSkillsMatrix.skills` in place:
+
+```
+Phase 1: PUBLIC       Tag all skills with a "public" source entry
+              |
+Phase 2: LOCAL        Tag skills with `local: true` as installed via local source
+              |
+Phase 3: PLUGIN       Detect plugin-installed skills in .claude/plugins/
+              |
+Phase 4: EXTRA        Fetch each configured extra source, tag matching skills as "private"
+              |
+Phase 5: ACTIVE       Set activeSource = installed variant, or first available
+```
+
+The pipeline is fault-tolerant: errors from individual extra sources are warned and skipped,
+never thrown. Network requests use cached data when available (`forceRefresh: false`).
+
+#### Source Configuration
+
+Extra sources are configured in project config and managed via `source-manager.ts`:
+
+```yaml
+# .claude-src/config.yaml
+sources:
+  - name: acme-corp
+    url: "github:acme-corp/claude-skills"
+  - name: internal
+    url: "github:my-org/private-skills"
+```
+
+`source-manager.ts` provides CRUD operations:
+
+- `addSource(projectDir, url)` -- validates by fetching marketplace, persists to config
+- `removeSource(projectDir, name)` -- removes by name (cannot remove "public")
+- `getSourceSummary(projectDir)` -- lists all sources with local/plugin skill counts
+
+#### Source Selection Flow
+
+The wizard's Sources step (`step-sources.tsx`) lets users choose between:
+
+1. **Recommended** -- use the default/installed sources (skip customization)
+2. **Customize** -- per-skill source selection via `SourceGrid`
+
+The `SourceGrid` component renders each selected technology as a row with source variant
+pills. Users navigate with arrow keys and select with Space. Source choices are stored as
+`sourceSelections: Partial<Record<SkillId, string>>` in the Zustand wizard store, mapping
+each skill ID to a source name.
+
+```
+WizardResultV2.sourceSelections
+       |
+       v
+skill-copier.ts: copySkillsToPluginFromSource(skills, sourceDir, ..., sourceSelections)
+       |
+       v
+For each skill: check sourceSelections[skillId]
+  - "local" -> preserve local skill on disk
+  - remote source name -> copy from that source's fetched directory
+  - undefined -> use activeSource or public default
+```
+
+#### Source Switching (Archive/Restore)
+
+When a user switches a local skill to a remote source, `source-switcher.ts` preserves
+the local version:
+
+```
+archiveLocalSkill(projectDir, skillId)
+  .claude/skills/{skillId}/  -->  .claude/skills/_archived/{skillId}/
+
+restoreArchivedSkill(projectDir, skillId)
+  .claude/skills/_archived/{skillId}/  -->  .claude/skills/{skillId}/
+```
+
+Both operations validate skill IDs against `SKILL_ID_PATTERN` and enforce path boundary
+checks to prevent traversal attacks. The archive directory (`_archived/`) is a sibling
+of active skill directories.
+
+#### Bound Skill Search
+
+The `SourceGrid` includes a search pill per skill row. When activated, it opens
+`SearchModal` which searches configured extra sources for matching skills:
+
+```
+User presses Space on search pill for "react"
+       |
+       v
+searchExtraSources("react", configuredSources)
+  -- fetches each extra source repository
+  -- matches by last directory segment (case-insensitive)
+       |
+       v
+BoundSkillCandidate[] displayed in SearchModal
+       |
+       v
+User selects a candidate -> bindSkill() in wizard store
+       |
+       v
+BoundSkill { id, sourceUrl, sourceName, boundTo: "react" }
+  -- appears as an additional source option in the SourceGrid row
+  -- persisted in WizardResultV2 for downstream compilation
+```
+
+`BoundSkill` represents a foreign skill explicitly bound to a subcategory via search.
+`BoundSkillCandidate` is the search result before binding. Both types live in
+`src/cli/types/matrix.ts`.
+
+#### Settings Overlay
+
+The `G` hotkey on the Sources step opens `StepSettings`, an overlay for managing
+configured sources:
+
+- View all configured marketplaces with local/plugin skill counts
+- `A` to add a new source URL (validated via `fetchMarketplace()`)
+- `DEL` to remove a source (except "public")
+- `ESC` to close and return to the Sources step
 
 ---
 
@@ -334,7 +493,7 @@ type CategoryPath = `${SkillIdPrefix}/${string}` | `${SkillIdPrefix}-${string}` 
 type Domain = "web" | "web-extras" | "api" | "cli" | "mobile" | "shared";
 type Subcategory = "framework" | "meta-framework" | "styling" | ...;  // 37 values
 type ModelName = "sonnet" | "opus" | "haiku" | "inherit";
-type SkillSourceType = "public" | "private" | "local" | "plugin";  // skill provenance
+type SkillSourceType = "public" | "private" | "local";  // skill provenance (install mode is separate)
 
 // src/cli/types/agents.ts
 type AgentName = "web-developer" | "api-developer" | "cli-developer" | ...;  // 18 values
@@ -364,17 +523,19 @@ Use these **instead of** boundary casts on `Object.entries/keys`.
 
 ### Key Interfaces
 
-| Type                 | File         | Purpose                                                 |
-| -------------------- | ------------ | ------------------------------------------------------- |
-| `ResolvedSkill`      | `matrix.ts`  | Fully merged skill with all relationships               |
-| `MergedSkillsMatrix` | `matrix.ts`  | Complete matrix with skills, stacks, display name maps  |
-| `CategoryDefinition` | `matrix.ts`  | Category metadata (domain, exclusive, required, order)  |
-| `AgentConfig`        | `agents.ts`  | Agent definition merged with compile config             |
-| `CompiledAgentData`  | `agents.ts`  | Fully compiled agent with content sections              |
-| `ProjectConfig`      | `config.ts`  | User's project configuration                            |
-| `Stack`              | `stacks.ts`  | Stack with agent-subcategory-skill mappings             |
-| `PluginManifest`     | `plugins.ts` | Plugin metadata for .claude-plugin/plugin.json          |
-| `SkillSource`        | `matrix.ts`  | Source provenance (name, type, url, version, installed) |
+| Type                  | File         | Purpose                                                 |
+| --------------------- | ------------ | ------------------------------------------------------- |
+| `ResolvedSkill`       | `matrix.ts`  | Fully merged skill with all relationships               |
+| `MergedSkillsMatrix`  | `matrix.ts`  | Complete matrix with skills, stacks, display name maps  |
+| `CategoryDefinition`  | `matrix.ts`  | Category metadata (domain, exclusive, required, order)  |
+| `AgentConfig`         | `agents.ts`  | Agent definition merged with compile config             |
+| `CompiledAgentData`   | `agents.ts`  | Fully compiled agent with content sections              |
+| `ProjectConfig`       | `config.ts`  | User's project configuration                            |
+| `Stack`               | `stacks.ts`  | Stack with agent-subcategory-skill mappings             |
+| `PluginManifest`      | `plugins.ts` | Plugin metadata for .claude-plugin/plugin.json          |
+| `SkillSource`         | `matrix.ts`  | Source provenance (name, type, url, version, installed) |
+| `BoundSkill`          | `matrix.ts`  | Foreign skill bound to a subcategory via search         |
+| `BoundSkillCandidate` | `matrix.ts`  | Search result candidate before binding                  |
 
 ### Type Convention Rules
 
@@ -528,6 +689,7 @@ Wizard (src/cli/components/wizard/wizard.tsx)
 |   +-- CategoryGrid    2D grid: rows=categories, cols=skills (✓ installed indicator)
 +-- StepSources      choose skill sources (recommended vs per-skill customize)
 |   +-- SourceGrid      per-skill source variant grid (arrow keys, space to select)
+|   |   +-- SearchModal    bound skill search results (up/down, enter to bind)
 |   +-- StepSettings    source management overlay (G hotkey, add/remove sources)
 +-- StepConfirm      review and install
 ```
@@ -552,8 +714,9 @@ type WizardState = {
   customizeSources: boolean;
   showSettings: boolean;
   enabledSources: Record<string, boolean>;
+  boundSkills: BoundSkill[]; // foreign skills bound via search
   history: WizardStep[]; // enables back navigation
-  // ... actions
+  // ... actions (setSourceSelection, bindSkill, buildSourceRows, etc.)
 };
 ```
 
@@ -895,13 +1058,14 @@ output-format.md          # Optional: output format section
 
 ### Evolution History
 
-| Phase | What Changed                                                                    |
-| ----- | ------------------------------------------------------------------------------- |
-| P1-P4 | Core commands, test coverage from 384 to 1160 tests                             |
-| P5    | Commander.js + @clack/prompts migrated to oclif + Ink                           |
-| P6    | Agent-centric configuration (skills in stacks, not agents)                      |
-| P7A   | Architecture fix (stack-based skill resolution)                                 |
-| P7B   | Wizard UX redesign (2D grid, domain-based, vim keys)                            |
-| D5    | Type simplification (types over interfaces, shared base, display names)         |
-| D6    | Type narrowing (union types, named aliases, Zod schemas, Remeda, typed helpers) |
-| D7    | Domain restructuring (8 lib subdirectories, barrel exports, ~140 import paths)  |
+| Phase | What Changed                                                                                                                             |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| P1-P4 | Core commands, test coverage from 384 to 1160 tests                                                                                      |
+| P5    | Commander.js + @clack/prompts migrated to oclif + Ink                                                                                    |
+| P6    | Agent-centric configuration (skills in stacks, not agents)                                                                               |
+| P7A   | Architecture fix (stack-based skill resolution)                                                                                          |
+| P7B   | Wizard UX redesign (2D grid, domain-based, vim keys)                                                                                     |
+| D5    | Type simplification (types over interfaces, shared base, display names)                                                                  |
+| D6    | Type narrowing (union types, named aliases, Zod schemas, Remeda, typed helpers)                                                          |
+| D7    | Domain restructuring (8 lib subdirectories, barrel exports, ~140 import paths)                                                           |
+| MS    | Multi-source UX (6 phases: source grid, multi-source loader, archive/restore, installed indicators, source settings, bound skill search) |
