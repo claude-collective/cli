@@ -12,6 +12,7 @@ import {
   marketplaceSchema,
   metadataValidationSchema,
   pluginManifestSchema,
+  projectConfigLoaderSchema,
   projectSourceConfigSchema,
   skillFrontmatterValidationSchema,
   skillsMatrixConfigSchema,
@@ -87,12 +88,22 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
     },
   },
   {
+    filename: "project-config.schema.json",
+    schema: projectConfigLoaderSchema,
+    metadata: {
+      $id: "schemas/project-config.schema.json",
+      title: "Project Configuration",
+      description:
+        "Schema for .claude-src/config.yaml consumer project files (name, agents, stack, skills).",
+    },
+  },
+  {
     filename: "project-source-config.schema.json",
     schema: projectSourceConfigSchema,
     metadata: {
       $id: "schemas/project-source-config.schema.json",
       title: "Project Source Configuration",
-      description: "Schema for .claude-src/config.yaml source configuration files.",
+      description: "Schema for .claude-src/config.yaml marketplace source configuration files.",
     },
   },
   {

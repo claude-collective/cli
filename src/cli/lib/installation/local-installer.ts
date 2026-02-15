@@ -233,7 +233,7 @@ async function buildAndMergeConfig(
 }
 
 async function writeConfigFile(config: ProjectConfig, configPath: string): Promise<void> {
-  const schemaComment = `${yamlSchemaComment(SCHEMA_PATHS.projectSourceConfig)}\n`;
+  const schemaComment = `${yamlSchemaComment(SCHEMA_PATHS.projectConfig)}\n`;
   // Compact stack for YAML output: bare strings for simple skills, objects for preloaded
   const serializable = config.stack
     ? { ...config, stack: compactStackForYaml(config.stack) }

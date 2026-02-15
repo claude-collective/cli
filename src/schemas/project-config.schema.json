@@ -1,0 +1,124 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "schemas/project-config.schema.json",
+  "title": "Project Configuration",
+  "description": "Schema for .claude-src/config.yaml consumer project files (name, agents, stack, skills).",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "agents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+-.+$"
+      }
+    },
+    "author": {
+      "type": "string"
+    },
+    "installMode": {
+      "type": "string",
+      "enum": ["local", "plugin"]
+    },
+    "stack": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "propertyNames": {
+          "type": "string"
+        },
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+-.+$"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+-.+$"
+                    },
+                    "preloaded": {
+                      "type": "boolean"
+                    },
+                    "local": {
+                      "type": "boolean"
+                    },
+                    "path": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["id"],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+-.+$"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+-.+$"
+                      },
+                      "preloaded": {
+                        "type": "boolean"
+                      },
+                      "local": {
+                        "type": "boolean"
+                      },
+                      "path": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["id"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "source": {
+      "type": "string"
+    },
+    "marketplace": {
+      "type": "string"
+    },
+    "agents_source": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": {}
+}

@@ -69,6 +69,7 @@ const SCHEMA_PKG_PREFIX =
   "https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas";
 
 export const SCHEMA_PATHS = {
+  projectConfig: `${SCHEMA_PKG_PREFIX}/project-config.schema.json`,
   projectSourceConfig: `${SCHEMA_PKG_PREFIX}/project-source-config.schema.json`,
   metadata: `${SCHEMA_PKG_PREFIX}/metadata.schema.json`,
   marketplace: `${SCHEMA_PKG_PREFIX}/marketplace.schema.json`,
