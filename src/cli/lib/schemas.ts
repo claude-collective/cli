@@ -305,6 +305,18 @@ export const agentHookDefinitionSchema: z.ZodType<AgentHookDefinition> = z.objec
 
 export const hooksRecordSchema = z.record(z.string(), z.array(agentHookDefinitionSchema));
 
+/** Strict hook definition — hooks array is required and must have at least one action */
+const strictAgentHookDefinitionSchema = z.object({
+  matcher: z.string().optional(),
+  hooks: z.array(agentHookActionSchema).min(1),
+});
+
+/** Strict hooks record for validation schemas (requires at least one hook action per definition) */
+export const strictHooksRecordSchema = z.record(
+  z.string(),
+  z.array(strictAgentHookDefinitionSchema),
+);
+
 export const skillAssignmentSchema: z.ZodType<SkillAssignment> = z.object({
   id: skillIdSchema,
   preloaded: z.boolean().optional(),
@@ -335,7 +347,7 @@ export const skillMetadataLoaderSchema = z
   .passthrough();
 
 export const pluginAuthorSchema: z.ZodType<PluginAuthor> = z.object({
-  name: z.string(),
+  name: z.string().min(1),
   email: z.string().optional(),
 });
 
@@ -350,6 +362,21 @@ export const pluginManifestSchema: z.ZodType<PluginManifest> = z.object({
   skills: z.union([z.string(), z.array(z.string())]).optional(),
   hooks: z.union([z.string(), hooksRecordSchema]).optional(),
 });
+
+/** Strict schema for plugin.json validation (IDE, cc validate). Rejects unknown fields. */
+export const pluginManifestValidationSchema = z
+  .object({
+    name: z.string().min(1),
+    version: z.string().optional(),
+    description: z.string().optional(),
+    author: pluginAuthorSchema.optional(),
+    keywords: z.array(z.string()).optional(),
+    commands: z.union([z.string(), z.array(z.string())]).optional(),
+    agents: z.union([z.string(), z.array(z.string())]).optional(),
+    skills: z.union([z.string(), z.array(z.string())]).optional(),
+    hooks: z.union([z.string(), strictHooksRecordSchema]).optional(),
+  })
+  .strict();
 
 export const agentYamlConfigSchema: z.ZodType<AgentYamlConfig> = z.object({
   id: agentNameSchema,
@@ -412,6 +439,35 @@ export const projectConfigLoaderSchema = z
   })
   .passthrough();
 
+/**
+ * Strict schema for IDE validation of .claude-src/config.yaml (ProjectConfig).
+ * Used to generate project-config.schema.json for yaml-language-server.
+ * Requires name/agents (the fields validateProjectConfig checks) and
+ * does NOT use .passthrough() so the IDE flags unknown properties.
+ */
+export const projectConfigValidationSchema = z.object({
+  version: z.literal("1").optional(),
+  /** Project/plugin name in kebab-case */
+  name: z.string(),
+  description: z.string().optional(),
+  /** Agent IDs to compile (e.g., ["web-developer", "api-developer"]) */
+  agents: z.array(z.string()),
+  /** Flat list of all skill IDs used by this project */
+  skills: z.array(skillIdSchema),
+  /** Author handle (e.g., "@vince") */
+  author: z.string().optional(),
+  /** "local" = .claude/agents, "plugin" = .claude/plugins/claude-collective */
+  installMode: z.enum(["local", "plugin"]),
+  /** Agent-to-subcategory-to-skill mappings from selected stack */
+  stack: z.record(z.string(), stackAgentConfigSchema),
+  /** Skills source path or URL (e.g., "github:my-org/skills") */
+  source: z.string(),
+  /** Marketplace identifier for plugin installation */
+  marketplace: z.string().optional(),
+  /** Separate source for agents when different from skills source */
+  agents_source: z.string().optional(),
+});
+
 export const categoryDefinitionSchema: z.ZodType<CategoryDefinition> = z.object({
   id: subcategorySchema,
   displayName: z.string(),
@@ -433,31 +489,31 @@ export const categoryDefinitionSchema: z.ZodType<CategoryDefinition> = z.object(
 const skillRefInYaml = z.string() as z.ZodType<SkillId>;
 
 export const conflictRuleSchema: z.ZodType<ConflictRule> = z.object({
-  skills: z.array(skillRefInYaml),
+  skills: z.array(skillRefInYaml).min(2),
   reason: z.string(),
 });
 
 export const discourageRuleSchema: z.ZodType<DiscourageRule> = z.object({
-  skills: z.array(skillRefInYaml),
+  skills: z.array(skillRefInYaml).min(2),
   reason: z.string(),
 });
 
 export const recommendRuleSchema: z.ZodType<RecommendRule> = z.object({
   when: skillRefInYaml,
-  suggest: z.array(skillRefInYaml),
+  suggest: z.array(skillRefInYaml).min(1),
   reason: z.string(),
 });
 
 export const requireRuleSchema: z.ZodType<RequireRule> = z.object({
   skill: skillRefInYaml,
-  needs: z.array(skillRefInYaml),
+  needs: z.array(skillRefInYaml).min(1),
   needs_any: z.boolean().optional(),
   reason: z.string(),
 });
 
 export const alternativeGroupSchema: z.ZodType<AlternativeGroup> = z.object({
   purpose: z.string(),
-  skills: z.array(skillRefInYaml),
+  skills: z.array(skillRefInYaml).min(1),
 });
 
 export const relationshipDefinitionsSchema: z.ZodType<RelationshipDefinitions> = z.object({
@@ -534,8 +590,8 @@ export const localSkillMetadataSchema = z
 // ---------------------------------------------------------------------------
 
 export const stackSchema = z.object({
-  id: z.string(),
-  name: z.string(),
+  id: z.string().min(1),
+  name: z.string().min(1),
   description: z.string(),
   /** Maps agent IDs to their subcategory-to-skill assignments */
   agents: z.record(z.string(), stackAgentConfigSchema),
@@ -546,7 +602,7 @@ export const stackSchema = z.object({
 // Pre-normalization schema: values may be string or string[].
 // loadStacks() normalizes to StacksConfig (all values SkillId[]) after parsing.
 export const stacksConfigSchema = z.object({
-  stacks: z.array(stackSchema),
+  stacks: z.array(stackSchema).min(1),
 });
 
 // ---------------------------------------------------------------------------
@@ -561,7 +617,7 @@ export const marketplaceRemoteSourceSchema: z.ZodType<MarketplaceRemoteSource> =
 });
 
 export const marketplacePluginSchema: z.ZodType<MarketplacePlugin> = z.object({
-  name: z.string(),
+  name: z.string().min(1),
   /** Local directory path (relative to pluginRoot) or remote source config */
   source: z.union([z.string(), marketplaceRemoteSourceSchema]),
   description: z.string().optional(),
@@ -573,7 +629,7 @@ export const marketplacePluginSchema: z.ZodType<MarketplacePlugin> = z.object({
 });
 
 export const marketplaceOwnerSchema: z.ZodType<MarketplaceOwner> = z.object({
-  name: z.string(),
+  name: z.string().min(1),
   email: z.string().optional(),
 });
 
@@ -584,12 +640,12 @@ export const marketplaceMetadataSchema: z.ZodType<MarketplaceMetadata> = z.objec
 
 export const marketplaceSchema: z.ZodType<Marketplace> = z.object({
   $schema: z.string().optional(),
-  name: z.string(),
-  version: z.string(),
+  name: z.string().min(1),
+  version: z.string().min(1),
   description: z.string().optional(),
   owner: marketplaceOwnerSchema,
   metadata: marketplaceMetadataSchema.optional(),
-  plugins: z.array(marketplacePluginSchema),
+  plugins: z.array(marketplacePluginSchema).min(1),
 });
 
 // ---------------------------------------------------------------------------
@@ -692,6 +748,33 @@ export const projectSourceConfigSchema = z
   })
   .passthrough();
 
+/**
+ * Strict schema for IDE validation of .claude-src/config.yaml (ProjectSourceConfig).
+ * Used to generate project-source-config.schema.json for yaml-language-server.
+ * All fields optional (source configs may have any subset) but no unknown properties.
+ */
+export const projectSourceConfigValidationSchema = z.object({
+  source: z.string().optional(),
+  author: z.string().optional(),
+  marketplace: z.string().optional(),
+  agents_source: z.string().optional(),
+  sources: z
+    .array(
+      z.object({
+        name: z.string(),
+        url: z.string(),
+        description: z.string().optional(),
+        ref: z.string().optional(),
+      }),
+    )
+    .optional(),
+  boundSkills: z.array(boundSkillSchema).optional(),
+  skills_dir: z.string().optional(),
+  agents_dir: z.string().optional(),
+  stacks_file: z.string().optional(),
+  matrix_file: z.string().optional(),
+});
+
 // ---------------------------------------------------------------------------
 // Strict validation schemas — used by `cc validate` and plugin-validator.
 // Unlike the lenient loader schemas above, these enforce all constraints
@@ -708,10 +791,10 @@ export const agentYamlGenerationSchema = z
     title: z.string().min(1),
     description: z.string().min(1),
     model: modelNameSchema.optional(),
-    tools: z.array(z.string()),
+    tools: z.array(z.string()).min(1),
     disallowed_tools: z.array(z.string()).optional(),
     permission_mode: permissionModeSchema.optional(),
-    hooks: hooksRecordSchema.optional(),
+    hooks: strictHooksRecordSchema.optional(),
     output_format: z.string().optional(),
   })
   .strict();
@@ -730,7 +813,7 @@ export const agentFrontmatterValidationSchema = z
     permissionMode: permissionModeSchema.optional(),
     /** Skill names to preload (embed in agent prompt) */
     skills: z.array(z.string().min(1)).optional(),
-    hooks: hooksRecordSchema.optional(),
+    hooks: strictHooksRecordSchema.optional(),
   })
   .strict();
 
