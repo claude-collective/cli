@@ -14,7 +14,7 @@ import type {
 } from "../../types";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import { type CopiedSkill, copySkillsToLocalFlattened, archiveLocalSkill } from "../skills";
-import { mergeWithExistingConfig } from "../configuration";
+import { type MergeResult, mergeWithExistingConfig } from "../configuration";
 import { loadAllAgents, type SourceLoadResult } from "../loading";
 import { loadStackById, compileAgentForPlugin } from "../stacks";
 import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
@@ -26,47 +26,110 @@ import { typedEntries, typedKeys } from "../../utils/typed-object";
 import {
   CLAUDE_DIR,
   CLAUDE_SRC_DIR,
+  DEFAULT_PLUGIN_NAME,
   LOCAL_SKILLS_PATH,
   PROJECT_ROOT,
   SCHEMA_PATHS,
+  STANDARD_FILES,
+  YAML_FORMATTING,
   yamlSchemaComment,
 } from "../../consts";
-
-const PLUGIN_NAME = "claude-collective";
-
-const YAML_INDENT = 2;
-const YAML_LINE_WIDTH = 120;
 
 type LocalResolvedSkill = SkillDefinition & {
   content: string;
 };
 
+/**
+ * Options for the local skill installation pipeline.
+ *
+ * Passed to {@link installLocal} to drive the full installation flow:
+ * skill copying, config generation, agent compilation, and file writing.
+ */
 export type LocalInstallOptions = {
+  /** Wizard output containing selected skills, stack, install mode, and source selections */
   wizardResult: WizardResultV2;
+  /** Loaded source data including the skills matrix, source path, and source configuration */
   sourceResult: SourceLoadResult;
+  /** Absolute path to the project root where `.claude/` artifacts will be written */
   projectDir: string;
+  /** Optional `--source` flag override (e.g., "github:org/repo"). Takes precedence over
+   *  source from config when writing the `source` field in config.yaml */
   sourceFlag?: string;
 };
 
+/**
+ * Result of a completed local skill installation.
+ *
+ * Returned by {@link installLocal} with details about what was written to disk,
+ * enabling the caller to display a summary to the user.
+ */
 export type LocalInstallResult = {
+  /** Skills that were copied to `.claude/skills/`, with source and destination paths */
   copiedSkills: CopiedSkill[];
+  /** Final project configuration (may be merged with existing config.yaml) */
   config: ProjectConfig;
+  /** Absolute path to the written config.yaml file */
   configPath: string;
+  /** Agent names that were compiled and written to `.claude/agents/` */
   compiledAgents: AgentName[];
+  /** Whether the config was merged with an existing config.yaml (true) or freshly created (false) */
   wasMerged: boolean;
+  /** Absolute path to the pre-existing config.yaml that was merged, if any */
   mergedConfigPath?: string;
+  /** Absolute path to the `.claude/skills/` directory */
   skillsDir: string;
+  /** Absolute path to the `.claude/agents/` directory */
   agentsDir: string;
 };
+
+type InstallPaths = {
+  skillsDir: string;
+  agentsDir: string;
+  configPath: string;
+};
+
+function resolveInstallPaths(projectDir: string): InstallPaths {
+  return {
+    skillsDir: path.join(projectDir, LOCAL_SKILLS_PATH),
+    agentsDir: path.join(projectDir, CLAUDE_DIR, "agents"),
+    configPath: path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML),
+  };
+}
+
+async function prepareDirectories(paths: InstallPaths): Promise<void> {
+  await ensureDir(paths.skillsDir);
+  await ensureDir(paths.agentsDir);
+  await ensureDir(path.dirname(paths.configPath));
+}
+
+async function archiveAndCopySkills(
+  wizardResult: WizardResultV2,
+  sourceResult: SourceLoadResult,
+  projectDir: string,
+  skillsDir: string,
+): Promise<CopiedSkill[]> {
+  // Archive local skills that are switching to a different source
+  for (const skillId of wizardResult.selectedSkills) {
+    const selectedSource = wizardResult.sourceSelections?.[skillId];
+    if (selectedSource && selectedSource !== "public") {
+      verbose(`Using alternate source '${selectedSource}' for ${skillId}`);
+      await archiveLocalSkill(projectDir, skillId);
+    }
+  }
+
+  return copySkillsToLocalFlattened(
+    wizardResult.selectedSkills,
+    skillsDir,
+    sourceResult.matrix,
+    sourceResult,
+  );
+}
 
 function buildLocalSkillsMap(
   copiedSkills: CopiedSkill[],
   matrix: MergedSkillsMatrix,
-): Record<SkillId, LocalResolvedSkill> {
-  const localSkillsForResolution: Record<SkillId, LocalResolvedSkill> = {} as Record<
-    SkillId,
-    LocalResolvedSkill
-  >;
+): Partial<Record<SkillId, LocalResolvedSkill>> {
+  const localSkillsForResolution: Partial<Record<SkillId, LocalResolvedSkill>> = {};
   for (const copiedSkill of copiedSkills) {
     const skill = matrix.skills[copiedSkill.skillId];
     if (skill) {
@@ -79,6 +142,13 @@ function buildLocalSkillsMap(
     }
   }
   return localSkillsForResolution;
+}
+
+async function loadMergedAgents(sourcePath: string): Promise<Record<AgentName, AgentDefinition>> {
+  const cliAgents = await loadAllAgents(PROJECT_ROOT);
+  const sourceAgents = await loadAllAgents(sourcePath);
+  // Boundary cast: loadAllAgents returns Record<string, AgentDefinition>, agent dirs are AgentName by convention
+  return { ...cliAgents, ...sourceAgents } as Record<AgentName, AgentDefinition>;
 }
 
 async function buildLocalConfig(
@@ -98,11 +168,9 @@ async function buildLocalConfig(
 
   if (wizardResult.selectedStackId) {
     if (loadedStack) {
-      // Generate config from the user's actual skill selections (which may differ
-      // from the original stack if the user customized). This ensures the stack
-      // property reflects customizations (e.g., swapping commander for oclif).
+      // Use actual selections (may differ from stack defaults after user customization)
       localConfig = generateProjectConfigFromSkills(
-        PLUGIN_NAME,
+        DEFAULT_PLUGIN_NAME,
         wizardResult.selectedSkills,
         sourceResult.matrix,
       );
@@ -125,7 +193,7 @@ async function buildLocalConfig(
     }
   } else {
     localConfig = generateProjectConfigFromSkills(
-      PLUGIN_NAME,
+      DEFAULT_PLUGIN_NAME,
       wizardResult.selectedSkills,
       sourceResult.matrix,
     );
@@ -142,7 +210,6 @@ function setConfigMetadata(
 ): void {
   config.installMode = wizardResult.installMode;
 
-  // Flag overrides resolved source
   if (sourceFlag) {
     config.source = sourceFlag;
   } else if (sourceResult.sourceConfig.source) {
@@ -152,6 +219,26 @@ function setConfigMetadata(
   if (sourceResult.marketplace) {
     config.marketplace = sourceResult.marketplace;
   }
+}
+
+async function buildAndMergeConfig(
+  wizardResult: WizardResultV2,
+  sourceResult: SourceLoadResult,
+  projectDir: string,
+  sourceFlag?: string,
+): Promise<MergeResult> {
+  const { config } = await buildLocalConfig(wizardResult, sourceResult);
+  setConfigMetadata(config, wizardResult, sourceResult, sourceFlag);
+  return mergeWithExistingConfig(config, { projectDir });
+}
+
+async function writeConfigFile(config: ProjectConfig, configPath: string): Promise<void> {
+  const schemaComment = yamlSchemaComment(SCHEMA_PATHS.projectSourceConfig) + "\n";
+  const configYaml = stringifyYaml(config, {
+    indent: YAML_FORMATTING.INDENT,
+    lineWidth: YAML_FORMATTING.LINE_WIDTH,
+  });
+  await writeFile(configPath, schemaComment + configYaml);
 }
 
 function buildCompileAgents(
@@ -174,7 +261,7 @@ function buildCompileAgents(
 async function compileAndWriteAgents(
   compileConfig: CompileConfig,
   agents: Record<AgentName, AgentDefinition>,
-  localSkills: Record<SkillId, LocalResolvedSkill>,
+  localSkills: Partial<Record<SkillId, LocalResolvedSkill>>,
   sourceResult: SourceLoadResult,
   projectDir: string,
   agentsDir: string,
@@ -204,90 +291,77 @@ async function compileAndWriteAgents(
   return compiledAgentNames;
 }
 
+/**
+ * Executes the full local skill installation pipeline.
+ *
+ * This is the main entry point for the "local" install mode (as opposed to plugin mode).
+ * It performs the following steps in order:
+ * 1. Creates `.claude/skills/` and `.claude/agents/` directories
+ * 2. Archives local skills switching to alternate sources, then copies selected
+ *    skills from the source repository into `.claude/skills/` (flattened layout)
+ * 3. Loads agent definitions from both the CLI and source repository
+ * 4. Generates project config.yaml from the wizard selections, merging with any
+ *    existing config
+ * 5. Writes config.yaml with YAML schema comment
+ * 6. Compiles agent markdown files using Liquid templates and writes them to
+ *    `.claude/agents/`
+ *
+ * @param options - Installation options containing wizard result, source data,
+ *                  project directory, and optional source flag override
+ * @returns Result containing all written artifacts (skills, config, agents) and
+ *          metadata about the installation (merge status, paths)
+ * @throws {Error} If the selected stack ID is not found in config/stacks.yaml
+ *
+ * @remarks
+ * **Side effects:** Creates directories and writes files under `{projectDir}/.claude/`.
+ * May archive existing local skills to `.claude/.archived-skills/` when source
+ * selections differ from the current installation.
+ */
 export async function installLocal(options: LocalInstallOptions): Promise<LocalInstallResult> {
   const { wizardResult, sourceResult, projectDir, sourceFlag } = options;
-  const matrix = sourceResult.matrix;
-  const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
-  const localAgentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-  const localConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, "config.yaml");
 
-  // 1. Create directories
-  await ensureDir(localSkillsDir);
-  await ensureDir(localAgentsDir);
-  await ensureDir(path.dirname(localConfigPath));
+  const paths = resolveInstallPaths(projectDir);
+  await prepareDirectories(paths);
 
-  // 2. Archive local skills that are switching to a different source
-  for (const skillId of wizardResult.selectedSkills) {
-    const selectedSource = wizardResult.sourceSelections?.[skillId];
-    if (selectedSource && selectedSource !== "public") {
-      verbose(`Using alternate source '${selectedSource}' for ${skillId}`);
-      await archiveLocalSkill(projectDir, skillId);
-    }
-  }
-
-  // 3. Copy selected skills
-  const copiedSkills = await copySkillsToLocalFlattened(
-    wizardResult.selectedSkills,
-    localSkillsDir,
-    matrix,
+  const copiedSkills = await archiveAndCopySkills(
+    wizardResult,
     sourceResult,
+    projectDir,
+    paths.skillsDir,
   );
+  const localSkillsForResolution = buildLocalSkillsMap(copiedSkills, sourceResult.matrix);
 
-  // 4. Build local skills map for resolution
-  const localSkillsForResolution = buildLocalSkillsMap(copiedSkills, matrix);
-  // 5. Load agents from both CLI and source, with source taking precedence
-  const cliAgents = await loadAllAgents(PROJECT_ROOT);
-  const localAgents = await loadAllAgents(sourceResult.sourcePath);
-  // Boundary cast: loadAllAgents returns Record<string, AgentDefinition>, agent dirs are AgentName by convention
-  const agents = { ...cliAgents, ...localAgents } as Record<AgentName, AgentDefinition>;
-
-  // 6. Build config
-  const { config: builtConfig } = await buildLocalConfig(wizardResult, sourceResult);
-
-  // 7. Set metadata
-  setConfigMetadata(builtConfig, wizardResult, sourceResult, sourceFlag);
-
-  // 8. Merge with existing config
-  const mergeResult = await mergeWithExistingConfig(builtConfig, { projectDir });
+  const agents = await loadMergedAgents(sourceResult.sourcePath);
+  const mergeResult = await buildAndMergeConfig(wizardResult, sourceResult, projectDir, sourceFlag);
   const finalConfig = mergeResult.config;
 
-  // 9. Write config
-  const schemaComment = yamlSchemaComment(SCHEMA_PATHS.projectSourceConfig) + "\n";
-  const configYaml = stringifyYaml(finalConfig, {
-    indent: YAML_INDENT,
-    lineWidth: YAML_LINE_WIDTH,
-  });
-  await writeFile(localConfigPath, schemaComment + configYaml);
+  await writeConfigFile(finalConfig, paths.configPath);
 
-  // 10. Build compile agents config
   const compileAgentsConfig = buildCompileAgents(finalConfig, agents);
-
   const compileConfig: CompileConfig = {
-    name: PLUGIN_NAME,
+    name: DEFAULT_PLUGIN_NAME,
     description:
       finalConfig.description || `Local setup with ${wizardResult.selectedSkills.length} skills`,
     agents: compileAgentsConfig,
   };
-
-  // 11. Compile and write agents
   const compiledAgentNames = await compileAndWriteAgents(
     compileConfig,
     agents,
     localSkillsForResolution,
     sourceResult,
     projectDir,
-    localAgentsDir,
+    paths.agentsDir,
     wizardResult.installMode,
   );
 
   return {
     copiedSkills,
     config: finalConfig,
-    configPath: localConfigPath,
+    configPath: paths.configPath,
     compiledAgents: compiledAgentNames,
     wasMerged: mergeResult.merged,
     mergedConfigPath: mergeResult.existingConfigPath,
-    skillsDir: localSkillsDir,
-    agentsDir: localAgentsDir,
+    skillsDir: paths.skillsDir,
+    agentsDir: paths.agentsDir,
   };
 }

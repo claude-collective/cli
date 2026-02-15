@@ -271,6 +271,129 @@ describe("schema-validator", () => {
       expect(frontmatterResult!.validFiles).toBe(0);
       expect(frontmatterResult!.invalidFiles[0].errors[0]).toContain("frontmatter");
     });
+
+    it("should validate skill metadata.yaml files", async () => {
+      const metadataDir = path.join(tempDir, "src", "skills", "web", "framework", "react");
+      await mkdir(metadataDir, { recursive: true });
+      await writeFile(
+        path.join(metadataDir, "metadata.yaml"),
+        [
+          "version: 1",
+          "author: '@test'",
+          "category: framework",
+          "cli_name: React",
+          "cli_description: React component patterns and hooks",
+          "usage_guidance: When building React components and hooks",
+        ].join("\n"),
+      );
+
+      const result = await validateAllSchemas(tempDir);
+
+      const metadataResult = result.results.find((r) => r.schemaName === "Skill Metadata");
+      expect(metadataResult).toBeDefined();
+      expect(metadataResult!.totalFiles).toBe(1);
+      expect(metadataResult!.validFiles).toBe(1);
+      expect(metadataResult!.valid).toBe(true);
+    });
+
+    it("should detect invalid skill metadata.yaml", async () => {
+      const metadataDir = path.join(tempDir, "src", "skills", "invalid-skill");
+      await mkdir(metadataDir, { recursive: true });
+      // Missing required fields: category, cli_name, cli_description, usage_guidance
+      await writeFile(path.join(metadataDir, "metadata.yaml"), "author: '@test'\nversion: 1\n");
+
+      const result = await validateAllSchemas(tempDir);
+
+      const metadataResult = result.results.find((r) => r.schemaName === "Skill Metadata");
+      expect(metadataResult).toBeDefined();
+      expect(metadataResult!.valid).toBe(false);
+      expect(metadataResult!.invalidFiles).toHaveLength(1);
+    });
+
+    it("should validate plugin manifest JSON files", async () => {
+      const pluginDir = path.join(tempDir, ".claude", "plugins", "test-plugin");
+      await mkdir(pluginDir, { recursive: true });
+      await writeFile(
+        path.join(pluginDir, "plugin.json"),
+        JSON.stringify({
+          name: "test-plugin",
+          version: "1.0.0",
+          description: "A test plugin",
+        }),
+      );
+
+      const result = await validateAllSchemas(tempDir);
+
+      const pluginResult = result.results.find((r) => r.schemaName === "Plugin Manifest");
+      expect(pluginResult).toBeDefined();
+      expect(pluginResult!.totalFiles).toBe(1);
+      expect(pluginResult!.validFiles).toBe(1);
+      expect(pluginResult!.valid).toBe(true);
+    });
+
+    it("should detect invalid plugin manifest (invalid JSON)", async () => {
+      const pluginDir = path.join(tempDir, ".claude", "plugins", "bad-plugin");
+      await mkdir(pluginDir, { recursive: true });
+      await writeFile(path.join(pluginDir, "plugin.json"), "not valid json {{{");
+
+      const result = await validateAllSchemas(tempDir);
+
+      const pluginResult = result.results.find((r) => r.schemaName === "Plugin Manifest");
+      expect(pluginResult).toBeDefined();
+      expect(pluginResult!.valid).toBe(false);
+      expect(pluginResult!.invalidFiles).toHaveLength(1);
+      expect(pluginResult!.invalidFiles[0].errors[0]).toContain("Failed to parse");
+    });
+
+    it("should validate project source config (config.yaml in .claude-src)", async () => {
+      const srcDir = path.join(tempDir, ".claude-src");
+      await mkdir(srcDir, { recursive: true });
+      await writeFile(
+        path.join(srcDir, "config.yaml"),
+        [
+          "name: My Project",
+          "description: A test project",
+          "agents:",
+          "  - web-developer",
+          "skills:",
+          "  - web-framework-react",
+        ].join("\n"),
+      );
+
+      const result = await validateAllSchemas(tempDir);
+
+      const configResult = result.results.find((r) => r.schemaName === "Project Source Config");
+      expect(configResult).toBeDefined();
+      expect(configResult!.totalFiles).toBe(1);
+      expect(configResult!.validFiles).toBe(1);
+      expect(configResult!.valid).toBe(true);
+    });
+
+    it("should validate stack skill frontmatter in src/stacks", async () => {
+      const stackSkillDir = path.join(tempDir, "src", "stacks", "my-stack", "skills", "react");
+      await mkdir(stackSkillDir, { recursive: true });
+      await writeFile(
+        path.join(stackSkillDir, "SKILL.md"),
+        [
+          "---",
+          "name: web-framework-react",
+          "description: React component patterns",
+          "---",
+          "",
+          "# React Skill",
+        ].join("\n"),
+      );
+
+      const result = await validateAllSchemas(tempDir);
+
+      const stackFrontmatterResult = result.results.find(
+        (r) => r.schemaName === "Stack Skill Frontmatter",
+      );
+      expect(stackFrontmatterResult).toBeDefined();
+      expect(stackFrontmatterResult!.totalFiles).toBe(1);
+      expect(stackFrontmatterResult!.validFiles).toBe(1);
+      expect(stackFrontmatterResult!.valid).toBe(true);
+    });
   });
 
   describe("printValidationResults", () => {

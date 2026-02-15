@@ -209,7 +209,7 @@ describe("agent-plugin-compiler", () => {
       expect(results).toHaveLength(1);
       expect(results[0].agentName).toBe("good-agent");
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("[WARN]"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Warning:"));
 
       consoleSpy.mockRestore();
     });

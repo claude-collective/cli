@@ -1,6 +1,6 @@
 import path from "path";
 import { fileExists } from "../utils/fs";
-import { DIRS } from "../consts";
+import { DIRS, STANDARD_FILES } from "../consts";
 import { verbose } from "../utils/logger";
 import type {
   AgentConfig,
@@ -10,7 +10,6 @@ import type {
   CompileConfig,
   ProjectConfig,
   Skill,
-  SkillAssignment,
   SkillDefinition,
   SkillId,
   SkillReference,
@@ -18,26 +17,20 @@ import type {
   Subcategory,
 } from "../types";
 import { typedEntries, typedKeys } from "../utils/typed-object";
-
-export async function resolveTemplate(projectRoot: string, stackId: string): Promise<string> {
-  const stackTemplate = path.join(projectRoot, DIRS.stacks, stackId, "agent.liquid");
-  if (await fileExists(stackTemplate)) return stackTemplate;
-
-  return path.join(projectRoot, DIRS.templates, "agent.liquid");
-}
+import { resolveAgentConfigToSkills } from "./stacks/stacks-loader";
 
 export async function resolveClaudeMd(projectRoot: string, stackId: string): Promise<string> {
-  const stackClaude = path.join(projectRoot, DIRS.stacks, stackId, "CLAUDE.md");
+  const stackClaude = path.join(projectRoot, DIRS.stacks, stackId, STANDARD_FILES.CLAUDE_MD);
   if (await fileExists(stackClaude)) return stackClaude;
 
   throw new Error(
-    `Stack '${stackId}' is missing required CLAUDE.md file. Expected at: ${stackClaude}`,
+    `Stack '${stackId}' is missing required ${STANDARD_FILES.CLAUDE_MD} file. Expected at: ${stackClaude}`,
   );
 }
 
 export function resolveSkillReference(
   ref: SkillReference,
-  skills: Record<SkillId, SkillDefinition>,
+  skills: Partial<Record<SkillId, SkillDefinition>>,
 ): Skill | null {
   const definition = skills[ref.id];
   if (!definition) {
@@ -53,17 +46,23 @@ export function resolveSkillReference(
 
 export function resolveSkillReferences(
   skillRefs: SkillReference[],
-  skills: Record<SkillId, SkillDefinition>,
+  skills: Partial<Record<SkillId, SkillDefinition>>,
 ): Skill[] {
   return skillRefs
     .map((ref) => resolveSkillReference(ref, skills))
     .filter((skill): skill is Skill => skill !== null);
 }
 
-// Resolve skills for an agent from a ResolvedSubcategorySkills map (ProjectConfig.stack).
-// Values are single SkillId per subcategory (post-resolution from buildStackProperty).
-// Note: preloaded defaults to false here because ProjectConfig.stack loses the preloaded info
-// from the original StackAgentConfig (it only stores SkillId per subcategory).
+/**
+ * Builds skill references from a ProjectConfig stack mapping (agent -> subcategory -> skillId).
+ *
+ * Each subcategory entry becomes a SkillReference with `preloaded: false` because
+ * ProjectConfig.stack loses the preloaded info from the original StackAgentConfig
+ * (it only stores one SkillId per subcategory).
+ *
+ * @param agentStack - Subcategory-to-skillId mapping from ProjectConfig.stack for one agent
+ * @returns Skill references with usage hints derived from subcategory names
+ */
 export function buildSkillRefsFromConfig(
   agentStack: Partial<Record<Subcategory, SkillId>>,
 ): SkillReference[] {
@@ -79,12 +78,20 @@ export function buildSkillRefsFromConfig(
   return skillRefs;
 }
 
-// Resolve skills for an agent from a Stack definition.
-// Stack values are already SkillAssignment[] normalized by loadStacks().
+/**
+ * Resolves skill references for an agent from a Stack definition.
+ *
+ * Stack values are already SkillAssignment[] normalized by loadStacks().
+ * Returns an empty array if the agent is not present in the stack or has
+ * no technology-specific skills configured.
+ *
+ * @param agentName - Agent to resolve skills for
+ * @param stack - Loaded stack definition with normalized skill assignments
+ * @returns Skill references with usage and preloaded flags from the stack
+ */
 export function resolveAgentSkillsFromStack(agentName: AgentName, stack: Stack): SkillReference[] {
   const agentConfig = stack.agents[agentName];
 
-  // Agent not in this stack
   if (!agentConfig) {
     verbose(`Agent '${agentName}' not found in stack '${stack.id}'`);
     return [];
@@ -96,29 +103,26 @@ export function resolveAgentSkillsFromStack(agentName: AgentName, stack: Stack):
     return [];
   }
 
-  const skillRefs: SkillReference[] = [];
-
-  for (const [subcategory, assignments] of typedEntries<Subcategory, SkillAssignment[]>(
-    agentConfig,
-  )) {
-    if (!assignments) continue;
-
-    for (const assignment of assignments) {
-      skillRefs.push({
-        id: assignment.id,
-        usage: `when working with ${subcategory}`,
-        preloaded: assignment.preloaded ?? false,
-      });
-    }
-  }
+  const skillRefs = resolveAgentConfigToSkills(agentConfig);
 
   verbose(`Resolved ${skillRefs.length} skills for agent '${agentName}' from stack '${stack.id}'`);
 
   return skillRefs;
 }
 
-// Priority: explicit agentConfig.skills > stack-based skills
-export async function getAgentSkills(
+/**
+ * Resolves skill references for an agent using a priority hierarchy.
+ *
+ * Priority order:
+ * 1. Explicit skills defined in the agent's compile config
+ * 2. Skills derived from the stack definition
+ *
+ * @param agentName - Agent to resolve skills for
+ * @param agentConfig - Compile-time agent config (may contain explicit skills)
+ * @param stack - Optional stack definition for fallback skill resolution
+ * @returns Skill references from the highest-priority source, or empty array
+ */
+export async function resolveAgentSkillRefs(
   agentName: AgentName,
   agentConfig: CompileAgentConfig,
   stack?: Stack,
@@ -137,17 +141,35 @@ export async function getAgentSkills(
     }
   }
 
-  // No skills defined for this agent
   return [];
 }
 
+/**
+ * Resolves all agents referenced in a compile config into fully populated AgentConfigs
+ * with their skill lists materialized from definitions.
+ *
+ * For each agent in `compileConfig.agents`, this function:
+ * 1. Validates the agent exists in the scanned agent definitions
+ * 2. Resolves skill references (from explicit config or stack fallback)
+ * 3. Materializes skill references into full Skill objects using the skill definitions map
+ * 4. Merges the agent definition with its resolved skills into an AgentConfig
+ *
+ * @param agents - Available agent definitions keyed by name (from scanning agent directories)
+ * @param skills - Available skill definitions keyed by ID (from scanning skill directories)
+ * @param compileConfig - Compilation config specifying which agents to compile and their overrides
+ * @param _projectRoot - Project root directory (currently unused, reserved for future use)
+ * @param stack - Optional stack definition for stack-based skill resolution
+ * @returns Map of agent names to fully resolved AgentConfig objects ready for compilation
+ * @throws When an agent referenced in compileConfig is not found in scanned agents
+ */
 export async function resolveAgents(
   agents: Record<AgentName, AgentDefinition>,
-  skills: Record<SkillId, SkillDefinition>,
+  skills: Partial<Record<SkillId, SkillDefinition>>,
   compileConfig: CompileConfig,
   _projectRoot: string,
   stack?: Stack,
 ): Promise<Record<AgentName, AgentConfig>> {
+  // Store initialization: accumulator filled below for each agent in compileConfig
   const resolved: Record<AgentName, AgentConfig> = {} as Record<AgentName, AgentConfig>;
   const agentNames = typedKeys<AgentName>(compileConfig.agents);
 
@@ -166,7 +188,7 @@ export async function resolveAgents(
 
     const agentConfig = compileConfig.agents[agentName];
 
-    const skillRefs = await getAgentSkills(agentName, agentConfig, stack);
+    const skillRefs = await resolveAgentSkillRefs(agentName, agentConfig, stack);
 
     const resolvedSkills = resolveSkillReferences(skillRefs, skills);
 
@@ -186,7 +208,8 @@ export async function resolveAgents(
   return resolved;
 }
 
-export function stackToCompileConfig(stackId: string, stack: ProjectConfig): CompileConfig {
+export function convertStackToCompileConfig(stackId: string, stack: ProjectConfig): CompileConfig {
+  // Store initialization: accumulator filled below for each agent in stack
   const agents: Record<AgentName, CompileAgentConfig> = {} as Record<AgentName, CompileAgentConfig>;
 
   for (const agentId of stack.agents) {

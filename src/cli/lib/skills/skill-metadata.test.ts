@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import type { SkillId } from "../../types";
 
 // Mock file system and logger (manual mocks from __mocks__ directories)
@@ -7,7 +7,7 @@ vi.mock("../../utils/logger");
 
 // Mock versioning
 vi.mock("../versioning", () => ({
-  hashFile: vi.fn(),
+  computeFileHash: vi.fn(),
   getCurrentDate: vi.fn().mockReturnValue("2026-01-15"),
 }));
 
@@ -15,11 +15,11 @@ import {
   readForkedFromMetadata,
   getLocalSkillsWithMetadata,
   computeSourceHash,
-  compareSkills,
+  compareLocalSkillsWithSource,
   injectForkedFromMetadata,
 } from "./skill-metadata";
 import { fileExists, readFile, writeFile, listDirectories } from "../../utils/fs";
-import { hashFile } from "../versioning";
+import { computeFileHash } from "../versioning";
 import { warn } from "../../utils/logger";
 import { stringify as stringifyYaml } from "yaml";
 
@@ -186,12 +186,12 @@ describe("skill-metadata", () => {
   describe("computeSourceHash", () => {
     it("returns hash when SKILL.md exists at source path", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(hashFile).mockResolvedValue("abc1234");
+      vi.mocked(computeFileHash).mockResolvedValue("abc1234");
 
       const result = await computeSourceHash("/source", "web/framework/react");
 
       expect(result).toBe("abc1234");
-      expect(hashFile).toHaveBeenCalledWith("/source/src/web/framework/react/SKILL.md");
+      expect(computeFileHash).toHaveBeenCalledWith("/source/src/web/framework/react/SKILL.md");
     });
 
     it("returns null when SKILL.md does not exist", async () => {
@@ -200,12 +200,12 @@ describe("skill-metadata", () => {
       const result = await computeSourceHash("/source", "web/framework/react");
 
       expect(result).toBeNull();
-      expect(hashFile).not.toHaveBeenCalled();
+      expect(computeFileHash).not.toHaveBeenCalled();
     });
 
     it("computes hash for correct file path", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(hashFile).mockResolvedValue("def5678");
+      vi.mocked(computeFileHash).mockResolvedValue("def5678");
 
       await computeSourceHash("/my/source", "api/database/drizzle");
 
@@ -213,7 +213,7 @@ describe("skill-metadata", () => {
     });
   });
 
-  describe("compareSkills", () => {
+  describe("compareLocalSkillsWithSource", () => {
     it("returns local-only status for skills without forked_from", async () => {
       // Mock getLocalSkillsWithMetadata (via its dependencies)
       vi.mocked(fileExists)
@@ -221,7 +221,7 @@ describe("skill-metadata", () => {
         .mockResolvedValueOnce(false); // no metadata.yaml
       vi.mocked(listDirectories).mockResolvedValue(["custom-skill"]);
 
-      const result = await compareSkills("/project", "/source", {});
+      const result = await compareLocalSkillsWithSource("/project", "/source", {});
 
       expect(result).toHaveLength(1);
       expect(result[0].status).toBe("local-only");
@@ -241,13 +241,13 @@ describe("skill-metadata", () => {
       vi.mocked(readFile).mockResolvedValue(
         createValidMetadataYaml("web-framework-react", MATCHING_HASH, "2026-01-01"),
       );
-      vi.mocked(hashFile).mockResolvedValue(MATCHING_HASH);
+      vi.mocked(computeFileHash).mockResolvedValue(MATCHING_HASH);
 
       const sourceSkills = {
         "web-framework-react": { path: "web/framework/react" },
       };
 
-      const result = await compareSkills("/project", "/source", sourceSkills);
+      const result = await compareLocalSkillsWithSource("/project", "/source", sourceSkills);
 
       expect(result).toHaveLength(1);
       expect(result[0].status).toBe("current");
@@ -268,13 +268,13 @@ describe("skill-metadata", () => {
       vi.mocked(readFile).mockResolvedValue(
         createValidMetadataYaml("web-framework-react", LOCAL_HASH, "2026-01-01"),
       );
-      vi.mocked(hashFile).mockResolvedValue(SOURCE_HASH);
+      vi.mocked(computeFileHash).mockResolvedValue(SOURCE_HASH);
 
       const sourceSkills = {
         "web-framework-react": { path: "web/framework/react" },
       };
 
-      const result = await compareSkills("/project", "/source", sourceSkills);
+      const result = await compareLocalSkillsWithSource("/project", "/source", sourceSkills);
 
       expect(result).toHaveLength(1);
       expect(result[0].status).toBe("outdated");
@@ -296,7 +296,7 @@ describe("skill-metadata", () => {
         "web-framework-vue": { path: "web/framework/vue" },
       };
 
-      const result = await compareSkills("/project", "/source", sourceSkills);
+      const result = await compareLocalSkillsWithSource("/project", "/source", sourceSkills);
 
       expect(result).toHaveLength(1);
       expect(result[0].status).toBe("local-only");
@@ -317,7 +317,7 @@ describe("skill-metadata", () => {
         "web-framework-react": { path: "web/framework/react" },
       };
 
-      const result = await compareSkills("/project", "/source", sourceSkills);
+      const result = await compareLocalSkillsWithSource("/project", "/source", sourceSkills);
 
       expect(result).toHaveLength(1);
       expect(result[0].status).toBe("local-only");
@@ -331,7 +331,7 @@ describe("skill-metadata", () => {
         .mockResolvedValueOnce(false); // no metadata.yaml for "auth"
       vi.mocked(listDirectories).mockResolvedValue(["zustand", "auth"]);
 
-      const result = await compareSkills("/project", "/source", {});
+      const result = await compareLocalSkillsWithSource("/project", "/source", {});
 
       expect(result).toHaveLength(2);
       // Sorted alphabetically: "auth" before "zustand"
@@ -342,7 +342,7 @@ describe("skill-metadata", () => {
     it("returns empty array when no local skills exist", async () => {
       vi.mocked(fileExists).mockResolvedValueOnce(false); // .claude/skills dir doesn't exist
 
-      const result = await compareSkills("/project", "/source", {});
+      const result = await compareLocalSkillsWithSource("/project", "/source", {});
 
       expect(result).toHaveLength(0);
     });
@@ -358,13 +358,13 @@ describe("skill-metadata", () => {
       vi.mocked(readFile).mockResolvedValue(
         createValidMetadataYaml("web-framework-react", MATCHING_HASH, "2026-01-01"),
       );
-      vi.mocked(hashFile).mockResolvedValue(MATCHING_HASH);
+      vi.mocked(computeFileHash).mockResolvedValue(MATCHING_HASH);
 
       const sourceSkills = {
         "web-framework-react": { path: "web/framework/react" },
       };
 
-      const result = await compareSkills("/project", "/source", sourceSkills);
+      const result = await compareLocalSkillsWithSource("/project", "/source", sourceSkills);
 
       expect(result[0].sourcePath).toBe("web/framework/react");
     });

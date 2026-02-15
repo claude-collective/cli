@@ -1,10 +1,12 @@
 import { sumBy } from "remeda";
 import { z } from "zod";
 import path from "path";
+import { getErrorMessage } from "../utils/errors";
 import { readFile, fileExists } from "../utils/fs";
 import { parse as parseYaml } from "yaml";
 import fg from "fast-glob";
 import { extractFrontmatter } from "../utils/frontmatter";
+import { log } from "../utils/logger";
 import {
   skillsMatrixConfigSchema,
   metadataValidationSchema,
@@ -16,14 +18,14 @@ import {
   projectSourceConfigSchema,
   pluginManifestSchema,
 } from "./schemas";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../consts";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../consts";
 
-export type FileValidationError = {
+type FileValidationError = {
   file: string;
   errors: string[];
 };
 
-export type SchemaValidationResult = {
+type SchemaValidationResult = {
   schemaName: string;
   valid: boolean;
   totalFiles: number;
@@ -56,44 +58,44 @@ const VALIDATION_TARGETS: ValidationTarget[] = [
   {
     name: "Skills Matrix",
     schema: skillsMatrixConfigSchema,
-    pattern: "skills-matrix.yaml",
+    pattern: STANDARD_FILES.SKILLS_MATRIX_YAML,
     baseDir: "src/config",
   },
   {
     name: "Skill Metadata",
     schema: metadataValidationSchema,
-    pattern: "**/metadata.yaml",
+    pattern: `**/${STANDARD_FILES.METADATA_YAML}`,
     baseDir: "src/skills",
   },
   {
     name: "Stack Skill Metadata",
     schema: metadataValidationSchema,
-    pattern: "**/skills/**/metadata.yaml",
+    pattern: `**/skills/**/${STANDARD_FILES.METADATA_YAML}`,
     baseDir: "src/stacks",
   },
   {
     name: "Stack Config",
     schema: stackConfigValidationSchema,
-    pattern: "*/config.yaml",
+    pattern: `*/${STANDARD_FILES.CONFIG_YAML}`,
     baseDir: "src/stacks",
   },
   {
     name: "Agent Definition",
     schema: agentYamlGenerationSchema,
-    pattern: "**/agent.yaml",
+    pattern: `**/${STANDARD_FILES.AGENT_YAML}`,
     baseDir: "src/agents",
   },
   {
     name: "Skill Frontmatter",
     schema: skillFrontmatterValidationSchema,
-    pattern: "**/SKILL.md",
+    pattern: `**/${STANDARD_FILES.SKILL_MD}`,
     baseDir: "src/skills",
     extractor: extractFrontmatter,
   },
   {
     name: "Stack Skill Frontmatter",
     schema: skillFrontmatterValidationSchema,
-    pattern: "**/skills/**/SKILL.md",
+    pattern: `**/skills/**/${STANDARD_FILES.SKILL_MD}`,
     baseDir: "src/stacks",
     extractor: extractFrontmatter,
   },
@@ -106,19 +108,19 @@ const VALIDATION_TARGETS: ValidationTarget[] = [
   {
     name: "Project Source Config",
     schema: projectSourceConfigSchema,
-    pattern: "config.yaml",
+    pattern: STANDARD_FILES.CONFIG_YAML,
     baseDir: CLAUDE_SRC_DIR,
   },
   {
     name: "Project Skill Metadata",
     schema: metadataValidationSchema,
-    pattern: "*/metadata.yaml",
+    pattern: `*/${STANDARD_FILES.METADATA_YAML}`,
     baseDir: `${CLAUDE_DIR}/skills`,
   },
   {
     name: "Project Skill Frontmatter",
     schema: skillFrontmatterValidationSchema,
-    pattern: "*/SKILL.md",
+    pattern: `*/${STANDARD_FILES.SKILL_MD}`,
     baseDir: `${CLAUDE_DIR}/skills`,
     extractor: extractFrontmatter,
   },
@@ -132,7 +134,7 @@ const VALIDATION_TARGETS: ValidationTarget[] = [
   {
     name: "Plugin Manifest",
     schema: pluginManifestSchema,
-    pattern: "*/plugin.json",
+    pattern: `*/${STANDARD_FILES.PLUGIN_JSON}`,
     baseDir: `${CLAUDE_DIR}/plugins`,
     extractor: (content: string) => JSON.parse(content) as unknown,
   },
@@ -181,7 +183,7 @@ async function validateFile(
 
     return { valid: false, errors: formatZodErrors(result.error) };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = getErrorMessage(error);
     return { valid: false, errors: [`Failed to parse content: ${message}`] };
   }
 }
@@ -249,32 +251,32 @@ export async function validateAllSchemas(
 }
 
 export function printValidationResults(result: FullValidationResult): void {
-  console.log(`\n  Schema Validation Summary:`);
-  console.log(`  ─────────────────────────`);
-  console.log(`  Total schemas checked: ${result.summary.totalSchemas}`);
-  console.log(`  Total files: ${result.summary.totalFiles}`);
-  console.log(`  Valid: ${result.summary.validFiles}`);
-  console.log(`  Invalid: ${result.summary.invalidFiles}`);
+  log(`\n  Schema Validation Summary:`);
+  log(`  ─────────────────────────`);
+  log(`  Total schemas checked: ${result.summary.totalSchemas}`);
+  log(`  Total files: ${result.summary.totalFiles}`);
+  log(`  Valid: ${result.summary.validFiles}`);
+  log(`  Invalid: ${result.summary.invalidFiles}`);
 
   for (const schemaResult of result.results) {
     if (schemaResult.totalFiles === 0) continue;
 
     const status = schemaResult.valid ? "✓" : "✗";
-    console.log(
+    log(
       `\n  ${status} ${schemaResult.schemaName}: ${schemaResult.validFiles}/${schemaResult.totalFiles} valid`,
     );
 
     if (schemaResult.invalidFiles.length > 0) {
       for (const file of schemaResult.invalidFiles) {
-        console.log(`\n    ${file.file}:`);
-        file.errors.forEach((e) => console.log(`      - ${e}`));
+        log(`\n    ${file.file}:`);
+        file.errors.forEach((e) => log(`      - ${e}`));
       }
     }
   }
 
   if (result.valid) {
-    console.log(`\n  ✓ All schemas validated successfully\n`);
+    log(`\n  ✓ All schemas validated successfully\n`);
   } else {
-    console.log(`\n  ✗ Validation failed\n`);
+    log(`\n  ✗ Validation failed\n`);
   }
 }

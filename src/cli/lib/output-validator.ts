@@ -1,5 +1,6 @@
 import type { AgentName, ValidationResult } from "../types";
 import { extractFrontmatter } from "../utils/frontmatter";
+import { log } from "../utils/logger";
 
 function checkXmlTagBalance(content: string): string[] {
   const errors: string[] = [];
@@ -86,6 +87,7 @@ function validateFrontmatter(content: string): {
     return { errors, warnings };
   }
 
+  // Boundary cast: YAML frontmatter parsed as unknown, narrow to record for field access
   const fm = frontmatter as Record<string, unknown>;
 
   if (!fm.name || typeof fm.name !== "string") {
@@ -137,12 +139,12 @@ export function validateCompiledAgent(content: string): ValidationResult {
 
 export function printOutputValidationResult(agentName: AgentName, result: ValidationResult): void {
   if (result.errors.length > 0) {
-    console.log(`    Validation errors for ${agentName}:`);
-    result.errors.forEach((e) => console.log(`      - ${e}`));
+    log(`    Validation errors for ${agentName}:`);
+    result.errors.forEach((e) => log(`      - ${e}`));
   }
 
   if (result.warnings.length > 0) {
-    console.log(`    Validation warnings for ${agentName}:`);
-    result.warnings.forEach((w) => console.log(`      - ${w}`));
+    log(`    Validation warnings for ${agentName}:`);
+    result.warnings.forEach((w) => log(`      - ${w}`));
   }
 }

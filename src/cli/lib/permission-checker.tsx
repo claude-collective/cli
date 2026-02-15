@@ -1,9 +1,12 @@
-import path from "path";
-import { Text, Box } from "ink";
 import React from "react";
-import { fileExists, readFile } from "../utils/fs";
+
+import { Text, Box } from "ink";
+import path from "path";
+
+import { CLI_COLORS, MAX_CONFIG_FILE_SIZE } from "../consts";
+import { fileExists, readFileSafe } from "../utils/fs";
 import { warn } from "../utils/logger";
-import { settingsFileSchema } from "./schemas";
+import { settingsFileSchema, warnUnknownFields } from "./schemas";
 
 type PermissionConfig = {
   allow?: string[];
@@ -23,8 +26,12 @@ export async function checkPermissions(projectRoot: string): Promise<React.React
   for (const filePath of [localSettingsPath, settingsPath]) {
     if (await fileExists(filePath)) {
       try {
-        const content = await readFile(filePath);
+        const content = await readFileSafe(filePath, MAX_CONFIG_FILE_SIZE);
         const raw = JSON.parse(content);
+        if (typeof raw === "object" && raw !== null && !Array.isArray(raw)) {
+          const EXPECTED_SETTINGS_KEYS = ["permissions"] as const;
+          warnUnknownFields(raw as Record<string, unknown>, EXPECTED_SETTINGS_KEYS, `settings file '${filePath}'`);
+        }
         const result = settingsFileSchema.safeParse(raw);
         const parsed: SettingsFile = result.success ? (result.data as SettingsFile) : {};
         if (parsed.permissions) {
@@ -32,15 +39,15 @@ export async function checkPermissions(projectRoot: string): Promise<React.React
           break;
         }
       } catch {
-        warn(`Malformed settings file at ${filePath} — skipping`);
+        warn(`Malformed settings file at '${filePath}' — skipping`);
       }
     }
   }
 
   if (!permissions) {
     return (
-      <Box flexDirection="column" borderStyle="round" borderColor="yellow" padding={1}>
-        <Text bold color="yellow">
+      <Box flexDirection="column" borderStyle="round" borderColor={CLI_COLORS.WARNING} padding={1}>
+        <Text bold color={CLI_COLORS.WARNING}>
           Permission Notice
         </Text>
         <Text>No permissions configured in .claude/settings.json</Text>
@@ -68,8 +75,8 @@ export async function checkPermissions(projectRoot: string): Promise<React.React
 
   if (hasRestrictiveBash || hasNoAllows) {
     return (
-      <Box flexDirection="column" borderStyle="round" borderColor="yellow" padding={1}>
-        <Text bold color="yellow">
+      <Box flexDirection="column" borderStyle="round" borderColor={CLI_COLORS.WARNING} padding={1}>
+        <Text bold color={CLI_COLORS.WARNING}>
           Permission Warnings
         </Text>
         {hasRestrictiveBash && (

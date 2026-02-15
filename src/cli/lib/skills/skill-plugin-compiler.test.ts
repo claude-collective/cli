@@ -461,7 +461,7 @@ description: Simple skill
       expect(skillNames).toContain("state-zustand");
 
       // Should have warned about the failed skill
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("[WARN]"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Warning:"));
 
       consoleSpy.mockRestore();
     });

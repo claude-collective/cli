@@ -1,6 +1,9 @@
 import path from "path";
 import { sortBy } from "remeda";
-import { readFile, writeFile, glob, ensureDir } from "../utils/fs";
+
+import { MAX_PLUGIN_FILE_SIZE } from "../consts";
+import { getErrorMessage } from "../utils/errors";
+import { readFileSafe, writeFile, glob, ensureDir } from "../utils/fs";
 import { verbose, warn } from "../utils/logger";
 import type { Marketplace, MarketplacePlugin, PluginManifest } from "../types";
 import { pluginManifestSchema } from "./schemas";
@@ -31,7 +34,7 @@ const CATEGORY_PATTERNS: Array<{ pattern: RegExp; category: string }> = [
   { pattern: /^security-/, category: "security" },
 ];
 
-export type MarketplaceOptions = {
+type MarketplaceOptions = {
   name: string;
   version?: string;
   description?: string;
@@ -40,7 +43,7 @@ export type MarketplaceOptions = {
   pluginRoot: string;
 };
 
-function inferCategory(pluginName: string): string | undefined {
+function inferCategoryFromPluginName(pluginName: string): string | undefined {
   for (const { pattern, category } of CATEGORY_PATTERNS) {
     if (pattern.test(pluginName)) {
       return category;
@@ -53,19 +56,20 @@ async function readPluginManifest(pluginDir: string): Promise<PluginManifest | n
   const manifestPath = path.join(pluginDir, PLUGIN_MANIFEST_PATH);
 
   try {
-    const content = await readFile(manifestPath);
+    const content = await readFileSafe(manifestPath, MAX_PLUGIN_FILE_SIZE);
     return pluginManifestSchema.parse(JSON.parse(content));
-  } catch {
+  } catch (error) {
+    verbose(`Failed to read plugin manifest at '${manifestPath}': ${getErrorMessage(error)}`);
     return null;
   }
 }
 
-function toMarketplacePlugin(
+function convertManifestToMarketplacePlugin(
   manifest: PluginManifest,
   pluginRoot: string,
   pluginDirName: string,
 ): MarketplacePlugin {
-  const category = inferCategory(manifest.name);
+  const category = inferCategoryFromPluginName(manifest.name);
 
   const plugin: MarketplacePlugin = {
     name: manifest.name,
@@ -100,11 +104,11 @@ export async function generateMarketplace(
 
     const manifest = await readPluginManifest(pluginDir);
     if (!manifest) {
-      warn(`Could not read plugin manifest: ${manifestFile}`);
+      warn(`Could not read plugin manifest: '${manifestFile}'`);
       continue;
     }
 
-    const plugin = toMarketplacePlugin(
+    const plugin = convertManifestToMarketplacePlugin(
       manifest,
       options.pluginRoot.replace(/^\.\//, ""),
       pluginDirName,

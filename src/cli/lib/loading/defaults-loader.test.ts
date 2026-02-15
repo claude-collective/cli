@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // (__mocks__ directory mocks create fresh vi.fn() instances on module reset)
 vi.mock("../../utils/fs", () => ({
   readFile: vi.fn(),
+  readFileSafe: vi.fn(),
   fileExists: vi.fn(),
 }));
 vi.mock("../../utils/logger", () => ({
@@ -11,7 +12,7 @@ vi.mock("../../utils/logger", () => ({
   warn: vi.fn(),
 }));
 
-import { readFile, fileExists } from "../../utils/fs";
+import { readFile, readFileSafe, fileExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
 
 function createValidMappingsYaml(): string {
@@ -57,7 +58,7 @@ describe("defaults-loader", () => {
   describe("loadDefaultMappings", () => {
     it("loads and parses valid YAML mappings", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createValidMappingsYaml());
+      vi.mocked(readFileSafe).mockResolvedValue(createValidMappingsYaml());
 
       const { loadDefaultMappings } = await import("./defaults-loader");
       const result = await loadDefaultMappings();
@@ -84,24 +85,24 @@ describe("defaults-loader", () => {
       const result = await loadDefaultMappings();
 
       expect(result).toBeNull();
-      expect(readFile).not.toHaveBeenCalled();
+      expect(readFileSafe).not.toHaveBeenCalled();
       expect(verbose).toHaveBeenCalledWith(expect.stringContaining("not found"));
     });
 
     it("returns null for invalid YAML structure (Zod validation failure)", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createInvalidMappingsYaml());
+      vi.mocked(readFileSafe).mockResolvedValue(createInvalidMappingsYaml());
 
       const { loadDefaultMappings } = await import("./defaults-loader");
       const result = await loadDefaultMappings();
 
       expect(result).toBeNull();
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid default mappings"));
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid YAML"));
     });
 
     it("returns null for malformed YAML that throws parse error", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createMalformedYaml());
+      vi.mocked(readFileSafe).mockResolvedValue(createMalformedYaml());
 
       const { loadDefaultMappings } = await import("./defaults-loader");
       const result = await loadDefaultMappings();
@@ -113,18 +114,18 @@ describe("defaults-loader", () => {
 
     it("returns null when readFile throws an error", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockRejectedValue(new Error("EACCES: permission denied"));
+      vi.mocked(readFileSafe).mockRejectedValue(new Error("EACCES: permission denied"));
 
       const { loadDefaultMappings } = await import("./defaults-loader");
       const result = await loadDefaultMappings();
 
       expect(result).toBeNull();
-      expect(verbose).toHaveBeenCalledWith(expect.stringContaining("Failed to parse"));
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Failed to parse YAML"));
     });
 
     it("logs verbose message on successful load", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createValidMappingsYaml());
+      vi.mocked(readFileSafe).mockResolvedValue(createValidMappingsYaml());
 
       const { loadDefaultMappings } = await import("./defaults-loader");
       await loadDefaultMappings();
@@ -136,7 +137,7 @@ describe("defaults-loader", () => {
   describe("caching behavior", () => {
     it("returns cached result on subsequent calls", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createValidMappingsYaml());
+      vi.mocked(readFileSafe).mockResolvedValue(createValidMappingsYaml());
 
       const { loadDefaultMappings } = await import("./defaults-loader");
 
@@ -144,7 +145,7 @@ describe("defaults-loader", () => {
       const second = await loadDefaultMappings();
 
       // readFile should only be called once — second call uses cache
-      expect(readFile).toHaveBeenCalledTimes(1);
+      expect(readFileSafe).toHaveBeenCalledTimes(1);
       expect(first).toBe(second);
     });
 
@@ -156,7 +157,7 @@ describe("defaults-loader", () => {
 
     it("getCachedDefaults returns cached data after load", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createValidMappingsYaml());
+      vi.mocked(readFileSafe).mockResolvedValue(createValidMappingsYaml());
 
       const { loadDefaultMappings, getCachedDefaults } = await import("./defaults-loader");
 
@@ -171,7 +172,7 @@ describe("defaults-loader", () => {
 
     it("clearDefaultsCache resets the cache", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createValidMappingsYaml());
+      vi.mocked(readFileSafe).mockResolvedValue(createValidMappingsYaml());
 
       const { loadDefaultMappings, getCachedDefaults, clearDefaultsCache } =
         await import("./defaults-loader");
@@ -185,7 +186,7 @@ describe("defaults-loader", () => {
 
     it("reloads from file after cache is cleared", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createValidMappingsYaml());
+      vi.mocked(readFileSafe).mockResolvedValue(createValidMappingsYaml());
 
       const { loadDefaultMappings, clearDefaultsCache } = await import("./defaults-loader");
 
@@ -194,14 +195,14 @@ describe("defaults-loader", () => {
       await loadDefaultMappings();
 
       // readFile called twice: once for initial load, once after cache clear
-      expect(readFile).toHaveBeenCalledTimes(2);
+      expect(readFileSafe).toHaveBeenCalledTimes(2);
     });
   });
 
   describe("edge cases", () => {
     it("handles empty YAML file", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue("");
+      vi.mocked(readFileSafe).mockResolvedValue("");
 
       const { loadDefaultMappings } = await import("./defaults-loader");
       const result = await loadDefaultMappings();
@@ -223,7 +224,7 @@ subcategory_aliases:
 extra_field: should_be_ignored
 `;
       vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(yamlWithExtras);
+      vi.mocked(readFileSafe).mockResolvedValue(yamlWithExtras);
 
       const { loadDefaultMappings } = await import("./defaults-loader");
       const result = await loadDefaultMappings();
@@ -241,7 +242,7 @@ preloaded_skills: {}
 subcategory_aliases: {}
 `;
       vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(emptyRecordsYaml);
+      vi.mocked(readFileSafe).mockResolvedValue(emptyRecordsYaml);
 
       const { loadDefaultMappings } = await import("./defaults-loader");
       const result = await loadDefaultMappings();

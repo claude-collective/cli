@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import path from "path";
 import type { Marketplace, MarketplacePlugin, SkillId } from "../../types";
 
@@ -39,7 +39,7 @@ describe("skill-fetcher", () => {
   const SKILLS_OUTPUT_DIR = path.join(OUTPUT_DIR, "skills");
 
   describe("fetchSkills", () => {
-    it("should create skills output directory", async () => {
+    it("when fetching skills, should create skills output directory before resolution", async () => {
       const marketplace = createMarketplace();
 
       // findSkillPath: baseDir does not exist
@@ -62,7 +62,7 @@ describe("skill-fetcher", () => {
       expect(mockEnsureDir).toHaveBeenCalledWith(SKILLS_OUTPUT_DIR);
     });
 
-    it("should find and copy a skill by glob pattern match", async () => {
+    it("when skillId has no slash, should find skill via glob pattern and copy it", async () => {
       const marketplace = createMarketplace();
       const skillId: SkillId = "web-framework-react";
       const skillSourceDir = path.join(SOURCE_PATH, "src", "skills");
@@ -136,7 +136,6 @@ describe("skill-fetcher", () => {
     it("should copy multiple skills", async () => {
       const marketplace = createMarketplace();
       const skillIds: SkillId[] = ["web-framework-react", "api-framework-hono"];
-      const skillSourceDir = path.join(SOURCE_PATH, "src", "skills");
 
       // For each skill: baseDir exists, glob finds a match
       mockDirectoryExists
@@ -153,7 +152,7 @@ describe("skill-fetcher", () => {
       expect(mockCopy).toHaveBeenCalledTimes(2);
     });
 
-    it("should stop processing on first skill not found (throws)", async () => {
+    it("when second of three skills is missing, should throw after copying only the first", async () => {
       const marketplace = createMarketplace();
       const skillIds: SkillId[] = [
         "web-framework-react",
@@ -234,7 +233,6 @@ describe("skill-fetcher", () => {
       const marketplace = createMarketplace();
       // A skill ID that has an author-like suffix pattern - tested via glob fallback
       const skillId: SkillId = "web-framework-react";
-      const skillSourceDir = path.join(SOURCE_PATH, "src", "skills");
 
       mockDirectoryExists.mockResolvedValueOnce(true); // baseDir exists
       // First glob (exact) finds nothing, so no author suffix stripping happens
@@ -269,7 +267,6 @@ describe("skill-fetcher", () => {
       const marketplace = createMarketplace();
       // Skill ID with author suffix (non-slash form)
       const skillId = "web-react (@author)" as SkillId;
-      const skillSourceDir = path.join(SOURCE_PATH, "src", "skills");
 
       mockDirectoryExists.mockResolvedValueOnce(true); // baseDir exists
 

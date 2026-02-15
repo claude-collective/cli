@@ -3,7 +3,7 @@ import os from "os";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
-import { installLocal, type LocalInstallOptions } from "./local-installer";
+import { installLocal } from "./local-installer";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import type { SourceLoadResult } from "../loading";
 import type { AgentConfig, AgentName, MergedSkillsMatrix, ProjectConfig } from "../../types";

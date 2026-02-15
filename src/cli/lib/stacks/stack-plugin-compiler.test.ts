@@ -9,7 +9,15 @@ import {
   type CompiledStackPlugin,
 } from "./stack-plugin-compiler";
 
-import type { AgentConfig, Skill, Stack, StackAgentConfig } from "../../types";
+import type {
+  AgentConfig,
+  Skill,
+  SkillAssignment,
+  SkillId,
+  Stack,
+  StackAgentConfig,
+  Subcategory,
+} from "../../types";
 
 describe("stack-plugin-compiler", () => {
   let tempDir: string;
@@ -81,22 +89,10 @@ Core principles are embedded directly in the template.
       tools: string[];
       intro?: string;
       workflow?: string;
-      skills?: Array<{ category: string; id: string; preloaded?: boolean }>;
     },
   ) {
     const agentDir = path.join(agentsDir, agentId);
     await mkdir(agentDir, { recursive: true });
-
-    // Build skills YAML if provided
-    let skillsYaml = "";
-    if (config.skills && config.skills.length > 0) {
-      skillsYaml = "skills:\n";
-      for (const skill of config.skills) {
-        skillsYaml += `  ${skill.category}:\n`;
-        skillsYaml += `    id: "${skill.id}"\n`;
-        skillsYaml += `    preloaded: ${skill.preloaded ?? false}\n`;
-      }
-    }
 
     // Create agent.yaml
     await writeFile(
@@ -106,7 +102,7 @@ title: ${config.title}
 description: ${config.description}
 tools:
 ${config.tools.map((t) => `  - ${t}`).join("\n")}
-${skillsYaml}`,
+`,
     );
 
     // Create intro.md
@@ -129,20 +125,14 @@ ${skillsYaml}`,
       description?: string;
       agents: string[];
       philosophy?: string;
-      // Allow additional properties for backwards compatibility but ignore them
-      version?: string;
-      author?: string;
-      skills?: Array<{ id: string; preloaded?: boolean }>;
-      tags?: string[];
-      principles?: string[];
-      hooks?: Record<string, unknown[]>;
+      /** Skill assignments per agent, keyed by subcategory */
+      agentSkills?: Record<string, Partial<Record<Subcategory, SkillAssignment[]>>>;
     },
   ): Stack {
     // Convert agents array to Record<string, StackAgentConfig>
-    // Empty config means no specific technology selections
     const agentsRecord: Record<string, StackAgentConfig> = {};
     for (const agentId of config.agents) {
-      agentsRecord[agentId] = {};
+      agentsRecord[agentId] = config.agentSkills?.[agentId] ?? {};
     }
 
     return {
@@ -152,26 +142,6 @@ ${skillsYaml}`,
       agents: agentsRecord,
       philosophy: config.philosophy,
     };
-  }
-
-  async function createSkillInStack(
-    stackDir: string,
-    skillId: string,
-    config: { name: string; description: string; content?: string },
-  ) {
-    const skillDir = path.join(stackDir, "skills", skillId);
-    await mkdir(skillDir, { recursive: true });
-
-    await writeFile(
-      path.join(skillDir, "SKILL.md"),
-      `---
-name: ${config.name}
-description: ${config.description}
----
-
-${config.content || `# ${config.name}\n\nSkill content here.`}
-`,
-    );
   }
 
   async function createSkillInSource(
@@ -195,7 +165,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
 
   describe("compileStackPlugin", () => {
     it("should create plugin directory structure", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
+      const { agentsDir } = await createProjectStructure();
 
       await createAgent(agentsDir, "web-developer", {
         title: "Frontend Developer",
@@ -206,7 +176,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       // Create skill in src/skills/ (new architecture)
       // Directory path is where the files live, frontmatter name is the canonical ID
       const directoryPath = "web/framework/react (@vince)";
-      const frontmatterName = "web-framework-react";
+      const frontmatterName = "web-framework-react" as SkillId;
       await createSkillInSource(directoryPath, {
         name: frontmatterName,
         description: "React development skills",
@@ -215,12 +185,13 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       const stackId = uniqueStackId();
       const stack = createStack(stackId, {
         name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
         description: "A test stack",
         agents: ["web-developer"],
-        // Reference by canonical ID (frontmatter name)
-        skills: [{ id: frontmatterName, preloaded: true }],
+        agentSkills: {
+          "web-developer": {
+            framework: [{ id: frontmatterName, preloaded: true }],
+          },
+        },
       });
 
       const result = await compileStackPlugin({
@@ -241,7 +212,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should generate valid plugin.json in .claude-plugin directory", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
+      const { agentsDir } = await createProjectStructure();
 
       await createAgent(agentsDir, "web-developer", {
         title: "Frontend Developer",
@@ -278,7 +249,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should compile agent markdown files to agents directory", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
+      const { agentsDir } = await createProjectStructure();
 
       await createAgent(agentsDir, "web-developer", {
         title: "Frontend Developer",
@@ -310,7 +281,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should generate README.md with stack information", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
+      const { agentsDir } = await createProjectStructure();
 
       await createAgent(agentsDir, "web-developer", {
         title: "Frontend Developer",
@@ -321,11 +292,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       const stackId = uniqueStackId();
       const stack = createStack(stackId, {
         name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
         description: "A comprehensive test stack",
         agents: ["web-developer"],
-        skills: [],
       });
 
       const result = await compileStackPlugin({
@@ -344,80 +312,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       expect(readmeContent).toContain(stackId);
     });
 
-    // Skip: tags removed from new stack format (config/stacks.yaml)
-    it.skip("should include tags in README when stack has tags", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
-
-      await createAgent(agentsDir, "web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
-        tools: ["Read"],
-      });
-
-      const stackId = uniqueStackId();
-      const stack = createStack(stackId, {
-        name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
-        agents: ["web-developer"],
-        tags: ["web", "react", "typescript"],
-        skills: [],
-      });
-
-      const result = await compileStackPlugin({
-        stackId,
-        outputDir,
-        projectRoot,
-        stack,
-      });
-
-      const readmePath = path.join(result.pluginPath, "README.md");
-      const readmeContent = await readFile(readmePath, "utf-8");
-
-      expect(readmeContent).toContain("## Tags");
-      expect(readmeContent).toContain("`web`");
-      expect(readmeContent).toContain("`react`");
-      expect(readmeContent).toContain("`typescript`");
-    });
-
-    // Skip: philosophy, principles, tags removed from ProjectConfig — dead fields
-    it.skip("should include principles in README when stack has principles", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
-
-      await createAgent(agentsDir, "web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
-        tools: ["Read"],
-      });
-
-      const stackId = uniqueStackId();
-      const stack = createStack(stackId, {
-        name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
-        agents: ["web-developer"],
-        principles: ["Test first", "Ship fast", "Keep it simple"],
-        skills: [],
-      });
-
-      const result = await compileStackPlugin({
-        stackId,
-        outputDir,
-        projectRoot,
-        stack,
-      });
-
-      const readmePath = path.join(result.pluginPath, "README.md");
-      const readmeContent = await readFile(readmePath, "utf-8");
-
-      expect(readmeContent).toContain("## Principles");
-      expect(readmeContent).toContain("- Test first");
-      expect(readmeContent).toContain("- Ship fast");
-      expect(readmeContent).toContain("- Keep it simple");
-    });
-
     it("should list agents in README", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
+      const { agentsDir } = await createProjectStructure();
 
       await createAgent(agentsDir, "web-developer", {
         title: "Frontend Developer",
@@ -434,10 +330,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       const stackId = uniqueStackId();
       const stack = createStack(stackId, {
         name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
         agents: ["web-developer", "api-developer"],
-        skills: [],
       });
 
       const result = await compileStackPlugin({
@@ -455,14 +348,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       expect(readmeContent).toContain("`api-developer`");
     });
 
-    // Skip: CLAUDE.md copying requires legacy stack directory structure
-    // which has been removed in favor of agent-centric config
-    it.skip("should copy CLAUDE.md to plugin root when present", async () => {
-      // Test skipped - stack-specific directories no longer exist
-    });
-
     it("should return compiled agents list", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
+      const { agentsDir } = await createProjectStructure();
 
       await createAgent(agentsDir, "web-developer", {
         title: "Frontend Developer",
@@ -479,10 +366,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       const stackId = uniqueStackId();
       const stack = createStack(stackId, {
         name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
         agents: ["web-developer", "web-tester"],
-        skills: [],
       });
 
       const result = await compileStackPlugin({
@@ -497,17 +381,14 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       expect(result.agents).toHaveLength(2);
     });
 
-    // Skip: This test requires skill aliases to be set up in the matrix.
-    // In Phase 7, skills come from stack agent configs via technology aliases,
-    // not from agent YAMLs. The test fixture doesn't include the skills matrix.
-    it.skip("should return skill plugin references", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
+    it("should return skill plugin references", async () => {
+      const { agentsDir } = await createProjectStructure();
 
       // Create skills in src/skills/ (new architecture)
       const reactDirPath = "web/framework/react (@vince)";
-      const reactCanonicalId = "web-framework-react";
+      const reactCanonicalId = "web-framework-react" as SkillId;
       const tsDirPath = "web/language/typescript (@vince)";
-      const tsCanonicalId = "web-language-typescript";
+      const tsCanonicalId = "web-language-typescript" as SkillId;
 
       await createSkillInSource(reactDirPath, {
         name: reactCanonicalId,
@@ -519,21 +400,23 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
         description: "TypeScript development",
       });
 
-      // Agent with skills defined (Phase 6: skills in agent YAML)
       await createAgent(agentsDir, "web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read"],
-        skills: [
-          { category: "framework", id: reactCanonicalId, preloaded: true },
-          { category: "language", id: tsCanonicalId, preloaded: false },
-        ],
       });
 
       const stackId = uniqueStackId();
+      // Skills assigned via stack agent config (current architecture)
       const stack = createStack(stackId, {
         name: "Test Stack",
         agents: ["web-developer"],
+        agentSkills: {
+          "web-developer": {
+            framework: [{ id: reactCanonicalId, preloaded: true }],
+            language: [{ id: tsCanonicalId }],
+          } as Partial<Record<Subcategory, SkillAssignment[]>>,
+        },
       });
 
       const result = await compileStackPlugin({
@@ -543,13 +426,13 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
         stack,
       });
 
-      // Skill plugins now use canonical frontmatter names (simplified ID format)
+      // Skill plugins use canonical frontmatter names
       expect(result.skillPlugins).toContain("web-framework-react");
       expect(result.skillPlugins).toContain("web-language-typescript");
     });
 
     it("should return correct manifest structure", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
+      const { agentsDir } = await createProjectStructure();
 
       await createAgent(agentsDir, "web-developer", {
         title: "Frontend Developer",
@@ -578,7 +461,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should return stack name from config", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
+      const { agentsDir } = await createProjectStructure();
 
       await createAgent(agentsDir, "web-developer", {
         title: "Frontend Developer",
@@ -589,10 +472,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       const stackId = uniqueStackId();
       const stack = createStack(stackId, {
         name: "Modern React Stack",
-        version: "1.0.0",
-        author: "@test",
         agents: ["web-developer"],
-        skills: [],
       });
 
       const result = await compileStackPlugin({
@@ -637,17 +517,11 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
         }),
       ).rejects.toThrow();
     });
-
-    // Skip: In new agent-centric model, skills come from agents not stacks.
-    // Missing skill errors are handled differently (warning instead of throw).
-    it.skip("should throw error when skill is missing", async () => {
-      // Test skipped - skill references now in agent YAMLs
-    });
   });
 
   describe("compileStackPlugin - edge cases", () => {
     it("should handle stack with no skills", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
+      const { agentsDir } = await createProjectStructure();
 
       await createAgent(agentsDir, "web-developer", {
         title: "Frontend Developer",
@@ -658,10 +532,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       const stackId = uniqueStackId();
       const stack = createStack(stackId, {
         name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
         agents: ["web-developer"],
-        skills: [],
       });
 
       const result = await compileStackPlugin({
@@ -680,7 +551,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should handle stack with no tags", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
+      const { agentsDir } = await createProjectStructure();
 
       await createAgent(agentsDir, "web-developer", {
         title: "Frontend Developer",
@@ -691,11 +562,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       const stackId = uniqueStackId();
       const stack = createStack(stackId, {
         name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
         agents: ["web-developer"],
-        skills: [],
-        // No tags
       });
 
       const result = await compileStackPlugin({
@@ -711,7 +578,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should handle stack with no philosophy", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
+      const { agentsDir } = await createProjectStructure();
 
       await createAgent(agentsDir, "web-developer", {
         title: "Frontend Developer",
@@ -722,11 +589,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       const stackId = uniqueStackId();
       const stack = createStack(stackId, {
         name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
         agents: ["web-developer"],
-        skills: [],
-        // No philosophy
       });
 
       const result = await compileStackPlugin({
@@ -742,7 +605,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should handle stack with no principles", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
+      const { agentsDir } = await createProjectStructure();
 
       await createAgent(agentsDir, "web-developer", {
         title: "Frontend Developer",
@@ -753,11 +616,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       const stackId = uniqueStackId();
       const stack = createStack(stackId, {
         name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
         agents: ["web-developer"],
-        skills: [],
-        // No principles
       });
 
       const result = await compileStackPlugin({
@@ -773,7 +632,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should handle stack with no description", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
+      const { agentsDir } = await createProjectStructure();
 
       await createAgent(agentsDir, "web-developer", {
         title: "Frontend Developer",
@@ -784,11 +643,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       const stackId = uniqueStackId();
       const stack = createStack(stackId, {
         name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
         agents: ["web-developer"],
-        skills: [],
-        // No description
       });
 
       const result = await compileStackPlugin({
@@ -805,7 +660,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should handle stack without CLAUDE.md", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
+      const { agentsDir } = await createProjectStructure();
 
       await createAgent(agentsDir, "web-developer", {
         title: "Frontend Developer",
@@ -816,10 +671,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       const stackId = uniqueStackId();
       const stack = createStack(stackId, {
         name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
         agents: ["web-developer"],
-        skills: [],
       });
 
       // Don't create CLAUDE.md
@@ -846,7 +698,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should handle multiple agents in a single stack", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
+      const { agentsDir } = await createProjectStructure();
 
       await createAgent(agentsDir, "web-developer", {
         title: "Frontend Developer",
@@ -869,10 +721,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       const stackId = uniqueStackId();
       const stack = createStack(stackId, {
         name: "Full Stack",
-        version: "1.0.0",
-        author: "@test",
         agents: ["web-developer", "api-developer", "web-tester"],
-        skills: [],
       });
 
       const result = await compileStackPlugin({
@@ -896,17 +745,14 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       }
     });
 
-    // Skip: This test requires skill aliases to be set up in the matrix.
-    // In Phase 7, skills come from stack agent configs via technology aliases,
-    // not from agent YAMLs. The test fixture doesn't include the skills matrix.
-    it.skip("should include skill plugins in README when skills are present", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
+    it("should include skill plugins in README when skills are present", async () => {
+      const { agentsDir } = await createProjectStructure();
 
       // Create skills in src/skills/ (new architecture)
       const reactDirPath = "web/framework/react (@vince)";
-      const reactCanonicalId = "web-framework-react";
+      const reactCanonicalId = "web-framework-react" as SkillId;
       const zustandDirPath = "web/client-state-management/zustand (@vince)";
-      const zustandCanonicalId = "web-state-zustand";
+      const zustandCanonicalId = "web-state-zustand" as SkillId;
 
       await createSkillInSource(reactDirPath, {
         name: reactCanonicalId,
@@ -918,21 +764,23 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
         description: "State management",
       });
 
-      // Agent with skills (Phase 6: skills in agent YAML)
       await createAgent(agentsDir, "web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read"],
-        skills: [
-          { category: "framework", id: reactCanonicalId, preloaded: true },
-          { category: "state", id: zustandCanonicalId, preloaded: false },
-        ],
       });
 
       const stackId = uniqueStackId();
+      // Skills assigned via stack agent config (current architecture)
       const stack = createStack(stackId, {
         name: "Test Stack",
         agents: ["web-developer"],
+        agentSkills: {
+          "web-developer": {
+            framework: [{ id: reactCanonicalId, preloaded: true }],
+            "client-state": [{ id: zustandCanonicalId }],
+          },
+        },
       });
 
       const result = await compileStackPlugin({
@@ -945,10 +793,10 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
       const readmePath = path.join(result.pluginPath, "README.md");
       const readmeContent = await readFile(readmePath, "utf-8");
 
-      // README now uses "Included Skills" with canonical IDs
+      // README uses "Included Skills" with canonical IDs
       expect(readmeContent).toContain("## Included Skills");
-      expect(readmeContent).toContain(`\`${"web-framework-react"}\``);
-      expect(readmeContent).toContain(`\`${"web-state-zustand"}\``);
+      expect(readmeContent).toContain("`web-framework-react`");
+      expect(readmeContent).toContain("`web-state-zustand`");
     });
   });
 
@@ -1308,261 +1156,6 @@ ${agentsYaml}
       // Should use bare IDs when no installMode specified
       expect(output).toContain("web-framework-react");
       expect(output).not.toContain("web-framework-react:web-framework-react");
-    });
-  });
-
-  // Skip: hooks removed from new stack format (config/stacks.yaml)
-  describe.skip("compileStackPlugin - hooks", () => {
-    it("should generate hooks/hooks.json when stack has hooks", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
-
-      await createAgent(agentsDir, "web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
-        tools: ["Read", "Write"],
-      });
-
-      const stackId = uniqueStackId();
-      const stack = createStack(stackId, {
-        name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
-        agents: ["web-developer"],
-        skills: [],
-        hooks: {
-          PostToolUse: [
-            {
-              matcher: "Write|Edit",
-              hooks: [
-                {
-                  type: "command",
-                  command: "${CLAUDE_PLUGIN_ROOT}/scripts/format.sh",
-                  timeout: 30,
-                },
-              ],
-            },
-          ],
-        },
-      });
-
-      const result = await compileStackPlugin({
-        stackId,
-        outputDir,
-        projectRoot,
-        stack,
-      });
-
-      // Verify hasHooks is true
-      expect(result.hasHooks).toBe(true);
-
-      // Verify hooks.json was created
-      const hooksJsonPath = path.join(result.pluginPath, "hooks", "hooks.json");
-      const hooksContent = await readFile(hooksJsonPath, "utf-8");
-      const hooksJson = JSON.parse(hooksContent);
-
-      expect(hooksJson.hooks).toBeDefined();
-      expect(hooksJson.hooks.PostToolUse).toBeDefined();
-      expect(hooksJson.hooks.PostToolUse).toHaveLength(1);
-      expect(hooksJson.hooks.PostToolUse[0].matcher).toBe("Write|Edit");
-      expect(hooksJson.hooks.PostToolUse[0].hooks).toHaveLength(1);
-      expect(hooksJson.hooks.PostToolUse[0].hooks[0].type).toBe("command");
-    });
-
-    it("should include hooks path in manifest when hooks exist", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
-
-      await createAgent(agentsDir, "web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
-        tools: ["Read"],
-      });
-
-      const stackId = uniqueStackId();
-      const stack = createStack(stackId, {
-        name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
-        agents: ["web-developer"],
-        skills: [],
-        hooks: {
-          SessionStart: [
-            {
-              hooks: [
-                {
-                  type: "command",
-                  command: "echo 'Session started'",
-                },
-              ],
-            },
-          ],
-        },
-      });
-
-      const result = await compileStackPlugin({
-        stackId,
-        outputDir,
-        projectRoot,
-        stack,
-      });
-
-      // Verify manifest includes hooks path
-      expect(result.manifest.hooks).toBe("./hooks/hooks.json");
-    });
-
-    it("should not generate hooks.json when stack has no hooks", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
-
-      await createAgent(agentsDir, "web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
-        tools: ["Read"],
-      });
-
-      const stackId = uniqueStackId();
-      const stack = createStack(stackId, {
-        name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
-        agents: ["web-developer"],
-        skills: [],
-        // No hooks
-      });
-
-      const result = await compileStackPlugin({
-        stackId,
-        outputDir,
-        projectRoot,
-        stack,
-      });
-
-      // Verify hasHooks is false
-      expect(result.hasHooks).toBe(false);
-
-      // Verify hooks directory does not exist
-      let hooksExists = false;
-      try {
-        await stat(path.join(result.pluginPath, "hooks"));
-        hooksExists = true;
-      } catch {
-        hooksExists = false;
-      }
-      expect(hooksExists).toBe(false);
-
-      // Verify manifest does not include hooks
-      expect(result.manifest.hooks).toBeUndefined();
-    });
-
-    it("should handle multiple hook events", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
-
-      await createAgent(agentsDir, "web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
-        tools: ["Read"],
-      });
-
-      const stackId = uniqueStackId();
-      const stack = createStack(stackId, {
-        name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
-        agents: ["web-developer"],
-        skills: [],
-        hooks: {
-          SessionStart: [
-            {
-              hooks: [
-                {
-                  type: "command",
-                  command: "echo 'Starting'",
-                },
-              ],
-            },
-          ],
-          PostToolUse: [
-            {
-              matcher: "Write",
-              hooks: [
-                {
-                  type: "command",
-                  command: "npm run format",
-                },
-              ],
-            },
-          ],
-          SessionEnd: [
-            {
-              hooks: [
-                {
-                  type: "command",
-                  command: "echo 'Ending'",
-                },
-              ],
-            },
-          ],
-        },
-      });
-
-      const result = await compileStackPlugin({
-        stackId,
-        outputDir,
-        projectRoot,
-        stack,
-      });
-
-      const hooksJsonPath = path.join(result.pluginPath, "hooks", "hooks.json");
-      const hooksContent = await readFile(hooksJsonPath, "utf-8");
-      const hooksJson = JSON.parse(hooksContent);
-
-      expect(Object.keys(hooksJson.hooks)).toHaveLength(3);
-      expect(hooksJson.hooks.SessionStart).toBeDefined();
-      expect(hooksJson.hooks.PostToolUse).toBeDefined();
-      expect(hooksJson.hooks.SessionEnd).toBeDefined();
-    });
-
-    it("should handle hooks without matcher", async () => {
-      const { agentsDir, configDir } = await createProjectStructure();
-
-      await createAgent(agentsDir, "web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
-        tools: ["Read"],
-      });
-
-      const stackId = uniqueStackId();
-      const stack = createStack(stackId, {
-        name: "Test Stack",
-        version: "1.0.0",
-        author: "@test",
-        agents: ["web-developer"],
-        skills: [],
-        hooks: {
-          SessionStart: [
-            {
-              hooks: [
-                {
-                  type: "command",
-                  command: "echo 'No matcher'",
-                },
-              ],
-            },
-          ],
-        },
-      });
-
-      const result = await compileStackPlugin({
-        stackId,
-        outputDir,
-        projectRoot,
-        stack,
-      });
-
-      const hooksJsonPath = path.join(result.pluginPath, "hooks", "hooks.json");
-      const hooksContent = await readFile(hooksJsonPath, "utf-8");
-      const hooksJson = JSON.parse(hooksContent);
-
-      expect(hooksJson.hooks.SessionStart[0].matcher).toBeUndefined();
-      expect(hooksJson.hooks.SessionStart[0].hooks).toBeDefined();
     });
   });
 });

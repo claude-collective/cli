@@ -16,6 +16,7 @@ export {
   resolveAuthor,
   resolveAllSources,
   isLocalSource,
+  validateSourceFormat,
 } from "./config";
 
 export {

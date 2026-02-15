@@ -2,12 +2,11 @@ import { mapToObj } from "remeda";
 import { describe, it, expect } from "vitest";
 import {
   resolveAlias,
+  getDependentSkills,
   isDisabled,
   isDiscouraged,
   isRecommended,
   getDisableReason,
-  getDiscourageReason,
-  getRecommendReason,
   validateSelection,
   getSkillsByCategory,
   getAvailableSkills,
@@ -15,7 +14,6 @@ import {
 } from "./matrix-resolver";
 import type {
   CategoryDefinition,
-  CategoryPath,
   MergedSkillsMatrix,
   ResolvedSkill,
   SkillDisplayName,
@@ -56,13 +54,13 @@ describe("resolveAlias", () => {
     expect(result).toBe("web-framework-react");
   });
 
-  it("should return unchanged if already a full ID", () => {
+  it("when input is already a full skill ID, should return it unchanged", () => {
     const matrix = createMatrix({}, { react: "web-framework-react" });
     const result = resolveAlias("web-framework-react", matrix);
     expect(result).toBe("web-framework-react");
   });
 
-  it("should return unchanged if alias not found", () => {
+  it("when alias does not exist in matrix, should return input unchanged", () => {
     const matrix = createMatrix({}, {});
     const result = resolveAlias("web-test-unknown", matrix);
     expect(result).toBe("web-test-unknown");
@@ -265,21 +263,12 @@ describe("getDisableReason", () => {
     expect(result).toBeUndefined();
   });
 
-  it("should return conflict reason", () => {
-    const skillA = createSkill("web-skill-a", {
-      conflictsWith: [{ skillId: "web-skill-b", reason: "Cannot use together" }],
-    });
-    const skillB = createSkill("web-skill-b");
-    const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
-
-    const result = getDisableReason("web-skill-a", ["web-skill-b"], matrix);
-    expect(result).toContain("Cannot use together");
-    expect(result).toContain("conflicts with");
-  });
+  // Conflict reason tests are in "Conflicting skills with expert mode off (P1-22)"
+  // Requirement reason tests are in "Missing skill dependencies (P1-24)"
 });
 
 describe("validateSelection", () => {
-  it("should return valid for empty selection", () => {
+  it("when no skills are selected, should return valid with no errors", () => {
     const matrix = createMatrix({});
     const result = validateSelection([], matrix);
     expect(result.valid).toBe(true);
@@ -627,35 +616,41 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
   });
 
   describe("non-expert mode auto-disables conflicting skills in getAvailableSkills", () => {
-    it("should mark conflicting skill as disabled in available skills list", () => {
-      const skillA = createSkill("web-skill-a", {
-        category: "framework",
-        conflictsWith: [{ skillId: "web-skill-b", reason: "Different paradigms" }],
-      });
-      const skillB = createSkill("web-skill-b", {
-        category: "framework",
-      });
-      const matrix = createMatrix(
-        { "web-skill-a": skillA, "web-skill-b": skillB },
-        {},
-        {
-          framework: {
-            id: "framework",
-            displayName: "Framework",
-            description: "Frameworks",
-            exclusive: false,
-            required: false,
-            order: 1,
-          },
+    const skillA = createSkill("web-skill-a", {
+      category: "framework",
+      conflictsWith: [{ skillId: "web-skill-b", reason: "Different paradigms" }],
+    });
+    const skillB = createSkill("web-skill-b", {
+      category: "framework",
+    });
+    const matrix = createMatrix(
+      { "web-skill-a": skillA, "web-skill-b": skillB },
+      {},
+      {
+        framework: {
+          id: "framework",
+          displayName: "Framework",
+          description: "Frameworks",
+          exclusive: false,
+          required: false,
+          order: 1,
         },
-      );
+      },
+    );
 
-      // skill-b is already selected
+    it("when conflicting skill is selected, should mark skill as disabled", () => {
       const options = getAvailableSkills("framework", ["web-skill-b"], matrix);
 
       const skillAOption = options.find((o: { id: string }) => o.id === "web-skill-a");
       expect(skillAOption).toBeDefined();
       expect(skillAOption!.disabled).toBe(true);
+    });
+
+    it("when conflicting skill is selected, should set disabledReason with conflict reason", () => {
+      const options = getAvailableSkills("framework", ["web-skill-b"], matrix);
+
+      const skillAOption = options.find((o: { id: string }) => o.id === "web-skill-a");
+      expect(skillAOption).toBeDefined();
       expect(skillAOption!.disabledReason).toContain("Different paradigms");
     });
   });
@@ -1225,5 +1220,609 @@ describe("Missing skill dependencies (P1-24)", () => {
 
       expect(result.valid).toBe(true);
     });
+  });
+});
+
+// --- Edge case tests ---
+
+describe("getDependentSkills", () => {
+  it("should return empty array when no skills depend on target", () => {
+    const skillA = createSkill("web-skill-a");
+    const skillB = createSkill("web-skill-b");
+    const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+
+    const result = getDependentSkills("web-skill-a", ["web-skill-a", "web-skill-b"], matrix);
+    expect(result).toEqual([]);
+  });
+
+  it("should return empty array when skill is not in matrix", () => {
+    const matrix = createMatrix({});
+
+    const result = getDependentSkills("web-skill-nonexistent", [], matrix);
+    expect(result).toEqual([]);
+  });
+
+  it("should find single dependent with AND requirement", () => {
+    const skillA = createSkill("web-skill-a");
+    const skillB = createSkill("web-skill-b", {
+      requires: [{ skillIds: ["web-skill-a"], needsAny: false, reason: "Needs A" }],
+    });
+    const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+
+    const result = getDependentSkills("web-skill-a", ["web-skill-a", "web-skill-b"], matrix);
+    expect(result).toEqual(["web-skill-b"]);
+  });
+
+  it("should find multiple dependents", () => {
+    const skillA = createSkill("web-skill-a");
+    const skillB = createSkill("web-skill-b", {
+      requires: [{ skillIds: ["web-skill-a"], needsAny: false, reason: "B needs A" }],
+    });
+    const skillC = createSkill("web-skill-c", {
+      requires: [{ skillIds: ["web-skill-a"], needsAny: false, reason: "C needs A" }],
+    });
+    const matrix = createMatrix({
+      "web-skill-a": skillA,
+      "web-skill-b": skillB,
+      "web-skill-c": skillC,
+    });
+
+    const result = getDependentSkills(
+      "web-skill-a",
+      ["web-skill-a", "web-skill-b", "web-skill-c"],
+      matrix,
+    );
+    expect(result).toContain("web-skill-b");
+    expect(result).toContain("web-skill-c");
+    expect(result).toHaveLength(2);
+  });
+
+  it("should detect OR dependency when target is the sole satisfier", () => {
+    const skillA = createSkill("web-skill-a");
+    const skillB = createSkill("web-skill-b");
+    const skillC = createSkill("web-skill-c", {
+      requires: [{ skillIds: ["web-skill-a", "web-skill-b"], needsAny: true, reason: "Needs one" }],
+    });
+    const matrix = createMatrix({
+      "web-skill-a": skillA,
+      "web-skill-b": skillB,
+      "web-skill-c": skillC,
+    });
+
+    // Only A and C selected, so A is the sole satisfier of C's OR requirement
+    const result = getDependentSkills("web-skill-a", ["web-skill-a", "web-skill-c"], matrix);
+    expect(result).toEqual(["web-skill-c"]);
+  });
+
+  it("should NOT detect OR dependency when another satisfier is also selected", () => {
+    const skillA = createSkill("web-skill-a");
+    const skillB = createSkill("web-skill-b");
+    const skillC = createSkill("web-skill-c", {
+      requires: [{ skillIds: ["web-skill-a", "web-skill-b"], needsAny: true, reason: "Needs one" }],
+    });
+    const matrix = createMatrix({
+      "web-skill-a": skillA,
+      "web-skill-b": skillB,
+      "web-skill-c": skillC,
+    });
+
+    // Both A and B selected, so removing A would still leave B to satisfy C
+    const result = getDependentSkills(
+      "web-skill-a",
+      ["web-skill-a", "web-skill-b", "web-skill-c"],
+      matrix,
+    );
+    expect(result).toEqual([]);
+  });
+
+  it("should skip the target skill itself in selections", () => {
+    // If skill-a requires itself (odd but shouldn't crash), it should skip
+    const skillA = createSkill("web-skill-a", {
+      requires: [{ skillIds: ["web-skill-a"], needsAny: false, reason: "Self-ref" }],
+    });
+    const matrix = createMatrix({ "web-skill-a": skillA });
+
+    const result = getDependentSkills("web-skill-a", ["web-skill-a"], matrix);
+    // A cannot depend on itself in getDependentSkills — it skips selectedId === fullId
+    expect(result).toEqual([]);
+  });
+
+  it("should handle transitive chain (only direct dependents returned)", () => {
+    // A <- B <- C (B requires A, C requires B)
+    const skillA = createSkill("web-skill-a");
+    const skillB = createSkill("web-skill-b", {
+      requires: [{ skillIds: ["web-skill-a"], needsAny: false, reason: "B needs A" }],
+    });
+    const skillC = createSkill("web-skill-c", {
+      requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "C needs B" }],
+    });
+    const matrix = createMatrix({
+      "web-skill-a": skillA,
+      "web-skill-b": skillB,
+      "web-skill-c": skillC,
+    });
+
+    // getDependentSkills returns DIRECT dependents only
+    const result = getDependentSkills(
+      "web-skill-a",
+      ["web-skill-a", "web-skill-b", "web-skill-c"],
+      matrix,
+    );
+    // Only B directly depends on A; C depends on B (transitive, not returned)
+    expect(result).toEqual(["web-skill-b"]);
+  });
+
+  it("should handle circular requirements without infinite loop", () => {
+    // A requires B, B requires A — both selected
+    const skillA = createSkill("web-skill-a", {
+      requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "A needs B" }],
+    });
+    const skillB = createSkill("web-skill-b", {
+      requires: [{ skillIds: ["web-skill-a"], needsAny: false, reason: "B needs A" }],
+    });
+    const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+
+    // Asking "who depends on A?" -> B depends on A
+    const resultA = getDependentSkills("web-skill-a", ["web-skill-a", "web-skill-b"], matrix);
+    expect(resultA).toEqual(["web-skill-b"]);
+
+    // Asking "who depends on B?" -> A depends on B
+    const resultB = getDependentSkills("web-skill-b", ["web-skill-a", "web-skill-b"], matrix);
+    expect(resultB).toEqual(["web-skill-a"]);
+  });
+
+  it("should resolve aliases in selections", () => {
+    const skillA = createSkill("web-skill-a-v");
+    const skillB = createSkill("web-skill-b-v", {
+      requires: [{ skillIds: ["web-skill-a-v"], needsAny: false, reason: "B needs A" }],
+    });
+    const matrix = createMatrix(
+      { "web-skill-a-v": skillA, "web-skill-b-v": skillB },
+      { "web-skill-a": "web-skill-a-v", "web-skill-b": "web-skill-b-v" },
+    );
+
+    // Use aliases in selections
+    const result = getDependentSkills("web-skill-a", ["web-skill-a", "web-skill-b"], matrix);
+    expect(result).toEqual(["web-skill-b-v"]);
+  });
+
+  it("should handle skill with multiple AND requirements including target", () => {
+    const skillA = createSkill("web-skill-a");
+    const skillB = createSkill("web-skill-b");
+    const skillC = createSkill("web-skill-c", {
+      requires: [
+        { skillIds: ["web-skill-a", "web-skill-b"], needsAny: false, reason: "Needs both" },
+      ],
+    });
+    const matrix = createMatrix({
+      "web-skill-a": skillA,
+      "web-skill-b": skillB,
+      "web-skill-c": skillC,
+    });
+
+    // C requires both A and B (AND), so C is dependent on A
+    const result = getDependentSkills(
+      "web-skill-a",
+      ["web-skill-a", "web-skill-b", "web-skill-c"],
+      matrix,
+    );
+    expect(result).toEqual(["web-skill-c"]);
+  });
+
+  it("should find dependents even when target is not in current selections", () => {
+    const skillA = createSkill("web-skill-a");
+    const skillB = createSkill("web-skill-b", {
+      requires: [{ skillIds: ["web-skill-a"], needsAny: false, reason: "B needs A" }],
+    });
+    const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+
+    // A is not in selections — asking who depends on A among current selections
+    const result = getDependentSkills("web-skill-a", ["web-skill-b"], matrix);
+    // B depends on A, so it should still be returned
+    expect(result).toEqual(["web-skill-b"]);
+  });
+});
+
+describe("getAvailableSkills edge cases", () => {
+  it("should return empty array for category with no skills", () => {
+    const matrix = createMatrix(
+      { "web-skill-a": createSkill("web-skill-a", { category: "framework" }) },
+      {},
+      {
+        styling: {
+          id: "styling",
+          displayName: "Styling",
+          description: "Styling options",
+          exclusive: false,
+          required: false,
+          order: 1,
+        },
+      } as Record<Subcategory, CategoryDefinition>,
+    );
+
+    const result = getAvailableSkills("styling", [], matrix);
+    expect(result).toEqual([]);
+  });
+
+  it("should handle large number of skills without issues", () => {
+    const SKILL_COUNT = 200;
+    const skills: Record<string, ResolvedSkill> = {};
+    for (let i = 0; i < SKILL_COUNT; i++) {
+      const id = `web-perf-skill${i}` as SkillId;
+      skills[id] = createSkill(id, { category: "performance" });
+    }
+    const matrix = createMatrix(skills, {}, {
+      performance: {
+        id: "performance",
+        displayName: "Performance",
+        description: "Performance tools",
+        exclusive: false,
+        required: false,
+        order: 1,
+      },
+    } as Record<Subcategory, CategoryDefinition>);
+
+    const result = getAvailableSkills("performance", [], matrix);
+    expect(result).toHaveLength(SKILL_COUNT);
+    expect(result.every((o) => !o.disabled)).toBe(true);
+    expect(result.every((o) => !o.selected)).toBe(true);
+  });
+
+  it("should include alternatives in skill options", () => {
+    const skillA = createSkill("web-skill-a", {
+      category: "framework",
+      alternatives: [
+        { skillId: "web-skill-b", purpose: "Alternative framework" },
+        { skillId: "web-skill-c", purpose: "Another alternative" },
+      ],
+    });
+    const skillB = createSkill("web-skill-b", { category: "framework" });
+    const skillC = createSkill("web-skill-c", { category: "framework" });
+    const matrix = createMatrix(
+      { "web-skill-a": skillA, "web-skill-b": skillB, "web-skill-c": skillC },
+      {},
+      {
+        framework: {
+          id: "framework",
+          displayName: "Framework",
+          description: "Frameworks",
+          exclusive: false,
+          required: false,
+          order: 1,
+        },
+      } as Record<Subcategory, CategoryDefinition>,
+    );
+
+    const result = getAvailableSkills("framework", [], matrix);
+    const optionA = result.find((o) => o.id === "web-skill-a");
+    expect(optionA).toBeDefined();
+    expect(optionA!.alternatives).toEqual(["web-skill-b", "web-skill-c"]);
+  });
+
+  it("should correctly mark selected skills", () => {
+    const skillA = createSkill("web-skill-a", { category: "framework" });
+    const skillB = createSkill("web-skill-b", { category: "framework" });
+    const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB }, {}, {
+      framework: {
+        id: "framework",
+        displayName: "Framework",
+        description: "Frameworks",
+        exclusive: false,
+        required: false,
+        order: 1,
+      },
+    } as Record<Subcategory, CategoryDefinition>);
+
+    const result = getAvailableSkills("framework", ["web-skill-a"], matrix);
+    const optionA = result.find((o) => o.id === "web-skill-a");
+    const optionB = result.find((o) => o.id === "web-skill-b");
+    expect(optionA!.selected).toBe(true);
+    expect(optionB!.selected).toBe(false);
+  });
+
+  it("should set discouraged and discouragedReason when applicable", () => {
+    const skillA = createSkill("web-skill-a", {
+      category: "framework",
+      discourages: [{ skillId: "web-skill-b", reason: "Not ideal pairing" }],
+    });
+    const skillB = createSkill("web-skill-b", { category: "framework" });
+    const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB }, {}, {
+      framework: {
+        id: "framework",
+        displayName: "Framework",
+        description: "Frameworks",
+        exclusive: false,
+        required: false,
+        order: 1,
+      },
+    } as Record<Subcategory, CategoryDefinition>);
+
+    const result = getAvailableSkills("framework", ["web-skill-a"], matrix);
+    const optionB = result.find((o) => o.id === "web-skill-b");
+    expect(optionB!.discouraged).toBe(true);
+    expect(optionB!.discouragedReason).toContain("Not ideal pairing");
+  });
+
+  it("should set recommended and recommendedReason when applicable", () => {
+    const skillA = createSkill("web-skill-a", {
+      category: "framework",
+      recommends: [{ skillId: "web-skill-b", reason: "Great combination" }],
+    });
+    const skillB = createSkill("web-skill-b", { category: "framework" });
+    const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB }, {}, {
+      framework: {
+        id: "framework",
+        displayName: "Framework",
+        description: "Frameworks",
+        exclusive: false,
+        required: false,
+        order: 1,
+      },
+    } as Record<Subcategory, CategoryDefinition>);
+
+    const result = getAvailableSkills("framework", ["web-skill-a"], matrix);
+    const optionB = result.find((o) => o.id === "web-skill-b");
+    expect(optionB!.recommended).toBe(true);
+    expect(optionB!.recommendedReason).toContain("Great combination");
+  });
+
+  it("should not mark discouraged when skill is already disabled", () => {
+    const skillA = createSkill("web-skill-a", {
+      category: "framework",
+      conflictsWith: [{ skillId: "web-skill-b", reason: "Incompatible" }],
+      discourages: [{ skillId: "web-skill-b", reason: "Not ideal" }],
+    });
+    const skillB = createSkill("web-skill-b", { category: "framework" });
+    const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB }, {}, {
+      framework: {
+        id: "framework",
+        displayName: "Framework",
+        description: "Frameworks",
+        exclusive: false,
+        required: false,
+        order: 1,
+      },
+    } as Record<Subcategory, CategoryDefinition>);
+
+    const result = getAvailableSkills("framework", ["web-skill-a"], matrix);
+    const optionB = result.find((o) => o.id === "web-skill-b");
+    // B is disabled by conflict, so discouraged should be false
+    expect(optionB!.disabled).toBe(true);
+    expect(optionB!.discouraged).toBe(false);
+  });
+
+  it("should not mark recommended when skill is disabled", () => {
+    const skillA = createSkill("web-skill-a", {
+      category: "framework",
+      conflictsWith: [{ skillId: "web-skill-b", reason: "Incompatible" }],
+      recommends: [{ skillId: "web-skill-b", reason: "Good pairing" }],
+    });
+    const skillB = createSkill("web-skill-b", { category: "framework" });
+    const matrix = createMatrix({ "web-skill-a": skillA, "web-skill-b": skillB }, {}, {
+      framework: {
+        id: "framework",
+        displayName: "Framework",
+        description: "Frameworks",
+        exclusive: false,
+        required: false,
+        order: 1,
+      },
+    } as Record<Subcategory, CategoryDefinition>);
+
+    const result = getAvailableSkills("framework", ["web-skill-a"], matrix);
+    const optionB = result.find((o) => o.id === "web-skill-b");
+    expect(optionB!.disabled).toBe(true);
+    expect(optionB!.recommended).toBe(false);
+  });
+});
+
+describe("isCategoryAllDisabled edge cases", () => {
+  it("should return disabled=false for category with 0 skills", () => {
+    const matrix = createMatrix({}, {}, {
+      tooling: {
+        id: "tooling",
+        displayName: "Tooling",
+        description: "No skills here",
+        exclusive: false,
+        required: false,
+        order: 1,
+      },
+    } as Record<Subcategory, CategoryDefinition>);
+
+    const result = isCategoryAllDisabled("tooling", [], matrix);
+    expect(result.disabled).toBe(false);
+    expect(result.reason).toBeUndefined();
+  });
+
+  it("should return disabled=false for unknown category", () => {
+    const matrix = createMatrix({});
+
+    const result = isCategoryAllDisabled("web-nonexistent-category", [], matrix);
+    expect(result.disabled).toBe(false);
+  });
+
+  it("should return disabled=true only when ALL skills in category are disabled", () => {
+    const skillA = createSkill("web-skill-a", {
+      category: "testing",
+      requires: [{ skillIds: ["web-skill-x"], needsAny: false, reason: "Needs X" }],
+    });
+    const skillB = createSkill("web-skill-b", {
+      category: "testing",
+    });
+    const skillX = createSkill("web-skill-x", { category: "framework" });
+    const matrix = createMatrix(
+      { "web-skill-a": skillA, "web-skill-b": skillB, "web-skill-x": skillX },
+      {},
+      {
+        testing: {
+          id: "testing",
+          displayName: "Testing",
+          description: "Testing tools",
+          exclusive: false,
+          required: false,
+          order: 1,
+        },
+      } as Record<Subcategory, CategoryDefinition>,
+    );
+
+    // skill-a is disabled (needs X which is not selected), but skill-b is still enabled
+    const result = isCategoryAllDisabled("testing", [], matrix);
+    expect(result.disabled).toBe(false);
+  });
+
+  it("should include reason from first disabled skill", () => {
+    const skillA = createSkill("web-skill-a", {
+      category: "styling",
+      conflictsWith: [{ skillId: "web-skill-x", reason: "Style conflict" }],
+    });
+    const skillB = createSkill("web-skill-b", {
+      category: "styling",
+      conflictsWith: [{ skillId: "web-skill-x", reason: "Another conflict" }],
+    });
+    const skillX = createSkill("web-skill-x", { category: "framework" });
+    const matrix = createMatrix(
+      { "web-skill-a": skillA, "web-skill-b": skillB, "web-skill-x": skillX },
+      {},
+      {
+        styling: {
+          id: "styling",
+          displayName: "Styling",
+          description: "Styling options",
+          exclusive: false,
+          required: false,
+          order: 1,
+        },
+      } as Record<Subcategory, CategoryDefinition>,
+    );
+
+    const result = isCategoryAllDisabled("styling", ["web-skill-x"], matrix);
+    expect(result.disabled).toBe(true);
+    // Reason comes from first disabled skill, truncated before " ("
+    expect(result.reason).toBeDefined();
+    expect(result.reason).not.toContain("(conflicts with");
+  });
+
+  it("should return disabled=false for category with single enabled skill among disabled", () => {
+    const skillA = createSkill("web-skill-a", {
+      category: "tooling",
+      conflictsWith: [{ skillId: "web-skill-x", reason: "Conflicts" }],
+    });
+    const skillB = createSkill("web-skill-b", {
+      category: "tooling",
+      conflictsWith: [{ skillId: "web-skill-x", reason: "Conflicts" }],
+    });
+    const skillC = createSkill("web-skill-c", {
+      category: "tooling",
+      // No conflicts -- this one is enabled
+    });
+    const skillX = createSkill("web-skill-x", { category: "framework" });
+    const matrix = createMatrix(
+      {
+        "web-skill-a": skillA,
+        "web-skill-b": skillB,
+        "web-skill-c": skillC,
+        "web-skill-x": skillX,
+      },
+      {},
+      {
+        tooling: {
+          id: "tooling",
+          displayName: "Tooling",
+          description: "Dev tooling",
+          exclusive: false,
+          required: false,
+          order: 1,
+        },
+      } as Record<Subcategory, CategoryDefinition>,
+    );
+
+    // A and B are disabled by conflict with X, but C is still available
+    const result = isCategoryAllDisabled("tooling", ["web-skill-x"], matrix);
+    expect(result.disabled).toBe(false);
+  });
+});
+
+describe("validateSelection edge cases", () => {
+  it("when selected skill does not exist in matrix, should not throw", () => {
+    const matrix = createMatrix({});
+
+    // Selecting a skill that doesn't exist in the matrix
+    const result = validateSelection(["web-skill-nonexistent"], matrix);
+    // Should not crash; the skill is simply skipped in validation
+    expect(result.valid).toBe(true);
+  });
+
+  it("should detect category exclusivity with more than 2 skills in same exclusive category", () => {
+    const skillA = createSkill("web-skill-a", { category: "framework", categoryExclusive: true });
+    const skillB = createSkill("web-skill-b", { category: "framework", categoryExclusive: true });
+    const skillC = createSkill("web-skill-c", { category: "framework", categoryExclusive: true });
+    const matrix = createMatrix(
+      { "web-skill-a": skillA, "web-skill-b": skillB, "web-skill-c": skillC },
+      {},
+      {
+        framework: {
+          id: "framework",
+          displayName: "Framework",
+          description: "Frameworks",
+          exclusive: true,
+          required: false,
+          order: 1,
+        },
+      } as Record<Subcategory, CategoryDefinition>,
+    );
+
+    const result = validateSelection(["web-skill-a", "web-skill-b", "web-skill-c"], matrix);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.type === "category_exclusive")).toBe(true);
+  });
+
+  it("should report unused_setup warning when setup skill has no corresponding usage skill", () => {
+    const setupSkill = createSkill("web-skill-setup", {
+      providesSetupFor: ["web-skill-usage" as SkillId],
+    });
+    const usageSkill = createSkill("web-skill-usage");
+    const matrix = createMatrix({
+      "web-skill-setup": setupSkill,
+      "web-skill-usage": usageSkill,
+    });
+
+    // Select setup but not usage
+    const result = validateSelection(["web-skill-setup"], matrix);
+    expect(result.warnings.some((w) => w.type === "unused_setup")).toBe(true);
+  });
+
+  it("should not report unused_setup when usage skill is also selected", () => {
+    const setupSkill = createSkill("web-skill-setup", {
+      providesSetupFor: ["web-skill-usage" as SkillId],
+    });
+    const usageSkill = createSkill("web-skill-usage");
+    const matrix = createMatrix({
+      "web-skill-setup": setupSkill,
+      "web-skill-usage": usageSkill,
+    });
+
+    const result = validateSelection(["web-skill-setup", "web-skill-usage"], matrix);
+    expect(result.warnings.filter((w) => w.type === "unused_setup")).toHaveLength(0);
+  });
+
+  it("should handle skill with both conflicts and requirements", () => {
+    const skillA = createSkill("web-skill-a", {
+      conflictsWith: [{ skillId: "web-skill-b", reason: "Conflicts" }],
+      requires: [{ skillIds: ["web-skill-c"], needsAny: false, reason: "Needs C" }],
+    });
+    const skillB = createSkill("web-skill-b");
+    const skillC = createSkill("web-skill-c");
+    const matrix = createMatrix({
+      "web-skill-a": skillA,
+      "web-skill-b": skillB,
+      "web-skill-c": skillC,
+    });
+
+    // A conflicts with B AND requires C — selecting A+B should produce conflict error
+    const result = validateSelection(["web-skill-a", "web-skill-b"], matrix);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.type === "conflict")).toBe(true);
+    // Also reports missing requirement for C
+    expect(result.errors.some((e) => e.type === "missing_requirement")).toBe(true);
   });
 });

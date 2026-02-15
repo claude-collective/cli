@@ -1,5 +1,6 @@
 import path from "path";
 import { PROJECT_ROOT, SKILLS_DIR_PATH, SKILLS_MATRIX_PATH } from "../../consts";
+import { LOCAL_DEFAULTS } from "../metadata-keys";
 import type {
   AgentName,
   MergedSkillsMatrix,
@@ -73,10 +74,8 @@ export async function loadSkillsMatrixFromSource(
     result.matrix = mergeLocalSkillsIntoMatrix(result.matrix, localSkillsResult);
   }
 
-  // Annotate skills with available sources (public, local, plugin, private)
   await loadSkillsFromAllSources(result.matrix, sourceConfig, resolvedProjectDir);
 
-  // Run matrix health check to surface referential integrity issues
   checkMatrixHealth(result.matrix);
 
   return result;
@@ -131,10 +130,8 @@ async function loadFromRemote(
 
 // Shared logic: reads source config overrides, resolves matrix/skills/stacks from basePath
 async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsMatrix> {
-  // Read source's own config for path overrides
   const sourceProjectConfig = await loadProjectSourceConfig(basePath);
 
-  // Resolve paths: config value > convention default
   const matrixRelPath = sourceProjectConfig?.matrix_file ?? SKILLS_MATRIX_PATH;
   const skillsDirRelPath = sourceProjectConfig?.skills_dir ?? SKILLS_DIR_PATH;
   const stacksRelFile = sourceProjectConfig?.stacks_file;
@@ -163,7 +160,7 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
   const sourceStacks = await loadStacks(basePath, stacksRelFile);
   const stacks = sourceStacks.length > 0 ? sourceStacks : await loadStacks(PROJECT_ROOT);
   if (stacks.length > 0) {
-    mergedMatrix.suggestedStacks = stacks.map((stack) => stackToResolvedStack(stack));
+    mergedMatrix.suggestedStacks = stacks.map((stack) => convertStackToResolvedStack(stack));
     const stackSource = sourceStacks.length > 0 ? "source" : "CLI";
     verbose(`Loaded ${stacks.length} stacks from ${stackSource}`);
   }
@@ -173,8 +170,7 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
 
 // Convert a Stack to ResolvedStack for wizard compatibility.
 // Stack values are already skill IDs — no alias resolution needed.
-function stackToResolvedStack(stack: Stack): ResolvedStack {
-  // Collect all unique skill IDs from agent configs in this stack
+function convertStackToResolvedStack(stack: Stack): ResolvedStack {
   const allSkillIds: SkillId[] = [];
   const seenSkillIds = new Set<SkillId>();
 
@@ -182,7 +178,6 @@ function stackToResolvedStack(stack: Stack): ResolvedStack {
     const agentConfig = stack.agents[agentId];
     if (!agentConfig) continue;
 
-    // Values are already skill IDs — extract directly
     const skillRefs = resolveAgentConfigToSkills(agentConfig);
 
     for (const ref of skillRefs) {
@@ -277,7 +272,7 @@ function mergeLocalSkillsIntoMatrix(
       categoryExclusive: metadata.categoryExclusive,
       tags: metadata.tags ?? [],
 
-      author: "@local",
+      author: LOCAL_DEFAULTS.AUTHOR,
 
       conflictsWith: existingSkill?.conflictsWith ?? [],
       recommends: existingSkill?.recommends ?? [],

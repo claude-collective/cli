@@ -3,6 +3,7 @@ import path from "path";
 import os from "os";
 import { mkdtemp, rm, readFile, stat } from "fs/promises";
 import {
+  generateAgentPluginManifest,
   generateSkillPluginManifest,
   generateStackPluginManifest,
   writePluginManifest,
@@ -110,6 +111,115 @@ describe("plugin-manifest", () => {
       });
 
       expect(manifest.version).toBe("1.0.0");
+    });
+
+    it("should not include author when author name is not provided", () => {
+      const manifest = generateSkillPluginManifest({
+        skillName: "react",
+        authorEmail: "orphan@example.com",
+      });
+
+      expect(manifest.author).toBeUndefined();
+    });
+
+    it("should not include description when not provided", () => {
+      const manifest = generateSkillPluginManifest({
+        skillName: "react",
+      });
+
+      expect(manifest.description).toBeUndefined();
+    });
+
+    it("should not include keywords when not provided", () => {
+      const manifest = generateSkillPluginManifest({
+        skillName: "react",
+      });
+
+      expect(manifest.keywords).toBeUndefined();
+    });
+  });
+
+  describe("generateAgentPluginManifest", () => {
+    it("should generate manifest with agent- prefix", () => {
+      const manifest = generateAgentPluginManifest({
+        agentName: "web-developer",
+      });
+
+      expect(manifest.name).toBe("agent-web-developer");
+    });
+
+    it("should include agents path", () => {
+      const manifest = generateAgentPluginManifest({
+        agentName: "web-developer",
+      });
+
+      expect(manifest.agents).toBe("./agents/");
+    });
+
+    it("should not include skills path", () => {
+      const manifest = generateAgentPluginManifest({
+        agentName: "web-developer",
+      });
+
+      expect(manifest.skills).toBeUndefined();
+    });
+
+    it("should default to version 1.0.0", () => {
+      const manifest = generateAgentPluginManifest({
+        agentName: "web-developer",
+      });
+
+      expect(manifest.version).toBe("1.0.0");
+    });
+
+    it("should use custom version when provided", () => {
+      const manifest = generateAgentPluginManifest({
+        agentName: "web-developer",
+        version: "2.0.0",
+      });
+
+      expect(manifest.version).toBe("2.0.0");
+    });
+
+    it("should include description when provided", () => {
+      const manifest = generateAgentPluginManifest({
+        agentName: "web-developer",
+        description: "Agent for web development tasks",
+      });
+
+      expect(manifest.description).toBe("Agent for web development tasks");
+    });
+
+    it("should not include description when not provided", () => {
+      const manifest = generateAgentPluginManifest({
+        agentName: "web-developer",
+      });
+
+      expect(manifest.description).toBeUndefined();
+    });
+
+    it("should not include author field", () => {
+      const manifest = generateAgentPluginManifest({
+        agentName: "web-developer",
+      });
+
+      expect(manifest.author).toBeUndefined();
+    });
+
+    it("should not include keywords field", () => {
+      const manifest = generateAgentPluginManifest({
+        agentName: "web-developer",
+      });
+
+      expect(manifest.keywords).toBeUndefined();
+    });
+
+    it("should not include hooks field", () => {
+      const manifest = generateAgentPluginManifest({
+        agentName: "web-developer",
+      });
+
+      expect(manifest.hooks).toBeUndefined();
     });
   });
 
@@ -230,6 +340,81 @@ describe("plugin-manifest", () => {
 
       expect(manifest.version).toBe("3.2.1");
     });
+
+    it("should include author without email when only name provided", () => {
+      const manifest = generateStackPluginManifest({
+        stackName: "nextjs-fullstack",
+        author: "@claude",
+      });
+
+      expect(manifest.author).toEqual({ name: "@claude" });
+    });
+
+    it("should not include author when author name is not provided", () => {
+      const manifest = generateStackPluginManifest({
+        stackName: "nextjs-fullstack",
+        authorEmail: "orphan@example.com",
+      });
+
+      expect(manifest.author).toBeUndefined();
+    });
+
+    it("should not include keywords when empty array", () => {
+      const manifest = generateStackPluginManifest({
+        stackName: "nextjs-fullstack",
+        keywords: [],
+      });
+
+      expect(manifest.keywords).toBeUndefined();
+    });
+
+    it("should include description when provided", () => {
+      const manifest = generateStackPluginManifest({
+        stackName: "nextjs-fullstack",
+        description: "Full-stack Next.js development",
+      });
+
+      expect(manifest.description).toBe("Full-stack Next.js development");
+    });
+
+    it("should not include description when not provided", () => {
+      const manifest = generateStackPluginManifest({
+        stackName: "nextjs-fullstack",
+      });
+
+      expect(manifest.description).toBeUndefined();
+    });
+
+    it("should not include hooks when hasHooks is undefined", () => {
+      const manifest = generateStackPluginManifest({
+        stackName: "nextjs-fullstack",
+      });
+
+      expect(manifest.hooks).toBeUndefined();
+    });
+
+    it("should generate manifest with all options populated", () => {
+      const manifest = generateStackPluginManifest({
+        stackName: "nextjs-fullstack",
+        description: "Full-stack Next.js",
+        author: "@claude",
+        authorEmail: "claude@example.com",
+        version: "2.0.0",
+        keywords: ["web", "react"],
+        hasSkills: true,
+        hasAgents: true,
+        hasHooks: true,
+      });
+
+      expect(manifest.name).toBe("nextjs-fullstack");
+      expect(manifest.version).toBe("2.0.0");
+      expect(manifest.description).toBe("Full-stack Next.js");
+      expect(manifest.author).toEqual({ name: "@claude", email: "claude@example.com" });
+      expect(manifest.keywords).toEqual(["web", "react"]);
+      expect(manifest.skills).toBe("./skills/");
+      expect(manifest.agents).toBeUndefined();
+      expect(manifest.hooks).toBe("./hooks/hooks.json");
+    });
   });
 
   describe("writePluginManifest", () => {
@@ -283,6 +468,35 @@ describe("plugin-manifest", () => {
       const result = await writePluginManifest(tempDir, manifest);
 
       expect(result).toBe(path.join(tempDir, ".claude-plugin", "plugin.json"));
+    });
+
+    it("should preserve all manifest fields in written JSON", async () => {
+      const manifest = generateStackPluginManifest({
+        stackName: "fullstack",
+        description: "Full-stack plugin",
+        author: "@claude",
+        authorEmail: "claude@example.com",
+        version: "2.0.0",
+        keywords: ["web", "react"],
+        hasSkills: true,
+        hasHooks: true,
+      });
+
+      await writePluginManifest(tempDir, manifest);
+
+      const manifestPath = path.join(tempDir, ".claude-plugin", "plugin.json");
+      const content = await readFile(manifestPath, "utf-8");
+      const parsed = JSON.parse(content);
+
+      expect(parsed).toEqual({
+        name: "fullstack",
+        version: "2.0.0",
+        skills: "./skills/",
+        description: "Full-stack plugin",
+        author: { name: "@claude", email: "claude@example.com" },
+        keywords: ["web", "react"],
+        hooks: "./hooks/hooks.json",
+      });
     });
 
     it("should format JSON with 2-space indentation", async () => {

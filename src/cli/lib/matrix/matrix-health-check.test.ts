@@ -1,6 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { checkMatrixHealth } from "./matrix-health-check";
-import type { MatrixHealthIssue } from "./matrix-health-check";
 import { createMockSkill, createMockMatrix } from "../__tests__/helpers";
 import type {
   CategoryDefinition,

@@ -7,12 +7,13 @@ export {
   readForkedFromMetadata,
   getLocalSkillsWithMetadata,
   computeSourceHash,
-  compareSkills,
+  compareLocalSkillsWithSource,
   injectForkedFromMetadata,
 } from "./skill-metadata";
 
 export {
   type CopiedSkill,
+  type CopyProgressCallback,
   copySkill,
   copySkillFromSource,
   copySkillsToPluginFromSource,

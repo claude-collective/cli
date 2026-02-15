@@ -1,236 +1,183 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import path from "path";
+import { mkdir, writeFile } from "fs/promises";
+import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
 
-// Mock file system (manual mock from __mocks__ directory)
-vi.mock("../../utils/fs");
-
-// Mock project-config
-vi.mock("../configuration", () => ({
-  loadProjectConfig: vi.fn(),
-}));
-
-// Mock plugin-finder
-vi.mock("../plugins", () => ({
-  getCollectivePluginDir: vi.fn(),
-}));
+// Mock logger (suppress verbose/warn output during tests)
+vi.mock("../../utils/logger");
 
 import { detectInstallation, getInstallationOrThrow } from "./installation";
-import { fileExists, directoryExists } from "../../utils/fs";
-import { loadProjectConfig } from "../configuration";
-import { getCollectivePluginDir } from "../plugins";
+
+const LOCAL_CONFIG_CONTENT = `name: my-project
+agents:
+  - web-developer
+skills: []
+installMode: local
+`;
+
+const LOCAL_CONFIG_NO_MODE = `name: my-project
+agents:
+  - web-developer
+skills: []
+`;
+
+async function createLocalProject(
+  projectDir: string,
+  options: { useSrcDir?: boolean; configContent?: string } = {},
+): Promise<void> {
+  const { useSrcDir = true, configContent = LOCAL_CONFIG_CONTENT } = options;
+  const configDir = useSrcDir
+    ? path.join(projectDir, ".claude-src")
+    : path.join(projectDir, ".claude");
+  await mkdir(configDir, { recursive: true });
+  await writeFile(path.join(configDir, "config.yaml"), configContent);
+}
+
+async function createPluginDir(projectDir: string): Promise<void> {
+  const pluginDir = path.join(projectDir, ".claude/plugins/claude-collective");
+  await mkdir(pluginDir, { recursive: true });
+}
 
 describe("installation", () => {
-  beforeEach(() => {
-    // Default: plugin dir resolves to a standard path
-    vi.mocked(getCollectivePluginDir).mockReturnValue("/project/.claude/plugins/claude-collective");
+  let tempDir: string;
+
+  beforeEach(async () => {
+    tempDir = await createTempDir("installation-test-");
+  });
+
+  afterEach(async () => {
+    await cleanupTempDir(tempDir);
   });
 
   describe("detectInstallation", () => {
     it("detects local installation with .claude-src/config.yaml", async () => {
-      // .claude-src/config.yaml exists
-      vi.mocked(fileExists).mockImplementation(async (filePath: string) => {
-        return filePath === "/project/.claude-src/config.yaml";
-      });
-      vi.mocked(loadProjectConfig).mockResolvedValue({
-        config: {
-          name: "my-project",
-          agents: ["web-developer"],
-          skills: [],
-          installMode: "local",
-        },
-        configPath: "/project/.claude-src/config.yaml",
-      });
+      await createLocalProject(tempDir);
 
-      const result = await detectInstallation("/project");
+      const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("local");
-      expect(result!.configPath).toBe("/project/.claude-src/config.yaml");
-      expect(result!.agentsDir).toBe("/project/.claude/agents");
-      expect(result!.skillsDir).toBe("/project/.claude/skills");
-      expect(result!.projectDir).toBe("/project");
+      expect(result!.configPath).toBe(path.join(tempDir, ".claude-src/config.yaml"));
+      expect(result!.agentsDir).toBe(path.join(tempDir, ".claude/agents"));
+      expect(result!.skillsDir).toBe(path.join(tempDir, ".claude/skills"));
+      expect(result!.projectDir).toBe(tempDir);
     });
 
     it("detects local installation with legacy .claude/config.yaml", async () => {
-      vi.mocked(fileExists).mockImplementation(async (filePath: string) => {
-        // .claude-src/config.yaml does NOT exist, but legacy does
-        return filePath === "/project/.claude/config.yaml";
-      });
-      vi.mocked(loadProjectConfig).mockResolvedValue({
-        config: {
-          name: "my-project",
-          agents: ["web-developer"],
-          skills: [],
-        },
-        configPath: "/project/.claude/config.yaml",
-      });
+      await createLocalProject(tempDir, { useSrcDir: false });
 
-      const result = await detectInstallation("/project");
+      const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("local");
-      expect(result!.configPath).toBe("/project/.claude/config.yaml");
+      expect(result!.configPath).toBe(path.join(tempDir, ".claude/config.yaml"));
     });
 
     it("defaults to local mode when installMode is not set", async () => {
-      vi.mocked(fileExists).mockImplementation(async (filePath: string) => {
-        return filePath === "/project/.claude-src/config.yaml";
-      });
-      vi.mocked(loadProjectConfig).mockResolvedValue({
-        config: {
-          name: "my-project",
-          agents: ["web-developer"],
-          skills: [],
-          // No installMode set — should default to "local"
-        },
-        configPath: "/project/.claude-src/config.yaml",
-      });
+      await createLocalProject(tempDir, { configContent: LOCAL_CONFIG_NO_MODE });
 
-      const result = await detectInstallation("/project");
+      const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("local");
     });
 
     it("detects plugin installation when no local config exists", async () => {
-      // No local config files
-      vi.mocked(fileExists).mockResolvedValue(false);
-      // Plugin directory exists
-      vi.mocked(directoryExists).mockResolvedValue(true);
+      // No local config, but plugin directory exists
+      await createPluginDir(tempDir);
 
-      const result = await detectInstallation("/project");
+      const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("plugin");
-      expect(result!.configPath).toBe("/project/.claude/plugins/claude-collective/config.yaml");
-      expect(result!.agentsDir).toBe("/project/.claude/plugins/claude-collective/agents");
-      expect(result!.skillsDir).toBe("/project/.claude/plugins/claude-collective/skills");
+      expect(result!.configPath).toBe(
+        path.join(tempDir, ".claude/plugins/claude-collective/config.yaml"),
+      );
+      expect(result!.agentsDir).toBe(
+        path.join(tempDir, ".claude/plugins/claude-collective/agents"),
+      );
+      expect(result!.skillsDir).toBe(
+        path.join(tempDir, ".claude/plugins/claude-collective/skills"),
+      );
     });
 
     it("returns null when no installation found", async () => {
-      vi.mocked(fileExists).mockResolvedValue(false);
-      vi.mocked(directoryExists).mockResolvedValue(false);
-
-      const result = await detectInstallation("/project");
+      // Empty temp dir — no config, no plugin
+      const result = await detectInstallation(tempDir);
 
       expect(result).toBeNull();
     });
 
     it("prefers local installation over plugin when both exist", async () => {
-      vi.mocked(fileExists).mockImplementation(async (filePath: string) => {
-        return filePath === "/project/.claude-src/config.yaml";
-      });
-      vi.mocked(loadProjectConfig).mockResolvedValue({
-        config: {
-          name: "my-project",
-          agents: ["web-developer"],
-          skills: [],
-        },
-        configPath: "/project/.claude-src/config.yaml",
-      });
-      // Plugin also exists
-      vi.mocked(directoryExists).mockResolvedValue(true);
+      await createLocalProject(tempDir);
+      await createPluginDir(tempDir);
 
-      const result = await detectInstallation("/project");
+      const result = await detectInstallation(tempDir);
 
       // Local takes priority
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("local");
     });
 
-    it("falls through to plugin when loadProjectConfig returns null", async () => {
-      vi.mocked(fileExists).mockImplementation(async (filePath: string) => {
-        return filePath === "/project/.claude-src/config.yaml";
-      });
-      // Config file exists but loadProjectConfig fails to parse
-      vi.mocked(loadProjectConfig).mockResolvedValue(null);
-      // Plugin directory exists
-      vi.mocked(directoryExists).mockResolvedValue(true);
+    it("falls through to local even when config is invalid YAML", async () => {
+      // Create a config file that exists but has invalid content
+      // loadProjectConfig returns null for unparseable configs
+      const configDir = path.join(tempDir, ".claude-src");
+      await mkdir(configDir, { recursive: true });
+      await writeFile(path.join(configDir, "config.yaml"), "not: [valid: yaml: {{");
 
-      const result = await detectInstallation("/project");
+      const result = await detectInstallation(tempDir);
 
-      // Should fall through since loadProjectConfig returned null =>
-      // loaded is null, mode would error. Let's check what actually happens.
-      // Looking at source: `const mode: InstallMode = loaded?.config?.installMode ?? "local";`
-      // loaded is null, so loaded?.config?.installMode is undefined, defaults to "local"
-      // So it returns local mode even with null loadProjectConfig result
+      // loadProjectConfig returns null, but the file exists so detectInstallation
+      // still enters the local branch. mode defaults to "local" via ?? operator.
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("local");
     });
 
     it("prefers .claude-src/config.yaml over .claude/config.yaml", async () => {
       // Both config files exist
-      vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(loadProjectConfig).mockResolvedValue({
-        config: {
-          name: "my-project",
-          agents: ["web-developer"],
-          skills: [],
-        },
-        configPath: "/project/.claude-src/config.yaml",
-      });
+      await createLocalProject(tempDir, { useSrcDir: true });
+      await createLocalProject(tempDir, { useSrcDir: false });
 
-      const result = await detectInstallation("/project");
+      const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
       // Should use .claude-src/config.yaml (checked first)
-      expect(result!.configPath).toBe("/project/.claude-src/config.yaml");
+      expect(result!.configPath).toBe(path.join(tempDir, ".claude-src/config.yaml"));
     });
 
     it("uses provided projectDir parameter", async () => {
-      vi.mocked(fileExists).mockResolvedValue(false);
-      vi.mocked(directoryExists).mockResolvedValue(false);
-      vi.mocked(getCollectivePluginDir).mockReturnValue(
-        "/custom/dir/.claude/plugins/claude-collective",
-      );
-
-      const result = await detectInstallation("/custom/dir");
+      // Empty dir — no installation
+      const result = await detectInstallation(tempDir);
 
       expect(result).toBeNull();
-      expect(getCollectivePluginDir).toHaveBeenCalledWith("/custom/dir");
     });
   });
 
   describe("getInstallationOrThrow", () => {
     it("returns installation when found", async () => {
-      vi.mocked(fileExists).mockImplementation(async (filePath: string) => {
-        return filePath === "/project/.claude-src/config.yaml";
-      });
-      vi.mocked(loadProjectConfig).mockResolvedValue({
-        config: {
-          name: "my-project",
-          agents: ["web-developer"],
-          skills: [],
-        },
-        configPath: "/project/.claude-src/config.yaml",
-      });
+      await createLocalProject(tempDir);
 
-      const result = await getInstallationOrThrow("/project");
+      const result = await getInstallationOrThrow(tempDir);
 
       expect(result.mode).toBe("local");
-      expect(result.projectDir).toBe("/project");
+      expect(result.projectDir).toBe(tempDir);
     });
 
     it("throws error when no installation found", async () => {
-      vi.mocked(fileExists).mockResolvedValue(false);
-      vi.mocked(directoryExists).mockResolvedValue(false);
-
-      await expect(getInstallationOrThrow("/project")).rejects.toThrow(
+      await expect(getInstallationOrThrow(tempDir)).rejects.toThrow(
         "No Claude Collective installation found",
       );
     });
 
     it("error message suggests running cc init", async () => {
-      vi.mocked(fileExists).mockResolvedValue(false);
-      vi.mocked(directoryExists).mockResolvedValue(false);
-
-      await expect(getInstallationOrThrow("/project")).rejects.toThrow("cc init");
+      await expect(getInstallationOrThrow(tempDir)).rejects.toThrow("cc init");
     });
 
     it("returns plugin installation when only plugin exists", async () => {
-      vi.mocked(fileExists).mockResolvedValue(false);
-      vi.mocked(directoryExists).mockResolvedValue(true);
+      await createPluginDir(tempDir);
 
-      const result = await getInstallationOrThrow("/project");
+      const result = await getInstallationOrThrow(tempDir);
 
       expect(result.mode).toBe("plugin");
     });

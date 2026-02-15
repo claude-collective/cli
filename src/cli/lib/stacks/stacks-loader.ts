@@ -1,6 +1,7 @@
 import { parse as parseYaml } from "yaml";
 import path from "path";
 import { mapValues } from "remeda";
+import { getErrorMessage } from "../../utils/errors";
 import { readFile, fileExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
 import type {
@@ -12,7 +13,7 @@ import type {
   StackAgentConfig,
   Subcategory,
 } from "../../types";
-import { SKILL_ID_PATTERN, stacksConfigSchema } from "../schemas";
+import { SKILL_ID_PATTERN, formatZodErrors, stacksConfigSchema } from "../schemas";
 import { typedEntries } from "../../utils/typed-object";
 
 const STACKS_FILE = "config/stacks.yaml";
@@ -38,7 +39,7 @@ export async function loadStacks(configDir: string, stacksFile?: string): Promis
 
     if (!result.success) {
       throw new Error(
-        `Invalid stacks.yaml at ${stacksPath}: ${result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
+        `Invalid stacks.yaml at '${stacksPath}': ${formatZodErrors(result.error.issues)}`,
       );
     }
 
@@ -65,7 +66,7 @@ export async function loadStacks(configDir: string, stacksFile?: string): Promis
 
     return stacks;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = getErrorMessage(error);
     throw new Error(`Failed to load stacks from '${stacksPath}': ${errorMessage}`);
   }
 }

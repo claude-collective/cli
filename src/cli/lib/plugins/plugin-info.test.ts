@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   getPluginInfo,
   formatPluginDisplay,
@@ -8,7 +8,7 @@ import {
   type InstallationInfo,
 } from "./plugin-info";
 import type { PluginManifest } from "../../types";
-import type { InstallMode, Installation } from "../installation";
+import type { Installation } from "../installation";
 
 vi.mock("fs/promises", () => ({
   readdir: vi.fn(),

@@ -1,6 +1,7 @@
 import path from "path";
 import { copy, ensureDir, directoryExists, glob } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
+import { GITHUB_SOURCE } from "../../consts";
 import type { Marketplace, MarketplacePlugin, SkillId } from "../../types";
 
 export type FetchSkillsOptions = {
@@ -18,7 +19,7 @@ function resolvePluginSource(plugin: MarketplacePlugin, _marketplace: Marketplac
 
   if (typeof plugin.source === "object" && plugin.source.repo) {
     const ref = plugin.source.ref ? `#${plugin.source.ref}` : "";
-    return `github:${plugin.source.repo}${ref}`;
+    return `${GITHUB_SOURCE.GITHUB_PREFIX}${plugin.source.repo}${ref}`;
   }
 
   return plugin.name;
@@ -51,7 +52,11 @@ export async function fetchSkills(
     const skillPath = await findSkillPath(skillSourceDir, skillId);
 
     if (!skillPath) {
-      throw new Error(`Skill not found: ${skillId}`);
+      throw new Error(
+        `Skill not found: ${skillId}\n\n` +
+          `Looked in: ${skillSourceDir}\n` +
+          `Run 'cc search ${skillId}' to find available skills, or 'cc init' to select skills interactively.`,
+      );
     }
 
     const relativePath = path.relative(skillSourceDir, skillPath);

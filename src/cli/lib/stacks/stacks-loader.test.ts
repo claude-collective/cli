@@ -10,12 +10,7 @@ vi.mock("../../utils/fs", () => ({
 
 vi.mock("../../utils/logger");
 
-import {
-  loadStacks,
-  loadStackById,
-  resolveAgentConfigToSkills,
-  resolveStackSkills,
-} from "./stacks-loader";
+import { resolveAgentConfigToSkills, resolveStackSkills } from "./stacks-loader";
 import { readFile, fileExists } from "../../utils/fs";
 import { warn } from "../../utils/logger";
 

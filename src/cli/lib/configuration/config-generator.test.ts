@@ -155,6 +155,210 @@ describe("config-generator", () => {
       // But agents should only be derived from known skills
       expect(config.agents.length).toBeGreaterThan(0);
     });
+
+    it("deduplicates agents across skills in the same domain", () => {
+      const matrix = createMockMatrix({
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        ["web-styling-scss-modules"]: createMockSkill("web-styling-scss-modules", "web/styling"),
+      });
+
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-framework-react", "web-styling-scss-modules"],
+        matrix,
+      );
+
+      // Both web/* skills map to the same agent set, so agents should be deduplicated
+      const uniqueAgents = new Set(config.agents);
+      expect(config.agents.length).toBe(uniqueAgents.size);
+    });
+
+    it("sorts agents alphabetically", () => {
+      const matrix = createMockMatrix({
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+      });
+
+      const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], matrix);
+
+      const sortedAgents = [...config.agents].sort();
+      expect(config.agents).toEqual(sortedAgents);
+    });
+
+    it("merges agents from different domains", () => {
+      const matrix = createMockMatrix({
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        ["api-framework-hono"]: createMockSkill("api-framework-hono", "api/framework"),
+      });
+
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-framework-react", "api-framework-hono"],
+        matrix,
+      );
+
+      // web/* agents
+      expect(config.agents).toContain("web-developer");
+      expect(config.agents).toContain("web-reviewer");
+      // api/* agents
+      expect(config.agents).toContain("api-developer");
+      expect(config.agents).toContain("api-reviewer");
+      // Agents should still be sorted
+      const sortedAgents = [...config.agents].sort();
+      expect(config.agents).toEqual(sortedAgents);
+    });
+
+    it("builds separate stack entries per agent for cross-domain skills", () => {
+      const matrix = createMockMatrix({
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        ["api-framework-hono"]: createMockSkill("api-framework-hono", "api/framework"),
+      });
+
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-framework-react", "api-framework-hono"],
+        matrix,
+      );
+
+      expect(config.stack).toBeDefined();
+      // web-developer gets framework from web skill
+      expect(config.stack!["web-developer"]?.framework).toBe("web-framework-react");
+      // api-developer gets framework from api skill
+      expect(config.stack!["api-developer"]?.framework).toBe("api-framework-hono");
+    });
+
+    it("handles bare subcategory category paths", () => {
+      // Skills can have bare subcategory (no domain prefix) as their category
+      const matrix = createMockMatrix({
+        ["web-testing-vitest"]: createMockSkill("web-testing-vitest", "testing"),
+      });
+
+      const config = generateProjectConfigFromSkills("my-project", ["web-testing-vitest"], matrix);
+
+      // Bare subcategory "testing" should still extract as subcategory
+      expect(config.stack).toBeDefined();
+      expect(
+        Object.values(config.stack!).some((agent) => agent.testing === "web-testing-vitest"),
+      ).toBe(true);
+    });
+
+    it("preserves all selected skill IDs in skills array", () => {
+      const matrix = createMockMatrix({
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        ["web-styling-scss-modules"]: createMockSkill("web-styling-scss-modules", "web/styling"),
+        ["api-framework-hono"]: createMockSkill("api-framework-hono", "api/framework"),
+      });
+
+      const selectedSkills: SkillId[] = [
+        "web-framework-react",
+        "web-styling-scss-modules",
+        "api-framework-hono",
+      ];
+
+      const config = generateProjectConfigFromSkills("my-project", selectedSkills, matrix);
+
+      expect(config.skills).toEqual(selectedSkills);
+    });
+
+    it("includes unknown skill IDs in skills array even when skipped for agents", () => {
+      const matrix = createMockMatrix({
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+      });
+
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-framework-react", "web-unknown-skill"],
+        matrix,
+      );
+
+      // skills array is a direct copy of selectedSkillIds — includes unknowns
+      expect(config.skills).toEqual(["web-framework-react", "web-unknown-skill"]);
+    });
+
+    it("produces no stack when all skills are unknown", () => {
+      const matrix = createMockMatrix({});
+
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-nonexistent-skill", "api-nonexistent-thing"],
+        matrix,
+      );
+
+      expect(config.agents).toEqual([]);
+      expect(config.stack).toBeUndefined();
+      // Skills array still contains the IDs even though they are unknown
+      expect(config.skills).toEqual(["web-nonexistent-skill", "api-nonexistent-thing"]);
+    });
+
+    it("does not add description when options.description is empty string", () => {
+      const matrix = createMockMatrix({
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+      });
+
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-framework-react"],
+        matrix,
+        { description: "", author: "@vince" },
+      );
+
+      // Empty string is falsy, so description should not be set
+      expect(config.description).toBeUndefined();
+      expect(config.author).toBe("@vince");
+    });
+
+    it("does not add author when options.author is empty string", () => {
+      const matrix = createMockMatrix({
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+      });
+
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-framework-react"],
+        matrix,
+        { description: "A project", author: "" },
+      );
+
+      expect(config.description).toBe("A project");
+      // Empty string is falsy, so author should not be set
+      expect(config.author).toBeUndefined();
+    });
+
+    it("does not add optional fields when options is undefined", () => {
+      const matrix = createMockMatrix({
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+      });
+
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-framework-react"],
+        matrix,
+        undefined,
+      );
+
+      expect(config.description).toBeUndefined();
+      expect(config.author).toBeUndefined();
+    });
+
+    it("assigns methodology skills to all methodology/* agents", () => {
+      const matrix = createMockMatrix({
+        ["meta-methodology-anti-over-engineering"]: createMockSkill(
+          "meta-methodology-anti-over-engineering",
+          "methodology/core",
+        ),
+      });
+
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["meta-methodology-anti-over-engineering"],
+        matrix,
+      );
+
+      // methodology/* maps to many agents including web-developer, api-developer, etc.
+      expect(config.agents).toContain("web-developer");
+      expect(config.agents).toContain("api-developer");
+      // Stack should have subcategory "core" from path "methodology/core"
+      expect(config.stack).toBeDefined();
+    });
   });
 
   describe("buildStackProperty", () => {
@@ -300,6 +504,98 @@ describe("config-generator", () => {
           methodology: undefined,
         },
       });
+    });
+
+    it("preserves preloaded flag in skill ID extraction (only ID is kept)", () => {
+      const stack: Stack = {
+        id: "test-stack",
+        name: "Test Stack",
+        description: "Test stack",
+        agents: {
+          "web-developer": {
+            framework: [sa("web-framework-react", true)],
+            styling: [sa("web-styling-scss-modules", false)],
+          } as StackAgentConfig,
+        } as Partial<Record<AgentName, StackAgentConfig>>,
+      };
+
+      const result = buildStackProperty(stack);
+
+      // buildStackProperty extracts only the ID — preloaded is not in the result
+      expect(result["web-developer"]?.framework).toBe("web-framework-react");
+      expect(result["web-developer"]?.styling).toBe("web-styling-scss-modules");
+    });
+
+    it("handles multiple agents with identical subcategories", () => {
+      const stack: Stack = {
+        id: "test-stack",
+        name: "Test Stack",
+        description: "Test stack",
+        agents: {
+          "web-developer": {
+            framework: [sa("web-framework-react")],
+          },
+          "web-reviewer": {
+            framework: [sa("web-framework-react")],
+          },
+        } as Partial<Record<AgentName, StackAgentConfig>>,
+      };
+
+      const result = buildStackProperty(stack);
+
+      // Each agent gets its own entry, even if they share the same subcategory skill
+      expect(result["web-developer"]?.framework).toBe("web-framework-react");
+      expect(result["web-reviewer"]?.framework).toBe("web-framework-react");
+    });
+
+    it("handles single agent with many subcategories", () => {
+      const stack: Stack = {
+        id: "fullstack",
+        name: "Fullstack",
+        description: "Fullstack stack",
+        agents: {
+          "web-developer": {
+            framework: [sa("web-framework-react")],
+            styling: [sa("web-styling-scss-modules")],
+            "client-state": [sa("web-state-zustand")],
+            testing: [sa("web-testing-vitest")],
+          } as StackAgentConfig,
+        } as Partial<Record<AgentName, StackAgentConfig>>,
+      };
+
+      const result = buildStackProperty(stack);
+
+      expect(result["web-developer"]).toEqual({
+        framework: "web-framework-react",
+        styling: "web-styling-scss-modules",
+        "client-state": "web-state-zustand",
+        testing: "web-testing-vitest",
+      });
+    });
+
+    it("handles local skill assignments in stack", () => {
+      const stack: Stack = {
+        id: "test-stack",
+        name: "Test Stack",
+        description: "Test stack with local skill",
+        agents: {
+          "web-developer": {
+            framework: [
+              {
+                id: "web-framework-react",
+                preloaded: true,
+                local: true,
+                path: ".claude/skills/react/",
+              },
+            ],
+          } as StackAgentConfig,
+        } as Partial<Record<AgentName, StackAgentConfig>>,
+      };
+
+      const result = buildStackProperty(stack);
+
+      // Only the ID is extracted, local/path are not preserved
+      expect(result["web-developer"]?.framework).toBe("web-framework-react");
     });
   });
 });

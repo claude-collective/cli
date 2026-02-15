@@ -1,7 +1,7 @@
 import path from "path";
-import { parse as parseYaml } from "yaml";
-import { readFile, fileExists } from "../../utils/fs";
+import { fileExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
+import { safeLoadYamlFile } from "../../utils/yaml";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../../consts";
 import type { ProjectConfig, ValidationResult } from "../../types";
 import { projectConfigLoaderSchema } from "../schemas";
@@ -31,42 +31,26 @@ export async function loadProjectConfig(projectDir: string): Promise<LoadedProje
     }
   }
 
-  try {
-    const content = await readFile(configPath);
-    const parsed = parseYaml(content);
+  const data = await safeLoadYamlFile(configPath, projectConfigLoaderSchema);
+  if (!data) return null;
 
-    if (!parsed || typeof parsed !== "object") {
-      warn(`Invalid project config structure at ${configPath}`);
-      return null;
-    }
-
-    const result = projectConfigLoaderSchema.safeParse(parsed);
-    if (!result.success) {
-      warn(`Invalid project config at ${configPath}: ${result.error.message}`);
-      return null;
-    }
-
-    const config = result.data as ProjectConfig;
-    if (!config.name) {
-      warn(
-        `Project config at ${configPath} is missing required 'name' field — defaulting to directory name`,
-      );
-      config.name = path.basename(projectDir);
-    }
-    if (!config.skills) {
-      warn(`Project config at ${configPath} is missing 'skills' array — defaulting to empty`);
-      config.skills = [];
-    }
-
-    verbose(`Loaded project config from ${configPath}`);
-    return {
-      config,
-      configPath,
-    };
-  } catch (error) {
-    warn(`Failed to parse project config at ${configPath}: ${error}`);
-    return null;
+  const config = data as ProjectConfig;
+  if (!config.name) {
+    warn(
+      `Project config at '${configPath}' is missing required 'name' field — defaulting to directory name`,
+    );
+    config.name = path.basename(projectDir);
   }
+  if (!config.skills) {
+    warn(`Project config at '${configPath}' is missing 'skills' array — defaulting to empty`);
+    config.skills = [];
+  }
+
+  verbose(`Loaded project config from ${configPath}`);
+  return {
+    config,
+    configPath,
+  };
 }
 
 export function validateProjectConfig(config: unknown): ValidationResult {
@@ -77,14 +61,13 @@ export function validateProjectConfig(config: unknown): ValidationResult {
     return { valid: false, errors: ["Config must be an object"], warnings: [] };
   }
 
+  // Boundary cast: config validated as object above, narrow to record for field access
   const c = config as Record<string, unknown>;
 
-  // Required: name
   if (!c.name || typeof c.name !== "string") {
     errors.push("name is required and must be a string");
   }
 
-  // Required: agents (for compilation)
   if (!c.agents || !Array.isArray(c.agents)) {
     errors.push("agents is required and must be an array");
   } else {
@@ -95,7 +78,6 @@ export function validateProjectConfig(config: unknown): ValidationResult {
     }
   }
 
-  // Optional: version
   if (c.version !== undefined && c.version !== "1") {
     errors.push('version must be "1" (or omitted for default)');
   }

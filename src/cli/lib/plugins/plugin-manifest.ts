@@ -1,10 +1,11 @@
 import path from "path";
+
 import { ensureDir, writeFile } from "../../utils/fs";
-import { DEFAULT_VERSION } from "../../consts";
+import { DEFAULT_VERSION, PLUGIN_MANIFEST_DIR, STANDARD_FILES } from "../../consts";
 import type { PluginAuthor, PluginManifest } from "../../types";
 
-const PLUGIN_DIR_NAME = ".claude-plugin";
-const PLUGIN_MANIFEST_FILE = "plugin.json";
+const PLUGIN_DIR_NAME = PLUGIN_MANIFEST_DIR;
+const PLUGIN_MANIFEST_FILE = STANDARD_FILES.PLUGIN_JSON;
 const SKILL_PLUGIN_PREFIX = "";
 const AGENT_PLUGIN_PREFIX = "agent-";
 

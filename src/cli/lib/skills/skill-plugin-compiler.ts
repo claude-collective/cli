@@ -1,16 +1,19 @@
 import path from "path";
 import { parse as parseYaml } from "yaml";
+import { getErrorMessage } from "../../utils/errors";
 import { readFile, writeFile, ensureDir, glob, fileExists, copy } from "../../utils/fs";
-import { verbose, warn } from "../../utils/logger";
+import { log, verbose, warn } from "../../utils/logger";
 import {
   generateSkillPluginManifest,
   writePluginManifest,
   getPluginManifestPath,
 } from "../plugins";
 import { parseFrontmatter } from "../loading";
-import { hashSkillFolder, determinePluginVersion, writeContentHash } from "../versioning";
+import { computeSkillFolderHash, determinePluginVersion, writeContentHash } from "../versioning";
 import type { PluginManifest, SkillFrontmatter, SkillMetadataConfig } from "../../types";
-import { skillMetadataLoaderSchema } from "../schemas";
+import { formatZodErrors, skillMetadataLoaderSchema } from "../schemas";
+import { STANDARD_FILES } from "../../consts";
+import { SKILL_CONTENT_FILES, SKILL_CONTENT_DIRS } from "../metadata-keys";
 
 export type SkillPluginOptions = {
   skillPath: string;
@@ -24,16 +27,12 @@ export type CompiledSkillPlugin = {
   skillName: string;
 };
 
-const SKILL_FILES = ["SKILL.md", "reference.md"] as const;
-
-const SKILL_DIRS = ["examples", "scripts"] as const;
-
 function sanitizeSkillName(name: string): string {
   return name.replace(/\+/g, "-");
 }
 
 async function readSkillMetadata(skillPath: string): Promise<SkillMetadataConfig | null> {
-  const metadataPath = path.join(skillPath, "metadata.yaml");
+  const metadataPath = path.join(skillPath, STANDARD_FILES.METADATA_YAML);
 
   if (!(await fileExists(metadataPath))) {
     return null;
@@ -48,14 +47,12 @@ async function readSkillMetadata(skillPath: string): Promise<SkillMetadataConfig
 
     const result = skillMetadataLoaderSchema.safeParse(parseYaml(yamlContent));
     if (!result.success) {
-      warn(
-        `Invalid metadata.yaml at ${skillPath}: ${result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
-      );
+      warn(`Invalid metadata.yaml at '${skillPath}': ${formatZodErrors(result.error.issues)}`);
       return null;
     }
     return result.data;
   } catch (error) {
-    warn(`Failed to read metadata.yaml at ${skillPath}: ${error}`);
+    warn(`Failed to read metadata.yaml at '${skillPath}': ${error}`);
     return null;
   }
 }
@@ -115,10 +112,10 @@ export async function compileSkillPlugin(
   // Use directory basename for initial error messages before frontmatter is parsed
   const dirBasename = path.basename(skillPath);
 
-  const skillMdPath = path.join(skillPath, "SKILL.md");
+  const skillMdPath = path.join(skillPath, STANDARD_FILES.SKILL_MD);
   if (!(await fileExists(skillMdPath))) {
     throw new Error(
-      `Skill '${dirBasename}' is missing required SKILL.md file. Expected at: ${skillMdPath}`,
+      `Skill '${dirBasename}' is missing required ${STANDARD_FILES.SKILL_MD} file. Expected at: ${skillMdPath}`,
     );
   }
 
@@ -127,7 +124,7 @@ export async function compileSkillPlugin(
 
   if (!frontmatter) {
     throw new Error(
-      `Skill '${dirBasename}' has invalid or missing YAML frontmatter in SKILL.md. ` +
+      `Skill '${dirBasename}' has invalid or missing YAML frontmatter in ${STANDARD_FILES.SKILL_MD}. ` +
         `Required fields: 'name' and 'description'. File: ${skillMdPath}`,
     );
   }
@@ -146,7 +143,7 @@ export async function compileSkillPlugin(
   await ensureDir(pluginDir);
   await ensureDir(skillsDir);
 
-  const newHash = await hashSkillFolder(skillPath);
+  const newHash = await computeSkillFolderHash(skillPath);
   const { version, contentHash } = await determinePluginVersion(
     newHash,
     pluginDir,
@@ -167,11 +164,11 @@ export async function compileSkillPlugin(
 
   verbose(`  Wrote plugin.json for ${skillName} (v${version})`);
 
-  await writeFile(path.join(skillsDir, "SKILL.md"), skillMdContent);
-  verbose(`  Copied SKILL.md`);
+  await writeFile(path.join(skillsDir, STANDARD_FILES.SKILL_MD), skillMdContent);
+  verbose(`  Copied ${STANDARD_FILES.SKILL_MD}`);
 
-  for (const fileName of SKILL_FILES) {
-    if (fileName === "SKILL.md") continue;
+  for (const fileName of SKILL_CONTENT_FILES) {
+    if (fileName === STANDARD_FILES.SKILL_MD) continue;
 
     const sourcePath = path.join(skillPath, fileName);
     if (await fileExists(sourcePath)) {
@@ -181,7 +178,7 @@ export async function compileSkillPlugin(
     }
   }
 
-  for (const dirName of SKILL_DIRS) {
+  for (const dirName of SKILL_CONTENT_DIRS) {
     const sourceDir = path.join(skillPath, dirName);
     if (await fileExists(sourceDir)) {
       await copy(sourceDir, path.join(skillsDir, dirName));
@@ -206,7 +203,7 @@ export async function compileAllSkillPlugins(
 ): Promise<CompiledSkillPlugin[]> {
   const results: CompiledSkillPlugin[] = [];
 
-  const skillMdFiles = await glob("**/SKILL.md", skillsDir);
+  const skillMdFiles = await glob(`**/${STANDARD_FILES.SKILL_MD}`, skillsDir);
 
   for (const skillMdFile of skillMdFiles) {
     const skillPath = path.join(skillsDir, path.dirname(skillMdFile));
@@ -218,11 +215,11 @@ export async function compileAllSkillPlugins(
         outputDir,
       });
       results.push(result);
-      console.log(`  [OK] ${result.skillName}`);
+      log(`  [OK] ${result.skillName}`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = getErrorMessage(error);
       const dirBasename = path.basename(skillPath);
-      console.warn(`  [WARN] Failed to compile skill from ${dirBasename}: ${errorMessage}`);
+      warn(`Failed to compile skill from '${dirBasename}': ${errorMessage}`);
     }
   }
 
@@ -230,8 +227,8 @@ export async function compileAllSkillPlugins(
 }
 
 export function printCompilationSummary(results: CompiledSkillPlugin[]): void {
-  console.log(`\nCompiled ${results.length} skill plugins:`);
+  log(`\nCompiled ${results.length} skill plugins:`);
   for (const result of results) {
-    console.log(`  - ${result.skillName} (v${result.manifest.version})`);
+    log(`  - ${result.skillName} (v${result.manifest.version})`);
   }
 }

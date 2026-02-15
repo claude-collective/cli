@@ -1,11 +1,12 @@
 import { parse as parseYaml } from "yaml";
 import path from "path";
 import { unique } from "remeda";
+import { getErrorMessage } from "../../utils/errors";
 import { glob, readFile, directoryExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
-import { CLAUDE_SRC_DIR, DIRS } from "../../consts";
+import { CLAUDE_SRC_DIR, DIRS, STANDARD_FILES } from "../../consts";
 import type { AgentDefinition, SkillDefinition, SkillFrontmatter, SkillId } from "../../types";
-import { skillFrontmatterLoaderSchema, agentYamlConfigSchema } from "../schemas";
+import { formatZodErrors, skillFrontmatterLoaderSchema, agentYamlConfigSchema } from "../schemas";
 
 const FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---/;
 
@@ -18,9 +19,7 @@ export function parseFrontmatter(content: string, filePath?: string): SkillFront
 
   if (!parsed.success) {
     const location = filePath ?? "unknown file";
-    warn(
-      `Invalid SKILL.md frontmatter in ${location}: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
-    );
+    warn(`Invalid SKILL.md frontmatter in '${location}': ${formatZodErrors(parsed.error.issues)}`);
     return null;
   }
   // Boundary cast: YAML name field may not match strict SkillId pattern (e.g., local skills)
@@ -51,9 +50,7 @@ export async function loadAllAgents(projectRoot: string): Promise<Record<string,
 
       verbose(`Loaded agent: ${config.id} from ${file}`);
     } catch (error) {
-      warn(
-        `Skipping invalid agent.yaml at ${fullPath}: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      warn(`Skipping invalid agent.yaml at '${fullPath}': ${getErrorMessage(error)}`);
     }
   }
 
@@ -92,9 +89,7 @@ export async function loadProjectAgents(
 
       verbose(`Loaded project agent: ${config.id} from ${file}`);
     } catch (error) {
-      warn(
-        `Skipping invalid agent.yaml at ${fullPath}: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      warn(`Skipping invalid agent.yaml at '${fullPath}': ${getErrorMessage(error)}`);
     }
   }
 
@@ -145,7 +140,7 @@ export async function loadSkillsByIds(
         expandedSkillIds.push(...(childSkills as SkillId[]));
         verbose(`Expanded directory '${skillId}' to ${childSkills.length} skills`);
       } else {
-        console.warn(`  Warning: Unknown skill reference '${skillId}'`);
+        warn(`Unknown skill reference '${skillId}'`);
       }
     }
   }
@@ -155,19 +150,19 @@ export async function loadSkillsByIds(
   for (const skillId of uniqueSkillIds) {
     const directoryPath = idToDirectoryPath[skillId];
     if (!directoryPath) {
-      console.warn(`  Warning: Could not find skill ${skillId}: No matching skill found`);
+      warn(`Could not find skill '${skillId}': no matching skill found`);
       continue;
     }
 
     const skillPath = path.join(skillsDir, directoryPath);
-    const skillMdPath = path.join(skillPath, "SKILL.md");
+    const skillMdPath = path.join(skillPath, STANDARD_FILES.SKILL_MD);
 
     try {
       const content = await readFile(skillMdPath);
       const frontmatter = parseFrontmatter(content, skillMdPath);
 
       if (!frontmatter) {
-        warn(`Skipping ${skillId}: Missing or invalid frontmatter`);
+        warn(`Skipping '${skillId}': missing or invalid frontmatter`);
         continue;
       }
 
@@ -186,7 +181,7 @@ export async function loadSkillsByIds(
 
       verbose(`Loaded skill: ${canonicalId} (from ${directoryPath})`);
     } catch (error) {
-      console.warn(`  Warning: Could not load skill ${skillId}: ${error}`);
+      warn(`Could not load skill '${skillId}': ${error}`);
     }
   }
 
@@ -211,7 +206,7 @@ export async function loadPluginSkills(
 
     const frontmatter = parseFrontmatter(content, fullPath);
     if (!frontmatter) {
-      warn(`Skipping ${file}: Missing or invalid frontmatter`);
+      warn(`Skipping '${file}': missing or invalid frontmatter`);
       continue;
     }
 
