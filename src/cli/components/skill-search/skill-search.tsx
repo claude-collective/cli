@@ -38,14 +38,13 @@ function matchesQuery(skill: SourcedSkill, query: string): boolean {
   if (skill.description.toLowerCase().includes(lowerQuery)) return true;
   if (skill.category.toLowerCase().includes(lowerQuery)) return true;
   if (skill.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))) return true;
-  if (skill.sourceName.toLowerCase().includes(lowerQuery)) return true;
 
-  return false;
+  return skill.sourceName.toLowerCase().includes(lowerQuery);
 }
 
 function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength - 3) + "...";
+  return `${text.slice(0, maxLength - 3)}...`;
 }
 
 type HeaderProps = {

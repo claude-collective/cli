@@ -23,7 +23,7 @@ const MAX_DESCRIPTION_WIDTH = 50;
 
 function truncate(str: string, maxLength: number): string {
   if (str.length <= maxLength) return str;
-  return str.slice(0, maxLength - 3) + "...";
+  return `${str.slice(0, maxLength - 3)}...`;
 }
 
 function matchesQuery(skill: ResolvedSkill, query: string): boolean {
@@ -34,11 +34,7 @@ function matchesQuery(skill: ResolvedSkill, query: string): boolean {
   if (skill.description.toLowerCase().includes(lowerQuery)) return true;
   if (skill.category.toLowerCase().includes(lowerQuery)) return true;
 
-  if (skill.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))) {
-    return true;
-  }
-
-  return false;
+  return skill.tags.some((tag) => tag.toLowerCase().includes(lowerQuery));
 }
 
 function matchesCategory(skill: ResolvedSkill, category: CategoryPath): boolean {
@@ -84,7 +80,7 @@ async function fetchSkillsFromSource(
           category: "imported" as CategoryPath,
           categoryExclusive: false,
           tags: [],
-          author: "@" + source.name,
+          author: `@${source.name}`,
           conflictsWith: [],
           recommends: [],
           requires: [],

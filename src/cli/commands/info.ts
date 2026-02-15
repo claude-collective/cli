@@ -48,7 +48,7 @@ function getPreviewLines(content: string, maxLines: number): string[] {
     if (result.length >= maxLines) break;
     if (line.trim() || result.length > 0) {
       const truncated =
-        line.length > MAX_LINE_LENGTH ? line.slice(0, MAX_LINE_LENGTH - 3) + "..." : line;
+        line.length > MAX_LINE_LENGTH ? `${line.slice(0, MAX_LINE_LENGTH - 3)}...` : line;
       result.push(truncated);
     }
   }

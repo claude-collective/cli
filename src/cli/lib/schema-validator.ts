@@ -251,8 +251,8 @@ export async function validateAllSchemas(
 }
 
 export function printValidationResults(result: FullValidationResult): void {
-  log(`\n  Schema Validation Summary:`);
-  log(`  ─────────────────────────`);
+  log("\n  Schema Validation Summary:");
+  log("  ─────────────────────────");
   log(`  Total schemas checked: ${result.summary.totalSchemas}`);
   log(`  Total files: ${result.summary.totalFiles}`);
   log(`  Valid: ${result.summary.validFiles}`);
@@ -275,8 +275,8 @@ export function printValidationResults(result: FullValidationResult): void {
   }
 
   if (result.valid) {
-    log(`\n  ✓ All schemas validated successfully\n`);
+    log("\n  ✓ All schemas validated successfully\n");
   } else {
-    log(`\n  ✗ Validation failed\n`);
+    log("\n  ✗ Validation failed\n");
   }
 }

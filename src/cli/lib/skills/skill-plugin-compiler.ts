@@ -81,18 +81,18 @@ function generateReadme(
   lines.push("Add this plugin to your Claude Code configuration:");
   lines.push("");
   lines.push("```json");
-  lines.push(`{`);
+  lines.push("{");
   lines.push(`  "plugins": ["${skillName}"]`);
-  lines.push(`}`);
+  lines.push("}");
   lines.push("```");
   lines.push("");
 
   lines.push("## Usage");
   lines.push("");
-  lines.push(`This skill is automatically available when installed.`);
+  lines.push("This skill is automatically available when installed.");
   if (metadata?.requires && metadata.requires.length > 0) {
     lines.push("");
-    lines.push("**Requires:** " + metadata.requires.join(", "));
+    lines.push(`**Requires:** ${metadata.requires.join(", ")}`);
   }
   lines.push("");
 
@@ -188,7 +188,7 @@ export async function compileSkillPlugin(
 
   const readme = generateReadme(skillName, frontmatter, metadata);
   await writeFile(path.join(pluginDir, "README.md"), readme);
-  verbose(`  Generated README.md`);
+  verbose("  Generated README.md");
 
   return {
     pluginPath: pluginDir,

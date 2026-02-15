@@ -85,6 +85,19 @@ function parseGitHubSource(source: string): {
   };
 }
 
+async function discoverValidSkills(skillsDir: string, skillDirs: string[]): Promise<string[]> {
+  const validSkills: string[] = [];
+
+  for (const skillDir of skillDirs) {
+    const skillMdPath = path.join(skillsDir, skillDir, SKILL_MD_FILE);
+    if (await fileExists(skillMdPath)) {
+      validSkills.push(skillDir);
+    }
+  }
+
+  return validSkills.sort();
+}
+
 export default class ImportSkill extends BaseCommand {
   static summary = "Import a skill from a third-party GitHub repository";
   static description =
@@ -220,13 +233,12 @@ export default class ImportSkill extends BaseCommand {
     }
 
     const skillDirs = await listDirectories(skillsDir);
-    const availableSkills = await this.discoverValidSkills(skillsDir, skillDirs);
+    const availableSkills = await discoverValidSkills(skillsDir, skillDirs);
 
     if (availableSkills.length === 0) {
-      this.error(
-        `No valid skills found in ${flags.subdir}/\n` + `Skills must have a SKILL.md file.`,
-        { exit: EXIT_CODES.ERROR },
-      );
+      this.error(`No valid skills found in ${flags.subdir}/\nSkills must have a SKILL.md file.`, {
+        exit: EXIT_CODES.ERROR,
+      });
     }
 
     if (flags.list) {
@@ -306,19 +318,6 @@ export default class ImportSkill extends BaseCommand {
     this.log("");
   }
 
-  private async discoverValidSkills(skillsDir: string, skillDirs: string[]): Promise<string[]> {
-    const validSkills: string[] = [];
-
-    for (const skillDir of skillDirs) {
-      const skillMdPath = path.join(skillsDir, skillDir, SKILL_MD_FILE);
-      if (await fileExists(skillMdPath)) {
-        validSkills.push(skillDir);
-      }
-    }
-
-    return validSkills.sort();
-  }
-
   private async importSkill(
     sourcePath: string,
     destPath: string,
@@ -366,7 +365,7 @@ export default class ImportSkill extends BaseCommand {
       let schemaComment = "";
 
       if (lines[0]?.startsWith("# yaml-language-server:")) {
-        schemaComment = lines[0] + "\n";
+        schemaComment = `${lines[0]}\n`;
         yamlContent = lines.slice(1).join("\n");
       }
 

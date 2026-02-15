@@ -148,7 +148,7 @@ export async function writeMarketplace(
   marketplace: Marketplace,
 ): Promise<void> {
   await ensureDir(path.dirname(outputPath));
-  const content = JSON.stringify(marketplace, null, 2) + "\n";
+  const content = `${JSON.stringify(marketplace, null, 2)}\n`;
   await writeFile(outputPath, content);
 }
 

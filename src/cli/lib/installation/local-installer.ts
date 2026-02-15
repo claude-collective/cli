@@ -233,12 +233,12 @@ async function buildAndMergeConfig(
 }
 
 async function writeConfigFile(config: ProjectConfig, configPath: string): Promise<void> {
-  const schemaComment = yamlSchemaComment(SCHEMA_PATHS.projectSourceConfig) + "\n";
+  const schemaComment = `${yamlSchemaComment(SCHEMA_PATHS.projectSourceConfig)}\n`;
   const configYaml = stringifyYaml(config, {
     indent: YAML_FORMATTING.INDENT,
     lineWidth: YAML_FORMATTING.LINE_WIDTH,
   });
-  await writeFile(configPath, schemaComment + configYaml);
+  await writeFile(configPath, `${schemaComment}${configYaml}`);
 }
 
 function buildCompileAgents(

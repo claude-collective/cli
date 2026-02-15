@@ -189,9 +189,9 @@ export async function fetchMarketplace(
       `Marketplace not found for source: ${source}\n\n` +
         `The .claude-plugin/marketplace.json file is missing from this repository.\n\n` +
         `Possible causes:\n` +
-        `  - The source URL may be incorrect\n` +
-        `  - The repository may not have a marketplace configured\n\n` +
-        `To create a marketplace, add a .claude-plugin/marketplace.json file to your source repository.`,
+        "  - The source URL may be incorrect\n" +
+        "  - The repository may not have a marketplace configured\n\n" +
+        "To create a marketplace, add a .claude-plugin/marketplace.json file to your source repository.",
     );
   }
 

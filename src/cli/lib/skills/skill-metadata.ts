@@ -311,7 +311,7 @@ export async function injectForkedFromMetadata(
     date: getCurrentDate(),
   };
 
-  const schemaComment = yamlSchemaComment(SCHEMA_PATHS.metadata) + "\n";
+  const schemaComment = `${yamlSchemaComment(SCHEMA_PATHS.metadata)}\n`;
   const newYamlContent = stringifyYaml(metadata, { lineWidth: YAML_FORMATTING.LINE_WIDTH_NONE });
-  await writeFile(metadataPath, schemaComment + newYamlContent);
+  await writeFile(metadataPath, `${schemaComment}${newYamlContent}`);
 }

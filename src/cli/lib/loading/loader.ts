@@ -132,7 +132,7 @@ export async function loadSkillsByIds(
     } else {
       const childSkills = allSkillIds.filter((id) => {
         const dirPath = idToDirectoryPath[id];
-        return dirPath.startsWith(skillId + "/");
+        return dirPath.startsWith(`${skillId}/`);
       });
 
       if (childSkills.length > 0) {

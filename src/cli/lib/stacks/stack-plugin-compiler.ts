@@ -163,9 +163,9 @@ function generateStackReadme(
   lines.push("Add this plugin to your Claude Code configuration:");
   lines.push("");
   lines.push("```json");
-  lines.push(`{`);
+  lines.push("{");
   lines.push(`  "plugins": ["${stackId}"]`);
-  lines.push(`}`);
+  lines.push("}");
   lines.push("```");
   lines.push("");
 
@@ -343,7 +343,7 @@ export async function compileStackPlugin(
 
   const readme = generateStackReadme(stackId, stack, compiledAgentNames, uniqueSkillPlugins);
   await writeFile(path.join(pluginDir, "README.md"), readme);
-  verbose(`  Generated README.md`);
+  verbose("  Generated README.md");
 
   return {
     pluginPath: pluginDir,
@@ -369,6 +369,6 @@ export function printStackCompilationSummary(result: CompiledStackPlugin): void 
     }
   }
   if (result.hasHooks) {
-    log(`  Hooks: enabled`);
+    log("  Hooks: enabled");
   }
 }
