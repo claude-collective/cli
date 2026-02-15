@@ -232,7 +232,9 @@ export const Wizard: React.FC<WizardProps> = ({
 
   return (
     <ThemeProvider theme={cliTheme}>
-      <WizardLayout version={version} marketplaceLabel={marketplaceLabel}>{renderStep()}</WizardLayout>
+      <WizardLayout version={version} marketplaceLabel={marketplaceLabel}>
+        {renderStep()}
+      </WizardLayout>
     </ThemeProvider>
   );
 };

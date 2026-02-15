@@ -82,7 +82,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
       </Box>
 
       <Box marginTop={1}>
-        <Text dimColor>ENTER install  ESC go back</Text>
+        <Text dimColor>ENTER install ESC go back</Text>
       </Box>
     </Box>
   );

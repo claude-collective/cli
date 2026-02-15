@@ -19,7 +19,11 @@ export type StepSettingsProps = {
 export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose }) => {
   const [summary, setSummary] = useState<SourceSummary | null>(null);
   const addModal = useModalState();
-  const { value: addSourceInput, setValue: setAddSourceInput, handleInput: handleTextInput } = useTextInput("");
+  const {
+    value: addSourceInput,
+    setValue: setAddSourceInput,
+    handleInput: handleTextInput,
+  } = useTextInput("");
   const [isLoading, setIsLoading] = useState(true);
 
   const loadSummary = useCallback(async () => {
@@ -40,7 +44,10 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
     void loadSummary();
   }, [loadSummary]);
 
-  const { handleAdd, handleRemove, statusMessage, clearStatus } = useSourceOperations(projectDir, loadSummary);
+  const { handleAdd, handleRemove, statusMessage, clearStatus } = useSourceOperations(
+    projectDir,
+    loadSummary,
+  );
 
   const sourceCount = summary?.sources.length ?? 0;
 
@@ -117,7 +124,13 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
       <Box marginTop={1} />
 
       <Text bold>Configured marketplaces:</Text>
-      <Box flexDirection="column" borderStyle="round" borderColor={CLI_COLORS.NEUTRAL} paddingX={1} marginTop={1}>
+      <Box
+        flexDirection="column"
+        borderStyle="round"
+        borderColor={CLI_COLORS.NEUTRAL}
+        paddingX={1}
+        marginTop={1}
+      >
         {summary?.sources.map((source, index) => {
           const isFocused = index === focusedIndex && !addModal.isOpen;
           const isDefault = source.name === DEFAULT_SOURCE_NAME;

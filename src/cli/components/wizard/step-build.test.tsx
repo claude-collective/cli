@@ -714,8 +714,8 @@ describe("getSkillDisplayLabel", () => {
   });
 
   it("should prefer displayName over id", () => {
-    expect(getSkillDisplayLabel({ displayName: "scss-modules", id: "web-styling-scss-modules" })).toBe(
-      "scss-modules",
-    );
+    expect(
+      getSkillDisplayLabel({ displayName: "scss-modules", id: "web-styling-scss-modules" }),
+    ).toBe("scss-modules");
   });
 });

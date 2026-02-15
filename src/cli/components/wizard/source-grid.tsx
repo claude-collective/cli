@@ -64,7 +64,11 @@ const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean }> = ({
   option,
   isFocused,
 }) => {
-  const borderColor = option.selected ? CLI_COLORS.PRIMARY : isFocused ? CLI_COLORS.UNFOCUSED : CLI_COLORS.NEUTRAL;
+  const borderColor = option.selected
+    ? CLI_COLORS.PRIMARY
+    : isFocused
+      ? CLI_COLORS.UNFOCUSED
+      : CLI_COLORS.NEUTRAL;
   const textColor = option.selected ? CLI_COLORS.PRIMARY : undefined;
   const isBold = isFocused || option.selected;
   const symbol = option.selected ? UI_SYMBOLS.SELECTED : UI_SYMBOLS.UNSELECTED;
@@ -74,8 +78,7 @@ const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean }> = ({
       <Text color={textColor} bold={isBold}>
         {" "}
         <Text dimColor={!option.selected}>{symbol}</Text> {option.label}
-        {option.selected && <Text dimColor> (active)</Text>}
-        {" "}
+        {option.selected && <Text dimColor> (active)</Text>}{" "}
       </Text>
     </Box>
   );

@@ -13,11 +13,7 @@ import { resolveAllSources, type SourceEntry } from "../lib/configuration/index.
 import { loadSkillsMatrixFromSource, fetchFromSource } from "../lib/loading/index.js";
 import type { CategoryPath, ResolvedSkill, SkillId } from "../types/index.js";
 import { listDirectories, fileExists, copy, ensureDir } from "../utils/fs.js";
-import {
-  SUCCESS_MESSAGES,
-  STATUS_MESSAGES,
-  INFO_MESSAGES,
-} from "../utils/messages.js";
+import { SUCCESS_MESSAGES, STATUS_MESSAGES, INFO_MESSAGES } from "../utils/messages.js";
 
 const MAX_DESCRIPTION_WIDTH = 50;
 

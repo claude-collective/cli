@@ -20,11 +20,7 @@ import {
 import { recompileAgents, getAgentDefinitions } from "../lib/agents/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { detectInstallation } from "../lib/installation/index.js";
-import {
-  ERROR_MESSAGES,
-  STATUS_MESSAGES,
-  INFO_MESSAGES,
-} from "../utils/messages.js";
+import { ERROR_MESSAGES, STATUS_MESSAGES, INFO_MESSAGES } from "../utils/messages.js";
 import { claudePluginInstall, claudePluginUninstall } from "../utils/exec.js";
 import type { SkillId } from "../types/index.js";
 import { typedEntries } from "../utils/typed-object.js";
@@ -217,9 +213,7 @@ export default class Edit extends BaseCommand {
         try {
           await claudePluginInstall(pluginRef, "project", projectDir);
         } catch (error) {
-          this.warn(
-            `Failed to install plugin ${pluginRef}: ${getErrorMessage(error)}`,
-          );
+          this.warn(`Failed to install plugin ${pluginRef}: ${getErrorMessage(error)}`);
         }
       }
       for (const skillId of removedSkills) {
@@ -227,9 +221,7 @@ export default class Edit extends BaseCommand {
         try {
           await claudePluginUninstall(skillId, "project", projectDir);
         } catch (error) {
-          this.warn(
-            `Failed to uninstall plugin ${skillId}: ${getErrorMessage(error)}`,
-          );
+          this.warn(`Failed to uninstall plugin ${skillId}: ${getErrorMessage(error)}`);
         }
       }
     }
@@ -258,7 +250,11 @@ export default class Edit extends BaseCommand {
     }
 
     let sourcePath: string;
-    this.log(flags["agent-source"] ? STATUS_MESSAGES.FETCHING_AGENT_PARTIALS : STATUS_MESSAGES.LOADING_AGENT_PARTIALS);
+    this.log(
+      flags["agent-source"]
+        ? STATUS_MESSAGES.FETCHING_AGENT_PARTIALS
+        : STATUS_MESSAGES.LOADING_AGENT_PARTIALS,
+    );
     try {
       const agentDefs = await getAgentDefinitions(flags["agent-source"], {
         forceRefresh: flags.refresh,
@@ -289,9 +285,7 @@ export default class Edit extends BaseCommand {
         this.log("✓ No agents to recompile\n");
       }
     } catch (error) {
-      this.warn(
-        `Agent recompilation failed: ${getErrorMessage(error)}`,
-      );
+      this.warn(`Agent recompilation failed: ${getErrorMessage(error)}`);
       this.log("You can manually recompile with 'cc compile'.\n");
     }
 

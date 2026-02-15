@@ -65,7 +65,7 @@ export const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
       {stackCount > 0 && (
         <Box marginTop={1}>
           <Text dimColor>
-            {"\u2191"}/{"\u2193"} navigate  ENTER select  ESC back
+            {"\u2191"}/{"\u2193"} navigate ENTER select ESC back
           </Text>
         </Box>
       )}

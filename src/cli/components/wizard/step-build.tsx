@@ -122,7 +122,8 @@ export const StepBuild: React.FC<StepBuildProps> = ({
             const isActive = domain === activeDomain;
             return (
               <Text key={domain} color={isActive ? CLI_COLORS.PRIMARY : undefined}>
-                {isActive ? UI_SYMBOLS.CURRENT : UI_SYMBOLS.UNSELECTED} {getDomainDisplayName(domain)}
+                {isActive ? UI_SYMBOLS.CURRENT : UI_SYMBOLS.UNSELECTED}{" "}
+                {getDomainDisplayName(domain)}
               </Text>
             );
           })}

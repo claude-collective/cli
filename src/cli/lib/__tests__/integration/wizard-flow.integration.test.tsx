@@ -5,7 +5,15 @@ import { useWizardStore } from "../../../stores/wizard-store";
 import { createComprehensiveMatrix, createBasicMatrix } from "../helpers";
 
 import type { MergedSkillsMatrix } from "../../../types";
-import { ARROW_DOWN, ENTER, ESCAPE, RENDER_DELAY_MS, SPACE, STEP_TRANSITION_DELAY_MS, delay } from "../test-constants";
+import {
+  ARROW_DOWN,
+  ENTER,
+  ESCAPE,
+  RENDER_DELAY_MS,
+  SPACE,
+  STEP_TRANSITION_DELAY_MS,
+  delay,
+} from "../test-constants";
 
 describe("Wizard integration", () => {
   let cleanup: (() => void) | undefined;

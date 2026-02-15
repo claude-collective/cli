@@ -30,7 +30,11 @@ export async function checkPermissions(projectRoot: string): Promise<React.React
         const raw = JSON.parse(content);
         if (typeof raw === "object" && raw !== null && !Array.isArray(raw)) {
           const EXPECTED_SETTINGS_KEYS = ["permissions"] as const;
-          warnUnknownFields(raw as Record<string, unknown>, EXPECTED_SETTINGS_KEYS, `settings file '${filePath}'`);
+          warnUnknownFields(
+            raw as Record<string, unknown>,
+            EXPECTED_SETTINGS_KEYS,
+            `settings file '${filePath}'`,
+          );
         }
         const result = settingsFileSchema.safeParse(raw);
         const parsed: SettingsFile = result.success ? (result.data as SettingsFile) : {};

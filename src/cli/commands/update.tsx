@@ -167,7 +167,11 @@ export default class Update extends BaseCommand {
         }
       }
 
-      const allResults = await compareLocalSkillsWithSource(projectDir, sourceResult.sourcePath, sourceSkills);
+      const allResults = await compareLocalSkillsWithSource(
+        projectDir,
+        sourceResult.sourcePath,
+        sourceSkills,
+      );
 
       let outdatedSkills = allResults.filter((r) => r.status === "outdated");
 
@@ -322,9 +326,7 @@ export default class Update extends BaseCommand {
           }
         } catch (error) {
           this.warn("Agent recompilation failed");
-          this.warn(
-            `Could not recompile agents: ${getErrorMessage(error)}`,
-          );
+          this.warn(`Could not recompile agents: ${getErrorMessage(error)}`);
         }
       }
 

@@ -4,7 +4,11 @@ import path from "path";
 
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
-import { loadSkillsMatrixFromSource, getMarketplaceLabel, type SourceLoadResult } from "../lib/loading/index.js";
+import {
+  loadSkillsMatrixFromSource,
+  getMarketplaceLabel,
+  type SourceLoadResult,
+} from "../lib/loading/index.js";
 import { saveSourceToProjectConfig } from "../lib/configuration/index.js";
 import { installLocal } from "../lib/installation/index.js";
 import { checkPermissions } from "../lib/permission-checker.js";

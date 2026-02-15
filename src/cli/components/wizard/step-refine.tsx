@@ -52,7 +52,10 @@ export const StepRefine: React.FC<StepRefineProps> = ({
         marginBottom={1}
       >
         <Box flexDirection="column">
-          <Text color={isRecommendedSelected ? CLI_COLORS.SUCCESS : undefined} bold={isRecommendedSelected}>
+          <Text
+            color={isRecommendedSelected ? CLI_COLORS.SUCCESS : undefined}
+            bold={isRecommendedSelected}
+          >
             {isRecommendedSelected ? ">" : "○"} Use all recommended skills (verified){" "}
             <Text dimColor>{isRecommendedSelected ? "(Selected)" : "(Not selected)"}</Text>
           </Text>
@@ -69,7 +72,10 @@ export const StepRefine: React.FC<StepRefineProps> = ({
         paddingY={1}
       >
         <Box flexDirection="column">
-          <Text color={!isRecommendedSelected ? CLI_COLORS.SUCCESS : undefined} bold={!isRecommendedSelected}>
+          <Text
+            color={!isRecommendedSelected ? CLI_COLORS.SUCCESS : undefined}
+            bold={!isRecommendedSelected}
+          >
             {!isRecommendedSelected ? ">" : "○"} Customize skill sources{" "}
             <Text dimColor>{!isRecommendedSelected ? "(Selected)" : "(Not selected)"}</Text>
           </Text>
@@ -80,7 +86,7 @@ export const StepRefine: React.FC<StepRefineProps> = ({
 
       <Box marginTop={1}>
         <Text dimColor>
-          {"\u2191"}/{"\u2193"} navigate  ENTER continue  ESC back
+          {"\u2191"}/{"\u2193"} navigate ENTER continue ESC back
         </Text>
       </Box>
     </Box>

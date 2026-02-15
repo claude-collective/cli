@@ -25,7 +25,12 @@ export type SkillSearchProps = {
   onCancel: () => void;
 };
 
-const { MAX_VISIBLE_RESULTS, DESCRIPTION_WIDTH, COPIED_MESSAGE_TIMEOUT_MS, FALLBACK_MESSAGE_TIMEOUT_MS } = UI_LAYOUT;
+const {
+  MAX_VISIBLE_RESULTS,
+  DESCRIPTION_WIDTH,
+  COPIED_MESSAGE_TIMEOUT_MS,
+  FALLBACK_MESSAGE_TIMEOUT_MS,
+} = UI_LAYOUT;
 const { CHECKBOX_CHECKED, CHECKBOX_UNCHECKED } = UI_SYMBOLS;
 
 function matchesQuery(skill: SourcedSkill, query: string): boolean {

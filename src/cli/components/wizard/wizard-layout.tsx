@@ -77,7 +77,11 @@ type WizardLayoutProps = {
   children: React.ReactNode;
 };
 
-export const WizardLayout: React.FC<WizardLayoutProps> = ({ version, marketplaceLabel, children }) => {
+export const WizardLayout: React.FC<WizardLayoutProps> = ({
+  version,
+  marketplaceLabel,
+  children,
+}) => {
   const store = useWizardStore();
   const { completedSteps, skippedSteps } = store.getStepProgress();
 

@@ -169,8 +169,7 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked }) => {
         {option.installed && <Text dimColor>{UI_SYMBOLS.SELECTED} </Text>}
         {!option.installed && <Text dimColor={isDimmed}>{stateSymbol} </Text>}
         {option.label}
-        {stateSuffix && <Text dimColor> {stateSuffix}</Text>}
-        {" "}
+        {stateSuffix && <Text dimColor> {stateSuffix}</Text>}{" "}
       </Text>
     </Box>
   );

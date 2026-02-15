@@ -144,7 +144,10 @@ export const StepSources: React.FC<StepSourcesProps> = ({
         marginBottom={1}
       >
         <Box flexDirection="column">
-          <Text color={isRecommendedSelected ? CLI_COLORS.SUCCESS : undefined} bold={isRecommendedSelected}>
+          <Text
+            color={isRecommendedSelected ? CLI_COLORS.SUCCESS : undefined}
+            bold={isRecommendedSelected}
+          >
             {isRecommendedSelected ? ">" : "\u25CB"}{" "}
             {hasLocalSkills
               ? "Use installed skill sources"
@@ -167,7 +170,10 @@ export const StepSources: React.FC<StepSourcesProps> = ({
         paddingY={1}
       >
         <Box flexDirection="column">
-          <Text color={!isRecommendedSelected ? CLI_COLORS.SUCCESS : undefined} bold={!isRecommendedSelected}>
+          <Text
+            color={!isRecommendedSelected ? CLI_COLORS.SUCCESS : undefined}
+            bold={!isRecommendedSelected}
+          >
             {!isRecommendedSelected ? ">" : "\u25CB"} Customize skill sources
           </Text>
           <Text> </Text>

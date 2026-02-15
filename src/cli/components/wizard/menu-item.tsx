@@ -21,7 +21,9 @@ export const MenuItem: React.FC<MenuItemProps> = ({
 
   return (
     <Box columnGap={1}>
-      <Text color={isFocused ? CLI_COLORS.PRIMARY : undefined}>{isFocused ? CHEVRON : CHEVRON_SPACER}</Text>
+      <Text color={isFocused ? CLI_COLORS.PRIMARY : undefined}>
+        {isFocused ? CHEVRON : CHEVRON_SPACER}
+      </Text>
       <Text bold={isFocused} color={showCyan ? CLI_COLORS.PRIMARY : undefined}>
         {label}
       </Text>
