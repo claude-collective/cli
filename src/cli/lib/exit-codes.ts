@@ -5,5 +5,3 @@ export const EXIT_CODES = {
   NETWORK_ERROR: 3,
   CANCELLED: 4,
 } as const;
-
-export type ExitCode = (typeof EXIT_CODES)[keyof typeof EXIT_CODES];

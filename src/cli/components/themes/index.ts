@@ -1,1 +1,0 @@
-export { cliTheme } from "./default";

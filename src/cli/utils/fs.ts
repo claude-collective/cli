@@ -6,6 +6,20 @@ export async function readFile(filePath: string): Promise<string> {
   return fs.readFile(filePath, "utf-8");
 }
 
+/**
+ * Reads a file with a size limit check before reading content.
+ * Throws if the file exceeds maxSizeBytes. Prevents DoS from oversized files.
+ */
+export async function readFileSafe(filePath: string, maxSizeBytes: number): Promise<string> {
+  const stats = await fs.stat(filePath);
+  if (stats.size > maxSizeBytes) {
+    throw new Error(
+      `File too large: '${filePath}' is ${stats.size} bytes (limit: ${maxSizeBytes} bytes)`,
+    );
+  }
+  return fs.readFile(filePath, "utf-8");
+}
+
 export async function readFileOptional(filePath: string, fallback = ""): Promise<string> {
   try {
     return await fs.readFile(filePath, "utf-8");
