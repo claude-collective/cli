@@ -1,20 +1,25 @@
 import { Args, Flags } from "@oclif/core";
-import { render } from "ink";
 import { printTable } from "@oclif/table";
+import { render } from "ink";
 import path from "path";
-import { BaseCommand } from "../base-command.js";
-import { loadSkillsMatrixFromSource, fetchFromSource } from "../lib/loading/index.js";
-import { resolveAllSources, type SourceEntry } from "../lib/configuration/index.js";
-import { listDirectories, fileExists, copy, ensureDir } from "../utils/fs.js";
 import { sortBy } from "remeda";
-import { EXIT_CODES } from "../lib/exit-codes.js";
+
+import { BaseCommand } from "../base-command.js";
 import { SkillSearch, type SkillSearchResult } from "../components/skill-search/index.js";
 import type { SourcedSkill } from "../components/skill-search/skill-search.js";
+import { DEFAULT_SKILLS_SUBDIR, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../consts.js";
+import { EXIT_CODES } from "../lib/exit-codes.js";
+import { resolveAllSources, type SourceEntry } from "../lib/configuration/index.js";
+import { loadSkillsMatrixFromSource, fetchFromSource } from "../lib/loading/index.js";
 import type { CategoryPath, ResolvedSkill, SkillId } from "../types/index.js";
-import { LOCAL_SKILLS_PATH } from "../consts.js";
+import { listDirectories, fileExists, copy, ensureDir } from "../utils/fs.js";
+import {
+  SUCCESS_MESSAGES,
+  STATUS_MESSAGES,
+  INFO_MESSAGES,
+} from "../utils/messages.js";
 
 const MAX_DESCRIPTION_WIDTH = 50;
-const DEFAULT_SKILLS_SUBDIR = "skills";
 
 function truncate(str: string, maxLength: number): string {
   if (str.length <= maxLength) return str;
@@ -69,7 +74,7 @@ async function fetchSkillsFromSource(
     const skills: SourcedSkill[] = [];
 
     for (const skillDir of skillDirs) {
-      const skillMdPath = path.join(skillsDir, skillDir, "SKILL.md");
+      const skillMdPath = path.join(skillsDir, skillDir, STANDARD_FILES.SKILL_MD);
       if (await fileExists(skillMdPath)) {
         skills.push({
           // Directory name is an untyped string — cast at data boundary
@@ -244,9 +249,9 @@ export default class Search extends BaseCommand {
       }
 
       this.log("");
-      this.logSuccess("Import complete!");
+      this.logSuccess(SUCCESS_MESSAGES.IMPORT_COMPLETE);
       this.log(`Skills location: ${destDir}`);
-      this.log("Run 'cc compile' to include imported skills in your agents.");
+      this.log(INFO_MESSAGES.RUN_COMPILE);
     } catch (error) {
       this.handleError(error);
     }
@@ -257,7 +262,7 @@ export default class Search extends BaseCommand {
     flags: { source?: string; category?: string },
   ): Promise<void> {
     try {
-      this.log("Loading skills...");
+      this.log(STATUS_MESSAGES.LOADING_SKILLS);
 
       const { matrix, sourcePath, isLocal } = await loadSkillsMatrixFromSource({
         sourceFlag: flags.source,

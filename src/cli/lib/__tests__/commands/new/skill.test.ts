@@ -3,6 +3,7 @@ import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, readFile } from "fs/promises";
 import { runCliCommand, fileExists, directoryExists } from "../../helpers";
+import { EXIT_CODES } from "../../../exit-codes";
 import {
   validateSkillName,
   toTitleCase,
@@ -150,7 +151,7 @@ describe("new:skill command", () => {
     it("should reject non-kebab-case name with uppercase", async () => {
       const { error } = await runCliCommand(["new:skill", "MySkill"]);
 
-      expect(error?.oclif?.exit).toBe(2);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should reject name with spaces", async () => {
@@ -237,7 +238,7 @@ describe("new:skill command", () => {
 
       const { error } = await runCliCommand(["new:skill", "existing-skill"]);
 
-      expect(error?.oclif?.exit).toBe(1);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
 
     it("should overwrite existing skill with --force flag", async () => {

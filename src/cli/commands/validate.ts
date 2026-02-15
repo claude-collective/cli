@@ -1,7 +1,9 @@
 import { Args, Flags } from "@oclif/core";
 import path from "path";
 import { BaseCommand } from "../base-command.js";
+import { getErrorMessage } from "../utils/errors.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
+import { ERROR_MESSAGES } from "../utils/messages.js";
 import { validateAllSchemas, printValidationResults } from "../lib/schema-validator.js";
 import {
   validatePlugin,
@@ -15,6 +17,25 @@ export default class Validate extends BaseCommand {
     "Validates skill/agent YAML files against JSON schemas, or validates compiled plugin structure and content. " +
     "Without arguments, validates all YAML files in the current directory against their schemas. " +
     "With a path argument or --plugins flag, validates plugin(s) instead.";
+
+  static examples = [
+    {
+      description: "Validate all YAML schemas",
+      command: "<%= config.bin %> <%= command.id %>",
+    },
+    {
+      description: "Validate a specific plugin",
+      command: "<%= config.bin %> <%= command.id %> ./path/to/plugin",
+    },
+    {
+      description: "Validate all plugins in a directory",
+      command: "<%= config.bin %> <%= command.id %> ./plugins --all",
+    },
+    {
+      description: "Validate plugins with verbose output",
+      command: "<%= config.bin %> <%= command.id %> --plugins --verbose",
+    },
+  ];
 
   static args = {
     path: Args.string({
@@ -71,8 +92,8 @@ export default class Validate extends BaseCommand {
         this.exit(EXIT_CODES.ERROR);
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.error(`Validation failed: ${message}`, { exit: EXIT_CODES.ERROR });
+      const message = getErrorMessage(error);
+      this.error(`${ERROR_MESSAGES.VALIDATION_FAILED}: ${message}`, { exit: EXIT_CODES.ERROR });
     }
   }
 
@@ -122,15 +143,15 @@ export default class Validate extends BaseCommand {
         this.log("");
       } else {
         this.log("");
-        this.error("Validation failed", { exit: EXIT_CODES.ERROR });
+        this.error(ERROR_MESSAGES.VALIDATION_FAILED, { exit: EXIT_CODES.ERROR });
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.error(`Validation failed: ${message}`, { exit: EXIT_CODES.ERROR });
+      const message = getErrorMessage(error);
+      this.error(`${ERROR_MESSAGES.VALIDATION_FAILED}: ${message}`, { exit: EXIT_CODES.ERROR });
     }
   }
 
-  private async validateSinglePlugin(targetPath: string, verbose: boolean): Promise<void> {
+  private async validateSinglePlugin(targetPath: string, _verbose: boolean): Promise<void> {
     this.log("");
     this.log(`Validating plugin: ${targetPath}`);
     this.log("");
@@ -154,11 +175,11 @@ export default class Validate extends BaseCommand {
         this.log("");
       } else {
         this.log("");
-        this.error("Validation failed", { exit: EXIT_CODES.ERROR });
+        this.error(ERROR_MESSAGES.VALIDATION_FAILED, { exit: EXIT_CODES.ERROR });
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.error(`Validation failed: ${message}`, { exit: EXIT_CODES.ERROR });
+      const message = getErrorMessage(error);
+      this.error(`${ERROR_MESSAGES.VALIDATION_FAILED}: ${message}`, { exit: EXIT_CODES.ERROR });
     }
   }
 }

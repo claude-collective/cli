@@ -1,6 +1,7 @@
 import { Flags } from "@oclif/core";
 import path from "path";
 import { sortBy } from "remeda";
+
 import { BaseCommand } from "../../base-command";
 import { setVerbose } from "../../utils/logger";
 import {
@@ -8,12 +9,10 @@ import {
   writeMarketplace,
   getMarketplaceStats,
 } from "../../lib/marketplace-generator";
-import { EXIT_CODES } from "../../lib/exit-codes";
-import { DEFAULT_VERSION } from "../../consts";
+import { DEFAULT_PLUGIN_NAME, DEFAULT_VERSION } from "../../consts";
 
 const DEFAULT_PLUGINS_DIR = "dist/plugins";
 const DEFAULT_OUTPUT_FILE = ".claude-plugin/marketplace.json";
-const DEFAULT_NAME = "claude-collective";
 const DEFAULT_DESCRIPTION = "Community skills and stacks for Claude Code";
 const DEFAULT_OWNER_NAME = "Claude Collective";
 const DEFAULT_OWNER_EMAIL = "hello@claude-collective.com";
@@ -45,7 +44,7 @@ export default class BuildMarketplace extends BaseCommand {
     }),
     name: Flags.string({
       description: "Marketplace name",
-      default: DEFAULT_NAME,
+      default: DEFAULT_PLUGIN_NAME,
     }),
     version: Flags.string({
       description: "Marketplace version",
@@ -131,9 +130,7 @@ export default class BuildMarketplace extends BaseCommand {
       this.log("");
     } catch (error) {
       this.log("Generation failed");
-      this.error(error instanceof Error ? error.message : String(error), {
-        exit: EXIT_CODES.ERROR,
-      });
+      this.handleError(error);
     }
   }
 }

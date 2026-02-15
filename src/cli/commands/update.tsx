@@ -1,20 +1,29 @@
 import React from "react";
-import { render } from "ink";
+
 import { Flags, Args } from "@oclif/core";
 import { printTable } from "@oclif/table";
+import { render } from "ink";
 import path from "path";
+
 import { BaseCommand } from "../base-command.js";
+import { getErrorMessage } from "../utils/errors.js";
 import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/loading/index.js";
 import { recompileAgents } from "../lib/agents/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import {
-  compareSkills,
+  compareLocalSkillsWithSource,
   injectForkedFromMetadata,
   type SkillComparisonResult,
 } from "../lib/skills/index.js";
 import { fileExists, copy } from "../utils/fs.js";
 import { LOCAL_SKILLS_PATH } from "../consts.js";
 import { getCollectivePluginDir } from "../lib/plugins/index.js";
+import {
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+  STATUS_MESSAGES,
+  INFO_MESSAGES,
+} from "../utils/messages.js";
 import { Confirm } from "../components/common/confirm.js";
 
 async function updateSkill(
@@ -39,7 +48,7 @@ async function updateSkill(
     return {
       success: false,
       newHash: null,
-      error: error instanceof Error ? error.message : String(error),
+      error: getErrorMessage(error),
     };
   }
 }
@@ -135,11 +144,11 @@ export default class Update extends BaseCommand {
     try {
       const localSkillsPath = path.join(projectDir, LOCAL_SKILLS_PATH);
       if (!(await fileExists(localSkillsPath))) {
-        this.warn("No local skills found. Run `cc init` or `cc edit` first.");
+        this.warn(ERROR_MESSAGES.NO_LOCAL_SKILLS);
         return;
       }
 
-      this.log("Loading skills...");
+      this.log(STATUS_MESSAGES.LOADING_SKILLS);
 
       const sourceResult = await loadSkillsMatrixFromSource({
         sourceFlag: flags.source,
@@ -158,7 +167,7 @@ export default class Update extends BaseCommand {
         }
       }
 
-      const allResults = await compareSkills(projectDir, sourceResult.sourcePath, sourceSkills);
+      const allResults = await compareLocalSkillsWithSource(projectDir, sourceResult.sourcePath, sourceSkills);
 
       let outdatedSkills = allResults.filter((r) => r.status === "outdated");
 
@@ -181,7 +190,7 @@ export default class Update extends BaseCommand {
 
           this.log(`Run \`cc search ${args.skill}\` to search available skills.`);
           this.log("");
-          this.error("Skill not found", { exit: EXIT_CODES.ERROR });
+          this.error(ERROR_MESSAGES.SKILL_NOT_FOUND, { exit: EXIT_CODES.ERROR });
         }
 
         if (foundSkill.status === "current") {
@@ -207,7 +216,7 @@ export default class Update extends BaseCommand {
 
       if (outdatedSkills.length === 0) {
         this.log("");
-        this.logSuccess("All skills are up to date.");
+        this.logSuccess(SUCCESS_MESSAGES.ALL_SKILLS_UP_TO_DATE);
         this.log("");
         return;
       }
@@ -257,7 +266,7 @@ export default class Update extends BaseCommand {
         }
 
         if (!confirmed) {
-          this.log("No changes made.");
+          this.log(INFO_MESSAGES.NO_CHANGES_MADE);
           return;
         }
       }
@@ -285,7 +294,7 @@ export default class Update extends BaseCommand {
 
       if (shouldRecompile && updated.length > 0) {
         this.log("");
-        this.log("Recompiling agents...");
+        this.log(STATUS_MESSAGES.RECOMPILING_AGENTS);
 
         try {
           const pluginDir = getCollectivePluginDir(projectDir);
@@ -303,7 +312,7 @@ export default class Update extends BaseCommand {
               this.log(`  Recompiled: ${agent}`);
             }
           } else {
-            this.log("No agents to recompile");
+            this.log(INFO_MESSAGES.NO_AGENTS_TO_RECOMPILE);
           }
 
           if (recompileResult.warnings.length > 0) {
@@ -314,7 +323,7 @@ export default class Update extends BaseCommand {
         } catch (error) {
           this.warn("Agent recompilation failed");
           this.warn(
-            `Could not recompile agents: ${error instanceof Error ? error.message : String(error)}`,
+            `Could not recompile agents: ${getErrorMessage(error)}`,
           );
         }
       }
@@ -335,7 +344,7 @@ export default class Update extends BaseCommand {
         this.error("Some updates failed", { exit: EXIT_CODES.ERROR });
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = getErrorMessage(error);
       this.error(`Update failed: ${message}`, { exit: EXIT_CODES.ERROR });
     }
   }

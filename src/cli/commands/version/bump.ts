@@ -1,16 +1,16 @@
+import { Args } from "@oclif/core";
+import path from "path";
+
 import { BaseCommand } from "../../base-command.js";
-import { Args, Flags } from "@oclif/core";
+import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts.js";
+import { EXIT_CODES } from "../../lib/exit-codes.js";
 import {
   bumpPluginVersion,
   type VersionBumpType,
   findPluginManifest,
 } from "../../lib/plugins/index.js";
-import { EXIT_CODES } from "../../lib/exit-codes.js";
-import path from "path";
-import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts.js";
-import { readFile } from "../../utils/fs.js";
-import type { PluginManifest } from "../../types/index.js";
 import { pluginManifestSchema } from "../../lib/schemas.js";
+import { readFile } from "../../utils/fs.js";
 
 export default class VersionBump extends BaseCommand {
   static summary = "Bump plugin version";

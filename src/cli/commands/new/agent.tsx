@@ -1,17 +1,19 @@
-import { Args, Flags } from "@oclif/core";
-import { render, Box, Text, useInput } from "ink";
-import { TextInput } from "@inkjs/ui";
 import React, { useState } from "react";
-import path from "path";
+
+import { Args, Flags } from "@oclif/core";
+import { TextInput } from "@inkjs/ui";
 import { spawn } from "child_process";
 import matter from "gray-matter";
+import { render, Box, Text, useInput } from "ink";
+import path from "path";
+
 import { BaseCommand } from "../../base-command.js";
-import { fetchFromSource } from "../../lib/loading/index.js";
-import { resolveSource } from "../../lib/configuration/index.js";
-import { isClaudeCLIAvailable } from "../../utils/exec.js";
-import { fileExists, readFile } from "../../utils/fs.js";
 import { CLAUDE_DIR } from "../../consts.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
+import { resolveSource } from "../../lib/configuration/index.js";
+import { fetchFromSource } from "../../lib/loading/index.js";
+import { isClaudeCLIAvailable } from "../../utils/exec.js";
+import { fileExists, readFile } from "../../utils/fs.js";
 
 const META_AGENT_NAME = "agent-summoner";
 const AGENTS_SUBDIR = ".claude/agents";
@@ -261,9 +263,7 @@ export default class NewAgent extends BaseCommand {
       this.log("─".repeat(60));
       this.logSuccess("Agent creation complete!");
     } catch (error) {
-      this.error(error instanceof Error ? error.message : "Unknown error occurred", {
-        exit: EXIT_CODES.ERROR,
-      });
+      this.handleError(error);
     }
   }
 }

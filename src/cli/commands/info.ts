@@ -4,7 +4,9 @@ import { BaseCommand } from "../base-command.js";
 import { loadSkillsMatrixFromSource } from "../lib/loading/index.js";
 import { discoverLocalSkills } from "../lib/skills/index.js";
 import { fileExists, readFile } from "../utils/fs.js";
+import { STANDARD_FILES } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
+import { STATUS_MESSAGES } from "../utils/messages.js";
 import type {
   ResolvedSkill,
   SkillDisplayName,
@@ -138,6 +140,21 @@ export default class Info extends BaseCommand {
   static description =
     "Display comprehensive information about a skill including metadata, relationships, and content preview";
 
+  static examples = [
+    {
+      description: "Show info for a skill by ID",
+      command: "<%= config.bin %> <%= command.id %> web-framework-react",
+    },
+    {
+      description: "Show info without content preview",
+      command: "<%= config.bin %> <%= command.id %> web-framework-react --no-preview",
+    },
+    {
+      description: "Show info from a custom source",
+      command: "<%= config.bin %> <%= command.id %> my-skill --source github:org/marketplace",
+    },
+  ];
+
   static args = {
     skill: Args.string({
       description: "Skill ID or alias to look up",
@@ -158,7 +175,7 @@ export default class Info extends BaseCommand {
     const { args, flags } = await this.parse(Info);
 
     try {
-      this.log("Loading skills...");
+      this.log(STATUS_MESSAGES.LOADING_SKILLS);
 
       const { matrix, sourcePath, isLocal } = await loadSkillsMatrixFromSource({
         sourceFlag: flags.source,
@@ -208,10 +225,10 @@ export default class Info extends BaseCommand {
         let skillMdPath: string;
 
         if (skill.local && skill.localPath) {
-          skillMdPath = path.join(process.cwd(), skill.localPath, "SKILL.md");
+          skillMdPath = path.join(process.cwd(), skill.localPath, STANDARD_FILES.SKILL_MD);
         } else {
           const sourceDir = isLocal ? sourcePath : path.dirname(sourcePath);
-          skillMdPath = path.join(sourceDir, skill.path, "SKILL.md");
+          skillMdPath = path.join(sourceDir, skill.path, STANDARD_FILES.SKILL_MD);
         }
 
         if (await fileExists(skillMdPath)) {

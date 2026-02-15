@@ -7,6 +7,13 @@ export default class List extends BaseCommand {
     "Display details about the Claude Collective installation (local or plugin mode)";
   static aliases = ["ls"];
 
+  static examples = [
+    {
+      description: "Show current installation details",
+      command: "<%= config.bin %> <%= command.id %>",
+    },
+  ];
+
   static flags = {
     ...BaseCommand.baseFlags,
   };

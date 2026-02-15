@@ -1,10 +1,11 @@
-import { BaseCommand } from "../../base-command.js";
 import { Args } from "@oclif/core";
-import { EXIT_CODES } from "../../lib/exit-codes.js";
+
+import { BaseCommand } from "../../base-command.js";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts.js";
-import { readFile, writeFile } from "../../utils/fs.js";
+import { EXIT_CODES } from "../../lib/exit-codes.js";
 import { findPluginManifest } from "../../lib/plugins/index.js";
 import { pluginManifestSchema } from "../../lib/schemas.js";
+import { readFile, writeFile } from "../../utils/fs.js";
 
 const SEMVER_REGEX = /^(\d+)\.(\d+)\.(\d+)$/;
 

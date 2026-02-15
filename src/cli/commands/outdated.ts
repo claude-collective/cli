@@ -2,10 +2,12 @@ import { Flags } from "@oclif/core";
 import { printTable } from "@oclif/table";
 import path from "path";
 import { countBy } from "remeda";
+
 import { BaseCommand } from "../base-command.js";
+import { getErrorMessage } from "../utils/errors.js";
 import { loadSkillsMatrixFromSource } from "../lib/loading/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
-import { compareSkills, type SkillComparisonResult } from "../lib/skills/index.js";
+import { compareLocalSkillsWithSource, type SkillComparisonResult } from "../lib/skills/index.js";
 import { fileExists } from "../utils/fs.js";
 import { LOCAL_SKILLS_PATH } from "../consts.js";
 
@@ -35,6 +37,21 @@ export default class Outdated extends BaseCommand {
   static summary = "Check which local skills are out of date compared to source";
   static description =
     "Compare local skills against their source repository to identify outdated skills that need updating";
+
+  static examples = [
+    {
+      description: "Check for outdated skills",
+      command: "<%= config.bin %> <%= command.id %>",
+    },
+    {
+      description: "Output results as JSON",
+      command: "<%= config.bin %> <%= command.id %> --json",
+    },
+    {
+      description: "Check against a custom source",
+      command: "<%= config.bin %> <%= command.id %> --source github:org/marketplace",
+    },
+  ];
 
   static flags = {
     ...BaseCommand.baseFlags,
@@ -85,7 +102,7 @@ export default class Outdated extends BaseCommand {
         }
       }
 
-      const results = await compareSkills(projectDir, sourcePath, sourceSkills);
+      const results = await compareLocalSkillsWithSource(projectDir, sourcePath, sourceSkills);
       const summary = calculateSummary(results);
 
       if (flags.json) {
@@ -150,7 +167,7 @@ export default class Outdated extends BaseCommand {
         this.error("Some skills are outdated", { exit: EXIT_CODES.ERROR });
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = getErrorMessage(error);
 
       if (flags.json) {
         this.error(JSON.stringify({ error: message }), {

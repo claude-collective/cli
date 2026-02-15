@@ -4,7 +4,14 @@ import os from "os";
 import { stringify as stringifyYaml } from "yaml";
 import { BaseCommand } from "../base-command.js";
 import { copy, ensureDir, directoryExists, fileExists, writeFile } from "../utils/fs.js";
-import { CLAUDE_SRC_DIR, DIRS, LOCAL_SKILLS_PATH, PROJECT_ROOT } from "../consts.js";
+import {
+  CLAUDE_SRC_DIR,
+  DIRS,
+  LOCAL_SKILLS_PATH,
+  PROJECT_ROOT,
+  STANDARD_FILES,
+  YAML_FORMATTING,
+} from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/loading/index.js";
 import { copySkillsToLocalFlattened } from "../lib/skills/index.js";
@@ -25,6 +32,25 @@ export default class Eject extends BaseCommand {
     "Copy agent partials or skills to your project for customization. " +
     "Agent partials are always copied from the CLI. " +
     "Skills are copied from the configured source (public marketplace by default).";
+
+  static examples = [
+    {
+      description: "Eject agent partials for customization",
+      command: "<%= config.bin %> <%= command.id %> agent-partials",
+    },
+    {
+      description: "Eject skills to local directory",
+      command: "<%= config.bin %> <%= command.id %> skills",
+    },
+    {
+      description: "Eject everything with force overwrite",
+      command: "<%= config.bin %> <%= command.id %> all --force",
+    },
+    {
+      description: "Eject to a custom output directory",
+      command: "<%= config.bin %> <%= command.id %> skills -o ./custom-dir",
+    },
+  ];
 
   static args = {
     type: Args.string({
@@ -146,7 +172,7 @@ export default class Eject extends BaseCommand {
     sourceFlag?: string,
     sourceResult?: SourceLoadResult,
   ): Promise<void> {
-    const configPath = path.join(projectDir, CLAUDE_SRC_DIR, "config.yaml");
+    const configPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
 
     if (await fileExists(configPath)) {
       return;
@@ -182,7 +208,7 @@ export default class Eject extends BaseCommand {
 
     await ensureDir(path.join(projectDir, CLAUDE_SRC_DIR));
 
-    let configContent = stringifyYaml(config, { indent: 2 });
+    let configContent = stringifyYaml(config, { indent: YAML_FORMATTING.INDENT });
 
     const exampleStackComment = `
 # Example stack configuration (uncomment and customize):

@@ -1,5 +1,6 @@
 import { Flags } from "@oclif/core";
 import path from "path";
+
 import { BaseCommand } from "../../base-command";
 import { setVerbose } from "../../utils/logger";
 import { DIRS } from "../../consts";
@@ -9,7 +10,6 @@ import {
   printCompilationSummary,
 } from "../../lib/skills";
 import { compileAllAgentPlugins, printAgentCompilationSummary } from "../../lib/agents";
-import { EXIT_CODES } from "../../lib/exit-codes";
 
 const DEFAULT_OUTPUT_DIR = "dist/plugins";
 
@@ -109,9 +109,7 @@ export default class BuildPlugins extends BaseCommand {
       this.logSuccess("Plugin compilation complete!");
     } catch (error) {
       this.log("Compilation failed");
-      this.error(error instanceof Error ? error.message : String(error), {
-        exit: EXIT_CODES.ERROR,
-      });
+      this.handleError(error);
     }
   }
 }

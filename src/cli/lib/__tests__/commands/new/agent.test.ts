@@ -22,6 +22,12 @@ describe("new:agent command", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
+  async function expectFlagAccepted(args: string[]): Promise<void> {
+    const { error } = await runCliCommand(args);
+    const output = error?.message || "";
+    expect(output.toLowerCase()).not.toContain("unknown flag");
+  }
+
   describe("argument validation", () => {
     it("should reject missing name argument", async () => {
       const { error } = await runCliCommand(["new:agent"]);
@@ -42,64 +48,40 @@ describe("new:agent command", () => {
 
   describe("flag acceptance", () => {
     it("should accept --purpose flag without parsing error", async () => {
-      const { error } = await runCliCommand([
+      await expectFlagAccepted([
         "new:agent",
         "my-agent",
         "--purpose",
         "Manages database migrations",
       ]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
     });
 
     it("should accept --refresh flag without parsing error", async () => {
-      const { error } = await runCliCommand(["new:agent", "my-agent", "--refresh"]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
+      await expectFlagAccepted(["new:agent", "my-agent", "--refresh"]);
     });
 
     it("should accept --source flag without parsing error", async () => {
-      const { error } = await runCliCommand(["new:agent", "my-agent", "--source", "/some/path"]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
+      await expectFlagAccepted(["new:agent", "my-agent", "--source", "/some/path"]);
     });
 
     it("should accept --non-interactive flag without parsing error", async () => {
-      const { error } = await runCliCommand(["new:agent", "my-agent", "--non-interactive"]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
+      await expectFlagAccepted(["new:agent", "my-agent", "--non-interactive"]);
     });
 
     it("should accept -p shorthand for purpose flag", async () => {
-      const { error } = await runCliCommand(["new:agent", "my-agent", "-p", "test purpose"]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
+      await expectFlagAccepted(["new:agent", "my-agent", "-p", "test purpose"]);
     });
 
     it("should accept -r shorthand for refresh flag", async () => {
-      const { error } = await runCliCommand(["new:agent", "my-agent", "-r"]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
+      await expectFlagAccepted(["new:agent", "my-agent", "-r"]);
     });
 
     it("should accept -n shorthand for non-interactive flag", async () => {
-      const { error } = await runCliCommand(["new:agent", "my-agent", "-n"]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
+      await expectFlagAccepted(["new:agent", "my-agent", "-n"]);
     });
 
     it("should accept -s shorthand for source flag (from base command)", async () => {
-      const { error } = await runCliCommand(["new:agent", "my-agent", "-s", "/some/source"]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
+      await expectFlagAccepted(["new:agent", "my-agent", "-s", "/some/source"]);
     });
   });
 

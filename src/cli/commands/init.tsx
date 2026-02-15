@@ -1,6 +1,7 @@
 import { Flags } from "@oclif/core";
 import { render } from "ink";
 import path from "path";
+
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
 import { loadSkillsMatrixFromSource, getMarketplaceLabel, type SourceLoadResult } from "../lib/loading/index.js";
@@ -17,11 +18,37 @@ import {
 import { directoryExists } from "../utils/fs.js";
 import { CLAUDE_DIR, LOCAL_SKILLS_PATH } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
+import {
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+  STATUS_MESSAGES,
+  INFO_MESSAGES,
+  DRY_RUN_MESSAGES,
+} from "../utils/messages.js";
 
 export default class Init extends BaseCommand {
   static summary = "Initialize Claude Collective in this project";
   static description =
     "Interactive wizard to set up skills and agents. Supports Plugin Mode (native install) and Local Mode (copy to .claude/).";
+
+  static examples = [
+    {
+      description: "Start the setup wizard",
+      command: "<%= config.bin %> <%= command.id %>",
+    },
+    {
+      description: "Initialize from a custom marketplace",
+      command: "<%= config.bin %> <%= command.id %> --source github:org/marketplace",
+    },
+    {
+      description: "Preview without creating files",
+      command: "<%= config.bin %> <%= command.id %> --dry-run",
+    },
+    {
+      description: "Force refresh skills from remote",
+      command: "<%= config.bin %> <%= command.id %> --refresh",
+    },
+  ];
 
   static flags = {
     ...BaseCommand.baseFlags,
@@ -47,7 +74,7 @@ export default class Init extends BaseCommand {
     );
 
     if (flags["dry-run"]) {
-      this.log("[dry-run] Preview mode - no files will be created\n");
+      this.log(`${DRY_RUN_MESSAGES.PREVIEW_NO_FILES_CREATED}\n`);
     }
 
     const pluginDir = getCollectivePluginDir();
@@ -56,7 +83,7 @@ export default class Init extends BaseCommand {
     if (pluginExists) {
       this.warn(`Claude Collective is already initialized at ${pluginDir}`);
       this.log(`Use 'cc edit' to modify skills.`);
-      this.log("No changes made.");
+      this.log(INFO_MESSAGES.NO_CHANGES_MADE);
       return;
     }
 
@@ -68,7 +95,7 @@ export default class Init extends BaseCommand {
         forceRefresh: flags.refresh,
       });
     } catch (error) {
-      this.error(error instanceof Error ? error.message : "Unknown error occurred", {
+      this.error(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR, {
         exit: EXIT_CODES.ERROR,
       });
     }
@@ -168,7 +195,7 @@ export default class Init extends BaseCommand {
         this.log(`[dry-run] Would compile agents to ${localAgentsDir}`);
         this.log(`[dry-run] Would save config to .claude-src/config.yaml`);
       }
-      this.log("\n[dry-run] Preview complete - no files were created");
+      this.log(`\n${DRY_RUN_MESSAGES.COMPLETE_NO_FILES_CREATED}`);
       return;
     }
 
@@ -195,7 +222,12 @@ export default class Init extends BaseCommand {
     flags: { source?: string },
   ): Promise<void> {
     if (!result.selectedStackId) {
-      throw new Error("No stack selected for plugin mode");
+      throw new Error(
+        "Plugin Mode requires a stack selection, but no stack was selected.\n" +
+          "To fix this, either:\n" +
+          "  1. Re-run 'cc init' and select a stack during the wizard\n" +
+          "  2. Use Local Mode instead (copies skills to .claude/skills/)",
+      );
     }
 
     const projectDir = process.cwd();
@@ -212,7 +244,7 @@ export default class Init extends BaseCommand {
           );
           this.log(`Registered marketplace: ${sourceResult.marketplace}`);
         } catch (error) {
-          this.error(error instanceof Error ? error.message : "Unknown error", {
+          this.error(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR_SHORT, {
             exit: EXIT_CODES.ERROR,
           });
         }
@@ -238,7 +270,7 @@ export default class Init extends BaseCommand {
         : `(compiled locally)`;
       this.log(`Installed stack plugin: ${installResult.pluginName} ${installedFrom}\n`);
 
-      this.log("Claude Collective initialized successfully!\n");
+      this.log(`${SUCCESS_MESSAGES.INIT_SUCCESS}\n`);
       this.log(`Stack "${installResult.stackName}" installed as plugin`);
 
       if (installResult.agents.length > 0) {
@@ -261,7 +293,7 @@ export default class Init extends BaseCommand {
         await waitUntilExit();
       }
     } catch (error) {
-      this.error(error instanceof Error ? error.message : "Unknown error", {
+      this.error(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR_SHORT, {
         exit: EXIT_CODES.ERROR,
       });
     }
@@ -287,7 +319,7 @@ export default class Init extends BaseCommand {
           );
           this.log(`Registered marketplace: ${sourceResult.marketplace}`);
         } catch (error) {
-          this.error(error instanceof Error ? error.message : "Unknown error", {
+          this.error(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR_SHORT, {
             exit: EXIT_CODES.ERROR,
           });
         }
@@ -303,7 +335,7 @@ export default class Init extends BaseCommand {
         this.log(`  Installed ${pluginRef}`);
       } catch (error) {
         this.error(
-          `Failed to install plugin ${pluginRef}: ${error instanceof Error ? error.message : "Unknown error"}`,
+          `Failed to install plugin ${pluginRef}: ${error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR_SHORT}`,
           { exit: EXIT_CODES.ERROR },
         );
       }
@@ -341,10 +373,10 @@ export default class Init extends BaseCommand {
       }
 
       this.log(`Configuration saved (${installResult.config.agents.length} agents)\n`);
-      this.log("Compiling agents...");
+      this.log(STATUS_MESSAGES.COMPILING_AGENTS);
       this.log(`Compiled ${installResult.compiledAgents.length} agents to .claude/agents/\n`);
 
-      this.log("Claude Collective initialized successfully!\n");
+      this.log(`${SUCCESS_MESSAGES.INIT_SUCCESS}\n`);
       this.log("Skills copied to:");
       this.log(`  ${installResult.skillsDir}`);
       for (const copiedSkill of installResult.copiedSkills) {
@@ -373,9 +405,7 @@ export default class Init extends BaseCommand {
         await waitUntilExit();
       }
     } catch (error) {
-      this.error(error instanceof Error ? error.message : String(error), {
-        exit: EXIT_CODES.ERROR,
-      });
+      this.handleError(error);
     }
   }
 }

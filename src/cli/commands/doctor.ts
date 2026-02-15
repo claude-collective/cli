@@ -1,14 +1,16 @@
 import { Flags } from "@oclif/core";
 import path from "path";
-import { BaseCommand } from "../base-command";
-import { setVerbose } from "../utils/logger";
-import { fileExists, glob, directoryExists } from "../utils/fs";
 import { unique } from "remeda";
+
+import { BaseCommand } from "../base-command";
+import { getErrorMessage } from "../utils/errors";
 import { EXIT_CODES } from "../lib/exit-codes";
 import { loadProjectConfig, validateProjectConfig } from "../lib/configuration";
 import { loadSkillsMatrixFromSource } from "../lib/loading";
 import { discoverLocalSkills } from "../lib/skills";
 import type { AgentName, MergedSkillsMatrix, ProjectConfig, SkillId } from "../types";
+import { fileExists, glob, directoryExists } from "../utils/fs";
+import { setVerbose } from "../utils/logger";
 
 type CheckResult = {
   status: "pass" | "fail" | "warn" | "skip";
@@ -193,7 +195,7 @@ async function checkSourceReachable(
       details: [`${skillCount} skills available`],
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = getErrorMessage(error);
     return {
       status: "fail",
       message: "Failed to load source",

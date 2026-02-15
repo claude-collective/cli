@@ -1,8 +1,9 @@
-import { BaseCommand } from "../../base-command.js";
-import { getPluginVersion, findPluginManifest } from "../../lib/plugins/index.js";
-import { EXIT_CODES } from "../../lib/exit-codes.js";
 import path from "path";
+
+import { BaseCommand } from "../../base-command.js";
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts.js";
+import { EXIT_CODES } from "../../lib/exit-codes.js";
+import { getPluginVersion, findPluginManifest } from "../../lib/plugins/index.js";
 
 export default class VersionShow extends BaseCommand {
   static summary = "Show current plugin version";

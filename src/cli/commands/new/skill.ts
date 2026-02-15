@@ -3,12 +3,16 @@ import path from "path";
 import { BaseCommand } from "../../base-command.js";
 import { resolveAuthor } from "../../lib/configuration/index.js";
 import { writeFile, directoryExists } from "../../utils/fs.js";
-import { LOCAL_SKILLS_PATH, SCHEMA_PATHS, yamlSchemaComment } from "../../consts.js";
+import {
+  LOCAL_SKILLS_PATH,
+  SCHEMA_PATHS,
+  STANDARD_FILES,
+  yamlSchemaComment,
+} from "../../consts.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
+import { LOCAL_DEFAULTS } from "../../lib/metadata-keys.js";
 import type { CategoryPath } from "../../types/index.js";
 
-const DEFAULT_AUTHOR = "@local";
-const DEFAULT_CATEGORY = "local";
 const KEBAB_CASE_PATTERN = /^[a-z][a-z0-9-]*$/;
 
 export function validateSkillName(name: string): string | null {
@@ -125,7 +129,7 @@ export default class NewSkill extends BaseCommand {
     category: Flags.string({
       char: "c",
       description: "Skill category",
-      default: DEFAULT_CATEGORY,
+      default: LOCAL_DEFAULTS.CATEGORY,
     }),
     force: Flags.boolean({
       char: "f",
@@ -150,7 +154,7 @@ export default class NewSkill extends BaseCommand {
     // Determine author: flag > project config > default
     let author = flags.author;
     if (!author) {
-      author = (await resolveAuthor(projectDir)) || DEFAULT_AUTHOR;
+      author = (await resolveAuthor(projectDir)) || LOCAL_DEFAULTS.AUTHOR;
     }
 
     // CLI flag is an untyped string — cast at data boundary
@@ -184,22 +188,20 @@ export default class NewSkill extends BaseCommand {
       const skillMdContent = generateSkillMd(args.name, author);
       const metadataContent = generateMetadataYaml(args.name, author, category);
 
-      const skillMdPath = path.join(skillDir, "SKILL.md");
-      const metadataPath = path.join(skillDir, "metadata.yaml");
+      const skillMdPath = path.join(skillDir, STANDARD_FILES.SKILL_MD);
+      const metadataPath = path.join(skillDir, STANDARD_FILES.METADATA_YAML);
 
       await writeFile(skillMdPath, skillMdContent);
       await writeFile(metadataPath, metadataContent);
 
       this.log("");
-      this.logSuccess(`Created SKILL.md at ${skillMdPath}`);
-      this.logSuccess(`Created metadata.yaml at ${metadataPath}`);
+      this.logSuccess(`Created ${STANDARD_FILES.SKILL_MD} at ${skillMdPath}`);
+      this.logSuccess(`Created ${STANDARD_FILES.METADATA_YAML} at ${metadataPath}`);
       this.log("");
       this.log("Skill created successfully! Run 'cc compile' to include it in your agents.");
       this.log("");
     } catch (error) {
-      this.error(error instanceof Error ? error.message : "Unknown error occurred", {
-        exit: EXIT_CODES.ERROR,
-      });
+      this.handleError(error);
     }
   }
 }
