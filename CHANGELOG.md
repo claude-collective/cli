@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.2] - 2026-02-15
+
+### Added
+
+- **Multi-skill stack assignments in project config** — `ProjectConfig.stack` now stores `SkillAssignment[]` per subcategory (matching `stacks.yaml` format) instead of a single `SkillId`. Enables multiple skills per subcategory with `preloaded` flags preserved through the full pipeline. Config YAML accepts bare strings, objects, and arrays interchangeably.
+- **Stack normalization at load time** — `loadProjectConfig` normalizes stack values to `SkillAssignment[]` using shared `normalizeStackRecord` helper (same as `loadStacks`).
+- **Compact YAML serialization** — `compactStackForYaml` produces minimal output: bare strings for simple skills, objects for preloaded, arrays for multi-skill subcategories.
+- **`getStackSkillIds` utility** — Extracts unique skill IDs from a stack config record using Remeda pipe. Used by `compile`, `doctor`, and `stack-plugin-compiler`.
+
+### Changed
+
+- **`buildStackProperty` preserves full assignments** — No longer extracts only the first skill ID per subcategory; preserves all `SkillAssignment[]` entries with preloaded flags.
+- **`buildSkillRefsFromConfig` delegates to `resolveAgentConfigToSkills`** — Removed manual iteration in favor of the existing typed helper, preserving preloaded flags from assignments.
+- **Schema widened** — `projectConfigLoaderSchema.stack` accepts the same 3 YAML formats as `stackSchema`: bare string, single object with preloaded, and array of mixed elements.
+
+### Fixed
+
+- **`hashStackConfig` produced objects instead of IDs** — `Object.values()` on `SkillAssignment[]` yielded assignment objects instead of skill IDs; now uses `getStackSkillIds()`.
+- **`compileStackPlugin` skill extraction** — Same `Object.values()` bug fixed with `getStackSkillIds()`.
+
 ## [0.29.1] - 2026-02-15
 
 ### Fixed
