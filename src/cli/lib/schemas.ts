@@ -363,6 +363,24 @@ export const agentYamlConfigSchema: z.ZodType<AgentYamlConfig> = z.object({
   output_format: z.string().optional(),
 });
 
+// ---------------------------------------------------------------------------
+// Skill assignment schemas — shared by projectConfigLoaderSchema and stackSchema.
+// Moved before projectConfigLoaderSchema so it can reference stackAgentConfigSchema.
+// ---------------------------------------------------------------------------
+
+// Single skill assignment element: either a bare SkillId string or an object { id, preloaded? }
+const skillAssignmentElementSchema = z.union([skillIdSchema, skillAssignmentSchema]);
+
+/**
+ * Agent config within a stack: maps subcategory to skill assignment(s).
+ * Lenient: accepts bare string, object, or array from YAML.
+ * Consumers normalize all values to SkillAssignment[] after parsing.
+ */
+export const stackAgentConfigSchema = z.record(
+  z.string(),
+  z.union([skillAssignmentElementSchema, z.array(skillAssignmentElementSchema)]),
+);
+
 /**
  * Lenient loader for .claude/config.yaml (ProjectConfig).
  * name/agents optional since partial configs are valid at load time.
@@ -383,8 +401,8 @@ export const projectConfigLoaderSchema = z
     author: z.string().optional(),
     /** "local" = .claude/agents, "plugin" = .claude/plugins/claude-collective */
     installMode: z.enum(["local", "plugin"]).optional(),
-    /** Agent-to-subcategory-to-skill mappings from selected stack */
-    stack: z.record(z.string(), z.record(z.string(), skillIdSchema)).optional(),
+    /** Agent-to-subcategory-to-skill mappings from selected stack (accepts same formats as stacks.yaml) */
+    stack: z.record(z.string(), stackAgentConfigSchema).optional(),
     /** Skills source path or URL (e.g., "github:my-org/skills") */
     source: z.string().optional(),
     /** Marketplace identifier for plugin installation */
@@ -514,19 +532,6 @@ export const localSkillMetadataSchema = z
 // ---------------------------------------------------------------------------
 // Stack schemas — validate stacks.yaml (pre-configured technology selections).
 // ---------------------------------------------------------------------------
-
-// Single skill assignment element: either a bare SkillId string or an object { id, preloaded? }
-const skillAssignmentElementSchema = z.union([skillIdSchema, skillAssignmentSchema]);
-
-/**
- * Agent config within a stack: maps subcategory to skill assignment(s).
- * Lenient: accepts bare string, object, or array from YAML.
- * loadStacks() normalizes all values to SkillAssignment[] after parsing.
- */
-export const stackAgentConfigSchema = z.record(
-  z.string(),
-  z.union([skillAssignmentElementSchema, z.array(skillAssignmentElementSchema)]),
-);
 
 export const stackSchema = z.object({
   id: z.string(),

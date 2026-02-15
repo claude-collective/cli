@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { validateNestingDepth, warnUnknownFields } from "./schemas";
+import { projectConfigLoaderSchema, validateNestingDepth, warnUnknownFields } from "./schemas";
 
 vi.mock("../utils/logger", () => ({
   warn: vi.fn(),
@@ -124,6 +124,156 @@ describe("schema utilities", () => {
       warnUnknownFields({ unknown: true }, ["name"], "marketplace.json");
 
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("marketplace.json"));
+    });
+  });
+});
+
+describe("projectConfigLoaderSchema", () => {
+  describe("stack field with mixed skill assignment formats", () => {
+    it("should accept bare string skill IDs (format 1)", () => {
+      const config = {
+        name: "test-project",
+        agents: ["web-developer"],
+        stack: {
+          "web-developer": {
+            framework: "web-framework-react",
+            styling: "web-styling-scss-modules",
+          },
+        },
+      };
+
+      const result = projectConfigLoaderSchema.safeParse(config);
+      expect(result.success).toBe(true);
+    });
+
+    it("should accept array of objects with preloaded (format 2)", () => {
+      const config = {
+        name: "test-project",
+        agents: ["web-developer"],
+        stack: {
+          "web-developer": {
+            methodology: [
+              { id: "meta-methodology-investigation-requirements", preloaded: true },
+              { id: "meta-methodology-anti-over-engineering", preloaded: true },
+            ],
+          },
+        },
+      };
+
+      const result = projectConfigLoaderSchema.safeParse(config);
+      expect(result.success).toBe(true);
+    });
+
+    it("should accept single object with preloaded (format 3)", () => {
+      const config = {
+        name: "test-project",
+        agents: ["web-developer"],
+        stack: {
+          "web-developer": {
+            framework: { id: "web-framework-react", preloaded: true },
+          },
+        },
+      };
+
+      const result = projectConfigLoaderSchema.safeParse(config);
+      expect(result.success).toBe(true);
+    });
+
+    it("should accept mixed formats within the same agent config", () => {
+      const config = {
+        name: "test-project",
+        agents: ["web-developer"],
+        stack: {
+          "web-developer": {
+            // Format 1: bare string
+            framework: "web-framework-react",
+            // Format 2: array of objects
+            methodology: [
+              { id: "meta-methodology-investigation-requirements", preloaded: true },
+              { id: "meta-methodology-anti-over-engineering", preloaded: true },
+            ],
+            // Format 3: single object
+            styling: { id: "web-styling-scss-modules", preloaded: true },
+          },
+        },
+      };
+
+      const result = projectConfigLoaderSchema.safeParse(config);
+      expect(result.success).toBe(true);
+    });
+
+    it("should accept mixed formats across multiple agents", () => {
+      const config = {
+        name: "test-project",
+        agents: ["web-developer", "api-developer"],
+        stack: {
+          "web-developer": {
+            framework: "web-framework-react",
+          },
+          "api-developer": {
+            api: { id: "api-framework-hono", preloaded: true },
+            database: [{ id: "api-database-drizzle" }],
+          },
+        },
+      };
+
+      const result = projectConfigLoaderSchema.safeParse(config);
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject invalid skill ID format in stack", () => {
+      const config = {
+        name: "test-project",
+        agents: ["web-developer"],
+        stack: {
+          "web-developer": {
+            framework: "invalid", // Not a valid SkillId (needs 3+ segments)
+          },
+        },
+      };
+
+      const result = projectConfigLoaderSchema.safeParse(config);
+      expect(result.success).toBe(false);
+    });
+
+    it("should accept stack with no agents", () => {
+      const config = {
+        name: "test-project",
+        agents: ["web-developer"],
+        stack: {},
+      };
+
+      const result = projectConfigLoaderSchema.safeParse(config);
+      expect(result.success).toBe(true);
+    });
+
+    it("should accept config without stack field", () => {
+      const config = {
+        name: "test-project",
+        agents: ["web-developer"],
+        skills: ["web-framework-react"],
+      };
+
+      const result = projectConfigLoaderSchema.safeParse(config);
+      expect(result.success).toBe(true);
+    });
+
+    it("should accept array with mixed string and object elements", () => {
+      const config = {
+        name: "test-project",
+        agents: ["web-developer"],
+        stack: {
+          "web-developer": {
+            methodology: [
+              "meta-methodology-investigation-requirements",
+              { id: "meta-methodology-anti-over-engineering", preloaded: true },
+            ],
+          },
+        },
+      };
+
+      const result = projectConfigLoaderSchema.safeParse(config);
+      expect(result.success).toBe(true);
     });
   });
 });
