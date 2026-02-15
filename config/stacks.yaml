@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../src/schemas/stacks.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas/stacks.schema.json
 # Stack definitions - agent groupings with technology mappings for different workflows
 
 stacks:

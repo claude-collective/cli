@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../../../schemas/agent.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas/agent.schema.json
 id: cli-migrator
 title: CLI Migration Specialist
 description: Converts Commander.js + @clack/prompts CLI code to oclif + Ink - TEMPORARY agent for migration effort

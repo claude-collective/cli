@@ -69,10 +69,13 @@ const SCHEMA_PKG_PREFIX =
   "https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas";
 
 export const SCHEMA_PATHS = {
-  projectConfig: `${SCHEMA_PKG_PREFIX}/project-config.schema.json`,
-  projectSourceConfig: `${SCHEMA_PKG_PREFIX}/project-source-config.schema.json`,
+  agent: `${SCHEMA_PKG_PREFIX}/agent.schema.json`,
   metadata: `${SCHEMA_PKG_PREFIX}/metadata.schema.json`,
   marketplace: `${SCHEMA_PKG_PREFIX}/marketplace.schema.json`,
+  projectConfig: `${SCHEMA_PKG_PREFIX}/project-config.schema.json`,
+  projectSourceConfig: `${SCHEMA_PKG_PREFIX}/project-source-config.schema.json`,
+  skillsMatrix: `${SCHEMA_PKG_PREFIX}/skills-matrix.schema.json`,
+  stacks: `${SCHEMA_PKG_PREFIX}/stacks.schema.json`,
 } as const;
 
 /** Generates a yaml-language-server schema comment for the top of YAML files. */

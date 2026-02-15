@@ -14,7 +14,7 @@ Provide your skill definition in this structure:
 ### metadata.yaml
 
 ```yaml
-# yaml-language-server: $schema=../../schemas/metadata.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas/metadata.schema.json
 category: [category]
 author: [@author]
 version: 1

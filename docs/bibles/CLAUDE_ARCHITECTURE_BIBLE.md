@@ -1260,7 +1260,7 @@ version: "1"        # String - INVALID
 ### Complete metadata.yaml Example
 
 ```yaml
-# yaml-language-server: $schema=../../../schemas/metadata.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas/metadata.schema.json
 category: framework
 category_exclusive: true
 author: "@vince"
