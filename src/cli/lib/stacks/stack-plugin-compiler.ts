@@ -9,18 +9,17 @@ import {
   fileExists,
   directoryExists,
 } from "../../utils/fs";
-import { verbose } from "../../utils/logger";
-import { DIRS, PROJECT_ROOT, SKILLS_MATRIX_PATH } from "../../consts";
-import { createLiquidEngine } from "../compiler";
+import { log, verbose } from "../../utils/logger";
+import { DIRS, PROJECT_ROOT, STANDARD_FILES } from "../../consts";
+import { createLiquidEngine, sanitizeCompiledAgentData } from "../compiler";
 import {
   generateStackPluginManifest,
   writePluginManifest,
   getPluginManifestPath,
 } from "../plugins";
 import { loadSkillsByIds, loadAllAgents } from "../loading";
-import { loadStackById, resolveAgentConfigToSkills } from "./stacks-loader";
-import { loadSkillsMatrix } from "../matrix";
-import { resolveAgents, stackToCompileConfig } from "../resolver";
+import { loadStackById, resolveAgentConfigToSkills, getStackSkillIds } from "./stacks-loader";
+import { resolveAgents, convertStackToCompileConfig } from "../resolver";
 import { buildStackProperty } from "../configuration";
 import type {
   AgentConfig,
@@ -34,21 +33,19 @@ import type {
   SkillId,
   Stack,
 } from "../../types";
-import { hashString, determinePluginVersion, writeContentHash } from "../versioning";
+import { computeStringHash, determinePluginVersion, writeContentHash } from "../versioning";
 import { unique } from "remeda";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
 
 function hashStackConfig(stack: ProjectConfig): string {
-  const stackSkillIds = stack.stack
-    ? [...new Set(Object.values(stack.stack).flatMap((a) => Object.values(a)))].sort()
-    : [];
+  const stackSkillIds = stack.stack ? getStackSkillIds(stack.stack).sort() : [];
   const parts: string[] = [
     `name:${stack.name}`,
     `description:${stack.description ?? ""}`,
     `skills:${stackSkillIds.join(",")}`,
     `agents:${(stack.agents || []).sort().join(",")}`,
   ];
-  return hashString(parts.join("\n"));
+  return computeStringHash(parts.join("\n"));
 }
 
 export type StackPluginOptions = {
@@ -84,18 +81,18 @@ export async function compileAgentForPlugin(
   const agentBaseDir = agent.agentBaseDir || DIRS.agents;
   const agentDir = path.join(agentSourceRoot, agentBaseDir, agent.path || name);
 
-  const intro = await readFile(path.join(agentDir, "intro.md"));
-  const workflow = await readFile(path.join(agentDir, "workflow.md"));
+  const intro = await readFile(path.join(agentDir, STANDARD_FILES.INTRO_MD));
+  const workflow = await readFile(path.join(agentDir, STANDARD_FILES.WORKFLOW_MD));
   const examples = await readFileOptional(
-    path.join(agentDir, "examples.md"),
+    path.join(agentDir, STANDARD_FILES.EXAMPLES_MD),
     "## Examples\n\n_No examples defined._",
   );
   const criticalRequirementsTop = await readFileOptional(
-    path.join(agentDir, "critical-requirements.md"),
+    path.join(agentDir, STANDARD_FILES.CRITICAL_REQUIREMENTS_MD),
     "",
   );
   const criticalReminders = await readFileOptional(
-    path.join(agentDir, "critical-reminders.md"),
+    path.join(agentDir, STANDARD_FILES.CRITICAL_REMINDERS_MD),
     "",
   );
 
@@ -103,9 +100,15 @@ export async function compileAgentForPlugin(
   const category = agentPath.split("/")[0];
   const categoryDir = path.join(agentSourceRoot, agentBaseDir, category);
 
-  let outputFormat = await readFileOptional(path.join(agentDir, "output-format.md"), "");
+  let outputFormat = await readFileOptional(
+    path.join(agentDir, STANDARD_FILES.OUTPUT_FORMAT_MD),
+    "",
+  );
   if (!outputFormat) {
-    outputFormat = await readFileOptional(path.join(categoryDir, "output-format.md"), "");
+    outputFormat = await readFileOptional(
+      path.join(categoryDir, STANDARD_FILES.OUTPUT_FORMAT_MD),
+      "",
+    );
   }
 
   // In plugin mode, skills are installed as individual plugins — use pluginRef format.
@@ -137,7 +140,7 @@ export async function compileAgentForPlugin(
     preloadedSkillIds,
   };
 
-  return engine.renderFile("agent", data);
+  return engine.renderFile("agent", sanitizeCompiledAgentData(data));
 }
 
 function generateStackReadme(
@@ -158,9 +161,9 @@ function generateStackReadme(
   lines.push("Add this plugin to your Claude Code configuration:");
   lines.push("");
   lines.push("```json");
-  lines.push(`{`);
+  lines.push("{");
   lines.push(`  "plugins": ["${stackId}"]`);
-  lines.push(`}`);
+  lines.push("}");
   lines.push("```");
   lines.push("");
 
@@ -204,7 +207,6 @@ export async function compileStackPlugin(
   verbose(`  Local agent source: ${localAgentRoot}`);
   verbose(`  CLI agent source: ${PROJECT_ROOT}`);
 
-  // Load agents from both local project and CLI, with local taking precedence
   const cliAgents = await loadAllAgents(PROJECT_ROOT);
   const localAgents = await loadAllAgents(localAgentRoot);
   // Boundary cast: loadAllAgents returns Record<string, AgentDefinition>, agent dirs are AgentName by convention
@@ -214,63 +216,47 @@ export async function compileStackPlugin(
     `  Loaded ${Object.keys(localAgents).length} local agents, ${Object.keys(cliAgents).length} CLI agents`,
   );
 
-  // Use provided stack or load from CLI's config/stacks.yaml
-  const newStack = options.stack || (await loadStackById(stackId, PROJECT_ROOT));
-
-  // Load skill aliases from the matrix to resolve technology aliases to skill IDs
-  // This is needed for Phase 7 skill resolution in resolveAgents
-  const matrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
-  const matrix = await loadSkillsMatrix(matrixPath);
-  const skillAliases = matrix.skill_aliases || {};
+  // Use provided stack or load from source's config/stacks.yaml, falling back to CLI
+  let newStack = options.stack || (await loadStackById(stackId, projectRoot));
+  if (!newStack) {
+    newStack = await loadStackById(stackId, PROJECT_ROOT);
+  }
 
   let stack: ProjectConfig;
   if (newStack) {
     verbose(`  Found stack: ${newStack.name}`);
 
-    // Extract skills from stack's agent configurations (Phase 7: skills in stacks, not agents)
     const agentSkillIds = new Set<SkillId>();
     for (const agentName of typedKeys<AgentName>(newStack.agents)) {
       const agentConfig = newStack.agents[agentName];
       if (!agentConfig) continue;
-      const skillRefs = resolveAgentConfigToSkills(agentConfig, skillAliases);
+      const skillRefs = resolveAgentConfigToSkills(agentConfig);
       for (const ref of skillRefs) {
         agentSkillIds.add(ref.id);
       }
     }
 
-    // Build ProjectConfig for rest of function
     stack = {
       name: newStack.name,
       description: newStack.description,
       agents: typedKeys<AgentName>(newStack.agents),
       skills: [...agentSkillIds],
-      stack: buildStackProperty(newStack, skillAliases) as ProjectConfig["stack"],
+      stack: buildStackProperty(newStack) as ProjectConfig["stack"],
     };
   } else {
     throw new Error(`Stack '${stackId}' not found in config/stacks.yaml`);
   }
 
-  // Collect unique skill IDs from stack property for loading
-  const stackSkillIds = stack.stack
-    ? [...new Set(Object.values(stack.stack).flatMap((a) => Object.values(a)))]
-    : [];
+  const stackSkillIds = stack.stack ? getStackSkillIds(stack.stack) : [];
   // Boundary cast: loadSkillsByIds returns Record<string, SkillDefinition>, keys are SkillId by construction
   const skills = (await loadSkillsByIds(
     stackSkillIds.map((id) => ({ id })),
     projectRoot,
   )) as Record<SkillId, SkillDefinition>;
 
-  const compileConfig: CompileConfig = stackToCompileConfig(stackId, stack);
+  const compileConfig: CompileConfig = convertStackToCompileConfig(stackId, stack);
 
-  // Pass newStack and skillAliases for Phase 7 skill resolution
-  const resolvedAgents = await resolveAgents(
-    agents,
-    skills,
-    compileConfig,
-    projectRoot,
-    newStack,
-    skillAliases,
-  );
+  const resolvedAgents = await resolveAgents(agents, skills, compileConfig, projectRoot, newStack);
 
   const pluginDir = path.join(outputDir, stackId);
   const agentsDir = path.join(pluginDir, "agents");
@@ -319,11 +305,11 @@ export async function compileStackPlugin(
   }
 
   const stackDir = path.join(projectRoot, DIRS.stacks, stackId);
-  const claudeMdPath = path.join(stackDir, "CLAUDE.md");
+  const claudeMdPath = path.join(stackDir, STANDARD_FILES.CLAUDE_MD);
   if (await fileExists(claudeMdPath)) {
     const claudeContent = await readFile(claudeMdPath);
-    await writeFile(path.join(pluginDir, "CLAUDE.md"), claudeContent);
-    verbose(`  Copied CLAUDE.md`);
+    await writeFile(path.join(pluginDir, STANDARD_FILES.CLAUDE_MD), claudeContent);
+    verbose(`  Copied ${STANDARD_FILES.CLAUDE_MD}`);
   }
 
   const newHash = hashStackConfig(stack);
@@ -353,7 +339,7 @@ export async function compileStackPlugin(
 
   const readme = generateStackReadme(stackId, stack, compiledAgentNames, uniqueSkillPlugins);
   await writeFile(path.join(pluginDir, "README.md"), readme);
-  verbose(`  Generated README.md`);
+  verbose("  Generated README.md");
 
   return {
     pluginPath: pluginDir,
@@ -366,19 +352,19 @@ export async function compileStackPlugin(
 }
 
 export function printStackCompilationSummary(result: CompiledStackPlugin): void {
-  console.log(`\nStack plugin compiled: ${result.stackName}`);
-  console.log(`  Path: ${result.pluginPath}`);
-  console.log(`  Agents: ${result.agents.length}`);
+  log(`\nStack plugin compiled: ${result.stackName}`);
+  log(`  Path: ${result.pluginPath}`);
+  log(`  Agents: ${result.agents.length}`);
   for (const agent of result.agents) {
-    console.log(`    - ${agent}`);
+    log(`    - ${agent}`);
   }
   if (result.skillPlugins.length > 0) {
-    console.log(`  Skills included: ${result.skillPlugins.length}`);
+    log(`  Skills included: ${result.skillPlugins.length}`);
     for (const skill of result.skillPlugins) {
-      console.log(`    - ${skill}`);
+      log(`    - ${skill}`);
     }
   }
   if (result.hasHooks) {
-    console.log(`  Hooks: enabled`);
+    log("  Hooks: enabled");
   }
 }

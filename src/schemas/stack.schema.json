@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://claude-collective.local/schemas/stack.schema.json",
+  "$id": "schemas/stack.schema.json",
   "title": "Stack Config",
   "description": "Schema for individual stack config.yaml files.",
   "type": "object",

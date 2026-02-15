@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { loadSkillsFromAllSources, searchExtraSources } from "./multi-source-loader";
-import type { MergedSkillsMatrix, ResolvedSkill, SkillId, SkillSource } from "../../types";
+import type { SkillId } from "../../types";
 import type { ResolvedConfig, SourceEntry } from "../configuration";
+import { createMockSkill, createMockMatrix } from "../__tests__/helpers";
 
 // Mock external dependencies
 vi.mock("../../utils/logger", () => ({
@@ -39,39 +40,6 @@ vi.mock("../../utils/fs", () => ({
   directoryExists: vi.fn().mockResolvedValue(false),
 }));
 
-function createTestSkill(id: SkillId, overrides: Partial<ResolvedSkill> = {}): ResolvedSkill {
-  return {
-    id,
-    description: `Test skill ${id}`,
-    category: "testing",
-    categoryExclusive: true,
-    tags: [],
-    author: "@test",
-    conflictsWith: [],
-    recommends: [],
-    requires: [],
-    alternatives: [],
-    discourages: [],
-    compatibleWith: [],
-    requiresSetup: [],
-    providesSetupFor: [],
-    path: `skills/${id}/`,
-    ...overrides,
-  };
-}
-
-function createTestMatrix(skills: Record<string, ResolvedSkill>): MergedSkillsMatrix {
-  return {
-    version: "1.0.0",
-    categories: {},
-    skills: skills as MergedSkillsMatrix["skills"],
-    suggestedStacks: [],
-    displayNameToId: {},
-    displayNames: {},
-    generatedAt: new Date().toISOString(),
-  };
-}
-
 const DEFAULT_SOURCE_CONFIG: ResolvedConfig = {
   source: "github:claude-collective/skills",
   sourceOrigin: "default",
@@ -90,9 +58,9 @@ describe("multi-source-loader", () => {
         extras: [],
       });
 
-      const matrix = createTestMatrix({
-        "web-framework-react": createTestSkill("web-framework-react" as SkillId),
-        "web-testing-vitest": createTestSkill("web-testing-vitest" as SkillId),
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+        "web-testing-vitest": createMockSkill("web-testing-vitest" as SkillId, "testing"),
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -117,8 +85,8 @@ describe("multi-source-loader", () => {
         extras: [],
       });
 
-      const matrix = createTestMatrix({
-        "web-framework-react": createTestSkill("web-framework-react" as SkillId, {
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing", {
           local: true,
           localPath: ".claude/skills/react/",
         }),
@@ -153,8 +121,8 @@ describe("multi-source-loader", () => {
         extras: [],
       });
 
-      const matrix = createTestMatrix({
-        "web-framework-react": createTestSkill("web-framework-react" as SkillId, {
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing", {
           local: true,
           localPath: ".claude/skills/react/",
         }),
@@ -180,8 +148,8 @@ describe("multi-source-loader", () => {
         extras: [],
       });
 
-      const matrix = createTestMatrix({
-        "web-framework-react": createTestSkill("web-framework-react" as SkillId, {
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing", {
           local: true,
           localPath: ".claude/skills/react/",
         }),
@@ -202,8 +170,8 @@ describe("multi-source-loader", () => {
         extras: [],
       });
 
-      const matrix = createTestMatrix({
-        "web-framework-react": createTestSkill("web-framework-react" as SkillId),
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -230,8 +198,8 @@ describe("multi-source-loader", () => {
       const { fetchFromSource } = await import("./source-fetcher");
       vi.mocked(fetchFromSource).mockRejectedValue(new Error("Network timeout"));
 
-      const matrix = createTestMatrix({
-        "web-framework-react": createTestSkill("web-framework-react" as SkillId),
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
       });
 
       // Should not throw
@@ -285,8 +253,8 @@ describe("multi-source-loader", () => {
         },
       ]);
 
-      const matrix = createTestMatrix({
-        "web-framework-react": createTestSkill("web-framework-react" as SkillId),
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -320,8 +288,8 @@ describe("multi-source-loader", () => {
       vi.mocked(directoryExists).mockResolvedValue(true);
       vi.mocked(getPluginSkillIds).mockResolvedValue(["web-framework-react" as SkillId]);
 
-      const matrix = createTestMatrix({
-        "web-framework-react": createTestSkill("web-framework-react" as SkillId),
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");

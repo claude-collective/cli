@@ -63,10 +63,22 @@ export type PermissionMode =
   | "plan"
   | "delegate";
 
-/** Category definitions indexed by subcategory ID */
+/**
+ * Category definitions indexed by subcategory ID.
+ * Partial because not every Subcategory has a category definition (e.g., a marketplace
+ * may only define a subset of all possible subcategories).
+ */
 export type CategoryMap = Partial<Record<Subcategory, CategoryDefinition>>;
 
-/** Full domain selections used throughout the wizard pipeline (store, components, result) */
+/**
+ * Full domain selections used throughout the wizard pipeline (store, components, result).
+ *
+ * Structure: `{ domain: { subcategory: [skillId, ...] } }`
+ *
+ * - Outer Partial: not all domains need selections (user may skip "mobile" entirely)
+ * - Inner Partial: within a domain, only some subcategories may have selections
+ * - SkillId[]: a subcategory can have multiple skills unless `CategoryDefinition.exclusive` is true
+ */
 export type DomainSelections = Partial<Record<Domain, Partial<Record<Subcategory, SkillId[]>>>>;
 
 /** Single category definition from skills-matrix.yaml */
@@ -78,9 +90,9 @@ export type CategoryDefinition = {
   domain?: Domain;
   /** Parent domain for display-only sub-domains, used to inherit framework selections */
   parent_domain?: Domain;
-  /** @default true */
+  /** If true, only one skill can be selected in this category (radio behavior). @default true */
   exclusive: boolean;
-  /** @default false */
+  /** If true, the user must select at least one skill before proceeding. @default false */
   required: boolean;
   /** Display order within domain (lower = earlier) */
   order: number;
@@ -163,45 +175,64 @@ export type SuggestedStack = {
   philosophy: string;
 };
 
-/** Output of mergeMatrixWithSkills() combining skills-matrix.yaml with extracted metadata */
+/**
+ * Output of mergeMatrixWithSkills() combining skills-matrix.yaml with extracted metadata.
+ * This is the primary read model consumed by the wizard and CLI commands.
+ */
 export type MergedSkillsMatrix = {
   version: string;
   categories: CategoryMap;
   /** Indexed by full skill ID for O(1) lookup */
   skills: Partial<Record<SkillId, ResolvedSkill>>;
+  /** Stacks with all skill aliases resolved to canonical IDs */
   suggestedStacks: ResolvedStack[];
+  /** Forward map: display name (e.g., "react") to canonical skill ID (e.g., "web-framework-react") */
   displayNameToId: Partial<Record<SkillDisplayName, SkillId>>;
-  /** Reverse map: skill ID to display name */
+  /** Reverse map: canonical skill ID to display name */
   displayNames: Partial<Record<SkillId, SkillDisplayName>>;
+  /** ISO timestamp of when this matrix was generated */
   generatedAt: string;
 };
 
-/** Single skill with all computed relationships resolved for CLI rendering */
+/**
+ * Single skill with all computed relationships resolved for CLI rendering.
+ * Produced by mergeMatrixWithSkills() after resolving aliases, relationships, and sources.
+ */
 export type ResolvedSkill = {
   id: SkillId;
+  /** Short display name (e.g., "react"); absent for skills without an alias in skill_aliases */
   displayName?: SkillDisplayName;
   description: string;
   /** When an AI agent should invoke this skill (decision criteria) */
   usageGuidance?: string;
-  /** Matches key in matrix.categories */
+  /** Matches key in matrix.categories; determines which wizard subcategory grid this skill appears in */
   category: CategoryPath;
+  /** If true, selecting this skill deselects others in the same category (radio vs checkbox behavior) */
   categoryExclusive: boolean;
   tags: string[];
+  /** Author handle (e.g., "@vince") from metadata.yaml */
   author: string;
   /** DEPRECATED: Version now lives in plugin.json */
   version?: string;
+  /** Selecting this skill disables these others (hard exclusion) */
   conflictsWith: SkillRelation[];
+  /** Selecting this skill highlights these as good companions (soft suggestion) */
   recommends: SkillRelation[];
   /** Skills that THIS skill requires (must select first) */
   requires: SkillRequirement[];
+  /** Other skills that serve the same purpose (informational, not enforced) */
   alternatives: SkillAlternative[];
+  /** Selecting this skill shows a warning for these others (soft conflict) */
   discourages: SkillRelation[];
   /**
    * Framework skill IDs this skill is compatible with.
-   * Used for framework-first filtering in the Build step.
+   * Used for framework-first filtering in the Build step: if a framework is selected,
+   * only skills listing that framework in compatibleWith (or with an empty list) are shown.
    */
   compatibleWith: SkillId[];
+  /** Setup skills that must be installed before this skill can function (e.g., "infra-env-setup") */
   requiresSetup: SkillId[];
+  /** Usage skills that this setup skill configures (inverse of requiresSetup) */
   providesSetupFor: SkillId[];
   /** Relative path to skill directory from src/ */
   path: string;
@@ -209,7 +240,7 @@ export type ResolvedSkill = {
   local?: boolean;
   /** Relative path from project root for local skills */
   localPath?: string;
-  /** All known sources that provide this skill */
+  /** All known sources that provide this skill (populated by multi-source-loader) */
   availableSources?: SkillSource[];
   /** Currently active/installed source (if any) */
   activeSource?: SkillSource;
@@ -303,18 +334,29 @@ export type BoundSkillCandidate = {
   description?: string;
 };
 
-/** Skill option as displayed in the wizard, computed based on current selections */
+/**
+ * Skill option as displayed in the wizard, computed based on current selections.
+ * Recomputed by matrix-resolver on every selection change.
+ */
 export type SkillOption = {
   id: SkillId;
   displayName?: SkillDisplayName;
   description: string;
+  /** True if a conflict rule prevents selection (grayed out in UI) */
   disabled: boolean;
+  /** Explains which conflict rule caused the disable (shown as tooltip) */
   disabledReason?: string;
+  /** True if a discourage rule applies (shown with warning indicator) */
   discouraged: boolean;
+  /** Explains which discourage rule applies */
   discouragedReason?: string;
+  /** True if a recommend rule from another selected skill suggests this one */
   recommended: boolean;
+  /** Explains why this skill is recommended */
   recommendedReason?: string;
+  /** True if this skill is currently selected by the user */
   selected: boolean;
+  /** Other skills that serve the same purpose (for "or try X" hints) */
   alternatives: SkillId[];
 };
 
@@ -339,7 +381,13 @@ export type ValidationWarning = {
   skills: SkillId[];
 };
 
-/** Skill metadata extracted from SKILL.md frontmatter + metadata.yaml before matrix merge */
+/**
+ * Skill metadata extracted from SKILL.md frontmatter + metadata.yaml before matrix merge.
+ *
+ * Important: relationship fields (compatibleWith, conflictsWith, requires) may contain
+ * display names (e.g., "react") at this stage. They are resolved to canonical SkillIds
+ * (e.g., "web-framework-react") during mergeMatrixWithSkills() via resolveAlias().
+ */
 export type ExtractedSkillMetadata = {
   /** Normalized from frontmatter name, e.g. "web-framework-react" */
   id: SkillId;

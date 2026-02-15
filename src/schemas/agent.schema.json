@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://claude-collective.local/schemas/agent.schema.json",
+  "$id": "schemas/agent.schema.json",
   "title": "Agent Definition",
   "description": "Schema for agent.yaml files defining Claude Code agents.",
   "type": "object",
@@ -25,6 +25,7 @@
       "enum": ["sonnet", "opus", "haiku", "inherit"]
     },
     "tools": {
+      "minItems": 1,
       "type": "array",
       "items": {
         "type": "string"
@@ -54,6 +55,7 @@
               "type": "string"
             },
             "hooks": {
+              "minItems": 1,
               "type": "array",
               "items": {
                 "type": "object",
@@ -77,6 +79,7 @@
               }
             }
           },
+          "required": ["hooks"],
           "additionalProperties": false
         }
       }

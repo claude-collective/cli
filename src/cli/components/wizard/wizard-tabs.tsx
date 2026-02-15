@@ -1,7 +1,8 @@
 import React from "react";
 import { Box, Text } from "ink";
+import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
 
-export type WizardTabStep = {
+type WizardTabStep = {
   id: string;
   label: string;
   number: number;
@@ -42,19 +43,27 @@ type TabProps = {
   state: StepState;
 };
 
+const STEP_STATE_SYMBOLS: Record<StepState, string> = {
+  completed: UI_SYMBOLS.SELECTED,
+  current: UI_SYMBOLS.CURRENT,
+  pending: UI_SYMBOLS.UNSELECTED,
+  skipped: UI_SYMBOLS.SKIPPED,
+};
+
 const Tab: React.FC<TabProps> = ({ step, state }) => {
-  const label = `[${step.number}] ${step.label}`;
+  const symbol = STEP_STATE_SYMBOLS[state];
+  const label = `${symbol} [${step.number}] ${step.label}`;
 
   switch (state) {
     case "current":
-      return <Text color="cyan">{label}</Text>;
+      return <Text color={CLI_COLORS.PRIMARY}>{label}</Text>;
     case "completed":
       return <Text>{label}</Text>;
     case "skipped":
       return <Text dimColor>{label}</Text>;
     case "pending":
     default:
-      return <Text color="white">{label}</Text>;
+      return <Text color={CLI_COLORS.UNFOCUSED}>{label}</Text>;
   }
 };
 

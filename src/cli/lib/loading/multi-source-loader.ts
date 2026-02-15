@@ -1,29 +1,45 @@
-import type {
-  BoundSkillCandidate,
-  MergedSkillsMatrix,
-  SkillAlias,
-  SkillId,
-  SkillSource,
-} from "../../types";
+import path from "path";
+
+import { SKILLS_DIR_PATH } from "../../consts";
+import type { BoundSkillCandidate, MergedSkillsMatrix, SkillAlias, SkillSource } from "../../types";
+import { directoryExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
 import { typedEntries } from "../../utils/typed-object";
 import { resolveAllSources, type ResolvedConfig, type SourceEntry } from "../configuration";
 import { extractAllSkills } from "../matrix";
-import { fetchFromSource } from "./source-fetcher";
-import { SKILLS_DIR_PATH } from "../../consts";
-import path from "path";
 import { getCollectivePluginDir, getPluginSkillIds, getPluginSkillsDir } from "../plugins";
-import { directoryExists } from "../../utils/fs";
+import { fetchFromSource } from "./source-fetcher";
 
+/** Default source name for skills from the primary (public) marketplace repository */
 const PUBLIC_SOURCE_NAME = "public";
 
 /**
- * Loads skill source metadata from all configured sources and annotates
- * each skill in the matrix with its available sources and active source.
+ * Annotates every skill in the matrix with multi-source availability metadata.
+ *
+ * Runs a five-phase tagging pipeline that mutates `primaryMatrix.skills` in place:
+ * 1. **Public** -- tags all skills with a "public" source entry
+ * 2. **Local** -- tags skills with `local: true` as installed via local source
+ * 3. **Plugin** -- detects plugin-installed skills in `{projectDir}/.claude/plugins/`
+ * 4. **Extra sources** -- fetches each configured extra source and tags matching skills
+ * 5. **Active source** -- sets `activeSource` to the installed variant, or first available
+ *
+ * After this function completes, each skill in the matrix has `availableSources` (all
+ * known sources) and `activeSource` (the one currently in use) populated.
+ *
+ * @param primaryMatrix - The merged skills matrix to annotate. Mutated in place --
+ *                        `availableSources` and `activeSource` are set on each skill.
+ * @param _sourceConfig - Reserved for future per-source configuration (currently unused)
+ * @param projectDir - Absolute path to the project root, used to locate plugin directories
+ *                     and resolve extra source configurations
+ *
+ * @remarks
+ * **Side effects:** Mutates `primaryMatrix` in place. May perform network requests
+ * to fetch extra source repositories (via giget). Errors from individual extra sources
+ * are warned and skipped -- the function never throws.
  */
 export async function loadSkillsFromAllSources(
   primaryMatrix: MergedSkillsMatrix,
-  sourceConfig: ResolvedConfig,
+  _sourceConfig: ResolvedConfig,
   projectDir: string,
 ): Promise<void> {
   // 1. Tag all primary source skills with "public" source
@@ -44,9 +60,7 @@ export async function loadSkillsFromAllSources(
 
 /** Tag all skills in the primary matrix as "public" source */
 function tagPrimarySourceSkills(matrix: MergedSkillsMatrix): void {
-  for (const [, skill] of typedEntries<SkillId, NonNullable<(typeof matrix.skills)[SkillId]>>(
-    matrix.skills as Record<SkillId, NonNullable<(typeof matrix.skills)[SkillId]>>,
-  )) {
+  for (const [, skill] of typedEntries(matrix.skills)) {
     if (!skill) continue;
 
     const source: SkillSource = {
@@ -64,9 +78,7 @@ function tagPrimarySourceSkills(matrix: MergedSkillsMatrix): void {
 /** Tag local skills with "local" source and mark as installed */
 function tagLocalSkills(matrix: MergedSkillsMatrix): void {
   let count = 0;
-  for (const [, skill] of typedEntries<SkillId, NonNullable<(typeof matrix.skills)[SkillId]>>(
-    matrix.skills as Record<SkillId, NonNullable<(typeof matrix.skills)[SkillId]>>,
-  )) {
+  for (const [, skill] of typedEntries(matrix.skills)) {
     if (!skill) continue;
     if (!skill.local) continue;
 
@@ -177,16 +189,14 @@ async function tagExtraSources(matrix: MergedSkillsMatrix, projectDir: string): 
         `Extra source '${extraSource.name}': ${skills.length} skills found, ${matchCount} matching`,
       );
     } catch (error) {
-      warn(`Failed to load extra source '${extraSource.name}' (${extraSource.url}): ${error}`);
+      warn(`Failed to load extra source '${extraSource.name}' ('${extraSource.url}'): ${error}`);
     }
   }
 }
 
 /** Set activeSource on each skill to the installed variant, or "public" as default */
 function setActiveSources(matrix: MergedSkillsMatrix): void {
-  for (const [, skill] of typedEntries<SkillId, NonNullable<(typeof matrix.skills)[SkillId]>>(
-    matrix.skills as Record<SkillId, NonNullable<(typeof matrix.skills)[SkillId]>>,
-  )) {
+  for (const [, skill] of typedEntries(matrix.skills)) {
     if (!skill) continue;
     if (!skill.availableSources || skill.availableSources.length === 0) continue;
 
@@ -197,9 +207,26 @@ function setActiveSources(matrix: MergedSkillsMatrix): void {
 }
 
 /**
- * Search configured extra sources for skills matching a given alias.
- * Returns candidates with source name, skill ID, and description.
- * Errors per-source are warned and skipped (never throws).
+ * Searches configured extra sources for skills matching a given alias.
+ *
+ * For each configured source, fetches the repository (using cached data when available),
+ * extracts all skill metadata, and matches by the last segment of the skill's directory
+ * path against the provided alias (case-insensitive). Used by the wizard's skill search
+ * modal to find foreign skills that can be bound to a subcategory.
+ *
+ * @param alias - Skill alias to search for (e.g., "react", "zustand"). Matched
+ *                case-insensitively against the last path segment of each skill's
+ *                directory path in the source repository.
+ * @param configuredSources - Array of extra source entries from project/global config.
+ *                            Each entry has `name` (display name) and `url` (giget-compatible
+ *                            source URL like "github:org/repo").
+ * @returns Array of matching candidates with skill ID, source URL, source name, alias,
+ *          and description. Returns an empty array if no sources are configured or no
+ *          matches are found. Never throws -- errors per-source are warned and skipped.
+ *
+ * @remarks
+ * **Side effects:** May perform network requests to fetch source repositories via giget.
+ * Uses cached source data when available (controlled by `forceRefresh: false`).
  */
 export async function searchExtraSources(
   alias: SkillAlias,
@@ -235,7 +262,7 @@ export async function searchExtraSources(
         }
       }
     } catch (error) {
-      warn(`Failed to search extra source '${source.name}' (${source.url}): ${error}`);
+      warn(`Failed to search extra source '${source.name}' ('${source.url}'): ${error}`);
     }
   }
 

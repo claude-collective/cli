@@ -1,15 +1,23 @@
-import path from "path";
 import os from "os";
-import { fileExists, readFile, glob } from "../../utils/fs";
-import { verbose } from "../../utils/logger";
+import path from "path";
+
+import { last, zip } from "remeda";
+
+import { fileExists, readFileSafe, readFile, glob } from "../../utils/fs";
+import { verbose, warn } from "../../utils/logger";
 import {
   CLAUDE_DIR,
+  DEFAULT_PLUGIN_NAME,
+  MAX_PLUGIN_FILE_SIZE,
   PLUGINS_SUBDIR,
   PLUGIN_MANIFEST_DIR,
   PLUGIN_MANIFEST_FILE,
 } from "../../consts";
-import type { MergedSkillsMatrix, PluginManifest, SkillId } from "../../types";
+import type { MergedSkillsMatrix, PluginManifest, ResolvedSkill, SkillId } from "../../types";
+import { typedEntries } from "../../utils/typed-object";
 import { pluginManifestSchema } from "../schemas";
+
+const MAX_SKILL_NAME_LENGTH = 100;
 
 export function getUserPluginsDir(): string {
   return path.join(os.homedir(), CLAUDE_DIR, PLUGINS_SUBDIR);
@@ -17,7 +25,7 @@ export function getUserPluginsDir(): string {
 
 export function getCollectivePluginDir(projectDir?: string): string {
   const dir = projectDir ?? process.cwd();
-  return path.join(dir, CLAUDE_DIR, PLUGINS_SUBDIR, "claude-collective");
+  return path.join(dir, CLAUDE_DIR, PLUGINS_SUBDIR, DEFAULT_PLUGIN_NAME);
 }
 
 export function getProjectPluginsDir(projectDir?: string): string {
@@ -46,7 +54,7 @@ export async function readPluginManifest(pluginDir: string): Promise<PluginManif
   }
 
   try {
-    const content = await readFile(manifestPath);
+    const content = await readFileSafe(manifestPath, MAX_PLUGIN_FILE_SIZE);
     const manifest = pluginManifestSchema.parse(JSON.parse(content));
 
     if (!manifest.name || typeof manifest.name !== "string") {
@@ -68,34 +76,44 @@ export async function getPluginSkillIds(
   const skillFiles = await glob("**/SKILL.md", pluginSkillsDir);
   const skillIds: SkillId[] = [];
 
-  // Boundary cast: Object.entries keys are SkillId
   const aliasToId = new Map<string, SkillId>();
-  for (const [id, skill] of Object.entries(matrix.skills)) {
+  for (const [id, skill] of typedEntries<SkillId, ResolvedSkill>(matrix.skills)) {
     if (!skill) continue;
     if (skill.displayName) {
-      aliasToId.set(skill.displayName.toLowerCase(), id as SkillId);
+      aliasToId.set(skill.displayName.toLowerCase(), id);
     }
   }
 
   const dirToId = new Map<string, SkillId>();
-  for (const [id] of Object.entries(matrix.skills)) {
+  for (const [id] of typedEntries<SkillId, ResolvedSkill>(matrix.skills)) {
     const idParts = id.split("/");
-    const lastPart = idParts[idParts.length - 1];
+    const lastPart = last(idParts);
     if (lastPart) {
-      dirToId.set(lastPart.toLowerCase(), id as SkillId);
+      dirToId.set(lastPart.toLowerCase(), id);
     }
   }
 
-  for (const skillFile of skillFiles) {
-    const fullPath = path.join(pluginSkillsDir, skillFile);
-    const content = await readFile(fullPath);
+  const fileContents = await Promise.all(
+    skillFiles.map((skillFile) => readFile(path.join(pluginSkillsDir, skillFile))),
+  );
 
+  for (const [skillFile, content] of zip(skillFiles, fileContents)) {
     const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
     if (frontmatterMatch) {
       const frontmatter = frontmatterMatch[1];
       const nameMatch = frontmatter.match(/^name:\s*["']?(.+?)["']?\s*$/m);
       if (nameMatch) {
         const skillName = nameMatch[1].trim();
+        if (skillName.length === 0) {
+          warn(`Skipping plugin skill '${skillFile}': empty name in frontmatter`);
+          continue;
+        }
+        if (skillName.length > MAX_SKILL_NAME_LENGTH) {
+          warn(
+            `Skipping plugin skill '${skillFile}': name exceeds ${MAX_SKILL_NAME_LENGTH} characters`,
+          );
+          continue;
+        }
         if (matrix.skills[skillName as SkillId]) {
           skillIds.push(skillName as SkillId);
           continue;

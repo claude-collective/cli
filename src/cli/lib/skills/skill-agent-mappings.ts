@@ -147,7 +147,7 @@ function getEffectiveSkillToAgents(): Record<string, AgentName[]> {
 export function getAgentsForSkill(
   skillPath: string,
   category: CategoryPath,
-  projectConfig?: ProjectConfig,
+  _projectConfig?: ProjectConfig,
 ): AgentName[] {
   const normalizedPath = skillPath.replace(/^skills\//, "").replace(/\/$/, "");
 

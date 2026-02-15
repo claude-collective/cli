@@ -1,12 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://claude-collective.local/schemas/plugin.schema.json",
+  "$id": "schemas/plugin.schema.json",
   "title": "Plugin Manifest",
   "description": "Schema for plugin.json manifest files.",
   "type": "object",
   "properties": {
     "name": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "version": {
       "type": "string"
@@ -18,7 +19,8 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "email": {
           "type": "string"
@@ -91,6 +93,7 @@
                   "type": "string"
                 },
                 "hooks": {
+                  "minItems": 1,
                   "type": "array",
                   "items": {
                     "type": "object",
@@ -114,6 +117,7 @@
                   }
                 }
               },
+              "required": ["hooks"],
               "additionalProperties": false
             }
           }

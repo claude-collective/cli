@@ -1,17 +1,16 @@
 import { readdir } from "fs/promises";
+import { countBy } from "remeda";
+
+import { DEFAULT_DISPLAY_VERSION, DEFAULT_PLUGIN_NAME } from "../../consts";
+import { directoryExists } from "../../utils/fs";
+import { loadProjectConfig } from "../configuration";
+import { detectInstallation, type InstallMode } from "../installation";
 import {
   getCollectivePluginDir,
   getPluginSkillsDir,
   getPluginAgentsDir,
   readPluginManifest,
 } from "./plugin-finder";
-import { countBy } from "remeda";
-import { directoryExists } from "../../utils/fs";
-import { DEFAULT_DISPLAY_VERSION } from "../../consts";
-import { detectInstallation, type InstallMode } from "../installation";
-import { loadProjectConfig } from "../configuration";
-
-const DEFAULT_NAME = "claude-collective";
 
 export type PluginInfo = {
   name: string;
@@ -61,7 +60,7 @@ export async function getPluginInfo(): Promise<PluginInfo | null> {
   }
 
   return {
-    name: manifest.name || DEFAULT_NAME,
+    name: manifest.name || DEFAULT_PLUGIN_NAME,
     version: manifest.version || DEFAULT_DISPLAY_VERSION,
     skillCount,
     agentCount,
@@ -85,7 +84,7 @@ export async function getInstallationInfo(): Promise<InstallationInfo | null> {
 
   let skillCount = 0;
   let agentCount = 0;
-  let name = DEFAULT_NAME;
+  let name = DEFAULT_PLUGIN_NAME;
   let version = DEFAULT_DISPLAY_VERSION;
 
   if (await directoryExists(installation.skillsDir)) {
@@ -113,14 +112,14 @@ export async function getInstallationInfo(): Promise<InstallationInfo | null> {
   if (installation.mode === "local") {
     const loaded = await loadProjectConfig(installation.projectDir);
     if (loaded?.config) {
-      name = loaded.config.name || DEFAULT_NAME;
+      name = loaded.config.name || DEFAULT_PLUGIN_NAME;
       version = "local";
     }
   } else {
     const pluginDir = getCollectivePluginDir(installation.projectDir);
     const manifest = await readPluginManifest(pluginDir);
     if (manifest) {
-      name = manifest.name || DEFAULT_NAME;
+      name = manifest.name || DEFAULT_PLUGIN_NAME;
       version = manifest.version || DEFAULT_DISPLAY_VERSION;
     }
   }

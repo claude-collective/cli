@@ -1,4 +1,5 @@
 import { extendTheme, defaultTheme } from "@inkjs/ui";
+import { CLI_COLORS } from "../../consts.js";
 
 /**
  * CLI theme matching existing picocolors styling
@@ -14,25 +15,25 @@ export const cliTheme = extendTheme(defaultTheme, {
   components: {
     Spinner: {
       styles: {
-        frame: () => ({ color: "cyan" }),
-        label: () => ({ color: "gray" }),
+        frame: () => ({ color: CLI_COLORS.PRIMARY }),
+        label: () => ({ color: CLI_COLORS.NEUTRAL }),
       },
     },
     Select: {
       styles: {
-        focusIndicator: () => ({ color: "cyan" }),
+        focusIndicator: () => ({ color: CLI_COLORS.FOCUS }),
         label: ({ isFocused }) => ({
-          color: isFocused ? "cyan" : undefined,
+          color: isFocused ? CLI_COLORS.FOCUS : undefined,
         }),
       },
     },
     MultiSelect: {
       styles: {
-        focusIndicator: () => ({ color: "cyan" }),
+        focusIndicator: () => ({ color: CLI_COLORS.FOCUS }),
         label: ({ isFocused, isSelected }) => ({
-          color: isFocused ? "cyan" : isSelected ? "green" : undefined,
+          color: isFocused ? CLI_COLORS.FOCUS : isSelected ? CLI_COLORS.SUCCESS : undefined,
         }),
-        checkboxChecked: () => ({ color: "green" }),
+        checkboxChecked: () => ({ color: CLI_COLORS.SUCCESS }),
       },
     },
     StatusMessage: {
@@ -41,12 +42,12 @@ export const cliTheme = extendTheme(defaultTheme, {
           borderStyle: "round",
           borderColor:
             variant === "error"
-              ? "red"
+              ? CLI_COLORS.ERROR
               : variant === "warning"
-                ? "yellow"
+                ? CLI_COLORS.WARNING
                 : variant === "success"
-                  ? "green"
-                  : "blue",
+                  ? CLI_COLORS.SUCCESS
+                  : CLI_COLORS.INFO,
         }),
       },
     },
@@ -55,36 +56,36 @@ export const cliTheme = extendTheme(defaultTheme, {
         container: ({ variant }) => ({
           borderColor:
             variant === "error"
-              ? "red"
+              ? CLI_COLORS.ERROR
               : variant === "warning"
-                ? "yellow"
+                ? CLI_COLORS.WARNING
                 : variant === "success"
-                  ? "green"
-                  : "blue",
+                  ? CLI_COLORS.SUCCESS
+                  : CLI_COLORS.INFO,
         }),
         icon: ({ variant }) => ({
           color:
             variant === "error"
-              ? "red"
+              ? CLI_COLORS.ERROR
               : variant === "warning"
-                ? "yellow"
+                ? CLI_COLORS.WARNING
                 : variant === "success"
-                  ? "green"
-                  : "blue",
+                  ? CLI_COLORS.SUCCESS
+                  : CLI_COLORS.INFO,
         }),
       },
     },
     TextInput: {
       styles: {
         container: ({ isFocused }) => ({
-          borderColor: isFocused ? "cyan" : "gray",
+          borderColor: isFocused ? CLI_COLORS.FOCUS : CLI_COLORS.NEUTRAL,
         }),
-        cursor: () => ({ color: "cyan" }),
+        cursor: () => ({ color: CLI_COLORS.PRIMARY }),
       },
     },
     ConfirmInput: {
       styles: {
-        highlightedChoice: () => ({ color: "cyan" }),
+        highlightedChoice: () => ({ color: CLI_COLORS.PRIMARY }),
       },
     },
     Badge: {
@@ -92,14 +93,14 @@ export const cliTheme = extendTheme(defaultTheme, {
         container: ({ variant }) => ({
           color:
             variant === "error"
-              ? "red"
+              ? CLI_COLORS.ERROR
               : variant === "warning"
-                ? "yellow"
+                ? CLI_COLORS.WARNING
                 : variant === "success"
-                  ? "green"
+                  ? CLI_COLORS.SUCCESS
                   : variant === "info"
-                    ? "blue"
-                    : "cyan",
+                    ? CLI_COLORS.INFO
+                    : CLI_COLORS.PRIMARY,
         }),
       },
     },

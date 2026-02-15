@@ -3,9 +3,7 @@ import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
 import { runCliCommand } from "../../helpers";
-
-const EXIT_CODE_ERROR = 1;
-const EXIT_CODE_INVALID_ARGS = 2;
+import { EXIT_CODES } from "../../../exit-codes";
 
 describe("version:bump command", () => {
   let tempDir: string;
@@ -68,13 +66,13 @@ describe("version:bump command", () => {
     it("should reject missing bump type argument", async () => {
       const { error } = await runCliCommand(["version:bump"]);
 
-      expect(error?.oclif?.exit).toBe(EXIT_CODE_INVALID_ARGS);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should reject invalid bump type 'invalid'", async () => {
       const { error } = await runCliCommand(["version:bump", "invalid"]);
 
-      expect(error?.oclif?.exit).toBe(EXIT_CODE_INVALID_ARGS);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
   });
 
@@ -126,7 +124,7 @@ describe("version:bump command", () => {
     it("should error when no plugin.json found", async () => {
       const { error } = await runCliCommand(["version:bump", "patch"]);
 
-      expect(error?.oclif?.exit).toBe(EXIT_CODE_ERROR);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
   });
 

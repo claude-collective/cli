@@ -1,5 +1,116 @@
 import { spawn } from "child_process";
+import { getErrorMessage } from "./errors";
 import { warn } from "./logger";
+
+// Argument length limits to prevent oversized CLI arguments
+const MAX_PLUGIN_PATH_LENGTH = 1024;
+const MAX_GITHUB_REPO_LENGTH = 256;
+const MAX_MARKETPLACE_NAME_LENGTH = 128;
+const MAX_PLUGIN_NAME_LENGTH = 256;
+
+// GitHub repo format: owner/repo with optional @marketplace suffix
+const GITHUB_REPO_PATTERN = /^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/;
+
+// Marketplace/plugin names: alphanumeric, dashes, underscores, dots, @
+const SAFE_NAME_PATTERN = /^[a-zA-Z0-9._@/-]+$/;
+
+// Plugin path/ref: alphanumeric, dashes, underscores, dots, slashes, @, colons (for marketplace refs like skill@marketplace)
+const SAFE_PLUGIN_PATH_PATTERN = /^[a-zA-Z0-9._@/:~-]+$/;
+
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHAR_PATTERN = /[\x00-\x08\x0E-\x1F\x7F]/u;
+
+function validatePluginPath(pluginPath: string): void {
+  if (!pluginPath || pluginPath.trim().length === 0) {
+    throw new Error("Plugin path must not be empty.");
+  }
+
+  if (pluginPath.length > MAX_PLUGIN_PATH_LENGTH) {
+    throw new Error(
+      `Plugin path is too long (${pluginPath.length} characters, max ${MAX_PLUGIN_PATH_LENGTH}).`,
+    );
+  }
+
+  if (CONTROL_CHAR_PATTERN.test(pluginPath)) {
+    throw new Error("Plugin path contains invalid control characters.");
+  }
+
+  if (!SAFE_PLUGIN_PATH_PATTERN.test(pluginPath)) {
+    throw new Error(
+      `Plugin path contains invalid characters: "${pluginPath}"\n` +
+        "Plugin paths may only contain alphanumeric characters, dashes, underscores, dots, slashes, @, and colons.",
+    );
+  }
+}
+
+function validateGithubRepo(githubRepo: string): void {
+  if (!githubRepo || githubRepo.trim().length === 0) {
+    throw new Error("GitHub repository must not be empty.");
+  }
+
+  if (githubRepo.length > MAX_GITHUB_REPO_LENGTH) {
+    throw new Error(
+      `GitHub repository is too long (${githubRepo.length} characters, max ${MAX_GITHUB_REPO_LENGTH}).`,
+    );
+  }
+
+  if (CONTROL_CHAR_PATTERN.test(githubRepo)) {
+    throw new Error("GitHub repository contains invalid control characters.");
+  }
+
+  if (!GITHUB_REPO_PATTERN.test(githubRepo)) {
+    throw new Error(
+      `Invalid GitHub repository format: "${githubRepo}"\n` +
+        "Expected format: owner/repo (e.g., 'my-org/my-skills').",
+    );
+  }
+}
+
+function validateMarketplaceName(name: string): void {
+  if (!name || name.trim().length === 0) {
+    throw new Error("Marketplace name must not be empty.");
+  }
+
+  if (name.length > MAX_MARKETPLACE_NAME_LENGTH) {
+    throw new Error(
+      `Marketplace name is too long (${name.length} characters, max ${MAX_MARKETPLACE_NAME_LENGTH}).`,
+    );
+  }
+
+  if (CONTROL_CHAR_PATTERN.test(name)) {
+    throw new Error("Marketplace name contains invalid control characters.");
+  }
+
+  if (!SAFE_NAME_PATTERN.test(name)) {
+    throw new Error(
+      `Marketplace name contains invalid characters: "${name}"\n` +
+        "Names may only contain alphanumeric characters, dashes, underscores, dots, @, and slashes.",
+    );
+  }
+}
+
+function validatePluginName(pluginName: string): void {
+  if (!pluginName || pluginName.trim().length === 0) {
+    throw new Error("Plugin name must not be empty.");
+  }
+
+  if (pluginName.length > MAX_PLUGIN_NAME_LENGTH) {
+    throw new Error(
+      `Plugin name is too long (${pluginName.length} characters, max ${MAX_PLUGIN_NAME_LENGTH}).`,
+    );
+  }
+
+  if (CONTROL_CHAR_PATTERN.test(pluginName)) {
+    throw new Error("Plugin name contains invalid control characters.");
+  }
+
+  if (!SAFE_NAME_PATTERN.test(pluginName)) {
+    throw new Error(
+      `Plugin name contains invalid characters: "${pluginName}"\n` +
+        "Names may only contain alphanumeric characters, dashes, underscores, dots, @, and slashes.",
+    );
+  }
+}
 
 export type ExecResult = {
   stdout: string;
@@ -49,6 +160,8 @@ export async function claudePluginInstall(
   scope: "project" | "user",
   projectDir: string,
 ): Promise<void> {
+  validatePluginPath(pluginPath);
+
   const args = ["plugin", "install", pluginPath, "--scope", scope];
   const result = await execCommand("claude", args, { cwd: projectDir });
 
@@ -107,14 +220,15 @@ export async function claudePluginMarketplaceExists(name: string): Promise<boole
 }
 
 export async function claudePluginMarketplaceAdd(githubRepo: string, name: string): Promise<void> {
+  validateGithubRepo(githubRepo);
+  validateMarketplaceName(name);
+
   const args = ["plugin", "marketplace", "add", githubRepo, "--name", name];
   let result;
   try {
     result = await execCommand("claude", args, {});
   } catch (err) {
-    throw new Error(
-      `Failed to add marketplace: ${err instanceof Error ? err.message : "Unknown error"}`,
-    );
+    throw new Error(`Failed to add marketplace: ${getErrorMessage(err)}`);
   }
 
   if (result.exitCode !== 0) {
@@ -131,6 +245,8 @@ export async function claudePluginUninstall(
   scope: "project" | "user",
   projectDir: string,
 ): Promise<void> {
+  validatePluginName(pluginName);
+
   const args = ["plugin", "uninstall", pluginName, "--scope", scope];
   const result = await execCommand("claude", args, { cwd: projectDir });
 

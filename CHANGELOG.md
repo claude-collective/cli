@@ -5,6 +5,131 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.4] - 2026-02-15
+
+### Fixed
+
+- **Strict JSON schema validation** — All 12 generated JSON schemas now enforce meaningful constraints for IDE autocomplete and validation via `yaml-language-server`. Previously, schemas like `project-config` accepted anything due to `.passthrough()` and missing `required` fields.
+  - Hook definitions require `hooks` array with at least 1 action
+  - Agent `tools` requires at least 1 entry
+  - Marketplace `name`/`version` reject empty strings; `plugins` requires at least 1 entry
+  - Stack `id`/`name` reject empty strings; `stacks` array requires at least 1 entry
+  - Relationship rules enforce minimum skill counts (`conflicts`/`discourages` need 2+)
+  - Plugin manifest uses strict validation schema (rejects unknown fields)
+  - Project config and source config use dedicated validation schemas with `required` fields and `additionalProperties: false`
+
+## [0.29.3] - 2026-02-15
+
+### Fixed
+
+- **Wrong YAML schema on generated config.yaml** — `cc init` embedded a `$schema` comment pointing to `project-source-config.schema.json` (marketplace source fields) instead of `project-config.schema.json` (consumer project fields like `name`, `agents`, `stack`, `skills`). Added new `project-config.schema.json` generated from `projectConfigLoaderSchema` and fixed the reference.
+
+## [0.29.2] - 2026-02-15
+
+### Added
+
+- **Multi-skill stack assignments in project config** — `ProjectConfig.stack` now stores `SkillAssignment[]` per subcategory (matching `stacks.yaml` format) instead of a single `SkillId`. Enables multiple skills per subcategory with `preloaded` flags preserved through the full pipeline. Config YAML accepts bare strings, objects, and arrays interchangeably.
+- **Stack normalization at load time** — `loadProjectConfig` normalizes stack values to `SkillAssignment[]` using shared `normalizeStackRecord` helper (same as `loadStacks`).
+- **Compact YAML serialization** — `compactStackForYaml` produces minimal output: bare strings for simple skills, objects for preloaded, arrays for multi-skill subcategories.
+- **`getStackSkillIds` utility** — Extracts unique skill IDs from a stack config record using Remeda pipe. Used by `compile`, `doctor`, and `stack-plugin-compiler`.
+
+### Changed
+
+- **`buildStackProperty` preserves full assignments** — No longer extracts only the first skill ID per subcategory; preserves all `SkillAssignment[]` entries with preloaded flags.
+- **`buildSkillRefsFromConfig` delegates to `resolveAgentConfigToSkills`** — Removed manual iteration in favor of the existing typed helper, preserving preloaded flags from assignments.
+- **Schema widened** — `projectConfigLoaderSchema.stack` accepts the same 3 YAML formats as `stackSchema`: bare string, single object with preloaded, and array of mixed elements.
+
+### Fixed
+
+- **`hashStackConfig` produced objects instead of IDs** — `Object.values()` on `SkillAssignment[]` yielded assignment objects instead of skill IDs; now uses `getStackSkillIds()`.
+- **YAML schema references unreachable** — `yaml-language-server` `$schema` comments pointed to `node_modules/@claude-collective/cli/...` which only worked if the CLI was installed as a dependency. Now uses `raw.githubusercontent.com` URLs that resolve for any consumer.
+- **`compileStackPlugin` skill extraction** — Same `Object.values()` bug fixed with `getStackSkillIds()`.
+
+## [0.29.1] - 2026-02-15
+
+### Fixed
+
+- **Regex unicode flags** — Added `u` flag to control character regexes in `exec.ts` and `config.ts` for proper Unicode handling.
+- **Switch default cases** — Added default cases to switch statements in `config.ts`, `plugin-version.ts`, `doctor.ts`, `eject.ts`, and `compile.ts`. Uses exhaustive `never` check for version bump type.
+- **Unused variables** — Removed unused imports and variables in `multi-source-loader.ts`, test helpers, and integration tests.
+
+### Changed
+
+- **Template literals** — Converted string concatenation to template literals, removed useless backtick strings without interpolation, and merged adjacent string literals across 13 production files.
+- **Control flow simplification** — Replaced logical AND chains with optional chaining in `matrix-resolver.ts`, removed redundant returns in wizard components, simplified boolean return patterns in `source-switcher.ts` and search components.
+- **Type cleanup** — Removed unnecessary explicit type annotations, reordered default parameters after required parameters in `eject.ts`, extracted `discoverValidSkills` to module-level function in `import/skill.ts`.
+
+## [0.29.0] - 2026-02-15
+
+### Added
+
+- **Shared utility modules** — Extracted `errors.ts`, `yaml.ts`, `messages.ts` into `src/cli/utils/` with full test coverage. Centralized metadata keys in `metadata-keys.ts`. Added `readFileSafe()` to `fs.ts` and `log()` to `logger.ts`.
+- **Expanded Zod schemas** — 30+ schemas covering all JSON/YAML parsing boundaries with field-level JSDoc. New `formatZodErrors` helper for user-friendly validation messages.
+- **Integration test suites** — New integration tests for import-skill, init-flow, source-switching, wizard-init-compile pipeline, and skill-resolution. Consolidated test helpers with `SKILL_FIXTURES`, `getTestSkill`, `createTestSource`. Test fixture files under `test/fixtures/`.
+- **Documentation** — `type-conventions.md` (union type rules, ID formats), `clean-code-standards.md` (code quality guidelines), expanded `architecture.md` and `commands.md`.
+
+### Changed
+
+- **Union types documented** — Added JSDoc field documentation to `DomainSelections`, `CategoryMap`, `CategoryDefinition`, `SubcategorySelections`, `ResolvedSubcategorySkills`, `SkillAssignment`.
+- **Library decomposition** — Decomposed large functions across resolver, agent-recompiler, matrix-resolver, matrix-loader, plugin-validator, plugin-finder, compiler, and versioning modules. Added JSDoc documentation throughout.
+- **Command standardization** — All CLI commands use consistent error handling via `handleError` base method, typed exit codes, and usage examples in descriptions.
+- **Wizard refactoring** — Extracted 11 custom hooks, 3 subcomponents (`domain-selection`, `stack-selection`, `help-modal`), and `build-step-logic` module. Wizard store decomposed into focused action groups.
+- **Barrel exports removed** — Deleted `themes/index.ts` and `common/index.ts` barrel files in favor of direct imports.
+- **Consolidated constants** — `CLI_COLORS`, `STANDARD_FILES`, `STANDARD_DIRS`, `MAX_CONFIG_FILE_SIZE` centralized in `consts.ts`.
+
+### Fixed
+
+- **Path traversal hardening** — `source-switcher`: `validateSkillId`, `validatePathBoundary`, TOCTOU race fix. `skill-copier`: `validateSkillPath`, `resolveSkillPath` boundary checks.
+- **Input validation** — `config.ts`: `validateSourceFormat`, SSRF prevention, UNC path blocking. `exec.ts`: argument length, format, and control character validation.
+- **Template injection** — Compiler Liquid template sanitization with function decomposition.
+- **Source fetcher limits** — File size limits, nesting depth guards, SHA256 cache keys.
+
+### Removed
+
+- **`validator.ts`** — Replaced by `schema-validator.ts` and `output-validator.ts`.
+
+## [0.28.0] - 2026-02-13
+
+### Added
+
+- **Explicit preloaded booleans in stacks** — `StackAgentConfig` uses `SkillAssignment[]` with explicit `preloaded: true/false` on each skill instead of inferring from `KEY_SUBCATEGORIES`. Normalization at the `loadStacks()` parse boundary accepts bare strings, objects, or arrays.
+- **Auto-default plugin mode** — Wizard defaults to plugin install mode when a marketplace source is detected. `initialInstallMode` prop passed from `cc init`.
+- **Marketplace indicator** — Wizard header shows marketplace label (e.g., "Photoroom + 1 public") via `getMarketplaceLabel()` utility.
+- **Published JSON schemas** — `src/schemas/` included in npm package. IDE-friendly `# yaml-language-server: $schema=...` comments embedded in generated config files (`.claude-src/config.yaml`, `metadata.yaml`). `SCHEMA_PATHS` constants and `yamlSchemaComment()` helper in `consts.ts`.
+- **Project-source-config JSON schema** — New `project-source-config.schema.json` for `.claude-src/config.yaml` validation in editors.
+- **Extended `cc validate`** — 6 new validation targets: stacks config, project source config, project skill metadata/frontmatter, project agent frontmatter, and plugin manifests. Total 7 → 13 targets. Works in both CLI repo and user projects.
+
+### Changed
+
+- **`StackAgentConfig` type** — Changed from `Partial<Record<Subcategory, SkillId[]>>` to `Partial<Record<Subcategory, SkillAssignment[]>>`.
+- **`KEY_SUBCATEGORIES` removed** — Replaced by explicit `preloaded` field on each skill assignment in `config/stacks.yaml`.
+- **JSON schema `$id` URLs** — Changed from placeholder `claude-collective.local` domain to relative `schemas/*.schema.json` paths.
+- **Stack domain filtering spec rewritten** — Unified wizard first step with stacks and scratch as peers in the same list.
+
+## [0.27.0] - 2026-02-13
+
+### Added
+
+- **Stacks use skill IDs** — `config/stacks.yaml` agent configs now reference skills by full skill ID (e.g., `web-framework-react`) instead of display name alias (e.g., `react`). This eliminates the `displayNameToId` resolution step at every stack loading call site.
+- **Config-driven source loading** — Marketplace repos can declare custom resource paths (`skills_dir`, `agents_dir`, `stacks_file`, `matrix_file`) in `.claude-src/config.yaml` instead of following the default layout conventions. Source loader reads path overrides and falls back to convention defaults.
+- **Stack domain filtering spec** — `docs/stack-domain-filtering-spec.md` details the planned domain selection UX after stack choice.
+- **Multi-skill categories findings** — `docs/multi-skill-categories-findings.md` documents analysis of skills that span multiple categories.
+
+### Changed
+
+- **`StackAgentConfig` value type** — Changed from `SkillDisplayName` to `SkillId`, matching the stacks.yaml data migration.
+- **`resolveStackSkillsFromDisplayNames` renamed** — Now `resolveStackSkills`, reflecting that no alias resolution is needed.
+- **`displayNameToId` threading removed** — Removed from `resolveAgentConfigToSkills`, `buildStackProperty`, `getAgentSkills`, `resolveAgents`, `stackToResolvedStack`, and `populateFromStack`. Net ~70 lines removed.
+- **Source loader DRYed** — Extracted shared `loadAndMergeFromBasePath` to eliminate duplicated local/remote loading logic.
+
+## [0.26.1] - 2026-02-13
+
+### Fixed
+
+- **Metadata version coercion** — `cc build plugins` no longer warns on `version: 1` in metadata.yaml. Added lenient `skillMetadataLoaderSchema` that coerces YAML numeric versions to strings.
+- **Stack lookup from source in plugin mode** — `compileStackPlugin` now resolves stacks from the source's `config/stacks.yaml` before falling back to the CLI's built-in stacks. Fixes "stack not found" error when running `cc init --source` with a private marketplace in plugin mode.
+- **Skills matrix fallback** — Stack compiler gracefully falls back to CLI matrix when the source's `config/skills-matrix.yaml` is missing or invalid.
+
 ## [0.26.0] - 2026-02-13
 
 ### Added

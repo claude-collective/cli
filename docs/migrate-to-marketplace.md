@@ -45,6 +45,15 @@ my-marketplace/
     +-- config.yaml                # updated project config
 ```
 
+**All paths are convention-based** -- the source loader expects these exact locations. There are no config keys to override them:
+
+| Resource      | Required path               | Constant             |
+| ------------- | --------------------------- | -------------------- |
+| Skills        | `src/skills/`               | `SKILLS_DIR_PATH`    |
+| Agents        | `src/agents/`               | `DIRS.agents`        |
+| Skills matrix | `config/skills-matrix.yaml` | `SKILLS_MATRIX_PATH` |
+| Stacks        | `config/stacks.yaml`        | `STACKS_FILE`        |
+
 ---
 
 ## Step 1: Move skills to `src/skills/`
@@ -132,7 +141,9 @@ rmdir .claude 2>/dev/null || true
 
 ## Step 4: Set up `config/skills-matrix.yaml`
 
-The source loader checks for `config/skills-matrix.yaml` in your repo. If it exists, consumers get YOUR matrix (categories, aliases, relationships). If not, they fall back to the CLI's built-in matrix.
+**This path is a hardcoded convention** (`SKILLS_MATRIX_PATH = "config/skills-matrix.yaml"`). There is no config key to override it. The file must be at exactly `config/skills-matrix.yaml` relative to your repo root.
+
+The source loader checks for this file in your repo. If it exists, consumers get YOUR matrix (categories, aliases, relationships). If not, they fall back to the CLI's built-in matrix.
 
 ```bash
 mkdir -p config
@@ -157,7 +168,9 @@ Edit it to match only the skills you're publishing. Remove categories for skills
 
 ## Step 5: Set up `config/stacks.yaml` (recommended)
 
-Stacks are curated bundles of skills + agents. The source loader now loads stacks from your repo's `config/stacks.yaml` (Phase 1 implementation). Without stacks, consumers can still pick individual skills.
+**This path is a hardcoded convention** (`STACKS_FILE = "config/stacks.yaml"`). There is no config key to override it. The file must be at exactly `config/stacks.yaml` relative to your repo root.
+
+Stacks are curated bundles of skills + agents. The source loader loads stacks from your repo's `config/stacks.yaml` first, falling back to the CLI's built-in stacks. Without stacks, consumers can still pick individual skills.
 
 ```bash
 # Create config/stacks.yaml
@@ -204,7 +217,7 @@ Update your project config to reflect the new structure. This is the marketplace
 name: my-marketplace
 description: "Private skills marketplace for our team"
 author: "@your-name"
-source: "github:your-org/my-marketplace"
+source: "https://github.com/your-org/my-marketplace"
 marketplace: my-marketplace
 installMode: local
 agents:
@@ -222,7 +235,15 @@ skills:
   # ... list all skill IDs in your src/skills/
 ```
 
-The `source` and `marketplace` fields are important -- they're what consumers inherit when they run `cc init --source github:your-org/my-marketplace`.
+The `source` field accepts any format that giget understands:
+
+- `https://github.com/your-org/my-marketplace` (full URL)
+- `github:your-org/my-marketplace` (shorthand)
+- `gh:your-org/my-marketplace` (alias)
+- `gitlab:your-org/my-marketplace`
+- `./local/path` or `/absolute/path` (local directories)
+
+The `source` and `marketplace` fields are important -- they're what consumers inherit when they run `cc init --source`.
 
 ---
 
@@ -337,6 +358,8 @@ claude plugin marketplace add your-org/my-marketplace
 ### 2. Run init with your source
 
 ```bash
+cc init --source https://github.com/your-org/my-marketplace
+# or shorthand:
 cc init --source github:your-org/my-marketplace
 ```
 

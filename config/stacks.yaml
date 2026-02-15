@@ -7,32 +7,59 @@ stacks:
     description: Production-ready Next.js with complete backend infrastructure
     agents:
       web-developer:
-        framework: react
-        styling: scss-modules
-        client-state: zustand
-        server-state: react-query
-        testing: vitest
-        mocking: msw
-        accessibility: accessibility
+        framework:
+          - id: web-framework-react
+            preloaded: true
+        styling: web-styling-scss-modules
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        mocking: web-mocks-msw
+        accessibility: web-accessibility-web-accessibility
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       api-developer:
-        api: hono
-        database: drizzle
-        auth: better-auth
-        observability: axiom-pino-sentry
-        analytics: posthog
-        email: resend
-        ci-cd: github-actions
-        testing: api-testing
+        api:
+          - id: api-framework-hono
+            preloaded: true
+        database:
+          - id: api-database-drizzle
+            preloaded: true
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        analytics: api-analytics-posthog-analytics
+        email: api-email-resend-react-email
+        ci-cd: api-ci-cd-github-actions
+        testing: api-testing-api-testing
       cli-developer:
-        cli-framework: cli-commander
+        cli-framework:
+          - id: cli-framework-cli-commander
+            preloaded: true
       web-reviewer:
-        reviewing: reviewing
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
       api-reviewer:
-        reviewing: reviewing
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
       cli-reviewer:
-        reviewing: cli-reviewing
+        reviewing:
+          - id: meta-reviewing-cli-reviewing
+            preloaded: true
       web-tester:
-        testing: playwright-e2e
+        testing: web-testing-playwright-e2e
       cli-tester: {}
       web-pm: {}
       skill-summoner: {}
@@ -51,20 +78,43 @@ stacks:
     description: Angular 19 with Signals and NgRx SignalStore
     agents:
       web-developer:
-        framework: angular
-        client-state: ngrx-signalstore
-        testing: vitest
+        framework:
+          - id: web-framework-angular-standalone
+            preloaded: true
+        client-state: web-state-ngrx-signalstore
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       api-developer:
-        api: hono
-        database: drizzle
-        auth: better-auth
-        observability: axiom-pino-sentry
-        testing: api-testing
+        api:
+          - id: api-framework-hono
+            preloaded: true
+        database:
+          - id: api-database-drizzle
+            preloaded: true
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        testing: api-testing-api-testing
       web-architecture: {}
       web-reviewer:
-        reviewing: reviewing
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
       api-reviewer:
-        reviewing: reviewing
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
       web-researcher: {}
       api-researcher: {}
       web-pm: {}
@@ -74,7 +124,7 @@ stacks:
       skill-summoner: {}
       documentor: {}
       web-tester:
-        testing: playwright-e2e
+        testing: web-testing-playwright-e2e
     philosophy: Enterprise-grade and type-safe
 
   - id: nuxt-stack
@@ -82,21 +132,46 @@ stacks:
     description: Vue 3 with Nuxt for full-stack Vue development
     agents:
       web-developer:
-        framework: nuxt
-        meta-framework: vue
-        client-state: pinia
-        testing: vitest
+        framework:
+          - id: web-framework-nuxt
+            preloaded: true
+        meta-framework:
+          - id: web-framework-vue-composition-api
+            preloaded: true
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       api-developer:
-        api: hono
-        database: drizzle
-        auth: better-auth
-        observability: axiom-pino-sentry
-        testing: api-testing
+        api:
+          - id: api-framework-hono
+            preloaded: true
+        database:
+          - id: api-database-drizzle
+            preloaded: true
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        testing: api-testing-api-testing
       web-architecture: {}
       web-reviewer:
-        reviewing: reviewing
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
       api-reviewer:
-        reviewing: reviewing
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
       web-researcher: {}
       api-researcher: {}
       web-pm: {}
@@ -106,7 +181,7 @@ stacks:
       skill-summoner: {}
       documentor: {}
       web-tester:
-        testing: playwright-e2e
+        testing: web-testing-playwright-e2e
     philosophy: Progressive Vue with Nuxt power
 
   - id: remix-stack
@@ -114,20 +189,45 @@ stacks:
     description: Remix for form-heavy applications with excellent DX
     agents:
       web-developer:
-        framework: remix
-        base-framework: react
-        testing: vitest
+        framework:
+          - id: web-framework-remix
+            preloaded: true
+        base-framework:
+          - id: web-framework-react
+            preloaded: true
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       api-developer:
-        api: hono
-        database: drizzle
-        auth: better-auth
-        observability: axiom-pino-sentry
-        testing: api-testing
+        api:
+          - id: api-framework-hono
+            preloaded: true
+        database:
+          - id: api-database-drizzle
+            preloaded: true
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        testing: api-testing-api-testing
       web-architecture: {}
       web-reviewer:
-        reviewing: reviewing
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
       api-reviewer:
-        reviewing: reviewing
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
       web-researcher: {}
       api-researcher: {}
       web-pm: {}
@@ -137,7 +237,7 @@ stacks:
       skill-summoner: {}
       documentor: {}
       web-tester:
-        testing: playwright-e2e
+        testing: web-testing-playwright-e2e
     philosophy: Web standards and excellent forms handling
 
   - id: vue-stack
@@ -145,20 +245,43 @@ stacks:
     description: Vue 3 with Composition API, Pinia, and Tailwind
     agents:
       web-developer:
-        framework: vue
-        client-state: pinia
-        testing: vitest
+        framework:
+          - id: web-framework-vue-composition-api
+            preloaded: true
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       api-developer:
-        api: hono
-        database: drizzle
-        auth: better-auth
-        observability: axiom-pino-sentry
-        testing: api-testing
+        api:
+          - id: api-framework-hono
+            preloaded: true
+        database:
+          - id: api-database-drizzle
+            preloaded: true
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        testing: api-testing-api-testing
       web-architecture: {}
       web-reviewer:
-        reviewing: reviewing
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
       api-reviewer:
-        reviewing: reviewing
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
       web-researcher: {}
       api-researcher: {}
       web-pm: {}
@@ -168,7 +291,7 @@ stacks:
       skill-summoner: {}
       documentor: {}
       web-tester:
-        testing: playwright-e2e
+        testing: web-testing-playwright-e2e
     philosophy: Progressive and approachable
 
   - id: solidjs-stack
@@ -176,19 +299,42 @@ stacks:
     description: High-performance SolidJS with Tailwind and Hono backend
     agents:
       web-developer:
-        framework: solidjs
-        testing: vitest
+        framework:
+          - id: web-framework-solidjs
+            preloaded: true
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       api-developer:
-        api: hono
-        database: drizzle
-        auth: better-auth
-        observability: axiom-pino-sentry
-        testing: api-testing
+        api:
+          - id: api-framework-hono
+            preloaded: true
+        database:
+          - id: api-database-drizzle
+            preloaded: true
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        testing: api-testing-api-testing
       web-architecture: {}
       web-reviewer:
-        reviewing: reviewing
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
       api-reviewer:
-        reviewing: reviewing
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
       web-researcher: {}
       api-researcher: {}
       web-pm: {}
@@ -198,7 +344,7 @@ stacks:
       skill-summoner: {}
       documentor: {}
       web-tester:
-        testing: playwright-e2e
+        testing: web-testing-playwright-e2e
     philosophy: Maximum performance with minimal overhead
 
   - id: react-native-stack
@@ -206,15 +352,36 @@ stacks:
     description: Cross-platform mobile with React Native and Expo
     agents:
       web-developer:
-        framework: react-native
-        platform: expo
-        base-framework: react
-        client-state: zustand
-        server-state: react-query
-        testing: vitest
+        framework:
+          - id: mobile-framework-react-native
+            preloaded: true
+        platform:
+          - id: mobile-framework-expo
+            preloaded: true
+        base-framework:
+          - id: web-framework-react
+            preloaded: true
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       web-architecture: {}
       web-reviewer:
-        reviewing: reviewing
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
       web-researcher: {}
       web-pm: {}
       pattern-scout: {}
@@ -223,7 +390,7 @@ stacks:
       skill-summoner: {}
       documentor: {}
       web-tester:
-        testing: vitest
+        testing: web-testing-vitest
     philosophy: One codebase, iOS and Android
 
   - id: meta-stack
@@ -231,18 +398,88 @@ stacks:
     description: Agents for creating agents, skills, documentation, and extracting patterns - invoke for meta-level development work
     agents:
       skill-summoner:
-        methodology: improvement-protocol
-        research: research-methodology
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+        research:
+          - id: meta-research-research-methodology
+            preloaded: true
       agent-summoner:
-        methodology: improvement-protocol
-        research: research-methodology
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+        research:
+          - id: meta-research-research-methodology
+            preloaded: true
       documentor:
-        methodology: context-management
-        research: research-methodology
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+        research:
+          - id: meta-research-research-methodology
+            preloaded: true
       pattern-scout:
-        methodology: investigation-requirements
-        research: research-methodology
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
       web-pattern-critique:
-        methodology: anti-over-engineering
-        reviewing: reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
     philosophy: Build tools that build tools

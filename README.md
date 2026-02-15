@@ -39,14 +39,14 @@ requires node 18+ and [Claude Code](https://docs.anthropic.com/en/docs/claude-co
 | `update`            | update local skills from source                               |
 | `list`              | show what's installed                                         |
 | `doctor`            | diagnose setup issues                                         |
-| `search`            | search for skills                                             |
+| `search`            | search skills (interactive multi-source or static query)      |
 | `info <skill>`      | show skill details                                            |
 | `diff`              | show skill differences vs source                              |
 | `outdated`          | check for outdated skills                                     |
 | `validate`          | check your setup is correct                                   |
 | `new skill`         | create a custom skill                                         |
 | `new agent`         | create a custom agent                                         |
-| `import skill`      | import a skill from a remote source                           |
+| `import skill`      | import a skill from an external GitHub repository             |
 | `eject`             | eject skills/agent partials for customization                 |
 | `uninstall`         | remove Claude Collective from project                         |
 | `config`            | manage settings (show, get, set-project, unset-project, path) |
@@ -87,31 +87,65 @@ stacks bundle skills together with pre-configured agents. instead of picking 20 
 
 each stack includes agents like `web-developer`, `api-developer`, `web-reviewer`, `web-tester`, `web-researcher`, `pattern-scout`, `documentor` - roles that use the right skills for the job.
 
-## installation options
+## installation modes
 
-**as a plugin** (recommended for personal use):
+the wizard starts by asking how you want to set up:
 
-```bash
-npx @claude-collective/cli init
-# interactive wizard lets you choose: plugin mode, local mode, or marketplace setup
-# plugin mode installs to ./.claude/plugins/claude-collective/
-```
-
-**locally in your project** (for team sharing):
+**use a stack** (default):
 
 ```bash
 npx @claude-collective/cli init
-# select "local" mode in the wizard
-# installs to ./.claude/ in your repo
+# select "Use a stack" → pick a pre-built stack (e.g. nextjs-fullstack)
+# installs as a native Claude Code plugin to ./.claude/plugins/claude-collective/
+# you can customize skills after selecting a stack
 ```
 
-**your own marketplace** (for orgs):
+**start from scratch** (pick individual skills):
 
 ```bash
 npx @claude-collective/cli init
-# select "marketplace" mode in the wizard
-# scaffolds a marketplace you can customize and host
+# select "Start from scratch" → browse domains and pick skills one by one
+# installs locally to ./.claude/skills/ in your repo
 ```
+
+both modes compile agents and generate a config at `.claude-src/config.yaml`. use `cc edit` to change skills after initial setup.
+
+## multi-source setup
+
+you can install skills from multiple sources. the wizard supports adding extra marketplaces alongside the default source:
+
+- press `G` in the wizard to open source settings
+- add marketplace URLs (e.g. `github:your-org/custom-marketplace`)
+- skills from all sources appear in the selection grid, tagged by origin
+
+you can also manage sources after setup with `cc edit` (same `G` hotkey).
+
+to search across all configured sources:
+
+```bash
+# interactive search across all sources
+cc search
+
+# static search with a query
+cc search react
+```
+
+## importing third-party skills
+
+import skills from any GitHub repository into your local setup:
+
+```bash
+# list available skills from a repository
+cc import skill github:vercel-labs/agent-skills --list
+
+# import a specific skill
+cc import skill github:vercel-labs/agent-skills --skill react-best-practices
+
+# import all skills from a repository
+cc import skill github:vercel-labs/agent-skills --all
+```
+
+imported skills are copied to `.claude/skills/` and tracked with metadata for future updates.
 
 ## creating custom skills
 

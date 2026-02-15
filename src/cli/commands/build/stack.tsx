@@ -1,8 +1,10 @@
 import React from "react";
+
 import { Flags } from "@oclif/core";
-import { render, Box, Text } from "ink";
 import { Select } from "@inkjs/ui";
+import { render, Box, Text } from "ink";
 import path from "path";
+
 import { BaseCommand } from "../../base-command";
 import { setVerbose } from "../../utils/logger";
 import { PROJECT_ROOT } from "../../consts";
@@ -127,9 +129,7 @@ export default class BuildStack extends BaseCommand {
       );
     } catch (error) {
       this.log("Failed to load agent partials");
-      this.error(error instanceof Error ? error.message : String(error), {
-        exit: EXIT_CODES.ERROR,
-      });
+      this.handleError(error);
     }
 
     try {
@@ -150,9 +150,7 @@ export default class BuildStack extends BaseCommand {
       this.logSuccess("Stack plugin compilation complete!");
     } catch (error) {
       this.log("Compilation failed");
-      this.error(error instanceof Error ? error.message : String(error), {
-        exit: EXIT_CODES.ERROR,
-      });
+      this.handleError(error);
     }
   }
 }

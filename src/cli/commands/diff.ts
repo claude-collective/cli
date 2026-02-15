@@ -3,11 +3,12 @@ import chalk from "chalk";
 import path from "path";
 import { createTwoFilesPatch } from "diff";
 import { BaseCommand } from "../base-command.js";
+import { getErrorMessage } from "../utils/errors.js";
 import { loadSkillsMatrixFromSource } from "../lib/loading/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { readForkedFromMetadata, type ForkedFromMetadata } from "../lib/skills/index.js";
 import { fileExists, readFile, listDirectories } from "../utils/fs.js";
-import { LOCAL_SKILLS_PATH } from "../consts.js";
+import { LOCAL_SKILLS_PATH, STANDARD_FILES } from "../consts.js";
 
 type SkillDiffResult = {
   skillDirName: string;
@@ -66,27 +67,27 @@ async function diffSkill(
     };
   }
 
-  const sourceSkillMdPath = path.join(sourcePath, "src", sourceSkill.path, "SKILL.md");
+  const sourceSkillMdPath = path.join(sourcePath, "src", sourceSkill.path, STANDARD_FILES.SKILL_MD);
 
   if (!(await fileExists(sourceSkillMdPath))) {
     return {
       skillDirName,
       forkedFrom,
       hasDiff: false,
-      diffOutput: `Source SKILL.md not found at ${sourceSkillMdPath}`,
+      diffOutput: `Source ${STANDARD_FILES.SKILL_MD} not found at ${sourceSkillMdPath}`,
     };
   }
 
   const sourceContent = await readFile(sourceSkillMdPath);
 
-  const localSkillMdPath = path.join(skillDir, "SKILL.md");
+  const localSkillMdPath = path.join(skillDir, STANDARD_FILES.SKILL_MD);
 
   if (!(await fileExists(localSkillMdPath))) {
     return {
       skillDirName,
       forkedFrom,
       hasDiff: false,
-      diffOutput: `Local SKILL.md not found at ${localSkillMdPath}`,
+      diffOutput: `Local ${STANDARD_FILES.SKILL_MD} not found at ${localSkillMdPath}`,
     };
   }
 
@@ -124,6 +125,21 @@ export default class Diff extends BaseCommand {
   static summary = "Show differences between local forked skills and their source versions";
   static description =
     "Compare local forked skills with their source versions and display differences using unified diff format with colored output";
+
+  static examples = [
+    {
+      description: "Show diffs for all forked skills",
+      command: "<%= config.bin %> <%= command.id %>",
+    },
+    {
+      description: "Show diff for a specific skill",
+      command: "<%= config.bin %> <%= command.id %> my-skill",
+    },
+    {
+      description: "Check for diffs without output (exit code only)",
+      command: "<%= config.bin %> <%= command.id %> --quiet",
+    },
+  ];
 
   static args = {
     skill: Args.string({
@@ -243,7 +259,7 @@ export default class Diff extends BaseCommand {
       this.exit(EXIT_CODES.SUCCESS);
     } catch (error) {
       if (!flags.quiet) {
-        const message = error instanceof Error ? error.message : String(error);
+        const message = getErrorMessage(error);
         this.error(`Failed to compare skills: ${message}`, {
           exit: EXIT_CODES.ERROR,
         });

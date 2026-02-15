@@ -16,12 +16,14 @@ export {
   resolveAuthor,
   resolveAllSources,
   isLocalSource,
+  validateSourceFormat,
 } from "./config";
 
 export {
   type ProjectConfigOptions,
   generateProjectConfigFromSkills,
   buildStackProperty,
+  compactStackForYaml,
 } from "./config-generator";
 
 export { type MergeContext, type MergeResult, mergeWithExistingConfig } from "./config-merger";

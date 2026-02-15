@@ -1,4 +1,3 @@
-import React from "react";
 import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, vi } from "vitest";
 import { SearchModal, type SearchModalProps } from "./search-modal";

@@ -1,8 +1,11 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import { ThemeProvider } from "@inkjs/ui";
 import { cliTheme } from "../themes/default.js";
 import type { ResolvedSkill, SkillId } from "../../types/index.js";
+import { CLI_COLORS, UI_SYMBOLS, UI_LAYOUT } from "../../consts.js";
+import { useTextInput } from "../hooks/use-text-input.js";
+import { useFilteredResults } from "../hooks/use-filtered-results.js";
 
 export type SourcedSkill = ResolvedSkill & {
   sourceName: string;
@@ -22,9 +25,13 @@ export type SkillSearchProps = {
   onCancel: () => void;
 };
 
-const MAX_VISIBLE_RESULTS = 10;
-const CHECKBOX_CHECKED = "[x]";
-const CHECKBOX_UNCHECKED = "[ ]";
+const {
+  MAX_VISIBLE_RESULTS,
+  DESCRIPTION_WIDTH,
+  COPIED_MESSAGE_TIMEOUT_MS,
+  FALLBACK_MESSAGE_TIMEOUT_MS,
+} = UI_LAYOUT;
+const { CHECKBOX_CHECKED, CHECKBOX_UNCHECKED } = UI_SYMBOLS;
 
 function matchesQuery(skill: SourcedSkill, query: string): boolean {
   if (!query.trim()) return true;
@@ -36,14 +43,13 @@ function matchesQuery(skill: SourcedSkill, query: string): boolean {
   if (skill.description.toLowerCase().includes(lowerQuery)) return true;
   if (skill.category.toLowerCase().includes(lowerQuery)) return true;
   if (skill.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))) return true;
-  if (skill.sourceName.toLowerCase().includes(lowerQuery)) return true;
 
-  return false;
+  return skill.sourceName.toLowerCase().includes(lowerQuery);
 }
 
 function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength - 3) + "...";
+  return `${text.slice(0, maxLength - 3)}...`;
 }
 
 type HeaderProps = {
@@ -61,7 +67,7 @@ const Header: React.FC<HeaderProps> = ({ sourceCount }) => {
       borderRight={false}
       paddingX={1}
     >
-      <Text bold color="cyan">
+      <Text bold color={CLI_COLORS.PRIMARY}>
         Search Skills
       </Text>
       <Text dimColor>
@@ -73,27 +79,14 @@ const Header: React.FC<HeaderProps> = ({ sourceCount }) => {
 
 type SearchInputProps = {
   value: string;
-  onChange: (value: string) => void;
 };
 
-const SearchInput: React.FC<SearchInputProps> = ({ value, onChange }) => {
-  useInput((input, key) => {
-    if (key.backspace || key.delete) {
-      onChange(value.slice(0, -1));
-    } else if (!key.ctrl && !key.meta && input && input.length === 1) {
-      // Only handle printable characters
-      const charCode = input.charCodeAt(0);
-      if (charCode >= 32 && charCode <= 126) {
-        onChange(value + input);
-      }
-    }
-  });
-
+const SearchInput: React.FC<SearchInputProps> = ({ value }) => {
   return (
     <Box paddingX={1} paddingY={1}>
-      <Text color="cyan">{">"} </Text>
+      <Text color={CLI_COLORS.FOCUS}>{">"} </Text>
       <Text>{value}</Text>
-      <Text color="cyan">_</Text>
+      <Text color={CLI_COLORS.FOCUS}>_</Text>
     </Box>
   );
 };
@@ -107,12 +100,10 @@ type ResultItemProps = {
 const ResultItem: React.FC<ResultItemProps> = ({ skill, isSelected, isFocused }) => {
   const checkbox = isSelected ? CHECKBOX_CHECKED : CHECKBOX_UNCHECKED;
   const displayName = skill.displayName || skill.id;
-  const descriptionWidth = 30;
-
   return (
     <Box flexDirection="row" gap={1}>
       <Text
-        color={isFocused ? "cyan" : isSelected ? "green" : undefined}
+        color={isFocused ? CLI_COLORS.FOCUS : isSelected ? CLI_COLORS.SUCCESS : undefined}
         bold={isFocused}
         backgroundColor={isFocused ? "#333333" : undefined}
       >
@@ -123,11 +114,11 @@ const ResultItem: React.FC<ResultItemProps> = ({ skill, isSelected, isFocused })
         <Text dimColor>{truncate(skill.sourceName, 12)}</Text>
       </Box>
       <Box width={24}>
-        <Text color={isFocused ? "cyan" : undefined} bold={isFocused || isSelected}>
+        <Text color={isFocused ? CLI_COLORS.FOCUS : undefined} bold={isFocused || isSelected}>
           {truncate(displayName, 22)}
         </Text>
       </Box>
-      <Text dimColor>{truncate(skill.description, descriptionWidth)}</Text>
+      <Text dimColor>{truncate(skill.description, DESCRIPTION_WIDTH)}</Text>
     </Box>
   );
 };
@@ -188,7 +179,7 @@ const StatusBar: React.FC<StatusBarProps> = ({ resultCount, selectedCount }) => 
     <Box paddingX={1}>
       <Text dimColor>
         {resultCount} result{resultCount !== 1 ? "s" : ""}
-        {selectedCount > 0 && <Text color="green"> | {selectedCount} selected</Text>}
+        {selectedCount > 0 && <Text color={CLI_COLORS.SUCCESS}> | {selectedCount} selected</Text>}
       </Text>
     </Box>
   );
@@ -212,21 +203,21 @@ const Footer: React.FC<FooterProps> = ({ hasSelection }) => {
       marginTop={1}
     >
       <Text dimColor>
-        <Text color="white">j/k</Text> navigate
+        <Text color={CLI_COLORS.UNFOCUSED}>j/k</Text> navigate
       </Text>
       <Text dimColor>
-        <Text color="white">SPACE</Text> select
+        <Text color={CLI_COLORS.UNFOCUSED}>SPACE</Text> select
       </Text>
       {hasSelection && (
         <Text dimColor>
-          <Text color="green">ENTER</Text> import
+          <Text color={CLI_COLORS.SUCCESS}>ENTER</Text> import
         </Text>
       )}
       <Text dimColor>
-        <Text color="white">c</Text> copy link
+        <Text color={CLI_COLORS.UNFOCUSED}>c</Text> copy link
       </Text>
       <Text dimColor>
-        <Text color="yellow">ESC</Text> cancel
+        <Text color={CLI_COLORS.WARNING}>ESC</Text> cancel
       </Text>
     </Box>
   );
@@ -241,24 +232,23 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
 }) => {
   const { exit } = useApp();
 
-  const [query, setQuery] = useState(initialQuery);
+  const { value: query, handleInput: handleTextInput } = useTextInput(initialQuery);
   const [selectedIds, setSelectedIds] = useState<Set<SkillId>>(new Set());
-  const [focusedIndex, setFocusedIndex] = useState(0);
-  const [scrollOffset, setScrollOffset] = useState(0);
   const [copiedMessage, setCopiedMessage] = useState<string | null>(null);
 
-  const filteredResults = useMemo(() => {
-    return skills.filter((skill) => matchesQuery(skill, query));
-  }, [skills, query]);
-
-  const safeFocusedIndex = Math.min(focusedIndex, Math.max(0, filteredResults.length - 1));
-  const focusedSkill = filteredResults[safeFocusedIndex];
-
-  const handleQueryChange = useCallback((newQuery: string) => {
-    setQuery(newQuery);
-    setFocusedIndex(0);
-    setScrollOffset(0);
-  }, []);
+  const {
+    filteredResults,
+    safeFocusedIndex,
+    focusedItem: focusedSkill,
+    scrollOffset,
+    moveUp,
+    moveDown,
+  } = useFilteredResults({
+    items: skills,
+    query,
+    filterFn: matchesQuery,
+    maxVisible: MAX_VISIBLE_RESULTS,
+  });
 
   const toggleSelection = useCallback((skillId: SkillId) => {
     setSelectedIds((prev) => {
@@ -280,10 +270,10 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
       const encoded = Buffer.from(link).toString("base64");
       process.stdout.write(`\x1b]52;c;${encoded}\x07`);
       setCopiedMessage(`Copied: ${link}`);
-      setTimeout(() => setCopiedMessage(null), 2000);
+      setTimeout(() => setCopiedMessage(null), COPIED_MESSAGE_TIMEOUT_MS);
     } catch {
       setCopiedMessage(`Link: ${link}`);
-      setTimeout(() => setCopiedMessage(null), 3000);
+      setTimeout(() => setCopiedMessage(null), FALLBACK_MESSAGE_TIMEOUT_MS);
     }
   }, []);
 
@@ -319,28 +309,22 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
     const isUp = key.upArrow || input === "k";
     const isDown = key.downArrow || input === "j";
 
-    if (isUp && safeFocusedIndex > 0) {
-      const newIndex = safeFocusedIndex - 1;
-      setFocusedIndex(newIndex);
-      if (newIndex < scrollOffset) {
-        setScrollOffset(newIndex);
-      }
+    if (isUp) {
+      moveUp();
     }
 
-    if (isDown && safeFocusedIndex < filteredResults.length - 1) {
-      const newIndex = safeFocusedIndex + 1;
-      setFocusedIndex(newIndex);
-      if (newIndex >= scrollOffset + MAX_VISIBLE_RESULTS) {
-        setScrollOffset(newIndex - MAX_VISIBLE_RESULTS + 1);
-      }
+    if (isDown) {
+      moveDown();
     }
+
+    handleTextInput(input, key);
   });
 
   return (
     <ThemeProvider theme={cliTheme}>
       <Box flexDirection="column">
         <Header sourceCount={sourceCount} />
-        <SearchInput value={query} onChange={handleQueryChange} />
+        <SearchInput value={query} />
         <ResultsList
           results={filteredResults}
           selectedIds={selectedIds}
@@ -350,7 +334,7 @@ export const SkillSearch: React.FC<SkillSearchProps> = ({
         <StatusBar resultCount={filteredResults.length} selectedCount={selectedIds.size} />
         {copiedMessage && (
           <Box paddingX={1}>
-            <Text color="green">{copiedMessage}</Text>
+            <Text color={CLI_COLORS.SUCCESS}>{copiedMessage}</Text>
           </Box>
         )}
         <Footer hasSelection={selectedIds.size > 0} />

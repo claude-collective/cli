@@ -16,13 +16,26 @@ import {
   ensureDir,
   glob,
   readFile,
+  readFileSafe,
   fileExists,
   listDirectories,
 } from "../utils/fs";
 import { recompileAgents } from "../lib/agents";
 import { loadPluginSkills, parseFrontmatter } from "../lib/loading";
-import { LOCAL_SKILLS_PATH } from "../consts";
+import {
+  DEFAULT_PLUGIN_NAME,
+  LOCAL_SKILLS_PATH,
+  MAX_PLUGIN_FILE_SIZE,
+  STANDARD_FILES,
+} from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
+import {
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+  STATUS_MESSAGES,
+  DRY_RUN_MESSAGES,
+  INFO_MESSAGES,
+} from "../utils/messages";
 import { detectInstallation } from "../lib/installation";
 import type {
   AgentSourcePaths,
@@ -32,12 +45,14 @@ import type {
   SkillId,
 } from "../types";
 import { pluginManifestSchema, projectConfigLoaderSchema } from "../lib/schemas";
+import { normalizeStackRecord, getStackSkillIds } from "../lib/stacks/stacks-loader";
+import { typedEntries } from "../utils/typed-object";
 
 async function loadSkillsFromDir(
   skillsDir: string,
-  pathPrefix: string = "",
-): Promise<Record<string, SkillDefinition>> {
-  const skills: Record<string, SkillDefinition> = {};
+  pathPrefix = "",
+): Promise<Partial<Record<SkillId, SkillDefinition>>> {
+  const skills: Partial<Record<SkillId, SkillDefinition>> = {};
 
   if (!(await directoryExists(skillsDir))) {
     return skills;
@@ -55,6 +70,7 @@ async function loadSkillsFromDir(
       const frontmatter = parseFrontmatter(content, skillPath);
 
       const skillName = frontmatter?.name || path.basename(skillDir);
+      // Boundary cast: skill name from frontmatter/directory is an untyped string
       const canonicalId = skillName as SkillId;
 
       const skill: SkillDefinition = {
@@ -73,8 +89,10 @@ async function loadSkillsFromDir(
   return skills;
 }
 
-async function discoverPluginSkills(projectDir: string): Promise<Record<string, SkillDefinition>> {
-  const allSkills: Record<string, SkillDefinition> = {};
+async function discoverPluginSkills(
+  projectDir: string,
+): Promise<Partial<Record<SkillId, SkillDefinition>>> {
+  const allSkills: Partial<Record<SkillId, SkillDefinition>> = {};
   const pluginsDir = getProjectPluginsDir(projectDir);
 
   if (!(await directoryExists(pluginsDir))) {
@@ -93,7 +111,8 @@ async function discoverPluginSkills(projectDir: string): Promise<Record<string, 
       const pluginSkills = await loadPluginSkills(pluginDir);
 
       for (const [id, skill] of Object.entries(pluginSkills)) {
-        allSkills[id] = skill;
+        // Boundary cast: loadPluginSkills keys are skill IDs from frontmatter
+        allSkills[id as SkillId] = skill;
       }
     }
   }
@@ -103,20 +122,22 @@ async function discoverPluginSkills(projectDir: string): Promise<Record<string, 
 
 async function discoverLocalProjectSkills(
   projectDir: string,
-): Promise<Record<string, SkillDefinition>> {
+): Promise<Partial<Record<SkillId, SkillDefinition>>> {
   const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
   return loadSkillsFromDir(localSkillsDir, LOCAL_SKILLS_PATH);
 }
 
 /** Merge skills from multiple sources. Later sources take precedence. */
 function mergeSkills(
-  ...skillSources: Record<string, SkillDefinition>[]
-): Record<string, SkillDefinition> {
-  const merged: Record<string, SkillDefinition> = {};
+  ...skillSources: Partial<Record<SkillId, SkillDefinition>>[]
+): Partial<Record<SkillId, SkillDefinition>> {
+  const merged: Partial<Record<SkillId, SkillDefinition>> = {};
 
   for (const source of skillSources) {
-    for (const [id, skill] of Object.entries(source)) {
-      merged[id] = skill;
+    for (const [id, skill] of typedEntries<SkillId, SkillDefinition | undefined>(source)) {
+      if (skill) {
+        merged[id] = skill;
+      }
     }
   }
 
@@ -131,12 +152,25 @@ async function readPluginManifest(pluginDir: string): Promise<PluginManifest | n
   }
 
   try {
-    const content = await readFile(manifestPath);
+    const content = await readFileSafe(manifestPath, MAX_PLUGIN_FILE_SIZE);
     return pluginManifestSchema.parse(JSON.parse(content));
   } catch {
     return null;
   }
 }
+
+type CompileFlags = {
+  source?: string;
+  "agent-source"?: string;
+  refresh: boolean;
+  verbose: boolean;
+  "dry-run": boolean;
+};
+
+type DiscoveredSkills = {
+  allSkills: Partial<Record<SkillId, SkillDefinition>>;
+  totalSkillCount: number;
+};
 
 export default class Compile extends BaseCommand {
   static summary = "Compile agents using local skills and agent definitions";
@@ -188,7 +222,7 @@ export default class Compile extends BaseCommand {
     const installation = await detectInstallation();
 
     if (!installation) {
-      this.error("No installation found. Run 'cc init' first to set up Claude Collective.", {
+      this.error(ERROR_MESSAGES.NO_INSTALLATION, {
         exit: EXIT_CODES.ERROR,
       });
     }
@@ -206,13 +240,77 @@ export default class Compile extends BaseCommand {
     }
   }
 
-  private async runPluginModeCompile(flags: {
-    source?: string;
-    "agent-source"?: string;
-    refresh: boolean;
-    verbose: boolean;
-    "dry-run": boolean;
-  }): Promise<void> {
+  private async discoverAllSkills(): Promise<DiscoveredSkills> {
+    const projectDir = process.cwd();
+    this.log(STATUS_MESSAGES.DISCOVERING_SKILLS);
+
+    const pluginSkills = await discoverPluginSkills(projectDir);
+    const pluginSkillCount = Object.keys(pluginSkills).length;
+    verbose(`  Found ${pluginSkillCount} skills from installed plugins`);
+
+    const localSkills = await discoverLocalProjectSkills(projectDir);
+    const localSkillCount = Object.keys(localSkills).length;
+    verbose(`  Found ${localSkillCount} local skills from .claude/skills/`);
+
+    const allSkills = mergeSkills(pluginSkills, localSkills);
+    const totalSkillCount = Object.keys(allSkills).length;
+
+    if (totalSkillCount === 0) {
+      this.log(ERROR_MESSAGES.NO_SKILLS_FOUND);
+      this.error(
+        "No skills found. Add skills with 'cc add <skill>' or create in .claude/skills/.",
+        { exit: EXIT_CODES.ERROR },
+      );
+    }
+
+    if (localSkillCount > 0 && pluginSkillCount > 0) {
+      this.log(
+        `Discovered ${totalSkillCount} skills (${pluginSkillCount} from plugins, ${localSkillCount} local)`,
+      );
+    } else if (localSkillCount > 0) {
+      this.log(`Discovered ${localSkillCount} local skills`);
+    } else {
+      this.log(`Discovered ${pluginSkillCount} skills from plugins`);
+    }
+
+    return { allSkills, totalSkillCount };
+  }
+
+  private async resolveSourceForCompile(flags: CompileFlags): Promise<void> {
+    this.log(STATUS_MESSAGES.RESOLVING_SOURCE);
+    try {
+      const sourceConfig = await resolveSource(flags.source);
+      this.log(`Source: ${sourceConfig.sourceOrigin}`);
+    } catch (error) {
+      this.log(ERROR_MESSAGES.FAILED_RESOLVE_SOURCE);
+      this.handleError(error);
+    }
+  }
+
+  private async loadAgentDefsForCompile(flags: CompileFlags): Promise<AgentSourcePaths> {
+    const projectDir = process.cwd();
+    this.log(
+      flags["agent-source"]
+        ? STATUS_MESSAGES.FETCHING_AGENT_PARTIALS
+        : STATUS_MESSAGES.LOADING_AGENT_PARTIALS,
+    );
+
+    try {
+      const agentDefs = await getAgentDefinitions(flags["agent-source"], {
+        forceRefresh: flags.refresh,
+        projectDir,
+      });
+      this.log(flags["agent-source"] ? "Agent partials fetched" : "Agent partials loaded");
+      verbose(`  Agents: ${agentDefs.agentsDir}`);
+      verbose(`  Templates: ${agentDefs.templatesDir}`);
+      return agentDefs;
+    } catch (error) {
+      this.log(ERROR_MESSAGES.FAILED_LOAD_AGENT_PARTIALS);
+      return this.handleError(error);
+    }
+  }
+
+  private async runPluginModeCompile(flags: CompileFlags): Promise<void> {
     this.log("");
     this.log("Plugin Mode Compile");
     this.log("");
@@ -228,12 +326,12 @@ export default class Compile extends BaseCommand {
     }
 
     const manifest = await readPluginManifest(pluginDir);
-    const pluginName = manifest?.name ?? "claude-collective";
+    const pluginName = manifest?.name ?? DEFAULT_PLUGIN_NAME;
 
     this.log(`Found plugin: ${pluginName}`);
     verbose(`  Path: ${pluginDir}`);
 
-    const configPath = path.join(pluginDir, "config.yaml");
+    const configPath = path.join(pluginDir, STANDARD_FILES.CONFIG_YAML);
     const hasConfig = await fileExists(configPath);
     if (hasConfig) {
       try {
@@ -241,11 +339,16 @@ export default class Compile extends BaseCommand {
         const parsed = parseYaml(configContent);
         const configResult = projectConfigLoaderSchema.safeParse(parsed);
         if (configResult.success) {
+          // Boundary cast: Zod loader schema validates structure; cast narrows passthrough output
           const config = configResult.data as ProjectConfig;
+          // Normalize stack values to SkillAssignment[] (same as loadProjectConfig)
+          if (config.stack) {
+            config.stack = normalizeStackRecord(
+              config.stack as unknown as Record<string, Record<string, unknown>>,
+            );
+          }
           const agentCount = config.agents?.length ?? 0;
-          const stackSkillCount = config.stack
-            ? new Set(Object.values(config.stack).flatMap((a) => Object.values(a))).size
-            : 0;
+          const stackSkillCount = config.stack ? getStackSkillIds(config.stack).length : 0;
           this.log(`Using config.yaml (${agentCount} agents, ${stackSkillCount} skills)`);
           verbose(`  Config: ${configPath}`);
         } else {
@@ -258,84 +361,27 @@ export default class Compile extends BaseCommand {
       verbose(`  No config.yaml found - using defaults`);
     }
 
-    const projectDir = process.cwd();
-    this.log("Discovering skills...");
-
-    const pluginSkills = await discoverPluginSkills(projectDir);
-    const pluginSkillCount = Object.keys(pluginSkills).length;
-    verbose(`  Found ${pluginSkillCount} skills from installed plugins`);
-
-    const localSkills = await discoverLocalProjectSkills(projectDir);
-    const localSkillCount = Object.keys(localSkills).length;
-    verbose(`  Found ${localSkillCount} local skills from .claude/skills/`);
-
-    const allSkills = mergeSkills(pluginSkills, localSkills);
-    const totalSkillCount = Object.keys(allSkills).length;
-
-    if (totalSkillCount === 0) {
-      this.log("No skills found");
-      this.error(
-        "No skills found. Add skills with 'cc add <skill>' or create in .claude/skills/.",
-        { exit: EXIT_CODES.ERROR },
-      );
-    }
-
-    if (localSkillCount > 0 && pluginSkillCount > 0) {
-      this.log(
-        `Discovered ${totalSkillCount} skills (${pluginSkillCount} from plugins, ${localSkillCount} local)`,
-      );
-    } else if (localSkillCount > 0) {
-      this.log(`Discovered ${localSkillCount} local skills`);
-    } else {
-      this.log(`Discovered ${pluginSkillCount} skills from plugins`);
-    }
-
-    this.log("Resolving marketplace source...");
-    let sourceConfig;
-    try {
-      sourceConfig = await resolveSource(flags.source);
-      this.log(`Source: ${sourceConfig.sourceOrigin}`);
-    } catch (error) {
-      this.log("Failed to resolve source");
-      this.error(error instanceof Error ? error.message : String(error), {
-        exit: EXIT_CODES.ERROR,
-      });
-    }
-
-    this.log(flags["agent-source"] ? "Fetching agent partials..." : "Loading agent partials...");
-    let agentDefs: AgentSourcePaths;
-    try {
-      agentDefs = await getAgentDefinitions(flags["agent-source"], {
-        forceRefresh: flags.refresh,
-        projectDir,
-      });
-      this.log(flags["agent-source"] ? "Agent partials fetched" : "Agent partials loaded");
-      verbose(`  Agents: ${agentDefs.agentsDir}`);
-      verbose(`  Templates: ${agentDefs.templatesDir}`);
-    } catch (error) {
-      this.log("Failed to load agent partials");
-      this.error(error instanceof Error ? error.message : String(error), {
-        exit: EXIT_CODES.ERROR,
-      });
-    }
+    const { allSkills, totalSkillCount } = await this.discoverAllSkills();
+    await this.resolveSourceForCompile(flags);
+    const agentDefs = await this.loadAgentDefsForCompile(flags);
 
     if (flags["dry-run"]) {
       this.log("");
       this.log(`[dry-run] Would compile ${totalSkillCount} skills`);
       this.log(`[dry-run] Would use agent partials from: ${agentDefs.sourcePath}`);
       this.log(`[dry-run] Would output to: ${getPluginAgentsDir(pluginDir)}`);
-      this.log("[dry-run] Preview complete - no files were written");
+      this.log(DRY_RUN_MESSAGES.COMPLETE_NO_FILES_WRITTEN);
       this.log("");
       return;
     }
 
-    this.log("Recompiling agents...");
+    this.log(STATUS_MESSAGES.RECOMPILING_AGENTS);
     try {
       const recompileResult = await recompileAgents({
         pluginDir,
         sourcePath: agentDefs.sourcePath,
         skills: allSkills,
-        projectDir,
+        projectDir: process.cwd(),
       });
 
       if (recompileResult.failed.length > 0) {
@@ -348,32 +394,23 @@ export default class Compile extends BaseCommand {
       } else if (recompileResult.compiled.length > 0) {
         this.log(`Recompiled ${recompileResult.compiled.length} agents`);
       } else {
-        this.log("No agents to recompile");
+        this.log(INFO_MESSAGES.NO_AGENTS_TO_RECOMPILE);
       }
 
       if (recompileResult.compiled.length > 0) {
         verbose(`  Compiled: ${recompileResult.compiled.join(", ")}`);
       }
     } catch (error) {
-      this.log("Failed to recompile agents");
-      this.error(error instanceof Error ? error.message : String(error), {
-        exit: EXIT_CODES.ERROR,
-      });
+      this.log(ERROR_MESSAGES.FAILED_COMPILE_AGENTS);
+      this.handleError(error);
     }
 
     this.log("");
-    this.logSuccess("Plugin compile complete!");
+    this.logSuccess(SUCCESS_MESSAGES.PLUGIN_COMPILE_COMPLETE);
     this.log("");
   }
 
-  private async runCustomOutputCompile(flags: {
-    source?: string;
-    "agent-source"?: string;
-    refresh: boolean;
-    verbose: boolean;
-    output: string;
-    "dry-run": boolean;
-  }): Promise<void> {
+  private async runCustomOutputCompile(flags: CompileFlags & { output: string }): Promise<void> {
     const outputDir = path.resolve(process.cwd(), flags.output);
     this.log("");
     this.log("Custom Output Compile");
@@ -381,80 +418,23 @@ export default class Compile extends BaseCommand {
     this.log(`Output directory: ${outputDir}`);
     this.log("");
 
-    const projectDir = process.cwd();
-    this.log("Discovering skills...");
-
-    const pluginSkills = await discoverPluginSkills(projectDir);
-    const pluginSkillCount = Object.keys(pluginSkills).length;
-    verbose(`  Found ${pluginSkillCount} skills from installed plugins`);
-
-    const localSkills = await discoverLocalProjectSkills(projectDir);
-    const localSkillCount = Object.keys(localSkills).length;
-    verbose(`  Found ${localSkillCount} local skills from .claude/skills/`);
-
-    const allSkills = mergeSkills(pluginSkills, localSkills);
-    const totalSkillCount = Object.keys(allSkills).length;
-
-    if (totalSkillCount === 0) {
-      this.log("No skills found");
-      this.error(
-        "No skills found. Add skills with 'cc add <skill>' or create in .claude/skills/.",
-        { exit: EXIT_CODES.ERROR },
-      );
-    }
-
-    if (localSkillCount > 0 && pluginSkillCount > 0) {
-      this.log(
-        `Discovered ${totalSkillCount} skills (${pluginSkillCount} from plugins, ${localSkillCount} local)`,
-      );
-    } else if (localSkillCount > 0) {
-      this.log(`Discovered ${localSkillCount} local skills`);
-    } else {
-      this.log(`Discovered ${pluginSkillCount} skills from plugins`);
-    }
-
-    this.log("Resolving source...");
-    let sourceConfig;
-    try {
-      sourceConfig = await resolveSource(flags.source);
-      this.log(`Source: ${sourceConfig.sourceOrigin}`);
-    } catch (error) {
-      this.log("Failed to resolve source");
-      this.error(error instanceof Error ? error.message : String(error), {
-        exit: EXIT_CODES.ERROR,
-      });
-    }
-
-    this.log(flags["agent-source"] ? "Fetching agent partials..." : "Loading agent partials...");
-    let agentDefs: AgentSourcePaths;
-    try {
-      agentDefs = await getAgentDefinitions(flags["agent-source"], {
-        forceRefresh: flags.refresh,
-        projectDir,
-      });
-      this.log(flags["agent-source"] ? "Agent partials fetched" : "Agent partials loaded");
-      verbose(`  Agents: ${agentDefs.agentsDir}`);
-      verbose(`  Templates: ${agentDefs.templatesDir}`);
-    } catch (error) {
-      this.log("Failed to load agent partials");
-      this.error(error instanceof Error ? error.message : String(error), {
-        exit: EXIT_CODES.ERROR,
-      });
-    }
+    const { allSkills, totalSkillCount } = await this.discoverAllSkills();
+    await this.resolveSourceForCompile(flags);
+    const agentDefs = await this.loadAgentDefsForCompile(flags);
 
     if (flags["dry-run"]) {
       this.log("");
       this.log(`[dry-run] Would compile agents with ${totalSkillCount} skills`);
       this.log(`[dry-run] Would use agent definitions from: ${agentDefs.sourcePath}`);
       this.log(`[dry-run] Would output to: ${outputDir}`);
-      this.log("[dry-run] Preview complete - no files were written");
+      this.log(DRY_RUN_MESSAGES.COMPLETE_NO_FILES_WRITTEN);
       this.log("");
       return;
     }
 
     const pluginDir = getCollectivePluginDir();
 
-    this.log("Compiling agents...");
+    this.log(STATUS_MESSAGES.COMPILING_AGENTS);
     try {
       await ensureDir(outputDir);
 
@@ -463,7 +443,7 @@ export default class Compile extends BaseCommand {
         sourcePath: agentDefs.sourcePath,
         skills: allSkills,
         outputDir,
-        projectDir,
+        projectDir: process.cwd(),
       });
 
       if (recompileResult.failed.length > 0) {
@@ -476,7 +456,7 @@ export default class Compile extends BaseCommand {
       } else if (recompileResult.compiled.length > 0) {
         this.log(`Compiled ${recompileResult.compiled.length} agents`);
       } else {
-        this.log("No agents to compile");
+        this.log(INFO_MESSAGES.NO_AGENTS_TO_COMPILE);
       }
 
       if (recompileResult.compiled.length > 0) {
@@ -489,14 +469,12 @@ export default class Compile extends BaseCommand {
         }
       }
     } catch (error) {
-      this.log("Failed to compile agents");
-      this.error(error instanceof Error ? error.message : String(error), {
-        exit: EXIT_CODES.ERROR,
-      });
+      this.log(ERROR_MESSAGES.FAILED_COMPILE_AGENTS);
+      this.handleError(error);
     }
 
     this.log("");
-    this.logSuccess("Custom output compile complete!");
+    this.logSuccess(SUCCESS_MESSAGES.CUSTOM_COMPILE_COMPLETE);
     this.log("");
   }
 }

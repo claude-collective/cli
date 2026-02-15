@@ -1,15 +1,16 @@
 import path from "path";
+import { getErrorMessage } from "../../utils/errors";
 import { readFile, ensureDir, glob, copy } from "../../utils/fs";
-import { verbose, warn } from "../../utils/logger";
+import { log, verbose, warn } from "../../utils/logger";
 import {
   generateAgentPluginManifest,
   writePluginManifest,
   getPluginManifestPath,
 } from "../plugins";
-import { hashString, determinePluginVersion, writeContentHash } from "../versioning";
+import { computeStringHash, determinePluginVersion, writeContentHash } from "../versioning";
 import { extractFrontmatter } from "../../utils/frontmatter";
 import type { PluginManifest } from "../../types";
-import { agentFrontmatterValidationSchema } from "../schemas";
+import { agentFrontmatterValidationSchema, formatZodErrors } from "../schemas";
 
 export type AgentPluginOptions = {
   agentPath: string;
@@ -33,9 +34,7 @@ function parseAgentFrontmatter(
 
   const result = agentFrontmatterValidationSchema.safeParse(raw);
   if (!result.success) {
-    warn(
-      `Invalid agent frontmatter in ${filePath}: ${result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
-    );
+    warn(`Invalid agent frontmatter in ${filePath}: ${formatZodErrors(result.error.issues)}`);
     return null;
   }
 
@@ -68,7 +67,7 @@ export async function compileAgentPlugin(
   await ensureDir(pluginDir);
   await ensureDir(agentsDir);
 
-  const newHash = hashString(content);
+  const newHash = computeStringHash(content);
   const { version, contentHash } = await determinePluginVersion(
     newHash,
     pluginDir,
@@ -114,10 +113,10 @@ export async function compileAllAgentPlugins(
         outputDir,
       });
       results.push(result);
-      console.log(`  [OK] agent-${result.agentName}`);
+      log(`  [OK] agent-${result.agentName}`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.warn(`  [WARN] Failed to compile agent from ${agentFile}: ${errorMessage}`);
+      const errorMessage = getErrorMessage(error);
+      warn(`Failed to compile agent from '${agentFile}': ${errorMessage}`);
     }
   }
 
@@ -125,8 +124,8 @@ export async function compileAllAgentPlugins(
 }
 
 export function printAgentCompilationSummary(results: CompiledAgentPlugin[]): void {
-  console.log(`\nCompiled ${results.length} agent plugins:`);
+  log(`\nCompiled ${results.length} agent plugins:`);
   for (const result of results) {
-    console.log(`  - agent-${result.agentName} (v${result.manifest.version})`);
+    log(`  - agent-${result.agentName} (v${result.manifest.version})`);
   }
 }

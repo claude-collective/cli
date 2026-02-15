@@ -1,11 +1,30 @@
-import path from "path";
+import { createHash } from "crypto";
 import { downloadTemplate } from "giget";
-import { verbose } from "../../utils/logger";
-import { CACHE_DIR } from "../../consts";
-import { ensureDir, directoryExists, readFile } from "../../utils/fs";
+import path from "path";
+
+import {
+  CACHE_DIR,
+  CACHE_HASH_LENGTH,
+  CACHE_READABLE_PREFIX_LENGTH,
+  MAX_MARKETPLACE_FILE_SIZE,
+  MAX_JSON_NESTING_DEPTH,
+  MAX_MARKETPLACE_PLUGINS,
+} from "../../consts";
+import { getErrorMessage } from "../../utils/errors";
+import { ensureDir, directoryExists, readFileSafe } from "../../utils/fs";
+import { verbose, warn } from "../../utils/logger";
 import { isLocalSource } from "../configuration";
-import { marketplaceSchema } from "../schemas";
+import {
+  formatZodErrors,
+  marketplaceSchema,
+  validateNestingDepth,
+  warnUnknownFields,
+} from "../schemas";
 import type { MarketplaceFetchResult } from "../../types";
+
+/** Safe name pattern: alphanumeric, hyphens, underscores, dots, spaces, @, / (no shell metacharacters) */
+const SAFE_NAME_PATTERN = /^[a-zA-Z0-9@._/ -]+$/;
+const MAX_NAME_LENGTH = 200;
 
 export type FetchOptions = {
   forceRefresh?: boolean;
@@ -19,11 +38,19 @@ export type FetchResult = {
 };
 
 export function sanitizeSourceForCache(source: string): string {
-  return source.replace(/:/g, "-").replace(/[\/]/g, "-").replace(/--+/g, "-").replace(/^-|-$/g, "");
+  const hash = createHash("sha256").update(source).digest("hex").slice(0, CACHE_HASH_LENGTH);
+
+  const readable = source
+    .replace(/[^a-zA-Z0-9]/g, "-")
+    .replace(/--+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, CACHE_READABLE_PREFIX_LENGTH);
+
+  return readable ? `${readable}-${hash}` : hash;
 }
 
 function getCacheDir(source: string): string {
-  const sanitized = sanitizeSourceForCache(source);
+  const sanitized = sanitizeSourceForCache(source) || "unknown";
   return path.join(CACHE_DIR, "sources", sanitized);
 }
 
@@ -45,7 +72,7 @@ async function fetchFromLocalSource(source: string, subdir?: string): Promise<Fe
   const absolutePath = path.isAbsolute(fullPath) ? fullPath : path.resolve(process.cwd(), fullPath);
 
   if (!(await directoryExists(absolutePath))) {
-    throw new Error(`Local source not found: ${absolutePath}`);
+    throw new Error(`Local source not found: '${absolutePath}'`);
   }
 
   verbose(`Using local source: ${absolutePath}`);
@@ -66,7 +93,6 @@ async function fetchFromRemoteSource(source: string, options: FetchOptions): Pro
   verbose(`Fetching from remote: ${fullSource}`);
   verbose(`Cache directory: ${cacheDir}`);
 
-  // If cache exists and not forcing refresh, use it directly
   if (!forceRefresh && (await directoryExists(cacheDir))) {
     verbose(`Using cached source: ${cacheDir}`);
     return {
@@ -93,12 +119,12 @@ async function fetchFromRemoteSource(source: string, options: FetchOptions): Pro
       source: fullSource,
     };
   } catch (error) {
-    throw wrapGigetError(error, source);
+    throw createDetailedFetchError(error, source);
   }
 }
 
-function wrapGigetError(error: unknown, source: string): Error {
-  const message = error instanceof Error ? error.message : String(error);
+function createDetailedFetchError(error: unknown, source: string): Error {
+  const message = getErrorMessage(error);
 
   if (message.includes("404") || message.includes("Not Found")) {
     return new Error(
@@ -160,23 +186,72 @@ export async function fetchMarketplace(
 
   if (!(await directoryExists(path.dirname(marketplacePath)))) {
     throw new Error(
-      `Marketplace not found at: ${marketplacePath}\n\n` +
-        `Expected .claude-plugin/marketplace.json in the source repository.`,
+      `Marketplace not found for source: ${source}\n\n` +
+        `The .claude-plugin/marketplace.json file is missing from this repository.\n\n` +
+        `Possible causes:\n` +
+        "  - The source URL may be incorrect\n" +
+        "  - The repository may not have a marketplace configured\n\n" +
+        "To create a marketplace, add a .claude-plugin/marketplace.json file to your source repository.",
     );
   }
 
-  const content = await readFile(marketplacePath);
+  const content = await readFileSafe(marketplacePath, MAX_MARKETPLACE_FILE_SIZE);
   const parsed = JSON.parse(content);
+
+  if (!validateNestingDepth(parsed, MAX_JSON_NESTING_DEPTH)) {
+    throw new Error(
+      `Invalid marketplace.json at: ${marketplacePath}\n\n` +
+        `JSON structure exceeds maximum nesting depth of ${MAX_JSON_NESTING_DEPTH}.`,
+    );
+  }
+
   const validation = marketplaceSchema.safeParse(parsed);
 
   if (!validation.success) {
     throw new Error(
       `Invalid marketplace.json at: ${marketplacePath}\n\n` +
-        `Validation errors: ${validation.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
+        `Validation errors: ${formatZodErrors(validation.error.issues)}`,
     );
   }
 
   const marketplace = validation.data;
+
+  // Warn about unexpected top-level fields in marketplace.json
+  const EXPECTED_MARKETPLACE_KEYS = [
+    "$schema",
+    "name",
+    "version",
+    "description",
+    "owner",
+    "metadata",
+    "plugins",
+  ] as const;
+  if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+    warnUnknownFields(
+      parsed as Record<string, unknown>,
+      EXPECTED_MARKETPLACE_KEYS,
+      "marketplace.json",
+    );
+  }
+
+  if (marketplace.plugins.length > MAX_MARKETPLACE_PLUGINS) {
+    throw new Error(
+      `Invalid marketplace.json at: ${marketplacePath}\n\n` +
+        `Too many plugins: ${marketplace.plugins.length} (limit: ${MAX_MARKETPLACE_PLUGINS}).`,
+    );
+  }
+
+  // Validate plugin names against safe character set
+  for (const plugin of marketplace.plugins) {
+    if (plugin.name.length > MAX_NAME_LENGTH) {
+      warn(
+        `Marketplace plugin name too long (${plugin.name.length} chars): '${plugin.name.slice(0, 50)}...'`,
+      );
+    }
+    if (!SAFE_NAME_PATTERN.test(plugin.name)) {
+      warn(`Marketplace plugin name contains unsafe characters: '${plugin.name.slice(0, 50)}'`);
+    }
+  }
 
   verbose(`Loaded marketplace: ${marketplace.name} v${marketplace.version}`);
 

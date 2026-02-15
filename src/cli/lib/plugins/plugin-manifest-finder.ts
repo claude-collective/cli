@@ -1,4 +1,5 @@
 import path from "path";
+
 import { PLUGIN_MANIFEST_DIR, PLUGIN_MANIFEST_FILE } from "../../consts";
 import { fileExists } from "../../utils/fs";
 

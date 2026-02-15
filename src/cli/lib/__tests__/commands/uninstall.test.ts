@@ -236,7 +236,7 @@ describe("uninstall command", () => {
   describe("flag targeting", () => {
     it("should only remove plugin with --plugin flag", async () => {
       const pluginDir = await createPluginDir(projectDir);
-      const { claudeDir, claudeSrcDir } = await createLocalDirs(projectDir);
+      const { claudeSrcDir } = await createLocalDirs(projectDir);
 
       await runCliCommand(["uninstall", "--yes", "--plugin"]);
 

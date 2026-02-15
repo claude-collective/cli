@@ -1,5 +1,11 @@
 import { Hook } from "@oclif/core";
 import { resolveSource } from "../lib/configuration/index.js";
+import type { ResolvedConfig } from "../lib/configuration/index.js";
+
+/** Narrow interface for attaching sourceConfig to oclif's Config object. */
+interface ConfigWithSource {
+  sourceConfig?: ResolvedConfig;
+}
 
 const hook: Hook<"init"> = async function (options) {
   const projectDir = process.cwd();
@@ -24,8 +30,8 @@ const hook: Hook<"init"> = async function (options) {
 
   try {
     const resolvedConfig = await resolveSource(sourceFlag, projectDir);
-    // Available to commands via this.sourceConfig getter in BaseCommand
-    (options.config as any).sourceConfig = resolvedConfig;
+    // Boundary cast: oclif Config doesn't declare sourceConfig; read in BaseCommand.sourceConfig
+    (options.config as unknown as ConfigWithSource).sourceConfig = resolvedConfig;
   } catch (error) {
     // Let the command handle config failures - commands can check if sourceConfig is undefined
   }

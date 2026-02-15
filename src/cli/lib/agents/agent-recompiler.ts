@@ -1,14 +1,9 @@
+import type { Liquid } from "liquidjs";
 import path from "path";
-import { glob, writeFile, ensureDir, readFile, fileExists } from "../../utils/fs";
-import { verbose } from "../../utils/logger";
-import { loadAllAgents, loadPluginSkills, loadProjectAgents } from "../loading";
-import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
-import { compileAgentForPlugin } from "../stacks";
-import { getPluginAgentsDir } from "../plugins";
-import { createLiquidEngine } from "../compiler";
-import { loadProjectConfig, type LoadedProjectConfig } from "../configuration";
 import { parse as parseYaml } from "yaml";
-import { projectConfigLoaderSchema } from "../schemas";
+
+import { getErrorMessage } from "../../utils/errors";
+import { STANDARD_FILES } from "../../consts";
 import type {
   AgentConfig,
   AgentDefinition,
@@ -19,13 +14,22 @@ import type {
   SkillDefinition,
   SkillId,
 } from "../../types";
+import { glob, writeFile, ensureDir, readFile, fileExists } from "../../utils/fs";
+import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
+import { createLiquidEngine } from "../compiler";
+import { loadProjectConfig, type LoadedProjectConfig } from "../configuration";
+import { loadAllAgents, loadPluginSkills, loadProjectAgents } from "../loading";
+import { getPluginAgentsDir } from "../plugins";
+import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
+import { projectConfigLoaderSchema } from "../schemas";
+import { compileAgentForPlugin } from "../stacks";
 
 export type RecompileAgentsOptions = {
   pluginDir: string;
   sourcePath: string;
   agents?: AgentName[];
-  skills?: Record<string, SkillDefinition>;
+  skills?: Partial<Record<SkillId, SkillDefinition>>;
   projectDir?: string;
   outputDir?: string;
 };
@@ -45,7 +49,7 @@ async function getExistingAgentNames(pluginDir: string): Promise<AgentName[]> {
 
 // Tries pluginDir/config.yaml (legacy) then pluginDir/.claude/config.yaml
 async function loadConfigWithFallback(pluginDir: string): Promise<LoadedProjectConfig | null> {
-  const legacyConfigPath = path.join(pluginDir, "config.yaml");
+  const legacyConfigPath = path.join(pluginDir, STANDARD_FILES.CONFIG_YAML);
   if (await fileExists(legacyConfigPath)) {
     try {
       const content = await readFile(legacyConfigPath);
@@ -72,17 +76,102 @@ async function loadConfigWithFallback(pluginDir: string): Promise<LoadedProjectC
   return loadProjectConfig(pluginDir);
 }
 
+type ResolveAgentNamesParams = {
+  specifiedAgents?: AgentName[];
+  projectConfig: ProjectConfig | null;
+  allAgents: Record<AgentName, AgentDefinition>;
+  outputDir?: string;
+  pluginDir: string;
+};
+
+async function resolveAgentNames(params: ResolveAgentNamesParams): Promise<AgentName[]> {
+  const { specifiedAgents, projectConfig, allAgents, outputDir, pluginDir } = params;
+
+  if (specifiedAgents) {
+    return specifiedAgents;
+  }
+
+  if (projectConfig?.agents) {
+    verbose(`Using agents from config.yaml: ${projectConfig.agents.join(", ")}`);
+    return projectConfig.agents;
+  }
+
+  if (outputDir) {
+    const names = typedKeys<AgentName>(allAgents);
+    verbose(`Using all available agents from source: ${names.join(", ")}`);
+    return names;
+  }
+
+  return getExistingAgentNames(pluginDir);
+}
+
+type BuildCompileConfigParams = {
+  agentNames: AgentName[];
+  allAgents: Record<AgentName, AgentDefinition>;
+  projectConfig: ProjectConfig | null;
+  pluginDir: string;
+};
+
+type BuildCompileConfigResult = {
+  compileConfig: CompileConfig;
+  warnings: string[];
+};
+
+function buildCompileConfig(params: BuildCompileConfigParams): BuildCompileConfigResult {
+  const { agentNames, allAgents, projectConfig, pluginDir } = params;
+  const warnings: string[] = [];
+
+  // Store initialization: accumulator filled below for each agent in agentNames
+  const compileAgents = {} as Record<AgentName, CompileAgentConfig>;
+  for (const agentName of agentNames) {
+    if (allAgents[agentName]) {
+      const agentStack = projectConfig?.stack?.[agentName];
+      compileAgents[agentName] = agentStack ? { skills: buildSkillRefsFromConfig(agentStack) } : {};
+    } else {
+      warnings.push(`Agent "${agentName}" not found in source definitions`);
+    }
+  }
+
+  const compileConfig: CompileConfig = {
+    name: projectConfig?.name || path.basename(pluginDir),
+    description: projectConfig?.description || "Recompiled plugin",
+    agents: compileAgents,
+  };
+
+  return { compileConfig, warnings };
+}
+
+type CompileAndWriteParams = {
+  resolvedAgents: Record<AgentName, AgentConfig>;
+  agentsDir: string;
+  sourcePath: string;
+  engine: Liquid;
+  installMode: ProjectConfig["installMode"];
+};
+
+async function compileAndWriteAgents(
+  params: CompileAndWriteParams,
+  result: RecompileAgentsResult,
+): Promise<void> {
+  const { resolvedAgents, agentsDir, sourcePath, engine, installMode } = params;
+
+  for (const [agentName, agent] of typedEntries<AgentName, AgentConfig>(resolvedAgents)) {
+    try {
+      const output = await compileAgentForPlugin(agentName, agent, sourcePath, engine, installMode);
+      await writeFile(path.join(agentsDir, `${agentName}.md`), output);
+      result.compiled.push(agentName);
+      verbose(`  Recompiled: ${agentName}`);
+    } catch (error) {
+      result.failed.push(agentName);
+      result.warnings.push(`Failed to compile ${agentName}: ${getErrorMessage(error)}`);
+    }
+  }
+}
+
 export async function recompileAgents(
   options: RecompileAgentsOptions,
 ): Promise<RecompileAgentsResult> {
-  const {
-    pluginDir,
-    sourcePath,
-    agents: specifiedAgents,
-    skills: providedSkills,
-    projectDir,
-    outputDir,
-  } = options;
+  const { pluginDir, sourcePath, skills: providedSkills, projectDir, outputDir } = options;
 
   const result: RecompileAgentsResult = {
     compiled: [],
@@ -106,18 +195,13 @@ export async function recompileAgents(
     ...projectAgents,
   } as Record<AgentName, AgentDefinition>;
 
-  let agentNames: AgentName[];
-  if (specifiedAgents) {
-    agentNames = specifiedAgents;
-  } else if (projectConfig?.agents) {
-    agentNames = projectConfig.agents;
-    verbose(`Using agents from config.yaml: ${agentNames.join(", ")}`);
-  } else if (outputDir) {
-    agentNames = typedKeys<AgentName>(allAgents);
-    verbose(`Using all available agents from source: ${agentNames.join(", ")}`);
-  } else {
-    agentNames = await getExistingAgentNames(pluginDir);
-  }
+  const agentNames = await resolveAgentNames({
+    specifiedAgents: options.agents,
+    projectConfig,
+    allAgents,
+    outputDir,
+    pluginDir,
+  });
 
   if (agentNames.length === 0) {
     result.warnings.push("No agents found to recompile");
@@ -128,21 +212,13 @@ export async function recompileAgents(
 
   const pluginSkills = providedSkills ?? (await loadPluginSkills(pluginDir));
 
-  const compileAgents = {} as Record<AgentName, CompileAgentConfig>;
-  for (const agentName of agentNames) {
-    if (allAgents[agentName]) {
-      const agentStack = projectConfig?.stack?.[agentName];
-      compileAgents[agentName] = agentStack ? { skills: buildSkillRefsFromConfig(agentStack) } : {};
-    } else {
-      result.warnings.push(`Agent "${agentName}" not found in source definitions`);
-    }
-  }
-
-  const compileConfig: CompileConfig = {
-    name: projectConfig?.name || path.basename(pluginDir),
-    description: projectConfig?.description || "Recompiled plugin",
-    agents: compileAgents,
-  };
+  const { compileConfig, warnings } = buildCompileConfig({
+    agentNames,
+    allAgents,
+    projectConfig,
+    pluginDir,
+  });
+  result.warnings.push(...warnings);
 
   const engine = await createLiquidEngine(projectDir);
   const resolvedAgents = await resolveAgents(allAgents, pluginSkills, compileConfig, sourcePath);
@@ -150,25 +226,16 @@ export async function recompileAgents(
   const agentsDir = outputDir ?? getPluginAgentsDir(pluginDir);
   await ensureDir(agentsDir);
 
-  for (const [agentName, agent] of typedEntries<AgentName, AgentConfig>(resolvedAgents)) {
-    try {
-      const output = await compileAgentForPlugin(
-        agentName,
-        agent,
-        sourcePath,
-        engine,
-        projectConfig?.installMode,
-      );
-      await writeFile(path.join(agentsDir, `${agentName}.md`), output);
-      result.compiled.push(agentName);
-      verbose(`  Recompiled: ${agentName}`);
-    } catch (error) {
-      result.failed.push(agentName);
-      result.warnings.push(
-        `Failed to compile ${agentName}: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
+  await compileAndWriteAgents(
+    {
+      resolvedAgents,
+      agentsDir,
+      sourcePath,
+      engine,
+      installMode: projectConfig?.installMode,
+    },
+    result,
+  );
 
   return result;
 }

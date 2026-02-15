@@ -4,7 +4,8 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { stringify as stringifyYaml } from "yaml";
 import { mergeWithExistingConfig } from "./config-merger";
-import type { ProjectConfig } from "../../types";
+import type { ProjectConfig, SkillAssignment, SkillId } from "../../types";
+import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 
 describe("config-merger", () => {
   let tempDir: string;
@@ -38,10 +39,10 @@ describe("config-merger", () => {
     });
 
     it("should inherit author from simple project config when no full config exists", async () => {
-      const configDir = path.join(tempDir, ".claude-src");
+      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(
-        path.join(configDir, "config.yaml"),
+        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
         stringifyYaml({ source: "github:my-org/skills", author: "@vince" }),
       );
 
@@ -62,10 +63,10 @@ describe("config-merger", () => {
     });
 
     it("should inherit agents_source from existing config", async () => {
-      const configDir = path.join(tempDir, ".claude-src");
+      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(
-        path.join(configDir, "config.yaml"),
+        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
         stringifyYaml({
           source: "github:my-org/skills",
           agents_source: "github:my-org/agents",
@@ -89,130 +90,61 @@ describe("config-merger", () => {
     describe("merge precedence rules", () => {
       async function writeFullConfig(config: ProjectConfig): Promise<void> {
         // Full config is at .claude-src/config.yaml with name and agents (required fields)
-        const configDir = path.join(tempDir, ".claude-src");
+        const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
         await mkdir(configDir, { recursive: true });
-        await writeFile(path.join(configDir, "config.yaml"), stringifyYaml(config));
+        await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_YAML), stringifyYaml(config));
       }
 
-      it("should keep existing name over new name", async () => {
-        await writeFullConfig({
-          name: "existing-project",
-          agents: ["web-developer"],
-          skills: [],
-        });
+      it.each([
+        { field: "name" as const, existingValue: "existing-project", newValue: "new-project" },
+        {
+          field: "description" as const,
+          existingValue: "Existing description",
+          newValue: "New description",
+        },
+        {
+          field: "source" as const,
+          existingValue: "github:existing/source",
+          newValue: "github:new/source",
+        },
+        { field: "author" as const, existingValue: "@existing-author", newValue: "@new-author" },
+        {
+          field: "marketplace" as const,
+          existingValue: "existing-marketplace",
+          newValue: "new-marketplace",
+        },
+      ])(
+        "should keep existing $field over new $field",
+        async ({ field, existingValue, newValue }) => {
+          await writeFullConfig({
+            name: "project",
+            agents: ["web-developer"],
+            skills: [],
+            [field]: existingValue,
+          });
 
-        const newConfig: ProjectConfig = {
-          name: "new-project",
-          agents: ["web-developer"],
-          skills: [],
-        };
+          const newConfig: ProjectConfig = {
+            name: "project",
+            agents: ["web-developer"],
+            skills: [],
+            [field]: newValue,
+          };
 
-        const result = await mergeWithExistingConfig(newConfig, {
-          projectDir: tempDir,
-        });
+          const result = await mergeWithExistingConfig(newConfig, {
+            projectDir: tempDir,
+          });
 
-        expect(result.merged).toBe(true);
-        expect(result.config.name).toBe("existing-project");
-      });
-
-      it("should keep existing description over new description", async () => {
-        await writeFullConfig({
-          name: "project",
-          agents: ["web-developer"],
-          skills: [],
-          description: "Existing description",
-        });
-
-        const newConfig: ProjectConfig = {
-          name: "project",
-          agents: ["web-developer"],
-          skills: [],
-          description: "New description",
-        };
-
-        const result = await mergeWithExistingConfig(newConfig, {
-          projectDir: tempDir,
-        });
-
-        expect(result.merged).toBe(true);
-        expect(result.config.description).toBe("Existing description");
-      });
-
-      it("should keep existing source over new source", async () => {
-        await writeFullConfig({
-          name: "project",
-          agents: ["web-developer"],
-          skills: [],
-          source: "github:existing/source",
-        });
-
-        const newConfig: ProjectConfig = {
-          name: "project",
-          agents: ["web-developer"],
-          skills: [],
-          source: "github:new/source",
-        };
-
-        const result = await mergeWithExistingConfig(newConfig, {
-          projectDir: tempDir,
-        });
-
-        expect(result.merged).toBe(true);
-        expect(result.config.source).toBe("github:existing/source");
-      });
-
-      it("should keep existing author over new author", async () => {
-        await writeFullConfig({
-          name: "project",
-          agents: ["web-developer"],
-          skills: [],
-          author: "@existing-author",
-        });
-
-        const newConfig: ProjectConfig = {
-          name: "project",
-          agents: ["web-developer"],
-          skills: [],
-          author: "@new-author",
-        };
-
-        const result = await mergeWithExistingConfig(newConfig, {
-          projectDir: tempDir,
-        });
-
-        expect(result.merged).toBe(true);
-        expect(result.config.author).toBe("@existing-author");
-      });
-
-      it("should keep existing marketplace over new marketplace", async () => {
-        await writeFullConfig({
-          name: "project",
-          agents: ["web-developer"],
-          skills: [],
-          marketplace: "existing-marketplace",
-        });
-
-        const newConfig: ProjectConfig = {
-          name: "project",
-          agents: ["web-developer"],
-          skills: [],
-          marketplace: "new-marketplace",
-        };
-
-        const result = await mergeWithExistingConfig(newConfig, {
-          projectDir: tempDir,
-        });
-
-        expect(result.merged).toBe(true);
-        expect(result.config.marketplace).toBe("existing-marketplace");
-      });
+          expect(result.merged).toBe(true);
+          expect(result.config[field]).toBe(existingValue);
+        },
+      );
     });
 
     describe("union of agents arrays", () => {
       async function writeFullConfig(config: ProjectConfig): Promise<void> {
-        const configDir = path.join(tempDir, ".claude-src");
+        const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
         await mkdir(configDir, { recursive: true });
-        await writeFile(path.join(configDir, "config.yaml"), stringifyYaml(config));
+        await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_YAML), stringifyYaml(config));
       }
 
       it("should union agents (existing + new, deduplicated)", async () => {
@@ -261,20 +193,26 @@ describe("config-merger", () => {
 
     describe("deep merge of stack", () => {
       async function writeFullConfig(config: ProjectConfig): Promise<void> {
-        const configDir = path.join(tempDir, ".claude-src");
+        const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
         await mkdir(configDir, { recursive: true });
-        await writeFile(path.join(configDir, "config.yaml"), stringifyYaml(config));
+        await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_YAML), stringifyYaml(config));
+      }
+
+      /** Shorthand: creates a SkillAssignment[] from an id */
+      function sa(id: string): SkillAssignment[] {
+        return [{ id: id as SkillId, preloaded: false }];
       }
 
       it("should deep merge stack with existing agent configs taking precedence", async () => {
+        // Write YAML with bare strings (format 1) - normalization converts to SkillAssignment[]
         await writeFullConfig({
           name: "project",
           agents: ["web-developer"],
           skills: [],
           stack: {
             "web-developer": {
-              framework: "web-framework-react-existing",
-              styling: "web-styling-scss-existing",
+              framework: sa("web-framework-react-existing"),
+              styling: sa("web-styling-scss-existing"),
             },
           },
         });
@@ -285,8 +223,8 @@ describe("config-merger", () => {
           skills: [],
           stack: {
             "web-developer": {
-              framework: "web-framework-react-new",
-              "client-state": "web-state-zustand-new",
+              framework: sa("web-framework-react-new"),
+              "client-state": sa("web-state-zustand-new"),
             },
           },
         };
@@ -300,9 +238,9 @@ describe("config-merger", () => {
         // New values added where not existing (client-state added)
         expect(result.config.stack).toEqual({
           "web-developer": {
-            framework: "web-framework-react-existing",
-            styling: "web-styling-scss-existing",
-            "client-state": "web-state-zustand-new",
+            framework: sa("web-framework-react-existing"),
+            styling: sa("web-styling-scss-existing"),
+            "client-state": sa("web-state-zustand-new"),
           },
         });
       });
@@ -314,7 +252,7 @@ describe("config-merger", () => {
           skills: [],
           stack: {
             "web-developer": {
-              framework: "web-framework-react",
+              framework: sa("web-framework-react"),
             },
           },
         });
@@ -325,10 +263,10 @@ describe("config-merger", () => {
           skills: [],
           stack: {
             "web-developer": {
-              framework: "web-framework-vue",
+              framework: sa("web-framework-vue"),
             },
             "api-developer": {
-              api: "api-framework-hono",
+              api: sa("api-framework-hono"),
             },
           },
         };
@@ -340,10 +278,10 @@ describe("config-merger", () => {
         expect(result.merged).toBe(true);
         expect(result.config.stack).toEqual({
           "web-developer": {
-            framework: "web-framework-react", // existing takes precedence
+            framework: sa("web-framework-react"), // existing takes precedence
           },
           "api-developer": {
-            api: "api-framework-hono", // new agent added
+            api: sa("api-framework-hono"), // new agent added
           },
         });
       });
@@ -361,7 +299,7 @@ describe("config-merger", () => {
           skills: [],
           stack: {
             "web-developer": {
-              framework: "web-framework-react",
+              framework: sa("web-framework-react"),
             },
           },
         };
@@ -373,17 +311,17 @@ describe("config-merger", () => {
         expect(result.merged).toBe(true);
         expect(result.config.stack).toEqual({
           "web-developer": {
-            framework: "web-framework-react",
+            framework: sa("web-framework-react"),
           },
         });
       });
     });
 
     it("should not mutate the input config", async () => {
-      const configDir = path.join(tempDir, ".claude-src");
+      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(
-        path.join(configDir, "config.yaml"),
+        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
         stringifyYaml({
           name: "existing",
           agents: ["web-developer"],
@@ -407,10 +345,10 @@ describe("config-merger", () => {
     });
 
     it("should return existingConfigPath when merged", async () => {
-      const configDir = path.join(tempDir, ".claude-src");
+      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(
-        path.join(configDir, "config.yaml"),
+        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
         stringifyYaml({
           name: "existing",
           agents: ["web-developer"],
@@ -429,7 +367,9 @@ describe("config-merger", () => {
 
       expect(result.merged).toBe(true);
       expect(result.existingConfigPath).toBeDefined();
-      expect(result.existingConfigPath).toContain(".claude-src/config.yaml");
+      expect(result.existingConfigPath).toContain(
+        `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_YAML}`,
+      );
     });
   });
 });

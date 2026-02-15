@@ -1,4 +1,3 @@
-import React from "react";
 import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
 import { StepSettings, type StepSettingsProps } from "./step-settings";
@@ -6,7 +5,6 @@ import {
   ESCAPE,
   ARROW_UP,
   ARROW_DOWN,
-  RENDER_DELAY_MS,
   INPUT_DELAY_MS,
   delay,
 } from "../../lib/__tests__/test-constants";

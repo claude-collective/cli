@@ -33,7 +33,6 @@ export async function addSource(
   const config = (await loadProjectSourceConfig(projectDir)) ?? {};
   const sources = config.sources ?? [];
 
-  // Check for duplicate names
   const exists = sources.some((s) => s.name === name);
   if (exists) {
     throw new Error(`Source "${name}" already exists`);
@@ -78,7 +77,6 @@ export async function getSourceSummary(
 ): Promise<SourceSummary> {
   const config = (await loadProjectSourceConfig(projectDir)) ?? {};
 
-  // Build sources list, always including the default "public" source
   const sources: Array<SourceEntry & { enabled: boolean }> = [
     {
       name: DEFAULT_SOURCE_NAME,
@@ -93,7 +91,6 @@ export async function getSourceSummary(
     }
   }
 
-  // Count local skills
   let localSkillCount = 0;
   try {
     const localResult = await discoverLocalSkills(projectDir);
@@ -104,7 +101,6 @@ export async function getSourceSummary(
     verbose("Failed to discover local skills for source summary");
   }
 
-  // Count plugin skills
   let pluginSkillCount = 0;
   if (matrix) {
     try {

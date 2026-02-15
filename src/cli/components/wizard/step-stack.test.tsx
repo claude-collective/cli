@@ -16,10 +16,9 @@ import {
   ENTER,
   ESCAPE,
   RENDER_DELAY_MS,
+  SELECT_NAV_DELAY_MS,
   delay,
 } from "../../lib/__tests__/test-constants";
-
-const SELECT_NAV_DELAY_MS = 100;
 
 const createMockStackWithSkills = (): MergedSkillsMatrix => {
   const skills = {
@@ -105,7 +104,7 @@ describe("StepStack component", () => {
         cleanup = unmount;
 
         const output = lastFrame();
-        expect(output).toContain("Select a pre-built template");
+        expect(output).toContain("Select a stack");
       });
 
       it("should render header text", () => {
@@ -113,7 +112,7 @@ describe("StepStack component", () => {
         cleanup = unmount;
 
         const output = lastFrame();
-        expect(output).toContain("Select a pre-built template");
+        expect(output).toContain("Select a stack");
       });
     });
 
@@ -271,7 +270,7 @@ describe("StepStack component", () => {
 
         const output = lastFrame();
         // Should still render the header
-        expect(output).toContain("Select a pre-built template");
+        expect(output).toContain("Select a stack");
       });
 
       it("should not render keyboard hints when no stacks", () => {

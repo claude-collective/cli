@@ -2,7 +2,8 @@ export {
   loadStacks,
   loadStackById,
   resolveAgentConfigToSkills,
-  resolveStackSkillsFromDisplayNames,
+  getStackSkillIds,
+  resolveStackSkills,
 } from "./stacks-loader";
 
 export {

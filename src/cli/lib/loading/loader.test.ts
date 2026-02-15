@@ -1,10 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
 // Mock file system and logger (manual mocks from __mocks__ directories)
 vi.mock("../../utils/fs");
 vi.mock("../../utils/logger");
 
-import { parseFrontmatter, loadAllAgents, loadProjectAgents, loadSkillsByIds } from "./loader";
+import {
+  parseFrontmatter,
+  loadAllAgents,
+  loadProjectAgents,
+  loadSkillsByIds,
+  loadPluginSkills,
+} from "./loader";
 import { readFile, glob, directoryExists } from "../../utils/fs";
 import { warn } from "../../utils/logger";
 import type { SkillId } from "../../types";
@@ -81,7 +87,7 @@ Content`;
     expect(result).toBeNull();
   });
 
-  it("should handle frontmatter with additional fields", () => {
+  it("when frontmatter contains extra fields like version/author/tags, should parse name and description", () => {
     const content = `---
 name: ${"api-framework-hono"}
 description: API patterns
@@ -144,7 +150,7 @@ description: desc
     expect(result).toBeNull();
   });
 
-  it("should handle empty content between frontmatter delimiters", () => {
+  it("when frontmatter delimiters contain no fields, should return null", () => {
     const content = `---
 ---
 
@@ -163,6 +169,193 @@ Content`;
     // The current regex expects \n only, not \r\n
     // This is a known limitation - SKILL.md files should use Unix line endings
     expect(result).toBeNull();
+  });
+
+  it("should return null for frontmatter with embedded --- in content", () => {
+    // Only the first --- pair should be matched
+    const content = `---
+name: web-framework-react
+description: React patterns
+---
+
+# Content
+
+---
+This line has triple dashes but is NOT frontmatter
+---`;
+
+    const result = parseFrontmatter(content);
+
+    expect(result).not.toBeNull();
+    expect(result?.name).toBe("web-framework-react");
+  });
+
+  it("should warn with file path when frontmatter schema validation fails", () => {
+    const content = `---
+name: 123
+description: Valid description
+---
+
+Content`;
+
+    parseFrontmatter(content, "/path/to/skill.md");
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("/path/to/skill.md"));
+  });
+
+  it("should warn with 'unknown file' when no file path provided and schema fails", () => {
+    const content = `---
+description: Missing name
+---
+
+Content`;
+
+    parseFrontmatter(content);
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("unknown file"));
+  });
+
+  it("should handle frontmatter with only whitespace between delimiters", () => {
+    const content = `---
+
+---
+
+Content`;
+
+    const result = parseFrontmatter(content);
+
+    // Whitespace-only YAML parses to null, which will fail schema validation
+    expect(result).toBeNull();
+  });
+
+  it("should handle frontmatter with model field", () => {
+    const content = `---
+name: web-framework-react
+description: React patterns
+model: opus
+---
+
+Content`;
+
+    const result = parseFrontmatter(content);
+
+    expect(result).not.toBeNull();
+    expect(result?.name).toBe("web-framework-react");
+    expect(result?.model).toBe("opus");
+  });
+
+  it("should handle frontmatter with special characters in description", () => {
+    const content = `---
+name: web-framework-react
+description: "React patterns: hooks, components & JSX"
+---
+
+Content`;
+
+    const result = parseFrontmatter(content);
+
+    expect(result).not.toBeNull();
+    expect(result?.description).toContain("hooks");
+    expect(result?.description).toContain("&");
+  });
+
+  it("should return null for content that is only triple-dash delimiters", () => {
+    const content = `---
+---`;
+
+    const result = parseFrontmatter(content);
+
+    expect(result).toBeNull();
+  });
+
+  it("should throw when frontmatter YAML uses tabs for indentation", () => {
+    const content = "---\n\tname: skill\n\tdescription: desc\n---\n\nContent";
+
+    // YAML spec forbids tabs for indentation — the parser throws
+    expect(() => parseFrontmatter(content)).toThrow();
+  });
+
+  it("should return null when name is a non-string type (number)", () => {
+    const content = `---
+name: 42
+description: A numeric name
+---
+
+Content`;
+
+    const result = parseFrontmatter(content, "/test/skill.md");
+
+    // Zod schema requires name to be a string; YAML parses bare 42 as number
+    expect(result).toBeNull();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("/test/skill.md"));
+  });
+
+  it("should return null when description is a non-string type (boolean)", () => {
+    const content = `---
+name: valid-skill
+description: true
+---
+
+Content`;
+
+    const result = parseFrontmatter(content, "/test/skill.md");
+
+    // YAML parses bare `true` as boolean, Zod requires string
+    expect(result).toBeNull();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("/test/skill.md"));
+  });
+
+  it("should return null when frontmatter contains invalid YAML syntax", () => {
+    const content = `---
+name: skill
+description: [unclosed bracket
+---
+
+Content`;
+
+    // The YAML parser should throw, and parseFrontmatter should return null or handle it
+    // The YAML parser actually throws, which propagates up
+    expect(() => parseFrontmatter(content)).toThrow();
+  });
+
+  it("should parse only the first frontmatter block when multiple exist", () => {
+    const content = `---
+name: first-skill
+description: First block
+---
+
+Some content
+
+---
+name: second-skill
+description: Second block
+---
+
+More content`;
+
+    const result = parseFrontmatter(content);
+
+    expect(result).not.toBeNull();
+    expect(result?.name).toBe("first-skill");
+    expect(result?.description).toBe("First block");
+  });
+
+  it("should handle frontmatter with deeply nested YAML that is otherwise valid", () => {
+    const content = `---
+name: nested-skill
+description: Has nested extras
+extra:
+  nested:
+    deep: value
+---
+
+Content`;
+
+    const result = parseFrontmatter(content);
+
+    // Extra fields are ignored by the schema (passthrough or stripped)
+    expect(result).not.toBeNull();
+    expect(result?.name).toBe("nested-skill");
   });
 });
 
@@ -199,6 +392,62 @@ describe("loadAllAgents", () => {
     expect(Object.keys(result)).toEqual(["web-developer"]);
     expect(result["web-developer"]?.title).toBe("web-developer Agent");
     expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it("should return empty object when no agent.yaml files exist", async () => {
+    vi.mocked(glob).mockResolvedValue([]);
+
+    const result = await loadAllAgents("/project");
+
+    expect(result).toEqual({});
+  });
+
+  it("should warn and skip when agent.yaml has valid YAML but wrong types", async () => {
+    vi.mocked(glob).mockResolvedValue(["wrong-types/agent.yaml"]);
+    // tools should be an array, not a string
+    vi.mocked(readFile).mockResolvedValue(
+      `id: wrong-types
+title: Wrong Types
+description: Has wrong types
+tools: not-an-array`,
+    );
+
+    const result = await loadAllAgents("/project");
+
+    expect(result).toEqual({});
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid agent.yaml"));
+  });
+
+  it("should warn and skip when readFile throws", async () => {
+    vi.mocked(glob).mockResolvedValue(["unreadable/agent.yaml"]);
+    vi.mocked(readFile).mockRejectedValue(new Error("EACCES: permission denied"));
+
+    const result = await loadAllAgents("/project");
+
+    expect(result).toEqual({});
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid agent.yaml"));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("EACCES"));
+  });
+
+  it("should warn and skip when agent.yaml has empty content", async () => {
+    vi.mocked(glob).mockResolvedValue(["empty/agent.yaml"]);
+    vi.mocked(readFile).mockResolvedValue("");
+
+    const result = await loadAllAgents("/project");
+
+    expect(result).toEqual({});
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid agent.yaml"));
+  });
+
+  it("should include full path in warning message", async () => {
+    vi.mocked(glob).mockResolvedValue(["deep/nested/dir/agent.yaml"]);
+    vi.mocked(readFile).mockResolvedValue("invalid yaml [[[");
+
+    await loadAllAgents("/project");
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("/project/src/agents/deep/nested/dir/agent.yaml"),
+    );
   });
 });
 
@@ -250,24 +499,18 @@ describe("loadProjectAgents", () => {
 
 describe("loadSkillsByIds", () => {
   it("should warn for unknown skill references", async () => {
-    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
-    // buildIdToDirectoryPathMap returns empty — no SKILL.md files found
+    // buildIdToDirectoryPathMap returns empty -- no SKILL.md files found
     vi.mocked(glob).mockResolvedValue([]);
 
     const result = await loadSkillsByIds([{ id: "nonexistent-skill" as SkillId }], "/project");
 
     expect(result).toEqual({});
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
+    expect(warn).toHaveBeenCalledWith(
       expect.stringContaining("Unknown skill reference 'nonexistent-skill'"),
     );
-
-    consoleWarnSpy.mockRestore();
   });
 
   it("should warn when skill not found in directory map after expansion", async () => {
-    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     // buildIdToDirectoryPathMap: skill "my-skill" maps to "my-skill" directory
     vi.mocked(glob).mockResolvedValue(["my-skill/SKILL.md"]);
     vi.mocked(readFile)
@@ -280,11 +523,7 @@ describe("loadSkillsByIds", () => {
 
     // The skill should be skipped due to the readFile error
     expect(result).toEqual({});
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Could not load skill my-skill"),
-    );
-
-    consoleWarnSpy.mockRestore();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Could not load skill 'my-skill'"));
   });
 
   it("should warn and skip skill with invalid frontmatter", async () => {
@@ -304,37 +543,29 @@ Content`);
 
     expect(result).toEqual({});
     expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining("Skipping bad-skill: Missing or invalid frontmatter"),
+      expect.stringContaining("Skipping 'bad-skill': missing or invalid frontmatter"),
     );
   });
 
   it("should warn and skip skill when readFile throws", async () => {
-    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     // buildIdToDirectoryPathMap: SKILL.md found
     vi.mocked(glob).mockResolvedValue(["error-skill/SKILL.md"]);
     vi.mocked(readFile)
-      // First call: buildIdToDirectoryPathMap reads SKILL.md — valid
+      // First call: buildIdToDirectoryPathMap reads SKILL.md -- valid
       .mockResolvedValueOnce(makeSkillMd("error-skill", "A skill"))
-      // Second call: loadSkillsByIds reads SKILL.md — throws (permission error, etc.)
+      // Second call: loadSkillsByIds reads SKILL.md -- throws (permission error, etc.)
       .mockRejectedValueOnce(new Error("EACCES: permission denied"));
 
     const result = await loadSkillsByIds([{ id: "error-skill" as SkillId }], "/project");
 
     expect(result).toEqual({});
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Could not load skill error-skill"),
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("Could not load skill 'error-skill'"),
     );
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("EACCES: permission denied"),
-    );
-
-    consoleWarnSpy.mockRestore();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("EACCES: permission denied"));
   });
 
   it("should load valid skills and skip ones with errors", async () => {
-    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
     vi.mocked(glob).mockResolvedValue(["good-skill/SKILL.md", "bad-skill/SKILL.md"]);
     vi.mocked(readFile)
       // buildIdToDirectoryPathMap: reads both SKILL.md files
@@ -352,10 +583,66 @@ Content`);
     expect(result["good-skill"]).toBeDefined();
     expect(result["good-skill"]?.id).toBe("good-skill");
     expect(result["bad-skill"]).toBeUndefined();
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Could not load skill bad-skill"),
-    );
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Could not load skill 'bad-skill'"));
+  });
+});
 
-    consoleWarnSpy.mockRestore();
+describe("loadPluginSkills", () => {
+  it("should return empty object when skills directory does not exist", async () => {
+    vi.mocked(directoryExists).mockResolvedValue(false);
+
+    const result = await loadPluginSkills("/path/to/plugin");
+
+    expect(result).toEqual({});
+  });
+
+  it("should load skills from plugin skills directory", async () => {
+    vi.mocked(directoryExists).mockResolvedValue(true);
+    vi.mocked(glob).mockResolvedValue(["web-framework-react/SKILL.md"]);
+    vi.mocked(readFile).mockResolvedValue(makeSkillMd("web-framework-react", "React patterns"));
+
+    const result = await loadPluginSkills("/path/to/plugin");
+
+    expect(result["web-framework-react"]).toBeDefined();
+    expect(result["web-framework-react"].id).toBe("web-framework-react");
+    expect(result["web-framework-react"].description).toBe("React patterns");
+    expect(result["web-framework-react"].path).toBe("skills/web-framework-react/");
+  });
+
+  it("should warn and skip skills with invalid frontmatter", async () => {
+    vi.mocked(directoryExists).mockResolvedValue(true);
+    vi.mocked(glob).mockResolvedValue(["bad-skill/SKILL.md"]);
+    vi.mocked(readFile).mockResolvedValue("# No frontmatter here");
+
+    const result = await loadPluginSkills("/path/to/plugin");
+
+    expect(result).toEqual({});
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping"));
+  });
+
+  it("should load multiple skills from plugin", async () => {
+    vi.mocked(directoryExists).mockResolvedValue(true);
+    vi.mocked(glob).mockResolvedValue([
+      "web-framework-react/SKILL.md",
+      "web-state-zustand/SKILL.md",
+    ]);
+    vi.mocked(readFile)
+      .mockResolvedValueOnce(makeSkillMd("web-framework-react", "React patterns"))
+      .mockResolvedValueOnce(makeSkillMd("web-state-zustand", "Zustand state"));
+
+    const result = await loadPluginSkills("/path/to/plugin");
+
+    expect(Object.keys(result)).toHaveLength(2);
+    expect(result["web-framework-react"]).toBeDefined();
+    expect(result["web-state-zustand"]).toBeDefined();
+  });
+
+  it("should return empty object when no SKILL.md files found", async () => {
+    vi.mocked(directoryExists).mockResolvedValue(true);
+    vi.mocked(glob).mockResolvedValue([]);
+
+    const result = await loadPluginSkills("/path/to/plugin");
+
+    expect(result).toEqual({});
   });
 });

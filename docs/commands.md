@@ -5,22 +5,44 @@
 Initialize Claude Collective in a project.
 
 ```bash
-cc init --source /path/to/marketplace
-cc init --source github:org/repo
-cc init --refresh  # Force refresh remote
-cc init --dry-run  # Preview only
+cc init                                      # Start the setup wizard
+cc init --source github:org/marketplace      # Use a custom marketplace
+cc init --source /path/to/marketplace        # Use a local marketplace
+cc init --refresh                            # Force refresh remote source
+cc init --dry-run                            # Preview only
 ```
 
-**Flow:**
+**Flags:**
 
-1. Load skills matrix from source
-2. Run wizard (approach -> stack/skills -> install mode)
-3. Plugin Mode: Install stack via `claude plugin install`
-4. Local Mode: Copy to `.claude/skills/`, compile agents to `.claude/agents/`
+| Flag                    | Description                                                       |
+| ----------------------- | ----------------------------------------------------------------- |
+| `-s, --source <source>` | Skills source path or URL (see [Source Formats](#source-formats)) |
+| `--refresh`             | Force re-download of marketplace, even if cached                  |
+| `--dry-run`             | Preview operations without creating files                         |
 
-**Default Mode:** Local (plugin mode is opt-in)
+**Wizard Steps:**
 
-**Limitation:** Individual skill plugin installation not supported (stacks only in plugin mode).
+1. **Approach** - Choose "Use a stack" or "Start from scratch"
+2. **Stack / Domains** - If stack: select a pre-configured stack. If scratch: select one or more domains (Web, Web Extras, API, CLI, Mobile)
+3. **Build** - Browse categories and toggle individual skills per domain
+4. **Sources** - Review skill sources and optionally customize which source provides each skill (public marketplace, private sources, or local)
+5. **Confirm** - Review selections and install
+
+**Installation Modes:**
+
+- **Plugin Mode** (default when marketplace is available): Installs via `claude plugin install`. Supports both stack-based installation and individual skill plugin installation from a marketplace.
+- **Local Mode** (default when no marketplace): Copies skills to `.claude/skills/` and compiles agents to `.claude/agents/`.
+
+**Keyboard Shortcuts (during wizard):**
+
+| Key   | Action                                                     |
+| ----- | ---------------------------------------------------------- |
+| `E`   | Toggle expert mode                                         |
+| `P`   | Toggle install mode (Plugin / Local)                       |
+| `A`   | Accept stack defaults (stack path only, during build step) |
+| `G`   | Manage extra sources (during sources step)                 |
+| `?`   | Show help                                                  |
+| `ESC` | Go back / cancel                                           |
 
 ---
 
@@ -33,6 +55,13 @@ cc edit
 cc edit --source /path/to/marketplace
 cc edit --refresh
 ```
+
+**Flags:**
+
+| Flag                    | Description                      |
+| ----------------------- | -------------------------------- |
+| `-s, --source <source>` | Skills source path or URL        |
+| `--refresh`             | Force re-download of marketplace |
 
 **Flow:**
 
@@ -305,16 +334,42 @@ cc new skill my-custom-skill
 
 ---
 
+## Source Formats
+
+The `--source` flag (and the `source` config key) accepts the following formats:
+
+| Format              | Example                                              |
+| ------------------- | ---------------------------------------------------- |
+| GitHub shorthand    | `github:org/repo` or `gh:org/repo`                   |
+| GitLab shorthand    | `gitlab:org/repo`                                    |
+| Bitbucket shorthand | `bitbucket:org/repo`                                 |
+| SourceHut shorthand | `sourcehut:org/repo`                                 |
+| HTTPS URL           | `https://github.com/org/repo`                        |
+| Local absolute path | `/home/user/my-marketplace`                          |
+| Local relative path | `./my-marketplace` or `../other-project/marketplace` |
+
+**Source resolution precedence:** `--source` flag > `CC_SOURCE` env var > project config (`.claude-src/config.yaml`) > default (`github:claude-collective/skills`)
+
+**Private repositories:** Set the `GIGET_AUTH` environment variable with a GitHub token for private repo access:
+
+```bash
+export GIGET_AUTH=ghp_your_github_token
+```
+
+---
+
 ## Global Options
 
 - `--dry-run` - Preview operations (init, compile)
+- `-s, --source <source>` - Skills source path or URL
 - `-h, --help` - Show help
 
 ## Exit Codes
 
-| Code | Meaning           |
-| ---- | ----------------- |
-| 0    | Success           |
-| 1    | Error             |
-| 2    | Cancelled         |
-| 3    | Invalid arguments |
+| Code | Meaning       |
+| ---- | ------------- |
+| 0    | Success       |
+| 1    | Error         |
+| 2    | Invalid args  |
+| 3    | Network error |
+| 4    | Cancelled     |

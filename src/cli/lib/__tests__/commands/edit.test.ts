@@ -3,8 +3,7 @@ import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir } from "fs/promises";
 import { runCliCommand } from "../helpers";
-
-const EXIT_CODE_ERROR = 1;
+import { EXIT_CODES } from "../../exit-codes";
 
 describe("edit command", () => {
   let tempDir: string;
@@ -25,15 +24,15 @@ describe("edit command", () => {
   });
 
   describe("no installation found", () => {
-    it("should error when no installation exists", async () => {
+    it("when .claude-src/ directory is missing, should exit with error code", async () => {
       // Clean temp dir has no .claude/ or .claude-src/ directories
       const { error } = await runCliCommand(["edit"]);
 
       // Should exit with EXIT_CODES.ERROR (1) because detectInstallation returns null
-      expect(error?.oclif?.exit).toBe(EXIT_CODE_ERROR);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
 
-    it("should include helpful error message about running init first", async () => {
+    it("when no installation exists, should suggest running cc init", async () => {
       const { error } = await runCliCommand(["edit"]);
 
       // Error message should mention running 'cc init' first
@@ -91,7 +90,7 @@ describe("edit command", () => {
   });
 
   describe("combined flags", () => {
-    it("should accept multiple flags together", async () => {
+    it("when --refresh, --source, and --agent-source provided together, should accept all flags", async () => {
       const { error } = await runCliCommand([
         "edit",
         "--refresh",
@@ -107,7 +106,7 @@ describe("edit command", () => {
       expect(output.toLowerCase()).not.toContain("unexpected argument");
     });
 
-    it("should accept shorthand and long flags together", async () => {
+    it("when mixing -s shorthand and --refresh long flag, should accept both", async () => {
       const { error } = await runCliCommand(["edit", "--refresh", "-s", "/custom/source"]);
 
       // Should accept mixed flag formats

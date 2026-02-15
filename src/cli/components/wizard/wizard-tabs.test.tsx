@@ -1,4 +1,3 @@
-import React from "react";
 import { render } from "ink-testing-library";
 import { afterEach, describe, expect, it } from "vitest";
 import { WizardTabs, WIZARD_STEPS, type WizardTabsProps } from "./wizard-tabs";

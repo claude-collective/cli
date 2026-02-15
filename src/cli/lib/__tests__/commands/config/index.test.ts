@@ -4,6 +4,7 @@ import os from "os";
 import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
 import { stringify as stringifyYaml, parse as parseYaml } from "yaml";
 import { runCliCommand } from "../../helpers";
+import { EXIT_CODES } from "../../../exit-codes";
 
 describe("config commands", () => {
   let tempDir: string;
@@ -148,7 +149,7 @@ describe("config commands", () => {
     it("should error on invalid key", async () => {
       const { error } = await runCliCommand(["config:get", "invalid-key"]);
 
-      expect(error?.oclif?.exit).toBe(2); // INVALID_ARGS
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should accept valid keys", async () => {
@@ -247,7 +248,7 @@ describe("config commands", () => {
     it("should reject invalid key with exit code 2", async () => {
       const { error } = await runCliCommand(["config:set-project", "invalid_key", "some-value"]);
 
-      expect(error?.oclif?.exit).toBe(2); // INVALID_ARGS
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should error when key argument is missing", async () => {
@@ -304,7 +305,7 @@ describe("config commands", () => {
     it("should reject invalid key with exit code 2", async () => {
       const { error } = await runCliCommand(["config:unset-project", "invalid_key"]);
 
-      expect(error?.oclif?.exit).toBe(2); // INVALID_ARGS
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should error when key argument is missing", async () => {

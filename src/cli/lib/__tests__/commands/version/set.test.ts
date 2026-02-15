@@ -3,9 +3,7 @@ import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
 import { runCliCommand } from "../../helpers";
-
-const EXIT_CODE_ERROR = 1;
-const EXIT_CODE_INVALID_ARGS = 2;
+import { EXIT_CODES } from "../../../exit-codes";
 
 describe("version command (index)", () => {
   let tempDir: string;
@@ -37,7 +35,7 @@ describe("version command (index)", () => {
   it("should error when no plugin.json found", async () => {
     const { error } = await runCliCommand(["version"]);
 
-    expect(error?.oclif?.exit).toBe(EXIT_CODE_ERROR);
+    expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
   });
 
   it("should succeed when plugin.json exists", async () => {
@@ -89,7 +87,7 @@ describe("version:set command", () => {
     it("should reject missing version argument", async () => {
       const { error } = await runCliCommand(["version:set"]);
 
-      expect(error?.oclif?.exit).toBe(EXIT_CODE_INVALID_ARGS);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should reject invalid semver format 'abc'", async () => {
@@ -102,7 +100,7 @@ describe("version:set command", () => {
 
       const { error } = await runCliCommand(["version:set", "abc"]);
 
-      expect(error?.oclif?.exit).toBe(EXIT_CODE_INVALID_ARGS);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should reject incomplete semver '1.2'", async () => {
@@ -115,7 +113,7 @@ describe("version:set command", () => {
 
       const { error } = await runCliCommand(["version:set", "1.2"]);
 
-      expect(error?.oclif?.exit).toBe(EXIT_CODE_INVALID_ARGS);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should reject four-segment version '1.2.3.4'", async () => {
@@ -128,7 +126,7 @@ describe("version:set command", () => {
 
       const { error } = await runCliCommand(["version:set", "1.2.3.4"]);
 
-      expect(error?.oclif?.exit).toBe(EXIT_CODE_INVALID_ARGS);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
   });
 
@@ -169,7 +167,7 @@ describe("version:set command", () => {
     it("should error when no plugin.json found", async () => {
       const { error } = await runCliCommand(["version:set", "1.0.0"]);
 
-      expect(error?.oclif?.exit).toBe(EXIT_CODE_ERROR);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
   });
 

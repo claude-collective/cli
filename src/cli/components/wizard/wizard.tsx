@@ -1,7 +1,8 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import { Box, Text, useApp, useInput, useStdout } from "ink";
 import { ThemeProvider } from "@inkjs/ui";
 import { useWizardStore, type WizardStep } from "../../stores/wizard-store.js";
+import { CLI_COLORS } from "../../consts.js";
 import { cliTheme } from "../themes/default.js";
 import { WizardLayout } from "./wizard-layout.js";
 import { StepApproach } from "./step-approach.js";
@@ -11,8 +12,11 @@ import { StepConfirm } from "./step-confirm.js";
 import { StepSources } from "./step-sources.js";
 import { StepSettings } from "./step-settings.js";
 import { resolveAlias, validateSelection } from "../../lib/matrix/index.js";
-import type { Domain, DomainSelections, MergedSkillsMatrix, SkillId } from "../../types/index.js";
+import type { DomainSelections, MergedSkillsMatrix, SkillId } from "../../types/index.js";
 import { getStackName } from "./utils.js";
+import { warn } from "../../utils/logger.js";
+import { useWizardInitialization } from "../hooks/use-wizard-initialization.js";
+import { useBuildStepProps } from "../hooks/use-build-step-props.js";
 
 export type WizardResultV2 = {
   selectedSkills: SkillId[];
@@ -34,15 +38,12 @@ type WizardProps = {
   onComplete: (result: WizardResultV2) => void;
   onCancel: () => void;
   version?: string;
+  marketplaceLabel?: string;
   initialStep?: WizardStep;
+  initialInstallMode?: "plugin" | "local";
   installedSkillIds?: SkillId[];
   projectDir?: string;
 };
-
-function getParentDomain(domain: Domain, matrix: MergedSkillsMatrix): Domain | undefined {
-  const cat = Object.values(matrix.categories).find((c) => c.domain === domain && c.parent_domain);
-  return cat?.parent_domain;
-}
 
 const MIN_TERMINAL_WIDTH = 80;
 
@@ -51,7 +52,9 @@ export const Wizard: React.FC<WizardProps> = ({
   onComplete,
   onCancel,
   version,
+  marketplaceLabel,
   initialStep,
+  initialInstallMode,
   installedSkillIds,
   projectDir,
 }) => {
@@ -62,21 +65,24 @@ export const Wizard: React.FC<WizardProps> = ({
   const terminalWidth = stdout.columns || MIN_TERMINAL_WIDTH;
   const isNarrowTerminal = terminalWidth < MIN_TERMINAL_WIDTH;
 
-  const [initialized] = useState(() => {
-    if (initialStep) {
-      if (installedSkillIds?.length) {
-        useWizardStore
-          .getState()
-          .populateFromSkillIds(installedSkillIds, matrix.skills, matrix.categories);
-      }
-      useWizardStore.setState({ step: initialStep, approach: "scratch" });
-    }
-    return true;
-  });
+  useWizardInitialization({ matrix, initialStep, initialInstallMode, installedSkillIds });
+
+  const buildStepProps = useBuildStepProps({ store, matrix, installedSkillIds });
 
   useInput((input, key) => {
-    // Disable global hotkeys when settings overlay is active
+    // Disable global hotkeys when settings or help overlay is active
     if (store.showSettings) return;
+
+    if (store.showHelp) {
+      // Any key closes the help modal (useInput in HelpModal handles this too)
+      store.toggleHelp();
+      return;
+    }
+
+    if (input === "?") {
+      store.toggleHelp();
+      return;
+    }
 
     if (key.escape) {
       if (store.step === "approach") {
@@ -84,7 +90,6 @@ export const Wizard: React.FC<WizardProps> = ({
         exit();
       } else if (store.step !== "build" && store.step !== "confirm" && store.step !== "sources") {
         // Only handle escape globally for steps that don't have their own escape handler.
-        // Build, sources, and confirm handle escape via their onBack props.
         store.goBack();
       }
       return;
@@ -97,20 +102,17 @@ export const Wizard: React.FC<WizardProps> = ({
       return;
     }
 
-    // Settings overlay (sources step only)
     if ((input === "g" || input === "G") && store.step === "sources") {
       store.toggleSettings();
       return;
     }
 
-    // Global toggles
     if (input === "e" || input === "E") {
       store.toggleExpertMode();
       return;
     }
     if (input === "p" || input === "P") {
       store.toggleInstallMode();
-      return;
     }
   });
 
@@ -120,7 +122,7 @@ export const Wizard: React.FC<WizardProps> = ({
     if (store.selectedStackId && store.stackAction === "defaults") {
       const stack = matrix.suggestedStacks.find((s) => s.id === store.selectedStackId);
       if (!stack) {
-        console.warn(`Stack not found in matrix: ${store.selectedStackId}`);
+        warn(`Stack not found in matrix: '${store.selectedStackId}'`);
       }
       allSkills = [...(stack?.allSkillIds || [])];
     } else {
@@ -128,15 +130,15 @@ export const Wizard: React.FC<WizardProps> = ({
       allSkills = techNames.map((tech) => {
         const resolved = resolveAlias(tech, matrix);
         if (!matrix.skills[resolved]) {
-          console.warn(
-            `Warning: Technology '${tech}' could not be resolved to a skill ID — it may be missing from skill_aliases`,
+          warn(
+            `Technology '${tech}' could not be resolved to a skill ID - it may be missing from skill_aliases`,
           );
         }
         return resolved;
       });
     }
 
-    const methodologySkills = store.getSelectedSkills();
+    const methodologySkills = store.getDefaultMethodologySkills();
     for (const skill of methodologySkills) {
       if (!allSkills.includes(skill)) {
         allSkills.push(skill);
@@ -168,53 +170,8 @@ export const Wizard: React.FC<WizardProps> = ({
       case "stack":
         return <StepStack matrix={matrix} />;
 
-      case "build": {
-        const currentDomain = store.getCurrentDomain();
-        const defaultDomains: Domain[] = ["web"];
-        const effectiveDomains =
-          store.selectedDomains.length > 0 ? store.selectedDomains : defaultDomains;
-
-        const allSelections = store.getAllSelectedTechnologies();
-
-        const activeDomain: Domain = currentDomain || effectiveDomains[0] || "web";
-        const parentDomain = getParentDomain(activeDomain, matrix);
-        const parentDomainSelections = parentDomain
-          ? store.domainSelections[parentDomain]
-          : undefined;
-
-        return (
-          <StepBuild
-            matrix={matrix}
-            domain={activeDomain}
-            selectedDomains={effectiveDomains}
-            selections={store.domainSelections[activeDomain] || {}}
-            allSelections={allSelections}
-            focusedRow={store.focusedRow}
-            focusedCol={store.focusedCol}
-            showDescriptions={store.showDescriptions}
-            expertMode={store.expertMode}
-            parentDomainSelections={parentDomainSelections}
-            installedSkillIds={installedSkillIds}
-            onToggle={(subcategoryId, techId) => {
-              const domain: Domain = store.getCurrentDomain() || "web";
-              const cat = matrix.categories[subcategoryId];
-              store.toggleTechnology(domain, subcategoryId, techId, cat?.exclusive ?? true);
-            }}
-            onFocusChange={store.setFocus}
-            onToggleDescriptions={store.toggleShowDescriptions}
-            onContinue={() => {
-              if (!store.nextDomain()) {
-                store.setStep("sources");
-              }
-            }}
-            onBack={() => {
-              if (!store.prevDomain()) {
-                store.goBack();
-              }
-            }}
-          />
-        );
-      }
+      case "build":
+        return <StepBuild {...buildStepProps} />;
 
       case "sources": {
         if (store.showSettings) {
@@ -229,25 +186,23 @@ export const Wizard: React.FC<WizardProps> = ({
           <StepSources
             matrix={matrix}
             projectDir={projectDir}
-            onContinue={handleComplete}
+            onContinue={() => store.setStep("confirm")}
             onBack={store.goBack}
           />
         );
       }
 
-      // NOTE: Currently unreachable — sources step calls handleComplete directly.
-      // Kept for future use when confirm step is wired back in.
       case "confirm": {
         const stackName = getStackName(store.selectedStackId, matrix);
-        const selectedCount = store.getAllSelectedTechnologies().length;
+        const technologyCount = store.getTechnologyCount();
         return (
           <StepConfirm
             onComplete={handleComplete}
             stackName={stackName}
             selectedDomains={store.selectedDomains}
             domainSelections={store.domainSelections}
-            technologyCount={selectedCount}
-            skillCount={selectedCount}
+            technologyCount={technologyCount}
+            skillCount={technologyCount}
             installMode={store.installMode}
             onBack={store.goBack}
           />
@@ -263,7 +218,7 @@ export const Wizard: React.FC<WizardProps> = ({
     return (
       <ThemeProvider theme={cliTheme}>
         <Box flexDirection="column" padding={1}>
-          <Text color="yellow">
+          <Text color={CLI_COLORS.WARNING}>
             Terminal too narrow ({terminalWidth} columns). Please resize to at least{" "}
             {MIN_TERMINAL_WIDTH} columns.
           </Text>
@@ -277,7 +232,9 @@ export const Wizard: React.FC<WizardProps> = ({
 
   return (
     <ThemeProvider theme={cliTheme}>
-      <WizardLayout version={version}>{renderStep()}</WizardLayout>
+      <WizardLayout version={version} marketplaceLabel={marketplaceLabel}>
+        {renderStep()}
+      </WizardLayout>
     </ThemeProvider>
   );
 };

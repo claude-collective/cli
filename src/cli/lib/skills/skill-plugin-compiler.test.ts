@@ -270,6 +270,33 @@ describe("skill-plugin-compiler", () => {
       expect(result.manifest.author).toBeUndefined();
     });
 
+    it("should coerce numeric version in metadata.yaml to string without warning", async () => {
+      const skillPath = await createTestSkill(
+        "web-testing-vitest",
+        {
+          name: "web-testing-vitest",
+          description: "Testing with Vitest",
+        },
+        "# Vitest Content",
+        { author: "@test-author", version: 1 },
+      );
+
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await compileSkillPlugin({
+        skillPath,
+        outputDir,
+      });
+
+      // Metadata was loaded successfully (not null) — author comes from metadata.yaml
+      expect(result.manifest.author?.name).toBe("@test-author");
+
+      // No warning about version type coercion
+      expect(warnSpy).not.toHaveBeenCalled();
+
+      warnSpy.mockRestore();
+    });
+
     it("should use hash-based versioning on recompile", async () => {
       const skillPath = await createTestSkill(
         "simple",
@@ -434,7 +461,7 @@ description: Simple skill
       expect(skillNames).toContain("state-zustand");
 
       // Should have warned about the failed skill
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("[WARN]"));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Warning:"));
 
       consoleSpy.mockRestore();
     });

@@ -1,4 +1,3 @@
-import React from "react";
 import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach } from "vitest";
 import { SectionProgress } from "./section-progress";

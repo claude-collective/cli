@@ -1,7 +1,8 @@
 import path from "path";
 import os from "os";
-import { mkdtemp, rm, mkdir, writeFile, readFile, stat } from "fs/promises";
+import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
 import { stringify as stringifyYaml, parse as parseYaml } from "yaml";
+import { fileExists, directoryExists } from "../helpers";
 
 export interface TestSkill {
   id: string;
@@ -203,23 +204,7 @@ export const DEFAULT_TEST_AGENTS: TestAgent[] = [
   },
 ];
 
-export async function fileExists(filePath: string): Promise<boolean> {
-  try {
-    const s = await stat(filePath);
-    return s.isFile();
-  } catch {
-    return false;
-  }
-}
-
-export async function directoryExists(dirPath: string): Promise<boolean> {
-  try {
-    const s = await stat(dirPath);
-    return s.isDirectory();
-  } catch {
-    return false;
-  }
-}
+export { fileExists, directoryExists };
 
 function generateMatrix(skills: TestSkill[], overrides?: Partial<TestMatrix>): TestMatrix {
   const skillsMap: Record<string, TestSkill> = {};

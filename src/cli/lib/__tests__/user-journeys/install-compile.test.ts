@@ -1,49 +1,13 @@
 import path from "path";
 import os from "os";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { readFile, mkdir, mkdtemp, rm, stat, writeFile } from "fs/promises";
-import { parse as parseYaml } from "yaml";
+import { readFile, mkdir, mkdtemp, rm, writeFile } from "fs/promises";
 import { compileStackPlugin } from "../../stacks";
+import { fileExists, directoryExists, parseTestFrontmatter } from "../helpers";
 import type { Stack, StackAgentConfig } from "../../../types";
 
 const PLUGIN_MANIFEST_DIR = ".claude-plugin";
 const PLUGIN_MANIFEST_FILE = "plugin.json";
-
-function parseFrontmatter(content: string): Record<string, unknown> | null {
-  if (!content.startsWith("---")) {
-    return null;
-  }
-
-  const endIndex = content.indexOf("---", 3);
-  if (endIndex === -1) {
-    return null;
-  }
-
-  const yamlContent = content.slice(3, endIndex).trim();
-  try {
-    return parseYaml(yamlContent) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-async function fileExists(filePath: string): Promise<boolean> {
-  try {
-    const s = await stat(filePath);
-    return s.isFile();
-  } catch {
-    return false;
-  }
-}
-
-async function directoryExists(dirPath: string): Promise<boolean> {
-  try {
-    const s = await stat(dirPath);
-    return s.isDirectory();
-  } catch {
-    return false;
-  }
-}
 
 async function createProjectStructure(projectRoot: string) {
   const agentsDir = path.join(projectRoot, "src/agents");
@@ -327,8 +291,6 @@ describe("User Journey: Install -> Compile -> Verify", () => {
       stack,
     });
 
-    // Skill should be copied to plugin skills directory
-    const copiedSkillDir = path.join(result.pluginPath, "skills", reactCanonicalId);
     // Skills are only copied if they're referenced in the stack property
     // With an empty agent config {}, no skills are resolved via the stack
     // The skill directory structure should still exist
@@ -721,7 +683,7 @@ You are a specialized web developer with deep expertise in:
       "utf-8",
     );
 
-    const frontmatter = parseFrontmatter(agentContent);
+    const frontmatter = parseTestFrontmatter(agentContent);
     expect(frontmatter).not.toBeNull();
 
     if (frontmatter) {

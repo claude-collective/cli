@@ -67,6 +67,42 @@ describe("plugin-version", () => {
 
       expect(version).toBe("1.0.0");
     });
+
+    it("should return large version numbers as-is", async () => {
+      await writeManifest({ name: "test-plugin", version: "100.200.300" });
+
+      const version = await getPluginVersion(tempDir);
+
+      expect(version).toBe("100.200.300");
+    });
+
+    it("should return pre-release version string as-is", async () => {
+      await writeManifest({ name: "test-plugin", version: "1.0.0-beta.1" });
+
+      const version = await getPluginVersion(tempDir);
+
+      expect(version).toBe("1.0.0-beta.1");
+    });
+
+    it("should return empty string version as DEFAULT_VERSION", async () => {
+      await writeManifest({ name: "test-plugin", version: "" });
+
+      const version = await getPluginVersion(tempDir);
+
+      // empty string is falsy, so `manifest.version || DEFAULT_VERSION` returns DEFAULT_VERSION
+      expect(version).toBe(DEFAULT_VERSION);
+    });
+
+    it("should throw when manifest is missing required name field", async () => {
+      const manifestDir = path.join(tempDir, PLUGIN_MANIFEST_DIR);
+      await mkdir(manifestDir, { recursive: true });
+      await writeFile(
+        path.join(manifestDir, PLUGIN_MANIFEST_FILE),
+        JSON.stringify({ version: "1.0.0" }),
+      );
+
+      await expect(getPluginVersion(tempDir)).rejects.toThrow();
+    });
   });
 
   describe("bumpPluginVersion", () => {
@@ -206,6 +242,172 @@ describe("plugin-version", () => {
         const diskVersion = await getPluginVersion(tempDir);
 
         expect(returnedVersion).toBe(diskVersion);
+      });
+    });
+
+    describe("large version numbers", () => {
+      it("should bump patch on large version numbers", async () => {
+        await writeManifest({ name: "test-plugin", version: "10.20.30" });
+
+        const newVersion = await bumpPluginVersion(tempDir, "patch");
+
+        expect(newVersion).toBe("10.20.31");
+      });
+
+      it("should bump minor on large version numbers", async () => {
+        await writeManifest({ name: "test-plugin", version: "10.20.30" });
+
+        const newVersion = await bumpPluginVersion(tempDir, "minor");
+
+        expect(newVersion).toBe("10.21.0");
+      });
+
+      it("should bump major on large version numbers", async () => {
+        await writeManifest({ name: "test-plugin", version: "10.20.30" });
+
+        const newVersion = await bumpPluginVersion(tempDir, "major");
+
+        expect(newVersion).toBe("11.0.0");
+      });
+
+      it("should handle version with triple-digit components", async () => {
+        await writeManifest({ name: "test-plugin", version: "100.200.999" });
+
+        const newVersion = await bumpPluginVersion(tempDir, "patch");
+
+        expect(newVersion).toBe("100.200.1000");
+      });
+    });
+
+    describe("pre-release version strings", () => {
+      it("should treat pre-release patch segment as 0 and bump from there", async () => {
+        // parseVersion("1.0.0-beta.1") splits on "." => ["1","0","0-beta","1"]
+        // Number("0-beta") = NaN, NaN || 0 = 0, so patch = 0
+        await writeManifest({ name: "test-plugin", version: "1.0.0-beta.1" });
+
+        const newVersion = await bumpPluginVersion(tempDir, "patch");
+
+        expect(newVersion).toBe("1.0.1");
+      });
+
+      it("should treat pre-release minor as NaN fallback for minor bump", async () => {
+        // parseVersion("1.0-rc.2") splits on "." => ["1","0-rc","2"]
+        // Number("0-rc") = NaN, NaN || 0 = 0
+        await writeManifest({ name: "test-plugin", version: "1.0-rc.2" });
+
+        const newVersion = await bumpPluginVersion(tempDir, "minor");
+
+        expect(newVersion).toBe("1.1.0");
+      });
+    });
+
+    describe("zero-major version handling", () => {
+      it("should treat major version 0 as 1 due to falsy fallback", async () => {
+        // parseVersion uses `parts[0] || 1`, so 0 becomes 1
+        await writeManifest({ name: "test-plugin", version: "0.1.0" });
+
+        const newVersion = await bumpPluginVersion(tempDir, "patch");
+
+        expect(newVersion).toBe("1.1.1");
+      });
+
+      it("should bump major from 0 treating it as 1", async () => {
+        await writeManifest({ name: "test-plugin", version: "0.5.3" });
+
+        const newVersion = await bumpPluginVersion(tempDir, "major");
+
+        expect(newVersion).toBe("2.0.0");
+      });
+    });
+
+    describe("partial version strings", () => {
+      it("should handle single-segment version string", async () => {
+        // parseVersion("5") => parts = [5], minor = parts[1] || 0 = 0, patch = parts[2] || 0 = 0
+        await writeManifest({ name: "test-plugin", version: "5" });
+
+        const newVersion = await bumpPluginVersion(tempDir, "patch");
+
+        expect(newVersion).toBe("5.0.1");
+      });
+
+      it("should handle two-segment version string", async () => {
+        // parseVersion("3.7") => parts = [3, 7], patch = parts[2] || 0 = 0
+        await writeManifest({ name: "test-plugin", version: "3.7" });
+
+        const newVersion = await bumpPluginVersion(tempDir, "patch");
+
+        expect(newVersion).toBe("3.7.1");
+      });
+    });
+
+    describe("invalid version strings", () => {
+      it("should fall back to 1.0.0 for completely invalid version string", async () => {
+        // parseVersion("abc") => Number("abc") = NaN, NaN || 1 = 1
+        await writeManifest({ name: "test-plugin", version: "abc" });
+
+        const newVersion = await bumpPluginVersion(tempDir, "patch");
+
+        expect(newVersion).toBe("1.0.1");
+      });
+
+      it("should fall back to 1.0.0 for empty version string", async () => {
+        // parseVersion("") => split(".")=[""], Number("") = 0, 0 || 1 = 1
+        await writeManifest({ name: "test-plugin", version: "" });
+
+        const newVersion = await bumpPluginVersion(tempDir, "patch");
+
+        expect(newVersion).toBe("1.0.1");
+      });
+    });
+
+    describe("sequential bumps", () => {
+      it("should correctly apply two consecutive patch bumps", async () => {
+        await writeManifest({ name: "test-plugin", version: "1.0.0" });
+
+        await bumpPluginVersion(tempDir, "patch");
+        const secondBump = await bumpPluginVersion(tempDir, "patch");
+
+        expect(secondBump).toBe("1.0.2");
+      });
+
+      it("should correctly apply minor then patch bump", async () => {
+        await writeManifest({ name: "test-plugin", version: "1.0.5" });
+
+        await bumpPluginVersion(tempDir, "minor");
+        const secondBump = await bumpPluginVersion(tempDir, "patch");
+
+        expect(secondBump).toBe("1.1.1");
+      });
+
+      it("should correctly apply major then minor then patch bump", async () => {
+        await writeManifest({ name: "test-plugin", version: "1.2.3" });
+
+        await bumpPluginVersion(tempDir, "major");
+        await bumpPluginVersion(tempDir, "minor");
+        const thirdBump = await bumpPluginVersion(tempDir, "patch");
+
+        expect(thirdBump).toBe("2.1.1");
+      });
+    });
+
+    describe("schema validation", () => {
+      it("should throw when manifest is missing required name field", async () => {
+        const manifestDir = path.join(tempDir, PLUGIN_MANIFEST_DIR);
+        await mkdir(manifestDir, { recursive: true });
+        await writeFile(
+          path.join(manifestDir, PLUGIN_MANIFEST_FILE),
+          JSON.stringify({ version: "1.0.0" }),
+        );
+
+        await expect(bumpPluginVersion(tempDir, "patch")).rejects.toThrow();
+      });
+
+      it("should throw when manifest is an empty object", async () => {
+        const manifestDir = path.join(tempDir, PLUGIN_MANIFEST_DIR);
+        await mkdir(manifestDir, { recursive: true });
+        await writeFile(path.join(manifestDir, PLUGIN_MANIFEST_FILE), JSON.stringify({}));
+
+        await expect(bumpPluginVersion(tempDir, "patch")).rejects.toThrow();
       });
     });
   });

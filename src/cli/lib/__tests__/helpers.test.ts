@@ -2,7 +2,6 @@ import { describe, it, expect, afterEach } from "vitest";
 import {
   createMockSkill,
   createMockMatrix,
-  createMockProjectConfig,
   createMockAgent,
   createTestDirs,
   cleanupTestDirs,
@@ -10,8 +9,6 @@ import {
   directoryExists,
   writeTestSkill,
   writeTestAgent,
-  createSkillContent,
-  createMetadataContent,
 } from "./helpers";
 import type { TestDirs } from "./helpers";
 
@@ -56,19 +53,6 @@ describe("test helpers", () => {
     });
   });
 
-  describe("createMockProjectConfig", () => {
-    it("creates a valid project config with stack", () => {
-      const config = createMockProjectConfig("test-stack", [
-        "web-framework-react",
-        "web-state-zustand",
-      ]);
-
-      expect(config.name).toBe("test-stack");
-      expect(config.stack).toBeDefined();
-      expect(config.agents).toContain("web-developer");
-    });
-  });
-
   describe("createMockAgent", () => {
     it("creates a valid agent definition", () => {
       const agent = createMockAgent("test-agent");
@@ -99,21 +83,6 @@ describe("test helpers", () => {
       const agentDir = await writeTestAgent(testDirs.agentsDir, "test-agent");
 
       expect(await fileExists(`${agentDir}/agent.yaml`)).toBe(true);
-    });
-  });
-
-  describe("content generators", () => {
-    it("createSkillContent generates valid frontmatter", () => {
-      const content = createSkillContent("my-skill", "My description");
-
-      expect(content).toContain("name: my-skill");
-      expect(content).toContain("description: My description");
-    });
-
-    it("createMetadataContent generates valid yaml", () => {
-      const content = createMetadataContent("@custom");
-
-      expect(content).toContain("author: @custom");
     });
   });
 });

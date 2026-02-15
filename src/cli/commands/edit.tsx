@@ -1,8 +1,10 @@
 import { Flags } from "@oclif/core";
 import { render } from "ink";
+
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
-import { loadSkillsMatrixFromSource } from "../lib/loading/index.js";
+import { getErrorMessage } from "../utils/errors.js";
+import { loadSkillsMatrixFromSource, getMarketplaceLabel } from "../lib/loading/index.js";
 import { directoryExists, ensureDir, remove } from "../utils/fs.js";
 import {
   getCollectivePluginDir,
@@ -18,6 +20,7 @@ import {
 import { recompileAgents, getAgentDefinitions } from "../lib/agents/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { detectInstallation } from "../lib/installation/index.js";
+import { ERROR_MESSAGES, STATUS_MESSAGES, INFO_MESSAGES } from "../utils/messages.js";
 import { claudePluginInstall, claudePluginUninstall } from "../utils/exec.js";
 import type { SkillId } from "../types/index.js";
 import { typedEntries } from "../utils/typed-object.js";
@@ -34,6 +37,21 @@ function formatSourceDisplayName(sourceName: string): string {
 export default class Edit extends BaseCommand {
   static summary = "Edit skills in the plugin";
   static description = "Modify the currently installed skills via interactive wizard";
+
+  static examples = [
+    {
+      description: "Open the edit wizard",
+      command: "<%= config.bin %> <%= command.id %>",
+    },
+    {
+      description: "Edit with a custom source",
+      command: "<%= config.bin %> <%= command.id %> --source github:org/marketplace",
+    },
+    {
+      description: "Force refresh skills from remote",
+      command: "<%= config.bin %> <%= command.id %> --refresh",
+    },
+  ];
 
   static flags = {
     ...BaseCommand.baseFlags,
@@ -52,7 +70,7 @@ export default class Edit extends BaseCommand {
     const installation = await detectInstallation();
 
     if (!installation) {
-      this.error("No installation found. Run 'cc init' first to set up Claude Collective.", {
+      this.error(ERROR_MESSAGES.NO_INSTALLATION, {
         exit: EXIT_CODES.ERROR,
       });
     }
@@ -64,7 +82,7 @@ export default class Edit extends BaseCommand {
     const modeLabel = installation.mode === "local" ? "Local" : "Plugin";
     this.log(`Edit ${modeLabel} Skills\n`);
 
-    this.log("Resolving marketplace source...");
+    this.log(STATUS_MESSAGES.LOADING_MARKETPLACE_SOURCE);
     let sourceResult;
     try {
       sourceResult = await loadSkillsMatrixFromSource({
@@ -91,12 +109,15 @@ export default class Edit extends BaseCommand {
     }
 
     let wizardResult: WizardResultV2 | null = null;
+    const marketplaceLabel = getMarketplaceLabel(sourceResult);
 
     const { waitUntilExit } = render(
       <Wizard
         matrix={sourceResult.matrix}
         version={this.config.version}
+        marketplaceLabel={marketplaceLabel}
         initialStep="build"
+        initialInstallMode={sourceResult.marketplace ? "plugin" : "local"}
         installedSkillIds={currentSkillIds}
         projectDir={process.cwd()}
         onComplete={(result) => {
@@ -152,7 +173,7 @@ export default class Edit extends BaseCommand {
     }
 
     if (!hasSkillChanges && !hasSourceChanges) {
-      this.log("No changes made.");
+      this.log(INFO_MESSAGES.NO_CHANGES_MADE);
       this.log("Plugin unchanged\n");
       return;
     }
@@ -192,9 +213,7 @@ export default class Edit extends BaseCommand {
         try {
           await claudePluginInstall(pluginRef, "project", projectDir);
         } catch (error) {
-          this.warn(
-            `Failed to install plugin ${pluginRef}: ${error instanceof Error ? error.message : String(error)}`,
-          );
+          this.warn(`Failed to install plugin ${pluginRef}: ${getErrorMessage(error)}`);
         }
       }
       for (const skillId of removedSkills) {
@@ -202,14 +221,12 @@ export default class Edit extends BaseCommand {
         try {
           await claudePluginUninstall(skillId, "project", projectDir);
         } catch (error) {
-          this.warn(
-            `Failed to uninstall plugin ${skillId}: ${error instanceof Error ? error.message : String(error)}`,
-          );
+          this.warn(`Failed to uninstall plugin ${skillId}: ${getErrorMessage(error)}`);
         }
       }
     }
 
-    this.log("Updating plugin skills...");
+    this.log(STATUS_MESSAGES.COPYING_SKILLS);
     try {
       if (await directoryExists(pluginSkillsDir)) {
         await remove(pluginSkillsDir);
@@ -222,14 +239,22 @@ export default class Edit extends BaseCommand {
         sourceResult.matrix,
         sourceResult,
         result.sourceSelections,
+        (completed, total) => {
+          process.stdout.write(`\r  Copying ${completed} of ${total} skills...`);
+        },
       );
-      this.log(`✓ Plugin updated with ${result.selectedSkills.length} skills\n`);
+      process.stdout.write("\n");
+      this.log(`✓ Copied ${result.selectedSkills.length} skills to plugin\n`);
     } catch (error) {
       this.handleError(error);
     }
 
     let sourcePath: string;
-    this.log(flags["agent-source"] ? "Fetching agent partials..." : "Loading agent partials...");
+    this.log(
+      flags["agent-source"]
+        ? STATUS_MESSAGES.FETCHING_AGENT_PARTIALS
+        : STATUS_MESSAGES.LOADING_AGENT_PARTIALS,
+    );
     try {
       const agentDefs = await getAgentDefinitions(flags["agent-source"], {
         forceRefresh: flags.refresh,
@@ -240,7 +265,7 @@ export default class Edit extends BaseCommand {
       this.handleError(error);
     }
 
-    this.log("Recompiling agents...");
+    this.log(STATUS_MESSAGES.RECOMPILING_AGENTS);
     try {
       const recompileResult = await recompileAgents({
         pluginDir,
@@ -260,9 +285,7 @@ export default class Edit extends BaseCommand {
         this.log("✓ No agents to recompile\n");
       }
     } catch (error) {
-      this.warn(
-        `Agent recompilation failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      this.warn(`Agent recompilation failed: ${getErrorMessage(error)}`);
       this.log("You can manually recompile with 'cc compile'.\n");
     }
 

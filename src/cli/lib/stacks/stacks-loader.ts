@@ -1,22 +1,62 @@
 import { parse as parseYaml } from "yaml";
 import path from "path";
-import { mapValues } from "remeda";
+import { mapValues, pipe, flatMap, unique } from "remeda";
+import { getErrorMessage } from "../../utils/errors";
 import { readFile, fileExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
-import type { SkillId, SkillReference, Stack, StackAgentConfig, Subcategory } from "../../types";
-import { stacksConfigSchema } from "../schemas";
-import { KEY_SUBCATEGORIES } from "../../consts";
+import type {
+  AgentName,
+  SkillAssignment,
+  SkillId,
+  SkillReference,
+  Stack,
+  StackAgentConfig,
+  Subcategory,
+} from "../../types";
+import { SKILL_ID_PATTERN, formatZodErrors, stacksConfigSchema } from "../schemas";
+import { typedEntries } from "../../utils/typed-object";
 
 const STACKS_FILE = "config/stacks.yaml";
 
 const stacksCache = new Map<string, Stack[]>();
 
-export async function loadStacks(configDir: string): Promise<Stack[]> {
-  const cacheKey = configDir;
+/**
+ * Normalizes a raw agent config (from Zod-parsed YAML) to StackAgentConfig.
+ * Converts bare strings to `{ id, preloaded: false }` and wraps single values in arrays.
+ * Used by both loadStacks() and loadProjectConfig() to handle all 3 YAML formats:
+ *   1. bare string: `framework: web-framework-react`
+ *   2. single object: `framework: { id: web-framework-react, preloaded: true }`
+ *   3. array: `methodology: [{ id: ..., preloaded: true }, { id: ... }]`
+ */
+export function normalizeAgentConfig(agentConfig: Record<string, unknown>): StackAgentConfig {
+  return mapValues(agentConfig, (value) => {
+    const items = Array.isArray(value) ? value : [value];
+    return items.map(
+      (item): SkillAssignment =>
+        typeof item === "string"
+          ? { id: item as SkillId, preloaded: false }
+          : (item as SkillAssignment),
+    );
+  }) as StackAgentConfig;
+}
+
+/**
+ * Normalizes a raw stack record (agent -> raw subcategory config) to the typed form.
+ * Applies normalizeAgentConfig to each agent entry.
+ */
+export function normalizeStackRecord(
+  rawStack: Record<string, Record<string, unknown>>,
+): Record<string, StackAgentConfig> {
+  return mapValues(rawStack, (agentConfig) => normalizeAgentConfig(agentConfig));
+}
+
+export async function loadStacks(configDir: string, stacksFile?: string): Promise<Stack[]> {
+  const resolvedStacksFile = stacksFile ?? STACKS_FILE;
+  const cacheKey = `${configDir}:${resolvedStacksFile}`;
   const cached = stacksCache.get(cacheKey);
   if (cached) return cached;
 
-  const stacksPath = path.join(configDir, STACKS_FILE);
+  const stacksPath = path.join(configDir, resolvedStacksFile);
 
   if (!(await fileExists(stacksPath))) {
     verbose(`No stacks file found at ${stacksPath}`);
@@ -29,18 +69,25 @@ export async function loadStacks(configDir: string): Promise<Stack[]> {
 
     if (!result.success) {
       throw new Error(
-        `Invalid stacks.yaml at ${stacksPath}: ${result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
+        `Invalid stacks.yaml at '${stacksPath}': ${formatZodErrors(result.error.issues)}`,
       );
     }
 
-    const config = result.data;
+    // Normalize: all values to SkillAssignment[] so StackAgentConfig is always SkillAssignment[]
+    const stacks: Stack[] = result.data.stacks.map((stack) => ({
+      ...stack,
+      agents: mapValues(
+        stack.agents as Partial<Record<AgentName, Record<string, unknown>>>,
+        (agentConfig) => normalizeAgentConfig(agentConfig as Record<string, unknown>),
+      ) as Stack["agents"],
+    }));
 
-    stacksCache.set(cacheKey, config.stacks);
-    verbose(`Loaded ${config.stacks.length} stacks from ${stacksPath}`);
+    stacksCache.set(cacheKey, stacks);
+    verbose(`Loaded ${stacks.length} stacks from ${stacksPath}`);
 
-    return config.stacks;
+    return stacks;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = getErrorMessage(error);
     throw new Error(`Failed to load stacks from '${stacksPath}': ${errorMessage}`);
   }
 }
@@ -58,43 +105,47 @@ export async function loadStackById(stackId: string, configDir: string): Promise
   return stack;
 }
 
-// Resolves each technology display name in the agent config to a full skill ID
-export function resolveAgentConfigToSkills(
-  agentConfig: StackAgentConfig,
-  displayNameToId: Partial<Record<string, SkillId>>,
-): SkillReference[] {
+// Converts a StackAgentConfig (subcategory -> SkillAssignment[]) to an array of SkillReferences.
+// Values are already normalized to SkillAssignment[] by loadStacks().
+export function resolveAgentConfigToSkills(agentConfig: StackAgentConfig): SkillReference[] {
   const skillRefs: SkillReference[] = [];
 
-  for (const [subcategory, technologyDisplayName] of Object.entries(agentConfig)) {
-    const fullSkillId = displayNameToId[technologyDisplayName];
+  for (const [subcategory, assignments] of typedEntries<Subcategory, SkillAssignment[]>(
+    agentConfig,
+  )) {
+    if (!assignments) continue;
 
-    if (!fullSkillId) {
-      warn(
-        `No skill found for display name '${technologyDisplayName}' (subcategory: ${subcategory}) in stack config. Skipping.`,
-      );
-      continue;
+    for (const assignment of assignments) {
+      if (!SKILL_ID_PATTERN.test(assignment.id)) {
+        warn(
+          `Invalid skill ID '${assignment.id}' for subcategory '${subcategory}' in stack config. Skipping.`,
+        );
+        continue;
+      }
+
+      skillRefs.push({
+        id: assignment.id,
+        usage: `when working with ${subcategory}`,
+        preloaded: assignment.preloaded ?? false,
+      });
     }
-
-    // Boundary cast: Object.entries() loses StackAgentConfig key type
-    const isKeySkill = KEY_SUBCATEGORIES.has(subcategory as Subcategory);
-
-    skillRefs.push({
-      id: fullSkillId,
-      usage: `when working with ${subcategory}`,
-      preloaded: isKeySkill,
-    });
   }
 
   return skillRefs;
 }
 
-export function resolveStackSkillsFromDisplayNames(
-  stack: Stack,
-  displayNameToId: Partial<Record<string, SkillId>>,
-): Record<string, SkillReference[]> {
-  const result = mapValues(stack.agents, (agentConfig) =>
-    resolveAgentConfigToSkills(agentConfig, displayNameToId),
+/** Extracts all unique skill IDs from a stack config (agent -> subcategory -> SkillAssignment[]). */
+export function getStackSkillIds(stack: Record<string, StackAgentConfig>): SkillId[] {
+  return pipe(
+    Object.values(stack),
+    flatMap(resolveAgentConfigToSkills),
+    (refs) => refs.map((r) => r.id),
+    unique(),
   );
+}
+
+export function resolveStackSkills(stack: Stack): Record<string, SkillReference[]> {
+  const result = mapValues(stack.agents, (agentConfig) => resolveAgentConfigToSkills(agentConfig));
 
   verbose(`Resolved skills for ${Object.keys(result).length} agents in stack '${stack.id}'`);
 

@@ -8,10 +8,12 @@ import path from "path";
 import {
   agentYamlGenerationSchema,
   agentFrontmatterValidationSchema,
-  hooksRecordSchema,
+  strictHooksRecordSchema,
   marketplaceSchema,
   metadataValidationSchema,
-  pluginManifestSchema,
+  pluginManifestValidationSchema,
+  projectConfigValidationSchema,
+  projectSourceConfigValidationSchema,
   skillFrontmatterValidationSchema,
   skillsMatrixConfigSchema,
   stackConfigValidationSchema,
@@ -35,7 +37,7 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
     filename: "agent.schema.json",
     schema: agentYamlGenerationSchema,
     metadata: {
-      $id: "https://claude-collective.local/schemas/agent.schema.json",
+      $id: "schemas/agent.schema.json",
       title: "Agent Definition",
       description: "Schema for agent.yaml files defining Claude Code agents.",
     },
@@ -44,16 +46,16 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
     filename: "agent-frontmatter.schema.json",
     schema: agentFrontmatterValidationSchema,
     metadata: {
-      $id: "https://claude-collective.local/schemas/agent-frontmatter.schema.json",
+      $id: "schemas/agent-frontmatter.schema.json",
       title: "Agent Frontmatter",
       description: "Schema for agent .md file frontmatter fields.",
     },
   },
   {
     filename: "hooks.schema.json",
-    schema: hooksRecordSchema,
+    schema: strictHooksRecordSchema,
     metadata: {
-      $id: "https://claude-collective.local/schemas/hooks.schema.json",
+      $id: "schemas/hooks.schema.json",
       title: "Hooks Configuration",
       description: "Schema for agent hook definitions.",
     },
@@ -62,7 +64,7 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
     filename: "marketplace.schema.json",
     schema: marketplaceSchema,
     metadata: {
-      $id: "https://claude-collective.local/schemas/marketplace.schema.json",
+      $id: "schemas/marketplace.schema.json",
       title: "Marketplace",
       description: "Schema for marketplace.json plugin listings.",
     },
@@ -71,25 +73,44 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
     filename: "metadata.schema.json",
     schema: metadataValidationSchema,
     metadata: {
-      $id: "https://claude-collective.local/schemas/metadata.schema.json",
+      $id: "schemas/metadata.schema.json",
       title: "Skill Metadata",
       description: "Schema for skill metadata.yaml files.",
     },
   },
   {
     filename: "plugin.schema.json",
-    schema: pluginManifestSchema,
+    schema: pluginManifestValidationSchema,
     metadata: {
-      $id: "https://claude-collective.local/schemas/plugin.schema.json",
+      $id: "schemas/plugin.schema.json",
       title: "Plugin Manifest",
       description: "Schema for plugin.json manifest files.",
+    },
+  },
+  {
+    filename: "project-config.schema.json",
+    schema: projectConfigValidationSchema,
+    metadata: {
+      $id: "schemas/project-config.schema.json",
+      title: "Project Configuration",
+      description:
+        "Schema for .claude-src/config.yaml consumer project files (name, agents, stack, skills).",
+    },
+  },
+  {
+    filename: "project-source-config.schema.json",
+    schema: projectSourceConfigValidationSchema,
+    metadata: {
+      $id: "schemas/project-source-config.schema.json",
+      title: "Project Source Configuration",
+      description: "Schema for .claude-src/config.yaml marketplace source configuration files.",
     },
   },
   {
     filename: "skill-frontmatter.schema.json",
     schema: skillFrontmatterValidationSchema,
     metadata: {
-      $id: "https://claude-collective.local/schemas/skill-frontmatter.schema.json",
+      $id: "schemas/skill-frontmatter.schema.json",
       title: "Skill Frontmatter",
       description: "Schema for SKILL.md file frontmatter fields.",
     },
@@ -98,7 +119,7 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
     filename: "skills-matrix.schema.json",
     schema: skillsMatrixConfigSchema,
     metadata: {
-      $id: "https://claude-collective.local/schemas/skills-matrix.schema.json",
+      $id: "schemas/skills-matrix.schema.json",
       title: "Skills Matrix Configuration",
       description:
         "Schema for config/skills-matrix.yaml defining skill categories and relationships.",
@@ -108,7 +129,7 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
     filename: "stacks.schema.json",
     schema: stacksConfigSchema,
     metadata: {
-      $id: "https://claude-collective.local/schemas/stacks.schema.json",
+      $id: "schemas/stacks.schema.json",
       title: "Stacks Configuration",
       description: "Schema for config/stacks.yaml defining agent groupings.",
     },
@@ -117,7 +138,7 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
     filename: "stack.schema.json",
     schema: stackConfigValidationSchema,
     metadata: {
-      $id: "https://claude-collective.local/schemas/stack.schema.json",
+      $id: "schemas/stack.schema.json",
       title: "Stack Config",
       description: "Schema for individual stack config.yaml files.",
     },

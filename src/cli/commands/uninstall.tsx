@@ -1,16 +1,28 @@
 import React from "react";
+
 import { Flags } from "@oclif/core";
 import { render, Box, Text, useApp } from "ink";
 import path from "path";
+
 import { BaseCommand } from "../base-command";
 import { Confirm } from "../components/common/confirm";
 import { directoryExists, fileExists, remove } from "../utils/fs";
 import { claudePluginUninstall, isClaudeCLIAvailable } from "../utils/exec";
 import { getCollectivePluginDir } from "../lib/plugins";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../consts";
+import {
+  CLAUDE_DIR,
+  CLAUDE_SRC_DIR,
+  CLI_COLORS,
+  DEFAULT_PLUGIN_NAME,
+  STANDARD_FILES,
+} from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
-
-const PLUGIN_NAME = "claude-collective";
+import {
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+  INFO_MESSAGES,
+  DRY_RUN_MESSAGES,
+} from "../utils/messages";
 
 type UninstallTarget = {
   hasPlugin: boolean;
@@ -31,7 +43,7 @@ async function detectInstallation(projectDir: string): Promise<UninstallTarget> 
   const pluginDir = getCollectivePluginDir(projectDir);
   const skillsDir = path.join(projectDir, CLAUDE_DIR, "skills");
   const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-  const configPath = path.join(projectDir, CLAUDE_DIR, "config.yaml");
+  const configPath = path.join(projectDir, CLAUDE_DIR, STANDARD_FILES.CONFIG_YAML);
   const claudeDir = path.join(projectDir, CLAUDE_DIR);
   const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
 
@@ -87,14 +99,14 @@ const UninstallConfirm: React.FC<UninstallConfirmProps> = ({
 
       {hasPluginToRemove && (
         <Box flexDirection="column">
-          <Text color="red"> Plugin:</Text>
+          <Text color={CLI_COLORS.ERROR}> Plugin:</Text>
           <Text dimColor> {target.pluginDir}</Text>
         </Box>
       )}
 
       {hasLocalToRemove && (
         <Box flexDirection="column">
-          <Text color="red"> Local directories:</Text>
+          <Text color={CLI_COLORS.ERROR}> Local directories:</Text>
           {target.hasClaudeDir && <Text dimColor> {target.claudeDir}/</Text>}
           {target.hasClaudeSrcDir && <Text dimColor> {target.claudeSrcDir}/</Text>}
         </Box>
@@ -157,7 +169,7 @@ export default class Uninstall extends BaseCommand {
     this.log("");
 
     if (flags["dry-run"]) {
-      this.log("[dry-run] Preview mode - no files will be removed");
+      this.log(DRY_RUN_MESSAGES.PREVIEW_NO_FILES_REMOVED);
       this.log("");
     }
 
@@ -174,17 +186,17 @@ export default class Uninstall extends BaseCommand {
       this.log("");
 
       if (flags.plugin && !target.hasPlugin) {
-        this.log("No plugin installation found.");
+        this.log(INFO_MESSAGES.NO_PLUGIN_INSTALLATION);
       }
       if (flags.local && !target.hasClaudeDir && !target.hasClaudeSrcDir) {
-        this.log("No local installation found.");
+        this.log(INFO_MESSAGES.NO_LOCAL_INSTALLATION);
       }
       if (!flags.plugin && !flags.local) {
-        this.log("Claude Collective is not installed in this project.");
+        this.log(INFO_MESSAGES.NOT_INSTALLED);
       }
 
       this.log("");
-      this.log("No changes made.");
+      this.log(INFO_MESSAGES.NO_CHANGES_MADE);
       return;
     }
 
@@ -232,7 +244,7 @@ export default class Uninstall extends BaseCommand {
 
     if (flags["dry-run"]) {
       if (hasPluginToRemove) {
-        this.log(`[dry-run] Would uninstall plugin "${PLUGIN_NAME}"`);
+        this.log(`[dry-run] Would uninstall plugin "${DEFAULT_PLUGIN_NAME}"`);
         this.log(`[dry-run] Would remove ${target.pluginDir}`);
       }
       if (hasLocalToRemove) {
@@ -244,7 +256,7 @@ export default class Uninstall extends BaseCommand {
         }
       }
       this.log("");
-      this.log("[dry-run] Preview complete - no files were removed");
+      this.log(DRY_RUN_MESSAGES.COMPLETE_NO_FILES_REMOVED);
       this.log("");
       return;
     }
@@ -256,7 +268,7 @@ export default class Uninstall extends BaseCommand {
         const cliAvailable = await isClaudeCLIAvailable();
         if (cliAvailable) {
           try {
-            await claudePluginUninstall(PLUGIN_NAME, "project", projectDir);
+            await claudePluginUninstall(DEFAULT_PLUGIN_NAME, "project", projectDir);
           } catch {
             // Best-effort: Claude CLI plugin unregister may fail (e.g., plugin
             // not registered). We still proceed to remove the plugin directory.
@@ -268,7 +280,7 @@ export default class Uninstall extends BaseCommand {
         this.logSuccess("Plugin uninstalled");
       } catch (error) {
         this.log("Plugin uninstall failed");
-        this.error(error instanceof Error ? error.message : "Unknown error occurred", {
+        this.error(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR, {
           exit: EXIT_CODES.ERROR,
         });
       }
@@ -295,7 +307,7 @@ export default class Uninstall extends BaseCommand {
         );
       } catch (error) {
         this.log("Failed to remove local directories");
-        this.error(error instanceof Error ? error.message : "Unknown error occurred", {
+        this.error(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR, {
           exit: EXIT_CODES.ERROR,
         });
       }
@@ -305,7 +317,7 @@ export default class Uninstall extends BaseCommand {
     this.log("Claude Collective has been uninstalled.");
 
     this.log("");
-    this.logSuccess("Uninstall complete!");
+    this.logSuccess(SUCCESS_MESSAGES.UNINSTALL_COMPLETE);
     this.log("");
   }
 }

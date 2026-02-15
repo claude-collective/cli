@@ -2,13 +2,11 @@ import { parse as parseYaml } from "yaml";
 import path from "path";
 import { directoryExists, listDirectories, fileExists, readFile } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
-import { LOCAL_SKILLS_PATH } from "../../consts";
+import { LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../consts";
 import { parseFrontmatter } from "../loading";
 import type { CategoryPath, ExtractedSkillMetadata, SkillId } from "../../types";
-import { localRawMetadataSchema } from "../schemas";
-
-const LOCAL_CATEGORY: CategoryPath = "local";
-const LOCAL_AUTHOR = "@local";
+import { formatZodErrors, localRawMetadataSchema } from "../schemas";
+import { LOCAL_DEFAULTS, METADATA_KEYS } from "../metadata-keys";
 
 type LocalRawMetadata = {
   cli_name: string;
@@ -63,8 +61,8 @@ async function extractLocalSkill(
   skillDirName: string,
 ): Promise<ExtractedSkillMetadata | null> {
   const skillDir = path.join(localSkillsPath, skillDirName);
-  const metadataPath = path.join(skillDir, "metadata.yaml");
-  const skillMdPath = path.join(skillDir, "SKILL.md");
+  const metadataPath = path.join(skillDir, STANDARD_FILES.METADATA_YAML);
+  const skillMdPath = path.join(skillDir, STANDARD_FILES.SKILL_MD);
 
   if (!(await fileExists(metadataPath))) {
     verbose(`Skipping local skill '${skillDirName}': No metadata.yaml found`);
@@ -81,7 +79,7 @@ async function extractLocalSkill(
 
   if (!parsed.success) {
     warn(
-      `Skipping local skill '${skillDirName}': Invalid metadata.yaml — ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
+      `Skipping local skill '${skillDirName}': invalid metadata.yaml — ${formatZodErrors(parsed.error.issues)}`,
     );
     return null;
   }
@@ -89,7 +87,9 @@ async function extractLocalSkill(
   const metadata = parsed.data as LocalRawMetadata;
 
   if (!metadata.cli_name) {
-    warn(`Skipping local skill '${skillDirName}': Missing required 'cli_name' in metadata.yaml`);
+    warn(
+      `Skipping local skill '${skillDirName}': missing required '${METADATA_KEYS.CLI_NAME}' in metadata.yaml`,
+    );
     return null;
   }
 
@@ -97,7 +97,7 @@ async function extractLocalSkill(
   const frontmatter = parseFrontmatter(skillMdContent, skillMdPath);
 
   if (!frontmatter) {
-    warn(`Skipping local skill '${skillDirName}': Invalid SKILL.md frontmatter`);
+    warn(`Skipping local skill '${skillDirName}': invalid SKILL.md frontmatter`);
     return null;
   }
 
@@ -106,11 +106,11 @@ async function extractLocalSkill(
 
   // Use category from metadata.yaml if available (preserved from source skill),
   // otherwise fall back to generic "local" category
-  const category = metadata.category || LOCAL_CATEGORY;
+  const category = metadata.category || LOCAL_DEFAULTS.CATEGORY;
 
   if (!metadata.category) {
     warn(
-      `Local skill '${skillDirName}' has no category in metadata.yaml — defaulting to '${LOCAL_CATEGORY}' (will not appear in wizard domain views)`,
+      `Local skill '${skillDirName}' has no category in metadata.yaml — defaulting to '${LOCAL_DEFAULTS.CATEGORY}' (will not appear in wizard domain views)`,
     );
   }
 
@@ -121,7 +121,7 @@ async function extractLocalSkill(
     usageGuidance: metadata.usage_guidance,
     category,
     categoryExclusive: metadata.category_exclusive ?? false,
-    author: LOCAL_AUTHOR,
+    author: LOCAL_DEFAULTS.AUTHOR,
     tags: metadata.tags ?? [],
     compatibleWith: metadata.compatible_with ?? [],
     conflictsWith: metadata.conflicts_with ?? [],

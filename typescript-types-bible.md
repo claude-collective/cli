@@ -125,6 +125,10 @@ Not all casts are bad. Classify them:
 
 **Every legitimate boundary cast should have a comment explaining why.**
 
+For the full boundary cast guide with real codebase examples (7 categories, acceptable vs
+unacceptable patterns, post-safeParse conventions), see
+[`docs/type-conventions.md` -- Boundary Cast Patterns](docs/type-conventions.md#boundary-cast-patterns).
+
 Prefer typed helper functions over raw casts for recurring patterns:
 
 ```typescript

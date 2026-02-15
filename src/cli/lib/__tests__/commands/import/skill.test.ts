@@ -4,9 +4,7 @@ import os from "os";
 import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
 import { parse as parseYaml } from "yaml";
 import { runCliCommand, fileExists, directoryExists } from "../../helpers";
-
-const EXIT_CODE_ERROR = 1;
-const EXIT_CODE_INVALID_ARGS = 2;
+import { EXIT_CODES } from "../../../exit-codes";
 const LOCAL_SKILLS_DIR = ".claude/skills";
 const SKILL_MD_FILE = "SKILL.md";
 const METADATA_YAML_FILE = "metadata.yaml";
@@ -65,7 +63,7 @@ describe("import:skill command", () => {
     it("should require at least one of --skill, --all, or --list", async () => {
       const { error } = await runCliCommand(["import:skill", LOCAL_SOURCE_NAME]);
 
-      expect(error?.oclif?.exit).toBe(EXIT_CODE_INVALID_ARGS);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should reject --skill and --all together", async () => {
@@ -77,7 +75,7 @@ describe("import:skill command", () => {
         "--all",
       ]);
 
-      expect(error?.oclif?.exit).toBe(EXIT_CODE_INVALID_ARGS);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
   });
 
@@ -210,7 +208,7 @@ describe("import:skill command", () => {
 
       const { error } = await runCliCommand(["import:skill", LOCAL_SOURCE_NAME, "--list"]);
 
-      expect(error?.oclif?.exit).toBe(EXIT_CODE_ERROR);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
   });
 
@@ -243,7 +241,7 @@ describe("import:skill command", () => {
         "nonexistent-skill",
       ]);
 
-      expect(error?.oclif?.exit).toBe(EXIT_CODE_INVALID_ARGS);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
     it("should inject forked_from metadata into metadata.yaml", async () => {
@@ -322,7 +320,7 @@ describe("import:skill command", () => {
 
       const { error } = await runCliCommand(["import:skill", LOCAL_SOURCE_NAME, "--all"]);
 
-      expect(error?.oclif?.exit).toBe(EXIT_CODE_ERROR);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
   });
 
@@ -405,7 +403,82 @@ describe("import:skill command", () => {
         "nonexistent-subdir",
       ]);
 
-      expect(error?.oclif?.exit).toBe(EXIT_CODE_INVALID_ARGS);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
+    });
+
+    it("should block path traversal with .. sequences", async () => {
+      await createLocalSource(projectDir, ["some-skill"]);
+
+      const { error } = await runCliCommand([
+        "import:skill",
+        LOCAL_SOURCE_NAME,
+        "--list",
+        "--subdir",
+        "../../../etc",
+      ]);
+
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
+      expect(error?.message).toContain("escapes repository boundary");
+    });
+
+    it("should block absolute paths in --subdir", async () => {
+      await createLocalSource(projectDir, ["some-skill"]);
+
+      const { error } = await runCliCommand([
+        "import:skill",
+        LOCAL_SOURCE_NAME,
+        "--list",
+        "--subdir",
+        "/etc/passwd",
+      ]);
+
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
+      expect(error?.message).toContain("must be a relative path");
+    });
+
+    it("should block null bytes in --subdir", async () => {
+      await createLocalSource(projectDir, ["some-skill"]);
+
+      const { error } = await runCliCommand([
+        "import:skill",
+        LOCAL_SOURCE_NAME,
+        "--list",
+        "--subdir",
+        "skills\x00/../../../etc",
+      ]);
+
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
+      expect(error?.message).toContain("null bytes");
+    });
+
+    it("should block intermediate traversal in --subdir", async () => {
+      await createLocalSource(projectDir, ["some-skill"]);
+
+      const { error } = await runCliCommand([
+        "import:skill",
+        LOCAL_SOURCE_NAME,
+        "--list",
+        "--subdir",
+        "skills/../../../etc/passwd",
+      ]);
+
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
+      expect(error?.message).toContain("escapes repository boundary");
+    });
+
+    it("should allow nested subdirectories within repository", async () => {
+      await createLocalSource(projectDir, ["nested-skill"], { subdir: "deep/nested/skills" });
+
+      const { error } = await runCliCommand([
+        "import:skill",
+        LOCAL_SOURCE_NAME,
+        "--list",
+        "--subdir",
+        "deep/nested/skills",
+      ]);
+
+      // Should succeed (no exit code error), listing skills from nested subdir
+      expect(error?.oclif?.exit).toBeUndefined();
     });
   });
 
@@ -443,7 +516,7 @@ describe("import:skill command", () => {
 
       const { error } = await runCliCommand(["import:skill", LOCAL_SOURCE_NAME, "--list"]);
 
-      expect(error?.oclif?.exit).toBe(EXIT_CODE_INVALID_ARGS);
+      expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
   });
 });

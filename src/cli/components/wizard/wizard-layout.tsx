@@ -1,7 +1,9 @@
-import React, { Fragment, useMemo } from "react";
+import React, { Fragment } from "react";
 import { Box, Text } from "ink";
 import { useWizardStore } from "../../stores/wizard-store.js";
+import { CLI_COLORS } from "../../consts.js";
 import { WizardTabs, WIZARD_STEPS } from "./wizard-tabs.js";
+import { HelpModal } from "./help-modal.js";
 
 type KeyHintProps = {
   isVisible?: boolean;
@@ -10,7 +12,7 @@ type KeyHintProps = {
   values: string[];
 };
 
-export const DefinitionItem: React.FC<KeyHintProps> = ({
+const DefinitionItem: React.FC<KeyHintProps> = ({
   isVisible = true,
   isActive = false,
   label,
@@ -24,13 +26,13 @@ export const DefinitionItem: React.FC<KeyHintProps> = ({
     <Text>
       {values.map((value) => (
         <Fragment key={value}>
-          <Text backgroundColor="black" color="white">
+          <Text backgroundColor="black" color={CLI_COLORS.UNFOCUSED}>
             {" "}
             {value}{" "}
           </Text>{" "}
         </Fragment>
       ))}
-      <Text color={isActive ? "cyan" : undefined}>{label}</Text>
+      <Text color={isActive ? CLI_COLORS.PRIMARY : undefined}>{label}</Text>
     </Text>
   );
 };
@@ -42,7 +44,7 @@ const HOT_KEYS: { label: string; values: string[] }[] = [
   { label: "back", values: ["ESC"] },
 ];
 
-export const WizardFooter = () => {
+const WizardFooter = () => {
   const store = useWizardStore();
 
   return (
@@ -71,37 +73,17 @@ export const WizardFooter = () => {
 
 type WizardLayoutProps = {
   version?: string;
+  marketplaceLabel?: string;
   children: React.ReactNode;
 };
 
-export const WizardLayout: React.FC<WizardLayoutProps> = ({ version, children }) => {
+export const WizardLayout: React.FC<WizardLayoutProps> = ({
+  version,
+  marketplaceLabel,
+  children,
+}) => {
   const store = useWizardStore();
-
-  const { completedSteps, skippedSteps } = useMemo(() => {
-    const completed: string[] = [];
-    const skipped: string[] = [];
-
-    if (store.step !== "approach") {
-      completed.push("approach");
-    }
-
-    if (store.step !== "approach" && store.step !== "stack") {
-      completed.push("stack");
-    }
-
-    // Stack path with defaults skips build and sources
-    if (store.approach === "stack" && store.selectedStackId && store.stackAction === "defaults") {
-      skipped.push("build");
-      skipped.push("sources");
-    } else if (store.step === "confirm") {
-      completed.push("build");
-      completed.push("sources");
-    } else if (store.step === "sources") {
-      completed.push("build");
-    }
-
-    return { completedSteps: completed, skippedSteps: skipped };
-  }, [store.step, store.approach, store.selectedStackId, store.stackAction]);
+  const { completedSteps, skippedSteps } = store.getStepProgress();
 
   return (
     <Box flexDirection="column" paddingX={1}>
@@ -112,28 +94,41 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({ version, children })
         skippedSteps={skippedSteps}
         version={version}
       />
-      <Box marginTop={1}>{children}</Box>
-      <Box paddingX={1} columnGap={2} marginTop={2}>
-        <DefinitionItem label="Expert mode" values={["E"]} isActive={store.expertMode} />
-        <DefinitionItem
-          label="Descriptions"
-          values={["D"]}
-          isVisible={store.step === "build"}
-          isActive={store.showDescriptions}
-        />
-        <DefinitionItem
-          label="Plugin mode"
-          values={["P"]}
-          isActive={store.installMode === "plugin"}
-        />
-        <DefinitionItem
-          label="Settings"
-          values={["G"]}
-          isVisible={store.step === "sources"}
-          isActive={store.showSettings}
-        />
-      </Box>
-      <WizardFooter />
+      {marketplaceLabel && (
+        <Box paddingLeft={1} marginTop={1}>
+          <Text dimColor>Marketplace: </Text>
+          <Text bold>{marketplaceLabel}</Text>
+        </Box>
+      )}
+      {store.showHelp ? (
+        <HelpModal currentStep={store.step} onClose={store.toggleHelp} />
+      ) : (
+        <>
+          <Box marginTop={1}>{children}</Box>
+          <Box paddingX={1} columnGap={2} marginTop={2}>
+            <DefinitionItem label="Expert mode" values={["E"]} isActive={store.expertMode} />
+            <DefinitionItem
+              label="Descriptions"
+              values={["D"]}
+              isVisible={store.step === "build"}
+              isActive={store.showDescriptions}
+            />
+            <DefinitionItem
+              label="Plugin mode"
+              values={["P"]}
+              isActive={store.installMode === "plugin"}
+            />
+            <DefinitionItem
+              label="Settings"
+              values={["G"]}
+              isVisible={store.step === "sources"}
+              isActive={store.showSettings}
+            />
+            <DefinitionItem label="Help" values={["?"]} />
+          </Box>
+          <WizardFooter />
+        </>
+      )}
     </Box>
   );
 };

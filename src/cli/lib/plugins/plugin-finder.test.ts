@@ -14,13 +14,23 @@ import {
 import type { PluginManifest, SkillId } from "../../types";
 import { createMockMatrix, createMockSkill } from "../__tests__/helpers";
 
-vi.mock("../../utils/fs");
+vi.mock("../../utils/fs", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../../utils/fs")>();
+  return {
+    ...original,
+    fileExists: vi.fn(),
+    readFile: vi.fn(),
+    readFileSafe: vi.fn(),
+    glob: vi.fn(),
+  };
+});
 vi.mock("../../utils/logger");
 
-import { fileExists, readFile, glob } from "../../utils/fs";
+import { fileExists, readFile, readFileSafe, glob } from "../../utils/fs";
 
 const mockedFileExists = vi.mocked(fileExists);
 const mockedReadFile = vi.mocked(readFile);
+const mockedReadFileSafe = vi.mocked(readFileSafe);
 const mockedGlob = vi.mocked(glob);
 
 const CLAUDE_DIR = ".claude";
@@ -109,7 +119,7 @@ describe("plugin-finder", () => {
       };
 
       mockedFileExists.mockResolvedValue(true);
-      mockedReadFile.mockResolvedValue(JSON.stringify(manifest));
+      mockedReadFileSafe.mockResolvedValue(JSON.stringify(manifest));
 
       const result = await readPluginManifest("/path/to/plugin");
 
@@ -121,7 +131,7 @@ describe("plugin-finder", () => {
 
     it("should return null for invalid JSON", async () => {
       mockedFileExists.mockResolvedValue(true);
-      mockedReadFile.mockResolvedValue("not valid json {{{");
+      mockedReadFileSafe.mockResolvedValue("not valid json {{{");
 
       const result = await readPluginManifest("/path/to/plugin");
 
@@ -130,7 +140,7 @@ describe("plugin-finder", () => {
 
     it("should return null when manifest has empty name", async () => {
       mockedFileExists.mockResolvedValue(true);
-      mockedReadFile.mockResolvedValue(JSON.stringify({ name: "", version: "1.0.0" }));
+      mockedReadFileSafe.mockResolvedValue(JSON.stringify({ name: "", version: "1.0.0" }));
 
       const result = await readPluginManifest("/path/to/plugin");
 
@@ -139,7 +149,7 @@ describe("plugin-finder", () => {
 
     it("should return null when manifest has no name field", async () => {
       mockedFileExists.mockResolvedValue(true);
-      mockedReadFile.mockResolvedValue(JSON.stringify({ version: "1.0.0" }));
+      mockedReadFileSafe.mockResolvedValue(JSON.stringify({ version: "1.0.0" }));
 
       const result = await readPluginManifest("/path/to/plugin");
 
@@ -148,7 +158,7 @@ describe("plugin-finder", () => {
 
     it("should return manifest with optional fields missing", async () => {
       mockedFileExists.mockResolvedValue(true);
-      mockedReadFile.mockResolvedValue(JSON.stringify({ name: "minimal-plugin" }));
+      mockedReadFileSafe.mockResolvedValue(JSON.stringify({ name: "minimal-plugin" }));
 
       const result = await readPluginManifest("/path/to/plugin");
 
@@ -160,7 +170,26 @@ describe("plugin-finder", () => {
 
     it("should return null when readFile throws", async () => {
       mockedFileExists.mockResolvedValue(true);
-      mockedReadFile.mockRejectedValue(new Error("EACCES permission denied"));
+      mockedReadFileSafe.mockRejectedValue(new Error("EACCES permission denied"));
+
+      const result = await readPluginManifest("/path/to/plugin");
+
+      expect(result).toBeNull();
+    });
+
+    it("when manifest name field is a number instead of string, should return null", async () => {
+      mockedFileExists.mockResolvedValue(true);
+      mockedReadFileSafe.mockResolvedValue(JSON.stringify({ name: 123, version: "1.0.0" }));
+
+      const result = await readPluginManifest("/path/to/plugin");
+
+      // Zod schema may coerce or fail; the name check verifies it's not a valid string
+      expect(result).toBeNull();
+    });
+
+    it("when manifest JSON is an array instead of object, should return null", async () => {
+      mockedFileExists.mockResolvedValue(true);
+      mockedReadFileSafe.mockResolvedValue(JSON.stringify([{ name: "plugin" }]));
 
       const result = await readPluginManifest("/path/to/plugin");
 
@@ -179,7 +208,7 @@ describe("plugin-finder", () => {
       };
 
       mockedFileExists.mockResolvedValue(true);
-      mockedReadFile.mockResolvedValue(JSON.stringify(manifest));
+      mockedReadFileSafe.mockResolvedValue(JSON.stringify(manifest));
 
       const result = await readPluginManifest("/path/to/plugin");
 

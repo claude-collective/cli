@@ -27,11 +27,10 @@ export async function getLocalAgentDefinitions(
 
   if (!(await directoryExists(agentsDir))) {
     throw new Error(
-      `Agent partials not found at: ${agentsDir}. ` + `Ensure the CLI is properly installed.`,
+      `Agent partials not found at '${agentsDir}'. Ensure the CLI is properly installed.`,
     );
   }
 
-  // Check for local templates first (from eject templates)
   if (options.projectDir) {
     const localTemplatesDir = path.join(options.projectDir, CLAUDE_DIR, "templates");
     if (await directoryExists(localTemplatesDir)) {
@@ -56,7 +55,7 @@ export async function getLocalAgentDefinitions(
 
 export async function fetchAgentDefinitionsFromRemote(
   source: string,
-  options: FetchOptions = {},
+  options: FetchOptions & { agentsDir?: string } = {},
 ): Promise<AgentSourcePaths> {
   verbose(`Fetching agent partials from remote: ${source}`);
 
@@ -65,11 +64,11 @@ export async function fetchAgentDefinitionsFromRemote(
     subdir: "",
   });
 
-  const agentsDir = path.join(result.path, "src", "agents");
+  const agentsDir = path.join(result.path, options.agentsDir ?? DIRS.agents);
   const templatesDir = path.join(agentsDir, "_templates");
 
   if (!(await directoryExists(agentsDir))) {
-    throw new Error(`Agent partials not found at: ${agentsDir}`);
+    throw new Error(`Agent partials not found at '${agentsDir}'`);
   }
 
   if (!(await directoryExists(templatesDir))) {

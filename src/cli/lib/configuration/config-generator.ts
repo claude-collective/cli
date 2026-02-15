@@ -3,8 +3,7 @@ import type {
   CategoryPath,
   MergedSkillsMatrix,
   ProjectConfig,
-  ResolvedSubcategorySkills,
-  SkillDisplayName,
+  SkillAssignment,
   SkillId,
   Stack,
   StackAgentConfig,
@@ -18,13 +17,28 @@ export type ProjectConfigOptions = {
   author?: string;
 };
 
-function extractSubcategory(categoryPath: CategoryPath): Subcategory | undefined {
+function extractSubcategoryFromPath(categoryPath: CategoryPath): Subcategory | undefined {
   if (categoryPath === "local") return undefined;
   const parts = categoryPath.split("/");
   // Boundary cast: the last segment of a CategoryPath is always a valid Subcategory
   return (parts.length >= 2 ? parts[1] : parts[0]) as Subcategory;
 }
 
+/**
+ * Generates a ProjectConfig from a list of selected skill IDs by resolving which
+ * agents are needed and building the stack property (agent -> subcategory -> SkillAssignment[]).
+ *
+ * For each selected skill, looks up its category and determines which agents
+ * should receive it (via `getAgentsForSkill`). The resulting config includes
+ * the deduplicated sorted agent list, full skill list, and optional stack
+ * mappings for subcategory-based skill resolution during compilation.
+ *
+ * @param name - Project name for the config
+ * @param selectedSkillIds - Skill IDs selected by the user in the wizard
+ * @param matrix - Merged skills matrix (used to look up skill metadata)
+ * @param options - Optional description and author fields
+ * @returns Complete ProjectConfig ready to be saved to config.yaml
+ */
 export function generateProjectConfigFromSkills(
   name: string,
   selectedSkillIds: SkillId[],
@@ -32,9 +46,8 @@ export function generateProjectConfigFromSkills(
   options?: ProjectConfigOptions,
 ): ProjectConfig {
   const neededAgents = new Set<AgentName>();
-  const stackProperty: Record<string, ResolvedSubcategorySkills> = {};
+  const stackProperty: Record<string, StackAgentConfig> = {};
 
-  // Derive agents from skills and build stack property
   for (const skillId of selectedSkillIds) {
     const skill = matrix.skills[skillId];
     if (!skill) {
@@ -44,34 +57,31 @@ export function generateProjectConfigFromSkills(
     const skillPath = skill.path;
     const category = skill.category;
     const agents = getAgentsForSkill(skillPath, category);
-    const subcategory = extractSubcategory(category);
+    const subcategory = extractSubcategoryFromPath(category);
 
     for (const agentId of agents) {
       neededAgents.add(agentId);
 
-      // Build stack: agent -> subcategory -> skillId
       if (subcategory) {
         if (!stackProperty[agentId]) {
           stackProperty[agentId] = {};
         }
-        stackProperty[agentId][subcategory] = skillId;
+        // Wizard selections are bare IDs with preloaded: false
+        stackProperty[agentId][subcategory] = [{ id: skillId, preloaded: false }];
       }
     }
   }
 
-  // Build minimal config
   const config: ProjectConfig = {
     name,
     agents: Array.from(neededAgents).sort(),
     skills: [...selectedSkillIds],
   };
 
-  // Only include stack if there are any mappings
   if (Object.keys(stackProperty).length > 0) {
     config.stack = stackProperty;
   }
 
-  // Add optional fields only if provided
   if (options?.description) {
     config.description = options.description;
   }
@@ -83,38 +93,79 @@ export function generateProjectConfigFromSkills(
   return config;
 }
 
-// Resolves display names in stack.agents to full skill IDs using skill_aliases
-export function buildStackProperty(
-  stack: Stack,
-  displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,
-): Partial<Record<AgentName, ResolvedSubcategorySkills>> {
-  const result: Partial<Record<AgentName, ResolvedSubcategorySkills>> = {};
+/**
+ * Extracts the stack property (agent -> subcategory -> SkillAssignment[]) from a Stack definition.
+ *
+ * Stack values are already normalized to SkillAssignment[] by loadStacks().
+ * Preserves all assignments and preloaded flags for round-trip fidelity.
+ *
+ * @param stack - Loaded Stack definition with normalized agent configs
+ * @returns Partial mapping of agent names to subcategory-skill assignment mappings
+ */
+export function buildStackProperty(stack: Stack): Partial<Record<AgentName, StackAgentConfig>> {
+  const result: Partial<Record<AgentName, StackAgentConfig>> = {};
 
   for (const [agentId, agentConfig] of typedEntries<AgentName, StackAgentConfig>(stack.agents)) {
-    // Skip agents with empty config
     if (!agentConfig || Object.keys(agentConfig).length === 0) {
       continue;
     }
 
-    const resolvedMappings: ResolvedSubcategorySkills = {};
+    const resolvedMappings: StackAgentConfig = {};
 
-    for (const [subcategoryId, displayName] of typedEntries<Subcategory, SkillDisplayName>(
+    for (const [subcategoryId, assignments] of typedEntries<Subcategory, SkillAssignment[]>(
       agentConfig,
     )) {
-      if (!displayName) continue;
-      // Resolve display name to full skill ID using skill_aliases from matrix
-      const skillId = displayNameToId[displayName];
-      if (skillId) {
-        resolvedMappings[subcategoryId] = skillId;
+      if (!assignments || assignments.length === 0) continue;
+      resolvedMappings[subcategoryId] = assignments;
+    }
+
+    if (Object.keys(resolvedMappings).length > 0) {
+      result[agentId] = resolvedMappings;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Compacts a ProjectConfig.stack for YAML serialization.
+ * Converts SkillAssignment[] to the most compact form:
+ *   - Single skill with preloaded=false -> bare string (e.g., "web-framework-react")
+ *   - Single skill with preloaded=true -> object (e.g., { id: "...", preloaded: true })
+ *   - Multiple skills -> array of objects/strings
+ * This ensures round-trip fidelity: bare strings stay bare, rich format stays rich.
+ */
+export function compactStackForYaml(
+  stack: Record<string, StackAgentConfig>,
+): Record<string, Record<string, unknown>> {
+  const result: Record<string, Record<string, unknown>> = {};
+
+  for (const [agentId, agentConfig] of Object.entries(stack)) {
+    const compacted: Record<string, unknown> = {};
+
+    for (const [subcategory, assignments] of typedEntries<Subcategory, SkillAssignment[]>(
+      agentConfig,
+    )) {
+      if (!assignments || assignments.length === 0) continue;
+
+      if (assignments.length === 1) {
+        const assignment = assignments[0];
+        // Single skill, no preloaded -> bare string
+        if (!assignment.preloaded) {
+          compacted[subcategory] = assignment.id;
+        } else {
+          compacted[subcategory] = { id: assignment.id, preloaded: true };
+        }
       } else {
-        // Boundary cast: display name not found in lookup, assumed to be a full skill ID already
-        resolvedMappings[subcategoryId] = displayName as unknown as SkillId;
+        // Multiple skills -> array, compact each element
+        compacted[subcategory] = assignments.map((a) =>
+          !a.preloaded ? a.id : { id: a.id, preloaded: true },
+        );
       }
     }
 
-    // Only add agent if it has resolved mappings
-    if (Object.keys(resolvedMappings).length > 0) {
-      result[agentId] = resolvedMappings;
+    if (Object.keys(compacted).length > 0) {
+      result[agentId] = compacted;
     }
   }
 

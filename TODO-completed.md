@@ -727,3 +727,75 @@ Generated 10 JSON Schema files from Zod schemas using `z.toJSONSchema()` (Zod v4
 - Create as a skill (not a full agent) since it's advisory, not tool-wielding
 - Include templates for each document type
 - Reference the project's actual files as canonical examples
+
+---
+
+## Phase 8: CLI UX Improvements (COMPLETE)
+
+#### U1: Progress Navigation Bar - Tab Styling [DONE]
+
+- [x] Replace circle indicators with tab-style navigation in `wizard-tabs.tsx`
+- [x] Active step: green background with 1-char padding (`{" "}[N] Label{" "}`)
+- [x] Completed steps: white background, dark text
+- [x] Pending steps: default text, no background
+- [x] Add horizontal divider lines above and below tabs
+- [x] Remove symbol row entirely (no more checkmark/dot/circle)
+
+**Files:** `src/cli/components/wizard/wizard-tabs.tsx`, tests
+
+#### U2: Header - Add Version Display [DONE]
+
+- [x] Add `version` prop to Wizard component
+- [x] Pass `this.config.version` from Init command to Wizard
+- [x] Display version in header area (near WizardTabs or in new header component)
+
+**Files:** `src/cli/commands/init.tsx`, `src/cli/components/wizard/wizard.tsx`
+
+#### U3: Footer - Split Layout with WizardFooter Component [DONE]
+
+- [x] Create new `wizard-footer.tsx` component with left/right props
+- [x] Use `justifyContent="space-between"` pattern
+- [x] Left side: navigation controls (up/down, left/right, SPACE, etc.)
+- [x] Right side: action hints (ESC back, ENTER continue)
+- [x] Update all step components to use WizardFooter
+- [x] Remove global footer from wizard.tsx
+
+**Files:** `src/cli/components/wizard/wizard-footer.tsx` (NEW), `wizard.tsx`, `step-approach.tsx`, `step-build.tsx`, `step-refine.tsx`, `step-confirm.tsx`
+
+#### U4: Build Step - Framework-First Flow [DONE]
+
+- [x] Update `step-build.tsx` to implement framework-first filtering logic
+- [x] Update `category-grid.tsx` to remove circles/strikethrough, add background colors
+- [x] Add `compatibleWith` field to `ResolvedSkill` type in `types-matrix.ts`
+- [x] Update `matrix-loader.ts` to preserve `compatibleWith` during skill resolution
+- [x] Update tests in `category-grid.test.tsx` and `step-build.test.tsx`
+
+**Implementation notes:**
+
+- Web domain only: Framework-first flow hides other categories until framework selected
+- Skills with empty `compatibleWith` array are shown (backwards compatible)
+- Visual styling: selected = cyan background (black text), focused = gray background (white text), disabled = dimmed text
+- Table layout with fixed column widths (16 chars) for vertical alignment
+
+#### U5: Import Third-Party Skills Command [DONE]
+
+- [x] Create `cc import skill` command
+- [x] Support GitHub repo sources: `cc import skill github:owner/repo --skill skill-name`
+- [x] Download skill to `.claude/skills/` directory
+- [x] Add validation for SKILL.md and metadata.yaml
+- [x] Track origin with `forked_from` metadata
+
+**Files:** `src/cli/commands/import/skill.ts` (NEW)
+
+#### U7: Align Skills Matrix Categories with Domains [DONE]
+
+- [x] Rename top-level categories in `config/skills-matrix.yaml` to match domain names
+- [x] Update `src/schemas/skills-matrix.schema.json` if category names are validated
+- [x] Update any code that references the old category names
+- [x] Update docs to reflect the change
+
+#### U8: Consumer config.yaml stack field supports array/object skill assignments [DONE]
+
+`stacks.yaml` and its loader already support all three YAML formats (bare string, object with `preloaded`, array of objects) and normalize to `SkillAssignment[]`. Extended the consumer project's `.claude-src/config.yaml` `stack` field schema to accept the same formats. Extracted `normalizeAgentConfig()`/`normalizeStackRecord()` shared helpers and `getStackSkillIds()` utility. Fixed bug in `hashStackConfig` where `Object.values()` on `SkillAssignment[]` produced objects instead of IDs.
+
+**Files:** `schemas.ts`, `stacks-loader.ts`, `project-config.ts`, `config-generator.ts`, `resolver.ts`, `compile.ts`, `doctor.ts`, `stack-plugin-compiler.ts`, `local-installer.ts`

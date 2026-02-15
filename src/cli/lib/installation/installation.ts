@@ -2,7 +2,7 @@ import path from "path";
 import { directoryExists, fileExists } from "../../utils/fs";
 import { loadProjectConfig } from "../configuration";
 import { getCollectivePluginDir } from "../plugins";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../../consts";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 
 export type InstallMode = "local" | "plugin";
 
@@ -18,11 +18,8 @@ export type Installation = {
 export async function detectInstallation(
   projectDir: string = process.cwd(),
 ): Promise<Installation | null> {
-  // 1. Check for local installation first
-  // Check .claude-src/config.yaml first (new location)
-  const srcConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, "config.yaml");
-  // Fall back to .claude/config.yaml (legacy location)
-  const legacyConfigPath = path.join(projectDir, CLAUDE_DIR, "config.yaml");
+  const srcConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
+  const legacyConfigPath = path.join(projectDir, CLAUDE_DIR, STANDARD_FILES.CONFIG_YAML);
 
   const localConfigPath = (await fileExists(srcConfigPath))
     ? srcConfigPath
@@ -48,9 +45,8 @@ export async function detectInstallation(
     }
   }
 
-  // 2. Check for plugin installation
   const pluginDir = getCollectivePluginDir(projectDir);
-  const pluginConfigPath = path.join(pluginDir, "config.yaml");
+  const pluginConfigPath = path.join(pluginDir, STANDARD_FILES.CONFIG_YAML);
 
   if (await directoryExists(pluginDir)) {
     return {
@@ -62,7 +58,6 @@ export async function detectInstallation(
     };
   }
 
-  // No installation found
   return null;
 }
 
@@ -72,7 +67,7 @@ export async function getInstallationOrThrow(
   const installation = await detectInstallation(projectDir);
 
   if (!installation) {
-    throw new Error("No Claude Collective installation found.\n" + "Run 'cc init' to create one.");
+    throw new Error("No Claude Collective installation found.\nRun 'cc init' to create one.");
   }
 
   return installation;

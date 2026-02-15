@@ -21,8 +21,7 @@ import {
 const TEST_AUTHOR = "@test";
 const DEFAULT_SKILL_COUNT = 4;
 
-// Frontmatter names match real skill_aliases so the stack compiler can resolve
-// display names (e.g., "react") through skill_aliases (e.g., react -> "web-framework-react")
+// Frontmatter names match the skill IDs used in the stack definition
 const STACK_TEST_SKILLS: TestSkill[] = [
   {
     id: "web-framework-react (@test)",
@@ -66,10 +65,10 @@ const TEST_STACK: Stack = {
   description: "A test stack for integration testing",
   agents: {
     "web-developer": {
-      framework: "react",
+      framework: [{ id: "web-framework-react", preloaded: true }],
     },
     "api-developer": {
-      api: "hono",
+      api: [{ id: "api-framework-hono", preloaded: true }],
     },
   },
 };

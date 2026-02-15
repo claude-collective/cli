@@ -1,4 +1,3 @@
-import React from "react";
 import { render } from "ink-testing-library";
 import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
 import { StepSources, type StepSourcesProps } from "./step-sources";
@@ -14,10 +13,10 @@ import {
   delay,
 } from "../../lib/__tests__/test-constants";
 import { createMockMatrix } from "../../lib/__tests__/helpers";
-import { createTestReactSkill, createTestZustandSkill } from "../../lib/__tests__/test-fixtures";
+import { getTestSkill } from "../../lib/__tests__/test-fixtures";
 
-const reactSkill = createTestReactSkill();
-const zustandSkill = createTestZustandSkill();
+const reactSkill = getTestSkill("react");
+const zustandSkill = getTestSkill("zustand");
 
 const mockMatrix = createMockMatrix({
   [reactSkill.id]: reactSkill,

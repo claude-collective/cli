@@ -44,7 +44,7 @@ agents:
       expect(result!.config.agents).toEqual(["web-developer", "api-developer"]);
     });
 
-    it("should load config with stack (agent->subcategory->skillId mappings)", async () => {
+    it("should load config with stack (bare strings normalized to SkillAssignment[])", async () => {
       const configDir = path.join(tempDir, ".claude");
       await mkdir(configDir, { recursive: true });
       await writeFile(
@@ -62,10 +62,51 @@ stack:
       const result = await loadProjectConfig(tempDir);
 
       expect(result).not.toBeNull();
+      // Bare strings are normalized to SkillAssignment[] at load time
       expect(result!.config.stack).toEqual({
         "web-developer": {
-          framework: "web-framework-react",
-          styling: "web-styling-scss-modules",
+          framework: [{ id: "web-framework-react", preloaded: false }],
+          styling: [{ id: "web-styling-scss-modules", preloaded: false }],
+        },
+      });
+    });
+
+    it("should load config with mixed stack formats (array, object, string)", async () => {
+      const configDir = path.join(tempDir, ".claude");
+      await mkdir(configDir, { recursive: true });
+      await writeFile(
+        path.join(configDir, "config.yaml"),
+        `name: my-project
+agents:
+  - web-developer
+stack:
+  web-developer:
+    framework: web-framework-react
+    methodology:
+      - id: meta-methodology-investigation-requirements
+        preloaded: true
+      - id: meta-methodology-anti-over-engineering
+        preloaded: true
+    styling:
+      id: web-styling-scss-modules
+      preloaded: true
+`,
+      );
+
+      const result = await loadProjectConfig(tempDir);
+
+      expect(result).not.toBeNull();
+      expect(result!.config.stack).toEqual({
+        "web-developer": {
+          // bare string -> SkillAssignment[]
+          framework: [{ id: "web-framework-react", preloaded: false }],
+          // array of objects -> SkillAssignment[]
+          methodology: [
+            { id: "meta-methodology-investigation-requirements", preloaded: true },
+            { id: "meta-methodology-anti-over-engineering", preloaded: true },
+          ],
+          // single object -> SkillAssignment[]
+          styling: [{ id: "web-styling-scss-modules", preloaded: true }],
         },
       });
     });

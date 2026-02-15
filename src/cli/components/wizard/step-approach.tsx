@@ -1,15 +1,14 @@
-import React, { useState } from "react";
-import { Box, useInput } from "ink";
+import React, { useCallback } from "react";
+import { Box, Text } from "ink";
 import { useWizardStore } from "../../stores/wizard-store.js";
+import { useKeyboardNavigation } from "../hooks/use-keyboard-navigation.js";
 import { MenuItem } from "./menu-item.js";
 import { ViewTitle } from "./view-title.js";
-
-const INITIAL_FOCUSED_INDEX = 0;
 
 const APPROACH_OPTIONS = [
   {
     value: "stack",
-    label: "Use a pre-built template",
+    label: "Use a stack",
   },
   {
     value: "scratch",
@@ -19,13 +18,10 @@ const APPROACH_OPTIONS = [
 
 export const StepApproach: React.FC = () => {
   const { setStep, setApproach } = useWizardStore();
-  const [focusedIndex, setFocusedIndex] = useState(INITIAL_FOCUSED_INDEX);
 
-  const optionCount = APPROACH_OPTIONS.length;
-
-  useInput((input, key) => {
-    if (key.return) {
-      const option = APPROACH_OPTIONS[focusedIndex];
+  const handleEnter = useCallback(
+    (index: number) => {
+      const option = APPROACH_OPTIONS[index];
       if (option) {
         if (option.value === "stack") {
           setApproach("stack");
@@ -35,17 +31,12 @@ export const StepApproach: React.FC = () => {
           setStep("stack");
         }
       }
-      return;
-    }
+    },
+    [setApproach, setStep],
+  );
 
-    if (key.upArrow || input === "k") {
-      setFocusedIndex((prev) => (prev - 1 + optionCount) % optionCount);
-      return;
-    }
-    if (key.downArrow || input === "j") {
-      setFocusedIndex((prev) => (prev + 1) % optionCount);
-      return;
-    }
+  const { focusedIndex } = useKeyboardNavigation(APPROACH_OPTIONS.length, {
+    onEnter: handleEnter,
   });
 
   return (
@@ -55,6 +46,11 @@ export const StepApproach: React.FC = () => {
         {APPROACH_OPTIONS.map((option, index) => (
           <MenuItem key={option.value} label={option.label} isFocused={index === focusedIndex} />
         ))}
+      </Box>
+      <Box marginTop={1}>
+        <Text dimColor>
+          {"\u2191"}/{"\u2193"} navigate ENTER select
+        </Text>
       </Box>
     </Box>
   );
