@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **`hashStackConfig` produced objects instead of IDs** — `Object.values()` on `SkillAssignment[]` yielded assignment objects instead of skill IDs; now uses `getStackSkillIds()`.
+- **YAML schema references unreachable** — `yaml-language-server` `$schema` comments pointed to `node_modules/@claude-collective/cli/...` which only worked if the CLI was installed as a dependency. Now uses `raw.githubusercontent.com` URLs that resolve for any consumer.
 - **`compileStackPlugin` skill extraction** — Same `Object.values()` bug fixed with `getStackSkillIds()`.
 
 ## [0.29.1] - 2026-02-15

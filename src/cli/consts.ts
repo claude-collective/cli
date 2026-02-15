@@ -63,8 +63,10 @@ export const DEFAULT_VERSION = "1.0.0";
 // "0.0.0" indicates no version was explicitly set
 export const DEFAULT_DISPLAY_VERSION = "0.0.0";
 
-// JSON Schema paths relative to package root (used in yaml-language-server $schema comments)
-const SCHEMA_PKG_PREFIX = "node_modules/@claude-collective/cli/src/schemas";
+// JSON Schema URLs for yaml-language-server $schema comments.
+// Uses raw.githubusercontent.com so schemas resolve without requiring the CLI as a dependency.
+const SCHEMA_PKG_PREFIX =
+  "https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas";
 
 export const SCHEMA_PATHS = {
   projectSourceConfig: `${SCHEMA_PKG_PREFIX}/project-source-config.schema.json`,
@@ -72,10 +74,7 @@ export const SCHEMA_PATHS = {
   marketplace: `${SCHEMA_PKG_PREFIX}/marketplace.schema.json`,
 } as const;
 
-/**
- * Generates a yaml-language-server schema comment for the top of YAML files.
- * The path should be relative from the YAML file's location to the schema file.
- */
+/** Generates a yaml-language-server schema comment for the top of YAML files. */
 export function yamlSchemaComment(schemaPath: string): string {
   return `# yaml-language-server: $schema=${schemaPath}`;
 }
