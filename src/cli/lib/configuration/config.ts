@@ -82,9 +82,9 @@ export async function saveProjectConfig(
 ): Promise<void> {
   const configPath = getProjectConfigPath(projectDir);
   await ensureDir(path.join(projectDir, CLAUDE_SRC_DIR));
-  const schemaComment = yamlSchemaComment(SCHEMA_PATHS.projectSourceConfig) + "\n";
+  const schemaComment = `${yamlSchemaComment(SCHEMA_PATHS.projectSourceConfig)}\n`;
   const content = stringifyYaml(config, { lineWidth: YAML_FORMATTING.LINE_WIDTH_NONE });
-  await writeFile(configPath, schemaComment + content);
+  await writeFile(configPath, `${schemaComment}${content}`);
   verbose(`Saved project config to ${configPath}`);
 }
 
@@ -191,6 +191,8 @@ export function formatOrigin(
         return `${SOURCE_ENV_VAR} environment variable`;
       case "default":
         return "default";
+      default:
+        break;
     }
   }
 
@@ -200,6 +202,8 @@ export function formatOrigin(
       return "--agent-source flag";
     case "default":
       return "default (local CLI)";
+    default:
+      break;
   }
 
   return origin;
@@ -394,7 +398,7 @@ function validateGitShorthand(source: string, repoPath: string, flagName: string
 function validateLocalPath(source: string, flagName: string): void {
   // Check for control characters (except common whitespace)
   // eslint-disable-next-line no-control-regex
-  const CONTROL_CHAR_PATTERN = /[\x00-\x08\x0E-\x1F\x7F]/;
+  const CONTROL_CHAR_PATTERN = /[\x00-\x08\x0E-\x1F\x7F]/u;
   if (CONTROL_CHAR_PATTERN.test(source)) {
     throw new Error(
       `${flagName} contains invalid characters: "${source}"\n\n` +

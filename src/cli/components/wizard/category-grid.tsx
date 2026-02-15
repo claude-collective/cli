@@ -68,7 +68,7 @@ const findNextValidOption = (
   options: CategoryOption[],
   currentIndex: number,
   direction: 1 | -1,
-  wrap: boolean = true,
+  wrap = true,
 ): number => {
   const length = options.length;
   if (length === 0) return currentIndex;

@@ -220,6 +220,8 @@ function formatStatus(status: CheckResult["status"]): string {
       return "!";
     case "skip":
       return "-";
+    default:
+      return "?";
   }
 }
 
@@ -261,6 +263,8 @@ function formatSummary(results: CheckResult[]): string {
         errors++;
         break;
       // skip doesn't count
+      default:
+        break;
     }
   }
 

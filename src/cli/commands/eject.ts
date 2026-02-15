@@ -137,8 +137,8 @@ export default class Eject extends BaseCommand {
         await this.ejectSkills(
           projectDir,
           flags.force,
-          directOutput,
           sourceResult!,
+          directOutput,
           directOutput ? outputBase : undefined,
         );
         break;
@@ -147,10 +147,12 @@ export default class Eject extends BaseCommand {
         await this.ejectSkills(
           projectDir,
           flags.force,
-          directOutput,
           sourceResult!,
+          directOutput,
           directOutput ? outputBase : undefined,
         );
+        break;
+      default:
         break;
     }
 
@@ -242,7 +244,7 @@ export default class Eject extends BaseCommand {
   private async ejectAgentPartials(
     outputBase: string,
     force: boolean,
-    directOutput: boolean = false,
+    directOutput = false,
   ): Promise<void> {
     const sourceDir = path.join(PROJECT_ROOT, DIRS.agents);
 
@@ -269,8 +271,8 @@ export default class Eject extends BaseCommand {
   private async ejectSkills(
     projectDir: string,
     force: boolean,
-    directOutput: boolean = false,
     sourceResult: SourceLoadResult,
+    directOutput = false,
     customOutputBase?: string,
   ): Promise<void> {
     const destDir =

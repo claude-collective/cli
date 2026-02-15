@@ -18,7 +18,7 @@ const SAFE_NAME_PATTERN = /^[a-zA-Z0-9._@/-]+$/;
 const SAFE_PLUGIN_PATH_PATTERN = /^[a-zA-Z0-9._@/:~-]+$/;
 
 // eslint-disable-next-line no-control-regex
-const CONTROL_CHAR_PATTERN = /[\x00-\x08\x0E-\x1F\x7F]/;
+const CONTROL_CHAR_PATTERN = /[\x00-\x08\x0E-\x1F\x7F]/u;
 
 function validatePluginPath(pluginPath: string): void {
   if (!pluginPath || pluginPath.trim().length === 0) {

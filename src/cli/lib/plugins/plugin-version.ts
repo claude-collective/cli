@@ -34,6 +34,10 @@ export async function bumpPluginVersion(pluginDir: string, type: VersionBumpType
     case "patch":
       newVersion = `${major}.${minor}.${patch + 1}`;
       break;
+    default: {
+      const exhaustiveCheck: never = type;
+      throw new Error(`Unknown version bump type: ${exhaustiveCheck}`);
+    }
   }
 
   manifest.version = newVersion;

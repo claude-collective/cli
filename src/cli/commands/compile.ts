@@ -49,7 +49,7 @@ import { typedEntries } from "../utils/typed-object";
 
 async function loadSkillsFromDir(
   skillsDir: string,
-  pathPrefix: string = "",
+  pathPrefix = "",
 ): Promise<Partial<Record<SkillId, SkillDefinition>>> {
   const skills: Partial<Record<SkillId, SkillDefinition>> = {};
 
@@ -305,7 +305,7 @@ export default class Compile extends BaseCommand {
       return agentDefs;
     } catch (error) {
       this.log(ERROR_MESSAGES.FAILED_LOAD_AGENT_PARTIALS);
-      this.handleError(error);
+      return this.handleError(error);
     }
   }
 
