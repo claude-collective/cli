@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.3] - 2026-02-15
+
+### Fixed
+
+- **Wrong YAML schema on generated config.yaml** — `cc init` embedded a `$schema` comment pointing to `project-source-config.schema.json` (marketplace source fields) instead of `project-config.schema.json` (consumer project fields like `name`, `agents`, `stack`, `skills`). Added new `project-config.schema.json` generated from `projectConfigLoaderSchema` and fixed the reference.
+
 ## [0.29.2] - 2026-02-15
 
 ### Added
