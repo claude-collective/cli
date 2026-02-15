@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "schemas/project-source-config.schema.json",
   "title": "Project Source Configuration",
-  "description": "Schema for .claude-src/config.yaml source configuration files.",
+  "description": "Schema for .claude-src/config.yaml marketplace source configuration files.",
   "type": "object",
   "properties": {
     "source": {
