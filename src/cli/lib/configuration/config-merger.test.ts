@@ -4,7 +4,7 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { stringify as stringifyYaml } from "yaml";
 import { mergeWithExistingConfig } from "./config-merger";
-import type { ProjectConfig } from "../../types";
+import type { ProjectConfig, SkillAssignment, SkillId } from "../../types";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 
 describe("config-merger", () => {
@@ -198,15 +198,21 @@ describe("config-merger", () => {
         await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_YAML), stringifyYaml(config));
       }
 
+      /** Shorthand: creates a SkillAssignment[] from an id */
+      function sa(id: string): SkillAssignment[] {
+        return [{ id: id as SkillId, preloaded: false }];
+      }
+
       it("should deep merge stack with existing agent configs taking precedence", async () => {
+        // Write YAML with bare strings (format 1) - normalization converts to SkillAssignment[]
         await writeFullConfig({
           name: "project",
           agents: ["web-developer"],
           skills: [],
           stack: {
             "web-developer": {
-              framework: "web-framework-react-existing",
-              styling: "web-styling-scss-existing",
+              framework: sa("web-framework-react-existing"),
+              styling: sa("web-styling-scss-existing"),
             },
           },
         });
@@ -217,8 +223,8 @@ describe("config-merger", () => {
           skills: [],
           stack: {
             "web-developer": {
-              framework: "web-framework-react-new",
-              "client-state": "web-state-zustand-new",
+              framework: sa("web-framework-react-new"),
+              "client-state": sa("web-state-zustand-new"),
             },
           },
         };
@@ -232,9 +238,9 @@ describe("config-merger", () => {
         // New values added where not existing (client-state added)
         expect(result.config.stack).toEqual({
           "web-developer": {
-            framework: "web-framework-react-existing",
-            styling: "web-styling-scss-existing",
-            "client-state": "web-state-zustand-new",
+            framework: sa("web-framework-react-existing"),
+            styling: sa("web-styling-scss-existing"),
+            "client-state": sa("web-state-zustand-new"),
           },
         });
       });
@@ -246,7 +252,7 @@ describe("config-merger", () => {
           skills: [],
           stack: {
             "web-developer": {
-              framework: "web-framework-react",
+              framework: sa("web-framework-react"),
             },
           },
         });
@@ -257,10 +263,10 @@ describe("config-merger", () => {
           skills: [],
           stack: {
             "web-developer": {
-              framework: "web-framework-vue",
+              framework: sa("web-framework-vue"),
             },
             "api-developer": {
-              api: "api-framework-hono",
+              api: sa("api-framework-hono"),
             },
           },
         };
@@ -272,10 +278,10 @@ describe("config-merger", () => {
         expect(result.merged).toBe(true);
         expect(result.config.stack).toEqual({
           "web-developer": {
-            framework: "web-framework-react", // existing takes precedence
+            framework: sa("web-framework-react"), // existing takes precedence
           },
           "api-developer": {
-            api: "api-framework-hono", // new agent added
+            api: sa("api-framework-hono"), // new agent added
           },
         });
       });
@@ -293,7 +299,7 @@ describe("config-merger", () => {
           skills: [],
           stack: {
             "web-developer": {
-              framework: "web-framework-react",
+              framework: sa("web-framework-react"),
             },
           },
         };
@@ -305,7 +311,7 @@ describe("config-merger", () => {
         expect(result.merged).toBe(true);
         expect(result.config.stack).toEqual({
           "web-developer": {
-            framework: "web-framework-react",
+            framework: sa("web-framework-react"),
           },
         });
       });

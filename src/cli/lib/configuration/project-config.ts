@@ -5,6 +5,7 @@ import { safeLoadYamlFile } from "../../utils/yaml";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../../consts";
 import type { ProjectConfig, ValidationResult } from "../../types";
 import { projectConfigLoaderSchema } from "../schemas";
+import { normalizeStackRecord } from "../stacks/stacks-loader";
 
 const CONFIG_PATH = `${CLAUDE_SRC_DIR}/config.yaml`;
 const LEGACY_CONFIG_PATH = `${CLAUDE_DIR}/config.yaml`;
@@ -34,7 +35,16 @@ export async function loadProjectConfig(projectDir: string): Promise<LoadedProje
   const data = await safeLoadYamlFile(configPath, projectConfigLoaderSchema);
   if (!data) return null;
 
+  // Boundary cast: Zod loader schema validates structure; cast narrows passthrough output
   const config = data as ProjectConfig;
+
+  // Normalize stack values to SkillAssignment[] (same as loadStacks does for stacks.yaml)
+  if (config.stack) {
+    config.stack = normalizeStackRecord(
+      config.stack as unknown as Record<string, Record<string, unknown>>,
+    );
+  }
+
   if (!config.name) {
     warn(
       `Project config at '${configPath}' is missing required 'name' field — defaulting to directory name`,

@@ -23,6 +23,7 @@ export {
   type ProjectConfigOptions,
   generateProjectConfigFromSkills,
   buildStackProperty,
+  compactStackForYaml,
 } from "./config-generator";
 
 export { type MergeContext, type MergeResult, mergeWithExistingConfig } from "./config-merger";

@@ -18,7 +18,7 @@ import {
   getPluginManifestPath,
 } from "../plugins";
 import { loadSkillsByIds, loadAllAgents } from "../loading";
-import { loadStackById, resolveAgentConfigToSkills } from "./stacks-loader";
+import { loadStackById, resolveAgentConfigToSkills, getStackSkillIds } from "./stacks-loader";
 import { resolveAgents, convertStackToCompileConfig } from "../resolver";
 import { buildStackProperty } from "../configuration";
 import type {
@@ -38,9 +38,7 @@ import { unique } from "remeda";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
 
 function hashStackConfig(stack: ProjectConfig): string {
-  const stackSkillIds = stack.stack
-    ? [...new Set(Object.values(stack.stack).flatMap((a) => Object.values(a)))].sort()
-    : [];
+  const stackSkillIds = stack.stack ? getStackSkillIds(stack.stack).sort() : [];
   const parts: string[] = [
     `name:${stack.name}`,
     `description:${stack.description ?? ""}`,
@@ -249,9 +247,7 @@ export async function compileStackPlugin(
     throw new Error(`Stack '${stackId}' not found in config/stacks.yaml`);
   }
 
-  const stackSkillIds = stack.stack
-    ? [...new Set(Object.values(stack.stack).flatMap((a) => Object.values(a)))]
-    : [];
+  const stackSkillIds = stack.stack ? getStackSkillIds(stack.stack) : [];
   // Boundary cast: loadSkillsByIds returns Record<string, SkillDefinition>, keys are SkillId by construction
   const skills = (await loadSkillsByIds(
     stackSkillIds.map((id) => ({ id })),

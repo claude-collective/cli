@@ -3,7 +3,6 @@ import type {
   CategoryPath,
   MergedSkillsMatrix,
   ProjectConfig,
-  ResolvedSubcategorySkills,
   SkillAssignment,
   SkillId,
   Stack,
@@ -27,7 +26,7 @@ function extractSubcategoryFromPath(categoryPath: CategoryPath): Subcategory | u
 
 /**
  * Generates a ProjectConfig from a list of selected skill IDs by resolving which
- * agents are needed and building the stack property (agent -> subcategory -> skillId).
+ * agents are needed and building the stack property (agent -> subcategory -> SkillAssignment[]).
  *
  * For each selected skill, looks up its category and determines which agents
  * should receive it (via `getAgentsForSkill`). The resulting config includes
@@ -47,7 +46,7 @@ export function generateProjectConfigFromSkills(
   options?: ProjectConfigOptions,
 ): ProjectConfig {
   const neededAgents = new Set<AgentName>();
-  const stackProperty: Record<string, ResolvedSubcategorySkills> = {};
+  const stackProperty: Record<string, StackAgentConfig> = {};
 
   for (const skillId of selectedSkillIds) {
     const skill = matrix.skills[skillId];
@@ -67,7 +66,8 @@ export function generateProjectConfigFromSkills(
         if (!stackProperty[agentId]) {
           stackProperty[agentId] = {};
         }
-        stackProperty[agentId][subcategory] = skillId;
+        // Wizard selections are bare IDs with preloaded: false
+        stackProperty[agentId][subcategory] = [{ id: skillId, preloaded: false }];
       }
     }
   }
@@ -94,37 +94,78 @@ export function generateProjectConfigFromSkills(
 }
 
 /**
- * Extracts the stack property (agent -> subcategory -> skillId) from a Stack definition.
+ * Extracts the stack property (agent -> subcategory -> SkillAssignment[]) from a Stack definition.
  *
- * Stack values are already normalized to SkillAssignment[] by loadStacks(). This function
- * takes the first skill ID per subcategory since ResolvedSubcategorySkills only holds one.
- * All skills are still preserved in ProjectConfig.skills via resolveAgentConfigToSkills.
+ * Stack values are already normalized to SkillAssignment[] by loadStacks().
+ * Preserves all assignments and preloaded flags for round-trip fidelity.
  *
  * @param stack - Loaded Stack definition with normalized agent configs
- * @returns Partial mapping of agent names to subcategory-skill mappings
+ * @returns Partial mapping of agent names to subcategory-skill assignment mappings
  */
-export function buildStackProperty(
-  stack: Stack,
-): Partial<Record<AgentName, ResolvedSubcategorySkills>> {
-  const result: Partial<Record<AgentName, ResolvedSubcategorySkills>> = {};
+export function buildStackProperty(stack: Stack): Partial<Record<AgentName, StackAgentConfig>> {
+  const result: Partial<Record<AgentName, StackAgentConfig>> = {};
 
   for (const [agentId, agentConfig] of typedEntries<AgentName, StackAgentConfig>(stack.agents)) {
     if (!agentConfig || Object.keys(agentConfig).length === 0) {
       continue;
     }
 
-    const resolvedMappings: ResolvedSubcategorySkills = {};
+    const resolvedMappings: StackAgentConfig = {};
 
     for (const [subcategoryId, assignments] of typedEntries<Subcategory, SkillAssignment[]>(
       agentConfig,
     )) {
-      if (!assignments) continue;
-      // Take the first skill ID — ResolvedSubcategorySkills holds one per subcategory
-      resolvedMappings[subcategoryId] = assignments[0]?.id;
+      if (!assignments || assignments.length === 0) continue;
+      resolvedMappings[subcategoryId] = assignments;
     }
 
     if (Object.keys(resolvedMappings).length > 0) {
       result[agentId] = resolvedMappings;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Compacts a ProjectConfig.stack for YAML serialization.
+ * Converts SkillAssignment[] to the most compact form:
+ *   - Single skill with preloaded=false -> bare string (e.g., "web-framework-react")
+ *   - Single skill with preloaded=true -> object (e.g., { id: "...", preloaded: true })
+ *   - Multiple skills -> array of objects/strings
+ * This ensures round-trip fidelity: bare strings stay bare, rich format stays rich.
+ */
+export function compactStackForYaml(
+  stack: Record<string, StackAgentConfig>,
+): Record<string, Record<string, unknown>> {
+  const result: Record<string, Record<string, unknown>> = {};
+
+  for (const [agentId, agentConfig] of Object.entries(stack)) {
+    const compacted: Record<string, unknown> = {};
+
+    for (const [subcategory, assignments] of typedEntries<Subcategory, SkillAssignment[]>(
+      agentConfig,
+    )) {
+      if (!assignments || assignments.length === 0) continue;
+
+      if (assignments.length === 1) {
+        const assignment = assignments[0];
+        // Single skill, no preloaded -> bare string
+        if (!assignment.preloaded) {
+          compacted[subcategory] = assignment.id;
+        } else {
+          compacted[subcategory] = { id: assignment.id, preloaded: true };
+        }
+      } else {
+        // Multiple skills -> array, compact each element
+        compacted[subcategory] = assignments.map((a) =>
+          !a.preloaded ? a.id : { id: a.id, preloaded: true },
+        );
+      }
+    }
+
+    if (Object.keys(compacted).length > 0) {
+      result[agentId] = compacted;
     }
   }
 

@@ -20,10 +20,12 @@ describe("config-generator", () => {
       expect(config.name).toBe("my-project");
       expect(config.agents).toBeDefined();
       expect(config.agents.length).toBeGreaterThan(0);
-      // Stack should contain agent->subcategory->skillId mappings
+      // Stack should contain agent->subcategory->SkillAssignment[] mappings
       expect(config.stack).toBeDefined();
       expect(
-        Object.values(config.stack!).some((agent) => agent.framework === "web-framework-react"),
+        Object.values(config.stack!).some(
+          (agent) => agent.framework?.[0]?.id === "web-framework-react",
+        ),
       ).toBe(true);
       // Should NOT have these fields by default
       expect(config.version).toBeUndefined();
@@ -31,7 +33,7 @@ describe("config-generator", () => {
       expect(config.description).toBeUndefined();
     });
 
-    it("builds stack with subcategory->skillId mappings for multiple skills", () => {
+    it("builds stack with subcategory->SkillAssignment[] mappings for multiple skills", () => {
       const matrix = createMockMatrix({
         ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
         ["web-styling-scss-modules"]: createMockSkill("web-styling-scss-modules", "web/styling"),
@@ -48,8 +50,8 @@ describe("config-generator", () => {
       // web-developer should have both framework and styling subcategories
       const webDev = config.stack!["web-developer"];
       expect(webDev).toBeDefined();
-      expect(webDev.framework).toBe("web-framework-react");
-      expect(webDev.styling).toBe("web-styling-scss-modules");
+      expect(webDev.framework?.[0]?.id).toBe("web-framework-react");
+      expect(webDev.styling?.[0]?.id).toBe("web-styling-scss-modules");
     });
 
     it("derives agents from skills via getAgentsForSkill", () => {
@@ -113,7 +115,9 @@ describe("config-generator", () => {
       // Stack should have framework mapping from remote skill
       expect(config.stack).toBeDefined();
       expect(
-        Object.values(config.stack!).some((agent) => agent.framework === "web-framework-react"),
+        Object.values(config.stack!).some(
+          (agent) => agent.framework?.[0]?.id === "web-framework-react",
+        ),
       ).toBe(true);
     });
 
@@ -150,7 +154,9 @@ describe("config-generator", () => {
       // Stack should only contain known skills
       expect(config.stack).toBeDefined();
       expect(
-        Object.values(config.stack!).some((agent) => agent.framework === "web-framework-react"),
+        Object.values(config.stack!).some(
+          (agent) => agent.framework?.[0]?.id === "web-framework-react",
+        ),
       ).toBe(true);
       // But agents should only be derived from known skills
       expect(config.agents.length).toBeGreaterThan(0);
@@ -221,9 +227,9 @@ describe("config-generator", () => {
 
       expect(config.stack).toBeDefined();
       // web-developer gets framework from web skill
-      expect(config.stack!["web-developer"]?.framework).toBe("web-framework-react");
+      expect(config.stack!["web-developer"]?.framework?.[0]?.id).toBe("web-framework-react");
       // api-developer gets framework from api skill
-      expect(config.stack!["api-developer"]?.framework).toBe("api-framework-hono");
+      expect(config.stack!["api-developer"]?.framework?.[0]?.id).toBe("api-framework-hono");
     });
 
     it("handles bare subcategory category paths", () => {
@@ -237,7 +243,9 @@ describe("config-generator", () => {
       // Bare subcategory "testing" should still extract as subcategory
       expect(config.stack).toBeDefined();
       expect(
-        Object.values(config.stack!).some((agent) => agent.testing === "web-testing-vitest"),
+        Object.values(config.stack!).some(
+          (agent) => agent.testing?.[0]?.id === "web-testing-vitest",
+        ),
       ).toBe(true);
     });
 
@@ -362,7 +370,7 @@ describe("config-generator", () => {
   });
 
   describe("buildStackProperty", () => {
-    it("extracts agent-to-subcategory-to-skillId mappings from stack", () => {
+    it("preserves full SkillAssignment[] from stack agents", () => {
       const stack: Stack = {
         id: "test-stack",
         name: "Test Stack",
@@ -383,12 +391,12 @@ describe("config-generator", () => {
 
       expect(result).toEqual({
         "web-developer": {
-          framework: "web-framework-react",
-          styling: "web-styling-scss-modules",
+          framework: [sa("web-framework-react", true)],
+          styling: [sa("web-styling-scss-modules")],
         },
         "api-developer": {
-          api: "api-framework-hono",
-          database: "api-database-drizzle",
+          api: [sa("api-framework-hono", true)],
+          database: [sa("api-database-drizzle", true)],
         },
       });
     });
@@ -411,14 +419,14 @@ describe("config-generator", () => {
 
       expect(result).toEqual({
         "web-developer": {
-          framework: "web-framework-react",
+          framework: [sa("web-framework-react", true)],
         },
       });
       expect(result["cli-tester"]).toBeUndefined();
       expect(result["web-pm"]).toBeUndefined();
     });
 
-    it("takes first skill ID from arrays", () => {
+    it("preserves single-element arrays", () => {
       const stack: Stack = {
         id: "test-stack",
         name: "Test Stack",
@@ -435,8 +443,8 @@ describe("config-generator", () => {
 
       expect(result).toEqual({
         "web-developer": {
-          framework: "web-framework-react",
-          styling: "web-styling-tailwind",
+          framework: [sa("web-framework-react", true)],
+          styling: [sa("web-styling-tailwind")],
         },
       });
     });
@@ -454,7 +462,7 @@ describe("config-generator", () => {
       expect(result).toEqual({});
     });
 
-    it("takes first skill ID from multi-element arrays", () => {
+    it("preserves multi-element arrays with all assignments", () => {
       const stack: Stack = {
         id: "test-stack",
         name: "Test Stack",
@@ -475,14 +483,17 @@ describe("config-generator", () => {
 
       expect(result).toEqual({
         "pattern-scout": {
-          // First skill from array
-          methodology: "meta-methodology-investigation-requirements",
-          research: "meta-research-research-methodology",
+          methodology: [
+            sa("meta-methodology-investigation-requirements", true),
+            sa("meta-methodology-anti-over-engineering", true),
+            sa("meta-methodology-success-criteria", true),
+          ],
+          research: [sa("meta-research-research-methodology", true)],
         },
       });
     });
 
-    it("handles empty array in subcategory", () => {
+    it("skips empty array subcategories", () => {
       const stack: Stack = {
         id: "test-stack",
         name: "Test Stack",
@@ -499,14 +510,13 @@ describe("config-generator", () => {
 
       expect(result).toEqual({
         "web-developer": {
-          framework: "web-framework-react",
-          // Empty array -> first element is undefined -> filtered
-          methodology: undefined,
+          framework: [sa("web-framework-react", true)],
+          // Empty array is skipped
         },
       });
     });
 
-    it("preserves preloaded flag in skill ID extraction (only ID is kept)", () => {
+    it("preserves preloaded flag in assignments", () => {
       const stack: Stack = {
         id: "test-stack",
         name: "Test Stack",
@@ -521,9 +531,9 @@ describe("config-generator", () => {
 
       const result = buildStackProperty(stack);
 
-      // buildStackProperty extracts only the ID — preloaded is not in the result
-      expect(result["web-developer"]?.framework).toBe("web-framework-react");
-      expect(result["web-developer"]?.styling).toBe("web-styling-scss-modules");
+      // buildStackProperty now preserves full SkillAssignment[] including preloaded
+      expect(result["web-developer"]?.framework).toEqual([sa("web-framework-react", true)]);
+      expect(result["web-developer"]?.styling).toEqual([sa("web-styling-scss-modules", false)]);
     });
 
     it("handles multiple agents with identical subcategories", () => {
@@ -544,8 +554,8 @@ describe("config-generator", () => {
       const result = buildStackProperty(stack);
 
       // Each agent gets its own entry, even if they share the same subcategory skill
-      expect(result["web-developer"]?.framework).toBe("web-framework-react");
-      expect(result["web-reviewer"]?.framework).toBe("web-framework-react");
+      expect(result["web-developer"]?.framework).toEqual([sa("web-framework-react")]);
+      expect(result["web-reviewer"]?.framework).toEqual([sa("web-framework-react")]);
     });
 
     it("handles single agent with many subcategories", () => {
@@ -566,10 +576,10 @@ describe("config-generator", () => {
       const result = buildStackProperty(stack);
 
       expect(result["web-developer"]).toEqual({
-        framework: "web-framework-react",
-        styling: "web-styling-scss-modules",
-        "client-state": "web-state-zustand",
-        testing: "web-testing-vitest",
+        framework: [sa("web-framework-react")],
+        styling: [sa("web-styling-scss-modules")],
+        "client-state": [sa("web-state-zustand")],
+        testing: [sa("web-testing-vitest")],
       });
     });
 
@@ -594,8 +604,9 @@ describe("config-generator", () => {
 
       const result = buildStackProperty(stack);
 
-      // Only the ID is extracted, local/path are not preserved
-      expect(result["web-developer"]?.framework).toBe("web-framework-react");
+      // Full assignment is preserved including local/path
+      expect(result["web-developer"]?.framework?.[0]?.id).toBe("web-framework-react");
+      expect(result["web-developer"]?.framework?.[0]?.local).toBe(true);
     });
   });
 });

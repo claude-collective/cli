@@ -18,9 +18,11 @@ import type {
   CompiledAgentData,
   ProjectConfig,
   Skill,
+  SkillAssignment,
   SkillDefinition,
   SkillId,
   SkillReference,
+  StackAgentConfig,
   Subcategory,
 } from "../types";
 
@@ -60,9 +62,9 @@ describe("resolveClaudeMd", () => {
 
 describe("buildSkillRefsFromConfig", () => {
   it("should build skill references from agent stack config", () => {
-    const agentStack: Partial<Record<Subcategory, SkillId>> = {
-      framework: "web-framework-react" as SkillId,
-      styling: "web-styling-scss-modules" as SkillId,
+    const agentStack: StackAgentConfig = {
+      framework: [{ id: "web-framework-react" as SkillId, preloaded: false }],
+      styling: [{ id: "web-styling-scss-modules" as SkillId, preloaded: false }],
     };
 
     const result = buildSkillRefsFromConfig(agentStack);
@@ -72,9 +74,20 @@ describe("buildSkillRefsFromConfig", () => {
     expect(result.find((r) => r.id === "web-styling-scss-modules")).toBeDefined();
   });
 
-  it("should set preloaded to false for all refs", () => {
-    const agentStack: Partial<Record<Subcategory, SkillId>> = {
-      framework: "web-framework-react" as SkillId,
+  it("should preserve preloaded flag from assignments", () => {
+    const agentStack: StackAgentConfig = {
+      framework: [{ id: "web-framework-react" as SkillId, preloaded: true }],
+    };
+
+    const result = buildSkillRefsFromConfig(agentStack);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].preloaded).toBe(true);
+  });
+
+  it("should set preloaded to false when not specified", () => {
+    const agentStack: StackAgentConfig = {
+      framework: [{ id: "web-framework-react" as SkillId }],
     };
 
     const result = buildSkillRefsFromConfig(agentStack);
@@ -84,8 +97,8 @@ describe("buildSkillRefsFromConfig", () => {
   });
 
   it("should include usage guidance with subcategory name", () => {
-    const agentStack: Partial<Record<Subcategory, SkillId>> = {
-      framework: "web-framework-react" as SkillId,
+    const agentStack: StackAgentConfig = {
+      framework: [{ id: "web-framework-react" as SkillId, preloaded: false }],
     };
 
     const result = buildSkillRefsFromConfig(agentStack);
@@ -99,17 +112,33 @@ describe("buildSkillRefsFromConfig", () => {
     expect(result).toEqual([]);
   });
 
-  it("when config has undefined skill ID values, should skip them and return only defined refs", () => {
+  it("when config has undefined assignment values, should skip them and return only defined refs", () => {
     // Partial record may have undefined values
-    const agentStack: Partial<Record<Subcategory, SkillId>> = {
-      framework: "web-framework-react" as SkillId,
-      styling: undefined,
+    const agentStack: StackAgentConfig = {
+      framework: [{ id: "web-framework-react" as SkillId, preloaded: false }],
     };
 
     const result = buildSkillRefsFromConfig(agentStack);
 
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("web-framework-react");
+  });
+
+  it("should handle multiple skills per subcategory", () => {
+    const agentStack: StackAgentConfig = {
+      methodology: [
+        { id: "meta-methodology-investigation-requirements" as SkillId, preloaded: true },
+        { id: "meta-methodology-anti-over-engineering" as SkillId, preloaded: true },
+      ],
+    };
+
+    const result = buildSkillRefsFromConfig(agentStack);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe("meta-methodology-investigation-requirements");
+    expect(result[0].preloaded).toBe(true);
+    expect(result[1].id).toBe("meta-methodology-anti-over-engineering");
+    expect(result[1].preloaded).toBe(true);
   });
 });
 
@@ -597,13 +626,7 @@ All skills for this agent are preloaded via frontmatter. No additional skill act
 });
 
 import { resolveAgentSkillsFromStack, resolveAgentSkillRefs, resolveAgents } from "./resolver";
-import type {
-  AgentDefinition,
-  CompileAgentConfig,
-  CompileConfig,
-  SkillAssignment,
-  Stack,
-} from "../types";
+import type { AgentDefinition, CompileAgentConfig, CompileConfig, Stack } from "../types";
 
 /** Shorthand: creates a SkillAssignment from an id and optional preloaded flag */
 function sa(id: SkillId, preloaded = false): SkillAssignment {

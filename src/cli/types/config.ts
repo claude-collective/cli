@@ -1,5 +1,6 @@
 import type { AgentName } from "./agents";
-import type { ResolvedSubcategorySkills, SkillId, SkillReference } from "./skills";
+import type { SkillId, SkillReference } from "./skills";
+import type { StackAgentConfig } from "./stacks";
 
 /** Agent configuration for compilation - contains skills for a specific agent */
 export type CompileAgentConfig = {
@@ -57,10 +58,11 @@ export type ProjectConfig = {
 
   /**
    * Resolved stack configuration with agent->skill mappings.
-   * Keys are agent IDs, values are subcategory->skill ID mappings.
+   * Keys are agent IDs, values are subcategory->SkillAssignment[] mappings.
+   * Values are normalized to SkillAssignment[] at load time (same as stacks.yaml).
    * Generated during `cc init` when a stack is selected.
    */
-  stack?: Record<string, ResolvedSubcategorySkills>;
+  stack?: Record<string, StackAgentConfig>;
 
   /**
    * Skills source path or URL.

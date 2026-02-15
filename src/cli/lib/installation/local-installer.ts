@@ -19,7 +19,7 @@ import { loadAllAgents, type SourceLoadResult } from "../loading";
 import { loadStackById, compileAgentForPlugin } from "../stacks";
 import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
 import { createLiquidEngine } from "../compiler";
-import { generateProjectConfigFromSkills } from "../configuration";
+import { generateProjectConfigFromSkills, compactStackForYaml } from "../configuration";
 import { ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
@@ -234,7 +234,11 @@ async function buildAndMergeConfig(
 
 async function writeConfigFile(config: ProjectConfig, configPath: string): Promise<void> {
   const schemaComment = `${yamlSchemaComment(SCHEMA_PATHS.projectSourceConfig)}\n`;
-  const configYaml = stringifyYaml(config, {
+  // Compact stack for YAML output: bare strings for simple skills, objects for preloaded
+  const serializable = config.stack
+    ? { ...config, stack: compactStackForYaml(config.stack) }
+    : config;
+  const configYaml = stringifyYaml(serializable, {
     indent: YAML_FORMATTING.INDENT,
     lineWidth: YAML_FORMATTING.LINE_WIDTH,
   });

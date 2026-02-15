@@ -1,13 +1,12 @@
 import { Flags } from "@oclif/core";
 import path from "path";
-import { unique } from "remeda";
-
 import { BaseCommand } from "../base-command";
 import { getErrorMessage } from "../utils/errors";
 import { EXIT_CODES } from "../lib/exit-codes";
 import { loadProjectConfig, validateProjectConfig } from "../lib/configuration";
 import { loadSkillsMatrixFromSource } from "../lib/loading";
 import { discoverLocalSkills } from "../lib/skills";
+import { getStackSkillIds } from "../lib/stacks";
 import type { AgentName, MergedSkillsMatrix, ProjectConfig, SkillId } from "../types";
 import { fileExists, glob, directoryExists } from "../utils/fs";
 import { setVerbose } from "../utils/logger";
@@ -58,17 +57,7 @@ async function checkSkillsResolved(
   matrix: MergedSkillsMatrix,
   projectDir: string,
 ): Promise<CheckResult> {
-  const configSkills: SkillId[] = [];
-
-  if (config.stack) {
-    for (const agentConfig of Object.values(config.stack)) {
-      for (const skillId of Object.values(agentConfig)) {
-        configSkills.push(skillId);
-      }
-    }
-  }
-
-  const uniqueSkills = unique(configSkills);
+  const uniqueSkills = config.stack ? getStackSkillIds(config.stack) : [];
 
   if (uniqueSkills.length === 0) {
     return {

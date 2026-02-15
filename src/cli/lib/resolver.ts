@@ -14,9 +14,10 @@ import type {
   SkillId,
   SkillReference,
   Stack,
+  StackAgentConfig,
   Subcategory,
 } from "../types";
-import { typedEntries, typedKeys } from "../utils/typed-object";
+import { typedKeys } from "../utils/typed-object";
 import { resolveAgentConfigToSkills } from "./stacks/stacks-loader";
 
 export async function resolveClaudeMd(projectRoot: string, stackId: string): Promise<string> {
@@ -54,28 +55,16 @@ export function resolveSkillReferences(
 }
 
 /**
- * Builds skill references from a ProjectConfig stack mapping (agent -> subcategory -> skillId).
+ * Builds skill references from a ProjectConfig stack mapping (agent -> subcategory -> SkillAssignment[]).
  *
- * Each subcategory entry becomes a SkillReference with `preloaded: false` because
- * ProjectConfig.stack loses the preloaded info from the original StackAgentConfig
- * (it only stores one SkillId per subcategory).
+ * Values are normalized to SkillAssignment[] at load time (by normalizeStackRecord in project-config.ts).
+ * Preserves preloaded flags from skill assignments.
  *
- * @param agentStack - Subcategory-to-skillId mapping from ProjectConfig.stack for one agent
+ * @param agentStack - Subcategory-to-SkillAssignment[] mapping from ProjectConfig.stack for one agent
  * @returns Skill references with usage hints derived from subcategory names
  */
-export function buildSkillRefsFromConfig(
-  agentStack: Partial<Record<Subcategory, SkillId>>,
-): SkillReference[] {
-  const skillRefs: SkillReference[] = [];
-  for (const [subcategory, skillId] of typedEntries<Subcategory, SkillId>(agentStack)) {
-    if (!skillId) continue;
-    skillRefs.push({
-      id: skillId,
-      usage: `when working with ${subcategory}`,
-      preloaded: false,
-    });
-  }
-  return skillRefs;
+export function buildSkillRefsFromConfig(agentStack: StackAgentConfig): SkillReference[] {
+  return resolveAgentConfigToSkills(agentStack);
 }
 
 /**

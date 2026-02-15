@@ -45,6 +45,7 @@ import type {
   SkillId,
 } from "../types";
 import { pluginManifestSchema, projectConfigLoaderSchema } from "../lib/schemas";
+import { normalizeStackRecord, getStackSkillIds } from "../lib/stacks/stacks-loader";
 import { typedEntries } from "../utils/typed-object";
 
 async function loadSkillsFromDir(
@@ -340,10 +341,14 @@ export default class Compile extends BaseCommand {
         if (configResult.success) {
           // Boundary cast: Zod loader schema validates structure; cast narrows passthrough output
           const config = configResult.data as ProjectConfig;
+          // Normalize stack values to SkillAssignment[] (same as loadProjectConfig)
+          if (config.stack) {
+            config.stack = normalizeStackRecord(
+              config.stack as unknown as Record<string, Record<string, unknown>>,
+            );
+          }
           const agentCount = config.agents?.length ?? 0;
-          const stackSkillCount = config.stack
-            ? new Set(Object.values(config.stack).flatMap((a) => Object.values(a))).size
-            : 0;
+          const stackSkillCount = config.stack ? getStackSkillIds(config.stack).length : 0;
           this.log(`Using config.yaml (${agentCount} agents, ${stackSkillCount} skills)`);
           verbose(`  Config: ${configPath}`);
         } else {
