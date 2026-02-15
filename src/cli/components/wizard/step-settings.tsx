@@ -83,7 +83,7 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
     }
 
     if (key.backspace || key.delete) {
-      if (summary && summary.sources[focusedIndex]) {
+      if (summary?.sources[focusedIndex]) {
         const source = summary.sources[focusedIndex];
         if (source.name !== DEFAULT_SOURCE_NAME) {
           void handleRemove(source.name).then((success) => {
@@ -99,7 +99,6 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
     if (input === "a" || input === "A") {
       addModal.open(true);
       setAddSourceInput("");
-      return;
     }
   });
 

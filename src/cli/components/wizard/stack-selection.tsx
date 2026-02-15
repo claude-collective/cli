@@ -46,7 +46,6 @@ export const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
     }
     if (key.downArrow || input === "j") {
       setFocusedIndex((prev) => Math.min(stackCount - 1, prev + 1));
-      return;
     }
   });
 

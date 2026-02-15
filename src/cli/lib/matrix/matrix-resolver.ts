@@ -136,7 +136,7 @@ export function isDisabled(
     }
 
     const selectedSkill = matrix.skills[selectedFullId];
-    if (selectedSkill && selectedSkill.conflictsWith.some((c) => c.skillId === fullId)) {
+    if (selectedSkill?.conflictsWith.some((c) => c.skillId === fullId)) {
       return true;
     }
   }
@@ -239,7 +239,7 @@ export function isDiscouraged(
 
   for (const selectedId of resolvedSelections) {
     const selectedSkill = matrix.skills[selectedId];
-    if (selectedSkill && selectedSkill.discourages.some((d) => d.skillId === fullId)) {
+    if (selectedSkill?.discourages.some((d) => d.skillId === fullId)) {
       return true;
     }
 
@@ -299,7 +299,7 @@ export function isRecommended(
 
   for (const selectedId of resolvedSelections) {
     const selectedSkill = matrix.skills[selectedId];
-    if (selectedSkill && selectedSkill.recommends.some((r) => r.skillId === fullId)) {
+    if (selectedSkill?.recommends.some((r) => r.skillId === fullId)) {
       return true;
     }
   }

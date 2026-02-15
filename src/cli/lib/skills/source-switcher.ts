@@ -17,15 +17,12 @@ function validateSkillId(skillId: SkillId): boolean {
     return false;
   }
   // Block null bytes and path traversal sequences
-  if (
+  return !(
     skillId.includes("\0") ||
     skillId.includes("..") ||
     skillId.includes("/") ||
     skillId.includes("\\")
-  ) {
-    return false;
-  }
-  return true;
+  );
 }
 
 /**

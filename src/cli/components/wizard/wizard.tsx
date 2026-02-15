@@ -113,7 +113,6 @@ export const Wizard: React.FC<WizardProps> = ({
     }
     if (input === "p" || input === "P") {
       store.toggleInstallMode();
-      return;
     }
   });
 

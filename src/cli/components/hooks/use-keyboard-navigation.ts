@@ -74,7 +74,6 @@ export function useKeyboardNavigation(
 
         if (key.downArrow || (vimKeys && input === "j")) {
           moveDown();
-          return;
         }
       },
       [active, onEnter, onEscape, vimKeys, moveUp, moveDown],

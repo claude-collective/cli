@@ -124,11 +124,11 @@ export default class Init extends BaseCommand {
 
     const result = wizardResult as WizardResultV2 | null;
     if (!result || result.cancelled) {
-      return this.exit(EXIT_CODES.CANCELLED);
+      this.exit(EXIT_CODES.CANCELLED);
     }
 
     if (result.selectedSkills.length === 0) {
-      return this.error("No skills selected", { exit: EXIT_CODES.ERROR });
+      this.error("No skills selected", { exit: EXIT_CODES.ERROR });
     }
 
     await this.handleInstallation(result, sourceResult, flags);
