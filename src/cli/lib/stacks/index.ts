@@ -2,6 +2,7 @@ export {
   loadStacks,
   loadStackById,
   resolveAgentConfigToSkills,
+  getStackSkillIds,
   resolveStackSkills,
 } from "./stacks-loader";
 

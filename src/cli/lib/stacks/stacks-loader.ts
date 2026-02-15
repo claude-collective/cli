@@ -1,6 +1,6 @@
 import { parse as parseYaml } from "yaml";
 import path from "path";
-import { mapValues } from "remeda";
+import { mapValues, pipe, flatMap, unique } from "remeda";
 import { getErrorMessage } from "../../utils/errors";
 import { readFile, fileExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
@@ -19,6 +19,36 @@ import { typedEntries } from "../../utils/typed-object";
 const STACKS_FILE = "config/stacks.yaml";
 
 const stacksCache = new Map<string, Stack[]>();
+
+/**
+ * Normalizes a raw agent config (from Zod-parsed YAML) to StackAgentConfig.
+ * Converts bare strings to `{ id, preloaded: false }` and wraps single values in arrays.
+ * Used by both loadStacks() and loadProjectConfig() to handle all 3 YAML formats:
+ *   1. bare string: `framework: web-framework-react`
+ *   2. single object: `framework: { id: web-framework-react, preloaded: true }`
+ *   3. array: `methodology: [{ id: ..., preloaded: true }, { id: ... }]`
+ */
+export function normalizeAgentConfig(agentConfig: Record<string, unknown>): StackAgentConfig {
+  return mapValues(agentConfig, (value) => {
+    const items = Array.isArray(value) ? value : [value];
+    return items.map(
+      (item): SkillAssignment =>
+        typeof item === "string"
+          ? { id: item as SkillId, preloaded: false }
+          : (item as SkillAssignment),
+    );
+  }) as StackAgentConfig;
+}
+
+/**
+ * Normalizes a raw stack record (agent -> raw subcategory config) to the typed form.
+ * Applies normalizeAgentConfig to each agent entry.
+ */
+export function normalizeStackRecord(
+  rawStack: Record<string, Record<string, unknown>>,
+): Record<string, StackAgentConfig> {
+  return mapValues(rawStack, (agentConfig) => normalizeAgentConfig(agentConfig));
+}
 
 export async function loadStacks(configDir: string, stacksFile?: string): Promise<Stack[]> {
   const resolvedStacksFile = stacksFile ?? STACKS_FILE;
@@ -48,16 +78,7 @@ export async function loadStacks(configDir: string, stacksFile?: string): Promis
       ...stack,
       agents: mapValues(
         stack.agents as Partial<Record<AgentName, Record<string, unknown>>>,
-        (agentConfig) =>
-          mapValues(agentConfig, (value) => {
-            const items = Array.isArray(value) ? value : [value];
-            return items.map(
-              (item): SkillAssignment =>
-                typeof item === "string"
-                  ? { id: item as SkillId, preloaded: false }
-                  : (item as SkillAssignment),
-            );
-          }) as StackAgentConfig,
+        (agentConfig) => normalizeAgentConfig(agentConfig as Record<string, unknown>),
       ) as Stack["agents"],
     }));
 
@@ -111,6 +132,16 @@ export function resolveAgentConfigToSkills(agentConfig: StackAgentConfig): Skill
   }
 
   return skillRefs;
+}
+
+/** Extracts all unique skill IDs from a stack config (agent -> subcategory -> SkillAssignment[]). */
+export function getStackSkillIds(stack: Record<string, StackAgentConfig>): SkillId[] {
+  return pipe(
+    Object.values(stack),
+    flatMap(resolveAgentConfigToSkills),
+    (refs) => refs.map((r) => r.id),
+    unique(),
+  );
 }
 
 export function resolveStackSkills(stack: Stack): Record<string, SkillReference[]> {
