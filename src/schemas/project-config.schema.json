@@ -120,5 +120,6 @@
       "type": "string"
     }
   },
-  "additionalProperties": {}
+  "required": ["name", "agents", "skills", "installMode", "stack", "source"],
+  "additionalProperties": false
 }

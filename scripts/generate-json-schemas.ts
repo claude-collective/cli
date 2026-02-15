@@ -8,12 +8,12 @@ import path from "path";
 import {
   agentYamlGenerationSchema,
   agentFrontmatterValidationSchema,
-  hooksRecordSchema,
+  strictHooksRecordSchema,
   marketplaceSchema,
   metadataValidationSchema,
-  pluginManifestSchema,
-  projectConfigLoaderSchema,
-  projectSourceConfigSchema,
+  pluginManifestValidationSchema,
+  projectConfigValidationSchema,
+  projectSourceConfigValidationSchema,
   skillFrontmatterValidationSchema,
   skillsMatrixConfigSchema,
   stackConfigValidationSchema,
@@ -53,7 +53,7 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
   },
   {
     filename: "hooks.schema.json",
-    schema: hooksRecordSchema,
+    schema: strictHooksRecordSchema,
     metadata: {
       $id: "schemas/hooks.schema.json",
       title: "Hooks Configuration",
@@ -80,7 +80,7 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
   },
   {
     filename: "plugin.schema.json",
-    schema: pluginManifestSchema,
+    schema: pluginManifestValidationSchema,
     metadata: {
       $id: "schemas/plugin.schema.json",
       title: "Plugin Manifest",
@@ -89,7 +89,7 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
   },
   {
     filename: "project-config.schema.json",
-    schema: projectConfigLoaderSchema,
+    schema: projectConfigValidationSchema,
     metadata: {
       $id: "schemas/project-config.schema.json",
       title: "Project Configuration",
@@ -99,7 +99,7 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
   },
   {
     filename: "project-source-config.schema.json",
-    schema: projectSourceConfigSchema,
+    schema: projectSourceConfigValidationSchema,
     metadata: {
       $id: "schemas/project-source-config.schema.json",
       title: "Project Source Configuration",

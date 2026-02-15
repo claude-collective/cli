@@ -25,6 +25,7 @@
       "enum": ["sonnet", "opus", "haiku", "inherit"]
     },
     "tools": {
+      "minItems": 1,
       "type": "array",
       "items": {
         "type": "string"
@@ -54,6 +55,7 @@
               "type": "string"
             },
             "hooks": {
+              "minItems": 1,
               "type": "array",
               "items": {
                 "type": "object",
@@ -77,6 +79,7 @@
               }
             }
           },
+          "required": ["hooks"],
           "additionalProperties": false
         }
       }

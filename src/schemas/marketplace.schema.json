@@ -9,10 +9,12 @@
       "type": "string"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "version": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "description": {
       "type": "string"
@@ -21,7 +23,8 @@
       "type": "object",
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "email": {
           "type": "string"
@@ -40,12 +43,14 @@
       "additionalProperties": false
     },
     "plugins": {
+      "minItems": 1,
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "source": {
             "anyOf": [
@@ -84,7 +89,8 @@
             "type": "object",
             "properties": {
               "name": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1
               },
               "email": {
                 "type": "string"

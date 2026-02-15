@@ -49,6 +49,7 @@
               "type": "string"
             },
             "hooks": {
+              "minItems": 1,
               "type": "array",
               "items": {
                 "type": "object",
@@ -72,6 +73,7 @@
               }
             }
           },
+          "required": ["hooks"],
           "additionalProperties": false
         }
       }
