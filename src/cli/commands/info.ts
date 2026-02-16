@@ -209,7 +209,7 @@ export default class Info extends BaseCommand {
         }
 
         this.log("");
-        this.logInfo("Use 'cc search <query>' to find available skills.");
+        this.logInfo("Use 'agentsinc search <query>' to find available skills.");
         this.log("");
         this.exit(EXIT_CODES.ERROR);
       }

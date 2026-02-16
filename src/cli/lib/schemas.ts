@@ -363,7 +363,7 @@ export const pluginManifestSchema: z.ZodType<PluginManifest> = z.object({
   hooks: z.union([z.string(), hooksRecordSchema]).optional(),
 });
 
-/** Strict schema for plugin.json validation (IDE, cc validate). Rejects unknown fields. */
+/** Strict schema for plugin.json validation (IDE, agentsinc validate). Rejects unknown fields. */
 export const pluginManifestValidationSchema = z
   .object({
     name: z.string().min(1),
@@ -691,7 +691,7 @@ export const settingsFileSchema = z
   })
   .passthrough();
 
-/** Metadata for skills imported via `cc import skill` (tracks original source for updates) */
+/** Metadata for skills imported via `agentsinc import skill` (tracks original source for updates) */
 export const importedSkillMetadataSchema = z
   .object({
     forked_from: z
@@ -789,7 +789,7 @@ export const projectSourceConfigValidationSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
-// Strict validation schemas — used by `cc validate` and plugin-validator.
+// Strict validation schemas — used by `agentsinc validate` and plugin-validator.
 // Unlike the lenient loader schemas above, these enforce all constraints
 // and use `.strict()` to reject unknown fields.
 // ---------------------------------------------------------------------------

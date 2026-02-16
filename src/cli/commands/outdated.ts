@@ -76,7 +76,7 @@ export default class Outdated extends BaseCommand {
             }),
           );
         } else {
-          this.warn("No local skills found. Run `cc init` or `cc edit` first.");
+          this.warn("No local skills found. Run `agentsinc init` or `agentsinc edit` first.");
         }
         return;
       }

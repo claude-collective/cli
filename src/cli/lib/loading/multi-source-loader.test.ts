@@ -35,7 +35,7 @@ vi.mock("../plugins", () => ({
 }));
 
 const DEFAULT_SOURCE_CONFIG: ResolvedConfig = {
-  source: "github:claude-collective/skills",
+  source: "github:agents-inc/skills",
   sourceOrigin: "default",
 };
 
@@ -48,7 +48,7 @@ describe("multi-source-loader", () => {
     it("should tag non-local skills with public source", async () => {
       const { resolveAllSources } = await import("../configuration");
       vi.mocked(resolveAllSources).mockResolvedValue({
-        primary: { name: "marketplace", url: "github:claude-collective/skills" },
+        primary: { name: "marketplace", url: "github:agents-inc/skills" },
         extras: [],
       });
 
@@ -75,7 +75,7 @@ describe("multi-source-loader", () => {
     it("should tag local skills with both public and local sources", async () => {
       const { resolveAllSources } = await import("../configuration");
       vi.mocked(resolveAllSources).mockResolvedValue({
-        primary: { name: "marketplace", url: "github:claude-collective/skills" },
+        primary: { name: "marketplace", url: "github:agents-inc/skills" },
         extras: [],
       });
 
@@ -111,7 +111,7 @@ describe("multi-source-loader", () => {
     it("should tag local skills with local source and installed: true", async () => {
       const { resolveAllSources } = await import("../configuration");
       vi.mocked(resolveAllSources).mockResolvedValue({
-        primary: { name: "marketplace", url: "github:claude-collective/skills" },
+        primary: { name: "marketplace", url: "github:agents-inc/skills" },
         extras: [],
       });
 
@@ -138,7 +138,7 @@ describe("multi-source-loader", () => {
     it("should set activeSource to installed variant when available", async () => {
       const { resolveAllSources } = await import("../configuration");
       vi.mocked(resolveAllSources).mockResolvedValue({
-        primary: { name: "marketplace", url: "github:claude-collective/skills" },
+        primary: { name: "marketplace", url: "github:agents-inc/skills" },
         extras: [],
       });
 
@@ -160,7 +160,7 @@ describe("multi-source-loader", () => {
     it("should set activeSource to public when no installed variant", async () => {
       const { resolveAllSources } = await import("../configuration");
       vi.mocked(resolveAllSources).mockResolvedValue({
-        primary: { name: "marketplace", url: "github:claude-collective/skills" },
+        primary: { name: "marketplace", url: "github:agents-inc/skills" },
         extras: [],
       });
 
@@ -183,7 +183,7 @@ describe("multi-source-loader", () => {
       const { warn } = await import("../../utils/logger");
 
       vi.mocked(resolveAllSources).mockResolvedValue({
-        primary: { name: "marketplace", url: "github:claude-collective/skills" },
+        primary: { name: "marketplace", url: "github:agents-inc/skills" },
         extras: [
           { name: "acme-corp", url: "github:acme-corp/skills", description: "Private skills" },
         ],
@@ -219,7 +219,7 @@ describe("multi-source-loader", () => {
       const { extractAllSkills } = await import("../matrix");
 
       vi.mocked(resolveAllSources).mockResolvedValue({
-        primary: { name: "marketplace", url: "github:claude-collective/skills" },
+        primary: { name: "marketplace", url: "github:agents-inc/skills" },
         extras: [{ name: "acme-corp", url: "github:acme-corp/skills", description: "Acme skills" }],
       });
 
@@ -274,7 +274,7 @@ describe("multi-source-loader", () => {
       const { discoverAllPluginSkills } = await import("../plugins");
 
       vi.mocked(resolveAllSources).mockResolvedValue({
-        primary: { name: "marketplace", url: "github:claude-collective/skills" },
+        primary: { name: "marketplace", url: "github:agents-inc/skills" },
         extras: [],
       });
 
@@ -312,7 +312,7 @@ describe("multi-source-loader", () => {
       const { discoverAllPluginSkills } = await import("../plugins");
 
       vi.mocked(resolveAllSources).mockResolvedValue({
-        primary: { name: "marketplace", url: "github:claude-collective/skills" },
+        primary: { name: "marketplace", url: "github:agents-inc/skills" },
         extras: [],
       });
 

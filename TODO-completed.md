@@ -355,7 +355,7 @@ project/
 - Compiled agents output to `.claude/agents/` (runtime output)
 - All path construction uses `CLAUDE_DIR` and `CLAUDE_SRC_DIR` constants from `consts.ts`
 
-**D-14 Details:** Eliminated global config at `~/.claude-collective/config.yaml`. All config now visible in project's `.claude-src/config.yaml`.
+**D-14 Details:** Eliminated global config at `~/.agents-inc/config.yaml`. All config now visible in project's `.claude-src/config.yaml`.
 
 **Properties moved:**
 
@@ -369,7 +369,7 @@ project/
 1. `--source` flag (ephemeral, highest priority)
 2. `CC_SOURCE` env var
 3. `.claude-src/config.yaml` in project
-4. Default (`github:claude-collective/skills`)
+4. Default (`github:agents-inc/skills`)
 
 **D-15 Details:** Fixed `eject skills` to load from source marketplace, consolidated templates+agents into `agent-partials`, removed config eject.
 

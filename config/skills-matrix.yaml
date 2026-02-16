@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas/skills-matrix.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/skills-matrix.schema.json
 # =============================================================================
 # skills-matrix.yaml
 # Full skills matrix for CLI data-driven architecture

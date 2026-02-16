@@ -183,7 +183,7 @@ node-red      nodebox
 #### fzf (Fuzzy Finder)
 
 ```bash
-$ cc list | fzf --preview 'cc info {}'
+$ agentsinc list | fzf --preview 'agentsinc info {}'
 ```
 
 **Strengths:**
@@ -212,13 +212,13 @@ $ cc list | fzf --preview 'cc info {}'
 ### 3.1 Dual-Mode Design
 
 ```
-cc search <query>
+agentsinc search <query>
 ├── Query provided → Static mode (scripting-friendly)
 └── No query → Interactive mode (discovery-friendly)
 
-cc search react         → Static table output
-cc search               → Interactive fuzzy finder
-cc search -i react      → Interactive with pre-filled query
+agentsinc search react         → Static table output
+agentsinc search               → Interactive fuzzy finder
+agentsinc search -i react      → Interactive with pre-filled query
 ```
 
 ### 3.2 Searchable Fields Priority
@@ -269,39 +269,39 @@ function scoreMatch(query: string, target: string): number {
 
 ```bash
 # Basic search
-cc search react
+agentsinc search react
 
 # Category filter
-cc search react --category frontend
-cc search react -c frontend
+agentsinc search react --category frontend
+agentsinc search react -c frontend
 
 # Output formats
-cc search react --json
-cc search react --format wide
+agentsinc search react --json
+agentsinc search react --format wide
 
 # Pagination
-cc search state --limit 10
-cc search state --offset 10
+agentsinc search state --limit 10
+agentsinc search state --offset 10
 
 # Compatibility filter
-cc search --compatible-with react
-cc search --compatible-with zustand,react-query
+agentsinc search --compatible-with react
+agentsinc search --compatible-with zustand,react-query
 ```
 
 ### 4.2 Interactive Mode
 
 ```bash
 # Interactive fuzzy finder
-cc search
-cc search -i
-cc search --interactive
+agentsinc search
+agentsinc search -i
+agentsinc search --interactive
 
 # Interactive with pre-filled query
-cc search -i react
-cc search --interactive react
+agentsinc search -i react
+agentsinc search --interactive react
 
 # Interactive with category pre-filter
-cc search -i --category backend
+agentsinc search -i --category backend
 ```
 
 ### 4.3 Proposed Flag Structure
@@ -361,7 +361,7 @@ static flags = {
 ### 5.1 Table Format (Default)
 
 ```
-$ cc search zustand
+$ agentsinc search zustand
 
 Found 3 skills matching "zustand"
 
@@ -376,7 +376,7 @@ Tip: Use -c <category> to filter, --format wide for more details
 ### 5.2 Wide Format
 
 ```
-$ cc search zustand --format wide
+$ agentsinc search zustand --format wide
 
 Found 3 skills matching "zustand"
 
@@ -414,12 +414,12 @@ Legend: COMPAT = compatible frameworks
 ### 5.4 List Format (for Piping)
 
 ```
-$ cc search zustand --format list
+$ agentsinc search zustand --format list
 zustand
 redux-toolkit
 jotai
 
-$ cc search zustand --format list | xargs -I {} cc info {}
+$ agentsinc search zustand --format list | xargs -I {} agentsinc info {}
 ```
 
 ---
@@ -501,7 +501,7 @@ $ cc search zustand --format list | xargs -I {} cc info {}
 
 ### Phase 1: Enhanced Static Search (Low Effort)
 
-**Scope:** Improve existing `cc search` command
+**Scope:** Improve existing `agentsinc search` command
 
 **Tasks:**
 
@@ -538,7 +538,7 @@ $ cc search zustand --format list | xargs -I {} cc info {}
 
 ### Phase 3: Interactive Mode (Higher Effort)
 
-**Scope:** Add `cc search -i` fuzzy finder
+**Scope:** Add `agentsinc search -i` fuzzy finder
 
 **Tasks:**
 
@@ -563,9 +563,9 @@ $ cc search zustand --format list | xargs -I {} cc info {}
 
 **Tasks:**
 
-1. `cc import skill <source> --search` - search before importing
-2. `cc add <skill>` - search + add workflow
-3. `cc init --search` - search during wizard
+1. `agentsinc import skill <source> --search` - search before importing
+2. `agentsinc add <skill>` - search + add workflow
+3. `agentsinc init --search` - search during wizard
 
 **Estimated effort:** 1-2 days
 
@@ -577,15 +577,15 @@ $ cc search zustand --format list | xargs -I {} cc info {}
 
 ```bash
 # User wants to find state management options
-$ cc search state
+$ agentsinc search state
 Found 8 skills matching "state"
 
 # User narrows to frontend
-$ cc search state -c frontend
+$ agentsinc search state -c frontend
 Found 5 skills matching "state" in category "frontend"
 
 # User wants interactive exploration
-$ cc search -i state
+$ agentsinc search -i state
 # ... interactive fuzzy finder opens ...
 
 # User selects zustand, sees details
@@ -594,30 +594,30 @@ $ cc search -i state
 zustand
 
 # Can pipe directly to add
-$ cc search -i state | xargs cc add
+$ agentsinc search -i state | xargs agentsinc add
 ```
 
 ### Scripting Flow (Automation)
 
 ```bash
 # List all React-compatible skills as JSON
-$ cc search --compatible-with react --json | jq '.results[].alias'
+$ agentsinc search --compatible-with react --json | jq '.results[].alias'
 
 # Find skills by tag
-$ cc search --json | jq '.results[] | select(.tags | contains(["testing"]))'
+$ agentsinc search --json | jq '.results[] | select(.tags | contains(["testing"]))'
 
 # Generate report
-$ cc search --format list > available-skills.txt
+$ agentsinc search --format list > available-skills.txt
 ```
 
 ### Import Flow (Third-Party)
 
 ```bash
 # Search third-party repo before importing
-$ cc import skill github:vercel-labs/skills --list | cc search -i
+$ agentsinc import skill github:vercel-labs/skills --list | agentsinc search -i
 
 # Or integrated search
-$ cc import skill github:vercel-labs/skills --search
+$ agentsinc import skill github:vercel-labs/skills --search
 # ... interactive search of that repo's skills ...
 ```
 

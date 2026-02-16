@@ -55,7 +55,7 @@ export async function fetchSkills(
       throw new Error(
         `Skill not found: ${skillId}\n\n` +
           `Looked in: ${skillSourceDir}\n` +
-          `Run 'cc search ${skillId}' to find available skills, or 'cc init' to select skills interactively.`,
+          `Run 'agentsinc search ${skillId}' to find available skills, or 'agentsinc init' to select skills interactively.`,
       );
     }
 

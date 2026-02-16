@@ -194,7 +194,7 @@ agents:
     });
 
     it("should include init suggestion in error message", async () => {
-      await expect(getInstallationOrThrow(tempDir)).rejects.toThrow(/cc init/);
+      await expect(getInstallationOrThrow(tempDir)).rejects.toThrow(/agentsinc init/);
     });
 
     it("should return installation when found (local)", async () => {

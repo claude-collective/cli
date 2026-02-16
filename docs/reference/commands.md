@@ -1,15 +1,15 @@
 # CLI Commands Reference
 
-## `cc init`
+## `agentsinc init`
 
 Initialize Agents Inc. in a project.
 
 ```bash
-cc init                                      # Start the setup wizard
-cc init --source github:org/marketplace      # Use a custom marketplace
-cc init --source /path/to/marketplace        # Use a local marketplace
-cc init --refresh                            # Force refresh remote source
-cc init --dry-run                            # Preview only
+agentsinc init                                      # Start the setup wizard
+agentsinc init --source github:org/marketplace      # Use a custom marketplace
+agentsinc init --source /path/to/marketplace        # Use a local marketplace
+agentsinc init --refresh                            # Force refresh remote source
+agentsinc init --dry-run                            # Preview only
 ```
 
 **Flags:**
@@ -46,14 +46,14 @@ cc init --dry-run                            # Preview only
 
 ---
 
-## `cc edit`
+## `agentsinc edit`
 
 Modify skills in existing installation.
 
 ```bash
-cc edit
-cc edit --source /path/to/marketplace
-cc edit --refresh
+agentsinc edit
+agentsinc edit --source /path/to/marketplace
+agentsinc edit --refresh
 ```
 
 **Flags:**
@@ -73,15 +73,15 @@ cc edit --refresh
 
 ---
 
-## `cc compile`
+## `agentsinc compile`
 
 Recompile agents from discovered skills.
 
 ```bash
-cc compile
-cc compile -v                    # Verbose
-cc compile -o /custom/output     # Custom output dir (skips plugin mode)
-cc compile --agent-source github:org/repo  # Remote agent definitions
+agentsinc compile
+agentsinc compile -v                    # Verbose
+agentsinc compile -o /custom/output     # Custom output dir (skips plugin mode)
+agentsinc compile --agent-source github:org/repo  # Remote agent definitions
 ```
 
 **Two Modes:**
@@ -91,16 +91,16 @@ cc compile --agent-source github:org/repo  # Remote agent definitions
 
 ---
 
-## `cc eject`
+## `agentsinc eject`
 
 Export bundled content for customization.
 
 ```bash
-cc eject agent-partials         # Export agent partial templates
-cc eject skills                 # Export skills from plugin
-cc eject all                    # Export everything
-cc eject agent-partials -o ./custom  # Custom output dir
-cc eject agent-partials -f           # Force overwrite
+agentsinc eject agent-partials         # Export agent partial templates
+agentsinc eject skills                 # Export skills from plugin
+agentsinc eject all                    # Export everything
+agentsinc eject agent-partials -o ./custom  # Custom output dir
+agentsinc eject agent-partials -f           # Force overwrite
 ```
 
 **Output locations:**
@@ -110,16 +110,16 @@ cc eject agent-partials -f           # Force overwrite
 
 ---
 
-## `cc uninstall`
+## `agentsinc uninstall`
 
 Remove Agents Inc. from a project.
 
 ```bash
-cc uninstall                    # Interactive, prompts for confirmation
-cc uninstall --yes              # Skip confirmation
-cc uninstall --keep-config      # Keep .claude/config.yaml
-cc uninstall --plugin           # Only remove plugin (not local files)
-cc uninstall --local            # Only remove local files (not plugin)
+agentsinc uninstall                    # Interactive, prompts for confirmation
+agentsinc uninstall --yes              # Skip confirmation
+agentsinc uninstall --keep-config      # Keep .claude/config.yaml
+agentsinc uninstall --plugin           # Only remove plugin (not local files)
+agentsinc uninstall --local            # Only remove local files (not plugin)
 ```
 
 **Plugin Mode:** Calls `claude plugin uninstall`
@@ -127,12 +127,12 @@ cc uninstall --local            # Only remove local files (not plugin)
 
 ---
 
-## `cc doctor`
+## `agentsinc doctor`
 
 Diagnose configuration issues and installation problems.
 
 ```bash
-cc doctor
+agentsinc doctor
 ```
 
 **Checks:**
@@ -144,170 +144,170 @@ cc doctor
 
 ---
 
-## `cc search`
+## `agentsinc search`
 
 Search available skills by name, description, category, or tags.
 
 ```bash
-cc search <query>
-cc search react
-cc search "state management"
+agentsinc search <query>
+agentsinc search react
+agentsinc search "state management"
 ```
 
 ---
 
-## `cc outdated`
+## `agentsinc outdated`
 
 Check which local skills are outdated compared to source.
 
 ```bash
-cc outdated
-cc outdated --source /path/to/marketplace
+agentsinc outdated
+agentsinc outdated --source /path/to/marketplace
 ```
 
 ---
 
-## `cc info`
+## `agentsinc info`
 
 Display detailed information about a specific skill.
 
 ```bash
-cc info <skill-id>
-cc info web/framework/react
+agentsinc info <skill-id>
+agentsinc info web/framework/react
 ```
 
 ---
 
-## `cc diff`
+## `agentsinc diff`
 
 Show differences between local and source skills.
 
 ```bash
-cc diff
-cc diff <skill-id>
-cc diff --source /path/to/marketplace
+agentsinc diff
+agentsinc diff <skill-id>
+agentsinc diff --source /path/to/marketplace
 ```
 
 ---
 
-## `cc update`
+## `agentsinc update`
 
 Update local skills from source.
 
 ```bash
-cc update
-cc update <skill-id>
-cc update --source /path/to/marketplace
+agentsinc update
+agentsinc update <skill-id>
+agentsinc update --source /path/to/marketplace
 ```
 
 ---
 
-## `cc build:plugins`
+## `agentsinc build:plugins`
 
 Build individual skills into standalone plugins. For marketplace maintainers.
 
 ```bash
-cc build:plugins
-cc build:plugins -s src/skills -o dist/plugins
-cc build:plugins --skill web/framework/react  # Single skill
-cc build:plugins -v  # Verbose
+agentsinc build:plugins
+agentsinc build:plugins -s src/skills -o dist/plugins
+agentsinc build:plugins --skill web/framework/react  # Single skill
+agentsinc build:plugins -v  # Verbose
 ```
 
 ---
 
-## `cc build:stack`
+## `agentsinc build:stack`
 
 Build a stack into a standalone plugin.
 
 ```bash
-cc build:stack --stack nextjs-fullstack
-cc build:stack --stack nextjs-fullstack -o dist/stacks
-cc build:stack --agent-source github:org/repo
-cc build:stack -v
+agentsinc build:stack --stack nextjs-fullstack
+agentsinc build:stack --stack nextjs-fullstack -o dist/stacks
+agentsinc build:stack --agent-source github:org/repo
+agentsinc build:stack -v
 ```
 
 **Output:** Complete plugin with agents, skills, manifest, README.
 
 ---
 
-## `cc build:marketplace`
+## `agentsinc build:marketplace`
 
 Generate marketplace.json from built plugins.
 
 ```bash
-cc build:marketplace
-cc build:marketplace -p dist/stacks -o dist/.claude-plugin/marketplace.json
-cc build:marketplace --name my-marketplace --version 1.0.0
+agentsinc build:marketplace
+agentsinc build:marketplace -p dist/stacks -o dist/.claude-plugin/marketplace.json
+agentsinc build:marketplace --name my-marketplace --version 1.0.0
 ```
 
 **Note:** Paths in marketplace.json must be relative to marketplace root.
 
 ---
 
-## `cc validate`
+## `agentsinc validate`
 
 Validate YAML schemas or compiled plugins.
 
 ```bash
-cc validate                     # Validate all YAML in project
-cc validate /path/to/plugin     # Validate single plugin
-cc validate /path/to/plugins --all  # Validate all plugins in dir
-cc validate -v
+agentsinc validate                     # Validate all YAML in project
+agentsinc validate /path/to/plugin     # Validate single plugin
+agentsinc validate /path/to/plugins --all  # Validate all plugins in dir
+agentsinc validate -v
 ```
 
 ---
 
-## `cc list` / `cc ls`
+## `agentsinc list` / `agentsinc ls`
 
 Show current plugin information.
 
 ```bash
-cc list
+agentsinc list
 ```
 
 ---
 
-## `cc config`
+## `agentsinc config`
 
 Manage configuration.
 
 ```bash
-cc config show                  # Show effective config with precedence
-cc config get source            # Get specific value
-cc config set source /path      # Set global config
-cc config unset source          # Remove from global
-cc config set-project source /path  # Set project config
-cc config unset-project source
-cc config path                  # Show config file paths
+agentsinc config show                  # Show effective config with precedence
+agentsinc config get source            # Get specific value
+agentsinc config set source /path      # Set global config
+agentsinc config unset source          # Remove from global
+agentsinc config set-project source /path  # Set project config
+agentsinc config unset-project source
+agentsinc config path                  # Show config file paths
 ```
 
 **Valid keys:** `source`, `author`, `agents_source`, `marketplace_url`
 
 ---
 
-## `cc version`
+## `agentsinc version`
 
 Manage plugin version.
 
 ```bash
-cc version patch    # 1.0.0 -> 1.0.1
-cc version minor    # 1.0.0 -> 1.1.0
-cc version major    # 1.0.0 -> 2.0.0
-cc version set 2.0.0
+agentsinc version patch    # 1.0.0 -> 1.0.1
+agentsinc version minor    # 1.0.0 -> 1.1.0
+agentsinc version major    # 1.0.0 -> 2.0.0
+agentsinc version set 2.0.0
 ```
 
 ---
 
-## `cc new agent`
+## `agentsinc new agent`
 
 Create a new custom agent using AI generation. Invokes the agent-summoner meta-agent to generate agent files.
 
 ```bash
-cc new agent <name>                      # Interactive mode
-cc new agent my-agent -p "Handles X"     # With purpose
-cc new agent my-agent -p "..." -n        # Non-interactive mode
-cc new agent my-agent -s /path/to/source # Custom source
-cc new agent my-agent -r                 # Force refresh source
+agentsinc new agent <name>                      # Interactive mode
+agentsinc new agent my-agent -p "Handles X"     # With purpose
+agentsinc new agent my-agent -p "..." -n        # Non-interactive mode
+agentsinc new agent my-agent -s /path/to/source # Custom source
+agentsinc new agent my-agent -r                 # Force refresh source
 ```
 
 **Options:**
@@ -321,13 +321,13 @@ cc new agent my-agent -r                 # Force refresh source
 
 ---
 
-## `cc new skill`
+## `agentsinc new skill`
 
 Create a new local skill with proper structure.
 
 ```bash
-cc new skill <name>
-cc new skill my-custom-skill
+agentsinc new skill <name>
+agentsinc new skill my-custom-skill
 ```
 
 **Output:** Creates skill files in `.claude/skills/<name>/`
@@ -348,7 +348,7 @@ The `--source` flag (and the `source` config key) accepts the following formats:
 | Local absolute path | `/home/user/my-marketplace`                          |
 | Local relative path | `./my-marketplace` or `../other-project/marketplace` |
 
-**Source resolution precedence:** `--source` flag > `CC_SOURCE` env var > project config (`.claude-src/config.yaml`) > default (`github:claude-collective/skills`)
+**Source resolution precedence:** `--source` flag > `CC_SOURCE` env var > project config (`.claude-src/config.yaml`) > default (`github:agents-inc/skills`)
 
 **Private repositories:** Set the `GIGET_AUTH` environment variable with a GitHub token for private repo access:
 

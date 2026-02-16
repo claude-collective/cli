@@ -169,7 +169,7 @@ export default class Eject extends BaseCommand {
     this.log("");
   }
 
-  // Ensures a minimal config.yaml exists so `cc compile` works after eject
+  // Ensures a minimal config.yaml exists so `agentsinc compile` works after eject
   private async ensureMinimalConfig(
     projectDir: string,
     sourceFlag?: string,

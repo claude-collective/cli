@@ -2331,7 +2331,7 @@ useInput((input, key) => {
 
 ## Flow
 
-1. **User runs `cc init`**
+1. **User runs `agentsinc init`**
    - Command: `src/cli/commands/init.tsx`
    - Parses flags (source, dry-run, refresh, local)
    - Loads skills matrix via `loadSkillsMatrixFromSource()`

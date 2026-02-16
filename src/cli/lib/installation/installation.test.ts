@@ -170,8 +170,8 @@ describe("installation", () => {
       );
     });
 
-    it("error message suggests running cc init", async () => {
-      await expect(getInstallationOrThrow(tempDir)).rejects.toThrow("cc init");
+    it("error message suggests running agentsinc init", async () => {
+      await expect(getInstallationOrThrow(tempDir)).rejects.toThrow("agentsinc init");
     });
 
     it("returns plugin installation when config has installMode: plugin", async () => {

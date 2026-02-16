@@ -164,7 +164,7 @@ export default class Diff extends BaseCommand {
 
     if (!(await fileExists(localSkillsPath))) {
       if (!flags.quiet) {
-        this.warn("No local skills found. Run 'cc init' or 'cc edit' first.");
+        this.warn("No local skills found. Run 'agentsinc init' or 'agentsinc edit' first.");
       }
       return;
     }

@@ -3,8 +3,8 @@ import { DEFAULT_BRANDING } from "../consts.js";
 export const ERROR_MESSAGES = {
   UNKNOWN_ERROR: "Unknown error occurred",
   UNKNOWN_ERROR_SHORT: "Unknown error",
-  NO_INSTALLATION: `No installation found. Run 'cc init' first to set up ${DEFAULT_BRANDING.NAME}`,
-  NO_LOCAL_SKILLS: "No local skills found. Run `cc init` or `cc edit` first.",
+  NO_INSTALLATION: `No installation found. Run 'agentsinc init' first to set up ${DEFAULT_BRANDING.NAME}`,
+  NO_LOCAL_SKILLS: "No local skills found. Run `agentsinc init` or `agentsinc edit` first.",
   NO_SKILLS_FOUND: "No skills found",
   VALIDATION_FAILED: "Validation failed",
   FAILED_RESOLVE_SOURCE: "Failed to resolve source",
@@ -39,7 +39,7 @@ export const STATUS_MESSAGES = {
 
 export const INFO_MESSAGES = {
   NO_CHANGES_MADE: "No changes made.",
-  RUN_COMPILE: "Run 'cc compile' to include imported skills in your agents.",
+  RUN_COMPILE: "Run 'agentsinc compile' to include imported skills in your agents.",
   NO_AGENTS_TO_RECOMPILE: "No agents to recompile",
   NO_AGENTS_TO_COMPILE: "No agents to compile",
   NO_PLUGIN_INSTALLATION: "No plugin installation found.",

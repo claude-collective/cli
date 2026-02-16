@@ -258,7 +258,7 @@ export default class Edit extends BaseCommand {
       }
     } catch (error) {
       this.warn(`Agent recompilation failed: ${getErrorMessage(error)}`);
-      this.log("You can manually recompile with 'cc compile'.\n");
+      this.log("You can manually recompile with 'agentsinc compile'.\n");
     }
 
     const summaryParts = [`${addedSkills.length} added`, `${removedSkills.length} removed`];

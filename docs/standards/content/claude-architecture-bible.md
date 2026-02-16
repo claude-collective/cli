@@ -29,13 +29,13 @@ This system compiles modular source files into standalone agent/skill markdown f
 
 ## Compilation Workflow
 
-> **NOTE:** The `cc switch` command is deprecated. Stacks are now semantic groupings defined within a single config file.
+> **NOTE:** The `agentsinc switch` command is deprecated. Stacks are now semantic groupings defined within a single config file.
 
 The compiler generates output based on `.claude-src/config.yaml`:
 
 ```bash
 # Compile agents and skills
-cc compile
+agentsinc compile
 ```
 
 **What happens:**
@@ -853,7 +853,7 @@ agents:
         usage: when implementing client state
 ```
 
-> **NOTE:** Stacks are now semantic groupings using the `stack:` field, not separate directories. The `cc switch` command is deprecated.
+> **NOTE:** Stacks are now semantic groupings using the `stack:` field, not separate directories. The `agentsinc switch` command is deprecated.
 
 ## Skill File Structure
 
@@ -934,10 +934,10 @@ Skills are single markdown files with this structure:
 
 ```bash
 # Compile agents and skills from .claude-src/config.yaml
-cc compile
+agentsinc compile
 ```
 
-> **NOTE:** The `cc switch` command is deprecated. Configuration is now managed via `.claude-src/config.yaml`.
+> **NOTE:** The `agentsinc switch` command is deprecated. Configuration is now managed via `.claude-src/config.yaml`.
 
 ## Final Reminder Pattern
 
@@ -1025,7 +1025,7 @@ agents:
 ### Step 4: Compile and Verify
 
 ```bash
-cc compile
+agentsinc compile
 # Output: .claude/agents/my-new-agent.md
 ```
 
@@ -1117,7 +1117,7 @@ See "Skill Schema Requirements" section below for full schema.
 
 ## Skill Schema Requirements
 
-Every skill consists of two required files: `SKILL.md` and `metadata.yaml`. Both have strict schema requirements that are validated by `cc validate`.
+Every skill consists of two required files: `SKILL.md` and `metadata.yaml`. Both have strict schema requirements that are validated by `agentsinc validate`.
 
 ### SKILL.md Frontmatter (REQUIRED)
 
@@ -1141,7 +1141,7 @@ description: Component architecture, hooks, patterns
 | `name`        | Skill identifier with author   | `web-framework-react (@vince)`            |
 | `description` | Short description (5-10 words) | `Component architecture, hooks, patterns` |
 
-**Validation:** Files without valid frontmatter will fail `cc validate` with "Failed to extract content (no valid frontmatter found)".
+**Validation:** Files without valid frontmatter will fail `agentsinc validate` with "Failed to extract content (no valid frontmatter found)".
 
 ---
 
@@ -1261,7 +1261,7 @@ version: "1"        # String - INVALID
 ### Complete metadata.yaml Example
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas/metadata.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/metadata.schema.json
 category: framework
 category_exclusive: true
 author: "@vince"

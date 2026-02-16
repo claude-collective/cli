@@ -199,7 +199,7 @@ export type WizardState = {
   /**
    * Pre-populate domainSelections from a flat list of installed skill IDs.
    *
-   * Used by `cc edit` to restore wizard state from existing project config.
+   * Used by `agentsinc edit` to restore wizard state from existing project config.
    * Looks up each skill's category and domain, warns for unresolvable skills.
    *
    * @param skillIds - Flat array of currently installed skill IDs

@@ -25,7 +25,7 @@ async function checkConfigValid(projectDir: string): Promise<CheckResult> {
     return {
       status: "fail",
       message: ".claude/config.yaml not found",
-      details: ["Run 'cc init' to create a configuration"],
+      details: ["Run 'agentsinc init' to create a configuration"],
     };
   }
 
@@ -288,10 +288,10 @@ function formatTips(results: CheckResult[]): string[] {
   const tips: string[] = [];
 
   if (hasAgentWarning) {
-    tips.push("  Tip: Run 'cc compile' to generate missing agent files");
+    tips.push("  Tip: Run 'agentsinc compile' to generate missing agent files");
   }
   if (hasConfigError) {
-    tips.push("  Tip: Run 'cc init' to create or fix configuration");
+    tips.push("  Tip: Run 'agentsinc init' to create or fix configuration");
   }
   if (hasSkillError) {
     tips.push("  Tip: Check skill IDs in config match available skills");

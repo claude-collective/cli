@@ -1,5 +1,5 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas/project-config.schema.json
-name: claude-collective
+# yaml-language-server: $schema=https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/project-config.schema.json
+name: agents-inc
 agents:
   - agent-summoner
   - api-developer
@@ -270,4 +270,4 @@ stack:
     cli-framework: cli-framework-oclif-ink
 description: Production-ready Next.js with complete backend infrastructure
 installMode: local
-source: github:claude-collective/skills
+source: github:agents-inc/skills

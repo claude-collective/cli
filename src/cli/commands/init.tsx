@@ -92,7 +92,7 @@ export default class Init extends BaseCommand {
         ? `.claude/settings.json`
         : (existingInstallation?.configPath ?? projectDir);
       this.warn(`${DEFAULT_BRANDING.NAME} is already initialized at ${location}`);
-      this.log(`Use 'cc edit' to modify skills.`);
+      this.log(`Use 'agentsinc edit' to modify skills.`);
       this.log(INFO_MESSAGES.NO_CHANGES_MADE);
       return;
     }
@@ -293,7 +293,7 @@ export default class Init extends BaseCommand {
       this.log("");
       this.log("To customize agent-skill assignments:");
       this.log(`  1. Edit .claude-src/config.yaml`);
-      this.log(`  2. Run 'cc compile' to regenerate agents`);
+      this.log(`  2. Run 'agentsinc compile' to regenerate agents`);
       this.log("");
 
       const permissionWarning = await checkPermissions(projectDir);
@@ -354,7 +354,7 @@ export default class Init extends BaseCommand {
       this.log("");
       this.log("To customize agent-skill assignments:");
       this.log(`  1. Edit .claude-src/config.yaml`);
-      this.log(`  2. Run 'cc compile' to regenerate agents`);
+      this.log(`  2. Run 'agentsinc compile' to regenerate agents`);
       this.log("");
 
       const permissionWarning = await checkPermissions(projectDir);

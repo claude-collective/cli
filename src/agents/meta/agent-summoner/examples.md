@@ -110,7 +110,7 @@ tools:
 ### Step 7: Compile and Verify
 
 ```bash
-cc compile
+agentsinc compile
 ```
 
 ---
@@ -173,4 +173,4 @@ You are an expert example developer.
 2. Should I verify changes were written?
 ```
 
-**Recommendation:** Apply changes, then recompile with `cc compile`
+**Recommendation:** Apply changes, then recompile with `agentsinc compile`

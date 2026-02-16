@@ -59,11 +59,11 @@ You may make changes in the claude-subagents directory (`/home/vince/dev/claude-
 
 ---
 
-### P1: Update GitHub URLs from claude-collective to agents-inc
+### P1: Update GitHub URLs from claude-collective to agents-inc ✅
 
-Priority: HIGH — Do this first before any other work.
+Priority: HIGH — **DONE**
 
-Update all `claude-collective` GitHub references across the codebase to the new organization name. This includes:
+Updated all `claude-collective` GitHub references across the codebase to `agents-inc`. This included:
 
 - `SCHEMA_BASE_URL` in `src/cli/consts.ts`
 - `DEFAULT_SOURCE` in `src/cli/lib/configuration/config.ts`

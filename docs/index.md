@@ -67,10 +67,10 @@ Feature development documentation organized by lifecycle stage.
 
 #### Proposed (Research Only)
 
-| Document                                                 | Content                                         |
-| -------------------------------------------------------- | ----------------------------------------------- |
-| [skill-consume.md](./features/proposed/skill-consume.md) | AI-assisted skill merging (`cc consume`) design |
-| [skill-search.md](./features/proposed/skill-search.md)   | Enhanced search with fuzzy matching design      |
+| Document                                                 | Content                                                |
+| -------------------------------------------------------- | ------------------------------------------------------ |
+| [skill-consume.md](./features/proposed/skill-consume.md) | AI-assisted skill merging (`agentsinc consume`) design |
+| [skill-search.md](./features/proposed/skill-search.md)   | Enhanced search with fuzzy matching design             |
 
 #### Completed
 
@@ -104,13 +104,13 @@ Feature development documentation organized by lifecycle stage.
 
 ```bash
 # Initialize in a project
-cc init --source /path/to/marketplace
+agentsinc init --source /path/to/marketplace
 
 # Build stack for distribution
-cc build stack --stack nextjs-fullstack
+agentsinc build stack --stack nextjs-fullstack
 
 # Generate marketplace.json
-cc build marketplace --plugins-dir dist/stacks
+agentsinc build marketplace --plugins-dir dist/stacks
 
 # Install via Claude CLI
 claude plugin marketplace add /path/to/dist

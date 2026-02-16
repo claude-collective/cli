@@ -66,7 +66,7 @@ export async function getInstallationOrThrow(
 
   if (!installation) {
     throw new Error(
-      `No ${DEFAULT_BRANDING.NAME} installation found.\nRun 'cc init' to create one.`,
+      `No ${DEFAULT_BRANDING.NAME} installation found.\nRun 'agentsinc init' to create one.`,
     );
   }
 

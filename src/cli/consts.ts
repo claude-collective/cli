@@ -66,8 +66,7 @@ export const DEFAULT_DISPLAY_VERSION = "0.0.0";
 
 // JSON Schema URLs for yaml-language-server $schema comments.
 // Uses raw.githubusercontent.com so schemas resolve without requiring the CLI as a dependency.
-const SCHEMA_PKG_PREFIX =
-  "https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas";
+const SCHEMA_PKG_PREFIX = "https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas";
 
 export const SCHEMA_PATHS = {
   agent: `${SCHEMA_PKG_PREFIX}/agent.schema.json`,

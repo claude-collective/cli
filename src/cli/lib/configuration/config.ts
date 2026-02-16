@@ -16,7 +16,7 @@ import {
 import { projectSourceConfigSchema } from "../schemas";
 import type { BoundSkill } from "../../types";
 
-export const DEFAULT_SOURCE = `${GITHUB_SOURCE.GITHUB_PREFIX}claude-collective/skills`;
+export const DEFAULT_SOURCE = `${GITHUB_SOURCE.GITHUB_PREFIX}agents-inc/skills`;
 export const SOURCE_ENV_VAR = "CC_SOURCE";
 export const PROJECT_CONFIG_FILE = STANDARD_FILES.CONFIG_YAML;
 

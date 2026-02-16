@@ -188,7 +188,7 @@ export default class Compile extends BaseCommand {
     if (totalSkillCount === 0) {
       this.log(ERROR_MESSAGES.NO_SKILLS_FOUND);
       this.error(
-        "No skills found. Add skills with 'cc add <skill>' or create in .claude/skills/.",
+        "No skills found. Add skills with 'agentsinc add <skill>' or create in .claude/skills/.",
         { exit: EXIT_CODES.ERROR },
       );
     }

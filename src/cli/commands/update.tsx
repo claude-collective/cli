@@ -191,7 +191,7 @@ export default class Update extends BaseCommand {
             this.log("");
           }
 
-          this.log(`Run \`cc search ${args.skill}\` to search available skills.`);
+          this.log(`Run \`agentsinc search ${args.skill}\` to search available skills.`);
           this.log("");
           this.error(ERROR_MESSAGES.SKILL_NOT_FOUND, { exit: EXIT_CODES.ERROR });
         }

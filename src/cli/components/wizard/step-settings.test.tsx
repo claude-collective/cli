@@ -18,7 +18,7 @@ vi.mock("../../lib/configuration/source-manager.js", () => ({
 
 // Mock config
 vi.mock("../../lib/configuration/config.js", () => ({
-  DEFAULT_SOURCE: "github:claude-collective/skills",
+  DEFAULT_SOURCE: "github:agents-inc/skills",
 }));
 
 const LOADING_SETTLE_MS = 200;
@@ -41,7 +41,7 @@ describe("StepSettings component", () => {
     const { getSourceSummary } = await import("../../lib/configuration/source-manager.js");
     vi.mocked(getSourceSummary).mockResolvedValue({
       sources: [
-        { name: "public", url: "github:claude-collective/skills", enabled: true },
+        { name: "public", url: "github:agents-inc/skills", enabled: true },
         { name: "acme-corp", url: "github:acme-corp/claude-skills", enabled: true },
       ],
       localSkillCount: 3,
@@ -89,7 +89,7 @@ describe("StepSettings component", () => {
 
       await delay(LOADING_SETTLE_MS);
       const output = lastFrame();
-      expect(output).toContain("github:claude-collective/skills");
+      expect(output).toContain("github:agents-inc/skills");
       expect(output).toContain("github:acme-corp/claude-skills");
     });
 
@@ -259,7 +259,7 @@ describe("StepSettings component", () => {
     it("should handle empty sources list gracefully", async () => {
       const { getSourceSummary } = await import("../../lib/configuration/source-manager.js");
       vi.mocked(getSourceSummary).mockResolvedValue({
-        sources: [{ name: "public", url: "github:claude-collective/skills", enabled: true }],
+        sources: [{ name: "public", url: "github:agents-inc/skills", enabled: true }],
         localSkillCount: 0,
         pluginSkillCount: 0,
       });

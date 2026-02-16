@@ -60,7 +60,7 @@ export type ProjectConfig = {
    * Resolved stack configuration with agent->skill mappings.
    * Keys are agent IDs, values are subcategory->SkillAssignment[] mappings.
    * Values are normalized to SkillAssignment[] at load time (same as stacks.yaml).
-   * Generated during `cc init` when a stack is selected.
+   * Generated during `agentsinc init` when a stack is selected.
    */
   stack?: Record<string, StackAgentConfig>;
 

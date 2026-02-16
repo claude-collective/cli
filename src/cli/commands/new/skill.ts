@@ -198,7 +198,7 @@ export default class NewSkill extends BaseCommand {
       this.logSuccess(`Created ${STANDARD_FILES.SKILL_MD} at ${skillMdPath}`);
       this.logSuccess(`Created ${STANDARD_FILES.METADATA_YAML} at ${metadataPath}`);
       this.log("");
-      this.log("Skill created successfully! Run 'cc compile' to include it in your agents.");
+      this.log("Skill created successfully! Run 'agentsinc compile' to include it in your agents.");
       this.log("");
     } catch (error) {
       this.handleError(error);

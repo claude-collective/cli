@@ -1,12 +1,12 @@
 # Skill Consume Command UX Research
 
-> Research findings for a `cc consume` command that merges external skills into existing local skills.
+> Research findings for a `agentsinc consume` command that merges external skills into existing local skills.
 
 ---
 
 ## Executive Summary
 
-The `cc consume` command enables users to "absorb" knowledge from external skills (third-party repos, community skills) into their own local skills. Unlike `cc import` which copies skills wholesale, `consume` intelligently merges content to create enhanced, comprehensive local skills.
+The `agentsinc consume` command enables users to "absorb" knowledge from external skills (third-party repos, community skills) into their own local skills. Unlike `agentsinc import` which copies skills wholesale, `consume` intelligently merges content to create enhanced, comprehensive local skills.
 
 **Key insight:** This is closer to knowledge synthesis than file merging - we're combining expertise, not just concatenating files.
 
@@ -128,7 +128,7 @@ consume_strategy:
 
 ```bash
 # Default: AI synthesis with preview
-cc consume vercel-labs/react-best-practices --into web-framework-react
+agentsinc consume vercel-labs/react-best-practices --into web-framework-react
 ```
 
 **Flow:**
@@ -144,14 +144,14 @@ cc consume vercel-labs/react-best-practices --into web-framework-react
 
 ```bash
 # Faster, deterministic, no AI
-cc consume vercel-labs/react-best-practices --into web-framework-react --structured
+agentsinc consume vercel-labs/react-best-practices --into web-framework-react --structured
 ```
 
 ### Fallback: Simple Append
 
 ```bash
 # Just append, no deduplication
-cc consume vercel-labs/react-best-practices --into web-framework-react --append
+agentsinc consume vercel-labs/react-best-practices --into web-framework-react --append
 ```
 
 ---
@@ -163,21 +163,21 @@ cc consume vercel-labs/react-best-practices --into web-framework-react --append
 **Option A: Source-first (like git pull)**
 
 ```bash
-cc consume <external-skill> --into <local-skill>
-cc consume github:vercel-labs/agent-skills/react-best-practices --into web-framework-react
+agentsinc consume <external-skill> --into <local-skill>
+agentsinc consume github:vercel-labs/agent-skills/react-best-practices --into web-framework-react
 ```
 
 **Option B: Target-first (like import)**
 
 ```bash
-cc consume <local-skill> --from <external-skill>
-cc consume web-framework-react --from github:vercel-labs/agent-skills/react-best-practices
+agentsinc consume <local-skill> --from <external-skill>
+agentsinc consume web-framework-react --from github:vercel-labs/agent-skills/react-best-practices
 ```
 
 **Option C: Interactive (no args)**
 
 ```bash
-cc consume
+agentsinc consume
 # Prompts: Which local skill? Which external source? Which patterns?
 ```
 
@@ -186,7 +186,7 @@ cc consume
 ### Full Command Spec
 
 ```bash
-cc consume <source> --into <local-skill> [options]
+agentsinc consume <source> --into <local-skill> [options]
 
 Arguments:
   source                External skill source (GitHub URL, repo:path, or skill ID)
@@ -206,16 +206,16 @@ Options:
 
 ```bash
 # Full GitHub URL
-cc consume https://github.com/vercel-labs/agent-skills --skill react-best-practices --into web-framework-react
+agentsinc consume https://github.com/vercel-labs/agent-skills --skill react-best-practices --into web-framework-react
 
 # Short GitHub format
-cc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react
+agentsinc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react
 
 # Direct skill path
-cc consume gh:vercel-labs/agent-skills/skills/react-best-practices --into web-framework-react
+agentsinc consume gh:vercel-labs/agent-skills/skills/react-best-practices --into web-framework-react
 
 # Local path (for testing)
-cc consume /path/to/skill-folder --into web-framework-react
+agentsinc consume /path/to/skill-folder --into web-framework-react
 ```
 
 ---
@@ -225,7 +225,7 @@ cc consume /path/to/skill-folder --into web-framework-react
 ### Flow A: Default (AI-Assisted with Preview)
 
 ```
-$ cc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react
+$ agentsinc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react
 
 Consume External Skill
 
@@ -268,7 +268,7 @@ Preview merged skill? [Y/n/edit] _
 ### Flow B: Structured Merge (No AI)
 
 ```
-$ cc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react --structured
+$ agentsinc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react --structured
 
 Consume External Skill (Structured Mode)
 
@@ -307,7 +307,7 @@ Apply merge? [y/N/preview] _
 ### Flow C: Interactive Mode
 
 ```
-$ cc consume
+$ agentsinc consume
 
 Consume External Skill
 
@@ -427,13 +427,13 @@ consumed_from:
 
 ```bash
 # Check if consumed sources have updates
-cc outdated --consumed
+agentsinc outdated --consumed
 
 # Re-consume with updates
-cc consume --update-all
+agentsinc consume --update-all
 
 # Show consumption history
-cc info web-framework-react --consumed
+agentsinc info web-framework-react --consumed
 ```
 
 ---
@@ -604,7 +604,7 @@ External skill doesn't follow standard skill structure.
 
 ### Phase 1: Basic Consume
 
-- `cc consume <source> --into <skill> --append`
+- `agentsinc consume <source> --into <skill> --append`
 - Simple append mode only
 - Basic metadata tracking (`consumed_from`)
 - Preview before apply
@@ -629,7 +629,7 @@ External skill doesn't follow standard skill structure.
 
 2. **What's the right default?** AI-synthesis (best output) vs append (safest)?
 
-3. **Should there be a `cc unconsume` command?** To revert a consume using backup?
+3. **Should there be a `agentsinc unconsume` command?** To revert a consume using backup?
 
 4. **Version compatibility?** What if external skill targets different React version?
 
@@ -641,31 +641,31 @@ External skill doesn't follow standard skill structure.
 
 ```bash
 # Basic consume with preview
-cc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react
+agentsinc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react
 
 # Consume and apply immediately
-cc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react --apply
+agentsinc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react --apply
 
 # Structured merge (no AI)
-cc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react --structured
+agentsinc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react --structured
 
 # Only consume certain sections
-cc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react --sections patterns,examples
+agentsinc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react --sections patterns,examples
 
 # Append mode (safest)
-cc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react --append
+agentsinc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react --append
 
 # Dry run (don't fetch, just show plan)
-cc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react --dry-run
+agentsinc consume github:vercel-labs/agent-skills --skill react-best-practices --into web-framework-react --dry-run
 
 # Interactive mode
-cc consume
+agentsinc consume
 
 # Check for updates to consumed sources
-cc outdated --consumed
+agentsinc outdated --consumed
 
 # Re-consume updated sources
-cc consume --update
+agentsinc consume --update
 ```
 
 ## Appendix B: Metadata Schema Addition

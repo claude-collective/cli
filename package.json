@@ -1,6 +1,6 @@
 {
   "name": "@agents-inc/cli",
-  "version": "0.32.1",
+  "version": "0.33.0",
   "description": "CLI for managing Agents Inc. skills, stacks, and agents for Claude Code",
   "type": "module",
   "main": "dist/index.js",
@@ -10,7 +10,7 @@
     }
   },
   "bin": {
-    "cc": "dist/index.js"
+    "agentsinc": "dist/index.js"
   },
   "files": [
     "dist/",
@@ -43,7 +43,7 @@
     "registry": "https://registry.npmjs.org/"
   },
   "oclif": {
-    "bin": "cc",
+    "bin": "agentsinc",
     "dirname": "agents-inc",
     "commands": {
       "strategy": "pattern",
@@ -65,8 +65,8 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "cc": "node dist/index.js",
-    "cc:dev": "bun src/cli/index.ts",
+    "agentsinc": "node dist/index.js",
+    "agentsinc:dev": "bun src/cli/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -83,14 +83,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/claude-collective/cli.git"
+    "url": "git+https://github.com/agents-inc/cli.git"
   },
   "author": "Vincent Bollaert",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/claude-collective/cli/issues"
+    "url": "https://github.com/agents-inc/cli/issues"
   },
-  "homepage": "https://github.com/claude-collective/cli#readme",
+  "homepage": "https://github.com/agents-inc/cli#readme",
   "dependencies": {
     "@inkjs/ui": "^2.0.0",
     "@oclif/core": "^4.0.0",

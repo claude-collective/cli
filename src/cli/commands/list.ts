@@ -25,7 +25,7 @@ export default class List extends BaseCommand {
 
     if (!info) {
       this.log("No installation found.");
-      this.log("Run 'cc init' to create one.");
+      this.log("Run 'agentsinc init' to create one.");
       return;
     }
 

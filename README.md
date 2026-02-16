@@ -108,7 +108,7 @@ npx @agents-inc/cli init
 # installs locally to ./.claude/skills/ in your repo
 ```
 
-both modes compile agents and generate a config at `.claude-src/config.yaml`. use `cc edit` to change skills after initial setup.
+both modes compile agents and generate a config at `.claude-src/config.yaml`. use `agentsinc edit` to change skills after initial setup.
 
 ## multi-source setup
 
@@ -118,16 +118,16 @@ you can install skills from multiple sources. the wizard supports adding extra m
 - add marketplace URLs (e.g. `github:your-org/custom-marketplace`)
 - skills from all sources appear in the selection grid, tagged by origin
 
-you can also manage sources after setup with `cc edit` (same `G` hotkey).
+you can also manage sources after setup with `agentsinc edit` (same `G` hotkey).
 
 to search across all configured sources:
 
 ```bash
 # interactive search across all sources
-cc search
+agentsinc search
 
 # static search with a query
-cc search react
+agentsinc search react
 ```
 
 ## importing third-party skills
@@ -136,13 +136,13 @@ import skills from any GitHub repository into your local setup:
 
 ```bash
 # list available skills from a repository
-cc import skill github:vercel-labs/agent-skills --list
+agentsinc import skill github:vercel-labs/agent-skills --list
 
 # import a specific skill
-cc import skill github:vercel-labs/agent-skills --skill react-best-practices
+agentsinc import skill github:vercel-labs/agent-skills --skill react-best-practices
 
 # import all skills from a repository
-cc import skill github:vercel-labs/agent-skills --all
+agentsinc import skill github:vercel-labs/agent-skills --all
 ```
 
 imported skills are copied to `.claude/skills/` and tracked with metadata for future updates.

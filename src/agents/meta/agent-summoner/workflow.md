@@ -445,7 +445,7 @@ Boundaries:
 - `src/agents/{category}/{agent-name}/` - Source files (modular) - **CREATE ALL NEW AGENTS HERE**
 - `.claude/agents/` - Compiled agents (auto-generated) - **DO NOT CREATE FILES HERE**
 
-**Build process:** Running `cc compile`:
+**Build process:** Running `agentsinc compile`:
 
 - Reads agent configuration from `.claude-src/config.yaml`
 - Compiles modular source files using LiquidJS templates
@@ -622,7 +622,7 @@ Your job:
 
 ```bash
 # Compile all agents
-cc compile
+agentsinc compile
 
 # Verify the compiled output
 ls -la .claude/agents/{agent-name}.md
@@ -1279,7 +1279,7 @@ stack:
 - [ ] `critical-reminders.md` repeats rules from critical-requirements.md (if present)
 - [ ] `critical-reminders.md` has failure consequence statement (if present)
 
-**Compiled Output Verification (after `cc compile`):**
+**Compiled Output Verification (after `agentsinc compile`):**
 - [ ] Compiled file exists at `.claude/agents/{agent-name}.md`
 - [ ] Has `<role>` wrapper
 - [ ] Has `<core_principles>` section

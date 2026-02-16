@@ -121,7 +121,7 @@ async function loadFromRemote(
 
   // Try to read marketplace name from the source's .claude-plugin/marketplace.json.
   // This handles the case where sourceConfig.marketplace is undefined (e.g. during
-  // `cc init --source github:user/repo` before any project config exists).
+  // `agentsinc init --source github:user/repo` before any project config exists).
   let marketplace = sourceConfig.marketplace;
   if (!marketplace) {
     try {
@@ -220,7 +220,7 @@ function convertStackToResolvedStack(stack: Stack): ResolvedStack {
 
 /**
  * Extract a human-readable name from a source URL.
- * e.g. "github:claude-collective/skills" -> "claude-collective"
+ * e.g. "github:agents-inc/skills" -> "agents-inc"
  *      "github:acme-corp/claude-skills" -> "acme-corp"
  */
 function extractSourceName(source: string): string {
@@ -241,7 +241,7 @@ function extractSourceName(source: string): string {
  * Format examples:
  *   "Photoroom + 1 public"   — private marketplace with public also available
  *   "Photoroom"              — private marketplace only
- *   "claude-collective (public)" — default public marketplace
+ *   "agents-inc (public)" — default public marketplace
  */
 export function getMarketplaceLabel(sourceResult: SourceLoadResult): string | undefined {
   if (sourceResult.isLocal) return undefined;
