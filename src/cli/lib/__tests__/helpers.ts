@@ -4,6 +4,8 @@ import { fileURLToPath } from "url";
 import { mkdtemp, rm, mkdir, writeFile, readFile, stat } from "fs/promises";
 import { parse as parseYaml } from "yaml";
 import { runCommand } from "@oclif/test";
+import { STANDARD_FILES } from "../../consts";
+import { typedEntries } from "../../utils/typed-object";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -91,6 +93,7 @@ export async function directoryExists(dirPath: string): Promise<boolean> {
 
 export async function readTestYaml<T>(filePath: string): Promise<T> {
   const content = await readFile(filePath, "utf-8");
+  // Boundary cast: YAML parse returns `unknown`, caller provides expected type
   return parseYaml(content) as T;
 }
 
@@ -146,6 +149,7 @@ export function parseTestFrontmatter(content: string): Record<string, unknown> |
 
   const yamlContent = content.slice(3, endIndex).trim();
   try {
+    // Boundary cast: YAML parse returns `unknown`
     return parseYaml(yamlContent) as Record<string, unknown>;
   } catch {
     return null;
@@ -281,7 +285,7 @@ export function createCompileContext(overrides?: Partial<CompileContext>): Compi
   };
 }
 
-function createSkillContent(name: string, description = "A test skill"): string {
+export function createSkillContent(name: string, description = "A test skill"): string {
   return `---
 name: ${name}
 description: ${description}
@@ -300,13 +304,13 @@ author: ${author}
 `;
 }
 
-function createAgentYamlContent(name: string, description = "A test agent"): string {
-  return `name: ${name}
+export function createAgentYamlContent(name: string, description = `Test ${name} agent`): string {
+  return `id: ${name}
+title: ${name} Agent
 description: ${description}
-tools: Read, Write, Edit
-model: opus
-permissionMode: default
-`;
+tools:
+  - Read
+  - Write`;
 }
 
 export async function writeTestSkill(
@@ -318,11 +322,14 @@ export async function writeTestSkill(
   await mkdir(skillDir, { recursive: true });
 
   await writeFile(
-    path.join(skillDir, "SKILL.md"),
+    path.join(skillDir, STANDARD_FILES.SKILL_MD),
     createSkillContent(skillName, options?.description),
   );
 
-  await writeFile(path.join(skillDir, "metadata.yaml"), createMetadataContent(options?.author));
+  await writeFile(
+    path.join(skillDir, STANDARD_FILES.METADATA_YAML),
+    createMetadataContent(options?.author),
+  );
 
   return skillDir;
 }
@@ -336,7 +343,7 @@ export async function writeTestAgent(
   await mkdir(agentDir, { recursive: true });
 
   await writeFile(
-    path.join(agentDir, "agent.yaml"),
+    path.join(agentDir, STANDARD_FILES.AGENT_YAML),
     createAgentYamlContent(agentName, options?.description),
   );
 
@@ -376,7 +383,12 @@ export function createMockResolvedStack(
   };
 }
 
-// 7 skills across 6 categories, 2 stacks, display name mappings, and relationship data
+/**
+ * Builds a comprehensive test matrix with 7 skills across 6 categories,
+ * 2 suggested stacks, display name mappings, and relationship data
+ * (conflicts, recommends). Suitable for full wizard and compilation tests.
+ * @returns A fully populated MergedSkillsMatrix with realistic test data
+ */
 export function createComprehensiveMatrix(
   overrides?: Partial<MergedSkillsMatrix>,
 ): MergedSkillsMatrix {
@@ -475,10 +487,12 @@ export function createComprehensiveMatrix(
     hono: "api-framework-hono",
     drizzle: "api-database-drizzle",
     vitest: "web-testing-vitest",
+    // Double cast needed: object literal's string keys are not assignable to branded
+    // SkillDisplayName/SkillId types without going through `unknown` first (boundary cast)
   } as unknown as Record<SkillDisplayName, SkillId>;
 
   const displayNames = {} as Record<SkillId, SkillDisplayName>;
-  for (const [displayName, fullId] of Object.entries(displayNameToId)) {
+  for (const [displayName, fullId] of typedEntries(displayNameToId)) {
     (displayNames as Record<string, string>)[fullId] = displayName;
   }
 
@@ -491,7 +505,11 @@ export function createComprehensiveMatrix(
   });
 }
 
-// 4 skills, 4 categories, 2 stacks — lighter than createComprehensiveMatrix
+/**
+ * Builds a lightweight test matrix with 4 skills, 4 categories, and 2 stacks.
+ * Use instead of createComprehensiveMatrix when relationship data is not needed.
+ * @returns A minimal MergedSkillsMatrix for basic integration tests
+ */
 export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): MergedSkillsMatrix {
   // Bare Subcategory IDs — see createComprehensiveMatrix comment
   const skills = {

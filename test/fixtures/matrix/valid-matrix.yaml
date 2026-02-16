@@ -1,0 +1,374 @@
+# Stable test fixture for skills-matrix validation tests.
+# All category keys and skill_alias keys must be present (required by schema).
+# Relationships are minimal -- just enough to test loading/validation logic.
+# Decoupled from config/skills-matrix.yaml: descriptions and relationship
+# details can change in production without breaking these tests.
+
+version: "1.0.0"
+
+# All subcategory keys from subcategorySchema are required
+categories:
+  framework:
+    id: framework
+    displayName: Framework
+    description: Core UI framework
+    exclusive: true
+    required: true
+    order: 1
+  meta-framework:
+    id: meta-framework
+    displayName: Meta-Framework
+    description: Full-stack framework
+    exclusive: true
+    required: false
+    order: 2
+  styling:
+    id: styling
+    displayName: Styling
+    description: CSS approach
+    exclusive: true
+    required: true
+    order: 3
+  client-state:
+    id: client-state
+    displayName: Client State
+    description: UI state management
+    exclusive: true
+    required: false
+    order: 4
+  server-state:
+    id: server-state
+    displayName: Server State
+    description: API data caching
+    exclusive: true
+    required: false
+    order: 5
+  forms:
+    id: forms
+    displayName: Forms
+    description: Form handling
+    exclusive: false
+    required: false
+    order: 6
+  testing:
+    id: testing
+    displayName: Testing
+    description: Testing frameworks
+    exclusive: false
+    required: false
+    order: 7
+  ui-components:
+    id: ui-components
+    displayName: UI Components
+    description: Component libraries
+    exclusive: false
+    required: false
+    order: 8
+  mocking:
+    id: mocking
+    displayName: Mocking
+    description: API mocking
+    exclusive: false
+    required: false
+    order: 9
+  error-handling:
+    id: error-handling
+    displayName: Error Handling
+    description: Error patterns
+    exclusive: false
+    required: false
+    order: 10
+  i18n:
+    id: i18n
+    displayName: i18n
+    description: Internationalization
+    exclusive: true
+    required: false
+    order: 11
+  file-upload:
+    id: file-upload
+    displayName: File Upload
+    description: File uploads
+    exclusive: false
+    required: false
+    order: 12
+  files:
+    id: files
+    displayName: Files
+    description: File handling
+    exclusive: false
+    required: false
+    order: 13
+  utilities:
+    id: utilities
+    displayName: Utilities
+    description: Utility libraries
+    exclusive: false
+    required: false
+    order: 14
+  realtime:
+    id: realtime
+    displayName: Realtime
+    description: Realtime communication
+    exclusive: true
+    required: false
+    order: 15
+  animation:
+    id: animation
+    displayName: Animation
+    description: Animation libraries
+    exclusive: false
+    required: false
+    order: 16
+  pwa:
+    id: pwa
+    displayName: PWA
+    description: Progressive web apps
+    exclusive: false
+    required: false
+    order: 17
+  accessibility:
+    id: accessibility
+    displayName: Accessibility
+    description: WCAG compliance
+    exclusive: false
+    required: false
+    order: 18
+  web-performance:
+    id: web-performance
+    displayName: Web Performance
+    description: Performance optimization
+    exclusive: false
+    required: false
+    order: 19
+  api:
+    id: api
+    displayName: API
+    description: Backend framework
+    exclusive: true
+    required: true
+    order: 1
+  database:
+    id: database
+    displayName: Database
+    description: Database ORM
+    exclusive: true
+    required: false
+    order: 2
+  auth:
+    id: auth
+    displayName: Auth
+    description: Authentication
+    exclusive: true
+    required: false
+    order: 3
+  observability:
+    id: observability
+    displayName: Observability
+    description: Logging and monitoring
+    exclusive: false
+    required: false
+    order: 4
+  analytics:
+    id: analytics
+    displayName: Analytics
+    description: Product analytics
+    exclusive: false
+    required: false
+    order: 5
+  email:
+    id: email
+    displayName: Email
+    description: Transactional email
+    exclusive: true
+    required: false
+    order: 6
+  performance:
+    id: performance
+    displayName: Performance
+    description: API performance
+    exclusive: false
+    required: false
+    order: 7
+  mobile-framework:
+    id: mobile-framework
+    displayName: Mobile
+    description: Mobile framework
+    exclusive: true
+    required: true
+    order: 1
+  monorepo:
+    id: monorepo
+    displayName: Monorepo
+    description: Monorepo tooling
+    exclusive: true
+    required: false
+    order: 1
+  tooling:
+    id: tooling
+    displayName: Tooling
+    description: Build tooling
+    exclusive: false
+    required: false
+    order: 2
+  security:
+    id: security
+    displayName: Security
+    description: Security patterns
+    exclusive: false
+    required: false
+    order: 3
+  methodology:
+    id: methodology
+    displayName: Methodology
+    description: Dev methodology
+    exclusive: false
+    required: false
+    order: 4
+  research:
+    id: research
+    displayName: Research
+    description: Research methodology
+    exclusive: false
+    required: false
+    order: 5
+  reviewing:
+    id: reviewing
+    displayName: Code Review
+    description: Code review guidance
+    exclusive: false
+    required: false
+    order: 6
+  ci-cd:
+    id: ci-cd
+    displayName: CI/CD
+    description: CI/CD pipelines
+    exclusive: false
+    required: false
+    order: 7
+  cli-framework:
+    id: cli-framework
+    displayName: CLI Framework
+    description: CLI framework
+    exclusive: true
+    required: true
+    order: 1
+  cli-prompts:
+    id: cli-prompts
+    displayName: CLI Prompts
+    description: CLI prompts
+    exclusive: true
+    required: false
+    order: 2
+  cli-testing:
+    id: cli-testing
+    displayName: CLI Testing
+    description: CLI testing
+    exclusive: false
+    required: false
+    order: 3
+
+# Minimal relationships -- enough to test loading logic
+relationships:
+  conflicts:
+    - skills: [react, vue]
+      reason: "Core frameworks are mutually exclusive"
+  discourages:
+    - skills: [scss-modules, tailwind]
+      reason: "Mixing CSS paradigms is unusual"
+  recommends:
+    - when: react
+      suggest: [zustand]
+      reason: "Best-in-class React state management"
+  requires:
+    - skill: zustand
+      needs: [react]
+      reason: "Zustand skill covers React patterns"
+  alternatives:
+    - purpose: "Frontend Framework"
+      skills: [react, vue]
+
+# All skillDisplayName keys from skillDisplayNameSchema are required
+skill_aliases:
+  react: "web-framework-react"
+  vue: "web-framework-vue-composition-api"
+  angular: "web-framework-angular-standalone"
+  solidjs: "web-framework-solidjs"
+  nextjs-app-router: "web-framework-nextjs-app-router"
+  nextjs-server-actions: "web-framework-nextjs-server-actions"
+  remix: "web-framework-remix"
+  nuxt: "web-framework-nuxt"
+  scss-modules: "web-styling-scss-modules"
+  cva: "web-styling-cva"
+  tailwind: "web-styling-tailwind"
+  zustand: "web-state-zustand"
+  redux-toolkit: "web-state-redux-toolkit"
+  pinia: "web-state-pinia"
+  ngrx-signalstore: "web-state-ngrx-signalstore"
+  jotai: "web-state-jotai"
+  mobx: "web-state-mobx"
+  react-query: "web-server-state-react-query"
+  swr: "web-data-fetching-swr"
+  graphql-apollo: "web-data-fetching-graphql-apollo"
+  graphql-urql: "web-data-fetching-graphql-urql"
+  trpc: "web-data-fetching-trpc"
+  react-hook-form: "web-forms-react-hook-form"
+  vee-validate: "web-forms-vee-validate"
+  zod-validation: "web-forms-zod-validation"
+  vitest: "web-testing-vitest"
+  playwright-e2e: "web-testing-playwright-e2e"
+  cypress-e2e: "web-testing-cypress-e2e"
+  react-testing-library: "web-testing-react-testing-library"
+  vue-test-utils: "web-testing-vue-test-utils"
+  msw: "web-mocks-msw"
+  shadcn-ui: "web-ui-shadcn-ui"
+  tanstack-table: "web-ui-tanstack-table"
+  radix-ui: "web-ui-radix-ui"
+  hono: "api-framework-hono"
+  express: "api-framework-express"
+  fastify: "api-framework-fastify"
+  drizzle: "api-database-drizzle"
+  prisma: "api-database-prisma"
+  better-auth: "api-auth-better-auth-drizzle-hono"
+  axiom-pino-sentry: "api-observability-axiom-pino-sentry"
+  posthog: "api-analytics-posthog-analytics"
+  posthog-flags: "api-flags-posthog-flags"
+  resend: "api-email-resend-react-email"
+  github-actions: "api-ci-cd-github-actions"
+  react-native: "mobile-framework-react-native"
+  expo: "mobile-framework-expo"
+  turborepo: "infra-monorepo-turborepo"
+  tooling: "infra-tooling-setup-tooling"
+  posthog-setup: "api-analytics-setup-posthog"
+  env: "infra-env-setup-env"
+  observability-setup: "api-observability-setup-axiom-pino-sentry"
+  email-setup: "api-email-setup-resend"
+  framer-motion: "web-animation-framer-motion"
+  css-animations: "web-animation-css-animations"
+  view-transitions: "web-animation-view-transitions"
+  storybook: "web-tooling-storybook"
+  error-boundaries: "web-error-handling-error-boundaries"
+  accessibility: "web-accessibility-web-accessibility"
+  websockets: "web-realtime-websockets"
+  sse: "web-realtime-sse"
+  socket-io: "web-realtime-socket-io"
+  service-workers: "web-pwa-service-workers"
+  file-upload: "web-files-file-upload-patterns"
+  image-handling: "web-files-image-handling"
+  date-fns: "web-utilities-date-fns"
+  api-testing: "api-testing-api-testing"
+  api-performance: "api-performance-api-performance"
+  web-performance: "web-performance-web-performance"
+  security: "security-auth-security"
+  commander: "cli-framework-cli-commander"
+  cli-commander: "cli-framework-cli-commander"
+  oclif: "cli-framework-oclif-ink"
+  reviewing: "meta-reviewing-reviewing"
+  cli-reviewing: "meta-reviewing-cli-reviewing"
+  research-methodology: "meta-research-research-methodology"
+  investigation-requirements: "meta-methodology-investigation-requirements"
+  anti-over-engineering: "meta-methodology-anti-over-engineering"
+  success-criteria: "meta-methodology-success-criteria"
+  write-verification: "meta-methodology-write-verification"
+  improvement-protocol: "meta-methodology-improvement-protocol"
+  context-management: "meta-methodology-context-management"

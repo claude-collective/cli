@@ -1,0 +1,5 @@
+{
+  "name": "bad-version-plugin",
+  "version": "v1.0",
+  "description": "Plugin with invalid semver version format"
+}

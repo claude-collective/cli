@@ -1,0 +1,7 @@
+{
+  "name": "test-plugin",
+  "version": "1.0.0",
+  "description": "A valid test plugin for fixture-based tests",
+  "skills": "./skills/",
+  "agents": "./agents/"
+}

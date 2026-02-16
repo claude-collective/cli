@@ -1,0 +1,3 @@
+# Config fixture with source field set.
+# Used by tests that verify source resolution from project config.
+source: github:mycompany/skills
