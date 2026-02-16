@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.30.0] - 2026-02-16
+
+### Added
+
+- **Settings.json-based plugin discovery** — New plugin discovery system that reads `.claude/settings.json` to find enabled plugins and resolves their install paths from the global plugin registry (`~/.claude/plugins/installed_plugins.json`). Replaces project-local `.claude/plugins/` directory scanning.
+- **plugin-settings.ts module** — Core module providing `getEnabledPluginKeys`, `resolvePluginInstallPaths`, and `getVerifiedPluginInstallPaths` for settings.json-based plugin resolution with Zod validation and size limits.
+- **plugin-discovery.ts module** — Provides `discoverAllPluginSkills`, `hasIndividualPlugins`, and `listPluginNames` for discovering skills from enabled plugins via the global cache.
+- **Comprehensive test coverage** — 37 new tests covering all plugin discovery scenarios, edge cases, and error handling.
+
+### Changed
+
+- **Plugin discovery mechanism** — All commands and library code migrated from collective plugin mode to individual plugin discovery via settings.json.
+  - `compile`: Uses `discoverAllPluginSkills` instead of local directory scan
+  - `uninstall`: Supports multiple individual plugins with updated messaging
+  - `multi-source-loader`: Uses settings.json-based discovery for skill source tagging
+  - `plugin-info`: Uses `discoverAllPluginSkills` for skill counting
+  - `local-installer`: Added `installPluginConfig` for plugin-only setup
+- **Plugin reference formats clarified** — `@` format (`plugin-name@marketplace`) for installation/registry, `:` format (`skill-id:skill-id`) for runtime skill invocation.
+- **Resolution priority** — Project-scoped plugin installations take precedence over user-scoped installations.
+
+### Removed
+
+- **Collective plugin mode** — Removed `getCollectivePluginDir`, `collectPluginSkillIds`, and related collective plugin infrastructure. All plugin discovery now uses individual plugins via settings.json.
+- **DEFAULT_PLUGIN_NAME constant** — Removed from uninstall command as it's no longer needed for individual plugin management.
+
+### Fixed
+
+- **Plugin.json path verification** — Fixed verification to check `.claude-plugin/plugin.json` subdirectory instead of root directory.
+
 ## [0.29.4] - 2026-02-15
 
 ### Fixed
