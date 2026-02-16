@@ -114,20 +114,32 @@ This encodes pipeline semantics in the type system — the compiler catches reso
 
 Not all casts are bad. Classify them:
 
-| Cast Type                        | Legitimate? | Example                                                               |
-| -------------------------------- | ----------- | --------------------------------------------------------------------- |
-| **Object.keys/entries boundary** | Yes         | `Object.keys(record) as Subcategory[]` — TS always returns `string[]` |
-| **CLI arg boundary**             | Yes         | `flags.category as CategoryPath` — user input enters as `string`      |
-| **YAML/JSON parse boundary**     | Yes         | `parseYaml(content) as Record<string, unknown>`                       |
-| **Test data construction**       | Yes         | `{ id: "test" } as SkillId` — intentionally invalid test values       |
-| **Store initialization**         | Yes         | `{} as Partial<Record<...>>` — empty initial state                    |
-| **Mid-pipeline workaround**      | **No**      | Fix the source type instead                                           |
+| Cast Type                        | Legitimate? | Example                                                                                                     |
+| -------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------- |
+| **Object.keys/entries boundary** | Yes         | `Object.keys(record) as Subcategory[]` — TS always returns `string[]`                                       |
+| **CLI arg boundary**             | Yes         | `flags.category as CategoryPath` — user input enters as `string`                                            |
+| **YAML/JSON parse boundary**     | Yes         | `parseYaml(content) as Record<string, unknown>`                                                             |
+| **Test data construction**       | Yes         | `{ id: "test" } as SkillId` — intentionally invalid test values                                             |
+| **Store initialization**         | Yes         | `{} as Partial<Record<...>>` — empty initial state                                                          |
+| **Branded record construction**  | Yes         | `{...} as unknown as Record<BrandedA, BrandedB>` — object literal keys can't satisfy branded types directly |
+| **Mid-pipeline workaround**      | **No**      | Fix the source type instead                                                                                 |
 
 **Every legitimate boundary cast should have a comment explaining why.**
 
 For the full boundary cast guide with real codebase examples (7 categories, acceptable vs
 unacceptable patterns, post-safeParse conventions), see
 [`docs/type-conventions.md` -- Boundary Cast Patterns](docs/type-conventions.md#boundary-cast-patterns).
+
+**Double cast through `unknown` for branded Record keys.** When constructing a Record whose keys and values are both branded template literal types (e.g., `SkillDisplayName`, `SkillId`), a single `as` cast fails because object literal string keys are not assignable to branded types. Use `as unknown as Record<BrandedKey, BrandedValue>` with a comment:
+
+```typescript
+// Double cast needed: object literal's string keys are not assignable to branded
+// SkillDisplayName/SkillId types without going through `unknown` first (boundary cast)
+const displayNameToId = {
+  react: "web-framework-react",
+  zustand: "web-state-zustand",
+} as unknown as Record<SkillDisplayName, SkillId>;
+```
 
 Prefer typed helper functions over raw casts for recurring patterns:
 
