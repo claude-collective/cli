@@ -29,10 +29,11 @@ A React skill shouldn't mention SCSS, Zustand, or MSW. A styling skill shouldn't
 5. [Content Relocation Protocol](#5-content-relocation-protocol)
 6. [Quality Gate Checklist](#6-quality-gate-checklist)
 7. [Complexity Tiers](#7-complexity-tiers)
-8. [Examples: Before vs After](#8-examples-before-vs-after)
-9. [Pitfalls to Avoid](#9-pitfalls-to-avoid)
-10. [Troubleshooting Common Issues](#10-troubleshooting-common-issues)
-11. [Verification Commands](#11-verification-commands)
+8. [Skill File Extraction](#8-skill-file-extraction)
+9. [Examples: Before vs After](#9-examples-before-vs-after)
+10. [Pitfalls to Avoid](#10-pitfalls-to-avoid)
+11. [Troubleshooting Common Issues](#11-troubleshooting-common-issues)
+12. [Verification Commands](#12-verification-commands)
 
 ---
 
@@ -45,16 +46,35 @@ Skills follow a directory-based structure with modular files:
 ├── SKILL.md              # Main skill file with TOC
 ├── metadata.yaml         # Skill metadata (category, tags, version)
 ├── reference.md          # Quick reference and decision frameworks
-└── examples/             # Categorized example files
-    ├── core.md           # Core patterns (required)
-    ├── hooks.md          # Hook examples (if applicable)
-    ├── error-handling.md # Error handling patterns
-    └── ...               # Additional topic-specific files
+└── examples/             # Technology-specific example files
+    ├── core.md           # Core patterns (ALWAYS required)
+    └── {topic}.md        # Technology-specific topics (as many as needed)
 ```
+
+### Key Rules
+
+- **`core.md` is ALWAYS required** — contains first-time setup, primary API, essential types, fundamental patterns, minimum viable usage
+- Additional files are named after the **topic** they cover, not fixed categories
+- The number and names of additional files depend on the **technology's natural domain boundaries**
+- There is no maximum file count — create as many topic files as the technology naturally requires
+
+### Technology-Driven Examples
+
+Different technologies produce different file structures because they have different domains of complexity:
+
+| Technology          | Example Files                                                      |
+| ------------------- | ------------------------------------------------------------------ |
+| **React**           | `core.md`, `hooks.md`, `performance.md`, `theming.md`              |
+| **API/Hono**        | `core.md`, `validation.md`, `seeding.md`, `middleware.md`          |
+| **Zustand**         | `core.md`, `persistence.md`, `middleware.md`, `devtools.md`        |
+| **Vitest**          | `core.md`, `mocking.md`, `async-patterns.md`                       |
+| **SCSS**            | `core.md`, `responsive.md`, `theming.md`, `animations.md`          |
+| **Redux Toolkit**   | `core.md`, `async-thunks.md`, `entity-adapters.md`, `selectors.md` |
+| **React Hook Form** | `core.md`, `dynamic-fields.md`, `multi-step-forms.md`              |
 
 ### SKILL.md Table of Contents
 
-Every SKILL.md must include a simple TOC below the frontmatter pointing to related files:
+Every SKILL.md must include a simple TOC below the frontmatter pointing to related files. The TOC entries reflect the technology-specific topics:
 
 ```markdown
 ---
@@ -68,22 +88,20 @@ description: Component architecture, hooks, patterns
 
 **Detailed Resources:**
 
-- [examples/core.md](examples/core.md) - Component patterns, variants
+- [examples/core.md](examples/core.md) - Component patterns, props, composition
 - [examples/hooks.md](examples/hooks.md) - Custom hook implementations
+- [examples/performance.md](examples/performance.md) - Memoization, lazy loading, profiling
 - [reference.md](reference.md) - Decision frameworks, anti-patterns
 ```
 
 ### Examples Folder Structure
 
-Examples are split into focused files rather than one monolithic file:
+Examples are split into focused files based on the technology's natural topics:
 
-| File                 | Purpose                              |
-| -------------------- | ------------------------------------ |
-| `core.md`            | Essential patterns everyone needs    |
-| `hooks.md`           | Custom hook implementations          |
-| `error-handling.md`  | Error boundaries, try-catch patterns |
-| `testing.md`         | Test patterns for this skill         |
-| Topic-specific files | As needed for the skill domain       |
+| File         | Purpose                               | When to create                                 |
+| ------------ | ------------------------------------- | ---------------------------------------------- |
+| `core.md`    | Essential patterns everyone needs     | ALWAYS — required for every skill              |
+| `{topic}.md` | Technology-specific extended patterns | When a topic has 100+ lines of focused content |
 
 Each example file should cross-reference related files at the top.
 
@@ -560,7 +578,7 @@ When removing valuable content that belongs in another skill:
 - [ ] `metadata.yaml` has all required fields (category, author, version, cli_name, cli_description, usage_guidance)
 - [ ] Tags use kebab-case only (`^[a-z][a-z0-9-]*$`) - NO camelCase or dots
 - [ ] Author uses `@` prefix (`@vince`, not `vince`)
-- [ ] Category is from allowed enum (see CLAUDE_ARCHITECTURE_BIBLE.md)
+- [ ] Category is from allowed enum (see claude-architecture-bible.md)
 - [ ] Version is an integer (1, 2, 3) - NOT semantic versioning
 - [ ] `bun cc:validate` passes with no errors
 
@@ -643,7 +661,169 @@ When removing valuable content that belongs in another skill:
 
 ---
 
-## 8. Examples: Before vs After
+## 8. Skill File Extraction
+
+Guidelines for splitting large example files into `core.md` plus technology-specific topic files.
+
+### Core vs Extractable Criteria
+
+#### Core Patterns (KEEP in core.md)
+
+A pattern is **core** if it meets ANY of these criteria:
+
+| Criterion                | Description                                   | Example                                        |
+| ------------------------ | --------------------------------------------- | ---------------------------------------------- |
+| **First-time setup**     | Required for initial implementation           | Store configuration, client setup, basic hooks |
+| **Primary API**          | The main API users interact with 80%+ of time | `useQuery`, `register()`, `createSlice`        |
+| **Essential types**      | TypeScript types needed for basic usage       | Generic type parameters, hook return types     |
+| **Fundamental good/bad** | The most common mistake to avoid              | Using `index` as key in field arrays           |
+| **Minimum viable**       | Simplest complete working example             | Basic form with validation, simple query       |
+
+**Rule of thumb**: If a developer cannot use the library at all without this pattern, it is core.
+
+#### Extractable Patterns (MOVE to topic files)
+
+A pattern is **extractable** if it meets ALL of these criteria:
+
+| Criterion          | Description                            | Example                             |
+| ------------------ | -------------------------------------- | ----------------------------------- |
+| **Optional**       | Not required for basic usage           | Redux Persist, custom middleware    |
+| **Advanced**       | Requires understanding of core first   | Entity adapters, optimistic updates |
+| **Situational**    | Only needed in specific use cases      | Multi-step forms, offline support   |
+| **Self-contained** | Can be understood without core context | Testing patterns, performance tips  |
+
+**Rule of thumb**: If a developer can ship a working feature without this pattern, it is extractable.
+
+### Decision Framework
+
+```
+Is this pattern required to use the library at all?
+├─ YES → Keep in core.md
+└─ NO → Create a topic-specific file named after the concept
+        (e.g., hooks.md, middleware.md, persistence.md)
+```
+
+### Size Guidelines
+
+| Metric                  | Guideline                                      |
+| ----------------------- | ---------------------------------------------- |
+| `core.md` target size   | 200-500 lines                                  |
+| Extraction trigger      | Total examples exceed 600 lines                |
+| Topic file minimum      | 100+ lines of focused content                  |
+| No extraction needed if | Total under 500 lines or fewer than 5 patterns |
+
+Do not extract if all patterns are interdependent (cannot understand one without the others) or if the skill is setup/configuration focused and naturally smaller.
+
+### File Structure for Extracted Files
+
+#### Header Format
+
+Each topic file MUST start with:
+
+```markdown
+# [Skill Name] - [Topic] Examples
+
+> Extended examples for [topic]. See [core.md](core.md) for core patterns.
+
+**Prerequisites**: Understand [Pattern 1], [Pattern 2] from core examples first.
+
+---
+```
+
+#### Pattern Format
+
+Maintain the same format as core examples:
+
+```markdown
+## Pattern N: [Title]
+
+### Good Example - [Descriptor]
+
+\`\`\`typescript
+// Code with comments
+\`\`\`
+
+**Why good:** [Explanation]
+
+### Bad Example - [Anti-pattern]
+
+\`\`\`typescript
+// BAD code with comments
+\`\`\`
+
+**Why bad:** [Explanation]
+
+---
+```
+
+#### Cross-References
+
+Add cross-references to core patterns:
+
+```markdown
+> **Note:** This pattern builds on [Pattern 2: Basic Setup](core.md#pattern-2-basic-setup).
+```
+
+#### File Naming
+
+Always use kebab-case. Name files after the topic, not a generic category:
+
+```
+examples/
+├── core.md               # Core (always present)
+├── hooks.md              # React hook patterns
+├── middleware.md          # Middleware/interceptor patterns
+├── persistence.md        # Local storage, IndexedDB patterns
+├── performance.md        # Optimization techniques
+├── async-patterns.md     # Async/concurrent patterns
+└── ...                   # As many as the technology requires
+```
+
+#### Pattern Numbering
+
+- Core patterns: Sequential numbering (Pattern 1, 2, 3...)
+- Topic file patterns: Continue numbering from core to maintain reference stability
+
+```markdown
+# core.md
+
+## Pattern 1: Store Configuration
+
+## Pattern 2: Slice Creation
+
+# async-thunks.md
+
+## Pattern 3: Async Thunks with createAsyncThunk
+
+## Pattern 4: Optimistic Updates
+```
+
+### Migration Checklist
+
+When extracting patterns from an existing skill:
+
+- [ ] Identify total line count and pattern count
+- [ ] Categorize each pattern using the core vs extractable criteria above
+- [ ] Group extractable patterns by their natural topic
+- [ ] Name topic files after the concept they cover (not generic categories)
+- [ ] Verify core patterns remain under 500 lines
+- [ ] Add cross-references between files
+- [ ] Update SKILL.md TOC to reference new files
+- [ ] Verify all code examples still have context
+- [ ] Test that examples can be understood standalone
+
+### Files NOT Requiring Extraction
+
+Do not extract if:
+
+- File is under 500 lines (leave as single `core.md` or `examples.md`)
+- File has fewer than 5 patterns total
+- All patterns are interdependent (cannot understand one without others)
+- Skill is setup/configuration focused (naturally smaller)
+
+---
+
+## 9. Examples: Before vs After
 
 ### Example 1: Import Coupling (React Skill)
 
@@ -847,7 +1027,7 @@ afterAll(() => {
 
 ---
 
-## 9. Pitfalls to Avoid
+## 10. Pitfalls to Avoid
 
 ### Pitfall 1: Over-Genericizing Examples
 
@@ -984,7 +1164,7 @@ Violations are often concentrated in `examples.md` because that's where imports 
 
 ---
 
-## 10. Troubleshooting Common Issues
+## 11. Troubleshooting Common Issues
 
 ### Issue: "But users need to know which tools work together!"
 
@@ -1085,7 +1265,7 @@ If content involves TWO domains, it probably belongs in neither and should be re
 
 ---
 
-## 11. Verification Commands
+## 12. Verification Commands
 
 ### Full Audit Command
 

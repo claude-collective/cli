@@ -105,11 +105,13 @@ catch (error) { verbose(`Failed to load: ${getErrorMessage(error)}`); return [];
 <Text color="cyan">Selected</Text>  <Text color={CLI_COLORS.PRIMARY}>Selected</Text>
 ```
 
-**4.2 Use `STANDARD_FILES.*` and `STANDARD_DIRS.*` from `consts.ts` for file/directory name strings.**
+**4.2 Use named constants from `consts.ts` for all file/directory name strings.** Key constants: `STANDARD_FILES.*`, `STANDARD_DIRS.*`, `CLAUDE_DIR` (`.claude`), `CLAUDE_SRC_DIR` (`.claude-src`), `PLUGIN_MANIFEST_DIR` (`.claude-plugin`), `PLUGINS_SUBDIR` (`plugins`), `LOCAL_SKILLS_PATH`, `SKILLS_DIR_PATH`. Search `consts.ts` before hardcoding any path segment.
 
 ```ts
 // BAD                                            // GOOD
 path.join(dir, "metadata.yaml")                   path.join(dir, STANDARD_FILES.METADATA_YAML)
+path.join(dir, ".claude-plugin")                  path.join(dir, PLUGIN_MANIFEST_DIR)
+path.join(dir, ".claude", "agents")               path.join(dir, CLAUDE_DIR, "agents")
 ```
 
 **4.3 No magic numbers.** Name all numeric constants `SCREAMING_SNAKE_CASE`.
@@ -117,6 +119,16 @@ path.join(dir, "metadata.yaml")                   path.join(dir, STANDARD_FILES.
 **4.4 Group related constants in `as const` objects.** See `YAML_FORMATTING`, `UI_SYMBOLS`, `UI_LAYOUT` in `consts.ts`.
 
 **4.5 User-facing message strings go in `utils/messages.ts`.** Grouped by category: `ERROR_MESSAGES`, `SUCCESS_MESSAGES`, `STATUS_MESSAGES`, `INFO_MESSAGES`, `DRY_RUN_MESSAGES`. One-off messages used in a single location can remain inline.
+
+**4.6 Watch for trailing punctuation in branding constants.** `DEFAULT_BRANDING.NAME` is `"Agents Inc."` (ends with a period). Do not add a period after it in sentences — it produces a double period.
+
+```ts
+// BAD — renders "maintained by Agents Inc.."
+<Text>maintained by {DEFAULT_BRANDING.NAME}.</Text>
+
+// GOOD — no extra period
+<Text>maintained by {DEFAULT_BRANDING.NAME}</Text>
+```
 
 ---
 
@@ -188,7 +200,7 @@ async function expectFlagAccepted(args: string[]): Promise<void> {
 
 **6.6** Every exported utility function must have a test file.
 
-**6.7** Use `createTempDir()`/`cleanupTempDir()` from `helpers.ts` for temp directory lifecycle. Never use raw `mkdtemp()`/`rm()` in test files.
+**6.7** Use `createTempDir()`/`cleanupTempDir()` from `helpers.ts` for temp directory lifecycle. **Never import `mkdtemp` from `fs/promises` or `os` for `tmpdir()` in test files** — these are the #1 recurring violation. If you see `import { mkdtemp }` or `import os from "os"` in a test file, replace with the helpers.
 
 ```ts
 // BAD
@@ -247,7 +259,7 @@ function createMockSkill(
 (Object.entries(obj) as [AgentName, AgentConfig][])       typedEntries<AgentName, AgentConfig>(obj)
 ```
 
-**7.2** Boundary casts only at data entry points (JSON.parse, YAML parse, fs reads). Add a comment explaining why. No mid-pipeline casts. See `docs/type-conventions.md` for the full boundary cast taxonomy.
+**7.2** Boundary casts only at data entry points (JSON.parse, YAML parse, fs reads). Add a comment explaining why. No mid-pipeline casts. See `docs/standards/code/type-conventions.md` for the full boundary cast taxonomy.
 
 **7.3** Use Zod schemas at JSON/YAML parse boundaries. No `JSON.parse(...) as T` in production code. For YAML files, prefer `safeLoadYamlFile(path, schema)` from `utils/yaml.ts` -- it combines `readFileSafe()` (size limit), YAML parsing, and Zod validation in one call. For JSON, parse then validate with `schema.safeParse()`.
 
@@ -279,6 +291,8 @@ const examples = await readFileOptional(path.join(dir, STANDARD_FILES.EXAMPLES_M
 ## 9. Dead Code
 
 **9.1** Remove exported functions with zero imports outside their file. Search first, then remove tests.
+
+**9.6** Prefix intentionally unused parameters with `_` (e.g., `_onClose`, `_input`). This signals intent and suppresses linter warnings. Remove the parameter entirely if the interface allows it.
 
 **9.2** Un-export symbols only used within their own file. If a module-level constant is only consumed to derive an exported value, keep it un-exported (e.g., `CLI_ROOT` -> `PROJECT_ROOT` in `consts.ts`).
 
@@ -326,9 +340,19 @@ populateFromSkillIds: (ids, skills, cats) => set(() => {
 
 **11.1** Add JSDoc to exported functions over 20 LOC or with non-obvious behavior. Include `@param` and `@returns` for complex signatures.
 
+**11.4** JSDoc `@example` tags must show actual literal values, not constant references. Documentation should be self-contained.
+
+```ts
+// BAD — reader must look up what DEFAULT_PLUGIN_NAME resolves to
+/** @example DEFAULT_PLUGIN_NAME */
+
+// GOOD — shows the actual value
+/** @example "agents-inc" */
+```
+
 **11.2** Add field-level comments on type/interface fields with non-obvious semantics (e.g., `needsAny?: boolean` needs a comment explaining AND vs OR).
 
-**11.3** When production behavior changes, update relevant docs. `docs/architecture.md` for pipeline, data flow, or system design changes. `docs/commands.md` for new flags, wizard steps, or keyboard shortcuts. `README.md` for user-facing setup instructions.
+**11.3** When production behavior changes, update relevant docs. `docs/reference/architecture.md` for pipeline, data flow, or system design changes. `docs/reference/commands.md` for new flags, wizard steps, or keyboard shortcuts. `README.md` for user-facing setup instructions.
 
 ---
 
@@ -347,3 +371,31 @@ populateFromSkillIds: (ids, skills, cats) => set(() => {
 **13.1** New files use `.js` extensions on relative imports. Existing files keep their current style. Do not mix styles within a single file.
 
 **13.2** No default exports. Use named exports only.
+
+---
+
+## 14. Comments
+
+**14.1** Comments explain WHY, not WHAT. Do not add comments that restate what the code already says.
+
+```ts
+// BAD: restates the code
+// Check if skill is installed
+if (skill.installed) { ... }
+
+// BAD: narrates control flow
+// If no sources found, return early
+if (sources.length === 0) return [];
+
+// GOOD: explains non-obvious reason
+// Must sort before dedup — uniqueBy keeps the first occurrence
+const sorted = sortBy(skills, [s => s.priority]);
+```
+
+**14.2** Do not add section separator comments (`// --- Methods ---`, `// === Exports ===`). File structure should be self-evident from code organization.
+
+**14.3** Do not narrate what happens next (`// approach is now set, step-stack.tsx will show DomainSelection`). Code flow speaks for itself.
+
+**14.4** Do not restate a function or variable name in a comment above it (`// Pre-select domains inferred from stack` above `preselectDomainsFromStack()`).
+
+**14.5** Acceptable comments: business rules not evident from code, workaround explanations, TODO items with context, gotchas (e.g., hoisting behavior), JSDoc on exported functions over 20 LOC (per rule 11.1), and `// boundary cast` annotations (per rule 7.2).

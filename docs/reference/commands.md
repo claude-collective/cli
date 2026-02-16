@@ -2,7 +2,7 @@
 
 ## `cc init`
 
-Initialize Claude Collective in a project.
+Initialize Agents Inc. in a project.
 
 ```bash
 cc init                                      # Start the setup wizard
@@ -112,7 +112,7 @@ cc eject agent-partials -f           # Force overwrite
 
 ## `cc uninstall`
 
-Remove Claude Collective from a project.
+Remove Agents Inc. from a project.
 
 ```bash
 cc uninstall                    # Interactive, prompts for confirmation

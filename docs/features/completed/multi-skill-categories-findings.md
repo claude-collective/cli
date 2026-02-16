@@ -371,7 +371,7 @@ agents:
 ### Documentation
 
 - `config/stacks.yaml` — Add examples showing array syntax
-- `docs/architecture.md` — Update stack type documentation
+- `docs/reference/architecture.md` — Update stack type documentation
 
 **Estimated files to change:** 8-10 core files + 15-20 test files
 

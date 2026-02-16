@@ -93,8 +93,9 @@ src/
 └── schemas/                   # JSON schemas for validation
 
 docs/
-└── bibles/
-    └── CLAUDE_ARCHITECTURE_BIBLE.md  # This file
+└── standards/
+    └── content/
+        └── claude-architecture-bible.md  # This file
 
 .claude-src/                   # Project configuration (source)
 └── config.yaml                # Skill assignments and project settings
@@ -116,7 +117,7 @@ docs/
 
 The agent's role definition. **Do NOT include `<role>` tags** - the template adds them.
 
-**CRITICAL: Include Expansion Modifiers** (See PROMPT_BIBLE Technique #6)
+**CRITICAL: Include Expansion Modifiers** (See prompt-bible Technique #6)
 
 Sonnet/Opus 4.5 are conservative by default. Without expansion modifiers, they produce minimal implementations. Every intro.md MUST include phrases like:
 
@@ -246,7 +247,7 @@ Here's what a complete, high-quality output looks like:
 
 These guidelines apply to ALL agent source files. Following them ensures optimal Claude 4.x behavior.
 
-### "Think" Alternatives (PROMPT_BIBLE Technique #11)
+### "Think" Alternatives (prompt-bible Technique #11)
 
 **CRITICAL for Opus 4.5:** The word "think" and its variants can cause confusion when extended thinking is disabled. Replace with alternatives:
 
@@ -271,7 +272,7 @@ Consider the implications before proceeding.
 
 **Note (January 2026):** The trigger keywords (`think`, `megathink`, `ultrathink`) have been **deprecated**. Claude Code now enables extended thinking by default (31,999 tokens max). Use `MAX_THINKING_TOKENS` environment variable to adjust.
 
-### Positive Framing (PROMPT_BIBLE Technique #10)
+### Positive Framing (prompt-bible Technique #10)
 
 Frame constraints positively (what TO do) rather than negatively (what NOT to do):
 
@@ -511,9 +512,9 @@ Provide your [type] in this structure:
 
 ## Technique Compliance Mapping
 
-This section maps the 13 Essential Techniques from `PROMPT_BIBLE.md` to their implementation in this architecture. An agent built correctly with this system is automatically compliant with all proven techniques.
+This section maps the 13 Essential Techniques from `prompt-bible.md` to their implementation in this architecture. An agent built correctly with this system is automatically compliant with all proven techniques.
 
-> **Reference:** See `PROMPT_BIBLE.md` for detailed rationale and performance metrics for each technique.
+> **Reference:** See `prompt-bible.md` for detailed rationale and performance metrics for each technique.
 
 ### Technique-to-Implementation Mapping
 
@@ -686,7 +687,7 @@ echo "========================================"
 
 ## Model-Specific Considerations
 
-This section documents behavioral differences and optimization strategies for Claude 4.x models. Reference `PROMPT_BIBLE.md` for detailed rationale and performance metrics.
+This section documents behavioral differences and optimization strategies for Claude 4.x models. Reference `prompt-bible.md` for detailed rationale and performance metrics.
 
 ### Sonnet 4.5 vs Opus 4.5 Comparison
 

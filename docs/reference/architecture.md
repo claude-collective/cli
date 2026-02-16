@@ -1,6 +1,6 @@
 # Architecture
 
-> Source of truth for the Claude Collective CLI codebase. Consult this document before
+> Source of truth for the Agents Inc. CLI codebase. Consult this document before
 > contributing code, adding tests, or performing refactors.
 
 ---
@@ -26,7 +26,7 @@
 
 ## High-Level Overview
 
-Claude Collective CLI (`cc`) is a TypeScript CLI tool that manages AI agent configurations
+Agents Inc. CLI (`cc`) is a TypeScript CLI tool that manages AI agent configurations
 for Claude. It loads skill definitions from a marketplace, lets users select technology
 stacks via an interactive wizard, compiles agents with selected skills via Liquid templates,
 and installs them as Claude plugins or local files.
@@ -122,7 +122,7 @@ and installs them as Claude plugins or local files.
 |       +-- skills-matrix.schema.json
 |       +-- stack.schema.json
 |       +-- stacks.schema.json
-+-- package.json                  # @claude-collective/cli, ESM, oclif config
++-- package.json                  # @agents-inc/cli, ESM, oclif config
 +-- tsconfig.json                 # ES2022, strict, bundler resolution
 +-- vitest.config.ts              # 3 test projects: unit, integration, commands
 ```
@@ -186,7 +186,7 @@ Source Resolution -> Skill Loading -> Matrix Merging -> Multi-Source Annotation 
                                             Plugin manifest (plugin.json)
 
 7. INSTALLATION
-   Plugin mode: .claude/plugins/claude-collective/
+   Plugin mode: .claude/plugins/agents-inc/
    Local mode:  .claude/agents/ + .claude/skills/
    Source switching: archiveLocalSkill() / restoreArchivedSkill() for local skills
 ```
@@ -931,10 +931,10 @@ For agents source:
 
 ### Installation Modes
 
-| Mode       | Location                               | Managed By             |
-| ---------- | -------------------------------------- | ---------------------- |
-| **Plugin** | `~/.claude/plugins/claude-collective/` | Native Claude CLI      |
-| **Local**  | `.claude/agents/` + `.claude/skills/`  | Direct file operations |
+| Mode       | Location                              | Managed By             |
+| ---------- | ------------------------------------- | ---------------------- |
+| **Plugin** | `~/.claude/plugins/agents-inc/`       | Native Claude CLI      |
+| **Local**  | `.claude/agents/` + `.claude/skills/` | Direct file operations |
 
 Detection: `detectInstallation()` checks plugin dir first, then local dirs.
 

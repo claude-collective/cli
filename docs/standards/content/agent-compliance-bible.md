@@ -1,6 +1,6 @@
 # Agent Compliance Bible
 
-> **Purpose**: A comprehensive test suite for verifying agent compliance. Run these tests periodically to ensure agents remain aligned with PROMPT_BIBLE and architecture standards.
+> **Purpose**: A comprehensive test suite for verifying agent compliance. Run these tests periodically to ensure agents remain aligned with prompt-bible and architecture standards.
 
 Each test has 3 verification steps. An agent passes when all 3 steps are verified.
 
@@ -32,7 +32,7 @@ Each test has 3 verification steps. An agent passes when all 3 steps are verifie
 22. [Post-Action Reflection Compliance](#test-post-action-reflection-compliance)
 23. [Investigation-First Compliance](#test-investigation-first-compliance)
 24. [Verbosity and Context Constraint Compliance](#test-verbosity-and-context-constraint-compliance)
-25. [PROMPT_BIBLE Essential Techniques Compliance](#test-prompt_bible-essential-techniques-compliance)
+25. [prompt-bible Essential Techniques Compliance](#test-prompt_bible-essential-techniques-compliance)
 26. [Canonical Agent Structure Compliance](#test-canonical-agent-structure-compliance)
 27. [Domain Scope and Agent Boundaries](#test-domain-scope-and-agent-boundaries)
 28. [Output Format and Examples Quality](#test-output-format-and-examples-quality)
@@ -360,7 +360,7 @@ Each test has 3 verification steps. An agent passes when all 3 steps are verifie
 - [ ] Test 3: FINAL SIGN-OFF - XML tags follow all conventions
   - Tags inside code blocks with xml hint
   - snake_case naming throughout
-  - Context isolation achieved per PROMPT_BIBLE
+  - Context isolation achieved per prompt-bible
 
 ---
 
@@ -378,7 +378,7 @@ Each test has 3 verification steps. An agent passes when all 3 steps are verifie
   - 7 MUST rules: 2 appearances (TOP + BOTTOM)
   - Core principles display: 2 appearances (line 36 + 138)
   - Write verification: 3 appearances (critical files + line 140)
-  - Pattern achieves 40-50% compliance improvement per PROMPT_BIBLE
+  - Pattern achieves 40-50% compliance improvement per prompt-bible
 
 ---
 
@@ -503,7 +503,7 @@ Each test has 3 verification steps. An agent passes when all 3 steps are verifie
 
 ---
 
-## Test: PROMPT_BIBLE Essential Techniques Compliance
+## Test: prompt-bible Essential Techniques Compliance
 
 - [ ] Test 1: Audit all 13 Essential Techniques
   - Positive framing in critical-requirements.md (use "modify only" not "do not modify")
@@ -512,7 +512,7 @@ Each test has 3 verification steps. An agent passes when all 3 steps are verifie
 - [ ] Test 2: Verify all techniques applied correctly
   - Check each technique against agent files
   - Document any gaps
-- [ ] Test 3: FINAL SIGN-OFF - 100% PROMPT_BIBLE compliance verified with comprehensive audit
+- [ ] Test 3: FINAL SIGN-OFF - 100% prompt-bible compliance verified with comprehensive audit
 
 ---
 

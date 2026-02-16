@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This document researches UX patterns for skill search and discovery in the Claude Collective CLI. With 150+ skills in the marketplace and third-party import capabilities, users need an effective way to discover and select skills.
+This document researches UX patterns for skill search and discovery in the Agents Inc. CLI. With 150+ skills in the marketplace and third-party import capabilities, users need an effective way to discover and select skills.
 
 **Key Recommendations:**
 

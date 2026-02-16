@@ -74,6 +74,7 @@ good-enough approximation without the rendering flash. The estimate can be tuned
 on real usage.
 
 **Formula:**
+
 ```
 categoryHeight = CATEGORY_NAME_LINES + ceil(optionCount * AVG_TAG_WIDTH / terminalWidth) + CATEGORY_MARGIN
 ```
@@ -256,6 +257,7 @@ export function useTerminalDimensions(): TerminalDimensions {
 ```
 
 **Design notes:**
+
 - `useState` initializer function avoids re-reading stdout on every render.
 - Cleanup via `stdout.off` prevents memory leaks.
 - Default values match common terminal defaults.
@@ -393,6 +395,7 @@ export function useVirtualScroll<T>({
 ```
 
 **Design notes:**
+
 - Pure `useMemo` - no state, no effects. Recomputes whenever inputs change.
 - Bidirectional expansion from focused item ensures focus is always visible.
 - `MIN_VIEWPORT_ROWS` prevents the viewport from collapsing to zero on tiny terminals.
@@ -403,6 +406,7 @@ export function useVirtualScroll<T>({
 ### 3. Modified: `src/cli/components/wizard/category-grid.tsx`
 
 **Changes:**
+
 - Accept new `availableHeight` and `terminalWidth` props
 - Use `useVirtualScroll` to compute visible categories
 - Render scroll indicators when content is clipped
@@ -614,6 +618,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
 ### 4. Modified: `src/cli/components/wizard/step-build.tsx`
 
 **Changes:**
+
 - Import and use `useTerminalDimensions`
 - Calculate available height for CategoryGrid
 - Pass height and width to CategoryGrid
@@ -675,6 +680,7 @@ export const StepBuild: React.FC<StepBuildProps> = ({ /* ... existing props ... 
 ```
 
 **Design notes:**
+
 - Chrome height is calculated from named constants, not magic numbers.
 - `Math.max(MIN_VIEWPORT_ROWS, ...)` ensures at least some content is visible even
   on extremely small terminals.
@@ -686,6 +692,7 @@ export const StepBuild: React.FC<StepBuildProps> = ({ /* ... existing props ... 
 ### 5. Modified: `src/cli/components/wizard/wizard.tsx` (Optional Enhancement)
 
 **Changes:**
+
 - Add minimum terminal height check alongside the existing width check.
 
 ```typescript
@@ -784,11 +791,12 @@ Ordered sequence with estimated effort and dependencies.
 ### Step 7: Write Tests (60 min)
 
 **Files:**
+
 - `src/cli/components/hooks/use-terminal-dimensions.test.ts` (new)
 - `src/cli/components/hooks/use-virtual-scroll.test.ts` (new)
 - Updates to `src/cli/components/wizard/category-grid.test.tsx`
-**Dependencies:** Steps 2, 3, 4
-**Risk:** Low - follows existing test patterns
+  **Dependencies:** Steps 2, 3, 4
+  **Risk:** Low - follows existing test patterns
 
 ### Step 8: Manual Testing and Tuning (30 min)
 
@@ -989,15 +997,15 @@ Manual integration testing is recommended for the viewport system because:
 
 **Manual test matrix:**
 
-| Terminal Size | Expected Behavior |
-|---|---|
-| 120x40 (normal) | All categories visible, no scroll indicators |
-| 120x24 (standard) | Top categories visible, "N more below" indicator |
-| 120x15 (minimal) | 1-2 categories visible, both indicators when navigating |
-| 120x12 (tiny) | "Terminal too short" warning |
-| Resize 40->24 | Live recalculation, scroll indicators appear |
-| Resize 24->40 | Scroll indicators disappear, all categories shown |
-| 80x24 (narrow) | Tag wrapping changes, fewer tags per row, more scroll |
+| Terminal Size     | Expected Behavior                                       |
+| ----------------- | ------------------------------------------------------- |
+| 120x40 (normal)   | All categories visible, no scroll indicators            |
+| 120x24 (standard) | Top categories visible, "N more below" indicator        |
+| 120x15 (minimal)  | 1-2 categories visible, both indicators when navigating |
+| 120x12 (tiny)     | "Terminal too short" warning                            |
+| Resize 40->24     | Live recalculation, scroll indicators appear            |
+| Resize 24->40     | Scroll indicators disappear, all categories shown       |
+| 80x24 (narrow)    | Tag wrapping changes, fewer tags per row, more scroll   |
 
 ---
 
@@ -1153,17 +1161,17 @@ The wizard store remains unchanged. Scroll position is ephemeral view state.
 
 ## File Inventory
 
-| File | Action | Lines Est. |
-|---|---|---|
-| `src/cli/consts.ts` | Modified | +20 |
-| `src/cli/components/hooks/use-terminal-dimensions.ts` | New | ~35 |
-| `src/cli/components/hooks/use-virtual-scroll.ts` | New | ~100 |
-| `src/cli/components/wizard/category-grid.tsx` | Modified | +60 |
-| `src/cli/components/wizard/step-build.tsx` | Modified | +15 |
-| `src/cli/components/wizard/wizard.tsx` | Modified (optional) | +15 |
-| `src/cli/components/hooks/use-terminal-dimensions.test.ts` | New | ~40 |
-| `src/cli/components/hooks/use-virtual-scroll.test.ts` | New | ~120 |
-| `src/cli/components/wizard/category-grid.test.tsx` | Modified | +40 |
+| File                                                       | Action              | Lines Est. |
+| ---------------------------------------------------------- | ------------------- | ---------- |
+| `src/cli/consts.ts`                                        | Modified            | +20        |
+| `src/cli/components/hooks/use-terminal-dimensions.ts`      | New                 | ~35        |
+| `src/cli/components/hooks/use-virtual-scroll.ts`           | New                 | ~100       |
+| `src/cli/components/wizard/category-grid.tsx`              | Modified            | +60        |
+| `src/cli/components/wizard/step-build.tsx`                 | Modified            | +15        |
+| `src/cli/components/wizard/wizard.tsx`                     | Modified (optional) | +15        |
+| `src/cli/components/hooks/use-terminal-dimensions.test.ts` | New                 | ~40        |
+| `src/cli/components/hooks/use-virtual-scroll.test.ts`      | New                 | ~120       |
+| `src/cli/components/wizard/category-grid.test.tsx`         | Modified            | +40        |
 
 **Total new/modified lines:** ~445
 **New files:** 4 (2 hooks + 2 test files)
@@ -1176,5 +1184,5 @@ The wizard store remains unchanged. Scroll position is ephemeral view state.
 - `src/cli/components/skill-search/skill-search.tsx` - Existing virtual windowing
 - `src/cli/components/hooks/use-filtered-results.ts` - Scroll offset tracking pattern
 - `src/cli/components/hooks/use-focused-list-item.ts` - 2D grid focus management
-- `docs/ux-2.0-scroll-viewport.md` - Problem statement and UX design
-- `docs/architecture.md` - Type system and coding conventions
+- `docs/features/active/scroll-viewport/research.md` - Problem statement and UX design
+- `docs/reference/architecture.md` - Type system and coding conventions

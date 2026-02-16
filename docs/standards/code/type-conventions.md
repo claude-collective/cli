@@ -1,6 +1,6 @@
 # Type Conventions
 
-> Rules and patterns for the Claude Collective CLI type system. Consult this document
+> Rules and patterns for the Agents Inc. CLI type system. Consult this document
 > when working with skill IDs, category paths, aliases, boundary casts, and typed helpers.
 >
 > For foundational principles (fix at source, union types, template literals, `Partial<Record>`,
