@@ -168,6 +168,9 @@ try {
 | `createMockSkill(id, category, overrides?)`          | `__tests__/helpers.ts`                                      |
 | `createComprehensiveMatrix()`, `createBasicMatrix()` | `__tests__/helpers.ts`                                      |
 | `createTestDirs()`, `cleanupTestDirs()`              | `__tests__/helpers.ts`                                      |
+| `createTempDir()`, `cleanupTempDir()`                | `__tests__/helpers.ts`                                      |
+| `createTestSource()`, `cleanupTestSource()`          | `__tests__/fixtures/create-test-source.ts`                  |
+| `createMockCategory(id, displayName, overrides?)`    | `__tests__/helpers.ts`                                      |
 
 **6.3** Extract local test helpers when 3+ tests share identical setup/assertion logic.
 
@@ -184,6 +187,54 @@ async function expectFlagAccepted(args: string[]): Promise<void> {
 **6.5** Use named constants from `test-constants.ts` for keyboard input (`ARROW_UP`, `SPACE`, `ENTER`, `ESCAPE`) and timing (`RENDER_DELAY_MS`, `INPUT_DELAY_MS`, `STEP_TRANSITION_DELAY_MS`).
 
 **6.6** Every exported utility function must have a test file.
+
+**6.7** Use `createTempDir()`/`cleanupTempDir()` from `helpers.ts` for temp directory lifecycle. Never use raw `mkdtemp()`/`rm()` in test files.
+
+```ts
+// BAD
+let tempDir: string;
+beforeEach(async () => {
+  tempDir = await mkdtemp(path.join(os.tmpdir(), "test-"));
+});
+afterEach(async () => {
+  await rm(tempDir, { recursive: true, force: true });
+});
+
+// GOOD
+let tempDir: string;
+beforeEach(async () => {
+  tempDir = await createTempDir("cc-mytest-");
+});
+afterEach(async () => {
+  await cleanupTempDir(tempDir);
+});
+```
+
+**6.8** Place static fixture files (YAML configs, matrix definitions, plugin structures) in `test/fixtures/` with domain subdirectories. Use for data that tests validate against but don't modify.
+
+```
+test/fixtures/
++-- matrix/          # skills-matrix.yaml variants
++-- configs/         # config.yaml variants
++-- plugins/         # complete plugin directory structures
++-- skills/          # SKILL.md files
++-- agents/          # agent partials and templates
+```
+
+For dynamic test data (created/modified per test), use factory functions from `helpers.ts` or `create-test-source.ts` instead.
+
+**6.9** Test factory functions use the signature `(requiredParams..., overrides?: Partial<T>): T`. Required params identify the object; optional overrides customize it. Spread overrides last.
+
+```ts
+// Pattern used by all factory functions in helpers.ts
+function createMockSkill(
+  id: SkillId,
+  category: CategoryPath,
+  overrides?: Partial<ResolvedSkill>,
+): ResolvedSkill {
+  return { id, category, /* defaults */, ...overrides };
+}
+```
 
 ---
 
