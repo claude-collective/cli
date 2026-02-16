@@ -1,0 +1,273 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/claude-collective/cli/main/src/schemas/project-config.schema.json
+name: claude-collective
+agents:
+  - agent-summoner
+  - api-developer
+  - api-researcher
+  - api-reviewer
+  - cli-developer
+  - cli-migrator
+  - cli-reviewer
+  - cli-tester
+  - documentor
+  - pattern-scout
+  - skill-summoner
+  - web-architecture
+  - web-developer
+  - web-pattern-critique
+  - web-pm
+  - web-researcher
+  - web-reviewer
+  - web-tester
+skills:
+  - web-framework-react
+  - web-styling-scss-modules
+  - web-state-zustand
+  - web-server-state-react-query
+  - web-testing-vitest
+  - api-testing-api-testing
+  - web-testing-playwright-e2e
+  - web-mocks-msw
+  - web-accessibility-web-accessibility
+  - web-utilities-native-js
+  - meta-methodology-investigation-requirements
+  - meta-methodology-anti-over-engineering
+  - meta-methodology-success-criteria
+  - meta-methodology-write-verification
+  - meta-methodology-improvement-protocol
+  - meta-methodology-context-management
+  - api-ci-cd-github-actions
+  - meta-reviewing-reviewing
+  - meta-reviewing-cli-reviewing
+  - infra-tooling-setup-tooling
+  - infra-env-setup-env
+  - security-auth-security
+  - meta-research-research-methodology
+  - api-framework-hono
+  - api-database-drizzle
+  - api-auth-better-auth-drizzle-hono
+  - api-observability-axiom-pino-sentry
+  - api-analytics-posthog-analytics
+  - api-email-resend-react-email
+  - cli-framework-oclif-ink
+  - mobile-framework-expo
+stack:
+  web-developer:
+    framework:
+      id: web-framework-react
+      preloaded: true
+    styling:
+      id: web-styling-scss-modules
+      preloaded: true
+    client-state:
+      id: web-state-zustand
+      preloaded: true
+    server-state: web-server-state-react-query
+    testing: web-testing-playwright-e2e
+    mocking: web-mocks-msw
+    accessibility: web-accessibility-web-accessibility
+    utilities: web-utilities-native-js
+    tooling: infra-env-setup-env
+    security: security-auth-security
+    mobile-framework: mobile-framework-expo
+  web-reviewer:
+    framework: web-framework-react
+    styling: web-styling-scss-modules
+    client-state: web-state-zustand
+    server-state: web-server-state-react-query
+    testing: web-testing-playwright-e2e
+    mocking: web-mocks-msw
+    accessibility: web-accessibility-web-accessibility
+    utilities: web-utilities-native-js
+    security: security-auth-security
+    mobile-framework: mobile-framework-expo
+  web-researcher:
+    framework: web-framework-react
+    styling: web-styling-scss-modules
+    client-state: web-state-zustand
+    server-state: web-server-state-react-query
+    testing: web-testing-playwright-e2e
+    mocking: web-mocks-msw
+    accessibility: web-accessibility-web-accessibility
+    utilities: web-utilities-native-js
+    mobile-framework: mobile-framework-expo
+  web-pm:
+    framework: web-framework-react
+    styling: web-styling-scss-modules
+    client-state: web-state-zustand
+    server-state: web-server-state-react-query
+    testing: web-testing-playwright-e2e
+    mocking: web-mocks-msw
+    accessibility: web-accessibility-web-accessibility
+    utilities: web-utilities-native-js
+    ci-cd: api-ci-cd-github-actions
+    security: security-auth-security
+    api: api-framework-hono
+    database: api-database-drizzle
+    auth: api-auth-better-auth-drizzle-hono
+    observability: api-observability-axiom-pino-sentry
+    analytics: api-analytics-posthog-analytics
+    email: api-email-resend-react-email
+    cli-framework: cli-framework-oclif-ink
+    mobile-framework: mobile-framework-expo
+  pattern-scout:
+    framework: web-framework-react
+    styling: web-styling-scss-modules
+    client-state: web-state-zustand
+    server-state: web-server-state-react-query
+    testing: web-testing-playwright-e2e
+    mocking: web-mocks-msw
+    accessibility: web-accessibility-web-accessibility
+    utilities: web-utilities-native-js
+    ci-cd: api-ci-cd-github-actions
+    api: api-framework-hono
+    database: api-database-drizzle
+    auth: api-auth-better-auth-drizzle-hono
+    observability: api-observability-axiom-pino-sentry
+    analytics: api-analytics-posthog-analytics
+    email: api-email-resend-react-email
+  web-pattern-critique:
+    framework: web-framework-react
+    styling: web-styling-scss-modules
+    client-state: web-state-zustand
+    server-state: web-server-state-react-query
+    testing: web-testing-playwright-e2e
+    mocking: web-mocks-msw
+    accessibility: web-accessibility-web-accessibility
+    utilities: web-utilities-native-js
+    ci-cd: api-ci-cd-github-actions
+    api: api-framework-hono
+    database: api-database-drizzle
+    auth: api-auth-better-auth-drizzle-hono
+    observability: api-observability-axiom-pino-sentry
+    analytics: api-analytics-posthog-analytics
+    email: api-email-resend-react-email
+  agent-summoner:
+    framework: web-framework-react
+    styling: web-styling-scss-modules
+    client-state: web-state-zustand
+    server-state: web-server-state-react-query
+    testing: web-testing-playwright-e2e
+    mocking: web-mocks-msw
+    accessibility: web-accessibility-web-accessibility
+    utilities: web-utilities-native-js
+    methodology: meta-methodology-context-management
+    ci-cd: api-ci-cd-github-actions
+    reviewing: meta-reviewing-cli-reviewing
+    tooling: infra-env-setup-env
+    security: security-auth-security
+    research: meta-research-research-methodology
+    api: api-framework-hono
+    database: api-database-drizzle
+    auth: api-auth-better-auth-drizzle-hono
+    observability: api-observability-axiom-pino-sentry
+    analytics: api-analytics-posthog-analytics
+    email: api-email-resend-react-email
+    cli-framework: cli-framework-oclif-ink
+    mobile-framework: mobile-framework-expo
+  skill-summoner:
+    framework: web-framework-react
+    styling: web-styling-scss-modules
+    client-state: web-state-zustand
+    server-state: web-server-state-react-query
+    testing: web-testing-playwright-e2e
+    mocking: web-mocks-msw
+    accessibility: web-accessibility-web-accessibility
+    utilities: web-utilities-native-js
+    methodology: meta-methodology-context-management
+    ci-cd: api-ci-cd-github-actions
+    reviewing: meta-reviewing-cli-reviewing
+    tooling: infra-env-setup-env
+    security: security-auth-security
+    research: meta-research-research-methodology
+    api: api-framework-hono
+    database: api-database-drizzle
+    auth: api-auth-better-auth-drizzle-hono
+    observability: api-observability-axiom-pino-sentry
+    analytics: api-analytics-posthog-analytics
+    email: api-email-resend-react-email
+    cli-framework: cli-framework-oclif-ink
+    mobile-framework: mobile-framework-expo
+  documentor:
+    framework: web-framework-react
+    styling: web-styling-scss-modules
+    client-state: web-state-zustand
+    server-state: web-server-state-react-query
+    testing: web-testing-playwright-e2e
+    mocking: web-mocks-msw
+    accessibility: web-accessibility-web-accessibility
+    utilities: web-utilities-native-js
+    methodology: meta-methodology-context-management
+    ci-cd: api-ci-cd-github-actions
+    reviewing: meta-reviewing-cli-reviewing
+    tooling: infra-env-setup-env
+    security: security-auth-security
+    research: meta-research-research-methodology
+    api: api-framework-hono
+    database: api-database-drizzle
+    auth: api-auth-better-auth-drizzle-hono
+    observability: api-observability-axiom-pino-sentry
+    analytics: api-analytics-posthog-analytics
+    email: api-email-resend-react-email
+    cli-framework: cli-framework-oclif-ink
+    mobile-framework: mobile-framework-expo
+  api-developer:
+    testing: api-testing-api-testing
+    ci-cd: api-ci-cd-github-actions
+    tooling: infra-env-setup-env
+    security: security-auth-security
+    api: api-framework-hono
+    database: api-database-drizzle
+    auth: api-auth-better-auth-drizzle-hono
+    observability: api-observability-axiom-pino-sentry
+    analytics: api-analytics-posthog-analytics
+    email: api-email-resend-react-email
+    cli-framework: cli-framework-oclif-ink
+  api-reviewer:
+    testing: api-testing-api-testing
+    ci-cd: api-ci-cd-github-actions
+    security: security-auth-security
+    api: api-framework-hono
+    database: api-database-drizzle
+    auth: api-auth-better-auth-drizzle-hono
+    observability: api-observability-axiom-pino-sentry
+    analytics: api-analytics-posthog-analytics
+    email: api-email-resend-react-email
+    cli-framework: cli-framework-oclif-ink
+  api-researcher:
+    testing: api-testing-api-testing
+    ci-cd: api-ci-cd-github-actions
+    api: api-framework-hono
+    database: api-database-drizzle
+    auth: api-auth-better-auth-drizzle-hono
+    observability: api-observability-axiom-pino-sentry
+    analytics: api-analytics-posthog-analytics
+    email: api-email-resend-react-email
+    cli-framework: cli-framework-oclif-ink
+  web-architecture:
+    testing: api-testing-api-testing
+    ci-cd: api-ci-cd-github-actions
+    tooling: infra-env-setup-env
+    security: security-auth-security
+    api: api-framework-hono
+    database: api-database-drizzle
+    auth: api-auth-better-auth-drizzle-hono
+    observability: api-observability-axiom-pino-sentry
+    analytics: api-analytics-posthog-analytics
+    email: api-email-resend-react-email
+    cli-framework: cli-framework-oclif-ink
+  cli-developer:
+    cli-framework:
+      id: cli-framework-oclif-ink
+      preloaded: true
+    framework: 
+      id: web-framework-react
+      preloaded: true
+    client-state:
+      id: web-state-zustand
+      preloaded: true
+  cli-reviewer:
+    cli-framework: cli-framework-oclif-ink
+description: Production-ready Next.js with complete backend infrastructure
+installMode: local
+source: github:claude-collective/skills

@@ -151,20 +151,19 @@ For example, the `nextjs-fullstack` stack's `cli-developer` should know about Re
 
 ---
 
-#### U12: Create CLAUDE.md with Documentation References
+#### U12: Create CLAUDE.md with Documentation References [DONE]
 
-Create a root-level `CLAUDE.md` file that provides agents with quick references to key documentation:
+- [x] Create root-level `CLAUDE.md` file
+- [x] Add decision trees (test helpers, type narrowing, error handling)
+- [x] Add code conventions (file naming, imports, constants)
+- [x] Add TypeScript enforcement rules
+- [x] Add architecture quick reference
+- [x] Add common patterns and checklists
+- [x] Link to detailed documentation
 
-- Link to TypeScript standards and conventions
-- Link to architecture document (`docs/architecture.md`)
-- Link to coding standards and patterns
-- Link to test infrastructure and conventions
-- Overview of project structure
-- Quick reference for common patterns
+This file now serves as the entry point for AI agents to understand the codebase conventions.
 
-This file will serve as the entry point for AI agents to understand the codebase conventions.
-
-**Files:** `CLAUDE.md` (new), potentially reference existing docs
+**Files:** `CLAUDE.md` (created in v0.31.0)
 
 ---
 
@@ -244,6 +243,45 @@ Add a comprehensive help section/overlay accessible via `?` key to show users ho
 - Make it easy to discover (`?` key always visible)
 
 **Files:** `src/cli/components/wizard/help-modal.tsx`
+
+---
+
+#### U16: Migrate to Split-File Changelog Architecture
+
+Migrate from the single large `CHANGELOG.md` file (966+ lines) to a split-file architecture that's safer for AI agents to manage.
+
+**Current problem:**
+
+- Single 966+ line file prone to accidental truncation when AI agents edit it
+- No protection against overwriting history
+
+**New architecture:**
+
+- `CHANGELOG.md` - Summary index (append-only, brief entries with links)
+- `changelogs/{version}.md` - Detailed release notes per version (create new file each release)
+
+**Protocol:** See [docs/COMMIT-PROTOCOL.md](./docs/COMMIT-PROTOCOL.md) for AI commit and changelog conventions.
+
+**Migration steps:**
+
+1. Create `changelogs/` directory
+2. Split current CHANGELOG.md into individual version files (0.30.0.md, 0.29.5.md, etc.)
+3. Rewrite CHANGELOG.md as a summary index with links
+4. Update COMMIT-PROTOCOL.md if needed
+5. Future releases follow protocol: create new file + prepend to index
+
+**Benefits:**
+
+- AI agents create files instead of editing (safer)
+- Can't accidentally delete history (old files immutable)
+- Each release is atomic (one new file)
+- Summary index stays small and scannable
+
+**Files:**
+
+- `CHANGELOG.md` (rewrite as index)
+- `changelogs/*.md` (new directory with version files)
+- `docs/COMMIT-PROTOCOL.md` (already created)
 
 ---
 
