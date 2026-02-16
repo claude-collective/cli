@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.32.0] - 2026-02-16
+
+**Wizard simplification, branding, scroll viewport, and code quality**
+
+See [changelogs/0.32.0.md](./changelogs/0.32.0.md) for full details.
+
 ## [0.31.1] - 2026-02-16
 
 **Commit protocol and changelog architecture**
