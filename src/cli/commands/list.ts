@@ -1,10 +1,10 @@
 import { BaseCommand } from "../base-command.js";
+import { DEFAULT_BRANDING } from "../consts.js";
 import { getInstallationInfo, formatInstallationDisplay } from "../lib/plugins/index.js";
 
 export default class List extends BaseCommand {
   static summary = "Show installation information";
-  static description =
-    "Display details about the Claude Collective installation (local or plugin mode)";
+  static description = `Display details about the ${DEFAULT_BRANDING.NAME} installation (local or plugin mode)`;
   static aliases = ["ls"];
 
   static examples = [

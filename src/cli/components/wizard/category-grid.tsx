@@ -4,7 +4,8 @@ import { Box, Text } from "ink";
 import { sortBy } from "remeda";
 
 import type { SkillId, Subcategory } from "../../types/index.js";
-import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
+import { CLI_COLORS, SCROLL_VIEWPORT, UI_SYMBOLS } from "../../consts.js";
+import { useVirtualScroll } from "../hooks/use-virtual-scroll.js";
 import {
   findValidStartColumn,
   isSectionLocked,
@@ -44,6 +45,10 @@ export type CategoryGridProps = {
   defaultFocusedCol?: number;
   /** Optional callback fired whenever the focused position changes */
   onFocusChange?: (row: number, col: number) => void;
+  /** Available height in terminal rows for the category list. When undefined, all categories render. */
+  availableHeight?: number;
+  /** Terminal width in columns, used for tag wrapping estimation. */
+  terminalWidth?: number;
 };
 
 const SYMBOL_REQUIRED = "*";
@@ -118,7 +123,7 @@ const getStateSymbol = (option: CategoryOption, isLocked: boolean): string => {
 };
 
 const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked }) => {
-  const getColor = (): { text: string; border: string } | undefined => {
+  const getColor = (): { text: string; border: string } => {
     if (isLocked || option.state === "disabled") {
       return {
         text: CLI_COLORS.NEUTRAL,
@@ -143,23 +148,29 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked }) => {
         border: CLI_COLORS.WARNING,
       };
     }
-    return undefined;
+    // Normal unselected: muted color to clearly contrast with selected (cyan) skills
+    return {
+      text: CLI_COLORS.NEUTRAL,
+      border: CLI_COLORS.NEUTRAL,
+    };
   };
 
   const isBold = isFocused || option.selected;
   const isDimmed = isLocked || option.state === "disabled";
+  const isBorderDimmed = isDimmed || (!option.selected && !isFocused);
   const focusBorderColor = option.selected ? CLI_COLORS.PRIMARY : CLI_COLORS.UNFOCUSED;
+  const colors = getColor();
   const stateSuffix = getStateSuffix(option.state, isLocked);
   const stateSymbol = getStateSymbol(option, isLocked);
 
   return (
     <Box
       marginRight={1}
-      borderColor={isFocused ? focusBorderColor : getColor()?.border}
+      borderColor={isFocused ? focusBorderColor : colors.border}
       borderStyle="single"
-      borderDimColor={isDimmed}
+      borderDimColor={isBorderDimmed}
     >
-      <Text color={getColor()?.text} bold={isBold} dimColor={false}>
+      <Text color={colors.text} bold={isBold} dimColor={false}>
         {" "}
         {option.local && (
           <>
@@ -226,6 +237,46 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   );
 };
 
+type ProcessedCategory = CategoryRow & { sortedOptions: CategoryOption[] };
+
+/**
+ * Estimate the rendered height of a category section in terminal rows.
+ *
+ * Each category consists of:
+ * - 1 line for the category name (+ margin-top)
+ * - N lines for the skill tags (based on count and terminal width wrapping)
+ *
+ * Tag wrapping: skill tags use flexWrap="wrap". Each tag is approximately
+ * AVG_TAG_WIDTH chars wide. The number of rows is ceil(tags * tagWidth / terminalWidth).
+ */
+const estimateCategoryHeight = (category: ProcessedCategory, terminalWidth: number): number => {
+  const { CATEGORY_NAME_LINES, AVG_TAG_WIDTH, CATEGORY_MARGIN_LINES } = SCROLL_VIEWPORT;
+  const optionCount = category.sortedOptions.length;
+  const tagsPerRow = Math.max(1, Math.floor(terminalWidth / AVG_TAG_WIDTH));
+  const tagRows = Math.ceil(optionCount / tagsPerRow);
+  return CATEGORY_NAME_LINES + tagRows + CATEGORY_MARGIN_LINES;
+};
+
+type ScrollIndicatorProps = {
+  count: number;
+  direction: "above" | "below";
+};
+
+const ScrollIndicator: React.FC<ScrollIndicatorProps> = ({ count, direction }) => {
+  if (count === 0) return null;
+
+  const arrow = direction === "above" ? UI_SYMBOLS.SCROLL_UP : UI_SYMBOLS.SCROLL_DOWN;
+  const label = `${arrow} ${count} more ${count === 1 ? "category" : "categories"} ${direction}`;
+
+  return (
+    <Box paddingLeft={1} marginTop={direction === "below" ? 1 : 0}>
+      <Text dimColor>{label}</Text>
+    </Box>
+  );
+};
+
+const DEFAULT_TERMINAL_WIDTH = 80;
+
 export const CategoryGrid: React.FC<CategoryGridProps> = ({
   categories,
   showDescriptions,
@@ -235,6 +286,8 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
   defaultFocusedRow = 0,
   defaultFocusedCol = 0,
   onFocusChange,
+  availableHeight,
+  terminalWidth,
 }) => {
   const processedCategories = useMemo(
     () =>
@@ -304,6 +357,14 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
     onToggleDescriptions,
   });
 
+  const { visibleItems, startIndex, hiddenAbove, hiddenBelow, isScrollable } = useVirtualScroll({
+    items: processedCategories,
+    availableHeight: availableHeight ?? Infinity,
+    focusedIndex: focusedRow,
+    estimateItemHeight: estimateCategoryHeight,
+    terminalWidth: terminalWidth ?? DEFAULT_TERMINAL_WIDTH,
+  });
+
   if (categories.length === 0) {
     return (
       <Box flexDirection="column">
@@ -314,7 +375,10 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
 
   return (
     <Box flexDirection="column">
-      {processedCategories.map((category, rowIndex) => {
+      {isScrollable && <ScrollIndicator count={hiddenAbove} direction="above" />}
+
+      {visibleItems.map((category, visibleIndex) => {
+        const originalIndex = startIndex + visibleIndex;
         const isLocked = isSectionLocked(category.id, categories);
 
         return (
@@ -323,12 +387,14 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
             category={category}
             options={category.sortedOptions}
             isLocked={isLocked}
-            isFocused={rowIndex === focusedRow}
+            isFocused={originalIndex === focusedRow}
             focusedOptionIndex={focusedCol}
             showDescriptions={showDescriptions}
           />
         );
       })}
+
+      {isScrollable && <ScrollIndicator count={hiddenBelow} direction="below" />}
     </Box>
   );
 };

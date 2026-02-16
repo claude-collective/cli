@@ -166,7 +166,7 @@ describe("installation", () => {
 
     it("throws error when no installation found", async () => {
       await expect(getInstallationOrThrow(tempDir)).rejects.toThrow(
-        "No Claude Collective installation found",
+        "No Agents Inc. installation found",
       );
     });
 

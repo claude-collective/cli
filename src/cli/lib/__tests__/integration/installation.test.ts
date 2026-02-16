@@ -1,24 +1,24 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "fs";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
+import { DEFAULT_BRANDING, DEFAULT_PLUGIN_NAME } from "../../../consts";
+import { createTempDir, cleanupTempDir } from "../helpers";
 import { detectInstallation, getInstallationOrThrow } from "../../installation";
 
 describe("installation", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-installation-test-"));
+    tempDir = await createTempDir("cc-installation-test-");
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("detectInstallation - local mode", () => {
     it("should return local installation when .claude-src/config.yaml exists", async () => {
-      // Create local config in new location
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
@@ -39,7 +39,6 @@ installMode: local
     });
 
     it("should fall back to .claude/config.yaml for legacy projects", async () => {
-      // Create local config in legacy location
       const claudeDir = path.join(tempDir, ".claude");
       await mkdir(claudeDir, { recursive: true });
       await writeFile(
@@ -60,7 +59,6 @@ installMode: local
     });
 
     it("should default to local mode when installMode is not in config", async () => {
-      // Create local config without installMode field
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
@@ -78,7 +76,6 @@ agents:
     });
 
     it("should use correct paths for agentsDir and skillsDir in local mode", async () => {
-      // Create local config - agents/skills still go to .claude/ (runtime directory)
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       const claudeDir = path.join(tempDir, ".claude");
       await mkdir(claudeSrcDir, { recursive: true });
@@ -93,7 +90,6 @@ agents:
       const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
-      // Agents and skills go to .claude/ (runtime output directory)
       expect(result?.agentsDir).toBe(path.join(claudeDir, "agents"));
       expect(result?.skillsDir).toBe(path.join(claudeDir, "skills"));
     });
@@ -101,7 +97,6 @@ agents:
 
   describe("detectInstallation - plugin mode", () => {
     it("should return plugin installation when config has installMode: plugin", async () => {
-      // Create config with explicit plugin mode
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
@@ -122,7 +117,6 @@ installMode: plugin
     });
 
     it("should use correct plugin paths for agentsDir and skillsDir", async () => {
-      // Create config with explicit plugin mode
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       const claudeDir = path.join(tempDir, ".claude");
       await mkdir(claudeSrcDir, { recursive: true });
@@ -143,8 +137,7 @@ installMode: plugin
     });
 
     it("should return null when only plugin directory exists without config", async () => {
-      // Just having a plugin directory without a config file should not detect installation
-      const pluginDir = path.join(tempDir, ".claude", "plugins", "claude-collective");
+      const pluginDir = path.join(tempDir, ".claude", "plugins", DEFAULT_PLUGIN_NAME);
       await mkdir(pluginDir, { recursive: true });
 
       const result = await detectInstallation(tempDir);
@@ -155,14 +148,12 @@ installMode: plugin
 
   describe("detectInstallation - no installation", () => {
     it("should return null when neither local nor plugin exists", async () => {
-      // Empty temp directory - no .claude folder at all
       const result = await detectInstallation(tempDir);
 
       expect(result).toBeNull();
     });
 
     it("should return null when .claude exists but no config.yaml or plugin", async () => {
-      // Create .claude directory without config or plugin
       const claudeDir = path.join(tempDir, ".claude");
       await mkdir(claudeDir, { recursive: true });
 
@@ -174,7 +165,6 @@ installMode: plugin
 
   describe("detectInstallation - priority", () => {
     it("should prioritize local installation over plugin when both exist", async () => {
-      // Create both local config and plugin directory
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       const claudeDir = path.join(tempDir, ".claude");
       await mkdir(claudeSrcDir, { recursive: true });
@@ -186,7 +176,7 @@ agents:
 `,
       );
 
-      const pluginDir = path.join(claudeDir, "plugins", "claude-collective");
+      const pluginDir = path.join(claudeDir, "plugins", DEFAULT_PLUGIN_NAME);
       await mkdir(pluginDir, { recursive: true });
 
       const result = await detectInstallation(tempDir);
@@ -198,19 +188,16 @@ agents:
 
   describe("getInstallationOrThrow", () => {
     it("should throw helpful error when no installation found", async () => {
-      // Empty temp directory
       await expect(getInstallationOrThrow(tempDir)).rejects.toThrow(
-        /No Claude Collective installation found/,
+        `No ${DEFAULT_BRANDING.NAME} installation found`,
       );
     });
 
     it("should include init suggestion in error message", async () => {
-      // Empty temp directory
       await expect(getInstallationOrThrow(tempDir)).rejects.toThrow(/cc init/);
     });
 
     it("should return installation when found (local)", async () => {
-      // Create local config
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
@@ -229,7 +216,6 @@ agents:
     });
 
     it("should return installation when found (plugin)", async () => {
-      // Create config with plugin mode
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
@@ -251,8 +237,6 @@ installMode: plugin
 
   describe("edge cases", () => {
     it("should handle config with explicit installMode: plugin even without plugin dir", async () => {
-      // Create local config with installMode: plugin
-      // Config file exists, so installation is detected as plugin mode
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
@@ -266,14 +250,12 @@ installMode: plugin
 
       const result = await detectInstallation(tempDir);
 
-      // Config file exists with installMode: plugin, so it returns plugin installation
       expect(result).not.toBeNull();
       expect(result?.mode).toBe("plugin");
       expect(result?.configPath).toBe(path.join(claudeSrcDir, "config.yaml"));
     });
 
     it("should treat invalid YAML config file as local mode (file exists)", async () => {
-      // Create invalid config
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(path.join(claudeSrcDir, "config.yaml"), "invalid: yaml: content: :");
@@ -288,14 +270,11 @@ installMode: plugin
     });
 
     it("should use process.cwd() as default when projectDir is not provided", async () => {
-      // Save original cwd
       const originalCwd = process.cwd();
 
       try {
-        // Change to temp directory
         process.chdir(tempDir);
 
-        // Create local config in temp directory
         const claudeSrcDir = path.join(tempDir, ".claude-src");
         await mkdir(claudeSrcDir, { recursive: true });
         await writeFile(
@@ -306,14 +285,12 @@ agents:
 `,
         );
 
-        // Call without projectDir argument
         const result = await detectInstallation();
 
         expect(result).not.toBeNull();
         expect(result?.mode).toBe("local");
         expect(result?.projectDir).toBe(fs.realpathSync(tempDir));
       } finally {
-        // Restore original cwd
         process.chdir(originalCwd);
       }
     });

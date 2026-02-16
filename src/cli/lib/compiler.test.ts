@@ -3,6 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { readFile as fsReadFile, stat } from "fs/promises";
 import type { AgentConfig, Skill } from "../types";
+import { DEFAULT_PLUGIN_NAME } from "../consts";
 import {
   createMockAgentConfig,
   createMockSkillEntry,
@@ -144,7 +145,7 @@ function createCompileContext(
     stackId: "test-stack",
     verbose: false,
     projectRoot,
-    outputDir: path.join(projectRoot, ".claude/plugins/claude-collective"),
+    outputDir: path.join(projectRoot, `.claude/plugins/${DEFAULT_PLUGIN_NAME}`),
     ...overrides,
   };
 }
@@ -176,7 +177,6 @@ describe("compiler", () => {
         const ctx = createCompileContext(projectDir);
         await compileAllAgents(agents, ctx, engine as never);
 
-        // Verify the output directory was actually created on disk
         const dirStat = await stat(path.join(ctx.outputDir, "agents"));
         expect(dirStat.isDirectory()).toBe(true);
       });
@@ -196,7 +196,6 @@ describe("compiler", () => {
         const ctx = createCompileContext(projectDir);
         await compileAllAgents(agents, ctx, engine as never);
 
-        // Verify the file was actually written with correct content
         const outputPath = path.join(ctx.outputDir, "agents/web-developer.md");
         const content = await fsReadFile(outputPath, "utf-8");
         expect(content).toBe(COMPILED_OUTPUT);
@@ -216,7 +215,6 @@ describe("compiler", () => {
         const ctx = createCompileContext(projectDir);
         await compileAllAgents(agents, ctx, engine as never);
 
-        // Engine should receive data read from real fixture files
         expect(engine.renderFile).toHaveBeenCalledWith(
           "agent",
           expect.objectContaining({
@@ -238,7 +236,6 @@ describe("compiler", () => {
         const ctx = createCompileContext(projectDir);
         await compileAllAgents(agents, ctx, engine as never);
 
-        // Web developer fixture has an examples.md file
         expect(engine.renderFile).toHaveBeenCalledWith(
           "agent",
           expect.objectContaining({
@@ -322,7 +319,6 @@ describe("compiler", () => {
       const ctx = createCompileContext(projectDir);
       await compileAllSkills(agents, ctx);
 
-      // Verify the skill file was actually copied to output
       const outputPath = path.join(ctx.outputDir, "skills/web-framework-react/SKILL.md");
       const content = await fsReadFile(outputPath, "utf-8");
       expect(content).toContain("React Framework");
@@ -338,7 +334,6 @@ describe("compiler", () => {
       const ctx = createCompileContext(projectDir);
       await compileAllSkills(agents, ctx);
 
-      // Verify single-file skill was written as SKILL.md in output
       const outputPath = path.join(ctx.outputDir, "skills/web-testing-vitest/SKILL.md");
       const content = await fsReadFile(outputPath, "utf-8");
       expect(content).toContain("Vitest Testing");
@@ -358,7 +353,6 @@ describe("compiler", () => {
       const ctx = createCompileContext(projectDir);
       await compileAllSkills(agents, ctx);
 
-      // Verify the skill output exists and has correct content
       const outputPath = path.join(ctx.outputDir, "skills/web-framework-react/SKILL.md");
       const content = await fsReadFile(outputPath, "utf-8");
       expect(content).toContain("React Framework");
@@ -382,7 +376,6 @@ describe("compiler", () => {
       const ctx = createCompileContext(projectDir);
       await copyClaudeMdToOutput(ctx);
 
-      // Verify CLAUDE.md was written to the plugins root (one level above outputDir)
       const outputPath = path.join(ctx.outputDir, "../CLAUDE.md");
       const content = await fsReadFile(outputPath, "utf-8");
       expect(content).toContain("Project-level instructions for Claude");
@@ -391,13 +384,11 @@ describe("compiler", () => {
 
   describe("compileAllCommands", () => {
     it("skips when commands directory does not exist", async () => {
-      // Create a project without commands dir
       const emptyProject = await createTempDir("compiler-no-cmds-");
 
       const ctx = createCompileContext(emptyProject);
       await compileAllCommands(ctx);
 
-      // No output directory should be created
       await expect(stat(path.join(ctx.outputDir, "commands"))).rejects.toThrow();
 
       await cleanupTempDir(emptyProject);
@@ -407,7 +398,6 @@ describe("compiler", () => {
       const ctx = createCompileContext(projectDir);
       await compileAllCommands(ctx);
 
-      // Verify both command files were copied with correct content
       const deployContent = await fsReadFile(
         path.join(ctx.outputDir, "commands/deploy.md"),
         "utf-8",
@@ -419,7 +409,6 @@ describe("compiler", () => {
     });
 
     it("skips when no command files found", async () => {
-      // Create a project with an empty commands dir
       const emptyProject = await createTempDir("compiler-empty-cmds-");
       const { mkdir } = await import("fs/promises");
       await mkdir(path.join(emptyProject, "src/commands"), { recursive: true });
@@ -427,14 +416,12 @@ describe("compiler", () => {
       const ctx = createCompileContext(emptyProject);
       await compileAllCommands(ctx);
 
-      // Commands output dir should not exist (no files to write)
       await expect(stat(path.join(ctx.outputDir, "commands"))).rejects.toThrow();
 
       await cleanupTempDir(emptyProject);
     });
 
     it("throws descriptive error when command file read fails", async () => {
-      // Create a project with an unreadable command file
       const brokenProject = await createTempDir("compiler-bad-cmd-");
       const { mkdir, writeFile: fsWrite, chmod } = await import("fs/promises");
       const cmdDir = path.join(brokenProject, "src/commands");
@@ -446,7 +433,6 @@ describe("compiler", () => {
         /Failed to compile command 'deploy\.md'/,
       );
 
-      // Restore permissions for cleanup
       await chmod(path.join(cmdDir, "deploy.md"), 0o644);
       await cleanupTempDir(brokenProject);
     });
@@ -462,7 +448,6 @@ describe("compiler", () => {
 
       await removeCompiledOutputDirs(outputDir);
 
-      // Verify directories were removed
       await expect(stat(path.join(outputDir, "agents"))).rejects.toThrow();
       await expect(stat(path.join(outputDir, "skills"))).rejects.toThrow();
       await expect(stat(path.join(outputDir, "commands"))).rejects.toThrow();
@@ -669,7 +654,6 @@ describe("compiler", () => {
       const ctx = createCompileContext(projectDir);
       await compileAllAgents(agents, ctx, engine as never);
 
-      // Verify sanitized data was passed to the engine
       const renderCall = engine.renderFile.mock.calls[0][1] as CompiledAgentData;
       expect(renderCall.agent.name).not.toContain("{{");
       expect(renderCall.agent.name).not.toContain("}}");

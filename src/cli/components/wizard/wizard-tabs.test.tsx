@@ -1,11 +1,18 @@
 import { render } from "ink-testing-library";
 import { afterEach, describe, expect, it } from "vitest";
-import { WizardTabs, WIZARD_STEPS, type WizardTabsProps } from "./wizard-tabs";
+import type { WizardStep } from "../../stores/wizard-store";
+import { WizardTabs, WIZARD_STEPS, formatStepLabel, type WizardTabsProps } from "./wizard-tabs";
+
+/** Format a custom (non-WIZARD_STEPS) step label for test assertions */
+const formatCustomStepLabel = (step: { label: string; number: number }) => {
+  const prefix = `[${step.number}]`;
+  return { prefix, label: step.label, full: `${prefix} ${step.label}` };
+};
 
 const renderWizardTabs = (props: Partial<WizardTabsProps> = {}) => {
   const defaultProps: WizardTabsProps = {
     steps: WIZARD_STEPS,
-    currentStep: "approach",
+    currentStep: "stack",
     completedSteps: [],
     skippedSteps: [],
     ...props,
@@ -22,16 +29,15 @@ describe("WizardTabs component", () => {
   });
 
   describe("rendering", () => {
-    it("should render all 5 tabs", () => {
+    it("should render all 4 tabs", () => {
       const { lastFrame, unmount } = renderWizardTabs();
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("[1] Intro");
-      expect(output).toContain("[2] Stack");
-      expect(output).toContain("[3] Build");
-      expect(output).toContain("[4] Sources");
-      expect(output).toContain("[5] Confirm");
+      expect(output).toContain(formatStepLabel("stack").full);
+      expect(output).toContain(formatStepLabel("build").full);
+      expect(output).toContain(formatStepLabel("sources").full);
+      expect(output).toContain(formatStepLabel("confirm").full);
     });
 
     it("should render all step numbers", () => {
@@ -39,11 +45,10 @@ describe("WizardTabs component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("[1]");
-      expect(output).toContain("[2]");
-      expect(output).toContain("[3]");
-      expect(output).toContain("[4]");
-      expect(output).toContain("[5]");
+      expect(output).toContain(formatStepLabel("stack").prefix);
+      expect(output).toContain(formatStepLabel("build").prefix);
+      expect(output).toContain(formatStepLabel("sources").prefix);
+      expect(output).toContain(formatStepLabel("confirm").prefix);
     });
 
     it("should render with custom steps", () => {
@@ -58,9 +63,9 @@ describe("WizardTabs component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("[1] First");
-      expect(output).toContain("[2] Second");
-      expect(output).not.toContain("Intro");
+      expect(output).toContain(formatCustomStepLabel(customSteps[0]).full);
+      expect(output).toContain(formatCustomStepLabel(customSteps[1]).full);
+      expect(output).not.toContain(formatStepLabel("stack").label);
     });
 
     it("should render horizontal dividers above and below tabs", () => {
@@ -68,7 +73,6 @@ describe("WizardTabs component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      // The divider uses Unicode horizontal line character (U+2500)
       expect(output).toContain("\u2500");
     });
   });
@@ -81,177 +85,167 @@ describe("WizardTabs component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      // Current step should be rendered with its label
-      expect(output).toContain("[3] Build");
+      expect(output).toContain(formatStepLabel("build").full);
     });
 
     it("should mark first step as current by default", () => {
       const { lastFrame, unmount } = renderWizardTabs({
-        currentStep: "approach",
+        currentStep: "stack",
         completedSteps: [],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("[1] Intro");
+      expect(output).toContain(formatStepLabel("stack").full);
     });
 
     it("should update current step when changed", () => {
       const { lastFrame, unmount } = renderWizardTabs({
         currentStep: "confirm",
-        completedSteps: ["approach", "stack", "build"],
+        completedSteps: ["stack", "build"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should show confirm step
-      expect(output).toContain("[5] Confirm");
+      expect(output).toContain(formatStepLabel("confirm").full);
     });
   });
 
   describe("completed steps", () => {
     it("should render completed step labels", () => {
       const { lastFrame, unmount } = renderWizardTabs({
-        currentStep: "stack",
-        completedSteps: ["approach"],
+        currentStep: "build",
+        completedSteps: ["stack"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("[1] Intro");
+      expect(output).toContain(formatStepLabel("stack").full);
     });
 
     it("should render multiple completed steps", () => {
       const { lastFrame, unmount } = renderWizardTabs({
-        currentStep: "build",
-        completedSteps: ["approach", "stack"],
+        currentStep: "sources",
+        completedSteps: ["stack", "build"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("[1] Intro");
-      expect(output).toContain("[2] Stack");
+      expect(output).toContain(formatStepLabel("stack").full);
+      expect(output).toContain(formatStepLabel("build").full);
     });
 
     it("should render current step separately from completed steps", () => {
       const { lastFrame, unmount } = renderWizardTabs({
-        currentStep: "approach",
+        currentStep: "stack",
         completedSteps: [],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should contain approach tab
-      expect(output).toContain("[1] Intro");
+      expect(output).toContain(formatStepLabel("stack").full);
     });
   });
 
   describe("pending steps", () => {
     it("should render pending step labels", () => {
       const { lastFrame, unmount } = renderWizardTabs({
-        currentStep: "approach",
+        currentStep: "stack",
         completedSteps: [],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Pending steps should still be visible
-      expect(output).toContain("[2] Stack");
-      expect(output).toContain("[3] Build");
+      expect(output).toContain(formatStepLabel("build").full);
+      expect(output).toContain(formatStepLabel("sources").full);
     });
 
     it("should render steps after current", () => {
       const { lastFrame, unmount } = renderWizardTabs({
         currentStep: "build",
-        completedSteps: ["approach", "stack"],
+        completedSteps: ["stack"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Pending step (confirm) should be rendered
-      expect(output).toContain("[5] Confirm");
+      expect(output).toContain(formatStepLabel("confirm").full);
     });
   });
 
   describe("skipped steps", () => {
     it("should render skipped step labels", () => {
       const { lastFrame, unmount } = renderWizardTabs({
-        currentStep: "build",
-        completedSteps: ["approach"],
-        skippedSteps: ["stack"],
+        currentStep: "sources",
+        completedSteps: ["stack"],
+        skippedSteps: ["build"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Skipped step should still be rendered
-      expect(output).toContain("[2] Stack");
+      expect(output).toContain(formatStepLabel("build").full);
     });
 
     it("should handle multiple skipped steps", () => {
       const { lastFrame, unmount } = renderWizardTabs({
         currentStep: "confirm",
-        completedSteps: ["approach", "build"],
-        skippedSteps: ["stack"],
+        completedSteps: ["stack"],
+        skippedSteps: ["build", "sources"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("[2] Stack");
+      expect(output).toContain(formatStepLabel("build").full);
+      expect(output).toContain(formatStepLabel("sources").full);
     });
 
     it("should prioritize completed over skipped when step is in both arrays", () => {
-      // Completed takes precedence over skipped
       const { lastFrame, unmount } = renderWizardTabs({
-        currentStep: "build",
-        completedSteps: ["approach", "stack"],
-        skippedSteps: ["stack"], // Also in skipped
+        currentStep: "sources",
+        completedSteps: ["stack", "build"],
+        skippedSteps: ["build"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should render both - completed status takes precedence visually
-      expect(output).toContain("[1] Intro");
-      expect(output).toContain("[2] Stack");
+      expect(output).toContain(formatStepLabel("stack").full);
+      expect(output).toContain(formatStepLabel("build").full);
     });
   });
 
   describe("state priority", () => {
     it("should prioritize completed over current", () => {
       const { lastFrame, unmount } = renderWizardTabs({
-        currentStep: "approach",
-        completedSteps: ["approach"],
+        currentStep: "stack",
+        completedSteps: ["stack"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should render approach - completed takes precedence
-      expect(output).toContain("[1] Intro");
+      expect(output).toContain(formatStepLabel("stack").full);
     });
 
     it("should prioritize current over skipped", () => {
       const { lastFrame, unmount } = renderWizardTabs({
-        currentStep: "stack",
+        currentStep: "build",
         completedSteps: [],
-        skippedSteps: ["stack"], // Also current
+        skippedSteps: ["build"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should render stack - current takes precedence over skipped
-      expect(output).toContain("[2] Stack");
+      expect(output).toContain(formatStepLabel("build").full);
     });
 
     it("should prioritize completed over skipped", () => {
       const { lastFrame, unmount } = renderWizardTabs({
-        currentStep: "build",
-        completedSteps: ["approach"],
-        skippedSteps: ["approach"], // Also completed
+        currentStep: "sources",
+        completedSteps: ["stack"],
+        skippedSteps: ["stack"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should render approach - completed takes precedence
-      expect(output).toContain("[1] Intro");
+      expect(output).toContain(formatStepLabel("stack").full);
     });
   });
 
@@ -261,9 +255,8 @@ describe("WizardTabs component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      // All tabs should be in the output
-      expect(output).toContain("Intro");
-      expect(output).toContain("Confirm");
+      expect(output).toContain(formatStepLabel("stack").label);
+      expect(output).toContain(formatStepLabel("confirm").label);
     });
 
     it("should include step labels", () => {
@@ -272,7 +265,7 @@ describe("WizardTabs component", () => {
 
       const output = lastFrame();
       WIZARD_STEPS.forEach((step) => {
-        expect(output).toContain(step.label);
+        expect(output).toContain(formatStepLabel(step.id as WizardStep).label);
       });
     });
   });
@@ -280,45 +273,42 @@ describe("WizardTabs component", () => {
   describe("edge cases", () => {
     it("should handle empty completed steps", () => {
       const { lastFrame, unmount } = renderWizardTabs({
-        currentStep: "approach",
+        currentStep: "stack",
         completedSteps: [],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should still render all tabs
-      expect(output).toContain("[1] Intro");
-      expect(output).toContain("[5] Confirm");
+      expect(output).toContain(formatStepLabel("stack").full);
+      expect(output).toContain(formatStepLabel("confirm").full);
     });
 
     it("should handle empty skipped steps", () => {
       const { lastFrame, unmount } = renderWizardTabs({
-        currentStep: "build",
-        completedSteps: ["approach", "stack"],
+        currentStep: "sources",
+        completedSteps: ["stack", "build"],
         skippedSteps: [],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should render all tabs
-      expect(output).toContain("[1] Intro");
-      expect(output).toContain("[2] Stack");
-      expect(output).toContain("[3] Build");
+      expect(output).toContain(formatStepLabel("stack").full);
+      expect(output).toContain(formatStepLabel("build").full);
+      expect(output).toContain(formatStepLabel("sources").full);
     });
 
     it("should handle all steps completed", () => {
       const { lastFrame, unmount } = renderWizardTabs({
         currentStep: "confirm",
-        completedSteps: ["approach", "stack", "build", "confirm"],
+        completedSteps: ["stack", "build", "sources", "confirm"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // All 4 tabs should be rendered
-      expect(output).toContain("[1] Intro");
-      expect(output).toContain("[2] Stack");
-      expect(output).toContain("[3] Build");
-      expect(output).toContain("[5] Confirm");
+      expect(output).toContain(formatStepLabel("stack").full);
+      expect(output).toContain(formatStepLabel("build").full);
+      expect(output).toContain(formatStepLabel("sources").full);
+      expect(output).toContain(formatStepLabel("confirm").full);
     });
 
     it("should handle single step", () => {
@@ -331,7 +321,7 @@ describe("WizardTabs component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("[1] Only Step");
+      expect(output).toContain(formatCustomStepLabel(singleStep[0]).full);
     });
   });
 });

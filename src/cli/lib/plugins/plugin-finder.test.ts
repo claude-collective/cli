@@ -12,6 +12,7 @@ import {
   getPluginSkillIds,
 } from "./plugin-finder";
 import type { PluginManifest, SkillId } from "../../types";
+import { DEFAULT_PLUGIN_NAME, PLUGIN_MANIFEST_DIR } from "../../consts";
 import { createMockMatrix, createMockSkill } from "../__tests__/helpers";
 
 vi.mock("../../utils/fs", async (importOriginal) => {
@@ -50,7 +51,7 @@ describe("plugin-finder", () => {
       const result = getCollectivePluginDir("/my/project");
 
       expect(result).toBe(
-        path.join("/my/project", CLAUDE_DIR, PLUGINS_SUBDIR, "claude-collective"),
+        path.join("/my/project", CLAUDE_DIR, PLUGINS_SUBDIR, DEFAULT_PLUGIN_NAME),
       );
     });
 
@@ -58,7 +59,7 @@ describe("plugin-finder", () => {
       const result = getCollectivePluginDir();
 
       expect(result).toBe(
-        path.join(process.cwd(), CLAUDE_DIR, PLUGINS_SUBDIR, "claude-collective"),
+        path.join(process.cwd(), CLAUDE_DIR, PLUGINS_SUBDIR, DEFAULT_PLUGIN_NAME),
       );
     });
   });
@@ -97,7 +98,7 @@ describe("plugin-finder", () => {
     it("should return manifest path within .claude-plugin directory", () => {
       const result = getPluginManifestPath("/path/to/plugin");
 
-      expect(result).toBe(path.join("/path/to/plugin", ".claude-plugin", "plugin.json"));
+      expect(result).toBe(path.join("/path/to/plugin", PLUGIN_MANIFEST_DIR, "plugin.json"));
     });
   });
 

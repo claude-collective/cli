@@ -6,6 +6,7 @@ import { BaseCommand } from "../base-command.js";
 import { copy, ensureDir, directoryExists, fileExists, writeFile } from "../utils/fs.js";
 import {
   CLAUDE_SRC_DIR,
+  DEFAULT_BRANDING,
   DIRS,
   LOCAL_SKILLS_PATH,
   PROJECT_ROOT,
@@ -110,7 +111,7 @@ export default class Eject extends BaseCommand {
     }
 
     this.log("");
-    this.log("Claude Collective Eject");
+    this.log(`${DEFAULT_BRANDING.NAME} Eject`);
     this.log("");
 
     if (flags.output) {

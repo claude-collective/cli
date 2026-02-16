@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, Text } from "ink";
 import { CLI_COLORS } from "../../consts.js";
 import type { WizardStep } from "../../stores/wizard-store.js";
 
@@ -24,7 +24,7 @@ const GLOBAL_TOGGLES: HelpSection = {
   keys: [
     { key: "E", description: "Toggle expert mode" },
     { key: "P", description: "Toggle plugin/local install mode" },
-    { key: "?", description: "Show this help" },
+    { key: "?", description: "Toggle this help" },
   ],
 };
 
@@ -39,7 +39,7 @@ const BUILD_KEYS: HelpSection = {
 
 const SOURCES_KEYS: HelpSection = {
   title: "Sources Step",
-  keys: [{ key: "G", description: "Open source settings" }],
+  keys: [{ key: "G", description: "Toggle source settings" }],
 };
 
 const STEP_SECTIONS: Partial<Record<WizardStep, HelpSection>> = {
@@ -74,14 +74,9 @@ const HelpSectionView: React.FC<HelpSectionViewProps> = ({ section }) => (
 
 export type HelpModalProps = {
   currentStep: WizardStep;
-  onClose: () => void;
 };
 
-export const HelpModal: React.FC<HelpModalProps> = ({ currentStep, onClose }) => {
-  useInput(() => {
-    onClose();
-  });
-
+export const HelpModal: React.FC<HelpModalProps> = ({ currentStep }) => {
   const stepSection = STEP_SECTIONS[currentStep];
 
   return (
@@ -102,7 +97,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ currentStep, onClose }) =>
       <HelpSectionView section={GLOBAL_TOGGLES} />
       {stepSection && <HelpSectionView section={stepSection} />}
 
-      <Text dimColor>Press any key to close</Text>
+      <Text dimColor>Press ESC or ? to close</Text>
     </Box>
   );
 };

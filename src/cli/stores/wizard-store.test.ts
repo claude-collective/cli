@@ -15,9 +15,9 @@ describe("WizardStore", () => {
   });
 
   describe("initial state", () => {
-    it("should start at approach step", () => {
+    it("should start at stack step", () => {
       const { step } = useWizardStore.getState();
-      expect(step).toBe("approach");
+      expect(step).toBe("stack");
     });
 
     it("should have no approach selected", () => {
@@ -68,34 +68,34 @@ describe("WizardStore", () => {
     it("should track navigation history when setting step", () => {
       const store = useWizardStore.getState();
 
-      store.setStep("stack");
+      store.setStep("build");
       store.setStep("confirm");
 
       const { history } = useWizardStore.getState();
-      expect(history).toEqual(["approach", "stack"]);
+      expect(history).toEqual(["stack", "build"]);
     });
 
     it("should go back through history", () => {
       const store = useWizardStore.getState();
 
-      store.setStep("stack");
+      store.setStep("build");
       store.setStep("confirm");
       store.goBack();
 
       const { step, history } = useWizardStore.getState();
-      expect(step).toBe("stack");
-      expect(history).toEqual(["approach"]);
+      expect(step).toBe("build");
+      expect(history).toEqual(["stack"]);
     });
 
-    it("when goBack is called with empty history, should return to approach step", () => {
+    it("when goBack is called with empty history, should return to stack step", () => {
       const store = useWizardStore.getState();
 
-      store.setStep("stack");
+      store.setStep("build");
       store.goBack();
       store.goBack();
 
       const { step } = useWizardStore.getState();
-      expect(step).toBe("approach");
+      expect(step).toBe("stack");
     });
   });
 
@@ -322,6 +322,72 @@ describe("WizardStore", () => {
 
       const { showDescriptions } = useWizardStore.getState();
       expect(showDescriptions).toBe(true);
+    });
+
+    it("should toggle help on", () => {
+      const store = useWizardStore.getState();
+
+      store.toggleHelp();
+
+      const { showHelp } = useWizardStore.getState();
+      expect(showHelp).toBe(true);
+    });
+
+    it("should toggle help off (show then hide)", () => {
+      const store = useWizardStore.getState();
+
+      store.toggleHelp();
+      store.toggleHelp();
+
+      const { showHelp } = useWizardStore.getState();
+      expect(showHelp).toBe(false);
+    });
+
+    it("should toggle settings on", () => {
+      const store = useWizardStore.getState();
+
+      store.toggleSettings();
+
+      const { showSettings } = useWizardStore.getState();
+      expect(showSettings).toBe(true);
+    });
+
+    it("should toggle settings off (show then hide)", () => {
+      const store = useWizardStore.getState();
+
+      store.toggleSettings();
+      store.toggleSettings();
+
+      const { showSettings } = useWizardStore.getState();
+      expect(showSettings).toBe(false);
+    });
+
+    it("should start with showHelp false", () => {
+      const { showHelp } = useWizardStore.getState();
+      expect(showHelp).toBe(false);
+    });
+
+    it("should start with showSettings false", () => {
+      const { showSettings } = useWizardStore.getState();
+      expect(showSettings).toBe(false);
+    });
+
+    it("should reset showHelp to false after reset", () => {
+      const store = useWizardStore.getState();
+      store.toggleHelp();
+      store.reset();
+
+      const { showHelp } = useWizardStore.getState();
+      expect(showHelp).toBe(false);
+    });
+
+    it("should reset showSettings to false after reset", () => {
+      const store = useWizardStore.getState();
+      store.toggleSettings();
+      store.reset();
+
+      const { showSettings } = useWizardStore.getState();
+      expect(showSettings).toBe(false);
     });
   });
 
@@ -551,7 +617,7 @@ describe("WizardStore", () => {
       store.reset();
 
       const state = useWizardStore.getState();
-      expect(state.step).toBe("approach");
+      expect(state.step).toBe("stack");
       expect(state.approach).toBeNull();
       expect(state.selectedStackId).toBeNull();
       expect(state.selectedDomains).toEqual([]);
@@ -734,8 +800,6 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
 
       store.setApproach("stack");
-      store.setStep("stack");
-
       store.selectStack("nextjs-fullstack");
       store.setStackAction("customize");
       store.setStep("build");
@@ -747,15 +811,13 @@ describe("WizardStore", () => {
       expect(state.approach).toBe("stack");
       expect(state.selectedStackId).toBe("nextjs-fullstack");
       expect(state.stackAction).toBe("customize");
-      expect(state.history).toEqual(["approach", "stack", "build"]);
+      expect(state.history).toEqual(["stack", "build"]);
     });
 
     it("should handle complete scratch flow", () => {
       const store = useWizardStore.getState();
 
       store.setApproach("scratch");
-      store.setStep("stack");
-
       store.toggleDomain("web");
       store.toggleDomain("api");
       store.setStep("build");
@@ -778,12 +840,10 @@ describe("WizardStore", () => {
       const store = useWizardStore.getState();
 
       store.setApproach("scratch");
-      store.setStep("stack");
       store.toggleDomain("web");
       store.setStep("build");
       store.toggleTechnology("web", "framework", "web-framework-react", true);
 
-      store.goBack();
       store.goBack();
 
       const state = useWizardStore.getState();

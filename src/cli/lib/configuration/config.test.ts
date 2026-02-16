@@ -8,13 +8,14 @@ import {
   getProjectConfigPath,
   isLocalSource,
   loadProjectSourceConfig,
+  resolveBranding,
   resolveSource,
   resolveAgentsSource,
   saveProjectConfig,
   SOURCE_ENV_VAR,
   validateSourceFormat,
 } from "./config";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_BRANDING, STANDARD_FILES } from "../../consts";
 
 /** Writes a config YAML string into the given subdirectory (defaults to CLAUDE_SRC_DIR) */
 async function writeConfigYaml(
@@ -32,18 +33,16 @@ describe("config", () => {
 
   beforeEach(async () => {
     tempDir = await createTempDir("cc-config-test-");
-    // Clear any environment variables
     delete process.env[SOURCE_ENV_VAR];
   });
 
   afterEach(async () => {
     await cleanupTempDir(tempDir);
-    // Restore environment
     delete process.env[SOURCE_ENV_VAR];
   });
 
   describe("DEFAULT_SOURCE", () => {
-    it("should be set to the claude-collective skills repo", () => {
+    it("should be set to the skills repo", () => {
       expect(DEFAULT_SOURCE).toBe("github:claude-collective/skills");
     });
   });
@@ -431,8 +430,6 @@ describe("config", () => {
       await writeConfigYaml(tempDir, "invalid: yaml: content: :");
 
       const config = await loadProjectSourceConfig(tempDir);
-      // Should return null or throw - implementation dependent
-      // Current implementation catches errors and returns null
       expect(config).toBeNull();
     });
 
@@ -454,10 +451,7 @@ describe("config", () => {
     });
 
     it("should overwrite existing config", async () => {
-      // Save initial config
       await saveProjectConfig(tempDir, { source: "github:first/repo" });
-
-      // Save new config
       await saveProjectConfig(tempDir, { source: "github:second/repo" });
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
@@ -491,7 +485,6 @@ describe("config", () => {
 
   describe("resolveSource", () => {
     it("should return flag value with highest priority", async () => {
-      // Set environment variable
       process.env[SOURCE_ENV_VAR] = "github:env/repo";
 
       const result = await resolveSource("github:flag/repo", tempDir);
@@ -533,7 +526,6 @@ describe("config", () => {
     });
 
     it("should prioritize flag over all other sources", async () => {
-      // Set everything
       process.env[SOURCE_ENV_VAR] = "github:env/repo";
       await writeConfigYaml(tempDir, "source: github:project/repo\n");
 
@@ -857,6 +849,104 @@ describe("config", () => {
       expect(content).toContain("source: github:myorg/skills");
       expect(content).toContain("marketplace: https://enterprise.example.com");
       expect(content).toContain("agents_source: https://agents.enterprise.example.com");
+    });
+  });
+
+  describe("loadProjectSourceConfig with branding", () => {
+    it("should load branding name from project config", async () => {
+      await writeConfigYaml(
+        tempDir,
+        "branding:\n  name: Acme Dev Tools\n  tagline: Build faster with Acme\n",
+      );
+
+      const config = await loadProjectSourceConfig(tempDir);
+      expect(config?.branding?.name).toBe("Acme Dev Tools");
+      expect(config?.branding?.tagline).toBe("Build faster with Acme");
+    });
+
+    it("should return undefined branding when not configured", async () => {
+      await writeConfigYaml(tempDir, "source: github:myorg/skills\n");
+
+      const config = await loadProjectSourceConfig(tempDir);
+      expect(config?.branding).toBeUndefined();
+    });
+
+    it("should load partial branding (name only)", async () => {
+      await writeConfigYaml(tempDir, "branding:\n  name: My Company\n");
+
+      const config = await loadProjectSourceConfig(tempDir);
+      expect(config?.branding?.name).toBe("My Company");
+      expect(config?.branding?.tagline).toBeUndefined();
+    });
+
+    it("should load partial branding (tagline only)", async () => {
+      await writeConfigYaml(tempDir, "branding:\n  tagline: Custom tagline\n");
+
+      const config = await loadProjectSourceConfig(tempDir);
+      expect(config?.branding?.name).toBeUndefined();
+      expect(config?.branding?.tagline).toBe("Custom tagline");
+    });
+  });
+
+  describe("saveProjectConfig with branding", () => {
+    it("should save branding to project config", async () => {
+      await saveProjectConfig(tempDir, {
+        branding: { name: "Acme Dev Tools", tagline: "Build faster" },
+      });
+
+      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
+      const content = await readFile(configPath, "utf-8");
+      expect(content).toContain("name: Acme Dev Tools");
+      expect(content).toContain("tagline: Build faster");
+    });
+  });
+
+  describe("resolveBranding", () => {
+    it("should return default branding when no config exists", async () => {
+      const branding = await resolveBranding(tempDir);
+      expect(branding.name).toBe(DEFAULT_BRANDING.NAME);
+      expect(branding.tagline).toBe(DEFAULT_BRANDING.TAGLINE);
+    });
+
+    it("should return default branding when projectDir is undefined", async () => {
+      const branding = await resolveBranding(undefined);
+      expect(branding.name).toBe(DEFAULT_BRANDING.NAME);
+      expect(branding.tagline).toBe(DEFAULT_BRANDING.TAGLINE);
+    });
+
+    it("should return custom branding when configured", async () => {
+      await writeConfigYaml(
+        tempDir,
+        "branding:\n  name: Acme Dev Tools\n  tagline: Build faster with Acme\n",
+      );
+
+      const branding = await resolveBranding(tempDir);
+      expect(branding.name).toBe("Acme Dev Tools");
+      expect(branding.tagline).toBe("Build faster with Acme");
+    });
+
+    it("should merge custom branding with defaults for missing fields", async () => {
+      await writeConfigYaml(tempDir, "branding:\n  name: Acme Dev Tools\n");
+
+      const branding = await resolveBranding(tempDir);
+      expect(branding.name).toBe("Acme Dev Tools");
+      expect(branding.tagline).toBe(DEFAULT_BRANDING.TAGLINE);
+    });
+
+    it("should use default name when only tagline is configured", async () => {
+      await writeConfigYaml(tempDir, "branding:\n  tagline: Custom tagline\n");
+
+      const branding = await resolveBranding(tempDir);
+      expect(branding.name).toBe(DEFAULT_BRANDING.NAME);
+      expect(branding.tagline).toBe("Custom tagline");
+    });
+
+    it("should return default branding when config has no branding section", async () => {
+      await writeConfigYaml(tempDir, "source: github:myorg/skills\n");
+
+      const branding = await resolveBranding(tempDir);
+      expect(branding.name).toBe(DEFAULT_BRANDING.NAME);
+      expect(branding.tagline).toBe(DEFAULT_BRANDING.TAGLINE);
     });
   });
 });

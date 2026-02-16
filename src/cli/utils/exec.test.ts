@@ -36,6 +36,7 @@ vi.mock("child_process", () => ({
 
 vi.mock("./logger");
 
+import { DEFAULT_PLUGIN_NAME } from "../consts";
 import { claudePluginInstall, claudePluginMarketplaceAdd, claudePluginUninstall } from "./exec";
 
 describe("exec argument validation", () => {
@@ -214,7 +215,7 @@ describe("exec argument validation", () => {
     });
 
     it("accepts valid plugin name", async () => {
-      const promise = claudePluginUninstall("claude-collective", "project", "/project");
+      const promise = claudePluginUninstall(DEFAULT_PLUGIN_NAME, "project", "/project");
       expect(promise).toBeInstanceOf(Promise);
     });
 

@@ -9,13 +9,18 @@ import {
   writeMarketplace,
   getMarketplaceStats,
 } from "../../lib/marketplace-generator";
-import { DEFAULT_PLUGIN_NAME, DEFAULT_VERSION } from "../../consts";
+import {
+  DEFAULT_BRANDING,
+  DEFAULT_PLUGIN_NAME,
+  DEFAULT_VERSION,
+  PLUGIN_MANIFEST_DIR,
+} from "../../consts";
 
 const DEFAULT_PLUGINS_DIR = "dist/plugins";
-const DEFAULT_OUTPUT_FILE = ".claude-plugin/marketplace.json";
+const DEFAULT_OUTPUT_FILE = `${PLUGIN_MANIFEST_DIR}/marketplace.json`;
 const DEFAULT_DESCRIPTION = "Community skills and stacks for Claude Code";
-const DEFAULT_OWNER_NAME = "Claude Collective";
-const DEFAULT_OWNER_EMAIL = "hello@claude-collective.com";
+const DEFAULT_OWNER_NAME = DEFAULT_BRANDING.NAME;
+const DEFAULT_OWNER_EMAIL = `hello@${DEFAULT_PLUGIN_NAME}.com`;
 
 export default class BuildMarketplace extends BaseCommand {
   static summary = "Generate marketplace.json from built plugins (requires skills repo)";

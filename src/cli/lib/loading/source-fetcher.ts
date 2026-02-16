@@ -9,6 +9,7 @@ import {
   MAX_MARKETPLACE_FILE_SIZE,
   MAX_JSON_NESTING_DEPTH,
   MAX_MARKETPLACE_PLUGINS,
+  PLUGIN_MANIFEST_DIR,
 } from "../../consts";
 import { getErrorMessage } from "../../utils/errors";
 import { ensureDir, directoryExists, readFileSafe } from "../../utils/fs";
@@ -182,7 +183,7 @@ export async function fetchMarketplace(
     subdir: "", // Root of repo
   });
 
-  const marketplacePath = path.join(result.path, ".claude-plugin", "marketplace.json");
+  const marketplacePath = path.join(result.path, PLUGIN_MANIFEST_DIR, "marketplace.json");
 
   if (!(await directoryExists(path.dirname(marketplacePath)))) {
     throw new Error(
@@ -216,7 +217,6 @@ export async function fetchMarketplace(
 
   const marketplace = validation.data;
 
-  // Warn about unexpected top-level fields in marketplace.json
   const EXPECTED_MARKETPLACE_KEYS = [
     "$schema",
     "name",
@@ -241,7 +241,6 @@ export async function fetchMarketplace(
     );
   }
 
-  // Validate plugin names against safe character set
   for (const plugin of marketplace.plugins) {
     if (plugin.name.length > MAX_NAME_LENGTH) {
       warn(

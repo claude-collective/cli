@@ -1,41 +1,68 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
+import { DEFAULT_SCRATCH_DOMAINS } from "../../consts.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import type { MergedSkillsMatrix } from "../../types/index.js";
+import { getDomainsFromStack } from "./utils.js";
 import { MenuItem } from "./menu-item.js";
 import { ViewTitle } from "./view-title.js";
 
 const INITIAL_FOCUSED_INDEX = 0;
+const SCRATCH_LABEL = "Start from scratch";
+const SCRATCH_DESCRIPTION = "Select domains and skills manually";
+
+/** Number of extra items after the stack list (scratch option) */
+const EXTRA_ITEMS_COUNT = 1;
+
+/** Width of the horizontal divider between stack list and scratch option */
+const DIVIDER_WIDTH = 30;
 
 export type StackSelectionProps = {
   matrix: MergedSkillsMatrix;
+  onCancel?: () => void;
 };
 
-export const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
-  const { selectStack, setStep, setStackAction, populateFromSkillIds, goBack } = useWizardStore();
+export const StackSelection: React.FC<StackSelectionProps> = ({ matrix, onCancel }) => {
+  const { selectStack, setApproach, setStackAction, populateFromSkillIds, toggleDomain } =
+    useWizardStore();
   const [focusedIndex, setFocusedIndex] = useState(INITIAL_FOCUSED_INDEX);
 
   const stacks = matrix.suggestedStacks;
   const stackCount = stacks.length;
+  const scratchIndex = stackCount;
+  const totalItems = stackCount + EXTRA_ITEMS_COUNT;
 
   useInput((input, key) => {
     if (key.escape) {
-      goBack();
+      if (onCancel) {
+        onCancel();
+      }
       return;
     }
 
-    if (key.return && stackCount > 0) {
+    if (key.return) {
+      if (focusedIndex === scratchIndex) {
+        selectStack(null);
+        setApproach("scratch");
+
+        for (const domain of DEFAULT_SCRATCH_DOMAINS) {
+          toggleDomain(domain);
+        }
+        return;
+      }
+
       const focusedStack = stacks[focusedIndex];
       if (focusedStack) {
         selectStack(focusedStack.id);
         setStackAction("customize");
+        populateFromSkillIds(focusedStack.allSkillIds, matrix.skills, matrix.categories);
 
-        const resolvedStack = matrix.suggestedStacks.find((s) => s.id === focusedStack.id);
-        if (resolvedStack) {
-          populateFromSkillIds(resolvedStack.allSkillIds, matrix.skills, matrix.categories);
+        const stackDomains = getDomainsFromStack(focusedStack, matrix.categories);
+        for (const domain of stackDomains) {
+          toggleDomain(domain);
         }
 
-        setStep("build");
+        setApproach("stack");
       }
       return;
     }
@@ -45,13 +72,13 @@ export const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
       return;
     }
     if (key.downArrow || input === "j") {
-      setFocusedIndex((prev) => Math.min(stackCount - 1, prev + 1));
+      setFocusedIndex((prev) => Math.min(totalItems - 1, prev + 1));
     }
   });
 
   return (
     <Box flexDirection="column">
-      <ViewTitle>Select a stack</ViewTitle>
+      <ViewTitle>Choose a stack</ViewTitle>
       <Box flexDirection="column" marginTop={1}>
         {stacks.map((stack, index) => (
           <MenuItem
@@ -61,14 +88,24 @@ export const StackSelection: React.FC<StackSelectionProps> = ({ matrix }) => {
             isFocused={index === focusedIndex}
           />
         ))}
-      </Box>
-      {stackCount > 0 && (
-        <Box marginTop={1}>
-          <Text dimColor>
-            {"\u2191"}/{"\u2193"} navigate ENTER select ESC back
-          </Text>
+        {stackCount > 0 && (
+          <Box marginTop={1}>
+            <Text dimColor>{"\u2500".repeat(DIVIDER_WIDTH)}</Text>
+          </Box>
+        )}
+        <Box marginTop={stackCount > 0 ? 0 : undefined}>
+          <MenuItem
+            label={SCRATCH_LABEL}
+            description={SCRATCH_DESCRIPTION}
+            isFocused={focusedIndex === scratchIndex}
+          />
         </Box>
-      )}
+      </Box>
+      <Box marginTop={1}>
+        <Text dimColor>
+          {"\u2191"}/{"\u2193"} navigate ENTER select ESC quit
+        </Text>
+      </Box>
     </Box>
   );
 };

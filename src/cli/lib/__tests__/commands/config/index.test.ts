@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
+import { mkdir, writeFile, readFile } from "fs/promises";
 import { stringify as stringifyYaml, parse as parseYaml } from "yaml";
-import { runCliCommand } from "../../helpers";
+import { runCliCommand, createTempDir, cleanupTempDir } from "../../helpers";
 import { EXIT_CODES } from "../../../exit-codes";
+import { DEFAULT_BRANDING } from "../../../../consts";
 
 describe("config commands", () => {
   let tempDir: string;
@@ -13,34 +13,21 @@ describe("config commands", () => {
   let originalEnv: NodeJS.ProcessEnv;
 
   beforeEach(async () => {
-    // Save original environment
     originalCwd = process.cwd();
     originalEnv = { ...process.env };
-
-    // Create temp directory for tests
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-config-test-"));
-
-    // Create project directory
+    tempDir = await createTempDir("cc-config-test-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
-
-    // Change to project directory
     process.chdir(projectDir);
-
-    // Clear CC_SOURCE to ensure clean test state
     delete process.env.CC_SOURCE;
   });
 
   afterEach(async () => {
-    // Restore original environment
     process.chdir(originalCwd);
     process.env = originalEnv;
-
-    // Clean up temp directory
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
-  // Skip: stdout capture limited in oclif/bun test environment
   describe("config:path", () => {
     it("should display project config path", async () => {
       const { stdout } = await runCliCommand(["config:path"]);
@@ -52,18 +39,16 @@ describe("config commands", () => {
     it("should show project config path containing current directory", async () => {
       const { stdout } = await runCliCommand(["config:path"]);
 
-      // Project path should include the project directory
       expect(stdout).toContain(projectDir);
       expect(stdout).toContain(".claude-src/config.yaml");
     });
   });
 
-  // Skip: stdout capture limited in oclif/bun test environment
   describe("config:show", () => {
     it("should display configuration overview", async () => {
       const { stdout } = await runCliCommand(["config:show"]);
 
-      expect(stdout).toContain("Claude Collective Configuration");
+      expect(stdout).toContain(`${DEFAULT_BRANDING.NAME} Configuration`);
       expect(stdout).toContain("Source:");
       expect(stdout).toContain("Configuration Layers:");
     });
@@ -71,10 +56,7 @@ describe("config commands", () => {
     it("should show source value and origin", async () => {
       const { stdout } = await runCliCommand(["config:show"]);
 
-      // Should show some source - may be default or from project config
-      // Just verify the output format shows source info
       expect(stdout).toContain("Source:");
-      // Origin formats: "default", "project config", etc.
       expect(stdout).toMatch(/\(from (default|project|--source|CC_SOURCE)/);
     });
 
@@ -120,15 +102,11 @@ describe("config commands", () => {
   });
 
   describe("config:get", () => {
-    // Skip: stdout capture limited in oclif/bun test environment
     it("should get source value", async () => {
       const { stdout } = await runCliCommand(["config:get", "source"]);
-
-      // Should return some source (either default or from project config)
       expect(stdout.trim().length).toBeGreaterThan(0);
     });
 
-    // Skip: stdout capture limited in oclif/bun test environment
     it("should get source from CC_SOURCE environment variable", async () => {
       process.env.CC_SOURCE = "/env/source/path";
 
@@ -140,9 +118,7 @@ describe("config commands", () => {
     it("should return author value (may be empty or set from project config)", async () => {
       const { stdout, error } = await runCliCommand(["config:get", "author"]);
 
-      // Should not error - author is a valid key
       expect(error?.oclif?.exit).toBeUndefined();
-      // May be empty or set depending on project config state
       expect(typeof stdout).toBe("string");
     });
 
@@ -157,18 +133,16 @@ describe("config commands", () => {
 
       for (const key of validKeys) {
         const { error } = await runCliCommand(["config:get", key]);
-        // Should not error (error should be undefined or exit code 0)
         expect(error?.oclif?.exit).toBeUndefined();
       }
     });
   });
 
-  // Skip: stdout capture limited in oclif/bun test environment
   describe("config (index)", () => {
     it("should display configuration overview", async () => {
       const { stdout } = await runCliCommand(["config"]);
 
-      expect(stdout).toContain("Claude Collective Configuration");
+      expect(stdout).toContain(`${DEFAULT_BRANDING.NAME} Configuration`);
       expect(stdout).toContain("Source:");
     });
   });
@@ -186,7 +160,6 @@ describe("config commands", () => {
 
       expect(error?.oclif?.exit).toBeUndefined();
 
-      // Verify file was created with correct content
       const configPath = path.join(projectDir, PROJECT_CONFIG_DIR, PROJECT_CONFIG_FILE);
       const content = await readFile(configPath, "utf-8");
       const parsed = parseYaml(content);
@@ -224,7 +197,6 @@ describe("config commands", () => {
     });
 
     it("should overwrite existing value", async () => {
-      // Set initial value
       const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(
@@ -232,7 +204,6 @@ describe("config commands", () => {
         stringifyYaml({ source: "old-source", marketplace: "keep-this" }),
       );
 
-      // Overwrite source
       const { error } = await runCliCommand(["config:set-project", "source", "new-source"]);
 
       expect(error?.oclif?.exit).toBeUndefined();
@@ -241,7 +212,6 @@ describe("config commands", () => {
       const content = await readFile(configPath, "utf-8");
       const parsed = parseYaml(content);
       expect(parsed).toHaveProperty("source", "new-source");
-      // Other keys should be preserved
       expect(parsed).toHaveProperty("marketplace", "keep-this");
     });
 
@@ -254,14 +224,12 @@ describe("config commands", () => {
     it("should error when key argument is missing", async () => {
       const { error } = await runCliCommand(["config:set-project"]);
 
-      // oclif validates required args and returns an error
       expect(error).toBeDefined();
     });
 
     it("should error when value argument is missing", async () => {
       const { error } = await runCliCommand(["config:set-project", "source"]);
 
-      // oclif validates required args and returns an error
       expect(error).toBeDefined();
     });
   });
@@ -271,7 +239,6 @@ describe("config commands", () => {
     const PROJECT_CONFIG_FILE = "config.yaml";
 
     it("should remove key from project config", async () => {
-      // Create config with multiple keys
       const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(
@@ -286,7 +253,6 @@ describe("config commands", () => {
 
       expect(error?.oclif?.exit).toBeUndefined();
 
-      // Verify source was removed but marketplace preserved
       const configPath = path.join(projectDir, PROJECT_CONFIG_DIR, PROJECT_CONFIG_FILE);
       const content = await readFile(configPath, "utf-8");
       const parsed = parseYaml(content);
@@ -295,10 +261,7 @@ describe("config commands", () => {
     });
 
     it("should handle config file not existing without error", async () => {
-      // No config file exists - command should handle gracefully
       const { error } = await runCliCommand(["config:unset-project", "source"]);
-
-      // Should not error - shows info message and returns
       expect(error?.oclif?.exit).toBeUndefined();
     });
 
@@ -311,7 +274,6 @@ describe("config commands", () => {
     it("should error when key argument is missing", async () => {
       const { error } = await runCliCommand(["config:unset-project"]);
 
-      // oclif validates required args and returns an error
       expect(error).toBeDefined();
     });
   });

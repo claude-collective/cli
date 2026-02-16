@@ -1,7 +1,7 @@
 import path from "path";
 import os from "os";
 import { fileURLToPath } from "url";
-import type { SkillId } from "./types/index.js";
+import type { Domain, SkillId } from "./types/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,11 +17,12 @@ export const CLAUDE_SRC_DIR = ".claude-src";
 export const PLUGINS_SUBDIR = "plugins";
 export const PLUGIN_MANIFEST_DIR = ".claude-plugin";
 export const PLUGIN_MANIFEST_FILE = "plugin.json";
-export const DEFAULT_PLUGIN_NAME = "claude-collective";
+export const DEFAULT_PLUGIN_NAME = "agents-inc";
 
 export const CACHE_DIR = path.join(os.homedir(), ".cache", DEFAULT_PLUGIN_NAME);
 
 export const SKILLS_MATRIX_PATH = "config/skills-matrix.yaml";
+export const STACKS_FILE_PATH = "config/stacks.yaml";
 export const SKILLS_DIR_PATH = "src/skills";
 export const LOCAL_SKILLS_PATH = ".claude/skills";
 export const ARCHIVED_SKILLS_DIR_NAME = "_archived";
@@ -101,6 +102,8 @@ export const UI_SYMBOLS = {
   SKIPPED: "\u2013",
   DISCOURAGED: "!",
   DISABLED: "\u2013",
+  SCROLL_UP: "\u25B2",
+  SCROLL_DOWN: "\u25BC",
 } as const;
 
 export const UI_LAYOUT = {
@@ -132,9 +135,28 @@ export const MAX_MARKETPLACE_FILE_SIZE = 10 * ONE_MB;
 export const MAX_PLUGIN_FILE_SIZE = ONE_MB;
 export const MAX_CONFIG_FILE_SIZE = ONE_MB;
 
-// JSON/YAML structural complexity limits
 export const MAX_JSON_NESTING_DEPTH = 10;
 export const MAX_MARKETPLACE_PLUGINS = 10_000;
+
+export const SCROLL_VIEWPORT = {
+  /** Height of the "N more above" scroll indicator */
+  SCROLL_INDICATOR_HEIGHT: 1,
+  /** Estimated lines per category name row (including top margin) */
+  CATEGORY_NAME_LINES: 2,
+  /** Estimated average width of a single skill tag in characters (borders + padding + label) */
+  AVG_TAG_WIDTH: 22,
+  /** Margin between category sections (marginTop on CategorySection) */
+  CATEGORY_MARGIN_LINES: 1,
+  /** Minimum rows to show at least 1 category before enabling scroll */
+  MIN_VIEWPORT_ROWS: 5,
+  /** Minimum terminal height to show the wizard at all */
+  MIN_TERMINAL_HEIGHT: 15,
+} as const;
+
+export const DEFAULT_BRANDING = {
+  NAME: "Agents Inc.",
+  TAGLINE: "AI-powered development tools",
+} as const;
 
 export const CLI_COLORS = {
   PRIMARY: "cyan",
@@ -147,7 +169,9 @@ export const CLI_COLORS = {
   UNFOCUSED: "white",
 } as const;
 
-// Foundational methodology skills preselected by default in the wizard
+/** Default domains pre-selected when "Start from scratch" is chosen (all except CLI) */
+export const DEFAULT_SCRATCH_DOMAINS: readonly Domain[] = ["web", "web-extras", "api", "mobile"];
+
 export const DEFAULT_PRESELECTED_SKILLS: readonly SkillId[] = [
   "meta-methodology-anti-over-engineering",
   "meta-methodology-context-management",

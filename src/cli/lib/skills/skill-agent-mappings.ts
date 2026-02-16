@@ -11,7 +11,7 @@
  * to use the new agent-centric approach.
  */
 
-import type { AgentName, CategoryPath, ProjectConfig } from "../../types";
+import type { AgentName, CategoryPath, ProjectConfig, SkillId, SkillIdPrefix } from "../../types";
 import { getCachedDefaults } from "../loading";
 
 // Hardcoded fallback defaults — used when YAML defaults cannot be loaded
@@ -173,4 +173,73 @@ export function getAgentsForSkill(
   }
 
   return DEFAULT_AGENTS;
+}
+
+/**
+ * Maps each agent to the skill ID prefixes it should receive by default.
+ * Derived from the inverse of SKILL_TO_AGENTS and stacks.yaml patterns.
+ *
+ * - Domain-specific agents get their domain prefix(es)
+ * - Cross-cutting agents (web-pm, web-architecture) get broad prefix sets
+ * - Meta agents get the "meta" prefix
+ * - All agents additionally receive "meta" for methodology/research skills
+ */
+export const AGENT_SKILL_PREFIXES: Record<AgentName, SkillIdPrefix[]> = {
+  "web-developer": ["web", "mobile", "infra", "security", "meta"],
+  "web-reviewer": ["web", "mobile", "security", "meta"],
+  "web-researcher": ["web", "mobile", "meta"],
+  "web-tester": ["web", "meta"],
+
+  "api-developer": ["api", "infra", "security", "cli", "meta"],
+  "api-reviewer": ["api", "security", "cli", "meta"],
+  "api-researcher": ["api", "cli", "meta"],
+
+  "cli-developer": ["cli", "meta"],
+  "cli-tester": ["cli", "meta"],
+  "cli-reviewer": ["cli", "meta"],
+  "cli-migrator": ["cli", "meta"],
+
+  // Cross-cutting agents — need full context across multiple domains
+  "web-pm": ["web", "api", "cli", "mobile", "infra", "security", "meta"],
+  "web-architecture": ["web", "api", "infra", "security", "cli", "meta"],
+
+  "pattern-scout": ["web", "api", "meta"],
+  "web-pattern-critique": ["web", "api", "meta"],
+
+  "agent-summoner": ["meta"],
+  "skill-summoner": ["meta"],
+  documentor: ["meta"],
+};
+
+// Priority: YAML defaults (if loaded) > hardcoded fallback
+function getEffectiveAgentSkillPrefixes(): Record<AgentName, SkillIdPrefix[]> {
+  const defaults = getCachedDefaults();
+  if (defaults?.agent_skill_prefixes) {
+    // Boundary cast: YAML-loaded mappings contain valid AgentName keys and SkillIdPrefix values
+    return defaults.agent_skill_prefixes as Record<AgentName, SkillIdPrefix[]>;
+  }
+  return AGENT_SKILL_PREFIXES;
+}
+
+/**
+ * Returns sensible default skills for an agent based on its domain.
+ * Only returns skills that exist in the provided `availableSkills` list.
+ *
+ * @param agentName - The agent to get default skills for
+ * @param availableSkills - The pool of available skill IDs to select from
+ * @returns Skill IDs from `availableSkills` matching the agent's domain prefixes
+ */
+export function getDefaultSkillsForAgent(
+  agentName: AgentName,
+  availableSkills: SkillId[],
+): SkillId[] {
+  const agentSkillPrefixes = getEffectiveAgentSkillPrefixes();
+  const prefixes = agentSkillPrefixes[agentName];
+  if (!prefixes || prefixes.length === 0) {
+    return [];
+  }
+
+  return availableSkills.filter((skillId) =>
+    prefixes.some((prefix) => skillId.startsWith(`${prefix}-`)),
+  );
 }

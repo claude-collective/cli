@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { projectConfigLoaderSchema, validateNestingDepth, warnUnknownFields } from "./schemas";
+import {
+  brandingConfigSchema,
+  projectConfigLoaderSchema,
+  projectSourceConfigSchema,
+  validateNestingDepth,
+  warnUnknownFields,
+} from "./schemas";
 
 vi.mock("../utils/logger", () => ({
   warn: vi.fn(),
@@ -275,5 +281,67 @@ describe("projectConfigLoaderSchema", () => {
       const result = projectConfigLoaderSchema.safeParse(config);
       expect(result.success).toBe(true);
     });
+  });
+});
+
+describe("brandingConfigSchema", () => {
+  it("should accept full branding config", () => {
+    const result = brandingConfigSchema.safeParse({
+      name: "Acme Dev Tools",
+      tagline: "Build faster with Acme",
+    });
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual({
+      name: "Acme Dev Tools",
+      tagline: "Build faster with Acme",
+    });
+  });
+
+  it("should accept partial branding (name only)", () => {
+    const result = brandingConfigSchema.safeParse({ name: "My Company" });
+    expect(result.success).toBe(true);
+    expect(result.data?.name).toBe("My Company");
+    expect(result.data?.tagline).toBeUndefined();
+  });
+
+  it("should accept partial branding (tagline only)", () => {
+    const result = brandingConfigSchema.safeParse({ tagline: "Custom tagline" });
+    expect(result.success).toBe(true);
+    expect(result.data?.tagline).toBe("Custom tagline");
+  });
+
+  it("should accept empty branding object", () => {
+    const result = brandingConfigSchema.safeParse({});
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject non-string name", () => {
+    const result = brandingConfigSchema.safeParse({ name: 123 });
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject non-string tagline", () => {
+    const result = brandingConfigSchema.safeParse({ tagline: true });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("projectSourceConfigSchema with branding", () => {
+  it("should accept config with branding", () => {
+    const result = projectSourceConfigSchema.safeParse({
+      source: "github:myorg/skills",
+      branding: {
+        name: "Acme Dev Tools",
+        tagline: "Build faster with Acme",
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept config without branding", () => {
+    const result = projectSourceConfigSchema.safeParse({
+      source: "github:myorg/skills",
+    });
+    expect(result.success).toBe(true);
   });
 });

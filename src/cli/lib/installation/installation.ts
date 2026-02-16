@@ -1,7 +1,13 @@
 import path from "path";
 import { fileExists } from "../../utils/fs";
 import { loadProjectConfig } from "../configuration";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
+import {
+  CLAUDE_DIR,
+  CLAUDE_SRC_DIR,
+  DEFAULT_BRANDING,
+  PLUGINS_SUBDIR,
+  STANDARD_FILES,
+} from "../../consts";
 
 export type InstallMode = "local" | "plugin";
 
@@ -31,8 +37,6 @@ export async function detectInstallation(
 
   const loaded = await loadProjectConfig(projectDir);
 
-  // If config exists and has installMode: local (or no installMode, defaults to local)
-  // treat it as local mode
   const mode: InstallMode = loaded?.config?.installMode ?? "local";
 
   if (mode === "local") {
@@ -45,14 +49,12 @@ export async function detectInstallation(
     };
   }
 
-  // Plugin mode with individual skill plugins
-  // Skills are in global cache, discovered via settings.json
-  // Agents are compiled locally to .claude/agents/
+  // Skills live in global plugin cache; agents compiled locally
   return {
     mode: "plugin",
     configPath: localConfigPath,
     agentsDir: path.join(projectDir, CLAUDE_DIR, "agents"),
-    skillsDir: path.join(projectDir, CLAUDE_DIR, "plugins"),
+    skillsDir: path.join(projectDir, CLAUDE_DIR, PLUGINS_SUBDIR),
     projectDir,
   };
 }
@@ -63,7 +65,9 @@ export async function getInstallationOrThrow(
   const installation = await detectInstallation(projectDir);
 
   if (!installation) {
-    throw new Error("No Claude Collective installation found.\nRun 'cc init' to create one.");
+    throw new Error(
+      `No ${DEFAULT_BRANDING.NAME} installation found.\nRun 'cc init' to create one.`,
+    );
   }
 
   return installation;

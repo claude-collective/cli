@@ -8,7 +8,7 @@ import { render, Box, Text, useInput } from "ink";
 import path from "path";
 
 import { BaseCommand } from "../../base-command.js";
-import { CLAUDE_DIR } from "../../consts.js";
+import { CLAUDE_DIR, CLI_COLORS } from "../../consts.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 import { resolveSource } from "../../lib/configuration/index.js";
 import { fetchFromSource } from "../../lib/loading/index.js";
@@ -65,7 +65,7 @@ const PurposeInput: React.FC<PurposeInputProps> = ({ onSubmit, onCancel }) => {
       <TextInput placeholder="Enter agent purpose..." onSubmit={handleSubmit} />
       {error && (
         <Box marginTop={1}>
-          <Text color="red">{error}</Text>
+          <Text color={CLI_COLORS.ERROR}>{error}</Text>
         </Box>
       )}
     </Box>
@@ -138,7 +138,6 @@ async function invokeMetaAgent(
   if (nonInteractive) {
     args.push("-p", prompt);
   } else {
-    // Interactive mode - let user interact with the agent
     args.push("--prompt", prompt);
   }
 

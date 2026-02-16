@@ -51,7 +51,7 @@ export type ProjectConfig = {
 
   /**
    * - 'local': Agents compiled to .claude/agents (committed to repo)
-   * - 'plugin': Agents compiled to .claude/plugins/claude-collective
+   * - 'plugin': Agents compiled to .claude/plugins/<plugin-name>
    * @default 'local'
    */
   installMode?: "local" | "plugin";
@@ -73,7 +73,7 @@ export type ProjectConfig = {
 
   /**
    * Marketplace identifier for plugin installation.
-   * @example "claude-collective"
+   * @example "agents-inc"
    */
   marketplace?: string;
 

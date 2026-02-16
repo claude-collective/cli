@@ -104,12 +104,12 @@ function getSkillAlias(skillId: SkillId, matrix: MergedSkillsMatrix): SkillAlias
 /**
  * Wizard step identifiers for the multi-step init/edit flow.
  *
- * Progression: approach -> stack -> build -> sources -> confirm
+ * Progression: stack -> build -> sources -> confirm
+ * The "stack" step shows all stacks + "Start from scratch" in a unified list.
  * Navigation is tracked via the `history` stack for goBack() support.
  */
 export type WizardStep =
-  | "approach" // Choose stack or build from scratch
-  | "stack" // Select stack (if approach=stack) or domains (if approach=scratch)
+  | "stack" // Unified first step: select stack or "Start from scratch", then domain selection
   | "build" // CategoryGrid for technology selection
   | "sources" // Choose skill sources (recommended vs custom)
   | "confirm"; // Final confirmation
@@ -121,7 +121,7 @@ export type WizardStep =
  * one or two state fields. Wizard step components compose these actions to build
  * up the full selection state incrementally (domains -> subcategories -> skills -> sources).
  *
- * State flow: approach selection -> stack/domain selection -> per-domain skill
+ * State flow: unified stack/scratch selection -> domain selection -> per-domain skill
  * selection (build step) -> source customization -> confirmation.
  */
 export type WizardState = {
@@ -161,11 +161,11 @@ export type WizardState = {
   setStep: (step: WizardStep) => void;
   /**
    * Set the wizard approach (stack-based or build-from-scratch).
-   * @param approach - "stack" to use a pre-built template, "scratch" to select skills manually
+   * @param approach - "stack" to use a pre-built template, "scratch" to select skills manually, null to reset
    *
    * Side effects: sets `approach`
    */
-  setApproach: (approach: "stack" | "scratch") => void;
+  setApproach: (approach: "stack" | "scratch" | null) => void;
   /**
    * Select a stack by ID, or null to deselect.
    * @param stackId - Stack identifier from suggestedStacks, or null to clear
@@ -297,7 +297,7 @@ export type WizardState = {
   bindSkill: (skill: BoundSkill) => void;
   /**
    * Navigate to the previous wizard step using the history stack.
-   * Falls back to "approach" if history is empty.
+   * Falls back to "stack" if history is empty.
    *
    * Side effects: pops from `history`, sets `step` to the popped value
    */
@@ -380,7 +380,7 @@ export type WizardState = {
 };
 
 const createInitialState = () => ({
-  step: "approach" as WizardStep,
+  step: "stack" as WizardStep,
   approach: null as "stack" | "scratch" | null,
   selectedStackId: null as string | null,
   stackAction: null as "defaults" | "customize" | null,
@@ -595,7 +595,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const history = [...state.history];
       const previousStep = history.pop();
       return {
-        step: previousStep || "approach",
+        step: previousStep || "stack",
         history,
       };
     }),
@@ -652,11 +652,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     const completed: string[] = [];
     const skipped: string[] = [];
 
-    if (state.step !== "approach") {
-      completed.push("approach");
-    }
-
-    if (state.step !== "approach" && state.step !== "stack") {
+    if (state.step !== "stack") {
       completed.push("stack");
     }
 
@@ -692,7 +688,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   getParentDomainSelections: (domain, matrix) => {
     const state = get();
-    const parentDomain = get().getParentDomain(domain, matrix);
+    const parentDomain = state.getParentDomain(domain, matrix);
     if (!parentDomain) return undefined;
     return state.domainSelections[parentDomain];
   },

@@ -7,6 +7,7 @@ import {
   type CategoryOption,
 } from "./category-grid";
 import type { SkillId, Subcategory } from "../../types";
+import { UI_SYMBOLS } from "../../consts";
 import {
   ARROW_UP,
   ARROW_DOWN,
@@ -263,6 +264,114 @@ describe("CategoryGrid component", () => {
       const output = lastFrame();
       // Disabled options should show label (dimmed text)
       expect(output).toContain("Option 2");
+    });
+
+    it("should show selected symbol for selected skills", () => {
+      const categories: CategoryRow[] = [
+        createCategory("forms", "Forms", [
+          createOption("web-test-opt1", "Selected Skill", { selected: true }),
+        ]),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ categories });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain(UI_SYMBOLS.SELECTED);
+      expect(output).toContain("Selected Skill");
+    });
+
+    it("should show unselected symbol for normal unselected skills", () => {
+      const categories: CategoryRow[] = [
+        createCategory("forms", "Forms", [
+          createOption("web-test-opt1", "Unselected Skill", { state: "normal", selected: false }),
+        ]),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ categories });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain(UI_SYMBOLS.UNSELECTED);
+      expect(output).toContain("Unselected Skill");
+    });
+
+    it("should show disabled symbol for disabled skills", () => {
+      const categories: CategoryRow[] = [
+        createCategory("forms", "Forms", [
+          createOption("web-test-opt1", "Disabled Skill", { state: "disabled" }),
+        ]),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ categories });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain(UI_SYMBOLS.DISABLED);
+      expect(output).toContain("Disabled Skill");
+    });
+
+    it("should show discouraged symbol for discouraged skills", () => {
+      const categories: CategoryRow[] = [
+        createCategory("forms", "Forms", [
+          createOption("web-test-opt1", "Discouraged Skill", { state: "discouraged" }),
+        ]),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ categories });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain(UI_SYMBOLS.DISCOURAGED);
+      expect(output).toContain("Discouraged Skill");
+    });
+
+    it("should differentiate selected vs unselected with different symbols", () => {
+      const categories: CategoryRow[] = [
+        createCategory("forms", "Forms", [
+          createOption("web-test-opt1", "Active", { selected: true }),
+          createOption("web-test-opt2", "Inactive", { selected: false }),
+        ]),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ categories, expertMode: true });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain(UI_SYMBOLS.SELECTED);
+      expect(output).toContain(UI_SYMBOLS.UNSELECTED);
+      expect(output).toContain("Active");
+      expect(output).toContain("Inactive");
+    });
+
+    it("should toggle visual state when selection changes", () => {
+      const categories1: CategoryRow[] = [
+        createCategory("forms", "Forms", [
+          createOption("web-test-opt1", "Toggle Skill", { selected: false }),
+        ]),
+      ];
+
+      const { lastFrame: frame1, unmount: unmount1 } = renderGrid({ categories: categories1 });
+      const output1 = frame1();
+      unmount1();
+
+      // Second render: same option selected
+      const categories2: CategoryRow[] = [
+        createCategory("forms", "Forms", [
+          createOption("web-test-opt1", "Toggle Skill", { selected: true }),
+        ]),
+      ];
+
+      const { lastFrame: frame2, unmount: unmount2 } = renderGrid({ categories: categories2 });
+      cleanup = unmount2;
+      const output2 = frame2();
+
+      // Unselected state should show circle symbol
+      expect(output1).toContain(UI_SYMBOLS.UNSELECTED);
+      expect(output1).not.toContain(UI_SYMBOLS.SELECTED);
+
+      // Selected state should show checkmark symbol
+      expect(output2).toContain(UI_SYMBOLS.SELECTED);
     });
   });
 
@@ -1032,6 +1141,91 @@ describe("CategoryGrid component", () => {
       expect(output).toContain("L");
       expect(output).toContain("✓");
       expect(output).toContain("Option 1");
+    });
+  });
+
+  describe("scroll viewport", () => {
+    it("should render all categories when no height constraint", () => {
+      const { lastFrame, unmount } = renderGrid();
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Framework");
+      expect(output).toContain("Styling");
+      expect(output).toContain("Client State");
+      expect(output).toContain("Server State");
+      expect(output).toContain("Analytics");
+      expect(output).not.toContain("more categories");
+    });
+
+    it("should render scroll indicators when height is constrained", () => {
+      const manyCategories: CategoryRow[] = Array.from({ length: 8 }, (_, i) =>
+        createCategory(
+          `cat-${i}` as Subcategory,
+          `Category ${i}`,
+          [
+            createOption(`web-test-opt${i}-a`, `Option ${i}A`),
+            createOption(`web-test-opt${i}-b`, `Option ${i}B`),
+            createOption(`web-test-opt${i}-c`, `Option ${i}C`),
+          ],
+        ),
+      );
+
+      const { lastFrame, unmount } = renderGrid({
+        categories: manyCategories,
+        availableHeight: 8,
+        terminalWidth: 120,
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("more categories below");
+    });
+
+    it("should not render scroll indicators when all content fits", () => {
+      const categories: CategoryRow[] = [
+        createCategory("forms", "Forms", [createOption("web-test-opt1", "A")]),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({
+        categories,
+        availableHeight: 100,
+        terminalWidth: 120,
+      });
+      cleanup = unmount;
+
+      expect(lastFrame()).not.toContain("more categories");
+    });
+
+    it("should keep focused category visible when scrolling down", async () => {
+      const onFocusChange = vi.fn();
+      const manyCategories: CategoryRow[] = Array.from({ length: 6 }, (_, i) =>
+        createCategory(
+          `cat-${i}` as Subcategory,
+          `Category ${i}`,
+          [createOption(`web-test-opt${i}-a`, `Option ${i}A`)],
+        ),
+      );
+
+      const { stdin, lastFrame, unmount } = renderGrid({
+        categories: manyCategories,
+        availableHeight: 8,
+        terminalWidth: 120,
+        defaultFocusedRow: 0,
+        onFocusChange,
+      });
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      await stdin.write(ARROW_DOWN);
+      await delay(INPUT_DELAY_MS);
+      await stdin.write(ARROW_DOWN);
+      await delay(INPUT_DELAY_MS);
+      await stdin.write(ARROW_DOWN);
+      await delay(INPUT_DELAY_MS);
+
+      const output = lastFrame();
+      expect(output).toContain("Category 3");
     });
   });
 });

@@ -15,8 +15,7 @@ import type {
 } from "../../types";
 import { SKILL_ID_PATTERN, formatZodErrors, stacksConfigSchema } from "../schemas";
 import { typedEntries } from "../../utils/typed-object";
-
-const STACKS_FILE = "config/stacks.yaml";
+import { STACKS_FILE_PATH } from "../../consts";
 
 const stacksCache = new Map<string, Stack[]>();
 
@@ -51,7 +50,7 @@ export function normalizeStackRecord(
 }
 
 export async function loadStacks(configDir: string, stacksFile?: string): Promise<Stack[]> {
-  const resolvedStacksFile = stacksFile ?? STACKS_FILE;
+  const resolvedStacksFile = stacksFile ?? STACKS_FILE_PATH;
   const cacheKey = `${configDir}:${resolvedStacksFile}`;
   const cached = stacksCache.get(cacheKey);
   if (cached) return cached;

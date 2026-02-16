@@ -426,7 +426,7 @@ export const projectConfigLoaderSchema = z
 
     /** Author handle (e.g., "@vince") */
     author: z.string().optional(),
-    /** "local" = .claude/agents, "plugin" = .claude/plugins/claude-collective */
+    /** "local" = .claude/agents, "plugin" = .claude/plugins/ (DEFAULT_PLUGIN_NAME) */
     installMode: z.enum(["local", "plugin"]).optional(),
     /** Agent-to-subcategory-to-skill mappings from selected stack (accepts same formats as stacks.yaml) */
     stack: z.record(z.string(), stackAgentConfigSchema).optional(),
@@ -456,7 +456,7 @@ export const projectConfigValidationSchema = z.object({
   skills: z.array(skillIdSchema),
   /** Author handle (e.g., "@vince") */
   author: z.string().optional(),
-  /** "local" = .claude/agents, "plugin" = .claude/plugins/claude-collective */
+  /** "local" = .claude/agents, "plugin" = .claude/plugins/ (DEFAULT_PLUGIN_NAME) */
   installMode: z.enum(["local", "plugin"]),
   /** Agent-to-subcategory-to-skill mappings from selected stack */
   stack: z.record(z.string(), stackAgentConfigSchema),
@@ -670,6 +670,8 @@ export const defaultMappingsSchema = z.object({
   skill_to_agents: z.record(z.string(), z.array(z.string())),
   /** Maps agent IDs to skill IDs that should be preloaded (embedded) instead of dynamic */
   preloaded_skills: z.record(z.string(), z.array(z.string())),
+  /** Maps agent IDs to skill ID prefixes they should receive by default */
+  agent_skill_prefixes: z.record(z.string(), z.array(z.string())).optional(),
   /** Maps subcategory names to their short aliases (e.g., "framework" -> "react") */
   subcategory_aliases: z.record(z.string(), z.string()),
 });
@@ -707,6 +709,14 @@ export const importedSkillMetadataSchema = z
   })
   .passthrough();
 
+/** Branding overrides for white-labeling the CLI */
+export const brandingConfigSchema = z.object({
+  /** Custom CLI name (e.g., "Acme Dev Tools") */
+  name: z.string().optional(),
+  /** Custom tagline shown in wizard header */
+  tagline: z.string().optional(),
+});
+
 /**
  * Project source configuration from .claude/config.yaml.
  * Stores multi-source settings, custom directory overrides, and bound skills.
@@ -737,6 +747,8 @@ export const projectSourceConfigSchema = z
       .optional(),
     /** Skills explicitly bound to subcategories via search (from Step Sources) */
     boundSkills: z.array(boundSkillSchema).optional(),
+    /** Branding overrides for white-labeling the CLI */
+    branding: brandingConfigSchema.optional(),
     /** Custom skills directory override (default: "src/skills") */
     skills_dir: z.string().optional(),
     /** Custom agents directory override (default: "src/agents") */
@@ -769,6 +781,7 @@ export const projectSourceConfigValidationSchema = z.object({
     )
     .optional(),
   boundSkills: z.array(boundSkillSchema).optional(),
+  branding: brandingConfigSchema.optional(),
   skills_dir: z.string().optional(),
   agents_dir: z.string().optional(),
   stacks_file: z.string().optional(),

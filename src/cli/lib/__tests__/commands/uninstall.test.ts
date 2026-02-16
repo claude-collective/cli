@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
-import os from "os";
 import fs from "fs";
-import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
-import { runCliCommand, directoryExists } from "../helpers";
+import { mkdir, writeFile } from "fs/promises";
+import { runCliCommand, directoryExists, createTempDir, cleanupTempDir } from "../helpers";
+import { DEFAULT_BRANDING } from "../../../consts";
 
 vi.mock("../../../utils/exec.js", () => ({
   claudePluginUninstall: vi.fn(),
@@ -87,7 +87,7 @@ describe("uninstall command", () => {
   beforeEach(async () => {
     originalCwd = process.cwd();
     originalHome = process.env.HOME;
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-uninstall-test-"));
+    tempDir = await createTempDir("cc-uninstall-test-");
     projectDir = path.join(tempDir, "project");
     fakeHome = path.join(tempDir, "fakehome");
     await mkdir(projectDir, { recursive: true });
@@ -99,14 +99,13 @@ describe("uninstall command", () => {
   afterEach(async () => {
     process.chdir(originalCwd);
     process.env.HOME = originalHome;
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("flag validation", () => {
     it("should run without arguments", async () => {
       const { error } = await runCliCommand(["uninstall"]);
 
-      // Should not have argument parsing errors
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("missing required arg");
       expect(output.toLowerCase()).not.toContain("unexpected argument");
@@ -214,7 +213,6 @@ describe("uninstall command", () => {
 
       await runCliCommand(["uninstall", "--dry-run"]);
 
-      // Verify nothing was actually removed
       expect(await directoryExists(pluginDir)).toBe(true);
       expect(await directoryExists(claudeDir)).toBe(true);
       expect(await directoryExists(claudeSrcDir)).toBe(true);
@@ -232,12 +230,10 @@ describe("uninstall command", () => {
     it("should remove plugin directory", async () => {
       const pluginDir = await createPluginDir(projectDir, fakeHome);
 
-      // Verify plugin exists before uninstall
       expect(await directoryExists(pluginDir)).toBe(true);
 
       const { stdout } = await runCliCommand(["uninstall", "--yes"]);
 
-      // Verify plugin was removed
       expect(await directoryExists(pluginDir)).toBe(false);
       expect(stdout).toContain("Plugins uninstalled");
     });
@@ -256,7 +252,7 @@ describe("uninstall command", () => {
 
       const { stdout } = await runCliCommand(["uninstall", "--yes"]);
 
-      expect(stdout).toContain("Claude Collective has been uninstalled");
+      expect(stdout).toContain(`${DEFAULT_BRANDING.NAME} has been uninstalled`);
       expect(stdout).toContain("Uninstall complete");
     });
   });
@@ -265,13 +261,11 @@ describe("uninstall command", () => {
     it("should remove .claude and .claude-src directories", async () => {
       const { claudeDir, claudeSrcDir } = await createLocalDirs(projectDir);
 
-      // Verify dirs exist before uninstall
       expect(await directoryExists(claudeDir)).toBe(true);
       expect(await directoryExists(claudeSrcDir)).toBe(true);
 
       const { stdout } = await runCliCommand(["uninstall", "--yes"]);
 
-      // Verify dirs were removed
       expect(await directoryExists(claudeDir)).toBe(false);
       expect(await directoryExists(claudeSrcDir)).toBe(false);
       expect(stdout).toContain("Removed 2 directories");
@@ -295,11 +289,8 @@ describe("uninstall command", () => {
 
       await runCliCommand(["uninstall", "--yes", "--plugin"]);
 
-      // Plugin should be removed
       expect(await directoryExists(pluginDir)).toBe(false);
-      // Local dirs should remain (--plugin skips local)
-      // Note: .claude dir is parent of plugin dir, so it may still exist
-      // but .claude-src should definitely remain
+      // .claude-src should remain since --plugin only targets plugins
       expect(await directoryExists(claudeSrcDir)).toBe(true);
     });
 
@@ -308,7 +299,6 @@ describe("uninstall command", () => {
 
       await runCliCommand(["uninstall", "--yes", "--local"]);
 
-      // .claude and .claude-src should be removed
       expect(await directoryExists(claudeSrcDir)).toBe(false);
     });
 
@@ -323,7 +313,6 @@ describe("uninstall command", () => {
     });
 
     it("should show nothing when --local but no local dirs exist", async () => {
-      // Empty project - no .claude/ or .claude-src/
       const { stdout, stderr } = await runCliCommand(["uninstall", "--yes", "--local"]);
 
       const output = stdout + stderr;

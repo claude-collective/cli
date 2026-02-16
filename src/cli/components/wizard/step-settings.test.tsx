@@ -251,7 +251,7 @@ describe("StepSettings component", () => {
 
       const output = lastFrame();
       expect(output).toContain("DEL remove");
-      expect(output).toContain("ESC close");
+      expect(output).toContain("close");
     });
   });
 

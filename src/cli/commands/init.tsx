@@ -21,9 +21,10 @@ import {
   claudePluginMarketplaceExists,
   claudePluginMarketplaceAdd,
 } from "../utils/exec.js";
-import { CLAUDE_DIR, LOCAL_SKILLS_PATH } from "../consts.js";
+import { CLAUDE_DIR, DEFAULT_BRANDING, LOCAL_SKILLS_PATH } from "../consts.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
+import { resolveBranding } from "../lib/configuration/config.js";
 import {
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,
@@ -33,7 +34,7 @@ import {
 } from "../utils/messages.js";
 
 export default class Init extends BaseCommand {
-  static summary = "Initialize Claude Collective in this project";
+  static summary = `Initialize ${DEFAULT_BRANDING.NAME} in this project`;
   static description =
     "Interactive wizard to set up skills and agents. Supports Plugin Mode (native install) and Local Mode (copy to .claude/).";
 
@@ -90,7 +91,7 @@ export default class Init extends BaseCommand {
       const location = individualPluginsExist
         ? `.claude/settings.json`
         : (existingInstallation?.configPath ?? projectDir);
-      this.warn(`Claude Collective is already initialized at ${location}`);
+      this.warn(`${DEFAULT_BRANDING.NAME} is already initialized at ${location}`);
       this.log(`Use 'cc edit' to modify skills.`);
       this.log(INFO_MESSAGES.NO_CHANGES_MADE);
       return;
@@ -112,12 +113,14 @@ export default class Init extends BaseCommand {
     let wizardResult: WizardResultV2 | null = null;
 
     const marketplaceLabel = getMarketplaceLabel(sourceResult);
+    const branding = await resolveBranding(projectDir);
 
     const { waitUntilExit } = render(
       <Wizard
         matrix={sourceResult.matrix}
         version={this.config.version}
         marketplaceLabel={marketplaceLabel}
+        brandingName={branding.name}
         projectDir={process.cwd()}
         initialInstallMode={sourceResult.marketplace ? "plugin" : "local"}
         onComplete={(result) => {
@@ -230,7 +233,6 @@ export default class Init extends BaseCommand {
   ): Promise<void> {
     const projectDir = process.cwd();
 
-    // 1. Register marketplace if needed
     if (sourceResult.marketplace) {
       const marketplaceExists = await claudePluginMarketplaceExists(sourceResult.marketplace);
 
@@ -247,7 +249,6 @@ export default class Init extends BaseCommand {
       }
     }
 
-    // 2. Install each skill as a native plugin
     this.log("Installing skill plugins...");
     for (const skillId of result.selectedSkills) {
       const pluginRef = `${skillId}@${sourceResult.marketplace}`;
@@ -263,8 +264,6 @@ export default class Init extends BaseCommand {
 
     this.log(`Installed ${result.selectedSkills.length} skill plugins\n`);
 
-    // 3. Generate config and compile agents (without copying skills to .claude/skills/)
-    // In plugin mode, skills come from the installed plugins, not local copies
     this.log("Generating configuration...");
     try {
       const configResult = await installPluginConfig({

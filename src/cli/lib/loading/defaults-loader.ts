@@ -9,6 +9,7 @@ import { defaultMappingsSchema } from "../schemas";
 export type DefaultMappings = {
   skill_to_agents: Record<string, string[]>;
   preloaded_skills: Record<string, string[]>;
+  agent_skill_prefixes?: Record<string, string[]>;
   subcategory_aliases: Record<string, string>;
 };
 

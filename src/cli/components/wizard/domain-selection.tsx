@@ -21,7 +21,12 @@ const AVAILABLE_DOMAINS: Array<{ id: Domain; label: string; description: string 
 ];
 
 export const DomainSelection: React.FC = () => {
-  const { selectedDomains, toggleDomain, setStep, goBack } = useWizardStore();
+  const { selectedDomains, toggleDomain, setStep, setApproach, selectStack } = useWizardStore();
+
+  const handleBack = () => {
+    setApproach(null);
+    selectStack(null);
+  };
 
   const domainOptions = AVAILABLE_DOMAINS.map((domain) => {
     const isSelected = selectedDomains.includes(domain.id);
@@ -47,7 +52,7 @@ export const DomainSelection: React.FC = () => {
 
   const handleSelect = (value: string) => {
     if (value === BACK_VALUE) {
-      goBack();
+      handleBack();
       return;
     }
 

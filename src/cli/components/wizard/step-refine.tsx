@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
-import { CLI_COLORS } from "../../consts.js";
+import { CLI_COLORS, DEFAULT_BRANDING } from "../../consts.js";
 
 export type RefineAction = "all-recommended" | "customize" | null;
 
@@ -61,7 +61,7 @@ export const StepRefine: React.FC<StepRefineProps> = ({
           </Text>
           <Text> </Text>
           <Text dimColor>This is the fastest option. All skills are verified and</Text>
-          <Text dimColor>maintained by Claude Collective.</Text>
+          <Text dimColor>maintained by {DEFAULT_BRANDING.NAME}</Text>
         </Box>
       </Box>
 

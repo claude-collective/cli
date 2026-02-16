@@ -2,10 +2,9 @@ import React, { useCallback } from "react";
 import { Box, Text, useApp, useInput, useStdout } from "ink";
 import { ThemeProvider } from "@inkjs/ui";
 import { useWizardStore, type WizardStep } from "../../stores/wizard-store.js";
-import { CLI_COLORS } from "../../consts.js";
+import { CLI_COLORS, SCROLL_VIEWPORT } from "../../consts.js";
 import { cliTheme } from "../themes/default.js";
 import { WizardLayout } from "./wizard-layout.js";
-import { StepApproach } from "./step-approach.js";
 import { StepStack } from "./step-stack.js";
 import { StepBuild } from "./step-build.js";
 import { StepConfirm } from "./step-confirm.js";
@@ -39,6 +38,7 @@ type WizardProps = {
   onCancel: () => void;
   version?: string;
   marketplaceLabel?: string;
+  brandingName?: string;
   initialStep?: WizardStep;
   initialInstallMode?: "plugin" | "local";
   installedSkillIds?: SkillId[];
@@ -53,6 +53,7 @@ export const Wizard: React.FC<WizardProps> = ({
   onCancel,
   version,
   marketplaceLabel,
+  brandingName,
   initialStep,
   initialInstallMode,
   installedSkillIds,
@@ -63,19 +64,27 @@ export const Wizard: React.FC<WizardProps> = ({
   const { stdout } = useStdout();
 
   const terminalWidth = stdout.columns || MIN_TERMINAL_WIDTH;
+  const terminalHeight = stdout.rows || SCROLL_VIEWPORT.MIN_TERMINAL_HEIGHT;
   const isNarrowTerminal = terminalWidth < MIN_TERMINAL_WIDTH;
+  const isShortTerminal = terminalHeight < SCROLL_VIEWPORT.MIN_TERMINAL_HEIGHT;
 
   useWizardInitialization({ matrix, initialStep, initialInstallMode, installedSkillIds });
 
   const buildStepProps = useBuildStepProps({ store, matrix, installedSkillIds });
 
   useInput((input, key) => {
-    // Disable global hotkeys when settings or help overlay is active
-    if (store.showSettings) return;
+    // ESC is handled by step-settings.tsx's own useKeyboardNavigation hook
+    if (store.showSettings) {
+      if (input === "g" || input === "G") {
+        store.toggleSettings();
+      }
+      return;
+    }
 
     if (store.showHelp) {
-      // Any key closes the help modal (useInput in HelpModal handles this too)
-      store.toggleHelp();
+      if (key.escape || input === "?") {
+        store.toggleHelp();
+      }
       return;
     }
 
@@ -85,17 +94,15 @@ export const Wizard: React.FC<WizardProps> = ({
     }
 
     if (key.escape) {
-      if (store.step === "approach") {
-        onCancel();
-        exit();
-      } else if (store.step !== "build" && store.step !== "confirm" && store.step !== "sources") {
-        // Only handle escape globally for steps that don't have their own escape handler.
+      // At the initial stack/scratch selection (approach not yet set), ESC cancels the wizard.
+      // StackSelection handles its own ESC via the onCancel prop.
+      // Other steps that don't have their own escape handler use goBack.
+      if (store.step !== "build" && store.step !== "confirm" && store.step !== "sources" && store.step !== "stack") {
         store.goBack();
       }
       return;
     }
 
-    // Accept defaults shortcut (stack path only, during build step)
     if ((input === "a" || input === "A") && store.step === "build" && store.selectedStackId) {
       store.setStackAction("defaults");
       store.setStep("confirm");
@@ -162,13 +169,15 @@ export const Wizard: React.FC<WizardProps> = ({
     exit();
   }, [store, matrix, onComplete, exit]);
 
+  const handleCancel = useCallback(() => {
+    onCancel();
+    exit();
+  }, [onCancel, exit]);
+
   const renderStep = () => {
     switch (store.step) {
-      case "approach":
-        return <StepApproach />;
-
       case "stack":
-        return <StepStack matrix={matrix} />;
+        return <StepStack matrix={matrix} onCancel={handleCancel} />;
 
       case "build":
         return <StepBuild {...buildStepProps} />;
@@ -214,17 +223,15 @@ export const Wizard: React.FC<WizardProps> = ({
     }
   };
 
-  if (isNarrowTerminal) {
+  if (isNarrowTerminal || isShortTerminal) {
+    const issue = isNarrowTerminal
+      ? `too narrow (${terminalWidth} columns, need ${MIN_TERMINAL_WIDTH})`
+      : `too short (${terminalHeight} rows, need ${SCROLL_VIEWPORT.MIN_TERMINAL_HEIGHT})`;
+
     return (
       <ThemeProvider theme={cliTheme}>
         <Box flexDirection="column" padding={1}>
-          <Text color={CLI_COLORS.WARNING}>
-            Terminal too narrow ({terminalWidth} columns). Please resize to at least{" "}
-            {MIN_TERMINAL_WIDTH} columns.
-          </Text>
-          <Box marginTop={1}>
-            <Text dimColor>Current width: {terminalWidth} columns</Text>
-          </Box>
+          <Text color={CLI_COLORS.WARNING}>Terminal {issue}. Please resize your terminal.</Text>
         </Box>
       </ThemeProvider>
     );
@@ -232,7 +239,7 @@ export const Wizard: React.FC<WizardProps> = ({
 
   return (
     <ThemeProvider theme={cliTheme}>
-      <WizardLayout version={version} marketplaceLabel={marketplaceLabel}>
+      <WizardLayout version={version} marketplaceLabel={marketplaceLabel} brandingName={brandingName} terminalHeight={terminalHeight}>
         {renderStep()}
       </WizardLayout>
     </ThemeProvider>

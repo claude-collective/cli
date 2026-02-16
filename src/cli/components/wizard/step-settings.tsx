@@ -82,8 +82,6 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
       return;
     }
 
-    // Non-adding mode: up/down/escape handled by useKeyboardNavigation hook
-
     if (key.return) {
       // Toggle enabled/disabled is a placeholder for future enabledSources store integration
       return;
@@ -179,7 +177,7 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
 
       <Box marginTop={1}>
         <Text dimColor>
-          {addModal.isOpen ? "ENTER submit  ESC cancel" : "A add  DEL remove  ESC close"}
+          {addModal.isOpen ? "ENTER submit  ESC cancel" : "A add  DEL remove  ESC or G to close"}
         </Text>
       </Box>
     </Box>

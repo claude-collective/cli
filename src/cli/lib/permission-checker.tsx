@@ -3,7 +3,7 @@ import React from "react";
 import { Text, Box } from "ink";
 import path from "path";
 
-import { CLI_COLORS, MAX_CONFIG_FILE_SIZE } from "../consts";
+import { CLAUDE_DIR, CLI_COLORS, MAX_CONFIG_FILE_SIZE } from "../consts";
 import { fileExists, readFileSafe } from "../utils/fs";
 import { warn } from "../utils/logger";
 import { settingsFileSchema, warnUnknownFields } from "./schemas";
@@ -18,8 +18,8 @@ type SettingsFile = {
 };
 
 export async function checkPermissions(projectRoot: string): Promise<React.ReactElement | null> {
-  const settingsPath = path.join(projectRoot, ".claude", "settings.json");
-  const localSettingsPath = path.join(projectRoot, ".claude", "settings.local.json");
+  const settingsPath = path.join(projectRoot, CLAUDE_DIR, "settings.json");
+  const localSettingsPath = path.join(projectRoot, CLAUDE_DIR, "settings.local.json");
 
   let permissions: PermissionConfig | undefined;
 

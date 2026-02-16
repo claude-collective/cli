@@ -14,6 +14,7 @@ import {
 } from "../../lib/__tests__/test-constants";
 import { createMockMatrix } from "../../lib/__tests__/helpers";
 import { getTestSkill } from "../../lib/__tests__/test-fixtures";
+import { DEFAULT_BRANDING } from "../../consts";
 
 const reactSkill = getTestSkill("react");
 const zustandSkill = getTestSkill("zustand");
@@ -87,7 +88,7 @@ describe("StepSources component", () => {
       const output = lastFrame();
       expect(output).toContain("fastest option");
       expect(output).toContain("verified");
-      expect(output).toContain("Claude Collective");
+      expect(output).toContain(DEFAULT_BRANDING.NAME);
     });
 
     it("should render customize description", () => {

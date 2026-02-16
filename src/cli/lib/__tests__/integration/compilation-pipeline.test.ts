@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, readFile, stat } from "fs/promises";
+import { mkdir, readFile, stat } from "fs/promises";
 import { compileAllSkillPlugins } from "../../skills";
 import { compileStackPlugin, loadStacks } from "../../stacks";
 import {
@@ -10,6 +9,7 @@ import {
   getMarketplaceStats,
 } from "../../marketplace-generator";
 import { validateAllPlugins, validatePlugin } from "../../plugins";
+import { DEFAULT_BRANDING, DEFAULT_PLUGIN_NAME } from "../../../consts";
 import type { Marketplace, PluginManifest, Stack } from "../../../types";
 import {
   createTestSource,
@@ -17,6 +17,7 @@ import {
   type TestDirs,
   type TestSkill,
 } from "../fixtures/create-test-source";
+import { createTempDir, cleanupTempDir } from "../helpers";
 
 const TEST_AUTHOR = "@test";
 const DEFAULT_SKILL_COUNT = 4;
@@ -99,14 +100,14 @@ describe("Integration: Full Skill Pipeline", () => {
 
   beforeEach(async () => {
     dirs = await createTestSource();
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "skill-pipeline-test-"));
+    tempDir = await createTempDir("skill-pipeline-test-");
     outputDir = path.join(tempDir, "plugins");
     await mkdir(outputDir, { recursive: true });
   });
 
   afterEach(async () => {
     await cleanupTestSource(dirs);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should compile all skills to plugins without errors", async () => {
@@ -115,10 +116,8 @@ describe("Integration: Full Skill Pipeline", () => {
 
     const results = await compileAllSkillPlugins(dirs.skillsDir, outputDir);
 
-    // All 4 default test skills should compile successfully
     expect(results).toHaveLength(DEFAULT_SKILL_COUNT);
 
-    // Each result should have valid structure
     for (const result of results) {
       expect(result.pluginPath).toBeTruthy();
       expect(result.manifest.name).toBe(result.skillName);
@@ -195,14 +194,14 @@ describe("Integration: Full Stack Pipeline", () => {
   beforeEach(async () => {
     // Create source with skills whose frontmatter names match real skill_aliases resolutions
     dirs = await createTestSource({ skills: STACK_TEST_SKILLS });
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "stack-pipeline-test-"));
+    tempDir = await createTempDir("stack-pipeline-test-");
     outputDir = path.join(tempDir, "stacks");
     await mkdir(outputDir, { recursive: true });
   });
 
   afterEach(async () => {
     await cleanupTestSource(dirs);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should list available stacks from fixture", async () => {
@@ -236,12 +235,10 @@ describe("Integration: Full Stack Pipeline", () => {
       stack: TEST_STACK,
     });
 
-    // Verify result structure
     expect(result.pluginPath).toBe(path.join(outputDir, TEST_STACK.id));
     expect(result.stackName).toBeTruthy();
     expect(result.agents.length).toBeGreaterThan(0);
 
-    // Verify plugin directory structure
     expect(await pathExists(result.pluginPath)).toBe(true);
     expect(await pathExists(path.join(result.pluginPath, "agents"))).toBe(true);
     expect(await pathExists(path.join(result.pluginPath, ".claude-plugin", "plugin.json"))).toBe(
@@ -249,7 +246,6 @@ describe("Integration: Full Stack Pipeline", () => {
     );
     expect(await pathExists(path.join(result.pluginPath, "README.md"))).toBe(true);
 
-    // Verify manifest
     const manifest = await readPluginManifest(result.pluginPath);
     expect(manifest).not.toBeNull();
     expect(manifest!.name).toBe(TEST_STACK.id);
@@ -269,12 +265,10 @@ describe("Integration: Full Stack Pipeline", () => {
     const readmePath = path.join(result.pluginPath, "README.md");
     const readme = await readFile(readmePath, "utf-8");
 
-    // README should contain section headers
     expect(readme).toContain("# ");
     expect(readme).toContain("## Agents");
     expect(readme).toContain("## Installation");
 
-    // README should list agents
     for (const agent of result.agents) {
       expect(readme).toContain(agent);
     }
@@ -289,10 +283,8 @@ describe("Integration: Full Stack Pipeline", () => {
       stack: TEST_STACK,
     });
 
-    // Should reference skill plugins
     expect(result.skillPlugins.length).toBeGreaterThan(0);
 
-    // Skill references should be in normalized kebab-case format
     for (const skillPlugin of result.skillPlugins) {
       expect(skillPlugin).toMatch(/^[a-z0-9-]+$/);
     }
@@ -324,7 +316,7 @@ describe("Integration: Marketplace Integrity", () => {
   beforeEach(async () => {
     // Use STACK_TEST_SKILLS so plugin names match category patterns (e.g., skill-web-framework-react -> "web")
     dirs = await createTestSource({ skills: STACK_TEST_SKILLS });
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "marketplace-test-"));
+    tempDir = await createTempDir("marketplace-test-");
     pluginsDir = path.join(tempDir, "plugins");
     marketplacePath = path.join(tempDir, "marketplace.json");
     await mkdir(pluginsDir, { recursive: true });
@@ -332,7 +324,7 @@ describe("Integration: Marketplace Integrity", () => {
 
   afterEach(async () => {
     await cleanupTestSource(dirs);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should generate valid marketplace.json", async () => {
@@ -342,10 +334,10 @@ describe("Integration: Marketplace Integrity", () => {
     await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
 
     const marketplace = await generateMarketplace(pluginsDir, {
-      name: "claude-collective",
+      name: DEFAULT_PLUGIN_NAME,
       version: "1.0.0",
-      description: "Claude Collective Skills Marketplace",
-      ownerName: "Claude Collective",
+      description: `${DEFAULT_BRANDING.NAME} Skills Marketplace`,
+      ownerName: DEFAULT_BRANDING.NAME,
       ownerEmail: "hello@example.com",
       pluginRoot: "./plugins",
     });
@@ -356,9 +348,9 @@ describe("Integration: Marketplace Integrity", () => {
     const parsed = JSON.parse(content) as Marketplace;
 
     expect(parsed.$schema).toBe("https://anthropic.com/claude-code/marketplace.schema.json");
-    expect(parsed.name).toBe("claude-collective");
+    expect(parsed.name).toBe(DEFAULT_PLUGIN_NAME);
     expect(parsed.version).toBe("1.0.0");
-    expect(parsed.owner.name).toBe("Claude Collective");
+    expect(parsed.owner.name).toBe(DEFAULT_BRANDING.NAME);
     expect(parsed.owner.email).toBe("hello@example.com");
     expect(parsed.metadata?.pluginRoot).toBe("./plugins");
     expect(parsed.plugins.length).toBe(STACK_TEST_SKILLS.length);
@@ -472,7 +464,7 @@ describe("Integration: End-to-End Pipeline", () => {
   beforeEach(async () => {
     // Use stack test skills so both skill and stack pipelines work with same source
     dirs = await createTestSource({ skills: STACK_TEST_SKILLS });
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "e2e-pipeline-test-"));
+    tempDir = await createTempDir("e2e-pipeline-test-");
     pluginsDir = path.join(tempDir, "plugins");
     stacksDir = path.join(tempDir, "stacks");
     await mkdir(pluginsDir, { recursive: true });
@@ -481,22 +473,19 @@ describe("Integration: End-to-End Pipeline", () => {
 
   afterEach(async () => {
     await cleanupTestSource(dirs);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should compile skills then stacks in sequence", async () => {
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    // Step 1: Compile all skills
     const skillResults = await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
     expect(skillResults.length).toBe(STACK_TEST_SKILLS.length);
 
-    // Step 2: Validate skill plugins
     const skillValidation = await validateAllPlugins(pluginsDir);
     expect(skillValidation.summary.invalid).toBe(0);
 
-    // Step 3: Compile a stack
     const stackResult = await compileStackPlugin({
       stackId: TEST_STACK.id,
       outputDir: stacksDir,
@@ -506,11 +495,9 @@ describe("Integration: End-to-End Pipeline", () => {
     });
     expect(stackResult.agents.length).toBeGreaterThan(0);
 
-    // Step 4: Validate stack plugin
     const stackValidation = await validatePlugin(stackResult.pluginPath);
     expect(stackValidation.valid).toBe(true);
 
-    // Step 5: Generate marketplace for skills
     const marketplace = await generateMarketplace(pluginsDir, {
       name: "test-marketplace",
       ownerName: "Test Owner",
@@ -537,7 +524,6 @@ describe("Integration: End-to-End Pipeline", () => {
     expect(stackResult.skillPlugins.length).toBeGreaterThan(0);
 
     for (const skillPlugin of stackResult.skillPlugins) {
-      // Should be in normalized kebab-case format
       expect(skillPlugin).toMatch(/^[a-z0-9-]+$/);
     }
 
@@ -549,10 +535,8 @@ describe("Integration: End-to-End Pipeline", () => {
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    // Compile skills
     const skillResults = await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
 
-    // Compile stack
     const stackResult = await compileStackPlugin({
       stackId: TEST_STACK.id,
       outputDir: stacksDir,
@@ -561,16 +545,12 @@ describe("Integration: End-to-End Pipeline", () => {
       stack: TEST_STACK,
     });
 
-    // Get skill base names from compiled plugins (plugin name = skill ID)
     const extractBaseName = (id: string) => id;
 
     const stackBaseNames = new Set(stackResult.skillPlugins.map(extractBaseName));
     const compiledBaseNames = new Set(skillResults.map((r) => extractBaseName(r.manifest.name)));
 
-    // There should be overlap between stack skill references and compiled skills
     const commonSkills = [...stackBaseNames].filter((name) => compiledBaseNames.has(name));
-
-    // Expect at least one common skill (e.g., web-framework-react)
     expect(commonSkills.length).toBeGreaterThan(0);
 
     consoleSpy.mockRestore();

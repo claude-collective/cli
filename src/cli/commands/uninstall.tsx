@@ -9,7 +9,7 @@ import { Confirm } from "../components/common/confirm";
 import { directoryExists, fileExists, remove } from "../utils/fs";
 import { claudePluginUninstall, isClaudeCLIAvailable } from "../utils/exec";
 import { listPluginNames, getProjectPluginsDir } from "../lib/plugins";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, CLI_COLORS, STANDARD_FILES } from "../consts";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, CLI_COLORS, DEFAULT_BRANDING, STANDARD_FILES } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
 import {
   ERROR_MESSAGES,
@@ -132,10 +132,10 @@ const UninstallConfirm: React.FC<UninstallConfirmProps> = ({
 };
 
 export default class Uninstall extends BaseCommand {
-  static summary = "Remove Claude Collective from this project";
+  static summary = `Remove ${DEFAULT_BRANDING.NAME} from this project`;
 
   static description =
-    "Uninstall the Claude Collective plugin and/or local directories (.claude/ and .claude-src/). By default, removes everything.";
+    `Uninstall the ${DEFAULT_BRANDING.NAME} plugin and/or local directories (.claude/ and .claude-src/). By default, removes everything.`;
 
   static examples = [
     "<%= config.bin %> <%= command.id %>",
@@ -167,7 +167,7 @@ export default class Uninstall extends BaseCommand {
     const projectDir = process.cwd();
 
     this.log("");
-    this.log("Claude Collective Uninstall");
+    this.log(`${DEFAULT_BRANDING.NAME} Uninstall`);
     this.log("");
 
     if (flags["dry-run"]) {
@@ -321,7 +321,7 @@ export default class Uninstall extends BaseCommand {
     }
 
     this.log("");
-    this.log("Claude Collective has been uninstalled.");
+    this.log(`${DEFAULT_BRANDING.NAME} has been uninstalled.`);
 
     this.log("");
     this.logSuccess(SUCCESS_MESSAGES.UNINSTALL_COMPLETE);

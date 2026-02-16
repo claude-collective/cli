@@ -9,6 +9,7 @@ import { discoverLocalSkills } from "../lib/skills";
 import { getStackSkillIds } from "../lib/stacks";
 import type { AgentName, MergedSkillsMatrix, ProjectConfig, SkillId } from "../types";
 import { fileExists, glob, directoryExists } from "../utils/fs";
+import { CLAUDE_DIR, DEFAULT_BRANDING } from "../consts";
 import { setVerbose } from "../utils/logger";
 
 type CheckResult = {
@@ -105,7 +106,7 @@ async function checkAgentsCompiled(
     };
   }
 
-  const agentsDir = path.join(projectDir, ".claude", "agents");
+  const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
   const missingAgents: string[] = [];
 
   for (const agent of agents) {
@@ -130,7 +131,7 @@ async function checkAgentsCompiled(
 }
 
 async function checkNoOrphans(config: ProjectConfig, projectDir: string): Promise<CheckResult> {
-  const agentsDir = path.join(projectDir, ".claude", "agents");
+  const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
 
   if (!(await directoryExists(agentsDir))) {
     return {
@@ -302,8 +303,7 @@ function formatTips(results: CheckResult[]): string[] {
 export default class Doctor extends BaseCommand {
   static summary = "Diagnose common configuration issues";
 
-  static description =
-    "Run diagnostic checks on your Claude Collective configuration to identify issues with config validity, skill resolution, agent compilation, and source connectivity.";
+  static description = `Run diagnostic checks on your ${DEFAULT_BRANDING.NAME} configuration to identify issues with config validity, skill resolution, agent compilation, and source connectivity.`;
 
   static examples = [
     "<%= config.bin %> <%= command.id %>",
@@ -331,7 +331,7 @@ export default class Doctor extends BaseCommand {
     const projectDir = process.cwd();
 
     this.log("");
-    this.log("Claude Collective Doctor");
+    this.log(`${DEFAULT_BRANDING.NAME} Doctor`);
     this.log("");
     this.log("  Checking configuration health...");
     this.log("");

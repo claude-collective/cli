@@ -8,6 +8,7 @@ import {
   type InstallationInfo,
 } from "./plugin-info";
 import type { Installation } from "../installation";
+import { DEFAULT_PLUGIN_NAME } from "../../consts";
 
 vi.mock("fs/promises", () => ({
   readdir: vi.fn(),
@@ -64,7 +65,7 @@ describe("plugin-info", () => {
       const result = await getPluginInfo();
 
       expect(result).not.toBeNull();
-      expect(result!.name).toBe("claude-collective");
+      expect(result!.name).toBe(DEFAULT_PLUGIN_NAME);
       expect(result!.version).toBe("0.0.0");
       expect(result!.skillCount).toBe(2);
       expect(result!.agentCount).toBe(0);
@@ -259,7 +260,7 @@ describe("plugin-info", () => {
       const result = await getInstallationInfo();
 
       expect(result).not.toBeNull();
-      expect(result!.name).toBe("claude-collective");
+      expect(result!.name).toBe(DEFAULT_PLUGIN_NAME);
     });
 
     it("should use default name when loadProjectConfig returns null", async () => {
@@ -278,7 +279,7 @@ describe("plugin-info", () => {
       const result = await getInstallationInfo();
 
       expect(result).not.toBeNull();
-      expect(result!.name).toBe("claude-collective");
+      expect(result!.name).toBe(DEFAULT_PLUGIN_NAME);
       expect(result!.version).toBe("0.0.0");
     });
 

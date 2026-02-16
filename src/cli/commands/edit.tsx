@@ -10,6 +10,7 @@ import { archiveLocalSkill, restoreArchivedSkill } from "../lib/skills/index.js"
 import { recompileAgents, getAgentDefinitions } from "../lib/agents/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { detectInstallation } from "../lib/installation/index.js";
+import { resolveBranding } from "../lib/configuration/config.js";
 import { ERROR_MESSAGES, STATUS_MESSAGES, INFO_MESSAGES } from "../utils/messages.js";
 import { claudePluginInstall, claudePluginUninstall } from "../utils/exec.js";
 import type { SkillId } from "../types/index.js";
@@ -101,12 +102,14 @@ export default class Edit extends BaseCommand {
 
     let wizardResult: WizardResultV2 | null = null;
     const marketplaceLabel = getMarketplaceLabel(sourceResult);
+    const branding = await resolveBranding(projectDir);
 
     const { waitUntilExit } = render(
       <Wizard
         matrix={sourceResult.matrix}
         version={this.config.version}
         marketplaceLabel={marketplaceLabel}
+        brandingName={branding.name}
         initialStep="build"
         initialInstallMode={sourceResult.marketplace ? "plugin" : "local"}
         installedSkillIds={currentSkillIds}
@@ -138,7 +141,6 @@ export default class Edit extends BaseCommand {
     const addedSkills = result.selectedSkills.filter((id) => !currentSkillIds.includes(id));
     const removedSkills = currentSkillIds.filter((id) => !result.selectedSkills.includes(id));
 
-    // Detect source changes (user changed which source provides a skill)
     const sourceChanges = new Map<SkillId, { from: string; to: string }>();
     for (const [skillId, selectedSource] of typedEntries<SkillId, string>(
       result.sourceSelections,
@@ -185,7 +187,6 @@ export default class Edit extends BaseCommand {
     }
     this.log("");
 
-    // Apply source switches (archive/restore local skills)
     for (const [skillId, change] of sourceChanges) {
       if (change.from === "local") {
         await archiveLocalSkill(projectDir, skillId);
@@ -195,7 +196,6 @@ export default class Edit extends BaseCommand {
       }
     }
 
-    // Install/uninstall skill plugins when in plugin mode with a marketplace
     if (isPluginMode && sourceResult.marketplace) {
       for (const skillId of addedSkills) {
         const pluginRef = `${skillId}@${sourceResult.marketplace}`;

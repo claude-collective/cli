@@ -6,6 +6,7 @@ import { safeLoadYamlFile } from "../../utils/yaml";
 import {
   CLAUDE_DIR,
   CLAUDE_SRC_DIR,
+  DEFAULT_BRANDING,
   GITHUB_SOURCE,
   SCHEMA_PATHS,
   STANDARD_FILES,
@@ -26,6 +27,14 @@ export type SourceEntry = {
   ref?: string;
 };
 
+/** Branding overrides for white-labeling the CLI */
+export type BrandingConfig = {
+  /** Custom CLI name (e.g., "Acme Dev Tools") */
+  name?: string;
+  /** Custom tagline shown in wizard header */
+  tagline?: string;
+};
+
 export type ProjectSourceConfig = {
   source?: string;
   author?: string;
@@ -33,7 +42,8 @@ export type ProjectSourceConfig = {
   agents_source?: string;
   sources?: SourceEntry[];
   boundSkills?: BoundSkill[];
-  // Resource path overrides (all relative to repo root, all optional)
+  /** Branding overrides for white-labeling the CLI */
+  branding?: BrandingConfig;
   skills_dir?: string; // default: src/skills (SKILLS_DIR_PATH)
   agents_dir?: string; // default: src/agents (DIRS.agents)
   stacks_file?: string; // default: config/stacks.yaml (STACKS_FILE)
@@ -53,9 +63,7 @@ export function getProjectConfigPath(projectDir: string): string {
 export async function loadProjectSourceConfig(
   projectDir: string,
 ): Promise<ProjectSourceConfig | null> {
-  // Check .claude-src/config.yaml first (new location)
   const srcConfigPath = getProjectConfigPath(projectDir);
-  // Fall back to .claude/config.yaml (legacy location)
   const legacyConfigPath = path.join(projectDir, CLAUDE_DIR, STANDARD_FILES.CONFIG_YAML);
 
   let configPath = srcConfigPath;
@@ -214,6 +222,21 @@ export async function resolveAuthor(projectDir?: string): Promise<string | undef
   return projectConfig?.author;
 }
 
+/** Resolved branding with defaults applied for any missing fields */
+export type ResolvedBranding = {
+  name: string;
+  tagline: string;
+};
+
+/** Resolves branding from project config, falling back to DEFAULT_BRANDING for missing fields. */
+export async function resolveBranding(projectDir?: string): Promise<ResolvedBranding> {
+  const projectConfig = projectDir ? await loadProjectSourceConfig(projectDir) : null;
+  return {
+    name: projectConfig?.branding?.name ?? DEFAULT_BRANDING.NAME,
+    tagline: projectConfig?.branding?.tagline ?? DEFAULT_BRANDING.TAGLINE,
+  };
+}
+
 export async function resolveAllSources(
   projectDir?: string,
 ): Promise<{ primary: SourceEntry; extras: SourceEntry[] }> {
@@ -241,7 +264,6 @@ export async function resolveAllSources(
   return { primary, extras };
 }
 
-// Remote protocol prefixes recognized by giget
 const REMOTE_PROTOCOLS = [
   GITHUB_SOURCE.GITHUB_PREFIX, // "github:"
   GITHUB_SOURCE.GH_PREFIX, // "gh:"
@@ -254,7 +276,6 @@ const REMOTE_PROTOCOLS = [
 
 // Minimum length after protocol prefix for a valid remote source (e.g., "org/repo" = 8 chars min)
 const MIN_REMOTE_PATH_LENGTH = 3;
-// Maximum reasonable source path length
 const MAX_SOURCE_LENGTH = 512;
 
 // Null bytes must never appear in source strings — they can bypass C-level string termination in downstream tools
@@ -305,7 +326,6 @@ export function validateSourceFormat(source: string, flagName: string): void {
     );
   }
 
-  // Check which remote protocol (if any) matches
   const matchedProtocol = REMOTE_PROTOCOLS.find((prefix) => source.startsWith(prefix));
 
   if (matchedProtocol) {

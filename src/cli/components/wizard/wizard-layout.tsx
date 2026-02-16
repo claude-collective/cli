@@ -74,25 +74,35 @@ const WizardFooter = () => {
 type WizardLayoutProps = {
   version?: string;
   marketplaceLabel?: string;
+  brandingName?: string;
+  /** Terminal height in rows, used to constrain the layout for flexGrow measurement */
+  terminalHeight: number;
   children: React.ReactNode;
 };
 
 export const WizardLayout: React.FC<WizardLayoutProps> = ({
   version,
   marketplaceLabel,
+  brandingName,
+  terminalHeight,
   children,
 }) => {
   const store = useWizardStore();
   const { completedSteps, skippedSteps } = store.getStepProgress();
 
+  // Constrain height only during the build step so flexGrow-based measurement
+  // can determine the grid area. Other steps grow to fit their content.
+  const constrainedHeight = store.step === "build" ? terminalHeight : undefined;
+
   return (
-    <Box flexDirection="column" paddingX={1}>
+    <Box flexDirection="column" paddingX={1} height={constrainedHeight}>
       <WizardTabs
         steps={WIZARD_STEPS}
         currentStep={store.step}
         completedSteps={completedSteps}
         skippedSteps={skippedSteps}
         version={version}
+        brandingName={brandingName}
       />
       {marketplaceLabel && (
         <Box paddingLeft={1} marginTop={1}>
@@ -101,10 +111,12 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
         </Box>
       )}
       {store.showHelp ? (
-        <HelpModal currentStep={store.step} onClose={store.toggleHelp} />
+        <HelpModal currentStep={store.step} />
       ) : (
         <>
-          <Box marginTop={1}>{children}</Box>
+          <Box flexGrow={1} marginTop={1}>
+            {children}
+          </Box>
           <Box paddingX={1} columnGap={2} marginTop={2}>
             <DefinitionItem label="Expert mode" values={["E"]} isActive={store.expertMode} />
             <DefinitionItem

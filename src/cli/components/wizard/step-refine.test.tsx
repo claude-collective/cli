@@ -10,6 +10,7 @@ import {
   INPUT_DELAY_MS,
   delay,
 } from "../../lib/__tests__/test-constants";
+import { DEFAULT_BRANDING } from "../../consts";
 
 const defaultProps: StepRefineProps = {
   technologyCount: 12,
@@ -77,7 +78,7 @@ describe("StepRefine component", () => {
       const output = lastFrame();
       expect(output).toContain("fastest option");
       expect(output).toContain("verified");
-      expect(output).toContain("Claude Collective");
+      expect(output).toContain(DEFAULT_BRANDING.NAME);
     });
   });
 

@@ -42,34 +42,361 @@ stacks:
         email: api-email-resend-react-email
         ci-cd: api-ci-cd-github-actions
         testing: api-testing-api-testing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       cli-developer:
         cli-framework:
           - id: cli-framework-cli-commander
+            preloaded: true
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
             preloaded: true
       web-reviewer:
         reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
+        framework: web-framework-react
+        styling: web-styling-scss-modules
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        mocking: web-mocks-msw
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       api-reviewer:
         reviewing:
           - id: meta-reviewing-reviewing
+            preloaded: true
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        testing: api-testing-api-testing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
             preloaded: true
       cli-reviewer:
         reviewing:
           - id: meta-reviewing-cli-reviewing
             preloaded: true
+        cli-framework: cli-framework-cli-commander
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       web-tester:
-        testing: web-testing-playwright-e2e
+        testing:
+          - web-testing-playwright-e2e
+          - web-testing-vitest
+        mocking: web-mocks-msw
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-pm:
+        framework: web-framework-react
+        styling: web-styling-scss-modules
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        mocking: web-mocks-msw
+        accessibility: web-accessibility-web-accessibility
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        analytics: api-analytics-posthog-analytics
+        email: api-email-resend-react-email
+        ci-cd: api-ci-cd-github-actions
+        cli-framework: cli-framework-cli-commander
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-architecture:
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        analytics: api-analytics-posthog-analytics
+        email: api-email-resend-react-email
+        ci-cd: api-ci-cd-github-actions
+        cli-framework: cli-framework-cli-commander
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-researcher:
+        framework: web-framework-react
+        styling: web-styling-scss-modules
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        mocking: web-mocks-msw
+        accessibility: web-accessibility-web-accessibility
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      api-researcher:
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        analytics: api-analytics-posthog-analytics
+        email: api-email-resend-react-email
+        ci-cd: api-ci-cd-github-actions
+        cli-framework: cli-framework-cli-commander
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      pattern-scout:
+        framework: web-framework-react
+        styling: web-styling-scss-modules
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        mocking: web-mocks-msw
+        accessibility: web-accessibility-web-accessibility
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        analytics: api-analytics-posthog-analytics
+        email: api-email-resend-react-email
+        ci-cd: api-ci-cd-github-actions
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-pattern-critique:
+        framework: web-framework-react
+        styling: web-styling-scss-modules
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        mocking: web-mocks-msw
+        accessibility: web-accessibility-web-accessibility
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        analytics: api-analytics-posthog-analytics
+        email: api-email-resend-react-email
+        ci-cd: api-ci-cd-github-actions
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      agent-summoner:
+        framework: web-framework-react
+        styling: web-styling-scss-modules
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        mocking: web-mocks-msw
+        accessibility: web-accessibility-web-accessibility
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        analytics: api-analytics-posthog-analytics
+        email: api-email-resend-react-email
+        ci-cd: api-ci-cd-github-actions
+        cli-framework: cli-framework-cli-commander
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      skill-summoner:
+        framework: web-framework-react
+        styling: web-styling-scss-modules
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        mocking: web-mocks-msw
+        accessibility: web-accessibility-web-accessibility
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        analytics: api-analytics-posthog-analytics
+        email: api-email-resend-react-email
+        ci-cd: api-ci-cd-github-actions
+        cli-framework: cli-framework-cli-commander
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      documentor:
+        framework: web-framework-react
+        styling: web-styling-scss-modules
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        mocking: web-mocks-msw
+        accessibility: web-accessibility-web-accessibility
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        analytics: api-analytics-posthog-analytics
+        email: api-email-resend-react-email
+        ci-cd: api-ci-cd-github-actions
+        cli-framework: cli-framework-cli-commander
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       cli-tester: {}
-      web-pm: {}
-      skill-summoner: {}
-      agent-summoner: {}
-      pattern-scout: {}
-      web-pattern-critique: {}
-      documentor: {}
-      web-architecture: {}
-      web-researcher: {}
-      api-researcher: {}
       cli-migrator: {}
     philosophy: Ship fast, iterate faster
 
@@ -106,25 +433,263 @@ stacks:
         auth: api-auth-better-auth-drizzle-hono
         observability: api-observability-axiom-pino-sentry
         testing: api-testing-api-testing
-      web-architecture: {}
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       web-reviewer:
         reviewing:
           - id: meta-reviewing-reviewing
+            preloaded: true
+        framework: web-framework-angular-standalone
+        client-state: web-state-ngrx-signalstore
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
             preloaded: true
       api-reviewer:
         reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-      web-researcher: {}
-      api-researcher: {}
-      web-pm: {}
-      pattern-scout: {}
-      web-pattern-critique: {}
-      agent-summoner: {}
-      skill-summoner: {}
-      documentor: {}
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        testing: api-testing-api-testing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-pm:
+        framework: web-framework-angular-standalone
+        client-state: web-state-ngrx-signalstore
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-architecture:
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-researcher:
+        framework: web-framework-angular-standalone
+        client-state: web-state-ngrx-signalstore
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      api-researcher:
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      pattern-scout:
+        framework: web-framework-angular-standalone
+        client-state: web-state-ngrx-signalstore
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-pattern-critique:
+        framework: web-framework-angular-standalone
+        client-state: web-state-ngrx-signalstore
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      agent-summoner:
+        framework: web-framework-angular-standalone
+        client-state: web-state-ngrx-signalstore
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      skill-summoner:
+        framework: web-framework-angular-standalone
+        client-state: web-state-ngrx-signalstore
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      documentor:
+        framework: web-framework-angular-standalone
+        client-state: web-state-ngrx-signalstore
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       web-tester:
-        testing: web-testing-playwright-e2e
+        testing:
+          - web-testing-playwright-e2e
+          - web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
     philosophy: Enterprise-grade and type-safe
 
   - id: nuxt-stack
@@ -163,25 +728,271 @@ stacks:
         auth: api-auth-better-auth-drizzle-hono
         observability: api-observability-axiom-pino-sentry
         testing: api-testing-api-testing
-      web-architecture: {}
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       web-reviewer:
         reviewing:
           - id: meta-reviewing-reviewing
+            preloaded: true
+        framework: web-framework-nuxt
+        meta-framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
             preloaded: true
       api-reviewer:
         reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-      web-researcher: {}
-      api-researcher: {}
-      web-pm: {}
-      pattern-scout: {}
-      web-pattern-critique: {}
-      agent-summoner: {}
-      skill-summoner: {}
-      documentor: {}
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        testing: api-testing-api-testing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-pm:
+        framework: web-framework-nuxt
+        meta-framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-architecture:
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-researcher:
+        framework: web-framework-nuxt
+        meta-framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      api-researcher:
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      pattern-scout:
+        framework: web-framework-nuxt
+        meta-framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-pattern-critique:
+        framework: web-framework-nuxt
+        meta-framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      agent-summoner:
+        framework: web-framework-nuxt
+        meta-framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      skill-summoner:
+        framework: web-framework-nuxt
+        meta-framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      documentor:
+        framework: web-framework-nuxt
+        meta-framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       web-tester:
-        testing: web-testing-playwright-e2e
+        testing:
+          - web-testing-playwright-e2e
+          - web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
     philosophy: Progressive Vue with Nuxt power
 
   - id: remix-stack
@@ -219,25 +1030,263 @@ stacks:
         auth: api-auth-better-auth-drizzle-hono
         observability: api-observability-axiom-pino-sentry
         testing: api-testing-api-testing
-      web-architecture: {}
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       web-reviewer:
         reviewing:
           - id: meta-reviewing-reviewing
+            preloaded: true
+        framework: web-framework-remix
+        base-framework: web-framework-react
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
             preloaded: true
       api-reviewer:
         reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-      web-researcher: {}
-      api-researcher: {}
-      web-pm: {}
-      pattern-scout: {}
-      web-pattern-critique: {}
-      agent-summoner: {}
-      skill-summoner: {}
-      documentor: {}
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        testing: api-testing-api-testing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-pm:
+        framework: web-framework-remix
+        base-framework: web-framework-react
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-architecture:
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-researcher:
+        framework: web-framework-remix
+        base-framework: web-framework-react
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      api-researcher:
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      pattern-scout:
+        framework: web-framework-remix
+        base-framework: web-framework-react
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-pattern-critique:
+        framework: web-framework-remix
+        base-framework: web-framework-react
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      agent-summoner:
+        framework: web-framework-remix
+        base-framework: web-framework-react
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      skill-summoner:
+        framework: web-framework-remix
+        base-framework: web-framework-react
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      documentor:
+        framework: web-framework-remix
+        base-framework: web-framework-react
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       web-tester:
-        testing: web-testing-playwright-e2e
+        testing:
+          - web-testing-playwright-e2e
+          - web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
     philosophy: Web standards and excellent forms handling
 
   - id: vue-stack
@@ -273,25 +1322,263 @@ stacks:
         auth: api-auth-better-auth-drizzle-hono
         observability: api-observability-axiom-pino-sentry
         testing: api-testing-api-testing
-      web-architecture: {}
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       web-reviewer:
         reviewing:
           - id: meta-reviewing-reviewing
+            preloaded: true
+        framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
             preloaded: true
       api-reviewer:
         reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-      web-researcher: {}
-      api-researcher: {}
-      web-pm: {}
-      pattern-scout: {}
-      web-pattern-critique: {}
-      agent-summoner: {}
-      skill-summoner: {}
-      documentor: {}
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        testing: api-testing-api-testing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-pm:
+        framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-architecture:
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-researcher:
+        framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      api-researcher:
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      pattern-scout:
+        framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-pattern-critique:
+        framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      agent-summoner:
+        framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      skill-summoner:
+        framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      documentor:
+        framework: web-framework-vue-composition-api
+        client-state: web-state-pinia
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       web-tester:
-        testing: web-testing-playwright-e2e
+        testing:
+          - web-testing-playwright-e2e
+          - web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
     philosophy: Progressive and approachable
 
   - id: solidjs-stack
@@ -326,25 +1613,255 @@ stacks:
         auth: api-auth-better-auth-drizzle-hono
         observability: api-observability-axiom-pino-sentry
         testing: api-testing-api-testing
-      web-architecture: {}
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       web-reviewer:
         reviewing:
           - id: meta-reviewing-reviewing
+            preloaded: true
+        framework: web-framework-solidjs
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
             preloaded: true
       api-reviewer:
         reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-      web-researcher: {}
-      api-researcher: {}
-      web-pm: {}
-      pattern-scout: {}
-      web-pattern-critique: {}
-      agent-summoner: {}
-      skill-summoner: {}
-      documentor: {}
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        testing: api-testing-api-testing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-pm:
+        framework: web-framework-solidjs
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-architecture:
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-researcher:
+        framework: web-framework-solidjs
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      api-researcher:
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      pattern-scout:
+        framework: web-framework-solidjs
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-pattern-critique:
+        framework: web-framework-solidjs
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      agent-summoner:
+        framework: web-framework-solidjs
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      skill-summoner:
+        framework: web-framework-solidjs
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      documentor:
+        framework: web-framework-solidjs
+        testing: web-testing-vitest
+        api: api-framework-hono
+        database: api-database-drizzle
+        auth: api-auth-better-auth-drizzle-hono
+        observability: api-observability-axiom-pino-sentry
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       web-tester:
-        testing: web-testing-playwright-e2e
+        testing:
+          - web-testing-playwright-e2e
+          - web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
     philosophy: Maximum performance with minimal overhead
 
   - id: react-native-stack
@@ -377,20 +1894,204 @@ stacks:
             preloaded: true
           - id: meta-methodology-context-management
             preloaded: true
-      web-architecture: {}
       web-reviewer:
         reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-      web-researcher: {}
-      web-pm: {}
-      pattern-scout: {}
-      web-pattern-critique: {}
-      agent-summoner: {}
-      skill-summoner: {}
-      documentor: {}
+        framework: mobile-framework-react-native
+        platform: mobile-framework-expo
+        base-framework: web-framework-react
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-pm:
+        framework: mobile-framework-react-native
+        platform: mobile-framework-expo
+        base-framework: web-framework-react
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-architecture:
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-researcher:
+        framework: mobile-framework-react-native
+        platform: mobile-framework-expo
+        base-framework: web-framework-react
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      pattern-scout:
+        framework: mobile-framework-react-native
+        platform: mobile-framework-expo
+        base-framework: web-framework-react
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      web-pattern-critique:
+        framework: mobile-framework-react-native
+        platform: mobile-framework-expo
+        base-framework: web-framework-react
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        reviewing:
+          - id: meta-reviewing-reviewing
+            preloaded: true
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      agent-summoner:
+        framework: mobile-framework-react-native
+        platform: mobile-framework-expo
+        base-framework: web-framework-react
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      skill-summoner:
+        framework: mobile-framework-react-native
+        platform: mobile-framework-expo
+        base-framework: web-framework-react
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
+      documentor:
+        framework: mobile-framework-react-native
+        platform: mobile-framework-expo
+        base-framework: web-framework-react
+        client-state: web-state-zustand
+        server-state: web-server-state-react-query
+        testing: web-testing-vitest
+        reviewing: meta-reviewing-reviewing
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
       web-tester:
         testing: web-testing-vitest
+        methodology:
+          - id: meta-methodology-investigation-requirements
+            preloaded: true
+          - id: meta-methodology-anti-over-engineering
+            preloaded: true
+          - id: meta-methodology-success-criteria
+            preloaded: true
+          - id: meta-methodology-write-verification
+            preloaded: true
+          - id: meta-methodology-improvement-protocol
+            preloaded: true
+          - id: meta-methodology-context-management
+            preloaded: true
     philosophy: One codebase, iOS and Android
 
   - id: meta-stack

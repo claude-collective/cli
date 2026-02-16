@@ -1,7 +1,9 @@
+import { DEFAULT_BRANDING } from "../consts.js";
+
 export const ERROR_MESSAGES = {
   UNKNOWN_ERROR: "Unknown error occurred",
   UNKNOWN_ERROR_SHORT: "Unknown error",
-  NO_INSTALLATION: "No installation found. Run 'cc init' first to set up Claude Collective.",
+  NO_INSTALLATION: `No installation found. Run 'cc init' first to set up ${DEFAULT_BRANDING.NAME}`,
   NO_LOCAL_SKILLS: "No local skills found. Run `cc init` or `cc edit` first.",
   NO_SKILLS_FOUND: "No skills found",
   VALIDATION_FAILED: "Validation failed",
@@ -14,7 +16,7 @@ export const ERROR_MESSAGES = {
 export const SUCCESS_MESSAGES = {
   IMPORT_COMPLETE: "Import complete!",
   UNINSTALL_COMPLETE: "Uninstall complete!",
-  INIT_SUCCESS: "Claude Collective initialized successfully!",
+  INIT_SUCCESS: `${DEFAULT_BRANDING.NAME} initialized successfully!`,
   PLUGIN_COMPILE_COMPLETE: "Plugin compile complete!",
   CUSTOM_COMPILE_COMPLETE: "Custom output compile complete!",
   ALL_SKILLS_UP_TO_DATE: "All skills are up to date.",
@@ -42,7 +44,7 @@ export const INFO_MESSAGES = {
   NO_AGENTS_TO_COMPILE: "No agents to compile",
   NO_PLUGIN_INSTALLATION: "No plugin installation found.",
   NO_LOCAL_INSTALLATION: "No local installation found.",
-  NOT_INSTALLED: "Claude Collective is not installed in this project.",
+  NOT_INSTALLED: `${DEFAULT_BRANDING.NAME} is not installed in this project.`,
 } as const;
 
 export const DRY_RUN_MESSAGES = {

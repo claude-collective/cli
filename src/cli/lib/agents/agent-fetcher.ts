@@ -3,6 +3,7 @@ import { directoryExists } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { PROJECT_ROOT, DIRS, CLAUDE_DIR } from "../../consts";
 import { fetchFromSource, type FetchOptions } from "../loading";
+import { loadProjectSourceConfig } from "../configuration";
 import type { AgentSourcePaths } from "../../types";
 
 export type AgentDefinitionOptions = FetchOptions & {
@@ -64,7 +65,16 @@ export async function fetchAgentDefinitionsFromRemote(
     subdir: "",
   });
 
-  const agentsDir = path.join(result.path, options.agentsDir ?? DIRS.agents);
+  let agentsDirRelPath = options.agentsDir;
+  if (!agentsDirRelPath) {
+    const sourceProjectConfig = await loadProjectSourceConfig(result.path);
+    agentsDirRelPath = sourceProjectConfig?.agents_dir ?? DIRS.agents;
+    if (sourceProjectConfig?.agents_dir) {
+      verbose(`Using agents_dir from source config: ${sourceProjectConfig.agents_dir}`);
+    }
+  }
+
+  const agentsDir = path.join(result.path, agentsDirRelPath);
   const templatesDir = path.join(agentsDir, "_templates");
 
   if (!(await directoryExists(agentsDir))) {

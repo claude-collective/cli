@@ -12,11 +12,9 @@ import {
   type TestSkill,
 } from "../fixtures/create-test-source";
 import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
+import { DEFAULT_PLUGIN_NAME } from "../../../consts";
 import { fileExists, directoryExists, buildWizardResult, buildSourceResult } from "../helpers";
 
-// -- Test Skills --
-
-// 10 skills across multiple categories for realistic wizard selection
 const PIPELINE_TEST_SKILLS: TestSkill[] = [
   {
     id: "web-framework-react (@test)",
@@ -193,7 +191,6 @@ Production-ready motion library for React.
 
 const SKILL_COUNT = 10;
 
-// Skill IDs as they appear in the frontmatter (what the copier uses)
 const SKILL_NAMES = PIPELINE_TEST_SKILLS.map((s) => s.name);
 
 describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
@@ -209,11 +206,9 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
   describe("Scenario 1: Full pipeline with 10 skills from scratch flow", () => {
     it("should install skills, generate config, and compile agents", async () => {
-      // Step 1: Simulate wizard completing with all 10 skills selected
       // Boundary cast: frontmatter names from test fixtures are SkillIds by convention
       const selectedSkills = SKILL_NAMES as unknown as SkillId[];
 
-      // Build a matrix that includes all test skills with their proper paths
       const matrixSkills: Record<
         string,
         {
@@ -264,55 +259,45 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
 
-      // Step 2: Run installLocal (what init command does in local mode)
       const installResult = await installLocal({
         wizardResult,
         sourceResult,
         projectDir: dirs.projectDir,
       });
 
-      // Step 3: Verify .claude-src/ directory was created with config
       const configPath = path.join(dirs.projectDir, ".claude-src", "config.yaml");
       expect(await fileExists(configPath)).toBe(true);
       expect(installResult.configPath).toBe(configPath);
 
-      // Step 4: Verify config content
       const configContent = await readFile(configPath, "utf-8");
       const config = parseYaml(configContent) as ProjectConfig;
 
-      expect(config.name).toBe("claude-collective");
+      expect(config.name).toBe(DEFAULT_PLUGIN_NAME);
       expect(config.skills).toBeDefined();
       expect(Array.isArray(config.skills)).toBe(true);
       expect(config.agents).toBeDefined();
       expect(config.agents.length).toBeGreaterThan(0);
       expect(config.installMode).toBe("local");
 
-      // Step 5: Verify .claude/skills/ directory has skill files
       const skillsDir = path.join(dirs.projectDir, ".claude", "skills");
       expect(await directoryExists(skillsDir)).toBe(true);
       expect(installResult.skillsDir).toBe(skillsDir);
 
-      // Verify skills were copied
       expect(installResult.copiedSkills.length).toBe(SKILL_COUNT);
 
-      // Step 6: Verify .claude/agents/ directory has compiled agents
       const agentsDir = path.join(dirs.projectDir, ".claude", "agents");
       expect(await directoryExists(agentsDir)).toBe(true);
       expect(installResult.agentsDir).toBe(agentsDir);
 
-      // Step 7: Verify compiled agents exist as .md files
       expect(installResult.compiledAgents.length).toBeGreaterThan(0);
       for (const agentName of installResult.compiledAgents) {
         const agentFilePath = path.join(agentsDir, `${agentName}.md`);
         expect(await fileExists(agentFilePath)).toBe(true);
       }
 
-      // Step 8: Verify agent content references skill material
       for (const agentName of installResult.compiledAgents) {
         const agentFilePath = path.join(agentsDir, `${agentName}.md`);
         const agentContent = await readFile(agentFilePath, "utf-8");
-
-        // Compiled agents should be non-trivial (contain skill content or frontmatter)
         expect(agentContent.length).toBeGreaterThan(0);
       }
     });
@@ -362,13 +347,11 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         projectDir: dirs.projectDir,
       });
 
-      // Verify at least some agent files contain skill-related content
       let foundSkillContent = false;
       for (const agentName of installResult.compiledAgents) {
         const agentFilePath = path.join(dirs.projectDir, ".claude", "agents", `${agentName}.md`);
         const agentContent = await readFile(agentFilePath, "utf-8");
 
-        // Check if agent content references any of our skills
         for (const skill of PIPELINE_TEST_SKILLS) {
           if (agentContent.includes(skill.description) || agentContent.includes(skill.name)) {
             foundSkillContent = true;
@@ -422,7 +405,6 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       const wizardResult = buildWizardResult([], { selectedSkills, installMode: "local" });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
 
-      // Step 1: Initial install
       const installResult = await installLocal({
         wizardResult,
         sourceResult,
@@ -432,15 +414,13 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       const initialAgentCount = installResult.compiledAgents.length;
       expect(initialAgentCount).toBeGreaterThan(0);
 
-      // Read initial agent content for comparison
       const initialAgentContents: Record<string, string> = {};
       for (const agentName of installResult.compiledAgents) {
         const agentPath = path.join(dirs.projectDir, ".claude", "agents", `${agentName}.md`);
         initialAgentContents[agentName] = await readFile(agentPath, "utf-8");
       }
 
-      // Step 2: Recompile agents (simulating `cc compile`)
-      // The recompileAgents function needs a pluginDir — in local mode, use the project dir
+      // In local mode, pluginDir is the project dir itself
       const recompileResult = await recompileAgents({
         pluginDir: dirs.projectDir,
         sourcePath: dirs.sourceDir,
@@ -448,11 +428,9 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         outputDir: path.join(dirs.projectDir, ".claude", "agents"),
       });
 
-      // Step 3: Verify recompile succeeded
       expect(recompileResult.failed.length).toBe(0);
       expect(recompileResult.compiled.length).toBeGreaterThan(0);
 
-      // Step 4: Verify recompiled agents still exist
       for (const agentName of recompileResult.compiled) {
         const agentPath = path.join(dirs.projectDir, ".claude", "agents", `${agentName}.md`);
         expect(await fileExists(agentPath)).toBe(true);
@@ -465,7 +443,6 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
   describe("Scenario 3: Config integrity through the pipeline", () => {
     it("should preserve skill list and agent assignments through install and config write", async () => {
-      // Select a subset of skills (5 of 10)
       const SUBSET_COUNT = 5;
       const selectedSkillNames = SKILL_NAMES.slice(0, SUBSET_COUNT);
       // Boundary cast: frontmatter names from test fixtures are SkillIds by convention
@@ -515,24 +492,20 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         projectDir: dirs.projectDir,
       });
 
-      // Read the saved config
       const configContent = await readFile(installResult.configPath, "utf-8");
       const config = parseYaml(configContent) as ProjectConfig;
 
-      // Verify all selected skills are in the config
       for (const skillId of selectedSkills) {
         expect(config.skills).toContain(skillId);
       }
       expect(config.skills?.length).toBe(SUBSET_COUNT);
 
-      // Verify only the copied skills match the selection
       expect(installResult.copiedSkills.length).toBe(SUBSET_COUNT);
       const copiedSkillIds = installResult.copiedSkills.map((s) => s.skillId);
       for (const skillId of selectedSkills) {
         expect(copiedSkillIds).toContain(skillId);
       }
 
-      // Verify agents list in config
       expect(config.agents.length).toBeGreaterThan(0);
     });
 
@@ -653,31 +626,25 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       //     agents/
       //       <agent-name>.md
 
-      // .claude-src/config.yaml
       expect(await fileExists(path.join(dirs.projectDir, ".claude-src", "config.yaml"))).toBe(true);
 
-      // .claude/skills/ directory with skill subdirectories
       const skillsDir = path.join(dirs.projectDir, ".claude", "skills");
       expect(await directoryExists(skillsDir)).toBe(true);
 
       const skillDirs = await readdir(skillsDir);
-      // Each skill should have its own flattened directory
       expect(skillDirs.length).toBe(SKILL_COUNT);
 
-      // Verify each skill directory has SKILL.md
       for (const skillDir of skillDirs) {
         const skillMdPath = path.join(skillsDir, skillDir, "SKILL.md");
         expect(await fileExists(skillMdPath)).toBe(true);
       }
 
-      // .claude/agents/ directory with compiled agent files
       const agentsDir = path.join(dirs.projectDir, ".claude", "agents");
       expect(await directoryExists(agentsDir)).toBe(true);
 
       const agentFiles = await readdir(agentsDir);
       expect(agentFiles.length).toBeGreaterThan(0);
 
-      // All agent files should be .md
       for (const agentFile of agentFiles) {
         expect(agentFile.endsWith(".md")).toBe(true);
       }

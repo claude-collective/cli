@@ -3,8 +3,9 @@ import os from "os";
 import { fileURLToPath } from "url";
 import { mkdtemp, rm, mkdir, writeFile, readFile, stat } from "fs/promises";
 import { parse as parseYaml } from "yaml";
-import { runCommand } from "@oclif/test";
-import { STANDARD_FILES } from "../../consts";
+import { run, Errors } from "@oclif/core";
+import ansis from "ansis";
+import { DEFAULT_BRANDING, DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../../consts";
 import { typedEntries } from "../../utils/typed-object";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -13,7 +14,7 @@ const __dirname = path.dirname(__filename);
 export const CLI_ROOT = path.resolve(__dirname, "../../../..");
 
 export const OUTPUT_STRINGS = {
-  CONFIG_HEADER: "Claude Collective Configuration",
+  CONFIG_HEADER: `${DEFAULT_BRANDING.NAME} Configuration`,
   CONFIG_PATHS_HEADER: "Configuration File Paths",
   CONFIG_LAYERS_HEADER: "Configuration Layers:",
   CONFIG_PRECEDENCE: "Precedence: flag > env > project > global > default",
@@ -24,8 +25,8 @@ export const OUTPUT_STRINGS = {
   PROJECT_LABEL: "Project:",
 
   // Setup/Init outputs
-  INIT_HEADER: "Claude Collective Setup",
-  INIT_SUCCESS: "Claude Collective initialized successfully!",
+  INIT_HEADER: `${DEFAULT_BRANDING.NAME} Setup`,
+  INIT_SUCCESS: `${DEFAULT_BRANDING.NAME} initialized successfully!`,
   LOADING_MATRIX: "Loading skills matrix...",
   LOADING_SKILLS: "Loading skills...",
   LOADING_AGENTS: "Loading agent partials...",
@@ -34,13 +35,13 @@ export const OUTPUT_STRINGS = {
   NO_PLUGIN_FOUND: "No plugin found",
   NO_INSTALLATION_FOUND: "No installation found",
   NO_PLUGIN_INSTALLATION: "No plugin installation found",
-  NOT_INSTALLED: "Claude Collective is not installed",
-  UNINSTALL_HEADER: "Claude Collective Uninstall",
-  UNINSTALL_COMPLETE: "Claude Collective has been uninstalled",
-  EJECT_HEADER: "Claude Collective Eject",
+  NOT_INSTALLED: `${DEFAULT_BRANDING.NAME} is not installed`,
+  UNINSTALL_HEADER: `${DEFAULT_BRANDING.NAME} Uninstall`,
+  UNINSTALL_COMPLETE: `${DEFAULT_BRANDING.NAME} has been uninstalled`,
+  EJECT_HEADER: `${DEFAULT_BRANDING.NAME} Eject`,
 
   // Doctor command outputs
-  DOCTOR_HEADER: "Claude Collective Doctor",
+  DOCTOR_HEADER: `${DEFAULT_BRANDING.NAME} Doctor`,
 
   // Error message patterns (lowercase for case-insensitive matching)
   ERROR_MISSING_ARG: "missing required arg",
@@ -49,8 +50,77 @@ export const OUTPUT_STRINGS = {
   ERROR_PARSE: "parse",
 } as const;
 
+/**
+ * Run a CLI command and capture its output.
+ *
+ * Bun's `console.log` does not go through `process.stdout.write`, so
+ * `@oclif/test`'s `runCommand` (which only intercepts `process.stdout.write`)
+ * returns empty stdout/stderr in bun. This helper intercepts both layers
+ * to work correctly in both Node.js and bun environments.
+ */
 export async function runCliCommand(args: string[]) {
-  return runCommand(args, { root: CLI_ROOT });
+  const origStdoutWrite = process.stdout.write;
+  const origStderrWrite = process.stderr.write;
+  const origLog = console.log;
+  const origWarn = console.warn;
+  const origError = console.error;
+
+  const stdoutBuf: string[] = [];
+  const stderrBuf: string[] = [];
+
+  // Intercept process.stdout/stderr.write (Node.js path)
+  process.stdout.write = function (str: unknown, encoding?: unknown, cb?: unknown): boolean {
+    stdoutBuf.push(String(str));
+    if (typeof encoding === "function") {
+      (encoding as () => void)();
+    } else if (typeof cb === "function") {
+      (cb as () => void)();
+    }
+    return true;
+  } as typeof process.stdout.write;
+
+  process.stderr.write = function (str: unknown, encoding?: unknown, cb?: unknown): boolean {
+    stderrBuf.push(String(str));
+    if (typeof encoding === "function") {
+      (encoding as () => void)();
+    } else if (typeof cb === "function") {
+      (cb as () => void)();
+    }
+    return true;
+  } as typeof process.stderr.write;
+
+  // Intercept console methods (bun path — console.log bypasses process.stdout.write)
+  console.log = (...logArgs: unknown[]) => {
+    stdoutBuf.push(logArgs.map(String).join(" ") + "\n");
+  };
+  console.warn = (...warnArgs: unknown[]) => {
+    stderrBuf.push(warnArgs.map(String).join(" ") + "\n");
+  };
+  console.error = (...errArgs: unknown[]) => {
+    stderrBuf.push(errArgs.map(String).join(" ") + "\n");
+  };
+
+  let error: (Error & Partial<Errors.CLIError>) | undefined;
+  try {
+    await run(args, { root: CLI_ROOT });
+  } catch (e) {
+    if (e instanceof Error) {
+      error = Object.assign(e, { message: ansis.strip(e.message) }) as Error &
+        Partial<Errors.CLIError>;
+    }
+  } finally {
+    process.stdout.write = origStdoutWrite;
+    process.stderr.write = origStderrWrite;
+    console.log = origLog;
+    console.warn = origWarn;
+    console.error = origError;
+  }
+
+  return {
+    stdout: stdoutBuf.map((s) => ansis.strip(s)).join(""),
+    stderr: stderrBuf.map((s) => ansis.strip(s)).join(""),
+    error,
+  };
 }
 import type {
   AgentConfig,
@@ -175,7 +245,7 @@ export interface TestDirs {
 export async function createTestDirs(prefix = "cc-test-"): Promise<TestDirs> {
   const tempDir = await createTempDir(prefix);
   const projectDir = path.join(tempDir, "project");
-  const pluginDir = path.join(projectDir, ".claude", "plugins", "claude-collective");
+  const pluginDir = path.join(projectDir, ".claude", "plugins", DEFAULT_PLUGIN_NAME);
   const skillsDir = path.join(pluginDir, "skills");
   const agentsDir = path.join(pluginDir, "agents");
 
@@ -280,7 +350,7 @@ export function createCompileContext(overrides?: Partial<CompileContext>): Compi
     stackId: "test-stack",
     verbose: false,
     projectRoot: "/project",
-    outputDir: "/project/.claude/plugins/claude-collective",
+    outputDir: `/project/.claude/plugins/${DEFAULT_PLUGIN_NAME}`,
     ...overrides,
   };
 }

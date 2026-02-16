@@ -1,4 +1,5 @@
 import { BaseCommand } from "../../base-command.js";
+import { DEFAULT_BRANDING } from "../../consts.js";
 import {
   resolveSource,
   resolveAgentsSource,
@@ -23,7 +24,7 @@ export default class ConfigShow extends BaseCommand {
 
     const projectDir = process.cwd();
 
-    this.log("\nClaude Collective Configuration\n");
+    this.log(`\n${DEFAULT_BRANDING.NAME} Configuration\n`);
 
     const resolved = await resolveSource(undefined, projectDir);
 

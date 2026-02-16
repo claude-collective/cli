@@ -22,3 +22,28 @@ export const STEP_TRANSITION_DELAY_MS = 150;
 
 export const delay = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
+
+// Realistic pool of available skills across domains for agent-skill mapping tests
+export const TEST_AVAILABLE_SKILLS = [
+  "web-framework-react",
+  "web-framework-vue",
+  "web-styling-scss-modules",
+  "web-state-zustand",
+  "web-testing-vitest",
+  "web-mocks-msw",
+  "api-framework-hono",
+  "api-database-drizzle",
+  "api-auth-better-auth",
+  "api-testing-api-testing",
+  "cli-framework-cli-commander",
+  "cli-framework-oclif",
+  "mobile-framework-react-native",
+  "mobile-framework-expo",
+  "infra-monorepo-turborepo",
+  "infra-env-setup",
+  "security-web-security",
+  "meta-methodology-investigation-requirements",
+  "meta-methodology-anti-over-engineering",
+  "meta-reviewing-reviewing",
+  "meta-research-research-methodology",
+] as const;

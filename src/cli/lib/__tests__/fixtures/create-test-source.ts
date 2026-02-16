@@ -1,8 +1,14 @@
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
+import { mkdir, writeFile, readFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
-import { fileExists, directoryExists, readTestYaml } from "../helpers";
+import { DEFAULT_PLUGIN_NAME } from "../../../consts";
+import {
+  fileExists,
+  directoryExists,
+  readTestYaml,
+  createTempDir,
+  cleanupTempDir,
+} from "../helpers";
 
 export interface TestSkill {
   id: string;
@@ -72,7 +78,7 @@ export interface TestSourceOptions {
   matrix?: Partial<TestMatrix>;
   projectConfig?: TestProjectConfig;
   pluginManifest?: TestPluginManifest;
-  /** Create as a plugin structure (in ~/.claude/plugins/claude-collective) */
+  /** Create as a plugin structure (in .claude/plugins/<plugin-name>) */
   asPlugin?: boolean;
   /** Create local skills in .claude/skills/ */
   localSkills?: TestSkill[];
@@ -92,7 +98,6 @@ export interface TestDirs {
 
 const TEST_AUTHOR = "@test";
 
-// Default skills for tests
 export const DEFAULT_TEST_SKILLS: TestSkill[] = [
   {
     id: "react (@test)",
@@ -180,7 +185,6 @@ Hono is a small, fast web framework for the edge.
   },
 ];
 
-// Default agents for tests
 export const DEFAULT_TEST_AGENTS: TestAgent[] = [
   {
     name: "web-developer",
@@ -216,7 +220,6 @@ function generateMatrix(skills: TestSkill[], overrides?: Partial<TestMatrix>): T
     if (skill.alias) {
       aliases[skill.alias] = skill.id;
     }
-    // Add category if not exists
     const categoryParts = skill.category.split("/");
     let categoryPath = "";
     for (const part of categoryParts) {
@@ -251,8 +254,7 @@ export async function createTestSource(options: TestSourceOptions = {}): Promise
   const agents = options.agents ?? DEFAULT_TEST_AGENTS;
   const matrix = generateMatrix(skills, options.matrix);
 
-  // Create temp directory
-  const tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-test-"));
+  const tempDir = await createTempDir("cc-test-");
   const projectDir = path.join(tempDir, "project");
   const sourceDir = path.join(tempDir, "source");
   const skillsDir = path.join(sourceDir, "src", "skills");
@@ -264,21 +266,17 @@ export async function createTestSource(options: TestSourceOptions = {}): Promise
   await mkdir(agentsDir, { recursive: true });
   await mkdir(configDir, { recursive: true });
 
-  // Write skills-matrix.yaml
   await writeFile(path.join(configDir, "skills-matrix.yaml"), stringifyYaml(matrix));
 
-  // Write config/stacks.yaml if stacks provided
   if (options.stacks && options.stacks.length > 0) {
     await writeFile(path.join(configDir, "stacks.yaml"), stringifyYaml({ stacks: options.stacks }));
   }
 
-  // Write skill files
   for (const skill of skills) {
     const categoryPath = skill.category.replace(/\//g, path.sep);
     const skillDir = path.join(skillsDir, categoryPath, skill.name);
     await mkdir(skillDir, { recursive: true });
 
-    // SKILL.md
     const content =
       skill.content ??
       `---
@@ -292,7 +290,6 @@ ${skill.description}
 `;
     await writeFile(path.join(skillDir, "SKILL.md"), content);
 
-    // metadata.yaml
     const metadata = {
       version: 1,
       author: skill.author,
@@ -302,11 +299,9 @@ ${skill.description}
     await writeFile(path.join(skillDir, "metadata.yaml"), stringifyYaml(metadata));
   }
 
-  // Write agent partials
   const templatesDir = path.join(agentsDir, "_templates");
   await mkdir(templatesDir, { recursive: true });
 
-  // Write a basic agent.liquid template
   const agentTemplate = `---
 name: {{ agent.name }}
 description: {{ agent.description }}
@@ -324,12 +319,10 @@ permissionMode: {{ agent.permission_mode }}
 `;
   await writeFile(path.join(templatesDir, "agent.liquid"), agentTemplate);
 
-  // Write each agent partial
   for (const agent of agents) {
     const agentDir = path.join(agentsDir, agent.name);
     await mkdir(agentDir, { recursive: true });
 
-    // agent.yaml (uses "id" field to match agentYamlConfigSchema)
     const agentYaml = {
       id: agent.name,
       title: agent.title,
@@ -340,13 +333,11 @@ permissionMode: {{ agent.permission_mode }}
     };
     await writeFile(path.join(agentDir, "agent.yaml"), stringifyYaml(agentYaml));
 
-    // intro.md
     await writeFile(
       path.join(agentDir, "intro.md"),
       agent.introContent ?? `# ${agent.title}\n\n${agent.description}`,
     );
 
-    // workflow.md
     await writeFile(
       path.join(agentDir, "workflow.md"),
       agent.workflowContent ?? "## Workflow\n\n1. Analyze\n2. Implement",
@@ -362,17 +353,15 @@ permissionMode: {{ agent.permission_mode }}
     configDir,
   };
 
-  // Create plugin structure if requested
   if (options.asPlugin) {
-    const pluginDir = path.join(projectDir, ".claude", "plugins", "claude-collective");
+    const pluginDir = path.join(projectDir, ".claude", "plugins", DEFAULT_PLUGIN_NAME);
     await mkdir(pluginDir, { recursive: true });
     await mkdir(path.join(pluginDir, ".claude-plugin"), { recursive: true });
     await mkdir(path.join(pluginDir, "agents"), { recursive: true });
     await mkdir(path.join(pluginDir, "skills"), { recursive: true });
 
-    // Write plugin.json
     const manifest = options.pluginManifest ?? {
-      name: "claude-collective",
+      name: DEFAULT_PLUGIN_NAME,
       version: "1.0.0",
       description: "Test plugin",
     };
@@ -381,7 +370,6 @@ permissionMode: {{ agent.permission_mode }}
       JSON.stringify(manifest, null, 2),
     );
 
-    // Copy skills to plugin
     for (const skill of skills) {
       const categoryPath = skill.category.replace(/\//g, path.sep);
       const srcSkillDir = path.join(skillsDir, categoryPath, skill.name);
@@ -395,7 +383,6 @@ permissionMode: {{ agent.permission_mode }}
       await writeFile(path.join(destSkillDir, "metadata.yaml"), metadataContent);
     }
 
-    // Write config.yaml for plugin
     if (options.projectConfig) {
       await writeFile(path.join(pluginDir, "config.yaml"), stringifyYaml(options.projectConfig));
     }
@@ -403,7 +390,6 @@ permissionMode: {{ agent.permission_mode }}
     dirs.pluginDir = pluginDir;
   }
 
-  // Create project config if requested
   if (options.projectConfig) {
     const projectClaudeDir = path.join(projectDir, ".claude");
     await mkdir(projectClaudeDir, { recursive: true });
@@ -413,7 +399,6 @@ permissionMode: {{ agent.permission_mode }}
     );
   }
 
-  // Create local skills if requested
   if (options.localSkills && options.localSkills.length > 0) {
     const localSkillsDir = path.join(projectDir, ".claude", "skills");
     await mkdir(localSkillsDir, { recursive: true });
@@ -422,7 +407,6 @@ permissionMode: {{ agent.permission_mode }}
       const skillDir = path.join(localSkillsDir, skill.name);
       await mkdir(skillDir, { recursive: true });
 
-      // SKILL.md
       const content =
         skill.content ??
         `---
@@ -436,7 +420,6 @@ ${skill.description}
 `;
       await writeFile(path.join(skillDir, "SKILL.md"), content);
 
-      // metadata.yaml with optional forked_from
       const metadata: Record<string, unknown> = {
         version: 1,
         author: skill.author,
@@ -452,7 +435,7 @@ ${skill.description}
 }
 
 export async function cleanupTestSource(dirs: TestDirs): Promise<void> {
-  await rm(dirs.tempDir, { recursive: true, force: true });
+  await cleanupTempDir(dirs.tempDir);
 }
 
 export async function readTestFile(filePath: string): Promise<string> {

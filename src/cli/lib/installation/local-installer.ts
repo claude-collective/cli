@@ -15,26 +15,25 @@ import type {
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import { type CopiedSkill, copySkillsToLocalFlattened, archiveLocalSkill } from "../skills";
 import { type MergeResult, mergeWithExistingConfig } from "../configuration";
-import {
-  loadAllAgents,
-  loadPluginSkills,
-  loadSkillsByIds,
-  type SourceLoadResult,
-} from "../loading";
+import { loadAllAgents, loadSkillsByIds, type SourceLoadResult } from "../loading";
 import { loadStackById, compileAgentForPlugin, getStackSkillIds } from "../stacks";
 import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
 import { createLiquidEngine } from "../compiler";
 import { generateProjectConfigFromSkills, compactStackForYaml } from "../configuration";
-import { directoryExists, ensureDir, listDirectories, writeFile } from "../../utils/fs";
+import { ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
 import {
   CLAUDE_DIR,
   CLAUDE_SRC_DIR,
   DEFAULT_PLUGIN_NAME,
+  DIRS,
   LOCAL_SKILLS_PATH,
   PROJECT_ROOT,
   SCHEMA_PATHS,
+  SKILLS_DIR_PATH,
+  SKILLS_MATRIX_PATH,
+  STACKS_FILE_PATH,
   STANDARD_FILES,
   YAML_FORMATTING,
   yamlSchemaComment,
@@ -113,7 +112,6 @@ async function archiveAndCopySkills(
   projectDir: string,
   skillsDir: string,
 ): Promise<CopiedSkill[]> {
-  // Archive local skills that are switching to a different source
   for (const skillId of wizardResult.selectedSkills) {
     const selectedSource = wizardResult.sourceSelections?.[skillId];
     if (selectedSource && selectedSource !== "public") {
@@ -160,7 +158,6 @@ async function buildLocalConfig(
   wizardResult: WizardResultV2,
   sourceResult: SourceLoadResult,
 ): Promise<{ config: ProjectConfig; loadedStack: Stack | null }> {
-  // Try loading stack from source first, fall back to CLI
   let loadedStack: Stack | null = null;
   if (wizardResult.selectedStackId) {
     loadedStack = await loadStackById(wizardResult.selectedStackId, sourceResult.sourcePath);
@@ -180,7 +177,6 @@ async function buildLocalConfig(
         sourceResult.matrix,
       );
 
-      // Preserve the stack description and ensure all stack agents are included
       localConfig.description = loadedStack.description;
       const stackAgentIds = typedKeys<AgentName>(loadedStack.agents);
       for (const agentId of stackAgentIds) {
@@ -190,7 +186,6 @@ async function buildLocalConfig(
       }
       localConfig.agents.sort();
     } else {
-      // Stack not found in CLI's config/stacks.yaml
       throw new Error(
         `Stack '${wizardResult.selectedStackId}' not found in config/stacks.yaml. ` +
           `Available stacks are defined in the CLI's config/stacks.yaml file.`,
@@ -237,6 +232,17 @@ async function buildAndMergeConfig(
   return mergeWithExistingConfig(config, { projectDir });
 }
 
+/** Commented-out path override hints appended to generated config.yaml for discoverability. */
+const PATH_OVERRIDES_COMMENT = [
+  "",
+  "# Custom paths (for marketplace repos with non-standard layouts):",
+  `# skills_dir: ${SKILLS_DIR_PATH}`,
+  `# agents_dir: ${DIRS.agents}`,
+  `# stacks_file: ${STACKS_FILE_PATH}`,
+  `# matrix_file: ${SKILLS_MATRIX_PATH}`,
+  "",
+].join("\n");
+
 async function writeConfigFile(config: ProjectConfig, configPath: string): Promise<void> {
   const schemaComment = `${yamlSchemaComment(SCHEMA_PATHS.projectConfig)}\n`;
   // Compact stack for YAML output: bare strings for simple skills, objects for preloaded
@@ -247,7 +253,7 @@ async function writeConfigFile(config: ProjectConfig, configPath: string): Promi
     indent: YAML_FORMATTING.INDENT,
     lineWidth: YAML_FORMATTING.LINE_WIDTH,
   });
-  await writeFile(configPath, `${schemaComment}${configYaml}`);
+  await writeFile(configPath, `${schemaComment}${configYaml}${PATH_OVERRIDES_COMMENT}`);
 }
 
 function buildCompileAgents(
@@ -345,7 +351,6 @@ export async function installPluginConfig(
   const { wizardResult, sourceResult, projectDir, sourceFlag } = options;
 
   const paths = resolveInstallPaths(projectDir);
-  // Only create agents and config directories, NOT skills directory
   await ensureDir(paths.agentsDir);
   await ensureDir(path.dirname(paths.configPath));
 

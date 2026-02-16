@@ -8,8 +8,10 @@ import type {
   SubcategorySelections,
 } from "../../types/index.js";
 import { validateBuildStep } from "../../lib/wizard/index.js";
-import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
+import { CLI_COLORS, SCROLL_VIEWPORT, UI_SYMBOLS } from "../../consts.js";
 import { useFrameworkFiltering } from "../hooks/use-framework-filtering.js";
+import { useTerminalDimensions } from "../hooks/use-terminal-dimensions.js";
+import { useMeasuredHeight } from "../hooks/use-measured-height.js";
 import { CategoryGrid } from "./category-grid.js";
 import { ViewTitle } from "./view-title.js";
 import { getDomainDisplayName } from "./utils.js";
@@ -76,6 +78,8 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   onBack,
 }) => {
   const [validationError, setValidationError] = useState<string | undefined>(undefined);
+  const { columns } = useTerminalDimensions();
+  const { ref: gridRef, measuredHeight: gridHeight } = useMeasuredHeight();
 
   const categories = useFrameworkFiltering({
     domain: activeDomain,
@@ -86,6 +90,9 @@ export const StepBuild: React.FC<StepBuildProps> = ({
     parentDomainSelections,
     installedSkillIds,
   });
+
+  const availableHeight =
+    gridHeight > 0 ? Math.max(SCROLL_VIEWPORT.MIN_VIEWPORT_ROWS, gridHeight) : Infinity;
 
   useInput((_input, key) => {
     if (key.return) {
@@ -103,7 +110,7 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   });
 
   return (
-    <Box flexDirection="column" width="100%">
+    <Box flexDirection="column" width="100%" flexGrow={1}>
       <Box
         columnGap={2}
         flexDirection="row"
@@ -132,14 +139,18 @@ export const StepBuild: React.FC<StepBuildProps> = ({
       </Box>
       <ViewTitle>Customize your {getDomainDisplayName(activeDomain)} stack</ViewTitle>
 
-      <CategoryGrid
-        key={activeDomain}
-        categories={categories}
-        expertMode={expertMode}
-        showDescriptions={showDescriptions}
-        onToggle={onToggle}
-        onToggleDescriptions={onToggleDescriptions}
-      />
+      <Box ref={gridRef} flexGrow={1}>
+        <CategoryGrid
+          key={activeDomain}
+          categories={categories}
+          expertMode={expertMode}
+          showDescriptions={showDescriptions}
+          onToggle={onToggle}
+          onToggleDescriptions={onToggleDescriptions}
+          availableHeight={availableHeight}
+          terminalWidth={columns}
+        />
+      </Box>
 
       <Footer validationError={validationError} />
     </Box>

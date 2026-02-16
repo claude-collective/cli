@@ -1,4 +1,4 @@
-# Default agent-skill mappings for Claude Collective CLI
+# Default agent-skill mappings for Agents Inc. CLI
 #
 # This file is bundled with the CLI and provides sensible defaults
 # for which agents should receive which skills based on skill category.
@@ -168,6 +168,93 @@ preloaded_skills:
     - research-methodology
   agent-summoner: []
   skill-summoner: []
+
+# Maps each agent to the skill ID prefixes it should receive by default.
+# Domain-specific agents get their domain prefix(es).
+# Cross-cutting agents (web-pm, web-architecture) get broad prefix sets.
+# Meta agents get the "meta" prefix.
+# All agents additionally receive "meta" for methodology/research skills.
+agent_skill_prefixes:
+  web-developer:
+    - web
+    - mobile
+    - infra
+    - security
+    - meta
+  web-reviewer:
+    - web
+    - mobile
+    - security
+    - meta
+  web-researcher:
+    - web
+    - mobile
+    - meta
+  web-tester:
+    - web
+    - meta
+
+  api-developer:
+    - api
+    - infra
+    - security
+    - cli
+    - meta
+  api-reviewer:
+    - api
+    - security
+    - cli
+    - meta
+  api-researcher:
+    - api
+    - cli
+    - meta
+
+  cli-developer:
+    - cli
+    - meta
+  cli-tester:
+    - cli
+    - meta
+  cli-reviewer:
+    - cli
+    - meta
+  cli-migrator:
+    - cli
+    - meta
+
+  # Cross-cutting agents — need full context across multiple domains
+  web-pm:
+    - web
+    - api
+    - cli
+    - mobile
+    - infra
+    - security
+    - meta
+  web-architecture:
+    - web
+    - api
+    - infra
+    - security
+    - cli
+    - meta
+
+  pattern-scout:
+    - web
+    - api
+    - meta
+  web-pattern-critique:
+    - web
+    - api
+    - meta
+
+  agent-summoner:
+    - meta
+  skill-summoner:
+    - meta
+  documentor:
+    - meta
 
 # Aliases for subcategory resolution
 # Maps short names to full paths for convenience

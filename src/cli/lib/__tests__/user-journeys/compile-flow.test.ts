@@ -212,25 +212,10 @@ describe("User Journey: Compile Flow", () => {
     });
 
     it("should show preview message in dry-run mode", async () => {
-      // Capture console.log output since oclif commands use this.log()
-      const logOutput: string[] = [];
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation((msg) => {
-        if (typeof msg === "string") {
-          logOutput.push(msg);
-        }
-      });
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const { stdout } = await runCliCommand(["compile", "--output", outputDir, "--dry-run"]);
 
-      try {
-        await runCliCommand(["compile", "--output", outputDir, "--dry-run"]);
-
-        // Dry-run output should contain preview indicator in console.log
-        const combinedOutput = logOutput.join("\n");
-        expect(combinedOutput).toContain("dry-run");
-      } finally {
-        consoleSpy.mockRestore();
-        warnSpy.mockRestore();
-      }
+      // Dry-run output should contain preview indicator
+      expect(stdout).toContain("dry-run");
     });
   });
 

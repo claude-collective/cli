@@ -7,7 +7,7 @@ import type {
   SkillAlias,
   SkillId,
 } from "../../types/index.js";
-import { CLI_COLORS } from "../../consts.js";
+import { CLI_COLORS, DEFAULT_BRANDING } from "../../consts.js";
 import { SourceGrid } from "./source-grid.js";
 import { ViewTitle } from "./view-title.js";
 import { searchExtraSources } from "../../lib/loading/multi-source-loader.js";
@@ -32,9 +32,6 @@ export const StepSources: React.FC<StepSourcesProps> = ({
   const [view, setView] = useState<SourcesView>("choice");
   const [choiceIndex, setChoiceIndex] = useState(0);
   const [isGridSearching, setIsGridSearching] = useState(false);
-
-  const selectedTechnologies = store.getAllSelectedTechnologies();
-  const rows = store.buildSourceRows(matrix);
 
   const handleGridSelect = useCallback(
     (skillId: SkillId, sourceId: string) => {
@@ -77,10 +74,8 @@ export const StepSources: React.FC<StepSourcesProps> = ({
     if (view === "choice") {
       if (key.return) {
         if (choiceIndex === 0) {
-          // "Use all recommended" -> continue
           onContinue();
         } else {
-          // "Customize skill sources" -> switch to grid view
           store.setCustomizeSources(true);
           setView("customize");
         }
@@ -92,7 +87,6 @@ export const StepSources: React.FC<StepSourcesProps> = ({
         setChoiceIndex((prev) => (prev === 0 ? 1 : 0));
       }
     } else if (view === "customize") {
-      // Don't handle Enter/Escape while search modal is open
       if (isGridSearching) return;
 
       if (key.return) {
@@ -106,6 +100,7 @@ export const StepSources: React.FC<StepSourcesProps> = ({
   });
 
   if (view === "customize") {
+    const rows = store.buildSourceRows(matrix);
     return (
       <Box flexDirection="column" width="100%">
         <ViewTitle>Customize skill sources</ViewTitle>
@@ -120,6 +115,8 @@ export const StepSources: React.FC<StepSourcesProps> = ({
     );
   }
 
+  const selectedTechnologies = store.getAllSelectedTechnologies();
+  const rows = store.buildSourceRows(matrix);
   const isRecommendedSelected = choiceIndex === 0;
   const hasLocalSkills = rows.some((row) =>
     row.options.some((o) => o.installed && o.id === "local"),
@@ -159,7 +156,7 @@ export const StepSources: React.FC<StepSourcesProps> = ({
               ? "Keep your current local and public skill selections."
               : "This is the fastest option. All skills are verified and"}
           </Text>
-          {!hasLocalSkills && <Text dimColor>maintained by Claude Collective.</Text>}
+          {!hasLocalSkills && <Text dimColor>maintained by {DEFAULT_BRANDING.NAME}</Text>}
         </Box>
       </Box>
 
