@@ -13,27 +13,8 @@ import {
 } from "./loader";
 import { readFile, glob, directoryExists } from "../../utils/fs";
 import { warn } from "../../utils/logger";
+import { createSkillContent, createAgentYamlContent } from "../__tests__/helpers";
 import type { SkillId } from "../../types";
-
-function makeSkillMd(name: string, description: string): string {
-  return `---
-name: ${name}
-description: ${description}
----
-
-# ${name}
-
-Content`;
-}
-
-function makeAgentYaml(id: string): string {
-  return `id: ${id}
-title: ${id} Agent
-description: Test ${id} agent
-tools:
-  - Read
-  - Write`;
-}
 
 describe("parseFrontmatter", () => {
   it("should parse valid frontmatter with name and description", () => {
@@ -384,7 +365,7 @@ describe("loadAllAgents", () => {
   it("should load valid agents and skip invalid ones", async () => {
     vi.mocked(glob).mockResolvedValue(["web-developer/agent.yaml", "bad-agent/agent.yaml"]);
     vi.mocked(readFile)
-      .mockResolvedValueOnce(makeAgentYaml("web-developer"))
+      .mockResolvedValueOnce(createAgentYamlContent("web-developer"))
       .mockResolvedValueOnce("not valid yaml [[[");
 
     const result = await loadAllAgents("/project");
@@ -486,7 +467,7 @@ describe("loadProjectAgents", () => {
     vi.mocked(directoryExists).mockResolvedValue(true);
     vi.mocked(glob).mockResolvedValue(["api-developer/agent.yaml", "broken/agent.yaml"]);
     vi.mocked(readFile)
-      .mockResolvedValueOnce(makeAgentYaml("api-developer"))
+      .mockResolvedValueOnce(createAgentYamlContent("api-developer"))
       .mockResolvedValueOnce("totally invalid");
 
     const result = await loadProjectAgents("/project");
@@ -515,7 +496,7 @@ describe("loadSkillsByIds", () => {
     vi.mocked(glob).mockResolvedValue(["my-skill/SKILL.md"]);
     vi.mocked(readFile)
       // First call: buildIdToDirectoryPathMap reads the SKILL.md
-      .mockResolvedValueOnce(makeSkillMd("my-skill", "A skill"))
+      .mockResolvedValueOnce(createSkillContent("my-skill", "A skill"))
       // Second call: loadSkillsByIds reads the SKILL.md again, but this time readFile throws
       .mockRejectedValueOnce(new Error("ENOENT"));
 
@@ -533,7 +514,7 @@ describe("loadSkillsByIds", () => {
     vi
       .mocked(readFile)
       // First call: buildIdToDirectoryPathMap reads SKILL.md — valid frontmatter
-      .mockResolvedValueOnce(makeSkillMd("bad-skill", "A skill")).mockResolvedValueOnce(`---
+      .mockResolvedValueOnce(createSkillContent("bad-skill", "A skill")).mockResolvedValueOnce(`---
 description: missing name field
 ---
 
@@ -552,7 +533,7 @@ Content`);
     vi.mocked(glob).mockResolvedValue(["error-skill/SKILL.md"]);
     vi.mocked(readFile)
       // First call: buildIdToDirectoryPathMap reads SKILL.md -- valid
-      .mockResolvedValueOnce(makeSkillMd("error-skill", "A skill"))
+      .mockResolvedValueOnce(createSkillContent("error-skill", "A skill"))
       // Second call: loadSkillsByIds reads SKILL.md -- throws (permission error, etc.)
       .mockRejectedValueOnce(new Error("EACCES: permission denied"));
 
@@ -569,10 +550,10 @@ Content`);
     vi.mocked(glob).mockResolvedValue(["good-skill/SKILL.md", "bad-skill/SKILL.md"]);
     vi.mocked(readFile)
       // buildIdToDirectoryPathMap: reads both SKILL.md files
-      .mockResolvedValueOnce(makeSkillMd("good-skill", "Good skill"))
-      .mockResolvedValueOnce(makeSkillMd("bad-skill", "Bad skill"))
+      .mockResolvedValueOnce(createSkillContent("good-skill", "Good skill"))
+      .mockResolvedValueOnce(createSkillContent("bad-skill", "Bad skill"))
       // loadSkillsByIds: reads them again
-      .mockResolvedValueOnce(makeSkillMd("good-skill", "Good skill"))
+      .mockResolvedValueOnce(createSkillContent("good-skill", "Good skill"))
       .mockRejectedValueOnce(new Error("Disk failure"));
 
     const result = await loadSkillsByIds(
@@ -599,7 +580,7 @@ describe("loadPluginSkills", () => {
   it("should load skills from plugin skills directory", async () => {
     vi.mocked(directoryExists).mockResolvedValue(true);
     vi.mocked(glob).mockResolvedValue(["web-framework-react/SKILL.md"]);
-    vi.mocked(readFile).mockResolvedValue(makeSkillMd("web-framework-react", "React patterns"));
+    vi.mocked(readFile).mockResolvedValue(createSkillContent("web-framework-react", "React patterns"));
 
     const result = await loadPluginSkills("/path/to/plugin");
 
@@ -627,8 +608,8 @@ describe("loadPluginSkills", () => {
       "web-state-zustand/SKILL.md",
     ]);
     vi.mocked(readFile)
-      .mockResolvedValueOnce(makeSkillMd("web-framework-react", "React patterns"))
-      .mockResolvedValueOnce(makeSkillMd("web-state-zustand", "Zustand state"));
+      .mockResolvedValueOnce(createSkillContent("web-framework-react", "React patterns"))
+      .mockResolvedValueOnce(createSkillContent("web-state-zustand", "Zustand state"));
 
     const result = await loadPluginSkills("/path/to/plugin");
 

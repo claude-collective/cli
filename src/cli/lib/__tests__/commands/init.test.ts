@@ -1,10 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
-import { mkdtemp, rm, mkdir } from "fs/promises";
+import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
 import { runCliCommand } from "../helpers";
-
-const PLUGIN_DIR_RELATIVE = ".claude/plugins/claude-collective";
 
 describe("init command", () => {
   let tempDir: string;
@@ -86,10 +84,14 @@ describe("init command", () => {
   });
 
   describe("already initialized", () => {
-    it.skip("should warn and exit when plugin directory already exists", async () => {
-      // Create the plugin directory to simulate an existing installation
-      const pluginDir = path.join(projectDir, PLUGIN_DIR_RELATIVE);
-      await mkdir(pluginDir, { recursive: true });
+    it("should warn and exit when project is already initialized", async () => {
+      // Create a config file that detectExistingInstallation() will find
+      const configDir = path.join(projectDir, ".claude-src");
+      await mkdir(configDir, { recursive: true });
+      await writeFile(
+        path.join(configDir, "config.yaml"),
+        "name: test-project\n",
+      );
 
       const { stdout, stderr, error } = await runCliCommand(["init"]);
 
@@ -102,16 +104,19 @@ describe("init command", () => {
       expect(combinedOutput).toContain("edit");
     });
 
-    it("should not modify existing plugin directory", async () => {
-      const pluginDir = path.join(projectDir, PLUGIN_DIR_RELATIVE);
-      await mkdir(pluginDir, { recursive: true });
+    it("should not modify existing config when already initialized", async () => {
+      // Create a config file that detectExistingInstallation() will find
+      const configDir = path.join(projectDir, ".claude-src");
+      await mkdir(configDir, { recursive: true });
+      const configPath = path.join(configDir, "config.yaml");
+      await writeFile(configPath, "name: test-project\n");
 
       await runCliCommand(["init"]);
 
-      // Plugin dir should still exist unchanged
+      // Config file should still exist unchanged
       const { stat } = await import("fs/promises");
-      const dirStat = await stat(pluginDir);
-      expect(dirStat.isDirectory()).toBe(true);
+      const configStat = await stat(configPath);
+      expect(configStat.isFile()).toBe(true);
     });
   });
 

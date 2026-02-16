@@ -1,13 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile, readFile, stat } from "fs/promises";
+import { mkdir, readFile, stat } from "fs/promises";
 import {
   compileAgentForPlugin,
   compileStackPlugin,
   printStackCompilationSummary,
   type CompiledStackPlugin,
 } from "./stack-plugin-compiler";
+import {
+  createTestSource,
+  cleanupTestSource,
+  writeTestFile,
+  type TestDirs,
+} from "../__tests__/fixtures/create-test-source";
 
 import type {
   AgentConfig,
@@ -20,7 +25,7 @@ import type {
 } from "../../types";
 
 describe("stack-plugin-compiler", () => {
-  let tempDir: string;
+  let dirs: TestDirs;
   let projectRoot: string;
   let outputDir: string;
   let testCounter = 0;
@@ -33,55 +38,20 @@ describe("stack-plugin-compiler", () => {
   }
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "stack-compiler-test-"));
-    projectRoot = path.join(tempDir, "project");
-    outputDir = path.join(tempDir, "output");
-
+    // createTestSource sets up source dir with agents/, skills/, config/, and templates
+    dirs = await createTestSource({ skills: [], agents: [] });
+    // The compiler uses sourceDir as projectRoot (contains src/agents/, src/skills/, config/)
+    projectRoot = dirs.sourceDir;
+    outputDir = path.join(dirs.tempDir, "output");
     await mkdir(outputDir, { recursive: true });
-    await mkdir(projectRoot, { recursive: true });
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTestSource(dirs);
   });
 
-  async function createProjectStructure() {
-    // Create directories
-    const agentsDir = path.join(projectRoot, "src/agents");
-    const templatesDir = path.join(projectRoot, "src/agents/_templates");
-    const configDir = path.join(projectRoot, "config");
-
-    await mkdir(agentsDir, { recursive: true });
-    await mkdir(templatesDir, { recursive: true });
-    await mkdir(configDir, { recursive: true });
-
-    // Create agent template
-    await writeFile(
-      path.join(templatesDir, "agent.liquid"),
-      `---
-name: {{ agent.name }}
-description: {{ agent.description }}
-tools: {{ agent.tools | join: ", " }}
-{%- if preloadedSkillIds.size > 0 %}
-skills: {{ preloadedSkillIds | join: ", " }}
-{%- endif %}
----
-
-{{ intro }}
-
-<core_principles>
-Core principles are embedded directly in the template.
-</core_principles>
-
-{{ workflow }}
-`,
-    );
-
-    return { agentsDir, templatesDir, configDir };
-  }
-
+  /** Write agent files (agent.yaml, intro.md, workflow.md) into the agents directory */
   async function createAgent(
-    agentsDir: string,
     agentId: string,
     config: {
       title: string;
@@ -91,28 +61,18 @@ Core principles are embedded directly in the template.
       workflow?: string;
     },
   ) {
-    const agentDir = path.join(agentsDir, agentId);
+    const agentDir = path.join(dirs.agentsDir, agentId);
     await mkdir(agentDir, { recursive: true });
 
-    // Create agent.yaml
-    await writeFile(
+    await writeTestFile(
       path.join(agentDir, "agent.yaml"),
-      `id: ${agentId}
-title: ${config.title}
-description: ${config.description}
-tools:
-${config.tools.map((t) => `  - ${t}`).join("\n")}
-`,
+      `id: ${agentId}\ntitle: ${config.title}\ndescription: ${config.description}\ntools:\n${config.tools.map((t) => `  - ${t}`).join("\n")}\n`,
     );
-
-    // Create intro.md
-    await writeFile(
+    await writeTestFile(
       path.join(agentDir, "intro.md"),
       config.intro || `# ${config.title}\n\nThis is the ${agentId} agent.`,
     );
-
-    // Create workflow.md
-    await writeFile(
+    await writeTestFile(
       path.join(agentDir, "workflow.md"),
       config.workflow || `## Workflow\n\n1. Analyze\n2. Implement\n3. Test`,
     );
@@ -144,30 +104,24 @@ ${config.tools.map((t) => `  - ${t}`).join("\n")}
     };
   }
 
+  /** Write a SKILL.md file at the given path under src/skills/ */
   async function createSkillInSource(
     directoryPath: string,
     config: { name: string; description: string; content?: string },
   ) {
-    const skillDir = path.join(projectRoot, "src", "skills", directoryPath);
+    const skillDir = path.join(dirs.skillsDir, directoryPath);
     await mkdir(skillDir, { recursive: true });
 
-    await writeFile(
+    await writeTestFile(
       path.join(skillDir, "SKILL.md"),
-      `---
-name: ${config.name}
-description: ${config.description}
----
-
-${config.content || `# ${config.name}\n\nSkill content here.`}
-`,
+      `---\nname: ${config.name}\ndescription: ${config.description}\n---\n\n${config.content || `# ${config.name}\n\nSkill content here.`}\n`,
     );
   }
 
   describe("compileStackPlugin", () => {
     it("should create plugin directory structure", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read", "Write", "Glob"],
@@ -212,9 +166,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should generate valid plugin.json in .claude-plugin directory", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read", "Write"],
@@ -249,9 +202,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should compile agent markdown files to agents directory", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read", "Write"],
@@ -281,9 +233,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should generate README.md with stack information", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read"],
@@ -313,15 +264,14 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should list agents in README", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read", "Write"],
       });
 
-      await createAgent(agentsDir, "api-developer", {
+      await createAgent("api-developer", {
         title: "Backend Developer",
         description: "A backend developer agent",
         tools: ["Read", "Write", "Bash"],
@@ -349,15 +299,14 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should return compiled agents list", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read"],
       });
 
-      await createAgent(agentsDir, "web-tester", {
+      await createAgent("web-tester", {
         title: "Tester",
         description: "A testing agent",
         tools: ["Read", "Bash"],
@@ -382,7 +331,6 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should return skill plugin references", async () => {
-      const { agentsDir } = await createProjectStructure();
 
       // Create skills in src/skills/ (new architecture)
       const reactDirPath = "web/framework/react (@vince)";
@@ -400,7 +348,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
         description: "TypeScript development",
       });
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read"],
@@ -415,6 +363,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
           "web-developer": {
             framework: [{ id: reactCanonicalId, preloaded: true }],
             language: [{ id: tsCanonicalId }],
+          // Boundary cast: string keys to branded Subcategory
           } as Partial<Record<Subcategory, SkillAssignment[]>>,
         },
       });
@@ -432,9 +381,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should return correct manifest structure", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read"],
@@ -461,9 +409,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should return stack name from config", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read"],
@@ -488,7 +435,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
 
   describe("compileStackPlugin - error handling", () => {
     it("should throw error when stack config is missing", async () => {
-      await createProjectStructure();
+      // Project structure already created in beforeEach via createTestSource
 
       await expect(
         compileStackPlugin({
@@ -500,7 +447,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should throw error when agent is missing", async () => {
-      await createProjectStructure();
+      // Project structure already created in beforeEach via createTestSource
 
       const stackId = uniqueStackId();
       const stack = createStack(stackId, {
@@ -521,9 +468,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
 
   describe("compileStackPlugin - edge cases", () => {
     it("should handle stack with no skills", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read"],
@@ -551,9 +497,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should handle stack with no tags", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read"],
@@ -578,9 +523,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should handle stack with no philosophy", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read"],
@@ -605,9 +549,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should handle stack with no principles", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read"],
@@ -632,9 +575,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should handle stack with no description", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read"],
@@ -660,9 +602,8 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should handle stack without CLAUDE.md", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read"],
@@ -698,21 +639,20 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should handle multiple agents in a single stack", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read", "Write"],
       });
 
-      await createAgent(agentsDir, "api-developer", {
+      await createAgent("api-developer", {
         title: "Backend Developer",
         description: "A backend developer agent",
         tools: ["Read", "Write", "Bash"],
       });
 
-      await createAgent(agentsDir, "web-tester", {
+      await createAgent("web-tester", {
         title: "Tester",
         description: "A web-tester agent",
         tools: ["Read", "Bash"],
@@ -746,7 +686,6 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
     });
 
     it("should include skill plugins in README when skills are present", async () => {
-      const { agentsDir } = await createProjectStructure();
 
       // Create skills in src/skills/ (new architecture)
       const reactDirPath = "web/framework/react (@vince)";
@@ -764,7 +703,7 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
         description: "State management",
       });
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read"],
@@ -802,25 +741,16 @@ ${config.content || `# ${config.name}\n\nSkill content here.`}
 
   describe("compileStackPlugin - remote source (projectRoot differs from CLI)", () => {
     async function createStacksYaml(dir: string, stackId: string, agentIds: string[]) {
-      const configDir = path.join(dir, "config");
-      await mkdir(configDir, { recursive: true });
       const agentsYaml = agentIds.map((a) => `      ${a}: {}`).join("\n");
-      await writeFile(
-        path.join(configDir, "stacks.yaml"),
-        `stacks:
-  - id: ${stackId}
-    name: Remote Source Stack
-    description: A stack from a remote source
-    agents:
-${agentsYaml}
-`,
+      await writeTestFile(
+        path.join(dir, "config", "stacks.yaml"),
+        `stacks:\n  - id: ${stackId}\n    name: Remote Source Stack\n    description: A stack from a remote source\n    agents:\n${agentsYaml}\n`,
       );
     }
 
     it("should load stack from projectRoot when not in CLI stacks.yaml", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read", "Write"],
@@ -844,9 +774,8 @@ ${agentsYaml}
     });
 
     it("should fall back to CLI matrix when projectRoot has no skills matrix", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read"],
@@ -1000,9 +929,8 @@ ${agentsYaml}
     const realTemplateDir = path.resolve(__dirname, "../../../../src/agents/_templates");
 
     it("should emit pluginRef format in frontmatter when installMode is plugin", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read", "Write"],
@@ -1057,9 +985,8 @@ ${agentsYaml}
     });
 
     it("should emit bare skill IDs when installMode is local", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read", "Write"],
@@ -1116,9 +1043,8 @@ ${agentsYaml}
     });
 
     it("should emit bare skill IDs when installMode is undefined", async () => {
-      const { agentsDir } = await createProjectStructure();
 
-      await createAgent(agentsDir, "web-developer", {
+      await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
         tools: ["Read", "Write"],

@@ -1,8 +1,8 @@
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
-import { stringify as stringifyYaml, parse as parseYaml } from "yaml";
-import { fileExists, directoryExists } from "../helpers";
+import { stringify as stringifyYaml } from "yaml";
+import { fileExists, directoryExists, readTestYaml } from "../helpers";
 
 export interface TestSkill {
   id: string;
@@ -240,6 +240,12 @@ function generateMatrix(skills: TestSkill[], overrides?: Partial<TestMatrix>): T
   };
 }
 
+/**
+ * Creates a complete test source directory structure with skills, agents,
+ * matrix config, and optionally a plugin layout. Sets up temp directories
+ * that must be cleaned up via cleanupTestSource.
+ * @returns TestDirs containing all created directory paths for assertions
+ */
 export async function createTestSource(options: TestSourceOptions = {}): Promise<TestDirs> {
   const skills = options.skills ?? DEFAULT_TEST_SKILLS;
   const agents = options.agents ?? DEFAULT_TEST_AGENTS;
@@ -453,13 +459,11 @@ export async function readTestFile(filePath: string): Promise<string> {
   return readFile(filePath, "utf-8");
 }
 
-export async function readTestYaml<T>(filePath: string): Promise<T> {
-  const content = await readFile(filePath, "utf-8");
-  return parseYaml(content) as T;
-}
+export { readTestYaml };
 
 export async function readTestJson<T>(filePath: string): Promise<T> {
   const content = await readFile(filePath, "utf-8");
+  // Boundary cast: JSON.parse returns `any`, caller provides expected type
   return JSON.parse(content) as T;
 }
 

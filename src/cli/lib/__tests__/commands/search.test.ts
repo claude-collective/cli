@@ -27,13 +27,6 @@ describe("search command", () => {
   });
 
   describe("argument validation", () => {
-    it.skip("should require query argument", async () => {
-      const { error } = await runCliCommand(["search"]);
-
-      // Should error because query is required
-      expect(error).toBeDefined();
-    });
-
     it("should accept query as first argument", async () => {
       const { stdout, error } = await runCliCommand(["search", "test"]);
 
@@ -62,7 +55,7 @@ describe("search command", () => {
 
   // Skip: stdout capture limited in oclif/bun test environment
   describe("output format", () => {
-    it.skip("should show loading message when starting", async () => {
+    it("should show loading message when starting", async () => {
       const { stdout } = await runCliCommand(["search", "anything"]);
 
       // Should show loading message as first output

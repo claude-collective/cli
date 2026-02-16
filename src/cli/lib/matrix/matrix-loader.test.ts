@@ -1,5 +1,6 @@
 import path from "path";
 import { describe, it, expect, vi } from "vitest";
+import { readFile as realReadFile } from "fs/promises";
 import type { SkillsMatrixConfig } from "../../types";
 
 // For extractAllSkills tests, we mock fs/loader. For loadSkillsMatrix, we
@@ -23,30 +24,25 @@ vi.mock("../loading", () => ({
 
 import { loadSkillsMatrix, extractAllSkills, mergeMatrixWithSkills } from "./matrix-loader";
 import { warn } from "../../utils/logger";
-import { readFile as realReadFile } from "fs/promises";
 
-async function loadRealMatrixYaml(): Promise<string> {
-  const matrixPath = path.resolve(__dirname, "../../../../config/skills-matrix.yaml");
-  return realReadFile(matrixPath, "utf-8");
-}
+// Fixture root: test/fixtures/ at repo root
+const FIXTURES_ROOT = path.resolve(__dirname, "../../../..", "test/fixtures");
+const VALID_MATRIX_PATH = path.join(FIXTURES_ROOT, "matrix/valid-matrix.yaml");
+const INVALID_MATRIX_PATH = path.join(FIXTURES_ROOT, "matrix/invalid-matrix.yaml");
 
-function createInvalidMatrixYaml(): string {
-  // Missing required fields (relationships, skill_aliases)
-  return `
-version: "1.0.0"
-categories: {}
-`;
+async function loadFixture(fixturePath: string): Promise<string> {
+  return realReadFile(fixturePath, "utf-8");
 }
 
 describe("matrix-loader", () => {
   describe("loadSkillsMatrix", () => {
-    it("loads and validates the real skills-matrix.yaml", async () => {
-      const realContent = await loadRealMatrixYaml();
-      mockReadFile.mockResolvedValue(realContent);
+    it("loads and validates a valid skills-matrix fixture", async () => {
+      const fixtureContent = await loadFixture(VALID_MATRIX_PATH);
+      mockReadFile.mockResolvedValue(fixtureContent);
 
       const result = await loadSkillsMatrix("/project/config/skills-matrix.yaml");
 
-      expect(result.version).toBeDefined();
+      expect(result.version).toBe("1.0.0");
       expect(result.skill_aliases).toBeDefined();
       expect(result.skill_aliases.react).toBe("web-framework-react");
       expect(result.relationships).toBeDefined();
@@ -54,7 +50,8 @@ describe("matrix-loader", () => {
     });
 
     it("throws on invalid YAML structure", async () => {
-      mockReadFile.mockResolvedValue(createInvalidMatrixYaml());
+      const invalidContent = await loadFixture(INVALID_MATRIX_PATH);
+      mockReadFile.mockResolvedValue(invalidContent);
 
       await expect(loadSkillsMatrix("/project/config/skills-matrix.yaml")).rejects.toThrow(
         /Invalid skills matrix/,
@@ -68,7 +65,8 @@ describe("matrix-loader", () => {
     });
 
     it("includes path in error message for invalid matrix", async () => {
-      mockReadFile.mockResolvedValue(createInvalidMatrixYaml());
+      const invalidContent = await loadFixture(INVALID_MATRIX_PATH);
+      mockReadFile.mockResolvedValue(invalidContent);
 
       await expect(loadSkillsMatrix("/custom/path/matrix.yaml")).rejects.toThrow(
         /\/custom\/path\/matrix\.yaml/,

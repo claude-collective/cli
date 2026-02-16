@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { useWizardStore } from "./wizard-store";
 import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
+import { createMockCategory } from "../lib/__tests__/helpers";
 import type { Domain, MergedSkillsMatrix, SkillAssignment, SkillId, Subcategory } from "../types";
 
 /** Shorthand: creates a SkillAssignment from an id and optional preloaded flag */
@@ -469,41 +470,26 @@ describe("WizardStore", () => {
   });
 
   describe("parent domain selectors", () => {
+    // Partial test data: only "categories" subset of MergedSkillsMatrix
+    // Casts to MergedSkillsMatrix below are intentional — tests only need category lookup
     const matrixWithParentDomain: Pick<MergedSkillsMatrix, "categories"> = {
       categories: {
-        "error-handling": {
-          id: "error-handling",
-          displayName: "Error Handling",
-          description: "Error handling tools",
-          domain: "web-extras",
-          parent_domain: "web",
+        "error-handling": createMockCategory("error-handling" as Subcategory, "Error Handling", {
+          domain: "web-extras" as Domain,
+          parent_domain: "web" as Domain,
           exclusive: false,
-          required: false,
-          order: 0,
-        },
-        framework: {
-          id: "framework",
-          displayName: "Framework",
-          description: "Web frameworks",
-          domain: "web",
-          exclusive: true,
-          required: false,
-          order: 0,
-        },
+        }),
+        framework: createMockCategory("framework" as Subcategory, "Framework", {
+          domain: "web" as Domain,
+        }),
       },
     };
 
     const matrixWithoutParent: Pick<MergedSkillsMatrix, "categories"> = {
       categories: {
-        framework: {
-          id: "framework",
-          displayName: "Framework",
-          description: "Web frameworks",
-          domain: "web",
-          exclusive: true,
-          required: false,
-          order: 0,
-        },
+        framework: createMockCategory("framework" as Subcategory, "Framework", {
+          domain: "web" as Domain,
+        }),
       },
     };
 

@@ -42,25 +42,25 @@ describe("config commands", () => {
 
   // Skip: stdout capture limited in oclif/bun test environment
   describe("config:path", () => {
-    it.skip("should display project config path", async () => {
+    it("should display project config path", async () => {
       const { stdout } = await runCliCommand(["config:path"]);
 
       expect(stdout).toContain("Configuration File Paths");
       expect(stdout).toContain("Project:");
     });
 
-    it.skip("should show project config path containing current directory", async () => {
+    it("should show project config path containing current directory", async () => {
       const { stdout } = await runCliCommand(["config:path"]);
 
       // Project path should include the project directory
       expect(stdout).toContain(projectDir);
-      expect(stdout).toContain(".claude/config.yaml");
+      expect(stdout).toContain(".claude-src/config.yaml");
     });
   });
 
   // Skip: stdout capture limited in oclif/bun test environment
   describe("config:show", () => {
-    it.skip("should display configuration overview", async () => {
+    it("should display configuration overview", async () => {
       const { stdout } = await runCliCommand(["config:show"]);
 
       expect(stdout).toContain("Claude Collective Configuration");
@@ -68,7 +68,7 @@ describe("config commands", () => {
       expect(stdout).toContain("Configuration Layers:");
     });
 
-    it.skip("should show source value and origin", async () => {
+    it("should show source value and origin", async () => {
       const { stdout } = await runCliCommand(["config:show"]);
 
       // Should show some source - may be default or from project config
@@ -78,7 +78,7 @@ describe("config commands", () => {
       expect(stdout).toMatch(/\(from (default|project|--source|CC_SOURCE)/);
     });
 
-    it.skip("should show environment variable when CC_SOURCE is set", async () => {
+    it("should show environment variable when CC_SOURCE is set", async () => {
       process.env.CC_SOURCE = "/custom/source/path";
 
       const { stdout } = await runCliCommand(["config:show"]);
@@ -87,7 +87,7 @@ describe("config commands", () => {
       expect(stdout).toContain("CC_SOURCE");
     });
 
-    it.skip("should show project config values when configured", async () => {
+    it("should show project config values when configured", async () => {
       const projectConfigDir = path.join(projectDir, ".claude");
       await mkdir(projectConfigDir, { recursive: true });
       await writeFile(
@@ -100,19 +100,19 @@ describe("config commands", () => {
       expect(stdout).toContain("/project/source");
     });
 
-    it.skip("should show precedence order", async () => {
+    it("should show precedence order", async () => {
       const { stdout } = await runCliCommand(["config:show"]);
 
       expect(stdout).toContain("Precedence: flag > env > project > default");
     });
 
-    it.skip("should show marketplace section", async () => {
+    it("should show marketplace section", async () => {
       const { stdout } = await runCliCommand(["config:show"]);
 
       expect(stdout).toContain("Marketplace:");
     });
 
-    it.skip("should show agents source section", async () => {
+    it("should show agents source section", async () => {
       const { stdout } = await runCliCommand(["config:show"]);
 
       expect(stdout).toContain("Agents Source:");
@@ -121,7 +121,7 @@ describe("config commands", () => {
 
   describe("config:get", () => {
     // Skip: stdout capture limited in oclif/bun test environment
-    it.skip("should get source value", async () => {
+    it("should get source value", async () => {
       const { stdout } = await runCliCommand(["config:get", "source"]);
 
       // Should return some source (either default or from project config)
@@ -129,7 +129,7 @@ describe("config commands", () => {
     });
 
     // Skip: stdout capture limited in oclif/bun test environment
-    it.skip("should get source from CC_SOURCE environment variable", async () => {
+    it("should get source from CC_SOURCE environment variable", async () => {
       process.env.CC_SOURCE = "/env/source/path";
 
       const { stdout } = await runCliCommand(["config:get", "source"]);
@@ -165,7 +165,7 @@ describe("config commands", () => {
 
   // Skip: stdout capture limited in oclif/bun test environment
   describe("config (index)", () => {
-    it.skip("should display configuration overview", async () => {
+    it("should display configuration overview", async () => {
       const { stdout } = await runCliCommand(["config"]);
 
       expect(stdout).toContain("Claude Collective Configuration");

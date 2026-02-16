@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, readFile, stat } from "fs/promises";
+import { readFile, stat } from "fs/promises";
 import {
   generateAgentPluginManifest,
   generateSkillPluginManifest,
@@ -10,16 +9,17 @@ import {
   getPluginDir,
   getPluginManifestPath,
 } from "./plugin-manifest";
+import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
 
 describe("plugin-manifest", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "plugin-manifest-test-"));
+    tempDir = await createTempDir("plugin-manifest-test-");
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("generateSkillPluginManifest", () => {

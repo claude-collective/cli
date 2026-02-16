@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import { loadSkillsMatrixFromSource } from "./source-loader";
+import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
 import type { CategoryDefinition, ResolvedSkill } from "../../types";
 
 // Skills are in claude-subagents repo, not CLI repo
@@ -11,20 +11,17 @@ const SKILLS_REPO_ROOT = path.resolve(__dirname, "../../../../../claude-subagent
 // Fallback to the linked .claude folder's parent if skills repo not at expected path
 const SKILLS_SOURCE = process.env.CC_TEST_SKILLS_SOURCE || SKILLS_REPO_ROOT;
 
-// Tests that need specific marketplace skills require explicit opt-in
-const itIntegration = process.env.CC_TEST_SKILLS_SOURCE ? it : it.skip;
-
 describe("source-loader", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-source-loader-test-"));
+    tempDir = await createTempDir("cc-source-loader-test-");
     // Clear environment
     delete process.env.CC_SOURCE;
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
     delete process.env.CC_SOURCE;
   });
 
@@ -131,11 +128,11 @@ describe("source-loader local skills integration", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-local-skills-test-"));
+    tempDir = await createTempDir("cc-local-skills-test-");
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should merge local skills into matrix when .claude/skills exists", async () => {
@@ -158,6 +155,7 @@ describe("source-loader local skills integration", () => {
     });
 
     // Local skill should be in the matrix with normalized ID
+    // Boundary cast: skills keys are branded SkillId, widened to string for test indexing
     const skills = result.matrix.skills as Record<string, ResolvedSkill>;
     expect(skills["my-local-skill"]).toBeDefined();
     const localSkill = skills["my-local-skill"];
@@ -187,6 +185,7 @@ describe("source-loader local skills integration", () => {
 
     // Local skills should NOT cause fake "local" or "local/custom" categories to be injected
     // The skill uses whatever category it declared (or "local" default from local-skill-loader)
+    // Boundary cast: categories keys are branded Subcategory, widened to string for test indexing
     expect(
       (result.matrix.categories as Record<string, CategoryDefinition>)["local/custom"],
     ).toBeUndefined();
@@ -213,6 +212,7 @@ describe("source-loader local skills integration", () => {
     });
 
     // Find a skill that has a domain-based category
+    // Boundary cast: branded SkillId/Subcategory keys widened to string for test indexing
     const skillsMap = initialResult.matrix.skills as Record<string, ResolvedSkill>;
     const categoriesMap = initialResult.matrix.categories as Record<string, CategoryDefinition>;
     const targetSkillId = Object.keys(skillsMap).find((id) => {
@@ -243,6 +243,7 @@ describe("source-loader local skills integration", () => {
       projectDir: tempDir,
     });
 
+    // Boundary cast: branded SkillId key widened to string for test indexing
     const overriddenSkill = (result.matrix.skills as Record<string, ResolvedSkill>)[targetSkillId];
     expect(overriddenSkill).toBeDefined();
     expect(overriddenSkill.local).toBe(true);
@@ -271,37 +272,50 @@ describe("source-loader local skills integration", () => {
     expect(marketplaceSkills.length).toBeGreaterThan(50);
 
     // Local skill should also be present with normalized ID
+    // Boundary cast: branded SkillId key widened to string for test indexing
     expect((result.matrix.skills as Record<string, ResolvedSkill>)["preserve-skill"]).toBeDefined();
   });
 
-  itIntegration("P1-19: local skill takes precedence over plugin skill with same ID", async () => {
-    // First, get the list of skills from the marketplace to find one to override
+  it("P1-19: local skill takes precedence over plugin skill with same ID", async () => {
+    // Create a source directory with a marketplace skill
+    const sourceDir = path.join(tempDir, "precedence-source");
+    const skillDir = path.join(sourceDir, "src", "skills", "web", "testing", "web-testing-vitest");
+    await mkdir(skillDir, { recursive: true });
+
+    await writeFile(
+      path.join(skillDir, "SKILL.md"),
+      "---\nname: web-testing-vitest\ndescription: Marketplace vitest configuration\n---\nMarketplace vitest skill content.",
+    );
+    await writeFile(
+      path.join(skillDir, "metadata.yaml"),
+      'category: web/testing\nauthor: "@test"\nversion: 1\ncli_name: Vitest\ncli_description: Marketplace vitest configuration\ncontent_hash: abc1234\n',
+    );
+
+    // Load skills from source to verify marketplace skill is present
     const initialResult = await loadSkillsMatrixFromSource({
-      sourceFlag: SKILLS_SOURCE,
+      sourceFlag: sourceDir,
       projectDir: tempDir,
     });
 
-    // Pick an existing skill from the marketplace to override
-    // Skill IDs are now normalized: web-testing-vitest
     const existingSkillId = "web-testing-vitest";
     const existingSkill = initialResult.matrix.skills[existingSkillId]!;
     expect(existingSkill).toBeDefined();
     expect(existingSkill.local).toBeUndefined(); // Should be a marketplace skill
-    const originalDescription = existingSkill.description;
+    expect(existingSkill.description).toBe("Marketplace vitest configuration");
 
-    // Create a local skill with the SAME normalized ID to override it
-    const skillsDir = path.join(tempDir, ".claude", "skills", "local-vitest");
-    await mkdir(skillsDir, { recursive: true });
+    // Create a local skill with the SAME ID to override it
+    const localSkillsDir = path.join(tempDir, ".claude", "skills", "local-vitest");
+    await mkdir(localSkillsDir, { recursive: true });
 
-    await writeFile(path.join(skillsDir, "metadata.yaml"), `cli_name: My Custom Vitest`);
+    await writeFile(path.join(localSkillsDir, "metadata.yaml"), `cli_name: My Custom Vitest`);
     await writeFile(
-      path.join(skillsDir, "SKILL.md"),
+      path.join(localSkillsDir, "SKILL.md"),
       `---\nname: web-testing-vitest\ndescription: My custom vitest configuration\n---\nThis is my local override of the vitest skill.`,
     );
 
     // Load again with the local skill in place
     const result = await loadSkillsMatrixFromSource({
-      sourceFlag: SKILLS_SOURCE,
+      sourceFlag: sourceDir,
       projectDir: tempDir,
     });
 
@@ -311,7 +325,7 @@ describe("source-loader local skills integration", () => {
     expect(overriddenSkill.local).toBe(true);
     expect(overriddenSkill.description).toBe("My custom vitest configuration");
     // Verify the original description was different (proves we actually overwrote something)
-    expect(overriddenSkill.description).not.toBe(originalDescription);
+    expect(overriddenSkill.description).not.toBe(existingSkill.description);
     expect(overriddenSkill.author).toBe("@local");
     // When overwriting a remote skill, the remote skill's category is inherited
     expect(overriddenSkill.category).toBe(existingSkill.category);
@@ -323,11 +337,11 @@ describe("source-loader config-driven paths", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-config-paths-test-"));
+    tempDir = await createTempDir("cc-config-paths-test-");
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should use custom skills_dir from source config", async () => {
@@ -477,11 +491,11 @@ describe("source-loader integration", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-integration-test-"));
+    tempDir = await createTempDir("cc-integration-test-");
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should load all skills from local source", async () => {

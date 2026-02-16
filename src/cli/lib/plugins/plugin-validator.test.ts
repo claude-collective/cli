@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import {
   validatePluginStructure,
   validatePluginManifest,
@@ -10,25 +9,31 @@ import {
   validatePlugin,
   validateAllPlugins,
 } from "./plugin-validator";
+import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
 
 describe("plugin-validator", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "plugin-validator-test-"));
+    tempDir = await createTempDir("plugin-validator-test-");
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
+
+  /** Write a plugin.json manifest at .claude-plugin/plugin.json */
+  async function writePluginJson(dir: string, manifest: Record<string, unknown>) {
+    await mkdir(path.join(dir, ".claude-plugin"), { recursive: true });
+    await writeFile(
+      path.join(dir, ".claude-plugin", "plugin.json"),
+      JSON.stringify(manifest),
+    );
+  }
 
   describe("validatePluginStructure", () => {
     it("should pass for valid plugin structure", async () => {
-      await mkdir(path.join(tempDir, ".claude-plugin"), { recursive: true });
-      await writeFile(
-        path.join(tempDir, ".claude-plugin", "plugin.json"),
-        JSON.stringify({ name: "test-plugin" }),
-      );
+      await writePluginJson(tempDir, { name: "test-plugin" });
       await writeFile(path.join(tempDir, "README.md"), "# Test Plugin");
 
       const result = await validatePluginStructure(tempDir);
@@ -62,11 +67,7 @@ describe("plugin-validator", () => {
     });
 
     it("should warn if README.md is missing", async () => {
-      await mkdir(path.join(tempDir, ".claude-plugin"), { recursive: true });
-      await writeFile(
-        path.join(tempDir, ".claude-plugin", "plugin.json"),
-        JSON.stringify({ name: "test-plugin" }),
-      );
+      await writePluginJson(tempDir, { name: "test-plugin" });
 
       const result = await validatePluginStructure(tempDir);
 
@@ -204,15 +205,8 @@ describe("plugin-validator", () => {
     });
 
     it("should fail if skills path does not exist", async () => {
-      await mkdir(path.join(tempDir, ".claude-plugin"), { recursive: true });
+      await writePluginJson(tempDir, { name: "test-plugin", skills: "./skills/" });
       const manifestPath = path.join(tempDir, ".claude-plugin", "plugin.json");
-      await writeFile(
-        manifestPath,
-        JSON.stringify({
-          name: "test-plugin",
-          skills: "./skills/",
-        }),
-      );
 
       const result = await validatePluginManifest(manifestPath);
 
@@ -221,17 +215,9 @@ describe("plugin-validator", () => {
     });
 
     it("should pass if skills path exists", async () => {
-      await mkdir(path.join(tempDir, ".claude-plugin"), { recursive: true });
+      await writePluginJson(tempDir, { name: "test-plugin", description: "Test", skills: "./skills/" });
       await mkdir(path.join(tempDir, "skills"), { recursive: true });
       const manifestPath = path.join(tempDir, ".claude-plugin", "plugin.json");
-      await writeFile(
-        manifestPath,
-        JSON.stringify({
-          name: "test-plugin",
-          description: "Test",
-          skills: "./skills/",
-        }),
-      );
 
       const result = await validatePluginManifest(manifestPath);
 
@@ -448,23 +434,15 @@ permissionMode: acceptEdits
 
   describe("validatePlugin", () => {
     it("should pass for complete valid plugin", async () => {
-      await mkdir(path.join(tempDir, ".claude-plugin"), { recursive: true });
-      await mkdir(path.join(tempDir, "skills", "test-skill"), {
-        recursive: true,
+      await writePluginJson(tempDir, {
+        name: "test-plugin",
+        version: "1.0.0",
+        description: "A test plugin",
+        skills: "./skills/",
+        agents: "./agents/",
       });
+      await mkdir(path.join(tempDir, "skills", "test-skill"), { recursive: true });
       await mkdir(path.join(tempDir, "agents"), { recursive: true });
-
-      await writeFile(
-        path.join(tempDir, ".claude-plugin", "plugin.json"),
-        JSON.stringify({
-          name: "test-plugin",
-          version: "1.0.0",
-          description: "A test plugin",
-          skills: "./skills/",
-          agents: "./agents/",
-        }),
-      );
-
       await writeFile(path.join(tempDir, "README.md"), "# Test Plugin");
       await writeFile(
         path.join(tempDir, "skills", "test-skill", "SKILL.md"),
@@ -496,18 +474,8 @@ tools: Read, Write
     });
 
     it("should aggregate errors from all validations", async () => {
-      await mkdir(path.join(tempDir, ".claude-plugin"), { recursive: true });
-      await mkdir(path.join(tempDir, "skills", "bad-skill"), {
-        recursive: true,
-      });
-
-      await writeFile(
-        path.join(tempDir, ".claude-plugin", "plugin.json"),
-        JSON.stringify({
-          name: "BadName", // Not kebab-case
-          skills: "./skills/",
-        }),
-      );
+      await writePluginJson(tempDir, { name: "BadName", skills: "./skills/" });
+      await mkdir(path.join(tempDir, "skills", "bad-skill"), { recursive: true });
 
       await writeFile(
         path.join(tempDir, "skills", "bad-skill", "SKILL.md"),
@@ -526,17 +494,8 @@ name: bad-skill
     });
 
     it("should warn if skills directory empty", async () => {
-      await mkdir(path.join(tempDir, ".claude-plugin"), { recursive: true });
+      await writePluginJson(tempDir, { name: "test-plugin", description: "Test", skills: "./skills/" });
       await mkdir(path.join(tempDir, "skills"), { recursive: true });
-
-      await writeFile(
-        path.join(tempDir, ".claude-plugin", "plugin.json"),
-        JSON.stringify({
-          name: "test-plugin",
-          description: "Test",
-          skills: "./skills/",
-        }),
-      );
       await writeFile(path.join(tempDir, "README.md"), "# Test");
 
       const result = await validatePlugin(tempDir);
@@ -550,13 +509,7 @@ name: bad-skill
     it("should validate multiple plugins", async () => {
       for (const name of ["plugin-one", "plugin-two"]) {
         const pluginDir = path.join(tempDir, name);
-        await mkdir(path.join(pluginDir, ".claude-plugin"), {
-          recursive: true,
-        });
-        await writeFile(
-          path.join(pluginDir, ".claude-plugin", "plugin.json"),
-          JSON.stringify({ name, description: `${name} description` }),
-        );
+        await writePluginJson(pluginDir, { name, description: `${name} description` });
         await writeFile(path.join(pluginDir, "README.md"), `# ${name}`);
       }
 
@@ -577,19 +530,11 @@ name: bad-skill
 
     it("should report mix of valid and invalid plugins", async () => {
       const validDir = path.join(tempDir, "valid-plugin");
-      await mkdir(path.join(validDir, ".claude-plugin"), { recursive: true });
-      await writeFile(
-        path.join(validDir, ".claude-plugin", "plugin.json"),
-        JSON.stringify({ name: "valid-plugin", description: "Valid" }),
-      );
+      await writePluginJson(validDir, { name: "valid-plugin", description: "Valid" });
       await writeFile(path.join(validDir, "README.md"), "# Valid");
 
       const invalidDir = path.join(tempDir, "invalid-plugin");
-      await mkdir(path.join(invalidDir, ".claude-plugin"), { recursive: true });
-      await writeFile(
-        path.join(invalidDir, ".claude-plugin", "plugin.json"),
-        JSON.stringify({ description: "Invalid - missing name" }),
-      );
+      await writePluginJson(invalidDir, { description: "Invalid - missing name" });
 
       const result = await validateAllPlugins(tempDir);
 
@@ -601,11 +546,7 @@ name: bad-skill
 
     it("should count plugins with warnings", async () => {
       const pluginDir = path.join(tempDir, "warn-plugin");
-      await mkdir(path.join(pluginDir, ".claude-plugin"), { recursive: true });
-      await writeFile(
-        path.join(pluginDir, ".claude-plugin", "plugin.json"),
-        JSON.stringify({ name: "warn-plugin" }), // Missing description triggers warning
-      );
+      await writePluginJson(pluginDir, { name: "warn-plugin" }); // Missing description triggers warning
       await writeFile(path.join(pluginDir, "README.md"), "# Warn");
 
       const result = await validateAllPlugins(tempDir);

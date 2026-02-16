@@ -1,20 +1,45 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import { discoverLocalSkills } from "./local-skill-loader";
 import { CLAUDE_DIR, LOCAL_SKILLS_PATH, STANDARD_DIRS, STANDARD_FILES } from "../../consts";
+import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
 
 describe("local-skill-loader", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-local-skill-test-"));
+    tempDir = await createTempDir("cc-local-skill-test-");
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
+
+  /** Create a local skill directory with metadata.yaml and optionally SKILL.md */
+  async function writeLocalSkill(
+    skillName: string,
+    options: {
+      metadata?: string;
+      skillMd?: string;
+      /** If false, skip creating SKILL.md. Default true. */
+      withSkillMd?: boolean;
+    } = {},
+  ): Promise<string> {
+    const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
+    const skillDir = path.join(skillsDir, skillName);
+    await mkdir(skillDir, { recursive: true });
+
+    if (options.metadata !== undefined) {
+      await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), options.metadata);
+    }
+
+    if (options.withSkillMd !== false && options.skillMd !== undefined) {
+      await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), options.skillMd);
+    }
+
+    return skillDir;
+  }
 
   describe("discoverLocalSkills", () => {
     it("returns null when .claude/skills/ does not exist", async () => {
@@ -33,19 +58,10 @@ describe("local-skill-loader", () => {
     });
 
     it("discovers skills regardless of name prefix", async () => {
-      const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      const normalSkillDir = path.join(skillsDir, "my-normal-skill");
-      await mkdir(normalSkillDir, { recursive: true });
-
-      // Create valid metadata and SKILL.md
-      await writeFile(
-        path.join(normalSkillDir, STANDARD_FILES.METADATA_YAML),
-        `cli_name: My Normal Skill\ncli_description: A normal skill`,
-      );
-      await writeFile(
-        path.join(normalSkillDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: my-normal-skill (@local)\ndescription: A normal skill\n---\nContent`,
-      );
+      await writeLocalSkill("my-normal-skill", {
+        metadata: `cli_name: My Normal Skill\ncli_description: A normal skill`,
+        skillMd: `---\nname: my-normal-skill (@local)\ndescription: A normal skill\n---\nContent`,
+      });
 
       const result = await discoverLocalSkills(tempDir);
 
@@ -59,15 +75,9 @@ describe("local-skill-loader", () => {
     });
 
     it("skips skill without metadata.yaml", async () => {
-      const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      const skillDir = path.join(skillsDir, "no-metadata");
-      await mkdir(skillDir, { recursive: true });
-
-      // Only create SKILL.md, no metadata.yaml
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: no-metadata (@local)\ndescription: Missing metadata\n---\nContent`,
-      );
+      await writeLocalSkill("no-metadata", {
+        skillMd: `---\nname: no-metadata (@local)\ndescription: Missing metadata\n---\nContent`,
+      });
 
       const result = await discoverLocalSkills(tempDir);
 
@@ -75,12 +85,10 @@ describe("local-skill-loader", () => {
     });
 
     it("skips skill without SKILL.md", async () => {
-      const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      const skillDir = path.join(skillsDir, "no-skillmd");
-      await mkdir(skillDir, { recursive: true });
-
-      // Only create metadata.yaml, no SKILL.md
-      await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), `cli_name: No Skill MD`);
+      await writeLocalSkill("no-skillmd", {
+        metadata: `cli_name: No Skill MD`,
+        withSkillMd: false,
+      });
 
       const result = await discoverLocalSkills(tempDir);
 
@@ -88,19 +96,10 @@ describe("local-skill-loader", () => {
     });
 
     it("skips skill with metadata.yaml missing cli_name", async () => {
-      const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      const skillDir = path.join(skillsDir, "no-cli-name");
-      await mkdir(skillDir, { recursive: true });
-
-      // Create metadata.yaml without cli_name
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        `cli_description: Just a description`,
-      );
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: no-cli-name (@local)\ndescription: Missing cli_name\n---\nContent`,
-      );
+      await writeLocalSkill("no-cli-name", {
+        metadata: `cli_description: Just a description`,
+        skillMd: `---\nname: no-cli-name (@local)\ndescription: Missing cli_name\n---\nContent`,
+      });
 
       const result = await discoverLocalSkills(tempDir);
 
@@ -108,19 +107,11 @@ describe("local-skill-loader", () => {
     });
 
     it("skips skill with invalid SKILL.md frontmatter", async () => {
-      const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      const skillDir = path.join(skillsDir, "bad-frontmatter");
-      await mkdir(skillDir, { recursive: true });
-
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        `cli_name: Bad Frontmatter Skill`,
-      );
-      // SKILL.md without proper frontmatter (missing name)
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        `---\ndescription: Only description, no name\n---\nContent`,
-      );
+      await writeLocalSkill("bad-frontmatter", {
+        metadata: `cli_name: Bad Frontmatter Skill`,
+        // SKILL.md without proper frontmatter (missing name)
+        skillMd: `---\ndescription: Only description, no name\n---\nContent`,
+      });
 
       const result = await discoverLocalSkills(tempDir);
 
@@ -128,18 +119,10 @@ describe("local-skill-loader", () => {
     });
 
     it("uses cli_description from metadata.yaml when provided", async () => {
-      const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      const skillDir = path.join(skillsDir, "with-desc");
-      await mkdir(skillDir, { recursive: true });
-
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        `cli_name: Desc Skill\ncli_description: Custom CLI description`,
-      );
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: desc-skill (@local)\ndescription: Frontmatter description\n---\nContent`,
-      );
+      await writeLocalSkill("with-desc", {
+        metadata: `cli_name: Desc Skill\ncli_description: Custom CLI description`,
+        skillMd: `---\nname: desc-skill (@local)\ndescription: Frontmatter description\n---\nContent`,
+      });
 
       const result = await discoverLocalSkills(tempDir);
 
@@ -147,18 +130,10 @@ describe("local-skill-loader", () => {
     });
 
     it("falls back to frontmatter description when cli_description not provided", async () => {
-      const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      const skillDir = path.join(skillsDir, "fallback-desc");
-      await mkdir(skillDir, { recursive: true });
-
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        `cli_name: Fallback Skill`,
-      );
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: fallback-skill (@local)\ndescription: Frontmatter description\n---\nContent`,
-      );
+      await writeLocalSkill("fallback-desc", {
+        metadata: `cli_name: Fallback Skill`,
+        skillMd: `---\nname: fallback-skill (@local)\ndescription: Frontmatter description\n---\nContent`,
+      });
 
       const result = await discoverLocalSkills(tempDir);
 
@@ -166,25 +141,14 @@ describe("local-skill-loader", () => {
     });
 
     it("discovers multiple valid skills", async () => {
-      const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-
-      // Create two valid skills
-      const skill1Dir = path.join(skillsDir, "skill-one");
-      const skill2Dir = path.join(skillsDir, "skill-two");
-      await mkdir(skill1Dir, { recursive: true });
-      await mkdir(skill2Dir, { recursive: true });
-
-      await writeFile(path.join(skill1Dir, STANDARD_FILES.METADATA_YAML), `cli_name: Skill One`);
-      await writeFile(
-        path.join(skill1Dir, STANDARD_FILES.SKILL_MD),
-        `---\nname: skill-one (@local)\ndescription: First skill\n---\nContent`,
-      );
-
-      await writeFile(path.join(skill2Dir, STANDARD_FILES.METADATA_YAML), `cli_name: Skill Two`);
-      await writeFile(
-        path.join(skill2Dir, STANDARD_FILES.SKILL_MD),
-        `---\nname: skill-two (@local)\ndescription: Second skill\n---\nContent`,
-      );
+      await writeLocalSkill("skill-one", {
+        metadata: `cli_name: Skill One`,
+        skillMd: `---\nname: skill-one (@local)\ndescription: First skill\n---\nContent`,
+      });
+      await writeLocalSkill("skill-two", {
+        metadata: `cli_name: Skill Two`,
+        skillMd: `---\nname: skill-two (@local)\ndescription: Second skill\n---\nContent`,
+      });
 
       const result = await discoverLocalSkills(tempDir);
 
@@ -194,18 +158,10 @@ describe("local-skill-loader", () => {
     });
 
     it("sets correct extracted metadata properties", async () => {
-      const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      const skillDir = path.join(skillsDir, "full-skill");
-      await mkdir(skillDir, { recursive: true });
-
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        `cli_name: Full Skill\ncli_description: Complete skill for testing`,
-      );
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: full-skill (@local)\ndescription: Complete skill\n---\nContent`,
-      );
+      await writeLocalSkill("full-skill", {
+        metadata: `cli_name: Full Skill\ncli_description: Complete skill for testing`,
+        skillMd: `---\nname: full-skill (@local)\ndescription: Complete skill\n---\nContent`,
+      });
 
       const result = await discoverLocalSkills(tempDir);
       const skill = result?.skills[0];
@@ -235,18 +191,10 @@ describe("local-skill-loader", () => {
     });
 
     it("uses category from metadata.yaml when provided", async () => {
-      const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      const skillDir = path.join(skillsDir, "categorized-skill");
-      await mkdir(skillDir, { recursive: true });
-
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        `cli_name: Categorized Skill\ncategory: framework`,
-      );
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: categorized-skill (@local)\ndescription: A categorized skill\n---\nContent`,
-      );
+      await writeLocalSkill("categorized-skill", {
+        metadata: `cli_name: Categorized Skill\ncategory: framework`,
+        skillMd: `---\nname: categorized-skill (@local)\ndescription: A categorized skill\n---\nContent`,
+      });
 
       const result = await discoverLocalSkills(tempDir);
 
@@ -254,13 +202,8 @@ describe("local-skill-loader", () => {
     });
 
     it("preserves metadata tags, conflicts, and requires from metadata.yaml", async () => {
-      const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      const skillDir = path.join(skillsDir, "rich-skill");
-      await mkdir(skillDir, { recursive: true });
-
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        [
+      await writeLocalSkill("rich-skill", {
+        metadata: [
           "cli_name: Rich Skill",
           "category: framework",
           "category_exclusive: true",
@@ -279,11 +222,8 @@ describe("local-skill-loader", () => {
           "provides_setup_for:",
           "  - web-build-webpack",
         ].join("\n"),
-      );
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: rich-skill (@local)\ndescription: A rich skill\n---\nContent`,
-      );
+        skillMd: `---\nname: rich-skill (@local)\ndescription: A rich skill\n---\nContent`,
+      });
 
       const result = await discoverLocalSkills(tempDir);
       const skill = result?.skills[0];
@@ -299,19 +239,11 @@ describe("local-skill-loader", () => {
     });
 
     it("skips skill when metadata.yaml has wrong field types", async () => {
-      const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      const skillDir = path.join(skillsDir, "wrong-types");
-      await mkdir(skillDir, { recursive: true });
-
-      // cli_name must be a string, but providing a number via YAML
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        "cli_name: 123\ncategory_exclusive: not-a-boolean",
-      );
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: wrong-types (@local)\ndescription: Wrong types in metadata\n---\nContent`,
-      );
+      await writeLocalSkill("wrong-types", {
+        // cli_name must be a string, but providing a number via YAML
+        metadata: "cli_name: 123\ncategory_exclusive: not-a-boolean",
+        skillMd: `---\nname: wrong-types (@local)\ndescription: Wrong types in metadata\n---\nContent`,
+      });
 
       const result = await discoverLocalSkills(tempDir);
 
@@ -321,24 +253,17 @@ describe("local-skill-loader", () => {
     });
 
     it("skips valid skills alongside invalid ones", async () => {
-      const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-
       // Valid skill
-      const validDir = path.join(skillsDir, "valid-skill");
-      await mkdir(validDir, { recursive: true });
-      await writeFile(path.join(validDir, STANDARD_FILES.METADATA_YAML), "cli_name: Valid Skill");
-      await writeFile(
-        path.join(validDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: valid-skill (@local)\ndescription: A valid skill\n---\nContent`,
-      );
+      await writeLocalSkill("valid-skill", {
+        metadata: "cli_name: Valid Skill",
+        skillMd: `---\nname: valid-skill (@local)\ndescription: A valid skill\n---\nContent`,
+      });
 
       // Invalid skill (no SKILL.md)
-      const invalidDir = path.join(skillsDir, "invalid-skill");
-      await mkdir(invalidDir, { recursive: true });
-      await writeFile(
-        path.join(invalidDir, STANDARD_FILES.METADATA_YAML),
-        "cli_name: Invalid Skill",
-      );
+      await writeLocalSkill("invalid-skill", {
+        metadata: "cli_name: Invalid Skill",
+        withSkillMd: false,
+      });
 
       const result = await discoverLocalSkills(tempDir);
 
@@ -347,15 +272,10 @@ describe("local-skill-loader", () => {
     });
 
     it("skips skill with empty metadata.yaml", async () => {
-      const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      const skillDir = path.join(skillsDir, "empty-meta");
-      await mkdir(skillDir, { recursive: true });
-
-      await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), "");
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: empty-meta (@local)\ndescription: Has empty metadata\n---\nContent`,
-      );
+      await writeLocalSkill("empty-meta", {
+        metadata: "",
+        skillMd: `---\nname: empty-meta (@local)\ndescription: Has empty metadata\n---\nContent`,
+      });
 
       const result = await discoverLocalSkills(tempDir);
 
@@ -364,18 +284,10 @@ describe("local-skill-loader", () => {
     });
 
     it("skips skill with metadata.yaml containing only comments", async () => {
-      const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      const skillDir = path.join(skillsDir, "comments-only");
-      await mkdir(skillDir, { recursive: true });
-
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        "# This is a comment\n# No actual fields",
-      );
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: comments-only (@local)\ndescription: Only comments\n---\nContent`,
-      );
+      await writeLocalSkill("comments-only", {
+        metadata: "# This is a comment\n# No actual fields",
+        skillMd: `---\nname: comments-only (@local)\ndescription: Only comments\n---\nContent`,
+      });
 
       const result = await discoverLocalSkills(tempDir);
 
@@ -384,16 +296,11 @@ describe("local-skill-loader", () => {
     });
 
     it("skips skill with metadata.yaml that parses to a non-object type", async () => {
-      const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-      const skillDir = path.join(skillsDir, "bad-yaml");
-      await mkdir(skillDir, { recursive: true });
-
-      // YAML that parses to a string instead of an object
-      await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), "just a plain string");
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.SKILL_MD),
-        `---\nname: bad-yaml (@local)\ndescription: Bad YAML\n---\nContent`,
-      );
+      await writeLocalSkill("bad-yaml", {
+        // YAML that parses to a string instead of an object
+        metadata: "just a plain string",
+        skillMd: `---\nname: bad-yaml (@local)\ndescription: Bad YAML\n---\nContent`,
+      });
 
       const result = await discoverLocalSkills(tempDir);
 

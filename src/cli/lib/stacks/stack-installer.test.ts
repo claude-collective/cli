@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import os from "os";
 import type { CompiledStackPlugin } from "./stack-plugin-compiler";
 import type { AgentName, SkillId } from "../../types";
 
@@ -32,7 +33,7 @@ function createMockCompiledResult(overrides?: Partial<CompiledStackPlugin>): Com
   };
 }
 
-describe.skip("stack-installer", () => {
+describe("stack-installer", () => {
   beforeEach(() => {
     // Set default mock return values
     vi.mocked(isClaudeCLIAvailable).mockResolvedValue(true);
@@ -107,8 +108,8 @@ describe.skip("stack-installer", () => {
       });
 
       const ensureDirCall = vi.mocked(ensureDir).mock.calls[0][0];
-      // Should start with the system temp directory
-      expect(ensureDirCall).toMatch(/^\/tmp/);
+      // Should start with the system temp directory (platform-agnostic)
+      expect(ensureDirCall).toContain(os.tmpdir());
     });
 
     it("should propagate compilation errors", async () => {

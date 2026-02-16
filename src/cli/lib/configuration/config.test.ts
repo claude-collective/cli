@@ -1,7 +1,7 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "fs/promises";
-import os from "os";
+import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
 import {
   DEFAULT_SOURCE,
   formatOrigin,
@@ -16,19 +16,28 @@ import {
 } from "./config";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 
+/** Writes a config YAML string into the given subdirectory (defaults to CLAUDE_SRC_DIR) */
+async function writeConfigYaml(
+  projectDir: string,
+  content: string,
+  configSubdir: string = CLAUDE_SRC_DIR,
+): Promise<void> {
+  const configDir = path.join(projectDir, configSubdir);
+  await mkdir(configDir, { recursive: true });
+  await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_YAML), content);
+}
+
 describe("config", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    // Create a temporary directory for testing
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-config-test-"));
+    tempDir = await createTempDir("cc-config-test-");
     // Clear any environment variables
     delete process.env[SOURCE_ENV_VAR];
   });
 
   afterEach(async () => {
-    // Clean up temporary directory
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
     // Restore environment
     delete process.env[SOURCE_ENV_VAR];
   });
@@ -405,38 +414,21 @@ describe("config", () => {
     });
 
     it("should load config from .claude-src/config.yaml", async () => {
-      // Create config file in new location
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        "source: github:mycompany/skills\n",
-      );
+      await writeConfigYaml(tempDir, "source: github:mycompany/skills\n");
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config).toEqual({ source: "github:mycompany/skills" });
     });
 
     it("should fall back to .claude/config.yaml for legacy projects", async () => {
-      // Create config file in legacy location
-      const configDir = path.join(tempDir, CLAUDE_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        "source: github:legacy/skills\n",
-      );
+      await writeConfigYaml(tempDir, "source: github:legacy/skills\n", CLAUDE_DIR);
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config).toEqual({ source: "github:legacy/skills" });
     });
 
     it("when config.yaml contains malformed YAML syntax, should return null", async () => {
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        "invalid: yaml: content: :",
-      );
+      await writeConfigYaml(tempDir, "invalid: yaml: content: :");
 
       const config = await loadProjectSourceConfig(tempDir);
       // Should return null or throw - implementation dependent
@@ -445,12 +437,7 @@ describe("config", () => {
     });
 
     it("should load marketplace from project config", async () => {
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        "marketplace: https://custom-marketplace.io\n",
-      );
+      await writeConfigYaml(tempDir, "marketplace: https://custom-marketplace.io\n");
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.marketplace).toBe("https://custom-marketplace.io");
@@ -523,13 +510,7 @@ describe("config", () => {
     });
 
     it("should return project config when no flag or env", async () => {
-      // Create project config
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        "source: github:project/repo\n",
-      );
+      await writeConfigYaml(tempDir, "source: github:project/repo\n");
 
       const result = await resolveSource(undefined, tempDir);
 
@@ -554,12 +535,7 @@ describe("config", () => {
     it("should prioritize flag over all other sources", async () => {
       // Set everything
       process.env[SOURCE_ENV_VAR] = "github:env/repo";
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        "source: github:project/repo\n",
-      );
+      await writeConfigYaml(tempDir, "source: github:project/repo\n");
 
       const result = await resolveSource("github:flag/repo", tempDir);
 
@@ -569,12 +545,7 @@ describe("config", () => {
 
     it("should prioritize env over project config", async () => {
       process.env[SOURCE_ENV_VAR] = "github:env/repo";
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        "source: github:project/repo\n",
-      );
+      await writeConfigYaml(tempDir, "source: github:project/repo\n");
 
       const result = await resolveSource(undefined, tempDir);
 
@@ -630,12 +601,7 @@ describe("config", () => {
         const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
         process.env[SOURCE_ENV_VAR] = "github:just-a-name";
 
-        const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-        await mkdir(configDir, { recursive: true });
-        await writeFile(
-          path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-          "source: github:project/repo\n",
-        );
+        await writeConfigYaml(tempDir, "source: github:project/repo\n");
 
         const result = await resolveSource(undefined, tempDir);
 
@@ -693,12 +659,7 @@ describe("config", () => {
 
     describe("marketplace resolution", () => {
       it("should return marketplace from project config", async () => {
-        const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-        await mkdir(configDir, { recursive: true });
-        await writeFile(
-          path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-          "marketplace: https://my-company.com/plugins\n",
-        );
+        await writeConfigYaml(tempDir, "marketplace: https://my-company.com/plugins\n");
 
         const result = await resolveSource(undefined, tempDir);
 
@@ -706,10 +667,8 @@ describe("config", () => {
       });
 
       it("should return marketplace alongside source from project config", async () => {
-        const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-        await mkdir(configDir, { recursive: true });
-        await writeFile(
-          path.join(configDir, STANDARD_FILES.CONFIG_YAML),
+        await writeConfigYaml(
+          tempDir,
           "source: github:mycompany/skills\nmarketplace: https://enterprise.example.com/plugins\n",
         );
 
@@ -730,13 +689,7 @@ describe("config", () => {
 
   describe("resolveAgentsSource", () => {
     it("should return flag value with highest priority", async () => {
-      // Create project config with agents_source
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        "agents_source: https://project.example.com/agents\n",
-      );
+      await writeConfigYaml(tempDir, "agents_source: https://project.example.com/agents\n");
 
       const result = await resolveAgentsSource("https://flag.example.com/agents", tempDir);
 
@@ -745,12 +698,7 @@ describe("config", () => {
     });
 
     it("should return project config when no flag is provided", async () => {
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        "agents_source: https://project.example.com/agents\n",
-      );
+      await writeConfigYaml(tempDir, "agents_source: https://project.example.com/agents\n");
 
       const result = await resolveAgentsSource(undefined, tempDir);
 
@@ -807,54 +755,35 @@ describe("config", () => {
 
   describe("loadProjectSourceConfig with path overrides", () => {
     it("should load skills_dir from project config", async () => {
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_YAML), "skills_dir: lib/skills\n");
+      await writeConfigYaml(tempDir, "skills_dir: lib/skills\n");
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.skills_dir).toBe("lib/skills");
     });
 
     it("should load agents_dir from project config", async () => {
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_YAML), "agents_dir: lib/agents\n");
+      await writeConfigYaml(tempDir, "agents_dir: lib/agents\n");
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.agents_dir).toBe("lib/agents");
     });
 
     it("should load stacks_file from project config", async () => {
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        "stacks_file: data/stacks.yaml\n",
-      );
+      await writeConfigYaml(tempDir, "stacks_file: data/stacks.yaml\n");
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.stacks_file).toBe("data/stacks.yaml");
     });
 
     it("should load matrix_file from project config", async () => {
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        "matrix_file: data/matrix.yaml\n",
-      );
+      await writeConfigYaml(tempDir, "matrix_file: data/matrix.yaml\n");
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.matrix_file).toBe("data/matrix.yaml");
     });
 
     it("should return undefined for missing path fields (defaults applied by consumer)", async () => {
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        "source: github:myorg/skills\n",
-      );
+      await writeConfigYaml(tempDir, "source: github:myorg/skills\n");
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.skills_dir).toBeUndefined();
@@ -864,10 +793,8 @@ describe("config", () => {
     });
 
     it("should load all path fields together", async () => {
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
+      await writeConfigYaml(
+        tempDir,
         [
           "source: github:myorg/skills",
           "skills_dir: lib/skills",
@@ -888,22 +815,15 @@ describe("config", () => {
 
   describe("loadProjectSourceConfig with agents_source", () => {
     it("should load agents_source from project config", async () => {
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        "agents_source: https://my-company.com/agents\n",
-      );
+      await writeConfigYaml(tempDir, "agents_source: https://my-company.com/agents\n");
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.agents_source).toBe("https://my-company.com/agents");
     });
 
     it("should load all config fields together", async () => {
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
+      await writeConfigYaml(
+        tempDir,
         "source: github:myorg/skills\nmarketplace: https://market.example.com\nagents_source: https://agents.example.com\n",
       );
 
