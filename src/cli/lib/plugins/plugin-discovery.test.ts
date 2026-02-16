@@ -2,13 +2,17 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { SkillId } from "../../types";
 
 // Use vi.hoisted so mock fns are available when vi.mock factories run (hoisted to top)
-const { mockLoadPluginSkills, mockGetVerifiedPluginInstallPaths, mockVerbose, mockGetErrorMessage } =
-  vi.hoisted(() => ({
-    mockLoadPluginSkills: vi.fn(),
-    mockGetVerifiedPluginInstallPaths: vi.fn(),
-    mockVerbose: vi.fn(),
-    mockGetErrorMessage: vi.fn((e: unknown) => (e instanceof Error ? e.message : String(e))),
-  }));
+const {
+  mockLoadPluginSkills,
+  mockGetVerifiedPluginInstallPaths,
+  mockVerbose,
+  mockGetErrorMessage,
+} = vi.hoisted(() => ({
+  mockLoadPluginSkills: vi.fn(),
+  mockGetVerifiedPluginInstallPaths: vi.fn(),
+  mockVerbose: vi.fn(),
+  mockGetErrorMessage: vi.fn((e: unknown) => (e instanceof Error ? e.message : String(e))),
+}));
 
 vi.mock("../../utils/logger", () => ({
   verbose: mockVerbose,
