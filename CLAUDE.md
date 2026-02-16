@@ -2,7 +2,7 @@
 
 **For comprehensive documentation, see [docs/index.md](./docs/index.md)**
 
-This file provides quick decision trees and essential conventions for working with the Claude Collective CLI codebase.
+This file provides quick decision trees and essential conventions for working with the Agents Inc. CLI codebase.
 
 ---
 
@@ -120,6 +120,7 @@ Is it pure logic (no I/O, no side effects)?
 **MANDATORY: Named exports ONLY (no default exports)**
 
 **Import ordering:**
+
 1. Node.js built-ins (`path`, `fs`, `os`)
 2. External dependencies (`zod`, `yaml`, `oclif`)
 3. Internal workspace paths (`../types`, `./utils`)
@@ -271,15 +272,15 @@ test/fixtures/             # Static fixture files
 
 ## Key Documentation
 
-| Document | Purpose |
-|----------|---------|
-| [docs/index.md](./docs/index.md) | Documentation index and system overview |
-| [docs/architecture.md](./docs/architecture.md) | System architecture and data flow |
-| [docs/clean-code-standards.md](./docs/clean-code-standards.md) | Enforceable code quality rules |
-| [typescript-types-bible.md](./typescript-types-bible.md) | Type narrowing patterns and cast guidelines |
-| [docs/commands.md](./docs/commands.md) | CLI command reference |
-| [docs/data-models.md](./docs/data-models.md) | Type definitions and schemas |
-| [TODO.md](./TODO.md) | Active tasks and blockers |
+| Document                                                                                     | Purpose                                     |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| [docs/index.md](./docs/index.md)                                                             | Documentation index and system overview     |
+| [docs/reference/architecture.md](./docs/reference/architecture.md)                           | System architecture and data flow           |
+| [docs/standards/code/clean-code-standards.md](./docs/standards/code/clean-code-standards.md) | Enforceable code quality rules              |
+| [typescript-types-bible.md](./typescript-types-bible.md)                                     | Type narrowing patterns and cast guidelines |
+| [docs/reference/commands.md](./docs/reference/commands.md)                                   | CLI command reference                       |
+| [docs/reference/data-models.md](./docs/reference/data-models.md)                             | Type definitions and schemas                |
+| [TODO.md](./TODO.md)                                                                         | Active tasks and blockers                   |
 
 ---
 
@@ -292,7 +293,7 @@ test/fixtures/             # Static fixture files
 export function createMockSkill(
   id: SkillId,
   category: CategoryPath,
-  overrides?: Partial<ResolvedSkill>
+  overrides?: Partial<ResolvedSkill>,
 ): ResolvedSkill {
   return {
     id,
@@ -352,13 +353,13 @@ const validated = schema.parse(parsed); // throws
 
 ```typescript
 // GOOD: Consistent with logger style (see utils/logger.ts style guide)
-this.warn(`Failed to load skill '${skillId}'`);              // No "Warning:" prefix — added automatically
-this.log(`Compiled ${count} agents successfully.`);           // Period: complete sentence
-this.log(`Skipping '${id}': missing SKILL.md`);               // No period: fragment after colon
-verbose(`Resolved source path: '${sourcePath}'`);             // Single-quoted dynamic values
+this.warn(`Failed to load skill '${skillId}'`); // No "Warning:" prefix — added automatically
+this.log(`Compiled ${count} agents successfully.`); // Period: complete sentence
+this.log(`Skipping '${id}': missing SKILL.md`); // No period: fragment after colon
+verbose(`Resolved source path: '${sourcePath}'`); // Single-quoted dynamic values
 
 // BAD: Inconsistent style
-this.warn(`Warning: Failed to load skill ${skillId}`);        // Don't add "Warning:" — both oclif this.warn() and logger warn() add it
-this.log(`Compiled ${count} agents successfully`);             // Complete sentences should end with period
-this.warn(`failed to load skill ${skillId}`);                  // Start with capital letter
+this.warn(`Warning: Failed to load skill ${skillId}`); // Don't add "Warning:" — both oclif this.warn() and logger warn() add it
+this.log(`Compiled ${count} agents successfully`); // Complete sentences should end with period
+this.warn(`failed to load skill ${skillId}`); // Start with capital letter
 ```

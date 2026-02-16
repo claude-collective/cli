@@ -121,6 +121,7 @@ Not all casts are bad. Classify them:
 | **YAML/JSON parse boundary**     | Yes         | `parseYaml(content) as Record<string, unknown>`                                                             |
 | **Test data construction**       | Yes         | `{ id: "test" } as SkillId` — intentionally invalid test values                                             |
 | **Store initialization**         | Yes         | `{} as Partial<Record<...>>` — empty initial state                                                          |
+| **vi.mock factory literals**     | Yes         | `"agents-inc"` inside `vi.mock()` — Vitest hoists factories above imports, so constants are unavailable     |
 | **Branded record construction**  | Yes         | `{...} as unknown as Record<BrandedA, BrandedB>` — object literal keys can't satisfy branded types directly |
 | **Mid-pipeline workaround**      | **No**      | Fix the source type instead                                                                                 |
 
@@ -128,7 +129,7 @@ Not all casts are bad. Classify them:
 
 For the full boundary cast guide with real codebase examples (7 categories, acceptable vs
 unacceptable patterns, post-safeParse conventions), see
-[`docs/type-conventions.md` -- Boundary Cast Patterns](docs/type-conventions.md#boundary-cast-patterns).
+[`docs/standards/code/type-conventions.md` -- Boundary Cast Patterns](docs/standards/code/type-conventions.md#boundary-cast-patterns).
 
 **Double cast through `unknown` for branded Record keys.** When constructing a Record whose keys and values are both branded template literal types (e.g., `SkillDisplayName`, `SkillId`), a single `as` cast fails because object literal string keys are not assignable to branded types. Use `as unknown as Record<BrandedKey, BrandedValue>` with a comment:
 

@@ -1,9 +1,9 @@
-# Claude Collective CLI
+# Agents Inc. CLI
 
-the CLI for working with Claude Collective skills. it's the entry point for everything: installing skills, creating stacks, and creating custom skills and subagents
+the CLI for working with Agents Inc. skills. it's the entry point for everything: installing skills, creating stacks, and creating custom skills and subagents
 
 ```bash
-npx @claude-collective/cli init
+npx @agents-inc/cli init
 ```
 
 ## what this does
@@ -21,10 +21,10 @@ the CLI is how you work with all of it:
 
 ```bash
 # run the wizard - picks skills, sets up agents
-npx @claude-collective/cli init
+npx @agents-inc/cli init
 
 # or install globally
-npm install -g @claude-collective/cli
+npm install -g @agents-inc/cli
 ```
 
 requires node 18+ and [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
@@ -48,20 +48,20 @@ requires node 18+ and [Claude Code](https://docs.anthropic.com/en/docs/claude-co
 | `new agent`         | create a custom agent                                         |
 | `import skill`      | import a skill from an external GitHub repository             |
 | `eject`             | eject skills/agent partials for customization                 |
-| `uninstall`         | remove Claude Collective from project                         |
+| `uninstall`         | remove Agents Inc. from project                               |
 | `config`            | manage settings (show, get, set-project, unset-project, path) |
 | `version`           | show/manage plugin versions (show, set, bump)                 |
 | `build marketplace` | generate marketplace.json                                     |
 | `build plugins`     | build individual skill plugins                                |
 | `build stack`       | build a stack plugin                                          |
 
-every command supports `--dry-run` and `--source` flags. run `npx @claude-collective/cli <command> --help` for full options.
+every command supports `--dry-run` and `--source` flags. run `npx @agents-inc/cli <command> --help` for full options.
 
 ## how skills work
 
 a skill is focused knowledge for one technology. not surface-level docs but actual patterns, edge cases, the things you'd normally have to explain repeatedly
 
-skills live in the [claude-collective/skills](https://github.com/claude-collective/skills) repository, organized by category:
+skills live in the [agents-inc/skills](https://github.com/agents-inc/skills) repository, organized by category:
 
 | category | what's there                                                                                                                                                                                                                                                                          |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -94,16 +94,16 @@ the wizard starts by asking how you want to set up:
 **use a stack** (default):
 
 ```bash
-npx @claude-collective/cli init
+npx @agents-inc/cli init
 # select "Use a stack" → pick a pre-built stack (e.g. nextjs-fullstack)
-# installs as a native Claude Code plugin to ./.claude/plugins/claude-collective/
+# installs as a native Claude Code plugin to ./.claude/plugins/agents-inc/
 # you can customize skills after selecting a stack
 ```
 
 **start from scratch** (pick individual skills):
 
 ```bash
-npx @claude-collective/cli init
+npx @agents-inc/cli init
 # select "Start from scratch" → browse domains and pick skills one by one
 # installs locally to ./.claude/skills/ in your repo
 ```
@@ -152,7 +152,7 @@ imported skills are copied to `.claude/skills/` and tracked with metadata for fu
 if the existing skills don't cover what you need:
 
 ```bash
-npx @claude-collective/cli new skill my-custom-skill
+npx @agents-inc/cli new skill my-custom-skill
 ```
 
 this scaffolds the structure. a skill is just markdown with examples - no special tooling required.
@@ -167,11 +167,11 @@ source resolution → skill loading → matrix merging → wizard selection → 
 
 the codebase is organized into domain-driven library modules (`agents/`, `configuration/`, `loading/`, `matrix/`, `plugins/`, `skills/`, `stacks/`, `installation/`) with barrel exports. agents are compiled from YAML definitions + markdown partials through Liquid templates.
 
-see [docs/architecture.md](./docs/architecture.md) for the full reference.
+see [docs/reference/architecture.md](./docs/reference/architecture.md) for the full reference.
 
 ## links
 
-- [skills repository](https://github.com/claude-collective/skills) - all the skills and stacks
+- [skills repository](https://github.com/agents-inc/skills) - all the skills and stacks
 - [Claude Code docs](https://docs.anthropic.com/en/docs/claude-code) - the tool this extends
 
 ## license
