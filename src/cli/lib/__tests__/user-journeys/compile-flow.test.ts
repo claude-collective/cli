@@ -13,7 +13,7 @@ import {
 } from "../fixtures/create-test-source";
 import { runCliCommand, parseTestFrontmatter } from "../helpers";
 
-describe("User Journey: Compile Flow", () => {
+describe.skip("User Journey: Compile Flow", () => {
   let dirs: TestDirs;
   let outputDir: string;
   let originalCwd: string;

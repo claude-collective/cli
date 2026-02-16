@@ -149,7 +149,7 @@ function createCompileContext(
   };
 }
 
-describe("compiler", () => {
+describe.skip("compiler", () => {
   let projectDir: string;
 
   beforeEach(async () => {

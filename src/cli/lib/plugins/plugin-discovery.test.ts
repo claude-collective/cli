@@ -1,12 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { discoverAllPluginSkills, hasIndividualPlugins, listPluginNames } from "./plugin-discovery";
 import type { SkillId } from "../../types";
 
-// Mock all utilities before importing them
-const mockLoadPluginSkills = vi.fn();
-const mockGetVerifiedPluginInstallPaths = vi.fn();
-const mockVerbose = vi.fn();
-const mockGetErrorMessage = vi.fn((e: unknown) => (e instanceof Error ? e.message : String(e)));
+// Use vi.hoisted so mock fns are available when vi.mock factories run (hoisted to top)
+const { mockLoadPluginSkills, mockGetVerifiedPluginInstallPaths, mockVerbose, mockGetErrorMessage } =
+  vi.hoisted(() => ({
+    mockLoadPluginSkills: vi.fn(),
+    mockGetVerifiedPluginInstallPaths: vi.fn(),
+    mockVerbose: vi.fn(),
+    mockGetErrorMessage: vi.fn((e: unknown) => (e instanceof Error ? e.message : String(e))),
+  }));
 
 vi.mock("../../utils/logger", () => ({
   verbose: mockVerbose,
@@ -23,6 +25,8 @@ vi.mock("../loading", () => ({
 vi.mock("./plugin-settings", () => ({
   getVerifiedPluginInstallPaths: mockGetVerifiedPluginInstallPaths,
 }));
+
+import { discoverAllPluginSkills, hasIndividualPlugins, listPluginNames } from "./plugin-discovery";
 
 describe("plugin-discovery", () => {
   beforeEach(() => {
