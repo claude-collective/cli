@@ -3,23 +3,13 @@ import path from "path";
 import { parse as parseYaml } from "yaml";
 import { BaseCommand } from "../base-command";
 import { setVerbose, verbose } from "../utils/logger";
-import {
-  discoverAllPluginSkills,
-} from "../lib/plugins";
+import { discoverAllPluginSkills } from "../lib/plugins";
 import { getAgentDefinitions } from "../lib/agents";
 import { resolveSource } from "../lib/configuration";
-import {
-  directoryExists,
-  ensureDir,
-  glob,
-  readFile,
-  fileExists,
-} from "../utils/fs";
+import { directoryExists, ensureDir, glob, readFile, fileExists } from "../utils/fs";
 import { recompileAgents } from "../lib/agents";
 import { parseFrontmatter } from "../lib/loading";
-import {
-  LOCAL_SKILLS_PATH,
-} from "../consts";
+import { LOCAL_SKILLS_PATH } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
 import {
   ERROR_MESSAGES,
@@ -29,12 +19,7 @@ import {
   INFO_MESSAGES,
 } from "../utils/messages";
 import { detectInstallation, type Installation } from "../lib/installation";
-import type {
-  AgentSourcePaths,
-  ProjectConfig,
-  SkillDefinition,
-  SkillId,
-} from "../types";
+import type { AgentSourcePaths, ProjectConfig, SkillDefinition, SkillId } from "../types";
 import { projectConfigLoaderSchema } from "../lib/schemas";
 import { normalizeStackRecord, getStackSkillIds } from "../lib/stacks/stacks-loader";
 import { typedEntries } from "../utils/typed-object";
@@ -255,7 +240,10 @@ export default class Compile extends BaseCommand {
     }
   }
 
-  private async runPluginModeCompile(flags: CompileFlags, installation: Installation): Promise<void> {
+  private async runPluginModeCompile(
+    flags: CompileFlags,
+    installation: Installation,
+  ): Promise<void> {
     this.log("");
     this.log("Plugin Mode Compile");
     this.log("");

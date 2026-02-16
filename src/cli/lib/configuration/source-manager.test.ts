@@ -287,8 +287,16 @@ describe("source-manager", () => {
 
       const { discoverAllPluginSkills } = await import("../plugins/plugin-discovery");
       vi.mocked(discoverAllPluginSkills).mockResolvedValue({
-        "web-framework-react": { id: "web-framework-react", path: "skills/react/", description: "React" },
-        "web-state-zustand": { id: "web-state-zustand", path: "skills/zustand/", description: "Zustand" },
+        "web-framework-react": {
+          id: "web-framework-react",
+          path: "skills/react/",
+          description: "React",
+        },
+        "web-state-zustand": {
+          id: "web-state-zustand",
+          path: "skills/zustand/",
+          description: "Zustand",
+        },
       } as never);
 
       const summary = await getSourceSummary(tempDir);
@@ -369,9 +377,21 @@ describe("source-manager", () => {
 
       const { discoverAllPluginSkills } = await import("../plugins/plugin-discovery");
       vi.mocked(discoverAllPluginSkills).mockResolvedValue({
-        "web-framework-react": { id: "web-framework-react", path: "skills/react/", description: "React" },
-        "web-state-zustand": { id: "web-state-zustand", path: "skills/zustand/", description: "Zustand" },
-        "api-framework-hono": { id: "api-framework-hono", path: "skills/hono/", description: "Hono" },
+        "web-framework-react": {
+          id: "web-framework-react",
+          path: "skills/react/",
+          description: "React",
+        },
+        "web-state-zustand": {
+          id: "web-state-zustand",
+          path: "skills/zustand/",
+          description: "Zustand",
+        },
+        "api-framework-hono": {
+          id: "api-framework-hono",
+          path: "skills/hono/",
+          description: "Hono",
+        },
       } as never);
 
       const summary = await getSourceSummary(tempDir);

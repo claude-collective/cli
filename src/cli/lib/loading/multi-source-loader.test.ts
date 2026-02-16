@@ -285,7 +285,10 @@ describe("multi-source-loader", () => {
           description: "React framework skill",
           path: "/global/cache/react/skills/web/framework/react",
         },
-      } as Partial<Record<SkillId, import("../../types").SkillDefinition>> as Record<SkillId, import("../../types").SkillDefinition>);
+      } as Partial<Record<SkillId, import("../../types").SkillDefinition>> as Record<
+        SkillId,
+        import("../../types").SkillDefinition
+      >);
 
       const matrix = createMockMatrix({
         "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
@@ -324,7 +327,10 @@ describe("multi-source-loader", () => {
           description: "Zustand",
           path: "/global/cache/zustand/skills/web/state/zustand",
         },
-      } as Partial<Record<SkillId, import("../../types").SkillDefinition>> as Record<SkillId, import("../../types").SkillDefinition>);
+      } as Partial<Record<SkillId, import("../../types").SkillDefinition>> as Record<
+        SkillId,
+        import("../../types").SkillDefinition
+      >);
 
       const matrix = createMockMatrix({
         "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),

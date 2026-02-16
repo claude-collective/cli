@@ -58,10 +58,7 @@ describe("plugin-info", () => {
     });
 
     it("should return plugin info with skill count from plugin names", async () => {
-      mockedListPluginNames.mockResolvedValue([
-        "react@my-marketplace",
-        "zustand@my-marketplace",
-      ]);
+      mockedListPluginNames.mockResolvedValue(["react@my-marketplace", "zustand@my-marketplace"]);
       mockedGetProjectPluginsDir.mockReturnValue("/project/.claude/plugins");
 
       const result = await getPluginInfo();

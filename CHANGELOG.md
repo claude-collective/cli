@@ -34,6 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Plugin.json path verification** — Fixed verification to check `.claude-plugin/plugin.json` subdirectory instead of root directory.
 
+## [0.29.5] - 2026-02-15
+
+### Fixed
+
+- **Local yaml-language-server schema paths** — All 22 YAML/MD files with `$schema` comments pointed to relative local paths (e.g. `../../../schemas/agent.schema.json`) which only resolve inside this repo. Replaced with `raw.githubusercontent.com` URLs so schemas resolve in any consumer project. Added `agent`, `skillsMatrix`, and `stacks` entries to `SCHEMA_PATHS` constant.
+
 ## [0.29.4] - 2026-02-15
 
 ### Fixed

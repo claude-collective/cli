@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  discoverAllPluginSkills,
-  hasIndividualPlugins,
-  listPluginNames,
-} from "./plugin-discovery";
+import { discoverAllPluginSkills, hasIndividualPlugins, listPluginNames } from "./plugin-discovery";
 import type { SkillId } from "../../types";
 
 // Mock all utilities before importing them
@@ -113,15 +109,13 @@ describe("plugin-discovery", () => {
 
       const skillId = "web-framework-react" as SkillId;
 
-      mockLoadPluginSkills
-        .mockRejectedValueOnce(new Error("Parse error"))
-        .mockResolvedValueOnce({
-          [skillId]: {
-            id: skillId,
-            path: "skills/web-framework-react/",
-            description: "React",
-          },
-        });
+      mockLoadPluginSkills.mockRejectedValueOnce(new Error("Parse error")).mockResolvedValueOnce({
+        [skillId]: {
+          id: skillId,
+          path: "skills/web-framework-react/",
+          description: "React",
+        },
+      });
 
       const result = await discoverAllPluginSkills("/project");
 

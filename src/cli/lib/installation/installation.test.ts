@@ -97,15 +97,9 @@ describe("installation", () => {
 
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("plugin");
-      expect(result!.configPath).toBe(
-        path.join(tempDir, ".claude-src/config.yaml"),
-      );
-      expect(result!.agentsDir).toBe(
-        path.join(tempDir, ".claude/agents"),
-      );
-      expect(result!.skillsDir).toBe(
-        path.join(tempDir, ".claude/plugins"),
-      );
+      expect(result!.configPath).toBe(path.join(tempDir, ".claude-src/config.yaml"));
+      expect(result!.agentsDir).toBe(path.join(tempDir, ".claude/agents"));
+      expect(result!.skillsDir).toBe(path.join(tempDir, ".claude/plugins"));
     });
 
     it("returns null when no installation found", async () => {

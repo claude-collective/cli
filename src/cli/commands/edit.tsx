@@ -5,13 +5,8 @@ import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { loadSkillsMatrixFromSource, getMarketplaceLabel } from "../lib/loading/index.js";
-import {
-  discoverAllPluginSkills,
-} from "../lib/plugins/index.js";
-import {
-  archiveLocalSkill,
-  restoreArchivedSkill,
-} from "../lib/skills/index.js";
+import { discoverAllPluginSkills } from "../lib/plugins/index.js";
+import { archiveLocalSkill, restoreArchivedSkill } from "../lib/skills/index.js";
 import { recompileAgents, getAgentDefinitions } from "../lib/agents/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { detectInstallation } from "../lib/installation/index.js";

@@ -9,7 +9,11 @@ import {
   getMarketplaceLabel,
   type SourceLoadResult,
 } from "../lib/loading/index.js";
-import { installLocal, installPluginConfig, detectInstallation as detectExistingInstallation } from "../lib/installation/index.js";
+import {
+  installLocal,
+  installPluginConfig,
+  detectInstallation as detectExistingInstallation,
+} from "../lib/installation/index.js";
 import { checkPermissions } from "../lib/permission-checker.js";
 import { hasIndividualPlugins } from "../lib/plugins/index.js";
 import {
@@ -85,7 +89,7 @@ export default class Init extends BaseCommand {
     if (individualPluginsExist || existingInstallation) {
       const location = individualPluginsExist
         ? `.claude/settings.json`
-        : existingInstallation?.configPath ?? projectDir;
+        : (existingInstallation?.configPath ?? projectDir);
       this.warn(`Claude Collective is already initialized at ${location}`);
       this.log(`Use 'cc edit' to modify skills.`);
       this.log(INFO_MESSAGES.NO_CHANGES_MADE);
@@ -251,10 +255,9 @@ export default class Init extends BaseCommand {
         await claudePluginInstall(pluginRef, "project", projectDir);
         this.log(`  Installed ${pluginRef}`);
       } catch (error) {
-        this.error(
-          `Failed to install plugin ${pluginRef}: ${getErrorMessage(error)}`,
-          { exit: EXIT_CODES.ERROR },
-        );
+        this.error(`Failed to install plugin ${pluginRef}: ${getErrorMessage(error)}`, {
+          exit: EXIT_CODES.ERROR,
+        });
       }
     }
 

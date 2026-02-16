@@ -157,9 +157,7 @@ describe("exec argument validation", () => {
     });
 
     it("rejects source with spaces", async () => {
-      await expect(claudePluginMarketplaceAdd("user /repo")).rejects.toThrow(
-        "invalid characters",
-      );
+      await expect(claudePluginMarketplaceAdd("user /repo")).rejects.toThrow("invalid characters");
     });
 
     it("accepts owner/repo format", async () => {

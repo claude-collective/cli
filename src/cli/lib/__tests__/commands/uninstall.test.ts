@@ -21,10 +21,7 @@ const PLUGIN_SUBPATH = path.join(CLAUDE_DIR, "plugins", TEST_PLUGIN_NAME);
  * 2. Fake home ~/.claude/plugins/installed_plugins.json registry
  * 3. Plugin manifest at the install path (.claude-plugin/plugin.json)
  */
-async function createPluginDir(
-  projectDir: string,
-  fakeHome: string,
-): Promise<string> {
+async function createPluginDir(projectDir: string, fakeHome: string): Promise<string> {
   const pluginDir = path.join(projectDir, PLUGIN_SUBPATH);
   await mkdir(pluginDir, { recursive: true });
 
@@ -38,10 +35,7 @@ async function createPluginDir(
 
   // Create .claude/settings.json with enabled plugin
   const settingsPath = path.join(projectDir, CLAUDE_DIR, "settings.json");
-  await writeFile(
-    settingsPath,
-    JSON.stringify({ enabledPlugins: { [TEST_PLUGIN_NAME]: true } }),
-  );
+  await writeFile(settingsPath, JSON.stringify({ enabledPlugins: { [TEST_PLUGIN_NAME]: true } }));
 
   // Use resolved (real) paths for registry entries because process.cwd()
   // resolves symlinks (e.g., /var -> /private/var on macOS) and the

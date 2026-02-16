@@ -9,12 +9,7 @@ import { Confirm } from "../components/common/confirm";
 import { directoryExists, fileExists, remove } from "../utils/fs";
 import { claudePluginUninstall, isClaudeCLIAvailable } from "../utils/exec";
 import { listPluginNames, getProjectPluginsDir } from "../lib/plugins";
-import {
-  CLAUDE_DIR,
-  CLAUDE_SRC_DIR,
-  CLI_COLORS,
-  STANDARD_FILES,
-} from "../consts";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, CLI_COLORS, STANDARD_FILES } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
 import {
   ERROR_MESSAGES,

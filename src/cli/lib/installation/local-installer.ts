@@ -15,7 +15,12 @@ import type {
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import { type CopiedSkill, copySkillsToLocalFlattened, archiveLocalSkill } from "../skills";
 import { type MergeResult, mergeWithExistingConfig } from "../configuration";
-import { loadAllAgents, loadPluginSkills, loadSkillsByIds, type SourceLoadResult } from "../loading";
+import {
+  loadAllAgents,
+  loadPluginSkills,
+  loadSkillsByIds,
+  type SourceLoadResult,
+} from "../loading";
 import { loadStackById, compileAgentForPlugin, getStackSkillIds } from "../stacks";
 import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
 import { createLiquidEngine } from "../compiler";
@@ -334,7 +339,9 @@ export type PluginConfigResult = {
  * @returns Result containing config and agent artifacts (no skills)
  * @throws {Error} If the selected stack ID is not found in config/stacks.yaml
  */
-export async function installPluginConfig(options: LocalInstallOptions): Promise<PluginConfigResult> {
+export async function installPluginConfig(
+  options: LocalInstallOptions,
+): Promise<PluginConfigResult> {
   const { wizardResult, sourceResult, projectDir, sourceFlag } = options;
 
   const paths = resolveInstallPaths(projectDir);
