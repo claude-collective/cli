@@ -14,8 +14,8 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Fixture root: test/fixtures/ at repo root
-const FIXTURES_ROOT = path.resolve(__dirname, "../../..", "test/fixtures");
+// Fixture root: __tests__/fixtures/ colocated with test helpers
+const FIXTURES_ROOT = path.resolve(__dirname, "__tests__/fixtures");
 
 // Mock resolver — returns a fixture CLAUDE.md path based on projectRoot
 vi.mock("./resolver", () => ({

@@ -25,8 +25,8 @@ vi.mock("../loading", () => ({
 import { loadSkillsMatrix, extractAllSkills, mergeMatrixWithSkills } from "./matrix-loader";
 import { warn } from "../../utils/logger";
 
-// Fixture root: test/fixtures/ at repo root
-const FIXTURES_ROOT = path.resolve(__dirname, "../../../..", "test/fixtures");
+// Fixture root: __tests__/fixtures/ colocated with test helpers
+const FIXTURES_ROOT = path.resolve(__dirname, "../__tests__/fixtures");
 const VALID_MATRIX_PATH = path.join(FIXTURES_ROOT, "matrix/valid-matrix.yaml");
 const INVALID_MATRIX_PATH = path.join(FIXTURES_ROOT, "matrix/invalid-matrix.yaml");
 
