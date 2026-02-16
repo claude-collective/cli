@@ -42,3 +42,13 @@ export {
   validateAllPlugins,
   printPluginValidationResult,
 } from "./plugin-validator";
+
+export { discoverAllPluginSkills, hasIndividualPlugins, listPluginNames } from "./plugin-discovery";
+
+export {
+  type PluginKey,
+  type ResolvedPlugin,
+  getEnabledPluginKeys,
+  resolvePluginInstallPaths,
+  getVerifiedPluginInstallPaths,
+} from "./plugin-settings";
