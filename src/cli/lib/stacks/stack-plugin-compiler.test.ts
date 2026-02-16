@@ -120,7 +120,6 @@ describe("stack-plugin-compiler", () => {
 
   describe("compileStackPlugin", () => {
     it("should create plugin directory structure", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -166,7 +165,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should generate valid plugin.json in .claude-plugin directory", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -202,7 +200,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should compile agent markdown files to agents directory", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -233,7 +230,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should generate README.md with stack information", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -264,7 +260,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should list agents in README", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -299,7 +294,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should return compiled agents list", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -331,7 +325,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should return skill plugin references", async () => {
-
       // Create skills in src/skills/ (new architecture)
       const reactDirPath = "web/framework/react (@vince)";
       const reactCanonicalId = "web-framework-react" as SkillId;
@@ -363,7 +356,7 @@ describe("stack-plugin-compiler", () => {
           "web-developer": {
             framework: [{ id: reactCanonicalId, preloaded: true }],
             language: [{ id: tsCanonicalId }],
-          // Boundary cast: string keys to branded Subcategory
+            // Boundary cast: string keys to branded Subcategory
           } as Partial<Record<Subcategory, SkillAssignment[]>>,
         },
       });
@@ -381,7 +374,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should return correct manifest structure", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -409,7 +401,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should return stack name from config", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -468,7 +459,6 @@ describe("stack-plugin-compiler", () => {
 
   describe("compileStackPlugin - edge cases", () => {
     it("should handle stack with no skills", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -497,7 +487,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should handle stack with no tags", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -523,7 +512,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should handle stack with no philosophy", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -549,7 +537,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should handle stack with no principles", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -575,7 +562,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should handle stack with no description", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -602,7 +588,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should handle stack without CLAUDE.md", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -639,7 +624,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should handle multiple agents in a single stack", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -686,7 +670,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should include skill plugins in README when skills are present", async () => {
-
       // Create skills in src/skills/ (new architecture)
       const reactDirPath = "web/framework/react (@vince)";
       const reactCanonicalId = "web-framework-react" as SkillId;
@@ -749,7 +732,6 @@ describe("stack-plugin-compiler", () => {
     }
 
     it("should load stack from projectRoot when not in CLI stacks.yaml", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -774,7 +756,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should fall back to CLI matrix when projectRoot has no skills matrix", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -929,7 +910,6 @@ describe("stack-plugin-compiler", () => {
     const realTemplateDir = path.resolve(__dirname, "../../../../src/agents/_templates");
 
     it("should emit pluginRef format in frontmatter when installMode is plugin", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -985,7 +965,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should emit bare skill IDs when installMode is local", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -1043,7 +1022,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should emit bare skill IDs when installMode is undefined", async () => {
-
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",

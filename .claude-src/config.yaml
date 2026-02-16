@@ -260,7 +260,7 @@ stack:
     cli-framework:
       id: cli-framework-oclif-ink
       preloaded: true
-    framework: 
+    framework:
       id: web-framework-react
       preloaded: true
     client-state:

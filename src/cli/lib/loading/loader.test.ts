@@ -580,7 +580,9 @@ describe("loadPluginSkills", () => {
   it("should load skills from plugin skills directory", async () => {
     vi.mocked(directoryExists).mockResolvedValue(true);
     vi.mocked(glob).mockResolvedValue(["web-framework-react/SKILL.md"]);
-    vi.mocked(readFile).mockResolvedValue(createSkillContent("web-framework-react", "React patterns"));
+    vi.mocked(readFile).mockResolvedValue(
+      createSkillContent("web-framework-react", "React patterns"),
+    );
 
     const result = await loadPluginSkills("/path/to/plugin");
 

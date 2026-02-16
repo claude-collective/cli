@@ -1160,15 +1160,11 @@ describe("CategoryGrid component", () => {
 
     it("should render scroll indicators when height is constrained", () => {
       const manyCategories: CategoryRow[] = Array.from({ length: 8 }, (_, i) =>
-        createCategory(
-          `cat-${i}` as Subcategory,
-          `Category ${i}`,
-          [
-            createOption(`web-test-opt${i}-a`, `Option ${i}A`),
-            createOption(`web-test-opt${i}-b`, `Option ${i}B`),
-            createOption(`web-test-opt${i}-c`, `Option ${i}C`),
-          ],
-        ),
+        createCategory(`cat-${i}` as Subcategory, `Category ${i}`, [
+          createOption(`web-test-opt${i}-a`, `Option ${i}A`),
+          createOption(`web-test-opt${i}-b`, `Option ${i}B`),
+          createOption(`web-test-opt${i}-c`, `Option ${i}C`),
+        ]),
       );
 
       const { lastFrame, unmount } = renderGrid({
@@ -1200,11 +1196,9 @@ describe("CategoryGrid component", () => {
     it("should keep focused category visible when scrolling down", async () => {
       const onFocusChange = vi.fn();
       const manyCategories: CategoryRow[] = Array.from({ length: 6 }, (_, i) =>
-        createCategory(
-          `cat-${i}` as Subcategory,
-          `Category ${i}`,
-          [createOption(`web-test-opt${i}-a`, `Option ${i}A`)],
-        ),
+        createCategory(`cat-${i}` as Subcategory, `Category ${i}`, [
+          createOption(`web-test-opt${i}-a`, `Option ${i}A`),
+        ]),
       );
 
       const { stdin, lastFrame, unmount } = renderGrid({

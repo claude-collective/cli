@@ -25,10 +25,7 @@ describe("plugin-validator", () => {
   /** Write a plugin.json manifest at .claude-plugin/plugin.json */
   async function writePluginJson(dir: string, manifest: Record<string, unknown>) {
     await mkdir(path.join(dir, ".claude-plugin"), { recursive: true });
-    await writeFile(
-      path.join(dir, ".claude-plugin", "plugin.json"),
-      JSON.stringify(manifest),
-    );
+    await writeFile(path.join(dir, ".claude-plugin", "plugin.json"), JSON.stringify(manifest));
   }
 
   describe("validatePluginStructure", () => {
@@ -215,7 +212,11 @@ describe("plugin-validator", () => {
     });
 
     it("should pass if skills path exists", async () => {
-      await writePluginJson(tempDir, { name: "test-plugin", description: "Test", skills: "./skills/" });
+      await writePluginJson(tempDir, {
+        name: "test-plugin",
+        description: "Test",
+        skills: "./skills/",
+      });
       await mkdir(path.join(tempDir, "skills"), { recursive: true });
       const manifestPath = path.join(tempDir, ".claude-plugin", "plugin.json");
 
@@ -494,7 +495,11 @@ name: bad-skill
     });
 
     it("should warn if skills directory empty", async () => {
-      await writePluginJson(tempDir, { name: "test-plugin", description: "Test", skills: "./skills/" });
+      await writePluginJson(tempDir, {
+        name: "test-plugin",
+        description: "Test",
+        skills: "./skills/",
+      });
       await mkdir(path.join(tempDir, "skills"), { recursive: true });
       await writeFile(path.join(tempDir, "README.md"), "# Test");
 

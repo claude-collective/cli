@@ -88,10 +88,7 @@ describe("init command", () => {
       // Create a config file that detectExistingInstallation() will find
       const configDir = path.join(projectDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, "config.yaml"),
-        "name: test-project\n",
-      );
+      await writeFile(path.join(configDir, "config.yaml"), "name: test-project\n");
 
       const { stdout, stderr, error } = await runCliCommand(["init"]);
 

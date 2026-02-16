@@ -97,7 +97,12 @@ export const Wizard: React.FC<WizardProps> = ({
       // At the initial stack/scratch selection (approach not yet set), ESC cancels the wizard.
       // StackSelection handles its own ESC via the onCancel prop.
       // Other steps that don't have their own escape handler use goBack.
-      if (store.step !== "build" && store.step !== "confirm" && store.step !== "sources" && store.step !== "stack") {
+      if (
+        store.step !== "build" &&
+        store.step !== "confirm" &&
+        store.step !== "sources" &&
+        store.step !== "stack"
+      ) {
         store.goBack();
       }
       return;
@@ -239,7 +244,12 @@ export const Wizard: React.FC<WizardProps> = ({
 
   return (
     <ThemeProvider theme={cliTheme}>
-      <WizardLayout version={version} marketplaceLabel={marketplaceLabel} brandingName={brandingName} terminalHeight={terminalHeight}>
+      <WizardLayout
+        version={version}
+        marketplaceLabel={marketplaceLabel}
+        brandingName={brandingName}
+        terminalHeight={terminalHeight}
+      >
         {renderStep()}
       </WizardLayout>
     </ThemeProvider>

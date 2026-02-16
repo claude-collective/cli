@@ -9,7 +9,13 @@ import { Confirm } from "../components/common/confirm";
 import { directoryExists, fileExists, remove } from "../utils/fs";
 import { claudePluginUninstall, isClaudeCLIAvailable } from "../utils/exec";
 import { listPluginNames, getProjectPluginsDir } from "../lib/plugins";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, CLI_COLORS, DEFAULT_BRANDING, STANDARD_FILES } from "../consts";
+import {
+  CLAUDE_DIR,
+  CLAUDE_SRC_DIR,
+  CLI_COLORS,
+  DEFAULT_BRANDING,
+  STANDARD_FILES,
+} from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
 import {
   ERROR_MESSAGES,
@@ -134,8 +140,7 @@ const UninstallConfirm: React.FC<UninstallConfirmProps> = ({
 export default class Uninstall extends BaseCommand {
   static summary = `Remove ${DEFAULT_BRANDING.NAME} from this project`;
 
-  static description =
-    `Uninstall the ${DEFAULT_BRANDING.NAME} plugin and/or local directories (.claude/ and .claude-src/). By default, removes everything.`;
+  static description = `Uninstall the ${DEFAULT_BRANDING.NAME} plugin and/or local directories (.claude/ and .claude-src/). By default, removes everything.`;
 
   static examples = [
     "<%= config.bin %> <%= command.id %>",
