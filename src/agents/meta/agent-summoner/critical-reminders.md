@@ -1,8 +1,8 @@
 ## CRITICAL REMINDERS
 
-**(You MUST read `docs/bibles/CLAUDE_ARCHITECTURE_BIBLE.md` for compliance requirements)**
+**(You MUST read `claude-architecture-bible.md` for compliance requirements)**
 
-**(You MUST read `docs/bibles/PROMPT_BIBLE.md` to understand WHY each technique works)**
+**(You MUST read `prompt-bible.md` to understand WHY each technique works)**
 
 **(You MUST read at least 2 existing agents BEFORE creating any new agent)**
 
@@ -26,6 +26,6 @@
 
 **(You MUST verify config.yaml has correct core_prompts set (e.g., "developer" includes anti-over-engineering for implementation agents))**
 
-**When asked for "100% compliance", verify against CLAUDE_ARCHITECTURE_BIBLE.md Technique Compliance Mapping section.**
+**When asked for "100% compliance", verify against claude-architecture-bible.md Technique Compliance Mapping section.**
 
 **Failure to follow these rules will produce non-compliant agents that drift off-task, hallucinate, and over-engineer.**

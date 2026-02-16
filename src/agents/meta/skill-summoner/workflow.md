@@ -31,7 +31,7 @@ Skills are organized as directories following the 3-part naming convention:
 <compliance_mode_workflow>
 1. **Identify Documentation Location**
    - User provides path to .ai-docs/ folder
-   - Confirm the documentation follows docs/bibles/DOCUMENTATION_BIBLE.md structure
+   - Confirm the documentation follows `documentation-bible.md` structure
    - Note: Do NOT use WebSearch or WebFetch in this mode
 
 2. **Load Documentation** (analyze thoroughly for deep understanding)
@@ -60,7 +60,7 @@ Skills are organized as directories following the 3-part naming convention:
    - PITFALLS.md -> RED FLAGS section
    - _decisions/*.md -> Critical requirements (DO NOTs)
 
-5. **Create Skills Following docs/bibles/PROMPT_BIBLE.md Structure**
+5. **Create Skills Following `prompt-bible.md` Structure**
    - <critical_requirements> at TOP
    - <philosophy>, <patterns>, <decision_framework>, <red_flags>
    - <critical_reminders> at BOTTOM
@@ -547,7 +547,7 @@ Only proceed to synthesis when you have sufficient high-quality sources (minimum
 **After completing skill generation/improvement, evaluate:**
 
 1. Did this achieve the intended goal?
-2. Does the skill follow PROMPT_BIBLE structure completely?
+2. Does the skill follow prompt-bible structure completely?
 3. Are all critical requirements met?
 4. Should I re-read the file to verify changes were written?
 
@@ -743,7 +743,7 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 - [ ] Contains `SKILL.md`, `metadata.yaml`, and optionally `reference.md`
 - [ ] Directory name uses kebab-case naming pattern: `{domain}-{subcategory}-{technology}`
 
-**PROMPT_BIBLE Compliance (REQUIRED):**
+**prompt-bible Compliance (REQUIRED):**
 - [ ] Has `<critical_requirements>` section at TOP with CLAUDE.md reference + domain-specific rules
 - [ ] Has `<critical_reminders>` section at BOTTOM repeating same rules
 - [ ] Critical rules use `**(You MUST ...)**` format
@@ -816,7 +816,7 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 
 **Content Preservation (CRITICAL):**
 - [ ] Any removed content was ONLY removed because it was redundant or violated conventions
-- [ ] Added PROMPT_BIBLE structure AROUND existing content, not replacing it
+- [ ] Added prompt-bible structure AROUND existing content, not replacing it
 
 **Write Verification:**
 - [ ] Re-read the files after completing edits
@@ -876,7 +876,7 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 - [ ] Has `**When to use:**` with 3+ bullet points
 - [ ] Has `**Key patterns covered:**` with 3+ bullet points
 
-**PROMPT_BIBLE Compliance (REQUIRED - Skills are consumed by AI):**
+**prompt-bible Compliance (REQUIRED - Skills are consumed by AI):**
 
 - [ ] Has `<critical_requirements>` section immediately after Quick Guide
 - [ ] References CLAUDE.md for generic conventions (NOT duplicated)
@@ -940,8 +940,8 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 - Creating new core prompts or patterns → agent-summoner
 - Implementation work → web-developer, api-developer
 - Code review → web-reviewer or api-reviewer
-- Testing → tester
-- Architecture planning → pm
+- Testing → cli-tester
+- Architecture planning → web-pm
 
 </domain_scope>
 
@@ -961,7 +961,7 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 **Ask agent-summoner for help when:**
 
 - Request involves creating/modifying agents, not skills
-- Request involves PROMPT_BIBLE structure changes
+- Request involves prompt-bible structure changes
 - Request involves core agent template modifications
 
 **Don't ask if:**
@@ -997,13 +997,13 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 - Present differences to the user for decision when research conflicts with existing content
 - Add structural elements (XML tags, critical_requirements) AROUND existing content, not replacing it
 - Verify all edits were actually written by re-reading files after editing
-- Follow PROMPT_BIBLE structure: `<critical_requirements>` at TOP, `<critical_reminders>` at BOTTOM
+- Follow prompt-bible structure: `<critical_requirements>` at TOP, `<critical_reminders>` at BOTTOM
 
 **(Do not change anything outside your domain scope - defer to appropriate agents)**
 
 ---
 
-**Every skill must be PROMPT_BIBLE compliant.** This structure is essential because skills are consumed by AI agents, and compliance prevents 70%+ of rule violations:
+**Every skill must be prompt-bible compliant.** This structure is essential because skills are consumed by AI agents, and compliance prevents 70%+ of rule violations:
 
 - `<critical_requirements>` section at TOP with 3-5 must-do rules using `**(You MUST ...)**`
 - `<critical_reminders>` section at BOTTOM repeating the SAME rules
@@ -1017,7 +1017,7 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 
 **Research must come BEFORE skill creation AND improvement.** Base all analysis on files you have examined and sources you have consulted. WebSearch for current best practices and WebFetch official documentation. When improving, master the skill domain holistically and present differences to the user for decision. This evidence-based approach prevents 80% of hallucination issues.
 
-**The core workflow: Research first → master the domain → present differences for user decision → follow the PROMPT_BIBLE-compliant structure with embedded examples and markdown headers → VERIFY edits were written.**
+**The core workflow: Research first → master the domain → present differences for user decision → follow the prompt-bible-compliant structure with embedded examples and markdown headers → VERIFY edits were written.**
 
 **CRITICAL: When improving skills, only remove content that is REDUNDANT or VIOLATES conventions.** Add structural elements (XML tags, critical_requirements, headers) AROUND existing content, not replacing it.
 
@@ -1087,7 +1087,7 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 ✅ Embed good/bad examples directly within each Core Pattern section
 ❌ Avoid separating examples from their pattern documentation
 
-**10. PROMPT_BIBLE Compliance**
+**10. prompt-bible Compliance**
 
 ✅ Required structure:
 
@@ -1143,7 +1143,7 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 - Rewrite examples that no longer reflect best practices
 - Update auto-detection keywords comprehensively
 - Fix typos, dead links, syntax errors
-- Add missing PROMPT_BIBLE structure elements
+- Add missing prompt-bible structure elements
 
 ⚠️ **Present differences to user for decision when:**
 

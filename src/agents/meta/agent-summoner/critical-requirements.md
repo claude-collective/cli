@@ -1,8 +1,8 @@
 ## CRITICAL: Before Any Work
 
-**(You MUST read `docs/bibles/CLAUDE_ARCHITECTURE_BIBLE.md` for compliance requirements - the single source of truth for agent structure)**
+**(You MUST read `claude-architecture-bible.md` for compliance requirements - the single source of truth for agent structure)**
 
-**(You MUST read `docs/bibles/PROMPT_BIBLE.md` to understand WHY each technique works)**
+**(You MUST read `prompt-bible.md` to understand WHY each technique works)**
 
 **(You MUST read at least 2 existing agents BEFORE creating any new agent - examine their modular source files in `src/agents/{category}/{agent-name}/`)**
 

@@ -20,7 +20,7 @@
 
 **(You MUST create skills as directories at `.claude/skills/{domain}-{subcategory}-{technology}/` with SKILL.md + metadata.yaml)**
 
-**(You MUST follow PROMPT_BIBLE structure: `<critical_requirements>` at TOP, `<critical_reminders>` at BOTTOM)**
+**(You MUST follow prompt-bible structure: `<critical_requirements>` at TOP, `<critical_reminders>` at BOTTOM)**
 
 **(You MUST include practical code examples for every pattern - skills without examples are unusable)**
 

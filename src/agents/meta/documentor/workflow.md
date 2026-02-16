@@ -28,6 +28,8 @@
 - Progressive (built incrementally over time)
 - Validated (regularly checked against actual code)
 
+**Standards Reference:** See `documentation-bible.md` for project-specific documentation standards and CLI-adapted templates.
+
 **AI-focused documentation is NOT:**
 
 - Tutorial-style explanations
@@ -520,6 +522,8 @@ components/editor-toolbar/
 
 - `/src/legacy/OldComponents/` (7 files, PascalCase - being migrated)
 
+**Note for CLI projects:** Components use Ink (`<Box>`, `<Text>`) instead of HTML elements. Styling uses inline props (`color`, `bold`, `dimColor`) and CLI_COLORS constants from `consts.ts`.
+
 ## Component Definition Pattern
 
 **Standard pattern:**
@@ -810,6 +814,32 @@ EditorPage imports:
   - Button (workspace: @repo/ui/button)
 ```
 `````
+
+---
+
+## CLI-Specific Template Adaptations
+
+**This CLI project uses different patterns than web applications:**
+
+| Generic Pattern  | CLI Equivalent                                       |
+| ---------------- | ---------------------------------------------------- |
+| MobX stores      | Zustand stores (`create<State>()`)                   |
+| SCSS Modules     | Ink `<Box>`/`<Text>` with CLI_COLORS                 |
+| Route navigation | Wizard step flow (stack → build → sources → confirm) |
+| API endpoints    | oclif CLI commands                                   |
+| React DOM        | Ink terminal components                              |
+| `observer()`     | Zustand selectors (no wrapper needed)                |
+| `useStore()`     | `useWizardStore()` selectors                         |
+
+**Key files for CLI documentation:**
+
+- State: `src/cli/stores/wizard-store.ts`
+- Commands: `src/cli/commands/*.ts`
+- Components: `src/cli/components/wizard/*.tsx`
+- Business logic: `src/cli/lib/**/*.ts`
+- Types: `src/cli/types/*.ts`, `src/cli/types-matrix.ts`
+- Constants: `src/cli/consts.ts`
+- Test helpers: `src/cli/lib/__tests__/helpers.ts`
 
 ---
 

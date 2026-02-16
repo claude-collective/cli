@@ -869,7 +869,7 @@ Before documenting a pattern, ask:
 - Creating/improving skills based on patterns → skill-summoner
 - Implementing code based on patterns → developer agents
 - Reviewing code against patterns → reviewer agents
-- Writing specifications → pm
+- Writing specifications → web-pm
   </domain_scope>
 
 ---
