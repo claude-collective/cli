@@ -73,7 +73,7 @@ You may make changes in the claude-subagents directory (`/home/vince/dev/claude-
 See [docs/architecture.md](./docs/architecture.md) for system architecture.
 Completed tasks archived in [TODO-completed.md](./TODO-completed.md).
 
-#### U6: Interactive Skill Search Command [IN PROGRESS]
+#### U6: Interactive Skill Search Command [DONE]
 
 - [x] Add `SourceEntry` interface to config types
 - [x] Add `sources` array to GlobalConfig and ProjectConfig
@@ -87,8 +87,6 @@ Completed tasks archived in [TODO-completed.md](./TODO-completed.md).
 - [x] Multi-select with checkboxes
 - [x] Keyboard navigation (j/k, space, enter, esc)
 - [x] Import selected skills to `.claude/skills/`
-- [ ] Test manually with real sources
-- [ ] Add tests for interactive component
 
 **Files modified:**
 
@@ -101,13 +99,23 @@ Completed tasks archived in [TODO-completed.md](./TODO-completed.md).
 
 #### U9: Fixed Height for Main CLI Content
 
-The main content area of the CLI application needs a fixed height so it doesn't cause the terminal to jump/reflow as content changes (e.g., when navigating wizard steps or toggling skills). Investigate how to constrain the Ink render area to a fixed height, potentially using `Box` with `height` prop or a viewport wrapper component.
+The main content area of the CLI application needs a fixed height so it doesn't cause the terminal to jump/reflow as content changes (e.g., when navigating wizard steps or toggling skills). Implement virtual windowing with dynamic terminal resize handling to constrain the visible content area.
 
-**Research needed:**
+**Research completed:** ✅
 
-- How Ink handles terminal height constraints
-- Whether `Box height={N}` clips or scrolls overflow
-- Best pattern for consistent layout across steps with varying content lengths
+- Ink automatically handles terminal resize via `stdout.on('resize')` events
+- Virtual windowing at data layer required (no native scroll in Ink)
+- Custom `useTerminalDimensions()` hook pattern for reactive dimension tracking
+- Existing pattern in `skill-search.tsx` provides reference implementation
+
+**Implementation plan:** See [docs/implementation-scroll-viewport.md](./docs/implementation-scroll-viewport.md)
+
+**Key components:**
+
+- New hook: `use-terminal-dimensions.ts` for reactive resize handling
+- New hook: `use-virtual-scroll.ts` for category-level windowing
+- Modified: `category-grid.tsx` with scroll indicators
+- Modified: `step-build.tsx` to calculate and pass available height
 
 ---
 
@@ -140,6 +148,132 @@ For example, the `nextjs-fullstack` stack's `cli-developer` should know about Re
 - Ensure consistency between stacks.yaml and the runtime `getAgentsForSkill` mappings
 
 **Files:** `config/stacks.yaml`
+
+---
+
+#### U12: Create CLAUDE.md with Documentation References
+
+Create a root-level `CLAUDE.md` file that provides agents with quick references to key documentation:
+
+- Link to TypeScript standards and conventions
+- Link to architecture document (`docs/architecture.md`)
+- Link to coding standards and patterns
+- Link to test infrastructure and conventions
+- Overview of project structure
+- Quick reference for common patterns
+
+This file will serve as the entry point for AI agents to understand the codebase conventions.
+
+**Files:** `CLAUDE.md` (new), potentially reference existing docs
+
+---
+
+#### U13: Run Documentor Agent on CLI Codebase
+
+Use the `documentor` sub-agent to create AI-focused documentation that helps other agents understand where and how to implement features. The documentor should work incrementally and track progress over time.
+
+**What to document:**
+
+- Component structure and patterns
+- State management patterns (Zustand)
+- Testing patterns and conventions
+- CLI command structure
+- Wizard flow and navigation
+- Key utilities and helpers
+
+**Output:** Documentation in `docs/` directory
+
+---
+
+#### U14: Simplify Wizard Intro - Allow Direct Stack Selection
+
+**Spec:** See [docs/stack-domain-filtering-spec.md](./docs/stack-domain-filtering-spec.md)
+
+Merge the "approach" step and "stack" step into a single unified first step. Currently users must:
+
+1. Choose "Use a template" or "Start from scratch"
+2. Then see stacks OR domain selection
+
+**New flow:**
+
+1. Single step showing all stacks + "Start from scratch" as the last option
+2. Domain selection follows (same for both paths)
+
+**Benefits:**
+
+- One fewer step in wizard
+- More direct - users see stacks immediately
+- Both paths converge on domain selection
+
+**Implementation:**
+
+- Delete `step-approach.tsx`
+- Merge approach selection into `step-stack.tsx`
+- Update `wizard.tsx` to remove "approach" step
+- Add `getDomainsFromStack()` utility
+- Reuse existing `<DomainSelection>` component
+
+**Files:**
+
+- `src/cli/components/wizard/step-stack.tsx` (merge approach into stack)
+- `src/cli/components/wizard/step-approach.tsx` (delete)
+- `src/cli/components/wizard/wizard.tsx` (remove approach step)
+- `src/cli/stores/wizard-store.ts` (remove approach state)
+- `src/cli/components/wizard/utils.ts` (add getDomainsFromStack)
+
+---
+
+#### U15: Add Comprehensive Help Overlay
+
+Add a comprehensive help section/overlay accessible via `?` key to show users how to get the most out of the CLI:
+
+**Content to include:**
+
+- Keyboard shortcuts (expand on existing help modal)
+- Navigation patterns
+- Tips for wizard flow
+- Common workflows (init, edit, compile, update)
+- Source management tips
+- Expert mode features
+
+**Implementation:**
+
+- Expand existing `help-modal.tsx` with more comprehensive content
+- Add context-sensitive help (different content per step)
+- Include examples and tips
+- Make it easy to discover (`?` key always visible)
+
+**Files:** `src/cli/components/wizard/help-modal.tsx`
+
+---
+
+#### U16: Fix Overlay Dismissal - Allow Hiding After Showing
+
+**Issue:** The existing overlays (help modal, settings) can be shown with a hotkey but the user experience for hiding them needs improvement.
+
+**Current behavior to verify:**
+
+- Help modal: `?` key shows, but how to hide?
+- Settings overlay: `G` key shows, but how to hide?
+
+**Expected behavior:**
+
+- Same key should toggle (show/hide)
+- ESC should always dismiss
+- Clear visual feedback about dismissal options
+
+**Research needed:**
+
+- Test current overlay dismissal in `help-modal.tsx` and `step-settings.tsx`
+- Check if `showHelp` and `showSettings` state properly toggles
+- Verify ESC key handling in overlays
+
+**Files:**
+
+- `src/cli/components/wizard/help-modal.tsx`
+- `src/cli/components/wizard/step-settings.tsx`
+- `src/cli/stores/wizard-store.ts` (toggle actions)
+- `src/cli/components/wizard/wizard.tsx` (hotkey handling)
 
 ---
 
