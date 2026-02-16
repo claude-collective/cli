@@ -343,6 +343,12 @@ export default class Compile extends BaseCommand {
     this.log(`Output directory: ${outputDir}`);
     this.log("");
 
+    if (flags["dry-run"]) {
+      this.log(`[dry-run] Preview mode - no files will be written`);
+    }
+
+    await ensureDir(outputDir);
+
     const { allSkills, totalSkillCount } = await this.discoverAllSkills();
     await this.resolveSourceForCompile(flags);
     const agentDefs = await this.loadAgentDefsForCompile(flags);
@@ -361,8 +367,6 @@ export default class Compile extends BaseCommand {
 
     this.log(STATUS_MESSAGES.COMPILING_AGENTS);
     try {
-      await ensureDir(outputDir);
-
       const recompileResult = await recompileAgents({
         pluginDir: projectDir,
         sourcePath: agentDefs.sourcePath,
