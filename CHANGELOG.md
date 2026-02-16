@@ -2,1002 +2,449 @@
 
 All notable changes to this project will be documented in this file.
 
+Each release has detailed notes in its own file under [`changelogs/`](./changelogs/). This file serves as a summary index.
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+---
+
 ## [0.31.1] - 2026-02-16
+
 **Commit protocol and changelog architecture**
 
 Established commit protocol for AI agents with split-file changelog pattern.
 
-[→ Full release notes](./changelogs/0.31.1.md)
+[-> Full release notes](./changelogs/0.31.1.md)
 
 ## [0.31.0] - 2026-02-16
 
-### Added
+**CLAUDE.md project instructions and test infrastructure**
 
-- **CLAUDE.md project instructions** — Comprehensive project instructions for AI agents with decision trees for test helpers, type narrowing, and error handling; code conventions for file naming, imports, and constants; TypeScript enforcement rules; architecture quick reference; common patterns and checklists.
-- **Test fixture structure** — Comprehensive static fixture structure in `test/fixtures/` for configs, matrix files, plugin structures, stacks, and agents. Complements dynamic factory functions in `helpers.ts` for validation tests where data isn't modified.
-- **Feature proposal documentation** — New `docs/features/` directory for feature proposals and implementation guides.
-- **Scroll viewport implementation guide** — `docs/implementation-scroll-viewport.md` documenting virtual windowing implementation plan with dynamic terminal resize handling for fixed-height CLI content.
-- **Boundary cast pattern documentation** — Double cast pattern for branded Record types (`as unknown as Record<BrandedKey, BrandedValue>`) documented in TypeScript bible with explanation of why object literal keys can't satisfy branded types.
-- **Enhanced test patterns documentation** — Added comprehensive test helper and fixture patterns to `clean-code-standards.md` including `createTempDir/cleanupTempDir` usage, test factory function signatures, static fixture organization, and proper test data construction examples.
-- **Test helper utilities** — `createTempDir()`, `cleanupTempDir()`, `createTestSource()`, `createMockCategory()` utilities with proper documentation.
+Comprehensive AI agent instructions, test fixture structure, feature proposals, and documentation cleanup.
 
-### Changed
-
-- **Standardized test files** — All test files now use shared helper functions from `__tests__/helpers.ts` instead of raw `mkdtemp/rm` calls. Replaced hardcoded filenames with `STANDARD_FILES` constants. Extracted `writeConfigYaml` helper for config test setup.
-- **Improved test helper utilities** — Added JSDoc comments to `createComprehensiveMatrix` and `createBasicMatrix`, exported `createSkillContent` and `createAgentYamlContent` for reuse, added boundary cast comments for YAML parse operations.
-- **Agent YAML structure** — Agent test fixtures now include `id` and `title` fields in proper structure.
-- **Updated TODO** — Marked U6 (Interactive Skill Search) as DONE, added completed research for U9 (Fixed Height CLI Content), documented implementation plan with virtual windowing approach, added new tasks U12-U14.
-- **Test readability** — Reduced code duplication through shared utilities and improved test maintainability.
-
-### Fixed
-
-- **Compile command output directory** — `ensureDir(outputDir)` call moved before dry-run flag check to ensure directory exists even in preview mode, preventing errors when dry-run attempts to validate paths.
-- **Type safety** — Added proper boundary cast comments throughout test files for type assertions at parse boundaries.
-
-### Removed
-
-- **Obsolete documentation files** — Removed 6 outdated documentation files: `SKILL-CONSUME-UX-RESEARCH.md` (superseded by implementation), `DOCUMENTATION_BIBLE.md` (consolidated into clean-code-standards), `cli-agent-invocation-research.md` (completed research), `known-issues.md` (issues resolved or moved to GitHub), `ux-2.0-multi-source-implementation.md` (implemented), `ux-2.0-multi-source.md` (implemented).
-- **Unused .gitignore entries** — Removed commented-out entries for CLAUDE.md and TODO files that should be tracked in the repository.
+[-> Full release notes](./changelogs/0.31.0.md)
 
 ## [0.30.0] - 2026-02-16
 
-### Added
+**Settings.json-based plugin discovery**
 
-- **Settings.json-based plugin discovery** — New plugin discovery system that reads `.claude/settings.json` to find enabled plugins and resolves their install paths from the global plugin registry (`~/.claude/plugins/installed_plugins.json`). Replaces project-local `.claude/plugins/` directory scanning.
-- **plugin-settings.ts module** — Core module providing `getEnabledPluginKeys`, `resolvePluginInstallPaths`, and `getVerifiedPluginInstallPaths` for settings.json-based plugin resolution with Zod validation and size limits.
-- **plugin-discovery.ts module** — Provides `discoverAllPluginSkills`, `hasIndividualPlugins`, and `listPluginNames` for discovering skills from enabled plugins via the global cache.
-- **Comprehensive test coverage** — 37 new tests covering all plugin discovery scenarios, edge cases, and error handling.
+Migrated plugin discovery from project-local directory scanning to settings.json-based resolution via global plugin registry.
 
-### Changed
-
-- **Plugin discovery mechanism** — All commands and library code migrated from collective plugin mode to individual plugin discovery via settings.json.
-  - `compile`: Uses `discoverAllPluginSkills` instead of local directory scan
-  - `uninstall`: Supports multiple individual plugins with updated messaging
-  - `multi-source-loader`: Uses settings.json-based discovery for skill source tagging
-  - `plugin-info`: Uses `discoverAllPluginSkills` for skill counting
-  - `local-installer`: Added `installPluginConfig` for plugin-only setup
-- **Plugin reference formats clarified** — `@` format (`plugin-name@marketplace`) for installation/registry, `:` format (`skill-id:skill-id`) for runtime skill invocation.
-- **Resolution priority** — Project-scoped plugin installations take precedence over user-scoped installations.
-
-### Removed
-
-- **Collective plugin mode** — Removed `getCollectivePluginDir`, `collectPluginSkillIds`, and related collective plugin infrastructure. All plugin discovery now uses individual plugins via settings.json.
-- **DEFAULT_PLUGIN_NAME constant** — Removed from uninstall command as it's no longer needed for individual plugin management.
-
-### Fixed
-
-- **Plugin.json path verification** — Fixed verification to check `.claude-plugin/plugin.json` subdirectory instead of root directory.
+[-> Full release notes](./changelogs/0.30.0.md)
 
 ## [0.29.5] - 2026-02-15
 
-### Fixed
+**Fix local YAML schema paths**
 
-- **Local yaml-language-server schema paths** — All 22 YAML/MD files with `$schema` comments pointed to relative local paths (e.g. `../../../schemas/agent.schema.json`) which only resolve inside this repo. Replaced with `raw.githubusercontent.com` URLs so schemas resolve in any consumer project. Added `agent`, `skillsMatrix`, and `stacks` entries to `SCHEMA_PATHS` constant.
+Replaced relative local schema paths with raw.githubusercontent.com URLs for consumer project compatibility.
+
+[-> Full release notes](./changelogs/0.29.5.md)
 
 ## [0.29.4] - 2026-02-15
 
-### Fixed
+**Strict JSON schema validation**
 
-- **Strict JSON schema validation** — All 12 generated JSON schemas now enforce meaningful constraints for IDE autocomplete and validation via `yaml-language-server`. Previously, schemas like `project-config` accepted anything due to `.passthrough()` and missing `required` fields.
-  - Hook definitions require `hooks` array with at least 1 action
-  - Agent `tools` requires at least 1 entry
-  - Marketplace `name`/`version` reject empty strings; `plugins` requires at least 1 entry
-  - Stack `id`/`name` reject empty strings; `stacks` array requires at least 1 entry
-  - Relationship rules enforce minimum skill counts (`conflicts`/`discourages` need 2+)
-  - Plugin manifest uses strict validation schema (rejects unknown fields)
-  - Project config and source config use dedicated validation schemas with `required` fields and `additionalProperties: false`
+All 12 generated JSON schemas now enforce meaningful constraints for IDE autocomplete and validation.
+
+[-> Full release notes](./changelogs/0.29.4.md)
 
 ## [0.29.3] - 2026-02-15
 
-### Fixed
+**Fix wrong YAML schema on generated config**
 
-- **Wrong YAML schema on generated config.yaml** — `cc init` embedded a `$schema` comment pointing to `project-source-config.schema.json` (marketplace source fields) instead of `project-config.schema.json` (consumer project fields like `name`, `agents`, `stack`, `skills`). Added new `project-config.schema.json` generated from `projectConfigLoaderSchema` and fixed the reference.
+Fixed `cc init` embedding wrong schema reference in generated config.yaml.
+
+[-> Full release notes](./changelogs/0.29.3.md)
 
 ## [0.29.2] - 2026-02-15
 
-### Added
+**Multi-skill stack assignments in project config**
 
-- **Multi-skill stack assignments in project config** — `ProjectConfig.stack` now stores `SkillAssignment[]` per subcategory (matching `stacks.yaml` format) instead of a single `SkillId`. Enables multiple skills per subcategory with `preloaded` flags preserved through the full pipeline. Config YAML accepts bare strings, objects, and arrays interchangeably.
-- **Stack normalization at load time** — `loadProjectConfig` normalizes stack values to `SkillAssignment[]` using shared `normalizeStackRecord` helper (same as `loadStacks`).
-- **Compact YAML serialization** — `compactStackForYaml` produces minimal output: bare strings for simple skills, objects for preloaded, arrays for multi-skill subcategories.
-- **`getStackSkillIds` utility** — Extracts unique skill IDs from a stack config record using Remeda pipe. Used by `compile`, `doctor`, and `stack-plugin-compiler`.
+Stack config now stores multiple skills per subcategory with preloaded flags preserved through the full pipeline.
 
-### Changed
-
-- **`buildStackProperty` preserves full assignments** — No longer extracts only the first skill ID per subcategory; preserves all `SkillAssignment[]` entries with preloaded flags.
-- **`buildSkillRefsFromConfig` delegates to `resolveAgentConfigToSkills`** — Removed manual iteration in favor of the existing typed helper, preserving preloaded flags from assignments.
-- **Schema widened** — `projectConfigLoaderSchema.stack` accepts the same 3 YAML formats as `stackSchema`: bare string, single object with preloaded, and array of mixed elements.
-
-### Fixed
-
-- **`hashStackConfig` produced objects instead of IDs** — `Object.values()` on `SkillAssignment[]` yielded assignment objects instead of skill IDs; now uses `getStackSkillIds()`.
-- **YAML schema references unreachable** — `yaml-language-server` `$schema` comments pointed to `node_modules/@claude-collective/cli/...` which only worked if the CLI was installed as a dependency. Now uses `raw.githubusercontent.com` URLs that resolve for any consumer.
-- **`compileStackPlugin` skill extraction** — Same `Object.values()` bug fixed with `getStackSkillIds()`.
+[-> Full release notes](./changelogs/0.29.2.md)
 
 ## [0.29.1] - 2026-02-15
 
-### Fixed
+**Lint fixes and code cleanup**
 
-- **Regex unicode flags** — Added `u` flag to control character regexes in `exec.ts` and `config.ts` for proper Unicode handling.
-- **Switch default cases** — Added default cases to switch statements in `config.ts`, `plugin-version.ts`, `doctor.ts`, `eject.ts`, and `compile.ts`. Uses exhaustive `never` check for version bump type.
-- **Unused variables** — Removed unused imports and variables in `multi-source-loader.ts`, test helpers, and integration tests.
+Regex unicode flags, switch default cases, template literals, control flow simplification, and type cleanup.
 
-### Changed
-
-- **Template literals** — Converted string concatenation to template literals, removed useless backtick strings without interpolation, and merged adjacent string literals across 13 production files.
-- **Control flow simplification** — Replaced logical AND chains with optional chaining in `matrix-resolver.ts`, removed redundant returns in wizard components, simplified boolean return patterns in `source-switcher.ts` and search components.
-- **Type cleanup** — Removed unnecessary explicit type annotations, reordered default parameters after required parameters in `eject.ts`, extracted `discoverValidSkills` to module-level function in `import/skill.ts`.
+[-> Full release notes](./changelogs/0.29.1.md)
 
 ## [0.29.0] - 2026-02-15
 
-### Added
+**Shared utilities, security hardening, and integration tests**
 
-- **Shared utility modules** — Extracted `errors.ts`, `yaml.ts`, `messages.ts` into `src/cli/utils/` with full test coverage. Centralized metadata keys in `metadata-keys.ts`. Added `readFileSafe()` to `fs.ts` and `log()` to `logger.ts`.
-- **Expanded Zod schemas** — 30+ schemas covering all JSON/YAML parsing boundaries with field-level JSDoc. New `formatZodErrors` helper for user-friendly validation messages.
-- **Integration test suites** — New integration tests for import-skill, init-flow, source-switching, wizard-init-compile pipeline, and skill-resolution. Consolidated test helpers with `SKILL_FIXTURES`, `getTestSkill`, `createTestSource`. Test fixture files under `test/fixtures/`.
-- **Documentation** — `type-conventions.md` (union type rules, ID formats), `clean-code-standards.md` (code quality guidelines), expanded `architecture.md` and `commands.md`.
+Extracted utility modules, expanded Zod schemas, added integration test suites, and hardened path traversal and input validation.
 
-### Changed
-
-- **Union types documented** — Added JSDoc field documentation to `DomainSelections`, `CategoryMap`, `CategoryDefinition`, `SubcategorySelections`, `ResolvedSubcategorySkills`, `SkillAssignment`.
-- **Library decomposition** — Decomposed large functions across resolver, agent-recompiler, matrix-resolver, matrix-loader, plugin-validator, plugin-finder, compiler, and versioning modules. Added JSDoc documentation throughout.
-- **Command standardization** — All CLI commands use consistent error handling via `handleError` base method, typed exit codes, and usage examples in descriptions.
-- **Wizard refactoring** — Extracted 11 custom hooks, 3 subcomponents (`domain-selection`, `stack-selection`, `help-modal`), and `build-step-logic` module. Wizard store decomposed into focused action groups.
-- **Barrel exports removed** — Deleted `themes/index.ts` and `common/index.ts` barrel files in favor of direct imports.
-- **Consolidated constants** — `CLI_COLORS`, `STANDARD_FILES`, `STANDARD_DIRS`, `MAX_CONFIG_FILE_SIZE` centralized in `consts.ts`.
-
-### Fixed
-
-- **Path traversal hardening** — `source-switcher`: `validateSkillId`, `validatePathBoundary`, TOCTOU race fix. `skill-copier`: `validateSkillPath`, `resolveSkillPath` boundary checks.
-- **Input validation** — `config.ts`: `validateSourceFormat`, SSRF prevention, UNC path blocking. `exec.ts`: argument length, format, and control character validation.
-- **Template injection** — Compiler Liquid template sanitization with function decomposition.
-- **Source fetcher limits** — File size limits, nesting depth guards, SHA256 cache keys.
-
-### Removed
-
-- **`validator.ts`** — Replaced by `schema-validator.ts` and `output-validator.ts`.
+[-> Full release notes](./changelogs/0.29.0.md)
 
 ## [0.28.0] - 2026-02-13
 
-### Added
+**Explicit preloaded booleans and published JSON schemas**
 
-- **Explicit preloaded booleans in stacks** — `StackAgentConfig` uses `SkillAssignment[]` with explicit `preloaded: true/false` on each skill instead of inferring from `KEY_SUBCATEGORIES`. Normalization at the `loadStacks()` parse boundary accepts bare strings, objects, or arrays.
-- **Auto-default plugin mode** — Wizard defaults to plugin install mode when a marketplace source is detected. `initialInstallMode` prop passed from `cc init`.
-- **Marketplace indicator** — Wizard header shows marketplace label (e.g., "Photoroom + 1 public") via `getMarketplaceLabel()` utility.
-- **Published JSON schemas** — `src/schemas/` included in npm package. IDE-friendly `# yaml-language-server: $schema=...` comments embedded in generated config files (`.claude-src/config.yaml`, `metadata.yaml`). `SCHEMA_PATHS` constants and `yamlSchemaComment()` helper in `consts.ts`.
-- **Project-source-config JSON schema** — New `project-source-config.schema.json` for `.claude-src/config.yaml` validation in editors.
-- **Extended `cc validate`** — 6 new validation targets: stacks config, project source config, project skill metadata/frontmatter, project agent frontmatter, and plugin manifests. Total 7 → 13 targets. Works in both CLI repo and user projects.
+Stack skills use explicit preloaded flags, published JSON schemas for IDE validation, and extended `cc validate` targets.
 
-### Changed
-
-- **`StackAgentConfig` type** — Changed from `Partial<Record<Subcategory, SkillId[]>>` to `Partial<Record<Subcategory, SkillAssignment[]>>`.
-- **`KEY_SUBCATEGORIES` removed** — Replaced by explicit `preloaded` field on each skill assignment in `config/stacks.yaml`.
-- **JSON schema `$id` URLs** — Changed from placeholder `claude-collective.local` domain to relative `schemas/*.schema.json` paths.
-- **Stack domain filtering spec rewritten** — Unified wizard first step with stacks and scratch as peers in the same list.
+[-> Full release notes](./changelogs/0.28.0.md)
 
 ## [0.27.0] - 2026-02-13
 
-### Added
+**Stacks use skill IDs and config-driven source loading**
 
-- **Stacks use skill IDs** — `config/stacks.yaml` agent configs now reference skills by full skill ID (e.g., `web-framework-react`) instead of display name alias (e.g., `react`). This eliminates the `displayNameToId` resolution step at every stack loading call site.
-- **Config-driven source loading** — Marketplace repos can declare custom resource paths (`skills_dir`, `agents_dir`, `stacks_file`, `matrix_file`) in `.claude-src/config.yaml` instead of following the default layout conventions. Source loader reads path overrides and falls back to convention defaults.
-- **Stack domain filtering spec** — `docs/stack-domain-filtering-spec.md` details the planned domain selection UX after stack choice.
-- **Multi-skill categories findings** — `docs/multi-skill-categories-findings.md` documents analysis of skills that span multiple categories.
+Stacks reference skills by ID instead of display name alias. Marketplace repos can declare custom resource paths.
 
-### Changed
-
-- **`StackAgentConfig` value type** — Changed from `SkillDisplayName` to `SkillId`, matching the stacks.yaml data migration.
-- **`resolveStackSkillsFromDisplayNames` renamed** — Now `resolveStackSkills`, reflecting that no alias resolution is needed.
-- **`displayNameToId` threading removed** — Removed from `resolveAgentConfigToSkills`, `buildStackProperty`, `getAgentSkills`, `resolveAgents`, `stackToResolvedStack`, and `populateFromStack`. Net ~70 lines removed.
-- **Source loader DRYed** — Extracted shared `loadAndMergeFromBasePath` to eliminate duplicated local/remote loading logic.
+[-> Full release notes](./changelogs/0.27.0.md)
 
 ## [0.26.1] - 2026-02-13
 
-### Fixed
+**Fix metadata version coercion and stack lookup**
 
-- **Metadata version coercion** — `cc build plugins` no longer warns on `version: 1` in metadata.yaml. Added lenient `skillMetadataLoaderSchema` that coerces YAML numeric versions to strings.
-- **Stack lookup from source in plugin mode** — `compileStackPlugin` now resolves stacks from the source's `config/stacks.yaml` before falling back to the CLI's built-in stacks. Fixes "stack not found" error when running `cc init --source` with a private marketplace in plugin mode.
-- **Skills matrix fallback** — Stack compiler gracefully falls back to CLI matrix when the source's `config/skills-matrix.yaml` is missing or invalid.
+Fixed version coercion warnings, stack lookup from source in plugin mode, and skills matrix fallback.
+
+[-> Full release notes](./changelogs/0.26.1.md)
 
 ## [0.26.0] - 2026-02-13
 
-### Added
+**Plugin-aware compilation and marketplace guides**
 
-- **Plugin-aware agent compilation** — `compileAgentForPlugin()` accepts `installMode` parameter. When `"plugin"`, emits fully-qualified `PluginSkillRef` format (`skill-id:skill-id`) in both preloaded frontmatter and dynamic skill invocations. New `PluginSkillRef` template literal type enforces the format at compile time.
-- **Stacks from source** — Source loader loads `config/stacks.yaml` from the marketplace source repository before falling back to the CLI's built-in stacks. Private marketplaces can now define custom stack configurations visible to consumers.
-- **Individual skill plugin installation** — New `installIndividualPlugins()` in `cc init` installs each selected skill as a native Claude Code plugin via `claude plugin install {id}@{marketplace}` when Plugin Mode is used without a stack.
-- **Plugin-aware edit flow** — `cc edit` installs new skill plugins and uninstalls removed ones when in Plugin Mode with a marketplace. Uses non-fatal warnings for individual install failures.
-- **Agent plugin compiler** — New `agent-plugin-compiler.ts` compiles agent partials into standalone Claude Code plugins. `cc build plugins --agents-dir` flag enables building agent plugins alongside skill plugins.
-- **Shared plugin versioning** — Content-hash version bumping utilities extracted to `versioning.ts` and shared across skill, agent, and stack plugin compilers.
-- **Marketplace creation guide** — `docs/creating-a-marketplace.md` covers manual and automated marketplace creation, consumer installation flow, and private repo authentication.
-- **Marketplace migration guide** — `docs/migrate-to-marketplace.md` with step-by-step instructions for converting an existing CC repo into a publishable marketplace.
+Plugin-aware agent compilation, stacks from source, individual skill plugin installation, and marketplace documentation.
 
-### Changed
-
-- **Plugin names match skill IDs** — `SKILL_PLUGIN_PREFIX` changed from `"skill-"` to `""`. Plugin names are now bare skill IDs (e.g., `web-framework-react` instead of `skill-web-framework-react`). Marketplace generator category patterns updated to match unprefixed names.
-- **`installMode` threaded through compilation** — `installMode` flows from `wizardResult.installMode` through `local-installer.ts` and from `projectConfig.installMode` through `agent-recompiler.ts` to `compileAgentForPlugin()`.
+[-> Full release notes](./changelogs/0.26.0.md)
 
 ## [0.25.1] - 2026-02-13
 
-### Changed
+**Code formatting**
 
-- **Code formatting** — Prettier applied across 21 files (wizard components, tests, schemas, docs).
+Prettier applied across 21 files.
+
+[-> Full release notes](./changelogs/0.25.1.md)
 
 ## [0.25.0] - 2026-02-12
 
-### Added
+**Multi-source skill selection (UX 2.0)**
 
-- **Multi-source skill selection** — New Sources step between Build and Confirm lets users choose between recommended (public) and custom skill sources per technology. Source grid displays variant cards for each available source with installed indicators. Customize view shows per-skill source options.
-- **Source settings management** — `G` hotkey opens settings panel to add/remove extra skill sources with URL validation. Sources persist to `.claude-src/config.yaml`.
-- **Source switching in `cc edit`** — Edit command detects source changes and applies archive/restore for Local↔Public transitions via `source-switcher.ts`. Shows `~ skillId (From → To)` for source switches.
-- **Bound skill search** — Search pill in source grid triggers immediate search across configured extra marketplaces on Space. Results appear in modal overlay with keyboard navigation. Selected results become bound skills persisted in config.
-- **BoundSkill types and schema** — `BoundSkill`, `BoundSkillCandidate`, `SkillAlias` types with Zod `boundSkillSchema` for config persistence. `boundSkills` field added to `ProjectSourceConfig`.
-- **Multi-source loader** — `tagExtraSources` enriches resolved skills with available sources from configured marketplaces. `searchExtraSources` queries all extra sources for skills matching a subcategory alias.
-- **Installed skill indicators** — Dimmed `✓` prefix on skill tags for already-installed technologies.
-- **Scroll viewport spec** — UX spec for wizard grid navigation with viewport-based scrolling.
+Full multi-source skill selection with source grid, source switching, bound skill search, and settings management.
 
-### Fixed
-
-- **Uninstall plugin removal resilient** — `claudePluginUninstall` wrapped in inner try-catch so directory removal proceeds even if Claude CLI plugin unregister fails.
-- **Config skills array restored** — Fixed skill-to-agent compilation when `skills` array was missing from project config.
-
-### Changed
-
-- **SkillId format tightened** — `${SkillIdPrefix}-${string}-${string}` now enforces 3+ segments.
-- **Architecture docs updated** for multi-source features.
+[-> Full release notes](./changelogs/0.25.0.md)
 
 ## [0.24.7] - 2026-02-12
 
-### Added
+**Sources step and edit command improvements**
 
-- **Sources step in wizard flow** — New step between Build and Confirm lets users choose between recommended skills (verified by Claude Collective) or customizing skill sources per technology. Wizard tabs updated to 5 steps.
-- **Edit command starts at Build step** — `cc edit` now skips Intro/Stack and opens directly at the Build step with currently installed skills pre-populated via new `populateFromSkillIds` store action.
+New Sources wizard step, edit command starts at Build step, parse boundary hardening.
 
-### Changed
-
-- **Parse boundary error handling hardened across 11 files** — All `verbose()` calls for malformed user-facing data (project config, local skills, default mappings, skill metadata) promoted to `warn()` so errors are visible without `--verbose`. Bare `JSON.parse` in skill import wrapped in try/catch. Empty `catch {}` in permission checker now warns on malformed `settings.json`. Manual frontmatter parsing in `compile.ts` replaced with `parseFrontmatter()` utility. Missing `name` field in project config now falls back to directory name with a warning.
-- **Marketplace list JSON parsing hardened** — `claudePluginMarketplaceList` now validates JSON parse and array type before returning.
-
-### Refactored
-
-- **Replaced pseudo-agents pattern with `populateFromSkillIds`** — Stack selection no longer constructs fake agent objects to feed into `populateFromStack`. New `populateFromSkillIds` store action maps skill IDs directly to domain/subcategory selections with warnings for missing or unresolvable skills.
+[-> Full release notes](./changelogs/0.24.7.md)
 
 ## [0.24.6] - 2026-02-12
 
-### Changed
+**Codebase-wide comment cleanup**
 
-- **Codebase-wide comment cleanup** — Removed AI-generated banner separators (`// ====...`), obvious JSDoc that restated function/variable names, file-level header comments, and verbose multi-line blocks across 150+ files (~5,600 lines removed). Comments explaining WHY, boundary casts, edge cases, and TODOs preserved.
-- **Standardized JSDoc on all type definitions** — All exported types in `src/cli/types/` now use consistent `/** */` JSDoc format. Union grouping comments kept as `//`. Obvious property comments removed, meaningful annotations (`@default`, deprecation, logic notes) preserved.
-- **Unused imports cleaned up** — Removed unused `beforeEach` in `plugin-finder.test.ts` and unused `readdir` in `agent-recompiler.test.ts`.
+Removed ~5,600 lines of AI-generated banner comments, standardized JSDoc on type definitions.
+
+[-> Full release notes](./changelogs/0.24.6.md)
 
 ## [0.24.5] - 2026-02-11
 
-### Added
+**Command tests and Vitest auto-mocks**
 
-- **Command tests for all 12 previously untested CLI commands** — ~158 new tests across 9 test files covering config:set-project, config:unset-project, version (index), version:set, version:bump, new:skill, new:agent, import:skill, update, uninstall, init, and edit. Total test count: 1512 passing (up from ~1344).
-- **Vitest auto-mocks for fs and logger** — Manual mock files (`src/cli/utils/__mocks__/fs.ts`, `logger.ts`) replace inline `vi.mock()` factory functions across 15 existing test files. `clearMocks: true` enabled globally.
-- **Vitest test projects** — Config split into 3 projects (`unit`, `integration`, `commands`) for clearer test organization and selective running.
+158 new command tests, Vitest auto-mocks for fs/logger, config split into 3 test projects.
 
-### Changed
-
-- **`docs/architecture.md` expanded** to comprehensive reference covering project structure, data flow, domain organization, type system, Zod validation, CLI commands, wizard components, test infrastructure, utility patterns, and conventions.
-- **`docs/index.md` updated** with bibles section and UX research section.
-
-### Removed
-
-- **21 outdated documentation files removed** — Completed migration plans (Commander.js→oclif), implemented feature plans (skill-id normalization, Phase 7 wizard redesign, init refactor), superseded research (integration testing, oclif ecosystem evaluation, CLI improvements), and resolved UX research. `cli-command-testing-plan.md` also removed (all tests implemented). Bibles and active UX research retained.
+[-> Full release notes](./changelogs/0.24.5.md)
 
 ## [0.24.4] - 2026-02-11
 
-### Changed
+**Library restructured into domain subdirectories**
 
-- **`lib/` restructured into domain subdirectories** — 62 files moved from flat `lib/` into 8 domain-organized subdirectories: `configuration/`, `loading/`, `matrix/`, `plugins/`, `skills/`, `agents/`, `stacks/`, `installation/`. Each domain has a barrel `index.ts` for clean imports. Cross-cutting files (`compiler`, `resolver`, `schemas`, etc.) remain at `lib/` root. ~140 import paths updated across commands, components, hooks, and tests.
+62 files moved from flat `lib/` into 8 domain-organized subdirectories with barrel imports.
+
+[-> Full release notes](./changelogs/0.24.4.md)
 
 ## [0.24.3] - 2026-02-11
 
-### Changed
+**AJV replaced with Zod, JSON schemas generated from Zod**
 
-- **AJV replaced with Zod for all schema validation** — `schema-validator.ts` and `plugin-validator.ts` rewritten to use Zod `.safeParse()`. AJV and ajv-formats dependencies removed (23 packages pruned). Strict validation schemas added for `cc validate`: `metadataValidationSchema`, `stackConfigValidationSchema`, `skillFrontmatterValidationSchema`, `agentFrontmatterValidationSchema`.
-- **JSON Schema files now generated from Zod** — `scripts/generate-json-schemas.ts` uses `z.toJSONSchema()` (Zod v4 native) to generate 10 schema files from Zod source of truth. Hand-maintained JSON schemas and symlinks to claude-subagents removed. New npm scripts: `generate:schemas`, `generate:schemas:check`.
-- **YAML `$schema` references use local relative paths** — All 18 `agent.yaml` files switched from remote `raw.githubusercontent.com` URLs to `# yaml-language-server: $schema=` comments with relative paths. Schema reference added to `config/skills-matrix.yaml`. VS Code YAML validation now works offline.
+Schema validation rewritten to Zod, JSON schemas generated natively, YAML references use local paths.
+
+[-> Full release notes](./changelogs/0.24.3.md)
 
 ## [0.24.2] - 2026-02-11
 
-### Changed
+**Type definitions co-located**
 
-- **Type definitions co-located into `src/cli/types/`** — 4 scattered type files (`src/types.ts`, `src/cli/types.ts`, `src/cli/types-matrix.ts`, `src/cli/types-stacks.ts`) consolidated into 6 domain-organized files + barrel index under `src/cli/types/`. All 60+ consumer imports updated. Unused imports cleaned up.
+4 scattered type files consolidated into 6 domain-organized files under `src/cli/types/`.
+
+[-> Full release notes](./changelogs/0.24.2.md)
 
 ## [0.24.1] - 2026-02-11
 
-### Fixed
+**Stack config respects customizations, parse boundaries hardened**
 
-- **Stack config now respects user customizations** — `buildLocalConfig` generates stack config from the user's actual skill selections instead of hardcoding the original stack definition. Customizations like swapping `commander` for `oclif` are now preserved.
-- **Subcategory key `cli` corrected to `cli-framework`** in `stacks.yaml` to match the `CategoryPath` format used in production metadata files.
-- **Parse boundaries hardened** — All YAML/JSON parse boundaries now warn or throw with context on failure: `parseFrontmatter` includes file path in warnings, `loadAllAgents`/`loadProjectAgents` catch and warn on invalid `agent.yaml`, `config-saver` uses Zod validation, `versioning` wraps `parseYaml` in try/catch, `matrix-loader` warns on invalid skill alias mappings.
+Stack config uses user selections, parse boundaries warn on failure, 17 new unit test files.
 
-### Changed
-
-- **Test structure reorganized** — Component tests co-located with source files. Integration tests grouped in `lib/__tests__/integration/`. Compilation pipeline tests rewritten to use `createTestSource()` instead of external repo dependency.
-- **Shared test factories added** — `createMockCategory()`, `createMockResolvedStack()`, `createComprehensiveMatrix()`, `createBasicMatrix()` in `helpers.ts` reduce ~300 lines of duplicate fixture code.
-- **17 previously untested lib files now have unit tests** — compiler, matrix-loader, stacks-loader, defaults-loader, config-saver, skill-plugin-compiler, plugin-info, plugin-finder, plugin-version, output-validator, schema-validator, installation, skill-fetcher, agent-fetcher, skill-metadata, matrix-health-check, stack-installer.
-- **Error path and user journey test coverage expanded** — 12 error path tests for loader functions, 8 edit-recompile journey tests, 17 install-compile journey tests.
+[-> Full release notes](./changelogs/0.24.1.md)
 
 ## [0.24.0] - 2026-02-11
 
-### Changed
+**Type system rewrite and dead code removal**
 
-- **Type system rewrite** — All `interface` declarations replaced with `type` aliases. `Skill` now extends `SkillDefinition` via intersection. Agent types composed from `BaseAgentFields` shared base. Inline `//` comments converted to JSDoc on type fields.
-- **`SkillAlias` renamed to `SkillDisplayName`** — `ResolvedSkill.alias` → `displayName`, `CategoryDefinition.name` → `displayName`. `SkillRef` union eliminated — all post-resolution sites use `SkillId` directly.
-- **`stack` is the single source of truth for skill assignment** — `skills` flat list, `agent_skills` per-agent overrides, and `preload_patterns` removed from `ProjectConfig`. When no predefined stack is selected, a stack is auto-generated from wizard selections.
-- **Config always uses `SkillAssignment` objects** — `SkillEntry` union (`string | SkillAssignment`) eliminated. Config YAML `skills` entries are always `{ id }` objects.
-- **`ProjectConfig.agents` narrowed** from `string[]` to `AgentName[]`. `getAgentsForSkill()` return type narrowed to `AgentName[]`.
-- **Remaining `Object.entries`/`Object.keys` replaced** with `typedEntries`/`typedKeys` across all files. `Record<string, X>` narrowed to `Record<SkillId|AgentName|Subcategory, X>` where keys are known.
-- **`loadProjectConfig` renamed** to `loadProjectSourceConfig` in `config.ts` to disambiguate from `project-config.ts` version.
-- **Format functions consolidated** — `formatSourceOrigin`/`formatAgentsSourceOrigin` merged into `formatOrigin(type, origin)`.
-- **`KEY_SUBCATEGORIES` deduplicated** — moved from `resolver.ts` and `stacks-loader.ts` into `consts.ts`.
+All interfaces replaced with type aliases, stack as single source of truth, ~2,100 lines of dead code removed.
 
-### Removed
-
-- **`name` field** from `SkillDefinition`, `Skill`, `ResolvedSkill`, `SkillOption` — `displayName` (formerly alias) replaces it. `extractDisplayName()` removed from `loader.ts`.
-- **`custom_agents` infrastructure** — `custom-agent-resolver.ts` deleted entirely. `CustomAgentConfig` type, validation, resolution, and compilation code paths removed.
-- **`agent_skills` config mechanism** — redundant with `stack`. All read/write/validation paths removed.
-- **`preload_patterns` config field** — redundant with `SkillAssignment.preloaded`.
-- **Dead `ProjectConfig` fields** — `philosophy`, `principles`, `tags`, `framework`, `hooks`.
-- **Dead `SkillFrontmatter` fields** — `agent`, `argument-hint`, `context`, `disable-model-invocation`, `user-invocable`, `allowed-tools`.
-- **Dead `PluginManifest` fields** — `homepage`, `license`, `repository`, `mcpServers`.
-- **`ResolvedSkill.recommendedBy` and `requiredBy`** — unused inverse relationship fields.
-- **`MarketplaceFetchResult.cacheKey`** — set but never read.
-- **`CompileConfig.claude_md`** — always empty string.
-- **`CompileMode` type and `getDirs()` function** — single-value enum.
-- **`LoadedProjectConfig.isLegacy`** — always `false`.
-- **`AgentYamlConfig.skills`** — parsed but never read.
-- **Dead `skill-agent-mappings.ts` code** — ~170 lines of hardcoded fallbacks, `shouldPreloadSkill`, `extractCategoryKey`, `hasAgentSkillsOverride`, `isSkillAssignedToAgent`, `normalizeAgentSkills`, `resolveAgentsForSkill`.
-- **Dead `resolver.ts` functions** — `resolveStackSkills`, `getStackSkillIds`, `flattenAgentSkills`, `expandSkillIdIfDirectory`, `normalizeSkillEntry`, unused interfaces.
-- **Unused `compileAllAgents()` `_config` parameter**.
-- **Dead wizard store actions/state** — `setDomainSelection`, `setSkillSource`, `setCurrentRefineIndex`, `setCurrentDomainIndex`, `toggleShowDescriptions`, `setFocus`, `currentRefineIndex`, `skillSources`.
-- **Dead wizard component code** — `shouldShowSubcategory()` (always true), unused props, redundant computations.
-- **~2,100 lines of redundant test code** for deleted features.
+[-> Full release notes](./changelogs/0.24.0.md)
 
 ## [0.23.0] - 2026-02-10
 
-### Added
+**Zod runtime validation, typed utilities, and Remeda**
 
-- **Zod runtime validation at all parse boundaries** — 30+ schemas in `schemas.ts` using bridge pattern (`z.ZodType<ExistingType>`) validate every `JSON.parse` and `parseYaml` call in production code. Eliminates all production `as T` casts at deserialization boundaries. Lenient loader schemas use `.passthrough()` at parse boundaries; strict schemas for validation.
-- **Typed object utilities** — `typedEntries<K,V>()` and `typedKeys<K>()` in `typed-object.ts` replace all `Object.entries/keys` boundary casts with type-safe helpers.
-- **Named type aliases** — `SkillRef`, `SubcategorySelections`, `DomainSelections`, `CategoryMap`, `ResolvedSubcategorySkills` in `types-matrix.ts` for recurring composite types.
-- **Scalar union types** — `ModelName` (`"sonnet" | "opus" | "haiku" | "inherit"`) and `PermissionMode` unions added to `types-matrix.ts`.
-- **Testing strategy document** — `testing-strategy.md` with conventions for test categories, co-location rules, Ink component testing, keyboard simulation timing, and fixture organization.
+30+ Zod schemas at parse boundaries, typed object utilities, Remeda array operations, named type aliases.
 
-### Changed
-
-- **Extended type narrowing across 33 library files** — `Record<string, X>` narrowed to `Record<AgentName|SkillId|Subcategory, X>` where keys are known. Function signatures narrowed for `compileAgent`, `compileAgentForPlugin`, `getPluginSkillIds`, `fetchSkills`, `buildStackProperty`, `buildAgentSkills`, `validateBuildStep`, `populateFromStack`. Return types narrowed for `CompiledStackPlugin`, `StackInstallResult`, `RecompileAgentsResult`.
-- **Replaced manual array operations with Remeda utilities** — `unique()`, `uniqueBy()`, `countBy()`, `sumBy()`, `sortBy()`, `indexBy()`, `mapToObj()`, `pipe()`, `flatMap()`, `filter()`, `mapValues()`, `difference()`, `groupBy()` across 20+ files.
-- **`types.ts` interface fields narrowed** — `SkillDefinition.canonicalId` to `SkillId`, `AgentDefinition`/`AgentConfig` model/permission fields to `ModelName`/`PermissionMode`, `ProjectConfig.stack` to `ResolvedSubcategorySkills`. Inline `//` comments converted to JSDoc.
-- **Wizard components and store narrowed** — Store selections use `DomainSelections`/`SubcategorySelections`, components use `typedEntries`/`typedKeys`.
-
-### Dependencies
-
-- Added `zod` v4.3.6 — runtime schema validation
-- Added `remeda` v2.33.6 — tree-shakeable TypeScript-first utility functions
+[-> Full release notes](./changelogs/0.23.0.md)
 
 ## [0.22.0] - 2026-02-09
 
-### Changed
+**Union types for IDs, categories, agents, and domains**
 
-- **Union types for skill IDs, categories, agents, and domains** - Added `SkillId`, `CategoryPath`, `SkillAlias`, `AgentName`, `Domain`, `Subcategory` template literal and union types to `types-matrix.ts` as the single source of truth. All interface fields and function parameters across the codebase now use strict union types instead of `string`.
-- **Narrowed production function signatures** - 27 production files updated: `matrix-resolver`, `skill-agent-mappings`, `resolver`, `wizard-store`, `step-build`, `category-grid`, and others. Type assertions (`as SkillId`, etc.) used only at data entry boundaries (YAML parsing, CLI input, `Object.keys()`).
-- **Normalized skill ID format enforced at compile time** - `SkillId` = `` `${SkillIdPrefix}-${string}` `` prevents old-format IDs like `"react (@vince)"` at the type level. All test files updated to use `domain-subcategory-name` format.
-- **Removed test constants** - `TEST_SKILLS`, `TEST_CATEGORIES`, `PLACEHOLDER_SKILLS`, `TEST_AUTHOR` removed from test helpers — union types provide compile-time safety, making string constants redundant.
-- **`CategoryDefinition.id`** narrowed from `string` to `Subcategory`.
-- **`SkillEntry`** narrowed from `string | SkillAssignment` to `SkillId | SkillAssignment`.
+Strict union types replace `string` across the codebase. Normalized skill ID format enforced at compile time.
+
+[-> Full release notes](./changelogs/0.22.0.md)
 
 ## [0.21.0] - 2026-02-09
 
-### Changed
+**Removed refine step, added web-extras domain**
 
-- **Removed refine wizard step** - The 5-step wizard flow (approach → stack → build → refine → confirm) is now 4 steps (approach → stack → build → confirm). The refine step for skill source selection has been removed; `refineAction` state and `setRefineAction` action removed from wizard store.
-- **Build step layout** - Domain tabs header shows all selected domains with active domain highlighted; legend row simplified from positioned overlay to inline flex layout.
+Wizard simplified to 4 steps. 8 categories split into `web-extras` domain with parent domain inheritance.
 
-### Added
-
-- **`web-extras` domain** - 8 categories (error-handling, file-upload, files, utilities, realtime, animation, pwa, accessibility) split from `web` into a new `web-extras` domain to reduce vertical height in the build view.
-- **`parent_domain` field** on `CategoryDefinition` - Sub-domains inherit framework-first filtering from their parent domain (e.g., `web-extras` respects `web`'s framework selection).
-- **`parentDomainSelections` prop** on `StepBuild` - Passes parent domain selections for framework compatibility filtering in sub-domains.
+[-> Full release notes](./changelogs/0.21.0.md)
 
 ## [0.20.0] - 2026-02-07
 
-### Changed
+**Removed StackConfig type and global config layer**
 
-- **Removed `StackConfig` type** - All consumers (compile, agent-recompiler, resolver, stack-plugin-compiler, loader) now operate directly on `ProjectConfig`. The `StackConfig` interface, `loadStack()`, `loadStackSkills()`, `projectConfigToStackLike()`, `resolveAgentSkills()`, and related conversion helpers have been removed.
-- **Removed global config layer** - The `~/.claude-collective/config.yaml` global config is no longer supported. Config resolution simplifies from `flag > env > project > global > default` to `flag > env > project > default`. The `config:set` and `config:unset` commands (which wrote to global config) have been deleted.
-- **Removed legacy StackConfig detection** - `isLegacyStackConfig()`, `normalizeStackConfig()`, and the legacy format migration branch in `loadProjectConfig()` have been removed. `ProjectConfig` is the only supported format.
-- **Removed StackConfig-based generator functions** - `generateConfigFromSkills`, `generateConfigFromStack`, `mergeStackWithSkills`, and `generateProjectConfigFromStack` removed from config-generator.
-- **Removed `suggested_stacks` from skills matrix** - The field on `SkillsMatrixConfig` and the alias-resolution logic in `resolveSuggestedStacks()` have been removed; stacks are defined in `stacks.yaml`.
-- **Removed deprecated frontmatter field warnings** - `category`, `author`, and `version` warnings in skill frontmatter validation removed (metadata comes from `metadata.yaml`).
-- **Removed deprecated skill extraction functions** - `extractSkillName`, `extractCategory`, `extractAuthor` stubs removed from skill-plugin-compiler.
-- **Removed deprecated `skills` field from `AgentDefinition`** - Skills come from stacks, not agent definitions.
+All consumers operate directly on ProjectConfig. Global config and related commands deleted.
 
-### Removed
-
-- **`config:set` command** - Wrote to removed global config.
-- **`config:unset` command** - Wrote to removed global config.
-- **`test-imports` command** - Hidden debug command no longer needed.
-- **`GlobalConfig` type and helpers** - `loadGlobalConfig`, `saveGlobalConfig`, `getGlobalConfigPath`, `getGlobalConfigDir`.
-- **`"global"` source origin** - Removed from `sourceOrigin` and `AgentsSourceOrigin` union types.
+[-> Full release notes](./changelogs/0.20.0.md)
 
 ## [0.19.0] - 2026-02-07
 
-### Changed
+**Removed top-level categories, aligned agent mappings with domains**
 
-- **Removed top-level categories from skills matrix** - Top-level categories (`frontend`, `backend`, `setup`, `cli`, `mobile`, `reviewing`, `methodology`, `research`, `shared`, `local`) and the `parent` field on subcategories have been removed. The wizard already operated entirely on the `domain` field; the top-level layer added no value.
-- **Aligned agent mapping patterns with domains** - Category path patterns in skill-agent-mappings renamed: `frontend/*` → `web/*`, `backend/*` → `api/*`, `setup/*` → `infra/*`. YAML defaults and marketplace generator updated to match.
-- **Renamed `frontend/realtime` to `realtime`** - Composite subcategory ID simplified to match the `^[a-z][a-z0-9-]*$` schema pattern.
-- **Stacks alias renamed** - `backend-testing` → `api-testing` in stacks.yaml.
+Flattened skills matrix to domain-based organization. Agent mapping patterns renamed to match domains.
 
-### Added
-
-- **New web categories** - `animation`, `pwa`, `accessibility`, `web-performance` for skills previously bucketed under the removed `frontend` top-level.
-- **New shared categories** - `methodology`, `research`, `reviewing`, `ci-cd` for meta and infrastructure skills.
-
-### Removed
-
-- **`parent` field** from `CategoryDefinition` type and JSON schema.
-- **`getSubcategories()` and `getTopLevelCategories()`** from matrix-resolver (unused in production code).
+[-> Full release notes](./changelogs/0.19.0.md)
 
 ## [0.18.0] - 2026-02-07
 
-### Added
+**Matrix health check and type consolidation**
 
-- **Matrix health check** - New `matrix-health-check` module validates referential integrity of the merged skills matrix at load time, surfacing ghost skill IDs, missing domains, unknown categories, and dangling stack references
-- **Diagnostic logging for alias resolution** - `resolveToCanonicalId` in matrix-loader now accepts a context parameter for verbose-level messages when an ID can't be resolved
-- **Logger `warn()` function** - Always-visible warnings (not gated by verbose mode) for issues like unresolved aliases and missing skill categories
-- **Expanded matrix categories** - Top-level categories (methodology, research, shared, local) and new subcategories: error-handling, i18n, file-upload, files, utilities, frontend/realtime, performance, security
-- **New skill aliases** - `tailwind` → `web-styling-tailwind`, `mobx` → `web-state-mobx`, updated `oclif` → `cli-framework-oclif-ink`
+Referential integrity validation, dead type removal, shared utilities extraction, matrix alias cleanup.
 
-### Changed
-
-- **Dead types removed** - Removed unused types from `types.ts` (`SkillsConfig`, `RegistryConfig`, `AgentsConfig`, `AgentSkillEntry`, `SkillYamlConfig`, `Config`, `PluginCompileOptions`) and `types-matrix.ts` (`WizardState`)
-- **Type disambiguations** - `ProjectConfig` → `ProjectSourceConfig` in config.ts, `SkillPluginOptions`/`StackPluginOptions` → `SkillManifestOptions`/`StackManifestOptions` in plugin-manifest.ts, `ForkedFromMetadata` → `ImportedForkedFromMetadata` in import command, `ValidationResult` → `BuildStepValidation` in step-build
-- **Shared `extractFrontmatter` utility** - Deduplicated three identical copies (output-validator, plugin-validator, schema-validator) into `src/cli/utils/frontmatter.ts`
-- **Shared wizard utilities** - Extracted `getDomainDisplayName` and `getStackName` from wizard.tsx and step-build.tsx into `wizard/utils.ts`
-- **Consolidated `injectForkedFromMetadata`** - Moved from skill-copier.ts and update.tsx into skill-metadata.ts as single source of truth
-- **`parseFrontmatter` import** - skill-plugin-compiler.ts now imports from loader.ts instead of defining its own copy
-- **`LocalResolvedSkill` type** - Extracted named type in local-installer.ts replacing repeated inline object types
-- **Deprecated `WizardResult` removed** - Wizard `onComplete` callback now accepts only `WizardResultV2`
-- **`OutputValidationResult` replaced** - Uses `ValidationResult` from types.ts instead of local duplicate
-- **Matrix alias cleanup** - Removed references to skills not yet created (yargs, clack, inquirer, ink, svelte) from conflicts, alternatives, recommends, and requires
+[-> Full release notes](./changelogs/0.18.0.md)
 
 ## [0.17.0] - 2026-02-07
 
-### Added
+**Local skill badge and module extraction**
 
-- **Local skill badge in wizard** - Skill tags in the CategoryGrid now show a gray `[L]` badge when the skill has a local override in `.claude/skills/`
+Local skill `[L]` badge in wizard, extracted config-merger, local-installer, and skill resolution improvements.
 
-### Changed
-
-- **Extract config-merger module** - Config merging logic (identity fields, skills/agents union, stack deep-merge) extracted from `init.tsx` into dedicated `lib/config-merger.ts` with comprehensive tests
-- **Extract local-installer module** - Local installation orchestration (skill copying, config generation, agent compilation) extracted from `init.tsx` into `lib/local-installer.ts`, reducing the command to a thin orchestrator
-- **Deduplicate getCurrentDate** - Removed duplicate `getCurrentDate()` definitions from `import/skill.ts`, `update.tsx`, and `skill-copier.ts` in favor of the canonical export from `lib/versioning.ts`
-- **Graceful missing skill resolution** - `resolveSkillReference` now returns `null` and logs a verbose message instead of throwing when a skill is not found; callers skip missing skills gracefully
-- **Remove synthetic local categories** - Stop injecting fake `local` and `local/custom` category definitions into the skills matrix; local skills use their declared or inherited category
-
-### Fixed
-
-- **Wizard skill count mismatch** - Confirm step now uses `getAllSelectedTechnologies()` instead of `getSelectedSkills()` so the count matches the actual technologies shown
-- **Wizard option tracking** - Build step uses `skill.id` instead of alias for `CategoryOption.id` so selection tracking stays consistent
-- **Multi-skill category pre-population** - Stack pre-population now uses per-skill pseudo-agents so categories with multiple skills (e.g. testing: vitest + playwright-e2e) are all preserved instead of the second overwriting the first
+[-> Full release notes](./changelogs/0.17.0.md)
 
 ## [0.16.0] - 2026-02-07
 
-### Changed
+**Simplified wizard flow and styling updates**
 
-- **Wizard flow simplified** - Removed the intermediate "stack-options" step; selecting a stack now goes directly to the build step with pre-populated technology selections. Flow is now: approach -> stack -> build -> refine -> confirm
-- **ViewTitle component** - Simplified API from `title` string prop to `children` for flexible composition
-- **Build step header** - Replaced domain tab header with ViewTitle showing "Customise your {Domain} stack"
-- **Build step legend** - Simplified color legend from background-colored badges to plain colored text
-- **CategoryGrid styling** - Skill tags now use border-based styling instead of background colors; removed section header underlines
+Removed stack-options step, simplified ViewTitle API, border-based skill tag styling.
 
-### Added
-
-- **Accept defaults shortcut** - Press `A` during build step (stack path only) to skip customization and continue with stack defaults
-- **All-domain cycling** - Stack selection now includes all five domains (web, api, cli, mobile, shared) in the build step, even if the stack only covers some
-
-### Fixed
-
-- **Local skill category preservation** - When a local skill overwrites a remote skill, the remote skill's domain-based category is now preserved instead of falling back to "local/custom"
-
-### Removed
-
-- **StepStackOptions component** - Eliminated intermediate step between stack selection and technology customization
+[-> Full release notes](./changelogs/0.16.0.md)
 
 ## [0.15.0] - 2026-02-07
 
-### Added
+**Custom navigation components and global shortcuts**
 
-- **MenuItem component** - Reusable chevron + label menu item with focused/active states for wizard navigation
-- **ViewTitle component** - Yellow-background title banner for consistent wizard step headings
-- **Global keyboard shortcuts** - `E` toggles expert mode, `P` toggles plugin/local install mode, `D` toggles descriptions (on build step) - available from any wizard step
+MenuItem and ViewTitle components, global keyboard shortcuts for mode toggles.
 
-### Changed
-
-- **Step Approach** - Replaced Select dropdown with custom card-based navigation using arrow keys and Enter
-- **Step Stack** - Replaced Select dropdown with card-based stack selection; Escape for back navigation; focus starts at first stack
-- **Mode toggles** - Expert mode and install mode moved from per-step menu options to persistent global shortcuts shown in layout footer
-- **Build step legend** - Repositioned color legend (active/recommended/discouraged/disabled) above category grid
-
-### Removed
-
-- **Inline keyboard hints** - Removed per-step keyboard hint text (global footer already provides this)
-- **CategoryGrid header/legend** - Moved toggle indicators and legend out of CategoryGrid to parent components
+[-> Full release notes](./changelogs/0.15.0.md)
 
 ## [0.14.1] - 2026-02-07
 
-### Changed
+**Library extraction: skill-metadata, config-saver, plugin-manifest-finder**
 
-- **Extract skill-metadata library** - Deduplicated `readForkedFromMetadata`, `getLocalSkillsWithMetadata`, `computeSourceHash`, and `compareSkills` into shared `lib/skill-metadata.ts`, removing ~254 lines from `update.tsx`, `outdated.ts`, and `diff.ts`
-- **Extract config-saver library** - Deduplicated `saveSourceToProjectConfig` into shared `lib/config-saver.ts`, removing duplication from `init.tsx` and `eject.ts`
-- **Extract plugin-manifest-finder library** - Deduplicated `findPluginManifest` into shared `lib/plugin-manifest-finder.ts`, removing duplication from 4 `version/*` command files
+Deduplicated shared logic into 3 new library modules.
 
-### Removed
-
-- **Unused step-build props** - Removed `currentDomainIndex` prop, dead code from SectionProgress removal (unused imports, constants, functions)
+[-> Full release notes](./changelogs/0.14.1.md)
 
 ## [0.14.0] - 2026-02-07
 
-### Changed
+**WizardLayout, redesigned tabs and footer, ASCII banner**
 
-- **WizardLayout component** - Extracted layout wrapper that renders WizardTabs (header), children, and WizardFooter consistently across all wizard steps
-- **Wizard tabs** - Simplified to text-only styling (cyan current, dimmed skipped) with horizontal border lines; renamed "Approach" step to "Intro"; version displayed in tab bar
-- **Build step header** - Redesigned with domain tab navigation and inline toggle indicators for descriptions and expert mode
-- **Wizard footer** - Unified keyboard shortcut hints (navigate, select, continue, back, export) displayed on all steps, replacing per-step footer strings
+Extracted WizardLayout component, unified footer, ASCII art banner, Prettier config.
 
-### Added
-
-- **ASCII art banner** - Init command displays stylized banner on startup
-- **Prettier config** - Added `prettier.config.mjs` for consistent code formatting (printWidth 100)
-
-### Removed
-
-- **Old WizardFooter component** (`wizard-footer.tsx`) - Replaced by centralized footer in WizardLayout
-- **SectionProgress in build step** - Domain progress replaced by domain tab navigation in header
-
-### Fixed
-
-- **Version display** - Fixed broken `import { config } from "process"` (Node's build config, not CLI version); version now prop-drilled from oclif `this.config.version`
+[-> Full release notes](./changelogs/0.14.0.md)
 
 ## [0.13.4] - 2026-02-06
 
-### Fixed
+**Fix local skills losing category metadata**
 
-- **local skills lose category metadata** - Local skills from `.claude/skills/` were hardcoded to `category: "local/custom"`, destroying their original category (e.g., `"framework"`, `"styling"`). This broke framework pre-selection in the wizard's Build step and domain filtering. Now preserves the original category from `metadata.yaml` when it matches a matrix category, and carries forward aliases and relationships from source skills.
+Local skills now preserve original category from metadata.yaml instead of hardcoding "local/custom".
+
+[-> Full release notes](./changelogs/0.13.4.md)
 
 ## [0.13.3] - 2026-02-06
 
-### Fixed
+**Fix local config and agent_skills normalization**
 
-- **local config not found during recompile** - `recompileAgents` only looked for config in the plugin directory, missing local mode configs in the project directory. now falls back to project directory when plugin dir has no config
-- **agent_skills normalization** - `agent_skills` from project config was passed to the compiler without normalizing mixed formats (string arrays vs object maps), causing compilation failures
+Fixed recompile config lookup fallback and agent_skills mixed format normalization.
+
+[-> Full release notes](./changelogs/0.13.3.md)
 
 ## [0.13.2] - 2026-02-06
 
-### Fixed
+**Fix npx eject missing agent partials**
 
-- **npx eject missing agent partials** - `src/agents/` directory was not included in the published npm package, causing `eject all` and `eject agent-partials` to warn "No agent partials found" and skip agent ejection
+Added `src/agents/` to published npm package.
+
+[-> Full release notes](./changelogs/0.13.2.md)
 
 ## [0.13.1] - 2026-02-06
 
-### Fixed
+**Fix npx eject ENOENT and build config**
 
-- **npx eject fails with ENOENT** - `config/` directory (skills-matrix.yaml, stacks.yaml) was missing from the published npm package, causing `npx @claude-collective/cli eject all` to fail
-- **Build copies config to dist** - `config/` is now copied to `dist/config/` during build for correct runtime path resolution
-- **Test suite portability** - Integration tests that depend on the external claude-subagents repo are now gated behind `CC_TEST_SKILLS_SOURCE` env var
-- **macOS temp path mismatch** - Fixed `/private/var` vs `/var` symlink issue in installation test
-- **Pre-commit hook** - Changed `bun test` to `bun run test` to use vitest instead of bun's built-in test runner
+Added `config/` to published package, fixed build to copy config to dist, test portability improvements.
+
+[-> Full release notes](./changelogs/0.13.1.md)
 
 ## [0.13.0] - 2026-02-06
 
-### Added
+**Import command, interactive search, framework-first build**
 
-- **Import skill command** (`cc import skill`) - Import skills from GitHub repos with `--list`, `--skill`, `--all`, `--force`, `--dry-run` options
-- **Interactive skill search** (`cc search -i`) - Live filtering, multi-select, batch import from configured sources
-- **Sources config** - Configure multiple skill registries in `config.yaml` with `sources` array
-- **Wizard footer component** - Split-layout footer with navigation hints on left, actions on right
-- **Framework-first build flow** - Web domain hides other categories until framework is selected
+Import skills from GitHub, interactive skill search with multi-select, framework-first wizard flow.
 
-### Changed
-
-- **Wizard tabs** - Tab-style navigation with background colors (cyan active, white completed) instead of circle indicators
-- **Wizard header** - Now displays CLI version
-- **Category grid styling** - Background colors instead of circles/strikethrough for selection states
-- **Agent definitions generalized** - 16 agents updated to use generic terms (styling, database) instead of specific tech (SCSS, Drizzle)
-
-### Removed
-
-- Old `search.ts` command - Replaced with dual-mode `search.tsx` (static + interactive)
-
-[0.21.0]: https://github.com/claude-collective/cli/releases/tag/v0.21.0
-[0.20.0]: https://github.com/claude-collective/cli/releases/tag/v0.20.0
-[0.19.0]: https://github.com/claude-collective/cli/releases/tag/v0.19.0
-[0.18.0]: https://github.com/claude-collective/cli/releases/tag/v0.18.0
-[0.17.0]: https://github.com/claude-collective/cli/releases/tag/v0.17.0
-[0.16.0]: https://github.com/claude-collective/cli/releases/tag/v0.16.0
-[0.15.0]: https://github.com/claude-collective/cli/releases/tag/v0.15.0
-[0.14.1]: https://github.com/claude-collective/cli/releases/tag/v0.14.1
-[0.14.0]: https://github.com/claude-collective/cli/releases/tag/v0.14.0
-[0.13.4]: https://github.com/claude-collective/cli/releases/tag/v0.13.4
-[0.13.3]: https://github.com/claude-collective/cli/releases/tag/v0.13.3
-[0.13.2]: https://github.com/claude-collective/cli/releases/tag/v0.13.2
-[0.13.1]: https://github.com/claude-collective/cli/releases/tag/v0.13.1
-[0.13.0]: https://github.com/claude-collective/cli/releases/tag/v0.13.0
+[-> Full release notes](./changelogs/0.13.0.md)
 
 ## [0.12.0] - 2026-02-04
 
-### Added
+**Agent Compliance Bible and Claude Code research**
 
-- **Agent Compliance Bible** - 30-test compliance suite in `docs/bibles/AGENT-COMPLIANCE-BIBLE.md` for verifying agent alignment with PROMPT_BIBLE and architecture standards
-- **Claude Code Research** - Documentation of 176 Claude Code updates (Oct 2025 - Jan 2026) covering subagents, hooks, plugins, and async execution patterns
-- **cli-tester examples** - Example test output for CLI component testing
+30-test compliance suite, 176 Claude Code updates documented, agent partials conciseness pass.
 
-### Changed
-
-- **Agent partials improved** - Major conciseness pass on 15+ examples.md files, removed ~800 lines of filler, N/A sections, and verbose examples
-- **Workflow quality** - Standardized workflows across all agents, removed time estimates, improved clarity
-- **Bible index updated** - Fixed paths from `src/docs/` to `docs/bibles/`, corrected agent naming conventions
-
-[0.12.0]: https://github.com/claude-collective/cli/releases/tag/v0.12.0
+[-> Full release notes](./changelogs/0.12.0.md)
 
 ## [0.11.0] - 2026-02-04
 
-### Breaking Changes
+**CLI source directory rename and Bible documentation**
 
-- **CLI source directory renamed** - `src/cli-v2/` renamed to `src/cli/`. The v2 suffix was removed as this is now the primary CLI implementation.
+`src/cli-v2/` renamed to `src/cli/`, comprehensive documentation standards added.
 
-### Added
-
-- **Bible documentation** - Added comprehensive documentation standards in `docs/bibles/`:
-  - `CLAUDE_ARCHITECTURE_BIBLE.md` - System architecture and agent structure
-  - `PROMPT_BIBLE.md` - Prompt engineering techniques
-  - `DOCUMENTATION_BIBLE.md` - Documentation standards
-  - `FRONTEND_BIBLE.md` - Frontend development standards
-  - `SKILL-ATOMICITY-BIBLE.md` - Skill design principles
-  - `INDEX.md` - Bible index and reference guide
-- **Missing command documentation** - Added docs for: `doctor`, `search`, `outdated`, `info`, `diff`, `update`, `new skill`, `new agent`, and all config/version subcommands
-- **skills-matrix.yaml schema documentation** - Full schema with categories, relationships, and skill aliases documented in `data-models.md`
-
-### Changed
-
-- **Agents genericized** - Developer agents no longer reference specific technologies (SCSS, Drizzle, Commander.js, etc.). Skills provide implementation details.
-- **Agent references fixed** - Updated all agent references to use correct names: `frontend-*` → `web-*`, `backend-*` → `api-*`, `tester` → `web-tester`/`cli-tester`
-- **Documentation paths fixed** - Fixed skill paths from `src/skills/` to `.claude/skills/`, Bible paths to `docs/bibles/`
-- **cc eject options corrected** - Changed from `templates/config/agents` to `agent-partials/skills/all`
-- **README install paths fixed** - Changed `~/.claude/` to `./.claude/` (relative to project)
-- **Command naming convention** - Updated docs to use space-separated format (`build plugins`) instead of colon notation (`build:plugins`)
-
-### Removed
-
-- **Deprecated documentation** - Deleted outdated files that referenced non-existent architecture:
-  - `docs/workflows.md` - Referenced non-existent `src/stacks/`
-  - `docs/stacks-as-visual-hierarchy.md` - Design proposal never implemented
-  - `docs/solution-a-migration-tasks.md` - Outdated migration document
-
-[0.11.0]: https://github.com/claude-collective/cli/releases/tag/v0.11.0
+[-> Full release notes](./changelogs/0.11.0.md)
 
 ## [0.10.0] - 2026-02-03
 
-### Breaking Changes
+**Directory structure: .claude-src/ and .claude/**
 
-- **Directory structure changed** - Source files now in `.claude-src/`, runtime output in `.claude/`. Config moved from `.claude/config.yaml` to `.claude-src/config.yaml`. Backward compatible reads from both locations.
-- **Uninstall removes directories** - `cc uninstall` now removes entire `.claude/` and `.claude-src/` directories. The `--keep-config` flag is removed.
+Source files in `.claude-src/`, runtime output in `.claude/`. Breaking change to directory layout.
 
-### Added
-
-- `CLAUDE_SRC_DIR` constant for `.claude-src/` directory
-- `loadProjectAgents()` function to load agents from `.claude-src/agents/`
-- `agentBaseDir` field on AgentDefinition/AgentConfig types
-- `marketplace` and `agents_source` fields on ProjectConfig type
-- Eject creates minimal `config.yaml` with example stack blueprint if it doesn't exist
-- Init merges with existing config instead of overwriting
-
-### Changed
-
-- Eject agent-partials go to `.claude-src/agents/` (was `.claude/agents/_partials/`)
-- Init writes config to `.claude-src/config.yaml`
-- Compiler checks `.claude-src/agents/_templates/` first for templates
-- Config readers check `.claude-src/` first, fall back to `.claude/`
-
-[0.10.0]: https://github.com/claude-collective/cli/releases/tag/v0.10.0
+[-> Full release notes](./changelogs/0.10.0.md)
 
 ## [0.9.0] - 2026-02-03
 
-### Breaking Changes
+**Config location change and eject simplification**
 
-- **Config location changed** - Project config now at `.claude/config.yaml` instead of `.claude-collective/config.yaml`. Global config is deprecated.
-- **Eject types simplified** - Old types `templates`, `config`, `agents` removed. Use `agent-partials`, `skills`, or `all`.
+Config moved to `.claude/config.yaml`, eject types simplified, wizard pre-population.
 
-### Added
-
-- `--refresh` flag for `cc eject` to force refresh cached remote sources
-- Source is saved to `.claude/config.yaml` when using `--source` flag
-- `resolveAuthor()` function for project-level author resolution
-- `populateFromStack()` wizard action to pre-populate domain selections
-
-### Fixed
-
-- **Compiled agents now include preloaded_skills** - Fixed bug where agents compiled by `cc init` had no skills in frontmatter
-- **Wizard "customize" option** - Now pre-populates with stack defaults instead of starting from scratch
-- **Source fetcher cache handling** - No longer errors when cache directory already exists
-
-### Changed
-
-- Eject loads skills from source marketplace instead of plugin directory
-- Global config functions deprecated in favor of project-level config
-
-[0.9.0]: https://github.com/claude-collective/cli/releases/tag/v0.9.0
+[-> Full release notes](./changelogs/0.9.0.md)
 
 ## [0.8.0] - 2026-02-02
 
-### Breaking Changes
+**Skill IDs normalized to kebab-case**
 
-- **Skill IDs normalized to kebab-case** - Skill IDs changed from path-based format with author suffix (e.g., `web/framework/react (@vince)`) to simple kebab-case (e.g., `web-framework-react`). Consumer configs and any code referencing old skill IDs must be updated.
+Breaking change from path-based IDs to simple kebab-case format. Meta-stack added.
 
-### Added
-
-- **Meta-stack** - New stack for meta-level development with 5 agents (skill-summoner, agent-summoner, documentor, pattern-scout, web-pattern-critique) mapped to methodology and research skills.
-
-### Changed
-
-- `skill_aliases` in skills-matrix.yaml now map to normalized kebab-case IDs
-- `DEFAULT_PRESELECTED_SKILLS` updated to use new ID format
-- Simplified `skill-copier.ts`, `skill-plugin-compiler.ts`, `marketplace-generator.ts` - removed path parsing logic
-
-### Removed
-
-- `normalizeSkillId()` function - no longer needed since frontmatter contains canonical IDs
-
-### Fixed
-
-- **Uninstall command terminal state** - Added proper `exit()` calls to restore terminal after confirmation
-
-[0.8.0]: https://github.com/claude-collective/cli/releases/tag/v0.8.0
+[-> Full release notes](./changelogs/0.8.0.md)
 
 ## [0.7.0] - 2026-02-02
 
-### Breaking Changes
+**Wizard flow redesign with domain-based grid selection**
 
-- **Wizard flow redesigned** - New 5-step flow: Approach → Stack → Build → Refine → Confirm. The old category → subcategory linear flow is replaced with domain-based grid selection.
+New 5-step flow with CategoryGrid, WizardTabs, domain-based navigation. Complete wizard rewrite.
 
-### Added
-
-- **Domain-based navigation** - Categories now have a `domain` field (web, api, cli, mobile, shared) for filtering in the Build step
-- **CategoryGrid component** - 2D grid selection with keyboard navigation (arrows, vim keys h/j/k/l), visual states (selected, recommended, discouraged, disabled)
-- **WizardTabs component** - Horizontal 5-step progress indicator with completed/current/pending/skipped states
-- **SectionProgress component** - Sub-step progress for multi-domain flows
-- **StepBuild component** - Grid-based technology selection per domain, replaces linear category/subcategory flow
-- **StepRefine component** - Skill source selection (verified skills, customize coming soon)
-- **StepStackOptions component** - Options after stack selection (continue defaults or customize)
-- **CLI domain support** - New `cli` category in skills-matrix with framework, prompts, testing subcategories
-- **Wizard store v2** - Complete rewrite with history-based navigation, domain selections, grid focus state
-
-### Changed
-
-- `wizard.tsx` - Complete rewrite as orchestrator for new 5-step flow
-- `step-approach.tsx` - Updated for v2 store
-- `step-stack.tsx` - Now dual-purpose: stack selection (stack path) or domain selection (scratch path)
-- `step-confirm.tsx` - Updated to show domain breakdown, technology/skill counts
-- `wizard-store.ts` - Migrated to v2 state shape with approach, selectedDomains, domainSelections, stackAction, focusedRow/Col
-
-### Removed
-
-- `step-category.tsx` - Replaced by StepBuild with CategoryGrid
-- `step-subcategory.tsx` - Replaced by StepBuild with CategoryGrid
-- `selection-header.tsx` - No longer needed
-
-### Fixed
-
-- **Skill resolution for stack defaults** - Selecting a stack with "Continue with defaults" now correctly includes all stack skills (was only including methodology skills)
-- **Display names in Build step** - Technologies now show clean names ("React") instead of full IDs ("React (@vince)")
-
-[0.7.0]: https://github.com/claude-collective/cli/releases/tag/v0.7.0
+[-> Full release notes](./changelogs/0.7.0.md)
 
 ## [0.6.0] - 2026-02-01
 
-### Breaking Changes
+**Skills defined in stacks, not agents**
 
-- **Skills now defined in stacks, not agents** - Previously, each agent YAML contained a `skills` field. Now, stacks define technology selections per agent in `config/stacks.yaml`. Skills are resolved via `skill_aliases` in the skills matrix. This fixes the bug where stacks got wrong skills (e.g., angular-stack getting React skills).
-- **stacks.yaml schema changed** - Agents are now objects with subcategory→technology mappings (e.g., `web-developer: { framework: react, styling: scss-modules }`) instead of simple string lists.
-- **Removed `skills` field from agent schema** - Agent YAMLs no longer contain skill definitions.
+Breaking change: stacks.yaml defines technology selections per agent. Skills resolved via matrix aliases.
 
-### Added
-
-- **`stack` property in consumer config.yaml** - When a stack is selected, the resolved agent→skill mappings are stored in the project config for reproducibility.
-- **`resolveAgentSkillsFromStack()`** - New function in resolver.ts to extract skills from stack configurations.
-- **`resolveStackSkillsFromAliases()`** - New function in stacks-loader.ts to resolve technology selections to skill IDs via the matrix.
-- **Phase 7 UX specification** - Comprehensive documentation for upcoming wizard UX redesign with domain-based navigation and grid-based skill selection.
-
-### Changed
-
-- `loadStackById()` now reads technology selections per agent from the new stacks.yaml format
-- `getAgentSkills()` now accepts optional `stack` and `skillAliases` parameters for Phase 7 skill resolution
-- `stackToResolvedStack()` extracts skills from stack configurations instead of agent YAMLs
-- Stack plugin compiler now extracts skills via matrix aliases
-
-### Removed
-
-- `skills` field from all 18 agent YAMLs - skills now come from stacks
-- `skills` property from agent.schema.json
-
-[0.6.0]: https://github.com/claude-collective/cli/releases/tag/v0.6.0
+[-> Full release notes](./changelogs/0.6.0.md)
 
 ## [0.5.1] - 2026-02-01
 
-### Added
+**Auto-detection of installation mode**
 
-- **Auto-detection of installation mode** - CLI now automatically detects whether you have a local (`.claude/`) or plugin (`.claude/plugins/claude-collective/`) installation. No more `--output` flag needed for local mode.
-- **`installMode` property in config.yaml** - new installations now store `installMode: local | plugin` explicitly in config
-- **`detectInstallation()` utility** - shared function for consistent installation detection across commands
-- **Local template support** - `compile` now uses templates from `.claude/templates/` if present (after running `eject templates`)
+CLI auto-detects local vs plugin installation. `installMode` stored in config.
 
-### Changed
-
-- `cc compile` - auto-detects local mode and outputs to `.claude/agents` without needing `--output` flag
-- `cc list` - now works for both local and plugin mode installations, shows mode in output
-- `cc edit` - now works with local mode installations
-- `nextjs-fullstack` stack - now includes all 18 agents (added `cli-tester` and `cli-migrator`)
-
-### Fixed
-
-- Local templates not being used after `eject templates` - compile now correctly checks for `.claude/templates/` before falling back to CLI bundled templates
-
-[0.5.1]: https://github.com/claude-collective/cli/releases/tag/v0.5.1
+[-> Full release notes](./changelogs/0.5.1.md)
 
 ## [0.5.0] - 2026-02-01
 
-### Breaking Changes
+**Agent-centric configuration**
 
-- **Agent-centric configuration** - skills are now defined in agent YAMLs instead of stack config files. Stacks are now simple agent groupings in `config/stacks.yaml`. This is a significant architectural change that simplifies configuration but requires migration for custom stacks.
+Breaking change: skills defined in agent YAMLs, centralized stacks.yaml.
 
-### Added
-
-- **Skills in agent YAMLs** - each agent now defines its own skills with a `preloaded` flag to control what's included in the agent prompt
-- **Centralized stacks.yaml** - all 7 stacks (nextjs-fullstack, angular, nuxt, remix, vue, solidjs, react-native) are now defined in `config/stacks.yaml` with agent lists and philosophy
-- **stacks-loader** - new module to load stacks from config/stacks.yaml
-- **resolveAgentSkills()** - function to extract skills from agent definitions
-
-### Changed
-
-- `loadStackById()` now loads from `config/stacks.yaml` (new format) instead of `src/stacks/*/config.yaml`
-- `getAgentSkills()` priority order: compile config > agent skills > stack-based (legacy)
-- `stackToResolvedStack()` now extracts skill IDs from agent definitions
-- `build:stack` command deprecated (shows warning and exits)
-
-### Removed
-
-- Stack config files (`src/stacks/*/config.yaml`) - skills now come from agent YAMLs
-- `suggested_stacks` section from `skills-matrix.yaml` - moved to `stacks.yaml`
-
-### Internal
-
-- Updated all 17 agent YAMLs with skills fields
-- Deprecated `skill-agent-mappings.ts` (kept for wizard fallback)
-- Updated tests to work with new stack format (passing Stack objects instead of writing config files)
-
-[0.5.0]: https://github.com/claude-collective/cli/releases/tag/v0.5.0
+[-> Full release notes](./changelogs/0.5.0.md)
 
 ## [0.4.0] - 2026-01-31
 
-### Added
+**Methodology skills preselected and comprehensive test suite**
 
-- **Methodology skills preselected** - foundational skills (anti-over-engineering, context-management, investigation-requirements, success-criteria, write-verification, improvement-protocol) are now selected by default in the wizard
-- **CLI skills in nextjs-fullstack** - stack now includes cli-commander, cli-reviewing, and setup skills for posthog, email, and observability
-- **Test isolation support** - `CC_CONFIG_HOME` environment variable allows overriding the global config directory
-- **Comprehensive test suite** - 1000+ tests covering commands, components, and user journeys
+Foundational skills selected by default, 1000+ tests, test isolation support.
 
-### Internal
-
-- Added cli-migrator and cli-tester agents for CLI development workflows
-- Added research documentation for CLI testing strategies and stack simplification
-
-[0.4.0]: https://github.com/claude-collective/cli/releases/tag/v0.4.0
+[-> Full release notes](./changelogs/0.4.0.md)
 
 ## [0.3.0] - 2026-01-31
 
-### Changed
+**CLI framework migration to oclif + Ink**
 
-- **CLI Framework Migration** - migrated from Commander.js + @clack/prompts to oclif + Ink for improved maintainability and extensibility
-- All commands now use oclif's class-based command structure
-- Interactive components now use Ink (React-based terminal UI)
-- Wizard state management now uses Zustand
-- Removed dependencies: commander, @clack/prompts, @clack/core, picocolors
-- Added dependencies: @oclif/core, @oclif/plugin-\*, ink, react, @inkjs/ui, zustand
+Migrated from Commander.js + @clack/prompts to oclif + Ink + Zustand.
 
-[0.3.0]: https://github.com/claude-collective/cli/releases/tag/v0.3.0
+[-> Full release notes](./changelogs/0.3.0.md)
 
 ## [0.2.0] - 2026-01-30
 
-### Added
+**Marketplace support**
 
-- **Marketplace support** - install stack plugins directly from configured marketplaces
-- Marketplace field in project and global config for plugin installation
-- CLI utilities for marketplace management (`marketplace list`, `exists`, `add`)
-- Multi-source agent loading - agents can now be loaded from both CLI and custom sources
-- `sourceRoot` tracking for correct template resolution with multi-source agents
+Install stack plugins from configured marketplaces, multi-source agent loading.
 
-### Changed
-
-- Removed skills eject functionality (use marketplace plugins instead)
-
-### Fixed
-
-- Wizard now preserves approach selection state when toggling Expert Mode or Install Mode
-
-[0.2.0]: https://github.com/claude-collective/cli/releases/tag/v0.2.0
+[-> Full release notes](./changelogs/0.2.0.md)
 
 ## [0.1.3] - 2026-01-30
 
-### Added
+**Eject output option and remote schema fetching**
 
-- `--output` option for eject command to specify custom output directory
-- Remote schema fetching for skill validation from GitHub
+Custom output directory for eject, remote schema validation from GitHub.
 
-### Fixed
-
-- Plugin manifest no longer includes agents field (Claude Code discovers automatically)
-- Source loader now supports source-provided skills matrix
-
-[0.1.3]: https://github.com/claude-collective/cli/releases/tag/v0.1.3
+[-> Full release notes](./changelogs/0.1.3.md)
 
 ## [0.1.2] - 2026-01-30
 
-### Changed
+**Remove local dev files from repo**
 
-- Removed local dev files from repo (.claude, CLAUDE.md)
+Cleaned up local development files (.claude, CLAUDE.md).
 
-[0.1.2]: https://github.com/claude-collective/cli/releases/tag/v0.1.2
+[-> Full release notes](./changelogs/0.1.2.md)
 
 ## [0.1.1] - 2026-01-30
 
-### Fixed
+**Fix repo reference and README agent names**
 
-- `GITHUB_REPO` const now points to correct repo
-- README agent names match actual stack config
+Corrected GITHUB_REPO const and README agent names.
 
-[0.1.1]: https://github.com/claude-collective/cli/releases/tag/v0.1.1
+[-> Full release notes](./changelogs/0.1.1.md)
 
 ## [0.1.0] - 2026-01-30
 
-### Added
+**Initial release**
 
-- **Interactive wizard** (`cc init`) - guided setup with stack/skill selection
-- **Stack installation** - install curated skill bundles (nextjs-fullstack, api-only, etc.)
-- **Individual skill installation** - pick specific skills for your project
-- **Skill compilation** (`cc compile`) - compile skills and agents
-- **Validation** (`cc validate`) - validate skill file structure and content
-- **Configuration management** (`cc config`) - view and edit project settings
-- **List command** (`cc list`) - browse available and installed skills/stacks
-- **Eject command** (`cc eject`) - eject templates for customization
-- **Plugin mode** - native Claude Code plugin installation
-- **Local mode** - copy skills directly to `.claude/skills/`
+Interactive wizard, stack installation, skill compilation, validation, configuration management, and plugin mode.
 
-### Stacks Included
-
-- `nextjs-fullstack` - Next.js App Router + Hono + Drizzle + Better Auth
-- `angular-stack` - Angular 19 + Signals + NgRx
-- `vue-stack` - Vue 3 + Pinia + Tailwind
-- `nuxt-stack` - Nuxt + Vue 3
-- `remix-stack` - Remix + React
-- `solidjs-stack` - SolidJS + Tailwind
-- `react-native-stack` - React Native + Expo
-
-### Skills Available
-
-80+ skills across domains:
-
-- Web (React, SCSS Modules, Zustand, React Query, MSW)
-- API (Hono, Drizzle, Better Auth, Resend)
-- Infrastructure (GitHub Actions, Turborepo, PostHog)
-- Quality (Vitest, Security, Accessibility)
-
-[0.1.0]: https://github.com/claude-collective/cli/releases/tag/v0.1.0
+[-> Full release notes](./changelogs/0.1.0.md)
