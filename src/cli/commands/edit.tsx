@@ -5,15 +5,10 @@ import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { loadSkillsMatrixFromSource, getMarketplaceLabel } from "../lib/loading/index.js";
-import { directoryExists, ensureDir, remove } from "../utils/fs.js";
 import {
-  getCollectivePluginDir,
-  getPluginSkillsDir,
-  getPluginSkillIds,
-  bumpPluginVersion,
+  discoverAllPluginSkills,
 } from "../lib/plugins/index.js";
 import {
-  copySkillsToPluginFromSource,
   archiveLocalSkill,
   restoreArchivedSkill,
 } from "../lib/skills/index.js";
@@ -75,9 +70,8 @@ export default class Edit extends BaseCommand {
       });
     }
 
-    const pluginDir = getCollectivePluginDir();
-    const pluginSkillsDir =
-      installation.mode === "local" ? installation.skillsDir : getPluginSkillsDir(pluginDir);
+    const projectDir = process.cwd();
+    const isPluginMode = installation.mode === "plugin";
 
     const modeLabel = installation.mode === "local" ? "Local" : "Plugin";
     this.log(`Edit ${modeLabel} Skills\n`);
@@ -87,7 +81,7 @@ export default class Edit extends BaseCommand {
     try {
       sourceResult = await loadSkillsMatrixFromSource({
         sourceFlag: flags.source,
-        projectDir: process.cwd(),
+        projectDir,
         forceRefresh: flags.refresh,
       });
 
@@ -102,7 +96,9 @@ export default class Edit extends BaseCommand {
     this.log("Reading current skills...");
     let currentSkillIds: SkillId[];
     try {
-      currentSkillIds = await getPluginSkillIds(pluginSkillsDir, sourceResult.matrix);
+      const discoveredSkills = await discoverAllPluginSkills(projectDir);
+      // Boundary cast: discoverAllPluginSkills keys are skill IDs from frontmatter
+      currentSkillIds = Object.keys(discoveredSkills) as SkillId[];
       this.log(`✓ Current plugin has ${currentSkillIds.length} skills\n`);
     } catch (error) {
       this.handleError(error);
@@ -195,7 +191,6 @@ export default class Edit extends BaseCommand {
     this.log("");
 
     // Apply source switches (archive/restore local skills)
-    const projectDir = process.cwd();
     for (const [skillId, change] of sourceChanges) {
       if (change.from === "local") {
         await archiveLocalSkill(projectDir, skillId);
@@ -205,8 +200,8 @@ export default class Edit extends BaseCommand {
       }
     }
 
-    // Install/uninstall individual skill plugins when in plugin mode with a marketplace
-    if (installation.mode === "plugin" && sourceResult.marketplace) {
+    // Install/uninstall skill plugins when in plugin mode with a marketplace
+    if (isPluginMode && sourceResult.marketplace) {
       for (const skillId of addedSkills) {
         const pluginRef = `${skillId}@${sourceResult.marketplace}`;
         this.log(`Installing plugin: ${pluginRef}...`);
@@ -224,29 +219,6 @@ export default class Edit extends BaseCommand {
           this.warn(`Failed to uninstall plugin ${skillId}: ${getErrorMessage(error)}`);
         }
       }
-    }
-
-    this.log(STATUS_MESSAGES.COPYING_SKILLS);
-    try {
-      if (await directoryExists(pluginSkillsDir)) {
-        await remove(pluginSkillsDir);
-      }
-      await ensureDir(pluginSkillsDir);
-
-      await copySkillsToPluginFromSource(
-        result.selectedSkills,
-        pluginDir,
-        sourceResult.matrix,
-        sourceResult,
-        result.sourceSelections,
-        (completed, total) => {
-          process.stdout.write(`\r  Copying ${completed} of ${total} skills...`);
-        },
-      );
-      process.stdout.write("\n");
-      this.log(`✓ Copied ${result.selectedSkills.length} skills to plugin\n`);
-    } catch (error) {
-      this.handleError(error);
     }
 
     let sourcePath: string;
@@ -267,9 +239,14 @@ export default class Edit extends BaseCommand {
 
     this.log(STATUS_MESSAGES.RECOMPILING_AGENTS);
     try {
+      const recompileSkills = await discoverAllPluginSkills(projectDir);
+
       const recompileResult = await recompileAgents({
-        pluginDir,
+        pluginDir: projectDir,
         sourcePath,
+        skills: recompileSkills,
+        projectDir,
+        outputDir: installation.agentsDir,
       });
 
       if (recompileResult.failed.length > 0) {
@@ -287,14 +264,6 @@ export default class Edit extends BaseCommand {
     } catch (error) {
       this.warn(`Agent recompilation failed: ${getErrorMessage(error)}`);
       this.log("You can manually recompile with 'cc compile'.\n");
-    }
-
-    this.log("Updating plugin version...");
-    try {
-      const newVersion = await bumpPluginVersion(pluginDir, "patch");
-      this.log(`✓ Version bumped to ${newVersion}\n`);
-    } catch (error) {
-      this.handleError(error);
     }
 
     const summaryParts = [`${addedSkills.length} added`, `${removedSkills.length} removed`];

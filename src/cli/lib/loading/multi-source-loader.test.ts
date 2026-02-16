@@ -31,13 +31,7 @@ vi.mock("../matrix", async () => {
 });
 
 vi.mock("../plugins", () => ({
-  getCollectivePluginDir: vi.fn().mockReturnValue("/fake/.claude/plugins/claude-collective"),
-  getPluginSkillsDir: vi.fn().mockReturnValue("/fake/.claude/plugins/claude-collective/skills"),
-  getPluginSkillIds: vi.fn().mockResolvedValue([]),
-}));
-
-vi.mock("../../utils/fs", () => ({
-  directoryExists: vi.fn().mockResolvedValue(false),
+  discoverAllPluginSkills: vi.fn().mockResolvedValue({}),
 }));
 
 const DEFAULT_SOURCE_CONFIG: ResolvedConfig = {
@@ -277,16 +271,21 @@ describe("multi-source-loader", () => {
   describe("plugin skill tagging", () => {
     it("should tag plugin-installed skills", async () => {
       const { resolveAllSources } = await import("../configuration");
-      const { getPluginSkillIds } = await import("../plugins");
-      const { directoryExists } = await import("../../utils/fs");
+      const { discoverAllPluginSkills } = await import("../plugins");
 
       vi.mocked(resolveAllSources).mockResolvedValue({
         primary: { name: "marketplace", url: "github:claude-collective/skills" },
         extras: [],
       });
 
-      vi.mocked(directoryExists).mockResolvedValue(true);
-      vi.mocked(getPluginSkillIds).mockResolvedValue(["web-framework-react" as SkillId]);
+      // Mock discoverAllPluginSkills to return skills from global cache
+      vi.mocked(discoverAllPluginSkills).mockResolvedValue({
+        "web-framework-react": {
+          id: "web-framework-react" as SkillId,
+          description: "React framework skill",
+          path: "/global/cache/react/skills/web/framework/react",
+        },
+      } as Partial<Record<SkillId, import("../../types").SkillDefinition>> as Record<SkillId, import("../../types").SkillDefinition>);
 
       const matrix = createMockMatrix({
         "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
@@ -303,6 +302,44 @@ describe("multi-source-loader", () => {
       expect(publicSource.type).toBe("public");
       expect(publicSource.installed).toBe(true);
       expect(publicSource.installMode).toBe("plugin");
+    });
+
+    it("should tag skills from multiple plugins discovered via settings.json", async () => {
+      const { resolveAllSources } = await import("../configuration");
+      const { discoverAllPluginSkills } = await import("../plugins");
+
+      vi.mocked(resolveAllSources).mockResolvedValue({
+        primary: { name: "marketplace", url: "github:claude-collective/skills" },
+        extras: [],
+      });
+
+      vi.mocked(discoverAllPluginSkills).mockResolvedValue({
+        "web-framework-react": {
+          id: "web-framework-react" as SkillId,
+          description: "React",
+          path: "/global/cache/react/skills/web/framework/react",
+        },
+        "web-state-zustand": {
+          id: "web-state-zustand" as SkillId,
+          description: "Zustand",
+          path: "/global/cache/zustand/skills/web/state/zustand",
+        },
+      } as Partial<Record<SkillId, import("../../types").SkillDefinition>> as Record<SkillId, import("../../types").SkillDefinition>);
+
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+        "web-state-zustand": createMockSkill("web-state-zustand" as SkillId, "testing"),
+      });
+
+      await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
+
+      const react = matrix.skills["web-framework-react" as SkillId]!;
+      expect(react.availableSources![0].installed).toBe(true);
+      expect(react.availableSources![0].installMode).toBe("plugin");
+
+      const zustand = matrix.skills["web-state-zustand" as SkillId]!;
+      expect(zustand.availableSources![0].installed).toBe(true);
+      expect(zustand.availableSources![0].installMode).toBe("plugin");
     });
   });
 

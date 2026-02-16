@@ -15,11 +15,9 @@ vi.mock("../skills/local-skill-loader", () => ({
   discoverLocalSkills: vi.fn(),
 }));
 
-// Mock the plugin-finder module
-vi.mock("../plugins/plugin-finder", () => ({
-  getPluginSkillIds: vi.fn(),
-  getCollectivePluginDir: vi.fn(),
-  getPluginSkillsDir: vi.fn(),
+// Mock the plugin-discovery module
+vi.mock("../plugins/plugin-discovery", () => ({
+  discoverAllPluginSkills: vi.fn().mockResolvedValue({}),
 }));
 
 describe("source-manager", () => {
@@ -283,57 +281,31 @@ describe("source-manager", () => {
       expect(summary.localSkillCount).toBe(0);
     });
 
-    it("should count plugin skills when matrix is provided", async () => {
+    it("should count plugin skills via discoverAllPluginSkills", async () => {
       const { discoverLocalSkills } = await import("../skills/local-skill-loader");
       vi.mocked(discoverLocalSkills).mockResolvedValue(null);
 
-      const { getCollectivePluginDir, getPluginSkillsDir, getPluginSkillIds } =
-        await import("../plugins/plugin-finder");
-      vi.mocked(getCollectivePluginDir).mockReturnValue(
-        "/project/.claude/plugins/claude-collective",
-      );
-      vi.mocked(getPluginSkillsDir).mockReturnValue(
-        "/project/.claude/plugins/claude-collective/skills",
-      );
-      vi.mocked(getPluginSkillIds).mockResolvedValue([
-        "web-framework-react" as never,
-        "web-state-zustand" as never,
-      ]);
-
-      const matrix = { skills: {} } as never;
-      const summary = await getSourceSummary(tempDir, matrix);
-
-      expect(summary.pluginSkillCount).toBe(2);
-      expect(getCollectivePluginDir).toHaveBeenCalledWith(tempDir);
-    });
-
-    it("should return pluginSkillCount of 0 when matrix is not provided", async () => {
-      const { discoverLocalSkills } = await import("../skills/local-skill-loader");
-      vi.mocked(discoverLocalSkills).mockResolvedValue(null);
+      const { discoverAllPluginSkills } = await import("../plugins/plugin-discovery");
+      vi.mocked(discoverAllPluginSkills).mockResolvedValue({
+        "web-framework-react": { id: "web-framework-react", path: "skills/react/", description: "React" },
+        "web-state-zustand": { id: "web-state-zustand", path: "skills/zustand/", description: "Zustand" },
+      } as never);
 
       const summary = await getSourceSummary(tempDir);
 
-      expect(summary.pluginSkillCount).toBe(0);
+      expect(summary.pluginSkillCount).toBe(2);
     });
 
-    it("should return pluginSkillCount of 0 when getPluginSkillIds throws", async () => {
+    it("should return pluginSkillCount of 0 when discoverAllPluginSkills throws", async () => {
       const { discoverLocalSkills } = await import("../skills/local-skill-loader");
       vi.mocked(discoverLocalSkills).mockResolvedValue(null);
 
-      const { getCollectivePluginDir, getPluginSkillsDir, getPluginSkillIds } =
-        await import("../plugins/plugin-finder");
-      vi.mocked(getCollectivePluginDir).mockReturnValue(
-        "/project/.claude/plugins/claude-collective",
-      );
-      vi.mocked(getPluginSkillsDir).mockReturnValue(
-        "/project/.claude/plugins/claude-collective/skills",
-      );
-      vi.mocked(getPluginSkillIds).mockRejectedValue(
+      const { discoverAllPluginSkills } = await import("../plugins/plugin-discovery");
+      vi.mocked(discoverAllPluginSkills).mockRejectedValue(
         new Error("ENOENT: no such file or directory"),
       );
 
-      const matrix = { skills: {} } as never;
-      const summary = await getSourceSummary(tempDir, matrix);
+      const summary = await getSourceSummary(tempDir);
 
       expect(summary.pluginSkillCount).toBe(0);
     });
@@ -395,22 +367,14 @@ describe("source-manager", () => {
         localSkillsPath: "/project/.claude/skills",
       });
 
-      const { getCollectivePluginDir, getPluginSkillsDir, getPluginSkillIds } =
-        await import("../plugins/plugin-finder");
-      vi.mocked(getCollectivePluginDir).mockReturnValue(
-        "/project/.claude/plugins/claude-collective",
-      );
-      vi.mocked(getPluginSkillsDir).mockReturnValue(
-        "/project/.claude/plugins/claude-collective/skills",
-      );
-      vi.mocked(getPluginSkillIds).mockResolvedValue([
-        "web-framework-react" as never,
-        "web-state-zustand" as never,
-        "api-framework-hono" as never,
-      ]);
+      const { discoverAllPluginSkills } = await import("../plugins/plugin-discovery");
+      vi.mocked(discoverAllPluginSkills).mockResolvedValue({
+        "web-framework-react": { id: "web-framework-react", path: "skills/react/", description: "React" },
+        "web-state-zustand": { id: "web-state-zustand", path: "skills/zustand/", description: "Zustand" },
+        "api-framework-hono": { id: "api-framework-hono", path: "skills/hono/", description: "Hono" },
+      } as never);
 
-      const matrix = { skills: {} } as never;
-      const summary = await getSourceSummary(tempDir, matrix);
+      const summary = await getSourceSummary(tempDir);
 
       expect(summary.localSkillCount).toBe(2);
       expect(summary.pluginSkillCount).toBe(3);

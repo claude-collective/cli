@@ -10,7 +10,7 @@ import type {
   Stack,
 } from "../../types";
 import { fileExists } from "../../utils/fs";
-import { verbose } from "../../utils/logger";
+import { verbose, warn } from "../../utils/logger";
 import { typedKeys } from "../../utils/typed-object";
 import {
   DEFAULT_SOURCE,
@@ -26,7 +26,7 @@ import {
   loadSkillsMatrix,
   mergeMatrixWithSkills,
 } from "../matrix";
-import { fetchFromSource } from "./source-fetcher";
+import { fetchFromSource, fetchMarketplace } from "./source-fetcher";
 import { loadSkillsFromAllSources } from "./multi-source-loader";
 import { loadStacks, resolveAgentConfigToSkills } from "../stacks";
 
@@ -119,12 +119,28 @@ async function loadFromRemote(
 
   const mergedMatrix = await loadAndMergeFromBasePath(fetchResult.path);
 
+  // Try to read marketplace name from the source's .claude-plugin/marketplace.json.
+  // This handles the case where sourceConfig.marketplace is undefined (e.g. during
+  // `cc init --source github:user/repo` before any project config exists).
+  let marketplace = sourceConfig.marketplace;
+  if (!marketplace) {
+    try {
+      const marketplaceResult = await fetchMarketplace(source, { forceRefresh });
+      // Use the actual marketplace name from marketplace.json
+      marketplace = marketplaceResult.marketplace.name;
+      verbose(`Using marketplace name from marketplace.json: ${marketplace}`);
+    } catch {
+      // No marketplace.json - this is not a marketplace
+      warn(`Source does not have a marketplace.json - falling back to local mode`);
+    }
+  }
+
   return {
     matrix: mergedMatrix,
     sourceConfig,
     sourcePath: fetchResult.path,
     isLocal: false,
-    marketplace: sourceConfig.marketplace,
+    marketplace,
   };
 }
 

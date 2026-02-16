@@ -15,12 +15,12 @@ import type {
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import { type CopiedSkill, copySkillsToLocalFlattened, archiveLocalSkill } from "../skills";
 import { type MergeResult, mergeWithExistingConfig } from "../configuration";
-import { loadAllAgents, type SourceLoadResult } from "../loading";
-import { loadStackById, compileAgentForPlugin } from "../stacks";
+import { loadAllAgents, loadPluginSkills, loadSkillsByIds, type SourceLoadResult } from "../loading";
+import { loadStackById, compileAgentForPlugin, getStackSkillIds } from "../stacks";
 import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
 import { createLiquidEngine } from "../compiler";
 import { generateProjectConfigFromSkills, compactStackForYaml } from "../configuration";
-import { ensureDir, writeFile } from "../../utils/fs";
+import { directoryExists, ensureDir, listDirectories, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
 import {
@@ -293,6 +293,94 @@ async function compileAndWriteAgents(
   }
 
   return compiledAgentNames;
+}
+
+/**
+ * Result of a plugin config installation (no skill copying).
+ *
+ * Returned by {@link installPluginConfig} with details about what was written to disk,
+ * enabling the caller to display a summary to the user.
+ */
+export type PluginConfigResult = {
+  /** Final project configuration (may be merged with existing config.yaml) */
+  config: ProjectConfig;
+  /** Absolute path to the written config.yaml file */
+  configPath: string;
+  /** Agent names that were compiled and written to `.claude/agents/` */
+  compiledAgents: AgentName[];
+  /** Whether the config was merged with an existing config.yaml (true) or freshly created (false) */
+  wasMerged: boolean;
+  /** Absolute path to the pre-existing config.yaml that was merged, if any */
+  mergedConfigPath?: string;
+  /** Absolute path to the `.claude/agents/` directory */
+  agentsDir: string;
+};
+
+/**
+ * Generates config and compiles agents for plugin mode (without copying skills).
+ *
+ * Used when skills are installed as native plugins and should NOT be copied
+ * to `.claude/skills/`. This function performs only:
+ * 1. Creates `.claude/agents/` and `.claude-src/` directories
+ * 2. Loads agent definitions from both the CLI and source repository
+ * 3. Generates project config.yaml from the wizard selections, merging with any
+ *    existing config
+ * 4. Writes config.yaml with YAML schema comment
+ * 5. Compiles agent markdown files using Liquid templates and writes them to
+ *    `.claude/agents/`
+ *
+ * @param options - Installation options containing wizard result, source data,
+ *                  project directory, and optional source flag override
+ * @returns Result containing config and agent artifacts (no skills)
+ * @throws {Error} If the selected stack ID is not found in config/stacks.yaml
+ */
+export async function installPluginConfig(options: LocalInstallOptions): Promise<PluginConfigResult> {
+  const { wizardResult, sourceResult, projectDir, sourceFlag } = options;
+
+  const paths = resolveInstallPaths(projectDir);
+  // Only create agents and config directories, NOT skills directory
+  await ensureDir(paths.agentsDir);
+  await ensureDir(path.dirname(paths.configPath));
+
+  const agents = await loadMergedAgents(sourceResult.sourcePath);
+  const mergeResult = await buildAndMergeConfig(wizardResult, sourceResult, projectDir, sourceFlag);
+  const finalConfig = mergeResult.config;
+
+  await writeConfigFile(finalConfig, paths.configPath);
+
+  const compileAgentsConfig = buildCompileAgents(finalConfig, agents);
+  const compileConfig: CompileConfig = {
+    name: DEFAULT_PLUGIN_NAME,
+    description:
+      finalConfig.description || `Plugin setup with ${wizardResult.selectedSkills.length} skills`,
+    agents: compileAgentsConfig,
+  };
+  // Load skill metadata from source for compilation
+  // (actual skill content will be loaded from plugins at runtime)
+  const stackSkillIds = finalConfig.stack ? getStackSkillIds(finalConfig.stack) : [];
+  const skillsForCompilation = (await loadSkillsByIds(
+    stackSkillIds.map((id) => ({ id })),
+    sourceResult.sourcePath,
+  )) as Partial<Record<SkillId, LocalResolvedSkill>>;
+
+  const compiledAgentNames = await compileAndWriteAgents(
+    compileConfig,
+    agents,
+    skillsForCompilation,
+    sourceResult,
+    projectDir,
+    paths.agentsDir,
+    wizardResult.installMode,
+  );
+
+  return {
+    config: finalConfig,
+    configPath: paths.configPath,
+    compiledAgents: compiledAgentNames,
+    wasMerged: mergeResult.merged,
+    mergedConfigPath: mergeResult.existingConfigPath,
+    agentsDir: paths.agentsDir,
+  };
 }
 
 /**

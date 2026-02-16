@@ -1,7 +1,6 @@
 import path from "path";
-import { directoryExists, fileExists } from "../../utils/fs";
+import { fileExists } from "../../utils/fs";
 import { loadProjectConfig } from "../configuration";
-import { getCollectivePluginDir } from "../plugins";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 
 export type InstallMode = "local" | "plugin";
@@ -14,7 +13,6 @@ export type Installation = {
   projectDir: string;
 };
 
-// Priority: Local (.claude-src/config.yaml) > Plugin (.claude/plugins/claude-collective/)
 export async function detectInstallation(
   projectDir: string = process.cwd(),
 ): Promise<Installation | null> {
@@ -27,38 +25,36 @@ export async function detectInstallation(
       ? legacyConfigPath
       : null;
 
-  if (localConfigPath) {
-    const loaded = await loadProjectConfig(projectDir);
-
-    // If config exists and has installMode: local (or no installMode, defaults to local)
-    // treat it as local mode
-    const mode: InstallMode = loaded?.config?.installMode ?? "local";
-
-    if (mode === "local") {
-      return {
-        mode: "local",
-        configPath: localConfigPath,
-        agentsDir: path.join(projectDir, CLAUDE_DIR, "agents"),
-        skillsDir: path.join(projectDir, CLAUDE_DIR, "skills"),
-        projectDir,
-      };
-    }
+  if (!localConfigPath) {
+    return null;
   }
 
-  const pluginDir = getCollectivePluginDir(projectDir);
-  const pluginConfigPath = path.join(pluginDir, STANDARD_FILES.CONFIG_YAML);
+  const loaded = await loadProjectConfig(projectDir);
 
-  if (await directoryExists(pluginDir)) {
+  // If config exists and has installMode: local (or no installMode, defaults to local)
+  // treat it as local mode
+  const mode: InstallMode = loaded?.config?.installMode ?? "local";
+
+  if (mode === "local") {
     return {
-      mode: "plugin",
-      configPath: pluginConfigPath,
-      agentsDir: path.join(pluginDir, "agents"),
-      skillsDir: path.join(pluginDir, "skills"),
+      mode: "local",
+      configPath: localConfigPath,
+      agentsDir: path.join(projectDir, CLAUDE_DIR, "agents"),
+      skillsDir: path.join(projectDir, CLAUDE_DIR, "skills"),
       projectDir,
     };
   }
 
-  return null;
+  // Plugin mode with individual skill plugins
+  // Skills are in global cache, discovered via settings.json
+  // Agents are compiled locally to .claude/agents/
+  return {
+    mode: "plugin",
+    configPath: localConfigPath,
+    agentsDir: path.join(projectDir, CLAUDE_DIR, "agents"),
+    skillsDir: path.join(projectDir, CLAUDE_DIR, "plugins"),
+    projectDir,
+  };
 }
 
 export async function getInstallationOrThrow(

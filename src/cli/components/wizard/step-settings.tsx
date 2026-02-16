@@ -174,7 +174,7 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
 
       <Box marginTop={1} flexDirection="column">
         <Text dimColor>Local skills: {summary?.localSkillCount ?? 0} in .claude/skills/</Text>
-        <Text dimColor>Plugins: {summary?.pluginSkillCount ?? 0} in .claude/plugins/</Text>
+        <Text dimColor>Plugins: {summary?.pluginSkillCount ?? 0} from installed plugins</Text>
       </Box>
 
       <Box marginTop={1}>

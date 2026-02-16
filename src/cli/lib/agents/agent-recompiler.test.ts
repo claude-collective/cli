@@ -70,11 +70,14 @@ description: Test plugin
 agents:
   - web-pm
 `;
-      await writeFile(path.join(testDirs.pluginDir, "config.yaml"), configContent);
+      const configDir = path.join(testDirs.projectDir, ".claude-src");
+      await mkdir(configDir, { recursive: true });
+      await writeFile(path.join(configDir, "config.yaml"), configContent);
 
       const result = await recompileAgents({
         pluginDir: testDirs.pluginDir,
         sourcePath: CLI_ROOT,
+        projectDir: testDirs.projectDir,
       });
 
       expect(result.compiled).toContain("web-pm");

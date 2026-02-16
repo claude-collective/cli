@@ -8,12 +8,11 @@ import { BaseCommand } from "../base-command";
 import { Confirm } from "../components/common/confirm";
 import { directoryExists, fileExists, remove } from "../utils/fs";
 import { claudePluginUninstall, isClaudeCLIAvailable } from "../utils/exec";
-import { getCollectivePluginDir } from "../lib/plugins";
+import { listPluginNames, getProjectPluginsDir } from "../lib/plugins";
 import {
   CLAUDE_DIR,
   CLAUDE_SRC_DIR,
   CLI_COLORS,
-  DEFAULT_PLUGIN_NAME,
   STANDARD_FILES,
 } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
@@ -25,13 +24,14 @@ import {
 } from "../utils/messages";
 
 type UninstallTarget = {
-  hasPlugin: boolean;
+  hasPlugins: boolean;
+  pluginNames: string[];
   hasLocalSkills: boolean;
   hasLocalAgents: boolean;
   hasLocalConfig: boolean;
   hasClaudeDir: boolean;
   hasClaudeSrcDir: boolean;
-  pluginDir: string;
+  pluginsDir: string;
   skillsDir: string;
   agentsDir: string;
   configPath: string;
@@ -39,17 +39,16 @@ type UninstallTarget = {
   claudeSrcDir: string;
 };
 
-async function detectInstallation(projectDir: string): Promise<UninstallTarget> {
-  const pluginDir = getCollectivePluginDir(projectDir);
+async function detectUninstallTarget(projectDir: string): Promise<UninstallTarget> {
+  const pluginsDir = getProjectPluginsDir(projectDir);
   const skillsDir = path.join(projectDir, CLAUDE_DIR, "skills");
   const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
   const configPath = path.join(projectDir, CLAUDE_DIR, STANDARD_FILES.CONFIG_YAML);
   const claudeDir = path.join(projectDir, CLAUDE_DIR);
   const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
 
-  const [hasPlugin, hasLocalSkills, hasLocalAgents, hasLocalConfig, hasClaudeDir, hasClaudeSrcDir] =
+  const [hasLocalSkills, hasLocalAgents, hasLocalConfig, hasClaudeDir, hasClaudeSrcDir] =
     await Promise.all([
-      directoryExists(pluginDir),
       directoryExists(skillsDir),
       directoryExists(agentsDir),
       fileExists(configPath),
@@ -57,14 +56,22 @@ async function detectInstallation(projectDir: string): Promise<UninstallTarget> 
       directoryExists(claudeSrcDir),
     ]);
 
+  let pluginNames: string[] = [];
+  try {
+    pluginNames = await listPluginNames(projectDir);
+  } catch {
+    // Best-effort: plugin detection may fail
+  }
+
   return {
-    hasPlugin,
+    hasPlugins: pluginNames.length > 0,
+    pluginNames,
     hasLocalSkills,
     hasLocalAgents,
     hasLocalConfig,
     hasClaudeDir,
     hasClaudeSrcDir,
-    pluginDir,
+    pluginsDir,
     skillsDir,
     agentsDir,
     configPath,
@@ -89,7 +96,7 @@ const UninstallConfirm: React.FC<UninstallConfirmProps> = ({
   onCancel,
 }) => {
   const { exit } = useApp();
-  const hasPluginToRemove = uninstallPlugin && target.hasPlugin;
+  const hasPluginToRemove = uninstallPlugin && target.hasPlugins;
   const hasLocalToRemove = uninstallLocal && (target.hasClaudeDir || target.hasClaudeSrcDir);
 
   return (
@@ -99,8 +106,8 @@ const UninstallConfirm: React.FC<UninstallConfirmProps> = ({
 
       {hasPluginToRemove && (
         <Box flexDirection="column">
-          <Text color={CLI_COLORS.ERROR}> Plugin:</Text>
-          <Text dimColor> {target.pluginDir}</Text>
+          <Text color={CLI_COLORS.ERROR}> Plugins:</Text>
+          <Text dimColor> {target.pluginsDir}</Text>
         </Box>
       )}
 
@@ -173,19 +180,19 @@ export default class Uninstall extends BaseCommand {
       this.log("");
     }
 
-    const target = await detectInstallation(projectDir);
+    const target = await detectUninstallTarget(projectDir);
 
     const uninstallPlugin = !flags.local;
     const uninstallLocal = !flags.plugin;
 
-    const hasPluginToRemove = uninstallPlugin && target.hasPlugin;
+    const hasPluginToRemove = uninstallPlugin && target.hasPlugins;
     const hasLocalToRemove = uninstallLocal && (target.hasClaudeDir || target.hasClaudeSrcDir);
 
     if (!hasPluginToRemove && !hasLocalToRemove) {
       this.warn("Nothing to uninstall.");
       this.log("");
 
-      if (flags.plugin && !target.hasPlugin) {
+      if (flags.plugin && !target.hasPlugins) {
         this.log(INFO_MESSAGES.NO_PLUGIN_INSTALLATION);
       }
       if (flags.local && !target.hasClaudeDir && !target.hasClaudeSrcDir) {
@@ -225,8 +232,8 @@ export default class Uninstall extends BaseCommand {
       this.log("");
 
       if (hasPluginToRemove) {
-        this.log("  Plugin:");
-        this.log(`    ${target.pluginDir}`);
+        this.log("  Plugins:");
+        this.log(`    ${target.pluginsDir}`);
       }
 
       if (hasLocalToRemove) {
@@ -244,8 +251,10 @@ export default class Uninstall extends BaseCommand {
 
     if (flags["dry-run"]) {
       if (hasPluginToRemove) {
-        this.log(`[dry-run] Would uninstall plugin "${DEFAULT_PLUGIN_NAME}"`);
-        this.log(`[dry-run] Would remove ${target.pluginDir}`);
+        this.log(`[dry-run] Would uninstall ${target.pluginNames.length} plugins:`);
+        for (const pluginName of target.pluginNames) {
+          this.log(`[dry-run]   ${pluginName}`);
+        }
       }
       if (hasLocalToRemove) {
         if (target.hasClaudeDir) {
@@ -262,22 +271,25 @@ export default class Uninstall extends BaseCommand {
     }
 
     if (hasPluginToRemove) {
-      this.log("Uninstalling plugin...");
+      this.log("Uninstalling plugins...");
 
       try {
         const cliAvailable = await isClaudeCLIAvailable();
-        if (cliAvailable) {
-          try {
-            await claudePluginUninstall(DEFAULT_PLUGIN_NAME, "project", projectDir);
-          } catch {
-            // Best-effort: Claude CLI plugin unregister may fail (e.g., plugin
-            // not registered). We still proceed to remove the plugin directory.
+
+        for (const pluginName of target.pluginNames) {
+          if (cliAvailable) {
+            try {
+              await claudePluginUninstall(pluginName, "project", projectDir);
+            } catch {
+              // Best-effort: plugin may not be registered with Claude CLI
+            }
           }
+
+          const pluginPath = path.join(target.pluginsDir, pluginName);
+          await remove(pluginPath);
         }
 
-        await remove(target.pluginDir);
-
-        this.logSuccess("Plugin uninstalled");
+        this.logSuccess("Plugins uninstalled");
       } catch (error) {
         this.log("Plugin uninstall failed");
         this.error(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR, {

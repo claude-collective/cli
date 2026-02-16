@@ -2,13 +2,8 @@ import type { SourceEntry } from "./config";
 import { loadProjectSourceConfig, saveProjectConfig, DEFAULT_SOURCE } from "./config";
 import { fetchMarketplace } from "../loading/source-fetcher";
 import { discoverLocalSkills } from "../skills/local-skill-loader";
-import {
-  getPluginSkillIds,
-  getCollectivePluginDir,
-  getPluginSkillsDir,
-} from "../plugins/plugin-finder";
+import { discoverAllPluginSkills } from "../plugins/plugin-discovery";
 import { verbose } from "../../utils/logger";
-import type { MergedSkillsMatrix } from "../../types";
 
 const DEFAULT_SOURCE_NAME = "public";
 
@@ -71,10 +66,7 @@ export async function removeSource(projectDir: string, name: string): Promise<vo
 /**
  * Get summary of all configured sources and local/plugin counts.
  */
-export async function getSourceSummary(
-  projectDir: string,
-  matrix?: MergedSkillsMatrix,
-): Promise<SourceSummary> {
+export async function getSourceSummary(projectDir: string): Promise<SourceSummary> {
   const config = (await loadProjectSourceConfig(projectDir)) ?? {};
 
   const sources: Array<SourceEntry & { enabled: boolean }> = [
@@ -102,15 +94,11 @@ export async function getSourceSummary(
   }
 
   let pluginSkillCount = 0;
-  if (matrix) {
-    try {
-      const pluginDir = getCollectivePluginDir(projectDir);
-      const pluginSkillsDir = getPluginSkillsDir(pluginDir);
-      const skillIds = await getPluginSkillIds(pluginSkillsDir, matrix);
-      pluginSkillCount = skillIds.length;
-    } catch {
-      verbose("Failed to count plugin skills for source summary");
-    }
+  try {
+    const discoveredSkills = await discoverAllPluginSkills(projectDir);
+    pluginSkillCount = Object.keys(discoveredSkills).length;
+  } catch {
+    verbose("Failed to discover plugin skills for source summary");
   }
 
   return { sources, localSkillCount, pluginSkillCount };

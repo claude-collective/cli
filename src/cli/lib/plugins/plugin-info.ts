@@ -1,16 +1,12 @@
 import { readdir } from "fs/promises";
-import { countBy } from "remeda";
 
 import { DEFAULT_DISPLAY_VERSION, DEFAULT_PLUGIN_NAME } from "../../consts";
 import { directoryExists } from "../../utils/fs";
+import { verbose } from "../../utils/logger";
 import { loadProjectConfig } from "../configuration";
 import { detectInstallation, type InstallMode } from "../installation";
-import {
-  getCollectivePluginDir,
-  getPluginSkillsDir,
-  getPluginAgentsDir,
-  readPluginManifest,
-} from "./plugin-finder";
+import { getProjectPluginsDir } from "./plugin-finder";
+import { discoverAllPluginSkills, listPluginNames } from "./plugin-discovery";
 
 export type PluginInfo = {
   name: string;
@@ -31,41 +27,25 @@ export type InstallationInfo = {
   skillsDir: string;
 };
 
-export async function getPluginInfo(): Promise<PluginInfo | null> {
-  const pluginDir = getCollectivePluginDir();
+export async function getPluginInfo(projectDir?: string): Promise<PluginInfo | null> {
+  const dir = projectDir ?? process.cwd();
 
-  if (!(await directoryExists(pluginDir))) {
-    return null;
+  try {
+    const pluginNames = await listPluginNames(dir);
+    if (pluginNames.length > 0) {
+      return {
+        name: DEFAULT_PLUGIN_NAME,
+        version: DEFAULT_DISPLAY_VERSION,
+        skillCount: pluginNames.length,
+        agentCount: 0,
+        path: getProjectPluginsDir(dir),
+      };
+    }
+  } catch {
+    verbose("Failed to list plugins for plugin info");
   }
 
-  const manifest = await readPluginManifest(pluginDir);
-  if (!manifest) {
-    return null;
-  }
-
-  const skillsDir = getPluginSkillsDir(pluginDir);
-  const agentsDir = getPluginAgentsDir(pluginDir);
-
-  let skillCount = 0;
-  let agentCount = 0;
-
-  if (await directoryExists(skillsDir)) {
-    const skills = await readdir(skillsDir, { withFileTypes: true });
-    skillCount = countBy(skills, (s) => String(s.isDirectory()))["true"] ?? 0;
-  }
-
-  if (await directoryExists(agentsDir)) {
-    const agents = await readdir(agentsDir, { withFileTypes: true });
-    agentCount = agents.filter((a) => a.isFile() && a.name.endsWith(".md")).length;
-  }
-
-  return {
-    name: manifest.name || DEFAULT_PLUGIN_NAME,
-    version: manifest.version || DEFAULT_DISPLAY_VERSION,
-    skillCount,
-    agentCount,
-    path: pluginDir,
-  };
+  return null;
 }
 
 export function formatPluginDisplay(info: PluginInfo): string {
@@ -87,7 +67,15 @@ export async function getInstallationInfo(): Promise<InstallationInfo | null> {
   let name = DEFAULT_PLUGIN_NAME;
   let version = DEFAULT_DISPLAY_VERSION;
 
-  if (await directoryExists(installation.skillsDir)) {
+  if (installation.mode === "plugin") {
+    // Plugin mode: discover skills via settings.json and global cache
+    try {
+      const pluginSkills = await discoverAllPluginSkills(installation.projectDir);
+      skillCount = Object.keys(pluginSkills).length;
+    } catch {
+      // Ignore errors
+    }
+  } else if (await directoryExists(installation.skillsDir)) {
     try {
       const skills = await readdir(installation.skillsDir, {
         withFileTypes: true,
@@ -109,19 +97,10 @@ export async function getInstallationInfo(): Promise<InstallationInfo | null> {
     }
   }
 
-  if (installation.mode === "local") {
-    const loaded = await loadProjectConfig(installation.projectDir);
-    if (loaded?.config) {
-      name = loaded.config.name || DEFAULT_PLUGIN_NAME;
-      version = "local";
-    }
-  } else {
-    const pluginDir = getCollectivePluginDir(installation.projectDir);
-    const manifest = await readPluginManifest(pluginDir);
-    if (manifest) {
-      name = manifest.name || DEFAULT_PLUGIN_NAME;
-      version = manifest.version || DEFAULT_DISPLAY_VERSION;
-    }
+  const loaded = await loadProjectConfig(installation.projectDir);
+  if (loaded?.config) {
+    name = loaded.config.name || DEFAULT_PLUGIN_NAME;
+    version = installation.mode === "local" ? "local" : "plugin";
   }
 
   return {

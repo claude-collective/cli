@@ -4,10 +4,7 @@ import { parse as parseYaml } from "yaml";
 import { BaseCommand } from "../base-command";
 import { setVerbose, verbose } from "../utils/logger";
 import {
-  getCollectivePluginDir,
-  getPluginAgentsDir,
-  getPluginManifestPath,
-  getProjectPluginsDir,
+  discoverAllPluginSkills,
 } from "../lib/plugins";
 import { getAgentDefinitions } from "../lib/agents";
 import { resolveSource } from "../lib/configuration";
@@ -16,17 +13,12 @@ import {
   ensureDir,
   glob,
   readFile,
-  readFileSafe,
   fileExists,
-  listDirectories,
 } from "../utils/fs";
 import { recompileAgents } from "../lib/agents";
-import { loadPluginSkills, parseFrontmatter } from "../lib/loading";
+import { parseFrontmatter } from "../lib/loading";
 import {
-  DEFAULT_PLUGIN_NAME,
   LOCAL_SKILLS_PATH,
-  MAX_PLUGIN_FILE_SIZE,
-  STANDARD_FILES,
 } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
 import {
@@ -36,15 +28,14 @@ import {
   DRY_RUN_MESSAGES,
   INFO_MESSAGES,
 } from "../utils/messages";
-import { detectInstallation } from "../lib/installation";
+import { detectInstallation, type Installation } from "../lib/installation";
 import type {
   AgentSourcePaths,
-  PluginManifest,
   ProjectConfig,
   SkillDefinition,
   SkillId,
 } from "../types";
-import { pluginManifestSchema, projectConfigLoaderSchema } from "../lib/schemas";
+import { projectConfigLoaderSchema } from "../lib/schemas";
 import { normalizeStackRecord, getStackSkillIds } from "../lib/stacks/stacks-loader";
 import { typedEntries } from "../utils/typed-object";
 
@@ -89,37 +80,6 @@ async function loadSkillsFromDir(
   return skills;
 }
 
-async function discoverPluginSkills(
-  projectDir: string,
-): Promise<Partial<Record<SkillId, SkillDefinition>>> {
-  const allSkills: Partial<Record<SkillId, SkillDefinition>> = {};
-  const pluginsDir = getProjectPluginsDir(projectDir);
-
-  if (!(await directoryExists(pluginsDir))) {
-    verbose(`No plugins directory found at ${pluginsDir}`);
-    return allSkills;
-  }
-
-  const pluginDirs = await listDirectories(pluginsDir);
-
-  for (const pluginName of pluginDirs) {
-    const pluginDir = path.join(pluginsDir, pluginName);
-    const pluginSkillsDir = path.join(pluginDir, "skills");
-
-    if (await directoryExists(pluginSkillsDir)) {
-      verbose(`Discovering skills from plugin: ${pluginName}`);
-      const pluginSkills = await loadPluginSkills(pluginDir);
-
-      for (const [id, skill] of Object.entries(pluginSkills)) {
-        // Boundary cast: loadPluginSkills keys are skill IDs from frontmatter
-        allSkills[id as SkillId] = skill;
-      }
-    }
-  }
-
-  return allSkills;
-}
-
 async function discoverLocalProjectSkills(
   projectDir: string,
 ): Promise<Partial<Record<SkillId, SkillDefinition>>> {
@@ -142,21 +102,6 @@ function mergeSkills(
   }
 
   return merged;
-}
-
-async function readPluginManifest(pluginDir: string): Promise<PluginManifest | null> {
-  const manifestPath = getPluginManifestPath(pluginDir);
-
-  if (!(await fileExists(manifestPath))) {
-    return null;
-  }
-
-  try {
-    const content = await readFileSafe(manifestPath, MAX_PLUGIN_FILE_SIZE);
-    return pluginManifestSchema.parse(JSON.parse(content));
-  } catch {
-    return null;
-  }
 }
 
 type CompileFlags = {
@@ -236,7 +181,7 @@ export default class Compile extends BaseCommand {
         output: installation.agentsDir,
       });
     } else {
-      await this.runPluginModeCompile(flags);
+      await this.runPluginModeCompile(flags, installation);
     }
   }
 
@@ -244,7 +189,7 @@ export default class Compile extends BaseCommand {
     const projectDir = process.cwd();
     this.log(STATUS_MESSAGES.DISCOVERING_SKILLS);
 
-    const pluginSkills = await discoverPluginSkills(projectDir);
+    const pluginSkills = await discoverAllPluginSkills(projectDir);
     const pluginSkillCount = Object.keys(pluginSkills).length;
     verbose(`  Found ${pluginSkillCount} skills from installed plugins`);
 
@@ -310,28 +255,19 @@ export default class Compile extends BaseCommand {
     }
   }
 
-  private async runPluginModeCompile(flags: CompileFlags): Promise<void> {
+  private async runPluginModeCompile(flags: CompileFlags, installation: Installation): Promise<void> {
     this.log("");
     this.log("Plugin Mode Compile");
     this.log("");
 
-    const pluginDir = getCollectivePluginDir();
-    this.log("Finding plugin...");
+    const projectDir = installation.projectDir;
+    const agentsDir = installation.agentsDir;
 
-    if (!(await directoryExists(pluginDir))) {
-      this.log("No plugin found");
-      this.error("No plugin found. Run 'cc init' first to create a plugin.", {
-        exit: EXIT_CODES.ERROR,
-      });
-    }
+    this.log("Using individual plugin mode");
+    verbose(`  Project: ${projectDir}`);
+    verbose(`  Agents: ${agentsDir}`);
 
-    const manifest = await readPluginManifest(pluginDir);
-    const pluginName = manifest?.name ?? DEFAULT_PLUGIN_NAME;
-
-    this.log(`Found plugin: ${pluginName}`);
-    verbose(`  Path: ${pluginDir}`);
-
-    const configPath = path.join(pluginDir, STANDARD_FILES.CONFIG_YAML);
+    const configPath = installation.configPath;
     const hasConfig = await fileExists(configPath);
     if (hasConfig) {
       try {
@@ -369,7 +305,7 @@ export default class Compile extends BaseCommand {
       this.log("");
       this.log(`[dry-run] Would compile ${totalSkillCount} skills`);
       this.log(`[dry-run] Would use agent partials from: ${agentDefs.sourcePath}`);
-      this.log(`[dry-run] Would output to: ${getPluginAgentsDir(pluginDir)}`);
+      this.log(`[dry-run] Would output to: ${agentsDir}`);
       this.log(DRY_RUN_MESSAGES.COMPLETE_NO_FILES_WRITTEN);
       this.log("");
       return;
@@ -378,10 +314,11 @@ export default class Compile extends BaseCommand {
     this.log(STATUS_MESSAGES.RECOMPILING_AGENTS);
     try {
       const recompileResult = await recompileAgents({
-        pluginDir,
+        pluginDir: projectDir,
         sourcePath: agentDefs.sourcePath,
         skills: allSkills,
-        projectDir: process.cwd(),
+        projectDir,
+        outputDir: agentsDir,
       });
 
       if (recompileResult.failed.length > 0) {
@@ -432,18 +369,18 @@ export default class Compile extends BaseCommand {
       return;
     }
 
-    const pluginDir = getCollectivePluginDir();
+    const projectDir = process.cwd();
 
     this.log(STATUS_MESSAGES.COMPILING_AGENTS);
     try {
       await ensureDir(outputDir);
 
       const recompileResult = await recompileAgents({
-        pluginDir,
+        pluginDir: projectDir,
         sourcePath: agentDefs.sourcePath,
         skills: allSkills,
         outputDir,
-        projectDir: process.cwd(),
+        projectDir,
       });
 
       if (recompileResult.failed.length > 0) {

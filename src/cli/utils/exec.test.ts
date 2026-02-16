@@ -126,117 +126,60 @@ describe("exec argument validation", () => {
   });
 
   describe("claudePluginMarketplaceAdd validation", () => {
-    describe("githubRepo validation", () => {
-      it("rejects empty github repo", async () => {
-        await expect(claudePluginMarketplaceAdd("", "my-marketplace")).rejects.toThrow(
-          "GitHub repository must not be empty",
-        );
-      });
-
-      it("rejects oversized github repo", async () => {
-        const longRepo = "a".repeat(257);
-        await expect(claudePluginMarketplaceAdd(longRepo, "my-marketplace")).rejects.toThrow(
-          "GitHub repository is too long",
-        );
-      });
-
-      it("accepts github repo at max length", async () => {
-        // 128/128 = owner(128) + "/" + repo(127) = 256 chars
-        const maxRepo = "a".repeat(128) + "/" + "b".repeat(127);
-        // Validation passes at exactly max length (function returns Promise<void>)
-        await expect(
-          claudePluginMarketplaceAdd(maxRepo, "my-marketplace"),
-        ).resolves.toBeUndefined();
-      });
-
-      it("rejects github repo with control characters", async () => {
-        await expect(claudePluginMarketplaceAdd("user\x00/repo", "my-marketplace")).rejects.toThrow(
-          "invalid control characters",
-        );
-      });
-
-      it("rejects github repo without slash", async () => {
-        await expect(claudePluginMarketplaceAdd("justrepo", "my-marketplace")).rejects.toThrow(
-          "Invalid GitHub repository format",
-        );
-      });
-
-      it("rejects github repo with multiple slashes", async () => {
-        await expect(
-          claudePluginMarketplaceAdd("user/repo/extra", "my-marketplace"),
-        ).rejects.toThrow("Invalid GitHub repository format");
-      });
-
-      it("rejects github repo with spaces", async () => {
-        await expect(claudePluginMarketplaceAdd("user /repo", "my-marketplace")).rejects.toThrow(
-          "Invalid GitHub repository format",
-        );
-      });
-
-      it("rejects github repo with shell injection", async () => {
-        await expect(
-          claudePluginMarketplaceAdd("$(whoami)/repo", "my-marketplace"),
-        ).rejects.toThrow("Invalid GitHub repository format");
-      });
-
-      it("accepts valid github repo format", async () => {
-        const promise = claudePluginMarketplaceAdd("my-org/my-repo", "my-marketplace");
-        expect(promise).toBeInstanceOf(Promise);
-      });
-
-      it("accepts github repo with dots and underscores", async () => {
-        const promise = claudePluginMarketplaceAdd("my_org.name/my_repo.name", "my-marketplace");
-        expect(promise).toBeInstanceOf(Promise);
-      });
+    it("rejects empty source", async () => {
+      await expect(claudePluginMarketplaceAdd("")).rejects.toThrow(
+        "Marketplace source must not be empty",
+      );
     });
 
-    describe("name validation", () => {
-      it("rejects empty marketplace name", async () => {
-        await expect(claudePluginMarketplaceAdd("user/repo", "")).rejects.toThrow(
-          "Marketplace name must not be empty",
-        );
-      });
+    it("rejects oversized source", async () => {
+      const longSource = "a".repeat(1025);
+      await expect(claudePluginMarketplaceAdd(longSource)).rejects.toThrow(
+        "Marketplace source is too long",
+      );
+    });
 
-      it("rejects oversized marketplace name", async () => {
-        const longName = "a".repeat(129);
-        await expect(claudePluginMarketplaceAdd("user/repo", longName)).rejects.toThrow(
-          "Marketplace name is too long",
-        );
-      });
+    it("accepts source at max length", async () => {
+      const maxSource = "a".repeat(1024);
+      await expect(claudePluginMarketplaceAdd(maxSource)).resolves.toBeUndefined();
+    });
 
-      it("accepts marketplace name at max length", async () => {
-        const maxName = "a".repeat(128);
-        // Validation passes at exactly max length (function returns Promise<void>)
-        await expect(claudePluginMarketplaceAdd("user/repo", maxName)).resolves.toBeUndefined();
-      });
+    it("rejects source with control characters", async () => {
+      await expect(claudePluginMarketplaceAdd("user\x00/repo")).rejects.toThrow(
+        "invalid control characters",
+      );
+    });
 
-      it("rejects marketplace name with control characters", async () => {
-        await expect(claudePluginMarketplaceAdd("user/repo", "name\x07here")).rejects.toThrow(
-          "invalid control characters",
-        );
-      });
+    it("rejects source with shell injection", async () => {
+      await expect(claudePluginMarketplaceAdd("$(whoami)/repo")).rejects.toThrow(
+        "invalid characters",
+      );
+    });
 
-      it("rejects marketplace name with shell metacharacters", async () => {
-        await expect(claudePluginMarketplaceAdd("user/repo", "name$(cmd)")).rejects.toThrow(
-          "invalid characters",
-        );
-      });
+    it("rejects source with spaces", async () => {
+      await expect(claudePluginMarketplaceAdd("user /repo")).rejects.toThrow(
+        "invalid characters",
+      );
+    });
 
-      it("rejects marketplace name with spaces", async () => {
-        await expect(claudePluginMarketplaceAdd("user/repo", "my marketplace")).rejects.toThrow(
-          "invalid characters",
-        );
-      });
+    it("accepts owner/repo format", async () => {
+      const promise = claudePluginMarketplaceAdd("my-org/my-repo");
+      expect(promise).toBeInstanceOf(Promise);
+    });
 
-      it("accepts valid marketplace name", async () => {
-        const promise = claudePluginMarketplaceAdd("user/repo", "my-marketplace");
-        expect(promise).toBeInstanceOf(Promise);
-      });
+    it("accepts github: prefixed source", async () => {
+      const promise = claudePluginMarketplaceAdd("github:my-org/my-repo");
+      expect(promise).toBeInstanceOf(Promise);
+    });
 
-      it("accepts marketplace name with dots and underscores", async () => {
-        const promise = claudePluginMarketplaceAdd("user/repo", "my_market.place");
-        expect(promise).toBeInstanceOf(Promise);
-      });
+    it("accepts source with dots and underscores", async () => {
+      const promise = claudePluginMarketplaceAdd("my_org.name/my_repo.name");
+      expect(promise).toBeInstanceOf(Promise);
+    });
+
+    it("accepts source with @ symbol", async () => {
+      const promise = claudePluginMarketplaceAdd("my-org/my-repo@main");
+      expect(promise).toBeInstanceOf(Promise);
     });
   });
 

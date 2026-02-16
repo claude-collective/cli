@@ -9,18 +9,16 @@ import {
   getMarketplaceLabel,
   type SourceLoadResult,
 } from "../lib/loading/index.js";
-import { saveSourceToProjectConfig } from "../lib/configuration/index.js";
-import { installLocal } from "../lib/installation/index.js";
+import { installLocal, installPluginConfig, detectInstallation as detectExistingInstallation } from "../lib/installation/index.js";
 import { checkPermissions } from "../lib/permission-checker.js";
-import { installStackAsPlugin } from "../lib/stacks/index.js";
-import { getCollectivePluginDir } from "../lib/plugins/index.js";
+import { hasIndividualPlugins } from "../lib/plugins/index.js";
 import {
   claudePluginInstall,
   claudePluginMarketplaceExists,
   claudePluginMarketplaceAdd,
 } from "../utils/exec.js";
-import { directoryExists } from "../utils/fs.js";
 import { CLAUDE_DIR, LOCAL_SKILLS_PATH } from "../consts.js";
+import { getErrorMessage } from "../utils/errors.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import {
   ERROR_MESSAGES,
@@ -81,11 +79,14 @@ export default class Init extends BaseCommand {
       this.log(`${DRY_RUN_MESSAGES.PREVIEW_NO_FILES_CREATED}\n`);
     }
 
-    const pluginDir = getCollectivePluginDir();
-    const pluginExists = await directoryExists(pluginDir);
+    const individualPluginsExist = await hasIndividualPlugins(projectDir);
+    const existingInstallation = await detectExistingInstallation(projectDir);
 
-    if (pluginExists) {
-      this.warn(`Claude Collective is already initialized at ${pluginDir}`);
+    if (individualPluginsExist || existingInstallation) {
+      const location = individualPluginsExist
+        ? `.claude/settings.json`
+        : existingInstallation?.configPath ?? projectDir;
+      this.warn(`Claude Collective is already initialized at ${location}`);
       this.log(`Use 'cc edit' to modify skills.`);
       this.log(INFO_MESSAGES.NO_CHANGES_MADE);
       return;
@@ -99,7 +100,7 @@ export default class Init extends BaseCommand {
         forceRefresh: flags.refresh,
       });
     } catch (error) {
-      this.error(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR, {
+      this.error(getErrorMessage(error), {
         exit: EXIT_CODES.ERROR,
       });
     }
@@ -204,9 +205,7 @@ export default class Init extends BaseCommand {
     }
 
     if (result.installMode === "plugin") {
-      if (result.selectedStackId) {
-        await this.installPluginMode(result, sourceResult, flags);
-      } else if (sourceResult.marketplace) {
+      if (sourceResult.marketplace) {
         await this.installIndividualPlugins(result, sourceResult, flags);
       } else {
         this.warn("Plugin Mode requires a marketplace for individual skill installation.");
@@ -220,89 +219,6 @@ export default class Init extends BaseCommand {
     await this.installLocalMode(result, sourceResult, flags);
   }
 
-  private async installPluginMode(
-    result: WizardResultV2,
-    sourceResult: SourceLoadResult,
-    flags: { source?: string },
-  ): Promise<void> {
-    if (!result.selectedStackId) {
-      throw new Error(
-        "Plugin Mode requires a stack selection, but no stack was selected.\n" +
-          "To fix this, either:\n" +
-          "  1. Re-run 'cc init' and select a stack during the wizard\n" +
-          "  2. Use Local Mode instead (copies skills to .claude/skills/)",
-      );
-    }
-
-    const projectDir = process.cwd();
-
-    if (sourceResult.marketplace) {
-      const marketplaceExists = await claudePluginMarketplaceExists(sourceResult.marketplace);
-
-      if (!marketplaceExists) {
-        this.log(`Registering marketplace "${sourceResult.marketplace}"...`);
-        try {
-          await claudePluginMarketplaceAdd(
-            sourceResult.sourceConfig.source,
-            sourceResult.marketplace,
-          );
-          this.log(`Registered marketplace: ${sourceResult.marketplace}`);
-        } catch (error) {
-          this.error(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR_SHORT, {
-            exit: EXIT_CODES.ERROR,
-          });
-        }
-      }
-    }
-
-    const installMethod = sourceResult.marketplace
-      ? `Installing from marketplace "${sourceResult.marketplace}"`
-      : "Compiling and installing";
-    this.log(`${installMethod} stack "${result.selectedStackId}"...`);
-
-    try {
-      const installResult = await installStackAsPlugin({
-        stackId: result.selectedStackId,
-        projectDir,
-        sourcePath: sourceResult.sourcePath,
-        agentSourcePath: sourceResult.sourcePath,
-        marketplace: sourceResult.marketplace,
-      });
-
-      const installedFrom = installResult.fromMarketplace
-        ? `from marketplace`
-        : `(compiled locally)`;
-      this.log(`Installed stack plugin: ${installResult.pluginName} ${installedFrom}\n`);
-
-      this.log(`${SUCCESS_MESSAGES.INIT_SUCCESS}\n`);
-      this.log(`Stack "${installResult.stackName}" installed as plugin`);
-
-      if (installResult.agents.length > 0) {
-        this.log("\nAgents included:");
-        for (const agentName of installResult.agents) {
-          this.log(`  ${agentName}`);
-        }
-        this.log(`\nSkills bundled: ${installResult.skills.length}`);
-      }
-      this.log("");
-
-      if (flags.source) {
-        await saveSourceToProjectConfig(projectDir, flags.source);
-        this.log(`Source saved to .claude-src/config.yaml`);
-      }
-
-      const permissionWarning = await checkPermissions(projectDir);
-      if (permissionWarning) {
-        const { waitUntilExit } = render(permissionWarning);
-        await waitUntilExit();
-      }
-    } catch (error) {
-      this.error(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR_SHORT, {
-        exit: EXIT_CODES.ERROR,
-      });
-    }
-  }
-
   private async installIndividualPlugins(
     result: WizardResultV2,
     sourceResult: SourceLoadResult,
@@ -310,20 +226,17 @@ export default class Init extends BaseCommand {
   ): Promise<void> {
     const projectDir = process.cwd();
 
-    // 1. Register marketplace if needed (same pattern as installPluginMode)
+    // 1. Register marketplace if needed
     if (sourceResult.marketplace) {
       const marketplaceExists = await claudePluginMarketplaceExists(sourceResult.marketplace);
 
       if (!marketplaceExists) {
         this.log(`Registering marketplace "${sourceResult.marketplace}"...`);
         try {
-          await claudePluginMarketplaceAdd(
-            sourceResult.sourceConfig.source,
-            sourceResult.marketplace,
-          );
+          await claudePluginMarketplaceAdd(sourceResult.marketplace);
           this.log(`Registered marketplace: ${sourceResult.marketplace}`);
         } catch (error) {
-          this.error(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR_SHORT, {
+          this.error(getErrorMessage(error), {
             exit: EXIT_CODES.ERROR,
           });
         }
@@ -339,7 +252,7 @@ export default class Init extends BaseCommand {
         this.log(`  Installed ${pluginRef}`);
       } catch (error) {
         this.error(
-          `Failed to install plugin ${pluginRef}: ${error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR_SHORT}`,
+          `Failed to install plugin ${pluginRef}: ${getErrorMessage(error)}`,
           { exit: EXIT_CODES.ERROR },
         );
       }
@@ -347,9 +260,48 @@ export default class Init extends BaseCommand {
 
     this.log(`Installed ${result.selectedSkills.length} skill plugins\n`);
 
-    // 3. Run local installation for config generation + agent compilation
-    // Skills are also copied to .claude/skills/ as a local reference for the compiler
-    await this.installLocalMode(result, sourceResult, flags);
+    // 3. Generate config and compile agents (without copying skills to .claude/skills/)
+    // In plugin mode, skills come from the installed plugins, not local copies
+    this.log("Generating configuration...");
+    try {
+      const configResult = await installPluginConfig({
+        wizardResult: result,
+        sourceResult,
+        projectDir,
+        sourceFlag: flags.source,
+      });
+
+      if (configResult.wasMerged) {
+        this.log(`Merged with existing config at ${configResult.mergedConfigPath}`);
+      }
+
+      this.log(`Configuration saved (${configResult.config.agents.length} agents)\n`);
+      this.log(STATUS_MESSAGES.COMPILING_AGENTS);
+      this.log(`Compiled ${configResult.compiledAgents.length} agents to .claude/agents/\n`);
+
+      this.log(`${SUCCESS_MESSAGES.INIT_SUCCESS}\n`);
+      this.log("Agents compiled to:");
+      this.log(`  ${configResult.agentsDir}`);
+      for (const agentName of configResult.compiledAgents) {
+        this.log(`    ${agentName}.md`);
+      }
+      this.log("");
+      this.log("Configuration:");
+      this.log(`  ${configResult.configPath}`);
+      this.log("");
+      this.log("To customize agent-skill assignments:");
+      this.log(`  1. Edit .claude-src/config.yaml`);
+      this.log(`  2. Run 'cc compile' to regenerate agents`);
+      this.log("");
+
+      const permissionWarning = await checkPermissions(projectDir);
+      if (permissionWarning) {
+        const { waitUntilExit } = render(permissionWarning);
+        await waitUntilExit();
+      }
+    } catch (error) {
+      this.handleError(error);
+    }
   }
 
   private async installLocalMode(

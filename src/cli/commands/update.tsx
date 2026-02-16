@@ -17,7 +17,6 @@ import {
 } from "../lib/skills/index.js";
 import { fileExists, copy } from "../utils/fs.js";
 import { LOCAL_SKILLS_PATH } from "../consts.js";
-import { getCollectivePluginDir } from "../lib/plugins/index.js";
 import {
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,
@@ -301,9 +300,8 @@ export default class Update extends BaseCommand {
         this.log(STATUS_MESSAGES.RECOMPILING_AGENTS);
 
         try {
-          const pluginDir = getCollectivePluginDir(projectDir);
           const recompileResult = await recompileAgents({
-            pluginDir,
+            pluginDir: projectDir,
             sourcePath: sourceResult.sourcePath,
             projectDir,
           });

@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
 import os from "os";
-import { mkdtemp, rm, mkdir } from "fs/promises";
+import fs from "fs";
+import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
 import { runCliCommand, directoryExists } from "../helpers";
 
 vi.mock("../../../utils/exec.js", () => ({
@@ -11,11 +12,64 @@ vi.mock("../../../utils/exec.js", () => ({
 
 const CLAUDE_DIR = ".claude";
 const CLAUDE_SRC_DIR = ".claude-src";
-const PLUGIN_SUBPATH = path.join(CLAUDE_DIR, "plugins", "claude-collective");
+const TEST_PLUGIN_NAME = "test-plugin@marketplace";
+const PLUGIN_SUBPATH = path.join(CLAUDE_DIR, "plugins", TEST_PLUGIN_NAME);
 
-async function createPluginDir(projectDir: string): Promise<string> {
+/**
+ * Creates a plugin directory with the full settings.json-based discovery chain:
+ * 1. Project .claude/settings.json with enabledPlugins
+ * 2. Fake home ~/.claude/plugins/installed_plugins.json registry
+ * 3. Plugin manifest at the install path (.claude-plugin/plugin.json)
+ */
+async function createPluginDir(
+  projectDir: string,
+  fakeHome: string,
+): Promise<string> {
   const pluginDir = path.join(projectDir, PLUGIN_SUBPATH);
   await mkdir(pluginDir, { recursive: true });
+
+  // Create plugin manifest so getVerifiedPluginInstallPaths can verify the path
+  const manifestDir = path.join(pluginDir, ".claude-plugin");
+  await mkdir(manifestDir, { recursive: true });
+  await writeFile(
+    path.join(manifestDir, "plugin.json"),
+    JSON.stringify({ name: TEST_PLUGIN_NAME, version: "1.0.0" }),
+  );
+
+  // Create .claude/settings.json with enabled plugin
+  const settingsPath = path.join(projectDir, CLAUDE_DIR, "settings.json");
+  await writeFile(
+    settingsPath,
+    JSON.stringify({ enabledPlugins: { [TEST_PLUGIN_NAME]: true } }),
+  );
+
+  // Use resolved (real) paths for registry entries because process.cwd()
+  // resolves symlinks (e.g., /var -> /private/var on macOS) and the
+  // uninstall command compares projectPath against process.cwd().
+  const realProjectDir = fs.realpathSync(projectDir);
+  const realPluginDir = path.join(realProjectDir, PLUGIN_SUBPATH);
+
+  // Create global registry at fake home
+  const registryDir = path.join(fakeHome, CLAUDE_DIR, "plugins");
+  await mkdir(registryDir, { recursive: true });
+  await writeFile(
+    path.join(registryDir, "installed_plugins.json"),
+    JSON.stringify({
+      version: 1,
+      plugins: {
+        [TEST_PLUGIN_NAME]: [
+          {
+            scope: "project",
+            projectPath: realProjectDir,
+            installPath: realPluginDir,
+            version: "1.0.0",
+            installedAt: new Date().toISOString(),
+          },
+        ],
+      },
+    }),
+  );
+
   return pluginDir;
 }
 
@@ -32,18 +86,25 @@ async function createLocalDirs(
 describe("uninstall command", () => {
   let tempDir: string;
   let projectDir: string;
+  let fakeHome: string;
   let originalCwd: string;
+  let originalHome: string | undefined;
 
   beforeEach(async () => {
     originalCwd = process.cwd();
+    originalHome = process.env.HOME;
     tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-uninstall-test-"));
     projectDir = path.join(tempDir, "project");
+    fakeHome = path.join(tempDir, "fakehome");
     await mkdir(projectDir, { recursive: true });
+    await mkdir(fakeHome, { recursive: true });
     process.chdir(projectDir);
+    process.env.HOME = fakeHome;
   });
 
   afterEach(async () => {
     process.chdir(originalCwd);
+    process.env.HOME = originalHome;
     await rm(tempDir, { recursive: true, force: true });
   });
 
@@ -125,7 +186,7 @@ describe("uninstall command", () => {
 
   describe("dry-run mode", () => {
     it("should show preview header in dry-run", async () => {
-      await createPluginDir(projectDir);
+      await createPluginDir(projectDir, fakeHome);
 
       const { stdout } = await runCliCommand(["uninstall", "--dry-run"]);
 
@@ -134,11 +195,11 @@ describe("uninstall command", () => {
     });
 
     it("should preview plugin removal in dry-run", async () => {
-      await createPluginDir(projectDir);
+      await createPluginDir(projectDir, fakeHome);
 
       const { stdout } = await runCliCommand(["uninstall", "--dry-run"]);
 
-      expect(stdout).toContain("[dry-run] Would uninstall plugin");
+      expect(stdout).toContain("[dry-run] Would uninstall");
       expect(stdout).toContain("[dry-run] Would remove");
       expect(stdout).toContain("Preview complete");
     });
@@ -154,7 +215,7 @@ describe("uninstall command", () => {
     });
 
     it("should not remove files in dry-run", async () => {
-      const pluginDir = await createPluginDir(projectDir);
+      const pluginDir = await createPluginDir(projectDir, fakeHome);
       const { claudeDir, claudeSrcDir } = await createLocalDirs(projectDir);
 
       await runCliCommand(["uninstall", "--dry-run"]);
@@ -175,7 +236,7 @@ describe("uninstall command", () => {
 
   describe("uninstall with --yes (plugin)", () => {
     it("should remove plugin directory", async () => {
-      const pluginDir = await createPluginDir(projectDir);
+      const pluginDir = await createPluginDir(projectDir, fakeHome);
 
       // Verify plugin exists before uninstall
       expect(await directoryExists(pluginDir)).toBe(true);
@@ -184,20 +245,20 @@ describe("uninstall command", () => {
 
       // Verify plugin was removed
       expect(await directoryExists(pluginDir)).toBe(false);
-      expect(stdout).toContain("Plugin uninstalled");
+      expect(stdout).toContain("Plugins uninstalled");
     });
 
     it("should show what will be removed", async () => {
-      await createPluginDir(projectDir);
+      await createPluginDir(projectDir, fakeHome);
 
       const { stdout } = await runCliCommand(["uninstall", "--yes"]);
 
       expect(stdout).toContain("The following will be removed");
-      expect(stdout).toContain("Plugin:");
+      expect(stdout).toContain("Plugins:");
     });
 
     it("should show uninstall complete message", async () => {
-      await createPluginDir(projectDir);
+      await createPluginDir(projectDir, fakeHome);
 
       const { stdout } = await runCliCommand(["uninstall", "--yes"]);
 
@@ -235,7 +296,7 @@ describe("uninstall command", () => {
 
   describe("flag targeting", () => {
     it("should only remove plugin with --plugin flag", async () => {
-      const pluginDir = await createPluginDir(projectDir);
+      const pluginDir = await createPluginDir(projectDir, fakeHome);
       const { claudeSrcDir } = await createLocalDirs(projectDir);
 
       await runCliCommand(["uninstall", "--yes", "--plugin"]);
@@ -279,17 +340,17 @@ describe("uninstall command", () => {
 
   describe("dry-run with flag targeting", () => {
     it("should preview only plugin removal with --dry-run --plugin", async () => {
-      await createPluginDir(projectDir);
+      await createPluginDir(projectDir, fakeHome);
       await createLocalDirs(projectDir);
 
       const { stdout } = await runCliCommand(["uninstall", "--dry-run", "--plugin"]);
 
-      expect(stdout).toContain("[dry-run] Would uninstall plugin");
+      expect(stdout).toContain("[dry-run] Would uninstall");
       expect(stdout).not.toContain(CLAUDE_SRC_DIR);
     });
 
     it("should preview only local removal with --dry-run --local", async () => {
-      await createPluginDir(projectDir);
+      await createPluginDir(projectDir, fakeHome);
       await createLocalDirs(projectDir);
 
       const { stdout } = await runCliCommand(["uninstall", "--dry-run", "--local"]);

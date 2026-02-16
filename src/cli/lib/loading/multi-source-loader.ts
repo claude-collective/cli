@@ -1,13 +1,12 @@
 import path from "path";
 
 import { SKILLS_DIR_PATH } from "../../consts";
-import type { BoundSkillCandidate, MergedSkillsMatrix, SkillAlias, SkillSource } from "../../types";
-import { directoryExists } from "../../utils/fs";
+import type { BoundSkillCandidate, MergedSkillsMatrix, SkillAlias, SkillId, SkillSource } from "../../types";
 import { verbose, warn } from "../../utils/logger";
 import { typedEntries } from "../../utils/typed-object";
 import { resolveAllSources, type ResolvedConfig, type SourceEntry } from "../configuration";
 import { extractAllSkills } from "../matrix";
-import { getCollectivePluginDir, getPluginSkillIds, getPluginSkillsDir } from "../plugins";
+import { discoverAllPluginSkills } from "../plugins";
 import { fetchFromSource } from "./source-fetcher";
 
 /** Default source name for skills from the primary (public) marketplace repository */
@@ -19,7 +18,7 @@ const PUBLIC_SOURCE_NAME = "public";
  * Runs a five-phase tagging pipeline that mutates `primaryMatrix.skills` in place:
  * 1. **Public** -- tags all skills with a "public" source entry
  * 2. **Local** -- tags skills with `local: true` as installed via local source
- * 3. **Plugin** -- detects plugin-installed skills in `{projectDir}/.claude/plugins/`
+ * 3. **Plugin** -- detects plugin-installed skills via `settings.json` and global cache
  * 4. **Extra sources** -- fetches each configured extra source and tags matching skills
  * 5. **Active source** -- sets `activeSource` to the installed variant, or first available
  *
@@ -97,52 +96,56 @@ function tagLocalSkills(matrix: MergedSkillsMatrix): void {
   verbose(`Tagged ${count} local skills with local source`);
 }
 
-/** Detect plugin-installed skills and tag them */
+/** Detect plugin-installed skills and tag them across all plugin directories */
 async function tagPluginSkills(matrix: MergedSkillsMatrix, projectDir: string): Promise<void> {
-  const pluginDir = getCollectivePluginDir(projectDir);
+  const allPluginSkillIds = await collectPluginSkillIds(matrix, projectDir);
 
-  if (!(await directoryExists(pluginDir))) {
-    verbose("No plugin directory found, skipping plugin skill tagging");
+  if (allPluginSkillIds.length === 0) {
     return;
   }
 
-  const pluginSkillsDir = getPluginSkillsDir(pluginDir);
+  for (const skillId of allPluginSkillIds) {
+    const skill = matrix.skills[skillId];
+    if (!skill) continue;
 
-  if (!(await directoryExists(pluginSkillsDir))) {
-    verbose("No plugin skills directory found, skipping plugin skill tagging");
-    return;
-  }
+    skill.availableSources = skill.availableSources ?? [];
 
-  try {
-    const pluginSkillIds = await getPluginSkillIds(pluginSkillsDir, matrix);
-
-    for (const skillId of pluginSkillIds) {
-      const skill = matrix.skills[skillId];
-      if (!skill) continue;
-
-      skill.availableSources = skill.availableSources ?? [];
-
-      // Mark the existing source as installed via plugin
-      const existingSource = skill.availableSources.find((s) => s.type === "public");
-      if (existingSource && !existingSource.installMode) {
-        existingSource.installed = true;
-        existingSource.installMode = "plugin";
-      } else if (!skill.availableSources.some((s) => s.installMode === "plugin")) {
-        // No existing source to mark — add a public source with plugin install mode
-        skill.availableSources.push({
-          name: PUBLIC_SOURCE_NAME,
-          type: "public",
-          version: skill.version,
-          installed: true,
-          installMode: "plugin",
-        });
-      }
+    // Mark the existing source as installed via plugin
+    const existingSource = skill.availableSources.find((s) => s.type === "public");
+    if (existingSource && !existingSource.installMode) {
+      existingSource.installed = true;
+      existingSource.installMode = "plugin";
+    } else if (!skill.availableSources.some((s) => s.installMode === "plugin")) {
+      // No existing source to mark -- add a public source with plugin install mode
+      skill.availableSources.push({
+        name: PUBLIC_SOURCE_NAME,
+        type: "public",
+        version: skill.version,
+        installed: true,
+        installMode: "plugin",
+      });
     }
-
-    verbose(`Tagged ${pluginSkillIds.length} plugin-installed skills`);
-  } catch (error) {
-    verbose(`Failed to detect plugin skills: ${error}`);
   }
+
+  verbose(`Tagged ${allPluginSkillIds.length} plugin-installed skills`);
+}
+
+/**
+ * Collects skill IDs from all enabled plugins via settings.json and global cache.
+ * Uses {@link discoverAllPluginSkills} to find skills from the plugin registry.
+ */
+async function collectPluginSkillIds(
+  _matrix: MergedSkillsMatrix,
+  projectDir: string,
+): Promise<SkillId[]> {
+  const pluginSkills = await discoverAllPluginSkills(projectDir);
+  const skillIds = Object.keys(pluginSkills) as SkillId[];
+
+  if (skillIds.length === 0) {
+    verbose("No plugin skills discovered from settings.json");
+  }
+
+  return skillIds;
 }
 
 /** Load extra sources from project config and tag matching skills */

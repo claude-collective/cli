@@ -110,7 +110,7 @@ describe("StepSettings component", () => {
       await delay(LOADING_SETTLE_MS);
       const output = lastFrame();
       expect(output).toContain("1");
-      expect(output).toContain(".claude/plugins/");
+      expect(output).toContain("installed plugins");
     });
 
     it("should show add source input area", async () => {

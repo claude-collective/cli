@@ -33,9 +33,17 @@ async function createLocalProject(
   await writeFile(path.join(configDir, "config.yaml"), configContent);
 }
 
-async function createPluginDir(projectDir: string): Promise<void> {
-  const pluginDir = path.join(projectDir, ".claude/plugins/claude-collective");
-  await mkdir(pluginDir, { recursive: true });
+const PLUGIN_CONFIG_CONTENT = `name: my-project
+agents:
+  - web-developer
+skills: []
+installMode: plugin
+`;
+
+async function createPluginProject(projectDir: string): Promise<void> {
+  const configDir = path.join(projectDir, ".claude-src");
+  await mkdir(configDir, { recursive: true });
+  await writeFile(path.join(configDir, "config.yaml"), PLUGIN_CONFIG_CONTENT);
 }
 
 describe("installation", () => {
@@ -82,22 +90,21 @@ describe("installation", () => {
       expect(result!.mode).toBe("local");
     });
 
-    it("detects plugin installation when no local config exists", async () => {
-      // No local config, but plugin directory exists
-      await createPluginDir(tempDir);
+    it("detects plugin installation when installMode is plugin", async () => {
+      await createPluginProject(tempDir);
 
       const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("plugin");
       expect(result!.configPath).toBe(
-        path.join(tempDir, ".claude/plugins/claude-collective/config.yaml"),
+        path.join(tempDir, ".claude-src/config.yaml"),
       );
       expect(result!.agentsDir).toBe(
-        path.join(tempDir, ".claude/plugins/claude-collective/agents"),
+        path.join(tempDir, ".claude/agents"),
       );
       expect(result!.skillsDir).toBe(
-        path.join(tempDir, ".claude/plugins/claude-collective/skills"),
+        path.join(tempDir, ".claude/plugins"),
       );
     });
 
@@ -108,15 +115,14 @@ describe("installation", () => {
       expect(result).toBeNull();
     });
 
-    it("prefers local installation over plugin when both exist", async () => {
-      await createLocalProject(tempDir);
-      await createPluginDir(tempDir);
+    it("returns null when no config file exists even if plugin dirs exist", async () => {
+      // Just having plugin directories without a config file is not sufficient
+      const pluginDir = path.join(tempDir, ".claude/plugins/some-skill@public");
+      await mkdir(pluginDir, { recursive: true });
 
       const result = await detectInstallation(tempDir);
 
-      // Local takes priority
-      expect(result).not.toBeNull();
-      expect(result!.mode).toBe("local");
+      expect(result).toBeNull();
     });
 
     it("falls through to local even when config is invalid YAML", async () => {
@@ -174,8 +180,8 @@ describe("installation", () => {
       await expect(getInstallationOrThrow(tempDir)).rejects.toThrow("cc init");
     });
 
-    it("returns plugin installation when only plugin exists", async () => {
-      await createPluginDir(tempDir);
+    it("returns plugin installation when config has installMode: plugin", async () => {
+      await createPluginProject(tempDir);
 
       const result = await getInstallationOrThrow(tempDir);
 

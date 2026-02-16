@@ -5,4 +5,10 @@ export {
   getInstallationOrThrow,
 } from "./installation";
 
-export { type LocalInstallOptions, type LocalInstallResult, installLocal } from "./local-installer";
+export {
+  type LocalInstallOptions,
+  type LocalInstallResult,
+  type PluginConfigResult,
+  installLocal,
+  installPluginConfig,
+} from "./local-installer";

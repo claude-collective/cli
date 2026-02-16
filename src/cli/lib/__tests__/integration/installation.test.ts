@@ -100,29 +100,56 @@ agents:
   });
 
   describe("detectInstallation - plugin mode", () => {
-    it("should return plugin installation when only plugin directory exists", async () => {
-      // Create plugin directory (without local config)
-      const pluginDir = path.join(tempDir, ".claude", "plugins", "claude-collective");
-      await mkdir(pluginDir, { recursive: true });
+    it("should return plugin installation when config has installMode: plugin", async () => {
+      // Create config with explicit plugin mode
+      const claudeSrcDir = path.join(tempDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
+      await writeFile(
+        path.join(claudeSrcDir, "config.yaml"),
+        `name: test-project
+agents:
+  - web-developer
+installMode: plugin
+`,
+      );
 
       const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
       expect(result?.mode).toBe("plugin");
-      expect(result?.configPath).toBe(path.join(pluginDir, "config.yaml"));
+      expect(result?.configPath).toBe(path.join(claudeSrcDir, "config.yaml"));
       expect(result?.projectDir).toBe(tempDir);
     });
 
     it("should use correct plugin paths for agentsDir and skillsDir", async () => {
-      // Create plugin directory
+      // Create config with explicit plugin mode
+      const claudeSrcDir = path.join(tempDir, ".claude-src");
+      const claudeDir = path.join(tempDir, ".claude");
+      await mkdir(claudeSrcDir, { recursive: true });
+      await writeFile(
+        path.join(claudeSrcDir, "config.yaml"),
+        `name: test-project
+agents:
+  - web-developer
+installMode: plugin
+`,
+      );
+
+      const result = await detectInstallation(tempDir);
+
+      expect(result).not.toBeNull();
+      expect(result?.agentsDir).toBe(path.join(claudeDir, "agents"));
+      expect(result?.skillsDir).toBe(path.join(claudeDir, "plugins"));
+    });
+
+    it("should return null when only plugin directory exists without config", async () => {
+      // Just having a plugin directory without a config file should not detect installation
       const pluginDir = path.join(tempDir, ".claude", "plugins", "claude-collective");
       await mkdir(pluginDir, { recursive: true });
 
       const result = await detectInstallation(tempDir);
 
-      expect(result).not.toBeNull();
-      expect(result?.agentsDir).toBe(path.join(pluginDir, "agents"));
-      expect(result?.skillsDir).toBe(path.join(pluginDir, "skills"));
+      expect(result).toBeNull();
     });
   });
 
@@ -202,9 +229,17 @@ agents:
     });
 
     it("should return installation when found (plugin)", async () => {
-      // Create plugin directory
-      const pluginDir = path.join(tempDir, ".claude", "plugins", "claude-collective");
-      await mkdir(pluginDir, { recursive: true });
+      // Create config with plugin mode
+      const claudeSrcDir = path.join(tempDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
+      await writeFile(
+        path.join(claudeSrcDir, "config.yaml"),
+        `name: test-project
+agents:
+  - web-developer
+installMode: plugin
+`,
+      );
 
       const result = await getInstallationOrThrow(tempDir);
 
@@ -215,9 +250,9 @@ agents:
   });
 
   describe("edge cases", () => {
-    it("should handle config with explicit installMode: plugin but no plugin dir", async () => {
-      // Create local config with installMode: plugin (unusual but possible)
-      // This should not return local installation since mode is explicitly plugin
+    it("should handle config with explicit installMode: plugin even without plugin dir", async () => {
+      // Create local config with installMode: plugin
+      // Config file exists, so installation is detected as plugin mode
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
@@ -231,9 +266,10 @@ installMode: plugin
 
       const result = await detectInstallation(tempDir);
 
-      // Should not match local mode since installMode is explicitly "plugin"
-      // And should not match plugin mode since plugin dir doesn't exist
-      expect(result).toBeNull();
+      // Config file exists with installMode: plugin, so it returns plugin installation
+      expect(result).not.toBeNull();
+      expect(result?.mode).toBe("plugin");
+      expect(result?.configPath).toBe(path.join(claudeSrcDir, "config.yaml"));
     });
 
     it("should treat invalid YAML config file as local mode (file exists)", async () => {

@@ -1,9 +1,7 @@
 import type { Liquid } from "liquidjs";
 import path from "path";
-import { parse as parseYaml } from "yaml";
 
 import { getErrorMessage } from "../../utils/errors";
-import { STANDARD_FILES } from "../../consts";
 import type {
   AgentConfig,
   AgentDefinition,
@@ -14,15 +12,15 @@ import type {
   SkillDefinition,
   SkillId,
 } from "../../types";
-import { glob, writeFile, ensureDir, readFile, fileExists } from "../../utils/fs";
+import { glob, writeFile, ensureDir } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
 import { createLiquidEngine } from "../compiler";
-import { loadProjectConfig, type LoadedProjectConfig } from "../configuration";
-import { loadAllAgents, loadPluginSkills, loadProjectAgents } from "../loading";
+import { loadProjectConfig } from "../configuration";
+import { loadAllAgents, loadProjectAgents } from "../loading";
 import { getPluginAgentsDir } from "../plugins";
+import { discoverAllPluginSkills } from "../plugins/plugin-discovery";
 import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
-import { projectConfigLoaderSchema } from "../schemas";
 import { compileAgentForPlugin } from "../stacks";
 
 export type RecompileAgentsOptions = {
@@ -45,35 +43,6 @@ async function getExistingAgentNames(pluginDir: string): Promise<AgentName[]> {
   const files = await glob("*.md", agentsDir);
   // Boundary cast: directory names from filesystem are agent names by convention
   return files.map((f) => path.basename(f, ".md") as AgentName);
-}
-
-// Tries pluginDir/config.yaml (legacy) then pluginDir/.claude/config.yaml
-async function loadConfigWithFallback(pluginDir: string): Promise<LoadedProjectConfig | null> {
-  const legacyConfigPath = path.join(pluginDir, STANDARD_FILES.CONFIG_YAML);
-  if (await fileExists(legacyConfigPath)) {
-    try {
-      const content = await readFile(legacyConfigPath);
-      const parsed = parseYaml(content);
-      const result = projectConfigLoaderSchema.safeParse(parsed);
-
-      if (result.success) {
-        verbose(`Loaded config.yaml from ${legacyConfigPath}`);
-        return {
-          // Loader schema validates field types but allows partial configs;
-          // required field validation happens in validateProjectConfig()
-          config: result.data as ProjectConfig,
-          configPath: legacyConfigPath,
-        };
-      } else {
-        verbose(`Invalid config.yaml at ${legacyConfigPath}: ${result.error.message}`);
-      }
-    } catch (error) {
-      verbose(`Failed to parse config.yaml: ${error}`);
-    }
-  }
-
-  // Fall back to project config location (.claude/config.yaml)
-  return loadProjectConfig(pluginDir);
 }
 
 type ResolveAgentNamesParams = {
@@ -179,10 +148,8 @@ export async function recompileAgents(
     warnings: [],
   };
 
-  let loadedConfig = await loadConfigWithFallback(pluginDir);
-  if (!loadedConfig && projectDir) {
-    loadedConfig = await loadConfigWithFallback(projectDir);
-  }
+  const configDir = projectDir ?? pluginDir;
+  const loadedConfig = await loadProjectConfig(configDir);
   const projectConfig = loadedConfig?.config ?? null;
 
   const builtinAgents = await loadAllAgents(sourcePath);
@@ -210,7 +177,13 @@ export async function recompileAgents(
 
   verbose(`Recompiling ${agentNames.length} agents in ${outputDir ?? pluginDir}`);
 
-  const pluginSkills = providedSkills ?? (await loadPluginSkills(pluginDir));
+  // When skills are not provided, discover from all plugin directories.
+  let pluginSkills: Partial<Record<SkillId, SkillDefinition>>;
+  if (providedSkills) {
+    pluginSkills = providedSkills;
+  } else {
+    pluginSkills = await discoverAllPluginSkills(projectDir ?? pluginDir);
+  }
 
   const { compileConfig, warnings } = buildCompileConfig({
     agentNames,

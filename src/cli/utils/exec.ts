@@ -4,12 +4,8 @@ import { warn } from "./logger";
 
 // Argument length limits to prevent oversized CLI arguments
 const MAX_PLUGIN_PATH_LENGTH = 1024;
-const MAX_GITHUB_REPO_LENGTH = 256;
-const MAX_MARKETPLACE_NAME_LENGTH = 128;
 const MAX_PLUGIN_NAME_LENGTH = 256;
-
-// GitHub repo format: owner/repo with optional @marketplace suffix
-const GITHUB_REPO_PATTERN = /^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/;
+const MAX_MARKETPLACE_SOURCE_LENGTH = 1024;
 
 // Marketplace/plugin names: alphanumeric, dashes, underscores, dots, @
 const SAFE_NAME_PATTERN = /^[a-zA-Z0-9._@/-]+$/;
@@ -43,48 +39,25 @@ function validatePluginPath(pluginPath: string): void {
   }
 }
 
-function validateGithubRepo(githubRepo: string): void {
-  if (!githubRepo || githubRepo.trim().length === 0) {
-    throw new Error("GitHub repository must not be empty.");
+function validateMarketplaceSource(source: string): void {
+  if (!source || source.trim().length === 0) {
+    throw new Error("Marketplace source must not be empty.");
   }
 
-  if (githubRepo.length > MAX_GITHUB_REPO_LENGTH) {
+  if (source.length > MAX_MARKETPLACE_SOURCE_LENGTH) {
     throw new Error(
-      `GitHub repository is too long (${githubRepo.length} characters, max ${MAX_GITHUB_REPO_LENGTH}).`,
+      `Marketplace source is too long (${source.length} characters, max ${MAX_MARKETPLACE_SOURCE_LENGTH}).`,
     );
   }
 
-  if (CONTROL_CHAR_PATTERN.test(githubRepo)) {
-    throw new Error("GitHub repository contains invalid control characters.");
+  if (CONTROL_CHAR_PATTERN.test(source)) {
+    throw new Error("Marketplace source contains invalid control characters.");
   }
 
-  if (!GITHUB_REPO_PATTERN.test(githubRepo)) {
+  if (!SAFE_PLUGIN_PATH_PATTERN.test(source)) {
     throw new Error(
-      `Invalid GitHub repository format: "${githubRepo}"\n` +
-        "Expected format: owner/repo (e.g., 'my-org/my-skills').",
-    );
-  }
-}
-
-function validateMarketplaceName(name: string): void {
-  if (!name || name.trim().length === 0) {
-    throw new Error("Marketplace name must not be empty.");
-  }
-
-  if (name.length > MAX_MARKETPLACE_NAME_LENGTH) {
-    throw new Error(
-      `Marketplace name is too long (${name.length} characters, max ${MAX_MARKETPLACE_NAME_LENGTH}).`,
-    );
-  }
-
-  if (CONTROL_CHAR_PATTERN.test(name)) {
-    throw new Error("Marketplace name contains invalid control characters.");
-  }
-
-  if (!SAFE_NAME_PATTERN.test(name)) {
-    throw new Error(
-      `Marketplace name contains invalid characters: "${name}"\n` +
-        "Names may only contain alphanumeric characters, dashes, underscores, dots, @, and slashes.",
+      `Marketplace source contains invalid characters: "${source}"\n` +
+        "Source may only contain alphanumeric characters, dashes, underscores, dots, slashes, @, and colons.",
     );
   }
 }
@@ -219,11 +192,10 @@ export async function claudePluginMarketplaceExists(name: string): Promise<boole
   return marketplaces.some((m) => m.name === name);
 }
 
-export async function claudePluginMarketplaceAdd(githubRepo: string, name: string): Promise<void> {
-  validateGithubRepo(githubRepo);
-  validateMarketplaceName(name);
+export async function claudePluginMarketplaceAdd(source: string): Promise<void> {
+  validateMarketplaceSource(source);
 
-  const args = ["plugin", "marketplace", "add", githubRepo, "--name", name];
+  const args = ["plugin", "marketplace", "add", source];
   let result;
   try {
     result = await execCommand("claude", args, {});
