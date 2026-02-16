@@ -1,7 +1,7 @@
 # CLI UX - Task Tracking
 
 > Dedicated tracking for CLI UX/UI improvements.
-> For architecture details, see [docs/architecture.md](./docs/architecture.md).
+> For architecture details, see [docs/reference/architecture.md](./docs/reference/architecture.md).
 
 ---
 

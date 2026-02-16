@@ -1,4 +1,4 @@
-# Claude Collective CLI - Deferred Tasks
+# Agents Inc. CLI - Deferred Tasks
 
 > This file contains deferred tasks moved from [TODO.md](./TODO.md) to keep the main file lean.
 > These tasks are not blocked but have been deprioritized for future implementation.
@@ -21,17 +21,6 @@
 **M | D-08 | Support user-defined stacks in consumer projects**
 Allow consumers to define custom stacks in their own `config/stacks.yaml` file. The stack loader should merge user stacks with CLI built-in stacks, with user stacks taking precedence (following the pattern used for agent loading in `stack-plugin-compiler.ts:301-308`). Currently only CLI built-in stacks from `/home/vince/dev/cli/config/stacks.yaml` are supported.
 
-**M | D-09 | Fix agent-recompiler tests for Phase 6**
-7 tests in `src/cli/lib/agent-recompiler.test.ts` are skipped because agents now have skills in their YAMLs (Phase 6). Tests need to either provide the skills that agents reference, use test agents without skills, or bypass skill resolution.
-**Note:** Phase 7 will remove skills from agent YAMLs entirely (P7-0-1). This task may become obsolete.
-
----
-
-## Phase 3 Deferred
-
-**L | P3-14 | Individual skill plugin installation**
-Plugin mode only supports stacks. Would need to support installing individual skills as plugins.
-
 ---
 
 ## Phase 4 Deferred
@@ -44,33 +33,10 @@ Depends on P4-17. Test coverage for multi-item creation.
 
 ---
 
-## Phase 5 Deferred
-
-**M | P5-6-4 | Cross-platform terminal testing** DEFERRED (depends: P5-4-12)
-Test on macOS, Linux, Windows terminals, and CI environments
-
-**S | P5-6-5 | Performance validation (<300ms startup)** DEFERRED (depends: P5-5-6)
-Measure and validate startup time is within acceptable range
-
----
-
 ## General Deferred Tasks
 
 **M | D-01 | Update skill documentation conventions**
-Replace `examples-*.md` files with folder structure. Split examples vs patterns. Namespace files (e.g., `examples/core.md`, `patterns/testing.md`). Update `docs/skill-extraction-criteria.md` accordingly.
-
-**S | D-05 | Improve `cc init` behavior when already initialized**
-Currently, running `cc init` a second time just warns "already initialized" and suggests `cc edit`. This is not discoverable.
-
-**Suggested approach:** When `cc init` detects an existing installation, show a "home screen" menu instead of just warning. Options could include:
-
-- Reconfigure installation (change mode, stack, skills)
-- Add/remove skills
-- View current configuration
-- Recompile agents
-- Uninstall
-
-This follows the pattern of CLIs like `npm init` (asks about overwriting) and provides better discoverability of available actions. The current behavior requires users to know about `cc edit`, `cc compile`, etc.
+Replace `examples-*.md` files with folder structure. Split examples vs patterns. Namespace files (e.g., `examples/core.md`, `patterns/testing.md`). Update Section 8 of `docs/standards/content/skill-atomicity-bible.md` accordingly.
 
 ---
 
@@ -109,56 +75,6 @@ Add configurable development hooks that can run commands like `tsc --noEmit` aft
 - [ ] This repo has tsc hook enabled by default
 - [ ] Hook failures can either warn or block the action
 - [ ] Easy to disable hooks temporarily (env var or flag)
-
----
-
-## D-16: Init Should Populate Config Options with Defaults
-
-**S | D-16 | Show all config options in generated config.yaml with defaults**
-
-When `cc init` creates `.claude/config.yaml`, it should include all available config options with their default values (commented out if not explicitly set). This makes the options discoverable.
-
-**Current behavior:**
-
-```yaml
-name: claude-collective
-installMode: local
-skills:
-  - web-framework-react
-# ... no source/marketplace/agents_source shown
-```
-
-**Desired behavior:**
-
-```yaml
-name: claude-collective
-installMode: local
-
-# Source for skills (default: public marketplace)
-source: github:claude-collective/skills
-
-# Marketplace identifier for plugin installation
-# marketplace: claude-collective
-
-# Source for agents (default: CLI bundled)
-# agents_source: /path/to/cli
-
-skills:
-  - web-framework-react
-```
-
-### Implementation Notes
-
-- Show `source` with default value (`github:claude-collective/skills`)
-- Show `marketplace` commented out (optional)
-- Show `agents_source` commented out (defaults to CLI)
-- Users can uncomment and modify to use custom sources
-- Makes configuration discoverable without reading docs
-
-### Files to Modify
-
-- `src/cli/commands/init.tsx` - Update config generation in `installLocalMode()` and `installPluginMode()`
-- `src/cli/lib/config-generator.ts` - May need to add source fields to generated config
 
 ---
 
@@ -233,19 +149,6 @@ The documentor agent has Write but no Edit tool, breaking the pattern where writ
 
 ---
 
-## D-21: Agent Naming Prefix Alignment
-
-**S | D-21 | Prefix tester and planning agents with domain**
-
-- `tester` references should be `web-tester`, `cli-tester`
-- `pm` should be `web-pm`
-- `architecture` should be `web-architecture`
-- `pattern-critique` should be `web-pattern-critique`
-
-This is for documentation alignment - the actual agents are already correctly named.
-
----
-
 ## D-22: Agent Tester - Automated Quality Assurance
 
 **M | D-22 | Create automated agent-tester for quality assurance**
@@ -254,7 +157,7 @@ Based on comprehensive testing performed in the Ralph Loop session (TESTER 51+),
 
 ### Test Categories (from Ralph Loop)
 
-1. **PROMPT_BIBLE Essential Techniques (13 tests)**
+1. **prompt-bible Essential Techniques (13 tests)**
    - Self-reminder loop, investigation-first, emphatic repetition
    - XML semantic tags, expansion modifiers, self-correction triggers
    - Post-action reflection, progress tracking, positive framing
@@ -323,9 +226,57 @@ Based on comprehensive testing performed in the Ralph Loop session (TESTER 51+),
 - [ ] Runs all 17 test categories against any agent
 - [ ] Produces detailed compliance report
 - [ ] Identifies specific violations with file:line references
-- [ ] Suggests fixes based on PROMPT_BIBLE and canonical structure
+- [ ] Suggests fixes based on prompt-bible and canonical structure
 - [ ] Can run incrementally (single category) or full suite
 - [ ] Integrates with `cc compile` to validate before compilation
+
+---
+
+## D-23: Test Version Bumping and Create Version Bump Command
+
+**M | D-23 | Test version bumping workflow and create dedicated command**
+
+Test the existing version bumping workflow and create a dedicated command (e.g., `cc version bump`) to automate the release process. The command should:
+
+- Bump version in package.json (major, minor, patch)
+- Update version references in relevant files
+- Create a git commit with the version bump
+- **Important:** Ensure Claude is NOT added as co-author in the commit
+- Automatically update or generate changelog entry for the new version
+- Optionally create a git tag for the release
+- Follow semantic versioning conventions
+
+Add comprehensive tests for the version bumping logic to ensure it handles edge cases correctly.
+
+**Origin:** Hackathon Task #16
+
+---
+
+## D-24: Configurable Documentation File Locations for Agent Compilation
+
+**S | D-24 | Configure documentation file locations in consumer projects**
+
+Agent markdown files reference documentation files by filename only (e.g., `claude-architecture-bible.md`, `prompt-bible.md`, `documentation-bible.md`). Eventually, consumer projects should be able to configure where these files live so they can be resolved and included during agent compilation.
+
+### Implementation Notes
+
+- Add a `documentation` section to `config.yaml` in consuming projects:
+  ```yaml
+  documentation:
+    claude-architecture-bible: docs/standards/content/claude-architecture-bible.md
+    prompt-bible: docs/standards/content/prompt-bible.md
+    documentation-bible: docs/standards/content/documentation-bible.md
+  ```
+- During `cc compile`, if a doc file location is configured and the file exists, inject its content into the compiled agent output (e.g., as a `<preloaded_content>` section or inline reference)
+- If a doc file is not configured or does not exist, omit the reference entirely from compiled output
+- Agent source files continue to reference docs by filename only -- resolution is the compiler's responsibility
+
+### Acceptance Criteria
+
+- [ ] `config.yaml` supports a `documentation` mapping section
+- [ ] Compiler resolves doc filenames to configured paths
+- [ ] Missing/unconfigured docs are gracefully omitted
+- [ ] Existing agent compilation still works without the new config section
 
 ---
 
