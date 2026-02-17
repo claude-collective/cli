@@ -24,7 +24,6 @@ import {
 import { CLAUDE_DIR, DEFAULT_BRANDING, LOCAL_SKILLS_PATH } from "../consts.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
-import { resolveBranding } from "../lib/configuration/config.js";
 import {
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,
@@ -69,16 +68,12 @@ export default class Init extends BaseCommand {
     const { flags } = await this.parse(Init);
     const projectDir = process.cwd();
 
-    this.log(
-      `       
- █████╗  ██████╗ ███████╗███╗   ██╗████████╗███████╗      ██╗███╗   ██╗ ██████╗
+    const logo = ` █████╗  ██████╗ ███████╗███╗   ██╗████████╗███████╗      ██╗███╗   ██╗ ██████╗
 ██╔══██╗██╔════╝ ██╔════╝████╗  ██║╚══██╔══╝██╔════╝      ██║████╗  ██║██╔════╝
-███████║██║  ███╗█████╗  ██╔██╗ ██║   ██║   ███████╗      ██║██╔██╗ ██║██║     
-██╔══██║██║   ██║██╔══╝  ██║╚██╗██║   ██║   ╚════██║      ██║██║╚██╗██║██║     
+███████║██║  ███╗█████╗  ██╔██╗ ██║   ██║   ███████╗      ██║██╔██╗ ██║██║
+██╔══██║██║   ██║██╔══╝  ██║╚██╗██║   ██║   ╚════██║      ██║██║╚██╗██║██║
 ██║  ██║╚██████╔╝███████╗██║ ╚████║   ██║   ███████║      ██║██║ ╚████║╚██████╗
-╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝      ╚═╝╚═╝  ╚═══╝ ╚═════╝
-`,
-    );
+╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝      ╚═╝╚═╝  ╚═══╝ ╚═════╝`;
 
     if (flags["dry-run"]) {
       this.log(`${DRY_RUN_MESSAGES.PREVIEW_NO_FILES_CREATED}\n`);
@@ -113,17 +108,16 @@ export default class Init extends BaseCommand {
     let wizardResult: WizardResultV2 | null = null;
 
     const marketplaceLabel = getMarketplaceLabel(sourceResult);
-    const branding = await resolveBranding(projectDir);
-
     const { waitUntilExit } = render(
       <Wizard
         matrix={sourceResult.matrix}
         version={this.config.version}
         marketplaceLabel={marketplaceLabel}
-        brandingName={branding.name}
+        logo={logo}
         projectDir={process.cwd()}
         initialInstallMode={sourceResult.marketplace ? "plugin" : "local"}
         onComplete={(result) => {
+          // Boundary cast: Ink render callback returns unknown result type
           wizardResult = result as WizardResultV2;
         }}
         onCancel={() => {
@@ -134,6 +128,7 @@ export default class Init extends BaseCommand {
 
     await waitUntilExit();
 
+    // Boundary cast: re-narrow after Ink waitUntilExit()
     const result = wizardResult as WizardResultV2 | null;
     if (!result || result.cancelled) {
       this.exit(EXIT_CODES.CANCELLED);

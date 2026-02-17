@@ -10,7 +10,6 @@ import { archiveLocalSkill, restoreArchivedSkill } from "../lib/skills/index.js"
 import { recompileAgents, getAgentDefinitions } from "../lib/agents/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { detectInstallation } from "../lib/installation/index.js";
-import { resolveBranding } from "../lib/configuration/config.js";
 import { ERROR_MESSAGES, STATUS_MESSAGES, INFO_MESSAGES } from "../utils/messages.js";
 import { claudePluginInstall, claudePluginUninstall } from "../utils/exec.js";
 import type { SkillId } from "../types/index.js";
@@ -102,14 +101,11 @@ export default class Edit extends BaseCommand {
 
     let wizardResult: WizardResultV2 | null = null;
     const marketplaceLabel = getMarketplaceLabel(sourceResult);
-    const branding = await resolveBranding(projectDir);
-
     const { waitUntilExit } = render(
       <Wizard
         matrix={sourceResult.matrix}
         version={this.config.version}
         marketplaceLabel={marketplaceLabel}
-        brandingName={branding.name}
         initialStep="build"
         initialInstallMode={sourceResult.marketplace ? "plugin" : "local"}
         installedSkillIds={currentSkillIds}

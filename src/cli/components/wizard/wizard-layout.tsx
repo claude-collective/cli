@@ -2,6 +2,7 @@ import React, { Fragment } from "react";
 import { Box, Text } from "ink";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import { CLI_COLORS } from "../../consts.js";
+import { useTerminalDimensions } from "../hooks/use-terminal-dimensions.js";
 import { WizardTabs, WIZARD_STEPS } from "./wizard-tabs.js";
 import { HelpModal } from "./help-modal.js";
 
@@ -26,7 +27,7 @@ const DefinitionItem: React.FC<KeyHintProps> = ({
     <Text>
       {values.map((value) => (
         <Fragment key={value}>
-          <Text backgroundColor="black" color={CLI_COLORS.UNFOCUSED}>
+          <Text backgroundColor="black" color={isActive ? CLI_COLORS.PRIMARY : CLI_COLORS.UNFOCUSED}>
             {" "}
             {value}{" "}
           </Text>{" "}
@@ -74,42 +75,40 @@ const WizardFooter = () => {
 type WizardLayoutProps = {
   version?: string;
   marketplaceLabel?: string;
-  brandingName?: string;
-  /** Terminal height in rows, used to constrain the layout for flexGrow measurement */
-  terminalHeight: number;
+  logo?: string;
   children: React.ReactNode;
 };
 
 export const WizardLayout: React.FC<WizardLayoutProps> = ({
   version,
   marketplaceLabel,
-  brandingName,
-  terminalHeight,
+  logo,
   children,
 }) => {
   const store = useWizardStore();
   const { completedSteps, skippedSteps } = store.getStepProgress();
-
-  // Constrain height only during the build step so flexGrow-based measurement
-  // can determine the grid area. Other steps grow to fit their content.
-  const constrainedHeight = store.step === "build" ? terminalHeight : undefined;
+  const { rows: terminalHeight } = useTerminalDimensions();
 
   return (
-    <Box flexDirection="column" paddingX={1} height={constrainedHeight}>
+    <Box flexDirection="column" paddingX={1} height={terminalHeight}>
+      {logo && (
+        <Box marginTop={1}>
+          <Text>{logo}</Text>
+        </Box>
+      )}
+      {marketplaceLabel && (
+        <Box marginBottom={1}>
+          <Text dimColor>Marketplace: </Text>
+          <Text bold>{marketplaceLabel}</Text>
+        </Box>
+      )}
       <WizardTabs
         steps={WIZARD_STEPS}
         currentStep={store.step}
         completedSteps={completedSteps}
         skippedSteps={skippedSteps}
         version={version}
-        brandingName={brandingName}
       />
-      {marketplaceLabel && (
-        <Box paddingLeft={1} marginTop={1}>
-          <Text dimColor>Marketplace: </Text>
-          <Text bold>{marketplaceLabel}</Text>
-        </Box>
-      )}
       {store.showHelp ? (
         <HelpModal currentStep={store.step} />
       ) : (

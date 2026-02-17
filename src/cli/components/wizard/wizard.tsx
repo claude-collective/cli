@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import { Box, Text, useApp, useInput, useStdout } from "ink";
 import { ThemeProvider } from "@inkjs/ui";
 import { useWizardStore, type WizardStep } from "../../stores/wizard-store.js";
-import { CLI_COLORS, SCROLL_VIEWPORT } from "../../consts.js";
+import { CLI_COLORS } from "../../consts.js";
 import { cliTheme } from "../themes/default.js";
 import { WizardLayout } from "./wizard-layout.js";
 import { StepStack } from "./step-stack.js";
@@ -38,7 +38,7 @@ type WizardProps = {
   onCancel: () => void;
   version?: string;
   marketplaceLabel?: string;
-  brandingName?: string;
+  logo?: string;
   initialStep?: WizardStep;
   initialInstallMode?: "plugin" | "local";
   installedSkillIds?: SkillId[];
@@ -46,6 +46,7 @@ type WizardProps = {
 };
 
 const MIN_TERMINAL_WIDTH = 80;
+const MIN_TERMINAL_HEIGHT = 15;
 
 export const Wizard: React.FC<WizardProps> = ({
   matrix,
@@ -53,7 +54,7 @@ export const Wizard: React.FC<WizardProps> = ({
   onCancel,
   version,
   marketplaceLabel,
-  brandingName,
+  logo,
   initialStep,
   initialInstallMode,
   installedSkillIds,
@@ -64,9 +65,9 @@ export const Wizard: React.FC<WizardProps> = ({
   const { stdout } = useStdout();
 
   const terminalWidth = stdout.columns || MIN_TERMINAL_WIDTH;
-  const terminalHeight = stdout.rows || SCROLL_VIEWPORT.MIN_TERMINAL_HEIGHT;
+  const terminalHeight = stdout.rows || MIN_TERMINAL_HEIGHT;
   const isNarrowTerminal = terminalWidth < MIN_TERMINAL_WIDTH;
-  const isShortTerminal = terminalHeight < SCROLL_VIEWPORT.MIN_TERMINAL_HEIGHT;
+  const isShortTerminal = terminalHeight < MIN_TERMINAL_HEIGHT;
 
   useWizardInitialization({ matrix, initialStep, initialInstallMode, installedSkillIds });
 
@@ -231,7 +232,7 @@ export const Wizard: React.FC<WizardProps> = ({
   if (isNarrowTerminal || isShortTerminal) {
     const issue = isNarrowTerminal
       ? `too narrow (${terminalWidth} columns, need ${MIN_TERMINAL_WIDTH})`
-      : `too short (${terminalHeight} rows, need ${SCROLL_VIEWPORT.MIN_TERMINAL_HEIGHT})`;
+      : `too short (${terminalHeight} rows, need ${MIN_TERMINAL_HEIGHT})`;
 
     return (
       <ThemeProvider theme={cliTheme}>
@@ -247,8 +248,7 @@ export const Wizard: React.FC<WizardProps> = ({
       <WizardLayout
         version={version}
         marketplaceLabel={marketplaceLabel}
-        brandingName={brandingName}
-        terminalHeight={terminalHeight}
+        logo={logo}
       >
         {renderStep()}
       </WizardLayout>
