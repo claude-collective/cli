@@ -3,7 +3,7 @@ import { CLI_COLORS } from "../../consts.js";
 import { getErrorMessage } from "../../utils/errors.js";
 import { addSource, removeSource } from "../../lib/configuration/source-manager.js";
 
-type StatusMessage = { text: string; color: string } | null;
+type StatusMessage = { text: string; color: "red" | "green" } | null;
 
 type UseSourceOperationsResult = {
   handleAdd: (url: string) => Promise<void>;

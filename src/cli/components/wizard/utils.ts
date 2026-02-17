@@ -11,7 +11,7 @@ export function getDomainDisplayName(domain: Domain): string {
     mobile: "Mobile",
     shared: "Shared",
   };
-  return displayNames[domain] || domain.charAt(0).toUpperCase() + domain.slice(1);
+  return displayNames[domain];
 }
 
 export function getStackName(

@@ -8,6 +8,8 @@ import { useKeyboardNavigation } from "../hooks/use-keyboard-navigation.js";
 import { useModalState } from "../hooks/use-modal-state.js";
 import { useSourceOperations } from "../hooks/use-source-operations.js";
 import { useTextInput } from "../hooks/use-text-input.js";
+import { verbose } from "../../utils/logger.js";
+import { getErrorMessage } from "../../utils/errors.js";
 
 const DEFAULT_SOURCE_NAME = "public";
 
@@ -30,7 +32,8 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
     try {
       const result = await getSourceSummary(projectDir);
       setSummary(result);
-    } catch {
+    } catch (error) {
+      verbose(`Failed to load source summary: ${getErrorMessage(error)}`);
       setSummary({
         sources: [{ name: DEFAULT_SOURCE_NAME, url: DEFAULT_SOURCE, enabled: true }],
         localSkillCount: 0,
@@ -166,7 +169,7 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
 
       {statusMessage && (
         <Box marginTop={1}>
-          <Text color={statusMessage.color as "red" | "green"}>{statusMessage.text}</Text>
+          <Text color={statusMessage.color}>{statusMessage.text}</Text>
         </Box>
       )}
 

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
+import { DEFAULT_PRESELECTED_SKILLS } from "../consts.js";
 import { resolveAlias } from "../lib/matrix/index.js";
 import type {
   BoundSkill,
@@ -332,7 +332,7 @@ export type WizardState = {
    * Used by WizardTabs to render step progress indicators.
    * @returns Object with completedSteps and skippedSteps string arrays
    */
-  getStepProgress: () => { completedSteps: string[]; skippedSteps: string[] };
+  getStepProgress: () => { completedSteps: WizardStep[]; skippedSteps: WizardStep[] };
   /** @returns true if there is a next domain after the current one */
   canGoToNextDomain: () => boolean;
   /** @returns true if there is a previous domain before the current one */
@@ -649,8 +649,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   getStepProgress: () => {
     const state = get();
-    const completed: string[] = [];
-    const skipped: string[] = [];
+    const completed: WizardStep[] = [];
+    const skipped: WizardStep[] = [];
 
     if (state.step !== "stack") {
       completed.push("stack");

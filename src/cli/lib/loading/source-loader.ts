@@ -10,7 +10,7 @@ import type {
   Stack,
 } from "../../types";
 import { fileExists } from "../../utils/fs";
-import { verbose, warn } from "../../utils/logger";
+import { verbose } from "../../utils/logger";
 import { typedKeys } from "../../utils/typed-object";
 import {
   DEFAULT_SOURCE,
@@ -130,8 +130,8 @@ async function loadFromRemote(
       marketplace = marketplaceResult.marketplace.name;
       verbose(`Using marketplace name from marketplace.json: ${marketplace}`);
     } catch {
-      // No marketplace.json - this is not a marketplace
-      warn(`Source does not have a marketplace.json - falling back to local mode`);
+      // No marketplace.json — getMarketplaceLabel() handles the fallback display
+      verbose(`Source does not have a marketplace.json — using source name as label`);
     }
   }
 
