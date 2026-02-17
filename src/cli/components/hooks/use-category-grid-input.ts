@@ -18,12 +18,7 @@ export const isSectionLocked = (categoryId: Subcategory, categories: CategoryRow
   return !frameworkCategory.options.some((opt) => opt.selected);
 };
 
-export const findValidStartColumn = (options: CategoryOption[]): number => {
-  for (let i = 0; i < options.length; i++) {
-    if (options[i] && options[i].state !== "disabled") {
-      return i;
-    }
-  }
+export const findValidStartColumn = (_options: CategoryOption[]): number => {
   return 0;
 };
 
@@ -89,11 +84,6 @@ export function useCategoryGridInput({
     if (focusedCol > maxCol) {
       const newCol = Math.max(0, maxCol);
       setFocused(focusedRow, newCol);
-    } else if (currentOptions[focusedCol]?.state === "disabled") {
-      const validCol = findValidStartColumn(currentOptions);
-      if (validCol !== focusedCol) {
-        setFocused(focusedRow, validCol);
-      }
     }
   }, [focusedRow, currentOptions, focusedCol, setFocused, currentRow]);
 

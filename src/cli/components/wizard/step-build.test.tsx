@@ -230,7 +230,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customize your Web stack");
+      expect(output).toContain("[2] Customize your Web stack");
     });
 
     it("should show ViewTitle with domain when only one selected", () => {
@@ -240,7 +240,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customize your Web stack");
+      expect(output).toContain("[2] Customize your Web stack");
     });
 
     it("should show ViewTitle for current domain on final domain", () => {
@@ -251,7 +251,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customize your API stack");
+      expect(output).toContain("[2] Customize your API stack");
     });
 
     it("should show correct domain display names", () => {
@@ -262,7 +262,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customize your API stack");
+      expect(output).toContain("[2] Customize your API stack");
     });
   });
 
@@ -482,7 +482,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customize your Web stack");
+      expect(output).toContain("[2] Customize your Web stack");
     });
 
     it("should show ViewTitle for last domain in multi-domain flow", () => {
@@ -493,7 +493,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customize your API stack");
+      expect(output).toContain("[2] Customize your API stack");
     });
 
     it("should show ViewTitle for current domain in three-domain flow", () => {
@@ -538,7 +538,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customize your API stack");
+      expect(output).toContain("[2] Customize your API stack");
     });
   });
 
@@ -548,7 +548,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customize your Web stack");
+      expect(output).toContain("[2] Customize your Web stack");
     });
 
     it("should render ViewTitle with domain display name", () => {
@@ -558,7 +558,7 @@ describe("StepBuild component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Customize your API stack");
+      expect(output).toContain("[2] Customize your API stack");
     });
   });
 

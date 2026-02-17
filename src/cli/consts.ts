@@ -142,8 +142,6 @@ export const SCROLL_VIEWPORT = {
   SCROLL_INDICATOR_HEIGHT: 1,
   /** Estimated lines per category name row (including top margin) */
   CATEGORY_NAME_LINES: 2,
-  /** Estimated average width of a single skill tag in characters (borders + padding + label) */
-  AVG_TAG_WIDTH: 22,
   /** Margin between category sections (marginTop on CategorySection) */
   CATEGORY_MARGIN_LINES: 1,
   /** Minimum rows to show at least 1 category before enabling scroll */
