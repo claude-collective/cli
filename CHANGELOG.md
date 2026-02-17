@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [0.34.1] - 2026-02-17
+
 **Code formatting**
 
 Prettier applied across wizard components.
