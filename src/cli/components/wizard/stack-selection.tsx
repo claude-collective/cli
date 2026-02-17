@@ -78,7 +78,7 @@ export const StackSelection: React.FC<StackSelectionProps> = ({ matrix, onCancel
 
   return (
     <Box flexDirection="column">
-      <ViewTitle>Choose a stack</ViewTitle>
+      <ViewTitle>[1] Choose a stack</ViewTitle>
       <Box flexDirection="column" marginTop={1}>
         {stacks.map((stack, index) => (
           <MenuItem

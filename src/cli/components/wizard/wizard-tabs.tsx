@@ -1,21 +1,20 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { CLI_COLORS, DEFAULT_BRANDING, UI_SYMBOLS } from "../../consts.js";
+import { CLI_COLORS } from "../../consts.js";
 import type { WizardStep } from "../../stores/wizard-store.js";
 
 type WizardTabStep = {
-  id: string;
+  id: WizardStep;
   label: string;
   number: number;
 };
 
 export type WizardTabsProps = {
   steps: WizardTabStep[];
-  currentStep: string;
-  completedSteps: string[];
-  skippedSteps?: string[];
+  currentStep: WizardStep;
+  completedSteps: WizardStep[];
+  skippedSteps?: WizardStep[];
   version?: string;
-  brandingName?: string;
 };
 
 export const WIZARD_STEPS: WizardTabStep[] = [
@@ -45,10 +44,10 @@ export function formatStepLabel(stepId: WizardStep): FormattedStepLabel {
 type StepState = "completed" | "current" | "pending" | "skipped";
 
 const getStepState = (
-  stepId: string,
-  currentStep: string,
-  completedSteps: string[],
-  skippedSteps: string[],
+  stepId: WizardStep,
+  currentStep: WizardStep,
+  completedSteps: WizardStep[],
+  skippedSteps: WizardStep[],
 ): StepState => {
   if (completedSteps.includes(stepId)) return "completed";
   if (stepId === currentStep) return "current";
@@ -61,16 +60,8 @@ type TabProps = {
   state: StepState;
 };
 
-const STEP_STATE_SYMBOLS: Record<StepState, string> = {
-  completed: UI_SYMBOLS.SELECTED,
-  current: UI_SYMBOLS.CURRENT,
-  pending: UI_SYMBOLS.UNSELECTED,
-  skipped: UI_SYMBOLS.SKIPPED,
-};
-
 const Tab: React.FC<TabProps> = ({ step, state }) => {
-  const symbol = STEP_STATE_SYMBOLS[state];
-  const label = `${symbol} [${step.number}] ${step.label}`;
+  const label = `[${step.number}] ${step.label}`;
 
   switch (state) {
     case "current":
@@ -91,10 +82,7 @@ export const WizardTabs: React.FC<WizardTabsProps> = ({
   completedSteps,
   skippedSteps = [],
   version,
-  brandingName,
 }) => {
-  const displayName = brandingName ?? DEFAULT_BRANDING.NAME;
-
   return (
     <Box
       flexDirection="row"
@@ -105,9 +93,6 @@ export const WizardTabs: React.FC<WizardTabsProps> = ({
       borderStyle="single"
       paddingRight={1}
     >
-      <Text bold color={CLI_COLORS.PRIMARY}>
-        {displayName}
-      </Text>
       {steps.map((step) => {
         const state = getStepState(step.id, currentStep, completedSteps, skippedSteps);
 
