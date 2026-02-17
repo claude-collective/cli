@@ -1,11 +1,9 @@
-import React from "react";
-import { Box, Text } from "ink";
-import { Select } from "@inkjs/ui";
+import React, { useState } from "react";
+import { Box, Text, useInput } from "ink";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import type { Domain } from "../../types/index.js";
-import { CLI_COLORS } from "../../consts.js";
+import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
 
-const BACK_VALUE = "_back";
 const CONTINUE_VALUE = "_continue";
 
 const AVAILABLE_DOMAINS: Array<{ id: Domain; label: string; description: string }> = [
@@ -20,59 +18,103 @@ const AVAILABLE_DOMAINS: Array<{ id: Domain; label: string; description: string 
   { id: "mobile", label: "Mobile", description: "Mobile applications" },
 ];
 
+type ListItem =
+  | { type: "domain"; domain: (typeof AVAILABLE_DOMAINS)[number] }
+  | { type: "continue" };
+
 export const DomainSelection: React.FC = () => {
   const { selectedDomains, toggleDomain, setStep, setApproach, selectStack } = useWizardStore();
+  const [focusedIndex, setFocusedIndex] = useState(0);
 
   const handleBack = () => {
     setApproach(null);
     selectStack(null);
   };
 
-  const domainOptions = AVAILABLE_DOMAINS.map((domain) => {
-    const isSelected = selectedDomains.includes(domain.id);
-    const checkbox = isSelected ? "[\u2713]" : "[ ]";
-    return {
-      value: domain.id,
-      label: `${checkbox} ${domain.label} - ${domain.description}`,
-    };
-  });
-
-  const options = [
-    { value: BACK_VALUE, label: "\u2190 Back" },
-    ...domainOptions,
-    ...(selectedDomains.length > 0
-      ? [
-          {
-            value: CONTINUE_VALUE,
-            label: `\u2192 Continue with ${selectedDomains.length} domain(s)`,
-          },
-        ]
-      : []),
+  const items: ListItem[] = [
+    ...AVAILABLE_DOMAINS.map((domain) => ({ type: "domain" as const, domain })),
+    ...(selectedDomains.length > 0 ? [{ type: "continue" as const }] : []),
   ];
 
-  const handleSelect = (value: string) => {
-    if (value === BACK_VALUE) {
+  const totalItems = items.length;
+
+  useInput((input, key) => {
+    if (key.escape) {
       handleBack();
       return;
     }
 
-    if (value === CONTINUE_VALUE) {
+    if (key.upArrow || input === "k") {
+      setFocusedIndex((prev) => (prev <= 0 ? totalItems - 1 : prev - 1));
+      return;
+    }
+
+    if (key.downArrow || input === "j") {
+      setFocusedIndex((prev) => (prev >= totalItems - 1 ? 0 : prev + 1));
+      return;
+    }
+
+    // ENTER: continue if domains selected
+    if (key.return) {
       if (selectedDomains.length > 0) {
         setStep("build");
       }
       return;
     }
 
-    // Toggle domain selection (value comes from Select UI component - data boundary)
-    toggleDomain(value as Domain);
-  };
+    // SPACE: toggle domain selection
+    if (input === " ") {
+      const focusedItem = items[focusedIndex];
+      if (!focusedItem) return;
+
+      if (focusedItem.type === "domain") {
+        toggleDomain(focusedItem.domain.id);
+      }
+    }
+  });
 
   return (
     <Box flexDirection="column">
       <Text bold>Select domains to configure:</Text>
       <Text dimColor>Select one or more domains, then continue</Text>
-      <Box marginTop={1}>
-        <Select options={options} onChange={handleSelect} />
+      <Box flexDirection="column" marginTop={1}>
+        {items.map((item, index) => {
+          const isFocused = index === focusedIndex;
+
+          if (item.type === "continue") {
+            return (
+              <Box key={CONTINUE_VALUE} columnGap={1}>
+                <Text color={isFocused ? CLI_COLORS.PRIMARY : undefined}>
+                  {isFocused ? UI_SYMBOLS.CURRENT : " "}
+                </Text>
+                <Text bold={isFocused} color={isFocused ? CLI_COLORS.PRIMARY : undefined}>
+                  {"\u2192"} Continue with {selectedDomains.length} domain(s)
+                </Text>
+              </Box>
+            );
+          }
+
+          const isSelected = selectedDomains.includes(item.domain.id);
+          const checkbox = isSelected ? "[\u2713]" : "[ ]";
+
+          return (
+            <Box key={item.domain.id} columnGap={1}>
+              <Text color={isFocused ? CLI_COLORS.PRIMARY : undefined}>
+                {isFocused ? UI_SYMBOLS.CURRENT : " "}
+              </Text>
+              <Text
+                bold={isFocused}
+                color={isSelected || isFocused ? CLI_COLORS.PRIMARY : undefined}
+              >
+                {checkbox}
+              </Text>
+              <Text bold={isFocused} color={isFocused ? CLI_COLORS.PRIMARY : undefined}>
+                {item.domain.label}
+              </Text>
+              <Text dimColor>- {item.domain.description}</Text>
+            </Box>
+          );
+        })}
       </Box>
       {selectedDomains.length > 0 ? (
         <Box marginTop={1}>
@@ -87,7 +129,7 @@ export const DomainSelection: React.FC = () => {
       )}
       <Box marginTop={1}>
         <Text dimColor>
-          {"\u2191"}/{"\u2193"} navigate ENTER toggle/select ESC back
+          {"\u2191"}/{"\u2193"} navigate SPACE toggle ENTER continue ESC back
         </Text>
       </Box>
     </Box>

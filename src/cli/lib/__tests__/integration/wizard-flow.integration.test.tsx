@@ -18,16 +18,16 @@ import {
 /**
  * Navigate from the domain selection sub-view to the build step.
  *
- * Domain selection uses an @inkjs/ui Select with items:
- *   [Back, Web, Web Extras, API, CLI, Mobile, Continue]
+ * Domain selection uses a custom useInput list with items:
+ *   [Web, Web Extras, API, CLI, Mobile, Continue]
  *
- * Focus starts on "Back" (index 0). We press down 6 times to reach
- * "Continue" (index 6) and then Enter to proceed.
+ * Focus starts on "Web" (index 0). We press down 5 times to reach
+ * "Continue" (index 5) and then Enter to proceed.
  */
 const navigateDomainSelectionToBuild = async (stdin: {
   write: (data: string) => Promise<void> | void;
 }) => {
-  const DOMAIN_CONTINUE_NAV_COUNT = 6;
+  const DOMAIN_CONTINUE_NAV_COUNT = 5;
   for (let i = 0; i < DOMAIN_CONTINUE_NAV_COUNT; i++) {
     await stdin.write(ARROW_DOWN);
     await delay(STEP_TRANSITION_DELAY_MS);
@@ -63,7 +63,7 @@ describe("Wizard integration", () => {
       await delay(RENDER_DELAY_MS);
 
       expect(lastFrame()).toContain("React Fullstack");
-      expect(lastFrame()).toContain("Choose a stack");
+      expect(lastFrame()).toContain("[1] Choose a stack");
 
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
@@ -312,7 +312,7 @@ describe("Wizard integration", () => {
 
       // Should show ViewTitle for current domain
       const frame = lastFrame();
-      expect(frame).toContain("Customize your Web stack");
+      expect(frame).toContain("[2] Customize your Web stack");
     });
 
     it("should advance to next domain when validation passes", async () => {
@@ -486,12 +486,12 @@ describe("Wizard integration", () => {
       // Should be at domain selection
       expect(lastFrame()).toContain("Select domains");
 
-      // Press Back in domain selection (first option)
-      await stdin.write(ENTER);
+      // Press ESC to go back from domain selection
+      await stdin.write(ESCAPE);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Should be back at stack/scratch selection (approach reset to null)
-      expect(lastFrame()).toContain("Choose a stack");
+      expect(lastFrame()).toContain("[1] Choose a stack");
       expect(onCancel).not.toHaveBeenCalled();
 
       // Now escape at initial selection should cancel
@@ -595,12 +595,12 @@ describe("Wizard integration", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
       expect(lastFrame()).toContain("Select domains");
 
-      // Press "Back" (first item in domain selection)
-      await stdin.write(ENTER);
+      // Press ESC to go back from domain selection
+      await stdin.write(ESCAPE);
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Should be back at stack/scratch selection
-      expect(lastFrame()).toContain("Choose a stack");
+      expect(lastFrame()).toContain("[1] Choose a stack");
       expect(onCancel).not.toHaveBeenCalled();
     });
   });

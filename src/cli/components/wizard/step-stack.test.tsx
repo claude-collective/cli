@@ -99,7 +99,7 @@ describe("StepStack component", () => {
         cleanup = unmount;
 
         const output = lastFrame();
-        expect(output).toContain("Choose a stack");
+        expect(output).toContain("[1] Choose a stack");
       });
 
       it("should render divider between stacks and scratch option", () => {
@@ -284,7 +284,7 @@ describe("StepStack component", () => {
         cleanup = unmount;
 
         const output = lastFrame();
-        expect(output).toContain("Choose a stack");
+        expect(output).toContain("[1] Choose a stack");
         expect(output).toContain("Start from scratch");
       });
     });
@@ -332,10 +332,8 @@ describe("StepStack component", () => {
 
         await delay(RENDER_DELAY_MS);
 
-        // Navigate down to first domain (Web) and select
-        stdin.write(ARROW_DOWN);
-        await delay(SELECT_NAV_DELAY_MS);
-        stdin.write(ENTER);
+        // First domain (Web) is focused by default, toggle with space
+        stdin.write(" ");
         await delay(SELECT_NAV_DELAY_MS);
 
         const { selectedDomains } = useWizardStore.getState();
@@ -348,9 +346,8 @@ describe("StepStack component", () => {
 
         await delay(RENDER_DELAY_MS);
 
-        stdin.write(ARROW_DOWN);
-        await delay(SELECT_NAV_DELAY_MS);
-        stdin.write(ENTER);
+        // First domain (Web) is focused by default
+        stdin.write(" ");
         await delay(SELECT_NAV_DELAY_MS);
 
         expect(useWizardStore.getState().selectedDomains).toContain("web");
@@ -381,8 +378,8 @@ describe("StepStack component", () => {
 
         await delay(RENDER_DELAY_MS);
 
-        // Navigate to continue option (last option)
-        for (let i = 0; i < 6; i++) {
+        // Navigate to continue option (after 5 domains)
+        for (let i = 0; i < 5; i++) {
           stdin.write(ARROW_DOWN);
           await delay(SELECT_NAV_DELAY_MS);
         }
@@ -395,21 +392,20 @@ describe("StepStack component", () => {
     });
 
     describe("back navigation", () => {
-      it("should return to stack/scratch selection when selecting back option", async () => {
+      it("should return to stack/scratch selection when pressing ESC", async () => {
         const { stdin, lastFrame, unmount } = render(<StepStack matrix={mockMatrix} />);
         cleanup = unmount;
 
         await delay(RENDER_DELAY_MS);
 
-        // First option is back
-        stdin.write(ENTER);
+        stdin.write(ESCAPE);
         await delay(SELECT_NAV_DELAY_MS);
 
         const { approach } = useWizardStore.getState();
         expect(approach).toBeNull();
 
         const output = lastFrame();
-        expect(output).toContain("Choose a stack");
+        expect(output).toContain("[1] Choose a stack");
       });
     });
   });
