@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.34.0] - 2026-02-17
+
+**Wizard UX overhaul — layout, scrolling, navigation, and visual redesign**
+
+See [changelogs/0.34.0.md](./changelogs/0.34.0.md) for full details.
+
 ## [0.32.1] - 2026-02-16
 
 **Code formatting cleanup (Prettier consistency)**
