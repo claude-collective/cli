@@ -10,7 +10,6 @@ Phase 7B complete. Ready for user testing.
 
 For completed tasks, see [TODO-completed.md](./TODO-completed.md).
 For deferred tasks, see [TODO-deferred.md](./TODO-deferred.md).
-For autonomous loop tasks, see [todo-loop.md](./todo-loop.md).
 
 ---
 
@@ -115,9 +114,9 @@ Add a comprehensive help section/overlay accessible via `?` key to show users ho
 
 ---
 
-#### D-05: Improve `cc init` Behavior When Already Initialized
+#### D-05: Improve `agentsinc init` Behavior When Already Initialized
 
-When `cc init` is run in a project that's already initialized, instead of just warning and suggesting `cc edit`, show the edit screen directly (same as running `cc edit`).
+When `agentsinc init` is run in a project that's already initialized, instead of just warning and suggesting `agentsinc edit`, show the edit screen directly (same as running `agentsinc edit`).
 
 **Simplified scope:** Just redirect to the edit flow when already initialized.
 
@@ -127,9 +126,78 @@ When `cc init` is run in a project that's already initialized, instead of just w
 
 #### D-16: Init Should Populate Config Options with Defaults
 
-When `cc init` creates `.claude-src/config.yaml`, include commented-out default values for discoverable config options (source, marketplace, agents_source). Path overrides are already included -- this extends to the remaining config options.
+When `agentsinc init` creates `.claude-src/config.yaml`, include commented-out default values for discoverable config options (source, marketplace, agents_source). Path overrides are already included -- this extends to the remaining config options.
 
 **Files:** `src/cli/lib/installation/local-installer.ts` (writeConfigFile function)
+
+---
+
+#### R-1: Consolidate Agent-Skill Mappings into YAML
+
+The hardcoded `SKILL_TO_AGENTS` and `AGENT_SKILL_PREFIXES` in `src/cli/lib/skills/skill-agent-mappings.ts` should be fully driven by `src/cli/defaults/agent-mappings.yaml`:
+
+1. Add `agent_skill_prefixes` section to `agent-mappings.yaml`
+2. Remove the hardcoded `SKILL_TO_AGENTS` constant (the YAML already has the same data; keep only as inline fallback if YAML fails to load)
+3. Load `AGENT_SKILL_PREFIXES` from YAML via `getCachedDefaults()`
+4. Update `skill-agent-mappings.test.ts` to test the YAML-loaded values rather than re-asserting hardcoded constants
+5. Move the `availableSkills` test array to `__tests__/test-constants.ts` or generate from matrix
+
+---
+
+#### H18: Tailor Documentation-Bible and Documentor Agent to This CLI Repo
+
+Adapt the existing documentation-bible and documentor agent to be tailor-made for this CLI repository. This is **surgical precision work** — NOT a rewrite from scratch.
+
+**CRITICAL: Surgical Approach**
+
+- Do NOT randomly remove sections from existing files
+- Every single change must be justified (wrong project context, outdated info, missing CLI-specific guidance)
+- Read the FULL existing content before making ANY changes
+- Preserve any sections that are technology-agnostic and still useful
+- Add CLI-specific sections alongside existing content where possible
+- The goal is ADAPTATION to this repo, not replacement
+
+**Phase 1: Surgically adapt documentation-bible.md**
+
+The current `docs/standards/content/documentation-bible.md` contains some content from a different project (web app with MobX). Adapt it:
+
+1. **KEEP** any universal documentation principles (structure, tone, formatting guidelines)
+2. **REPLACE** only project-specific references (MobX → Zustand, web app patterns → CLI patterns)
+3. **ADD** CLI-specific documentation categories:
+   - Command Patterns (oclif structure, flags, interactive modes)
+   - Wizard Flow (Ink components, Zustand state, step navigation)
+   - Agent/Skill Compilation (pipeline, Liquid templates, plugins)
+   - Test Infrastructure (helpers, fixtures, factories)
+   - Type System (branded types, template literals, boundary casts)
+   - Configuration (config loading, multi-source support)
+   - Ink UI Patterns (components, useInput, scroll management)
+
+**Phase 2: Surgically update documentor agent**
+
+In `src/agents/meta/documentor/workflow.md`:
+
+- Add a reference to `docs/standards/content/documentation-bible.md` in the documentation philosophy section
+- Add CLI-specific patterns to the templates section
+- Do NOT remove existing workflow steps — only add CLI context where needed
+
+**Phase 3: Run documentor agent to generate docs**
+
+Create `.claude/docs/` directory structure with:
+
+- `DOCUMENTATION_MAP.md` - Master index tracking coverage
+- `command-patterns.md` - oclif command conventions
+- `wizard-architecture.md` - Wizard flow, state management
+- `compilation-system.md` - Agent/skill compilation pipeline
+- `test-patterns.md` - Test infrastructure and fixtures
+- `type-system.md` - Type conventions and branded types
+
+**Success criteria:**
+
+- documentation-bible.md retains universal principles + gains CLI-specific guidance
+- No sections removed without explicit justification in a comment
+- Documentor agent workflow references the Bible without losing existing steps
+- `.claude/docs/` directory exists with 5+ documentation files
+- Documentation helps agents answer "where is X?" and "how does Y work?"
 
 ---
 

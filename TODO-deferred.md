@@ -25,7 +25,7 @@ Allow consumers to define custom stacks in their own `config/stacks.yaml` file. 
 
 ## Phase 4 Deferred
 
-**M | P4-17 | Feature: `cc new skill/agent` supports multiple items**
+**M | P4-17 | Feature: `agentsincnew skill/agent` supports multiple items**
 Deferred until after migration. Allow creating multiple skills/agents in one command.
 
 **S | P4-18 | Test: Multiple skill/agent creation works**
@@ -85,7 +85,7 @@ Add configurable development hooks that can run commands like `tsc --noEmit` aft
 Add support for ejecting complete agent markdown files from custom sources/marketplaces.
 
 ```bash
-cc eject agents --source /path/to/marketplace
+agentsinc eject agents --source /path/to/marketplace
 ```
 
 Currently `eject agent-partials` only ejects the CLI's bundled partials and templates (the building blocks). This future feature would allow ejecting fully-compiled agent files from third-party sources.
@@ -103,17 +103,17 @@ Currently `eject agent-partials` only ejects the CLI's bundled partials and temp
 
 **S | D-13 | Filter ejected skills by domain or category**
 
-Add `--domain` and `--category` flags to `cc eject skills` to selectively eject skills from specific areas instead of all skills.
+Add `--domain` and `--category` flags to `agentsinceject skills` to selectively eject skills from specific areas instead of all skills.
 
 ```bash
 # Eject only frontend skills
-cc eject skills --domain frontend
+agentsinc eject skills --domain frontend
 
 # Eject only framework skills across all domains
-cc eject skills --category framework
+agentsinc eject skills --category framework
 
 # Combine filters
-cc eject skills --domain backend --category api
+agentsinc eject skills --domain backend --category api
 ```
 
 ### Implementation Notes
@@ -228,7 +228,7 @@ Based on comprehensive testing performed in the Ralph Loop session (TESTER 51+),
 - [ ] Identifies specific violations with file:line references
 - [ ] Suggests fixes based on prompt-bible and canonical structure
 - [ ] Can run incrementally (single category) or full suite
-- [ ] Integrates with `cc compile` to validate before compilation
+- [ ] Integrates with `agentsinccompile` to validate before compilation
 
 ---
 
@@ -236,7 +236,7 @@ Based on comprehensive testing performed in the Ralph Loop session (TESTER 51+),
 
 **M | D-23 | Test version bumping workflow and create dedicated command**
 
-Test the existing version bumping workflow and create a dedicated command (e.g., `cc version bump`) to automate the release process. The command should:
+Test the existing version bumping workflow and create a dedicated command (e.g., `agentsincversion bump`) to automate the release process. The command should:
 
 - Bump version in package.json (major, minor, patch)
 - Update version references in relevant files
@@ -267,7 +267,7 @@ Agent markdown files reference documentation files by filename only (e.g., `clau
     prompt-bible: docs/standards/content/prompt-bible.md
     documentation-bible: docs/standards/content/documentation-bible.md
   ```
-- During `cc compile`, if a doc file location is configured and the file exists, inject its content into the compiled agent output (e.g., as a `<preloaded_content>` section or inline reference)
+- During `agentsinccompile`, if a doc file location is configured and the file exists, inject its content into the compiled agent output (e.g., as a `<preloaded_content>` section or inline reference)
 - If a doc file is not configured or does not exist, omit the reference entirely from compiled output
 - Agent source files continue to reference docs by filename only -- resolution is the compiler's responsibility
 
@@ -288,10 +288,10 @@ Create a command to download skills from external marketplaces and integrate the
 
 ```bash
 # Download and integrate a skill from another marketplace
-cc import skill https://example.com/marketplace/my-skill
+agentsinc import skill https://example.com/marketplace/my-skill
 
 # Or from a git repo
-cc import skill github:someuser/their-skills --skill react-patterns
+agentsinc import skill github:someuser/their-skills --skill react-patterns
 ```
 
 ### Workflow
@@ -311,3 +311,27 @@ cc import skill github:someuser/their-skills --skill react-patterns
   - How to extract key patterns from external skill
   - How to handle conflicts with existing skills
 - Consider licensing/attribution requirements
+
+---
+
+## CLI UX Backlog
+
+**M | UX-04 | Interactive skill search polish**
+Manual testing + tests for interactive search component.
+
+**S | UX-05 | Refine step - skills.sh integration**
+Community skill alternatives in Refine step.
+
+**S | UX-06 | Search with color highlighting**
+Needs more UX thought.
+
+**S | UX-07 | Incompatibility tooltips**
+Show reason when hovering disabled options.
+
+**S | UX-08 | Keyboard shortcuts help overlay**
+In-wizard help for keybindings.
+
+**S | UX-09 | Animations/transitions**
+Polish pass for step transitions.
+
+**M | UX-13 | Add readable schemas on subagents and skills**
