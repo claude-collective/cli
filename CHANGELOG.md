@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.34.1] - 2026-02-17
+**Code formatting**
+
+Prettier applied across wizard components.
+
+See [changelogs/0.34.1.md](./changelogs/0.34.1.md) for full details.
+
+---
+
 ## [0.34.0] - 2026-02-17
 
 **Wizard UX overhaul — layout, scrolling, navigation, and visual redesign**

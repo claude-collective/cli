@@ -378,11 +378,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
 
   return (
     <Box flexDirection="column" height={availableHeight} overflow="hidden">
-      <Box
-        flexDirection="column"
-        marginTop={scrollTopPx > 0 ? -scrollTopPx : 0}
-        flexShrink={0}
-      >
+      <Box flexDirection="column" marginTop={scrollTopPx > 0 ? -scrollTopPx : 0} flexShrink={0}>
         {sectionElements}
       </Box>
     </Box>

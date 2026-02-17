@@ -16,7 +16,9 @@ export const ViewTitle: React.FC<ViewTitleProps> = ({ children }) => {
     <Box marginBottom={1} flexDirection="column">
       <Text backgroundColor={CLI_COLORS.WARNING}>{padding}</Text>
       <Text backgroundColor={CLI_COLORS.WARNING} bold color="#000">
-        {paddingHalf}{children}{paddingHalf}
+        {paddingHalf}
+        {children}
+        {paddingHalf}
       </Text>
       <Text backgroundColor={CLI_COLORS.WARNING}>{padding}</Text>
     </Box>

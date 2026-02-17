@@ -36,6 +36,7 @@ Instead of the suppressed warning, the marketplace label should always render. C
 ### 3. Verify all changes actually render correctly
 
 The agents reported success but the user says the build step is "still broken in the exact same way." Need to visually verify:
+
 - No icons in skill tags
 - No colored borders on unfocused tags
 - Stable skill order
