@@ -1,6 +1,7 @@
 import { create } from "zustand";
-import { DEFAULT_PRESELECTED_SKILLS } from "../consts.js";
+import { DEFAULT_PRESELECTED_SKILLS, DEFAULT_PUBLIC_SOURCE_NAME } from "../consts.js";
 import { resolveAlias } from "../lib/matrix/index.js";
+import { getSkillDisplayLabel } from "../lib/wizard/build-step-logic.js";
 import type {
   BoundSkill,
   Domain,
@@ -9,6 +10,7 @@ import type {
   SkillAlias,
   SkillAssignment,
   SkillId,
+  SkillSource,
   Subcategory,
   SubcategorySelections,
 } from "../types/index.js";
@@ -17,22 +19,29 @@ import { typedEntries, typedKeys } from "../utils/typed-object.js";
 
 const ALL_DOMAINS: Domain[] = ["web", "web-extras", "api", "cli", "mobile", "shared"];
 
-const DEFAULT_SOURCE_ID = "public";
-const DEFAULT_SOURCE_LABEL = "Public";
 
-/** Sort priority: local first, then public, then private/other */
-const SOURCE_SORT_ORDER: Record<string, number> = {
-  local: 0,
-  public: 1,
-  private: 2,
-};
+/**
+ * Fixed source sort tiers (lower = higher priority):
+ * 1 = local/global (installed on disk -- type "local" or installed via plugin)
+ * 2 = scoped marketplace (primary source from --source flag)
+ * 3 = default public marketplace (Agents Inc)
+ * 4 = third-party marketplaces (extra configured sources)
+ */
+const SOURCE_SORT_TIER_LOCAL = 1;
+const SOURCE_SORT_TIER_SCOPED = 2;
+const SOURCE_SORT_TIER_PUBLIC = 3;
+const SOURCE_SORT_TIER_THIRD_PARTY = 4;
+
+function getSourceSortTier(source: SkillSource): number {
+  if (source.type === "local") return SOURCE_SORT_TIER_LOCAL;
+  if (source.primary) return SOURCE_SORT_TIER_SCOPED;
+  if (source.type === "public") return SOURCE_SORT_TIER_PUBLIC;
+  return SOURCE_SORT_TIER_THIRD_PARTY;
+}
 
 const SOURCE_DISPLAY_NAMES: Record<string, string> = {
-  public: "Public",
   local: "Local",
 };
-
-const DEFAULT_SORT_PRIORITY = 3;
 
 function formatSourceLabel(source: {
   name: string;
@@ -90,7 +99,6 @@ function buildBoundSkillOptions(
     }));
 }
 
-/** Extract the alias from a skill ID or use displayName from the matrix */
 function getSkillAlias(skillId: SkillId, matrix: MergedSkillsMatrix): SkillAlias {
   const displayName = matrix.displayNames?.[skillId];
   if (displayName) return displayName;
@@ -136,7 +144,7 @@ export type WizardState = {
   currentDomainIndex: number;
   domainSelections: DomainSelections;
 
-  showDescriptions: boolean;
+  showLabels: boolean;
   expertMode: boolean;
 
   installMode: "plugin" | "local";
@@ -254,8 +262,8 @@ export type WizardState = {
    * Side effects: decrements `currentDomainIndex`
    */
   prevDomain: () => boolean;
-  /** Toggle skill description visibility in the build step grid. */
-  toggleShowDescriptions: () => void;
+  /** Toggle compatibility label visibility on skill tags in the build step grid. */
+  toggleShowLabels: () => void;
   /** Toggle expert mode (shows advanced/niche skills in the build step). */
   toggleExpertMode: () => void;
   /** Toggle between "plugin" and "local" install modes. */
@@ -387,7 +395,7 @@ const createInitialState = () => ({
   selectedDomains: [] as Domain[],
   currentDomainIndex: 0,
   domainSelections: {} as DomainSelections,
-  showDescriptions: false,
+  showLabels: false,
   expertMode: false,
   installMode: "local" as "plugin" | "local",
   sourceSelections: {} as Partial<Record<SkillId, string>>,
@@ -539,7 +547,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     return false;
   },
 
-  toggleShowDescriptions: () => set((state) => ({ showDescriptions: !state.showDescriptions })),
+  toggleShowLabels: () => set((state) => ({ showLabels: !state.showLabels })),
 
   toggleExpertMode: () => set((state) => ({ expertMode: !state.expertMode })),
 
@@ -702,13 +710,12 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const skillId = resolveAlias(tech, matrix);
       const skill = matrix.skills[skillId];
       const selectedSource =
-        sourceSelections[skillId] || skill?.activeSource?.name || DEFAULT_SOURCE_ID;
+        sourceSelections[skillId] || skill?.activeSource?.name || DEFAULT_PUBLIC_SOURCE_NAME;
       const alias = getSkillAlias(skillId, matrix);
+      const displayLabel = skill ? getSkillDisplayLabel(skill) : skillId;
 
       const sortedSources = [...(skill?.availableSources || [])].sort(
-        (a, b) =>
-          (SOURCE_SORT_ORDER[a.type] ?? DEFAULT_SORT_PRIORITY) -
-          (SOURCE_SORT_ORDER[b.type] ?? DEFAULT_SORT_PRIORITY),
+        (a, b) => getSourceSortTier(a) - getSourceSortTier(b),
       );
 
       const options =
@@ -725,16 +732,16 @@ export const useWizardStore = create<WizardState>((set, get) => ({
             }))
           : [
               {
-                id: DEFAULT_SOURCE_ID,
-                label: DEFAULT_SOURCE_LABEL,
-                selected: selectedSource === DEFAULT_SOURCE_ID,
+                id: DEFAULT_PUBLIC_SOURCE_NAME,
+                label: DEFAULT_PUBLIC_SOURCE_NAME,
+                selected: selectedSource === DEFAULT_PUBLIC_SOURCE_NAME,
                 installed: false,
               },
             ];
 
       options.push(...buildBoundSkillOptions(boundSkills, alias, selectedSource));
 
-      return { skillId, displayName: alias, alias, options };
+      return { skillId, displayName: displayLabel, alias, options };
     });
   },
 }));

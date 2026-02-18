@@ -6,7 +6,6 @@ export type Domain = "web" | "web-extras" | "api" | "cli" | "mobile" | "shared";
 
 /** Keys in skills-matrix.yaml `categories` section */
 export type Subcategory =
-  // Web
   | "framework"
   | "meta-framework"
   | "styling"
@@ -26,7 +25,6 @@ export type Subcategory =
   | "pwa"
   | "accessibility"
   | "web-performance"
-  // API
   | "api"
   | "database"
   | "auth"
@@ -34,11 +32,9 @@ export type Subcategory =
   | "analytics"
   | "email"
   | "performance"
-  // Mobile
   | "mobile-framework"
   | "base-framework"
   | "platform"
-  // Shared / Infrastructure
   | "monorepo"
   | "tooling"
   | "security"
@@ -46,7 +42,6 @@ export type Subcategory =
   | "research"
   | "reviewing"
   | "ci-cd"
-  // CLI
   | "cli-framework"
   | "cli-prompts"
   | "cli-testing";
@@ -302,6 +297,8 @@ export type SkillSource = {
   installed: boolean;
   /** How the skill was installed on disk (separate from provenance) */
   installMode?: "plugin" | "local";
+  /** True for the primary marketplace source (scoped or default public). Set by multi-source-loader. */
+  primary?: boolean;
 };
 
 /** A foreign skill explicitly bound to a subcategory via search */

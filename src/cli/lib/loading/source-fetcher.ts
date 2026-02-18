@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
 import { downloadTemplate } from "giget";
+import os from "os";
 import path from "path";
 
 import {
@@ -12,7 +13,7 @@ import {
   PLUGIN_MANIFEST_DIR,
 } from "../../consts";
 import { getErrorMessage } from "../../utils/errors";
-import { ensureDir, directoryExists, readFileSafe } from "../../utils/fs";
+import { ensureDir, directoryExists, readFileSafe, remove } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
 import { isLocalSource } from "../configuration";
 import {
@@ -26,6 +27,15 @@ import type { MarketplaceFetchResult } from "../../types";
 /** Safe name pattern: alphanumeric, hyphens, underscores, dots, spaces, @, / (no shell metacharacters) */
 const SAFE_NAME_PATTERN = /^[a-zA-Z0-9@._/ -]+$/;
 const MAX_NAME_LENGTH = 200;
+
+/** Matches giget's source protocol regex to extract provider name */
+const SOURCE_PROTO_RE = /^([\w-.]+):/;
+
+/**
+ * Matches giget's input regex for git URI parsing.
+ * Groups: repo (org/name), subdir (optional path), ref (optional #branch)
+ */
+const GIT_URI_RE = /^(?<repo>[\w.-]+\/[\w.-]+)(?<subdir>[^#]+)?(?<ref>#[\w./@-]+)?/;
 
 export type FetchOptions = {
   forceRefresh?: boolean;
@@ -85,6 +95,60 @@ async function fetchFromLocalSource(source: string, subdir?: string): Promise<Fe
   };
 }
 
+/**
+ * Compute the giget tarball cache directory for a source.
+ *
+ * Replicates giget's internal cache path logic:
+ *   `{cacheRoot}/{providerName}/{templateName}`
+ *
+ * where templateName is `repo.replace("/", "-")` sanitized to `[a-zA-Z0-9-]`.
+ * Returns undefined if the source format doesn't match giget's git URI pattern.
+ */
+function getGigetCacheDir(source: string): string | undefined {
+  let providerName = "github";
+  let rawSource = source;
+
+  const protoMatch = source.match(SOURCE_PROTO_RE);
+  if (protoMatch) {
+    providerName = protoMatch[1];
+    rawSource = source.slice(protoMatch[0].length);
+    // http/https providers use the full URL, not parseable as git URI
+    if (providerName === "http" || providerName === "https") {
+      return undefined;
+    }
+  }
+
+  const uriMatch = rawSource.match(GIT_URI_RE);
+  if (!uriMatch?.groups?.repo) {
+    return undefined;
+  }
+
+  // Replicate giget's template.name sanitization
+  const templateName = uriMatch.groups.repo
+    .replace("/", "-")
+    .replace(/[^\da-z-]/gi, "-");
+
+  const gigetCacheRoot = process.env.XDG_CACHE_HOME
+    ? path.resolve(process.env.XDG_CACHE_HOME, "giget")
+    : path.resolve(os.homedir(), ".cache", "giget");
+
+  return path.join(gigetCacheRoot, providerName, templateName);
+}
+
+/**
+ * Clear giget's tarball/ETag cache for a source so downloadTemplate()
+ * performs a fresh fetch instead of short-circuiting with a stale ETag.
+ */
+async function clearGigetCache(source: string): Promise<void> {
+  const gigetDir = getGigetCacheDir(source);
+  if (!gigetDir) return;
+
+  if (await directoryExists(gigetDir)) {
+    verbose(`Clearing giget cache: ${gigetDir}`);
+    await remove(gigetDir);
+  }
+}
+
 async function fetchFromRemoteSource(source: string, options: FetchOptions): Promise<FetchResult> {
   const { forceRefresh = false, subdir } = options;
   const cacheDir = getCacheDir(source);
@@ -101,6 +165,10 @@ async function fetchFromRemoteSource(source: string, options: FetchOptions): Pro
       fromCache: true,
       source: fullSource,
     };
+  }
+
+  if (forceRefresh) {
+    await clearGigetCache(source);
   }
 
   await ensureDir(path.dirname(cacheDir));

@@ -155,6 +155,9 @@ export const DEFAULT_BRANDING = {
   TAGLINE: "AI-powered development tools",
 } as const;
 
+/** Fallback name for the default public marketplace when marketplace.json is unavailable */
+export const DEFAULT_PUBLIC_SOURCE_NAME = "Agents Inc";
+
 export const CLI_COLORS = {
   PRIMARY: "cyan",
   SUCCESS: "green",
