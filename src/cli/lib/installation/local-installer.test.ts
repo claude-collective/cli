@@ -71,15 +71,20 @@ vi.mock("../compiler", () => ({
   createLiquidEngine: vi.fn().mockResolvedValue({}),
 }));
 
-vi.mock("../configuration/config-generator", () => ({
-  generateProjectConfigFromSkills: vi.fn().mockReturnValue({
-    // Uses literal string because vi.mock factories are hoisted above imports
-    name: "agents-inc",
-    agents: ["web-developer"],
-    skills: ["test-skill"],
-  }),
-  buildStackProperty: vi.fn().mockReturnValue({}),
-}));
+vi.mock("../configuration/config-generator", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../configuration/config-generator")>();
+  return {
+    generateProjectConfigFromSkills: vi.fn().mockReturnValue({
+      // Uses literal string because vi.mock factories are hoisted above imports
+      name: "agents-inc",
+      agents: ["web-developer"],
+      skills: ["test-skill"],
+    }),
+    buildStackProperty: vi.fn().mockReturnValue({}),
+    // Use real compactStackForYaml so configs with stack properties serialize correctly
+    compactStackForYaml: original.compactStackForYaml,
+  };
+});
 
 // Access the mock to verify installMode is passed through
 const mockCompileAgentForPlugin = vi.mocked(
@@ -421,6 +426,77 @@ describe("local-installer", () => {
       expect((config as Record<string, unknown>)["agents_dir"]).toBeUndefined();
       expect((config as Record<string, unknown>)["stacks_file"]).toBeUndefined();
       expect((config as Record<string, unknown>)["matrix_file"]).toBeUndefined();
+    });
+
+    it("should preserve preloaded flags from stack skill assignments", async () => {
+      const mockLoadStackById = vi.mocked((await import("../stacks/stacks-loader")).loadStackById);
+      const mockGenerateConfig = vi.mocked(
+        (await import("../configuration/config-generator")).generateProjectConfigFromSkills,
+      );
+      const mockBuildStackProperty = vi.mocked(
+        (await import("../configuration/config-generator")).buildStackProperty,
+      );
+
+      // Stack defines a skill with preloaded: true
+      mockLoadStackById.mockResolvedValueOnce({
+        id: "test-stack",
+        name: "Test Stack",
+        description: "A test stack",
+        agents: {
+          "web-developer": {
+            framework: [{ id: "web-framework-react", preloaded: true }],
+          },
+        },
+      });
+
+      // generateProjectConfigFromSkills hardcodes preloaded: false (the bug)
+      mockGenerateConfig.mockReturnValueOnce({
+        name: "agents-inc",
+        agents: ["web-developer"],
+        skills: ["web-framework-react"],
+        stack: {
+          "web-developer": {
+            framework: [{ id: "web-framework-react", preloaded: false }],
+          },
+        },
+      });
+
+      // buildStackProperty extracts stack data preserving preloaded: true
+      mockBuildStackProperty.mockReturnValueOnce({
+        "web-developer": {
+          framework: [{ id: "web-framework-react", preloaded: true }],
+        },
+      });
+
+      const matrix = createMockMatrix({});
+      const wizardResult = createWizardResult({
+        selectedSkills: ["web-framework-react"],
+        selectedStackId: "test-stack",
+      });
+      const sourceResult = createSourceResult(matrix, tempDir);
+
+      const result = await installLocal({
+        wizardResult,
+        sourceResult,
+        projectDir: tempDir,
+      });
+
+      // Verify preloaded: true survived into the final config
+      const webDevStack = result.config.stack?.["web-developer"];
+      expect(webDevStack).toBeDefined();
+      const frameworkAssignments = webDevStack?.framework;
+      expect(frameworkAssignments).toBeDefined();
+      expect(frameworkAssignments).toHaveLength(1);
+      expect(frameworkAssignments![0].id).toBe("web-framework-react");
+      expect(frameworkAssignments![0].preloaded).toBe(true);
+
+      // Also verify it's written correctly to the YAML file
+      const configPath = path.join(tempDir, ".claude-src", "config.yaml");
+      const configContent = await readFile(configPath, "utf-8");
+      const parsedConfig = parseYaml(configContent) as ProjectConfig;
+      // compactStackForYaml converts preloaded: true to { id, preloaded: true } object form
+      const parsedWebDev = parsedConfig.stack?.["web-developer"] as Record<string, unknown>;
+      expect(parsedWebDev?.framework).toEqual({ id: "web-framework-react", preloaded: true });
     });
   });
 });

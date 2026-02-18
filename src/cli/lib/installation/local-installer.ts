@@ -14,12 +14,12 @@ import type {
 } from "../../types";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import { type CopiedSkill, copySkillsToLocalFlattened, archiveLocalSkill } from "../skills";
-import { type MergeResult, mergeWithExistingConfig } from "../configuration";
+import { type MergeResult, mergeWithExistingConfig, DEFAULT_SOURCE } from "../configuration";
 import { loadAllAgents, loadSkillsByIds, type SourceLoadResult } from "../loading";
 import { loadStackById, compileAgentForPlugin, getStackSkillIds } from "../stacks";
 import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
 import { createLiquidEngine } from "../compiler";
-import { generateProjectConfigFromSkills, compactStackForYaml } from "../configuration";
+import { generateProjectConfigFromSkills, compactStackForYaml, buildStackProperty } from "../configuration";
 import { ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
@@ -177,6 +177,26 @@ async function buildLocalConfig(
         sourceResult.matrix,
       );
 
+      // Overlay preloaded flags from the stack definition — generateProjectConfigFromSkills
+      // defaults all skills to preloaded: false; the stack YAML may define preloaded: true
+      if (localConfig.stack) {
+        const stackProperty = buildStackProperty(loadedStack);
+        for (const [agentId, agentConfig] of typedEntries(stackProperty)) {
+          if (!agentConfig) continue;
+          for (const [subcategory, assignments] of typedEntries(agentConfig)) {
+            if (!assignments) continue;
+            const localAgentConfig = localConfig.stack[agentId];
+            if (!localAgentConfig?.[subcategory]) continue;
+            for (const assignment of localAgentConfig[subcategory]) {
+              const stackAssignment = assignments.find((a) => a.id === assignment.id);
+              if (stackAssignment?.preloaded) {
+                assignment.preloaded = true;
+              }
+            }
+          }
+        }
+      }
+
       localConfig.description = loadedStack.description;
       const stackAgentIds = typedKeys<AgentName>(loadedStack.agents);
       for (const agentId of stackAgentIds) {
@@ -210,6 +230,11 @@ function setConfigMetadata(
 ): void {
   config.installMode = wizardResult.installMode;
 
+  // Only persist expertMode when true (sparse YAML output)
+  if (wizardResult.expertMode) {
+    config.expertMode = true;
+  }
+
   if (sourceFlag) {
     config.source = sourceFlag;
   } else if (sourceResult.sourceConfig.source) {
@@ -232,6 +257,16 @@ async function buildAndMergeConfig(
   return mergeWithExistingConfig(config, { projectDir });
 }
 
+/** Commented-out config option hints appended to generated config.yaml for discoverability. */
+const CONFIG_OPTIONS_COMMENT = [
+  "",
+  "# Additional config options:",
+  `# source: ${DEFAULT_SOURCE}`,
+  "# marketplace: my-company",
+  "# agents_source: github:my-org/agents",
+  "",
+].join("\n");
+
 /** Commented-out path override hints appended to generated config.yaml for discoverability. */
 const PATH_OVERRIDES_COMMENT = [
   "",
@@ -253,7 +288,7 @@ async function writeConfigFile(config: ProjectConfig, configPath: string): Promi
     indent: YAML_FORMATTING.INDENT,
     lineWidth: YAML_FORMATTING.LINE_WIDTH,
   });
-  await writeFile(configPath, `${schemaComment}${configYaml}${PATH_OVERRIDES_COMMENT}`);
+  await writeFile(configPath, `${schemaComment}${configYaml}${CONFIG_OPTIONS_COMMENT}${PATH_OVERRIDES_COMMENT}`);
 }
 
 function buildCompileAgents(
