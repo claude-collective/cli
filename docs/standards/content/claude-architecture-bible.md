@@ -1220,7 +1220,7 @@ author: "Vincent"     # No @ prefix
 Valid category values (from `src/schemas/metadata.schema.json`):
 
 ```
-framework, meta-framework, client-state, server-state, styling, testing,
+framework, client-state, server-state, styling, testing,
 mocking, api, database, auth, analytics, observability, email, forms,
 ui-components, i18n, error-handling, files, file-upload, utilities,
 tooling, monorepo, mobile-framework, frontend, backend, security, shared,

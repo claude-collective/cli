@@ -12,6 +12,7 @@ This file provides quick decision trees and essential conventions for working wi
 - NEVER add backward-compatibility shims, migration code, or legacy fallbacks. The project is pre-1.0 — backward compatibility is not a concern. Remove old code cleanly instead of maintaining two paths.
 - NEVER add unnecessary comments — only add comments when something is unintuitive, complex, or for edge cases. Self-explanatory code should not have comments. Do not add JSDoc to obvious functions.
 - NEVER reassign constants to other constants — use the original constant directly instead of creating aliases like `const FOO = BAR`
+- NEVER build intermediate data structures imperatively when the data is static or the rendering is straightforward. No `const arr = []; for (...) { arr.push(...) }` patterns. Use declarative const arrays, `.map()`, `.flatMap()`, or inline JSX. If data is known at write-time, write it as a literal. If it needs transforming, use functional array methods. Imperative accumulation into mutable arrays is never the answer.
 
 ---
 

@@ -83,7 +83,7 @@ This screen is identical for both paths. The only difference is the initial chec
 
 - Extract domains from stack's agent configs (see "Domain Extraction" below)
 - Pre-check those domains
-- Optionally include `web-extras` if `web` is present (unchecked, opt-in)
+- Pre-check those domains
 
 **From scratch:**
 
@@ -108,9 +108,6 @@ function getDomainsFromStack(stack: Stack, categories: CategoryMap): Domain[] {
       if (domain) domains.add(domain);
     }
   }
-
-  // web-extras is available if web is present (opt-in, not pre-selected)
-  // handled separately in the UI
 
   return Array.from(domains).sort();
 }

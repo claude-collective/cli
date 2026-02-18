@@ -9,6 +9,8 @@
 | D-28 | Fix startup warning/error messages                         | Pending      |
 | D-29 | Ensure skills metadata YAML includes $schema reference     | Pending      |
 | D-30 | Add Agents selection step to wizard                        | Pending      |
+| D-32 | Add category as enum in metadata JSON schema               | Pending      |
+| D-35 | Pre-D-31 cleanup: merge meta-framework + remove web-extras | Pending      |
 
 ---
 
@@ -117,6 +119,17 @@ Each `metadata.yaml` file for skills should include a `$schema` field pointing t
 
 ---
 
+#### D-32: Add Category as Enum in Metadata JSON Schema
+
+The `category` field in `src/schemas/metadata.schema.json` currently accepts any string. It should be an enum of valid `Subcategory` values so that IDE validation catches invalid categories (like `frontend`, `shared`, `setup`) immediately.
+
+**Changes needed:**
+
+- Update `src/schemas/metadata.schema.json` — add `enum` constraint to the `category` property with all valid subcategory values
+- Keep the enum in sync with `SUBCATEGORY_VALUES` in `src/cli/lib/schemas.ts`
+
+---
+
 ### Wizard / Features
 
 #### D-30: Add Agents Selection Step to Wizard
@@ -162,6 +175,19 @@ Each `metadata.yaml` file for skills should include a `$schema` field pointing t
 - Pattern: pattern-scout, web-pattern-critique
 - Meta: agent-summoner, skill-summoner, documentor
 - Migration: cli-migrator
+
+---
+
+### Category Cleanup
+
+#### D-35: Pre-D-31 Cleanup — Merge meta-framework + Remove web-extras
+
+Two cleanup tasks combined, both prerequisite to D-31:
+
+1. **Merge `meta-framework` into `framework`** — the distinction causes real errors (nuxt-stack inverted), no code treats them differently, skill IDs already use `web-framework-*` for both
+2. **Remove `web-extras` domain** — not a real domain, just a wizard UI grouping. Now that scrolling is supported, all web categories fit in one step
+
+**Full plan:** [todo/D-35-merge-meta-framework.md](./D-35-merge-meta-framework.md)
 
 ---
 

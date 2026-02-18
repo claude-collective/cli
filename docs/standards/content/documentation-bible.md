@@ -726,7 +726,7 @@ afterEach(async () => {
 type SkillId = `${SkillIdPrefix}-${string}-${string}`;
 
 // Domain: finite union
-type Domain = "web" | "web-extras" | "api" | "cli" | "mobile" | "shared";
+type Domain = "web" | "api" | "cli" | "mobile" | "shared";
 ```
 
 **Typed object helpers** (from `src/cli/utils/typed-object.ts`):

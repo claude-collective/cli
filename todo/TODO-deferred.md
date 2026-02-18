@@ -2,6 +2,7 @@
 
 | ID    | Task                                                  | Status   |
 | ----- | ----------------------------------------------------- | -------- |
+| D-34  | Replace agent-mappings.yaml with schema-backed file   | Deferred |
 | D-31  | Prefix categories with their domain                   | Deferred |
 | D-05  | Improve `agentsinc init` when already initialized     | Deferred |
 | P4-17 | `agentsinc new` supports multiple items               | Deferred |
@@ -28,6 +29,32 @@
 | D-25  | Auto-version check + source staleness                 | Deferred |
 | D-26  | Marketplace-specific uninstall                        | Deferred |
 | D-30  | Update schemas when generating new categories/domains | Deferred |
+
+---
+
+## D-34: Replace agent-mappings.yaml with Schema-Backed Agent-Skills Config
+
+The current `src/cli/defaults/agent-mappings.yaml` is brittle — it's a free-form YAML file without a JSON schema, doing pattern matching (`"web/*"`, `"api/*"`) to route skills to agents. It should be replaced with a proper schema-backed file similar to `stacks.yaml`.
+
+**Problems with agent-mappings.yaml:**
+
+- No `$schema` reference, no IDE validation
+- `skillToAgents` uses glob-like patterns (`"web/*"`) that are string-matched at runtime — easy to break silently
+- `agentSkillPrefixes` duplicates information that could be derived from the skill-to-agent mapping
+- The file's structure doesn't match any of the CLI's existing JSON schemas
+
+**Proposed replacement:**
+
+Create a new `config/agent-defaults.yaml` (with `agent-defaults.schema.json`) that explicitly maps each agent to its default skill categories, similar to how `stacks.yaml` maps agents to specific skills per stack. The routing logic in `config-generator.ts` would read from this structured config instead of pattern-matching.
+
+**Files to change:**
+
+- Remove `src/cli/defaults/agent-mappings.yaml`
+- Create `config/agent-defaults.yaml` + `src/schemas/agent-defaults.schema.json`
+- Update `src/cli/lib/loading/defaults-loader.ts` to load the new file
+- Update `src/cli/lib/configuration/config-generator.ts` to use structured lookups instead of pattern matching
+- Update `src/cli/stores/wizard-store.ts` agent preselection to use the new structure
+- Update tests
 
 ---
 

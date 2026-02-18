@@ -490,8 +490,8 @@ type SkillDisplayName = "react" | "vue" | ...;       // 137 values - human-reada
 type CategoryPath = `${SkillIdPrefix}/${string}` | `${SkillIdPrefix}-${string}` | Subcategory | "local";
 
 // src/cli/types/matrix.ts
-type Domain = "web" | "web-extras" | "api" | "cli" | "mobile" | "shared";
-type Subcategory = "framework" | "meta-framework" | "styling" | ...;  // 37 values
+type Domain = "web" | "api" | "cli" | "mobile" | "shared";
+type Subcategory = "framework" | "styling" | ...;  // 36 values
 type ModelName = "sonnet" | "opus" | "haiku" | "inherit";
 type SkillSourceType = "public" | "private" | "local";  // skill provenance (install mode is separate)
 
@@ -731,12 +731,6 @@ type WizardState = {
 - `e` to toggle expert mode
 - `g` to open source settings (Sources step only)
 - `p` to toggle install mode
-
-### Web-Extras Domain
-
-`web-extras` is a UI-only domain that groups 8 categories (error-handling, file-upload, files,
-utilities, realtime, animation, pwa, accessibility) to reduce vertical space. It uses
-`parent_domain: web` to inherit framework-first filtering from the `web` domain.
 
 ---
 
