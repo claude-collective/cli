@@ -10,7 +10,46 @@ import type {
   Subcategory,
 } from "../../types";
 import { typedEntries } from "../../utils/typed-object";
-import { getAgentsForSkill } from "../skills";
+import { getCachedDefaults } from "../loading";
+
+// Boundary cast: literal strings are valid AgentName values
+const DEFAULT_AGENTS: AgentName[] = ["agent-summoner", "skill-summoner", "documentor"];
+
+function getEffectiveSkillToAgents(): Record<string, AgentName[]> {
+  const defaults = getCachedDefaults();
+  if (defaults?.skill_to_agents) {
+    // Boundary cast: YAML-loaded mappings contain valid AgentName values
+    return defaults.skill_to_agents as Record<string, AgentName[]>;
+  }
+  return {};
+}
+
+function getAgentsForSkill(skillPath: string, category: CategoryPath): AgentName[] {
+  const normalizedPath = skillPath.replace(/^skills\//, "").replace(/\/$/, "");
+
+  const skillToAgents = getEffectiveSkillToAgents();
+
+  if (skillToAgents[category]) {
+    return skillToAgents[category];
+  }
+
+  for (const [pattern, agents] of Object.entries(skillToAgents)) {
+    if (normalizedPath === pattern || normalizedPath.startsWith(`${pattern}/`)) {
+      return agents;
+    }
+  }
+
+  for (const [pattern, agents] of Object.entries(skillToAgents)) {
+    if (pattern.endsWith("/*")) {
+      const prefix = pattern.slice(0, -2);
+      if (normalizedPath.startsWith(prefix)) {
+        return agents;
+      }
+    }
+  }
+
+  return DEFAULT_AGENTS;
+}
 
 export type ProjectConfigOptions = {
   description?: string;

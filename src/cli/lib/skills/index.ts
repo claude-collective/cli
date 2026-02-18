@@ -5,6 +5,7 @@ export {
   type LocalSkillMetadata,
   type SkillComparisonResult,
   readForkedFromMetadata,
+  readLocalSkillMetadata,
   getLocalSkillsWithMetadata,
   computeSourceHash,
   compareLocalSkillsWithSource,
@@ -19,13 +20,6 @@ export {
   copySkillsToPluginFromSource,
   copySkillsToLocalFlattened,
 } from "./skill-copier";
-
-export {
-  SKILL_TO_AGENTS,
-  AGENT_SKILL_PREFIXES,
-  getAgentsForSkill,
-  getDefaultSkillsForAgent,
-} from "./skill-agent-mappings";
 
 export {
   type SkillPluginOptions,
