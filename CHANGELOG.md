@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.37.0] - 2026-02-18
+
+**Rename all snake_case config/metadata fields to camelCase (D-27)**
+
+- 27 fields renamed across types, schemas, configs, and all implementation code
+- All 6 JSON schemas updated, validation error discriminants renamed
+- Zero backward compatibility shims — clean break
+
+See [changelogs/0.37.0.md](./changelogs/0.37.0.md) for full details.
+
+---
+
 ## [0.36.0] - 2026-02-18
 
 **Tier-based source sort order, display name rendering, and code standards enforcement**
