@@ -269,7 +269,9 @@ async function tagExtraSources(
         `Extra source '${extraSource.name}': ${skills.length} skills found, ${matchCount} matching`,
       );
     } catch (error) {
-      warn(`Failed to load extra source '${extraSource.name}' ('${extraSource.url}'): ${getErrorMessage(error)}`);
+      warn(
+        `Failed to load extra source '${extraSource.name}' ('${extraSource.url}'): ${getErrorMessage(error)}`,
+      );
     }
   }
 }
@@ -342,7 +344,9 @@ export async function searchExtraSources(
         }
       }
     } catch (error) {
-      warn(`Failed to search extra source '${source.name}' ('${source.url}'): ${getErrorMessage(error)}`);
+      warn(
+        `Failed to search extra source '${source.name}' ('${source.url}'): ${getErrorMessage(error)}`,
+      );
     }
   }
 

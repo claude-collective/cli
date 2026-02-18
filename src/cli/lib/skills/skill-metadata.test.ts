@@ -445,7 +445,6 @@ describe("skill-metadata", () => {
 
       expect(readFile).toHaveBeenCalledWith("/project/skills/react/metadata.yaml");
     });
-
   });
 
   describe("readLocalSkillMetadata", () => {

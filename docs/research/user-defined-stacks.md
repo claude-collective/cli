@@ -37,6 +37,7 @@ Neither `Stack` nor `ResolvedStack` currently has an `origin` or `source` field 
 **File:** `src/cli/lib/stacks/stacks-loader.ts:52-92`
 
 `loadStacks(configDir, stacksFile?)` is the core loader:
+
 - Takes a `configDir` (base path) and optional `stacksFile` (relative path to stacks YAML)
 - Defaults `stacksFile` to `STACKS_FILE_PATH` ("config/stacks.yaml") from `consts.ts:25`
 - Parses the YAML against `stacksConfigSchema` (Zod)
@@ -49,6 +50,7 @@ Neither `Stack` nor `ResolvedStack` currently has an `origin` or `source` field 
 **File:** `src/cli/lib/loading/source-loader.ts:148-185` -- `loadAndMergeFromBasePath()`
 
 This is the key function. It:
+
 1. Reads source config for `stacks_file` override (line 153)
 2. Loads stacks from the source first: `loadStacks(basePath, stacksRelFile)` (line 176)
 3. Falls back to CLI's built-in stacks: `loadStacks(PROJECT_ROOT)` (line 177)
@@ -63,6 +65,7 @@ This is the key function. It:
 **File:** `src/cli/components/wizard/stack-selection.tsx:25-111`
 
 The `StackSelection` component:
+
 - Gets stacks from `matrix.suggestedStacks` (line 30)
 - Renders them as a flat list using `MenuItem` components (lines 83-90)
 - Adds a "Start from scratch" option after a horizontal divider (lines 91-102)
@@ -98,6 +101,7 @@ Lists all configured sources with their enabled state.
 ### Private vs Public Source Detection
 
 The system differentiates sources by:
+
 - **Default source:** `github:agents-inc/skills` (from `config.ts:19`)
 - **Private marketplace:** When `ProjectSourceConfig.source` points to a non-default URL
 - **Extra sources:** `ProjectSourceConfig.sources[]` array (from `config.ts:43`)
@@ -121,7 +125,7 @@ The consumer's `.claude-src/config.yaml` already supports `stacks_file`. Current
 ```yaml
 # .claude-src/config.yaml (consumer project)
 source: github:acme-corp/skills
-stacks_file: stacks/my-stacks.yaml  # project-level stacks
+stacks_file: stacks/my-stacks.yaml # project-level stacks
 ```
 
 This would mean `stacks_file` has dual meaning depending on context (source vs consumer), which could be confusing.
@@ -133,7 +137,7 @@ Add a distinct field that specifically points to project-level stacks:
 ```yaml
 # .claude-src/config.yaml (consumer project)
 source: github:acme-corp/skills
-project_stacks: stacks/my-stacks.yaml  # project-level stacks
+project_stacks: stacks/my-stacks.yaml # project-level stacks
 ```
 
 **Option C: Use `stacks_file` but load from project root**
@@ -164,8 +168,8 @@ export type Stack = {
   description: string;
   agents: Partial<Record<AgentName, StackAgentConfig>>;
   philosophy?: string;
-  origin?: StackOrigin;       // NEW
-  originLabel?: string;       // NEW - display name (e.g., "Acme Corp")
+  origin?: StackOrigin; // NEW
+  originLabel?: string; // NEW - display name (e.g., "Acme Corp")
 };
 ```
 
@@ -179,8 +183,8 @@ export type ResolvedStack = {
   skills: Partial<Record<AgentName, Partial<Record<Subcategory, SkillId>>>>;
   allSkillIds: SkillId[];
   philosophy: string;
-  origin?: StackOrigin;       // NEW
-  originLabel?: string;       // NEW
+  origin?: StackOrigin; // NEW
+  originLabel?: string; // NEW
 };
 ```
 
@@ -235,13 +239,13 @@ const sourceStacks = await loadStacks(basePath, stacksRelFile);
 const cliStacks = await loadStacks(PROJECT_ROOT);
 
 // Tag origins
-const taggedSourceStacks = sourceStacks.map(s => ({
+const taggedSourceStacks = sourceStacks.map((s) => ({
   ...convertStackToResolvedStack(s),
   origin: "marketplace" as StackOrigin,
   originLabel: marketplace ?? extractSourceName(source),
 }));
 
-const taggedCliStacks = cliStacks.map(s => ({
+const taggedCliStacks = cliStacks.map((s) => ({
   ...convertStackToResolvedStack(s),
   origin: "public" as StackOrigin,
   originLabel: "Agents Inc (public)",
@@ -259,16 +263,13 @@ After `loadAndMergeFromBasePath()` returns, before returning the result, load pr
 const consumerConfig = projectDir ? await loadProjectSourceConfig(projectDir) : null;
 if (consumerConfig?.stacks_file) {
   const projectStacks = await loadStacks(resolvedProjectDir, consumerConfig.stacks_file);
-  const taggedProjectStacks = projectStacks.map(s => ({
+  const taggedProjectStacks = projectStacks.map((s) => ({
     ...convertStackToResolvedStack(s),
     origin: "project" as StackOrigin,
     originLabel: "Your Project",
   }));
   // Prepend project stacks (they go at the top)
-  result.matrix.suggestedStacks = [
-    ...taggedProjectStacks,
-    ...result.matrix.suggestedStacks,
-  ];
+  result.matrix.suggestedStacks = [...taggedProjectStacks, ...result.matrix.suggestedStacks];
 }
 ```
 
@@ -281,7 +282,7 @@ After all stacks are assembled, hide public stacks if a private marketplace is c
 const hasPrivateSource = sourceConfig.source !== DEFAULT_SOURCE;
 if (hasPrivateSource) {
   result.matrix.suggestedStacks = result.matrix.suggestedStacks.filter(
-    s => s.origin !== "public"
+    (s) => s.origin !== "public",
   );
 }
 ```
@@ -351,9 +352,7 @@ function groupStacksByOrigin(stacks: ResolvedStack[]): StackSection[] {
     groups.get(key)!.stacks.push(stack);
   }
 
-  return ORDER
-    .filter(o => groups.has(o))
-    .map(o => groups.get(o)!);
+  return ORDER.filter((o) => groups.has(o)).map((o) => groups.get(o)!);
 }
 ```
 
@@ -412,20 +411,20 @@ No changes needed to `projectSourceConfigSchema` -- `stacks_file` already exists
 
 ## 7. Files That Would Need to Change
 
-| File | Description |
-|------|-------------|
-| `src/cli/types/stacks.ts` | Add `StackOrigin` type export |
-| `src/cli/types/matrix.ts` | Add `origin?` and `originLabel?` to `ResolvedStack` |
-| `src/cli/types/index.ts` | Export `StackOrigin` if not already re-exported |
-| `src/cli/lib/loading/source-loader.ts` | Main changes: tag stacks with origin, load project stacks, apply exclusion rule |
-| `src/cli/components/wizard/stack-selection.tsx` | Group stacks by origin with section headers, update navigation indices |
-| `src/cli/lib/stacks/stacks-loader.ts` | No changes needed (origin is assigned by caller, not by the loader) |
-| `src/cli/lib/schemas.ts` | No changes needed (origin is not part of YAML schema) |
-| `src/cli/lib/configuration/config.ts` | No changes needed (`stacks_file` already exists) |
-| `src/cli/stores/wizard-store.ts` | Possibly no changes (stacks come from matrix, not the store) |
-| `src/cli/lib/__tests__/helpers.ts` | Update `createMockResolvedStack` factory to support `origin` |
-| `src/cli/components/wizard/step-stack.test.tsx` | Add tests for grouped rendering, exclusion rule |
-| `src/cli/lib/loading/source-loader.test.ts` | Add tests for project stacks loading, origin tagging, exclusion |
+| File                                            | Description                                                                     |
+| ----------------------------------------------- | ------------------------------------------------------------------------------- |
+| `src/cli/types/stacks.ts`                       | Add `StackOrigin` type export                                                   |
+| `src/cli/types/matrix.ts`                       | Add `origin?` and `originLabel?` to `ResolvedStack`                             |
+| `src/cli/types/index.ts`                        | Export `StackOrigin` if not already re-exported                                 |
+| `src/cli/lib/loading/source-loader.ts`          | Main changes: tag stacks with origin, load project stacks, apply exclusion rule |
+| `src/cli/components/wizard/stack-selection.tsx` | Group stacks by origin with section headers, update navigation indices          |
+| `src/cli/lib/stacks/stacks-loader.ts`           | No changes needed (origin is assigned by caller, not by the loader)             |
+| `src/cli/lib/schemas.ts`                        | No changes needed (origin is not part of YAML schema)                           |
+| `src/cli/lib/configuration/config.ts`           | No changes needed (`stacks_file` already exists)                                |
+| `src/cli/stores/wizard-store.ts`                | Possibly no changes (stacks come from matrix, not the store)                    |
+| `src/cli/lib/__tests__/helpers.ts`              | Update `createMockResolvedStack` factory to support `origin`                    |
+| `src/cli/components/wizard/step-stack.test.tsx` | Add tests for grouped rendering, exclusion rule                                 |
+| `src/cli/lib/loading/source-loader.test.ts`     | Add tests for project stacks loading, origin tagging, exclusion                 |
 
 ---
 

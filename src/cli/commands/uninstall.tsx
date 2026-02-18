@@ -13,18 +13,9 @@ import { listPluginNames, getProjectPluginsDir } from "../lib/plugins";
 import { readForkedFromMetadata } from "../lib/skills";
 import { loadProjectSourceConfig } from "../lib/configuration/config";
 import type { ProjectSourceConfig } from "../lib/configuration/config";
-import {
-  CLAUDE_DIR,
-  CLAUDE_SRC_DIR,
-  CLI_COLORS,
-  DEFAULT_BRANDING,
-} from "../consts";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, CLI_COLORS, DEFAULT_BRANDING } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
-import {
-  SUCCESS_MESSAGES,
-  INFO_MESSAGES,
-  DRY_RUN_MESSAGES,
-} from "../utils/messages";
+import { SUCCESS_MESSAGES, INFO_MESSAGES, DRY_RUN_MESSAGES } from "../utils/messages";
 
 type UninstallTarget = {
   hasPlugins: boolean;
@@ -69,14 +60,15 @@ async function detectUninstallTarget(projectDir: string): Promise<UninstallTarge
   const claudeDir = path.join(projectDir, CLAUDE_DIR);
   const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
 
-  const [hasLocalSkills, hasLocalAgents, hasClaudeDir, hasClaudeSrcDir, config] =
-    await Promise.all([
+  const [hasLocalSkills, hasLocalAgents, hasClaudeDir, hasClaudeSrcDir, config] = await Promise.all(
+    [
       directoryExists(skillsDir),
       directoryExists(agentsDir),
       directoryExists(claudeDir),
       directoryExists(claudeSrcDir),
       loadProjectSourceConfig(projectDir),
-    ]);
+    ],
+  );
 
   let pluginNames: string[] = [];
   try {
@@ -363,11 +355,11 @@ export default class Uninstall extends BaseCommand {
         const skillDir = path.join(target.skillsDir, skillDirName);
         const forkedFrom = await readForkedFromMetadata(skillDir);
 
-        const shouldRemove = forkedFrom !== null && (
-          skillMatchesConfiguredSource(forkedFrom.source, target.configuredSources) ||
-          // Legacy skills without source field are treated as CLI-managed when config exists
-          (!forkedFrom.source && target.config !== null)
-        );
+        const shouldRemove =
+          forkedFrom !== null &&
+          (skillMatchesConfiguredSource(forkedFrom.source, target.configuredSources) ||
+            // Legacy skills without source field are treated as CLI-managed when config exists
+            (!forkedFrom.source && target.config !== null));
 
         if (shouldRemove) {
           await remove(skillDir);
@@ -422,10 +414,10 @@ export default class Uninstall extends BaseCommand {
         const skillDir = path.join(target.skillsDir, skillDirName);
         const forkedFrom = await readForkedFromMetadata(skillDir);
 
-        const shouldRemove = forkedFrom !== null && (
-          skillMatchesConfiguredSource(forkedFrom.source, target.configuredSources) ||
-          (!forkedFrom.source && target.config !== null)
-        );
+        const shouldRemove =
+          forkedFrom !== null &&
+          (skillMatchesConfiguredSource(forkedFrom.source, target.configuredSources) ||
+            (!forkedFrom.source && target.config !== null));
 
         if (shouldRemove) {
           this.log(`[dry-run] Would remove skill '${skillDirName}'`);

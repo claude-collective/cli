@@ -73,7 +73,8 @@ describe("skill-plugin-compiler", () => {
       const skillPath = await writeTestSkill(skillsDir, "tailwind", {
         description: "Tailwind CSS styling",
         skipMetadata: true,
-        skillContent: "---\nname: tailwind\ndescription: Tailwind CSS styling\ncategory: test\n---\n\n# Tailwind Content\n\nStyling guide.",
+        skillContent:
+          "---\nname: tailwind\ndescription: Tailwind CSS styling\ncategory: test\n---\n\n# Tailwind Content\n\nStyling guide.",
       });
 
       const result = await compileSkillPlugin({
@@ -339,7 +340,8 @@ description: Simple skill
       await writeTestSkill(skillsDir, "some-directory-name", {
         description: "Skill description",
         skipMetadata: true,
-        skillContent: "---\nname: actual-skill-name\ndescription: Skill description\n---\n\n# Content",
+        skillContent:
+          "---\nname: actual-skill-name\ndescription: Skill description\n---\n\n# Content",
       });
 
       const results = await compileAllSkillPlugins(skillsDir, outputDir);

@@ -128,13 +128,7 @@ describe("multi-source-loader", () => {
       });
 
       // marketplace parameter (from marketplace.json) takes precedence
-      await loadSkillsFromAllSources(
-        matrix,
-        privateSourceConfig,
-        "/tmp/test",
-        false,
-        "Acme Corp",
-      );
+      await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test", false, "Acme Corp");
 
       const react = matrix.skills["web-framework-react" as SkillId]!;
       expect(react.availableSources).toBeDefined();
@@ -619,9 +613,7 @@ describe("multi-source-loader", () => {
       await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test");
 
       // Should have warned about the failure
-      expect(warn).toHaveBeenCalledWith(
-        expect.stringContaining("Failed to load public source"),
-      );
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Failed to load public source"));
 
       // Skill should still have just the private source
       const react = matrix.skills["web-framework-react" as SkillId]!;

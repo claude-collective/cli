@@ -23,9 +23,7 @@ Before `render()` is called, the commands and loading modules print directly to 
 ```javascript
 // node_modules/ink/build/ink.js:121-125
 if (outputHeight >= this.options.stdout.rows) {
-    this.options.stdout.write(
-        ansiEscapes.clearTerminal + this.fullStaticOutput + output
-    );
+  this.options.stdout.write(ansiEscapes.clearTerminal + this.fullStaticOutput + output);
 }
 ```
 
@@ -37,18 +35,18 @@ The logo is rendered inside the Ink component tree (`wizard-layout.tsx:97-101`) 
 
 ## Key Files
 
-| File | Role |
-|------|------|
-| `src/cli/commands/init.tsx:67-143` | Init command — logo string (71-76), pre-Ink logs, `render()` (111-128) |
-| `src/cli/commands/edit.tsx:58-131` | Edit command — pre-Ink logs (73-101), `render()` (111-128) |
-| `src/cli/components/wizard/wizard-layout.tsx:96` | `height={terminalHeight}` triggers full-screen clear |
-| `src/cli/utils/logger.ts:33-35` | `warn()` writes to stderr via `console.warn()` |
-| `src/cli/lib/loading/multi-source-loader.ts` | Source loading warnings (lines 221, 272, 345) |
-| `src/cli/lib/loading/source-fetcher.ts` | Marketplace validation warnings (lines 314, 319) |
-| `src/cli/lib/skills/skill-metadata.ts` | Metadata warnings (lines 99, 126, 330) |
-| `src/cli/lib/matrix/matrix-health-check.ts` | Matrix health warnings (line 28) |
-| `node_modules/ink/build/ink.js:121-125` | The `clearTerminal` code path |
-| `node_modules/ink/build/log-update.js` | Ink's `eraseLines` output management |
+| File                                             | Role                                                                   |
+| ------------------------------------------------ | ---------------------------------------------------------------------- |
+| `src/cli/commands/init.tsx:67-143`               | Init command — logo string (71-76), pre-Ink logs, `render()` (111-128) |
+| `src/cli/commands/edit.tsx:58-131`               | Edit command — pre-Ink logs (73-101), `render()` (111-128)             |
+| `src/cli/components/wizard/wizard-layout.tsx:96` | `height={terminalHeight}` triggers full-screen clear                   |
+| `src/cli/utils/logger.ts:33-35`                  | `warn()` writes to stderr via `console.warn()`                         |
+| `src/cli/lib/loading/multi-source-loader.ts`     | Source loading warnings (lines 221, 272, 345)                          |
+| `src/cli/lib/loading/source-fetcher.ts`          | Marketplace validation warnings (lines 314, 319)                       |
+| `src/cli/lib/skills/skill-metadata.ts`           | Metadata warnings (lines 99, 126, 330)                                 |
+| `src/cli/lib/matrix/matrix-health-check.ts`      | Matrix health warnings (line 28)                                       |
+| `node_modules/ink/build/ink.js:121-125`          | The `clearTerminal` code path                                          |
+| `node_modules/ink/build/log-update.js`           | Ink's `eraseLines` output management                                   |
 
 ## Recommended Fix: Buffer + Ink `<Static>`
 
@@ -64,9 +62,7 @@ Even in the full-clear code path, Ink preserves static output:
 
 ```javascript
 // ink.js:122-125
-this.options.stdout.write(
-    ansiEscapes.clearTerminal + this.fullStaticOutput + output
-);
+this.options.stdout.write(ansiEscapes.clearTerminal + this.fullStaticOutput + output);
 ```
 
 `this.fullStaticOutput` accumulates everything rendered via `<Static>` and is always re-written after a clear.
@@ -74,10 +70,12 @@ this.options.stdout.write(
 ### Changes Required
 
 **Command files (`init.tsx`, `edit.tsx`):**
+
 - Replace `this.log()` / `this.warn()` calls during the pre-Ink phase with pushes to a message buffer
 - Pass the buffer as a prop to `<Wizard>`
 
 **`WizardLayout` (`wizard-layout.tsx`):**
+
 - Add a `<Static>` block above the main layout that renders buffered messages
 
 ```tsx
@@ -92,17 +90,18 @@ import { Static, Box, Text } from "ink";
       </Text>
     </Box>
   )}
-</Static>
+</Static>;
 ```
 
 **Loading modules (`utils/logger.ts`, loading/ modules):**
+
 - Support a buffered output mode so `warn()` can push to a collector instead of `console.warn()`
 - One approach: a module-level message collector that can be enabled/drained
 
 ### Alternatives Considered
 
-| Approach | Pros | Cons |
-|----------|------|------|
-| **Remove `height={terminalHeight}`** | Simplest change | Breaks full-screen wizard layout |
+| Approach                                    | Pros                     | Cons                                              |
+| ------------------------------------------- | ------------------------ | ------------------------------------------------- |
+| **Remove `height={terminalHeight}`**        | Simplest change          | Breaks full-screen wizard layout                  |
 | **Move loading into Ink (async useEffect)** | No pre-Ink output at all | Largest refactor; moves business logic into React |
-| **Custom Ink output wrapper** | Preserves architecture | Fights Ink internals; fragile |
+| **Custom Ink output wrapper**               | Preserves architecture   | Fights Ink internals; fragile                     |

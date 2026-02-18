@@ -58,14 +58,18 @@ async function writeRemoteSkillOnDisk(
   config: { name: string; description: string; cliName?: string; author?: string },
 ): Promise<string> {
   const skillDir = path.join(projectDir, "src", relPath);
-  await writeTestSkill(path.join(projectDir, "src", path.dirname(relPath)), path.basename(relPath), {
-    description: config.description,
-    skillContent: `---\nname: ${config.name}\ndescription: ${config.description}\n---\n${config.description}`,
-    extraMetadata: {
-      cliName: config.cliName ?? config.name,
-      author: config.author ?? "@vince",
+  await writeTestSkill(
+    path.join(projectDir, "src", path.dirname(relPath)),
+    path.basename(relPath),
+    {
+      description: config.description,
+      skillContent: `---\nname: ${config.name}\ndescription: ${config.description}\n---\n${config.description}`,
+      extraMetadata: {
+        cliName: config.cliName ?? config.name,
+        author: config.author ?? "@vince",
+      },
     },
-  });
+  );
   return skillDir;
 }
 

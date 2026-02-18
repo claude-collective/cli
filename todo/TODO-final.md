@@ -2,15 +2,15 @@
 
 These are the remaining tasks to complete for the CLI.
 
-| ID             | Task                                             | Status  |
-| -------------- | ------------------------------------------------ | ------- |
-| WUX-3          | Visually verify wizard UX changes                | Pending |
-| U-UI-ITERATION | Wizard UI polish pass                            | Pending |
-| U-LOGO         | Upload logo / branding asset                     | Pending |
-| #15            | Create Agents Inc. logo                          | Pending |
-| #2             | Add proper documentation                         | Pending |
-| #1             | Create proper Work web stack                     | Pending |
-| U15            | Add comprehensive help overlay                   | Pending |
+| ID             | Task                              | Status  |
+| -------------- | --------------------------------- | ------- |
+| WUX-3          | Visually verify wizard UX changes | Pending |
+| U-UI-ITERATION | Wizard UI polish pass             | Pending |
+| U-LOGO         | Upload logo / branding asset      | Pending |
+| #15            | Create Agents Inc. logo           | Pending |
+| #2             | Add proper documentation          | Pending |
+| #1             | Create proper Work web stack      | Pending |
+| U15            | Add comprehensive help overlay    | Pending |
 
 ---
 

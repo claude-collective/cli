@@ -12,7 +12,12 @@ import { StepSources } from "./step-sources.js";
 import { StepSettings } from "./step-settings.js";
 import { StepAgents } from "./step-agents.js";
 import { resolveAlias, validateSelection } from "../../lib/matrix/index.js";
-import type { AgentName, DomainSelections, MergedSkillsMatrix, SkillId } from "../../types/index.js";
+import type {
+  AgentName,
+  DomainSelections,
+  MergedSkillsMatrix,
+  SkillId,
+} from "../../types/index.js";
 import { getStackName } from "./utils.js";
 import { warn } from "../../utils/logger.js";
 import { useWizardInitialization } from "../hooks/use-wizard-initialization.js";

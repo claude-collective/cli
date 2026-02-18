@@ -24,9 +24,7 @@ export type CheckboxGridProps<T extends string = string> = {
 
 const CONTINUE_VALUE = "_continue";
 
-type ListItem<T extends string> =
-  | { type: "item"; item: CheckboxItem<T> }
-  | { type: "continue" };
+type ListItem<T extends string> = { type: "item"; item: CheckboxItem<T> } | { type: "continue" };
 
 export const CheckboxGrid = <T extends string = string>({
   title,

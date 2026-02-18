@@ -302,9 +302,7 @@ const INSTALLED_SKILL_IDS: SkillId[] = [
 ];
 
 // Skills that exist in the source but are NOT installed locally (eligible for eject)
-const NON_INSTALLED_SKILLS = DEFAULT_TEST_SKILLS.filter(
-  (s) => !INSTALLED_SKILL_IDS.includes(s.id),
-);
+const NON_INSTALLED_SKILLS = DEFAULT_TEST_SKILLS.filter((s) => !INSTALLED_SKILL_IDS.includes(s.id));
 
 /**
  * Build a MergedSkillsMatrix from DEFAULT_TEST_SKILLS with skill paths matching
@@ -453,11 +451,7 @@ describe("eject skills from initialized project", () => {
     await copySkillsToLocalFlattened(skillIds, outputDir, matrix, sourceResult);
 
     const targetSkill = NON_INSTALLED_SKILLS[0];
-    const metadataPath = path.join(
-      outputDir,
-      targetSkill.id,
-      STANDARD_FILES.METADATA_YAML,
-    );
+    const metadataPath = path.join(outputDir, targetSkill.id, STANDARD_FILES.METADATA_YAML);
     expect(await fileExists(metadataPath)).toBe(true);
 
     const metadata = await readTestYaml<Record<string, unknown>>(metadataPath);
@@ -607,11 +601,7 @@ describe("eject in plugin mode", () => {
     await copySkillsToLocalFlattened(skillIds, outputDir, matrix, sourceResult);
 
     const targetSkill = DEFAULT_TEST_SKILLS[0];
-    const skillMdPath = path.join(
-      outputDir,
-      targetSkill.id,
-      STANDARD_FILES.SKILL_MD,
-    );
+    const skillMdPath = path.join(outputDir, targetSkill.id, STANDARD_FILES.SKILL_MD);
     expect(await fileExists(skillMdPath)).toBe(true);
 
     const content = await readFile(skillMdPath, "utf-8");
@@ -631,11 +621,7 @@ describe("eject in plugin mode", () => {
     await copySkillsToLocalFlattened(skillIds, outputDir, matrix, sourceResult);
 
     const targetSkill = DEFAULT_TEST_SKILLS[0];
-    const metadataPath = path.join(
-      outputDir,
-      targetSkill.id,
-      STANDARD_FILES.METADATA_YAML,
-    );
+    const metadataPath = path.join(outputDir, targetSkill.id, STANDARD_FILES.METADATA_YAML);
     expect(await fileExists(metadataPath)).toBe(true);
 
     const metadata = await readTestYaml<Record<string, unknown>>(metadataPath);

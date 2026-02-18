@@ -80,6 +80,7 @@ Should the operation continue after error?
 **RULE: ALWAYS use factories and fixtures for test data. NEVER construct configs, matrices, skills, agents, or stacks inline in test files.**
 
 This means:
+
 - **Skills/agents/SKILL.md/metadata.yaml** → `createCLISkill()`, `createUserSkill()`, `writeTestSkill()`, `writeSourceSkill()`, `createTestSource()`
 - **Mock skill objects** → `createMockSkill()` from helpers.ts
 - **Mock matrices** → `createMockMatrix()` from helpers.ts
@@ -348,12 +349,13 @@ const matrix = createMockMatrix({ "web-framework-react": skill });
 const dirs = await createTestSource({ stacks: CUSTOM_STACKS });
 
 // BAD: NEVER construct configs/matrices/skills inline in tests
-const matrixConfig: SkillsMatrixConfig = {     // NO! Use createMockMatrix()
+const matrixConfig: SkillsMatrixConfig = {
+  // NO! Use createMockMatrix()
   version: "1.0.0",
-  categories: { framework: { name: "..." } },  // NO! Use createMockCategory()
+  categories: { framework: { name: "..." } }, // NO! Use createMockCategory()
 };
-await writeFile(path.join(dir, "SKILL.md"), "---\nname: ...");  // NO! Use writeTestSkill()
-const skills: Record<string, ResolvedSkill> = {};  // NO! Use createMockSkill()
+await writeFile(path.join(dir, "SKILL.md"), "---\nname: ..."); // NO! Use writeTestSkill()
+const skills: Record<string, ResolvedSkill> = {}; // NO! Use createMockSkill()
 ```
 
 ### Temp Directory Lifecycle (Tests)

@@ -4,10 +4,22 @@ import { useWizardStore } from "../../stores/wizard-store.js";
 import { CheckboxGrid, type CheckboxItem } from "./checkbox-grid.js";
 
 const AVAILABLE_AGENTS: CheckboxItem<AgentName>[] = [
-  { id: "web-developer", label: "Web Developer", description: "Frontend features, components, TypeScript" },
-  { id: "api-developer", label: "API Developer", description: "Backend routes, database, middleware" },
+  {
+    id: "web-developer",
+    label: "Web Developer",
+    description: "Frontend features, components, TypeScript",
+  },
+  {
+    id: "api-developer",
+    label: "API Developer",
+    description: "Backend routes, database, middleware",
+  },
   { id: "cli-developer", label: "CLI Developer", description: "CLI commands, interactive prompts" },
-  { id: "web-architecture", label: "Web Architecture", description: "App scaffolding, foundational patterns" },
+  {
+    id: "web-architecture",
+    label: "Web Architecture",
+    description: "App scaffolding, foundational patterns",
+  },
   { id: "web-reviewer", label: "Web Reviewer", description: "UI component code review" },
   { id: "api-reviewer", label: "API Reviewer", description: "Backend and config code review" },
   { id: "cli-reviewer", label: "CLI Reviewer", description: "CLI code review" },
@@ -16,10 +28,22 @@ const AVAILABLE_AGENTS: CheckboxItem<AgentName>[] = [
   { id: "web-tester", label: "Web Tester", description: "Frontend tests, E2E, component tests" },
   { id: "cli-tester", label: "CLI Tester", description: "CLI application tests" },
   { id: "web-pm", label: "Web PM", description: "Implementation specs and planning" },
-  { id: "pattern-scout", label: "Pattern Scout", description: "Extract codebase patterns and standards" },
-  { id: "web-pattern-critique", label: "Pattern Critique", description: "Critique patterns against industry standards" },
+  {
+    id: "pattern-scout",
+    label: "Pattern Scout",
+    description: "Extract codebase patterns and standards",
+  },
+  {
+    id: "web-pattern-critique",
+    label: "Pattern Critique",
+    description: "Critique patterns against industry standards",
+  },
   { id: "agent-summoner", label: "Agent Summoner", description: "Create and improve agents" },
-  { id: "skill-summoner", label: "Skill Summoner", description: "Create technology-specific skills" },
+  {
+    id: "skill-summoner",
+    label: "Skill Summoner",
+    description: "Create technology-specific skills",
+  },
   { id: "documentor", label: "Documentor", description: "AI-focused documentation" },
   { id: "cli-migrator", label: "CLI Migrator", description: "Commander.js to oclif migration" },
 ];

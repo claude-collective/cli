@@ -5,6 +5,7 @@
 ### Current State
 
 **Package identity:**
+
 - Package name: `@agents-inc/cli` (from `package.json:2`)
 - Current version: `0.35.0` (from `package.json:3`)
 - Published to npm: `https://registry.npmjs.org/@agents-inc/cli`
@@ -30,6 +31,7 @@ The version flows through this path:
 **Existing update mechanism -- `@oclif/plugin-warn-if-update-available`:**
 
 The project already has `@oclif/plugin-warn-if-update-available` v3.1.55 installed and configured:
+
 - Listed in `package.json:56` under `oclif.plugins`
 - Listed in `package.json:100` under `dependencies`
 
@@ -63,12 +65,14 @@ Since `@oclif/plugin-warn-if-update-available` already maintains a version cache
 5. The WizardTabs component renders "v0.35.0 -> v0.36.0 available" instead of just "v0.35.0".
 
 **Pros:**
+
 - Zero additional npm requests -- reuses existing cache
 - No new dependencies needed
 - Background refresh already handled by the oclif plugin
 - Minimal code changes
 
 **Cons:**
+
 - Depends on the oclif plugin's cache freshness (default 60-day timeout, configurable via env vars)
 - If the plugin hasn't run recently, cache might be stale
 - Couples to the oclif plugin's internal cache format (but it's simple JSON)
@@ -76,17 +80,20 @@ Since `@oclif/plugin-warn-if-update-available` already maintains a version cache
 #### Option B: Independent background check
 
 Implement a custom version check that:
+
 1. Spawns a background process or uses `fetch()` with `AbortController` timeout
 2. Checks `https://registry.npmjs.org/@agents-inc/cli/latest` (returns `{"name": "@agents-inc/cli", "version": "0.35.0", ...}`)
 3. Caches the result locally (e.g., `~/.cache/agents-inc/version-check.json` with a timestamp)
 4. Passes result to the wizard via Zustand store or React state
 
 **Pros:**
+
 - Independent of oclif plugin internals
 - Can set a shorter TTL (e.g., 1 hour instead of 60 days)
 - Full control over behavior
 
 **Cons:**
+
 - Duplicates logic that already exists
 - Additional network request (even if lightweight)
 - More code to maintain
@@ -100,23 +107,24 @@ Implement a custom version check that:
 
 ### Files That Would Need to Change
 
-| File | Change |
-|------|--------|
-| `package.json` | Add `warn-if-update-available` config to reduce `timeoutInDays` (e.g., to 1 day or configure via frequency/frequencyUnit) |
-| `src/cli/hooks/init.ts` | Read the version cache file and attach `latestVersion` to the oclif config object |
-| `src/cli/base-command.ts` | Add a getter for `latestVersion` from the config (similar to `sourceConfig`) |
-| `src/cli/commands/init.tsx` | Pass `latestVersion` prop to `<Wizard>` |
-| `src/cli/commands/edit.tsx` | Pass `latestVersion` prop to `<Wizard>` |
-| `src/cli/components/wizard/wizard.tsx` | Accept and forward `latestVersion` prop |
-| `src/cli/components/wizard/wizard-layout.tsx` | Forward `latestVersion` to `<WizardTabs>` |
-| `src/cli/components/wizard/wizard-tabs.tsx` | Render update-available text next to version |
-| `src/cli/components/wizard/wizard-tabs.test.tsx` | Add test for update-available rendering |
+| File                                             | Change                                                                                                                    |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `package.json`                                   | Add `warn-if-update-available` config to reduce `timeoutInDays` (e.g., to 1 day or configure via frequency/frequencyUnit) |
+| `src/cli/hooks/init.ts`                          | Read the version cache file and attach `latestVersion` to the oclif config object                                         |
+| `src/cli/base-command.ts`                        | Add a getter for `latestVersion` from the config (similar to `sourceConfig`)                                              |
+| `src/cli/commands/init.tsx`                      | Pass `latestVersion` prop to `<Wizard>`                                                                                   |
+| `src/cli/commands/edit.tsx`                      | Pass `latestVersion` prop to `<Wizard>`                                                                                   |
+| `src/cli/components/wizard/wizard.tsx`           | Accept and forward `latestVersion` prop                                                                                   |
+| `src/cli/components/wizard/wizard-layout.tsx`    | Forward `latestVersion` to `<WizardTabs>`                                                                                 |
+| `src/cli/components/wizard/wizard-tabs.tsx`      | Render update-available text next to version                                                                              |
+| `src/cli/components/wizard/wizard-tabs.test.tsx` | Add test for update-available rendering                                                                                   |
 
 ### Detailed Component Changes
 
 #### `wizard-tabs.tsx` -- Version Display
 
 Current (line 101-103):
+
 ```tsx
 <Box flexGrow={1} justifyContent="flex-end">
   <Text dimColor>{`v${version}`}</Text>
@@ -124,14 +132,11 @@ Current (line 101-103):
 ```
 
 Proposed:
+
 ```tsx
 <Box flexGrow={1} justifyContent="flex-end" columnGap={1}>
   <Text dimColor>{`v${version}`}</Text>
-  {latestVersion && (
-    <Text color={CLI_COLORS.WARNING}>
-      {`-> v${latestVersion} available`}
-    </Text>
-  )}
+  {latestVersion && <Text color={CLI_COLORS.WARNING}>{`-> v${latestVersion} available`}</Text>}
 </Box>
 ```
 
@@ -269,12 +274,14 @@ Simple: just a file containing an ISO 8601 timestamp.
 Recommended: **1 hour (3600000 ms)**.
 
 Rationale:
+
 - Skills don't change extremely frequently
 - Users typically do `init` or `edit` sessions spanning minutes, not hours
 - 1 hour strikes a balance between freshness and avoiding unnecessary network requests
 - The `--refresh` flag remains available for force-refresh
 
 Define as a named constant in `consts.ts`:
+
 ```typescript
 /** How long cached remote sources remain fresh before auto-refreshing (milliseconds) */
 export const SOURCE_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
@@ -282,22 +289,22 @@ export const SOURCE_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 #### Interaction with Existing Mechanisms
 
-| Mechanism | Behavior | After TTL addition |
-|-----------|----------|-------------------|
-| `--refresh` flag | Clears giget cache + re-downloads | Unchanged -- always force-refreshes |
-| `forceRefresh: true` | Bypasses cache entirely | Unchanged |
-| No flag, fresh cache | Returns cached path | Returns cached path (within TTL) |
-| No flag, stale cache | **Returns cached path** (current bug) | **Auto-refreshes** (new behavior) |
+| Mechanism            | Behavior                              | After TTL addition                  |
+| -------------------- | ------------------------------------- | ----------------------------------- |
+| `--refresh` flag     | Clears giget cache + re-downloads     | Unchanged -- always force-refreshes |
+| `forceRefresh: true` | Bypasses cache entirely               | Unchanged                           |
+| No flag, fresh cache | Returns cached path                   | Returns cached path (within TTL)    |
+| No flag, stale cache | **Returns cached path** (current bug) | **Auto-refreshes** (new behavior)   |
 
 The `clearGigetCache()` function should also be called during TTL-triggered refresh, just as it is during `--refresh`.
 
 ### Files That Would Need to Change
 
-| File | Change |
-|------|--------|
-| `src/cli/consts.ts` | Add `SOURCE_CACHE_TTL_MS` constant |
-| `src/cli/lib/loading/source-fetcher.ts` | Add `isSourceStale()`, `writeLastFetched()` functions; modify `fetchFromRemoteSource()` |
-| `src/cli/lib/loading/source-fetcher.test.ts` | Add tests for TTL behavior |
+| File                                         | Change                                                                                  |
+| -------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `src/cli/consts.ts`                          | Add `SOURCE_CACHE_TTL_MS` constant                                                      |
+| `src/cli/lib/loading/source-fetcher.ts`      | Add `isSourceStale()`, `writeLastFetched()` functions; modify `fetchFromRemoteSource()` |
+| `src/cli/lib/loading/source-fetcher.test.ts` | Add tests for TTL behavior                                                              |
 
 ### Edge Cases
 
@@ -318,6 +325,7 @@ The `clearGigetCache()` function should also be called during TTL-triggered refr
 ### Phase 1: CLI Version Check (Estimated: Small)
 
 1. Configure `@oclif/plugin-warn-if-update-available` in `package.json` to check more frequently:
+
    ```json
    "warn-if-update-available": {
      "timeoutInDays": 1,

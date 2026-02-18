@@ -49,13 +49,13 @@ agentsinc uninstall [--yes] [--all] [--dry-run]
 
 ## Files to Change
 
-| File | Change |
-|------|--------|
-| `src/cli/commands/uninstall.tsx` | Rewrite: new flags, config-based removal logic |
-| `src/cli/lib/skills/skill-metadata.ts` | Remove `generatedByAgentsInc` from type and `injectForkedFromMetadata()` |
-| `src/cli/lib/schemas.ts` | Remove `generatedByAgentsInc` from `localSkillMetadataSchema` |
-| `src/cli/lib/__tests__/commands/uninstall.test.ts` | Rewrite tests for new behavior |
-| `src/cli/lib/skills/skill-copier.test.ts` | Remove `generatedByAgentsInc` assertions |
+| File                                               | Change                                                                   |
+| -------------------------------------------------- | ------------------------------------------------------------------------ |
+| `src/cli/commands/uninstall.tsx`                   | Rewrite: new flags, config-based removal logic                           |
+| `src/cli/lib/skills/skill-metadata.ts`             | Remove `generatedByAgentsInc` from type and `injectForkedFromMetadata()` |
+| `src/cli/lib/schemas.ts`                           | Remove `generatedByAgentsInc` from `localSkillMetadataSchema`            |
+| `src/cli/lib/__tests__/commands/uninstall.test.ts` | Rewrite tests for new behavior                                           |
+| `src/cli/lib/skills/skill-copier.test.ts`          | Remove `generatedByAgentsInc` assertions                                 |
 
 ## Future Enhancement (Deferred: D-26)
 

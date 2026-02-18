@@ -124,9 +124,7 @@ function getGigetCacheDir(source: string): string | undefined {
   }
 
   // Replicate giget's template.name sanitization
-  const templateName = uriMatch.groups.repo
-    .replace("/", "-")
-    .replace(/[^\da-z-]/gi, "-");
+  const templateName = uriMatch.groups.repo.replace("/", "-").replace(/[^\da-z-]/gi, "-");
 
   const gigetCacheRoot = process.env.XDG_CACHE_HOME
     ? path.resolve(process.env.XDG_CACHE_HOME, "giget")

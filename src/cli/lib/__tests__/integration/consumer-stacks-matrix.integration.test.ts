@@ -157,9 +157,7 @@ describe("Integration: Consumer-Defined Stacks", () => {
     // to SkillAssignment[] with preloaded: false
     const webDevConfig = fullstackStack.agents["web-developer"];
     expect(webDevConfig).toBeDefined();
-    expect(webDevConfig!.framework).toEqual([
-      { id: "web-framework-react", preloaded: false },
-    ]);
+    expect(webDevConfig!.framework).toEqual([{ id: "web-framework-react", preloaded: false }]);
   });
 
   it("should load stacks with philosophy field when provided", async () => {
@@ -548,10 +546,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
           conflicts: [],
           discourages: [
             {
-              skills: [
-                "web-framework-custom-a" as SkillId,
-                "web-styling-custom-b" as SkillId,
-              ],
+              skills: ["web-framework-custom-a" as SkillId, "web-styling-custom-b" as SkillId],
               reason: "These tools have conflicting design philosophies",
             },
           ],
@@ -626,9 +621,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
             description: "Stack with preloaded skills",
             agents: {
               "web-developer": {
-                framework: [
-                  { id: "web-framework-react", preloaded: true },
-                ],
+                framework: [{ id: "web-framework-react", preloaded: true }],
                 testing: "web-testing-vitest",
                 methodology: [
                   { id: "meta-methodology-investigation-requirements", preloaded: true },
@@ -640,10 +633,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
         ],
       };
 
-      await writeFile(
-        path.join(configDir, "stacks.yaml"),
-        stringifyYaml(stacksContent),
-      );
+      await writeFile(path.join(configDir, "stacks.yaml"), stringifyYaml(stacksContent));
 
       const stacks = await loadStacks(tempDir);
 
@@ -761,12 +751,7 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
       expect(matrixContent).toContain("categories:");
 
       // Verify source also has skill directories
-      const reactDir = path.join(
-        dirs.skillsDir,
-        "web",
-        "framework",
-        "web-framework-react",
-      );
+      const reactDir = path.join(dirs.skillsDir, "web", "framework", "web-framework-react");
       expect(await directoryExists(reactDir)).toBe(true);
     } finally {
       await cleanupTestSource(dirs);

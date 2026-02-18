@@ -165,10 +165,7 @@ async function createUserMcpConfig(claudeDir: string): Promise<string> {
 /** Creates a user settings.json in .claude/settings.json (without plugin references) */
 async function createUserSettings(claudeDir: string): Promise<string> {
   const settingsPath = path.join(claudeDir, "settings.json");
-  await writeFile(
-    settingsPath,
-    JSON.stringify({ userPreference: "dark-mode" }),
-  );
+  await writeFile(settingsPath, JSON.stringify({ userPreference: "dark-mode" }));
   return settingsPath;
 }
 
