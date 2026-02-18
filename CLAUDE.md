@@ -7,6 +7,11 @@ This file provides quick decision trees and essential conventions for working wi
 ## NEVER do this
 
 - NEVER use `git stash` — not in the main context, not in sub-agents, never
+- NEVER construct test data inline — no inline configs, matrices, skills, stacks. Use factories from `helpers.ts` and fixtures from `create-test-source.ts`. If a factory doesn't exist, create one.
+- NEVER put TODO/task IDs (T1, T6, etc.) in test `describe()` blocks — test code is not a task tracker
+- NEVER add backward-compatibility shims, migration code, or legacy fallbacks. The project is pre-1.0 — backward compatibility is not a concern. Remove old code cleanly instead of maintaining two paths.
+- NEVER add unnecessary comments — only add comments when something is unintuitive, complex, or for edge cases. Self-explanatory code should not have comments. Do not add JSDoc to obvious functions.
+- NEVER reassign constants to other constants — use the original constant directly instead of creating aliases like `const FOO = BAR`
 
 ---
 
@@ -72,18 +77,35 @@ Should the operation continue after error?
 
 ### Fixture vs Inline Test Data
 
+**RULE: ALWAYS use factories and fixtures for test data. NEVER construct configs, matrices, skills, agents, or stacks inline in test files.**
+
+This means:
+- **Skills/agents/SKILL.md/metadata.yaml** → `createCLISkill()`, `createUserSkill()`, `writeTestSkill()`, `writeSourceSkill()`, `createTestSource()`
+- **Mock skill objects** → `createMockSkill()` from helpers.ts
+- **Mock matrices** → `createMockMatrix()` from helpers.ts
+- **Mock categories** → `createMockCategory()` from helpers.ts
+- **Full project directories** → `createTestSource()` from fixtures/create-test-source.ts
+- **Stacks** → Use `TestStack[]` via `createTestSource({ stacks })` or extend existing fixtures
+- **Configs** → Use `buildWizardResult()`, `buildSourceResult()`, or extend helpers
+
+**If a factory doesn't exist for what you need, CREATE ONE in helpers.ts — do not inline the data.**
+
+**RULE: Never create mapping/alias constants to translate incorrect test data to correct values.** Fix test data at the source instead. Do not add workarounds like lookup tables. Alias hacks mask real problems.
+
+**RULE: Never put TODO/task tracking IDs in test describe blocks.** Test describes should be purely descriptive (e.g., `"edit wizard pre-selection"`, not `"edit wizard pre-selection (T3)"`). Tracking IDs are for TODO files, not test code.
+
 ```
 Is it a complete skill/agent/category object?
 ├─ YES → Use factory from helpers.ts (createMockSkill, createMockAgent, createMockCategory)
 └─ NO → Is it a full project directory structure?
     ├─ YES → Use createTestSource() from fixtures/create-test-source.ts
-    └─ NO → Is it static YAML/JSON/markdown content?
-        ├─ YES → Is it reused across 2+ test files?
-        │   ├─ YES → Create in test/fixtures/{domain}/
-        │   └─ NO → Keep inline as string
-        └─ NO → Is it a partial object for one test case?
-            ├─ YES → Inline is fine
-            └─ NO → Use factory with overrides parameter
+    └─ NO → Does it create skill files (SKILL.md, metadata.yaml)?
+        ├─ YES → Use helpers: createCLISkill(), createUserSkill(), writeTestSkill(), writeSourceSkill()
+        └─ NO → Does it create a config, matrix, or stack?
+            ├─ YES → Use a factory (createMockMatrix, buildWizardResult, etc.) — NEVER inline
+            └─ NO → Is it a partial object for one test case?
+                ├─ YES → Inline is fine
+                └─ NO → Use factory with overrides parameter
 ```
 
 ### Where to Place Utilities
@@ -252,6 +274,11 @@ test/fixtures/             # Static fixture files
 - [ ] Boundary casts have comments
 - [ ] Use `createTempDir()` / `cleanupTempDir()` in tests (not raw `mkdtemp`)
 - [ ] Import test helpers from `__tests__/helpers.ts` (don't redefine)
+- [ ] **ALL test data uses factories/fixtures** — no inline configs, matrices, skills, stacks, or agents
+- [ ] No raw `writeFile` for skill/agent test data — use `createCLISkill`, `createUserSkill`, `writeTestSkill`, `writeSourceSkill`, `createTestSource`
+- [ ] No inline `SkillsMatrixConfig` or `MergedSkillsMatrix` construction — use `createMockMatrix()`, `createMockSkill()`
+- [ ] No alias/mapping hacks to paper over wrong test data — fix the data at the source
+- [ ] No TODO/task IDs in test describe blocks — describes are purely descriptive
 - [ ] Tests written and passing (`npm test`)
 - [ ] Type check passes (`tsc --noEmit`)
 - [ ] No TypeScript errors
@@ -307,6 +334,26 @@ export function createMockSkill(
     ...overrides,
   };
 }
+```
+
+### Test Data (MANDATORY: Use Factories)
+
+```typescript
+// GOOD: Use factories for EVERYTHING
+import { createMockSkill, createMockMatrix, createMockCategory } from "../helpers.js";
+import { createTestSource } from "../fixtures/create-test-source.js";
+
+const skill = createMockSkill("web-framework-react", "web/framework");
+const matrix = createMockMatrix({ "web-framework-react": skill });
+const dirs = await createTestSource({ stacks: CUSTOM_STACKS });
+
+// BAD: NEVER construct configs/matrices/skills inline in tests
+const matrixConfig: SkillsMatrixConfig = {     // NO! Use createMockMatrix()
+  version: "1.0.0",
+  categories: { framework: { name: "..." } },  // NO! Use createMockCategory()
+};
+await writeFile(path.join(dir, "SKILL.md"), "---\nname: ...");  // NO! Use writeTestSkill()
+const skills: Record<string, ResolvedSkill> = {};  // NO! Use createMockSkill()
 ```
 
 ### Temp Directory Lifecycle (Tests)

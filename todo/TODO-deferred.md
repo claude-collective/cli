@@ -3,8 +3,6 @@
 | ID    | Task                                              | Status   |
 | ----- | ------------------------------------------------- | -------- |
 | D-05  | Improve `agentsinc init` when already initialized | Deferred |
-| T5    | Create work-related agents and skills             | Deferred |
-| D-08  | Support user-defined stacks in consumer projects  | Deferred |
 | P4-17 | `agentsinc new` supports multiple items           | Deferred |
 | P4-18 | Test: multiple skill/agent creation               | Deferred |
 | D-01  | Update skill documentation conventions            | Deferred |
@@ -22,13 +20,11 @@
 | UX-05 | Refine step - skills.sh integration               | Deferred |
 | UX-06 | Search with color highlighting                    | Deferred |
 | UX-07 | Incompatibility tooltips                          | Deferred |
-| UX-08 | Keyboard shortcuts help overlay                   | Deferred |
 | UX-09 | Animations/transitions                            | Deferred |
-| UX-13 | Add readable schemas on subagents and skills      | Deferred |
-| #8    | Ask which repos to claudify                       | Deferred |
-| #3    | Rename workstack → work web stack                 | Deferred |
 | #5    | Agents command for skill assignment               | Deferred |
-| UX-14 | Build step "show description" toggle              | Deferred |
+| #19   | Sub-agent learning capture system                | Deferred |
+| D-25  | Auto-version check + source staleness             | Deferred |
+| D-26  | Marketplace-specific uninstall                    | Deferred |
 
 ---
 
@@ -42,24 +38,6 @@
 When `agentsinc init` is run in a project that's already initialized, show a richer experience than simply redirecting to the edit view. The exact UX is TBD — something more nuanced than a plain redirect (e.g. a summary of what's installed, options to edit/recompile/update).
 
 **Files:** `src/cli/commands/init.tsx`
-
----
-
-## Work-Related Agents and Skills
-
-**M | T5 | Create Work-Related Agents and Skills**
-
-- [ ] Identify gaps in current agent ecosystem for work use cases
-- [ ] Create specialized agents for common work patterns
-- [ ] Create skills for work-specific technologies
-- [ ] Ensure new agents follow corrected architecture patterns
-
----
-
-## Phase 6 Future Work
-
-**M | D-08 | Support user-defined stacks in consumer projects**
-Allow consumers to define custom stacks in their own `config/stacks.yaml` file. The stack loader should merge user stacks with CLI built-in stacks, with user stacks taking precedence (following the pattern used for agent loading in `stack-plugin-compiler.ts:301-308`). Currently only CLI built-in stacks from `/home/vince/dev/cli/config/stacks.yaml` are supported.
 
 ---
 
@@ -98,6 +76,7 @@ Add configurable development hooks that can run commands like `tsc --noEmit` aft
 - Use existing Claude Code hooks system if available
 - Add `.claude/hooks.yaml` or similar config file
 - Example config:
+
   ```yaml
   hooks:
     post_edit:
@@ -301,12 +280,14 @@ Agent markdown files reference documentation files by filename only (e.g., `clau
 ### Implementation Notes
 
 - Add a `documentation` section to `config.yaml` in consuming projects:
+
   ```yaml
   documentation:
     claude-architecture-bible: docs/standards/content/claude-architecture-bible.md
     prompt-bible: docs/standards/content/prompt-bible.md
     documentation-bible: docs/standards/content/documentation-bible.md
   ```
+
 - During `agentsinccompile`, if a doc file location is configured and the file exists, inject its content into the compiled agent output (e.g., as a `<preloaded_content>` section or inline reference)
 - If a doc file is not configured or does not exist, omit the reference entirely from compiled output
 - Agent source files continue to reference docs by filename only -- resolution is the compiler's responsibility
@@ -378,20 +359,12 @@ Polish pass for step transitions.
 
 ---
 
-## Hackathon Deferred
-
-**D | #8 | Ask which repos to claudify**
-Create a survey or discussion to gather input from team members and users about which repositories they would like to have sub agents and skills automatically generated for (claudified). This will help prioritize which codebases to target for agent/skill generation.
-
-**D | #3 | Rename workstack → work web stack**
-Rename the existing workstack configuration to "work web stack" to better reflect its purpose. Then create an additional simple stack configuration for basic project needs. This will provide users with both comprehensive and minimal stack options.
-
 **D | #5 | Agents command for skill assignment**
 Implement an agents command that allows users to assign specific skills to agents and configure whether those skills should be preloaded or loaded on-demand. This will give users fine-grained control over agent capabilities and performance characteristics.
 
 ---
 
-## UX-14: Build Step "Show Description" Toggle
+## UX-14: Build Step "Show Description" Toggle [DONE]
 
 **S | UX-14 | Add "show description" toggle to the Build step**
 
@@ -404,3 +377,48 @@ Add a toggle to the Build step (alongside the existing toggles) called "show des
 - Labels should use appropriate colors to match the existing color scheme
 
 **Files:** `src/cli/components/wizard/category-grid.tsx`, `src/cli/components/wizard/step-build.tsx`
+
+---
+
+## D-25: Auto-Version Check and Source Staleness
+
+**M | D-25 | CLI version check in wizard header + source staleness TTL**
+
+**See research doc:** [docs/research/auto-version-check.md](../docs/research/auto-version-check.md)
+
+### Feature 1 (primary): CLI version check in wizard header
+
+The main goal is to notify users when a newer CLI version is available. On startup, check the latest published version on npm in the background (non-blocking, so startup is instant). If a newer version exists, display it in the wizard header next to the current version (e.g., `v0.35.0 → v0.36.0 available, will update on restart`).
+
+- **Already installed:** `@oclif/plugin-warn-if-update-available` — its cache at `~/Library/Caches/agents-inc/version` stores `dist-tags` from npm, but the default 60-day timeout is too infrequent
+- **Recommended approach:** Read the existing oclif cache file on startup (non-blocking), reduce the check frequency to 1 hour, thread `latestVersion` as a prop through Wizard → WizardLayout → WizardTabs
+- **Version display:** Currently at `wizard-tabs.tsx:101-103` as `<Text dimColor>v{version}</Text>`
+- **Background check:** The oclif plugin already spawns a detached background process to fetch npm dist-tags — just need to reduce its frequency and read the cached result in the wizard
+- **Files:** `src/cli/hooks/init.ts`, `src/cli/commands/init.tsx`, `src/cli/commands/edit.tsx`, `src/cli/components/wizard/wizard.tsx`, `src/cli/components/wizard/wizard-layout.tsx`, `src/cli/components/wizard/wizard-tabs.tsx`
+
+### Feature 2 (secondary): Source staleness (TTL-based auto-refresh)
+
+When fetching skills from a remote source, auto-refresh if the cache is stale.
+
+- Store a `.last-fetched` timestamp file in each source cache directory (`~/.cache/agents-inc/sources/{hash}/.last-fetched`)
+- If older than threshold (default 1 hour), set `forceRefresh=true` automatically
+- Clear giget cache via existing `clearGigetCache()` when auto-refreshing
+- **Files:** `src/cli/lib/loading/source-fetcher.ts`, `src/cli/consts.ts`
+
+---
+
+## D-26: Marketplace-Specific Uninstall
+
+Allow passing a specific marketplace/source to the uninstall command so that only skills and agents from that source are removed, leaving other sources' installations intact.
+
+```
+agentsinc uninstall --source github:acme-corp/skills
+```
+
+This would:
+- Read config.yaml for the list of configured sources
+- Only remove skills/agents that match the specified source
+- Preserve skills/agents from other sources
+
+**Depends on:** Uninstall redesign (config-based removal logic) being completed first.
+

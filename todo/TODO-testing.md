@@ -1,4 +1,4 @@
-> **Test Audit (2026-02-18):** 2407 tests pass across 103 test files. T1: NOT YET IMPLEMENTED (eject.test.ts only has flag/argument validation and agent-partials tests against bare directories; no test calls installLocal() then eject skills). T2: NOT YET IMPLEMENTED (no test creates an installMode: plugin project then runs eject). T3: NOT YET IMPLEMENTED (edit.test.ts only tests flags and "no installation" error; no test checks domainSelections pre-population in the Zustand store). T4: NOT YET IMPLEMENTED (no test verifies domain filtering in edit mode). T5: EXISTS AND PASSES (uninstall.test.ts lines 389-541 has a full "selective skill removal (generatedByAgentsInc)" describe block covering: remove CLI skills, skip user skills, skip skills without metadata, mixed scenario, preserve .claude/ if user content remains, remove .claude/ if empty, remove compiled agents, multiple CLI skills, and dry-run preview of selective removal). T6: NOT YET IMPLEMENTED (no integration test loads consumer-defined stacks.yaml or skills-matrix.yaml; grep for "consumer stacks", "loadStacksFromSource", "loadSkillsMatrixFromSource" found zero matches in test files). Coverage table corrections: T5 row should be changed from ❌ to ✅ since surgical uninstall scope is fully tested. All other ✅ markers verified as accurate.
+> **Test Audit (2026-02-18, updated):** 2420 tests pass across 103 test files. T1: IMPLEMENTED (8 tests in "eject skills from initialized project" block — calls installLocal() then copySkillsToLocalFlattened). T2: IMPLEMENTED (8 tests in "eject in plugin mode" block — uses installPluginConfig()). T3: IMPLEMENTED. T4: IMPLEMENTED. T5: IMPLEMENTED. T6: IMPLEMENTED. T10: NOT POSSIBLE — global uninstall feature does not exist yet (no --global flag, no global install mechanism). 3 it.todo placeholders in uninstall.test.ts. Only remaining gap is T10 which is a feature gap, not a test gap.
 
 # Agents Inc. CLI - Testing
 
@@ -8,16 +8,16 @@
 | ---------------------------------------------- | ------------------------------------------------- | ---------- | ------ |
 | `agentsinc init`                               | Wizard flow, flag parsing, already-init guard     | ✅         |        |
 | `agentsinc edit` — flags                       | Flag parsing, no-installation error               | ✅         |        |
-| `agentsinc edit` — wizard pre-selection        | Prior skills pre-checked when wizard reopens      | ❌ T3      |        |
-| `agentsinc edit` — domain filtering            | Domains absent if no skills were picked from them | ❌ T4      |        |
+| `agentsinc edit` — wizard pre-selection        | Prior skills pre-checked when wizard reopens      | ✅         |        |
+| `agentsinc edit` — domain filtering            | Domains absent if no skills were picked from them | ✅         |        |
 | `agentsinc compile`                            | Recompile agents, dry-run, output flag            | ✅         |        |
 | `agentsinc eject agent-partials`               | Copies partials, config guard, --force, --output  | ✅         |        |
-| `agentsinc eject agent-partials` (initialized) | Eject with a real install already in place        | ❌ T1      |        |
-| `agentsinc eject skills` — flags only          | Flag parsing against a bare project               | ✅ partial |        |
-| `agentsinc eject skills` (initialized)         | Skills copied from a real initialized project     | ❌ T1      |        |
+| `agentsinc eject agent-partials` (initialized) | Eject with a real install already in place        | ✅         |        |
+| `agentsinc eject skills` — flags only          | Flag parsing against a bare project               | ✅         |        |
+| `agentsinc eject skills` (initialized)         | Skills copied from a real initialized project     | ✅         |        |
 | `agentsinc eject all`                          | Runs both agent-partials + skills in one pass     | ✅ partial |        |
 | `agentsinc eject` — invalid types              | `templates`, `agents`, `config` all rejected      | ✅         |        |
-| `agentsinc eject` — plugin mode                | Eject from a plugin-mode project                  | ❌ T2      |        |
+| `agentsinc eject` — plugin mode                | Eject from a plugin-mode project                  | ✅         |        |
 | `agentsinc diff`                               | Diff local skills against upstream source         | ✅         |        |
 | `agentsinc doctor`                             | Project health and config diagnostics             | ✅         |        |
 | `agentsinc info`                               | Show installed agents and skills                  | ✅         |        |
@@ -28,7 +28,12 @@
 | `agentsinc update`                             | Pull updated skills from source                   | ✅         |        |
 | `agentsinc uninstall`                          | Flags, dry-run, local/plugin targeting, removal   | ✅         |        |
 | `agentsinc uninstall` — surgical scope         | Only removes CLI-owned files, not user content    | ✅         |        |
-| Consumer stacks.yaml and matrix override       | Custom stacks/matrix in project or marketplace    | ❌ T6      |        |
+| `agentsinc uninstall` — plugin mode            | Uninstall from plugin-mode project                | ✅         |        |
+| `agentsinc uninstall` — local mode             | Uninstall from local-mode project                 | ✅         |        |
+| `agentsinc uninstall` — project scope          | Default uninstall removes all CLI artifacts       | ✅         |        |
+| `agentsinc uninstall` — global                 | Global uninstall preserves user global content    | ⏳ T10     |        |
+| `agentsinc uninstall` — preservation           | Pre-existing skills/plugins/MCP/agents untouched  | ✅         |        |
+| Consumer stacks.yaml and matrix override       | Custom stacks/matrix in project or marketplace    | ✅         |        |
 | `agentsinc new skill`                          | Scaffold a new skill with correct structure       | ✅         |        |
 | `agentsinc new agent`                          | Scaffold a new agent                              | ✅         |        |
 | `agentsinc import skill`                       | Import a skill from an external URL or repo       | ✅         |        |
@@ -154,6 +159,89 @@ Verify that `stacks.yaml` and `skills-matrix.yaml` defined in a consuming projec
 - `src/cli/lib/__tests__/fixtures/create-test-source.ts` — extend to support stacks.yaml and matrix fixtures
 
 **Note:** Related to D-08 (deferred) which tracks full support for user-defined stacks in consumer projects. These tests should be written against the current partially-supported behaviour and updated as D-08 is implemented.
+
+---
+
+### T7: Uninstall — Plugin Mode
+
+Test that uninstalling from a plugin-mode project correctly removes CLI plugin references.
+
+1. Create a project with `installMode: plugin` in config
+2. Add CLI-installed plugin references (as the CLI would during init)
+3. Add pre-existing user content: a custom MCP server in `.claude/mcp.json`, a user-authored agent in `.claude/agents/`, a user-authored skill in `.claude/skills/`
+4. Run `agentsinc uninstall --plugin --yes`
+5. Verify CLI-installed plugin references are removed
+6. Verify pre-existing MCP servers, user agents, and user skills are untouched
+7. Verify `.claude-src/config.yaml` is removed or updated
+
+**File:** `src/cli/lib/__tests__/commands/uninstall.test.ts`
+
+---
+
+### T8: Uninstall — Local Mode
+
+Test that uninstalling from a local-mode project removes CLI-owned skills and agents.
+
+1. Create a project with `installMode: local`, with CLI-installed skills and compiled agents
+2. Add pre-existing user content alongside CLI content: user-authored agents in `.claude/agents/`, user-authored skills in `.claude/skills/`, custom MCP server config in `.claude/mcp.json`
+3. Run `agentsinc uninstall --local --yes`
+4. Verify CLI-copied skills in `.claude/skills/` are removed
+5. Verify CLI-compiled agents in `.claude/agents/` are removed
+6. Verify `.claude-src/` is removed
+7. Verify user-authored agents, user-authored skills, and MCP server config remain intact
+
+**File:** `src/cli/lib/__tests__/commands/uninstall.test.ts`
+
+---
+
+### T9: Uninstall — Project Scope (Default)
+
+Test the default uninstall (no `--local` or `--plugin` flag) removes all CLI artifacts while preserving user content.
+
+1. Initialize a project (local mode) with skills and agents
+2. Add pre-existing user content (agents, skills, MCP servers)
+3. Run `agentsinc uninstall --yes` (no targeting flag)
+4. Verify all CLI artifacts are removed (`.claude-src/`, CLI skills, CLI agents)
+5. Verify `.claude/` directory is preserved if user content remains
+6. Verify `.claude/` directory is fully removed if no user content remains (separate sub-test)
+
+**File:** `src/cli/lib/__tests__/commands/uninstall.test.ts`
+
+---
+
+### T10: Uninstall — Global
+
+Test that global uninstall removes CLI global artifacts without affecting user global content.
+
+1. Install globally with global skills/agents
+2. Add pre-existing global MCP servers and user-authored global agents
+3. Run `agentsinc uninstall --global --yes`
+4. Verify CLI global artifacts are removed
+5. Verify pre-existing global MCP servers and user-authored agents are untouched
+
+**File:** `src/cli/lib/__tests__/commands/uninstall.test.ts`
+
+---
+
+### T11: Uninstall — Pre-Existing Content Preservation (Cross-Cutting)
+
+Verify across all uninstall flavors that pre-existing user content is never removed. This is a dedicated test suite with parametrized cases.
+
+**Content that must survive all uninstall operations:**
+
+- `.claude/mcp.json` entries not added by CLI
+- `.claude/agents/*.md` files not generated by CLI (no `generatedByAgentsInc` metadata)
+- `.claude/skills/*/` directories not copied by CLI (no CLI metadata marker)
+- `.claude/settings.json`
+- `.claude/CLAUDE.md`
+- Any other user-created files in `.claude/`
+
+**Dry-run verification:**
+
+- `--dry-run` shows what would be removed but removes nothing
+- `--dry-run` output lists CLI artifacts only, not user content
+
+**File:** `src/cli/lib/__tests__/commands/uninstall.test.ts`
 
 ---
 
