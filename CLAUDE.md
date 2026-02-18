@@ -4,6 +4,10 @@
 
 This file provides quick decision trees and essential conventions for working with the Agents Inc. CLI codebase.
 
+## NEVER do this
+
+- NEVER use `git stash` — not in the main context, not in sub-agents, never
+
 ---
 
 ## Decision Trees
@@ -280,7 +284,7 @@ test/fixtures/             # Static fixture files
 | [typescript-types-bible.md](./typescript-types-bible.md)                                     | Type narrowing patterns and cast guidelines |
 | [docs/reference/commands.md](./docs/reference/commands.md)                                   | CLI command reference                       |
 | [docs/reference/data-models.md](./docs/reference/data-models.md)                             | Type definitions and schemas                |
-| [TODO.md](./TODO.md)                                                                         | Active tasks and blockers                   |
+| [TODO.md](./todo/TODO.md)                                                                    | Active tasks and blockers                   |
 
 ---
 

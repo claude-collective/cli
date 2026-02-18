@@ -86,11 +86,11 @@ Feature development documentation organized by lifecycle stage.
 
 ## Task Tracking
 
-| Document                                  | Content                       |
-| ----------------------------------------- | ----------------------------- |
-| [TODO.md](../TODO.md)                     | Active tasks and blockers     |
-| [TODO-completed.md](../TODO-completed.md) | Archive of completed tasks    |
-| [TODO-deferred.md](../TODO-deferred.md)   | Deprioritized tasks for later |
+| Document                                       | Content                       |
+| ---------------------------------------------- | ----------------------------- |
+| [TODO.md](../todo/TODO.md)                     | Active tasks and blockers     |
+| [TODO-completed.md](../todo/TODO-completed.md) | Archive of completed tasks    |
+| [TODO-deferred.md](../todo/TODO-deferred.md)   | Deprioritized tasks for later |
 
 ## Quick Reference
 

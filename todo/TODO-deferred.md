@@ -1,7 +1,47 @@
 # Agents Inc. CLI - Deferred Tasks
 
+| ID    | Task                                              | Status   |
+| ----- | ------------------------------------------------- | -------- |
+| D-05  | Improve `agentsinc init` when already initialized | Deferred |
+| T5    | Create work-related agents and skills             | Deferred |
+| D-08  | Support user-defined stacks in consumer projects  | Deferred |
+| P4-17 | `agentsinc new` supports multiple items           | Deferred |
+| P4-18 | Test: multiple skill/agent creation               | Deferred |
+| D-01  | Update skill documentation conventions            | Deferred |
+| D-11  | Development hooks for type checking               | Deferred |
+| D-12  | Eject full agents from custom sources             | Deferred |
+| D-13  | Eject skills by domain/category                   | Deferred |
+| D-18  | Template system documentation improvements        | Deferred |
+| D-19  | Improve template error messages                   | Deferred |
+| D-20  | Add Edit tool to documentor agent                 | Deferred |
+| D-22  | Automated agent-tester for quality assurance      | Deferred |
+| D-23  | Test version bumping, create version bump command | Deferred |
+| D-24  | Configurable documentation file locations         | Deferred |
+| D-14  | Import skills from third-party marketplaces       | Deferred |
+| UX-04 | Interactive skill search polish                   | Deferred |
+| UX-05 | Refine step - skills.sh integration               | Deferred |
+| UX-06 | Search with color highlighting                    | Deferred |
+| UX-07 | Incompatibility tooltips                          | Deferred |
+| UX-08 | Keyboard shortcuts help overlay                   | Deferred |
+| UX-09 | Animations/transitions                            | Deferred |
+| UX-13 | Add readable schemas on subagents and skills      | Deferred |
+| #8    | Ask which repos to claudify                       | Deferred |
+| #3    | Rename workstack → work web stack                 | Deferred |
+| #5    | Agents command for skill assignment               | Deferred |
+| UX-14 | Build step "show description" toggle              | Deferred |
+
+---
+
 > This file contains deferred tasks moved from [TODO.md](./TODO.md) to keep the main file lean.
 > These tasks are not blocked but have been deprioritized for future implementation.
+
+---
+
+## D-05: Improve `agentsinc init` When Already Initialized
+
+When `agentsinc init` is run in a project that's already initialized, show a richer experience than simply redirecting to the edit view. The exact UX is TBD — something more nuanced than a plain redirect (e.g. a summary of what's installed, options to edit/recompile/update).
+
+**Files:** `src/cli/commands/init.tsx`
 
 ---
 
@@ -335,3 +375,32 @@ In-wizard help for keybindings.
 Polish pass for step transitions.
 
 **M | UX-13 | Add readable schemas on subagents and skills**
+
+---
+
+## Hackathon Deferred
+
+**D | #8 | Ask which repos to claudify**
+Create a survey or discussion to gather input from team members and users about which repositories they would like to have sub agents and skills automatically generated for (claudified). This will help prioritize which codebases to target for agent/skill generation.
+
+**D | #3 | Rename workstack → work web stack**
+Rename the existing workstack configuration to "work web stack" to better reflect its purpose. Then create an additional simple stack configuration for basic project needs. This will provide users with both comprehensive and minimal stack options.
+
+**D | #5 | Agents command for skill assignment**
+Implement an agents command that allows users to assign specific skills to agents and configure whether those skills should be preloaded or loaded on-demand. This will give users fine-grained control over agent capabilities and performance characteristics.
+
+---
+
+## UX-14: Build Step "Show Description" Toggle
+
+**S | UX-14 | Add "show description" toggle to the Build step**
+
+Add a toggle to the Build step (alongside the existing toggles) called "show description". When enabled, it shows the recommended/discouraged/selected labels within the skill tags, giving users more context about each skill's status.
+
+**Behavior:**
+
+- Off by default (current compact view)
+- When toggled on, each skill tag displays its recommendation status (e.g., "Recommended", "Discouraged", "Selected")
+- Labels should use appropriate colors to match the existing color scheme
+
+**Files:** `src/cli/components/wizard/category-grid.tsx`, `src/cli/components/wizard/step-build.tsx`
