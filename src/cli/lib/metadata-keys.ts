@@ -6,12 +6,12 @@ import type { CategoryPath } from "../types";
  * Centralized to avoid string duplication across loaders and compilers.
  */
 export const METADATA_KEYS = {
-  CLI_NAME: "cli_name",
-  CLI_DESCRIPTION: "cli_description",
+  CLI_NAME: "cliName",
+  CLI_DESCRIPTION: "cliDescription",
   CATEGORY: "category",
-  FORKED_FROM: "forked_from",
-  CONTENT_HASH: "content_hash",
-  USAGE_GUIDANCE: "usage_guidance",
+  FORKED_FROM: "forkedFrom",
+  CONTENT_HASH: "contentHash",
+  USAGE_GUIDANCE: "usageGuidance",
 } as const;
 
 /**

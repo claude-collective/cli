@@ -84,7 +84,7 @@ export type CategoryDefinition = {
   /** Domain for wizard domain filtering */
   domain?: Domain;
   /** Parent domain for display-only sub-domains, used to inherit framework selections */
-  parent_domain?: Domain;
+  parentDomain?: Domain;
   /** If true, only one skill can be selected in this category (radio behavior). @default true */
   exclusive: boolean;
   /** If true, the user must select at least one skill before proceeding. @default false */
@@ -140,7 +140,7 @@ export type RequireRule = {
    * If false/undefined, ALL are required (AND logic).
    * @default false
    */
-  needs_any?: boolean;
+  needsAny?: boolean;
   reason: string;
 };
 
@@ -156,7 +156,7 @@ export type SkillsMatrixConfig = {
   categories: CategoryMap;
   relationships: RelationshipDefinitions;
   /** Maps short display names to normalized skill IDs */
-  skill_aliases: Partial<Record<SkillDisplayName, SkillId>>;
+  skillAliases: Partial<Record<SkillDisplayName, SkillId>>;
 };
 
 /** Pre-configured stack of skills for a specific use case */
@@ -195,7 +195,7 @@ export type MergedSkillsMatrix = {
  */
 export type ResolvedSkill = {
   id: SkillId;
-  /** Short display name (e.g., "react"); absent for skills without an alias in skill_aliases */
+  /** Short display name (e.g., "react"); absent for skills without an alias in skillAliases */
   displayName?: SkillDisplayName;
   description: string;
   /** When an AI agent should invoke this skill (decision criteria) */
@@ -366,7 +366,7 @@ export type SelectionValidation = {
 
 /** Blocking validation error requiring user action */
 export type ValidationError = {
-  type: "conflict" | "missing_requirement" | "category_exclusive";
+  type: "conflict" | "missingRequirement" | "categoryExclusive";
   message: string;
   skills: SkillId[];
 };

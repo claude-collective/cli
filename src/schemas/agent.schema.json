@@ -31,13 +31,13 @@
         "type": "string"
       }
     },
-    "disallowed_tools": {
+    "disallowedTools": {
       "type": "array",
       "items": {
         "type": "string"
       }
     },
-    "permission_mode": {
+    "permissionMode": {
       "type": "string",
       "enum": ["default", "acceptEdits", "dontAsk", "bypassPermissions", "plan", "delegate"]
     },
@@ -84,7 +84,7 @@
         }
       }
     },
-    "output_format": {
+    "outputFormat": {
       "type": "string"
     }
   },

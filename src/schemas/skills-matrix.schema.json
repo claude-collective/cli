@@ -107,7 +107,7 @@
             "type": "string",
             "enum": ["web", "web-extras", "api", "cli", "mobile", "shared"]
           },
-          "parent_domain": {
+          "parentDomain": {
             "type": "string",
             "enum": ["web", "web-extras", "api", "cli", "mobile", "shared"]
           },
@@ -248,7 +248,7 @@
                   "type": "string"
                 }
               },
-              "needs_any": {
+              "needsAny": {
                 "type": "boolean"
               },
               "reason": {
@@ -283,7 +283,7 @@
       "required": ["conflicts", "discourages", "recommends", "requires", "alternatives"],
       "additionalProperties": false
     },
-    "skill_aliases": {
+    "skillAliases": {
       "type": "object",
       "propertyNames": {
         "type": "string",
@@ -462,6 +462,6 @@
       ]
     }
   },
-  "required": ["version", "categories", "relationships", "skill_aliases"],
+  "required": ["version", "categories", "relationships", "skillAliases"],
   "additionalProperties": false
 }

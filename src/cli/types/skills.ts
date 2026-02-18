@@ -200,7 +200,7 @@ export type SkillMetadataConfig = {
   /** Which subcategory this skill belongs to (e.g., "web-framework" or "testing") */
   category?: CategoryPath;
   /** If true, only one skill from this category can be selected. Overrides CategoryDefinition. */
-  category_exclusive?: boolean;
+  categoryExclusive?: boolean;
   /** Author handle (e.g., "@vince") */
   author?: string;
   /** Content version integer as string; now DEPRECATED in favor of plugin.json version */
@@ -210,7 +210,7 @@ export type SkillMetadataConfig = {
   /** Skill IDs that must be selected before this skill (dependency) */
   requires?: SkillId[];
   /** Framework skill IDs this skill works with (for framework-first filtering) */
-  compatible_with?: SkillId[];
+  compatibleWith?: SkillId[];
   /** Skill IDs that cannot be selected alongside this skill (mutual exclusion) */
-  conflicts_with?: SkillId[];
+  conflictsWith?: SkillId[];
 };

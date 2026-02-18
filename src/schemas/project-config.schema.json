@@ -119,7 +119,7 @@
     "marketplace": {
       "type": "string"
     },
-    "agents_source": {
+    "agentsSource": {
       "type": "string"
     }
   },

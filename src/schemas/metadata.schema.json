@@ -8,7 +8,7 @@
     "category": {
       "type": "string"
     },
-    "category_exclusive": {
+    "categoryExclusive": {
       "type": "boolean"
     },
     "author": {
@@ -20,17 +20,17 @@
       "minimum": 1,
       "maximum": 9007199254740991
     },
-    "cli_name": {
+    "cliName": {
       "type": "string",
       "minLength": 1,
       "maxLength": 30
     },
-    "cli_description": {
+    "cliDescription": {
       "type": "string",
       "minLength": 1,
       "maxLength": 60
     },
-    "usage_guidance": {
+    "usageGuidance": {
       "type": "string",
       "minLength": 10
     },
@@ -41,14 +41,14 @@
         "minLength": 1
       }
     },
-    "compatible_with": {
+    "compatibleWith": {
       "type": "array",
       "items": {
         "type": "string",
         "minLength": 1
       }
     },
-    "conflicts_with": {
+    "conflictsWith": {
       "type": "array",
       "items": {
         "type": "string",
@@ -62,31 +62,31 @@
         "pattern": "^[a-z][a-z0-9-]*$"
       }
     },
-    "requires_setup": {
+    "requiresSetup": {
       "type": "array",
       "items": {
         "type": "string",
         "minLength": 1
       }
     },
-    "provides_setup_for": {
+    "providesSetupFor": {
       "type": "array",
       "items": {
         "type": "string",
         "minLength": 1
       }
     },
-    "content_hash": {
+    "contentHash": {
       "type": "string",
       "pattern": "^[a-f0-9]{7}$"
     },
     "updated": {
       "type": "string"
     },
-    "forked_from": {
+    "forkedFrom": {
       "type": "object",
       "properties": {
-        "skill_id": {
+        "skillId": {
           "type": "string"
         },
         "version": {
@@ -94,7 +94,7 @@
           "minimum": 1,
           "maximum": 9007199254740991
         },
-        "content_hash": {
+        "contentHash": {
           "type": "string"
         },
         "source": {
@@ -104,10 +104,10 @@
           "type": "string"
         }
       },
-      "required": ["skill_id", "content_hash", "date"],
+      "required": ["skillId", "contentHash", "date"],
       "additionalProperties": false
     }
   },
-  "required": ["category", "author", "cli_name", "cli_description", "usage_guidance"],
+  "required": ["category", "author", "cliName", "cliDescription", "usageGuidance"],
   "additionalProperties": false
 }

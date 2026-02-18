@@ -58,7 +58,7 @@
         "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
       }
     },
-    "agent_skills": {
+    "agentSkills": {
       "type": "object",
       "propertyNames": {
         "type": "string"

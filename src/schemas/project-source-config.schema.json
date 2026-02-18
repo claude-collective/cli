@@ -14,7 +14,7 @@
     "marketplace": {
       "type": "string"
     },
-    "agents_source": {
+    "agentsSource": {
       "type": "string"
     },
     "sources": {
@@ -76,16 +76,16 @@
       },
       "additionalProperties": false
     },
-    "skills_dir": {
+    "skillsDir": {
       "type": "string"
     },
-    "agents_dir": {
+    "agentsDir": {
       "type": "string"
     },
-    "stacks_file": {
+    "stacksFile": {
       "type": "string"
     },
-    "matrix_file": {
+    "matrixFile": {
       "type": "string"
     }
   },

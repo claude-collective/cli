@@ -55,11 +55,11 @@ export type BaseAgentFields = {
   description: string;
   model?: ModelName;
   tools: string[];
-  disallowed_tools?: string[];
-  permission_mode?: PermissionMode;
+  disallowedTools?: string[];
+  permissionMode?: PermissionMode;
   hooks?: Record<string, AgentHookDefinition[]>;
   /** Which output format file to use */
-  output_format?: string;
+  outputFormat?: string;
 };
 
 /** Base agent definition from agents.yaml (skills are defined in stacks, not agents) */

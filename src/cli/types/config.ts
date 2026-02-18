@@ -89,5 +89,5 @@ export type ProjectConfig = {
    * Agents source path or URL (when agents come from a different source than skills).
    * If not specified, uses the same source as skills.
    */
-  agents_source?: string;
+  agentsSource?: string;
 };
