@@ -2,12 +2,11 @@ import type { CategoryPath, SkillDisplayName, SkillId } from "./skills";
 import type { AgentName } from "./agents";
 
 /** Wizard domain grouping for skill categories */
-export type Domain = "web" | "web-extras" | "api" | "cli" | "mobile" | "shared";
+export type Domain = "web" | "api" | "cli" | "mobile" | "shared";
 
 /** Keys in skills-matrix.yaml `categories` section */
 export type Subcategory =
   | "framework"
-  | "meta-framework"
   | "styling"
   | "client-state"
   | "server-state"
@@ -83,8 +82,6 @@ export type CategoryDefinition = {
   description: string;
   /** Domain for wizard domain filtering */
   domain?: Domain;
-  /** Parent domain for display-only sub-domains, used to inherit framework selections */
-  parentDomain?: Domain;
   /** If true, only one skill can be selected in this category (radio behavior). @default true */
   exclusive: boolean;
   /** If true, the user must select at least one skill before proceeding. @default false */

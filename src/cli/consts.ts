@@ -170,7 +170,7 @@ export const CLI_COLORS = {
 } as const;
 
 /** Default domains pre-selected when "Start from scratch" is chosen (all except CLI) */
-export const DEFAULT_SCRATCH_DOMAINS: readonly Domain[] = ["web", "web-extras", "api", "mobile"];
+export const DEFAULT_SCRATCH_DOMAINS: readonly Domain[] = ["web", "api", "mobile"];
 
 export const DEFAULT_PRESELECTED_SKILLS: readonly SkillId[] = [
   "meta-methodology-anti-over-engineering",

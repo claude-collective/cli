@@ -33,14 +33,7 @@ import type {
 } from "../types";
 
 // Bridge pattern: z.ZodType<ExistingType> ensures Zod output matches our union types
-export const domainSchema = z.enum([
-  "web",
-  "web-extras",
-  "api",
-  "cli",
-  "mobile",
-  "shared",
-]) as z.ZodType<Domain>;
+export const domainSchema = z.enum(["web", "api", "cli", "mobile", "shared"]) as z.ZodType<Domain>;
 
 export const skillSourceTypeSchema = z.enum([
   "public",
@@ -59,7 +52,6 @@ export const boundSkillSchema: z.ZodType<BoundSkill> = z.object({
 /** Raw subcategory values (before cast) — used to derive stackSubcategorySchema */
 const SUBCATEGORY_VALUES = [
   "framework",
-  "meta-framework",
   "styling",
   "client-state",
   "server-state",
@@ -453,7 +445,6 @@ export const categoryDefinitionSchema: z.ZodType<CategoryDefinition> = z.object(
   displayName: z.string(),
   description: z.string(),
   domain: domainSchema.optional(),
-  parentDomain: domainSchema.optional(),
   exclusive: z.boolean(),
   required: z.boolean(),
   order: z.number(),
@@ -627,14 +618,10 @@ export const versionedMetadataSchema = z
 
 /** Default agent-skill mappings from config/defaults.yaml (fallback when no stack is selected) */
 export const defaultMappingsSchema = z.object({
-  /** Maps skill IDs to the agent IDs that should receive them */
+  /** Maps skill path patterns to the agent IDs that should receive them */
   skillToAgents: z.record(z.string(), z.array(z.string())),
-  /** Maps agent IDs to skill IDs that should be preloaded (embedded) instead of dynamic */
-  preloadedSkills: z.record(z.string(), z.array(z.string())),
   /** Maps agent IDs to skill ID prefixes they should receive by default */
   agentSkillPrefixes: z.record(z.string(), z.array(z.string())).optional(),
-  /** Maps subcategory names to their short aliases (e.g., "framework" -> "react") */
-  subcategoryAliases: z.record(z.string(), z.string()),
 });
 
 /** Tool permission overrides (allow/deny lists for Claude Code tool access) */

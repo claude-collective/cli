@@ -49,7 +49,6 @@
           "type": "string",
           "enum": [
             "framework",
-            "meta-framework",
             "styling",
             "client-state",
             "server-state",
