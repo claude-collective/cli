@@ -1,7 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { generateProjectConfigFromSkills, buildStackProperty } from "./config-generator";
-import type { AgentName, SkillAssignment, SkillId, Stack, StackAgentConfig } from "../../types";
+import type { AgentName, CategoryPath, SkillAssignment, SkillId, Stack, StackAgentConfig } from "../../types";
 import { createMockSkill, createMockMatrix } from "../__tests__/helpers";
+import { loadDefaultMappings, clearDefaultsCache } from "../loading";
 
 /** Shorthand: creates a SkillAssignment from an id and optional preloaded flag */
 function sa(id: SkillId, preloaded = false): SkillAssignment {
@@ -9,6 +10,15 @@ function sa(id: SkillId, preloaded = false): SkillAssignment {
 }
 
 describe("config-generator", () => {
+  beforeEach(async () => {
+    clearDefaultsCache();
+    await loadDefaultMappings();
+  });
+
+  afterEach(() => {
+    clearDefaultsCache();
+  });
+
   describe("generateProjectConfigFromSkills", () => {
     it("returns a minimal ProjectConfig structure with stack", () => {
       const matrix = createMockMatrix({
@@ -351,7 +361,7 @@ describe("config-generator", () => {
       const matrix = createMockMatrix({
         ["meta-methodology-anti-over-engineering"]: createMockSkill(
           "meta-methodology-anti-over-engineering",
-          "methodology/core",
+          "methodology",
         ),
       });
 
@@ -364,7 +374,7 @@ describe("config-generator", () => {
       // methodology/* maps to many agents including web-developer, api-developer, etc.
       expect(config.agents).toContain("web-developer");
       expect(config.agents).toContain("api-developer");
-      // Stack should have subcategory "core" from path "methodology/core"
+      // Stack should have subcategory "methodology" from category path
       expect(config.stack).toBeDefined();
     });
   });

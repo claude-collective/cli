@@ -14,51 +14,10 @@ import type { Marketplace, PluginManifest, Stack } from "../../../types";
 import {
   createTestSource,
   cleanupTestSource,
+  DEFAULT_TEST_SKILLS,
   type TestDirs,
-  type TestSkill,
 } from "../fixtures/create-test-source";
 import { createTempDir, cleanupTempDir } from "../helpers";
-
-const TEST_AUTHOR = "@test";
-const DEFAULT_SKILL_COUNT = 4;
-
-// Frontmatter names match the skill IDs used in the stack definition
-const STACK_TEST_SKILLS: TestSkill[] = [
-  {
-    id: "web-framework-react (@test)",
-    name: "web-framework-react",
-    description: "React framework skill for stack testing",
-    category: "web/framework",
-    author: TEST_AUTHOR,
-    tags: ["react", "web"],
-    content: `---
-name: web-framework-react
-description: React framework skill for stack testing
----
-
-# React
-
-React is a JavaScript library for building user interfaces.
-`,
-  },
-  {
-    id: "api-framework-hono (@test)",
-    name: "api-framework-hono",
-    description: "Hono API framework skill for stack testing",
-    category: "api/framework",
-    author: TEST_AUTHOR,
-    tags: ["hono", "api"],
-    content: `---
-name: api-framework-hono
-description: Hono API framework skill for stack testing
----
-
-# Hono
-
-Hono is a fast web framework for the edge.
-`,
-  },
-];
 
 const TEST_STACK: Stack = {
   id: "test-stack",
@@ -116,7 +75,7 @@ describe("Integration: Full Skill Pipeline", () => {
 
     const results = await compileAllSkillPlugins(dirs.skillsDir, outputDir);
 
-    expect(results).toHaveLength(DEFAULT_SKILL_COUNT);
+    expect(results).toHaveLength(DEFAULT_TEST_SKILLS.length);
 
     for (const result of results) {
       expect(result.pluginPath).toBeTruthy();
@@ -136,7 +95,7 @@ describe("Integration: Full Skill Pipeline", () => {
 
     const validationResult = await validateAllPlugins(outputDir);
 
-    expect(validationResult.summary.total).toBe(DEFAULT_SKILL_COUNT);
+    expect(validationResult.summary.total).toBe(DEFAULT_TEST_SKILLS.length);
     expect(validationResult.summary.invalid).toBe(0);
 
     consoleSpy.mockRestore();
@@ -192,8 +151,7 @@ describe("Integration: Full Stack Pipeline", () => {
   let outputDir: string;
 
   beforeEach(async () => {
-    // Create source with skills whose frontmatter names match real skill_aliases resolutions
-    dirs = await createTestSource({ skills: STACK_TEST_SKILLS });
+    dirs = await createTestSource();
     tempDir = await createTempDir("stack-pipeline-test-");
     outputDir = path.join(tempDir, "stacks");
     await mkdir(outputDir, { recursive: true });
@@ -207,7 +165,6 @@ describe("Integration: Full Stack Pipeline", () => {
   it("should list available stacks from fixture", async () => {
     // Create a source with stacks defined in config/stacks.yaml
     const stackDirs = await createTestSource({
-      skills: STACK_TEST_SKILLS,
       stacks: [
         {
           id: TEST_STACK.id,
@@ -314,8 +271,7 @@ describe("Integration: Marketplace Integrity", () => {
   let marketplacePath: string;
 
   beforeEach(async () => {
-    // Use STACK_TEST_SKILLS so plugin names match category patterns (e.g., skill-web-framework-react -> "web")
-    dirs = await createTestSource({ skills: STACK_TEST_SKILLS });
+    dirs = await createTestSource();
     tempDir = await createTempDir("marketplace-test-");
     pluginsDir = path.join(tempDir, "plugins");
     marketplacePath = path.join(tempDir, "marketplace.json");
@@ -353,7 +309,7 @@ describe("Integration: Marketplace Integrity", () => {
     expect(parsed.owner.name).toBe(DEFAULT_BRANDING.NAME);
     expect(parsed.owner.email).toBe("hello@example.com");
     expect(parsed.metadata?.pluginRoot).toBe("./plugins");
-    expect(parsed.plugins.length).toBe(STACK_TEST_SKILLS.length);
+    expect(parsed.plugins.length).toBe(DEFAULT_TEST_SKILLS.length);
 
     consoleSpy.mockRestore();
     warnSpy.mockRestore();
@@ -462,8 +418,7 @@ describe("Integration: End-to-End Pipeline", () => {
   let stacksDir: string;
 
   beforeEach(async () => {
-    // Use stack test skills so both skill and stack pipelines work with same source
-    dirs = await createTestSource({ skills: STACK_TEST_SKILLS });
+    dirs = await createTestSource();
     tempDir = await createTempDir("e2e-pipeline-test-");
     pluginsDir = path.join(tempDir, "plugins");
     stacksDir = path.join(tempDir, "stacks");
@@ -481,7 +436,7 @@ describe("Integration: End-to-End Pipeline", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const skillResults = await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
-    expect(skillResults.length).toBe(STACK_TEST_SKILLS.length);
+    expect(skillResults.length).toBe(DEFAULT_TEST_SKILLS.length);
 
     const skillValidation = await validateAllPlugins(pluginsDir);
     expect(skillValidation.summary.invalid).toBe(0);

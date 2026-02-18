@@ -1,5 +1,5 @@
 import path from "path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { readFile } from "fs/promises";
 
 import {
@@ -24,6 +24,16 @@ import {
   buildWizardResult,
   buildSourceResult,
 } from "../helpers";
+import { loadDefaultMappings, clearDefaultsCache } from "../../loading";
+
+// Load YAML defaults once for all tests in this file
+beforeAll(async () => {
+  await loadDefaultMappings();
+});
+
+afterAll(() => {
+  clearDefaultsCache();
+});
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -68,7 +78,7 @@ function buildMatrix(skills: TestSkill[]): MergedSkillsMatrix {
 // Skills that exist in both marketplace and locally (for switching scenarios)
 const SWITCHABLE_SKILLS: TestSkill[] = [
   {
-    id: "web-framework-react (@test)",
+    id: "web-framework-react",
     name: "web-framework-react",
     description: "React framework for building user interfaces",
     category: "web/framework",
@@ -86,7 +96,7 @@ Use component-based architecture with JSX.
 `,
   },
   {
-    id: "web-state-zustand (@test)",
+    id: "web-state-zustand",
     name: "web-state-zustand",
     description: "Bear necessities state management",
     category: "web/state",
@@ -103,7 +113,7 @@ Zustand is a minimal state management library for React.
 `,
   },
   {
-    id: "api-framework-hono (@test)",
+    id: "api-framework-hono",
     name: "api-framework-hono",
     description: "Lightweight web framework for the edge",
     category: "api/framework",
@@ -120,7 +130,7 @@ Hono is a fast web framework for the edge.
 `,
   },
   {
-    id: "web-testing-vitest (@test)",
+    id: "web-testing-vitest",
     name: "web-testing-vitest",
     description: "Next generation testing framework",
     category: "testing",
@@ -194,7 +204,7 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
 
   describe("Scenario 1: Archive and restore with real file system", () => {
     it("should archive a local skill to _archived directory", async () => {
-      const skillId = "web-framework-react" as SkillId;
+      const skillId = "web-framework-react";
       const skillDir = path.join(dirs.projectDir, LOCAL_SKILLS_PATH, skillId);
       const archivedDir = path.join(
         dirs.projectDir,
@@ -223,7 +233,7 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
     });
 
     it("should restore a previously archived skill", async () => {
-      const skillId = "web-framework-react" as SkillId;
+      const skillId = "web-framework-react";
       const skillDir = path.join(dirs.projectDir, LOCAL_SKILLS_PATH, skillId);
       const archivedDir = path.join(
         dirs.projectDir,
@@ -255,7 +265,7 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
     });
 
     it("should detect archived skill existence correctly", async () => {
-      const skillId = "web-framework-react" as SkillId;
+      const skillId = "web-framework-react";
 
       // No archive initially
       expect(await hasArchivedSkill(dirs.projectDir, skillId)).toBe(false);
@@ -274,8 +284,8 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
     });
 
     it("should handle archiving multiple skills independently", async () => {
-      const skillA = "web-framework-react" as SkillId;
-      const skillB = "web-state-zustand" as SkillId;
+      const skillA = "web-framework-react";
+      const skillB = "web-state-zustand";
 
       // Archive both
       await archiveLocalSkill(dirs.projectDir, skillA);
@@ -298,7 +308,7 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
     });
 
     it("should return false when restoring a non-existent archive", async () => {
-      const skillId = "web-framework-react" as SkillId;
+      const skillId = "web-framework-react";
 
       // No archive exists, restore should return false
       const restored = await restoreArchivedSkill(dirs.projectDir, skillId);
@@ -313,8 +323,8 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
   describe("Scenario 2: Local to marketplace switching (local -> public)", () => {
     it("should archive local skills when switching to marketplace source", async () => {
       // Mark skills as having both local and marketplace sources
-      const reactSkillId = "web-framework-react" as SkillId;
-      const zustandSkillId = "web-state-zustand" as SkillId;
+      const reactSkillId = "web-framework-react";
+      const zustandSkillId = "web-state-zustand";
 
       // Simulate what the edit command does: detect source changes
       // User had local source, now selects "public" (marketplace)
@@ -359,11 +369,10 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
 
     it("should install from source and recompile after switching to marketplace", async () => {
       const matrix = buildMatrix(SWITCHABLE_SKILLS);
-      // Boundary cast: test skill names are SkillIds by convention
-      const allSkillNames = SWITCHABLE_SKILLS.map((s) => s.name) as unknown as SkillId[];
+      const allSkillNames = SWITCHABLE_SKILLS.map((s) => s.name);
 
-      const reactSkillId = "web-framework-react" as SkillId;
-      const zustandSkillId = "web-state-zustand" as SkillId;
+      const reactSkillId = "web-framework-react";
+      const zustandSkillId = "web-state-zustand";
 
       // Step 1: Archive local skills that are switching to marketplace
       await archiveLocalSkill(dirs.projectDir, reactSkillId);
@@ -415,8 +424,8 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
 
   describe("Scenario 3: Marketplace to local switching (public -> local)", () => {
     it("should restore archived local skills when switching back to local source", async () => {
-      const reactSkillId = "web-framework-react" as SkillId;
-      const zustandSkillId = "web-state-zustand" as SkillId;
+      const reactSkillId = "web-framework-react";
+      const zustandSkillId = "web-state-zustand";
 
       // Simulate prior state: skills were previously archived (switched to marketplace)
       await archiveLocalSkill(dirs.projectDir, reactSkillId);
@@ -461,11 +470,10 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
     });
 
     it("should install from restored local skills and recompile agents", async () => {
-      // Boundary cast: test skill names are SkillIds by convention
-      const allSkillNames = SWITCHABLE_SKILLS.map((s) => s.name) as unknown as SkillId[];
+      const allSkillNames = SWITCHABLE_SKILLS.map((s) => s.name);
 
-      const reactSkillId = "web-framework-react" as SkillId;
-      const zustandSkillId = "web-state-zustand" as SkillId;
+      const reactSkillId = "web-framework-react";
+      const zustandSkillId = "web-state-zustand";
 
       // Step 1: Simulate switching from marketplace back to local
       // First archive (simulates the initial local -> marketplace switch)
@@ -522,7 +530,7 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
 
   describe("Scenario 4: Bidirectional round-trip (local -> marketplace -> local)", () => {
     it("should preserve local skill content through a full round-trip switch", async () => {
-      const skillId = "web-framework-react" as SkillId;
+      const skillId = "web-framework-react";
       const skillDir = path.join(dirs.projectDir, LOCAL_SKILLS_PATH, skillId);
 
       // Read original local content
@@ -546,10 +554,9 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
     });
 
     it("should handle full pipeline round-trip with compile verification", async () => {
-      // Boundary cast: test skill names are SkillIds by convention
-      const allSkillNames = SWITCHABLE_SKILLS.map((s) => s.name) as unknown as SkillId[];
+      const allSkillNames = SWITCHABLE_SKILLS.map((s) => s.name);
 
-      const reactSkillId = "web-framework-react" as SkillId;
+      const reactSkillId = "web-framework-react";
 
       // --- Phase 1: Initial install with local source ---
       const matrixWithLocal = buildMatrix(SWITCHABLE_SKILLS);
@@ -612,8 +619,8 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
 
   describe("Scenario 5: Mixed source selections in edit flow", () => {
     it("should handle mixed source selections where some skills switch and others stay", async () => {
-      const reactSkillId = "web-framework-react" as SkillId;
-      const zustandSkillId = "web-state-zustand" as SkillId;
+      const reactSkillId = "web-framework-react";
+      const zustandSkillId = "web-state-zustand";
 
       // React switches local -> marketplace, zustand stays local
       const sourceChanges = new Map<SkillId, { from: string; to: string }>([
@@ -647,8 +654,8 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
     });
 
     it("should handle simultaneous bidirectional switches", async () => {
-      const reactSkillId = "web-framework-react" as SkillId;
-      const zustandSkillId = "web-state-zustand" as SkillId;
+      const reactSkillId = "web-framework-react";
+      const zustandSkillId = "web-state-zustand";
 
       // First, archive zustand to simulate a prior marketplace switch
       await archiveLocalSkill(dirs.projectDir, zustandSkillId);
@@ -695,7 +702,7 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
     });
 
     it("should handle restoring when no archive exists", async () => {
-      const skillId = "web-framework-react" as SkillId;
+      const skillId = "web-framework-react";
 
       // Don't archive first, just try to restore
       const restored = await restoreArchivedSkill(dirs.projectDir, skillId);
@@ -708,7 +715,7 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
     });
 
     it("should handle archiving the same skill twice", async () => {
-      const skillId = "web-framework-react" as SkillId;
+      const skillId = "web-framework-react";
 
       // Archive first time
       await archiveLocalSkill(dirs.projectDir, skillId);
@@ -720,7 +727,7 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
     });
 
     it("should preserve metadata.yaml through archive/restore cycle", async () => {
-      const skillId = "web-framework-react" as SkillId;
+      const skillId = "web-framework-react";
       const skillDir = path.join(dirs.projectDir, LOCAL_SKILLS_PATH, skillId);
 
       // Read original metadata

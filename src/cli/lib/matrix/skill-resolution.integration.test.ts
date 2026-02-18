@@ -20,6 +20,7 @@ import { createMockSkill, createMockMatrix, createMockCategory } from "../__test
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import type {
   CategoryDefinition,
+  CategoryPath,
   DomainSelections,
   MergedSkillsMatrix,
   ProjectConfig,
@@ -77,7 +78,7 @@ function buildSourceResult(
  */
 function createMultiSourceSkill(
   id: SkillId,
-  category: string,
+  category: CategoryPath,
   sources: SkillSource[],
   overrides?: Partial<ResolvedSkill>,
 ): ResolvedSkill {
@@ -111,7 +112,7 @@ function createPrivateSource(name: string, url: string, installed = false): Skil
 // ── Test Data: 15 skills across 3 sources ──────────────────────────────────────
 
 // Source 1: Public marketplace (5 skills)
-const PUBLIC_SKILLS: Array<{ id: SkillId; category: string; description: string }> = [
+const PUBLIC_SKILLS: Array<{ id: SkillId; category: CategoryPath; description: string }> = [
   { id: "web-framework-react", category: "framework", description: "React framework" },
   { id: "web-framework-vue", category: "framework", description: "Vue.js framework" },
   { id: "web-state-zustand", category: "client-state", description: "Zustand state management" },
@@ -120,7 +121,7 @@ const PUBLIC_SKILLS: Array<{ id: SkillId; category: string; description: string 
 ];
 
 // Source 2: Private marketplace "acme-corp" (5 skills, 2 overlap with public)
-const ACME_SKILLS: Array<{ id: SkillId; category: string; description: string }> = [
+const ACME_SKILLS: Array<{ id: SkillId; category: CategoryPath; description: string }> = [
   { id: "web-framework-react", category: "framework", description: "React (acme custom fork)" },
   { id: "api-framework-hono", category: "api", description: "Hono web framework" },
   { id: "api-database-drizzle", category: "database", description: "Drizzle ORM" },
@@ -129,7 +130,7 @@ const ACME_SKILLS: Array<{ id: SkillId; category: string; description: string }>
 ];
 
 // Source 3: Private marketplace "internal" (5 skills, 1 overlap with public)
-const INTERNAL_SKILLS: Array<{ id: SkillId; category: string; description: string }> = [
+const INTERNAL_SKILLS: Array<{ id: SkillId; category: CategoryPath; description: string }> = [
   { id: "web-framework-react", category: "framework", description: "React (internal build)" },
   { id: "web-animation-framer", category: "animation", description: "Framer Motion" },
   {
@@ -138,7 +139,7 @@ const INTERNAL_SKILLS: Array<{ id: SkillId; category: string; description: strin
     description: "Investigation first",
   },
   { id: "web-accessibility-a11y", category: "accessibility", description: "Web accessibility" },
-  { id: "api-monitoring-sentry", category: "monitoring", description: "Sentry error tracking" },
+  { id: "api-monitoring-sentry", category: "observability", description: "Sentry error tracking" },
 ];
 
 // ── Matrix Builder ─────────────────────────────────────────────────────────────
@@ -205,8 +206,8 @@ function buildMultiSourceMatrix(overrides?: Partial<MergedSkillsMatrix>): Merged
     accessibility: createMockCategory("accessibility" as Subcategory, "Accessibility", {
       order: 9,
     }),
-    monitoring: createMockCategory("monitoring" as Subcategory, "Monitoring", { order: 10 }),
-  } as Record<Subcategory, CategoryDefinition>;
+    observability: createMockCategory("observability" as Subcategory, "Observability", { order: 10 }),
+  } as Partial<Record<Subcategory, CategoryDefinition>> as Record<Subcategory, CategoryDefinition>;
 
   return createMockMatrix(skills, {
     categories,
@@ -362,7 +363,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       const matrix = buildMultiSourceMatrix();
 
       // Check all categories -- missing skill should not appear
-      const allCategories = Object.keys(matrix.categories);
+      const allCategories = Object.keys(matrix.categories) as Subcategory[];
       for (const category of allCategories) {
         const available = getAvailableSkills(category, [], matrix);
         const ids = available.map((o) => o.id);
@@ -612,7 +613,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
   // Test skills that map to the multi-source scenario
   const PIPELINE_SKILLS: TestSkill[] = [
     {
-      id: "web-framework-react (@test)",
+      id: "web-framework-react",
       name: "web-framework-react",
       description: "React framework (public source)",
       category: "web/framework",
@@ -621,7 +622,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
       content: `---\nname: web-framework-react\ndescription: React framework\n---\n\n# React\n\nReact framework from public source.\n`,
     },
     {
-      id: "api-framework-hono (@test)",
+      id: "api-framework-hono",
       name: "api-framework-hono",
       description: "Hono framework (acme source)",
       category: "api/framework",
@@ -630,7 +631,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
       content: `---\nname: api-framework-hono\ndescription: Hono framework\n---\n\n# Hono\n\nHono framework from acme source.\n`,
     },
     {
-      id: "web-animation-framer (@test)",
+      id: "web-animation-framer",
       name: "web-animation-framer",
       description: "Framer Motion (internal source)",
       category: "web/animation",
@@ -639,7 +640,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
       content: `---\nname: web-animation-framer\ndescription: Framer Motion\n---\n\n# Framer Motion\n\nFramer Motion from internal source.\n`,
     },
     {
-      id: "api-database-drizzle (@test)",
+      id: "api-database-drizzle",
       name: "api-database-drizzle",
       description: "Drizzle ORM (acme source)",
       category: "api/database",
@@ -648,7 +649,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
       content: `---\nname: api-database-drizzle\ndescription: Drizzle ORM\n---\n\n# Drizzle ORM\n\nDrizzle from acme source.\n`,
     },
     {
-      id: "web-testing-vitest (@test)",
+      id: "web-testing-vitest",
       name: "web-testing-vitest",
       description: "Vitest testing (public source)",
       category: "testing",

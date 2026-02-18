@@ -12,7 +12,7 @@ import {
   DEFAULT_TEST_SKILLS,
   DEFAULT_TEST_AGENTS,
 } from "../fixtures/create-test-source";
-import type { AgentName, SkillId } from "../../../types";
+import type { AgentName, SkillDefinition, SkillId } from "../../../types";
 
 const CLI_REPO_PATH = path.resolve(__dirname, "../../../../..");
 const EDIT_MARKER = "EDITED-SKILL-CONTENT-MARKER";
@@ -68,7 +68,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
   it("should produce valid initial compilation", async () => {
     const options = buildRecompileOptions(dirs, outputDir, {
-      agents: ["web-pm" as AgentName],
+      agents: ["web-pm"],
     });
 
     const result = await recompileAgents(options);
@@ -92,16 +92,16 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     const pluginSkillsDir = path.join(pluginDir, "skills");
 
     // Step 1: Initial compile with skills provided directly
-    const reactSkillDef = {
-      react: {
-        id: "react" as SkillId,
-        path: "skills/react/",
+    const reactSkillDef: Partial<Record<SkillId, SkillDefinition>> = {
+      "web-framework-react": {
+        id: "web-framework-react",
+        path: "skills/web-framework-react/",
         description: "React framework",
       },
     };
 
     const initialOptions = buildRecompileOptions(dirs, outputDir, {
-      agents: ["web-pm" as AgentName],
+      agents: ["web-pm"],
       skills: reactSkillDef,
     });
 
@@ -111,7 +111,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     const agentPath = path.join(outputDir, "web-pm.md");
 
     // Step 2: Edit a skill file in the plugin directory
-    const reactSkillPath = path.join(pluginSkillsDir, "react", "SKILL.md");
+    const reactSkillPath = path.join(pluginSkillsDir, "web-framework-react", "SKILL.md");
     if (await fileExists(reactSkillPath)) {
       const originalSkill = await readTestFile(reactSkillPath);
       await writeTestFile(reactSkillPath, originalSkill + APPENDED_SKILL_SECTION);
@@ -119,7 +119,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
     // Step 3: Recompile (loadPluginSkills will re-read the edited skill files)
     const recompileOptions = buildRecompileOptions(dirs, outputDir, {
-      agents: ["web-pm" as AgentName],
+      agents: ["web-pm"],
       // Don't provide skills - let it reload from plugin dir
     });
 
@@ -136,7 +136,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
   it("should preserve unchanged agents during recompile", async () => {
     // Compile two agents
     const options = buildRecompileOptions(dirs, outputDir, {
-      agents: ["web-pm" as AgentName],
+      agents: ["web-pm"],
     });
 
     const result1 = await recompileAgents(options);
@@ -161,7 +161,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
     // Step 1: Initial compile with no skills provided (empty plugin skills)
     const initialOptions = buildRecompileOptions(dirs, outputDir, {
-      agents: ["web-pm" as AgentName],
+      agents: ["web-pm"],
       skills: {},
     });
 
@@ -192,7 +192,7 @@ Use this for verifying recompilation picks up new skills.
 
     // Step 3: Recompile without providing skills (force reload from plugin dir)
     const recompileOptions = buildRecompileOptions(dirs, outputDir, {
-      agents: ["web-pm" as AgentName],
+      agents: ["web-pm"],
     });
 
     const recompileResult = await recompileAgents(recompileOptions);
@@ -207,21 +207,21 @@ Use this for verifying recompilation picks up new skills.
 
   it("should handle removing skills from agents", async () => {
     // Step 1: Initial compile with explicit skills
-    const initialSkills = {
-      react: {
-        id: "react" as SkillId,
-        path: "skills/react/",
+    const initialSkills: Partial<Record<SkillId, SkillDefinition>> = {
+      "web-framework-react": {
+        id: "web-framework-react",
+        path: "skills/web-framework-react/",
         description: "React framework",
       },
-      zustand: {
-        id: "zustand" as SkillId,
-        path: "skills/zustand/",
+      "web-state-zustand": {
+        id: "web-state-zustand",
+        path: "skills/web-state-zustand/",
         description: "State management",
       },
     };
 
     const initialOptions = buildRecompileOptions(dirs, outputDir, {
-      agents: ["web-pm" as AgentName],
+      agents: ["web-pm"],
       skills: initialSkills,
     });
 
@@ -229,16 +229,16 @@ Use this for verifying recompilation picks up new skills.
     expect(initialResult.compiled).toContain("web-pm");
 
     // Step 2: Recompile with fewer skills (simulating removal)
-    const reducedSkills = {
-      react: {
-        id: "react" as SkillId,
-        path: "skills/react/",
+    const reducedSkills: Partial<Record<SkillId, SkillDefinition>> = {
+      "web-framework-react": {
+        id: "web-framework-react",
+        path: "skills/web-framework-react/",
         description: "React framework",
       },
     };
 
     const recompileOptions = buildRecompileOptions(dirs, outputDir, {
-      agents: ["web-pm" as AgentName],
+      agents: ["web-pm"],
       skills: reducedSkills,
     });
 
@@ -256,7 +256,7 @@ Use this for verifying recompilation picks up new skills.
   it("should report correct compiled and failed agent lists", async () => {
     // Compile a valid agent and an invalid one
     const options = buildRecompileOptions(dirs, outputDir, {
-      agents: ["web-pm" as AgentName, "non-existent-agent-xyz" as AgentName],
+      agents: ["web-pm", "non-existent-agent-xyz" as AgentName],
     });
 
     const result = await recompileAgents(options);
@@ -273,7 +273,7 @@ Use this for verifying recompilation picks up new skills.
     await mkdir(customOutputDir, { recursive: true });
 
     const options = buildRecompileOptions(dirs, customOutputDir, {
-      agents: ["web-pm" as AgentName],
+      agents: ["web-pm"],
     });
 
     const result = await recompileAgents(options);
@@ -290,7 +290,7 @@ Use this for verifying recompilation picks up new skills.
 
   it("should produce identical output on consecutive recompiles without changes", async () => {
     const options = buildRecompileOptions(dirs, outputDir, {
-      agents: ["web-pm" as AgentName],
+      agents: ["web-pm"],
     });
 
     // First compile

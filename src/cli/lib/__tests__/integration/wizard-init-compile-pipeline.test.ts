@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import path from "path";
 import { readFile, readdir } from "fs/promises";
 import { parse as parseYaml } from "yaml";
@@ -11,13 +11,23 @@ import {
   type TestDirs,
   type TestSkill,
 } from "../fixtures/create-test-source";
-import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
+import type { MergedSkillsMatrix, ProjectConfig } from "../../../types";
 import { DEFAULT_PLUGIN_NAME } from "../../../consts";
 import { fileExists, directoryExists, buildWizardResult, buildSourceResult } from "../helpers";
+import { loadDefaultMappings, clearDefaultsCache } from "../../loading";
+
+// Load YAML defaults once for all tests in this file
+beforeAll(async () => {
+  await loadDefaultMappings();
+});
+
+afterAll(() => {
+  clearDefaultsCache();
+});
 
 const PIPELINE_TEST_SKILLS: TestSkill[] = [
   {
-    id: "web-framework-react (@test)",
+    id: "web-framework-react",
     name: "web-framework-react",
     description: "React framework for building user interfaces",
     category: "web/framework",
@@ -35,7 +45,7 @@ Use component-based architecture with JSX.
 `,
   },
   {
-    id: "web-state-zustand (@test)",
+    id: "web-state-zustand",
     name: "web-state-zustand",
     description: "Bear necessities state management",
     category: "web/state",
@@ -52,7 +62,7 @@ Zustand is a minimal state management library for React.
 `,
   },
   {
-    id: "web-styling-scss-modules (@test)",
+    id: "web-styling-scss-modules",
     name: "web-styling-scss-modules",
     description: "CSS Modules with SCSS",
     category: "web/styling",
@@ -69,7 +79,7 @@ Use CSS Modules with SCSS for scoped styling.
 `,
   },
   {
-    id: "web-testing-vitest (@test)",
+    id: "web-testing-vitest",
     name: "web-testing-vitest",
     description: "Next generation testing framework",
     category: "testing",
@@ -86,7 +96,7 @@ Vitest is a fast unit test framework powered by Vite.
 `,
   },
   {
-    id: "api-framework-hono (@test)",
+    id: "api-framework-hono",
     name: "api-framework-hono",
     description: "Lightweight web framework for the edge",
     category: "api/framework",
@@ -103,7 +113,7 @@ Hono is a fast web framework for the edge.
 `,
   },
   {
-    id: "api-database-drizzle (@test)",
+    id: "api-database-drizzle",
     name: "api-database-drizzle",
     description: "TypeScript ORM for SQL databases",
     category: "api/database",
@@ -120,7 +130,7 @@ Drizzle is a lightweight TypeScript ORM.
 `,
   },
   {
-    id: "api-security-auth-patterns (@test)",
+    id: "api-security-auth-patterns",
     name: "api-security-auth-patterns",
     description: "Authentication and authorization patterns",
     category: "api/security",
@@ -137,7 +147,7 @@ JWT-based authentication and role-based authorization.
 `,
   },
   {
-    id: "web-accessibility-a11y (@test)",
+    id: "web-accessibility-a11y",
     name: "web-accessibility-a11y",
     description: "Web accessibility best practices",
     category: "web/accessibility",
@@ -154,7 +164,7 @@ Follow WCAG 2.1 guidelines for accessible web applications.
 `,
   },
   {
-    id: "meta-methodology-investigation (@test)",
+    id: "meta-methodology-investigation",
     name: "meta-methodology-investigation",
     description: "Investigation before implementation",
     category: "meta/methodology",
@@ -171,7 +181,7 @@ Always investigate before implementing. Read the code first.
 `,
   },
   {
-    id: "web-animation-framer (@test)",
+    id: "web-animation-framer",
     name: "web-animation-framer",
     description: "Framer Motion animation library",
     category: "web/animation",
@@ -206,9 +216,6 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
   describe("Scenario 1: Full pipeline with 10 skills from scratch flow", () => {
     it("should install skills, generate config, and compile agents", async () => {
-      // Boundary cast: frontmatter names from test fixtures are SkillIds by convention
-      const selectedSkills = SKILL_NAMES as unknown as SkillId[];
-
       const matrixSkills: Record<
         string,
         {
@@ -242,12 +249,12 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       } as unknown as MergedSkillsMatrix;
 
       const wizardResult = buildWizardResult([], {
-        selectedSkills,
+        selectedSkills: SKILL_NAMES,
         installMode: "local",
         domainSelections: {
           web: {
             framework: ["web-framework-react"],
-            state: ["web-state-zustand"],
+            "client-state": ["web-state-zustand"],
             styling: ["web-styling-scss-modules"],
           },
           api: {
@@ -303,9 +310,6 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
     });
 
     it("should produce agents that contain skill content from source", async () => {
-      // Boundary cast: frontmatter names from test fixtures are SkillIds by convention
-      const selectedSkills = SKILL_NAMES as unknown as SkillId[];
-
       const matrixSkills: Record<
         string,
         {
@@ -338,7 +342,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         generatedAt: new Date().toISOString(),
       } as unknown as MergedSkillsMatrix;
 
-      const wizardResult = buildWizardResult([], { selectedSkills, installMode: "local" });
+      const wizardResult = buildWizardResult([], { selectedSkills: SKILL_NAMES, installMode: "local" });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
 
       const installResult = await installLocal({
@@ -367,9 +371,6 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
   describe("Scenario 2: Compile round-trip (init then recompile)", () => {
     it("should recompile agents from installLocal output", async () => {
-      // Boundary cast: frontmatter names from test fixtures are SkillIds by convention
-      const selectedSkills = SKILL_NAMES as unknown as SkillId[];
-
       const matrixSkills: Record<
         string,
         {
@@ -402,7 +403,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         generatedAt: new Date().toISOString(),
       } as unknown as MergedSkillsMatrix;
 
-      const wizardResult = buildWizardResult([], { selectedSkills, installMode: "local" });
+      const wizardResult = buildWizardResult([], { selectedSkills: SKILL_NAMES, installMode: "local" });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
 
       const installResult = await installLocal({
@@ -444,9 +445,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
   describe("Scenario 3: Config integrity through the pipeline", () => {
     it("should preserve skill list and agent assignments through install and config write", async () => {
       const SUBSET_COUNT = 5;
-      const selectedSkillNames = SKILL_NAMES.slice(0, SUBSET_COUNT);
-      // Boundary cast: frontmatter names from test fixtures are SkillIds by convention
-      const selectedSkills = selectedSkillNames as unknown as SkillId[];
+      const selectedSkills = SKILL_NAMES.slice(0, SUBSET_COUNT);
 
       const matrixSkills: Record<
         string,
@@ -510,8 +509,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
     });
 
     it("should set source metadata in config when sourceFlag is provided", async () => {
-      // Boundary cast: frontmatter names from test fixtures are SkillIds by convention
-      const selectedSkills = SKILL_NAMES.slice(0, 3) as unknown as SkillId[];
+      const selectedSkills = SKILL_NAMES.slice(0, 3);
 
       const matrixSkills: Record<
         string,
@@ -570,9 +568,6 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
   describe("Scenario 4: Directory structure verification", () => {
     it("should create complete directory structure matching init expectations", async () => {
-      // Boundary cast: frontmatter names from test fixtures are SkillIds by convention
-      const selectedSkills = SKILL_NAMES as unknown as SkillId[];
-
       const matrixSkills: Record<
         string,
         {
@@ -605,7 +600,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         generatedAt: new Date().toISOString(),
       } as unknown as MergedSkillsMatrix;
 
-      const wizardResult = buildWizardResult([], { selectedSkills, installMode: "local" });
+      const wizardResult = buildWizardResult([], { selectedSkills: SKILL_NAMES, installMode: "local" });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
 
       await installLocal({

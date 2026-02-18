@@ -8,6 +8,7 @@ import {
   directoryExists,
   readTestFile,
   type TestDirs,
+  type TestSkill,
   DEFAULT_TEST_SKILLS,
   DEFAULT_TEST_AGENTS,
 } from "../fixtures/create-test-source";
@@ -141,9 +142,9 @@ describe("User Journey: Compile Flow", () => {
             expect(Array.isArray(frontmatter.skills)).toBe(true);
             const skills = frontmatter.skills as string[];
 
-            // Skills should be in the expected format (name (@author))
+            // Skills should be valid SkillId format (prefix-subcategory-name)
             for (const skill of skills) {
-              expect(skill).toMatch(/\(@\w+\)/); // Contains author reference
+              expect(skill).toMatch(/^(web|api|cli|mobile|infra|meta|security)-\w+-\w+/);
             }
           }
         }
@@ -247,19 +248,19 @@ describe("User Journey: Compile with Local Skills", () => {
     originalCwd = process.cwd();
 
     // Create test source with local skills
-    const localSkill = {
-      id: "my-local-skill (@test)",
-      name: "my-local-skill",
+    const localSkill: TestSkill = {
+      id: "web-tooling-local-skill",
+      name: "web-tooling-local-skill",
       description: "A local project skill",
-      category: "local",
+      category: "web/tooling",
       author: "@test",
       tags: ["local", "custom"],
       content: `---
-name: my-local-skill
+name: web-tooling-local-skill
 description: A local project skill for testing
 ---
 
-# My Local Skill
+# Web Tooling Local Skill
 
 This is a locally defined skill for the project.
 
@@ -303,7 +304,7 @@ Use this skill for project-specific patterns.
         dirs.projectDir,
         ".claude",
         "skills",
-        "my-local-skill",
+        "web-tooling-local-skill",
         "SKILL.md",
       );
       expect(await fileExists(localSkillPath)).toBe(true);
