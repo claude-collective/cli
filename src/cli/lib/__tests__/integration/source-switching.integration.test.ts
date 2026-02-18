@@ -35,8 +35,6 @@ afterAll(() => {
   clearDefaultsCache();
 });
 
-// ── Constants ──────────────────────────────────────────────────────────────────
-
 const SKILL_COUNT = 4;
 
 function buildMatrix(skills: TestSkill[]): MergedSkillsMatrix {
@@ -62,6 +60,7 @@ function buildMatrix(skills: TestSkill[]): MergedSkillsMatrix {
     };
   }
 
+  // Boundary cast: test data construction — cannot satisfy branded types directly
   return {
     version: "1.0.0",
     categories: {},
@@ -73,9 +72,6 @@ function buildMatrix(skills: TestSkill[]): MergedSkillsMatrix {
   } as unknown as MergedSkillsMatrix;
 }
 
-// ── Test Skills ────────────────────────────────────────────────────────────────
-
-// Skills that exist in both marketplace and locally (for switching scenarios)
 const SWITCHABLE_SKILLS: TestSkill[] = [
   {
     id: "web-framework-react",
@@ -99,7 +95,7 @@ Use component-based architecture with JSX.
     id: "web-state-zustand",
     name: "web-state-zustand",
     description: "Bear necessities state management",
-    category: "web/state",
+    category: "web/client-state",
     author: "@test",
     tags: ["state", "zustand"],
     content: `---
@@ -171,7 +167,7 @@ This is my customized React skill with project-specific patterns.
     id: "web-state-zustand",
     name: "web-state-zustand",
     description: "Zustand state management (local customized version)",
-    category: "web/state",
+    category: "web/client-state",
     author: "@local-user",
     tags: ["state", "zustand"],
     content: `---
@@ -185,8 +181,6 @@ My customized Zustand patterns with project-specific stores.
 `,
   },
 ];
-
-// ── Tests ──────────────────────────────────────────────────────────────────────
 
 describe("Integration: Multi-Source Source Switching E2E", () => {
   let dirs: TestDirs;

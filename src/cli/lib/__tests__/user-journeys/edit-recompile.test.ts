@@ -1,6 +1,6 @@
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir } from "fs/promises";
 import { recompileAgents, type RecompileAgentsOptions } from "../../agents";
 import {
   createTestSource,
@@ -12,6 +12,7 @@ import {
   DEFAULT_TEST_SKILLS,
   DEFAULT_TEST_AGENTS,
 } from "../fixtures/create-test-source";
+import { writeTestSkill } from "../helpers";
 import type { AgentName, SkillDefinition, SkillId } from "../../../types";
 
 const CLI_REPO_PATH = path.resolve(__dirname, "../../../../..");
@@ -171,24 +172,10 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     const agentPath = path.join(outputDir, "web-pm.md");
 
     // Step 2: Add a brand new skill to the plugin skills directory
-    const newSkillDir = path.join(pluginSkillsDir, "new-testing-skill");
-    await mkdir(newSkillDir, { recursive: true });
-    await writeFile(
-      path.join(newSkillDir, "SKILL.md"),
-      `---
-name: new-testing-skill
-description: A newly added testing skill
----
-
-# New Testing Skill
-
-This skill was added after initial compilation.
-
-## Usage
-
-Use this for verifying recompilation picks up new skills.
-`,
-    );
+    await writeTestSkill(pluginSkillsDir, "new-testing-skill", {
+      description: "A newly added testing skill",
+      skipMetadata: true,
+    });
 
     // Step 3: Recompile without providing skills (force reload from plugin dir)
     const recompileOptions = buildRecompileOptions(dirs, outputDir, {

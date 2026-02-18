@@ -23,6 +23,7 @@ import { createMockCategory, createMockSkill, createMockMatrix } from "../../lib
 
 const SKILL_DEFAULTS: Partial<ResolvedSkill> = { categoryExclusive: true };
 
+// Test data construction casts: indexBy/mapToObj return generic Records
 const buildTestMatrix = (categories: CategoryDefinition[], skills: ResolvedSkill[]) => {
   const withDisplayName = skills.filter((s) => s.displayName);
   return createMockMatrix(
@@ -130,10 +131,10 @@ const defaultProps: StepBuildProps = {
   selectedDomains: ["web"],
   selections: {},
   allSelections: [],
-  showDescriptions: false,
+  showLabels: false,
   expertMode: false,
   onToggle: vi.fn(),
-  onToggleDescriptions: vi.fn(),
+  onToggleLabels: vi.fn(),
   onContinue: vi.fn(),
   onBack: vi.fn(),
 };
@@ -340,14 +341,14 @@ describe("StepBuild component", () => {
       expect(output).toBeDefined();
     });
 
-    it("should pass showDescriptions to CategoryGrid", () => {
+    it("should pass showLabels to CategoryGrid", () => {
       const { lastFrame, unmount } = renderStepBuild({
-        showDescriptions: true,
+        showLabels: true,
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Descriptions toggle is now shown globally in wizard-layout
+      // Labels toggle is now shown globally in wizard-layout
       // Verify component renders without error
       expect(output).toBeDefined();
     });
@@ -402,16 +403,16 @@ describe("StepBuild component", () => {
   });
 
   describe("toggle callbacks", () => {
-    it("should pass onToggleDescriptions to CategoryGrid", async () => {
-      const onToggleDescriptions = vi.fn();
-      const { stdin, unmount } = renderStepBuild({ onToggleDescriptions });
+    it("should pass onToggleLabels to CategoryGrid", async () => {
+      const onToggleLabels = vi.fn();
+      const { stdin, unmount } = renderStepBuild({ onToggleLabels });
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
-      stdin.write("d"); // 'd' key toggles descriptions
+      stdin.write("d"); // 'd' key toggles compatibility labels
       await delay(INPUT_DELAY_MS);
 
-      expect(onToggleDescriptions).toHaveBeenCalled();
+      expect(onToggleLabels).toHaveBeenCalled();
     });
 
     it("should not handle expert mode toggle locally (handled globally)", () => {
@@ -563,16 +564,16 @@ describe("StepBuild component", () => {
   });
 
   describe("keyboard help text", () => {
-    it("should respond to d key for toggling descriptions", async () => {
-      const onToggleDescriptions = vi.fn();
-      const { stdin, unmount } = renderStepBuild({ onToggleDescriptions });
+    it("should respond to d key for toggling compatibility labels", async () => {
+      const onToggleLabels = vi.fn();
+      const { stdin, unmount } = renderStepBuild({ onToggleLabels });
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
       stdin.write("d");
       await delay(INPUT_DELAY_MS);
 
-      expect(onToggleDescriptions).toHaveBeenCalled();
+      expect(onToggleLabels).toHaveBeenCalled();
     });
   });
 

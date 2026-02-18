@@ -19,7 +19,7 @@ const SKILL_FIXTURES: Record<string, SkillFixtureConfig> = {
   },
   zustand: {
     id: "web-state-zustand",
-    category: "web/state",
+    category: "web/client-state",
     displayName: "zustand",
     description: "Bear necessities state management",
     tags: ["state", "react", "zustand"],

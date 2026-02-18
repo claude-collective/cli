@@ -204,7 +204,7 @@ describe("StepSources component", () => {
       const output = lastFrame();
       expect(output).toContain("react");
       expect(output).toContain("zustand");
-      expect(output).toContain("Public");
+      expect(output).toContain("Agents Inc");
     });
 
     it("should call onContinue when Enter pressed in customize view", async () => {

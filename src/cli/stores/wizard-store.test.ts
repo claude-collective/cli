@@ -1,10 +1,18 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { useWizardStore } from "./wizard-store";
 import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
-import { createMockCategory } from "../lib/__tests__/helpers";
-import type { Domain, MergedSkillsMatrix, SkillAssignment, SkillId, Subcategory } from "../types";
+import { createMockCategory, createMockSkill, createMockMatrix } from "../lib/__tests__/helpers";
+import { typedKeys } from "../utils/typed-object";
+import type {
+  Domain,
+  MergedSkillsMatrix,
+  SkillAssignment,
+  SkillDisplayName,
+  SkillId,
+  SkillSource,
+  Subcategory,
+} from "../types";
 
-/** Shorthand: creates a SkillAssignment from an id and optional preloaded flag */
 function sa(id: SkillId, preloaded = false): SkillAssignment {
   return { id, preloaded };
 }
@@ -315,13 +323,13 @@ describe("WizardStore", () => {
       expect(installMode).toBe("local");
     });
 
-    it("should toggle show descriptions", () => {
+    it("should toggle show labels", () => {
       const store = useWizardStore.getState();
 
-      store.toggleShowDescriptions();
+      store.toggleShowLabels();
 
-      const { showDescriptions } = useWizardStore.getState();
-      expect(showDescriptions).toBe(true);
+      const { showLabels } = useWizardStore.getState();
+      expect(showLabels).toBe(true);
     });
 
     it("should toggle help on", () => {
@@ -694,7 +702,7 @@ describe("WizardStore", () => {
 
       const { domainSelections } = useWizardStore.getState();
 
-      expect(Object.keys(domainSelections)).toHaveLength(0);
+      expect(typedKeys(domainSelections)).toHaveLength(0);
     });
 
     it("should populate multiple skills from array-valued subcategories", () => {
@@ -849,6 +857,123 @@ describe("WizardStore", () => {
       const state = useWizardStore.getState();
       expect(state.selectedDomains).toContain("web");
       expect(state.domainSelections.web!.framework).toEqual(["web-framework-react"]);
+    });
+  });
+
+  describe("buildSourceRows sort order", () => {
+    function makeSource(overrides: Partial<SkillSource> & { name: string }): SkillSource {
+      return {
+        type: "private",
+        installed: false,
+        ...overrides,
+      };
+    }
+
+    it("should sort local sources before scoped marketplace sources", () => {
+      const store = useWizardStore.getState();
+
+      const skill = createMockSkill("web-framework-react" as SkillId, "framework", {
+        displayName: "react" as SkillDisplayName,
+        availableSources: [
+          makeSource({ name: "Photoroom", type: "private", primary: true }),
+          makeSource({ name: "local", type: "local", installed: true, installMode: "local" }),
+        ],
+      });
+
+      const matrix = createMockMatrix(
+        { "web-framework-react": skill },
+        {
+          displayNames: { "web-framework-react": "react" } as Partial<Record<SkillId, SkillDisplayName>>,
+        },
+      );
+
+      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
+
+      const rows = store.buildSourceRows(matrix);
+      expect(rows).toHaveLength(1);
+      expect(rows[0].options[0].id).toBe("local");
+      expect(rows[0].options[1].id).toBe("Photoroom");
+    });
+
+    it("should sort scoped marketplace before default public marketplace", () => {
+      const store = useWizardStore.getState();
+
+      const skill = createMockSkill("web-framework-react" as SkillId, "framework", {
+        displayName: "react" as SkillDisplayName,
+        availableSources: [
+          makeSource({ name: "Agents Inc", type: "public" }),
+          makeSource({ name: "Photoroom", type: "private", primary: true }),
+        ],
+      });
+
+      const matrix = createMockMatrix(
+        { "web-framework-react": skill },
+        {
+          displayNames: { "web-framework-react": "react" } as Partial<Record<SkillId, SkillDisplayName>>,
+        },
+      );
+
+      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
+
+      const rows = store.buildSourceRows(matrix);
+      expect(rows).toHaveLength(1);
+      expect(rows[0].options[0].id).toBe("Photoroom");
+      expect(rows[0].options[1].id).toBe("Agents Inc");
+    });
+
+    it("should sort default public marketplace before third-party sources", () => {
+      const store = useWizardStore.getState();
+
+      const skill = createMockSkill("web-framework-react" as SkillId, "framework", {
+        displayName: "react" as SkillDisplayName,
+        availableSources: [
+          makeSource({ name: "Extra Corp", type: "private" }),
+          makeSource({ name: "Agents Inc", type: "public" }),
+        ],
+      });
+
+      const matrix = createMockMatrix(
+        { "web-framework-react": skill },
+        {
+          displayNames: { "web-framework-react": "react" } as Partial<Record<SkillId, SkillDisplayName>>,
+        },
+      );
+
+      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
+
+      const rows = store.buildSourceRows(matrix);
+      expect(rows).toHaveLength(1);
+      expect(rows[0].options[0].id).toBe("Agents Inc");
+      expect(rows[0].options[1].id).toBe("Extra Corp");
+    });
+
+    it("should sort all four tiers in correct order", () => {
+      const store = useWizardStore.getState();
+
+      const skill = createMockSkill("web-framework-react" as SkillId, "framework", {
+        displayName: "react" as SkillDisplayName,
+        availableSources: [
+          makeSource({ name: "Extra Corp", type: "private" }),
+          makeSource({ name: "Agents Inc", type: "public" }),
+          makeSource({ name: "Photoroom", type: "private", primary: true }),
+          makeSource({ name: "local", type: "local", installed: true, installMode: "local" }),
+        ],
+      });
+
+      const matrix = createMockMatrix(
+        { "web-framework-react": skill },
+        {
+          displayNames: { "web-framework-react": "react" } as Partial<Record<SkillId, SkillDisplayName>>,
+        },
+      );
+
+      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
+
+      const rows = store.buildSourceRows(matrix);
+      expect(rows).toHaveLength(1);
+
+      const sourceNames = rows[0].options.map((opt) => opt.id);
+      expect(sourceNames).toEqual(["local", "Photoroom", "Agents Inc", "Extra Corp"]);
     });
   });
 });

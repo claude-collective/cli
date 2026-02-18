@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import {
   getCurrentDate,
   computeStringHash,
   computeFileHash,
   computeSkillFolderHash,
 } from "./versioning";
+import { createTempDir, cleanupTempDir } from "./__tests__/helpers";
 
 describe("getCurrentDate", () => {
   it("should return date in YYYY-MM-DD format", () => {
@@ -65,11 +65,11 @@ describe("computeFileHash", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "hashfile-test-"));
+    tempDir = await createTempDir("hashfile-test-");
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should hash file content", async () => {
@@ -107,11 +107,11 @@ describe("computeSkillFolderHash", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "versioning-test-"));
+    tempDir = await createTempDir("versioning-test-");
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should hash SKILL.md content", async () => {

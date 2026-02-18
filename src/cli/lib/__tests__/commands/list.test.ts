@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
-import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
+import { runCliCommand, createTempDir, cleanupTempDir, writeTestSkill } from "../helpers";
 
 describe("list command", () => {
   let tempDir: string;
@@ -66,12 +66,7 @@ agents:
       );
 
       // Write a test skill
-      const testSkillDir = path.join(skillsDir, "test-skill");
-      await mkdir(testSkillDir, { recursive: true });
-      await writeFile(
-        path.join(testSkillDir, "SKILL.md"),
-        "---\nname: test-skill\n---\n# Test Skill",
-      );
+      await writeTestSkill(skillsDir, "test-skill");
 
       const { error } = await runCliCommand(["list"]);
 

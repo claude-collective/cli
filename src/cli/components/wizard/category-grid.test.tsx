@@ -126,11 +126,11 @@ const defaultProps: CategoryGridProps = {
   categories: defaultCategories,
   defaultFocusedRow: 0,
   defaultFocusedCol: 0,
-  showDescriptions: false,
+  showLabels: false,
   expertMode: false,
   onToggle: vi.fn(),
   onFocusChange: vi.fn(),
-  onToggleDescriptions: vi.fn(),
+  onToggleLabels: vi.fn(),
 };
 
 const renderGrid = (props: Partial<CategoryGridProps> = {}) => {
@@ -876,11 +876,11 @@ describe("CategoryGrid component", () => {
     });
   });
 
-  describe("show descriptions toggle", () => {
-    it("should call onToggleDescriptions when pressing d key", async () => {
-      const onToggleDescriptions = vi.fn();
+  describe("compatibility labels toggle", () => {
+    it("should call onToggleLabels when pressing d key", async () => {
+      const onToggleLabels = vi.fn();
       const { stdin, unmount } = renderGrid({
-        onToggleDescriptions,
+        onToggleLabels,
       });
       cleanup = unmount;
 
@@ -888,37 +888,65 @@ describe("CategoryGrid component", () => {
       await stdin.write("d");
       await delay(INPUT_DELAY_MS);
 
-      expect(onToggleDescriptions).toHaveBeenCalled();
+      expect(onToggleLabels).toHaveBeenCalled();
     });
 
-    it("should show descriptions when showDescriptions is true", () => {
-      const { lastFrame, unmount } = renderGrid({ showDescriptions: true });
+    it("should show compatibility labels when showLabels is true", () => {
+      const { lastFrame, unmount } = renderGrid({ showLabels: true });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should show state reasons
-      expect(output).toContain("Popular choice"); // react's stateReason
+      // Should show compatibility label suffixes on skill tags
+      expect(output).toContain("(recommended)"); // react has state: "recommended"
     });
 
-    it("should hide descriptions when showDescriptions is false", () => {
-      const { lastFrame, unmount } = renderGrid({ showDescriptions: false });
+    it("should show Selected label for selected skills when showLabels is true", () => {
+      const { lastFrame, unmount } = renderGrid({ showLabels: true });
       cleanup = unmount;
 
       const output = lastFrame();
-      // stateReasons should not be visible (though they might still be in DOM)
-      // At minimum, the display should be different
-      expect(output).toBeDefined();
+      // SCSS Modules is selected in defaultCategories
+      expect(output).toContain("(selected)");
     });
 
-    it("should show descriptions when enabled", () => {
+    it("should show Discouraged label when showLabels is true", () => {
+      // Use categoriesWithFramework so Client State section is unlocked
       const { lastFrame, unmount } = renderGrid({
-        showDescriptions: true,
+        categories: categoriesWithFramework,
+        showLabels: true,
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      // Should show state reasons when descriptions are enabled
-      expect(output).toContain("Popular choice"); // react's stateReason
+      // Redux has state: "discouraged" in categoriesWithFramework
+      expect(output).toContain("(discouraged)");
+    });
+
+    it("should hide compatibility labels when showLabels is false", () => {
+      const { lastFrame, unmount } = renderGrid({ showLabels: false });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      // Labels should not be visible when toggle is off
+      expect(output).not.toContain("(recommended)");
+      expect(output).not.toContain("(selected)");
+      expect(output).not.toContain("(discouraged)");
+      expect(output).not.toContain("(disabled)");
+    });
+
+    it("should show Disabled label for disabled options when showLabels is true", () => {
+      const categories: CategoryRow[] = [
+        createCategory("testing", "Test", [
+          createOption("web-test-opt1", "Option 1"),
+          createOption("web-test-opt2", "Option 2", { state: "disabled" }),
+        ]),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ categories, showLabels: true });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("(disabled)");
     });
   });
 
@@ -1101,7 +1129,7 @@ describe("CategoryGrid component", () => {
       expect(output).toContain("Option 1");
     });
 
-    it("should show L badge but no checkmark when local and installed", () => {
+    it("should render local installed skill without L badge or checkmark", () => {
       const categories: CategoryRow[] = [
         createCategory("forms", "Forms", [
           createOption("web-test-opt1", "Option 1", { local: true, installed: true }),
@@ -1112,7 +1140,6 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("L");
       expect(output).not.toContain("✓");
       expect(output).toContain("Option 1");
     });

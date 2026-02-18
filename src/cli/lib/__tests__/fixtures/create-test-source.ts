@@ -101,9 +101,6 @@ export type TestDirs = {
 
 const TEST_AUTHOR = "@test";
 
-// ── Compile Command Test Skills ──────────────────────────────────────────────
-// Skills for testing metadata presence/absence scenarios in the compile command.
-
 /** Valid local skill with SKILL.md and metadata.yaml */
 export const VALID_LOCAL_SKILL: TestSkill = {
   id: "web-tooling-valid",
@@ -141,9 +138,6 @@ export const DRY_RUN_SKILL: TestSkill = {
   category: "web/tooling",
   author: TEST_AUTHOR,
 };
-
-// ── Local Skill Fixtures for Command Tests ───────────────────────────────────
-// Reusable local skills for commands that operate on .claude/skills/ (diff, update, outdated).
 
 /** A basic local-only skill (no forked_from) with SKILL.md and metadata.yaml */
 export const LOCAL_SKILL_BASIC: TestSkill = {
@@ -206,11 +200,11 @@ name: test
   },
 };
 
-// ── Import Integration Test Skills ───────────────────────────────────────────
-// Skills used by import:skill integration tests with richer content.
-// These use a plain object type (not TestSkill) because import sources use
-// simple directory names that don't follow the SkillId pattern.
-
+/**
+ * Skills used by import:skill integration tests with richer content.
+ * These use a plain object type (not TestSkill) because import sources use
+ * simple directory names that don't follow the SkillId pattern.
+ */
 export type ImportSourceSkill = {
   name: string;
   content: string;
@@ -321,7 +315,7 @@ React is a JavaScript library for building user interfaces with components.
     name: "web-state-zustand",
     alias: "web-state-zustand",
     description: "Bear necessities state management",
-    category: "web/state",
+    category: "web/client-state",
     author: TEST_AUTHOR,
     tags: ["state", "react", "zustand"],
     content: `---
@@ -403,7 +397,21 @@ export const DEFAULT_TEST_AGENTS: TestAgent[] = [
 
 export { fileExists, directoryExists };
 
-function generateMatrix(skills: TestSkill[], overrides?: Partial<TestMatrix>): TestMatrix {
+/**
+ * Generates two matrix representations from skill definitions:
+ * 1. `testMatrix` — the internal TestMatrix used by test assertions
+ * 2. `diskMatrix` — a skills-matrix.yaml-compatible structure for
+ *    `loadSkillsMatrix()` (schema: skillsMatrixConfigSchema)
+ *
+ * The disk format requires `categories` as CategoryDefinition objects
+ * keyed by valid subcategorySchema values, `relationships` (empty arrays),
+ * and `skill_aliases` (empty — test aliases are not valid SkillDisplayName
+ * enum members). Skill data is loaded separately via `extractAllSkills`.
+ */
+function generateMatrix(
+  skills: TestSkill[],
+  overrides?: Partial<TestMatrix>,
+): { testMatrix: TestMatrix; diskMatrix: Record<string, unknown> } {
   const skillsMap: Record<string, TestSkill> = {};
   const aliases: Record<string, string> = {};
   const categories: Record<string, { name: string; description: string }> = {};
@@ -426,7 +434,7 @@ function generateMatrix(skills: TestSkill[], overrides?: Partial<TestMatrix>): T
     }
   }
 
-  return {
+  const testMatrix: TestMatrix = {
     version: "1.0.0",
     skills: skillsMap,
     categories,
@@ -434,6 +442,49 @@ function generateMatrix(skills: TestSkill[], overrides?: Partial<TestMatrix>): T
     aliases,
     ...overrides,
   };
+
+  // Build skillsMatrixConfigSchema-compatible structure for disk serialization.
+  // Categories need full CategoryDefinition fields keyed by valid subcategory enum values.
+  // Skills carry their own category via metadata.yaml — these are only for UI grouping.
+  const diskCategories: Record<string, Record<string, unknown>> = {};
+  let order = 0;
+  const seenSubcategories = new Set<string>();
+  for (const [categoryPath, cat] of Object.entries(categories)) {
+    const parts = categoryPath.split("/");
+    const rawSubcategory = parts[parts.length - 1];
+    const subcategory = rawSubcategory;
+    // Skip domain-level entries (e.g., "web") and duplicate subcategories
+    if (parts.length < 2 || seenSubcategories.has(subcategory)) continue;
+    seenSubcategories.add(subcategory);
+    const domain = parts[0];
+    diskCategories[subcategory] = {
+      id: subcategory,
+      displayName: cat.name,
+      description: cat.description,
+      domain,
+      exclusive: true,
+      required: false,
+      order: order++,
+    };
+  }
+
+  // skill_aliases must be empty — test skill aliases (e.g., "web-framework-react")
+  // are not valid skillDisplayNameSchema enum members (which expects values like
+  // "react", "zustand", "vitest"). The aliases are only for wizard display names.
+  const diskMatrix: Record<string, unknown> = {
+    version: "1.0.0",
+    categories: diskCategories,
+    relationships: {
+      conflicts: [],
+      discourages: [],
+      recommends: [],
+      requires: [],
+      alternatives: [],
+    },
+    skill_aliases: {},
+  };
+
+  return { testMatrix, diskMatrix };
 }
 
 /**
@@ -445,7 +496,7 @@ function generateMatrix(skills: TestSkill[], overrides?: Partial<TestMatrix>): T
 export async function createTestSource(options: TestSourceOptions = {}): Promise<TestDirs> {
   const skills = options.skills ?? DEFAULT_TEST_SKILLS;
   const agents = options.agents ?? DEFAULT_TEST_AGENTS;
-  const matrix = generateMatrix(skills, options.matrix);
+  const { diskMatrix } = generateMatrix(skills, options.matrix);
 
   const tempDir = await createTempDir("cc-test-");
   const projectDir = path.join(tempDir, "project");
@@ -459,7 +510,7 @@ export async function createTestSource(options: TestSourceOptions = {}): Promise
   await mkdir(agentsDir, { recursive: true });
   await mkdir(configDir, { recursive: true });
 
-  await writeFile(path.join(configDir, "skills-matrix.yaml"), stringifyYaml(matrix));
+  await writeFile(path.join(configDir, "skills-matrix.yaml"), stringifyYaml(diskMatrix));
 
   if (options.stacks && options.stacks.length > 0) {
     await writeFile(path.join(configDir, "stacks.yaml"), stringifyYaml({ stacks: options.stacks }));
@@ -488,6 +539,8 @@ ${skill.description}
       author: skill.author,
       category: skill.category,
       tags: skill.tags ?? [],
+      // cli_name is required by extractAllSkills for source-based matrix loading
+      cli_name: skill.name,
     };
     await writeFile(path.join(skillDir, "metadata.yaml"), stringifyYaml(metadata));
   }

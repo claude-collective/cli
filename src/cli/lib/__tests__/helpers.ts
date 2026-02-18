@@ -2,7 +2,7 @@ import path from "path";
 import os from "os";
 import { fileURLToPath } from "url";
 import { mkdtemp, rm, mkdir, writeFile, readFile, stat } from "fs/promises";
-import { parse as parseYaml } from "yaml";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { run, Errors } from "@oclif/core";
 import ansis from "ansis";
 import { DEFAULT_BRANDING, DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../../consts";
@@ -130,6 +130,7 @@ import type {
   CompileContext,
   Domain,
   DomainSelections,
+  ExtractedSkillMetadata,
   MergedSkillsMatrix,
   ResolvedSkill,
   ResolvedStack,
@@ -302,6 +303,39 @@ export function createMockSkill(
   };
 }
 
+/**
+ * Creates a mock ExtractedSkillMetadata for testing.
+ * Used when mocking extractAllSkills() return values.
+ */
+export function createMockExtractedSkill(
+  id: SkillId,
+  overrides?: Partial<ExtractedSkillMetadata>,
+): ExtractedSkillMetadata {
+  // Derive directory path and category from the skill ID convention: "domain-subcategory-name"
+  const segments = id.split("-");
+  const domain = segments[0] ?? "web";
+  const subcategory = segments[1] ?? "framework";
+  const name = segments.slice(2).join("-") || "skill";
+  const directoryPath = `${domain}/${subcategory}/${name}`;
+
+  return {
+    id,
+    directoryPath,
+    description: `${id} skill`,
+    category: `${subcategory}` as CategoryPath,
+    categoryExclusive: true,
+    author: "@test",
+    tags: [],
+    compatibleWith: [],
+    conflictsWith: [],
+    requires: [],
+    requiresSetup: [],
+    providesSetupFor: [],
+    path: `skills/${directoryPath}/`,
+    ...overrides,
+  };
+}
+
 export function createMockMatrix(
   skills: Record<string, ResolvedSkill>,
   overrides?: Partial<MergedSkillsMatrix>,
@@ -404,19 +438,91 @@ tools:
 export async function writeTestSkill(
   skillsDir: string,
   skillName: string,
-  options?: { author?: string; description?: string },
+  options?: {
+    author?: string;
+    description?: string;
+    /** Extra fields to merge into metadata.yaml (e.g., forked_from, cli_name) */
+    extraMetadata?: Record<string, unknown>;
+    /** Skip metadata.yaml creation entirely */
+    skipMetadata?: boolean;
+    /** Custom SKILL.md content (overrides default generated content) */
+    skillContent?: string;
+  },
 ): Promise<string> {
   const skillDir = path.join(skillsDir, skillName);
   await mkdir(skillDir, { recursive: true });
 
   await writeFile(
     path.join(skillDir, STANDARD_FILES.SKILL_MD),
-    createSkillContent(skillName, options?.description),
+    options?.skillContent ?? createSkillContent(skillName, options?.description),
   );
+
+  if (!options?.skipMetadata) {
+    if (options?.extraMetadata) {
+      const metadata = {
+        version: 1,
+        author: options?.author ?? "@test",
+        ...options.extraMetadata,
+      };
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
+        stringifyYaml(metadata),
+      );
+    } else {
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
+        createMetadataContent(options?.author),
+      );
+    }
+  }
+
+  return skillDir;
+}
+
+/**
+ * Creates a source-level skill directory with SKILL.md and rich metadata.yaml.
+ * Use this when testing `extractAllSkills()` and `mergeMatrixWithSkills()`.
+ *
+ * Unlike `writeTestSkill()` which creates installed skills, this writes skills
+ * in the source directory layout (under `src/skills/<domain>/<subcategory>/<name>/`).
+ */
+export async function writeSourceSkill(
+  skillsDir: string,
+  directoryPath: string,
+  config: {
+    id: string;
+    description: string;
+    category: string;
+    author?: string;
+    tags?: string[];
+    categoryExclusive?: boolean;
+    content?: string;
+  },
+): Promise<string> {
+  const skillDir = path.join(skillsDir, directoryPath);
+  await mkdir(skillDir, { recursive: true });
+
+  await writeFile(
+    path.join(skillDir, STANDARD_FILES.SKILL_MD),
+    createSkillContent(config.id, config.description),
+  );
+
+  const metadata: Record<string, unknown> = {
+    cli_name: config.id,
+    category: config.category,
+    author: config.author ?? "@test",
+    version: "1",
+  };
+  if (config.tags) {
+    metadata.tags = config.tags;
+  }
+  if (config.categoryExclusive !== undefined) {
+    metadata.category_exclusive = config.categoryExclusive;
+  }
 
   await writeFile(
     path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-    createMetadataContent(options?.author),
+    stringifyYaml(metadata),
   );
 
   return skillDir;

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { loadSkillsFromAllSources, searchExtraSources } from "./multi-source-loader";
 import type { SkillId } from "../../types";
 import type { ResolvedConfig, SourceEntry } from "../configuration";
-import { createMockSkill, createMockMatrix } from "../__tests__/helpers";
+import { createMockSkill, createMockMatrix, createMockExtractedSkill } from "../__tests__/helpers";
 
 // Mock external dependencies
 vi.mock("../../utils/logger", () => ({
@@ -20,6 +20,7 @@ vi.mock("../configuration", async () => {
 
 vi.mock("./source-fetcher", () => ({
   fetchFromSource: vi.fn(),
+  fetchMarketplace: vi.fn(),
 }));
 
 vi.mock("../matrix", async () => {
@@ -63,13 +64,112 @@ describe("multi-source-loader", () => {
       expect(react.availableSources).toBeDefined();
       expect(react.availableSources).toHaveLength(1);
       expect(react.availableSources![0].type).toBe("public");
-      expect(react.availableSources![0].name).toBe("public");
+      expect(react.availableSources![0].name).toBe("Agents Inc");
       expect(react.availableSources![0].installed).toBe(false);
+      expect(react.availableSources![0].primary).toBe(true);
 
       const vitest = matrix.skills["web-testing-vitest" as SkillId]!;
       expect(vitest.availableSources).toBeDefined();
       expect(vitest.availableSources).toHaveLength(1);
       expect(vitest.availableSources![0].type).toBe("public");
+      expect(vitest.availableSources![0].primary).toBe(true);
+    });
+
+    it("should tag skills with private marketplace source when source is not default", async () => {
+      const { resolveAllSources } = await import("../configuration");
+      vi.mocked(resolveAllSources).mockResolvedValue({
+        primary: { name: "marketplace", url: "github:private-org/skills" },
+        extras: [],
+      });
+
+      const privateSourceConfig: ResolvedConfig = {
+        source: "github:private-org/skills",
+        sourceOrigin: "flag",
+        marketplace: "Photoroom",
+      };
+
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+        "web-testing-vitest": createMockSkill("web-testing-vitest" as SkillId, "testing"),
+      });
+
+      await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test");
+
+      const react = matrix.skills["web-framework-react" as SkillId]!;
+      expect(react.availableSources).toBeDefined();
+      expect(react.availableSources).toHaveLength(1);
+      expect(react.availableSources![0].type).toBe("private");
+      expect(react.availableSources![0].name).toBe("Photoroom");
+      expect(react.availableSources![0].installed).toBe(false);
+      expect(react.availableSources![0].primary).toBe(true);
+
+      const vitest = matrix.skills["web-testing-vitest" as SkillId]!;
+      expect(vitest.availableSources).toBeDefined();
+      expect(vitest.availableSources).toHaveLength(1);
+      expect(vitest.availableSources![0].type).toBe("private");
+      expect(vitest.availableSources![0].name).toBe("Photoroom");
+      expect(vitest.availableSources![0].primary).toBe(true);
+    });
+
+    it("should use marketplace from marketplace parameter over sourceConfig", async () => {
+      const { resolveAllSources } = await import("../configuration");
+      vi.mocked(resolveAllSources).mockResolvedValue({
+        primary: { name: "marketplace", url: "github:private-org/skills" },
+        extras: [],
+      });
+
+      const privateSourceConfig: ResolvedConfig = {
+        source: "github:private-org/skills",
+        sourceOrigin: "flag",
+      };
+
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+      });
+
+      // marketplace parameter (from marketplace.json) takes precedence
+      await loadSkillsFromAllSources(
+        matrix,
+        privateSourceConfig,
+        "/tmp/test",
+        false,
+        "Acme Corp",
+      );
+
+      const react = matrix.skills["web-framework-react" as SkillId]!;
+      expect(react.availableSources).toBeDefined();
+      expect(react.availableSources).toHaveLength(1);
+      expect(react.availableSources![0].type).toBe("private");
+      expect(react.availableSources![0].name).toBe("Acme Corp");
+      expect(react.availableSources![0].primary).toBe(true);
+    });
+
+    it("should tag as public when default source has marketplace set", async () => {
+      const { resolveAllSources } = await import("../configuration");
+      vi.mocked(resolveAllSources).mockResolvedValue({
+        primary: { name: "marketplace", url: "github:agents-inc/skills" },
+        extras: [],
+      });
+
+      // Edge case: default source with marketplace set should use marketplace name but remain public type
+      const configWithMarketplace: ResolvedConfig = {
+        source: "github:agents-inc/skills",
+        sourceOrigin: "default",
+        marketplace: "SomeMarketplace",
+      };
+
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+      });
+
+      await loadSkillsFromAllSources(matrix, configWithMarketplace, "/tmp/test");
+
+      const react = matrix.skills["web-framework-react" as SkillId]!;
+      expect(react.availableSources).toBeDefined();
+      expect(react.availableSources).toHaveLength(1);
+      expect(react.availableSources![0].type).toBe("public");
+      expect(react.availableSources![0].name).toBe("SomeMarketplace");
+      expect(react.availableSources![0].primary).toBe(true);
     });
 
     it("should tag local skills with both public and local sources", async () => {
@@ -95,6 +195,7 @@ describe("multi-source-loader", () => {
       const publicSource = react.availableSources!.find((s) => s.type === "public");
       expect(publicSource).toBeDefined();
       expect(publicSource!.installed).toBe(false);
+      expect(publicSource!.primary).toBe(true);
 
       const localSource = react.availableSources!.find((s) => s.type === "local");
       expect(localSource).toBeDefined();
@@ -173,7 +274,7 @@ describe("multi-source-loader", () => {
       const react = matrix.skills["web-framework-react" as SkillId]!;
       expect(react.activeSource).toBeDefined();
       expect(react.activeSource!.type).toBe("public");
-      expect(react.activeSource!.name).toBe("public");
+      expect(react.activeSource!.name).toBe("Agents Inc");
     });
   });
 
@@ -230,21 +331,10 @@ describe("multi-source-loader", () => {
       });
 
       vi.mocked(extractAllSkills).mockResolvedValue([
-        {
-          id: "web-framework-react" as SkillId,
-          directoryPath: "web/framework/react",
+        createMockExtractedSkill("web-framework-react" as SkillId, {
           description: "Acme React",
-          category: "framework",
-          categoryExclusive: true,
           author: "@acme",
-          tags: [],
-          compatibleWith: [],
-          conflictsWith: [],
-          requires: [],
-          requiresSetup: [],
-          providesSetupFor: [],
-          path: "skills/web/framework/react/",
-        },
+        }),
       ]);
 
       const matrix = createMockMatrix({
@@ -265,6 +355,7 @@ describe("multi-source-loader", () => {
       expect(privateSource.name).toBe("acme-corp");
       expect(privateSource.url).toBe("github:acme-corp/skills");
       expect(privateSource.installed).toBe(false);
+      expect(privateSource.primary).toBeUndefined();
     });
   });
 
@@ -305,6 +396,7 @@ describe("multi-source-loader", () => {
       expect(publicSource.type).toBe("public");
       expect(publicSource.installed).toBe(true);
       expect(publicSource.installMode).toBe("plugin");
+      expect(publicSource.primary).toBe(true);
     });
 
     it("should tag skills from multiple plugins discovered via settings.json", async () => {
@@ -349,6 +441,196 @@ describe("multi-source-loader", () => {
     });
   });
 
+  describe("public source fallback tagging", () => {
+    it("should tag matching skills with public source when primary is non-default", async () => {
+      const { resolveAllSources } = await import("../configuration");
+      const { fetchFromSource } = await import("./source-fetcher");
+      const { fetchMarketplace } = await import("./source-fetcher");
+      const { extractAllSkills } = await import("../matrix");
+
+      vi.mocked(resolveAllSources).mockResolvedValue({
+        primary: { name: "marketplace", url: "github:private-org/skills" },
+        extras: [],
+      });
+
+      // fetchMarketplace for public source -- return a marketplace name
+      vi.mocked(fetchMarketplace).mockResolvedValue({
+        marketplace: {
+          name: "Agents Inc",
+          version: "1.0.0",
+          description: "Public",
+          owner: { name: "agents-inc" },
+          plugins: [],
+        },
+        sourcePath: "/tmp/cached/agents-inc",
+        fromCache: true,
+      });
+
+      // fetchFromSource for public source
+      vi.mocked(fetchFromSource).mockResolvedValue({
+        path: "/tmp/cached/agents-inc",
+        fromCache: true,
+        source: "github:agents-inc/skills",
+      });
+
+      // extractAllSkills for public source -- react exists in public, vitest does not
+      vi.mocked(extractAllSkills).mockResolvedValue([
+        createMockExtractedSkill("web-framework-react" as SkillId, {
+          description: "Public React",
+          author: "@agents-inc",
+        }),
+      ]);
+
+      const privateSourceConfig: ResolvedConfig = {
+        source: "github:private-org/skills",
+        sourceOrigin: "flag",
+        marketplace: "Photoroom",
+      };
+
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+        "web-testing-vitest": createMockSkill("web-testing-vitest" as SkillId, "testing"),
+      });
+
+      await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test");
+
+      // React should have both private (Photoroom) and public (Agents Inc) sources
+      const react = matrix.skills["web-framework-react" as SkillId]!;
+      expect(react.availableSources).toBeDefined();
+      expect(react.availableSources).toHaveLength(2);
+
+      const privateSource = react.availableSources!.find((s) => s.type === "private");
+      expect(privateSource).toBeDefined();
+      expect(privateSource!.name).toBe("Photoroom");
+      expect(privateSource!.primary).toBe(true);
+
+      const publicSource = react.availableSources!.find((s) => s.type === "public");
+      expect(publicSource).toBeDefined();
+      expect(publicSource!.name).toBe("Agents Inc");
+      expect(publicSource!.installed).toBe(false);
+      expect(publicSource!.primary).toBeUndefined();
+
+      // Vitest only exists in private source, not in public
+      const vitest = matrix.skills["web-testing-vitest" as SkillId]!;
+      expect(vitest.availableSources).toHaveLength(1);
+      expect(vitest.availableSources![0].type).toBe("private");
+      expect(vitest.availableSources![0].name).toBe("Photoroom");
+      expect(vitest.availableSources![0].primary).toBe(true);
+    });
+
+    it("should not duplicate public source when primary IS the default source", async () => {
+      const { resolveAllSources } = await import("../configuration");
+      const { fetchFromSource } = await import("./source-fetcher");
+
+      vi.mocked(resolveAllSources).mockResolvedValue({
+        primary: { name: "marketplace", url: "github:agents-inc/skills" },
+        extras: [],
+      });
+
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+      });
+
+      await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
+
+      const react = matrix.skills["web-framework-react" as SkillId]!;
+      // Only the primary public source -- no duplicate public tagging
+      expect(react.availableSources).toHaveLength(1);
+      expect(react.availableSources![0].type).toBe("public");
+      expect(react.availableSources![0].name).toBe("Agents Inc");
+
+      // fetchFromSource should NOT have been called for public fallback
+      expect(fetchFromSource).not.toHaveBeenCalled();
+    });
+
+    it("should use fallback name when public source has no marketplace.json", async () => {
+      const { resolveAllSources } = await import("../configuration");
+      const { fetchFromSource } = await import("./source-fetcher");
+      const { fetchMarketplace } = await import("./source-fetcher");
+      const { extractAllSkills } = await import("../matrix");
+
+      vi.mocked(resolveAllSources).mockResolvedValue({
+        primary: { name: "marketplace", url: "github:private-org/skills" },
+        extras: [],
+      });
+
+      // fetchMarketplace fails -- no marketplace.json in public source
+      vi.mocked(fetchMarketplace).mockRejectedValue(new Error("Not found"));
+
+      vi.mocked(fetchFromSource).mockResolvedValue({
+        path: "/tmp/cached/agents-inc",
+        fromCache: true,
+        source: "github:agents-inc/skills",
+      });
+
+      vi.mocked(extractAllSkills).mockResolvedValue([
+        createMockExtractedSkill("web-framework-react" as SkillId, {
+          description: "Public React",
+          author: "@agents-inc",
+        }),
+      ]);
+
+      const privateSourceConfig: ResolvedConfig = {
+        source: "github:private-org/skills",
+        sourceOrigin: "flag",
+        marketplace: "Photoroom",
+      };
+
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+      });
+
+      await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test");
+
+      const react = matrix.skills["web-framework-react" as SkillId]!;
+      expect(react.availableSources).toHaveLength(2);
+
+      // Public source should use fallback name "Agents Inc"
+      const publicSource = react.availableSources!.find((s) => s.type === "public");
+      expect(publicSource).toBeDefined();
+      expect(publicSource!.name).toBe("Agents Inc");
+    });
+
+    it("should handle public source fetch failure gracefully", async () => {
+      const { resolveAllSources } = await import("../configuration");
+      const { fetchFromSource } = await import("./source-fetcher");
+      const { fetchMarketplace } = await import("./source-fetcher");
+      const { warn } = await import("../../utils/logger");
+
+      vi.mocked(resolveAllSources).mockResolvedValue({
+        primary: { name: "marketplace", url: "github:private-org/skills" },
+        extras: [],
+      });
+
+      vi.mocked(fetchMarketplace).mockRejectedValue(new Error("Not found"));
+      vi.mocked(fetchFromSource).mockRejectedValue(new Error("Network error"));
+
+      const privateSourceConfig: ResolvedConfig = {
+        source: "github:private-org/skills",
+        sourceOrigin: "flag",
+        marketplace: "Photoroom",
+      };
+
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+      });
+
+      // Should not throw
+      await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test");
+
+      // Should have warned about the failure
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining("Failed to load public source"),
+      );
+
+      // Skill should still have just the private source
+      const react = matrix.skills["web-framework-react" as SkillId]!;
+      expect(react.availableSources).toHaveLength(1);
+      expect(react.availableSources![0].type).toBe("private");
+      expect(react.availableSources![0].name).toBe("Photoroom");
+    });
+  });
+
   describe("searchExtraSources", () => {
     it("should return empty array when no sources configured", async () => {
       const result = await searchExtraSources("react", []);
@@ -366,36 +648,18 @@ describe("multi-source-loader", () => {
       });
 
       vi.mocked(extractAllSkills).mockResolvedValue([
-        {
-          id: "web-framework-react-pro" as SkillId,
+        createMockExtractedSkill("web-framework-react-pro" as SkillId, {
           directoryPath: "web/framework/react",
           description: "Opinionated React with strict TS",
-          category: "framework",
-          categoryExclusive: true,
           author: "@acme",
-          tags: [],
-          compatibleWith: [],
-          conflictsWith: [],
-          requires: [],
-          requiresSetup: [],
-          providesSetupFor: [],
           path: "skills/web/framework/react/",
-        },
-        {
-          id: "web-framework-vue-pro" as SkillId,
+        }),
+        createMockExtractedSkill("web-framework-vue-pro" as SkillId, {
           directoryPath: "web/framework/vue",
           description: "Acme Vue",
-          category: "framework",
-          categoryExclusive: true,
           author: "@acme",
-          tags: [],
-          compatibleWith: [],
-          conflictsWith: [],
-          requires: [],
-          requiresSetup: [],
-          providesSetupFor: [],
           path: "skills/web/framework/vue/",
-        },
+        }),
       ]);
 
       const sources: SourceEntry[] = [{ name: "acme-corp", url: "github:acme-corp/skills" }];
@@ -428,38 +692,20 @@ describe("multi-source-loader", () => {
 
       vi.mocked(extractAllSkills)
         .mockResolvedValueOnce([
-          {
-            id: "web-framework-react-pro" as SkillId,
+          createMockExtractedSkill("web-framework-react-pro" as SkillId, {
             directoryPath: "web/framework/react",
             description: "Acme React Pro",
-            category: "framework",
-            categoryExclusive: true,
             author: "@acme",
-            tags: [],
-            compatibleWith: [],
-            conflictsWith: [],
-            requires: [],
-            requiresSetup: [],
-            providesSetupFor: [],
             path: "skills/web/framework/react/",
-          },
+          }),
         ])
         .mockResolvedValueOnce([
-          {
-            id: "web-framework-react-strict" as SkillId,
+          createMockExtractedSkill("web-framework-react-strict" as SkillId, {
             directoryPath: "web/framework/react",
             description: "Strict React",
-            category: "framework",
-            categoryExclusive: true,
             author: "@team-xyz",
-            tags: [],
-            compatibleWith: [],
-            conflictsWith: [],
-            requires: [],
-            requiresSetup: [],
-            providesSetupFor: [],
             path: "skills/web/framework/react/",
-          },
+          }),
         ]);
 
       const sources: SourceEntry[] = [
@@ -490,21 +736,12 @@ describe("multi-source-loader", () => {
         });
 
       vi.mocked(extractAllSkills).mockResolvedValueOnce([
-        {
-          id: "web-framework-react-strict" as SkillId,
+        createMockExtractedSkill("web-framework-react-strict" as SkillId, {
           directoryPath: "web/framework/react",
           description: "Strict React",
-          category: "framework",
-          categoryExclusive: true,
           author: "@team-xyz",
-          tags: [],
-          compatibleWith: [],
-          conflictsWith: [],
-          requires: [],
-          requiresSetup: [],
-          providesSetupFor: [],
           path: "skills/web/framework/react/",
-        },
+        }),
       ]);
 
       const sources: SourceEntry[] = [
@@ -535,21 +772,12 @@ describe("multi-source-loader", () => {
       });
 
       vi.mocked(extractAllSkills).mockResolvedValue([
-        {
-          id: "web-framework-vue-pro" as SkillId,
+        createMockExtractedSkill("web-framework-vue-pro" as SkillId, {
           directoryPath: "web/framework/vue",
           description: "Acme Vue",
-          category: "framework",
-          categoryExclusive: true,
           author: "@acme",
-          tags: [],
-          compatibleWith: [],
-          conflictsWith: [],
-          requires: [],
-          requiresSetup: [],
-          providesSetupFor: [],
           path: "skills/web/framework/vue/",
-        },
+        }),
       ]);
 
       const sources: SourceEntry[] = [{ name: "acme-corp", url: "github:acme-corp/skills" }];
@@ -569,21 +797,12 @@ describe("multi-source-loader", () => {
       });
 
       vi.mocked(extractAllSkills).mockResolvedValue([
-        {
-          id: "web-framework-react-pro" as SkillId,
+        createMockExtractedSkill("web-framework-react-pro" as SkillId, {
           directoryPath: "web/framework/React",
           description: "Acme React Pro",
-          category: "framework",
-          categoryExclusive: true,
           author: "@acme",
-          tags: [],
-          compatibleWith: [],
-          conflictsWith: [],
-          requires: [],
-          requiresSetup: [],
-          providesSetupFor: [],
           path: "skills/web/framework/React/",
-        },
+        }),
       ]);
 
       const sources: SourceEntry[] = [{ name: "acme-corp", url: "github:acme-corp/skills" }];

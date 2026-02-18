@@ -16,6 +16,46 @@ import { DEFAULT_PLUGIN_NAME } from "../../../consts";
 import { fileExists, directoryExists, buildWizardResult, buildSourceResult } from "../helpers";
 import { loadDefaultMappings, clearDefaultsCache } from "../../loading";
 
+/**
+ * Builds a MergedSkillsMatrix from PIPELINE_TEST_SKILLS for pipeline integration tests.
+ * Boundary cast: test data construction — the object literal satisfies the runtime shape
+ * but cannot satisfy branded types (SkillId, CategoryPath, SkillDisplayName) directly.
+ */
+function buildPipelineMatrix(skills: TestSkill[]): MergedSkillsMatrix {
+  const matrixSkills: Record<
+    string,
+    {
+      id: string;
+      description: string;
+      category: string;
+      path: string;
+      tags: string[];
+      author: string;
+    }
+  > = {};
+  for (const skill of skills) {
+    matrixSkills[skill.name] = {
+      id: skill.name,
+      description: skill.description,
+      category: skill.category,
+      path: `skills/${skill.category}/${skill.name}/`,
+      tags: skill.tags ?? [],
+      author: skill.author,
+    };
+  }
+
+  // Boundary cast: test data construction — cannot satisfy branded types directly
+  return {
+    version: "1.0.0",
+    categories: {},
+    skills: matrixSkills,
+    suggestedStacks: [],
+    displayNameToId: {},
+    displayNames: {},
+    generatedAt: new Date().toISOString(),
+  } as unknown as MergedSkillsMatrix;
+}
+
 // Load YAML defaults once for all tests in this file
 beforeAll(async () => {
   await loadDefaultMappings();
@@ -48,7 +88,7 @@ Use component-based architecture with JSX.
     id: "web-state-zustand",
     name: "web-state-zustand",
     description: "Bear necessities state management",
-    category: "web/state",
+    category: "web/client-state",
     author: "@test",
     tags: ["state", "zustand"],
     content: `---
@@ -216,37 +256,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
   describe("Scenario 1: Full pipeline with 10 skills from scratch flow", () => {
     it("should install skills, generate config, and compile agents", async () => {
-      const matrixSkills: Record<
-        string,
-        {
-          id: string;
-          description: string;
-          category: string;
-          path: string;
-          tags: string[];
-          author: string;
-        }
-      > = {};
-      for (const skill of PIPELINE_TEST_SKILLS) {
-        matrixSkills[skill.name] = {
-          id: skill.name,
-          description: skill.description,
-          category: skill.category,
-          path: `skills/${skill.category}/${skill.name}/`,
-          tags: skill.tags ?? [],
-          author: skill.author,
-        };
-      }
-
-      const matrix = {
-        version: "1.0.0",
-        categories: {},
-        skills: matrixSkills,
-        suggestedStacks: [],
-        displayNameToId: {},
-        displayNames: {},
-        generatedAt: new Date().toISOString(),
-      } as unknown as MergedSkillsMatrix;
+      const matrix = buildPipelineMatrix(PIPELINE_TEST_SKILLS);
 
       const wizardResult = buildWizardResult([], {
         selectedSkills: SKILL_NAMES,
@@ -277,6 +287,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       expect(installResult.configPath).toBe(configPath);
 
       const configContent = await readFile(configPath, "utf-8");
+      // Boundary cast: YAML parse returns `unknown`
       const config = parseYaml(configContent) as ProjectConfig;
 
       expect(config.name).toBe(DEFAULT_PLUGIN_NAME);
@@ -310,37 +321,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
     });
 
     it("should produce agents that contain skill content from source", async () => {
-      const matrixSkills: Record<
-        string,
-        {
-          id: string;
-          description: string;
-          category: string;
-          path: string;
-          tags: string[];
-          author: string;
-        }
-      > = {};
-      for (const skill of PIPELINE_TEST_SKILLS) {
-        matrixSkills[skill.name] = {
-          id: skill.name,
-          description: skill.description,
-          category: skill.category,
-          path: `skills/${skill.category}/${skill.name}/`,
-          tags: skill.tags ?? [],
-          author: skill.author,
-        };
-      }
-
-      const matrix = {
-        version: "1.0.0",
-        categories: {},
-        skills: matrixSkills,
-        suggestedStacks: [],
-        displayNameToId: {},
-        displayNames: {},
-        generatedAt: new Date().toISOString(),
-      } as unknown as MergedSkillsMatrix;
+      const matrix = buildPipelineMatrix(PIPELINE_TEST_SKILLS);
 
       const wizardResult = buildWizardResult([], {
         selectedSkills: SKILL_NAMES,
@@ -374,37 +355,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
   describe("Scenario 2: Compile round-trip (init then recompile)", () => {
     it("should recompile agents from installLocal output", async () => {
-      const matrixSkills: Record<
-        string,
-        {
-          id: string;
-          description: string;
-          category: string;
-          path: string;
-          tags: string[];
-          author: string;
-        }
-      > = {};
-      for (const skill of PIPELINE_TEST_SKILLS) {
-        matrixSkills[skill.name] = {
-          id: skill.name,
-          description: skill.description,
-          category: skill.category,
-          path: `skills/${skill.category}/${skill.name}/`,
-          tags: skill.tags ?? [],
-          author: skill.author,
-        };
-      }
-
-      const matrix = {
-        version: "1.0.0",
-        categories: {},
-        skills: matrixSkills,
-        suggestedStacks: [],
-        displayNameToId: {},
-        displayNames: {},
-        generatedAt: new Date().toISOString(),
-      } as unknown as MergedSkillsMatrix;
+      const matrix = buildPipelineMatrix(PIPELINE_TEST_SKILLS);
 
       const wizardResult = buildWizardResult([], {
         selectedSkills: SKILL_NAMES,
@@ -453,37 +404,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       const SUBSET_COUNT = 5;
       const selectedSkills = SKILL_NAMES.slice(0, SUBSET_COUNT);
 
-      const matrixSkills: Record<
-        string,
-        {
-          id: string;
-          description: string;
-          category: string;
-          path: string;
-          tags: string[];
-          author: string;
-        }
-      > = {};
-      for (const skill of PIPELINE_TEST_SKILLS) {
-        matrixSkills[skill.name] = {
-          id: skill.name,
-          description: skill.description,
-          category: skill.category,
-          path: `skills/${skill.category}/${skill.name}/`,
-          tags: skill.tags ?? [],
-          author: skill.author,
-        };
-      }
-
-      const matrix = {
-        version: "1.0.0",
-        categories: {},
-        skills: matrixSkills,
-        suggestedStacks: [],
-        displayNameToId: {},
-        displayNames: {},
-        generatedAt: new Date().toISOString(),
-      } as unknown as MergedSkillsMatrix;
+      const matrix = buildPipelineMatrix(PIPELINE_TEST_SKILLS);
 
       const wizardResult = buildWizardResult([], {
         selectedSkills,
@@ -498,6 +419,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       });
 
       const configContent = await readFile(installResult.configPath, "utf-8");
+      // Boundary cast: YAML parse returns `unknown`
       const config = parseYaml(configContent) as ProjectConfig;
 
       for (const skillId of selectedSkills) {
@@ -517,37 +439,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
     it("should set source metadata in config when sourceFlag is provided", async () => {
       const selectedSkills = SKILL_NAMES.slice(0, 3);
 
-      const matrixSkills: Record<
-        string,
-        {
-          id: string;
-          description: string;
-          category: string;
-          path: string;
-          tags: string[];
-          author: string;
-        }
-      > = {};
-      for (const skill of PIPELINE_TEST_SKILLS) {
-        matrixSkills[skill.name] = {
-          id: skill.name,
-          description: skill.description,
-          category: skill.category,
-          path: `skills/${skill.category}/${skill.name}/`,
-          tags: skill.tags ?? [],
-          author: skill.author,
-        };
-      }
-
-      const matrix = {
-        version: "1.0.0",
-        categories: {},
-        skills: matrixSkills,
-        suggestedStacks: [],
-        displayNameToId: {},
-        displayNames: {},
-        generatedAt: new Date().toISOString(),
-      } as unknown as MergedSkillsMatrix;
+      const matrix = buildPipelineMatrix(PIPELINE_TEST_SKILLS);
 
       const wizardResult = buildWizardResult([], { selectedSkills, installMode: "local" });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir, {
@@ -565,6 +457,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         path.join(dirs.projectDir, ".claude-src", "config.yaml"),
         "utf-8",
       );
+      // Boundary cast: YAML parse returns `unknown`
       const config = parseYaml(configContent) as ProjectConfig;
 
       expect(config.source).toBe("github:my-org/skills");
@@ -574,37 +467,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
   describe("Scenario 4: Directory structure verification", () => {
     it("should create complete directory structure matching init expectations", async () => {
-      const matrixSkills: Record<
-        string,
-        {
-          id: string;
-          description: string;
-          category: string;
-          path: string;
-          tags: string[];
-          author: string;
-        }
-      > = {};
-      for (const skill of PIPELINE_TEST_SKILLS) {
-        matrixSkills[skill.name] = {
-          id: skill.name,
-          description: skill.description,
-          category: skill.category,
-          path: `skills/${skill.category}/${skill.name}/`,
-          tags: skill.tags ?? [],
-          author: skill.author,
-        };
-      }
-
-      const matrix = {
-        version: "1.0.0",
-        categories: {},
-        skills: matrixSkills,
-        suggestedStacks: [],
-        displayNameToId: {},
-        displayNames: {},
-        generatedAt: new Date().toISOString(),
-      } as unknown as MergedSkillsMatrix;
+      const matrix = buildPipelineMatrix(PIPELINE_TEST_SKILLS);
 
       const wizardResult = buildWizardResult([], {
         selectedSkills: SKILL_NAMES,

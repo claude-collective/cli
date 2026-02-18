@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile, readFile, stat } from "fs/promises";
+import { mkdir, readFile, stat, writeFile } from "fs/promises";
 import {
   compileSkillPlugin,
   compileAllSkillPlugins,
   printCompilationSummary,
 } from "./skill-plugin-compiler";
+import { createTempDir, cleanupTempDir, writeTestSkill } from "../__tests__/helpers";
 
 describe("skill-plugin-compiler", () => {
   let tempDir: string;
@@ -14,7 +14,7 @@ describe("skill-plugin-compiler", () => {
   let outputDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "skill-compiler-test-"));
+    tempDir = await createTempDir("skill-compiler-test-");
     skillsDir = path.join(tempDir, "skills");
     outputDir = path.join(tempDir, "output");
     await mkdir(skillsDir, { recursive: true });
@@ -22,50 +22,14 @@ describe("skill-plugin-compiler", () => {
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("compileSkillPlugin", () => {
-    async function createTestSkill(
-      dirName: string,
-      frontmatter: Record<string, string>,
-      content = "# Skill Content",
-      metadata?: Record<string, unknown>,
-    ): Promise<string> {
-      // Use flat directory structure (no (@author) suffix)
-      const skillPath = path.join(skillsDir, dirName);
-      await mkdir(skillPath, { recursive: true });
-
-      // Create SKILL.md with frontmatter
-      const frontmatterYaml = Object.entries(frontmatter)
-        .map(([key, value]) => `${key}: ${value}`)
-        .join("\n");
-      const skillMd = `---\n${frontmatterYaml}\n---\n\n${content}`;
-      await writeFile(path.join(skillPath, "SKILL.md"), skillMd);
-
-      // Create metadata.yaml if provided
-      if (metadata) {
-        const metadataYaml = Object.entries(metadata)
-          .map(([key, value]) => {
-            if (Array.isArray(value)) {
-              return `${key}:\n${value.map((v) => `  - ${v}`).join("\n")}`;
-            }
-            // Quote strings that start with @ to avoid YAML parsing issues
-            const stringValue =
-              typeof value === "string" && value.startsWith("@") ? `"${value}"` : String(value);
-            return `${key}: ${stringValue}`;
-          })
-          .join("\n");
-        await writeFile(path.join(skillPath, "metadata.yaml"), metadataYaml);
-      }
-
-      return skillPath;
-    }
-
     it("should create plugin directory structure", async () => {
-      const skillPath = await createTestSkill("react", {
-        name: "react",
+      const skillPath = await writeTestSkill(skillsDir, "react", {
         description: "React skills",
+        skipMetadata: true,
       });
 
       const result = await compileSkillPlugin({
@@ -83,9 +47,9 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should generate valid plugin.json", async () => {
-      const skillPath = await createTestSkill("zustand", {
-        name: "zustand",
+      const skillPath = await writeTestSkill(skillsDir, "zustand", {
         description: "State management with Zustand",
+        skipMetadata: true,
       });
 
       const result = await compileSkillPlugin({
@@ -106,15 +70,11 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should copy SKILL.md with frontmatter", async () => {
-      const frontmatter = {
-        name: "tailwind",
+      const skillPath = await writeTestSkill(skillsDir, "tailwind", {
         description: "Tailwind CSS styling",
-      };
-      const skillPath = await createTestSkill(
-        "tailwind",
-        frontmatter,
-        "# Tailwind Content\n\nStyling guide.",
-      );
+        skipMetadata: true,
+        skillContent: "---\nname: tailwind\ndescription: Tailwind CSS styling\ncategory: test\n---\n\n# Tailwind Content\n\nStyling guide.",
+      });
 
       const result = await compileSkillPlugin({
         skillPath,
@@ -131,9 +91,9 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should copy examples directory when present", async () => {
-      const skillPath = await createTestSkill("vitest", {
-        name: "vitest",
+      const skillPath = await writeTestSkill(skillsDir, "vitest", {
         description: "Testing with Vitest",
+        skipMetadata: true,
       });
 
       // Create examples directory
@@ -155,9 +115,9 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should generate README.md", async () => {
-      const skillPath = await createTestSkill("mobx", {
-        name: "mobx",
+      const skillPath = await writeTestSkill(skillsDir, "mobx", {
         description: "State management with MobX",
+        skipMetadata: true,
       });
 
       const result = await compileSkillPlugin({
@@ -175,15 +135,10 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should include tags in README when metadata has tags", async () => {
-      const skillPath = await createTestSkill(
-        "react-query",
-        {
-          name: "react-query",
-          description: "Data fetching with React Query",
-        },
-        "# React Query",
-        { tags: ["web", "data", "async"] },
-      );
+      const skillPath = await writeTestSkill(skillsDir, "react-query", {
+        description: "Data fetching with React Query",
+        extraMetadata: { tags: ["web", "data", "async"] },
+      });
 
       const result = await compileSkillPlugin({
         skillPath,
@@ -200,9 +155,9 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should use custom skill name when provided", async () => {
-      const skillPath = await createTestSkill("original", {
-        name: "original",
+      const skillPath = await writeTestSkill(skillsDir, "original", {
         description: "Original skill",
+        skipMetadata: true,
       });
 
       const result = await compileSkillPlugin({
@@ -236,15 +191,10 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should get author from metadata.yaml", async () => {
-      const skillPath = await createTestSkill(
-        "web-framework-react",
-        {
-          name: "web-framework-react",
-          description: "React skills",
-        },
-        "# React Content",
-        { author: "@vince" },
-      );
+      const skillPath = await writeTestSkill(skillsDir, "web-framework-react", {
+        description: "React skills",
+        extraMetadata: { author: "@vince" },
+      });
 
       const result = await compileSkillPlugin({
         skillPath,
@@ -256,9 +206,9 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should have undefined author when no metadata.yaml", async () => {
-      const skillPath = await createTestSkill("web-framework-vue", {
-        name: "web-framework-vue",
+      const skillPath = await writeTestSkill(skillsDir, "web-framework-vue", {
         description: "Vue skills",
+        skipMetadata: true,
       });
 
       const result = await compileSkillPlugin({
@@ -271,15 +221,10 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should coerce numeric version in metadata.yaml to string without warning", async () => {
-      const skillPath = await createTestSkill(
-        "web-testing-vitest",
-        {
-          name: "web-testing-vitest",
-          description: "Testing with Vitest",
-        },
-        "# Vitest Content",
-        { author: "@test-author", version: 1 },
-      );
+      const skillPath = await writeTestSkill(skillsDir, "web-testing-vitest", {
+        description: "Testing with Vitest",
+        extraMetadata: { author: "@test-author", version: 1 },
+      });
 
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -298,14 +243,11 @@ describe("skill-plugin-compiler", () => {
     });
 
     it("should use hash-based versioning on recompile", async () => {
-      const skillPath = await createTestSkill(
-        "simple",
-        {
-          name: "simple",
-          description: "Simple skill",
-        },
-        "# Simple version 1",
-      );
+      const skillPath = await writeTestSkill(skillsDir, "simple", {
+        description: "Simple skill",
+        skipMetadata: true,
+        skillContent: "---\nname: simple\ndescription: Simple skill\n---\n\n# Simple version 1",
+      });
 
       // First compile
       const result1 = await compileSkillPlugin({
@@ -345,41 +287,20 @@ description: Simple skill
   });
 
   describe("compileAllSkillPlugins", () => {
-    async function createTestSkill(
-      dirName: string,
-      frontmatter: Record<string, string>,
-      content = "# Skill Content",
-    ): Promise<string> {
-      // Use flat directory structure (no subDir or (@author) suffix)
-      const skillPath = path.join(skillsDir, dirName);
-      await mkdir(skillPath, { recursive: true });
-
-      const frontmatterYaml = Object.entries(frontmatter)
-        .map(([key, value]) => `${key}: ${value}`)
-        .join("\n");
-      const skillMd = `---\n${frontmatterYaml}\n---\n\n${content}`;
-      await writeFile(path.join(skillPath, "SKILL.md"), skillMd);
-
-      return skillPath;
-    }
-
     it("should compile multiple skills from directory", async () => {
       // Use flat directory structure with frontmatter.name as source of truth
-      await createTestSkill(
-        "web-framework-react",
-        { name: "web-framework-react", description: "React skills" },
-        "# React",
-      );
-      await createTestSkill(
-        "state-zustand",
-        { name: "state-zustand", description: "State management" },
-        "# Zustand",
-      );
-      await createTestSkill(
-        "backend-api-hono",
-        { name: "backend-api-hono", description: "API framework" },
-        "# Hono",
-      );
+      await writeTestSkill(skillsDir, "web-framework-react", {
+        description: "React skills",
+        skipMetadata: true,
+      });
+      await writeTestSkill(skillsDir, "state-zustand", {
+        description: "State management",
+        skipMetadata: true,
+      });
+      await writeTestSkill(skillsDir, "backend-api-hono", {
+        description: "API framework",
+        skipMetadata: true,
+      });
 
       const results = await compileAllSkillPlugins(skillsDir, outputDir);
 
@@ -391,16 +312,14 @@ description: Simple skill
     });
 
     it("should create plugin directories for each skill", async () => {
-      await createTestSkill(
-        "web-framework-react",
-        { name: "web-framework-react", description: "React skills" },
-        "# React",
-      );
-      await createTestSkill(
-        "backend-api-hono",
-        { name: "backend-api-hono", description: "API framework" },
-        "# Hono",
-      );
+      await writeTestSkill(skillsDir, "web-framework-react", {
+        description: "React skills",
+        skipMetadata: true,
+      });
+      await writeTestSkill(skillsDir, "backend-api-hono", {
+        description: "API framework",
+        skipMetadata: true,
+      });
 
       const results = await compileAllSkillPlugins(skillsDir, outputDir);
 
@@ -417,11 +336,11 @@ description: Simple skill
 
     it("should use frontmatter.name as skill name (not directory name)", async () => {
       // Directory name and frontmatter.name are different
-      await createTestSkill(
-        "some-directory-name",
-        { name: "actual-skill-name", description: "Skill description" },
-        "# Content",
-      );
+      await writeTestSkill(skillsDir, "some-directory-name", {
+        description: "Skill description",
+        skipMetadata: true,
+        skillContent: "---\nname: actual-skill-name\ndescription: Skill description\n---\n\n# Content",
+      });
 
       const results = await compileAllSkillPlugins(skillsDir, outputDir);
 
@@ -432,23 +351,21 @@ description: Simple skill
 
     it("should continue compiling other skills when one fails", async () => {
       // Create valid skill
-      await createTestSkill(
-        "web-framework-react",
-        { name: "web-framework-react", description: "React skills" },
-        "# React",
-      );
+      await writeTestSkill(skillsDir, "web-framework-react", {
+        description: "React skills",
+        skipMetadata: true,
+      });
 
-      // Create invalid skill (no frontmatter)
+      // Create invalid skill (no frontmatter) - intentionally raw for error testing
       const badSkillPath = path.join(skillsDir, "bad-skill");
       await mkdir(badSkillPath, { recursive: true });
       await writeFile(path.join(badSkillPath, "SKILL.md"), "# No frontmatter");
 
       // Create another valid skill
-      await createTestSkill(
-        "state-zustand",
-        { name: "state-zustand", description: "State" },
-        "# Zustand",
-      );
+      await writeTestSkill(skillsDir, "state-zustand", {
+        description: "State",
+        skipMetadata: true,
+      });
 
       const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -467,11 +384,10 @@ description: Simple skill
     });
 
     it("should log success messages for compiled skills", async () => {
-      await createTestSkill(
-        "web-framework-react",
-        { name: "web-framework-react", description: "React skills" },
-        "# React",
-      );
+      await writeTestSkill(skillsDir, "web-framework-react", {
+        description: "React skills",
+        skipMetadata: true,
+      });
 
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
@@ -484,16 +400,14 @@ description: Simple skill
     });
 
     it("should return correct manifest for each compiled skill", async () => {
-      await createTestSkill(
-        "web-framework-react",
-        { name: "web-framework-react", description: "React skills" },
-        "# React",
-      );
-      await createTestSkill(
-        "backend-api-hono",
-        { name: "backend-api-hono", description: "API framework" },
-        "# Hono",
-      );
+      await writeTestSkill(skillsDir, "web-framework-react", {
+        description: "React skills",
+        skipMetadata: true,
+      });
+      await writeTestSkill(skillsDir, "backend-api-hono", {
+        description: "API framework",
+        skipMetadata: true,
+      });
 
       const results = await compileAllSkillPlugins(skillsDir, outputDir);
 

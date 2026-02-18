@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir } from "fs/promises";
-import { runCliCommand, createMockCategory } from "../helpers";
+import { mkdir } from "fs/promises";
+import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
 import { EXIT_CODES } from "../../exit-codes";
 import { useWizardStore } from "../../../stores/wizard-store";
 import type { Domain, SkillId, Subcategory } from "../../../types";
@@ -14,7 +13,7 @@ describe("edit command", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-edit-test-"));
+    tempDir = await createTempDir("cc-edit-test-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
@@ -22,7 +21,7 @@ describe("edit command", () => {
 
   afterEach(async () => {
     process.chdir(originalCwd);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("no installation found", () => {
@@ -37,7 +36,6 @@ describe("edit command", () => {
     it("when no installation exists, should suggest running agentsinc init", async () => {
       const { error } = await runCliCommand(["edit"]);
 
-      // Error message should mention running 'agentsinc init' first
       expect(error?.message).toContain("No installation found");
     });
   });
@@ -55,7 +53,6 @@ describe("edit command", () => {
     it("should accept --source flag with path", async () => {
       const { error } = await runCliCommand(["edit", "--source", "/some/path"]);
 
-      // Should not error on flag parsing
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
       expect(output.toLowerCase()).not.toContain("unexpected argument");
@@ -64,7 +61,6 @@ describe("edit command", () => {
     it("should accept -s shorthand for source", async () => {
       const { error } = await runCliCommand(["edit", "-s", "/some/path"]);
 
-      // Should accept -s shorthand
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
@@ -76,7 +72,6 @@ describe("edit command", () => {
         "https://example.com/agents",
       ]);
 
-      // Should not error on flag parsing
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
       expect(output.toLowerCase()).not.toContain("unexpected argument");
@@ -85,7 +80,6 @@ describe("edit command", () => {
     it("should accept --dry-run flag (inherited from BaseCommand)", async () => {
       const { error } = await runCliCommand(["edit", "--dry-run"]);
 
-      // Should not error on flag parsing (dry-run is inherited from BaseCommand.baseFlags)
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
@@ -102,7 +96,6 @@ describe("edit command", () => {
         "https://example.com/agents",
       ]);
 
-      // Should accept all flags without parsing errors
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
       expect(output.toLowerCase()).not.toContain("unexpected argument");
@@ -111,22 +104,19 @@ describe("edit command", () => {
     it("when mixing -s shorthand and --refresh long flag, should accept both", async () => {
       const { error } = await runCliCommand(["edit", "--refresh", "-s", "/custom/source"]);
 
-      // Should accept mixed flag formats
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
   });
 });
 
-// ── T3: Edit Wizard Pre-Selects Previously Chosen Skills ────────────────────
-//
 // The edit command uses populateFromSkillIds() on the Zustand wizard store
 // to restore prior selections. Testing at the store level because the edit
 // command itself launches an interactive wizard that cannot be driven from
 // runCliCommand. This validates the same code path used by
 // use-wizard-initialization.ts when edit mode is active.
 
-describe("edit wizard pre-selection via populateFromSkillIds (T3)", () => {
+describe("edit wizard pre-selection via populateFromSkillIds", () => {
   const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
     framework: { domain: "web" },
     "client-state": { domain: "web" },
@@ -191,16 +181,106 @@ describe("edit wizard pre-selection via populateFromSkillIds (T3)", () => {
     expect(selectedDomains).toContain("api");
     expect(selectedDomains).toContain("shared");
   });
+
+  it("should place shared-domain skills under the shared domain key", () => {
+    const installedSkills: SkillId[] = ["web-testing-vitest"];
+
+    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+
+    const { domainSelections } = useWizardStore.getState();
+
+    // Testing category maps to the shared domain
+    expect(domainSelections.shared?.testing).toEqual(["vitest"]);
+
+    // No web or api entries should exist
+    expect(domainSelections.web).toBeUndefined();
+    expect(domainSelections.api).toBeUndefined();
+  });
+
+  it("should produce empty domainSelections when installed list is empty", () => {
+    const installedSkills: SkillId[] = [];
+
+    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+
+    const { domainSelections } = useWizardStore.getState();
+
+    expect(Object.keys(domainSelections)).toHaveLength(0);
+  });
+
+  it("should skip skills missing from the marketplace (no displayName)", () => {
+    // Skill exists in lookup but has no displayName, so resolveSkillForPopulation returns null
+    const sparseSkills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
+      "web-framework-react": { category: "framework", displayName: "react" },
+      "web-framework-unknown": { category: "framework" },
+    } as Partial<Record<SkillId, { category: string; displayName?: string }>>;
+
+    const installedSkills: SkillId[] = ["web-framework-react", "web-framework-unknown"];
+
+    useWizardStore.getState().populateFromSkillIds(installedSkills, sparseSkills, categories);
+
+    const { domainSelections } = useWizardStore.getState();
+
+    // Only the skill with a displayName should be populated
+    expect(domainSelections.web?.framework).toEqual(["react"]);
+    expect(domainSelections.web?.framework).toHaveLength(1);
+  });
+
+  it("should skip skills whose category has no domain mapping", () => {
+    const extraSkills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
+      "web-framework-react": { category: "framework", displayName: "react" },
+      "infra-tooling-linter": { category: "unmapped-category", displayName: "linter" },
+    };
+
+    const installedSkills: SkillId[] = ["web-framework-react", "infra-tooling-linter"];
+
+    useWizardStore.getState().populateFromSkillIds(installedSkills, extraSkills, categories);
+
+    const { domainSelections } = useWizardStore.getState();
+
+    // Only the resolvable skill should be populated
+    expect(domainSelections.web?.framework).toEqual(["react"]);
+    // No domain should contain the unresolvable skill
+    const allTechs = useWizardStore.getState().getAllSelectedTechnologies();
+    expect(allTechs).not.toContain("linter");
+  });
+
+  it("should not duplicate skills when the same skill ID appears twice in installed list", () => {
+    const installedSkills: SkillId[] = ["web-framework-react", "web-framework-react"];
+
+    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+
+    const { domainSelections } = useWizardStore.getState();
+
+    // Should deduplicate
+    expect(domainSelections.web?.framework).toEqual(["react"]);
+    expect(domainSelections.web?.framework).toHaveLength(1);
+  });
+
+  it("should populate multiple skills within the same subcategory (non-exclusive)", () => {
+    // testing category is non-exclusive, so multiple selections are valid
+    const multiSkills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
+      ...skills,
+      "web-testing-playwright": { category: "testing", displayName: "playwright" },
+    } as Partial<Record<SkillId, { category: string; displayName?: string }>>;
+
+    const installedSkills: SkillId[] = ["web-testing-vitest", "web-testing-playwright"];
+
+    useWizardStore.getState().populateFromSkillIds(installedSkills, multiSkills, categories);
+
+    const { domainSelections } = useWizardStore.getState();
+
+    expect(domainSelections.shared?.testing).toContain("vitest");
+    expect(domainSelections.shared?.testing).toContain("playwright");
+    expect(domainSelections.shared?.testing).toHaveLength(2);
+  });
 });
 
-// ── T4: Edit Wizard Hides Domains With No Prior Selections ──────────────────
-//
 // After populateFromSkillIds, the wizard uses getSelectedTechnologiesPerDomain()
 // to determine which domains have active selections. Domains not in this result
 // can be filtered out of the build step UI. This tests that the store correctly
 // omits domains with zero selections.
 
-describe("edit wizard domain filtering (T4)", () => {
+describe("edit wizard domain filtering", () => {
   const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
     framework: { domain: "web" },
     "client-state": { domain: "web" },
@@ -246,5 +326,72 @@ describe("edit wizard domain filtering (T4)", () => {
     expect(perDomain.web).toBeDefined();
     expect(perDomain.api).toBeDefined();
     expect(perDomain.cli).toBeUndefined();
+  });
+
+  it("should report only shared domain when only shared skills are installed", () => {
+    const installedSkills: SkillId[] = ["web-testing-vitest"];
+
+    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+
+    const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
+
+    // Only shared domain should have selections
+    expect(perDomain.shared).toBeDefined();
+    expect(perDomain.shared).toEqual(["vitest"]);
+
+    // All other domains should be absent
+    expect(perDomain.web).toBeUndefined();
+    expect(perDomain.api).toBeUndefined();
+    expect(perDomain.cli).toBeUndefined();
+    expect(perDomain.mobile).toBeUndefined();
+  });
+
+  it("should return empty result when no skills are installed", () => {
+    const installedSkills: SkillId[] = [];
+
+    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+
+    const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
+
+    // All domains should be absent
+    expect(Object.keys(perDomain)).toHaveLength(0);
+  });
+
+  it("should include correct skill count per domain", () => {
+    const installedSkills: SkillId[] = [
+      "web-framework-react",
+      "web-state-zustand",
+      "api-framework-hono",
+      "web-testing-vitest",
+    ];
+
+    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+
+    const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
+
+    // Web has 2 skills (framework + client-state)
+    expect(perDomain.web).toHaveLength(2);
+
+    // API has 1 skill
+    expect(perDomain.api).toHaveLength(1);
+
+    // Shared has 1 skill (testing)
+    expect(perDomain.shared).toHaveLength(1);
+
+    // CLI and mobile still absent
+    expect(perDomain.cli).toBeUndefined();
+    expect(perDomain.mobile).toBeUndefined();
+  });
+
+  it("should exclude web-extras domain when no web-extras skills are installed", () => {
+    const installedSkills: SkillId[] = ["web-framework-react"];
+
+    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+
+    const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
+
+    expect(perDomain.web).toBeDefined();
+    // web-extras is a separate domain and should not appear unless explicitly selected
+    expect(perDomain["web-extras"]).toBeUndefined();
   });
 });
