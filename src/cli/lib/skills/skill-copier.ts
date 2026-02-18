@@ -75,6 +75,7 @@ export async function copySkill(
   skill: ResolvedSkill,
   stackDir: string,
   registryRoot: string,
+  source?: string,
 ): Promise<CopiedSkill> {
   const sourcePath = getSkillSourcePath(skill, registryRoot);
   const destPath = getSkillDestPath(skill, stackDir);
@@ -84,7 +85,7 @@ export async function copySkill(
   await ensureDir(path.dirname(destPath));
   await copy(sourcePath, destPath);
 
-  await injectForkedFromMetadata(destPath, skill.id, contentHash);
+  await injectForkedFromMetadata(destPath, skill.id, contentHash, source);
 
   return {
     skillId: skill.id,
@@ -115,7 +116,7 @@ export async function copySkillFromSource(
   await ensureDir(path.dirname(destPath));
   await copy(sourcePath, destPath);
 
-  await injectForkedFromMetadata(destPath, skill.id, contentHash);
+  await injectForkedFromMetadata(destPath, skill.id, contentHash, sourceResult.sourceConfig.source);
 
   return {
     skillId: skill.id,
@@ -192,7 +193,7 @@ async function copySkillToLocalFlattened(
   await ensureDir(path.dirname(destPath));
   await copy(sourcePath, destPath);
 
-  await injectForkedFromMetadata(destPath, skill.id, contentHash);
+  await injectForkedFromMetadata(destPath, skill.id, contentHash, sourceResult.sourceConfig.source);
 
   return {
     skillId: skill.id,

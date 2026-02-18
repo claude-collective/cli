@@ -74,7 +74,13 @@ export async function loadSkillsMatrixFromSource(
     result.matrix = mergeLocalSkillsIntoMatrix(result.matrix, localSkillsResult);
   }
 
-  await loadSkillsFromAllSources(result.matrix, sourceConfig, resolvedProjectDir);
+  await loadSkillsFromAllSources(
+    result.matrix,
+    sourceConfig,
+    resolvedProjectDir,
+    forceRefresh,
+    result.marketplace,
+  );
 
   checkMatrixHealth(result.matrix);
 
@@ -126,7 +132,6 @@ async function loadFromRemote(
   if (!marketplace) {
     try {
       const marketplaceResult = await fetchMarketplace(source, { forceRefresh });
-      // Use the actual marketplace name from marketplace.json
       marketplace = marketplaceResult.marketplace.name;
       verbose(`Using marketplace name from marketplace.json: ${marketplace}`);
     } catch {
@@ -144,7 +149,6 @@ async function loadFromRemote(
   };
 }
 
-// Shared logic: reads source config overrides, resolves matrix/skills/stacks from basePath
 async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsMatrix> {
   const sourceProjectConfig = await loadProjectSourceConfig(basePath);
 
@@ -152,7 +156,6 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
   const skillsDirRelPath = sourceProjectConfig?.skills_dir ?? SKILLS_DIR_PATH;
   const stacksRelFile = sourceProjectConfig?.stacks_file;
 
-  // Check if source has its own matrix, otherwise fallback to CLI matrix
   const sourceMatrixPath = path.join(basePath, matrixRelPath);
   const cliMatrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
 
@@ -184,8 +187,7 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
   return mergedMatrix;
 }
 
-// Convert a Stack to ResolvedStack for wizard compatibility.
-// Stack values are already skill IDs — no alias resolution needed.
+// Stack values are already skill IDs — no alias resolution needed
 function convertStackToResolvedStack(stack: Stack): ResolvedStack {
   const allSkillIds: SkillId[] = [];
   const seenSkillIds = new Set<SkillId>();
@@ -249,13 +251,11 @@ export function getMarketplaceLabel(sourceResult: SourceLoadResult): string | un
   const { marketplace } = sourceResult;
 
   if (!marketplace) {
-    // No private marketplace — show source name as public
     const name = extractSourceName(sourceResult.sourceConfig.source);
     return `${name} (public)`;
   }
 
-  // Private marketplace is active.
-  // When using a non-default source, the public marketplace is also available.
+  // When using a non-default source, the public marketplace is also available
   const PUBLIC_MARKETPLACE_COUNT = 1;
   const isDefaultSource = sourceResult.sourceConfig.source === DEFAULT_SOURCE;
   if (!isDefaultSource) {
@@ -270,7 +270,6 @@ function mergeLocalSkillsIntoMatrix(
   localResult: LocalSkillDiscoveryResult,
 ): MergedSkillsMatrix {
   for (const metadata of localResult.skills) {
-    // Preserve alias and category from existing matrix entry (if skill was in source)
     const existingSkill = matrix.skills[metadata.id];
 
     // If overwriting an existing remote skill, inherit its category unconditionally.

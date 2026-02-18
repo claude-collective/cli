@@ -18,16 +18,40 @@ export function useMeasuredHeight(): {
   const [measuredHeight, setMeasuredHeight] = useState(0);
   const { stdout } = useStdout();
 
+  const measure = () => {
+    if (ref.current) {
+      const { height } = measureElement(ref.current);
+      setMeasuredHeight((prev) => (prev !== height ? height : prev));
+    }
+  };
+
+  // Re-measure after every render so late-mounted refs (e.g., Sources
+  // step switching from "choice" to "customize" view) get picked up.
+  // The state setter avoids unnecessary updates when height is unchanged.
   useEffect(() => {
-    const measure = () => {
-      if (ref.current) {
-        const { height } = measureElement(ref.current);
-        setMeasuredHeight((prev) => (prev !== height ? height : prev));
+    measure();
+  });
+
+  // Yoga may not have computed the layout on the first render, so
+  // measureElement() returns 0. Retry with increasing delays to give
+  // Yoga time to resolve the full flex constraint chain.
+  useEffect(() => {
+    const RETRY_DELAYS_MS = [0, 16, 50];
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    for (const delay of RETRY_DELAYS_MS) {
+      timers.push(setTimeout(measure, delay));
+    }
+
+    return () => {
+      for (const timer of timers) {
+        clearTimeout(timer);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    measure();
-
+  useEffect(() => {
     stdout.on("resize", measure);
     return () => {
       stdout.off("resize", measure);

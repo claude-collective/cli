@@ -22,7 +22,7 @@ import { detectInstallation, type Installation } from "../lib/installation";
 import type { AgentSourcePaths, ProjectConfig, SkillDefinition, SkillId } from "../types";
 import { projectConfigLoaderSchema } from "../lib/schemas";
 import { normalizeStackRecord, getStackSkillIds } from "../lib/stacks/stacks-loader";
-import { typedEntries } from "../utils/typed-object";
+import { typedEntries, typedKeys } from "../utils/typed-object";
 
 async function loadSkillsFromDir(
   skillsDir: string,
@@ -82,7 +82,7 @@ async function discoverLocalProjectSkills(
   return loadSkillsFromDir(localSkillsDir, LOCAL_SKILLS_PATH);
 }
 
-/** Merge skills from multiple sources. Later sources take precedence. */
+/** Later sources take precedence over earlier ones */
 function mergeSkills(
   ...skillSources: Partial<Record<SkillId, SkillDefinition>>[]
 ): Partial<Record<SkillId, SkillDefinition>> {
@@ -102,7 +102,6 @@ function mergeSkills(
 type CompileFlags = {
   source?: string;
   "agent-source"?: string;
-  refresh: boolean;
   verbose: boolean;
   "dry-run": boolean;
 };
@@ -123,7 +122,6 @@ export default class Compile extends BaseCommand {
     "<%= config.bin %> <%= command.id %> --verbose",
     "<%= config.bin %> <%= command.id %> --output ./agents",
     "<%= config.bin %> <%= command.id %> --dry-run",
-    "<%= config.bin %> <%= command.id %> --source /path/to/marketplace --refresh",
   ];
 
   static flags = {
@@ -135,10 +133,6 @@ export default class Compile extends BaseCommand {
     }),
     "agent-source": Flags.string({
       description: "Remote agent partials source (default: local CLI)",
-    }),
-    refresh: Flags.boolean({
-      description: "Force refresh from remote sources",
-      default: false,
     }),
     output: Flags.string({
       char: "o",
@@ -185,15 +179,15 @@ export default class Compile extends BaseCommand {
     this.log(STATUS_MESSAGES.DISCOVERING_SKILLS);
 
     const pluginSkills = await discoverAllPluginSkills(projectDir);
-    const pluginSkillCount = Object.keys(pluginSkills).length;
+    const pluginSkillCount = typedKeys<SkillId>(pluginSkills).length;
     verbose(`  Found ${pluginSkillCount} skills from installed plugins`);
 
     const localSkills = await discoverLocalProjectSkills(projectDir);
-    const localSkillCount = Object.keys(localSkills).length;
+    const localSkillCount = typedKeys<SkillId>(localSkills).length;
     verbose(`  Found ${localSkillCount} local skills from .claude/skills/`);
 
     const allSkills = mergeSkills(pluginSkills, localSkills);
-    const totalSkillCount = Object.keys(allSkills).length;
+    const totalSkillCount = typedKeys<SkillId>(allSkills).length;
 
     if (totalSkillCount === 0) {
       this.log(ERROR_MESSAGES.NO_SKILLS_FOUND);
@@ -237,7 +231,6 @@ export default class Compile extends BaseCommand {
 
     try {
       const agentDefs = await getAgentDefinitions(flags["agent-source"], {
-        forceRefresh: flags.refresh,
         projectDir,
       });
       this.log(flags["agent-source"] ? "Agent partials fetched" : "Agent partials loaded");

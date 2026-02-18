@@ -31,7 +31,7 @@ const GLOBAL_TOGGLES: HelpSection = {
 const BUILD_KEYS: HelpSection = {
   title: "Build Step",
   keys: [
-    { key: "D", description: "Toggle skill descriptions" },
+    { key: "D", description: "Toggle compatibility labels" },
     { key: "A", description: "Accept stack defaults (stack path only)" },
     { key: "h/j/k/l", description: "Vim-style navigation" },
   ],

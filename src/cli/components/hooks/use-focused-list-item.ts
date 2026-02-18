@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 
 type Direction = "up" | "down" | "left" | "right";
 
@@ -52,22 +52,18 @@ export function useFocusedListItem(
   const [focusedRow, setFocusedRow] = useState(initialRow);
   const [focusedCol, setFocusedCol] = useState(initialCol);
 
-  // Refs for stable callback access without stale closures
+  // Refs for stable callback access without stale closures.
+  // Synced during render (not via useEffect) to prevent a timing gap where
+  // the ref holds stale values when an input event arrives between render
+  // and effect execution (e.g. after a domain-switch remount).
   const focusedRowRef = useRef(focusedRow);
+  focusedRowRef.current = focusedRow;
+
   const focusedColRef = useRef(focusedCol);
+  focusedColRef.current = focusedCol;
+
   const onChangeRef = useRef(onChange);
-
-  useEffect(() => {
-    focusedRowRef.current = focusedRow;
-  }, [focusedRow]);
-
-  useEffect(() => {
-    focusedColRef.current = focusedCol;
-  }, [focusedCol]);
-
-  useEffect(() => {
-    onChangeRef.current = onChange;
-  }, [onChange]);
+  onChangeRef.current = onChange;
 
   const applyFocus = useCallback((row: number, col: number) => {
     setFocusedRow(row);

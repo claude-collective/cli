@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useInput } from "ink";
 
 import type { Subcategory, SkillId } from "../../types/index.js";
@@ -59,7 +59,7 @@ type UseCategoryGridInputOptions = {
   setFocused: (row: number, col: number) => void;
   moveFocus: (direction: "up" | "down" | "left" | "right") => void;
   onToggle: (categoryId: Subcategory, technologyId: SkillId) => void;
-  onToggleDescriptions: () => void;
+  onToggleLabels: () => void;
 };
 
 export function useCategoryGridInput({
@@ -70,7 +70,7 @@ export function useCategoryGridInput({
   setFocused,
   moveFocus,
   onToggle,
-  onToggleDescriptions,
+  onToggleLabels,
 }: UseCategoryGridInputOptions): void {
   const currentRow = processedCategories[focusedRow];
   const currentOptions = currentRow?.sortedOptions || [];
@@ -99,78 +99,73 @@ export function useCategoryGridInput({
     }
   }, [currentRow, currentLocked, focusedRow, processedCategories, categories, setFocused]);
 
-  useInput(
-    useCallback(
-      (
-        input: string,
-        key: {
-          leftArrow: boolean;
-          rightArrow: boolean;
-          upArrow: boolean;
-          downArrow: boolean;
-          tab: boolean;
-          shift: boolean;
-        },
-      ) => {
-        if (key.tab && key.shift) {
-          onToggleDescriptions();
-          return;
-        }
+  // Store the latest handler in a ref so that the useInput effect never needs to
+  // re-register on the event emitter. This avoids a stale-closure race condition
+  // where, after a domain switch (CategoryGrid remount via key={activeDomain}),
+  // the useInput effect may not yet have re-registered the updated handler when
+  // the first keypress arrives — causing the first space press to be silently lost.
+  type InputKey = {
+    leftArrow: boolean;
+    rightArrow: boolean;
+    upArrow: boolean;
+    downArrow: boolean;
+    tab: boolean;
+    shift: boolean;
+  };
 
-        if (key.tab && !key.shift) {
-          const nextSection = findNextUnlockedIndex(processedCategories, focusedRow, categories);
-          if (nextSection !== focusedRow) {
-            const newRowOptions = processedCategories[nextSection]?.sortedOptions || [];
-            const newCol = findValidStartColumn(newRowOptions);
-            setFocused(nextSection, newCol);
-          }
-          return;
-        }
+  const handlerRef = useRef<((input: string, key: InputKey) => void) | null>(null);
+  handlerRef.current = (input: string, key: InputKey) => {
+    if (key.tab && key.shift) {
+      onToggleLabels();
+      return;
+    }
 
-        if (input === "d" || input === "D") {
-          onToggleDescriptions();
-          return;
-        }
+    if (key.tab && !key.shift) {
+      const nextSection = findNextUnlockedIndex(processedCategories, focusedRow, categories);
+      if (nextSection !== focusedRow) {
+        const newRowOptions = processedCategories[nextSection]?.sortedOptions || [];
+        const newCol = findValidStartColumn(newRowOptions);
+        setFocused(nextSection, newCol);
+      }
+      return;
+    }
 
-        if (input === " ") {
-          if (currentLocked) return;
-          const currentOption = currentOptions[focusedCol];
-          if (currentOption && currentOption.state !== "disabled") {
-            onToggle(currentRow.id, currentOption.id);
-          }
-          return;
-        }
+    if (input === "d" || input === "D") {
+      onToggleLabels();
+      return;
+    }
 
-        const isLeft = key.leftArrow || input === "h";
-        const isRight = key.rightArrow || input === "l";
-        const isUp = key.upArrow || input === "k";
-        const isDown = key.downArrow || input === "j";
+    if (input === " ") {
+      if (currentLocked) return;
+      const currentOption = currentOptions[focusedCol];
+      if (currentOption && currentOption.state !== "disabled") {
+        onToggle(currentRow.id, currentOption.id);
+      }
+      return;
+    }
 
-        if (isLeft) {
-          if (currentLocked) return;
-          moveFocus("left");
-        } else if (isRight) {
-          if (currentLocked) return;
-          moveFocus("right");
-        } else if (isUp) {
-          moveFocus("up");
-        } else if (isDown) {
-          moveFocus("down");
-        }
-      },
-      [
-        focusedRow,
-        focusedCol,
-        currentOptions,
-        currentRow,
-        currentLocked,
-        processedCategories,
-        categories,
-        onToggle,
-        onToggleDescriptions,
-        setFocused,
-        moveFocus,
-      ],
-    ),
-  );
+    const isLeft = key.leftArrow || input === "h";
+    const isRight = key.rightArrow || input === "l";
+    const isUp = key.upArrow || input === "k";
+    const isDown = key.downArrow || input === "j";
+
+    if (isLeft) {
+      if (currentLocked) return;
+      moveFocus("left");
+    } else if (isRight) {
+      if (currentLocked) return;
+      moveFocus("right");
+    } else if (isUp) {
+      moveFocus("up");
+    } else if (isDown) {
+      moveFocus("down");
+    }
+  };
+
+  // Stable handler reference — never changes, so useInput's effect registers once
+  const stableHandler = useCallback((input: string, key: InputKey) => {
+    handlerRef.current?.(input, key);
+  }, []);
+
+  useInput(stableHandler);
 }

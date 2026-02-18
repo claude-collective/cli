@@ -21,14 +21,14 @@ export type StepBuildProps = {
   selectedDomains: Domain[];
   selections: SubcategorySelections;
   allSelections: SkillId[];
-  showDescriptions: boolean;
+  showLabels: boolean;
   expertMode: boolean;
   /** For framework-first filtering on sub-domains (e.g., web-extras inherits from web) */
   parentDomainSelections?: SubcategorySelections;
   /** Skill IDs already installed on disk, shown with a dimmed checkmark */
   installedSkillIds?: SkillId[];
   onToggle: (subcategoryId: Subcategory, technologyId: SkillId) => void;
-  onToggleDescriptions: () => void;
+  onToggleLabels: () => void;
   onContinue: () => void;
   onBack: () => void;
 };
@@ -56,12 +56,12 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   selectedDomains,
   selections,
   allSelections,
-  showDescriptions,
+  showLabels,
   expertMode,
   parentDomainSelections,
   installedSkillIds,
   onToggle,
-  onToggleDescriptions,
+  onToggleLabels,
   onContinue,
   onBack,
 }) => {
@@ -127,9 +127,9 @@ export const StepBuild: React.FC<StepBuildProps> = ({
           categories={categories}
           availableHeight={gridHeight}
           expertMode={expertMode}
-          showDescriptions={showDescriptions}
+          showLabels={showLabels}
           onToggle={onToggle}
-          onToggleDescriptions={onToggleDescriptions}
+          onToggleLabels={onToggleLabels}
         />
       </Box>
 

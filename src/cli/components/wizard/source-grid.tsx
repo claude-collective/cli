@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Box, type DOMElement, Text, measureElement, useInput } from "ink";
 import type { BoundSkillCandidate, SkillAlias, SkillId } from "../../types/index.js";
-import { CLI_COLORS, SCROLL_VIEWPORT, UI_SYMBOLS } from "../../consts.js";
+import { CLI_COLORS, SCROLL_VIEWPORT } from "../../consts.js";
 import { useFocusedListItem } from "../hooks/use-focused-list-item.js";
 import { useSourceGridSearchModal } from "../hooks/use-source-grid-search-modal.js";
 import { SearchModal } from "./search-modal.js";
@@ -66,21 +66,26 @@ const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean }> = ({
   option,
   isFocused,
 }) => {
-  const borderColor = option.selected
-    ? CLI_COLORS.PRIMARY
-    : isFocused
-      ? CLI_COLORS.UNFOCUSED
-      : CLI_COLORS.NEUTRAL;
-  const textColor = option.selected ? CLI_COLORS.PRIMARY : undefined;
+  const getBorderColor = (): string => {
+    if (isFocused) {
+      return option.selected ? CLI_COLORS.PRIMARY : CLI_COLORS.UNFOCUSED;
+    }
+    return CLI_COLORS.NEUTRAL;
+  };
+
+  const textColor = option.selected ? CLI_COLORS.PRIMARY : CLI_COLORS.NEUTRAL;
   const isBold = isFocused || option.selected;
-  const symbol = option.selected ? UI_SYMBOLS.SELECTED : UI_SYMBOLS.UNSELECTED;
 
   return (
-    <Box marginRight={1} borderColor={borderColor} borderStyle="single">
-      <Text color={textColor} bold={isBold}>
+    <Box
+      marginRight={1}
+      borderColor={getBorderColor()}
+      borderStyle="single"
+      borderDimColor={!isFocused}
+    >
+      <Text color={textColor} bold={isBold} dimColor={false}>
         {" "}
-        <Text dimColor={!option.selected}>{symbol}</Text> {option.label}
-        {option.selected && <Text dimColor> (active)</Text>}{" "}
+        {option.label}{" "}
       </Text>
     </Box>
   );
@@ -158,7 +163,6 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
     initialCol: defaultFocusedCol,
   });
 
-  // --- Pixel-accurate scroll tracking ---
   const sectionRefs = useRef<(DOMElement | null)[]>([]);
   const [sectionHeights, setSectionHeights] = useState<number[]>([]);
   const [scrollTopPx, setScrollTopPx] = useState(0);
@@ -167,7 +171,6 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
     sectionRefs.current[index] = el;
   }, []);
 
-  // Measure all section heights after each render
   useEffect(() => {
     const heights = sectionRefs.current.map((el) => {
       if (el) {
@@ -177,7 +180,6 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
       return 0;
     });
     setSectionHeights((prev) => {
-      // Only update if heights actually changed (avoid infinite re-render)
       if (prev.length === heights.length && prev.every((h, i) => h === heights[i])) {
         return prev;
       }
@@ -187,7 +189,6 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
 
   const scrollEnabled = availableHeight > 0 && availableHeight >= SCROLL_VIEWPORT.MIN_VIEWPORT_ROWS;
 
-  // Scroll focused row into view
   useEffect(() => {
     if (!scrollEnabled || sectionHeights.length === 0) return;
 
@@ -224,12 +225,10 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
         if (input === " ") {
           const currentRow = rows[focusedRow];
           if (!currentRow) return;
-          // Space on search pill triggers search
           if (showSearchPill && focusedCol === currentRow.options.length) {
             void handleSearchTrigger(focusedRow);
             return;
           }
-          // Space on a source option toggles selection
           if (focusedCol < currentRow.options.length) {
             const currentOption = currentRow.options[focusedCol];
             if (currentOption) {
@@ -290,17 +289,21 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
   // When no height constraint, render flat (tests, or before first measurement)
   if (!scrollEnabled) {
     return (
-      <Box flexDirection="column" flexGrow={1} overflow="hidden">
-        {sectionElements}
+      <Box flexDirection="column" flexGrow={1}>
+        <Box flexDirection="column" flexGrow={1} overflow="hidden">
+          {sectionElements}
+        </Box>
         {searchModalElement}
       </Box>
     );
   }
 
   return (
-    <Box flexDirection="column" height={availableHeight} overflow="hidden">
-      <Box flexDirection="column" marginTop={scrollTopPx > 0 ? -scrollTopPx : 0} flexShrink={0}>
-        {sectionElements}
+    <Box flexDirection="column" height={availableHeight}>
+      <Box flexDirection="column" overflow="hidden" flexGrow={1}>
+        <Box flexDirection="column" marginTop={scrollTopPx > 0 ? -scrollTopPx : 0} flexShrink={0}>
+          {sectionElements}
+        </Box>
       </Box>
       {searchModalElement}
     </Box>

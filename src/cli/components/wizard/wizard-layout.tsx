@@ -114,16 +114,16 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
         <HelpModal currentStep={store.step} />
       ) : (
         <>
-          <Box flexGrow={1} marginTop={1}>
+          <Box flexDirection="column" flexGrow={1} flexBasis={0} marginTop={1}>
             {children}
           </Box>
           <Box paddingX={1} columnGap={2} marginTop={2}>
             <DefinitionItem label="Expert mode" values={["E"]} isActive={store.expertMode} />
             <DefinitionItem
-              label="Descriptions"
+              label="Labels"
               values={["D"]}
               isVisible={store.step === "build"}
-              isActive={store.showDescriptions}
+              isActive={store.showLabels}
             />
             <DefinitionItem
               label="Plugin mode"

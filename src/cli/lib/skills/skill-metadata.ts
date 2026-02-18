@@ -30,6 +30,8 @@ export type ForkedFromMetadata = {
   content_hash: string;
   /** ISO date string (YYYY-MM-DD) when the skill was installed or last updated */
   date: string;
+  /** Source URL the skill was installed from (e.g., "github:agents-inc/skills") */
+  source?: string;
 };
 
 /**
@@ -41,8 +43,6 @@ export type ForkedFromMetadata = {
 export type LocalSkillMetadata = {
   /** Provenance metadata linking back to the original source skill, if any */
   forked_from?: ForkedFromMetadata;
-  /** If true, this skill was installed by the Agents Inc. CLI (safe to remove on uninstall) */
-  generatedByAgentsInc?: boolean;
   [key: string]: unknown;
 };
 
@@ -106,8 +106,8 @@ export async function readForkedFromMetadata(skillDir: string): Promise<ForkedFr
 /**
  * Reads the full local skill metadata from a skill's metadata.yaml file.
  *
- * Returns the parsed metadata including `generatedByAgentsInc` and `forked_from` fields.
- * Used by the uninstall command to determine whether a skill was created by the CLI.
+ * Returns the parsed metadata including `forked_from` field.
+ * Used by the uninstall command to determine whether a skill was installed by the CLI.
  *
  * @param skillDir - Absolute path to the skill directory
  * @returns The parsed metadata if valid, `null` if the file doesn't exist or is invalid
@@ -166,7 +166,6 @@ export async function getLocalSkillsWithMetadata(
     const skillDir = path.join(localSkillsPath, dirName);
     const forkedFrom = await readForkedFromMetadata(skillDir);
 
-    // Use the skill_id from forked_from if available, otherwise use directory name
     const skillId = forkedFrom?.skill_id ?? dirName;
 
     result.set(skillId, { dirName, forkedFrom });
@@ -236,7 +235,6 @@ export async function compareLocalSkillsWithSource(
 
   for (const [skillId, { dirName, forkedFrom }] of localSkills) {
     if (!forkedFrom) {
-      // Local-only skill (no forked_from metadata)
       // Boundary cast: skillId comes from Map<string, ...> keys (directory names or forkedFrom.skill_id)
       results.push({
         id: skillId as SkillId,
@@ -252,7 +250,6 @@ export async function compareLocalSkillsWithSource(
     const sourceSkill = sourceSkills[forkedFrom.skill_id];
 
     if (!sourceSkill) {
-      // Skill was forked from a source that no longer exists
       results.push({
         id: forkedFrom.skill_id,
         localHash,
@@ -305,6 +302,7 @@ export async function compareLocalSkillsWithSource(
  *                   The file must already exist (created during skill copy).
  * @param skillId - Canonical skill ID from the source repository (e.g., "cc-ts-react-hook-form")
  * @param contentHash - SHA-256 hash of the source SKILL.md content at install time
+ * @param source - Source URL the skill was installed from (e.g., "github:agents-inc/skills")
  *
  * @remarks
  * **Side effect:** Overwrites `{destPath}/metadata.yaml` on disk. Existing fields
@@ -315,6 +313,7 @@ export async function injectForkedFromMetadata(
   destPath: string,
   skillId: SkillId,
   contentHash: string,
+  source?: string,
 ): Promise<void> {
   const metadataPath = path.join(destPath, STANDARD_FILES.METADATA_YAML);
   const rawContent = await readFile(metadataPath);
@@ -338,8 +337,8 @@ export async function injectForkedFromMetadata(
     skill_id: skillId,
     content_hash: contentHash,
     date: getCurrentDate(),
+    ...(source ? { source } : {}),
   };
-  metadata.generatedByAgentsInc = true;
 
   const schemaComment = `${yamlSchemaComment(SCHEMA_PATHS.metadata)}\n`;
   const newYamlContent = stringifyYaml(metadata, { lineWidth: YAML_FORMATTING.LINE_WIDTH_NONE });

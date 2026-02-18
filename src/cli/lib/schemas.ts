@@ -32,11 +32,7 @@ import type {
   Subcategory,
 } from "../types";
 
-// ---------------------------------------------------------------------------
-// Enum schemas — mirror the union types in types/ for Zod runtime validation.
-// Bridge pattern: `z.ZodType<ExistingType>` ensures Zod output matches our types.
-// ---------------------------------------------------------------------------
-
+// Bridge pattern: z.ZodType<ExistingType> ensures Zod output matches our union types
 export const domainSchema = z.enum([
   "web",
   "web-extras",
@@ -61,7 +57,6 @@ export const boundSkillSchema: z.ZodType<BoundSkill> = z.object({
 });
 
 export const subcategorySchema = z.enum([
-  // Web
   "framework",
   "meta-framework",
   "styling",
@@ -81,7 +76,6 @@ export const subcategorySchema = z.enum([
   "pwa",
   "accessibility",
   "web-performance",
-  // API
   "api",
   "database",
   "auth",
@@ -89,9 +83,7 @@ export const subcategorySchema = z.enum([
   "analytics",
   "email",
   "performance",
-  // Mobile
   "mobile-framework",
-  // Shared / Infrastructure
   "monorepo",
   "tooling",
   "security",
@@ -99,37 +91,28 @@ export const subcategorySchema = z.enum([
   "research",
   "reviewing",
   "ci-cd",
-  // CLI
   "cli-framework",
   "cli-prompts",
   "cli-testing",
 ]) as z.ZodType<Subcategory>;
 
 export const agentNameSchema = z.enum([
-  // Developers
   "web-developer",
   "api-developer",
   "cli-developer",
   "web-architecture",
-  // Meta
   "agent-summoner",
   "documentor",
   "skill-summoner",
-  // Migration
   "cli-migrator",
-  // Pattern
   "pattern-scout",
   "web-pattern-critique",
-  // Planning
   "web-pm",
-  // Researchers
   "api-researcher",
   "web-researcher",
-  // Reviewers
   "api-reviewer",
   "cli-reviewer",
   "web-reviewer",
-  // Testers
   "cli-tester",
   "web-tester",
 ]) as z.ZodType<AgentName>;
@@ -151,77 +134,59 @@ export const permissionModeSchema = z.enum([
 ]) as z.ZodType<PermissionMode>;
 
 export const skillDisplayNameSchema = z.enum([
-  // Frameworks
   "react",
   "vue",
   "angular",
   "solidjs",
-  // Meta-frameworks
   "nextjs-app-router",
   "nextjs-server-actions",
   "remix",
   "nuxt",
-  // Styling
   "scss-modules",
   "cva",
   "tailwind",
-  // Client State
   "zustand",
   "redux-toolkit",
   "pinia",
   "ngrx-signalstore",
   "jotai",
   "mobx",
-  // Server State / Data Fetching
   "react-query",
   "swr",
   "graphql-apollo",
   "graphql-urql",
   "trpc",
-  // Forms & Validation
   "react-hook-form",
   "vee-validate",
   "zod-validation",
-  // Testing
   "vitest",
   "playwright-e2e",
   "cypress-e2e",
   "react-testing-library",
   "vue-test-utils",
   "msw",
-  // UI Components
   "shadcn-ui",
   "tanstack-table",
   "radix-ui",
-  // Backend - API Framework
   "hono",
   "express",
   "fastify",
-  // Backend - Database
   "drizzle",
   "prisma",
-  // Backend - Auth
   "better-auth",
-  // Backend - Observability
   "axiom-pino-sentry",
-  // Backend - Analytics
   "posthog",
   "posthog-flags",
-  // Backend - Email
   "resend",
-  // Backend - CI/CD
   "github-actions",
-  // Mobile
   "react-native",
   "expo",
-  // Setup / Infrastructure
   "turborepo",
   "tooling",
   "posthog-setup",
   "env",
   "observability-setup",
   "email-setup",
-  // Animation / PWA / Realtime / etc.
   "framer-motion",
   "css-animations",
   "view-transitions",
@@ -235,21 +200,16 @@ export const skillDisplayNameSchema = z.enum([
   "file-upload",
   "image-handling",
   "date-fns",
-  // Backend-specific category skills
   "api-testing",
   "api-performance",
   "web-performance",
-  // Security
   "security",
-  // CLI
   "commander",
   "cli-commander",
   "oclif",
-  // Reviewing / Meta
   "reviewing",
   "cli-reviewing",
   "research-methodology",
-  // Methodology
   "investigation-requirements",
   "anti-over-engineering",
   "success-criteria",
@@ -257,10 +217,6 @@ export const skillDisplayNameSchema = z.enum([
   "improvement-protocol",
   "context-management",
 ]) as z.ZodType<SkillDisplayName>;
-
-// ---------------------------------------------------------------------------
-// Composite schemas — validate structured data at JSON/YAML parse boundaries.
-// ---------------------------------------------------------------------------
 
 /** Matches SkillId format: prefix-subcategory-name (at least 3 dash-separated segments) */
 export const SKILL_ID_PATTERN = /^(web|api|cli|mobile|infra|meta|security)-.+-.+$/;
@@ -276,13 +232,9 @@ export const skillIdSchema = z
 // Accepts: "prefix/subcategory", "prefix-subcategory", bare subcategory, or "local"
 export const categoryPathSchema = z.string().refine(
   (val): val is CategoryPath => {
-    // "local" literal
     if (val === "local") return true;
-    // prefix/subcategory format
     if (/^(web|api|cli|mobile|infra|meta|security)\/.+$/.test(val)) return true;
-    // prefix-subcategory format
     if (/^(web|api|cli|mobile|infra|meta|security)-.+$/.test(val)) return true;
-    // Bare subcategory — validated against the subcategory union
     return subcategorySchema.safeParse(val).success;
   },
   {
@@ -390,11 +342,7 @@ export const agentYamlConfigSchema: z.ZodType<AgentYamlConfig> = z.object({
   output_format: z.string().optional(),
 });
 
-// ---------------------------------------------------------------------------
-// Skill assignment schemas — shared by projectConfigLoaderSchema and stackSchema.
-// Moved before projectConfigLoaderSchema so it can reference stackAgentConfigSchema.
-// ---------------------------------------------------------------------------
-
+// Defined before projectConfigLoaderSchema so it can reference stackAgentConfigSchema
 // Single skill assignment element: either a bare SkillId string or an object { id, preloaded? }
 const skillAssignmentElementSchema = z.union([skillIdSchema, skillAssignmentSchema]);
 
@@ -484,11 +432,6 @@ export const categoryDefinitionSchema: z.ZodType<CategoryDefinition> = z.object(
   icon: z.string().optional(),
 });
 
-// ---------------------------------------------------------------------------
-// Relationship rule schemas — used by skillsMatrixConfigSchema to validate
-// the `relationships` section of skills-matrix.yaml.
-// ---------------------------------------------------------------------------
-
 // Lenient: accepts both SkillId and SkillDisplayName, resolved to canonical IDs by matrix-loader
 const skillRefInYaml = z.string() as z.ZodType<SkillId>;
 
@@ -539,10 +482,6 @@ export const skillsMatrixConfigSchema: z.ZodType<SkillsMatrixConfig> = z.object(
   >,
 });
 
-// ---------------------------------------------------------------------------
-// Local skill schemas — validate metadata.yaml for user-defined .claude/skills/
-// ---------------------------------------------------------------------------
-
 /**
  * Raw metadata from a local skill's metadata.yaml.
  * All fields optional — the loader validates cli_name after parsing.
@@ -570,8 +509,6 @@ export const localRawMetadataSchema = z
     requires_setup: z.array(skillIdSchema).optional(),
     /** Usage skills this setup skill configures (inverse relationship) */
     provides_setup_for: z.array(skillIdSchema).optional(),
-    /** If true, this skill was installed by the Agents Inc. CLI (safe to remove on uninstall) */
-    generatedByAgentsInc: z.boolean().optional(),
   })
   .passthrough();
 
@@ -586,16 +523,12 @@ export const localSkillMetadataSchema = z
         content_hash: z.string(),
         /** ISO date when the fork was created */
         date: z.string(),
+        /** Source URL the skill was installed from (e.g., "github:agents-inc/skills") */
+        source: z.string().optional(),
       })
       .optional(),
-    /** If true, this skill was installed by the Agents Inc. CLI (safe to remove on uninstall) */
-    generatedByAgentsInc: z.boolean().optional(),
   })
   .passthrough();
-
-// ---------------------------------------------------------------------------
-// Stack schemas — validate stacks.yaml (pre-configured technology selections).
-// ---------------------------------------------------------------------------
 
 export const stackSchema = z.object({
   id: z.string().min(1),
@@ -612,10 +545,6 @@ export const stackSchema = z.object({
 export const stacksConfigSchema = z.object({
   stacks: z.array(stackSchema).min(1),
 });
-
-// ---------------------------------------------------------------------------
-// Marketplace schemas — validate marketplace.json for plugin distribution.
-// ---------------------------------------------------------------------------
 
 export const marketplaceRemoteSourceSchema: z.ZodType<MarketplaceRemoteSource> = z.object({
   source: z.enum(["github", "url"]),
@@ -655,10 +584,6 @@ export const marketplaceSchema: z.ZodType<Marketplace> = z.object({
   metadata: marketplaceMetadataSchema.optional(),
   plugins: z.array(marketplacePluginSchema).min(1),
 });
-
-// ---------------------------------------------------------------------------
-// Misc loader schemas — validate various config files at parse boundaries.
-// ---------------------------------------------------------------------------
 
 /** Versioned metadata for tracking skill content changes (used by outdated/diff commands) */
 export const versionedMetadataSchema = z
@@ -796,12 +721,8 @@ export const projectSourceConfigValidationSchema = z.object({
   matrix_file: z.string().optional(),
 });
 
-// ---------------------------------------------------------------------------
-// Strict validation schemas — used by `agentsinc validate` and plugin-validator.
-// Unlike the lenient loader schemas above, these enforce all constraints
-// and use `.strict()` to reject unknown fields.
-// ---------------------------------------------------------------------------
-
+// Strict validation schemas enforce all constraints and use .strict() to reject unknown fields,
+// unlike the lenient loader schemas above which use .passthrough() for backward compatibility
 const KEBAB_CASE_PATTERN = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 
 /** Strict schema for compiled agent.yaml output. Lenient id (any string) since marketplace agents may use custom identifiers. */
@@ -980,10 +901,6 @@ export const stackConfigValidationSchema = z
       .optional(),
   })
   .strict();
-
-// ---------------------------------------------------------------------------
-// Schema utilities — helpers for error formatting and validation.
-// ---------------------------------------------------------------------------
 
 /** Format Zod validation issues into a human-readable string (e.g., "path.to.field: Expected string; other: Required") */
 export function formatZodErrors(issues: z.ZodIssue[]): string {
