@@ -116,6 +116,7 @@ export default class Init extends BaseCommand {
         logo={logo}
         projectDir={process.cwd()}
         initialInstallMode={sourceResult.marketplace ? "plugin" : "local"}
+        initialExpertMode={!!flags.source}
         onComplete={(result) => {
           // Boundary cast: Ink render callback returns unknown result type
           wizardResult = result as WizardResultV2;

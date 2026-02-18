@@ -10,6 +10,7 @@ import { archiveLocalSkill, restoreArchivedSkill } from "../lib/skills/index.js"
 import { recompileAgents, getAgentDefinitions } from "../lib/agents/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { detectInstallation } from "../lib/installation/index.js";
+import { loadProjectConfig } from "../lib/configuration/index.js";
 import { ERROR_MESSAGES, STATUS_MESSAGES, INFO_MESSAGES } from "../utils/messages.js";
 import { claudePluginInstall, claudePluginUninstall } from "../utils/exec.js";
 import type { SkillId } from "../types/index.js";
@@ -101,13 +102,20 @@ export default class Edit extends BaseCommand {
 
     let wizardResult: WizardResultV2 | null = null;
     const marketplaceLabel = getMarketplaceLabel(sourceResult);
+
+    // Read saved installMode from config; fall back to marketplace-derived default only if absent
+    const projectConfig = await loadProjectConfig(projectDir);
+    const savedInstallMode = projectConfig?.config?.installMode;
+    const initialInstallMode = savedInstallMode ?? (sourceResult.marketplace ? "plugin" : "local");
+
     const { waitUntilExit } = render(
       <Wizard
         matrix={sourceResult.matrix}
         version={this.config.version}
         marketplaceLabel={marketplaceLabel}
         initialStep="build"
-        initialInstallMode={sourceResult.marketplace ? "plugin" : "local"}
+        initialInstallMode={initialInstallMode}
+        initialExpertMode={projectConfig?.config?.expertMode}
         installedSkillIds={currentSkillIds}
         projectDir={process.cwd()}
         onComplete={(result) => {

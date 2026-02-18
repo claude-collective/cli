@@ -1,7 +1,7 @@
-import React, { useCallback } from "react";
-import { Box, Text, useInput } from "ink";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Box, type DOMElement, Text, measureElement, useInput } from "ink";
 import type { BoundSkillCandidate, SkillAlias, SkillId } from "../../types/index.js";
-import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
+import { CLI_COLORS, SCROLL_VIEWPORT, UI_SYMBOLS } from "../../consts.js";
 import { useFocusedListItem } from "../hooks/use-focused-list-item.js";
 import { useSourceGridSearchModal } from "../hooks/use-source-grid-search-modal.js";
 import { SearchModal } from "./search-modal.js";
@@ -24,6 +24,8 @@ export type SourceRow = {
 
 export type SourceGridProps = {
   rows: SourceRow[];
+  /** Available height in terminal lines for the scrollable viewport. 0 = no constraint. */
+  availableHeight?: number;
   onSelect: (skillId: SkillId, sourceId: string) => void;
   onSearch?: (alias: SkillAlias) => Promise<BoundSkillCandidate[]>;
   onBind?: (candidate: BoundSkillCandidate) => void;
@@ -121,6 +123,7 @@ const getNavigableCount = (row: SourceRow, showSearchPill: boolean): number => {
 
 export const SourceGrid: React.FC<SourceGridProps> = ({
   rows,
+  availableHeight = 0,
   onSelect,
   onSearch,
   onBind,
@@ -155,6 +158,57 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
     initialCol: defaultFocusedCol,
   });
 
+  // --- Pixel-accurate scroll tracking ---
+  const sectionRefs = useRef<(DOMElement | null)[]>([]);
+  const [sectionHeights, setSectionHeights] = useState<number[]>([]);
+  const [scrollTopPx, setScrollTopPx] = useState(0);
+
+  const setSectionRef = useCallback((index: number, el: DOMElement | null) => {
+    sectionRefs.current[index] = el;
+  }, []);
+
+  // Measure all section heights after each render
+  useEffect(() => {
+    const heights = sectionRefs.current.map((el) => {
+      if (el) {
+        const { height } = measureElement(el);
+        return height;
+      }
+      return 0;
+    });
+    setSectionHeights((prev) => {
+      // Only update if heights actually changed (avoid infinite re-render)
+      if (prev.length === heights.length && prev.every((h, i) => h === heights[i])) {
+        return prev;
+      }
+      return heights;
+    });
+  });
+
+  const scrollEnabled = availableHeight > 0 && availableHeight >= SCROLL_VIEWPORT.MIN_VIEWPORT_ROWS;
+
+  // Scroll focused row into view
+  useEffect(() => {
+    if (!scrollEnabled || sectionHeights.length === 0) return;
+
+    let topOfFocused = 0;
+    for (let i = 0; i < focusedRow; i++) {
+      topOfFocused += sectionHeights[i] ?? 0;
+    }
+    const focusedHeight = sectionHeights[focusedRow] ?? 0;
+    const bottomOfFocused = topOfFocused + focusedHeight;
+
+    setScrollTopPx((prev) => {
+      if (topOfFocused < prev) {
+        return topOfFocused;
+      }
+      if (bottomOfFocused > prev + availableHeight) {
+        return bottomOfFocused - availableHeight;
+      }
+      return prev;
+    });
+  }, [focusedRow, sectionHeights, scrollEnabled, availableHeight]);
+
   useInput(
     useCallback(
       (
@@ -167,9 +221,6 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
           return: boolean;
         },
       ) => {
-        // Don't handle grid input while search modal is open
-        if (searchModal.isOpen) return;
-
         if (input === " ") {
           const currentRow = rows[focusedRow];
           if (!currentRow) return;
@@ -209,11 +260,11 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
         focusedCol,
         onSelect,
         showSearchPill,
-        searchModal.isOpen,
         handleSearchTrigger,
         moveFocus,
       ],
     ),
+    { isActive: !searchModal.isOpen },
   );
 
   if (rows.length === 0) {
@@ -224,25 +275,42 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
     );
   }
 
+  const sectionElements = rows.map((row, rowIndex) => (
+    <Box key={row.skillId} ref={(el) => setSectionRef(rowIndex, el)} flexShrink={0}>
+      <SourceSection
+        row={row}
+        isFocused={rowIndex === focusedRow}
+        focusedOptionIndex={focusedCol}
+        showSearchPill={showSearchPill}
+      />
+    </Box>
+  ));
+
+  const searchModalElement = searchModal.isOpen && (
+    <SearchModal
+      results={searchResults}
+      alias={searchAlias}
+      onBind={handleBind}
+      onClose={handleCloseSearch}
+    />
+  );
+
+  // When no height constraint, render flat (tests, or before first measurement)
+  if (!scrollEnabled) {
+    return (
+      <Box flexDirection="column" flexGrow={1} overflow="hidden">
+        {sectionElements}
+        {searchModalElement}
+      </Box>
+    );
+  }
+
   return (
-    <Box flexDirection="column">
-      {rows.map((row, rowIndex) => (
-        <SourceSection
-          key={row.skillId}
-          row={row}
-          isFocused={rowIndex === focusedRow}
-          focusedOptionIndex={focusedCol}
-          showSearchPill={showSearchPill}
-        />
-      ))}
-      {searchModal.isOpen && (
-        <SearchModal
-          results={searchResults}
-          alias={searchAlias}
-          onBind={handleBind}
-          onClose={handleCloseSearch}
-        />
-      )}
+    <Box flexDirection="column" height={availableHeight} overflow="hidden">
+      <Box flexDirection="column" marginTop={scrollTopPx > 0 ? -scrollTopPx : 0} flexShrink={0}>
+        {sectionElements}
+      </Box>
+      {searchModalElement}
     </Box>
   );
 };

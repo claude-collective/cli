@@ -55,8 +55,6 @@ export function useKeyboardNavigation(
         input: string,
         key: { upArrow: boolean; downArrow: boolean; return: boolean; escape: boolean },
       ) => {
-        if (!active) return;
-
         if (key.escape) {
           onEscape?.();
           return;
@@ -76,8 +74,9 @@ export function useKeyboardNavigation(
           moveDown();
         }
       },
-      [active, onEnter, onEscape, vimKeys, moveUp, moveDown],
+      [onEnter, onEscape, vimKeys, moveUp, moveDown],
     ),
+    { isActive: active },
   );
 
   return { focusedIndex, setFocusedIndex };

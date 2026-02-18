@@ -41,6 +41,7 @@ type WizardProps = {
   logo?: string;
   initialStep?: WizardStep;
   initialInstallMode?: "plugin" | "local";
+  initialExpertMode?: boolean;
   installedSkillIds?: SkillId[];
   projectDir?: string;
 };
@@ -57,6 +58,7 @@ export const Wizard: React.FC<WizardProps> = ({
   logo,
   initialStep,
   initialInstallMode,
+  initialExpertMode,
   installedSkillIds,
   projectDir,
 }) => {
@@ -69,7 +71,7 @@ export const Wizard: React.FC<WizardProps> = ({
   const isNarrowTerminal = terminalWidth < MIN_TERMINAL_WIDTH;
   const isShortTerminal = terminalHeight < MIN_TERMINAL_HEIGHT;
 
-  useWizardInitialization({ matrix, initialStep, initialInstallMode, installedSkillIds });
+  useWizardInitialization({ matrix, initialStep, initialInstallMode, initialExpertMode, installedSkillIds });
 
   const buildStepProps = useBuildStepProps({ store, matrix, installedSkillIds });
 

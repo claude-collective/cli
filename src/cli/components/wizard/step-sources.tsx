@@ -8,6 +8,7 @@ import type {
   SkillId,
 } from "../../types/index.js";
 import { CLI_COLORS, DEFAULT_BRANDING } from "../../consts.js";
+import { useMeasuredHeight } from "../hooks/use-measured-height.js";
 import { SourceGrid } from "./source-grid.js";
 import { ViewTitle } from "./view-title.js";
 import { searchExtraSources } from "../../lib/loading/multi-source-loader.js";
@@ -32,6 +33,7 @@ export const StepSources: React.FC<StepSourcesProps> = ({
   const [view, setView] = useState<SourcesView>("choice");
   const [choiceIndex, setChoiceIndex] = useState(0);
   const [isGridSearching, setIsGridSearching] = useState(false);
+  const { ref: gridRef, measuredHeight: gridHeight } = useMeasuredHeight();
 
   const handleGridSelect = useCallback(
     (skillId: SkillId, sourceId: string) => {
@@ -102,15 +104,18 @@ export const StepSources: React.FC<StepSourcesProps> = ({
   if (view === "customize") {
     const rows = store.buildSourceRows(matrix);
     return (
-      <Box flexDirection="column" width="100%">
+      <Box flexDirection="column" width="100%" flexGrow={1} flexBasis={0}>
         <ViewTitle>Customize skill sources</ViewTitle>
-        <SourceGrid
-          rows={rows}
-          onSelect={handleGridSelect}
-          onSearch={handleSearch}
-          onBind={handleBind}
-          onSearchStateChange={handleSearchStateChange}
-        />
+        <Box ref={gridRef} flexGrow={1} flexBasis={0}>
+          <SourceGrid
+            rows={rows}
+            availableHeight={gridHeight}
+            onSelect={handleGridSelect}
+            onSearch={handleSearch}
+            onBind={handleBind}
+            onSearchStateChange={handleSearchStateChange}
+          />
+        </Box>
       </Box>
     );
   }

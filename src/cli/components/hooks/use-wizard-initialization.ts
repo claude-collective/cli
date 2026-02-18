@@ -6,6 +6,7 @@ type UseWizardInitializationOptions = {
   matrix: MergedSkillsMatrix;
   initialStep?: WizardStep;
   initialInstallMode?: "plugin" | "local";
+  initialExpertMode?: boolean;
   installedSkillIds?: SkillId[];
 };
 
@@ -17,6 +18,7 @@ export function useWizardInitialization({
   matrix,
   initialStep,
   initialInstallMode,
+  initialExpertMode,
   installedSkillIds,
 }: UseWizardInitializationOptions): void {
   const initialized = useRef(false);
@@ -34,6 +36,9 @@ export function useWizardInitialization({
     }
     if (initialInstallMode) {
       useWizardStore.setState({ installMode: initialInstallMode });
+    }
+    if (initialExpertMode) {
+      useWizardStore.setState({ expertMode: initialExpertMode });
     }
   }
 }

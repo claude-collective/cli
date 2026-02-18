@@ -1,7 +1,7 @@
 import React, { Fragment } from "react";
 import { Box, Text } from "ink";
 import { useWizardStore } from "../../stores/wizard-store.js";
-import { CLI_COLORS } from "../../consts.js";
+import { CLI_COLORS, DEFAULT_PLUGIN_NAME } from "../../consts.js";
 import { useTerminalDimensions } from "../hooks/use-terminal-dimensions.js";
 import { WizardTabs, WIZARD_STEPS } from "./wizard-tabs.js";
 import { HelpModal } from "./help-modal.js";
@@ -99,12 +99,10 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
           <Text>{logo}</Text>
         </Box>
       )}
-      {marketplaceLabel && (
-        <Box marginBottom={1}>
-          <Text dimColor>Marketplace: </Text>
-          <Text bold>{marketplaceLabel}</Text>
-        </Box>
-      )}
+      <Box>
+        <Text dimColor>Marketplace: </Text>
+        <Text bold>{marketplaceLabel || `${DEFAULT_PLUGIN_NAME} (public)`}</Text>
+      </Box>
       <WizardTabs
         steps={WIZARD_STEPS}
         currentStep={store.step}
