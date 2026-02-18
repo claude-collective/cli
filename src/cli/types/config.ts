@@ -57,6 +57,14 @@ export type ProjectConfig = {
   installMode?: "local" | "plugin";
 
   /**
+   * Whether expert mode was enabled in the wizard.
+   * When true, advanced/niche skills are shown in the build step.
+   * Omitted from YAML when false (sparse output).
+   * @default false
+   */
+  expertMode?: boolean;
+
+  /**
    * Resolved stack configuration with agent->skill mappings.
    * Keys are agent IDs, values are subcategory->SkillAssignment[] mappings.
    * Values are normalized to SkillAssignment[] at load time (same as stacks.yaml).

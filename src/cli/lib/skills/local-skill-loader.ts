@@ -21,6 +21,8 @@ type LocalRawMetadata = {
   requires?: SkillId[];
   requires_setup?: SkillId[];
   provides_setup_for?: SkillId[];
+  /** If true, this skill was installed by the Agents Inc. CLI (safe to remove on uninstall) */
+  generatedByAgentsInc?: boolean;
 };
 
 export type LocalSkillDiscoveryResult = {

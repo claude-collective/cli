@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { SkillId } from "../../types";
 
 // Mock file system and logger (manual mocks from __mocks__ directories)
@@ -11,17 +11,18 @@ vi.mock("../versioning", () => ({
   getCurrentDate: vi.fn().mockReturnValue("2026-01-15"),
 }));
 
-import {
-  readForkedFromMetadata,
-  getLocalSkillsWithMetadata,
-  computeSourceHash,
-  compareLocalSkillsWithSource,
-  injectForkedFromMetadata,
-} from "./skill-metadata";
-import { fileExists, readFile, writeFile, listDirectories } from "../../utils/fs";
-import { computeFileHash } from "../versioning";
-import { warn } from "../../utils/logger";
 import { stringify as stringifyYaml } from "yaml";
+import { fileExists, listDirectories, readFile, writeFile } from "../../utils/fs";
+import { warn } from "../../utils/logger";
+import { computeFileHash } from "../versioning";
+import {
+  compareLocalSkillsWithSource,
+  computeSourceHash,
+  getLocalSkillsWithMetadata,
+  injectForkedFromMetadata,
+  readForkedFromMetadata,
+  readLocalSkillMetadata,
+} from "./skill-metadata";
 
 function createValidMetadataYaml(skillId: string, contentHash: string, date: string): string {
   return stringifyYaml({
@@ -443,6 +444,75 @@ describe("skill-metadata", () => {
       );
 
       expect(readFile).toHaveBeenCalledWith("/project/skills/react/metadata.yaml");
+    });
+
+    it("injects generatedByAgentsInc: true into metadata.yaml", async () => {
+      vi.mocked(readFile).mockResolvedValue(createMetadataWithoutForkedFrom());
+
+      await injectForkedFromMetadata(
+        "/project/.claude/skills/react",
+        "web-framework-react",
+        "abc1234",
+      );
+
+      const writtenContent = vi.mocked(writeFile).mock.calls[0][1];
+      expect(writtenContent).toContain("generatedByAgentsInc: true");
+    });
+  });
+
+  describe("readLocalSkillMetadata", () => {
+    it("returns full metadata when metadata.yaml exists and is valid", async () => {
+      vi.mocked(fileExists).mockResolvedValue(true);
+      vi.mocked(readFile).mockResolvedValue(
+        stringifyYaml({
+          forked_from: {
+            skill_id: "web-framework-react",
+            content_hash: "abc1234",
+            date: "2026-01-01",
+          },
+          generatedByAgentsInc: true,
+        }),
+      );
+
+      const result = await readLocalSkillMetadata("/project/.claude/skills/react");
+
+      expect(result).not.toBeNull();
+      expect(result?.generatedByAgentsInc).toBe(true);
+      expect(result?.forked_from?.skill_id).toBe("web-framework-react");
+    });
+
+    it("returns null when metadata.yaml does not exist", async () => {
+      vi.mocked(fileExists).mockResolvedValue(false);
+
+      const result = await readLocalSkillMetadata("/project/.claude/skills/react");
+
+      expect(result).toBeNull();
+    });
+
+    it("returns metadata without generatedByAgentsInc for user-created skills", async () => {
+      vi.mocked(fileExists).mockResolvedValue(true);
+      vi.mocked(readFile).mockResolvedValue(createMetadataWithoutForkedFrom());
+
+      const result = await readLocalSkillMetadata("/project/.claude/skills/custom");
+
+      expect(result).not.toBeNull();
+      expect(result?.generatedByAgentsInc).toBeUndefined();
+    });
+
+    it("returns null and warns for invalid metadata", async () => {
+      vi.mocked(fileExists).mockResolvedValue(true);
+      vi.mocked(readFile).mockResolvedValue(
+        stringifyYaml({
+          forked_from: {
+            invalid_field: "bad",
+          },
+        }),
+      );
+
+      const result = await readLocalSkillMetadata("/project/.claude/skills/react");
+
+      expect(result).toBeNull();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid metadata.yaml"));
     });
   });
 });

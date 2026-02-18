@@ -6,9 +6,10 @@ import path from "path";
 
 import { BaseCommand } from "../base-command";
 import { Confirm } from "../components/common/confirm";
-import { directoryExists, fileExists, remove } from "../utils/fs";
+import { directoryExists, fileExists, listDirectories, remove } from "../utils/fs";
 import { claudePluginUninstall, isClaudeCLIAvailable } from "../utils/exec";
 import { listPluginNames, getProjectPluginsDir } from "../lib/plugins";
+import { readLocalSkillMetadata } from "../lib/skills";
 import {
   CLAUDE_DIR,
   CLAUDE_SRC_DIR,
@@ -137,10 +138,26 @@ const UninstallConfirm: React.FC<UninstallConfirmProps> = ({
   );
 };
 
+/**
+ * Checks whether a directory is empty (contains no entries).
+ * Returns true if the directory has no subdirectories or files.
+ */
+async function isDirectoryEmpty(dirPath: string): Promise<boolean> {
+  const entries = await listDirectories(dirPath);
+  // listDirectories only returns directories; also check for files
+  const { readdir } = await import("fs/promises");
+  try {
+    const allEntries = await readdir(dirPath);
+    return allEntries.length === 0;
+  } catch {
+    return true;
+  }
+}
+
 export default class Uninstall extends BaseCommand {
   static summary = `Remove ${DEFAULT_BRANDING.NAME} from this project`;
 
-  static description = `Uninstall the ${DEFAULT_BRANDING.NAME} plugin and/or local directories (.claude/ and .claude-src/). By default, removes everything.`;
+  static description = `Uninstall the ${DEFAULT_BRANDING.NAME} plugin and/or local directories (.claude/ and .claude-src/). By default, removes everything. Only removes skills that were installed by the CLI (marked with generatedByAgentsInc in metadata.yaml).`;
 
   static examples = [
     "<%= config.bin %> <%= command.id %>",
@@ -257,12 +274,7 @@ export default class Uninstall extends BaseCommand {
         }
       }
       if (hasLocalToRemove) {
-        if (target.hasClaudeDir) {
-          this.log(`[dry-run] Would remove ${target.claudeDir}/`);
-        }
-        if (target.hasClaudeSrcDir) {
-          this.log(`[dry-run] Would remove ${target.claudeSrcDir}/`);
-        }
+        await this.dryRunLocalRemoval(target);
       }
       this.log("");
       this.log(DRY_RUN_MESSAGES.COMPLETE_NO_FILES_REMOVED);
@@ -299,26 +311,12 @@ export default class Uninstall extends BaseCommand {
     }
 
     if (hasLocalToRemove) {
-      this.log("Removing local directories...");
+      this.log("Removing local files...");
 
       try {
-        const removed: string[] = [];
-
-        if (target.hasClaudeDir) {
-          await remove(target.claudeDir);
-          removed.push(CLAUDE_DIR);
-        }
-
-        if (target.hasClaudeSrcDir) {
-          await remove(target.claudeSrcDir);
-          removed.push(CLAUDE_SRC_DIR);
-        }
-
-        this.logSuccess(
-          `Removed ${removed.length} ${removed.length === 1 ? "directory" : "directories"}: ${removed.join(", ")}`,
-        );
+        await this.removeLocalFiles(target);
       } catch (error) {
-        this.log("Failed to remove local directories");
+        this.log("Failed to remove local files");
         this.error(error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR, {
           exit: EXIT_CODES.ERROR,
         });
@@ -331,5 +329,110 @@ export default class Uninstall extends BaseCommand {
     this.log("");
     this.logSuccess(SUCCESS_MESSAGES.UNINSTALL_COMPLETE);
     this.log("");
+  }
+
+  /**
+   * Selectively removes local files installed by the CLI.
+   *
+   * - Skills: only removes skill dirs with `generatedByAgentsInc: true` in metadata.yaml
+   * - Agents: removes the entire `.claude/agents/` directory (compiled by CLI)
+   * - Config: removes `.claude-src/` entirely (CLI-owned config)
+   * - `.claude/`: only removed if empty after selective cleanup
+   */
+  private async removeLocalFiles(target: UninstallTarget): Promise<void> {
+    let removedSkillCount = 0;
+    let skippedSkillCount = 0;
+
+    // Selectively remove skills based on generatedByAgentsInc flag
+    if (target.hasLocalSkills) {
+      const skillDirNames = await listDirectories(target.skillsDir);
+
+      for (const skillDirName of skillDirNames) {
+        const skillDir = path.join(target.skillsDir, skillDirName);
+        const metadata = await readLocalSkillMetadata(skillDir);
+
+        if (metadata?.generatedByAgentsInc) {
+          await remove(skillDir);
+          removedSkillCount++;
+        } else {
+          this.warn(`Skipping '${skillDirName}': not created by ${DEFAULT_BRANDING.NAME} CLI`);
+          skippedSkillCount++;
+        }
+      }
+
+      if (removedSkillCount > 0) {
+        this.logSuccess(
+          `Removed ${removedSkillCount} CLI-installed ${removedSkillCount === 1 ? "skill" : "skills"}`,
+        );
+      }
+
+      // Remove skills/ directory if now empty
+      if (skippedSkillCount === 0 && (await directoryExists(target.skillsDir))) {
+        if (await isDirectoryEmpty(target.skillsDir)) {
+          await remove(target.skillsDir);
+        }
+      }
+    }
+
+    // Remove compiled agents directory entirely (generated by CLI)
+    if (target.hasLocalAgents) {
+      await remove(target.agentsDir);
+      this.logSuccess("Removed compiled agents");
+    }
+
+    // Remove .claude-src/ entirely (CLI-owned config)
+    if (target.hasClaudeSrcDir) {
+      await remove(target.claudeSrcDir);
+      this.logSuccess(`Removed ${CLAUDE_SRC_DIR}/`);
+    }
+
+    // Only remove .claude/ itself if it is empty after cleanup
+    if (target.hasClaudeDir && (await directoryExists(target.claudeDir))) {
+      if (await isDirectoryEmpty(target.claudeDir)) {
+        await remove(target.claudeDir);
+        this.logSuccess(`Removed ${CLAUDE_DIR}/`);
+      } else {
+        this.log(`Kept ${CLAUDE_DIR}/ (contains user content)`);
+      }
+    }
+  }
+
+  /**
+   * Dry-run preview of local file removal.
+   * Shows what would be removed/skipped without making changes.
+   */
+  private async dryRunLocalRemoval(target: UninstallTarget): Promise<void> {
+    // Preview skill removal
+    if (target.hasLocalSkills) {
+      const skillDirNames = await listDirectories(target.skillsDir);
+
+      for (const skillDirName of skillDirNames) {
+        const skillDir = path.join(target.skillsDir, skillDirName);
+        const metadata = await readLocalSkillMetadata(skillDir);
+
+        if (metadata?.generatedByAgentsInc) {
+          this.log(`[dry-run] Would remove skill '${skillDirName}'`);
+        } else {
+          this.log(
+            `[dry-run] Would skip '${skillDirName}': not created by ${DEFAULT_BRANDING.NAME} CLI`,
+          );
+        }
+      }
+    }
+
+    // Preview agents removal
+    if (target.hasLocalAgents) {
+      this.log(`[dry-run] Would remove ${target.agentsDir}/`);
+    }
+
+    // Preview .claude-src/ removal
+    if (target.hasClaudeSrcDir) {
+      this.log(`[dry-run] Would remove ${target.claudeSrcDir}/`);
+    }
+
+    // Preview .claude/ removal
+    if (target.hasClaudeDir) {
+      this.log(`[dry-run] Would remove ${target.claudeDir}/ only if empty after cleanup`);
+    }
   }
 }

@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
 import fs from "fs";
-import { mkdir, writeFile } from "fs/promises";
-import { runCliCommand, directoryExists, createTempDir, cleanupTempDir } from "../helpers";
-import { DEFAULT_BRANDING } from "../../../consts";
+import { mkdir, writeFile, readdir } from "fs/promises";
+import { runCliCommand, directoryExists, fileExists, createTempDir, cleanupTempDir } from "../helpers";
+import { DEFAULT_BRANDING, STANDARD_FILES } from "../../../consts";
 
 vi.mock("../../../utils/exec.js", () => ({
   claudePluginUninstall: vi.fn(),
@@ -75,6 +75,47 @@ async function createLocalDirs(
   await mkdir(claudeDir, { recursive: true });
   await mkdir(claudeSrcDir, { recursive: true });
   return { claudeDir, claudeSrcDir };
+}
+
+/** Creates a skill directory with metadata.yaml containing generatedByAgentsInc: true */
+async function createCLISkill(skillsDir: string, skillName: string): Promise<string> {
+  const skillDir = path.join(skillsDir, skillName);
+  await mkdir(skillDir, { recursive: true });
+  await writeFile(
+    path.join(skillDir, STANDARD_FILES.SKILL_MD),
+    `---\nname: ${skillName}\ndescription: Test skill\n---\nSkill content`,
+  );
+  await writeFile(
+    path.join(skillDir, STANDARD_FILES.METADATA_YAML),
+    `cli_name: ${skillName}\ngeneratedByAgentsInc: true\n`,
+  );
+  return skillDir;
+}
+
+/** Creates a skill directory WITHOUT generatedByAgentsInc (user-created skill) */
+async function createUserSkill(skillsDir: string, skillName: string): Promise<string> {
+  const skillDir = path.join(skillsDir, skillName);
+  await mkdir(skillDir, { recursive: true });
+  await writeFile(
+    path.join(skillDir, STANDARD_FILES.SKILL_MD),
+    `---\nname: ${skillName}\ndescription: User skill\n---\nUser skill content`,
+  );
+  await writeFile(
+    path.join(skillDir, STANDARD_FILES.METADATA_YAML),
+    `cli_name: ${skillName}\n`,
+  );
+  return skillDir;
+}
+
+/** Creates a skill directory with no metadata.yaml at all */
+async function createSkillWithoutMetadata(skillsDir: string, skillName: string): Promise<string> {
+  const skillDir = path.join(skillsDir, skillName);
+  await mkdir(skillDir, { recursive: true });
+  await writeFile(
+    path.join(skillDir, STANDARD_FILES.SKILL_MD),
+    `---\nname: ${skillName}\ndescription: No metadata skill\n---\nContent`,
+  );
+  return skillDir;
 }
 
 describe("uninstall command", () => {
@@ -258,7 +299,7 @@ describe("uninstall command", () => {
   });
 
   describe("uninstall with --yes (local directories)", () => {
-    it("should remove .claude and .claude-src directories", async () => {
+    it("should remove empty .claude and .claude-src directories", async () => {
       const { claudeDir, claudeSrcDir } = await createLocalDirs(projectDir);
 
       expect(await directoryExists(claudeDir)).toBe(true);
@@ -268,7 +309,8 @@ describe("uninstall command", () => {
 
       expect(await directoryExists(claudeDir)).toBe(false);
       expect(await directoryExists(claudeSrcDir)).toBe(false);
-      expect(stdout).toContain("Removed 2 directories");
+      expect(stdout).toContain(`Removed ${CLAUDE_SRC_DIR}/`);
+      expect(stdout).toContain(`Removed ${CLAUDE_DIR}/`);
     });
 
     it("should remove only .claude when .claude-src does not exist", async () => {
@@ -278,7 +320,7 @@ describe("uninstall command", () => {
       const { stdout } = await runCliCommand(["uninstall", "--yes"]);
 
       expect(await directoryExists(claudeDir)).toBe(false);
-      expect(stdout).toContain("Removed 1 directory");
+      expect(stdout).toContain(`Removed ${CLAUDE_DIR}/`);
     });
   });
 
@@ -341,6 +383,160 @@ describe("uninstall command", () => {
       expect(stdout).toContain("[dry-run] Would remove");
       expect(stdout).toContain(CLAUDE_SRC_DIR);
       expect(stdout).not.toContain("Would uninstall plugin");
+    });
+  });
+
+  describe("selective skill removal (generatedByAgentsInc)", () => {
+    it("should remove skills with generatedByAgentsInc flag", async () => {
+      const { claudeDir } = await createLocalDirs(projectDir);
+      const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
+      await mkdir(claudeSrcDir, { recursive: true });
+
+      const skillsDir = path.join(claudeDir, "skills");
+      await mkdir(skillsDir, { recursive: true });
+
+      const cliSkillDir = await createCLISkill(skillsDir, "web-framework-react");
+
+      const { stdout } = await runCliCommand(["uninstall", "--yes", "--local"]);
+
+      expect(await directoryExists(cliSkillDir)).toBe(false);
+      expect(stdout).toContain("Removed 1 CLI-installed skill");
+    });
+
+    it("should skip skills without generatedByAgentsInc flag", async () => {
+      const { claudeDir } = await createLocalDirs(projectDir);
+
+      const skillsDir = path.join(claudeDir, "skills");
+      await mkdir(skillsDir, { recursive: true });
+
+      const userSkillDir = await createUserSkill(skillsDir, "web-tooling-custom");
+
+      const { stdout, stderr } = await runCliCommand(["uninstall", "--yes", "--local"]);
+
+      const output = stdout + stderr;
+      expect(await directoryExists(userSkillDir)).toBe(true);
+      expect(output).toContain("Skipping 'web-tooling-custom'");
+      expect(output).toContain("not created by");
+    });
+
+    it("should skip skills without metadata.yaml", async () => {
+      const { claudeDir } = await createLocalDirs(projectDir);
+
+      const skillsDir = path.join(claudeDir, "skills");
+      await mkdir(skillsDir, { recursive: true });
+
+      const noMetaSkillDir = await createSkillWithoutMetadata(skillsDir, "web-tooling-nometadata");
+
+      const { stdout, stderr } = await runCliCommand(["uninstall", "--yes", "--local"]);
+
+      const output = stdout + stderr;
+      expect(await directoryExists(noMetaSkillDir)).toBe(true);
+      expect(output).toContain("Skipping 'web-tooling-nometadata'");
+    });
+
+    it("should remove CLI skills and skip user skills in mixed scenario", async () => {
+      const { claudeDir } = await createLocalDirs(projectDir);
+
+      const skillsDir = path.join(claudeDir, "skills");
+      await mkdir(skillsDir, { recursive: true });
+
+      const cliSkillDir = await createCLISkill(skillsDir, "web-framework-react");
+      const userSkillDir = await createUserSkill(skillsDir, "web-tooling-custom");
+
+      const { stdout, stderr } = await runCliCommand(["uninstall", "--yes", "--local"]);
+
+      const output = stdout + stderr;
+
+      // CLI skill should be removed
+      expect(await directoryExists(cliSkillDir)).toBe(false);
+      expect(output).toContain("Removed 1 CLI-installed skill");
+
+      // User skill should remain
+      expect(await directoryExists(userSkillDir)).toBe(true);
+      expect(output).toContain("Skipping 'web-tooling-custom'");
+    });
+
+    it("should not remove .claude/ if user content remains", async () => {
+      const claudeDir = path.join(projectDir, CLAUDE_DIR);
+      const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
+      await mkdir(claudeDir, { recursive: true });
+      await mkdir(claudeSrcDir, { recursive: true });
+
+      const skillsDir = path.join(claudeDir, "skills");
+      await mkdir(skillsDir, { recursive: true });
+
+      // Create a user skill (will not be removed)
+      await createUserSkill(skillsDir, "web-tooling-custom");
+
+      const { stdout } = await runCliCommand(["uninstall", "--yes", "--local"]);
+
+      // .claude/ should remain because it still has user content
+      expect(await directoryExists(claudeDir)).toBe(true);
+      expect(stdout).toContain("Kept .claude/ (contains user content)");
+    });
+
+    it("should remove .claude/ if empty after cleanup", async () => {
+      const claudeDir = path.join(projectDir, CLAUDE_DIR);
+      const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
+      await mkdir(claudeDir, { recursive: true });
+      await mkdir(claudeSrcDir, { recursive: true });
+
+      const skillsDir = path.join(claudeDir, "skills");
+      await mkdir(skillsDir, { recursive: true });
+
+      // Create only CLI-installed skills (will all be removed)
+      await createCLISkill(skillsDir, "web-framework-react");
+
+      const { stdout } = await runCliCommand(["uninstall", "--yes", "--local"]);
+
+      // .claude/ should be removed because it's empty after cleanup
+      expect(await directoryExists(claudeDir)).toBe(false);
+      expect(stdout).toContain(`Removed ${CLAUDE_DIR}/`);
+    });
+
+    it("should remove compiled agents directory entirely", async () => {
+      const claudeDir = path.join(projectDir, CLAUDE_DIR);
+      const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
+      await mkdir(claudeSrcDir, { recursive: true });
+
+      const agentsDir = path.join(claudeDir, "agents");
+      await mkdir(agentsDir, { recursive: true });
+      await writeFile(path.join(agentsDir, "web-developer.md"), "# Web Developer Agent");
+
+      const { stdout } = await runCliCommand(["uninstall", "--yes", "--local"]);
+
+      expect(await directoryExists(agentsDir)).toBe(false);
+      expect(stdout).toContain("Removed compiled agents");
+    });
+
+    it("should remove multiple CLI skills", async () => {
+      const { claudeDir } = await createLocalDirs(projectDir);
+
+      const skillsDir = path.join(claudeDir, "skills");
+      await mkdir(skillsDir, { recursive: true });
+
+      await createCLISkill(skillsDir, "web-framework-react");
+      await createCLISkill(skillsDir, "web-state-zustand");
+      await createCLISkill(skillsDir, "api-framework-hono");
+
+      const { stdout } = await runCliCommand(["uninstall", "--yes", "--local"]);
+
+      expect(stdout).toContain("Removed 3 CLI-installed skills");
+    });
+
+    it("should preview selective skill removal in dry-run", async () => {
+      const { claudeDir } = await createLocalDirs(projectDir);
+
+      const skillsDir = path.join(claudeDir, "skills");
+      await mkdir(skillsDir, { recursive: true });
+
+      await createCLISkill(skillsDir, "web-framework-react");
+      await createUserSkill(skillsDir, "web-tooling-custom");
+
+      const { stdout } = await runCliCommand(["uninstall", "--dry-run", "--local"]);
+
+      expect(stdout).toContain("[dry-run] Would remove skill 'web-framework-react'");
+      expect(stdout).toContain("[dry-run] Would skip 'web-tooling-custom'");
     });
   });
 });

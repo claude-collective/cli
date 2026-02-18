@@ -428,6 +428,8 @@ export const projectConfigLoaderSchema = z
     author: z.string().optional(),
     /** "local" = .claude/agents, "plugin" = .claude/plugins/ (DEFAULT_PLUGIN_NAME) */
     installMode: z.enum(["local", "plugin"]).optional(),
+    /** Whether expert mode (advanced/niche skills) was enabled in the wizard */
+    expertMode: z.boolean().optional(),
     /** Agent-to-subcategory-to-skill mappings from selected stack (accepts same formats as stacks.yaml) */
     stack: z.record(z.string(), stackAgentConfigSchema).optional(),
     /** Skills source path or URL (e.g., "github:my-org/skills") */
@@ -458,6 +460,8 @@ export const projectConfigValidationSchema = z.object({
   author: z.string().optional(),
   /** "local" = .claude/agents, "plugin" = .claude/plugins/ (DEFAULT_PLUGIN_NAME) */
   installMode: z.enum(["local", "plugin"]),
+  /** Whether expert mode (advanced/niche skills) was enabled in the wizard */
+  expertMode: z.boolean().optional(),
   /** Agent-to-subcategory-to-skill mappings from selected stack */
   stack: z.record(z.string(), stackAgentConfigSchema),
   /** Skills source path or URL (e.g., "github:my-org/skills") */
@@ -566,6 +570,8 @@ export const localRawMetadataSchema = z
     requires_setup: z.array(skillIdSchema).optional(),
     /** Usage skills this setup skill configures (inverse relationship) */
     provides_setup_for: z.array(skillIdSchema).optional(),
+    /** If true, this skill was installed by the Agents Inc. CLI (safe to remove on uninstall) */
+    generatedByAgentsInc: z.boolean().optional(),
   })
   .passthrough();
 
@@ -582,6 +588,8 @@ export const localSkillMetadataSchema = z
         date: z.string(),
       })
       .optional(),
+    /** If true, this skill was installed by the Agents Inc. CLI (safe to remove on uninstall) */
+    generatedByAgentsInc: z.boolean().optional(),
   })
   .passthrough();
 

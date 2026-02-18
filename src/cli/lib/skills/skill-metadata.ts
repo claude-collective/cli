@@ -41,6 +41,8 @@ export type ForkedFromMetadata = {
 export type LocalSkillMetadata = {
   /** Provenance metadata linking back to the original source skill, if any */
   forked_from?: ForkedFromMetadata;
+  /** If true, this skill was installed by the Agents Inc. CLI (safe to remove on uninstall) */
+  generatedByAgentsInc?: boolean;
   [key: string]: unknown;
 };
 
@@ -99,6 +101,35 @@ export async function readForkedFromMetadata(skillDir: string): Promise<ForkedFr
   }
 
   return (result.data as LocalSkillMetadata).forked_from ?? null;
+}
+
+/**
+ * Reads the full local skill metadata from a skill's metadata.yaml file.
+ *
+ * Returns the parsed metadata including `generatedByAgentsInc` and `forked_from` fields.
+ * Used by the uninstall command to determine whether a skill was created by the CLI.
+ *
+ * @param skillDir - Absolute path to the skill directory
+ * @returns The parsed metadata if valid, `null` if the file doesn't exist or is invalid
+ */
+export async function readLocalSkillMetadata(
+  skillDir: string,
+): Promise<LocalSkillMetadata | null> {
+  const metadataPath = path.join(skillDir, STANDARD_FILES.METADATA_YAML);
+
+  if (!(await fileExists(metadataPath))) {
+    return null;
+  }
+
+  const content = await readFile(metadataPath);
+  const result = localSkillMetadataSchema.safeParse(parseYaml(content));
+
+  if (!result.success) {
+    warn(`Invalid metadata.yaml at ${metadataPath}: ${formatZodErrors(result.error.issues)}`);
+    return null;
+  }
+
+  return result.data as LocalSkillMetadata;
 }
 
 /**
@@ -310,6 +341,7 @@ export async function injectForkedFromMetadata(
     content_hash: contentHash,
     date: getCurrentDate(),
   };
+  metadata.generatedByAgentsInc = true;
 
   const schemaComment = `${yamlSchemaComment(SCHEMA_PATHS.metadata)}\n`;
   const newYamlContent = stringifyYaml(metadata, { lineWidth: YAML_FORMATTING.LINE_WIDTH_NONE });
