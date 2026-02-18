@@ -22,10 +22,6 @@ export type CheckboxGridProps<T extends string = string> = {
   emptyMessage?: string;
 };
 
-const CONTINUE_VALUE = "_continue";
-
-type ListItem<T extends string> = { type: "item"; item: CheckboxItem<T> } | { type: "continue" };
-
 export const CheckboxGrid = <T extends string = string>({
   title,
   subtitle,
@@ -37,14 +33,9 @@ export const CheckboxGrid = <T extends string = string>({
   continueLabel = (count) => `Continue with ${count} item(s)`,
   emptyMessage = "Please select at least one item",
 }: CheckboxGridProps<T>): React.ReactElement => {
+  // Items + continue option at the end
+  const totalItems = items.length + 1;
   const [focusedIndex, setFocusedIndex] = useState(0);
-
-  const listItems: ListItem<T>[] = [
-    ...items.map((item) => ({ type: "item" as const, item })),
-    ...(selectedIds.length > 0 ? [{ type: "continue" as const }] : []),
-  ];
-
-  const totalItems = listItems.length;
 
   useInput((input, key) => {
     if (key.escape) {
@@ -63,81 +54,54 @@ export const CheckboxGrid = <T extends string = string>({
     }
 
     if (key.return) {
-      if (selectedIds.length > 0) {
-        onContinue();
-      }
+      onContinue();
       return;
     }
 
     if (input === " ") {
-      const focusedItem = listItems[focusedIndex];
-      if (!focusedItem) return;
-
-      if (focusedItem.type === "item") {
-        onToggle(focusedItem.item.id);
+      const item = items[focusedIndex];
+      if (item) {
+        onToggle(item.id);
       }
     }
   });
+
+  const continueIndex = items.length;
 
   return (
     <Box flexDirection="column">
       <Text bold>{title}</Text>
       <Text dimColor>{subtitle}</Text>
-      <Box flexDirection="column" marginTop={1}>
-        {listItems.map((listItem, index) => {
-          const isFocused = index === focusedIndex;
+      <Text>{" "}</Text>
+      {items.map((item, index) => {
+        const isFocused = index === focusedIndex;
+        const isSelected = selectedIds.includes(item.id);
+        const checkbox = isSelected ? "[\u2713]" : "[ ]";
+        const pointer = isFocused ? UI_SYMBOLS.CURRENT : " ";
 
-          if (listItem.type === "continue") {
-            return (
-              <Box key={CONTINUE_VALUE} columnGap={1}>
-                <Text color={isFocused ? CLI_COLORS.PRIMARY : undefined}>
-                  {isFocused ? UI_SYMBOLS.CURRENT : " "}
-                </Text>
-                <Text bold={isFocused} color={isFocused ? CLI_COLORS.PRIMARY : undefined}>
-                  {"\u2192"} {continueLabel(selectedIds.length)}
-                </Text>
-              </Box>
-            );
-          }
-
-          const isSelected = selectedIds.includes(listItem.item.id);
-          const checkbox = isSelected ? "[\u2713]" : "[ ]";
-
-          return (
-            <Box key={listItem.item.id} columnGap={1}>
-              <Text color={isFocused ? CLI_COLORS.PRIMARY : undefined}>
-                {isFocused ? UI_SYMBOLS.CURRENT : " "}
-              </Text>
-              <Text
-                bold={isFocused}
-                color={isSelected || isFocused ? CLI_COLORS.PRIMARY : undefined}
-              >
-                {checkbox}
-              </Text>
-              <Text bold={isFocused} color={isFocused ? CLI_COLORS.PRIMARY : undefined}>
-                {listItem.item.label}
-              </Text>
-              <Text dimColor>- {listItem.item.description}</Text>
-            </Box>
-          );
-        })}
-      </Box>
-      {selectedIds.length > 0 ? (
-        <Box marginTop={1}>
-          <Text>
-            Selected: <Text color={CLI_COLORS.PRIMARY}>{selectedIds.join(", ")}</Text>
+        return (
+          <Text key={item.id}>
+            <Text color={isFocused ? CLI_COLORS.PRIMARY : undefined}>{pointer}</Text>
+            <Text color={isSelected || isFocused ? CLI_COLORS.PRIMARY : undefined} bold={isFocused}>
+              {" "}{checkbox} {item.label}
+            </Text>
+            <Text dimColor> - {item.description}</Text>
           </Text>
-        </Box>
-      ) : (
-        <Box marginTop={1}>
-          <Text color={CLI_COLORS.WARNING}>{emptyMessage}</Text>
-        </Box>
-      )}
-      <Box marginTop={1}>
-        <Text dimColor>
-          {"\u2191"}/{"\u2193"} navigate SPACE toggle ENTER continue ESC back
+        );
+      })}
+      <Text color={focusedIndex === continueIndex ? CLI_COLORS.PRIMARY : undefined} bold={focusedIndex === continueIndex}>
+        {focusedIndex === continueIndex ? UI_SYMBOLS.CURRENT : " "} {"\u2192"} {continueLabel(selectedIds.length)}
+      </Text>
+      {selectedIds.length > 0 ? (
+        <Text>
+          {"\n"}Selected: <Text color={CLI_COLORS.PRIMARY}>{selectedIds.join(", ")}</Text>
         </Text>
-      </Box>
+      ) : emptyMessage ? (
+        <Text dimColor>{"\n"}{emptyMessage}</Text>
+      ) : null}
+      <Text dimColor>
+        {"\n"}{"\u2191"}/{"\u2193"} navigate SPACE toggle ENTER continue ESC back
+      </Text>
     </Box>
   );
 };
