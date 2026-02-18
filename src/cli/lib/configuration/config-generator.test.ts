@@ -1,6 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { generateProjectConfigFromSkills, buildStackProperty } from "./config-generator";
-import type { AgentName, CategoryPath, SkillAssignment, SkillId, Stack, StackAgentConfig } from "../../types";
+import type {
+  AgentName,
+  CategoryPath,
+  SkillAssignment,
+  SkillId,
+  Stack,
+  StackAgentConfig,
+} from "../../types";
 import { createMockSkill, createMockMatrix } from "../__tests__/helpers";
 import { loadDefaultMappings, clearDefaultsCache } from "../loading";
 

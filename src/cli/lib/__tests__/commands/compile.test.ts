@@ -279,11 +279,7 @@ describe("compile command", () => {
       });
       process.chdir(localDirs.projectDir);
 
-      const { stderr, stdout, error } = await runCliCommand([
-        "compile",
-        "--output",
-        outputPath,
-      ]);
+      const { stderr, stdout, error } = await runCliCommand(["compile", "--output", outputPath]);
 
       const allOutput = stdout + stderr + (error?.message || "");
       // Warning should be emitted with the skill name and mention metadata.yaml
@@ -302,11 +298,7 @@ describe("compile command", () => {
       });
       process.chdir(localDirs.projectDir);
 
-      const { stderr, stdout, error } = await runCliCommand([
-        "compile",
-        "--output",
-        outputPath,
-      ]);
+      const { stderr, stdout, error } = await runCliCommand(["compile", "--output", outputPath]);
 
       const allOutput = stdout + stderr + (error?.message || "");
       // Warning should contain the skill name

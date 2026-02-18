@@ -2,7 +2,13 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
 import { mkdir, writeFile, readFile, rm } from "fs/promises";
 import { stringify as stringifyYaml, parse as parseYaml } from "yaml";
-import { runCliCommand, fileExists, directoryExists, createTempDir, cleanupTempDir } from "../helpers";
+import {
+  runCliCommand,
+  fileExists,
+  directoryExists,
+  createTempDir,
+  cleanupTempDir,
+} from "../helpers";
 import { compileSkillPlugin, compileAllSkillPlugins } from "../../skills";
 import { validatePlugin } from "../../plugins";
 import { EXIT_CODES } from "../../exit-codes";
@@ -666,10 +672,7 @@ describe("Integration: Import Error Recovery", () => {
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    await createLocalSource(projectDir, [
-      IMPORT_REACT_PATTERNS_SKILL,
-      IMPORT_TESTING_UTILS_SKILL,
-    ]);
+    await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL, IMPORT_TESTING_UTILS_SKILL]);
 
     await runCliCommand(["import:skill", LOCAL_SOURCE_NAME, "--all"]);
 

@@ -71,7 +71,13 @@ export const Wizard: React.FC<WizardProps> = ({
   const isNarrowTerminal = terminalWidth < MIN_TERMINAL_WIDTH;
   const isShortTerminal = terminalHeight < MIN_TERMINAL_HEIGHT;
 
-  useWizardInitialization({ matrix, initialStep, initialInstallMode, initialExpertMode, installedSkillIds });
+  useWizardInitialization({
+    matrix,
+    initialStep,
+    initialInstallMode,
+    initialExpertMode,
+    installedSkillIds,
+  });
 
   const buildStepProps = useBuildStepProps({ store, matrix, installedSkillIds });
 

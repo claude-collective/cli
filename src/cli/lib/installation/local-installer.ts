@@ -19,7 +19,11 @@ import { loadAllAgents, loadSkillsByIds, type SourceLoadResult } from "../loadin
 import { loadStackById, compileAgentForPlugin, getStackSkillIds } from "../stacks";
 import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
 import { createLiquidEngine } from "../compiler";
-import { generateProjectConfigFromSkills, compactStackForYaml, buildStackProperty } from "../configuration";
+import {
+  generateProjectConfigFromSkills,
+  compactStackForYaml,
+  buildStackProperty,
+} from "../configuration";
 import { ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
@@ -288,7 +292,10 @@ async function writeConfigFile(config: ProjectConfig, configPath: string): Promi
     indent: YAML_FORMATTING.INDENT,
     lineWidth: YAML_FORMATTING.LINE_WIDTH,
   });
-  await writeFile(configPath, `${schemaComment}${configYaml}${CONFIG_OPTIONS_COMMENT}${PATH_OVERRIDES_COMMENT}`);
+  await writeFile(
+    configPath,
+    `${schemaComment}${configYaml}${CONFIG_OPTIONS_COMMENT}${PATH_OVERRIDES_COMMENT}`,
+  );
 }
 
 function buildCompileAgents(

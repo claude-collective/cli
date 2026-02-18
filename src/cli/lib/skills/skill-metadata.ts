@@ -112,9 +112,7 @@ export async function readForkedFromMetadata(skillDir: string): Promise<ForkedFr
  * @param skillDir - Absolute path to the skill directory
  * @returns The parsed metadata if valid, `null` if the file doesn't exist or is invalid
  */
-export async function readLocalSkillMetadata(
-  skillDir: string,
-): Promise<LocalSkillMetadata | null> {
+export async function readLocalSkillMetadata(skillDir: string): Promise<LocalSkillMetadata | null> {
   const metadataPath = path.join(skillDir, STANDARD_FILES.METADATA_YAML);
 
   if (!(await fileExists(metadataPath))) {

@@ -220,10 +220,7 @@ describe("edit wizard domain filtering (T4)", () => {
   });
 
   it("should report only web domain when only web skills are installed", () => {
-    const installedSkills: SkillId[] = [
-      "web-framework-react",
-      "web-state-zustand",
-    ];
+    const installedSkills: SkillId[] = ["web-framework-react", "web-state-zustand"];
 
     useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
 
@@ -240,10 +237,7 @@ describe("edit wizard domain filtering (T4)", () => {
   });
 
   it("should report both web and api domains when both have selections", () => {
-    const installedSkills: SkillId[] = [
-      "web-framework-react",
-      "api-framework-hono",
-    ];
+    const installedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
 
     useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
 

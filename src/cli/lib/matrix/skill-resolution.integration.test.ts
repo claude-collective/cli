@@ -206,7 +206,9 @@ function buildMultiSourceMatrix(overrides?: Partial<MergedSkillsMatrix>): Merged
     accessibility: createMockCategory("accessibility" as Subcategory, "Accessibility", {
       order: 9,
     }),
-    observability: createMockCategory("observability" as Subcategory, "Observability", { order: 10 }),
+    observability: createMockCategory("observability" as Subcategory, "Observability", {
+      order: 10,
+    }),
   } as Partial<Record<Subcategory, CategoryDefinition>> as Record<Subcategory, CategoryDefinition>;
 
   return createMockMatrix(skills, {

@@ -116,10 +116,7 @@ describe("Integration: Consumer-Defined Stacks (T6)", () => {
     const sourceResult = buildSourceResult(buildConsumerMatrix(), dirs.sourceDir);
 
     const result = await installLocal({
-      wizardResult: buildWizardResult([
-        "web-framework-react",
-        "api-framework-hono",
-      ]),
+      wizardResult: buildWizardResult(["web-framework-react", "api-framework-hono"]),
       sourceResult,
       projectDir: dirs.projectDir,
     });

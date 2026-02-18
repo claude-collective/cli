@@ -254,15 +254,7 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
           moveFocus("down");
         }
       },
-      [
-        rows,
-        focusedRow,
-        focusedCol,
-        onSelect,
-        showSearchPill,
-        handleSearchTrigger,
-        moveFocus,
-      ],
+      [rows, focusedRow, focusedCol, onSelect, showSearchPill, handleSearchTrigger, moveFocus],
     ),
     { isActive: !searchModal.isOpen },
   );

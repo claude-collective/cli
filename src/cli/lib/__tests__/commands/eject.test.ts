@@ -13,11 +13,7 @@ import {
   createMockSkill,
   createMockMatrix,
 } from "../helpers";
-import {
-  createTestSource,
-  cleanupTestSource,
-  type TestDirs,
-} from "../fixtures/create-test-source";
+import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { installLocal } from "../../installation/local-installer";
 import { loadDefaultMappings, clearDefaultsCache } from "../../loading";
 import type { MergedSkillsMatrix, ProjectConfig, ResolvedSkill } from "../../../types";
@@ -370,10 +366,7 @@ describe("eject skills from initialized project (T1)", () => {
     // Run installLocal to create a real initialized project
     const sourceResult = buildSourceResult(buildT1Matrix(), dirs.sourceDir);
     await installLocal({
-      wizardResult: buildWizardResult([
-        "web-framework-react",
-        "api-framework-hono",
-      ]),
+      wizardResult: buildWizardResult(["web-framework-react", "api-framework-hono"]),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -463,10 +456,9 @@ describe("eject in plugin mode (T2)", () => {
     // Create an initialized project with installMode: plugin
     const sourceResult = buildSourceResult(buildT1Matrix(), dirs.sourceDir);
     await installLocal({
-      wizardResult: buildWizardResult(
-        ["web-framework-react", "api-framework-hono"],
-        { installMode: "plugin" },
-      ),
+      wizardResult: buildWizardResult(["web-framework-react", "api-framework-hono"], {
+        installMode: "plugin",
+      }),
       sourceResult,
       projectDir: dirs.projectDir,
     });

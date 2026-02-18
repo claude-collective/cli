@@ -30,9 +30,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "name"
-      ],
+      "required": ["name"],
       "additionalProperties": false
     },
     "metadata": {
@@ -64,10 +62,7 @@
                 "properties": {
                   "source": {
                     "type": "string",
-                    "enum": [
-                      "github",
-                      "url"
-                    ]
+                    "enum": ["github", "url"]
                   },
                   "repo": {
                     "type": "string"
@@ -79,9 +74,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "source"
-                ],
+                "required": ["source"],
                 "additionalProperties": false
               }
             ]
@@ -103,9 +96,7 @@
                 "type": "string"
               }
             },
-            "required": [
-              "name"
-            ],
+            "required": ["name"],
             "additionalProperties": false
           },
           "category": {
@@ -118,19 +109,11 @@
             }
           }
         },
-        "required": [
-          "name",
-          "source"
-        ],
+        "required": ["name", "source"],
         "additionalProperties": false
       }
     }
   },
-  "required": [
-    "name",
-    "version",
-    "owner",
-    "plugins"
-  ],
+  "required": ["name", "version", "owner", "plugins"],
   "additionalProperties": false
 }

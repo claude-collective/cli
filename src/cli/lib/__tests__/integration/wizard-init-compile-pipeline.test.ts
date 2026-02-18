@@ -342,7 +342,10 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         generatedAt: new Date().toISOString(),
       } as unknown as MergedSkillsMatrix;
 
-      const wizardResult = buildWizardResult([], { selectedSkills: SKILL_NAMES, installMode: "local" });
+      const wizardResult = buildWizardResult([], {
+        selectedSkills: SKILL_NAMES,
+        installMode: "local",
+      });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
 
       const installResult = await installLocal({
@@ -403,7 +406,10 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         generatedAt: new Date().toISOString(),
       } as unknown as MergedSkillsMatrix;
 
-      const wizardResult = buildWizardResult([], { selectedSkills: SKILL_NAMES, installMode: "local" });
+      const wizardResult = buildWizardResult([], {
+        selectedSkills: SKILL_NAMES,
+        installMode: "local",
+      });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
 
       const installResult = await installLocal({
@@ -600,7 +606,10 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         generatedAt: new Date().toISOString(),
       } as unknown as MergedSkillsMatrix;
 
-      const wizardResult = buildWizardResult([], { selectedSkills: SKILL_NAMES, installMode: "local" });
+      const wizardResult = buildWizardResult([], {
+        selectedSkills: SKILL_NAMES,
+        installMode: "local",
+      });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
 
       await installLocal({

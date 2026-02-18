@@ -144,10 +144,7 @@ describe("Init Flow Integration: Local Mode", () => {
   });
 
   it("should create .claude-src/config.yaml with correct structure", async () => {
-    const selectedSkills: SkillId[] = [
-      "web-framework-react",
-      "api-framework-hono",
-    ];
+    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
 
     const result = await installLocal({
       wizardResult: buildWizardResult(selectedSkills),
@@ -173,10 +170,7 @@ describe("Init Flow Integration: Local Mode", () => {
   });
 
   it("should copy selected skills to .claude/skills/", async () => {
-    const selectedSkills: SkillId[] = [
-      "web-framework-react",
-      "api-framework-hono",
-    ];
+    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
 
     const result = await installLocal({
       wizardResult: buildWizardResult(selectedSkills),
@@ -204,10 +198,7 @@ describe("Init Flow Integration: Local Mode", () => {
   });
 
   it("should compile agents to .claude/agents/", async () => {
-    const selectedSkills: SkillId[] = [
-      "web-framework-react",
-      "api-framework-hono",
-    ];
+    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
 
     const result = await installLocal({
       wizardResult: buildWizardResult(selectedSkills),
@@ -257,10 +248,7 @@ describe("Init Flow Integration: Local Mode", () => {
   });
 
   it("should assign skills to correct agents based on category", async () => {
-    const selectedSkills: SkillId[] = [
-      "web-framework-react",
-      "api-framework-hono",
-    ];
+    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
 
     const result = await installLocal({
       wizardResult: buildWizardResult(selectedSkills),
@@ -429,10 +417,7 @@ describe("Init Flow Integration: Directory Structure Verification", () => {
   });
 
   it("should create complete directory structure", async () => {
-    const selectedSkills: SkillId[] = [
-      "web-framework-react",
-      "api-framework-hono",
-    ];
+    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
 
     await installLocal({
       wizardResult: buildWizardResult(selectedSkills),
@@ -473,10 +458,7 @@ describe("Init Flow Integration: Directory Structure Verification", () => {
   });
 
   it("should produce agent markdown with valid frontmatter", async () => {
-    const selectedSkills: SkillId[] = [
-      "web-framework-react",
-      "api-framework-hono",
-    ];
+    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
 
     const result = await installLocal({
       wizardResult: buildWizardResult(selectedSkills),
@@ -533,10 +515,7 @@ describe("Init Flow Integration: Idempotency and Merge", () => {
 
     // Second init with additional skill
     const secondResult = await installLocal({
-      wizardResult: buildWizardResult([
-        "web-framework-react",
-        "api-framework-hono",
-      ]),
+      wizardResult: buildWizardResult(["web-framework-react", "api-framework-hono"]),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -613,10 +592,7 @@ describe("Init Flow Integration: Skill Content Verification", () => {
 
   it("should preserve skill content when copying", async () => {
     const result = await installLocal({
-      wizardResult: buildWizardResult([
-        "web-framework-react",
-        "api-framework-hono",
-      ]),
+      wizardResult: buildWizardResult(["web-framework-react", "api-framework-hono"]),
       sourceResult,
       projectDir: dirs.projectDir,
     });

@@ -2,7 +2,13 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
 import fs from "fs";
 import { mkdir, writeFile, readdir } from "fs/promises";
-import { runCliCommand, directoryExists, fileExists, createTempDir, cleanupTempDir } from "../helpers";
+import {
+  runCliCommand,
+  directoryExists,
+  fileExists,
+  createTempDir,
+  cleanupTempDir,
+} from "../helpers";
 import { DEFAULT_BRANDING, STANDARD_FILES } from "../../../consts";
 
 vi.mock("../../../utils/exec.js", () => ({
@@ -100,10 +106,7 @@ async function createUserSkill(skillsDir: string, skillName: string): Promise<st
     path.join(skillDir, STANDARD_FILES.SKILL_MD),
     `---\nname: ${skillName}\ndescription: User skill\n---\nUser skill content`,
   );
-  await writeFile(
-    path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-    `cli_name: ${skillName}\n`,
-  );
+  await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), `cli_name: ${skillName}\n`);
   return skillDir;
 }
 
