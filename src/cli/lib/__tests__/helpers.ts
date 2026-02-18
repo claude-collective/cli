@@ -230,8 +230,26 @@ export async function createTempDir(prefix = "cc-test-"): Promise<string> {
   return mkdtemp(path.join(os.tmpdir(), prefix));
 }
 
+const CLEANUP_MAX_RETRIES = 3;
+const CLEANUP_RETRY_DELAY_MS = 100;
+
 export async function cleanupTempDir(dirPath: string): Promise<void> {
-  await rm(dirPath, { recursive: true, force: true });
+  for (let attempt = 0; attempt < CLEANUP_MAX_RETRIES; attempt++) {
+    try {
+      await rm(dirPath, { recursive: true, force: true });
+      return;
+    } catch (error: unknown) {
+      const isRetryable =
+        error instanceof Error &&
+        "code" in error &&
+        (error as NodeJS.ErrnoException).code === "ENOTEMPTY";
+      if (!isRetryable || attempt === CLEANUP_MAX_RETRIES - 1) {
+        throw error;
+      }
+      // Transient ENOTEMPTY on macOS: kernel hasn't released directory entries yet
+      await new Promise((resolve) => setTimeout(resolve, CLEANUP_RETRY_DELAY_MS));
+    }
+  }
 }
 
 export interface TestDirs {
