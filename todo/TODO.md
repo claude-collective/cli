@@ -2,12 +2,12 @@
 
 | ID   | Task                                             | Status       |
 | ---- | ------------------------------------------------ | ------------ |
-| D-08 | Support user-defined stacks in consumer projects | Pending      |
 | U13  | Run Documentor Agent on CLI Codebase             | Pending      |
 | H18  | Tailor documentation-bible to CLI repo           | Phase 3 only |
 | #4   | Handle plugins + local skills together           | Pending      |
-| D-27 | Switch config/metadata fields from snake_case to camelCase | Pending |
+| D-27 | Switch config/metadata fields from snake_case to camelCase | Done |
 | D-28 | Fix startup warning/error messages              | Pending      |
+| D-29 | Ensure skills metadata YAML includes $schema reference | Pending |
 
 ---
 
@@ -24,25 +24,6 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 ---
 
 ## Active Tasks
-
-### Stacks
-
-#### D-08: Support User-Defined Stacks in Consumer Projects
-
-**See research doc:** [docs/research/user-defined-stacks.md](../docs/research/user-defined-stacks.md)
-
-Allow consumers to define stacks at four levels with a clear hierarchy in the wizard:
-
-1. **Project-level stacks** (top) — defined in a `stacks.yaml` referenced from `.claude-src/config.yaml` via the existing `stacks_file` field
-2. **Global stacks** — user-defined stacks that apply across all projects (e.g., `~/.config/agents-inc/stacks.yaml`)
-3. **Private marketplace stacks** — from configured marketplace sources
-4. **Public stacks** (bottom) — built-in CLI stacks from `config/stacks.yaml`, hidden when a private source is configured
-
-Each section has its own heading in the Stack Selection screen. Stacks are tagged with a `StackOrigin` (`"project" | "global" | "marketplace" | "public"`) and `originLabel` for display. The loader needs to change from either/or to merging from all origins.
-
-**Files:** `src/cli/lib/stacks/stacks-loader.ts`, `src/cli/lib/loading/source-loader.ts`
-
----
 
 ### Documentation & Tooling
 
@@ -94,28 +75,10 @@ Implement functionality to support both plugins and local skills working togethe
 
 #### D-27: Switch Config/Metadata Fields from snake_case to camelCase
 
-Standardize all config and metadata field names to use camelCase instead of snake_case. This affects YAML config files (`config.yaml`, `metadata.yaml`) and their corresponding TypeScript types/schemas.
+Rename all 27 snake_case fields to camelCase across YAML configs, TypeScript types, Zod schemas, JSON schemas, and all property accesses. Affects ~50 files and 6 JSON schemas.
 
-**Fields to rename:**
-
-**config.yaml:**
-- `agents_source` → `agentsSource`
-- `skills_dir` → `skillsDir`
-- `agents_dir` → `agentsDir`
-- `stacks_file` → `stacksFile`
-- `matrix_file` → `matrixFile`
-
-**metadata.yaml (`forked_from`):**
-- `forked_from` → `forkedFrom`
-- `skill_id` → `skillId`
-- `content_hash` → `contentHash`
-
-**Files to change:**
-- `src/cli/lib/configuration/config.ts` — `ProjectSourceConfig` type
-- `src/cli/lib/skills/skill-metadata.ts` — `ForkedFromMetadata` type
-- `src/cli/lib/schemas.ts` — Zod schemas
-- All consumers of these types
-- JSON schemas in `schemas/`
+**Full audit with field inventory, file touchpoints, migration layers, and special considerations:**
+[todo/D-27-snake-case-audit.md](./D-27-snake-case-audit.md)
 
 ---
 
@@ -123,16 +86,33 @@ Standardize all config and metadata field names to use camelCase instead of snak
 
 #### D-28: Fix Startup Warning/Error Messages
 
-The CLI shows numerous warning or error messages on startup that clutter the terminal. Audit all messages shown during initialization, identify which are unnecessary or too verbose, and either suppress, downgrade to `verbose()`, or fix the underlying issues.
+**See research doc:** [docs/research/startup-message-persistence.md](../docs/research/startup-message-persistence.md)
 
-**Investigation needed:**
+The CLI shows warning/error messages and the ASCII logo on startup that flash briefly then disappear. Ink's `clearTerminal` wipes all pre-Ink terminal output because `WizardLayout` uses `height={terminalHeight}`, triggering a full-screen clear on every render cycle.
 
-- Catalog all warnings/errors shown during a normal `agentsinc init` or `agentsinc edit` startup
-- Determine which are actionable vs noise (e.g., missing optional config, fallback paths, network timeouts)
-- Downgrade informational messages to `verbose()` so they only show with `--verbose` flag
-- Fix any underlying issues causing spurious warnings (e.g., missing files that should be expected)
+**Root cause:** Pre-Ink `this.log()` / `warn()` calls print to the terminal, then Ink's first render erases everything via `ansiEscapes.clearTerminal`.
 
-**Files likely involved:** `src/cli/hooks/init.ts`, `src/cli/lib/loading/`, `src/cli/lib/configuration/`, `src/cli/utils/logger.ts`
+**Planned fix:** Buffer pre-Ink messages and render them via Ink's `<Static>` component (which survives `clearTerminal`).
+
+**Changes needed:**
+
+- `src/cli/commands/init.tsx`, `src/cli/commands/edit.tsx` — buffer messages instead of `this.log()` / `this.warn()`, pass buffer to `<Wizard>`
+- `src/cli/components/wizard/wizard-layout.tsx` — add `<Static>` block for startup messages
+- `src/cli/utils/logger.ts` + loading modules — support buffered output mode
+- Audit which warnings are actionable vs noise; downgrade informational messages to `verbose()`
+
+---
+
+#### D-29: Ensure Skills Metadata YAML Includes $schema Reference
+
+Each `metadata.yaml` file for skills should include a `$schema` field pointing to the JSON schema, enabling IDE validation and ensuring consistency across all skill metadata files.
+
+**Changes needed:**
+
+- Add `$schema` reference to all `metadata.yaml` files in source skill directories
+- Update skill scaffolding (`new/skill.ts`) to include `$schema` in generated metadata
+- Update `createTestSource()` and `writeTestSkill()` to include `$schema` in test fixtures
+- Verify the validator accepts the `$schema` field (it should be ignored or explicitly allowed)
 
 ---
 

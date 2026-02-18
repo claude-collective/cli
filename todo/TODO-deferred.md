@@ -4,6 +4,7 @@
 | ----- | ------------------------------------------------- | -------- |
 | D-05  | Improve `agentsinc init` when already initialized | Deferred |
 | P4-17 | `agentsinc new` supports multiple items           | Deferred |
+| D-08  | Support user-defined stacks in consumer projects  | Deferred |
 | P4-18 | Test: multiple skill/agent creation               | Deferred |
 | D-01  | Update skill documentation conventions            | Deferred |
 | D-11  | Development hooks for type checking               | Deferred |
@@ -48,6 +49,23 @@ Deferred until after migration. Allow creating multiple skills/agents in one com
 
 **S | P4-18 | Test: Multiple skill/agent creation works**
 Depends on P4-17. Test coverage for multi-item creation.
+
+---
+
+## D-08: Support User-Defined Stacks in Consumer Projects
+
+**See research doc:** [docs/research/user-defined-stacks.md](../docs/research/user-defined-stacks.md)
+
+Allow consumers to define stacks at four levels with a clear hierarchy in the wizard:
+
+1. **Project-level stacks** (top) — defined in a `stacks.yaml` referenced from `.claude-src/config.yaml` via the existing `stacks_file` field
+2. **Global stacks** — user-defined stacks that apply across all projects (e.g., `~/.config/agents-inc/stacks.yaml`)
+3. **Private marketplace stacks** — from configured marketplace sources
+4. **Public stacks** (bottom) — built-in CLI stacks from `config/stacks.yaml`, hidden when a private source is configured
+
+Each section has its own heading in the Stack Selection screen. Stacks are tagged with a `StackOrigin` (`"project" | "global" | "marketplace" | "public"`) and `originLabel` for display. The loader needs to change from either/or to merging from all origins.
+
+**Files:** `src/cli/lib/stacks/stacks-loader.ts`, `src/cli/lib/loading/source-loader.ts`
 
 ---
 
