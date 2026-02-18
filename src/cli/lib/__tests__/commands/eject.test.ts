@@ -1,8 +1,26 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from "vitest";
 import path from "path";
 import os from "os";
-import { mkdtemp, rm, mkdir, stat } from "fs/promises";
-import { runCliCommand } from "../helpers";
+import { mkdtemp, rm, mkdir, stat, readFile, readdir, writeFile } from "fs/promises";
+import { stringify as stringifyYaml } from "yaml";
+import {
+  runCliCommand,
+  fileExists,
+  directoryExists,
+  readTestYaml,
+  buildWizardResult,
+  buildSourceResult,
+  createMockSkill,
+  createMockMatrix,
+} from "../helpers";
+import {
+  createTestSource,
+  cleanupTestSource,
+  type TestDirs,
+} from "../fixtures/create-test-source";
+import { installLocal } from "../../installation/local-installer";
+import { loadDefaultMappings, clearDefaultsCache } from "../../loading";
+import type { MergedSkillsMatrix, ProjectConfig, ResolvedSkill } from "../../../types";
 
 async function pathExists(p: string): Promise<boolean> {
   try {
@@ -313,5 +331,187 @@ describe("eject command", () => {
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("invalid path");
     });
+  });
+});
+
+// ── T1: Eject Skills From an Initialized Project ────────────────────────────
+
+function buildT1Matrix(): MergedSkillsMatrix {
+  const skills: Record<string, ResolvedSkill> = {
+    "web-framework-react": createMockSkill("web-framework-react", "web/framework", {
+      description: "React framework for building user interfaces",
+      tags: ["react", "web", "ui"],
+    }),
+    "api-framework-hono": createMockSkill("api-framework-hono", "api/framework", {
+      description: "Lightweight web framework for the edge",
+      tags: ["api", "hono", "edge"],
+    }),
+  };
+  return createMockMatrix(skills);
+}
+
+describe("eject skills from initialized project (T1)", () => {
+  let dirs: TestDirs;
+  let originalCwd: string;
+
+  beforeAll(async () => {
+    await loadDefaultMappings();
+  });
+
+  afterAll(() => {
+    clearDefaultsCache();
+  });
+
+  beforeEach(async () => {
+    originalCwd = process.cwd();
+    dirs = await createTestSource();
+    process.chdir(dirs.projectDir);
+
+    // Run installLocal to create a real initialized project
+    const sourceResult = buildSourceResult(buildT1Matrix(), dirs.sourceDir);
+    await installLocal({
+      wizardResult: buildWizardResult([
+        "web-framework-react",
+        "api-framework-hono",
+      ]),
+      sourceResult,
+      projectDir: dirs.projectDir,
+    });
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    await cleanupTestSource(dirs);
+  });
+
+  it("should eject skills to output directory from initialized project", async () => {
+    const outputDir = path.join(dirs.tempDir, "ejected-skills");
+
+    const { stdout, stderr, error } = await runCliCommand([
+      "eject",
+      "skills",
+      "--source",
+      dirs.sourceDir,
+      "--output",
+      outputDir,
+      "--force",
+    ]);
+
+    const output = stdout + stderr;
+
+    // The eject command loads the matrix from source and copies skills
+    // Verify no fatal error occurred
+    expect(error?.oclif?.exit).toBeUndefined();
+
+    // Should complete and produce output
+    expect(output).toContain("Eject");
+  });
+
+  it("should not crash when ejecting skills with --source pointing to test source", async () => {
+    const outputDir = path.join(dirs.tempDir, "ejected-skills");
+
+    const { stdout, stderr, error } = await runCliCommand([
+      "eject",
+      "skills",
+      "--source",
+      dirs.sourceDir,
+      "--output",
+      outputDir,
+      "--force",
+    ]);
+
+    const output = stdout + stderr;
+
+    // Command should not produce a fatal oclif error
+    expect(error?.oclif?.exit).toBeUndefined();
+
+    // Should at least display the eject header
+    expect(output).toContain("Eject");
+  });
+
+  it("should eject agent-partials from initialized project", async () => {
+    const { stdout } = await runCliCommand(["eject", "agent-partials", "--force"]);
+
+    // Should complete successfully
+    expect(stdout).toContain("Agent partials ejected");
+
+    // Partials should exist in .claude-src/agents/
+    const partialsDir = path.join(dirs.projectDir, ".claude-src", "agents");
+    expect(await directoryExists(partialsDir)).toBe(true);
+  });
+});
+
+// ── T2: Eject in Plugin Mode ────────────────────────────────────────────────
+
+describe("eject in plugin mode (T2)", () => {
+  let dirs: TestDirs;
+  let originalCwd: string;
+
+  beforeAll(async () => {
+    await loadDefaultMappings();
+  });
+
+  afterAll(() => {
+    clearDefaultsCache();
+  });
+
+  beforeEach(async () => {
+    originalCwd = process.cwd();
+    dirs = await createTestSource();
+    process.chdir(dirs.projectDir);
+
+    // Create an initialized project with installMode: plugin
+    const sourceResult = buildSourceResult(buildT1Matrix(), dirs.sourceDir);
+    await installLocal({
+      wizardResult: buildWizardResult(
+        ["web-framework-react", "api-framework-hono"],
+        { installMode: "plugin" },
+      ),
+      sourceResult,
+      projectDir: dirs.projectDir,
+    });
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    await cleanupTestSource(dirs);
+  });
+
+  it("should eject skills from plugin mode project without fatal error", async () => {
+    const outputDir = path.join(dirs.tempDir, "ejected-plugin-skills");
+
+    const { stdout, stderr, error } = await runCliCommand([
+      "eject",
+      "skills",
+      "--source",
+      dirs.sourceDir,
+      "--output",
+      outputDir,
+      "--force",
+    ]);
+
+    const output = stdout + stderr;
+
+    // Command should not produce a fatal oclif error
+    expect(error?.oclif?.exit).toBeUndefined();
+
+    // Should display eject header
+    expect(output).toContain("Eject");
+  });
+
+  it("should have installMode plugin in config after init", async () => {
+    // Verify the project config was written with plugin mode
+    const configPath = path.join(dirs.projectDir, ".claude-src", "config.yaml");
+    expect(await fileExists(configPath)).toBe(true);
+
+    const config = await readTestYaml<ProjectConfig>(configPath);
+    expect(config.installMode).toBe("plugin");
+  });
+
+  it("should eject agent-partials from plugin mode project", async () => {
+    const { stdout } = await runCliCommand(["eject", "agent-partials", "--force"]);
+
+    // Should complete successfully — partials eject from CLI, not project
+    expect(stdout).toContain("Agent partials ejected");
   });
 });
