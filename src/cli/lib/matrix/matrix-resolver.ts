@@ -381,7 +381,7 @@ function validateRequirements(
         const hasAny = requirement.skillIds.some((reqId) => selectedSet.has(reqId));
         if (!hasAny) {
           errors.push({
-            type: "missing_requirement",
+            type: "missingRequirement",
             message: `${getLabel(skill, skillId)} requires one of: ${requirement.skillIds.map((id) => getLabel(matrix.skills[id], id)).join(", ")}`,
             skills: [skillId, ...requirement.skillIds],
           });
@@ -390,7 +390,7 @@ function validateRequirements(
         const missingIds = requirement.skillIds.filter((reqId) => !selectedSet.has(reqId));
         if (missingIds.length > 0) {
           errors.push({
-            type: "missing_requirement",
+            type: "missingRequirement",
             message: `${getLabel(skill, skillId)} requires: ${missingIds.map((id) => getLabel(matrix.skills[id], id)).join(", ")}`,
             skills: [skillId, ...missingIds],
           });
@@ -420,7 +420,7 @@ function validateExclusivity(
       const category = matrix.categories[categoryId as Subcategory];
       if (category?.exclusive) {
         errors.push({
-          type: "category_exclusive",
+          type: "categoryExclusive",
           message: `Category "${category.displayName}" only allows one selection, but multiple selected: ${skillIds.map((id) => getLabel(matrix.skills[id], id)).join(", ")}`,
           skills: skillIds,
         });

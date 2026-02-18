@@ -56,14 +56,14 @@ async function diffSkill(
     };
   }
 
-  const sourceSkill = sourceSkills[forkedFrom.skill_id];
+  const sourceSkill = sourceSkills[forkedFrom.skillId];
 
   if (!sourceSkill) {
     return {
       skillDirName,
       forkedFrom,
       hasDiff: false,
-      diffOutput: `Source skill '${forkedFrom.skill_id}' no longer exists`,
+      diffOutput: `Source skill '${forkedFrom.skillId}' no longer exists`,
     };
   }
 
@@ -223,7 +223,7 @@ export default class Diff extends BaseCommand {
 
         if (skillsWithoutForkedFrom.length > 0) {
           for (const skillName of skillsWithoutForkedFrom) {
-            this.warn(`Skill '${skillName}' has no forked_from metadata - cannot compare`);
+            this.warn(`Skill '${skillName}' has no forkedFrom metadata - cannot compare`);
           }
           this.log("");
         }
@@ -238,7 +238,7 @@ export default class Diff extends BaseCommand {
           for (const result of skillsWithDiffs) {
             this.log(
               chalk.bold(
-                `\n=== ${result.skillDirName} (forked from ${result.forkedFrom?.skill_id}) ===\n`,
+                `\n=== ${result.skillDirName} (forked from ${result.forkedFrom?.skillId}) ===\n`,
               ),
             );
             this.log(colorDiff(result.diffOutput));

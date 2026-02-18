@@ -96,12 +96,12 @@ export function generateMetadataYaml(name: string, author: string, category: Cat
 
   return `${yamlSchemaComment(SCHEMA_PATHS.metadata)}
 category: ${category}
-category_exclusive: false
+categoryExclusive: false
 author: "${author}"
 version: 1
-cli_name: ${titleName}
-cli_description: Brief description
-usage_guidance: Use when <guidance>.
+cliName: ${titleName}
+cliDescription: Brief description
+usageGuidance: Use when <guidance>.
 tags:
   - local
   - custom

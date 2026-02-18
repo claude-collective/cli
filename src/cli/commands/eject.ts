@@ -205,8 +205,8 @@ export default class Eject extends BaseCommand {
     if (existingProjectConfig?.author) {
       config.author = existingProjectConfig.author;
     }
-    if (existingProjectConfig?.agents_source) {
-      config.agents_source = existingProjectConfig.agents_source;
+    if (existingProjectConfig?.agentsSource) {
+      config.agentsSource = existingProjectConfig.agentsSource;
     }
 
     await ensureDir(path.join(projectDir, CLAUDE_SRC_DIR));

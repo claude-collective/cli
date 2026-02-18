@@ -11,11 +11,11 @@ import { EXIT_CODES } from "../../lib/exit-codes.js";
 export default class ConfigSetProject extends BaseCommand {
   static summary = "Set a project-level configuration value";
   static description =
-    "Set a project-level configuration value (source, marketplace, agents_source)";
+    "Set a project-level configuration value (source, marketplace, agentsSource)";
 
   static args = {
     key: Args.string({
-      description: "Configuration key (source, marketplace, agents_source)",
+      description: "Configuration key (source, marketplace, agentsSource)",
       required: true,
     }),
     value: Args.string({
@@ -33,7 +33,7 @@ export default class ConfigSetProject extends BaseCommand {
     const projectDir = process.cwd();
     const { key, value } = args;
 
-    const validKeys = ["source", "marketplace", "agents_source"];
+    const validKeys = ["source", "marketplace", "agentsSource"];
 
     if (!validKeys.includes(key)) {
       this.error(`Unknown configuration key: ${key}\nValid keys: ${validKeys.join(", ")}`, {

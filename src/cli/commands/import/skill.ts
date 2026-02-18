@@ -28,18 +28,18 @@ import { STATUS_MESSAGES, INFO_MESSAGES } from "../../utils/messages.js";
 
 /**
  * Metadata for tracking third-party imports. Different from ForkedFromMetadata
- * in skill-metadata.ts which tracks internal fork lineage (uses skill_id
- * instead of source/skill_name).
+ * in skill-metadata.ts which tracks internal fork lineage (uses skillId
+ * instead of source/skillName).
  */
 type ImportedForkedFromMetadata = {
   source: string;
-  skill_name: string;
-  content_hash: string;
+  skillName: string;
+  contentHash: string;
   date: string;
 };
 
 type SkillMetadata = {
-  forked_from?: ImportedForkedFromMetadata;
+  forkedFrom?: ImportedForkedFromMetadata;
   [key: string]: unknown;
 };
 
@@ -353,8 +353,8 @@ export default class ImportSkill extends BaseCommand {
 
     const forkedFrom: ImportedForkedFromMetadata = {
       source,
-      skill_name: skillName,
-      content_hash: contentHash,
+      skillName: skillName,
+      contentHash: contentHash,
       date: getCurrentDate(),
     };
 
@@ -375,14 +375,14 @@ export default class ImportSkill extends BaseCommand {
         this.warn(
           `Malformed metadata.yaml at ${metadataYamlPath} — existing fields may be lost\n` +
             `  Validation errors: ${parseResult.error.issues.map((i) => i.message).join(", ")}\n` +
-            `  Expected fields: cli_name (string), cli_description (string), category (string)\n` +
+            `  Expected fields: cliName (string), cliDescription (string), category (string)\n` +
             `  Validate your YAML syntax at https://yamllint.com`,
         );
       }
       const metadata = parseResult.success
         ? (parseResult.data as SkillMetadata)
-        : { forked_from: undefined };
-      metadata.forked_from = forkedFrom;
+        : { forkedFrom: undefined };
+      metadata.forkedFrom = forkedFrom;
 
       const newYamlContent = stringifyYaml(metadata, {
         lineWidth: YAML_FORMATTING.LINE_WIDTH_NONE,
@@ -407,8 +407,8 @@ export default class ImportSkill extends BaseCommand {
       const jsonResult = importedSkillMetadataSchema.safeParse(jsonParsed);
       const metadata = jsonResult.success
         ? (jsonResult.data as SkillMetadata)
-        : { forked_from: undefined };
-      metadata.forked_from = forkedFrom;
+        : { forkedFrom: undefined };
+      metadata.forkedFrom = forkedFrom;
 
       const yamlContent = stringifyYaml(metadata, { lineWidth: YAML_FORMATTING.LINE_WIDTH_NONE });
       await writeFile(metadataYamlPath, yamlContent);
@@ -416,15 +416,15 @@ export default class ImportSkill extends BaseCommand {
     }
 
     const minimalMetadata: SkillMetadata = {
-      cli_name: skillName
+      cliName: skillName
         .split("-")
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" "),
-      cli_description: "Imported from third-party repository",
+      cliDescription: "Imported from third-party repository",
       category: IMPORT_DEFAULTS.CATEGORY,
-      category_exclusive: false,
+      categoryExclusive: false,
       author: IMPORT_DEFAULTS.AUTHOR,
-      forked_from: forkedFrom,
+      forkedFrom: forkedFrom,
     };
 
     const yamlContent = stringifyYaml(minimalMetadata, {

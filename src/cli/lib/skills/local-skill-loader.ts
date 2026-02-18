@@ -9,18 +9,18 @@ import { formatZodErrors, localRawMetadataSchema } from "../schemas";
 import { LOCAL_DEFAULTS, METADATA_KEYS } from "../metadata-keys";
 
 type LocalRawMetadata = {
-  cli_name: string;
-  cli_description?: string;
+  cliName: string;
+  cliDescription?: string;
   /** Original skill category from source (e.g., "framework", "styling", "api") */
   category?: CategoryPath;
-  category_exclusive?: boolean;
-  usage_guidance?: string;
+  categoryExclusive?: boolean;
+  usageGuidance?: string;
   tags?: string[];
-  compatible_with?: SkillId[];
-  conflicts_with?: SkillId[];
+  compatibleWith?: SkillId[];
+  conflictsWith?: SkillId[];
   requires?: SkillId[];
-  requires_setup?: SkillId[];
-  provides_setup_for?: SkillId[];
+  requiresSetup?: SkillId[];
+  providesSetupFor?: SkillId[];
 };
 
 export type LocalSkillDiscoveryResult = {
@@ -86,7 +86,7 @@ async function extractLocalSkill(
 
   const metadata = parsed.data as LocalRawMetadata;
 
-  if (!metadata.cli_name) {
+  if (!metadata.cliName) {
     warn(
       `Skipping local skill '${skillDirName}': missing required '${METADATA_KEYS.CLI_NAME}' in metadata.yaml`,
     );
@@ -117,17 +117,17 @@ async function extractLocalSkill(
   const extracted: ExtractedSkillMetadata = {
     id: skillId,
     directoryPath: skillDirName,
-    description: metadata.cli_description || frontmatter.description,
-    usageGuidance: metadata.usage_guidance,
+    description: metadata.cliDescription || frontmatter.description,
+    usageGuidance: metadata.usageGuidance,
     category,
-    categoryExclusive: metadata.category_exclusive ?? false,
+    categoryExclusive: metadata.categoryExclusive ?? false,
     author: LOCAL_DEFAULTS.AUTHOR,
     tags: metadata.tags ?? [],
-    compatibleWith: metadata.compatible_with ?? [],
-    conflictsWith: metadata.conflicts_with ?? [],
+    compatibleWith: metadata.compatibleWith ?? [],
+    conflictsWith: metadata.conflictsWith ?? [],
     requires: metadata.requires ?? [],
-    requiresSetup: metadata.requires_setup ?? [],
-    providesSetupFor: metadata.provides_setup_for ?? [],
+    requiresSetup: metadata.requiresSetup ?? [],
+    providesSetupFor: metadata.providesSetupFor ?? [],
     path: relativePath,
     local: true,
     localPath: relativePath,

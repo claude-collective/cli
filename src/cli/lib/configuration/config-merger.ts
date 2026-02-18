@@ -54,8 +54,8 @@ export async function mergeWithExistingConfig(
       localConfig.author = existingConfig.author;
     }
 
-    if (existingConfig.agents_source) {
-      localConfig.agents_source = existingConfig.agents_source;
+    if (existingConfig.agentsSource) {
+      localConfig.agentsSource = existingConfig.agentsSource;
     }
 
     if (existingConfig.marketplace) {
@@ -69,13 +69,13 @@ export async function mergeWithExistingConfig(
     };
   }
 
-  // No existing full config, try simple project source config for author/agents_source
+  // No existing full config, try simple project source config for author/agentsSource
   const existingProjectConfig = await loadProjectSourceConfig(context.projectDir);
   if (existingProjectConfig?.author) {
     localConfig.author = existingProjectConfig.author;
   }
-  if (existingProjectConfig?.agents_source) {
-    localConfig.agents_source = existingProjectConfig.agents_source;
+  if (existingProjectConfig?.agentsSource) {
+    localConfig.agentsSource = existingProjectConfig.agentsSource;
   }
 
   return { config: localConfig, merged: false };

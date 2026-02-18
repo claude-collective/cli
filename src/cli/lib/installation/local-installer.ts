@@ -267,7 +267,7 @@ const CONFIG_OPTIONS_COMMENT = [
   "# Additional config options:",
   `# source: ${DEFAULT_SOURCE}`,
   "# marketplace: my-company",
-  "# agents_source: github:my-org/agents",
+  "# agentsSource: github:my-org/agents",
   "",
 ].join("\n");
 
@@ -275,10 +275,10 @@ const CONFIG_OPTIONS_COMMENT = [
 const PATH_OVERRIDES_COMMENT = [
   "",
   "# Custom paths (for marketplace repos with non-standard layouts):",
-  `# skills_dir: ${SKILLS_DIR_PATH}`,
-  `# agents_dir: ${DIRS.agents}`,
-  `# stacks_file: ${STACKS_FILE_PATH}`,
-  `# matrix_file: ${SKILLS_MATRIX_PATH}`,
+  `# skillsDir: ${SKILLS_DIR_PATH}`,
+  `# agentsDir: ${DIRS.agents}`,
+  `# stacksFile: ${STACKS_FILE_PATH}`,
+  `# matrixFile: ${SKILLS_MATRIX_PATH}`,
   "",
 ].join("\n");
 

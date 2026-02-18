@@ -17,9 +17,9 @@ const DEFAULT_AGENTS: AgentName[] = ["agent-summoner", "skill-summoner", "docume
 
 function getEffectiveSkillToAgents(): Record<string, AgentName[]> {
   const defaults = getCachedDefaults();
-  if (defaults?.skill_to_agents) {
+  if (defaults?.skillToAgents) {
     // Boundary cast: YAML-loaded mappings contain valid AgentName values
-    return defaults.skill_to_agents as Record<string, AgentName[]>;
+    return defaults.skillToAgents as Record<string, AgentName[]>;
   }
   return {};
 }

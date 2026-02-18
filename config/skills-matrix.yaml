@@ -103,7 +103,7 @@ categories:
     displayName: Error Handling
     description: Error boundaries, result types, and error patterns
     domain: web-extras
-    parent_domain: web
+    parentDomain: web
     exclusive: false
     required: false
     order: 11
@@ -122,7 +122,7 @@ categories:
     displayName: File Upload
     description: File upload patterns and handling
     domain: web-extras
-    parent_domain: web
+    parentDomain: web
     exclusive: false
     required: false
     order: 13
@@ -132,7 +132,7 @@ categories:
     displayName: Files & Images
     description: Image handling and file processing
     domain: web-extras
-    parent_domain: web
+    parentDomain: web
     exclusive: false
     required: false
     order: 14
@@ -142,7 +142,7 @@ categories:
     displayName: Utilities
     description: Utility libraries (date-fns, native JS patterns)
     domain: web-extras
-    parent_domain: web
+    parentDomain: web
     exclusive: false
     required: false
     order: 15
@@ -152,7 +152,7 @@ categories:
     displayName: Realtime
     description: WebSockets, SSE, and real-time communication
     domain: web-extras
-    parent_domain: web
+    parentDomain: web
     exclusive: true
     required: false
     order: 16
@@ -162,7 +162,7 @@ categories:
     displayName: Animation
     description: Animation libraries and CSS animations
     domain: web-extras
-    parent_domain: web
+    parentDomain: web
     exclusive: false
     required: false
     order: 17
@@ -172,7 +172,7 @@ categories:
     displayName: Progressive Web App
     description: Service workers, offline-first patterns, and PWA features
     domain: web-extras
-    parent_domain: web
+    parentDomain: web
     exclusive: false
     required: false
     order: 18
@@ -182,7 +182,7 @@ categories:
     displayName: Accessibility
     description: WCAG compliance, ARIA, and keyboard navigation
     domain: web-extras
-    parent_domain: web
+    parentDomain: web
     exclusive: false
     required: false
     order: 19
@@ -597,12 +597,12 @@ relationships:
     # React-specific libraries (note: these libraries have vanilla/other-framework options, but our skills teach React patterns)
     - skill: zustand
       needs: [react, react-native]
-      needs_any: true
+      needsAny: true
       reason: "Our Zustand skill covers React/React Native patterns (zustand/vanilla exists for other frameworks)"
 
     - skill: redux-toolkit
       needs: [react, react-native]
-      needs_any: true
+      needsAny: true
       reason: "Our Redux Toolkit skill covers React/React Native patterns (RTK core is framework-agnostic)"
 
     - skill: mobx
@@ -611,17 +611,17 @@ relationships:
 
     - skill: react-query
       needs: [react, react-native]
-      needs_any: true
+      needsAny: true
       reason: "TanStack Query's React adapter. Note: TanStack Query also supports Vue, Solid, Svelte via separate adapters."
 
     - skill: swr
       needs: [react, react-native]
-      needs_any: true
+      needsAny: true
       reason: "SWR is a React Hooks library. For React Native, requires @nandorojo/swr-react-native wrapper."
 
     - skill: react-hook-form
       needs: [react, react-native]
-      needs_any: true
+      needsAny: true
       reason: "React Hook Form is React only"
 
     - skill: react-testing-library
@@ -659,7 +659,7 @@ relationships:
     # Backend dependencies
     - skill: better-auth
       needs: [drizzle, prisma]
-      needs_any: true
+      needsAny: true
       reason: "Better Auth supports multiple database adapters (Drizzle, Prisma, Kysely, MongoDB). Our skill uses Drizzle adapter."
 
     # NOTE: Removed drizzle/prisma requires API framework - ORMs work standalone for scripts, CLI tools, workers, etc.
@@ -672,12 +672,12 @@ relationships:
     # GraphQL clients need a framework
     - skill: graphql-apollo
       needs: [react, vue, angular]
-      needs_any: true
+      needsAny: true
       reason: "Apollo Client - first-party React support, community-maintained Vue/Angular integrations. Note: Svelte/Solid bindings exist but are stale (2020-2022)."
 
     - skill: graphql-urql
       needs: [react, vue, solidjs]
-      needs_any: true
+      needsAny: true
       reason: "URQL has first-party support for React, Vue, and Solid (no Angular support). Svelte support exists but skill not yet created."
 
   # ─────────────────────────────────────────────────────────────────
@@ -759,7 +759,7 @@ relationships:
 # - Lowercase
 # =============================================================================
 
-skill_aliases:
+skillAliases:
   # ─────────────────────────────────────────────────────────────────
   # Frameworks - normalized skill IDs
   # ─────────────────────────────────────────────────────────────────

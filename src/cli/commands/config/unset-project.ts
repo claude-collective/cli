@@ -27,7 +27,7 @@ export default class ConfigUnsetProject extends BaseCommand {
     const projectDir = process.cwd();
     const { key } = args;
 
-    const validKeys = ["source", "marketplace", "agents_source"];
+    const validKeys = ["source", "marketplace", "agentsSource"];
 
     if (!validKeys.includes(key)) {
       this.error(`Unknown configuration key: ${key}\nValid keys: ${validKeys.join(", ")}`, {

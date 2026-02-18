@@ -81,12 +81,12 @@ export function sanitizeCompiledAgentData(data: CompiledAgentData): CompiledAgen
     title: sanitizeLiquidSyntax(data.agent.title, "agent.title"),
     description: sanitizeLiquidSyntax(data.agent.description, "agent.description"),
     tools: sanitizeStringArray(data.agent.tools, "agent.tools") ?? data.agent.tools,
-    disallowed_tools: sanitizeStringArray(data.agent.disallowed_tools, "agent.disallowed_tools"),
+    disallowedTools: sanitizeStringArray(data.agent.disallowedTools, "agent.disallowedTools"),
     model: sanitizeString(data.agent.model, "agent.model") as AgentConfig["model"],
-    permission_mode: sanitizeString(
-      data.agent.permission_mode,
-      "agent.permission_mode",
-    ) as AgentConfig["permission_mode"],
+    permissionMode: sanitizeString(
+      data.agent.permissionMode,
+      "agent.permissionMode",
+    ) as AgentConfig["permissionMode"],
   };
 
   const sanitizedSkills = sanitizeSkills(data.skills);

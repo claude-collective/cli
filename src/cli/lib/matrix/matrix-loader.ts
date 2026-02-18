@@ -36,19 +36,19 @@ type ResolveId = (id: SkillId, context?: string) => SkillId;
 
 const rawMetadataSchema = z.object({
   category: categoryPathSchema,
-  category_exclusive: z.boolean().optional(),
+  categoryExclusive: z.boolean().optional(),
   author: z.string(),
   version: z.coerce.string(),
-  cli_name: z.string().optional(),
-  cli_description: z.string().optional(),
-  usage_guidance: z.string().optional(),
+  cliName: z.string().optional(),
+  cliDescription: z.string().optional(),
+  usageGuidance: z.string().optional(),
   tags: z.array(z.string()).optional(),
   // Lenient: accepts display names and skill IDs from YAML, resolved to canonical IDs during matrix merge
-  compatible_with: z.array(z.string() as z.ZodType<SkillId>).optional(),
-  conflicts_with: z.array(z.string() as z.ZodType<SkillId>).optional(),
+  compatibleWith: z.array(z.string() as z.ZodType<SkillId>).optional(),
+  conflictsWith: z.array(z.string() as z.ZodType<SkillId>).optional(),
   requires: z.array(z.string() as z.ZodType<SkillId>).optional(),
-  requires_setup: z.array(z.string() as z.ZodType<SkillId>).optional(),
-  provides_setup_for: z.array(z.string() as z.ZodType<SkillId>).optional(),
+  requiresSetup: z.array(z.string() as z.ZodType<SkillId>).optional(),
+  providesSetupFor: z.array(z.string() as z.ZodType<SkillId>).optional(),
 });
 
 /**
@@ -83,11 +83,11 @@ export async function loadSkillsMatrix(configPath: string): Promise<SkillsMatrix
  * 4. Merges metadata fields into an ExtractedSkillMetadata object
  *
  * Skills with invalid metadata are warned and skipped. Skills missing
- * the required `cli_name` field in metadata.yaml cause a hard error.
+ * the required `cliName` field in metadata.yaml cause a hard error.
  *
  * @param skillsDir - Absolute path to the skills root directory (e.g., `{root}/src/skills`)
  * @returns Array of extracted skill metadata, one per valid skill found
- * @throws When a skill's metadata.yaml is missing the required `cli_name` field
+ * @throws When a skill's metadata.yaml is missing the required `cliName` field
  */
 export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkillMetadata[]> {
   const skills: ExtractedSkillMetadata[] = [];
@@ -123,7 +123,7 @@ export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkil
       continue;
     }
 
-    if (!metadata.cli_name) {
+    if (!metadata.cliName) {
       throw new Error(
         `Skill at ${metadataFile} is missing required '${METADATA_KEYS.CLI_NAME}' field in metadata.yaml`,
       );
@@ -134,17 +134,17 @@ export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkil
     const extracted: ExtractedSkillMetadata = {
       id: skillId,
       directoryPath: skillDir,
-      description: metadata.cli_description || frontmatter.description,
-      usageGuidance: metadata.usage_guidance,
+      description: metadata.cliDescription || frontmatter.description,
+      usageGuidance: metadata.usageGuidance,
       category: metadata.category,
-      categoryExclusive: metadata.category_exclusive ?? true,
+      categoryExclusive: metadata.categoryExclusive ?? true,
       author: metadata.author,
       tags: metadata.tags ?? [],
-      compatibleWith: metadata.compatible_with ?? [],
-      conflictsWith: metadata.conflicts_with ?? [],
+      compatibleWith: metadata.compatibleWith ?? [],
+      conflictsWith: metadata.conflictsWith ?? [],
       requires: metadata.requires ?? [],
-      requiresSetup: metadata.requires_setup ?? [],
-      providesSetupFor: metadata.provides_setup_for ?? [],
+      requiresSetup: metadata.requiresSetup ?? [],
+      providesSetupFor: metadata.providesSetupFor ?? [],
       path: `skills/${skillDir}/`,
     };
 
@@ -270,7 +270,7 @@ export async function mergeMatrixWithSkills(
   matrix: SkillsMatrixConfig,
   skills: ExtractedSkillMetadata[],
 ): Promise<MergedSkillsMatrix> {
-  const displayNameToId = matrix.skill_aliases;
+  const displayNameToId = matrix.skillAliases;
   const displayNames = buildReverseDisplayNames(displayNameToId);
   const directoryPathToId = buildDirectoryPathToIdMap(skills);
   const aliasTargetToSkillId = buildAliasTargetToSkillIdMap(displayNameToId, skills);
@@ -382,7 +382,7 @@ function resolveRequirements(
     if (resolve(rule.skill, "requires.skill") !== skillId) continue;
     requires.push({
       skillIds: rule.needs.map((id) => resolve(id, "requires.needs")),
-      needsAny: rule.needs_any ?? false,
+      needsAny: rule.needsAny ?? false,
       reason: rule.reason,
     });
   }

@@ -348,7 +348,7 @@ export type WizardState = {
   /**
    * Find the parent domain for a sub-domain (e.g., web-extras -> web).
    * @param domain - Domain to look up
-   * @param matrix - Merged skills matrix containing category definitions with parent_domain
+   * @param matrix - Merged skills matrix containing category definitions with parentDomain
    * @returns The parent domain, or undefined if the domain has no parent
    */
   getParentDomain: (domain: Domain, matrix: MergedSkillsMatrix) => Domain | undefined;
@@ -689,9 +689,9 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   getParentDomain: (domain, matrix) => {
     const cat = Object.values(matrix.categories).find(
-      (c) => c.domain === domain && c.parent_domain,
+      (c) => c.domain === domain && c.parentDomain,
     );
-    return cat?.parent_domain;
+    return cat?.parentDomain;
   },
 
   getParentDomainSelections: (domain, matrix) => {

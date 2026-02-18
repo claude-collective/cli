@@ -19,15 +19,15 @@ import { warn } from "../../utils/logger";
 /**
  * Tracks the original marketplace source of a locally-installed skill.
  *
- * Written into each skill's metadata.yaml under the `forked_from` key when a skill
+ * Written into each skill's metadata.yaml under the `forkedFrom` key when a skill
  * is copied from a source repository to the local `.claude/skills/` directory.
  * Used for version comparison, update detection, and provenance tracking.
  */
 export type ForkedFromMetadata = {
   /** Canonical skill ID from the source repository (e.g., "cc-ts-react-hook-form") */
-  skill_id: SkillId;
+  skillId: SkillId;
   /** SHA-256 hash of the source SKILL.md content at the time of installation */
-  content_hash: string;
+  contentHash: string;
   /** ISO date string (YYYY-MM-DD) when the skill was installed or last updated */
   date: string;
   /** Source URL the skill was installed from (e.g., "github:agents-inc/skills") */
@@ -42,7 +42,7 @@ export type ForkedFromMetadata = {
  */
 export type LocalSkillMetadata = {
   /** Provenance metadata linking back to the original source skill, if any */
-  forked_from?: ForkedFromMetadata;
+  forkedFrom?: ForkedFromMetadata;
   [key: string]: unknown;
 };
 
@@ -53,9 +53,9 @@ export type LocalSkillMetadata = {
  * `.claude/skills/` directory. Used by `agentsinc outdated` to display update status.
  */
 export type SkillComparisonResult = {
-  /** Canonical skill ID (from forked_from metadata, or directory name if no metadata) */
+  /** Canonical skill ID (from forkedFrom metadata, or directory name if no metadata) */
   id: SkillId;
-  /** SHA-256 hash of the local SKILL.md content at install time, null if no forked_from metadata */
+  /** SHA-256 hash of the local SKILL.md content at install time, null if no forkedFrom metadata */
   localHash: string | null;
   /** SHA-256 hash of the current source SKILL.md, null if source skill no longer exists */
   sourceHash: string | null;
@@ -68,20 +68,20 @@ export type SkillComparisonResult = {
 };
 
 /**
- * Reads forked-from metadata from a skill's metadata.yaml file.
+ * Reads forkedFrom metadata from a skill's metadata.yaml file.
  *
  * This metadata tracks the original marketplace source of a locally-installed skill,
  * enabling version comparison and update detection via content hash matching.
  *
  * @param skillDir - Absolute path to the skill directory (e.g., `/project/.claude/skills/react-hook-form`)
- * @returns The `forked_from` metadata if present and valid, `null` if the file doesn't exist,
- *          has no `forked_from` field, or fails Zod validation (warns on invalid metadata)
+ * @returns The `forkedFrom` metadata if present and valid, `null` if the file doesn't exist,
+ *          has no `forkedFrom` field, or fails Zod validation (warns on invalid metadata)
  *
  * @example
  * ```ts
  * const metadata = await readForkedFromMetadata("/project/.claude/skills/react-hook-form");
  * if (metadata) {
- *   console.log(`Installed from ${metadata.skill_id} on ${metadata.date}`);
+ *   console.log(`Installed from ${metadata.skillId} on ${metadata.date}`);
  * }
  * ```
  */
@@ -100,13 +100,13 @@ export async function readForkedFromMetadata(skillDir: string): Promise<ForkedFr
     return null;
   }
 
-  return (result.data as LocalSkillMetadata).forked_from ?? null;
+  return (result.data as LocalSkillMetadata).forkedFrom ?? null;
 }
 
 /**
  * Reads the full local skill metadata from a skill's metadata.yaml file.
  *
- * Returns the parsed metadata including `forked_from` field.
+ * Returns the parsed metadata including `forkedFrom` field.
  * Used by the uninstall command to determine whether a skill was installed by the CLI.
  *
  * @param skillDir - Absolute path to the skill directory
@@ -134,8 +134,8 @@ export async function readLocalSkillMetadata(skillDir: string): Promise<LocalSki
  * Scans all local skill directories and reads their forked-from metadata.
  *
  * Enumerates every subdirectory under `{projectDir}/.claude/skills/` and reads
- * the `forked_from` field from each skill's metadata.yaml. The returned Map is
- * keyed by skill ID (from `forked_from.skill_id` if available, otherwise the
+ * the `forkedFrom` field from each skill's metadata.yaml. The returned Map is
+ * keyed by skill ID (from `forkedFrom.skillId` if available, otherwise the
  * directory name).
  *
  * @param projectDir - Absolute path to the project root containing `.claude/skills/`
@@ -166,7 +166,7 @@ export async function getLocalSkillsWithMetadata(
     const skillDir = path.join(localSkillsPath, dirName);
     const forkedFrom = await readForkedFromMetadata(skillDir);
 
-    const skillId = forkedFrom?.skill_id ?? dirName;
+    const skillId = forkedFrom?.skillId ?? dirName;
 
     result.set(skillId, { dirName, forkedFrom });
   }
@@ -178,7 +178,7 @@ export async function getLocalSkillsWithMetadata(
  * Computes the SHA-256 content hash of a skill's SKILL.md in a source repository.
  *
  * Used to compare the current source version against the locally-installed version's
- * `content_hash` to detect whether updates are available.
+ * `contentHash` to detect whether updates are available.
  *
  * @param sourcePath - Absolute path to the source repository root
  * @param skillPath - Relative path to the skill within `src/` (e.g., "web/react/react-hook-form")
@@ -200,11 +200,11 @@ export async function computeSourceHash(
 /**
  * Compares all local skills against their source repository versions.
  *
- * For each skill in `{projectDir}/.claude/skills/`, reads its `forked_from` metadata
+ * For each skill in `{projectDir}/.claude/skills/`, reads its `forkedFrom` metadata
  * and computes the current source hash. Skills are classified as:
  * - **"current"** -- local content hash matches the source (no update available)
  * - **"outdated"** -- hashes differ (source has been updated since installation)
- * - **"local-only"** -- no `forked_from` metadata, or the source skill no longer exists
+ * - **"local-only"** -- no `forkedFrom` metadata, or the source skill no longer exists
  *
  * Results are sorted alphabetically by skill ID.
  *
@@ -235,7 +235,7 @@ export async function compareLocalSkillsWithSource(
 
   for (const [skillId, { dirName, forkedFrom }] of localSkills) {
     if (!forkedFrom) {
-      // Boundary cast: skillId comes from Map<string, ...> keys (directory names or forkedFrom.skill_id)
+      // Boundary cast: skillId comes from Map<string, ...> keys (directory names or forkedFrom.skillId)
       results.push({
         id: skillId as SkillId,
         localHash: null,
@@ -246,12 +246,12 @@ export async function compareLocalSkillsWithSource(
       continue;
     }
 
-    const localHash = forkedFrom.content_hash;
-    const sourceSkill = sourceSkills[forkedFrom.skill_id];
+    const localHash = forkedFrom.contentHash;
+    const sourceSkill = sourceSkills[forkedFrom.skillId];
 
     if (!sourceSkill) {
       results.push({
-        id: forkedFrom.skill_id,
+        id: forkedFrom.skillId,
         localHash,
         sourceHash: null,
         status: "local-only",
@@ -264,7 +264,7 @@ export async function compareLocalSkillsWithSource(
 
     if (sourceHash === null) {
       results.push({
-        id: forkedFrom.skill_id,
+        id: forkedFrom.skillId,
         localHash,
         sourceHash: null,
         status: "local-only",
@@ -276,7 +276,7 @@ export async function compareLocalSkillsWithSource(
     const status = localHash === sourceHash ? "current" : "outdated";
 
     results.push({
-      id: forkedFrom.skill_id,
+      id: forkedFrom.skillId,
       localHash,
       sourceHash,
       status,
@@ -292,7 +292,7 @@ export async function compareLocalSkillsWithSource(
  * Writes forked-from provenance metadata into a skill's metadata.yaml.
  *
  * Reads the existing metadata.yaml (preserving any extra fields), sets the
- * `forked_from` block with the given skill ID, content hash, and current date,
+ * `forkedFrom` block with the given skill ID, content hash, and current date,
  * then writes the file back with a YAML language server schema comment.
  *
  * Called during skill installation (by the skill copier) to record where a
@@ -306,7 +306,7 @@ export async function compareLocalSkillsWithSource(
  *
  * @remarks
  * **Side effect:** Overwrites `{destPath}/metadata.yaml` on disk. Existing fields
- * are preserved if the file parses successfully; if parsing fails, only `forked_from`
+ * are preserved if the file parses successfully; if parsing fails, only `forkedFrom`
  * is written (with a warning logged).
  */
 export async function injectForkedFromMetadata(
@@ -331,11 +331,11 @@ export async function injectForkedFromMetadata(
   }
   const metadata: LocalSkillMetadata = parseResult.success
     ? (parseResult.data as LocalSkillMetadata)
-    : { forked_from: undefined };
+    : { forkedFrom: undefined };
 
-  metadata.forked_from = {
-    skill_id: skillId,
-    content_hash: contentHash,
+  metadata.forkedFrom = {
+    skillId: skillId,
+    contentHash: contentHash,
     date: getCurrentDate(),
     ...(source ? { source } : {}),
   };

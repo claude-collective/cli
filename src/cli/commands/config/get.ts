@@ -11,11 +11,11 @@ import { EXIT_CODES } from "../../lib/exit-codes.js";
 export default class ConfigGet extends BaseCommand {
   static summary = "Get a configuration value";
   static description =
-    "Get the effective value of a configuration key (source, author, marketplace, agents_source)";
+    "Get the effective value of a configuration key (source, author, marketplace, agentsSource)";
 
   static args = {
     key: Args.string({
-      description: "Configuration key (source, author, marketplace, agents_source)",
+      description: "Configuration key (source, author, marketplace, agentsSource)",
       required: true,
     }),
   };
@@ -39,12 +39,12 @@ export default class ConfigGet extends BaseCommand {
     } else if (key === "marketplace") {
       const resolved = await resolveSource(undefined, projectDir);
       this.log(resolved.marketplace || "");
-    } else if (key === "agents_source") {
+    } else if (key === "agentsSource") {
       const resolved = await resolveAgentsSource(undefined, projectDir);
       this.log(resolved.agentsSource || "");
     } else {
       this.error(
-        `Unknown configuration key: ${key}\nValid keys: source, author, marketplace, agents_source`,
+        `Unknown configuration key: ${key}\nValid keys: source, author, marketplace, agentsSource`,
         { exit: EXIT_CODES.INVALID_ARGS },
       );
     }

@@ -66,15 +66,15 @@ export default class ConfigShow extends BaseCommand {
     const projectConfigPath = getProjectConfigPath(projectDir);
     this.log(`  2. Project config:`);
     this.log(`     ${projectConfigPath}`);
-    if (projectConfig?.source || projectConfig?.marketplace || projectConfig?.agents_source) {
+    if (projectConfig?.source || projectConfig?.marketplace || projectConfig?.agentsSource) {
       if (projectConfig?.source) {
         this.log(`     source: ${projectConfig.source}`);
       }
       if (projectConfig?.marketplace) {
         this.log(`     marketplace: ${projectConfig.marketplace}`);
       }
-      if (projectConfig?.agents_source) {
-        this.log(`     agents_source: ${projectConfig.agents_source}`);
+      if (projectConfig?.agentsSource) {
+        this.log(`     agentsSource: ${projectConfig.agentsSource}`);
       }
     } else {
       this.log(`     (not configured)`);

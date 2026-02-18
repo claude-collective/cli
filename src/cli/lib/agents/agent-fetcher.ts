@@ -68,9 +68,9 @@ export async function fetchAgentDefinitionsFromRemote(
   let agentsDirRelPath = options.agentsDir;
   if (!agentsDirRelPath) {
     const sourceProjectConfig = await loadProjectSourceConfig(result.path);
-    agentsDirRelPath = sourceProjectConfig?.agents_dir ?? DIRS.agents;
-    if (sourceProjectConfig?.agents_dir) {
-      verbose(`Using agents_dir from source config: ${sourceProjectConfig.agents_dir}`);
+    agentsDirRelPath = sourceProjectConfig?.agentsDir ?? DIRS.agents;
+    if (sourceProjectConfig?.agentsDir) {
+      verbose(`Using agentsDir from source config: ${sourceProjectConfig.agentsDir}`);
     }
   }
 

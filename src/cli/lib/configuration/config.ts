@@ -39,15 +39,15 @@ export type ProjectSourceConfig = {
   source?: string;
   author?: string;
   marketplace?: string;
-  agents_source?: string;
+  agentsSource?: string;
   sources?: SourceEntry[];
   boundSkills?: BoundSkill[];
   /** Branding overrides for white-labeling the CLI */
   branding?: BrandingConfig;
-  skills_dir?: string; // default: src/skills (SKILLS_DIR_PATH)
-  agents_dir?: string; // default: src/agents (DIRS.agents)
-  stacks_file?: string; // default: config/stacks.yaml (STACKS_FILE)
-  matrix_file?: string; // default: config/skills-matrix.yaml (SKILLS_MATRIX_PATH)
+  skillsDir?: string; // default: src/skills (SKILLS_DIR_PATH)
+  agentsDir?: string; // default: src/agents (DIRS.agents)
+  stacksFile?: string; // default: config/stacks.yaml (STACKS_FILE)
+  matrixFile?: string; // default: config/skills-matrix.yaml (SKILLS_MATRIX_PATH)
 };
 
 export type ResolvedConfig = {
@@ -171,10 +171,10 @@ export async function resolveAgentsSource(
   }
 
   const projectConfig = projectDir ? await loadProjectSourceConfig(projectDir) : null;
-  if (projectConfig?.agents_source) {
-    verbose(`Agents source from project config: ${projectConfig.agents_source}`);
+  if (projectConfig?.agentsSource) {
+    verbose(`Agents source from project config: ${projectConfig.agentsSource}`);
     return {
-      agentsSource: projectConfig.agents_source,
+      agentsSource: projectConfig.agentsSource,
       agentsSourceOrigin: "project",
     };
   }

@@ -152,9 +152,9 @@ async function loadFromRemote(
 async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsMatrix> {
   const sourceProjectConfig = await loadProjectSourceConfig(basePath);
 
-  const matrixRelPath = sourceProjectConfig?.matrix_file ?? SKILLS_MATRIX_PATH;
-  const skillsDirRelPath = sourceProjectConfig?.skills_dir ?? SKILLS_DIR_PATH;
-  const stacksRelFile = sourceProjectConfig?.stacks_file;
+  const matrixRelPath = sourceProjectConfig?.matrixFile ?? SKILLS_MATRIX_PATH;
+  const skillsDirRelPath = sourceProjectConfig?.skillsDir ?? SKILLS_DIR_PATH;
+  const stacksRelFile = sourceProjectConfig?.stacksFile;
 
   const sourceMatrixPath = path.join(basePath, matrixRelPath);
   const cliMatrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
