@@ -1,8 +1,10 @@
 import { create } from "zustand";
 import { DEFAULT_PRESELECTED_SKILLS, DEFAULT_PUBLIC_SOURCE_NAME } from "../consts.js";
+import { getCachedDefaults } from "../lib/loading/index.js";
 import { resolveAlias } from "../lib/matrix/index.js";
 import { getSkillDisplayLabel } from "../lib/wizard/build-step-logic.js";
 import type {
+  AgentName,
   BoundSkill,
   Domain,
   DomainSelections,
@@ -19,6 +21,57 @@ import { typedEntries, typedKeys } from "../utils/typed-object.js";
 
 const ALL_DOMAINS: Domain[] = ["web", "web-extras", "api", "cli", "mobile", "shared"];
 
+/** Agents that are never auto-preselected regardless of domain selection */
+const OPTIONAL_AGENTS: readonly AgentName[] = [
+  "agent-summoner",
+  "skill-summoner",
+  "documentor",
+  "pattern-scout",
+  "web-pattern-critique",
+] as const;
+
+/** Extracts unique domain prefixes from skill IDs (first segment before the first hyphen). */
+function extractSkillPrefixes(skillIds: SkillId[]): Set<string> {
+  const prefixes = new Set<string>();
+  for (const id of skillIds) {
+    const firstHyphen = id.indexOf("-");
+    if (firstHyphen > 0) {
+      prefixes.add(id.slice(0, firstHyphen));
+    }
+  }
+  return prefixes;
+}
+
+/**
+ * Determines which agents to preselect based on the actually selected skills.
+ *
+ * Derives domain prefixes from skill IDs (e.g., "web-framework-react" -> "web"),
+ * then matches those prefixes against agentSkillPrefixes from cached defaults.
+ * Optional agents (meta/pattern) are excluded.
+ *
+ * @param skillPrefixes - Unique domain prefixes extracted from selected skill IDs
+ * @param agentSkillPrefixes - Mapping of agent name to its domain prefix strings
+ * @returns Sorted array of agent names to preselect
+ */
+function computeAgentPreselection(
+  skillPrefixes: Set<string>,
+  agentSkillPrefixes: Record<AgentName, string[]>,
+): AgentName[] {
+  if (skillPrefixes.size === 0) return [];
+
+  const result: AgentName[] = [];
+
+  for (const [agent, prefixes] of typedEntries<AgentName, string[]>(agentSkillPrefixes)) {
+    if (OPTIONAL_AGENTS.includes(agent)) continue;
+
+    const hasMatchingPrefix = prefixes?.some((prefix) => skillPrefixes.has(prefix));
+    if (hasMatchingPrefix) {
+      result.push(agent);
+    }
+  }
+
+  return result.sort();
+}
 
 /**
  * Fixed source sort tiers (lower = higher priority):
@@ -112,7 +165,7 @@ function getSkillAlias(skillId: SkillId, matrix: MergedSkillsMatrix): SkillAlias
 /**
  * Wizard step identifiers for the multi-step init/edit flow.
  *
- * Progression: stack -> build -> sources -> confirm
+ * Progression: stack -> build -> sources -> agents -> confirm
  * The "stack" step shows all stacks + "Start from scratch" in a unified list.
  * Navigation is tracked via the `history` stack for goBack() support.
  */
@@ -120,6 +173,7 @@ export type WizardStep =
   | "stack" // Unified first step: select stack or "Start from scratch", then domain selection
   | "build" // CategoryGrid for technology selection
   | "sources" // Choose skill sources (recommended vs custom)
+  | "agents" // Select which agents to compile
   | "confirm"; // Final confirmation
 
 /**
@@ -155,6 +209,8 @@ export type WizardState = {
   showSettings: boolean;
   showHelp: boolean;
   enabledSources: Record<string, boolean>;
+
+  selectedAgents: AgentName[];
 
   boundSkills: BoundSkill[];
 
@@ -310,6 +366,22 @@ export type WizardState = {
    * Side effects: pops from `history`, sets `step` to the popped value
    */
   goBack: () => void;
+  /**
+   * Toggle an agent on or off in the selectedAgents list.
+   * @param agent - Agent name to toggle
+   *
+   * Side effects: adds or removes from `selectedAgents`
+   */
+  toggleAgent: (agent: AgentName) => void;
+  /**
+   * Preselect agents based on the actually selected skills from the build step.
+   * Extracts domain prefixes from skill IDs and uses agentSkillPrefixes from
+   * cached defaults to determine which agents match. Optional and pattern
+   * agents are excluded.
+   *
+   * Side effects: replaces `selectedAgents` with computed preselection
+   */
+  preselectAgentsFromSkills: () => void;
   /** Reset all wizard state to initial values. */
   reset: () => void;
 
@@ -403,6 +475,7 @@ const createInitialState = () => ({
   showSettings: false,
   showHelp: false,
   enabledSources: {} as Record<string, boolean>,
+  selectedAgents: [] as AgentName[],
   boundSkills: [] as BoundSkill[],
   history: [] as WizardStep[],
 });
@@ -608,6 +681,27 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       };
     }),
 
+  toggleAgent: (agent) =>
+    set((state) => {
+      const isSelected = state.selectedAgents.includes(agent);
+      return {
+        selectedAgents: isSelected
+          ? state.selectedAgents.filter((a) => a !== agent)
+          : [...state.selectedAgents, agent],
+      };
+    }),
+
+  preselectAgentsFromSkills: () =>
+    set(() => {
+      const selectedSkills = get().getAllSelectedTechnologies();
+      const skillPrefixes = extractSkillPrefixes(selectedSkills);
+      const defaults = getCachedDefaults();
+      const agentSkillPrefixes = defaults?.agentSkillPrefixes ?? {};
+      return {
+        selectedAgents: computeAgentPreselection(skillPrefixes, agentSkillPrefixes),
+      };
+    }),
+
   reset: () => set(createInitialState()),
 
   getAllSelectedTechnologies: () => {
@@ -667,7 +761,12 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     if (state.approach === "stack" && state.selectedStackId && state.stackAction === "defaults") {
       skipped.push("build");
       skipped.push("sources");
+      skipped.push("agents");
     } else if (state.step === "confirm") {
+      completed.push("build");
+      completed.push("sources");
+      completed.push("agents");
+    } else if (state.step === "agents") {
       completed.push("build");
       completed.push("sources");
     } else if (state.step === "sources") {
@@ -688,9 +787,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   getParentDomain: (domain, matrix) => {
-    const cat = Object.values(matrix.categories).find(
-      (c) => c.domain === domain && c.parentDomain,
-    );
+    const cat = Object.values(matrix.categories).find((c) => c.domain === domain && c.parentDomain);
     return cat?.parentDomain;
   },
 

@@ -174,6 +174,7 @@ export function buildWizardResult(
 ): WizardResultV2 {
   return {
     selectedSkills,
+    selectedAgents: [],
     selectedStackId: null,
     domainSelections: {} as DomainSelections,
     sourceSelections: {},
@@ -464,10 +465,7 @@ export async function writeTestSkill(
         author: options?.author ?? "@test",
         ...options.extraMetadata,
       };
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        stringifyYaml(metadata),
-      );
+      await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));
     } else {
       await writeFile(
         path.join(skillDir, STANDARD_FILES.METADATA_YAML),
@@ -520,10 +518,7 @@ export async function writeSourceSkill(
     metadata.categoryExclusive = config.categoryExclusive;
   }
 
-  await writeFile(
-    path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-    stringifyYaml(metadata),
-  );
+  await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));
 
   return skillDir;
 }

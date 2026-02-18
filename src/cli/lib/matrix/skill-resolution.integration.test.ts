@@ -44,6 +44,7 @@ function buildWizardResult(
 ): WizardResultV2 {
   return {
     selectedSkills,
+    selectedAgents: [],
     selectedStackId: null,
     domainSelections: {} as DomainSelections,
     sourceSelections: {},

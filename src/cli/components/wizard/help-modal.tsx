@@ -42,9 +42,15 @@ const SOURCES_KEYS: HelpSection = {
   keys: [{ key: "G", description: "Toggle source settings" }],
 };
 
+const AGENTS_KEYS: HelpSection = {
+  title: "Agents Step",
+  keys: [],
+};
+
 const STEP_SECTIONS: Partial<Record<WizardStep, HelpSection>> = {
   build: BUILD_KEYS,
   sources: SOURCES_KEYS,
+  agents: AGENTS_KEYS,
 };
 
 const KEY_COLUMN_WIDTH = 14;

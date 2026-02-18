@@ -82,7 +82,7 @@ export function generateProjectConfigFromSkills(
   name: string,
   selectedSkillIds: SkillId[],
   matrix: MergedSkillsMatrix,
-  options?: ProjectConfigOptions,
+  options?: ProjectConfigOptions & { selectedAgents?: AgentName[] },
 ): ProjectConfig {
   const neededAgents = new Set<AgentName>();
   const stackProperty: Record<string, StackAgentConfig> = {};
@@ -111,9 +111,14 @@ export function generateProjectConfigFromSkills(
     }
   }
 
+  // When the user explicitly selected agents, use their selection instead of the derived set
+  const agentList = options?.selectedAgents
+    ? [...options.selectedAgents].sort()
+    : Array.from(neededAgents).sort();
+
   const config: ProjectConfig = {
     name,
-    agents: Array.from(neededAgents).sort(),
+    agents: agentList,
     skills: [...selectedSkillIds],
   };
 

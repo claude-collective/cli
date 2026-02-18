@@ -29,7 +29,7 @@ describe("WizardTabs component", () => {
   });
 
   describe("rendering", () => {
-    it("should render all 4 tabs", () => {
+    it("should render all 5 tabs", () => {
       const { lastFrame, unmount } = renderWizardTabs();
       cleanup = unmount;
 
@@ -37,6 +37,7 @@ describe("WizardTabs component", () => {
       expect(output).toContain(formatStepLabel("stack").full);
       expect(output).toContain(formatStepLabel("build").full);
       expect(output).toContain(formatStepLabel("sources").full);
+      expect(output).toContain(formatStepLabel("agents").full);
       expect(output).toContain(formatStepLabel("confirm").full);
     });
 
@@ -48,6 +49,7 @@ describe("WizardTabs component", () => {
       expect(output).toContain(formatStepLabel("stack").prefix);
       expect(output).toContain(formatStepLabel("build").prefix);
       expect(output).toContain(formatStepLabel("sources").prefix);
+      expect(output).toContain(formatStepLabel("agents").prefix);
       expect(output).toContain(formatStepLabel("confirm").prefix);
     });
 
@@ -299,7 +301,7 @@ describe("WizardTabs component", () => {
     it("should handle all steps completed", () => {
       const { lastFrame, unmount } = renderWizardTabs({
         currentStep: "confirm",
-        completedSteps: ["stack", "build", "sources", "confirm"],
+        completedSteps: ["stack", "build", "sources", "agents", "confirm"],
       });
       cleanup = unmount;
 

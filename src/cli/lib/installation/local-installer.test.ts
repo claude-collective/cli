@@ -13,6 +13,7 @@ import { DEFAULT_PLUGIN_NAME } from "../../consts";
 function createWizardResult(overrides?: Partial<WizardResultV2>): WizardResultV2 {
   return {
     selectedSkills: [],
+    selectedAgents: [],
     selectedStackId: null,
     domainSelections: {},
     sourceSelections: {},

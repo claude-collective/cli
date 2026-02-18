@@ -11,6 +11,7 @@ type StepConfirmProps = {
   domainSelections?: DomainSelections;
   technologyCount?: number;
   skillCount?: number;
+  agentCount?: number;
   installMode?: "plugin" | "local";
   onBack?: () => void;
 };
@@ -22,6 +23,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
   domainSelections,
   technologyCount,
   skillCount,
+  agentCount,
   installMode,
   onBack,
 }) => {
@@ -71,6 +73,11 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
           <Text>
             <Text dimColor>Skills:</Text> <Text bold>{skillCount}</Text>{" "}
             <Text color={CLI_COLORS.SUCCESS}>(all verified)</Text>
+          </Text>
+        )}
+        {agentCount !== undefined && (
+          <Text>
+            <Text dimColor>Agents:</Text> <Text bold>{agentCount}</Text>
           </Text>
         )}
         {installMode && (

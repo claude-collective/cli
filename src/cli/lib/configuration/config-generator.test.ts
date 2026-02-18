@@ -364,6 +364,43 @@ describe("config-generator", () => {
       expect(config.author).toBeUndefined();
     });
 
+    it("uses selectedAgents when provided instead of derived agents", () => {
+      const matrix = createMockMatrix({
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+      });
+
+      const selectedAgents: AgentName[] = ["web-developer", "web-reviewer"];
+
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-framework-react"],
+        matrix,
+        { selectedAgents },
+      );
+
+      // Should use explicitly provided agents, sorted
+      expect(config.agents).toEqual(["web-developer", "web-reviewer"]);
+      // Stack should still be built from skills (for agent skill assignments)
+      expect(config.stack).toBeDefined();
+      expect(
+        Object.values(config.stack!).some(
+          (agent) => agent.framework?.[0]?.id === "web-framework-react",
+        ),
+      ).toBe(true);
+    });
+
+    it("derives agents when selectedAgents is not provided", () => {
+      const matrix = createMockMatrix({
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+      });
+
+      const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], matrix);
+
+      // Should derive agents from skills as before
+      expect(config.agents).toContain("web-developer");
+      expect(config.agents.length).toBeGreaterThan(0);
+    });
+
     it("assigns methodology skills to all methodology/* agents", () => {
       const matrix = createMockMatrix({
         ["meta-methodology-anti-over-engineering"]: createMockSkill(

@@ -1,9 +1,11 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { useWizardStore } from "./wizard-store";
 import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
 import { createMockCategory, createMockSkill, createMockMatrix } from "../lib/__tests__/helpers";
+import { loadDefaultMappings, clearDefaultsCache } from "../lib/loading";
 import { typedKeys } from "../utils/typed-object";
 import type {
+  AgentName,
   Domain,
   MergedSkillsMatrix,
   SkillAssignment,
@@ -883,7 +885,9 @@ describe("WizardStore", () => {
       const matrix = createMockMatrix(
         { "web-framework-react": skill },
         {
-          displayNames: { "web-framework-react": "react" } as Partial<Record<SkillId, SkillDisplayName>>,
+          displayNames: { "web-framework-react": "react" } as Partial<
+            Record<SkillId, SkillDisplayName>
+          >,
         },
       );
 
@@ -909,7 +913,9 @@ describe("WizardStore", () => {
       const matrix = createMockMatrix(
         { "web-framework-react": skill },
         {
-          displayNames: { "web-framework-react": "react" } as Partial<Record<SkillId, SkillDisplayName>>,
+          displayNames: { "web-framework-react": "react" } as Partial<
+            Record<SkillId, SkillDisplayName>
+          >,
         },
       );
 
@@ -935,7 +941,9 @@ describe("WizardStore", () => {
       const matrix = createMockMatrix(
         { "web-framework-react": skill },
         {
-          displayNames: { "web-framework-react": "react" } as Partial<Record<SkillId, SkillDisplayName>>,
+          displayNames: { "web-framework-react": "react" } as Partial<
+            Record<SkillId, SkillDisplayName>
+          >,
         },
       );
 
@@ -963,7 +971,9 @@ describe("WizardStore", () => {
       const matrix = createMockMatrix(
         { "web-framework-react": skill },
         {
-          displayNames: { "web-framework-react": "react" } as Partial<Record<SkillId, SkillDisplayName>>,
+          displayNames: { "web-framework-react": "react" } as Partial<
+            Record<SkillId, SkillDisplayName>
+          >,
         },
       );
 
@@ -974,6 +984,210 @@ describe("WizardStore", () => {
 
       const sourceNames = rows[0].options.map((opt) => opt.id);
       expect(sourceNames).toEqual(["local", "Photoroom", "Agents Inc", "Extra Corp"]);
+    });
+  });
+
+  describe("agent selection", () => {
+    it("should start with empty selectedAgents", () => {
+      const { selectedAgents } = useWizardStore.getState();
+      expect(selectedAgents).toEqual([]);
+    });
+
+    it("should toggle agent on", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+
+      const { selectedAgents } = useWizardStore.getState();
+      expect(selectedAgents).toContain("web-developer");
+    });
+
+    it("should toggle agent off", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+      store.toggleAgent("web-developer");
+
+      const { selectedAgents } = useWizardStore.getState();
+      expect(selectedAgents).not.toContain("web-developer");
+    });
+
+    it("should allow multiple agents to be selected", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+      store.toggleAgent("api-developer");
+      store.toggleAgent("web-reviewer");
+
+      const { selectedAgents } = useWizardStore.getState();
+      expect(selectedAgents).toEqual(["web-developer", "api-developer", "web-reviewer"]);
+    });
+
+    it("should reset selectedAgents on reset", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+      store.reset();
+
+      const { selectedAgents } = useWizardStore.getState();
+      expect(selectedAgents).toEqual([]);
+    });
+  });
+
+  describe("preselectAgentsFromSkills", () => {
+    beforeEach(async () => {
+      clearDefaultsCache();
+      await loadDefaultMappings();
+    });
+
+    afterEach(() => {
+      clearDefaultsCache();
+    });
+
+    it("should preselect web-related agents when web skills are selected", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
+      store.preselectAgentsFromSkills();
+
+      const { selectedAgents } = useWizardStore.getState();
+      expect(selectedAgents).toContain("web-developer");
+      expect(selectedAgents).toContain("web-reviewer");
+      expect(selectedAgents).toContain("web-researcher");
+      expect(selectedAgents).toContain("web-tester");
+      expect(selectedAgents).toContain("web-pm");
+      expect(selectedAgents).toContain("web-architecture");
+    });
+
+    it("should preselect api-related agents when api skills are selected", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("api", "api", "api-framework-hono" as SkillId, true);
+      store.preselectAgentsFromSkills();
+
+      const { selectedAgents } = useWizardStore.getState();
+      expect(selectedAgents).toContain("api-developer");
+      expect(selectedAgents).toContain("api-reviewer");
+      expect(selectedAgents).toContain("api-researcher");
+      expect(selectedAgents).not.toContain("web-developer");
+    });
+
+    it("should never include optional agents regardless of skills", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
+      store.toggleTechnology("api", "api", "api-framework-hono" as SkillId, true);
+      store.toggleTechnology("cli", "framework", "cli-framework-oclif-ink" as SkillId, true);
+      store.preselectAgentsFromSkills();
+
+      const { selectedAgents } = useWizardStore.getState();
+      expect(selectedAgents).not.toContain("agent-summoner");
+      expect(selectedAgents).not.toContain("skill-summoner");
+      expect(selectedAgents).not.toContain("documentor");
+      expect(selectedAgents).not.toContain("pattern-scout");
+      expect(selectedAgents).not.toContain("web-pattern-critique");
+    });
+
+    it("should return empty agents when no skills are selected", () => {
+      const store = useWizardStore.getState();
+      store.preselectAgentsFromSkills();
+
+      const { selectedAgents } = useWizardStore.getState();
+      expect(selectedAgents).toEqual([]);
+    });
+
+    it("should produce union of agents for skills across multiple domains", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
+      store.toggleTechnology("api", "api", "api-framework-hono" as SkillId, true);
+      store.preselectAgentsFromSkills();
+
+      const { selectedAgents } = useWizardStore.getState();
+      expect(selectedAgents).toContain("web-developer");
+      expect(selectedAgents).toContain("api-developer");
+      expect(selectedAgents).toContain("web-reviewer");
+      expect(selectedAgents).toContain("api-reviewer");
+    });
+
+    it("should preselect cli agents when cli skills are selected", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("cli", "framework", "cli-framework-oclif-ink" as SkillId, true);
+      store.preselectAgentsFromSkills();
+
+      const { selectedAgents } = useWizardStore.getState();
+      expect(selectedAgents).toContain("cli-developer");
+      expect(selectedAgents).toContain("cli-tester");
+      expect(selectedAgents).toContain("cli-reviewer");
+      expect(selectedAgents).toContain("cli-migrator");
+    });
+
+    it("should not preselect api agents when only web skills are selected", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
+      store.toggleTechnology("web", "styling", "web-styling-scss-modules" as SkillId, false);
+      store.preselectAgentsFromSkills();
+
+      const { selectedAgents } = useWizardStore.getState();
+      expect(selectedAgents).toContain("web-developer");
+      expect(selectedAgents).not.toContain("api-developer");
+      expect(selectedAgents).not.toContain("api-reviewer");
+    });
+
+    it("should return sorted agents", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
+      store.toggleTechnology("api", "api", "api-framework-hono" as SkillId, true);
+      store.preselectAgentsFromSkills();
+
+      const { selectedAgents } = useWizardStore.getState();
+      const sorted = [...selectedAgents].sort();
+      expect(selectedAgents).toEqual(sorted);
+    });
+
+    it("should replace previous agent selection", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("documentor");
+      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
+      store.preselectAgentsFromSkills();
+
+      const { selectedAgents } = useWizardStore.getState();
+      // preselectAgentsFromSkills replaces the array entirely
+      expect(selectedAgents).not.toContain("documentor");
+    });
+  });
+
+  describe("step progress with agents step", () => {
+    it("should include agents in completed steps when on confirm", () => {
+      const store = useWizardStore.getState();
+      store.setApproach("scratch");
+      store.setStep("build");
+      store.setStep("sources");
+      store.setStep("agents");
+      store.setStep("confirm");
+
+      const { completedSteps } = store.getStepProgress();
+      expect(completedSteps).toContain("agents");
+      expect(completedSteps).toContain("sources");
+      expect(completedSteps).toContain("build");
+    });
+
+    it("should include sources in completed steps when on agents step", () => {
+      const store = useWizardStore.getState();
+      store.setApproach("scratch");
+      store.setStep("build");
+      store.setStep("sources");
+      store.setStep("agents");
+
+      const { completedSteps } = store.getStepProgress();
+      expect(completedSteps).toContain("build");
+      expect(completedSteps).toContain("sources");
+      expect(completedSteps).not.toContain("agents");
+    });
+
+    it("should skip agents step when using stack defaults", () => {
+      const store = useWizardStore.getState();
+      store.setApproach("stack");
+      store.selectStack("nextjs-fullstack");
+      store.setStackAction("defaults");
+      store.setStep("confirm");
+
+      const { skippedSteps } = store.getStepProgress();
+      expect(skippedSteps).toContain("agents");
+      expect(skippedSteps).toContain("build");
+      expect(skippedSteps).toContain("sources");
     });
   });
 });

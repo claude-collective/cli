@@ -21,7 +21,8 @@ export const WIZARD_STEPS: WizardTabStep[] = [
   { id: "stack", label: "Stack", number: 1 },
   { id: "build", label: "Build", number: 2 },
   { id: "sources", label: "Sources", number: 3 },
-  { id: "confirm", label: "Confirm", number: 4 },
+  { id: "agents", label: "Agents", number: 4 },
+  { id: "confirm", label: "Confirm", number: 5 },
 ];
 
 type FormattedStepLabel = {

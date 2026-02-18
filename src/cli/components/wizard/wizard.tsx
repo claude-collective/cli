@@ -10,8 +10,9 @@ import { StepBuild } from "./step-build.js";
 import { StepConfirm } from "./step-confirm.js";
 import { StepSources } from "./step-sources.js";
 import { StepSettings } from "./step-settings.js";
+import { StepAgents } from "./step-agents.js";
 import { resolveAlias, validateSelection } from "../../lib/matrix/index.js";
-import type { DomainSelections, MergedSkillsMatrix, SkillId } from "../../types/index.js";
+import type { AgentName, DomainSelections, MergedSkillsMatrix, SkillId } from "../../types/index.js";
 import { getStackName } from "./utils.js";
 import { warn } from "../../utils/logger.js";
 import { useWizardInitialization } from "../hooks/use-wizard-initialization.js";
@@ -19,6 +20,7 @@ import { useBuildStepProps } from "../hooks/use-build-step-props.js";
 
 export type WizardResultV2 = {
   selectedSkills: SkillId[];
+  selectedAgents: AgentName[];
   selectedStackId: string | null;
   domainSelections: DomainSelections;
   sourceSelections: Partial<Record<SkillId, string>>;
@@ -110,6 +112,7 @@ export const Wizard: React.FC<WizardProps> = ({
         store.step !== "build" &&
         store.step !== "confirm" &&
         store.step !== "sources" &&
+        store.step !== "agents" &&
         store.step !== "stack"
       ) {
         store.goBack();
@@ -170,6 +173,7 @@ export const Wizard: React.FC<WizardProps> = ({
 
     const result: WizardResultV2 = {
       selectedSkills: allSkills,
+      selectedAgents: store.selectedAgents,
       selectedStackId: store.selectedStackId,
       domainSelections: store.domainSelections,
       sourceSelections: store.sourceSelections,
@@ -209,11 +213,17 @@ export const Wizard: React.FC<WizardProps> = ({
           <StepSources
             matrix={matrix}
             projectDir={projectDir}
-            onContinue={() => store.setStep("confirm")}
+            onContinue={() => {
+              store.preselectAgentsFromSkills();
+              store.setStep("agents");
+            }}
             onBack={store.goBack}
           />
         );
       }
+
+      case "agents":
+        return <StepAgents />;
 
       case "confirm": {
         const stackName = getStackName(store.selectedStackId, matrix);
@@ -226,6 +236,7 @@ export const Wizard: React.FC<WizardProps> = ({
             domainSelections={store.domainSelections}
             technologyCount={technologyCount}
             skillCount={technologyCount}
+            agentCount={store.selectedAgents.length}
             installMode={store.installMode}
             onBack={store.goBack}
           />

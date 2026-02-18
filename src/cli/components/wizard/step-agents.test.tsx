@@ -1,0 +1,201 @@
+import { render } from "ink-testing-library";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { StepAgents } from "./step-agents";
+import { useWizardStore } from "../../stores/wizard-store";
+import {
+  ARROW_DOWN,
+  ENTER,
+  ESCAPE,
+  SPACE,
+  RENDER_DELAY_MS,
+  INPUT_DELAY_MS,
+  delay,
+} from "../../lib/__tests__/test-constants";
+
+const EXPECTED_AGENT_COUNT = 18;
+
+describe("StepAgents component", () => {
+  let cleanup: (() => void) | undefined;
+
+  beforeEach(() => {
+    useWizardStore.getState().reset();
+  });
+
+  afterEach(() => {
+    cleanup?.();
+    cleanup = undefined;
+  });
+
+  describe("rendering", () => {
+    it("should render title and subtitle", () => {
+      const { lastFrame, unmount } = render(<StepAgents />);
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Select agents to compile:");
+      expect(output).toContain("Toggle agents on/off, then continue");
+    });
+
+    it("should render all agents", () => {
+      const { lastFrame, unmount } = render(<StepAgents />);
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Web Developer");
+      expect(output).toContain("API Developer");
+      expect(output).toContain("CLI Developer");
+      expect(output).toContain("Web Architecture");
+      expect(output).toContain("Web Reviewer");
+      expect(output).toContain("API Reviewer");
+      expect(output).toContain("CLI Reviewer");
+      expect(output).toContain("Web Researcher");
+      expect(output).toContain("API Researcher");
+      expect(output).toContain("Web Tester");
+      expect(output).toContain("CLI Tester");
+      expect(output).toContain("Web PM");
+      expect(output).toContain("Pattern Scout");
+      expect(output).toContain("Pattern Critique");
+      expect(output).toContain("Agent Summoner");
+      expect(output).toContain("Skill Summoner");
+      expect(output).toContain("Documentor");
+      expect(output).toContain("CLI Migrator");
+    });
+
+    it("should render agent descriptions", () => {
+      const { lastFrame, unmount } = render(<StepAgents />);
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Frontend features, components, TypeScript");
+      expect(output).toContain("Backend routes, database, middleware");
+      expect(output).toContain("CLI commands, interactive prompts");
+    });
+
+    it("should show empty message when no agents selected", () => {
+      const { lastFrame, unmount } = render(<StepAgents />);
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Please select at least one agent");
+    });
+
+    it("should show selected agents when preselected", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+      store.toggleAgent("api-developer");
+
+      const { lastFrame, unmount } = render(<StepAgents />);
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Selected:");
+      expect(output).toContain("web-developer");
+      expect(output).toContain("api-developer");
+    });
+
+    it("should show continue option with agent count when agents selected", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+      store.toggleAgent("api-developer");
+      store.toggleAgent("web-reviewer");
+
+      const { lastFrame, unmount } = render(<StepAgents />);
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Continue with 3 agent(s)");
+    });
+  });
+
+  describe("keyboard interaction", () => {
+    it("should toggle agent on SPACE", async () => {
+      const { stdin, lastFrame, unmount } = render(<StepAgents />);
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      stdin.write(SPACE);
+      await delay(INPUT_DELAY_MS);
+
+      const store = useWizardStore.getState();
+      expect(store.selectedAgents).toContain("web-developer");
+    });
+
+    it("should toggle correct agent after navigation", async () => {
+      const { stdin, unmount } = render(<StepAgents />);
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      stdin.write(ARROW_DOWN);
+      await delay(INPUT_DELAY_MS);
+      stdin.write(SPACE);
+      await delay(INPUT_DELAY_MS);
+
+      const store = useWizardStore.getState();
+      expect(store.selectedAgents).toContain("api-developer");
+    });
+
+    it("should navigate to confirm on ENTER when agents selected", async () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+      // Set step to agents so setStep("confirm") actually navigates
+      store.setStep("agents");
+
+      const { stdin, unmount } = render(<StepAgents />);
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      stdin.write(ENTER);
+      await delay(INPUT_DELAY_MS);
+
+      const updatedStore = useWizardStore.getState();
+      expect(updatedStore.step).toBe("confirm");
+    });
+
+    it("should not navigate on ENTER when no agents selected", async () => {
+      const store = useWizardStore.getState();
+      store.setStep("agents");
+
+      const { stdin, unmount } = render(<StepAgents />);
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      stdin.write(ENTER);
+      await delay(INPUT_DELAY_MS);
+
+      const updatedStore = useWizardStore.getState();
+      expect(updatedStore.step).toBe("agents");
+    });
+
+    it("should go back on ESC", async () => {
+      const store = useWizardStore.getState();
+      store.setStep("sources");
+      store.setStep("agents");
+
+      const { stdin, unmount } = render(<StepAgents />);
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      stdin.write(ESCAPE);
+      await delay(INPUT_DELAY_MS);
+
+      const updatedStore = useWizardStore.getState();
+      expect(updatedStore.step).toBe("sources");
+    });
+
+    it("should toggle agent off when already selected", async () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+
+      const { stdin, unmount } = render(<StepAgents />);
+      cleanup = unmount;
+
+      await delay(RENDER_DELAY_MS);
+      // First item is web-developer, toggle it off
+      stdin.write(SPACE);
+      await delay(INPUT_DELAY_MS);
+
+      const updatedStore = useWizardStore.getState();
+      expect(updatedStore.selectedAgents).not.toContain("web-developer");
+    });
+  });
+});
