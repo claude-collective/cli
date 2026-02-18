@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.39.0] - 2026-02-19
+
+**Merge meta-framework into framework, remove web-extras domain, grouped agents step**
+
+- Merge `meta-framework` subcategory into `framework` — meta-frameworks now conflict with base frameworks directly
+- Remove `web-extras` domain and `parentDomain` field — all web categories under single `web` domain
+- Rewrite agents step with domain-grouped layout (Web, API, CLI, Meta) and scroll support
+- Simplify agent preselection from skill-based to domain-based lookup
+- Remove unused `preloadedSkills` and `subcategoryAliases` from agent mappings
+
+See [changelogs/0.39.0.md](./changelogs/0.39.0.md) for full details.
+
+---
+
 ## [0.38.0] - 2026-02-18
 
 **Agents selection step, skill-based preselection, strict stacks schema**
