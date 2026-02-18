@@ -232,7 +232,7 @@ describe("round-trip tests", () => {
     // Create mock matrix with skills
     const matrix = createMockMatrix({
       ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
-      ["web-state-zustand"]: createMockSkill("web-state-zustand", "web/state"),
+      ["web-state-zustand"]: createMockSkill("web-state-zustand", "web/client-state"),
     });
 
     // Generate config

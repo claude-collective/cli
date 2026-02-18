@@ -18,9 +18,13 @@ import {
   skillsMatrixConfigSchema,
   stackConfigValidationSchema,
   stacksConfigSchema,
+  stackSubcategorySchema,
 } from "../src/cli/lib/schemas.ts";
 
 const SCHEMAS_DIR = path.resolve(import.meta.dirname, "../src/schemas");
+
+/** All valid subcategory values for stack configs (includes stacks-only keys like base-framework, platform) */
+const STACK_SUBCATEGORY_ENUM = [...stackSubcategorySchema.options];
 
 type SchemaEntry = {
   filename: string;
@@ -30,7 +34,55 @@ type SchemaEntry = {
     title: string;
     description: string;
   };
+  /** Optional post-processor to fix generated JSON schema quirks */
+  postProcess?: (schema: Record<string, unknown>) => void;
 };
+
+/**
+ * Injects propertyNames enum constraints for stackAgentConfig objects.
+ *
+ * The Zod schema uses z.record(z.string()).superRefine() for runtime key validation
+ * (because z.record(z.enum()) requires ALL enum values as mandatory properties).
+ * But z.toJSONSchema() cannot represent superRefine constraints, so we inject the
+ * propertyNames enum into the generated JSON schema for IDE validation.
+ *
+ * Targets objects that have:
+ * - type: "object"
+ * - propertyNames: { type: "string" } (plain string, no enum yet)
+ * - additionalProperties with skill assignment patterns (anyOf with SkillId pattern)
+ */
+function injectSubcategoryPropertyNames(obj: unknown): void {
+  if (obj === null || typeof obj !== "object") return;
+  if (Array.isArray(obj)) {
+    for (const item of obj) injectSubcategoryPropertyNames(item);
+    return;
+  }
+  const record = obj as Record<string, unknown>;
+
+  // Detect stackAgentConfig objects: have propertyNames: { type: "string" } and
+  // additionalProperties with the skill assignment anyOf pattern
+  const propNames = record.propertyNames as Record<string, unknown> | undefined;
+  const additionalProps = record.additionalProperties as Record<string, unknown> | undefined;
+  if (
+    record.type === "object" &&
+    propNames &&
+    propNames.type === "string" &&
+    !propNames.enum &&
+    additionalProps &&
+    additionalProps.anyOf
+  ) {
+    // Check if additionalProperties contains the skill ID pattern (confirms this is a stackAgentConfig)
+    const json = JSON.stringify(additionalProps);
+    if (json.includes("(web|api|cli|mobile|infra|meta|security)-.+-.+")) {
+      propNames.enum = STACK_SUBCATEGORY_ENUM;
+    }
+  }
+
+  // Recurse into all values
+  for (const value of Object.values(record)) {
+    injectSubcategoryPropertyNames(value);
+  }
+}
 
 const SCHEMA_ENTRIES: SchemaEntry[] = [
   {
@@ -96,6 +148,9 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
       description:
         "Schema for .claude-src/config.yaml consumer project files (name, agents, stack, skills).",
     },
+    // stackAgentConfigSchema uses superRefine for runtime key validation (not representable
+    // in JSON schema), so inject propertyNames enum for IDE validation
+    postProcess: injectSubcategoryPropertyNames,
   },
   {
     filename: "project-source-config.schema.json",
@@ -133,6 +188,9 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
       title: "Stacks Configuration",
       description: "Schema for config/stacks.yaml defining agent groupings.",
     },
+    // stackAgentConfigSchema uses superRefine for runtime key validation (not representable
+    // in JSON schema), so inject propertyNames enum for IDE validation
+    postProcess: injectSubcategoryPropertyNames,
   },
   {
     filename: "stack.schema.json",
@@ -154,13 +212,17 @@ function generate(): void {
     const jsonSchema = z.toJSONSchema(entry.schema, { target: "draft-07" });
 
     // Overlay metadata
-    const output = {
+    const output: Record<string, unknown> = {
       $schema: jsonSchema.$schema,
       $id: entry.metadata.$id,
       title: entry.metadata.title,
       description: entry.metadata.description,
       ...Object.fromEntries(Object.entries(jsonSchema).filter(([key]) => key !== "$schema")),
     };
+
+    if (entry.postProcess) {
+      entry.postProcess(output);
+    }
 
     const filePath = path.join(SCHEMAS_DIR, entry.filename);
     writeFileSync(filePath, JSON.stringify(output, null, 2) + "\n");

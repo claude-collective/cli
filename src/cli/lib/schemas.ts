@@ -56,7 +56,8 @@ export const boundSkillSchema: z.ZodType<BoundSkill> = z.object({
   description: z.string().optional(),
 });
 
-export const subcategorySchema = z.enum([
+/** Raw subcategory values (before cast) — used to derive stackSubcategorySchema */
+const SUBCATEGORY_VALUES = [
   "framework",
   "meta-framework",
   "styling",
@@ -94,7 +95,17 @@ export const subcategorySchema = z.enum([
   "cli-framework",
   "cli-prompts",
   "cli-testing",
-]) as z.ZodType<Subcategory>;
+] as const;
+
+// Bridge pattern: z.ZodType<ExistingType> ensures Zod output matches our union types
+export const subcategorySchema = z.enum(SUBCATEGORY_VALUES) as z.ZodType<Subcategory>;
+
+/**
+ * Extended subcategory enum for stack configs.
+ * Includes all matrix subcategories plus stacks-only keys (base-framework, platform)
+ * that are used in stacks.yaml but not defined as matrix categories.
+ */
+export const stackSubcategorySchema = z.enum([...SUBCATEGORY_VALUES, "base-framework", "platform"]);
 
 export const agentNameSchema = z.enum([
   "web-developer",
@@ -348,13 +359,30 @@ const skillAssignmentElementSchema = z.union([skillIdSchema, skillAssignmentSche
 
 /**
  * Agent config within a stack: maps subcategory to skill assignment(s).
+ * Keys restricted to valid Subcategory values from skills-matrix.yaml.
  * Lenient: accepts bare string, object, or array from YAML.
  * Consumers normalize all values to SkillAssignment[] after parsing.
+ *
+ * Uses z.record(z.string()) with superRefine for key validation because
+ * z.record(z.enum()) treats all enum values as required properties.
  */
-export const stackAgentConfigSchema = z.record(
-  z.string(),
-  z.union([skillAssignmentElementSchema, z.array(skillAssignmentElementSchema)]),
-);
+const stackSubcategoryValues: Set<string> = new Set(stackSubcategorySchema.options);
+export const stackAgentConfigSchema = z
+  .record(
+    z.string(),
+    z.union([skillAssignmentElementSchema, z.array(skillAssignmentElementSchema)]),
+  )
+  .superRefine((val, ctx) => {
+    for (const key of Object.keys(val)) {
+      if (!stackSubcategoryValues.has(key)) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `Invalid subcategory '${key}'. Must be one of: ${[...stackSubcategoryValues].join(", ")}`,
+        });
+      }
+    }
+  });
 
 /**
  * Lenient loader for .claude/config.yaml (ProjectConfig).
