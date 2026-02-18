@@ -120,55 +120,6 @@ skillToAgents:
     - web-developer
     - web-reviewer
 
-# Skills that should be preloaded (embedded) for each agent
-# Maps agent name to categories/patterns that trigger preloading
-preloadedSkills:
-  web-developer:
-    - framework
-    - styling
-  api-developer:
-    - api
-    - database
-    - cli
-  cli-developer:
-    - cli
-  web-reviewer:
-    - framework
-    - styling
-    - reviewing
-  api-reviewer:
-    - api
-    - database
-    - reviewing
-  cli-reviewer:
-    - cli
-    - reviewing
-    - cli-reviewing
-  web-researcher:
-    - framework
-    - research-methodology
-  api-researcher:
-    - api
-    - research-methodology
-  web-tester:
-    - testing
-    - mocks
-  web-architecture:
-    - monorepo
-    - turborepo
-    - cli
-  web-pm:
-    - research-methodology
-  pattern-scout:
-    - research-methodology
-  web-pattern-critique:
-    - research-methodology
-    - reviewing
-  documentor:
-    - research-methodology
-  agent-summoner: []
-  skill-summoner: []
-
 # Maps each agent to the skill ID prefixes it should receive by default.
 # Domain-specific agents get their domain prefix(es).
 # Cross-cutting agents (web-pm, web-architecture) get broad prefix sets.
@@ -256,16 +207,3 @@ agentSkillPrefixes:
   documentor:
     - meta
 
-# Aliases for subcategory resolution
-# Maps short names to full paths for convenience
-subcategoryAliases:
-  framework: web/framework
-  styling: web/styling
-  api: api/api
-  database: api/database
-  mocks: web/mocks
-  testing: testing
-  reviewing: reviewing
-  research-methodology: research/research-methodology
-  monorepo: infra/monorepo
-  cli: cli

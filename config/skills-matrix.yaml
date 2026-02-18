@@ -20,20 +20,11 @@ categories:
   framework:
     id: framework
     displayName: Framework
-    description: Core UI framework (React, Vue, Angular, SolidJS)
+    description: UI framework (React, Vue, Angular, SolidJS, Next.js, Remix, Nuxt)
     domain: web
     exclusive: true
     required: true
     order: 1
-
-  meta-framework:
-    id: meta-framework
-    displayName: Meta-Framework
-    description: Full-stack framework (Next.js, Remix, Nuxt)
-    domain: web
-    exclusive: true
-    required: false
-    order: 2
 
   styling:
     id: styling
@@ -102,8 +93,7 @@ categories:
     id: error-handling
     displayName: Error Handling
     description: Error boundaries, result types, and error patterns
-    domain: web-extras
-    parentDomain: web
+    domain: web
     exclusive: false
     required: false
     order: 11
@@ -121,8 +111,7 @@ categories:
     id: file-upload
     displayName: File Upload
     description: File upload patterns and handling
-    domain: web-extras
-    parentDomain: web
+    domain: web
     exclusive: false
     required: false
     order: 13
@@ -131,8 +120,7 @@ categories:
     id: files
     displayName: Files & Images
     description: Image handling and file processing
-    domain: web-extras
-    parentDomain: web
+    domain: web
     exclusive: false
     required: false
     order: 14
@@ -141,8 +129,7 @@ categories:
     id: utilities
     displayName: Utilities
     description: Utility libraries (date-fns, native JS patterns)
-    domain: web-extras
-    parentDomain: web
+    domain: web
     exclusive: false
     required: false
     order: 15
@@ -151,8 +138,7 @@ categories:
     id: realtime
     displayName: Realtime
     description: WebSockets, SSE, and real-time communication
-    domain: web-extras
-    parentDomain: web
+    domain: web
     exclusive: true
     required: false
     order: 16
@@ -161,8 +147,7 @@ categories:
     id: animation
     displayName: Animation
     description: Animation libraries and CSS animations
-    domain: web-extras
-    parentDomain: web
+    domain: web
     exclusive: false
     required: false
     order: 17
@@ -171,8 +156,7 @@ categories:
     id: pwa
     displayName: Progressive Web App
     description: Service workers, offline-first patterns, and PWA features
-    domain: web-extras
-    parentDomain: web
+    domain: web
     exclusive: false
     required: false
     order: 18
@@ -181,8 +165,7 @@ categories:
     id: accessibility
     displayName: Accessibility
     description: WCAG compliance, ARIA, and keyboard navigation
-    domain: web-extras
-    parentDomain: web
+    domain: web
     exclusive: false
     required: false
     order: 19
@@ -379,13 +362,9 @@ relationships:
   # CONFLICTS (Mutually exclusive - selecting A disables B)
   # ─────────────────────────────────────────────────────────────────
   conflicts:
-    # Framework conflicts (only one core framework)
-    - skills: [react, vue, angular, solidjs]
-      reason: "Core frameworks are mutually exclusive within a single application. Exception: micro-frontend architectures (Single-SPA, Module Federation) can combine frameworks in isolation."
-
-    # Meta-framework conflicts
-    - skills: [nextjs-app-router, remix, nuxt]
-      reason: "Meta-frameworks are mutually exclusive - choose one"
+    # Framework conflicts (only one framework)
+    - skills: [react, vue, angular, solidjs, nextjs-app-router, remix, nuxt]
+      reason: "Frameworks are mutually exclusive — choose one"
 
     # NOTE: scss-modules/tailwind moved to discourages - they're technically compatible
 
@@ -596,65 +575,60 @@ relationships:
   requires:
     # React-specific libraries (note: these libraries have vanilla/other-framework options, but our skills teach React patterns)
     - skill: zustand
-      needs: [react, react-native]
+      needs: [react, nextjs-app-router, remix, react-native]
       needsAny: true
       reason: "Our Zustand skill covers React/React Native patterns (zustand/vanilla exists for other frameworks)"
 
     - skill: redux-toolkit
-      needs: [react, react-native]
+      needs: [react, nextjs-app-router, remix, react-native]
       needsAny: true
       reason: "Our Redux Toolkit skill covers React/React Native patterns (RTK core is framework-agnostic)"
 
     - skill: mobx
-      needs: [react]
+      needs: [react, nextjs-app-router, remix]
+      needsAny: true
       reason: "Our MobX skill teaches React patterns. Note: MobX core has official Vue (mobx-vue) and Angular (mobx-angular) bindings."
 
     - skill: react-query
-      needs: [react, react-native]
+      needs: [react, nextjs-app-router, remix, react-native]
       needsAny: true
       reason: "TanStack Query's React adapter. Note: TanStack Query also supports Vue, Solid, Svelte via separate adapters."
 
     - skill: swr
-      needs: [react, react-native]
+      needs: [react, nextjs-app-router, remix, react-native]
       needsAny: true
       reason: "SWR is a React Hooks library. For React Native, requires @nandorojo/swr-react-native wrapper."
 
     - skill: react-hook-form
-      needs: [react, react-native]
+      needs: [react, nextjs-app-router, remix, react-native]
       needsAny: true
       reason: "React Hook Form is React only"
 
     - skill: react-testing-library
-      needs: [react]
+      needs: [react, nextjs-app-router, remix]
+      needsAny: true
       reason: "React Testing Library is React only"
 
     # Vue-specific libraries
     - skill: pinia
-      needs: [vue]
+      needs: [vue, nuxt]
+      needsAny: true
       reason: "Pinia is Vue only"
 
     - skill: vee-validate
-      needs: [vue]
+      needs: [vue, nuxt]
+      needsAny: true
       reason: "VeeValidate is Vue only"
 
     - skill: vue-test-utils
-      needs: [vue]
+      needs: [vue, nuxt]
+      needsAny: true
       reason: "Vue Test Utils is Vue only"
 
     # Angular-specific libraries
     - skill: ngrx-signalstore
       needs: [angular]
       reason: "NgRx SignalStore is Angular only"
-
-    # Next.js specific
-    - skill: nextjs-app-router
-      needs: [react]
-      reason: "Next.js is built on React"
-
-    # Remix specific
-    - skill: remix
-      needs: [react]
-      reason: "Remix is built on React"
 
     # Backend dependencies
     - skill: better-auth
@@ -666,17 +640,22 @@ relationships:
 
     # UI component dependencies
     - skill: shadcn-ui
-      needs: [react, tailwind]
-      reason: "shadcn/ui requires React and Tailwind"
+      needs: [react, nextjs-app-router, remix]
+      needsAny: true
+      reason: "shadcn/ui requires a React-based framework"
+
+    - skill: shadcn-ui
+      needs: [tailwind]
+      reason: "shadcn/ui requires Tailwind CSS"
 
     # GraphQL clients need a framework
     - skill: graphql-apollo
-      needs: [react, vue, angular]
+      needs: [react, vue, angular, nextjs-app-router, remix, nuxt]
       needsAny: true
       reason: "Apollo Client - first-party React support, community-maintained Vue/Angular integrations. Note: Svelte/Solid bindings exist but are stale (2020-2022)."
 
     - skill: graphql-urql
-      needs: [react, vue, solidjs]
+      needs: [react, vue, solidjs, nextjs-app-router, remix, nuxt]
       needsAny: true
       reason: "URQL has first-party support for React, Vue, and Solid (no Angular support). Svelte support exists but skill not yet created."
 
@@ -685,10 +664,7 @@ relationships:
   # ─────────────────────────────────────────────────────────────────
   alternatives:
     - purpose: "Frontend Framework"
-      skills: [react, vue, angular, solidjs]
-
-    - purpose: "React Meta-Framework"
-      skills: [nextjs-app-router, remix]
+      skills: [react, vue, angular, solidjs, nextjs-app-router, remix, nuxt]
 
     - purpose: "Styling"
       skills: [scss-modules, tailwind, cva]

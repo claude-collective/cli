@@ -700,7 +700,7 @@ stacks:
         framework:
           - id: web-framework-nuxt
             preloaded: true
-        meta-framework:
+        base-framework:
           - id: web-framework-vue-composition-api
             preloaded: true
         client-state: web-state-pinia
@@ -746,7 +746,7 @@ stacks:
           - id: meta-reviewing-reviewing
             preloaded: true
         framework: web-framework-nuxt
-        meta-framework: web-framework-vue-composition-api
+        base-framework: web-framework-vue-composition-api
         client-state: web-state-pinia
         testing: web-testing-vitest
         methodology:
@@ -786,7 +786,7 @@ stacks:
             preloaded: true
       web-pm:
         framework: web-framework-nuxt
-        meta-framework: web-framework-vue-composition-api
+        base-framework: web-framework-vue-composition-api
         client-state: web-state-pinia
         testing: web-testing-vitest
         api: api-framework-hono
@@ -826,7 +826,7 @@ stacks:
             preloaded: true
       web-researcher:
         framework: web-framework-nuxt
-        meta-framework: web-framework-vue-composition-api
+        base-framework: web-framework-vue-composition-api
         client-state: web-state-pinia
         testing: web-testing-vitest
         methodology:
@@ -862,7 +862,7 @@ stacks:
             preloaded: true
       pattern-scout:
         framework: web-framework-nuxt
-        meta-framework: web-framework-vue-composition-api
+        base-framework: web-framework-vue-composition-api
         client-state: web-state-pinia
         testing: web-testing-vitest
         api: api-framework-hono
@@ -884,7 +884,7 @@ stacks:
             preloaded: true
       web-pattern-critique:
         framework: web-framework-nuxt
-        meta-framework: web-framework-vue-composition-api
+        base-framework: web-framework-vue-composition-api
         client-state: web-state-pinia
         testing: web-testing-vitest
         api: api-framework-hono
@@ -909,7 +909,7 @@ stacks:
             preloaded: true
       agent-summoner:
         framework: web-framework-nuxt
-        meta-framework: web-framework-vue-composition-api
+        base-framework: web-framework-vue-composition-api
         client-state: web-state-pinia
         testing: web-testing-vitest
         api: api-framework-hono
@@ -932,7 +932,7 @@ stacks:
             preloaded: true
       skill-summoner:
         framework: web-framework-nuxt
-        meta-framework: web-framework-vue-composition-api
+        base-framework: web-framework-vue-composition-api
         client-state: web-state-pinia
         testing: web-testing-vitest
         api: api-framework-hono
@@ -955,7 +955,7 @@ stacks:
             preloaded: true
       documentor:
         framework: web-framework-nuxt
-        meta-framework: web-framework-vue-composition-api
+        base-framework: web-framework-vue-composition-api
         client-state: web-state-pinia
         testing: web-testing-vitest
         api: api-framework-hono

@@ -8,9 +8,7 @@ import { defaultMappingsSchema } from "../schemas";
 
 export type DefaultMappings = {
   skillToAgents: Record<string, string[]>;
-  preloadedSkills: Record<string, string[]>;
   agentSkillPrefixes?: Record<string, string[]>;
-  subcategoryAliases: Record<string, string>;
 };
 
 let cachedDefaults: DefaultMappings | null = null;
