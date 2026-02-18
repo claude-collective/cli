@@ -104,10 +104,20 @@
           "type": "string"
         }
       },
-      "required": ["skill_id", "content_hash", "date"],
+      "required": [
+        "skill_id",
+        "content_hash",
+        "date"
+      ],
       "additionalProperties": false
     }
   },
-  "required": ["category", "author", "cli_name", "cli_description", "usage_guidance"],
+  "required": [
+    "category",
+    "author",
+    "cli_name",
+    "cli_description",
+    "usage_guidance"
+  ],
   "additionalProperties": false
 }

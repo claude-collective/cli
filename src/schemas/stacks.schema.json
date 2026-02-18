@@ -57,7 +57,9 @@
                             "type": "string"
                           }
                         },
-                        "required": ["id"],
+                        "required": [
+                          "id"
+                        ],
                         "additionalProperties": false
                       }
                     ]
@@ -87,7 +89,9 @@
                               "type": "string"
                             }
                           },
-                          "required": ["id"],
+                          "required": [
+                            "id"
+                          ],
                           "additionalProperties": false
                         }
                       ]
@@ -101,11 +105,18 @@
             "type": "string"
           }
         },
-        "required": ["id", "name", "description", "agents"],
+        "required": [
+          "id",
+          "name",
+          "description",
+          "agents"
+        ],
         "additionalProperties": false
       }
     }
   },
-  "required": ["stacks"],
+  "required": [
+    "stacks"
+  ],
   "additionalProperties": false
 }

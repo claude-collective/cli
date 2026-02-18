@@ -24,11 +24,18 @@
     },
     "model": {
       "type": "string",
-      "enum": ["sonnet", "opus", "haiku", "inherit"]
+      "enum": [
+        "sonnet",
+        "opus",
+        "haiku",
+        "inherit"
+      ]
     },
     "context": {
       "type": "string",
-      "enum": ["fork"]
+      "enum": [
+        "fork"
+      ]
     },
     "agent": {
       "type": "string"
@@ -37,6 +44,9 @@
       "type": "string"
     }
   },
-  "required": ["name", "description"],
+  "required": [
+    "name",
+    "description"
+  ],
   "additionalProperties": false
 }

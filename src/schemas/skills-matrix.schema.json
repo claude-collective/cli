@@ -105,11 +105,25 @@
           },
           "domain": {
             "type": "string",
-            "enum": ["web", "web-extras", "api", "cli", "mobile", "shared"]
+            "enum": [
+              "web",
+              "web-extras",
+              "api",
+              "cli",
+              "mobile",
+              "shared"
+            ]
           },
           "parent_domain": {
             "type": "string",
-            "enum": ["web", "web-extras", "api", "cli", "mobile", "shared"]
+            "enum": [
+              "web",
+              "web-extras",
+              "api",
+              "cli",
+              "mobile",
+              "shared"
+            ]
           },
           "exclusive": {
             "type": "boolean"
@@ -124,7 +138,14 @@
             "type": "string"
           }
         },
-        "required": ["id", "displayName", "description", "exclusive", "required", "order"],
+        "required": [
+          "id",
+          "displayName",
+          "description",
+          "exclusive",
+          "required",
+          "order"
+        ],
         "additionalProperties": false
       },
       "required": [
@@ -186,7 +207,10 @@
                 "type": "string"
               }
             },
-            "required": ["skills", "reason"],
+            "required": [
+              "skills",
+              "reason"
+            ],
             "additionalProperties": false
           }
         },
@@ -206,7 +230,10 @@
                 "type": "string"
               }
             },
-            "required": ["skills", "reason"],
+            "required": [
+              "skills",
+              "reason"
+            ],
             "additionalProperties": false
           }
         },
@@ -229,7 +256,11 @@
                 "type": "string"
               }
             },
-            "required": ["when", "suggest", "reason"],
+            "required": [
+              "when",
+              "suggest",
+              "reason"
+            ],
             "additionalProperties": false
           }
         },
@@ -255,7 +286,11 @@
                 "type": "string"
               }
             },
-            "required": ["skill", "needs", "reason"],
+            "required": [
+              "skill",
+              "needs",
+              "reason"
+            ],
             "additionalProperties": false
           }
         },
@@ -275,12 +310,21 @@
                 }
               }
             },
-            "required": ["purpose", "skills"],
+            "required": [
+              "purpose",
+              "skills"
+            ],
             "additionalProperties": false
           }
         }
       },
-      "required": ["conflicts", "discourages", "recommends", "requires", "alternatives"],
+      "required": [
+        "conflicts",
+        "discourages",
+        "recommends",
+        "requires",
+        "alternatives"
+      ],
       "additionalProperties": false
     },
     "skill_aliases": {
@@ -462,6 +506,11 @@
       ]
     }
   },
-  "required": ["version", "categories", "relationships", "skill_aliases"],
+  "required": [
+    "version",
+    "categories",
+    "relationships",
+    "skill_aliases"
+  ],
   "additionalProperties": false
 }

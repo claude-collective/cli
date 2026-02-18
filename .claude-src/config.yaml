@@ -266,8 +266,74 @@ stack:
     client-state:
       id: web-state-zustand
       preloaded: true
+    meta:
+      - id: meta-methodology-investigation-requirements
+        preloaded: true
+      - id: meta-methodology-write-verification
+        preloaded: true
+      - id: meta-methodology-success-criteria
+        preloaded: true
+      - id: meta-methodology-anti-over-engineering
+        preloaded: true
+      - id: meta-methodology-improvement-protocol
+        preloaded: true
+      - id: meta-methodology-context-management
+        preloaded: true
   cli-reviewer:
-    cli-framework: cli-framework-oclif-ink
+    cli-framework:
+      id: cli-framework-oclif-ink
+      preloaded: true
+    framework:
+      id: web-framework-react
+      preloaded: true
+    client-state:
+      id: web-state-zustand
+      preloaded: true
+    meta:
+      - id: meta-methodology-investigation-requirements
+        preloaded: true
+      - id: meta-methodology-write-verification
+        preloaded: true
+      - id: meta-methodology-success-criteria
+        preloaded: true
+      - id: meta-methodology-anti-over-engineering
+        preloaded: true
+      - id: meta-methodology-improvement-protocol
+        preloaded: true
+      - id: meta-methodology-context-management
+        preloaded: true
+  cli-tester:
+    cli-framework:
+      id: cli-framework-oclif-ink
+      preloaded: true
+    testing:
+      id: web-testing-vitest
+      preloaded: true
+    e2e-testing:
+      id: web-testing-playwright-e2e
+      preloaded: true
+    api-testing:
+      id: api-testing-api-testing
+      preloaded: true
+    framework:
+      id: web-framework-react
+      preloaded: true
+    client-state:
+      id: web-state-zustand
+      preloaded: true
+    meta:
+      - id: meta-methodology-investigation-requirements
+        preloaded: true
+      - id: meta-methodology-write-verification
+        preloaded: true
+      - id: meta-methodology-success-criteria
+        preloaded: true
+      - id: meta-methodology-anti-over-engineering
+        preloaded: true
+      - id: meta-methodology-improvement-protocol
+        preloaded: true
+      - id: meta-methodology-context-management
+        preloaded: true
 description: Production-ready Next.js with complete backend infrastructure
 installMode: local
 source: github:agents-inc/skills

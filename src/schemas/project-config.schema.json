@@ -33,7 +33,13 @@
     },
     "installMode": {
       "type": "string",
-      "enum": ["local", "plugin"]
+      "enum": [
+        "local",
+        "plugin"
+      ]
+    },
+    "expertMode": {
+      "type": "boolean"
     },
     "stack": {
       "type": "object",
@@ -70,7 +76,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["id"],
+                  "required": [
+                    "id"
+                  ],
                   "additionalProperties": false
                 }
               ]
@@ -100,7 +108,9 @@
                         "type": "string"
                       }
                     },
-                    "required": ["id"],
+                    "required": [
+                      "id"
+                    ],
                     "additionalProperties": false
                   }
                 ]
@@ -120,6 +130,13 @@
       "type": "string"
     }
   },
-  "required": ["name", "agents", "skills", "installMode", "stack", "source"],
+  "required": [
+    "name",
+    "agents",
+    "skills",
+    "installMode",
+    "stack",
+    "source"
+  ],
   "additionalProperties": false
 }

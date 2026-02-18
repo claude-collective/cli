@@ -26,7 +26,9 @@
           "type": "string"
         }
       },
-      "required": ["name"],
+      "required": [
+        "name"
+      ],
       "additionalProperties": false
     },
     "keywords": {
@@ -100,7 +102,11 @@
                     "properties": {
                       "type": {
                         "type": "string",
-                        "enum": ["command", "script", "prompt"]
+                        "enum": [
+                          "command",
+                          "script",
+                          "prompt"
+                        ]
                       },
                       "command": {
                         "type": "string"
@@ -112,12 +118,16 @@
                         "type": "string"
                       }
                     },
-                    "required": ["type"],
+                    "required": [
+                      "type"
+                    ],
                     "additionalProperties": false
                   }
                 }
               },
-              "required": ["hooks"],
+              "required": [
+                "hooks"
+              ],
               "additionalProperties": false
             }
           }
@@ -125,6 +135,8 @@
       ]
     }
   },
-  "required": ["name"],
+  "required": [
+    "name"
+  ],
   "additionalProperties": false
 }

@@ -22,11 +22,23 @@
     },
     "model": {
       "type": "string",
-      "enum": ["sonnet", "opus", "haiku", "inherit"]
+      "enum": [
+        "sonnet",
+        "opus",
+        "haiku",
+        "inherit"
+      ]
     },
     "permissionMode": {
       "type": "string",
-      "enum": ["default", "acceptEdits", "dontAsk", "bypassPermissions", "plan", "delegate"]
+      "enum": [
+        "default",
+        "acceptEdits",
+        "dontAsk",
+        "bypassPermissions",
+        "plan",
+        "delegate"
+      ]
     },
     "skills": {
       "type": "array",
@@ -56,7 +68,11 @@
                 "properties": {
                   "type": {
                     "type": "string",
-                    "enum": ["command", "script", "prompt"]
+                    "enum": [
+                      "command",
+                      "script",
+                      "prompt"
+                    ]
                   },
                   "command": {
                     "type": "string"
@@ -68,17 +84,24 @@
                     "type": "string"
                   }
                 },
-                "required": ["type"],
+                "required": [
+                  "type"
+                ],
                 "additionalProperties": false
               }
             }
           },
-          "required": ["hooks"],
+          "required": [
+            "hooks"
+          ],
           "additionalProperties": false
         }
       }
     }
   },
-  "required": ["name", "description"],
+  "required": [
+    "name",
+    "description"
+  ],
   "additionalProperties": false
 }
