@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.36.0] - 2026-02-18
+
+**Tier-based source sort order, display name rendering, and code standards enforcement**
+
+- Sources step sorts by fixed tiers: local → scoped marketplace → default public → third-party
+- Skills render full display names in Sources step (matching Build step)
+- Clean code standards enforced across ~30 files (comments, typedKeys, getErrorMessage, test helpers)
+
+See [changelogs/0.36.0.md](./changelogs/0.36.0.md) for full details.
+
+---
+
 ## [0.35.0] - 2026-02-18
 
 **Selective uninstall, expert mode persistence, metadata.yaml requirement, and test infrastructure overhaul**
