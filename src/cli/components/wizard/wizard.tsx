@@ -219,7 +219,7 @@ export const Wizard: React.FC<WizardProps> = ({
             matrix={matrix}
             projectDir={projectDir}
             onContinue={() => {
-              store.preselectAgentsFromSkills();
+              store.preselectAgentsFromDomains();
               store.setStep("agents");
             }}
             onBack={store.goBack}

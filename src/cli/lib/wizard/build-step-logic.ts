@@ -115,10 +115,9 @@ export function buildCategoriesForDomain(
   matrix: MergedSkillsMatrix,
   expertMode: boolean,
   selections: SubcategorySelections,
-  parentDomainSelections?: SubcategorySelections,
   installedSkillIds?: SkillId[],
 ): CategoryRow[] {
-  const frameworkSource = parentDomainSelections ?? selections;
+  const frameworkSource = selections;
   const frameworkSelected = isFrameworkSelected(frameworkSource);
   const selectedFrameworkIds = frameworkSelected
     ? getSelectedFrameworks(frameworkSource, matrix)
@@ -135,7 +134,7 @@ export function buildCategoriesForDomain(
     });
 
     const useFrameworkFilter =
-      (domain === WEB_DOMAIN_ID || parentDomainSelections !== undefined) &&
+      domain === WEB_DOMAIN_ID &&
       cat.id !== FRAMEWORK_SUBCATEGORY_ID &&
       frameworkSelected;
     const filteredSkillOptions = useFrameworkFilter

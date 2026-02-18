@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { DEFAULT_PRESELECTED_SKILLS, DEFAULT_PUBLIC_SOURCE_NAME } from "../consts.js";
-import { getCachedDefaults } from "../lib/loading/index.js";
 import { resolveAlias } from "../lib/matrix/index.js";
 import { getSkillDisplayLabel } from "../lib/wizard/build-step-logic.js";
 import type {
@@ -19,59 +18,23 @@ import type {
 import { warn } from "../utils/logger.js";
 import { typedEntries, typedKeys } from "../utils/typed-object.js";
 
-const ALL_DOMAINS: Domain[] = ["web", "web-extras", "api", "cli", "mobile", "shared"];
+const ALL_DOMAINS: Domain[] = ["web", "api", "cli", "mobile", "shared"];
 
-/** Agents that are never auto-preselected regardless of domain selection */
-const OPTIONAL_AGENTS: readonly AgentName[] = [
-  "agent-summoner",
-  "skill-summoner",
-  "documentor",
-  "pattern-scout",
-  "web-pattern-critique",
-] as const;
-
-/** Extracts unique domain prefixes from skill IDs (first segment before the first hyphen). */
-function extractSkillPrefixes(skillIds: SkillId[]): Set<string> {
-  const prefixes = new Set<string>();
-  for (const id of skillIds) {
-    const firstHyphen = id.indexOf("-");
-    if (firstHyphen > 0) {
-      prefixes.add(id.slice(0, firstHyphen));
-    }
-  }
-  return prefixes;
-}
-
-/**
- * Determines which agents to preselect based on the actually selected skills.
- *
- * Derives domain prefixes from skill IDs (e.g., "web-framework-react" -> "web"),
- * then matches those prefixes against agentSkillPrefixes from cached defaults.
- * Optional agents (meta/pattern) are excluded.
- *
- * @param skillPrefixes - Unique domain prefixes extracted from selected skill IDs
- * @param agentSkillPrefixes - Mapping of agent name to its domain prefix strings
- * @returns Sorted array of agent names to preselect
- */
-function computeAgentPreselection(
-  skillPrefixes: Set<string>,
-  agentSkillPrefixes: Record<AgentName, string[]>,
-): AgentName[] {
-  if (skillPrefixes.size === 0) return [];
-
-  const result: AgentName[] = [];
-
-  for (const [agent, prefixes] of typedEntries<AgentName, string[]>(agentSkillPrefixes)) {
-    if (OPTIONAL_AGENTS.includes(agent)) continue;
-
-    const hasMatchingPrefix = prefixes?.some((prefix) => skillPrefixes.has(prefix));
-    if (hasMatchingPrefix) {
-      result.push(agent);
-    }
-  }
-
-  return result.sort();
-}
+/** All known agent names grouped by domain prefix. */
+const DOMAIN_AGENTS: Record<Domain, AgentName[]> = {
+  web: [
+    "web-developer",
+    "web-reviewer",
+    "web-researcher",
+    "web-tester",
+    "web-pm",
+    "web-architecture",
+  ],
+  api: ["api-developer", "api-reviewer", "api-researcher"],
+  cli: ["cli-developer", "cli-tester", "cli-reviewer", "cli-migrator"],
+  mobile: [],
+  shared: [],
+};
 
 /**
  * Fixed source sort tiers (lower = higher priority):
@@ -374,14 +337,13 @@ export type WizardState = {
    */
   toggleAgent: (agent: AgentName) => void;
   /**
-   * Preselect agents based on the actually selected skills from the build step.
-   * Extracts domain prefixes from skill IDs and uses agentSkillPrefixes from
-   * cached defaults to determine which agents match. Optional and pattern
-   * agents are excluded.
+   * Preselect agents based on selected domains from the first wizard step.
+   * Matches domains against agentSkillPrefixes from cached defaults.
+   * Optional agents (meta/pattern) are excluded.
    *
    * Side effects: replaces `selectedAgents` with computed preselection
    */
-  preselectAgentsFromSkills: () => void;
+  preselectAgentsFromDomains: () => void;
   /** Reset all wizard state to initial values. */
   reset: () => void;
 
@@ -417,25 +379,6 @@ export type WizardState = {
   canGoToNextDomain: () => boolean;
   /** @returns true if there is a previous domain before the current one */
   canGoToPreviousDomain: () => boolean;
-  /**
-   * Find the parent domain for a sub-domain (e.g., web-extras -> web).
-   * @param domain - Domain to look up
-   * @param matrix - Merged skills matrix containing category definitions with parentDomain
-   * @returns The parent domain, or undefined if the domain has no parent
-   */
-  getParentDomain: (domain: Domain, matrix: MergedSkillsMatrix) => Domain | undefined;
-  /**
-   * Get the current selections of a domain's parent domain.
-   * Used for framework-first filtering: web-extras inherits web's framework selections.
-   *
-   * @param domain - Sub-domain to find parent selections for
-   * @param matrix - Merged skills matrix containing category definitions
-   * @returns The parent domain's SubcategorySelections, or undefined if no parent
-   */
-  getParentDomainSelections: (
-    domain: Domain,
-    matrix: MergedSkillsMatrix,
-  ) => SubcategorySelections | undefined;
   /**
    * Build the source selection rows for the sources step UI.
    *
@@ -691,15 +634,16 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       };
     }),
 
-  preselectAgentsFromSkills: () =>
+  preselectAgentsFromDomains: () =>
     set(() => {
-      const selectedSkills = get().getAllSelectedTechnologies();
-      const skillPrefixes = extractSkillPrefixes(selectedSkills);
-      const defaults = getCachedDefaults();
-      const agentSkillPrefixes = defaults?.agentSkillPrefixes ?? {};
-      return {
-        selectedAgents: computeAgentPreselection(skillPrefixes, agentSkillPrefixes),
-      };
+      const agents: AgentName[] = [];
+      for (const domain of get().selectedDomains) {
+        const domainAgents = DOMAIN_AGENTS[domain];
+        if (domainAgents) {
+          agents.push(...domainAgents);
+        }
+      }
+      return { selectedAgents: agents.sort() };
     }),
 
   reset: () => set(createInitialState()),
@@ -784,18 +728,6 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   canGoToPreviousDomain: () => {
     const state = get();
     return state.currentDomainIndex > 0;
-  },
-
-  getParentDomain: (domain, matrix) => {
-    const cat = Object.values(matrix.categories).find((c) => c.domain === domain && c.parentDomain);
-    return cat?.parentDomain;
-  },
-
-  getParentDomainSelections: (domain, matrix) => {
-    const state = get();
-    const parentDomain = state.getParentDomain(domain, matrix);
-    if (!parentDomain) return undefined;
-    return state.domainSelections[parentDomain];
   },
 
   buildSourceRows: (matrix) => {

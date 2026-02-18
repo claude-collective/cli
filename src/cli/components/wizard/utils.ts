@@ -5,7 +5,6 @@ import { typedKeys } from "../../utils/typed-object.js";
 export function getDomainDisplayName(domain: Domain): string {
   const displayNames: Record<Domain, string> = {
     web: "Web",
-    "web-extras": "Web Extras",
     api: "API",
     cli: "CLI",
     mobile: "Mobile",

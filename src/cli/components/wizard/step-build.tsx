@@ -23,8 +23,6 @@ export type StepBuildProps = {
   allSelections: SkillId[];
   showLabels: boolean;
   expertMode: boolean;
-  /** For framework-first filtering on sub-domains (e.g., web-extras inherits from web) */
-  parentDomainSelections?: SubcategorySelections;
   /** Skill IDs already installed on disk, shown with a dimmed checkmark */
   installedSkillIds?: SkillId[];
   onToggle: (subcategoryId: Subcategory, technologyId: SkillId) => void;
@@ -58,7 +56,6 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   allSelections,
   showLabels,
   expertMode,
-  parentDomainSelections,
   installedSkillIds,
   onToggle,
   onToggleLabels,
@@ -74,7 +71,6 @@ export const StepBuild: React.FC<StepBuildProps> = ({
     matrix,
     expertMode,
     selections,
-    parentDomainSelections,
     installedSkillIds,
   });
 

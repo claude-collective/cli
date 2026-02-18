@@ -22,7 +22,6 @@ export function useBuildStepProps({
   const allSelections = store.getAllSelectedTechnologies();
 
   const activeDomain: Domain = currentDomain || effectiveDomains[0] || "web";
-  const parentDomainSelections = store.getParentDomainSelections(activeDomain, matrix);
 
   const onToggle = useCallback(
     (subcategoryId: Parameters<StepBuildProps["onToggle"]>[0], techId: SkillId) => {
@@ -53,7 +52,6 @@ export function useBuildStepProps({
     allSelections,
     showLabels: store.showLabels,
     expertMode: store.expertMode,
-    parentDomainSelections,
     installedSkillIds,
     onToggle,
     onToggleLabels: store.toggleShowLabels,
