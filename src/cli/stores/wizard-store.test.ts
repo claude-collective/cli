@@ -1,13 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { useWizardStore } from "./wizard-store";
 import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
-import { createMockCategory, createMockSkill, createMockMatrix } from "../lib/__tests__/helpers";
-import { loadDefaultMappings, clearDefaultsCache } from "../lib/loading";
+import { createMockSkill, createMockMatrix } from "../lib/__tests__/helpers";
 import { typedKeys } from "../utils/typed-object";
 import type {
   AgentName,
   Domain,
-  MergedSkillsMatrix,
   SkillAssignment,
   SkillDisplayName,
   SkillId,
@@ -545,75 +543,6 @@ describe("WizardStore", () => {
     });
   });
 
-  describe("parent domain selectors", () => {
-    // Partial test data: only "categories" subset of MergedSkillsMatrix
-    // Casts to MergedSkillsMatrix below are intentional — tests only need category lookup
-    const matrixWithParentDomain: Pick<MergedSkillsMatrix, "categories"> = {
-      categories: {
-        "error-handling": createMockCategory("error-handling" as Subcategory, "Error Handling", {
-          domain: "web-extras" as Domain,
-          parentDomain: "web" as Domain,
-          exclusive: false,
-        }),
-        framework: createMockCategory("framework" as Subcategory, "Framework", {
-          domain: "web" as Domain,
-        }),
-      },
-    };
-
-    const matrixWithoutParent: Pick<MergedSkillsMatrix, "categories"> = {
-      categories: {
-        framework: createMockCategory("framework" as Subcategory, "Framework", {
-          domain: "web" as Domain,
-        }),
-      },
-    };
-
-    it("should find parent domain for a domain with parentDomain", () => {
-      const store = useWizardStore.getState();
-      const parent = store.getParentDomain(
-        "web-extras",
-        matrixWithParentDomain as MergedSkillsMatrix,
-      );
-      expect(parent).toBe("web");
-    });
-
-    it("should return undefined for a domain without parentDomain", () => {
-      const store = useWizardStore.getState();
-      const parent = store.getParentDomain("web", matrixWithoutParent as MergedSkillsMatrix);
-      expect(parent).toBeUndefined();
-    });
-
-    it("should get parent domain selections when parent exists", () => {
-      const store = useWizardStore.getState();
-      store.toggleTechnology("web", "framework", "web-framework-react", true);
-
-      const parentSelections = store.getParentDomainSelections(
-        "web-extras",
-        matrixWithParentDomain as MergedSkillsMatrix,
-      );
-      expect(parentSelections).toEqual({ framework: ["web-framework-react"] });
-    });
-
-    it("should return undefined for getParentDomainSelections when no parent", () => {
-      const store = useWizardStore.getState();
-      const parentSelections = store.getParentDomainSelections(
-        "web",
-        matrixWithoutParent as MergedSkillsMatrix,
-      );
-      expect(parentSelections).toBeUndefined();
-    });
-
-    it("should return undefined for getParentDomainSelections when parent has no selections", () => {
-      const store = useWizardStore.getState();
-      const parentSelections = store.getParentDomainSelections(
-        "web-extras",
-        matrixWithParentDomain as MergedSkillsMatrix,
-      );
-      expect(parentSelections).toBeUndefined();
-    });
-  });
-
   describe("reset", () => {
     it("should reset to initial state", () => {
       const store = useWizardStore.getState();
@@ -654,7 +583,7 @@ describe("WizardStore", () => {
 
       const { selectedDomains, domainSelections } = useWizardStore.getState();
 
-      expect(selectedDomains).toEqual(["web", "web-extras", "api", "cli", "mobile", "shared"]);
+      expect(selectedDomains).toEqual(["web", "api", "cli", "mobile", "shared"]);
 
       expect(domainSelections.web).toBeDefined();
       expect(domainSelections.web!.framework).toEqual(["web-framework-react"]);
@@ -1030,20 +959,11 @@ describe("WizardStore", () => {
     });
   });
 
-  describe("preselectAgentsFromSkills", () => {
-    beforeEach(async () => {
-      clearDefaultsCache();
-      await loadDefaultMappings();
-    });
-
-    afterEach(() => {
-      clearDefaultsCache();
-    });
-
-    it("should preselect web-related agents when web skills are selected", () => {
+  describe("preselectAgentsFromDomains", () => {
+    it("should preselect web-related agents when web domain is selected", () => {
       const store = useWizardStore.getState();
-      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
-      store.preselectAgentsFromSkills();
+      store.toggleDomain("web");
+      store.preselectAgentsFromDomains();
 
       const { selectedAgents } = useWizardStore.getState();
       expect(selectedAgents).toContain("web-developer");
@@ -1054,10 +974,10 @@ describe("WizardStore", () => {
       expect(selectedAgents).toContain("web-architecture");
     });
 
-    it("should preselect api-related agents when api skills are selected", () => {
+    it("should preselect api-related agents when api domain is selected", () => {
       const store = useWizardStore.getState();
-      store.toggleTechnology("api", "api", "api-framework-hono" as SkillId, true);
-      store.preselectAgentsFromSkills();
+      store.toggleDomain("api");
+      store.preselectAgentsFromDomains();
 
       const { selectedAgents } = useWizardStore.getState();
       expect(selectedAgents).toContain("api-developer");
@@ -1066,12 +986,24 @@ describe("WizardStore", () => {
       expect(selectedAgents).not.toContain("web-developer");
     });
 
-    it("should never include optional agents regardless of skills", () => {
+    it("should preselect cli agents when cli domain is selected", () => {
       const store = useWizardStore.getState();
-      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
-      store.toggleTechnology("api", "api", "api-framework-hono" as SkillId, true);
-      store.toggleTechnology("cli", "framework", "cli-framework-oclif-ink" as SkillId, true);
-      store.preselectAgentsFromSkills();
+      store.toggleDomain("cli");
+      store.preselectAgentsFromDomains();
+
+      const { selectedAgents } = useWizardStore.getState();
+      expect(selectedAgents).toContain("cli-developer");
+      expect(selectedAgents).toContain("cli-tester");
+      expect(selectedAgents).toContain("cli-reviewer");
+      expect(selectedAgents).toContain("cli-migrator");
+    });
+
+    it("should never include optional agents regardless of domains", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+      store.toggleDomain("api");
+      store.toggleDomain("cli");
+      store.preselectAgentsFromDomains();
 
       const { selectedAgents } = useWizardStore.getState();
       expect(selectedAgents).not.toContain("agent-summoner");
@@ -1081,19 +1013,19 @@ describe("WizardStore", () => {
       expect(selectedAgents).not.toContain("web-pattern-critique");
     });
 
-    it("should return empty agents when no skills are selected", () => {
+    it("should return empty agents when no domains are selected", () => {
       const store = useWizardStore.getState();
-      store.preselectAgentsFromSkills();
+      store.preselectAgentsFromDomains();
 
       const { selectedAgents } = useWizardStore.getState();
       expect(selectedAgents).toEqual([]);
     });
 
-    it("should produce union of agents for skills across multiple domains", () => {
+    it("should produce union of agents for multiple domains", () => {
       const store = useWizardStore.getState();
-      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
-      store.toggleTechnology("api", "api", "api-framework-hono" as SkillId, true);
-      store.preselectAgentsFromSkills();
+      store.toggleDomain("web");
+      store.toggleDomain("api");
+      store.preselectAgentsFromDomains();
 
       const { selectedAgents } = useWizardStore.getState();
       expect(selectedAgents).toContain("web-developer");
@@ -1102,23 +1034,10 @@ describe("WizardStore", () => {
       expect(selectedAgents).toContain("api-reviewer");
     });
 
-    it("should preselect cli agents when cli skills are selected", () => {
+    it("should not preselect api agents when only web domain is selected", () => {
       const store = useWizardStore.getState();
-      store.toggleTechnology("cli", "framework", "cli-framework-oclif-ink" as SkillId, true);
-      store.preselectAgentsFromSkills();
-
-      const { selectedAgents } = useWizardStore.getState();
-      expect(selectedAgents).toContain("cli-developer");
-      expect(selectedAgents).toContain("cli-tester");
-      expect(selectedAgents).toContain("cli-reviewer");
-      expect(selectedAgents).toContain("cli-migrator");
-    });
-
-    it("should not preselect api agents when only web skills are selected", () => {
-      const store = useWizardStore.getState();
-      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
-      store.toggleTechnology("web", "styling", "web-styling-scss-modules" as SkillId, false);
-      store.preselectAgentsFromSkills();
+      store.toggleDomain("web");
+      store.preselectAgentsFromDomains();
 
       const { selectedAgents } = useWizardStore.getState();
       expect(selectedAgents).toContain("web-developer");
@@ -1128,9 +1047,9 @@ describe("WizardStore", () => {
 
     it("should return sorted agents", () => {
       const store = useWizardStore.getState();
-      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
-      store.toggleTechnology("api", "api", "api-framework-hono" as SkillId, true);
-      store.preselectAgentsFromSkills();
+      store.toggleDomain("web");
+      store.toggleDomain("api");
+      store.preselectAgentsFromDomains();
 
       const { selectedAgents } = useWizardStore.getState();
       const sorted = [...selectedAgents].sort();
@@ -1140,11 +1059,11 @@ describe("WizardStore", () => {
     it("should replace previous agent selection", () => {
       const store = useWizardStore.getState();
       store.toggleAgent("documentor");
-      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
-      store.preselectAgentsFromSkills();
+      store.toggleDomain("web");
+      store.preselectAgentsFromDomains();
 
       const { selectedAgents } = useWizardStore.getState();
-      // preselectAgentsFromSkills replaces the array entirely
+      // preselectAgentsFromDomains replaces the array entirely
       expect(selectedAgents).not.toContain("documentor");
     });
   });

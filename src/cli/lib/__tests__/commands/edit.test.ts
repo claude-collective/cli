@@ -383,15 +383,4 @@ describe("edit wizard domain filtering", () => {
     expect(perDomain.mobile).toBeUndefined();
   });
 
-  it("should exclude web-extras domain when no web-extras skills are installed", () => {
-    const installedSkills: SkillId[] = ["web-framework-react"];
-
-    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
-
-    const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
-
-    expect(perDomain.web).toBeDefined();
-    // web-extras is a separate domain and should not appear unless explicitly selected
-    expect(perDomain["web-extras"]).toBeUndefined();
-  });
 });

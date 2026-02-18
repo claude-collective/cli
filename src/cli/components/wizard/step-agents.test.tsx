@@ -71,26 +71,24 @@ describe("StepAgents component", () => {
       expect(output).toContain("CLI commands, interactive prompts");
     });
 
-    it("should show empty message when no agents selected", () => {
+    it("should render group headers", () => {
       const { lastFrame, unmount } = render(<StepAgents />);
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Please select at least one agent");
+      expect(output).toContain("Web");
+      expect(output).toContain("API");
+      expect(output).toContain("CLI");
+      expect(output).toContain("Meta");
     });
 
-    it("should show selected agents when preselected", () => {
-      const store = useWizardStore.getState();
-      store.toggleAgent("web-developer");
-      store.toggleAgent("api-developer");
-
+    it("should show continue arrow", () => {
       const { lastFrame, unmount } = render(<StepAgents />);
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Selected:");
-      expect(output).toContain("web-developer");
-      expect(output).toContain("api-developer");
+      expect(output).toContain("\u2192");
+      expect(output).toContain("Continue");
     });
 
     it("should show continue option with agent count when agents selected", () => {
@@ -104,6 +102,14 @@ describe("StepAgents component", () => {
 
       const output = lastFrame();
       expect(output).toContain("Continue with 3 agent(s)");
+    });
+
+    it("should show 'Continue without agents' when no agents selected", () => {
+      const { lastFrame, unmount } = render(<StepAgents />);
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Continue without agents");
     });
   });
 
@@ -131,7 +137,7 @@ describe("StepAgents component", () => {
       await delay(INPUT_DELAY_MS);
 
       const store = useWizardStore.getState();
-      expect(store.selectedAgents).toContain("api-developer");
+      expect(store.selectedAgents).toContain("web-reviewer");
     });
 
     it("should navigate to confirm on ENTER when agents selected", async () => {
@@ -151,7 +157,7 @@ describe("StepAgents component", () => {
       expect(updatedStore.step).toBe("confirm");
     });
 
-    it("should not navigate on ENTER when no agents selected", async () => {
+    it("should navigate to confirm on ENTER even with no agents selected", async () => {
       const store = useWizardStore.getState();
       store.setStep("agents");
 
@@ -163,7 +169,7 @@ describe("StepAgents component", () => {
       await delay(INPUT_DELAY_MS);
 
       const updatedStore = useWizardStore.getState();
-      expect(updatedStore.step).toBe("agents");
+      expect(updatedStore.step).toBe("confirm");
     });
 
     it("should go back on ESC", async () => {

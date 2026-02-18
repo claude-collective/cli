@@ -19,15 +19,15 @@ import {
  * Navigate from the domain selection sub-view to the build step.
  *
  * Domain selection uses a custom useInput list with items:
- *   [Web, Web Extras, API, CLI, Mobile, Continue]
+ *   [Web, API, CLI, Mobile, Continue]
  *
- * Focus starts on "Web" (index 0). We press down 5 times to reach
- * "Continue" (index 5) and then Enter to proceed.
+ * Focus starts on "Web" (index 0). We press down 4 times to reach
+ * "Continue" (index 4) and then Enter to proceed.
  */
 const navigateDomainSelectionToBuild = async (stdin: {
   write: (data: string) => Promise<void> | void;
 }) => {
-  const DOMAIN_CONTINUE_NAV_COUNT = 5;
+  const DOMAIN_CONTINUE_NAV_COUNT = 4;
   for (let i = 0; i < DOMAIN_CONTINUE_NAV_COUNT; i++) {
     await stdin.write(ARROW_DOWN);
     await delay(STEP_TRANSITION_DELAY_MS);
@@ -441,7 +441,7 @@ describe("Wizard integration", () => {
       // Now at domain selection - verify domains were pre-selected
       const state = useWizardStore.getState();
       expect(state.approach).toBe("scratch");
-      // Scratch pre-selects web, web-extras, api, mobile
+      // Scratch pre-selects web, api, mobile
       expect(state.selectedDomains).toContain("web");
       expect(state.selectedDomains).toContain("api");
     });

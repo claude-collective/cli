@@ -244,7 +244,6 @@ describe("buildCategoriesForDomain", () => {
       matrix,
       false,
       {},
-      undefined,
       installedSkillIds,
     );
 

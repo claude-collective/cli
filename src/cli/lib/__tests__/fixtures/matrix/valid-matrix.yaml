@@ -15,13 +15,6 @@ categories:
     exclusive: true
     required: true
     order: 1
-  meta-framework:
-    id: meta-framework
-    displayName: Meta-Framework
-    description: Full-stack framework
-    exclusive: true
-    required: false
-    order: 2
   styling:
     id: styling
     displayName: Styling

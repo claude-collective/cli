@@ -23,15 +23,6 @@ skillToAgents:
     - web-tester
   api-database-drizzle:
     - api-developer
-preloadedSkills:
-  web-developer:
-    - web-framework-react
-    - web-styling-scss-modules
-  api-developer:
-    - api-framework-hono
-subcategoryAliases:
-  framework: web-framework
-  database: api-database
 `;
 }
 
@@ -68,14 +59,7 @@ describe("defaults-loader", () => {
         "web-framework-react": ["web-developer", "web-tester"],
         "api-database-drizzle": ["api-developer"],
       });
-      expect(result!.preloadedSkills).toEqual({
-        "web-developer": ["web-framework-react", "web-styling-scss-modules"],
-        "api-developer": ["api-framework-hono"],
-      });
-      expect(result!.subcategoryAliases).toEqual({
-        framework: "web-framework",
-        database: "api-database",
-      });
+      expect(result!.agentSkillPrefixes).toBeUndefined();
     });
 
     it("returns null when file does not exist", async () => {
@@ -166,8 +150,6 @@ describe("defaults-loader", () => {
 
       expect(cached).not.toBeNull();
       expect(cached!.skillToAgents).toBeDefined();
-      expect(cached!.preloadedSkills).toBeDefined();
-      expect(cached!.subcategoryAliases).toBeDefined();
     });
 
     it("clearDefaultsCache resets the cache", async () => {
@@ -216,11 +198,6 @@ describe("defaults-loader", () => {
 skillToAgents:
   web-framework-react:
     - web-developer
-preloadedSkills:
-  web-developer:
-    - web-framework-react
-subcategoryAliases:
-  framework: web-framework
 extra_field: should_be_ignored
 `;
       vi.mocked(fileExists).mockResolvedValue(true);
@@ -238,8 +215,6 @@ extra_field: should_be_ignored
     it("handles YAML with empty records", async () => {
       const emptyRecordsYaml = `
 skillToAgents: {}
-preloadedSkills: {}
-subcategoryAliases: {}
 `;
       vi.mocked(fileExists).mockResolvedValue(true);
       vi.mocked(readFileSafe).mockResolvedValue(emptyRecordsYaml);
@@ -249,8 +224,6 @@ subcategoryAliases: {}
 
       expect(result).not.toBeNull();
       expect(result!.skillToAgents).toEqual({});
-      expect(result!.preloadedSkills).toEqual({});
-      expect(result!.subcategoryAliases).toEqual({});
     });
   });
 });

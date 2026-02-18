@@ -184,7 +184,6 @@ describe("StepStack component", () => {
         expect(selectedDomains).toContain("web");
         expect(selectedDomains).toContain("api");
         expect(selectedDomains).toContain("mobile");
-        expect(selectedDomains).toContain("web-extras");
         expect(selectedDomains).not.toContain("cli");
       });
     });
@@ -302,7 +301,6 @@ describe("StepStack component", () => {
 
         const output = lastFrame();
         expect(output).toContain("Web");
-        expect(output).toContain("Web Extras");
         expect(output).toContain("API");
         expect(output).toContain("CLI");
       });
@@ -378,8 +376,8 @@ describe("StepStack component", () => {
 
         await delay(RENDER_DELAY_MS);
 
-        // Navigate to continue option (after 5 domains)
-        for (let i = 0; i < 5; i++) {
+        // Navigate to continue option (after 4 domains)
+        for (let i = 0; i < 4; i++) {
           stdin.write(ARROW_DOWN);
           await delay(SELECT_NAV_DELAY_MS);
         }

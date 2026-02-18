@@ -101,6 +101,16 @@ describe("CheckboxGrid component", () => {
       expect(output).toContain("Select at least one");
     });
 
+    it("should show empty message as dimmed informational text", () => {
+      const { lastFrame, unmount } = renderCheckboxGrid({
+        emptyMessage: "No items selected",
+      });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("No items selected");
+    });
+
     it("should show selected summary when items are selected", () => {
       const { lastFrame, unmount } = renderCheckboxGrid({
         selectedIds: ["alpha", "beta"],
@@ -123,12 +133,12 @@ describe("CheckboxGrid component", () => {
       expect(output).toContain("Continue with 1 item(s)");
     });
 
-    it("should not show continue option when nothing selected", () => {
+    it("should always show continue option even when nothing selected", () => {
       const { lastFrame, unmount } = renderCheckboxGrid();
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).not.toContain("Continue with");
+      expect(output).toContain("Continue with 0 item(s)");
     });
 
     it("should show navigation hints", () => {
@@ -234,7 +244,7 @@ describe("CheckboxGrid component", () => {
       expect(onContinue).toHaveBeenCalled();
     });
 
-    it("should not call onContinue with ENTER when nothing selected", async () => {
+    it("should call onContinue with ENTER even when nothing selected", async () => {
       const onContinue = vi.fn();
       const { stdin, unmount } = renderCheckboxGrid({
         onContinue,
@@ -246,7 +256,7 @@ describe("CheckboxGrid component", () => {
       stdin.write(ENTER);
       await delay(INPUT_DELAY_MS);
 
-      expect(onContinue).not.toHaveBeenCalled();
+      expect(onContinue).toHaveBeenCalled();
     });
 
     it("should call onBack with ESC", async () => {
@@ -267,7 +277,9 @@ describe("CheckboxGrid component", () => {
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
-      // Navigate down past all 3 items (no continue since nothing selected)
+      // Navigate down past all 3 items + continue item (always present)
+      stdin.write(ARROW_DOWN);
+      await delay(INPUT_DELAY_MS);
       stdin.write(ARROW_DOWN);
       await delay(INPUT_DELAY_MS);
       stdin.write(ARROW_DOWN);
