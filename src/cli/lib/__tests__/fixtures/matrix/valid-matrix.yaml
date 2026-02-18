@@ -289,7 +289,7 @@ relationships:
       skills: [react, vue]
 
 # All skillDisplayName keys from skillDisplayNameSchema are required
-skill_aliases:
+skillAliases:
   react: "web-framework-react"
   vue: "web-framework-vue-composition-api"
   angular: "web-framework-angular-standalone"

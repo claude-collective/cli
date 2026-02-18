@@ -439,7 +439,7 @@ describe("eject skills from initialized project", () => {
     }
   });
 
-  it("should include metadata.yaml with forked_from for ejected skills", async () => {
+  it("should include metadata.yaml with forkedFrom for ejected skills", async () => {
     const outputDir = path.join(dirs.tempDir, "ejected-skills");
     await mkdir(outputDir, { recursive: true });
 
@@ -461,13 +461,13 @@ describe("eject skills from initialized project", () => {
     expect(await fileExists(metadataPath)).toBe(true);
 
     const metadata = await readTestYaml<Record<string, unknown>>(metadataPath);
-    // copySkillsToLocalFlattened injects forked_from with skill_id and content_hash
-    expect(metadata.forked_from).toBeDefined();
+    // copySkillsToLocalFlattened injects forkedFrom with skillId and contentHash
+    expect(metadata.forkedFrom).toBeDefined();
 
-    const forkedFrom = metadata.forked_from as Record<string, unknown>;
-    expect(forkedFrom.skill_id).toBe(targetSkill.id);
-    expect(forkedFrom.content_hash).toBeDefined();
-    expect(typeof forkedFrom.content_hash).toBe("string");
+    const forkedFrom = metadata.forkedFrom as Record<string, unknown>;
+    expect(forkedFrom.skillId).toBe(targetSkill.id);
+    expect(forkedFrom.contentHash).toBeDefined();
+    expect(typeof forkedFrom.contentHash).toBe("string");
   });
 
   it("should report the correct number of non-local skills ejected", async () => {
@@ -620,7 +620,7 @@ describe("eject in plugin mode", () => {
     expect(frontmatter?.name).toBe(targetSkill.name);
   });
 
-  it("should include metadata.yaml with forked_from in plugin mode", async () => {
+  it("should include metadata.yaml with forkedFrom in plugin mode", async () => {
     const outputDir = path.join(dirs.tempDir, "ejected-plugin-skills");
     await mkdir(outputDir, { recursive: true });
 
@@ -639,11 +639,11 @@ describe("eject in plugin mode", () => {
     expect(await fileExists(metadataPath)).toBe(true);
 
     const metadata = await readTestYaml<Record<string, unknown>>(metadataPath);
-    expect(metadata.forked_from).toBeDefined();
+    expect(metadata.forkedFrom).toBeDefined();
 
-    const forkedFrom = metadata.forked_from as Record<string, unknown>;
-    expect(forkedFrom.skill_id).toBe(targetSkill.id);
-    expect(forkedFrom.content_hash).toBeDefined();
+    const forkedFrom = metadata.forkedFrom as Record<string, unknown>;
+    expect(forkedFrom.skillId).toBe(targetSkill.id);
+    expect(forkedFrom.contentHash).toBeDefined();
   });
 
   it("should eject all skills to default .claude/skills/ in plugin mode", async () => {

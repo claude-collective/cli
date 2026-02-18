@@ -192,8 +192,8 @@ describe("stack-plugin-compiler", () => {
       expect(manifest.name).toBe(stackId);
       expect(manifest.description).toBe("My custom stack");
       expect(manifest.version).toBe("1.0.0"); // Semver versioning
-      // content_hash and updated are no longer in manifest - stored internally
-      expect(manifest.content_hash).toBeUndefined();
+      // contentHash and updated are no longer in manifest - stored internally
+      expect(manifest.contentHash).toBeUndefined();
       expect(manifest.updated).toBeUndefined();
       // Claude Code discovers agents automatically from ./agents/ directory
       expect(manifest.agents).toBeUndefined();

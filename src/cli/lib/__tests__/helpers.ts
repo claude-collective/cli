@@ -361,7 +361,7 @@ export function createMockAgent(
     description: `${name} agent`,
     tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"],
     model: "opus",
-    permission_mode: "default",
+    permissionMode: "default",
     ...overrides,
   };
 }
@@ -441,7 +441,7 @@ export async function writeTestSkill(
   options?: {
     author?: string;
     description?: string;
-    /** Extra fields to merge into metadata.yaml (e.g., forked_from, cli_name) */
+    /** Extra fields to merge into metadata.yaml (e.g., forkedFrom, cliName) */
     extraMetadata?: Record<string, unknown>;
     /** Skip metadata.yaml creation entirely */
     skipMetadata?: boolean;
@@ -508,7 +508,7 @@ export async function writeSourceSkill(
   );
 
   const metadata: Record<string, unknown> = {
-    cli_name: config.id,
+    cliName: config.id,
     category: config.category,
     author: config.author ?? "@test",
     version: "1",
@@ -517,7 +517,7 @@ export async function writeSourceSkill(
     metadata.tags = config.tags;
   }
   if (config.categoryExclusive !== undefined) {
-    metadata.category_exclusive = config.categoryExclusive;
+    metadata.categoryExclusive = config.categoryExclusive;
   }
 
   await writeFile(

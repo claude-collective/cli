@@ -17,19 +17,19 @@ import { verbose, warn } from "../../utils/logger";
 
 function createValidMappingsYaml(): string {
   return `
-skill_to_agents:
+skillToAgents:
   web-framework-react:
     - web-developer
     - web-tester
   api-database-drizzle:
     - api-developer
-preloaded_skills:
+preloadedSkills:
   web-developer:
     - web-framework-react
     - web-styling-scss-modules
   api-developer:
     - api-framework-hono
-subcategory_aliases:
+subcategoryAliases:
   framework: web-framework
   database: api-database
 `;
@@ -64,15 +64,15 @@ describe("defaults-loader", () => {
       const result = await loadDefaultMappings();
 
       expect(result).not.toBeNull();
-      expect(result!.skill_to_agents).toEqual({
+      expect(result!.skillToAgents).toEqual({
         "web-framework-react": ["web-developer", "web-tester"],
         "api-database-drizzle": ["api-developer"],
       });
-      expect(result!.preloaded_skills).toEqual({
+      expect(result!.preloadedSkills).toEqual({
         "web-developer": ["web-framework-react", "web-styling-scss-modules"],
         "api-developer": ["api-framework-hono"],
       });
-      expect(result!.subcategory_aliases).toEqual({
+      expect(result!.subcategoryAliases).toEqual({
         framework: "web-framework",
         database: "api-database",
       });
@@ -165,9 +165,9 @@ describe("defaults-loader", () => {
       const cached = getCachedDefaults();
 
       expect(cached).not.toBeNull();
-      expect(cached!.skill_to_agents).toBeDefined();
-      expect(cached!.preloaded_skills).toBeDefined();
-      expect(cached!.subcategory_aliases).toBeDefined();
+      expect(cached!.skillToAgents).toBeDefined();
+      expect(cached!.preloadedSkills).toBeDefined();
+      expect(cached!.subcategoryAliases).toBeDefined();
     });
 
     it("clearDefaultsCache resets the cache", async () => {
@@ -213,13 +213,13 @@ describe("defaults-loader", () => {
 
     it("handles YAML with extra fields (passthrough)", async () => {
       const yamlWithExtras = `
-skill_to_agents:
+skillToAgents:
   web-framework-react:
     - web-developer
-preloaded_skills:
+preloadedSkills:
   web-developer:
     - web-framework-react
-subcategory_aliases:
+subcategoryAliases:
   framework: web-framework
 extra_field: should_be_ignored
 `;
@@ -232,14 +232,14 @@ extra_field: should_be_ignored
       // Zod strict vs passthrough depends on schema — verify it either parses or rejects
       // The schema uses z.object which strips extra fields by default
       expect(result).not.toBeNull();
-      expect(result!.skill_to_agents).toBeDefined();
+      expect(result!.skillToAgents).toBeDefined();
     });
 
     it("handles YAML with empty records", async () => {
       const emptyRecordsYaml = `
-skill_to_agents: {}
-preloaded_skills: {}
-subcategory_aliases: {}
+skillToAgents: {}
+preloadedSkills: {}
+subcategoryAliases: {}
 `;
       vi.mocked(fileExists).mockResolvedValue(true);
       vi.mocked(readFileSafe).mockResolvedValue(emptyRecordsYaml);
@@ -248,9 +248,9 @@ subcategory_aliases: {}
       const result = await loadDefaultMappings();
 
       expect(result).not.toBeNull();
-      expect(result!.skill_to_agents).toEqual({});
-      expect(result!.preloaded_skills).toEqual({});
-      expect(result!.subcategory_aliases).toEqual({});
+      expect(result!.skillToAgents).toEqual({});
+      expect(result!.preloadedSkills).toEqual({});
+      expect(result!.subcategoryAliases).toEqual({});
     });
   });
 });

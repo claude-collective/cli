@@ -63,8 +63,8 @@ describe("skill-plugin-compiler", () => {
 
       expect(manifest.name).toBe("zustand");
       expect(manifest.version).toBe("1.0.0");
-      // content_hash and updated are no longer in manifest - stored internally
-      expect(manifest.content_hash).toBeUndefined();
+      // contentHash and updated are no longer in manifest - stored internally
+      expect(manifest.contentHash).toBeUndefined();
       expect(manifest.updated).toBeUndefined();
       expect(manifest.skills).toBe("./skills/");
     });

@@ -244,7 +244,7 @@ describe("import:skill command", () => {
       expect(error?.oclif?.exit).toBe(EXIT_CODES.INVALID_ARGS);
     });
 
-    it("should inject forked_from metadata into metadata.yaml", async () => {
+    it("should inject forkedFrom metadata into metadata.yaml", async () => {
       await createLocalSource(projectDir, ["my-skill"]);
 
       const { error } = await runCliCommand([
@@ -263,14 +263,14 @@ describe("import:skill command", () => {
       const content = await readFile(metadataPath, "utf-8");
       const metadata = parseYaml(content);
 
-      expect(metadata.forked_from).toBeDefined();
-      expect(metadata.forked_from.skill_name).toBe("my-skill");
-      expect(metadata.forked_from.source).toBe(LOCAL_SOURCE_NAME);
-      expect(metadata.forked_from.content_hash).toBeDefined();
-      expect(metadata.forked_from.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(metadata.forkedFrom).toBeDefined();
+      expect(metadata.forkedFrom.skillName).toBe("my-skill");
+      expect(metadata.forkedFrom.source).toBe(LOCAL_SOURCE_NAME);
+      expect(metadata.forkedFrom.contentHash).toBeDefined();
+      expect(metadata.forkedFrom.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     });
 
-    it("should preserve existing metadata.yaml and add forked_from", async () => {
+    it("should preserve existing metadata.yaml and add forkedFrom", async () => {
       await createLocalSource(projectDir, ["my-skill"], { withMetadata: true });
 
       const { error } = await runCliCommand([
@@ -289,9 +289,9 @@ describe("import:skill command", () => {
       // Original metadata fields should be preserved
       expect(metadata.version).toBe(1);
       expect(metadata.author).toBe("@external");
-      // forked_from should be injected
-      expect(metadata.forked_from).toBeDefined();
-      expect(metadata.forked_from.skill_name).toBe("my-skill");
+      // forkedFrom should be injected
+      expect(metadata.forkedFrom).toBeDefined();
+      expect(metadata.forkedFrom.skillName).toBe("my-skill");
     });
   });
 

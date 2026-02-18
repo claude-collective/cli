@@ -281,9 +281,9 @@ describe("schema-validator", () => {
           "version: 1",
           "author: '@test'",
           "category: framework",
-          "cli_name: React",
-          "cli_description: React component patterns and hooks",
-          "usage_guidance: When building React components and hooks",
+          "cliName: React",
+          "cliDescription: React component patterns and hooks",
+          "usageGuidance: When building React components and hooks",
         ].join("\n"),
       );
 
@@ -299,7 +299,7 @@ describe("schema-validator", () => {
     it("should detect invalid skill metadata.yaml", async () => {
       const metadataDir = path.join(tempDir, "src", "skills", "invalid-skill");
       await mkdir(metadataDir, { recursive: true });
-      // Missing required fields: category, cli_name, cli_description, usage_guidance
+      // Missing required fields: category, cliName, cliDescription, usageGuidance
       await writeFile(path.join(metadataDir, "metadata.yaml"), "author: '@test'\nversion: 1\n");
 
       const result = await validateAllSchemas(tempDir);

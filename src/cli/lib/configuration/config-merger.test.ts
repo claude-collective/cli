@@ -62,14 +62,14 @@ describe("config-merger", () => {
       expect(result.config.author).toBe("@vince");
     });
 
-    it("should inherit agents_source from existing config", async () => {
+    it("should inherit agentsSource from existing config", async () => {
       const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(
         path.join(configDir, STANDARD_FILES.CONFIG_YAML),
         stringifyYaml({
           source: "github:my-org/skills",
-          agents_source: "github:my-org/agents",
+          agentsSource: "github:my-org/agents",
         }),
       );
 
@@ -84,7 +84,7 @@ describe("config-merger", () => {
       });
 
       expect(result.merged).toBe(true);
-      expect(result.config.agents_source).toBe("github:my-org/agents");
+      expect(result.config.agentsSource).toBe("github:my-org/agents");
     });
 
     describe("merge precedence rules", () => {

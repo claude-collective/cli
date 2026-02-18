@@ -397,10 +397,10 @@ describe("local-installer", () => {
       expect(configContent).toContain(
         "# Custom paths (for marketplace repos with non-standard layouts):",
       );
-      expect(configContent).toContain("# skills_dir: src/skills");
-      expect(configContent).toContain("# agents_dir: src/agents");
-      expect(configContent).toContain("# stacks_file: config/stacks.yaml");
-      expect(configContent).toContain("# matrix_file: config/skills-matrix.yaml");
+      expect(configContent).toContain("# skillsDir: src/skills");
+      expect(configContent).toContain("# agentsDir: src/agents");
+      expect(configContent).toContain("# stacksFile: config/stacks.yaml");
+      expect(configContent).toContain("# matrixFile: config/skills-matrix.yaml");
     });
 
     it("should not interfere with YAML parsing when path overrides are commented", async () => {
@@ -422,10 +422,10 @@ describe("local-installer", () => {
 
       // Comments should be ignored by YAML parser — no path override fields in parsed config
       expect(config.name).toBe(DEFAULT_PLUGIN_NAME);
-      expect((config as Record<string, unknown>)["skills_dir"]).toBeUndefined();
-      expect((config as Record<string, unknown>)["agents_dir"]).toBeUndefined();
-      expect((config as Record<string, unknown>)["stacks_file"]).toBeUndefined();
-      expect((config as Record<string, unknown>)["matrix_file"]).toBeUndefined();
+      expect((config as Record<string, unknown>)["skillsDir"]).toBeUndefined();
+      expect((config as Record<string, unknown>)["agentsDir"]).toBeUndefined();
+      expect((config as Record<string, unknown>)["stacksFile"]).toBeUndefined();
+      expect((config as Record<string, unknown>)["matrixFile"]).toBeUndefined();
     });
 
     it("should preserve preloaded flags from stack skill assignments", async () => {

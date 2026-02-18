@@ -420,7 +420,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
           requires: [],
           alternatives: [],
         },
-        skill_aliases: {},
+        skillAliases: {},
       };
 
       // Create a skill in the tooling category (use "infra" prefix — valid categoryPath prefix)
@@ -481,7 +481,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
           requires: [],
           alternatives: [],
         },
-        skill_aliases: {},
+        skillAliases: {},
       };
 
       // Create skills in the exclusive category (use "infra" prefix — valid categoryPath prefix)
@@ -565,7 +565,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
           requires: [],
           alternatives: [],
         },
-        skill_aliases: {},
+        skillAliases: {},
       };
 
       // Create the skills referenced in relationships
@@ -819,7 +819,7 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
 });
 
 describe("Integration: Custom Matrix Skill Metadata Survival", () => {
-  it("should preserve category_exclusive from skill metadata through loading", async () => {
+  it("should preserve categoryExclusive from skill metadata through loading", async () => {
     const tempDir = await createTempDir("cat-exclusive-test-");
 
     try {
@@ -846,10 +846,10 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
           requires: [],
           alternatives: [],
         },
-        skill_aliases: {},
+        skillAliases: {},
       };
 
-      // Create a skill with category_exclusive: false in metadata
+      // Create a skill with categoryExclusive: false in metadata
       await writeSourceSkill(skillsDir, path.join("web", "tooling", "vite"), {
         id: "web-tooling-vite",
         description: "Vite build tool",
@@ -897,7 +897,7 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
           requires: [],
           alternatives: [],
         },
-        skill_aliases: {},
+        skillAliases: {},
       };
 
       const customTags = ["monitoring", "observability", "apm", "custom-tag"];
@@ -961,7 +961,7 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
           ],
           alternatives: [],
         },
-        skill_aliases: {},
+        skillAliases: {},
       };
 
       // Create the skills (use valid categoryPath prefixes — "shared" is not valid)

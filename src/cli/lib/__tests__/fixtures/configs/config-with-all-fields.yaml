@@ -2,8 +2,8 @@
 # Used by tests that verify loading of path overrides and multiple config fields.
 source: github:myorg/skills
 marketplace: https://enterprise.example.com
-agents_source: https://agents.example.com
-skills_dir: lib/skills
-agents_dir: lib/agents
-stacks_file: data/stacks.yaml
-matrix_file: data/matrix.yaml
+agentsSource: https://agents.example.com
+skillsDir: lib/skills
+agentsDir: lib/agents
+stacksFile: data/stacks.yaml
+matrixFile: data/matrix.yaml

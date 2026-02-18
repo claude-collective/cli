@@ -111,9 +111,9 @@ describe("generateMetadataYaml", () => {
     expect(content).toContain('author: "@vince"');
   });
 
-  it("should contain title-cased cli_name", () => {
+  it("should contain title-cased cliName", () => {
     const content = generateMetadataYaml("web-framework", "@local", "local");
-    expect(content).toContain("cli_name: Web Framework");
+    expect(content).toContain("cliName: Web Framework");
   });
 
   it("should use provided category", () => {
@@ -198,7 +198,7 @@ describe("new:skill command", () => {
       const content = await readFile(metadataPath, "utf-8");
 
       expect(content).toContain("category: local");
-      expect(content).toContain("cli_name: My Test Skill");
+      expect(content).toContain("cliName: My Test Skill");
       expect(content).toContain("version: 1");
     });
   });

@@ -619,22 +619,22 @@ describe("compiler", () => {
     });
 
     it("preserves undefined optional fields", () => {
-      const data = createTestAgentData({ model: undefined, permission_mode: undefined });
+      const data = createTestAgentData({ model: undefined, permissionMode: undefined });
       const result = sanitizeCompiledAgentData(data);
 
       expect(result.agent.model).toBeUndefined();
-      expect(result.agent.permission_mode).toBeUndefined();
+      expect(result.agent.permissionMode).toBeUndefined();
     });
 
     it("sanitizes optional string fields when present", () => {
       const data = createTestAgentData({
         model: "{{ inject }}" as AgentConfig["model"],
-        permission_mode: "{% evil %}" as AgentConfig["permission_mode"],
+        permissionMode: "{% evil %}" as AgentConfig["permissionMode"],
       });
       const result = sanitizeCompiledAgentData(data);
 
       expect(String(result.agent.model)).not.toContain("{{");
-      expect(String(result.agent.permission_mode)).not.toContain("{%");
+      expect(String(result.agent.permissionMode)).not.toContain("{%");
     });
   });
 

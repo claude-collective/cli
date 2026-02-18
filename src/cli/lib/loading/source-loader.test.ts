@@ -142,7 +142,7 @@ describe("source-loader local skills integration", () => {
 
     await writeFile(
       path.join(skillsDir, "metadata.yaml"),
-      `cli_name: My Local Skill\ncli_description: A local skill`,
+      `cliName: My Local Skill\ncliDescription: A local skill`,
     );
     await writeFile(
       path.join(skillsDir, "SKILL.md"),
@@ -172,7 +172,7 @@ describe("source-loader local skills integration", () => {
     const skillsDir = path.join(tempDir, ".claude", "skills", "test-cat-skill");
     await mkdir(skillsDir, { recursive: true });
 
-    await writeFile(path.join(skillsDir, "metadata.yaml"), `cli_name: Category Test`);
+    await writeFile(path.join(skillsDir, "metadata.yaml"), `cliName: Category Test`);
     await writeFile(
       path.join(skillsDir, "SKILL.md"),
       `---\nname: cat-skill (@local)\ndescription: Category test\n---\nContent`,
@@ -231,7 +231,7 @@ describe("source-loader local skills integration", () => {
     const skillsDir = path.join(tempDir, ".claude", "skills", "test-override-category");
     await mkdir(skillsDir, { recursive: true });
 
-    await writeFile(path.join(skillsDir, "metadata.yaml"), `cli_name: Override Test`);
+    await writeFile(path.join(skillsDir, "metadata.yaml"), `cliName: Override Test`);
     await writeFile(
       path.join(skillsDir, "SKILL.md"),
       `---\nname: ${targetSkillId}\ndescription: Local override\n---\nContent`,
@@ -256,7 +256,7 @@ describe("source-loader local skills integration", () => {
     const skillsDir = path.join(tempDir, ".claude", "skills", "test-preserve");
     await mkdir(skillsDir, { recursive: true });
 
-    await writeFile(path.join(skillsDir, "metadata.yaml"), `cli_name: Preserve Test`);
+    await writeFile(path.join(skillsDir, "metadata.yaml"), `cliName: Preserve Test`);
     await writeFile(
       path.join(skillsDir, "SKILL.md"),
       `---\nname: preserve-skill\ndescription: Preserve test\n---\nContent`,
@@ -288,7 +288,7 @@ describe("source-loader local skills integration", () => {
     );
     await writeFile(
       path.join(skillDir, "metadata.yaml"),
-      'category: web/testing\nauthor: "@test"\nversion: 1\ncli_name: Vitest\ncli_description: Marketplace vitest configuration\ncontent_hash: abc1234\n',
+      'category: web/testing\nauthor: "@test"\nversion: 1\ncliName: Vitest\ncliDescription: Marketplace vitest configuration\ncontentHash: abc1234\n',
     );
 
     // Load skills from source to verify marketplace skill is present
@@ -307,7 +307,7 @@ describe("source-loader local skills integration", () => {
     const localSkillsDir = path.join(tempDir, ".claude", "skills", "local-vitest");
     await mkdir(localSkillsDir, { recursive: true });
 
-    await writeFile(path.join(localSkillsDir, "metadata.yaml"), `cli_name: My Custom Vitest`);
+    await writeFile(path.join(localSkillsDir, "metadata.yaml"), `cliName: My Custom Vitest`);
     await writeFile(
       path.join(localSkillsDir, "SKILL.md"),
       `---\nname: web-testing-vitest\ndescription: My custom vitest configuration\n---\nThis is my local override of the vitest skill.`,
@@ -344,13 +344,13 @@ describe("source-loader config-driven paths", () => {
     await cleanupTempDir(tempDir);
   });
 
-  it("should use custom skills_dir from source config", async () => {
+  it("should use custom skillsDir from source config", async () => {
     const sourceDir = path.join(tempDir, "custom-source");
 
-    // Create source config with custom skills_dir
+    // Create source config with custom skillsDir
     const configDir = path.join(sourceDir, ".claude-src");
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.yaml"), "skills_dir: lib/skills\n");
+    await writeFile(path.join(configDir, "config.yaml"), "skillsDir: lib/skills\n");
 
     // Create skills in the custom directory
     const skillsDir = path.join(sourceDir, "lib", "skills", "web", "framework", "react");
@@ -361,7 +361,7 @@ describe("source-loader config-driven paths", () => {
     );
     await writeFile(
       path.join(skillsDir, "metadata.yaml"),
-      'category: web/framework\nauthor: "@test"\nversion: 1\ncli_name: React\ncli_description: React framework\nusage_guidance: Use React for building UIs\ncontent_hash: abc1234\n',
+      'category: web/framework\nauthor: "@test"\nversion: 1\ncliName: React\ncliDescription: React framework\nusageGuidance: Use React for building UIs\ncontentHash: abc1234\n',
     );
 
     const result = await loadSkillsMatrixFromSource({
@@ -373,13 +373,13 @@ describe("source-loader config-driven paths", () => {
     expect(result.matrix.skills["web-framework-react"]).toBeDefined();
   });
 
-  it("should use custom matrix_file path from source config", async () => {
+  it("should use custom matrixFile path from source config", async () => {
     const sourceDir = path.join(tempDir, "custom-matrix-source");
 
-    // Create source config with custom matrix_file pointing to a non-existent path
+    // Create source config with custom matrixFile pointing to a non-existent path
     const configDir = path.join(sourceDir, ".claude-src");
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.yaml"), "matrix_file: data/matrix.yaml\n");
+    await writeFile(path.join(configDir, "config.yaml"), "matrixFile: data/matrix.yaml\n");
 
     // Do NOT create matrix at data/matrix.yaml — loader should fall back to CLI matrix
     await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
@@ -396,13 +396,13 @@ describe("source-loader config-driven paths", () => {
   });
 
   it("should prefer matrix at custom path over convention path", async () => {
-    // Verify that when matrix_file is set and file exists at that path,
-    // the loader uses it (verified by skills_dir test above which loads
+    // Verify that when matrixFile is set and file exists at that path,
+    // the loader uses it (verified by skillsDir test above which loads
     // matrix from CLI fallback, showing the path resolution works)
     const sourceDir = path.join(tempDir, "matrix-path-pref-source");
     const configDir = path.join(sourceDir, ".claude-src");
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.yaml"), "matrix_file: nonexistent/matrix.yaml\n");
+    await writeFile(path.join(configDir, "config.yaml"), "matrixFile: nonexistent/matrix.yaml\n");
 
     // Also create convention-path matrix to verify it doesn't use it
     // (it should check nonexistent/matrix.yaml first, not find it,
@@ -421,13 +421,13 @@ describe("source-loader config-driven paths", () => {
     expect(result.matrix).toBeDefined();
   });
 
-  it("should use custom stacks_file from source config", async () => {
+  it("should use custom stacksFile from source config", async () => {
     const sourceDir = path.join(tempDir, "custom-stacks-source");
 
-    // Create source config with custom stacks_file
+    // Create source config with custom stacksFile
     const configDir = path.join(sourceDir, ".claude-src");
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.yaml"), "stacks_file: data/stacks.yaml\n");
+    await writeFile(path.join(configDir, "config.yaml"), "stacksFile: data/stacks.yaml\n");
 
     // Create stacks at the custom path
     const dataDir = path.join(sourceDir, "data");

@@ -26,9 +26,9 @@ import {
 
 function createValidMetadataYaml(skillId: string, contentHash: string, date: string): string {
   return stringifyYaml({
-    forked_from: {
-      skill_id: skillId,
-      content_hash: contentHash,
+    forkedFrom: {
+      skillId: skillId,
+      contentHash: contentHash,
       date,
     },
   });
@@ -47,7 +47,7 @@ function createMetadataWithSchemaComment(skillId: string, contentHash: string): 
 
 describe("skill-metadata", () => {
   describe("readForkedFromMetadata", () => {
-    it("returns forked_from metadata when metadata.yaml exists and is valid", async () => {
+    it("returns forkedFrom metadata when metadata.yaml exists and is valid", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
       vi.mocked(readFile).mockResolvedValue(
         createValidMetadataYaml("web-framework-react", "abc1234", "2026-01-01"),
@@ -56,8 +56,8 @@ describe("skill-metadata", () => {
       const result = await readForkedFromMetadata("/project/.claude/skills/react");
 
       expect(result).toEqual({
-        skill_id: "web-framework-react",
-        content_hash: "abc1234",
+        skillId: "web-framework-react",
+        contentHash: "abc1234",
         date: "2026-01-01",
       });
       expect(fileExists).toHaveBeenCalledWith("/project/.claude/skills/react/metadata.yaml");
@@ -72,7 +72,7 @@ describe("skill-metadata", () => {
       expect(readFile).not.toHaveBeenCalled();
     });
 
-    it("returns null when metadata.yaml has no forked_from field", async () => {
+    it("returns null when metadata.yaml has no forkedFrom field", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
       vi.mocked(readFile).mockResolvedValue(createMetadataWithoutForkedFrom());
 
@@ -85,8 +85,8 @@ describe("skill-metadata", () => {
       vi.mocked(fileExists).mockResolvedValue(true);
       vi.mocked(readFile).mockResolvedValue(
         stringifyYaml({
-          forked_from: {
-            // Missing required fields: skill_id, content_hash, date
+          forkedFrom: {
+            // Missing required fields: skillId, contentHash, date
             invalid_field: "bad",
           },
         }),
@@ -98,13 +98,13 @@ describe("skill-metadata", () => {
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid metadata.yaml"));
     });
 
-    it("returns null and warns when forked_from has wrong types", async () => {
+    it("returns null and warns when forkedFrom has wrong types", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
       vi.mocked(readFile).mockResolvedValue(
         stringifyYaml({
-          forked_from: {
-            skill_id: 123, // Should be string
-            content_hash: "abc",
+          forkedFrom: {
+            skillId: 123, // Should be string
+            contentHash: "abc",
             date: "2026-01-01",
           },
         }),
@@ -126,7 +126,7 @@ describe("skill-metadata", () => {
       expect(result.size).toBe(0);
     });
 
-    it("returns skills with forked_from metadata", async () => {
+    it("returns skills with forkedFrom metadata", async () => {
       // First call: check if .claude/skills exists
       // Second call: check if metadata.yaml exists for "react" skill
       vi.mocked(fileExists)
@@ -140,18 +140,18 @@ describe("skill-metadata", () => {
       const result = await getLocalSkillsWithMetadata("/project");
 
       expect(result.size).toBe(1);
-      // Key is the skill_id from forked_from metadata
+      // Key is the skillId from forkedFrom metadata
       expect(result.has("web-framework-react")).toBe(true);
       const entry = result.get("web-framework-react");
       expect(entry?.dirName).toBe("react");
       expect(entry?.forkedFrom).toEqual({
-        skill_id: "web-framework-react",
-        content_hash: "abc1234",
+        skillId: "web-framework-react",
+        contentHash: "abc1234",
         date: "2026-01-01",
       });
     });
 
-    it("uses directory name as key when no forked_from metadata", async () => {
+    it("uses directory name as key when no forkedFrom metadata", async () => {
       vi.mocked(fileExists)
         .mockResolvedValueOnce(true) // .claude/skills dir
         .mockResolvedValueOnce(true); // metadata.yaml
@@ -215,7 +215,7 @@ describe("skill-metadata", () => {
   });
 
   describe("compareLocalSkillsWithSource", () => {
-    it("returns local-only status for skills without forked_from", async () => {
+    it("returns local-only status for skills without forkedFrom", async () => {
       // Mock getLocalSkillsWithMetadata (via its dependencies)
       vi.mocked(fileExists)
         .mockResolvedValueOnce(true) // .claude/skills dir exists
@@ -372,7 +372,7 @@ describe("skill-metadata", () => {
   });
 
   describe("injectForkedFromMetadata", () => {
-    it("injects forked_from metadata into existing metadata.yaml", async () => {
+    it("injects forkedFrom metadata into existing metadata.yaml", async () => {
       vi.mocked(readFile).mockResolvedValue(createMetadataWithoutForkedFrom());
 
       await injectForkedFromMetadata(
@@ -383,7 +383,7 @@ describe("skill-metadata", () => {
 
       expect(writeFile).toHaveBeenCalledWith(
         "/project/.claude/skills/react/metadata.yaml",
-        expect.stringContaining("forked_from"),
+        expect.stringContaining("forkedFrom"),
       );
       expect(writeFile).toHaveBeenCalledWith(
         expect.any(String),
@@ -399,7 +399,7 @@ describe("skill-metadata", () => {
       );
     });
 
-    it("updates existing forked_from metadata", async () => {
+    it("updates existing forkedFrom metadata", async () => {
       vi.mocked(readFile).mockResolvedValue(
         createValidMetadataYaml("old-skill-id", "old-hash", "2025-01-01"),
       );
@@ -453,9 +453,9 @@ describe("skill-metadata", () => {
       vi.mocked(fileExists).mockResolvedValue(true);
       vi.mocked(readFile).mockResolvedValue(
         stringifyYaml({
-          forked_from: {
-            skill_id: "web-framework-react",
-            content_hash: "abc1234",
+          forkedFrom: {
+            skillId: "web-framework-react",
+            contentHash: "abc1234",
             date: "2026-01-01",
           },
         }),
@@ -464,7 +464,7 @@ describe("skill-metadata", () => {
       const result = await readLocalSkillMetadata("/project/.claude/skills/react");
 
       expect(result).not.toBeNull();
-      expect(result?.forked_from?.skill_id).toBe("web-framework-react");
+      expect(result?.forkedFrom?.skillId).toBe("web-framework-react");
     });
 
     it("returns null when metadata.yaml does not exist", async () => {
@@ -475,21 +475,21 @@ describe("skill-metadata", () => {
       expect(result).toBeNull();
     });
 
-    it("returns metadata without forked_from for user-created skills", async () => {
+    it("returns metadata without forkedFrom for user-created skills", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
       vi.mocked(readFile).mockResolvedValue(createMetadataWithoutForkedFrom());
 
       const result = await readLocalSkillMetadata("/project/.claude/skills/custom");
 
       expect(result).not.toBeNull();
-      expect(result?.forked_from).toBeUndefined();
+      expect(result?.forkedFrom).toBeUndefined();
     });
 
     it("returns null and warns for invalid metadata", async () => {
       vi.mocked(fileExists).mockResolvedValue(true);
       vi.mocked(readFile).mockResolvedValue(
         stringifyYaml({
-          forked_from: {
+          forkedFrom: {
             invalid_field: "bad",
           },
         }),

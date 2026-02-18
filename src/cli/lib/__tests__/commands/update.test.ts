@@ -148,7 +148,7 @@ describe("update command", () => {
     let localDirs: TestDirs;
 
     beforeEach(async () => {
-      // Create local skills directory with forked_from metadata using fixture
+      // Create local skills directory with forkedFrom metadata using fixture
       localDirs = await createTestSource({
         skills: [],
         agents: [],

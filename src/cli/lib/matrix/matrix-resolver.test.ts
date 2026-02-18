@@ -307,7 +307,7 @@ describe("validateSelection", () => {
 
     const result = validateSelection(["web-skill-a"], matrix);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.type === "missing_requirement")).toBe(true);
+    expect(result.errors.some((e) => e.type === "missingRequirement")).toBe(true);
   });
 
   it("should return warning for missing recommendations", () => {
@@ -344,7 +344,7 @@ describe("validateSelection", () => {
 
     const result = validateSelection(["web-skill-a", "web-skill-b"], matrix);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.type === "category_exclusive")).toBe(true);
+    expect(result.errors.some((e) => e.type === "categoryExclusive")).toBe(true);
   });
 });
 
@@ -854,7 +854,7 @@ describe("Missing skill dependencies (P1-24)", () => {
 
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(1);
-      expect(result.errors[0].type).toBe("missing_requirement");
+      expect(result.errors[0].type).toBe("missingRequirement");
       expect(result.errors[0].skills).toContain("web-skill-a");
       expect(result.errors[0].skills).toContain("web-skill-b");
     });
@@ -881,7 +881,7 @@ describe("Missing skill dependencies (P1-24)", () => {
 
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(1);
-      expect(result.errors[0].type).toBe("missing_requirement");
+      expect(result.errors[0].type).toBe("missingRequirement");
       // Should include both missing dependencies
       expect(result.errors[0].skills).toContain("web-skill-b");
       expect(result.errors[0].skills).toContain("web-skill-c");
@@ -909,7 +909,7 @@ describe("Missing skill dependencies (P1-24)", () => {
 
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(1);
-      expect(result.errors[0].type).toBe("missing_requirement");
+      expect(result.errors[0].type).toBe("missingRequirement");
       expect(result.errors[0].message).toContain("one of");
     });
 
@@ -959,7 +959,7 @@ describe("Missing skill dependencies (P1-24)", () => {
 
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(2);
-      expect(result.errors.every((e) => e.type === "missing_requirement")).toBe(true);
+      expect(result.errors.every((e) => e.type === "missingRequirement")).toBe(true);
     });
   });
 
@@ -1196,7 +1196,7 @@ describe("Missing skill dependencies (P1-24)", () => {
       const result = validateSelection(["web-skill-a"], matrix);
 
       expect(result.valid).toBe(false);
-      expect(result.errors[0].type).toBe("missing_requirement");
+      expect(result.errors[0].type).toBe("missingRequirement");
     });
 
     it("should validate successfully when dependency is selected via alias", () => {
@@ -1773,7 +1773,7 @@ describe("validateSelection edge cases", () => {
 
     const result = validateSelection(["web-skill-a", "web-skill-b", "web-skill-c"], matrix);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.type === "category_exclusive")).toBe(true);
+    expect(result.errors.some((e) => e.type === "categoryExclusive")).toBe(true);
   });
 
   it("should report unused_setup warning when setup skill has no corresponding usage skill", () => {
@@ -1823,6 +1823,6 @@ describe("validateSelection edge cases", () => {
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.type === "conflict")).toBe(true);
     // Also reports missing requirement for C
-    expect(result.errors.some((e) => e.type === "missing_requirement")).toBe(true);
+    expect(result.errors.some((e) => e.type === "missingRequirement")).toBe(true);
   });
 });

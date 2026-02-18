@@ -110,10 +110,10 @@ describe("diff command", () => {
       await cleanupTestSource(localDirs);
     });
 
-    it("should handle local skills without forked_from metadata", async () => {
+    it("should handle local skills without forkedFrom metadata", async () => {
       const { error } = await runCliCommand(["diff"]);
 
-      // Command should complete (may have warnings about missing forked_from)
+      // Command should complete (may have warnings about missing forkedFrom)
       // Note: stdout capture is limited in oclif test environment
       // The command exits with code 0 when no forked skills to compare
       const output = error?.message || "";
@@ -132,7 +132,7 @@ describe("diff command", () => {
     let localDirs: TestDirs;
 
     beforeEach(async () => {
-      // Create local skills directory with forked_from metadata using fixture
+      // Create local skills directory with forkedFrom metadata using fixture
       localDirs = await createTestSource({
         skills: [],
         agents: [],

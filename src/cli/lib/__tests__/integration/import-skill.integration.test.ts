@@ -445,7 +445,7 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
     await cleanupTempDir(tempDir);
   });
 
-  it("should preserve forked_from metadata after import", async () => {
+  it("should preserve forkedFrom metadata after import", async () => {
     await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
 
     const { error } = await runCliCommand([
@@ -468,14 +468,14 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
     const metadataContent = await readFile(metadataPath, "utf-8");
     const metadata = parseYaml(metadataContent) as Record<string, unknown>;
 
-    // Verify forked_from was injected
-    expect(metadata.forked_from).toBeDefined();
-    const forkedFrom = metadata.forked_from as Record<string, unknown>;
+    // Verify forkedFrom was injected
+    expect(metadata.forkedFrom).toBeDefined();
+    const forkedFrom = metadata.forkedFrom as Record<string, unknown>;
     expect(forkedFrom.source).toBe(LOCAL_SOURCE_NAME);
-    expect(forkedFrom.skill_name).toBe("react-patterns");
-    expect(forkedFrom.content_hash).toBeDefined();
-    expect(typeof forkedFrom.content_hash).toBe("string");
-    expect((forkedFrom.content_hash as string).length).toBeGreaterThan(0);
+    expect(forkedFrom.skillName).toBe("react-patterns");
+    expect(forkedFrom.contentHash).toBeDefined();
+    expect(typeof forkedFrom.contentHash).toBe("string");
+    expect((forkedFrom.contentHash as string).length).toBeGreaterThan(0);
     expect(forkedFrom.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
     // Original metadata fields should be preserved
@@ -483,7 +483,7 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
     expect(metadata.author).toBe("@external-author");
   });
 
-  it("should inject forked_from metadata for skills without existing metadata", async () => {
+  it("should inject forkedFrom metadata for skills without existing metadata", async () => {
     // IMPORT_API_SECURITY_SKILL has no tags/metadata — toImportSourceSkill won't add metadata
     await createLocalSource(projectDir, [IMPORT_API_SECURITY_SKILL]);
 
@@ -495,7 +495,7 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
     ]);
     expect(error?.oclif?.exit).toBeUndefined();
 
-    // A metadata.yaml should have been created with minimal metadata + forked_from
+    // A metadata.yaml should have been created with minimal metadata + forkedFrom
     const metadataPath = path.join(
       projectDir,
       LOCAL_SKILLS_DIR,
@@ -508,15 +508,15 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
     const metadata = parseYaml(metadataContent) as Record<string, unknown>;
 
     // Minimal metadata should be created
-    expect(metadata.cli_name).toBe("Api Security");
-    expect(metadata.cli_description).toBe("Imported from third-party repository");
-    expect(metadata.forked_from).toBeDefined();
+    expect(metadata.cliName).toBe("Api Security");
+    expect(metadata.cliDescription).toBe("Imported from third-party repository");
+    expect(metadata.forkedFrom).toBeDefined();
 
-    const forkedFrom = metadata.forked_from as Record<string, unknown>;
-    expect(forkedFrom.skill_name).toBe("api-security");
+    const forkedFrom = metadata.forkedFrom as Record<string, unknown>;
+    expect(forkedFrom.skillName).toBe("api-security");
   });
 
-  it("should use forked_from metadata tags in compiled plugin README", async () => {
+  it("should use forkedFrom metadata tags in compiled plugin README", async () => {
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 

@@ -129,7 +129,7 @@ describe("config commands", () => {
     });
 
     it("should accept valid keys", async () => {
-      const validKeys = ["source", "author", "marketplace", "agents_source"];
+      const validKeys = ["source", "author", "marketplace", "agentsSource"];
 
       for (const key of validKeys) {
         const { error } = await runCliCommand(["config:get", key]);
@@ -181,10 +181,10 @@ describe("config commands", () => {
       expect(parsed).toHaveProperty("marketplace", "https://marketplace.example.com");
     });
 
-    it("should set agents_source value", async () => {
+    it("should set agentsSource value", async () => {
       const { error } = await runCliCommand([
         "config:set-project",
-        "agents_source",
+        "agentsSource",
         "/custom/agents",
       ]);
 
@@ -193,7 +193,7 @@ describe("config commands", () => {
       const configPath = path.join(projectDir, PROJECT_CONFIG_DIR, PROJECT_CONFIG_FILE);
       const content = await readFile(configPath, "utf-8");
       const parsed = parseYaml(content);
-      expect(parsed).toHaveProperty("agents_source", "/custom/agents");
+      expect(parsed).toHaveProperty("agentsSource", "/custom/agents");
     });
 
     it("should overwrite existing value", async () => {

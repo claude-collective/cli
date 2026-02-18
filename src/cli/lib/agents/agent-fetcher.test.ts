@@ -252,7 +252,7 @@ describe("agent-fetcher", () => {
       expect(result.templatesDir).toBe(path.join(fetchedDir, "src", "agents", "_templates"));
     });
 
-    it("should use agents_dir from source project config when set", async () => {
+    it("should use agentsDir from source project config when set", async () => {
       const fetchedDir = path.join(tempDir, "fetched-config");
       await mkdir(path.join(fetchedDir, "lib/agents/_templates"), { recursive: true });
 
@@ -262,9 +262,9 @@ describe("agent-fetcher", () => {
         source: REMOTE_SOURCE,
       });
 
-      // Source config declares custom agents_dir
+      // Source config declares custom agentsDir
       mockLoadProjectSourceConfig.mockResolvedValue({
-        agents_dir: "lib/agents",
+        agentsDir: "lib/agents",
       });
 
       const result = await fetchAgentDefinitionsFromRemote(REMOTE_SOURCE);
@@ -274,7 +274,7 @@ describe("agent-fetcher", () => {
       expect(result.templatesDir).toBe(path.join(fetchedDir, "lib/agents", "_templates"));
     });
 
-    it("should fall back to default agents dir when source config has no agents_dir", async () => {
+    it("should fall back to default agents dir when source config has no agentsDir", async () => {
       const fetchedDir = path.join(tempDir, "fetched-no-agents-dir");
       await mkdir(path.join(fetchedDir, "src/agents/_templates"), { recursive: true });
 
@@ -284,7 +284,7 @@ describe("agent-fetcher", () => {
         source: REMOTE_SOURCE,
       });
 
-      // Source config exists but without agents_dir
+      // Source config exists but without agentsDir
       mockLoadProjectSourceConfig.mockResolvedValue({
         source: "github:myorg/skills",
       });
@@ -312,7 +312,7 @@ describe("agent-fetcher", () => {
       expect(result.agentsDir).toBe(path.join(fetchedDir, "src/agents"));
     });
 
-    it("should prefer explicit agentsDir option over source config agents_dir", async () => {
+    it("should prefer explicit agentsDir option over source config agentsDir", async () => {
       const fetchedDir = path.join(tempDir, "fetched-override");
       await mkdir(path.join(fetchedDir, "custom/agents/_templates"), { recursive: true });
 
@@ -324,7 +324,7 @@ describe("agent-fetcher", () => {
 
       // Source config declares one path, but explicit option takes precedence
       mockLoadProjectSourceConfig.mockResolvedValue({
-        agents_dir: "lib/agents",
+        agentsDir: "lib/agents",
       });
 
       const result = await fetchAgentDefinitionsFromRemote(REMOTE_SOURCE, {
@@ -336,7 +336,7 @@ describe("agent-fetcher", () => {
       expect(result.agentsDir).toBe(path.join(fetchedDir, "custom/agents"));
     });
 
-    it("should throw when agents_dir from config points to non-existent directory", async () => {
+    it("should throw when agentsDir from config points to non-existent directory", async () => {
       const fetchedDir = path.join(tempDir, "fetched-bad-config");
       await mkdir(fetchedDir, { recursive: true });
 
@@ -348,7 +348,7 @@ describe("agent-fetcher", () => {
 
       // Source config points to a directory that doesn't exist
       mockLoadProjectSourceConfig.mockResolvedValue({
-        agents_dir: "nonexistent/agents",
+        agentsDir: "nonexistent/agents",
       });
 
       await expect(fetchAgentDefinitionsFromRemote(REMOTE_SOURCE)).rejects.toThrow(

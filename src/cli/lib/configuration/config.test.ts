@@ -681,7 +681,7 @@ describe("config", () => {
 
   describe("resolveAgentsSource", () => {
     it("should return flag value with highest priority", async () => {
-      await writeConfigYaml(tempDir, "agents_source: https://project.example.com/agents\n");
+      await writeConfigYaml(tempDir, "agentsSource: https://project.example.com/agents\n");
 
       const result = await resolveAgentsSource("https://flag.example.com/agents", tempDir);
 
@@ -690,7 +690,7 @@ describe("config", () => {
     });
 
     it("should return project config when no flag is provided", async () => {
-      await writeConfigYaml(tempDir, "agents_source: https://project.example.com/agents\n");
+      await writeConfigYaml(tempDir, "agentsSource: https://project.example.com/agents\n");
 
       const result = await resolveAgentsSource(undefined, tempDir);
 
@@ -746,42 +746,42 @@ describe("config", () => {
   });
 
   describe("loadProjectSourceConfig with path overrides", () => {
-    it("should load skills_dir from project config", async () => {
-      await writeConfigYaml(tempDir, "skills_dir: lib/skills\n");
+    it("should load skillsDir from project config", async () => {
+      await writeConfigYaml(tempDir, "skillsDir: lib/skills\n");
 
       const config = await loadProjectSourceConfig(tempDir);
-      expect(config?.skills_dir).toBe("lib/skills");
+      expect(config?.skillsDir).toBe("lib/skills");
     });
 
-    it("should load agents_dir from project config", async () => {
-      await writeConfigYaml(tempDir, "agents_dir: lib/agents\n");
+    it("should load agentsDir from project config", async () => {
+      await writeConfigYaml(tempDir, "agentsDir: lib/agents\n");
 
       const config = await loadProjectSourceConfig(tempDir);
-      expect(config?.agents_dir).toBe("lib/agents");
+      expect(config?.agentsDir).toBe("lib/agents");
     });
 
-    it("should load stacks_file from project config", async () => {
-      await writeConfigYaml(tempDir, "stacks_file: data/stacks.yaml\n");
+    it("should load stacksFile from project config", async () => {
+      await writeConfigYaml(tempDir, "stacksFile: data/stacks.yaml\n");
 
       const config = await loadProjectSourceConfig(tempDir);
-      expect(config?.stacks_file).toBe("data/stacks.yaml");
+      expect(config?.stacksFile).toBe("data/stacks.yaml");
     });
 
-    it("should load matrix_file from project config", async () => {
-      await writeConfigYaml(tempDir, "matrix_file: data/matrix.yaml\n");
+    it("should load matrixFile from project config", async () => {
+      await writeConfigYaml(tempDir, "matrixFile: data/matrix.yaml\n");
 
       const config = await loadProjectSourceConfig(tempDir);
-      expect(config?.matrix_file).toBe("data/matrix.yaml");
+      expect(config?.matrixFile).toBe("data/matrix.yaml");
     });
 
     it("should return undefined for missing path fields (defaults applied by consumer)", async () => {
       await writeConfigYaml(tempDir, "source: github:myorg/skills\n");
 
       const config = await loadProjectSourceConfig(tempDir);
-      expect(config?.skills_dir).toBeUndefined();
-      expect(config?.agents_dir).toBeUndefined();
-      expect(config?.stacks_file).toBeUndefined();
-      expect(config?.matrix_file).toBeUndefined();
+      expect(config?.skillsDir).toBeUndefined();
+      expect(config?.agentsDir).toBeUndefined();
+      expect(config?.stacksFile).toBeUndefined();
+      expect(config?.matrixFile).toBeUndefined();
     });
 
     it("should load all path fields together", async () => {
@@ -789,66 +789,66 @@ describe("config", () => {
         tempDir,
         [
           "source: github:myorg/skills",
-          "skills_dir: lib/skills",
-          "agents_dir: lib/agents",
-          "stacks_file: data/stacks.yaml",
-          "matrix_file: data/matrix.yaml",
+          "skillsDir: lib/skills",
+          "agentsDir: lib/agents",
+          "stacksFile: data/stacks.yaml",
+          "matrixFile: data/matrix.yaml",
         ].join("\n") + "\n",
       );
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.source).toBe("github:myorg/skills");
-      expect(config?.skills_dir).toBe("lib/skills");
-      expect(config?.agents_dir).toBe("lib/agents");
-      expect(config?.stacks_file).toBe("data/stacks.yaml");
-      expect(config?.matrix_file).toBe("data/matrix.yaml");
+      expect(config?.skillsDir).toBe("lib/skills");
+      expect(config?.agentsDir).toBe("lib/agents");
+      expect(config?.stacksFile).toBe("data/stacks.yaml");
+      expect(config?.matrixFile).toBe("data/matrix.yaml");
     });
   });
 
-  describe("loadProjectSourceConfig with agents_source", () => {
-    it("should load agents_source from project config", async () => {
-      await writeConfigYaml(tempDir, "agents_source: https://my-company.com/agents\n");
+  describe("loadProjectSourceConfig with agentsSource", () => {
+    it("should load agentsSource from project config", async () => {
+      await writeConfigYaml(tempDir, "agentsSource: https://my-company.com/agents\n");
 
       const config = await loadProjectSourceConfig(tempDir);
-      expect(config?.agents_source).toBe("https://my-company.com/agents");
+      expect(config?.agentsSource).toBe("https://my-company.com/agents");
     });
 
     it("should load all config fields together", async () => {
       await writeConfigYaml(
         tempDir,
-        "source: github:myorg/skills\nmarketplace: https://market.example.com\nagents_source: https://agents.example.com\n",
+        "source: github:myorg/skills\nmarketplace: https://market.example.com\nagentsSource: https://agents.example.com\n",
       );
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.source).toBe("github:myorg/skills");
       expect(config?.marketplace).toBe("https://market.example.com");
-      expect(config?.agents_source).toBe("https://agents.example.com");
+      expect(config?.agentsSource).toBe("https://agents.example.com");
     });
   });
 
-  describe("saveProjectConfig with agents_source", () => {
-    it("should save agents_source to project config", async () => {
+  describe("saveProjectConfig with agentsSource", () => {
+    it("should save agentsSource to project config", async () => {
       await saveProjectConfig(tempDir, {
-        agents_source: "https://my-agents.example.com",
+        agentsSource: "https://my-agents.example.com",
       });
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
       const content = await readFile(configPath, "utf-8");
-      expect(content).toContain("agents_source: https://my-agents.example.com");
+      expect(content).toContain("agentsSource: https://my-agents.example.com");
     });
 
     it("should save all config fields together", async () => {
       await saveProjectConfig(tempDir, {
         source: "github:myorg/skills",
         marketplace: "https://enterprise.example.com",
-        agents_source: "https://agents.enterprise.example.com",
+        agentsSource: "https://agents.enterprise.example.com",
       });
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
       const content = await readFile(configPath, "utf-8");
       expect(content).toContain("source: github:myorg/skills");
       expect(content).toContain("marketplace: https://enterprise.example.com");
-      expect(content).toContain("agents_source: https://agents.enterprise.example.com");
+      expect(content).toContain("agentsSource: https://agents.enterprise.example.com");
     });
   });
 

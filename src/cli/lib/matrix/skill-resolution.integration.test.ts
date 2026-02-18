@@ -394,7 +394,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       const validation = validateSelection(["web-feature-advanced" as SkillId], matrix);
 
       expect(validation.valid).toBe(false);
-      expect(validation.errors.some((e) => e.type === "missing_requirement")).toBe(true);
+      expect(validation.errors.some((e) => e.type === "missingRequirement")).toBe(true);
     });
   });
 
@@ -434,7 +434,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       // Only drizzle selected, hono missing
       const validation = validateSelection(["api-database-drizzle"], matrix);
       expect(validation.valid).toBe(false);
-      expect(validation.errors[0].type).toBe("missing_requirement");
+      expect(validation.errors[0].type).toBe("missingRequirement");
       expect(validation.errors[0].message).toContain("api-framework-hono");
     });
 
@@ -545,7 +545,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       // framework category is exclusive -- selecting both react and vue violates it
       const validation = validateSelection(["web-framework-react", "web-framework-vue"], matrix);
       expect(validation.valid).toBe(false);
-      expect(validation.errors.some((e) => e.type === "category_exclusive")).toBe(true);
+      expect(validation.errors.some((e) => e.type === "categoryExclusive")).toBe(true);
     });
   });
 

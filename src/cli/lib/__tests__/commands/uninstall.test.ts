@@ -105,7 +105,7 @@ async function createPluginDir(projectDir: string, fakeHome: string): Promise<st
   return pluginDir;
 }
 
-/** Creates a skill with forked_from.source matching a configured source (CLI-installed) */
+/** Creates a skill with forkedFrom.source matching a configured source (CLI-installed) */
 async function createCLISkill(
   skillsDir: string,
   skillName: string,
@@ -113,10 +113,10 @@ async function createCLISkill(
 ): Promise<string> {
   return writeTestSkill(skillsDir, skillName, {
     extraMetadata: {
-      cli_name: skillName,
-      forked_from: {
-        skill_id: skillName,
-        content_hash: "abc1234",
+      cliName: skillName,
+      forkedFrom: {
+        skillId: skillName,
+        contentHash: "abc1234",
         date: "2026-01-01",
         source,
       },
@@ -124,11 +124,11 @@ async function createCLISkill(
   });
 }
 
-/** Creates a skill directory WITHOUT forked_from (user-created skill) */
+/** Creates a skill directory WITHOUT forkedFrom (user-created skill) */
 async function createUserSkill(skillsDir: string, skillName: string): Promise<string> {
   return writeTestSkill(skillsDir, skillName, {
     description: "User skill",
-    extraMetadata: { cli_name: skillName },
+    extraMetadata: { cliName: skillName },
   });
 }
 
@@ -259,7 +259,7 @@ describe("uninstall command", () => {
   });
 
   describe("config-based skill removal", () => {
-    it("should remove skills with forked_from.source matching configured source", async () => {
+    it("should remove skills with forkedFrom.source matching configured source", async () => {
       await createProjectConfig(projectDir);
       const claudeDir = path.join(projectDir, CLAUDE_DIR);
       await mkdir(claudeDir, { recursive: true });
@@ -274,7 +274,7 @@ describe("uninstall command", () => {
       expect(stdout).toContain("Removed 1 CLI-installed skill");
     });
 
-    it("should preserve skills without forked_from (user-created)", async () => {
+    it("should preserve skills without forkedFrom (user-created)", async () => {
       await createProjectConfig(projectDir);
       const claudeDir = path.join(projectDir, CLAUDE_DIR);
       await mkdir(claudeDir, { recursive: true });
@@ -372,21 +372,21 @@ describe("uninstall command", () => {
       expect(stdout).toContain("Removed 2 CLI-installed skills");
     });
 
-    it("should handle legacy skills without source field in forked_from when config exists", async () => {
-      // Legacy skill: has forked_from but no source field
+    it("should handle legacy skills without source field in forkedFrom when config exists", async () => {
+      // Legacy skill: has forkedFrom but no source field
       await createProjectConfig(projectDir);
       const claudeDir = path.join(projectDir, CLAUDE_DIR);
       await mkdir(claudeDir, { recursive: true });
       const skillsDir = path.join(claudeDir, "skills");
       await mkdir(skillsDir, { recursive: true });
 
-      // Create a legacy skill with forked_from but no source
+      // Create a legacy skill with forkedFrom but no source
       const legacySkillDir = await writeTestSkill(skillsDir, "web-framework-vue", {
         extraMetadata: {
-          cli_name: "web-framework-vue",
-          forked_from: {
-            skill_id: "web-framework-vue",
-            content_hash: "def5678",
+          cliName: "web-framework-vue",
+          forkedFrom: {
+            skillId: "web-framework-vue",
+            contentHash: "def5678",
             date: "2026-01-01",
             // Note: no source field (legacy)
           },
@@ -395,7 +395,7 @@ describe("uninstall command", () => {
 
       const { stdout } = await runCliCommand(["uninstall", "--yes"]);
 
-      // Legacy skill with forked_from but no source should still be removed when config exists
+      // Legacy skill with forkedFrom but no source should still be removed when config exists
       expect(await directoryExists(legacySkillDir)).toBe(false);
       expect(stdout).toContain("Removed 1 CLI-installed skill");
     });

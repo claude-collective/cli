@@ -43,8 +43,8 @@ describe("matrix-loader", () => {
       const result = await loadSkillsMatrix("/project/config/skills-matrix.yaml");
 
       expect(result.version).toBe("1.0.0");
-      expect(result.skill_aliases).toBeDefined();
-      expect(result.skill_aliases.react).toBe("web-framework-react");
+      expect(result.skillAliases).toBeDefined();
+      expect(result.skillAliases.react).toBe("web-framework-react");
       expect(result.relationships).toBeDefined();
       expect(result.categories.framework).toBeDefined();
     });
@@ -90,7 +90,7 @@ relationships:
   recommends: []
   requires: []
   alternatives: []
-skill_aliases: {}
+skillAliases: {}
 `);
 
       await expect(loadSkillsMatrix("/project/matrix.yaml")).rejects.toThrow(
@@ -104,7 +104,7 @@ version: "1.0.0"
 categories: {}
 relationships:
   conflicts: []
-skill_aliases: {}
+skillAliases: {}
 `);
 
       await expect(loadSkillsMatrix("/project/matrix.yaml")).rejects.toThrow(
@@ -121,7 +121,7 @@ relationships:
   recommends: []
   requires: []
   alternatives: []
-skill_aliases: {}
+skillAliases: {}
 `);
 
       await expect(loadSkillsMatrix("/project/matrix.yaml")).rejects.toThrow(
@@ -146,8 +146,8 @@ skill_aliases: {}
 category: web/framework
 author: "@vince"
 version: "1"
-cli_name: react
-cli_description: React framework
+cliName: react
+cliDescription: React framework
 `;
         }
         // SKILL.md content
@@ -195,7 +195,7 @@ description: React framework
       expect(skills).toHaveLength(0);
     });
 
-    it("throws when cli_name is missing from metadata", async () => {
+    it("throws when cliName is missing from metadata", async () => {
       mockGlob.mockResolvedValue(["no-cli/metadata.yaml"]);
       mockFileExists.mockResolvedValue(true);
       mockReadFile.mockImplementation(async (filePath: string) => {
@@ -214,7 +214,7 @@ version: "1"
       });
 
       await expect(extractAllSkills("/project/src/skills")).rejects.toThrow(
-        /missing required 'cli_name' field/,
+        /missing required 'cliName' field/,
       );
     });
 
@@ -227,7 +227,7 @@ version: "1"
 category: web/framework
 author: "@test"
 version: "1"
-cli_name: bad-fm
+cliName: bad-fm
 `;
         }
         return "no frontmatter here";
@@ -271,7 +271,7 @@ cli_name: bad-fm
 category: 12345
 author: true
 version: "1"
-cli_name: wrong
+cliName: wrong
 `;
         }
         return `---\nname: wrong-types\ndescription: test\n---\n# Test`;
@@ -295,7 +295,7 @@ cli_name: wrong
       });
       mockReadFile.mockImplementation(async (filePath: string) => {
         if (filePath.includes("skill-valid") && filePath.includes("metadata.yaml")) {
-          return `category: web/framework\nauthor: "@test"\nversion: "1"\ncli_name: valid`;
+          return `category: web/framework\nauthor: "@test"\nversion: "1"\ncliName: valid`;
         }
         if (filePath.includes("skill-bad-meta") && filePath.includes("metadata.yaml")) {
           return "invalid: true\n";
@@ -323,10 +323,10 @@ cli_name: wrong
 category: web/styling
 author: "@test"
 version: "1"
-cli_name: scss-modules
-compatible_with:
+cliName: scss-modules
+compatibleWith:
   - web-framework-react
-conflicts_with:
+conflictsWith:
   - web-styling-tailwind
 requires:
   - web-framework-react
@@ -368,9 +368,9 @@ requires:
           requires: [],
           alternatives: [],
         },
-        skill_aliases: {
+        skillAliases: {
           react: "web-framework-react",
-        } as SkillsMatrixConfig["skill_aliases"],
+        } as SkillsMatrixConfig["skillAliases"],
       };
 
       const skills = [
@@ -414,10 +414,10 @@ requires:
           requires: [],
           alternatives: [],
         },
-        skill_aliases: {
+        skillAliases: {
           react: "web-framework-react",
           vue: "web-framework-vue",
-        } as SkillsMatrixConfig["skill_aliases"],
+        } as SkillsMatrixConfig["skillAliases"],
       };
 
       const skills = [
@@ -476,7 +476,7 @@ requires:
           requires: [],
           alternatives: [],
         },
-        skill_aliases: {} as SkillsMatrixConfig["skill_aliases"],
+        skillAliases: {} as SkillsMatrixConfig["skillAliases"],
       };
 
       const merged = await mergeMatrixWithSkills(matrix, []);
@@ -485,7 +485,7 @@ requires:
       expect(merged.suggestedStacks).toEqual([]);
     });
 
-    it("warns when skill_aliases contains invalid entries", async () => {
+    it("warns when skillAliases contains invalid entries", async () => {
       const matrix: SkillsMatrixConfig = {
         version: "1.0.0",
         categories: {} as SkillsMatrixConfig["categories"],
@@ -497,10 +497,10 @@ requires:
           alternatives: [],
         },
         // Invalid alias: value is not a valid SkillId format
-        skill_aliases: {
+        skillAliases: {
           react: "web-framework-react",
           "": "invalid-empty-key",
-        } as SkillsMatrixConfig["skill_aliases"],
+        } as SkillsMatrixConfig["skillAliases"],
       };
 
       const skills = [
@@ -547,7 +547,7 @@ requires:
           requires: [],
           alternatives: [],
         },
-        skill_aliases: {} as SkillsMatrixConfig["skill_aliases"],
+        skillAliases: {} as SkillsMatrixConfig["skillAliases"],
       };
 
       const skills = [
@@ -595,7 +595,7 @@ requires:
             },
           ],
         },
-        skill_aliases: {} as SkillsMatrixConfig["skill_aliases"],
+        skillAliases: {} as SkillsMatrixConfig["skillAliases"],
       };
 
       const skills = [
@@ -667,7 +667,7 @@ requires:
           ],
           alternatives: [],
         },
-        skill_aliases: {} as SkillsMatrixConfig["skill_aliases"],
+        skillAliases: {} as SkillsMatrixConfig["skillAliases"],
       };
 
       const skills = [

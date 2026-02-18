@@ -169,14 +169,14 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
       await createProjectConfig(projectDir, {
         source: "github:project/source",
         marketplace: "https://marketplace.example.com",
-        agents_source: "https://agents.example.com",
+        agentsSource: "https://agents.example.com",
       });
 
       const config = await loadProjectSourceConfig(projectDir);
 
       expect(config?.source).toBe("github:project/source");
       expect(config?.marketplace).toBe("https://marketplace.example.com");
-      expect(config?.agents_source).toBe("https://agents.example.com");
+      expect(config?.agentsSource).toBe("https://agents.example.com");
     });
 
     it("should return null for missing project config", async () => {
@@ -273,10 +273,10 @@ describe("User Journey: Config Precedence - Agent Source Resolution", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  describe("agents_source precedence", () => {
+  describe("agentsSource precedence", () => {
     it("should use flag value with highest priority", async () => {
       await createProjectConfig(projectDir, {
-        agents_source: "https://project.example.com/agents",
+        agentsSource: "https://project.example.com/agents",
       });
 
       const result = await resolveAgentsSource("https://flag.example.com/agents", projectDir);
@@ -287,7 +287,7 @@ describe("User Journey: Config Precedence - Agent Source Resolution", () => {
 
     it("should use project config when no flag provided", async () => {
       await createProjectConfig(projectDir, {
-        agents_source: "https://project.example.com/agents",
+        agentsSource: "https://project.example.com/agents",
       });
 
       const result = await resolveAgentsSource(undefined, projectDir);
@@ -352,7 +352,7 @@ describe("User Journey: Project Config Save and Load", () => {
       await saveProjectConfig(projectDir, {
         source: "github:myorg/skills",
         marketplace: "https://marketplace.example.com",
-        agents_source: "https://agents.example.com",
+        agentsSource: "https://agents.example.com",
       });
 
       const configPath = getProjectConfigPath(projectDir);
@@ -360,7 +360,7 @@ describe("User Journey: Project Config Save and Load", () => {
 
       expect(content).toContain("source: github:myorg/skills");
       expect(content).toContain("marketplace: https://marketplace.example.com");
-      expect(content).toContain("agents_source: https://agents.example.com");
+      expect(content).toContain("agentsSource: https://agents.example.com");
     });
   });
 

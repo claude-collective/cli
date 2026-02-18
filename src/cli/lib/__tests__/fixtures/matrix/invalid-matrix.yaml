@@ -1,5 +1,5 @@
 # Invalid matrix fixture for testing schema validation errors.
-# Missing required fields: relationships and skill_aliases.
+# Missing required fields: relationships and skillAliases.
 
 version: "1.0.0"
 categories: {}

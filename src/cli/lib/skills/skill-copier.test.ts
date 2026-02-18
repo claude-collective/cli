@@ -62,7 +62,7 @@ async function writeRemoteSkillOnDisk(
     description: config.description,
     skillContent: `---\nname: ${config.name}\ndescription: ${config.description}\n---\n${config.description}`,
     extraMetadata: {
-      cli_name: config.cliName ?? config.name,
+      cliName: config.cliName ?? config.name,
       author: config.author ?? "@vince",
     },
   });

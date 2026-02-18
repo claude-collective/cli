@@ -614,7 +614,7 @@ describe("Init Flow Integration: Skill Content Verification", () => {
     expect(honoContent).toContain("fast web framework");
   });
 
-  it("should inject forked_from metadata on copied skills", async () => {
+  it("should inject forkedFrom metadata on copied skills", async () => {
     const result = await installLocal({
       wizardResult: buildWizardResult(["web-framework-react"]),
       sourceResult,
@@ -626,11 +626,11 @@ describe("Init Flow Integration: Skill Content Verification", () => {
     expect(await fileExists(metadataPath)).toBe(true);
 
     const metadata = await readTestYaml<Record<string, unknown>>(metadataPath);
-    // installLocal calls injectForkedFromMetadata which adds forked_from
-    expect(metadata).toHaveProperty("forked_from");
+    // installLocal calls injectForkedFromMetadata which adds forkedFrom
+    expect(metadata).toHaveProperty("forkedFrom");
 
-    const forkedFrom = metadata.forked_from as Record<string, unknown>;
-    expect(forkedFrom.skill_id).toBe("web-framework-react");
-    expect(forkedFrom.content_hash).toBeDefined();
+    const forkedFrom = metadata.forkedFrom as Record<string, unknown>;
+    expect(forkedFrom.skillId).toBe("web-framework-react");
+    expect(forkedFrom.contentHash).toBeDefined();
   });
 });

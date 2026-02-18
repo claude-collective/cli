@@ -23,8 +23,8 @@ export type TestSkill = {
   /** Skip metadata.yaml creation for this local skill (for testing missing-metadata warnings) */
   skipMetadata?: boolean;
   forkedFrom?: {
-    skill_id: string;
-    content_hash: string;
+    skillId: string;
+    contentHash: string;
     date: string;
   };
 };
@@ -139,7 +139,7 @@ export const DRY_RUN_SKILL: TestSkill = {
   author: TEST_AUTHOR,
 };
 
-/** A basic local-only skill (no forked_from) with SKILL.md and metadata.yaml */
+/** A basic local-only skill (no forkedFrom) with SKILL.md and metadata.yaml */
 export const LOCAL_SKILL_BASIC: TestSkill = {
   id: "web-tooling-my-skill",
   name: "web-tooling-my-skill",
@@ -158,7 +158,7 @@ Test content here.
 `,
 };
 
-/** A forked local skill with forked_from metadata for diff/update/outdated commands */
+/** A forked local skill with forkedFrom metadata for diff/update/outdated commands */
 export const LOCAL_SKILL_FORKED: TestSkill = {
   id: "web-tooling-forked-skill",
   name: "web-tooling-forked-skill",
@@ -176,13 +176,13 @@ category: test
 Local modifications here.
 `,
   forkedFrom: {
-    skill_id: "web-framework-react",
-    content_hash: "abc123",
+    skillId: "web-framework-react",
+    contentHash: "abc123",
     date: "2025-01-01",
   },
 };
 
-/** A minimal local skill for error handling tests (with forked_from) */
+/** A minimal local skill for error handling tests (with forkedFrom) */
 export const LOCAL_SKILL_FORKED_MINIMAL: TestSkill = {
   id: "web-tooling-test-minimal",
   name: "web-tooling-test-minimal",
@@ -194,8 +194,8 @@ name: test
 ---
 # Test`,
   forkedFrom: {
-    skill_id: "web-framework-react",
-    content_hash: "abc",
+    skillId: "web-framework-react",
+    contentHash: "abc",
     date: "2025-01-01",
   },
 };
@@ -405,7 +405,7 @@ export { fileExists, directoryExists };
  *
  * The disk format requires `categories` as CategoryDefinition objects
  * keyed by valid subcategorySchema values, `relationships` (empty arrays),
- * and `skill_aliases` (empty — test aliases are not valid SkillDisplayName
+ * and `skillAliases` (empty — test aliases are not valid SkillDisplayName
  * enum members). Skill data is loaded separately via `extractAllSkills`.
  */
 function generateMatrix(
@@ -468,7 +468,7 @@ function generateMatrix(
     };
   }
 
-  // skill_aliases must be empty — test skill aliases (e.g., "web-framework-react")
+  // skillAliases must be empty — test skill aliases (e.g., "web-framework-react")
   // are not valid skillDisplayNameSchema enum members (which expects values like
   // "react", "zustand", "vitest"). The aliases are only for wizard display names.
   const diskMatrix: Record<string, unknown> = {
@@ -481,7 +481,7 @@ function generateMatrix(
       requires: [],
       alternatives: [],
     },
-    skill_aliases: {},
+    skillAliases: {},
   };
 
   return { testMatrix, diskMatrix };
@@ -539,8 +539,8 @@ ${skill.description}
       author: skill.author,
       category: skill.category,
       tags: skill.tags ?? [],
-      // cli_name is required by extractAllSkills for source-based matrix loading
-      cli_name: skill.name,
+      // cliName is required by extractAllSkills for source-based matrix loading
+      cliName: skill.name,
     };
     await writeFile(path.join(skillDir, "metadata.yaml"), stringifyYaml(metadata));
   }
@@ -553,8 +553,8 @@ name: {{ agent.name }}
 description: {{ agent.description }}
 tools: {{ agent.tools | join: ", " }}
 model: {{ agent.model }}
-permissionMode: {{ agent.permission_mode }}
-{% if agent.preloaded_skills %}skills: {{ agent.preloaded_skills | join: ", " }}{% endif %}
+permissionMode: {{ agent.permissionMode }}
+{% if agent.preloadedSkills %}skills: {{ agent.preloadedSkills | join: ", " }}{% endif %}
 ---
 
 {% include "_partials/intro.liquid" %}
@@ -668,12 +668,12 @@ ${skill.description}
 
       if (!skill.skipMetadata) {
         const metadata: Record<string, unknown> = {
-          cli_name: skill.name,
+          cliName: skill.name,
           version: 1,
           author: skill.author,
         };
         if (skill.forkedFrom) {
-          metadata.forked_from = skill.forkedFrom;
+          metadata.forkedFrom = skill.forkedFrom;
         }
         await writeFile(path.join(skillDir, "metadata.yaml"), stringifyYaml(metadata));
       }

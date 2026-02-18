@@ -550,7 +550,7 @@ describe("WizardStore", () => {
       categories: {
         "error-handling": createMockCategory("error-handling" as Subcategory, "Error Handling", {
           domain: "web-extras" as Domain,
-          parent_domain: "web" as Domain,
+          parentDomain: "web" as Domain,
           exclusive: false,
         }),
         framework: createMockCategory("framework" as Subcategory, "Framework", {
@@ -567,7 +567,7 @@ describe("WizardStore", () => {
       },
     };
 
-    it("should find parent domain for a domain with parent_domain", () => {
+    it("should find parent domain for a domain with parentDomain", () => {
       const store = useWizardStore.getState();
       const parent = store.getParentDomain(
         "web-extras",
@@ -576,7 +576,7 @@ describe("WizardStore", () => {
       expect(parent).toBe("web");
     });
 
-    it("should return undefined for a domain without parent_domain", () => {
+    it("should return undefined for a domain without parentDomain", () => {
       const store = useWizardStore.getState();
       const parent = store.getParentDomain("web", matrixWithoutParent as MergedSkillsMatrix);
       expect(parent).toBeUndefined();
