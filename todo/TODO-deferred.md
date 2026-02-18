@@ -1,31 +1,72 @@
 # Agents Inc. CLI - Deferred Tasks
 
-| ID    | Task                                              | Status   |
-| ----- | ------------------------------------------------- | -------- |
-| D-05  | Improve `agentsinc init` when already initialized | Deferred |
-| P4-17 | `agentsinc new` supports multiple items           | Deferred |
-| D-08  | Support user-defined stacks in consumer projects  | Deferred |
-| P4-18 | Test: multiple skill/agent creation               | Deferred |
-| D-01  | Update skill documentation conventions            | Deferred |
-| D-11  | Development hooks for type checking               | Deferred |
-| D-12  | Eject full agents from custom sources             | Deferred |
-| D-13  | Eject skills by domain/category                   | Deferred |
-| D-18  | Template system documentation improvements        | Deferred |
-| D-19  | Improve template error messages                   | Deferred |
-| D-20  | Add Edit tool to documentor agent                 | Deferred |
-| D-22  | Automated agent-tester for quality assurance      | Deferred |
-| D-23  | Test version bumping, create version bump command | Deferred |
-| D-24  | Configurable documentation file locations         | Deferred |
-| D-14  | Import skills from third-party marketplaces       | Deferred |
-| UX-04 | Interactive skill search polish                   | Deferred |
-| UX-05 | Refine step - skills.sh integration               | Deferred |
-| UX-06 | Search with color highlighting                    | Deferred |
-| UX-07 | Incompatibility tooltips                          | Deferred |
-| UX-09 | Animations/transitions                            | Deferred |
-| #5    | Agents command for skill assignment               | Deferred |
-| #19   | Sub-agent learning capture system                | Deferred |
-| D-25  | Auto-version check + source staleness             | Deferred |
-| D-26  | Marketplace-specific uninstall                    | Deferred |
+| ID    | Task                                                  | Status   |
+| ----- | ----------------------------------------------------- | -------- |
+| D-31  | Prefix categories with their domain                   | Deferred |
+| D-05  | Improve `agentsinc init` when already initialized     | Deferred |
+| P4-17 | `agentsinc new` supports multiple items               | Deferred |
+| D-08  | Support user-defined stacks in consumer projects      | Deferred |
+| P4-18 | Test: multiple skill/agent creation                   | Deferred |
+| D-01  | Update skill documentation conventions                | Deferred |
+| D-11  | Development hooks for type checking                   | Deferred |
+| D-12  | Eject full agents from custom sources                 | Deferred |
+| D-13  | Eject skills by domain/category                       | Deferred |
+| D-18  | Template system documentation improvements            | Deferred |
+| D-19  | Improve template error messages                       | Deferred |
+| D-20  | Add Edit tool to documentor agent                     | Deferred |
+| D-22  | Automated agent-tester for quality assurance          | Deferred |
+| D-23  | Test version bumping, create version bump command     | Deferred |
+| D-24  | Configurable documentation file locations             | Deferred |
+| D-14  | Import skills from third-party marketplaces           | Deferred |
+| UX-04 | Interactive skill search polish                       | Deferred |
+| UX-05 | Refine step - skills.sh integration                   | Deferred |
+| UX-06 | Search with color highlighting                        | Deferred |
+| UX-07 | Incompatibility tooltips                              | Deferred |
+| UX-09 | Animations/transitions                                | Deferred |
+| #5    | Agents command for skill assignment                   | Deferred |
+| #19   | Sub-agent learning capture system                     | Deferred |
+| D-25  | Auto-version check + source staleness                 | Deferred |
+| D-26  | Marketplace-specific uninstall                        | Deferred |
+| D-30  | Update schemas when generating new categories/domains | Deferred |
+
+---
+
+## D-31: Prefix Categories with Their Domain
+
+**Priority: Highest deferred task.**
+
+Currently, subcategory keys in stacks, the skills matrix, and metadata are bare names (e.g., `framework`, `testing`, `client-state`). These should be prefixed with their parent domain to avoid ambiguity and align with the `domain/subcategory` pattern already used in `CategoryPath` (e.g., `web/framework`, `api/testing`).
+
+**Example:**
+
+```yaml
+# Before (current)
+agents:
+  web-developer:
+    framework: web-framework-react
+
+# After (proposed)
+agents:
+  web-developer:
+    web/framework: web-framework-react
+```
+
+**Scope:**
+
+- Skills matrix categories: `framework` → `web/framework`, `testing` → `web/testing`, etc.
+- Stacks agent configs: subcategory keys become domain-prefixed
+- Metadata `category` field: currently bare subcategory, should become `domain/subcategory`
+- Schema enums: update all `subcategorySchema`, `stackSubcategorySchema`, and generated JSON schemas
+- TypeScript types: `Subcategory` type and `CategoryPath` may need to converge
+
+**Investigation needed:**
+
+- Audit all places where bare subcategory names are used vs `CategoryPath` (`domain/subcategory`)
+- Determine if `Subcategory` and `CategoryPath` can be unified
+- Assess impact on existing stacks.yaml, skills-matrix.yaml, and all metadata.yaml files
+- Plan migration for source marketplaces (claude-subagents, skills, etc.)
+
+**Related:** D-30 (schema generation for new categories)
 
 ---
 
@@ -434,9 +475,24 @@ agentsinc uninstall --source github:acme-corp/skills
 ```
 
 This would:
+
 - Read config.yaml for the list of configured sources
 - Only remove skills/agents that match the specified source
 - Preserve skills/agents from other sources
 
 **Depends on:** Uninstall redesign (config-based removal logic) being completed first.
 
+---
+
+## D-30: Update Schemas When Generating New Categories/Domains
+
+When a user creates a new category or domain, the JSON schemas (e.g., `metadata.schema.json`, `skills-matrix.schema.json`) should be updated to include the new values. Currently there is no code that handles this — generating a new category or domain does not update any schemas.
+
+**Investigation needed:**
+
+- Determine whether categories/domains are currently hardcoded in schemas or dynamically derived
+- Identify what flows create new categories or domains (if any exist yet)
+- Design how schema regeneration should be triggered (automatic on compile? explicit command? pre-commit hook?)
+- Ensure `$schema` references in metadata.yaml remain valid after schema changes
+
+**Related:** D-29 (`$schema` in metadata.yaml)
