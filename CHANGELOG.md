@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.38.0] - 2026-02-18
+
+**Agents selection step, skill-based preselection, strict stacks schema**
+
+- New "Agents" wizard step — users can toggle which agents to compile
+- Agents preselected from actually selected skills (not just domains)
+- Stacks schema enforces valid subcategory keys via enum
+- Reusable CheckboxGrid component extracted from domain selection
+
+See [changelogs/0.38.0.md](./changelogs/0.38.0.md) for full details.
+
+---
+
 ## [0.37.0] - 2026-02-18
 
 **Rename all snake_case config/metadata fields to camelCase (D-27)**
