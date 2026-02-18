@@ -2,6 +2,7 @@ import path from "path";
 import { mkdir, writeFile, readFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
 import { DEFAULT_PLUGIN_NAME } from "../../../consts";
+import type { CategoryPath, SkillId } from "../../../types";
 import {
   fileExists,
   directoryExists,
@@ -10,23 +11,25 @@ import {
   cleanupTempDir,
 } from "../helpers";
 
-export interface TestSkill {
-  id: string;
-  name: string;
+export type TestSkill = {
+  id: SkillId;
+  name: SkillId;
   alias?: string;
   description: string;
-  category: string;
+  category: CategoryPath;
   author: string;
   tags?: string[];
   content?: string;
+  /** Skip metadata.yaml creation for this local skill (for testing missing-metadata warnings) */
+  skipMetadata?: boolean;
   forkedFrom?: {
     skill_id: string;
     content_hash: string;
     date: string;
   };
-}
+};
 
-export interface TestAgent {
+export type TestAgent = {
   name: string;
   title: string;
   description: string;
@@ -35,9 +38,9 @@ export interface TestAgent {
   permissionMode?: string;
   introContent?: string;
   workflowContent?: string;
-}
+};
 
-export interface TestMatrix {
+export type TestMatrix = {
   version: string;
   skills: Record<string, TestSkill>;
   categories: Record<string, { name: string; description: string }>;
@@ -48,31 +51,31 @@ export interface TestMatrix {
     allSkillIds: string[];
   }>;
   aliases: Record<string, string>;
-}
+};
 
-export interface TestProjectConfig {
+export type TestProjectConfig = {
   name: string;
   description?: string;
   agents?: string[];
   skills?: Array<string | { id: string }>;
   version?: string;
-}
+};
 
-export interface TestPluginManifest {
+export type TestPluginManifest = {
   name: string;
   version: string;
   description?: string;
-}
+};
 
-export interface TestStack {
+export type TestStack = {
   id: string;
   name: string;
   description: string;
   agents: Record<string, Record<string, string>>;
   philosophy?: string;
-}
+};
 
-export interface TestSourceOptions {
+export type TestSourceOptions = {
   skills?: TestSkill[];
   agents?: TestAgent[];
   matrix?: Partial<TestMatrix>;
@@ -84,9 +87,9 @@ export interface TestSourceOptions {
   localSkills?: TestSkill[];
   /** Create config/stacks.yaml with these stack definitions */
   stacks?: TestStack[];
-}
+};
 
-export interface TestDirs {
+export type TestDirs = {
   tempDir: string;
   projectDir: string;
   sourceDir: string;
@@ -94,21 +97,211 @@ export interface TestDirs {
   agentsDir: string;
   pluginDir?: string;
   configDir?: string;
-}
+};
 
 const TEST_AUTHOR = "@test";
 
+// ── Compile Command Test Skills ──────────────────────────────────────────────
+// Skills for testing metadata presence/absence scenarios in the compile command.
+
+/** Valid local skill with SKILL.md and metadata.yaml */
+export const VALID_LOCAL_SKILL: TestSkill = {
+  id: "web-tooling-valid",
+  name: "web-tooling-valid",
+  description: "A valid skill",
+  category: "web/tooling",
+  author: TEST_AUTHOR,
+};
+
+/** Skill created WITHOUT metadata.yaml (for testing missing-metadata warnings) */
+export const SKILL_WITHOUT_METADATA: TestSkill = {
+  id: "web-tooling-incomplete",
+  name: "web-tooling-incomplete",
+  description: "Missing metadata",
+  category: "web/tooling",
+  author: TEST_AUTHOR,
+  skipMetadata: true,
+};
+
+/** Another skill without metadata.yaml (for path warning tests) */
+export const SKILL_WITHOUT_METADATA_CUSTOM: TestSkill = {
+  id: "web-tooling-custom",
+  name: "web-tooling-custom",
+  description: "No metadata",
+  category: "web/tooling",
+  author: TEST_AUTHOR,
+  skipMetadata: true,
+};
+
+/** Skill used for dry-run tests */
+export const DRY_RUN_SKILL: TestSkill = {
+  id: "web-tooling-test",
+  name: "web-tooling-test",
+  description: "Test",
+  category: "web/tooling",
+  author: TEST_AUTHOR,
+};
+
+// ── Local Skill Fixtures for Command Tests ───────────────────────────────────
+// Reusable local skills for commands that operate on .claude/skills/ (diff, update, outdated).
+
+/** A basic local-only skill (no forked_from) with SKILL.md and metadata.yaml */
+export const LOCAL_SKILL_BASIC: TestSkill = {
+  id: "web-tooling-my-skill",
+  name: "web-tooling-my-skill",
+  description: "A test skill",
+  category: "web/tooling",
+  author: TEST_AUTHOR,
+  content: `---
+name: my-skill
+description: A test skill
+category: test
+---
+
+# My Skill
+
+Test content here.
+`,
+};
+
+/** A forked local skill with forked_from metadata for diff/update/outdated commands */
+export const LOCAL_SKILL_FORKED: TestSkill = {
+  id: "web-tooling-forked-skill",
+  name: "web-tooling-forked-skill",
+  description: "A forked skill",
+  category: "web/tooling",
+  author: TEST_AUTHOR,
+  content: `---
+name: forked-skill
+description: A forked skill
+category: test
+---
+
+# Forked Skill
+
+Local modifications here.
+`,
+  forkedFrom: {
+    skill_id: "web-framework-react",
+    content_hash: "abc123",
+    date: "2025-01-01",
+  },
+};
+
+/** A minimal local skill for error handling tests (with forked_from) */
+export const LOCAL_SKILL_FORKED_MINIMAL: TestSkill = {
+  id: "web-tooling-test-minimal",
+  name: "web-tooling-test-minimal",
+  description: "Test skill",
+  category: "web/tooling",
+  author: TEST_AUTHOR,
+  content: `---
+name: test
+---
+# Test`,
+  forkedFrom: {
+    skill_id: "web-framework-react",
+    content_hash: "abc",
+    date: "2025-01-01",
+  },
+};
+
+// ── Import Integration Test Skills ───────────────────────────────────────────
+// Skills used by import:skill integration tests with richer content.
+// These use a plain object type (not TestSkill) because import sources use
+// simple directory names that don't follow the SkillId pattern.
+
+export type ImportSourceSkill = {
+  name: string;
+  content: string;
+  metadata?: Record<string, unknown>;
+};
+
+/** React patterns skill with metadata for import integration tests */
+export const IMPORT_REACT_PATTERNS_SKILL: ImportSourceSkill = {
+  name: "react-patterns",
+  content: `---
+name: react-patterns
+description: React design patterns and best practices
+---
+
+# React Patterns
+
+## Component Composition
+
+Use composition over inheritance for flexible component design.
+
+## Hooks Patterns
+
+- Custom hooks for shared logic
+- useReducer for complex state
+- useMemo for expensive computations
+`,
+  metadata: {
+    version: 1,
+    author: "@external-author",
+    tags: ["react", "patterns", "web"],
+    category: "web/framework",
+  },
+};
+
+/** Testing utils skill with metadata for import integration tests */
+export const IMPORT_TESTING_UTILS_SKILL: ImportSourceSkill = {
+  name: "testing-utils",
+  content: `---
+name: testing-utils
+description: Testing utilities and best practices
+---
+
+# Testing Utilities
+
+## Unit Testing
+
+Write focused tests that verify single behaviors.
+
+## Integration Testing
+
+Test component interactions and data flow.
+`,
+  metadata: {
+    version: 1,
+    author: "@external-author",
+    tags: ["testing", "vitest"],
+    category: "testing",
+  },
+};
+
+/** API security skill without metadata for import integration tests */
+export const IMPORT_API_SECURITY_SKILL: ImportSourceSkill = {
+  name: "api-security",
+  content: `---
+name: api-security
+description: API security patterns and middleware
+---
+
+# API Security
+
+## Authentication
+
+Implement JWT-based authentication with refresh tokens.
+
+## Rate Limiting
+
+Apply rate limiting to prevent abuse.
+`,
+};
+
 export const DEFAULT_TEST_SKILLS: TestSkill[] = [
   {
-    id: "react (@test)",
-    name: "react",
-    alias: "react",
+    id: "web-framework-react",
+    name: "web-framework-react",
+    alias: "web-framework-react",
     description: "React framework for building user interfaces",
     category: "web/framework",
     author: TEST_AUTHOR,
     tags: ["react", "web", "ui"],
     content: `---
-name: react
+name: web-framework-react
 description: React framework for building user interfaces
 ---
 
@@ -124,15 +317,15 @@ React is a JavaScript library for building user interfaces with components.
 `,
   },
   {
-    id: "zustand (@test)",
-    name: "zustand",
-    alias: "zustand",
+    id: "web-state-zustand",
+    name: "web-state-zustand",
+    alias: "web-state-zustand",
     description: "Bear necessities state management",
     category: "web/state",
     author: TEST_AUTHOR,
     tags: ["state", "react", "zustand"],
     content: `---
-name: zustand
+name: web-state-zustand
 description: Bear necessities state management
 ---
 
@@ -148,15 +341,15 @@ Zustand is a small, fast state management solution for React.
 `,
   },
   {
-    id: "vitest (@test)",
-    name: "vitest",
-    alias: "vitest",
+    id: "web-testing-vitest",
+    name: "web-testing-vitest",
+    alias: "web-testing-vitest",
     description: "Next generation testing framework",
-    category: "testing",
+    category: "web/testing",
     author: TEST_AUTHOR,
     tags: ["testing", "vitest", "unit"],
     content: `---
-name: vitest
+name: web-testing-vitest
 description: Next generation testing framework
 ---
 
@@ -166,15 +359,15 @@ Vitest is a fast unit test framework powered by Vite.
 `,
   },
   {
-    id: "hono (@test)",
-    name: "hono",
-    alias: "hono",
+    id: "api-framework-hono",
+    name: "api-framework-hono",
+    alias: "api-framework-hono",
     description: "Lightweight web framework for the edge",
     category: "api/framework",
     author: TEST_AUTHOR,
-    tags: ["api", "api", "edge"],
+    tags: ["api", "hono", "edge"],
     content: `---
-name: hono
+name: api-framework-hono
 description: Lightweight web framework for the edge
 ---
 
@@ -420,14 +613,17 @@ ${skill.description}
 `;
       await writeFile(path.join(skillDir, "SKILL.md"), content);
 
-      const metadata: Record<string, unknown> = {
-        version: 1,
-        author: skill.author,
-      };
-      if (skill.forkedFrom) {
-        metadata.forked_from = skill.forkedFrom;
+      if (!skill.skipMetadata) {
+        const metadata: Record<string, unknown> = {
+          cli_name: skill.name,
+          version: 1,
+          author: skill.author,
+        };
+        if (skill.forkedFrom) {
+          metadata.forked_from = skill.forkedFrom;
+        }
+        await writeFile(path.join(skillDir, "metadata.yaml"), stringifyYaml(metadata));
       }
-      await writeFile(path.join(skillDir, "metadata.yaml"), stringifyYaml(metadata));
     }
   }
 

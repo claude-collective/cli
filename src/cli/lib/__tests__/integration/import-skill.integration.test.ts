@@ -1,12 +1,17 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile, readFile } from "fs/promises";
-import { parse as parseYaml } from "yaml";
-import { runCliCommand, fileExists, directoryExists } from "../helpers";
+import { mkdir, writeFile, readFile, rm } from "fs/promises";
+import { stringify as stringifyYaml, parse as parseYaml } from "yaml";
+import { runCliCommand, fileExists, directoryExists, createTempDir, cleanupTempDir } from "../helpers";
 import { compileSkillPlugin, compileAllSkillPlugins } from "../../skills";
 import { validatePlugin } from "../../plugins";
 import { EXIT_CODES } from "../../exit-codes";
+import {
+  IMPORT_REACT_PATTERNS_SKILL,
+  IMPORT_TESTING_UTILS_SKILL,
+  IMPORT_API_SECURITY_SKILL,
+  type ImportSourceSkill,
+} from "../fixtures/create-test-source";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -24,11 +29,7 @@ const LOCAL_SOURCE_NAME = "test-import-source";
 
 async function createLocalSource(
   projectDir: string,
-  skills: Array<{
-    name: string;
-    content: string;
-    metadata?: Record<string, unknown>;
-  }>,
+  skills: ImportSourceSkill[],
   options?: { subdir?: string },
 ): Promise<void> {
   const subdir = options?.subdir ?? "skills";
@@ -40,84 +41,10 @@ async function createLocalSource(
     await writeFile(path.join(skillDir, SKILL_MD_FILE), skill.content);
 
     if (skill.metadata) {
-      const { stringify } = await import("yaml");
-      await writeFile(path.join(skillDir, METADATA_YAML_FILE), stringify(skill.metadata));
+      await writeFile(path.join(skillDir, METADATA_YAML_FILE), stringifyYaml(skill.metadata));
     }
   }
 }
-
-// ── Test Skill Fixtures ────────────────────────────────────────────────────────
-
-const REACT_PATTERNS_SKILL = {
-  name: "react-patterns",
-  content: `---
-name: react-patterns
-description: React design patterns and best practices
----
-
-# React Patterns
-
-## Component Composition
-
-Use composition over inheritance for flexible component design.
-
-## Hooks Patterns
-
-- Custom hooks for shared logic
-- useReducer for complex state
-- useMemo for expensive computations
-`,
-  metadata: {
-    version: 1,
-    author: "@external-author",
-    tags: ["react", "patterns", "web"],
-    category: "web/framework",
-  },
-};
-
-const TESTING_UTILS_SKILL = {
-  name: "testing-utils",
-  content: `---
-name: testing-utils
-description: Testing utilities and best practices
----
-
-# Testing Utilities
-
-## Unit Testing
-
-Write focused tests that verify single behaviors.
-
-## Integration Testing
-
-Test component interactions and data flow.
-`,
-  metadata: {
-    version: 1,
-    author: "@external-author",
-    tags: ["testing", "vitest"],
-    category: "testing",
-  },
-};
-
-const API_SECURITY_SKILL = {
-  name: "api-security",
-  content: `---
-name: api-security
-description: API security patterns and middleware
----
-
-# API Security
-
-## Authentication
-
-Implement JWT-based authentication with refresh tokens.
-
-## Rate Limiting
-
-Apply rate limiting to prevent abuse.
-`,
-};
 
 // ── Test Suites ────────────────────────────────────────────────────────────────
 
@@ -128,7 +55,7 @@ describe("Integration: Import Skill -> Compile Pipeline", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-import-integration-"));
+    tempDir = await createTempDir("cc-import-integration-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
@@ -136,7 +63,7 @@ describe("Integration: Import Skill -> Compile Pipeline", () => {
 
   afterEach(async () => {
     process.chdir(originalCwd);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should import a skill and compile it as a plugin", async () => {
@@ -144,7 +71,7 @@ describe("Integration: Import Skill -> Compile Pipeline", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     // Step 1: Create source with a skill
-    await createLocalSource(projectDir, [REACT_PATTERNS_SKILL]);
+    await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
 
     // Step 2: Import the skill
     const { error } = await runCliCommand([
@@ -203,9 +130,9 @@ describe("Integration: Import Skill -> Compile Pipeline", () => {
 
     // Step 1: Create source with multiple skills
     await createLocalSource(projectDir, [
-      REACT_PATTERNS_SKILL,
-      TESTING_UTILS_SKILL,
-      API_SECURITY_SKILL,
+      IMPORT_REACT_PATTERNS_SKILL,
+      IMPORT_TESTING_UTILS_SKILL,
+      IMPORT_API_SECURITY_SKILL,
     ]);
 
     // Step 2: Import all skills
@@ -249,7 +176,7 @@ describe("Integration: Import Skill -> Compile Pipeline", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     // Import a skill with metadata
-    await createLocalSource(projectDir, [REACT_PATTERNS_SKILL]);
+    await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
 
     const { error } = await runCliCommand([
       "import:skill",
@@ -286,7 +213,7 @@ describe("Integration: Import with --force and Recompile", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-import-force-"));
+    tempDir = await createTempDir("cc-import-force-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
@@ -294,7 +221,7 @@ describe("Integration: Import with --force and Recompile", () => {
 
   afterEach(async () => {
     process.chdir(originalCwd);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should overwrite and recompile with updated content", async () => {
@@ -302,7 +229,7 @@ describe("Integration: Import with --force and Recompile", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     // Step 1: Import original version
-    await createLocalSource(projectDir, [REACT_PATTERNS_SKILL]);
+    await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
 
     const { error: firstError } = await runCliCommand([
       "import:skill",
@@ -325,7 +252,7 @@ describe("Integration: Import with --force and Recompile", () => {
 
     // Step 3: Update the source skill with new content
     const updatedSkill = {
-      ...REACT_PATTERNS_SKILL,
+      ...IMPORT_REACT_PATTERNS_SKILL,
       content: `---
 name: react-patterns
 description: React design patterns and best practices (updated)
@@ -390,7 +317,7 @@ Leverage Suspense for data fetching and code splitting.
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     // Import original version
-    await createLocalSource(projectDir, [REACT_PATTERNS_SKILL]);
+    await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
     await runCliCommand(["import:skill", LOCAL_SOURCE_NAME, "--skill", "react-patterns"]);
 
     // Compile first version
@@ -432,7 +359,7 @@ describe("Integration: Import with --subdir and Compile", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-import-subdir-"));
+    tempDir = await createTempDir("cc-import-subdir-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
@@ -440,7 +367,7 @@ describe("Integration: Import with --subdir and Compile", () => {
 
   afterEach(async () => {
     process.chdir(originalCwd);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should import from custom subdirectory and compile successfully", async () => {
@@ -448,7 +375,7 @@ describe("Integration: Import with --subdir and Compile", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     // Create source with custom subdirectory
-    await createLocalSource(projectDir, [API_SECURITY_SKILL], {
+    await createLocalSource(projectDir, [IMPORT_API_SECURITY_SKILL], {
       subdir: "custom-skills",
     });
 
@@ -501,7 +428,7 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-import-metadata-"));
+    tempDir = await createTempDir("cc-import-metadata-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
@@ -509,11 +436,11 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
 
   afterEach(async () => {
     process.chdir(originalCwd);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should preserve forked_from metadata after import", async () => {
-    await createLocalSource(projectDir, [REACT_PATTERNS_SKILL]);
+    await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
 
     const { error } = await runCliCommand([
       "import:skill",
@@ -551,8 +478,8 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
   });
 
   it("should inject forked_from metadata for skills without existing metadata", async () => {
-    // API_SECURITY_SKILL has no metadata property
-    await createLocalSource(projectDir, [API_SECURITY_SKILL]);
+    // IMPORT_API_SECURITY_SKILL has no tags/metadata — toImportSourceSkill won't add metadata
+    await createLocalSource(projectDir, [IMPORT_API_SECURITY_SKILL]);
 
     const { error } = await runCliCommand([
       "import:skill",
@@ -587,7 +514,7 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    await createLocalSource(projectDir, [REACT_PATTERNS_SKILL]);
+    await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
 
     await runCliCommand(["import:skill", LOCAL_SOURCE_NAME, "--skill", "react-patterns"]);
 
@@ -621,7 +548,7 @@ describe("Integration: Import --dry-run Does Not Affect Compilation", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-import-dryrun-"));
+    tempDir = await createTempDir("cc-import-dryrun-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
@@ -629,11 +556,11 @@ describe("Integration: Import --dry-run Does Not Affect Compilation", () => {
 
   afterEach(async () => {
     process.chdir(originalCwd);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should not create importable skills in dry-run mode", async () => {
-    await createLocalSource(projectDir, [REACT_PATTERNS_SKILL]);
+    await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
 
     const { error } = await runCliCommand([
       "import:skill",
@@ -661,7 +588,7 @@ describe("Integration: Import Error Recovery", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-import-error-"));
+    tempDir = await createTempDir("cc-import-error-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
@@ -669,11 +596,11 @@ describe("Integration: Import Error Recovery", () => {
 
   afterEach(async () => {
     process.chdir(originalCwd);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should error when importing nonexistent skill from valid source", async () => {
-    await createLocalSource(projectDir, [REACT_PATTERNS_SKILL]);
+    await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
 
     const { error } = await runCliCommand([
       "import:skill",
@@ -687,7 +614,7 @@ describe("Integration: Import Error Recovery", () => {
 
   it("should import valid skills even when source has mixed content", async () => {
     // Create a source with one valid skill and one directory without SKILL.md
-    await createLocalSource(projectDir, [REACT_PATTERNS_SKILL]);
+    await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
 
     // Add a directory without SKILL.md (invalid skill)
     const invalidDir = path.join(projectDir, LOCAL_SOURCE_NAME, "skills", "invalid-skill");
@@ -739,7 +666,10 @@ describe("Integration: Import Error Recovery", () => {
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    await createLocalSource(projectDir, [REACT_PATTERNS_SKILL, TESTING_UTILS_SKILL]);
+    await createLocalSource(projectDir, [
+      IMPORT_REACT_PATTERNS_SKILL,
+      IMPORT_TESTING_UTILS_SKILL,
+    ]);
 
     await runCliCommand(["import:skill", LOCAL_SOURCE_NAME, "--all"]);
 

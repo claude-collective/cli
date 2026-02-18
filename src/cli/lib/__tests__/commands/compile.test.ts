@@ -1,7 +1,16 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir } from "fs/promises";
 import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
+import {
+  createTestSource,
+  cleanupTestSource,
+  VALID_LOCAL_SKILL,
+  SKILL_WITHOUT_METADATA,
+  SKILL_WITHOUT_METADATA_CUSTOM,
+  DRY_RUN_SKILL,
+  type TestDirs,
+} from "../fixtures/create-test-source";
 
 describe("compile command", () => {
   let tempDir: string;
@@ -123,27 +132,20 @@ describe("compile command", () => {
     it("should accept --dry-run with --output flag", async () => {
       const outputPath = path.join(tempDir, "dry-run-output");
 
-      // Create minimal skill setup so compile can proceed
-      const skillsDir = path.join(projectDir, ".claude", "skills", "test-skill");
-      await mkdir(skillsDir, { recursive: true });
-      await writeFile(
-        path.join(skillsDir, "SKILL.md"),
-        `---
-name: test-skill
-description: Test
-category: test
----
-
-# Test Skill
-
-Content.
-`,
-      );
+      // Use fixture to create local skill with metadata
+      const dirs = await createTestSource({
+        skills: [],
+        agents: [],
+        localSkills: [DRY_RUN_SKILL],
+      });
+      process.chdir(dirs.projectDir);
 
       const { error } = await runCliCommand(["compile", "--dry-run", "--output", outputPath]);
 
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
+
+      await cleanupTestSource(dirs);
     });
   });
 
@@ -232,6 +234,85 @@ Content.
 
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
+    });
+  });
+
+  describe("metadata.yaml requirement for local skills", () => {
+    let localDirs: TestDirs;
+
+    afterEach(async () => {
+      if (localDirs) {
+        await cleanupTestSource(localDirs);
+      }
+    });
+
+    it("should include a skill that has both SKILL.md and metadata.yaml", async () => {
+      const outputPath = path.join(tempDir, "metadata-output");
+
+      localDirs = await createTestSource({
+        skills: [],
+        agents: [],
+        localSkills: [VALID_LOCAL_SKILL],
+      });
+      process.chdir(localDirs.projectDir);
+
+      const { stdout, error } = await runCliCommand([
+        "compile",
+        "--dry-run",
+        "--output",
+        outputPath,
+      ]);
+
+      const output = stdout + (error?.message || "");
+      // Skill should be discovered (not skipped)
+      expect(output).not.toContain("missing metadata.yaml");
+      expect(output).toContain("1");
+    });
+
+    it("should skip a skill with SKILL.md but no metadata.yaml and emit a warning", async () => {
+      const outputPath = path.join(tempDir, "no-metadata-output");
+
+      localDirs = await createTestSource({
+        skills: [],
+        agents: [],
+        localSkills: [SKILL_WITHOUT_METADATA],
+      });
+      process.chdir(localDirs.projectDir);
+
+      const { stderr, stdout, error } = await runCliCommand([
+        "compile",
+        "--output",
+        outputPath,
+      ]);
+
+      const allOutput = stdout + stderr + (error?.message || "");
+      // Warning should be emitted with the skill name and mention metadata.yaml
+      expect(allOutput).toContain("web-tooling-incomplete");
+      expect(allOutput).toContain("metadata.yaml");
+      expect(allOutput).toContain("skipped");
+    });
+
+    it("should include the skill directory path in the warning message", async () => {
+      const outputPath = path.join(tempDir, "path-warning-output");
+
+      localDirs = await createTestSource({
+        skills: [],
+        agents: [],
+        localSkills: [SKILL_WITHOUT_METADATA_CUSTOM],
+      });
+      process.chdir(localDirs.projectDir);
+
+      const { stderr, stdout, error } = await runCliCommand([
+        "compile",
+        "--output",
+        outputPath,
+      ]);
+
+      const allOutput = stdout + stderr + (error?.message || "");
+      // Warning should contain the skill name
+      expect(allOutput).toContain("web-tooling-custom");
+      // Warning should contain the path hint
+      expect(allOutput).toContain(".claude/skills/");
     });
   });
 

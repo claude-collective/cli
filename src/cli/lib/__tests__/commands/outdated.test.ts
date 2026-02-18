@@ -1,8 +1,15 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
-import { runCliCommand } from "../helpers";
+import { mkdir } from "fs/promises";
+import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
+import {
+  createTestSource,
+  cleanupTestSource,
+  LOCAL_SKILL_BASIC,
+  LOCAL_SKILL_FORKED,
+  LOCAL_SKILL_FORKED_MINIMAL,
+  type TestDirs,
+} from "../fixtures/create-test-source";
 
 describe("outdated command", () => {
   let tempDir: string;
@@ -11,7 +18,7 @@ describe("outdated command", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-outdated-test-"));
+    tempDir = await createTempDir("cc-outdated-test-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
@@ -19,7 +26,7 @@ describe("outdated command", () => {
 
   afterEach(async () => {
     process.chdir(originalCwd);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("basic execution", () => {
@@ -90,32 +97,20 @@ describe("outdated command", () => {
   });
 
   describe("with local skills", () => {
+    let localDirs: TestDirs;
+
     beforeEach(async () => {
-      // Create local skills directory structure
-      const skillsDir = path.join(projectDir, ".claude", "skills", "my-skill");
-      await mkdir(skillsDir, { recursive: true });
+      // Create local skills directory structure using fixture
+      localDirs = await createTestSource({
+        skills: [],
+        agents: [],
+        localSkills: [LOCAL_SKILL_BASIC],
+      });
+      process.chdir(localDirs.projectDir);
+    });
 
-      // Create a local skill without forked_from (local-only skill)
-      await writeFile(
-        path.join(skillsDir, "SKILL.md"),
-        `---
-name: my-skill
-description: A test skill
-category: test
----
-
-# My Skill
-
-Test content here.
-`,
-      );
-
-      await writeFile(
-        path.join(skillsDir, "metadata.yaml"),
-        `version: 1
-author: "@test"
-`,
-      );
+    afterEach(async () => {
+      await cleanupTestSource(localDirs);
     });
 
     it("should process local skills for comparison", async () => {
@@ -137,35 +132,20 @@ author: "@test"
   });
 
   describe("with forked skills", () => {
+    let localDirs: TestDirs;
+
     beforeEach(async () => {
-      // Create local skills directory with forked_from metadata
-      const skillsDir = path.join(projectDir, ".claude", "skills", "forked-skill");
-      await mkdir(skillsDir, { recursive: true });
+      // Create local skills directory with forked_from metadata using fixture
+      localDirs = await createTestSource({
+        skills: [],
+        agents: [],
+        localSkills: [LOCAL_SKILL_FORKED],
+      });
+      process.chdir(localDirs.projectDir);
+    });
 
-      await writeFile(
-        path.join(skillsDir, "SKILL.md"),
-        `---
-name: forked-skill
-description: A forked skill
-category: test
----
-
-# Forked Skill
-
-Local modifications here.
-`,
-      );
-
-      await writeFile(
-        path.join(skillsDir, "metadata.yaml"),
-        `version: 1
-author: "@test"
-forked_from:
-  skill_id: "${"web-framework-react"}"
-  content_hash: "abc123"
-  date: "2025-01-01"
-`,
-      );
+    afterEach(async () => {
+      await cleanupTestSource(localDirs);
     });
 
     it("should process forked skills for comparison", async () => {
@@ -213,15 +193,20 @@ forked_from:
   });
 
   describe("error handling", () => {
+    let localDirs: TestDirs;
+
     beforeEach(async () => {
       // Create local skills so command proceeds to source loading
-      const skillsDir = path.join(projectDir, ".claude", "skills", "test");
-      await mkdir(skillsDir, { recursive: true });
-      await writeFile(path.join(skillsDir, "SKILL.md"), "---\nname: test\n---\n# Test");
-      await writeFile(
-        path.join(skillsDir, "metadata.yaml"),
-        `forked_from:\n  skill_id: "${"web-framework-react"}"\n  content_hash: "abc"\n  date: "2025-01-01"`,
-      );
+      localDirs = await createTestSource({
+        skills: [],
+        agents: [],
+        localSkills: [LOCAL_SKILL_FORKED_MINIMAL],
+      });
+      process.chdir(localDirs.projectDir);
+    });
+
+    afterEach(async () => {
+      await cleanupTestSource(localDirs);
     });
 
     it("should handle source path flag gracefully", async () => {

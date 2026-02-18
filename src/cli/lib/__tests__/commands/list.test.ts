@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
-import { runCliCommand } from "../helpers";
+import { mkdir, writeFile } from "fs/promises";
+import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
 
 describe("list command", () => {
   let tempDir: string;
@@ -12,7 +11,7 @@ describe("list command", () => {
   beforeEach(async () => {
     originalCwd = process.cwd();
 
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-list-test-"));
+    tempDir = await createTempDir("cc-list-test-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
@@ -20,7 +19,7 @@ describe("list command", () => {
 
   afterEach(async () => {
     process.chdir(originalCwd);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("command behavior", () => {

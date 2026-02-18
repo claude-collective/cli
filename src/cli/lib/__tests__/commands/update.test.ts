@@ -1,8 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
-import { runCliCommand } from "../helpers";
+import { mkdir } from "fs/promises";
+import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
+import {
+  createTestSource,
+  cleanupTestSource,
+  LOCAL_SKILL_FORKED,
+  LOCAL_SKILL_FORKED_MINIMAL,
+  type TestDirs,
+} from "../fixtures/create-test-source";
 
 describe("update command", () => {
   let tempDir: string;
@@ -11,7 +17,7 @@ describe("update command", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-update-test-"));
+    tempDir = await createTempDir("cc-update-test-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
@@ -19,7 +25,7 @@ describe("update command", () => {
 
   afterEach(async () => {
     process.chdir(originalCwd);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("basic execution", () => {
@@ -139,35 +145,20 @@ describe("update command", () => {
   });
 
   describe("with local skills", () => {
+    let localDirs: TestDirs;
+
     beforeEach(async () => {
-      // Create local skills directory with forked_from metadata
-      const skillsDir = path.join(projectDir, ".claude", "skills", "my-skill");
-      await mkdir(skillsDir, { recursive: true });
+      // Create local skills directory with forked_from metadata using fixture
+      localDirs = await createTestSource({
+        skills: [],
+        agents: [],
+        localSkills: [LOCAL_SKILL_FORKED],
+      });
+      process.chdir(localDirs.projectDir);
+    });
 
-      await writeFile(
-        path.join(skillsDir, "SKILL.md"),
-        `---
-name: my-skill
-description: A test skill
-category: test
----
-
-# My Skill
-
-Test content here.
-`,
-      );
-
-      await writeFile(
-        path.join(skillsDir, "metadata.yaml"),
-        `version: 1
-author: "@test"
-forked_from:
-  skill_id: "web-framework-react"
-  content_hash: "abc123"
-  date: "2025-01-01"
-`,
-      );
+    afterEach(async () => {
+      await cleanupTestSource(localDirs);
     });
 
     it("should process local skills for update check", async () => {
@@ -199,13 +190,12 @@ forked_from:
   describe("error handling", () => {
     it("should handle source path flag gracefully", async () => {
       // Create local skills so command proceeds past the early exit check
-      const skillsDir = path.join(projectDir, ".claude", "skills", "test");
-      await mkdir(skillsDir, { recursive: true });
-      await writeFile(path.join(skillsDir, "SKILL.md"), "---\nname: test\n---\n# Test");
-      await writeFile(
-        path.join(skillsDir, "metadata.yaml"),
-        `forked_from:\n  skill_id: "web-framework-react"\n  content_hash: "abc"\n  date: "2025-01-01"`,
-      );
+      const localDirs = await createTestSource({
+        skills: [],
+        agents: [],
+        localSkills: [LOCAL_SKILL_FORKED_MINIMAL],
+      });
+      process.chdir(localDirs.projectDir);
 
       const { error } = await runCliCommand([
         "update",
@@ -217,17 +207,18 @@ forked_from:
       // (may error on source not found, which is expected)
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
+
+      await cleanupTestSource(localDirs);
     });
 
     it("should handle --yes with invalid source path", async () => {
       // Create local skills so command proceeds past the early exit check
-      const skillsDir = path.join(projectDir, ".claude", "skills", "test");
-      await mkdir(skillsDir, { recursive: true });
-      await writeFile(path.join(skillsDir, "SKILL.md"), "---\nname: test\n---\n# Test");
-      await writeFile(
-        path.join(skillsDir, "metadata.yaml"),
-        `forked_from:\n  skill_id: "web-framework-react"\n  content_hash: "abc"\n  date: "2025-01-01"`,
-      );
+      const localDirs = await createTestSource({
+        skills: [],
+        agents: [],
+        localSkills: [LOCAL_SKILL_FORKED_MINIMAL],
+      });
+      process.chdir(localDirs.projectDir);
 
       const { error } = await runCliCommand([
         "update",
@@ -239,6 +230,8 @@ forked_from:
       // Should not have flag parsing errors
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
+
+      await cleanupTestSource(localDirs);
     });
 
     it("should reject unknown flags", async () => {
