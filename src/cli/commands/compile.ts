@@ -2,14 +2,14 @@ import { Flags } from "@oclif/core";
 import path from "path";
 import { parse as parseYaml } from "yaml";
 import { BaseCommand } from "../base-command";
-import { setVerbose, verbose } from "../utils/logger";
+import { setVerbose, verbose, warn } from "../utils/logger";
 import { discoverAllPluginSkills } from "../lib/plugins";
 import { getAgentDefinitions } from "../lib/agents";
 import { resolveSource } from "../lib/configuration";
 import { directoryExists, ensureDir, glob, readFile, fileExists } from "../utils/fs";
 import { recompileAgents } from "../lib/agents";
 import { parseFrontmatter } from "../lib/loading";
-import { LOCAL_SKILLS_PATH } from "../consts";
+import { LOCAL_SKILLS_PATH, STANDARD_FILES } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
 import {
   ERROR_MESSAGES,
@@ -40,6 +40,16 @@ async function loadSkillsFromDir(
     const skillPath = path.join(skillsDir, skillFile);
     const skillDir = path.dirname(skillPath);
     const relativePath = path.relative(skillsDir, skillDir);
+    const skillDirName = path.basename(skillDir);
+
+    const metadataPath = path.join(skillDir, STANDARD_FILES.METADATA_YAML);
+    if (!(await fileExists(metadataPath))) {
+      const displayPath = pathPrefix ? `${pathPrefix}/${relativePath}/` : `${relativePath}/`;
+      warn(
+        `Skill '${skillDirName}' in '${displayPath}' is missing ${STANDARD_FILES.METADATA_YAML} — skipped. Add ${STANDARD_FILES.METADATA_YAML} to register it with the CLI.`,
+      );
+      continue;
+    }
 
     try {
       const content = await readFile(skillPath);
