@@ -4,7 +4,7 @@
 stacks:
   - id: nextjs-fullstack
     name: Next.js Fullstack
-    description: Production-ready Next.js with complete backend infrastructure
+    description: React + Hono full-stack
     agents:
       web-developer:
         framework:
@@ -402,7 +402,7 @@ stacks:
 
   - id: angular-stack
     name: Modern Angular Stack
-    description: Angular 19 with Signals and NgRx SignalStore
+    description: Angular + Signals stack
     agents:
       web-developer:
         framework:
@@ -694,7 +694,7 @@ stacks:
 
   - id: nuxt-stack
     name: Nuxt Full-Stack
-    description: Vue 3 with Nuxt for full-stack Vue development
+    description: Vue + Nuxt full-stack
     agents:
       web-developer:
         framework:
@@ -997,7 +997,7 @@ stacks:
 
   - id: remix-stack
     name: Remix Full-Stack
-    description: Remix for form-heavy applications with excellent DX
+    description: Remix + form-centric DX
     agents:
       web-developer:
         framework:
@@ -1291,7 +1291,7 @@ stacks:
 
   - id: vue-stack
     name: Modern Vue Stack
-    description: Vue 3 with Composition API, Pinia, and Tailwind
+    description: Vue + Pinia + Tailwind
     agents:
       web-developer:
         framework:
@@ -1583,7 +1583,7 @@ stacks:
 
   - id: solidjs-stack
     name: SolidJS Stack
-    description: High-performance SolidJS with Tailwind and Hono backend
+    description: SolidJS + Hono full-stack
     agents:
       web-developer:
         framework:
@@ -1866,7 +1866,7 @@ stacks:
 
   - id: react-native-stack
     name: React Native Stack
-    description: Cross-platform mobile with React Native and Expo
+    description: React Native + Expo mobile
     agents:
       web-developer:
         framework:
@@ -2096,7 +2096,7 @@ stacks:
 
   - id: meta-stack
     name: Meta Agent Stack
-    description: Agents for creating agents, skills, documentation, and extracting patterns - invoke for meta-level development work
+    description: Meta-level agent tooling
     agents:
       skill-summoner:
         methodology:

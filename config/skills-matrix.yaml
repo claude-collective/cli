@@ -38,9 +38,9 @@ categories:
   styling:
     id: styling
     displayName: Styling
-    description: CSS approach (SCSS Modules, Tailwind)
+    description: CSS approach (SCSS Modules, Tailwind, CVA)
     domain: web
-    exclusive: true
+    exclusive: false
     required: true
     order: 3
 
@@ -437,10 +437,6 @@ relationships:
   # DISCOURAGES (Soft warnings - selecting A shows warning for B but doesn't disable)
   # ─────────────────────────────────────────────────────────────────
   discourages:
-    # Styling paradigm mixing is unusual but technically compatible
-    - skills: [scss-modules, tailwind]
-      reason: "Mixing CSS paradigms causes slower builds (Tailwind runs per-module) and inconsistent patterns - pick one approach for new projects. Valid for gradual migrations."
-
     # React state libraries - can coexist but adds complexity
     - skills: [zustand, redux-toolkit, mobx]
       reason: "Using multiple React state libraries adds complexity - choose one primary approach. Migration patterns exist for gradual transitions."
@@ -513,8 +509,12 @@ relationships:
       reason: "Radix primitives work well with any CSS approach"
 
     - when: tailwind
-      suggest: [shadcn-ui]
-      reason: "shadcn/ui is built for Tailwind"
+      suggest: [shadcn-ui, cva]
+      reason: "shadcn/ui is built for Tailwind; CVA provides type-safe variant management for Tailwind classes"
+
+    - when: cva
+      suggest: [tailwind]
+      reason: "CVA is designed for type-safe variant management of Tailwind utility classes"
 
     # UI component recommendations
     - when: shadcn-ui
@@ -691,7 +691,7 @@ relationships:
       skills: [nextjs-app-router, remix]
 
     - purpose: "Styling"
-      skills: [scss-modules, tailwind]
+      skills: [scss-modules, tailwind, cva]
 
     - purpose: "Client State (React)"
       skills: [zustand, redux-toolkit, mobx, jotai]
