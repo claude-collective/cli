@@ -2,6 +2,8 @@
 
 | ID   | Task                                                  | Status       |
 | ---- | ----------------------------------------------------- | ------------ |
+| B-03 | Edit pre-selection allows incompatible skills          | Bug          |
+| B-02 | Validate compatibleWith/conflictsWith refs in metadata | Pending      |
 | B-01 | Edit wizard shows steps that were omitted during init | Bug          |
 | U13  | Run Documentor Agent on CLI Codebase                  | Pending      |
 | H18  | Tailor documentation-bible to CLI repo                | Phase 3 only |
@@ -25,6 +27,26 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 ## Active Tasks
 
 ### Bugs
+
+#### B-03: Edit pre-selection allows incompatible skills
+
+When running `agentsinc edit`, the wizard pre-selects skills from the existing config. However, it does not apply the same compatibility/validation logic that `init` uses. For example, skills like `web-state-*` (client state) and `web-i18n-*` (internationalization) that have `compatibleWith` constraints get pre-selected even when the selected framework doesn't match — during `init` these would be filtered out, but during `edit` they appear as already selected.
+
+The `edit` command's pre-selection path needs to run the same validation that the `init` build step uses (framework compatibility filtering via `isCompatibleWithSelectedFrameworks` in `build-step-logic.ts`). Currently the pre-selection just restores raw skill IDs from config without checking whether they're still compatible with the current framework selection.
+
+**Location:** `src/cli/commands/edit.tsx` pre-selection logic, `src/cli/lib/wizard/build-step-logic.ts` filtering logic.
+
+---
+
+#### B-02: Validate compatibleWith/conflictsWith refs in metadata
+
+During matrix merge, `compatibleWith` and `conflictsWith` arrays in skill `metadata.yaml` can contain unresolvable references (e.g. display names with `(@author)` suffixes like `"react (@vince)"` or non-canonical IDs like `"setup-tooling"`). When `resolveToCanonicalId` can't resolve these, they pass through as-is and silently break framework compatibility filtering — skills disappear from the build step without any warning.
+
+**Fix:** Add a post-merge validation pass that checks every `compatibleWith` and `conflictsWith` entry on each resolved skill. If a reference doesn't match any known skill ID in `matrix.skills`, emit a `warn()` with the skill ID, the field name, and the unresolved reference. This catches the problem at load time instead of silently filtering skills out.
+
+**Location:** `src/cli/lib/matrix/matrix-loader.ts` — after `mergeMatrixWithSkills()` builds `resolvedSkills`, or in `checkMatrixHealth()` in `matrix-health-check.ts`.
+
+---
 
 #### B-01: Edit wizard shows steps that were omitted during init
 
