@@ -3,18 +3,18 @@ import { render } from "ink";
 
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
-import { getErrorMessage } from "../utils/errors.js";
-import { loadSkillsMatrixFromSource, getMarketplaceLabel } from "../lib/loading/index.js";
-import { discoverAllPluginSkills } from "../lib/plugins/index.js";
-import { archiveLocalSkill, restoreArchivedSkill } from "../lib/skills/index.js";
-import { recompileAgents, getAgentDefinitions } from "../lib/agents/index.js";
 import { CLI_BIN_NAME } from "../consts.js";
+import { getAgentDefinitions, recompileAgents } from "../lib/agents/index.js";
+import { loadProjectConfig } from "../lib/configuration/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { detectInstallation } from "../lib/installation/index.js";
-import { loadProjectConfig } from "../lib/configuration/index.js";
-import { ERROR_MESSAGES, STATUS_MESSAGES, INFO_MESSAGES } from "../utils/messages.js";
-import { claudePluginInstall, claudePluginUninstall } from "../utils/exec.js";
+import { getMarketplaceLabel, loadSkillsMatrixFromSource } from "../lib/loading/index.js";
+import { discoverAllPluginSkills } from "../lib/plugins/index.js";
+import { archiveLocalSkill, restoreArchivedSkill } from "../lib/skills/index.js";
 import type { SkillId } from "../types/index.js";
+import { getErrorMessage } from "../utils/errors.js";
+import { claudePluginInstall, claudePluginUninstall } from "../utils/exec.js";
+import { ERROR_MESSAGES, INFO_MESSAGES, STATUS_MESSAGES } from "../utils/messages.js";
 import { typedEntries } from "../utils/typed-object.js";
 
 const SOURCE_DISPLAY_NAMES: Record<string, string> = {
@@ -90,13 +90,22 @@ export default class Edit extends BaseCommand {
       this.handleError(error);
     }
 
+    const projectConfig = await loadProjectConfig(projectDir);
+
     this.log("Reading current skills...");
     let currentSkillIds: SkillId[];
     try {
       const discoveredSkills = await discoverAllPluginSkills(projectDir);
       // Boundary cast: discoverAllPluginSkills keys are skill IDs from frontmatter
       currentSkillIds = Object.keys(discoveredSkills) as SkillId[];
-      this.log(`✓ Current plugin has ${currentSkillIds.length} skills\n`);
+
+      // In local mode, plugin discovery returns empty — fall back to project config skills
+      if (currentSkillIds.length === 0 && projectConfig?.config?.skills?.length) {
+        currentSkillIds = projectConfig.config.skills;
+        this.log(`✓ Found ${currentSkillIds.length} skills from project config\n`);
+      } else {
+        this.log(`✓ Current plugin has ${currentSkillIds.length} skills\n`);
+      }
     } catch (error) {
       this.handleError(error);
     }
@@ -105,7 +114,6 @@ export default class Edit extends BaseCommand {
     const marketplaceLabel = getMarketplaceLabel(sourceResult);
 
     // Read saved installMode from config; fall back to marketplace-derived default only if absent
-    const projectConfig = await loadProjectConfig(projectDir);
     const savedInstallMode = projectConfig?.config?.installMode;
     const initialInstallMode = savedInstallMode ?? (sourceResult.marketplace ? "plugin" : "local");
 

@@ -1,10 +1,74 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import type { ReactElement } from "react";
 import path from "path";
 import { mkdir } from "fs/promises";
-import { runCliCommand, createTempDir, cleanupTempDir } from "../helpers";
+import {
+  runCliCommand,
+  createTempDir,
+  cleanupTempDir,
+  createMockMatrix,
+  createMockSkill,
+  buildSourceResult,
+  CLI_ROOT,
+} from "../helpers";
 import { EXIT_CODES } from "../../exit-codes";
 import { useWizardStore } from "../../../stores/wizard-store";
 import type { Domain, SkillId, Subcategory } from "../../../types";
+import Edit from "../../../commands/edit.js";
+
+// --- Module mocks (hoisted by vitest) ---
+
+const {
+  mockRender,
+  mockDetectInstallation,
+  mockLoadSkillsMatrixFromSource,
+  mockGetMarketplaceLabel,
+  mockLoadProjectConfig,
+  mockDiscoverAllPluginSkills,
+} = vi.hoisted(() => ({
+  mockRender: vi.fn().mockReturnValue({ waitUntilExit: () => Promise.resolve() }),
+  mockDetectInstallation: vi.fn().mockResolvedValue(null),
+  mockLoadSkillsMatrixFromSource: vi.fn(),
+  mockGetMarketplaceLabel: vi.fn().mockReturnValue(undefined),
+  mockLoadProjectConfig: vi.fn().mockResolvedValue(null),
+  mockDiscoverAllPluginSkills: vi.fn().mockResolvedValue({}),
+}));
+
+vi.mock("ink", async (importOriginal) => {
+  const original = await importOriginal<typeof import("ink")>();
+  return { ...original, render: mockRender };
+});
+
+vi.mock("../../installation/index.js", () => ({
+  detectInstallation: (...args: unknown[]) => mockDetectInstallation(...(args as [])),
+}));
+
+vi.mock("../../loading/index.js", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../../loading/index.js")>();
+  return {
+    ...original,
+    loadSkillsMatrixFromSource: (...args: unknown[]) =>
+      mockLoadSkillsMatrixFromSource(...(args as [])),
+    getMarketplaceLabel: (...args: unknown[]) => mockGetMarketplaceLabel(...(args as [])),
+  };
+});
+
+vi.mock("../../configuration/index.js", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../../configuration/index.js")>();
+  return {
+    ...original,
+    loadProjectConfig: (...args: unknown[]) => mockLoadProjectConfig(...(args as [])),
+  };
+});
+
+vi.mock("../../plugins/index.js", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../../plugins/index.js")>();
+  return {
+    ...original,
+    discoverAllPluginSkills: (...args: unknown[]) =>
+      mockDiscoverAllPluginSkills(...(args as [])),
+  };
+});
 
 describe("edit command", () => {
   let tempDir: string;
@@ -17,6 +81,9 @@ describe("edit command", () => {
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
+
+    // Ensure detectInstallation returns null (no installation) for these tests
+    mockDetectInstallation.mockResolvedValue(null);
   });
 
   afterEach(async () => {
@@ -380,5 +447,107 @@ describe("edit wizard domain filtering", () => {
     // CLI and mobile still absent
     expect(perDomain.cli).toBeUndefined();
     expect(perDomain.mobile).toBeUndefined();
+  });
+});
+
+// The edit command has a local-mode fallback: when discoverAllPluginSkills returns
+// empty (no plugin-based skills found), it falls back to project config skills.
+// These tests verify that the correct installedSkillIds reach the Wizard component.
+
+describe("edit command local-mode skill fallback", () => {
+  let tempDir: string;
+  let projectDir: string;
+  let originalCwd: string;
+
+  const CONFIG_SKILLS: SkillId[] = ["web-framework-react", "api-framework-hono"];
+
+  const testMatrix = createMockMatrix({
+    "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+    "api-framework-hono": createMockSkill("api-framework-hono", "api-api"),
+  });
+
+  const testSourceResult = buildSourceResult(testMatrix, "/test/source");
+
+  function getRenderedInstalledSkillIds(): SkillId[] | undefined {
+    const renderCall = mockRender.mock.calls[0];
+    if (!renderCall) return undefined;
+    // ink.render receives a React element; props are on .props
+    const element = renderCall[0] as ReactElement;
+    return element.props.installedSkillIds as SkillId[];
+  }
+
+  beforeEach(async () => {
+    originalCwd = process.cwd();
+    tempDir = await createTempDir("cc-edit-fallback-");
+    projectDir = path.join(tempDir, "project");
+    await mkdir(projectDir, { recursive: true });
+    process.chdir(projectDir);
+
+    // Reset all mocks to known state for each test
+    mockRender.mockClear();
+    mockRender.mockReturnValue({ waitUntilExit: () => Promise.resolve() });
+
+    mockDetectInstallation.mockResolvedValue({
+      mode: "local",
+      configPath: path.join(projectDir, ".claude-src/config.yaml"),
+      agentsDir: path.join(projectDir, ".claude/agents"),
+      skillsDir: path.join(projectDir, ".claude/skills"),
+      projectDir,
+    });
+
+    mockLoadSkillsMatrixFromSource.mockResolvedValue(testSourceResult);
+    mockGetMarketplaceLabel.mockReturnValue(undefined);
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    await cleanupTempDir(tempDir);
+  });
+
+  it("should use project config skills as installedSkillIds when plugin discovery returns empty", async () => {
+    mockDiscoverAllPluginSkills.mockResolvedValue({});
+    mockLoadProjectConfig.mockResolvedValue({
+      config: {
+        name: "test-project",
+        agents: [],
+        skills: CONFIG_SKILLS,
+      },
+      configPath: path.join(projectDir, ".claude-src/config.yaml"),
+    });
+
+    try {
+      await Edit.run([], { root: CLI_ROOT });
+    } catch {
+      // Expected: command errors after render because wizardResult is null
+    }
+
+    expect(mockRender).toHaveBeenCalledOnce();
+    const installedSkillIds = getRenderedInstalledSkillIds();
+    expect(installedSkillIds).toEqual(CONFIG_SKILLS);
+  });
+
+  it("should use discovered plugin skills as installedSkillIds when plugin discovery returns results", async () => {
+    const pluginSkillIds: SkillId[] = ["web-framework-react"];
+    mockDiscoverAllPluginSkills.mockResolvedValue({
+      "web-framework-react": { id: "web-framework-react", path: "skills/web-framework-react/" },
+    });
+    mockLoadProjectConfig.mockResolvedValue({
+      config: {
+        name: "test-project",
+        agents: [],
+        skills: CONFIG_SKILLS,
+      },
+      configPath: path.join(projectDir, ".claude-src/config.yaml"),
+    });
+
+    try {
+      await Edit.run([], { root: CLI_ROOT });
+    } catch {
+      // Expected: command errors after render because wizardResult is null
+    }
+
+    expect(mockRender).toHaveBeenCalledOnce();
+    const installedSkillIds = getRenderedInstalledSkillIds();
+    expect(installedSkillIds).toEqual(pluginSkillIds);
   });
 });
