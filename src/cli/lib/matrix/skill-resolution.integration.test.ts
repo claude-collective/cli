@@ -116,7 +116,11 @@ function createPrivateSource(name: string, url: string, installed = false): Skil
 const PUBLIC_SKILLS: Array<{ id: SkillId; category: CategoryPath; description: string }> = [
   { id: "web-framework-react", category: "web-framework", description: "React framework" },
   { id: "web-framework-vue", category: "web-framework", description: "Vue.js framework" },
-  { id: "web-state-zustand", category: "web-client-state", description: "Zustand state management" },
+  {
+    id: "web-state-zustand",
+    category: "web-client-state",
+    description: "Zustand state management",
+  },
   { id: "web-styling-scss-modules", category: "web-styling", description: "SCSS Modules styling" },
   { id: "web-testing-vitest", category: "web-testing", description: "Vitest testing framework" },
 ];
@@ -140,7 +144,11 @@ const INTERNAL_SKILLS: Array<{ id: SkillId; category: CategoryPath; description:
     description: "Investigation first",
   },
   { id: "web-accessibility-a11y", category: "web-accessibility", description: "Web accessibility" },
-  { id: "api-monitoring-sentry", category: "api-observability", description: "Sentry error tracking" },
+  {
+    id: "api-monitoring-sentry",
+    category: "api-observability",
+    description: "Sentry error tracking",
+  },
 ];
 
 // ── Matrix Builder ─────────────────────────────────────────────────────────────
@@ -190,7 +198,9 @@ function buildMultiSourceMatrix(overrides?: Partial<MergedSkillsMatrix>): Merged
       exclusive: true,
       required: true,
     }),
-    "web-client-state": createMockCategory("web-client-state" as Subcategory, "State", { order: 1 }),
+    "web-client-state": createMockCategory("web-client-state" as Subcategory, "State", {
+      order: 1,
+    }),
     "web-styling": createMockCategory("web-styling" as Subcategory, "Styling", { order: 2 }),
     "web-testing": createMockCategory("web-testing" as Subcategory, "Testing", {
       exclusive: false,
@@ -201,9 +211,13 @@ function buildMultiSourceMatrix(overrides?: Partial<MergedSkillsMatrix>): Merged
       order: 4,
     }),
     "api-database": createMockCategory("api-database" as Subcategory, "Database", { order: 5 }),
-    "shared-security": createMockCategory("shared-security" as Subcategory, "Security", { order: 6 }),
+    "shared-security": createMockCategory("shared-security" as Subcategory, "Security", {
+      order: 6,
+    }),
     "web-animation": createMockCategory("web-animation" as Subcategory, "Animation", { order: 7 }),
-    "shared-methodology": createMockCategory("shared-methodology" as Subcategory, "Methodology", { order: 8 }),
+    "shared-methodology": createMockCategory("shared-methodology" as Subcategory, "Methodology", {
+      order: 8,
+    }),
     "web-accessibility": createMockCategory("web-accessibility" as Subcategory, "Accessibility", {
       order: 9,
     }),

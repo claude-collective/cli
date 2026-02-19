@@ -160,7 +160,9 @@ describe("Integration: Consumer-Defined Stacks", () => {
     // to SkillAssignment[] with preloaded: false
     const webDevConfig = fullstackStack.agents["web-developer"];
     expect(webDevConfig).toBeDefined();
-    expect(webDevConfig!["web-framework"]).toEqual([{ id: "web-framework-react", preloaded: false }]);
+    expect(webDevConfig!["web-framework"]).toEqual([
+      { id: "web-framework-react", preloaded: false },
+    ]);
   });
 
   it("should load stacks with philosophy field when provided", async () => {

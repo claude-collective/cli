@@ -573,9 +573,10 @@ export function createMockResolvedStack(
 }
 
 /**
- * Builds a comprehensive test matrix with 7 skills across 6 categories,
+ * Builds a comprehensive test matrix with 13 skills across 7 categories,
  * 2 suggested stacks, display name mappings, and relationship data
- * (conflicts, recommends). Suitable for full wizard and compilation tests.
+ * (conflicts, recommends). Includes all 6 DEFAULT_PRESELECTED_SKILLS
+ * (methodology) so wizard handleComplete can resolve them.
  * @returns A fully populated MergedSkillsMatrix with realistic test data
  */
 export function createComprehensiveMatrix(
@@ -597,6 +598,40 @@ export function createComprehensiveMatrix(
     "api-framework-hono": getTestSkill("hono", { category: "api-api" }),
     "api-database-drizzle": getTestSkill("drizzle", { category: "api-database" }),
     "web-testing-vitest": getTestSkill("vitest", { category: "web-testing" }),
+    // Methodology skills (DEFAULT_PRESELECTED_SKILLS) — auto-injected by wizard
+    "meta-methodology-investigation-requirements": createMockSkill(
+      "meta-methodology-investigation-requirements",
+      "shared-methodology",
+      { description: "Never speculate - read actual code first", categoryExclusive: false },
+    ),
+    "meta-methodology-anti-over-engineering": createMockSkill(
+      "meta-methodology-anti-over-engineering",
+      "shared-methodology",
+      {
+        description: "Surgical implementation, not architectural innovation",
+        categoryExclusive: false,
+      },
+    ),
+    "meta-methodology-success-criteria": createMockSkill(
+      "meta-methodology-success-criteria",
+      "shared-methodology",
+      { description: "Explicit, measurable criteria defining done", categoryExclusive: false },
+    ),
+    "meta-methodology-write-verification": createMockSkill(
+      "meta-methodology-write-verification",
+      "shared-methodology",
+      { description: "Verify work was actually saved", categoryExclusive: false },
+    ),
+    "meta-methodology-improvement-protocol": createMockSkill(
+      "meta-methodology-improvement-protocol",
+      "shared-methodology",
+      { description: "Evidence-based self-improvement", categoryExclusive: false },
+    ),
+    "meta-methodology-context-management": createMockSkill(
+      "meta-methodology-context-management",
+      "shared-methodology",
+      { description: "Maintain project continuity across sessions", categoryExclusive: false },
+    ),
   };
 
   const categories = {
@@ -626,6 +661,12 @@ export function createComprehensiveMatrix(
       domain: "shared" as Domain,
       exclusive: false,
       order: 10,
+    }),
+    "shared-methodology": createMockCategory("shared-methodology" as Subcategory, "Methodology", {
+      domain: "shared" as Domain,
+      exclusive: false,
+      required: false,
+      order: 11,
     }),
   } as Record<Subcategory, CategoryDefinition>;
 
@@ -674,6 +715,12 @@ export function createComprehensiveMatrix(
     hono: "api-framework-hono",
     drizzle: "api-database-drizzle",
     vitest: "web-testing-vitest",
+    "investigation-requirements": "meta-methodology-investigation-requirements",
+    "anti-over-engineering": "meta-methodology-anti-over-engineering",
+    "success-criteria": "meta-methodology-success-criteria",
+    "write-verification": "meta-methodology-write-verification",
+    "improvement-protocol": "meta-methodology-improvement-protocol",
+    "context-management": "meta-methodology-context-management",
     // Double cast needed: object literal's string keys are not assignable to branded
     // SkillDisplayName/SkillId types without going through `unknown` first (boundary cast)
   } as unknown as Record<SkillDisplayName, SkillId>;

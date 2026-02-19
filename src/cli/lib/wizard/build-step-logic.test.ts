@@ -238,14 +238,7 @@ describe("buildCategoriesForDomain", () => {
     const matrix = createMatrix();
     const installedSkillIds = ["web-framework-react" as import("../../types").SkillId];
 
-    const result = buildCategoriesForDomain(
-      "web",
-      [],
-      matrix,
-      false,
-      {},
-      installedSkillIds,
-    );
+    const result = buildCategoriesForDomain("web", [], matrix, false, {}, installedSkillIds);
 
     const frameworkRow = result.find((r) => r.id === frameworkCategory);
     const reactOption = frameworkRow?.options.find((o) => o.id === "web-framework-react");

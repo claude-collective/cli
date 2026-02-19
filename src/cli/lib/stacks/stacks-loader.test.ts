@@ -242,10 +242,14 @@ describe("stacks-loader", () => {
       expect(stack.id).toBe("object-stack");
 
       // Object-form with preloaded: true preserved
-      expect(stack.agents["web-developer"]!["web-framework"]).toEqual([sa("web-framework-react", true)]);
+      expect(stack.agents["web-developer"]!["web-framework"]).toEqual([
+        sa("web-framework-react", true),
+      ]);
 
       // Bare string normalized to preloaded: false
-      expect(stack.agents["web-developer"]!["web-styling"]).toEqual([sa("web-styling-scss-modules")]);
+      expect(stack.agents["web-developer"]!["web-styling"]).toEqual([
+        sa("web-styling-scss-modules"),
+      ]);
 
       // Mixed array: object + bare string
       expect(stack.agents["web-developer"]!["shared-methodology"]).toEqual([

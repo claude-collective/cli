@@ -1753,9 +1753,18 @@ describe("validateSelection edge cases", () => {
   });
 
   it("should detect category exclusivity with more than 2 skills in same exclusive category", () => {
-    const skillA = createSkill("web-skill-a", { category: "web-framework", categoryExclusive: true });
-    const skillB = createSkill("web-skill-b", { category: "web-framework", categoryExclusive: true });
-    const skillC = createSkill("web-skill-c", { category: "web-framework", categoryExclusive: true });
+    const skillA = createSkill("web-skill-a", {
+      category: "web-framework",
+      categoryExclusive: true,
+    });
+    const skillB = createSkill("web-skill-b", {
+      category: "web-framework",
+      categoryExclusive: true,
+    });
+    const skillC = createSkill("web-skill-c", {
+      category: "web-framework",
+      categoryExclusive: true,
+    });
     const matrix = createMatrix(
       { "web-skill-a": skillA, "web-skill-b": skillB, "web-skill-c": skillC },
       {},

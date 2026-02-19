@@ -9,7 +9,13 @@ import {
   type TestSkill,
 } from "../fixtures/create-test-source";
 import { installLocal } from "../../installation/local-installer";
-import type { MergedSkillsMatrix, ProjectConfig, ResolvedSkill, SkillId } from "../../../types";
+import type {
+  AgentName,
+  MergedSkillsMatrix,
+  ProjectConfig,
+  ResolvedSkill,
+  SkillId,
+} from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
 import {
   createMockSkill,
@@ -632,5 +638,102 @@ describe("Init Flow Integration: Skill Content Verification", () => {
     const forkedFrom = metadata.forkedFrom as Record<string, unknown>;
     expect(forkedFrom.skillId).toBe("web-framework-react");
     expect(forkedFrom.contentHash).toBeDefined();
+  });
+});
+
+describe("Init Flow Integration: Selected Agents Filtering", () => {
+  let dirs: TestDirs;
+  let originalCwd: string;
+  let sourceResult: SourceLoadResult;
+
+  beforeEach(async () => {
+    originalCwd = process.cwd();
+    dirs = await createTestSource({ skills: TEST_SKILLS });
+    process.chdir(dirs.projectDir);
+    sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    await cleanupTestSource(dirs);
+  });
+
+  it("should only include selected agents in config.agents", async () => {
+    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
+    const selectedAgents: AgentName[] = ["web-developer", "web-reviewer", "api-developer"];
+
+    const result = await installLocal({
+      wizardResult: buildWizardResult(selectedSkills, { selectedAgents }),
+      sourceResult,
+      projectDir: dirs.projectDir,
+    });
+
+    const config = await readTestYaml<ProjectConfig>(result.configPath);
+
+    // config.agents should contain exactly the selected agents (sorted)
+    expect(config.agents).toEqual([...selectedAgents].sort());
+  });
+
+  it("should only have stack entries for selected agents, not DEFAULT_AGENTS", async () => {
+    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
+    const selectedAgents: AgentName[] = ["web-developer", "web-reviewer", "api-developer"];
+
+    const result = await installLocal({
+      wizardResult: buildWizardResult(selectedSkills, { selectedAgents }),
+      sourceResult,
+      projectDir: dirs.projectDir,
+    });
+
+    const config = await readTestYaml<ProjectConfig>(result.configPath);
+
+    expect(config.stack).toBeDefined();
+
+    // Stack should NOT contain default agents that were not in selectedAgents
+    const stackAgentIds = Object.keys(config.stack || {});
+    for (const agentId of stackAgentIds) {
+      expect(selectedAgents).toContain(agentId);
+    }
+
+    // Specifically verify DEFAULT_AGENTS are absent from stack
+    expect(config.stack?.["agent-summoner"]).toBeUndefined();
+    expect(config.stack?.["skill-summoner"]).toBeUndefined();
+    expect(config.stack?.["documentor"]).toBeUndefined();
+  });
+
+  it("should assign skills to their appropriate selected agents based on category", async () => {
+    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
+    const selectedAgents: AgentName[] = ["web-developer", "web-reviewer", "api-developer"];
+
+    const result = await installLocal({
+      wizardResult: buildWizardResult(selectedSkills, { selectedAgents }),
+      sourceResult,
+      projectDir: dirs.projectDir,
+    });
+
+    const config = await readTestYaml<ProjectConfig>(result.configPath);
+
+    expect(config.stack).toBeDefined();
+
+    // web-framework-react should be assigned to web-developer and/or web-reviewer
+    // (both are in the web/* mapping and in selectedAgents)
+    const webAgentsWithFramework = Object.entries(config.stack || {}).filter(([, agentConfig]) => {
+      const typedConfig = agentConfig as Record<string, unknown>;
+      return typedConfig["web-framework"] !== undefined;
+    });
+    expect(webAgentsWithFramework.length).toBeGreaterThan(0);
+    for (const [agentId] of webAgentsWithFramework) {
+      expect(["web-developer", "web-reviewer"]).toContain(agentId);
+    }
+
+    // api-framework-hono should be assigned to api-developer
+    // (api-developer is in the api/* mapping and in selectedAgents)
+    const apiAgentsWithFramework = Object.entries(config.stack || {}).filter(([, agentConfig]) => {
+      const typedConfig = agentConfig as Record<string, unknown>;
+      return typedConfig["api-api"] !== undefined;
+    });
+    expect(apiAgentsWithFramework.length).toBeGreaterThan(0);
+    for (const [agentId] of apiAgentsWithFramework) {
+      expect(agentId).toBe("api-developer");
+    }
   });
 });

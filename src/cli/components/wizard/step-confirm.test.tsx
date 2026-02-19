@@ -152,7 +152,10 @@ describe("StepConfirm component", () => {
           onComplete={onComplete}
           selectedDomains={["web", "api"]}
           domainSelections={{
-            web: { "web-framework": ["web-framework-react"], "web-styling": ["web-styling-scss-modules"] },
+            web: {
+              "web-framework": ["web-framework-react"],
+              "web-styling": ["web-styling-scss-modules"],
+            },
             api: { "api-api": ["api-framework-hono"] },
           }}
           technologyCount={3}
@@ -177,7 +180,10 @@ describe("StepConfirm component", () => {
           onComplete={onComplete}
           selectedDomains={["web", "api"]}
           domainSelections={{
-            web: { "web-framework": ["web-framework-react"], "web-styling": ["web-styling-scss-modules"] },
+            web: {
+              "web-framework": ["web-framework-react"],
+              "web-styling": ["web-styling-scss-modules"],
+            },
             api: { "api-api": ["api-framework-hono"] },
           }}
           technologyCount={3}

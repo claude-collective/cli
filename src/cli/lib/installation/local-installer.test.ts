@@ -497,7 +497,10 @@ describe("local-installer", () => {
       const parsedConfig = parseYaml(configContent) as ProjectConfig;
       // compactStackForYaml converts preloaded: true to { id, preloaded: true } object form
       const parsedWebDev = parsedConfig.stack?.["web-developer"] as Record<string, unknown>;
-      expect(parsedWebDev?.["web-framework"]).toEqual({ id: "web-framework-react", preloaded: true });
+      expect(parsedWebDev?.["web-framework"]).toEqual({
+        id: "web-framework-react",
+        preloaded: true,
+      });
     });
   });
 });
