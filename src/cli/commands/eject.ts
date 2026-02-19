@@ -51,6 +51,10 @@ export default class Eject extends BaseCommand {
       description: "Eject to a custom output directory",
       command: "<%= config.bin %> <%= command.id %> skills -o ./custom-dir",
     },
+    {
+      description: "Eject only agent templates",
+      command: "<%= config.bin %> <%= command.id %> agent-partials --templates",
+    },
   ];
 
   static args = {
@@ -74,6 +78,11 @@ export default class Eject extends BaseCommand {
     }),
     refresh: Flags.boolean({
       description: "Force refresh from remote source",
+      default: false,
+    }),
+    templates: Flags.boolean({
+      char: "t",
+      description: "Eject only agent templates (used with agent-partials)",
       default: false,
     }),
   };
@@ -121,6 +130,10 @@ export default class Eject extends BaseCommand {
     const ejectType = args.type as EjectType;
     const directOutput = !!flags.output;
 
+    if (flags.templates && ejectType === "skills") {
+      this.warn("The --templates flag only applies to agent-partials. Ignoring.");
+    }
+
     let sourceResult: SourceLoadResult | undefined;
     if (ejectType === "skills" || ejectType === "all") {
       sourceResult = await loadSkillsMatrixFromSource({
@@ -132,7 +145,7 @@ export default class Eject extends BaseCommand {
 
     switch (ejectType) {
       case "agent-partials":
-        await this.ejectAgentPartials(outputBase, flags.force, directOutput);
+        await this.ejectAgentPartials(outputBase, flags.force, directOutput, flags.templates);
         break;
       case "skills":
         await this.ejectSkills(
@@ -144,7 +157,7 @@ export default class Eject extends BaseCommand {
         );
         break;
       case "all":
-        await this.ejectAgentPartials(outputBase, flags.force, directOutput);
+        await this.ejectAgentPartials(outputBase, flags.force, directOutput, flags.templates);
         await this.ejectSkills(
           projectDir,
           flags.force,
@@ -246,18 +259,27 @@ export default class Eject extends BaseCommand {
     outputBase: string,
     force: boolean,
     directOutput = false,
+    templatesOnly = false,
   ): Promise<void> {
-    const sourceDir = path.join(PROJECT_ROOT, DIRS.agents);
+    const sourceDir = templatesOnly
+      ? path.join(PROJECT_ROOT, DIRS.templates)
+      : path.join(PROJECT_ROOT, DIRS.agents);
 
     if (!(await directoryExists(sourceDir))) {
-      this.warn("No agent partials found in CLI.");
+      this.warn(
+        templatesOnly ? "No agent templates found in CLI." : "No agent partials found in CLI.",
+      );
       return;
     }
 
-    const destDir = directOutput ? outputBase : path.join(outputBase, "agents");
+    const destDir = directOutput
+      ? outputBase
+      : templatesOnly
+        ? path.join(outputBase, path.basename(DIRS.agents), path.basename(DIRS.templates))
+        : path.join(outputBase, path.basename(DIRS.agents));
 
     if ((await directoryExists(destDir)) && !force) {
-      this.warn(`Agent partials already exist at ${destDir}. Use --force to overwrite.`);
+      this.warn(`${templatesOnly ? "Agent templates" : "Agent partials"} already exist at ${destDir}. Use --force to overwrite.`);
       return;
     }
 
@@ -265,8 +287,14 @@ export default class Eject extends BaseCommand {
 
     await copy(sourceDir, destDir);
 
-    this.logSuccess(`Agent partials ejected to ${destDir}`);
-    this.log("You can now customize templates, agent intro, workflow, and examples locally.");
+    this.logSuccess(
+      `${templatesOnly ? "Agent templates" : "Agent partials"} ejected to ${destDir}`,
+    );
+    this.log(
+      templatesOnly
+        ? "You can now customize agent templates locally."
+        : "You can now customize templates, agent intro, workflow, and examples locally.",
+    );
   }
 
   private async ejectSkills(

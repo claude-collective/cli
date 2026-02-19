@@ -23,7 +23,7 @@ import {
 import { installLocal, installPluginConfig } from "../../installation/local-installer";
 import { copySkillsToLocalFlattened } from "../../skills/skill-copier";
 import { loadDefaultMappings, clearDefaultsCache } from "../../loading";
-import { LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../consts";
+import { CLAUDE_SRC_DIR, DIRS, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../consts";
 import { typedKeys } from "../../../utils/typed-object";
 import type { MergedSkillsMatrix, ProjectConfig, ResolvedSkill, SkillId } from "../../../types";
 
@@ -137,6 +137,20 @@ describe("eject command", () => {
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
+
+    it("should accept --templates flag", async () => {
+      const { error } = await runCliCommand(["eject", "agent-partials", "--templates"]);
+
+      const output = error?.message || "";
+      expect(output.toLowerCase()).not.toContain("unknown flag");
+    });
+
+    it("should accept -t shorthand for templates", async () => {
+      const { error } = await runCliCommand(["eject", "agent-partials", "-t"]);
+
+      const output = error?.message || "";
+      expect(output.toLowerCase()).not.toContain("unknown flag");
+    });
   });
 
   describe("eject agent-partials", () => {
@@ -217,6 +231,72 @@ describe("eject command", () => {
     });
   });
 
+  describe("eject agent-partials --templates", () => {
+    it("should eject only templates directory when --templates is used", async () => {
+      const { stdout } = await runCliCommand(["eject", "agent-partials", "--templates"]);
+
+      expect(stdout).toContain("Agent templates ejected");
+
+      const templatesDir = path.join(
+        projectDir,
+        CLAUDE_SRC_DIR,
+        path.basename(DIRS.agents),
+        path.basename(DIRS.templates),
+      );
+      expect(await directoryExists(templatesDir)).toBe(true);
+
+      const entries = await readdir(templatesDir);
+      expect(entries.length).toBeGreaterThan(0);
+      expect(entries).toContain("agent.liquid");
+    });
+
+    it("should not eject other agent partials when --templates is used", async () => {
+      await runCliCommand(["eject", "agent-partials", "--templates"]);
+
+      const agentsDir = path.join(projectDir, CLAUDE_SRC_DIR, path.basename(DIRS.agents));
+      const entries = await readdir(agentsDir);
+
+      // Only _templates should exist, not developer/, reviewer/, etc.
+      expect(entries).toEqual([path.basename(DIRS.templates)]);
+    });
+
+    it("should work with --force flag combined with --templates", async () => {
+      // First eject
+      await runCliCommand(["eject", "agent-partials", "--templates"]);
+
+      // Second eject with --force
+      const { stdout } = await runCliCommand([
+        "eject",
+        "agent-partials",
+        "--templates",
+        "--force",
+      ]);
+
+      expect(stdout).toContain("Agent templates ejected");
+    });
+
+    it("should work with --output flag combined with --templates", async () => {
+      const outputDir = path.join(tempDir, "custom-templates");
+
+      const { stdout } = await runCliCommand([
+        "eject",
+        "agent-partials",
+        "--templates",
+        "--output",
+        outputDir,
+      ]);
+
+      expect(stdout).toContain("Agent templates ejected");
+      expect(await directoryExists(outputDir)).toBe(true);
+    });
+
+    it("should warn when --templates is used with skills type", async () => {
+      const { stderr } = await runCliCommand(["eject", "skills", "--templates"]);
+
+      expect(stderr).toContain("--templates flag only applies to agent-partials");
+    });
+  });
+
   describe("eject skills", () => {
     it("should load skills from source", async () => {
       const { error } = await runCliCommand(["eject", "skills"]);
@@ -267,6 +347,27 @@ describe("eject command", () => {
 
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
+    });
+
+    it("should eject only templates for agent-partials portion when --templates is used", async () => {
+      const { stdout } = await runCliCommand(["eject", "all", "--templates"]);
+
+      // Agent-partials portion should use templates only
+      expect(stdout).toContain("Agent templates ejected");
+
+      const templatesDir = path.join(
+        projectDir,
+        CLAUDE_SRC_DIR,
+        path.basename(DIRS.agents),
+        path.basename(DIRS.templates),
+      );
+      expect(await directoryExists(templatesDir)).toBe(true);
+
+      const agentsDir = path.join(projectDir, CLAUDE_SRC_DIR, path.basename(DIRS.agents));
+      const entries = await readdir(agentsDir);
+
+      // Only _templates should exist under agents/, not developer/, reviewer/, etc.
+      expect(entries).toEqual([path.basename(DIRS.templates)]);
     });
   });
 
