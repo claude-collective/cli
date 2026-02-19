@@ -1,8 +1,9 @@
-import React from "react";
 import { Box, Text, useInput } from "ink";
-import type { DomainSelections, Domain } from "../../types/index.js";
+import React from "react";
 import { CLI_COLORS } from "../../consts.js";
+import type { Domain, DomainSelections } from "../../types/index.js";
 import { getDomainDisplayName } from "./utils.js";
+import { ViewTitle } from "./view-title.js";
 
 type StepConfirmProps = {
   onComplete: () => void;
@@ -43,9 +44,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
 
   return (
     <Box flexDirection="column" paddingX={2}>
-      <Text bold color={CLI_COLORS.SUCCESS}>
-        {title}
-      </Text>
+      <ViewTitle>{title}</ViewTitle>
       <Text> </Text>
 
       {domainSelections && selectedDomains && !stackName && (
@@ -72,7 +71,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
         {skillCount !== undefined && (
           <Text>
             <Text dimColor>Skills:</Text> <Text bold>{skillCount}</Text>{" "}
-            <Text color={CLI_COLORS.SUCCESS}>(all verified)</Text>
+            <Text color={CLI_COLORS.PRIMARY}>(all verified)</Text>
           </Text>
         )}
         {agentCount !== undefined && (

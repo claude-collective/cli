@@ -1,5 +1,5 @@
-import React from "react";
 import { Box, Text } from "ink";
+import React from "react";
 import { CLI_COLORS } from "../../consts.js";
 
 type SectionProgressProps = {

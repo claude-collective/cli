@@ -1,5 +1,5 @@
-import React from "react";
 import { Box, Text } from "ink";
+import React from "react";
 import { CLI_COLORS } from "../../consts.js";
 import type { WizardStep } from "../../stores/wizard-store.js";
 
@@ -60,12 +60,10 @@ type HelpSectionViewProps = {
 };
 
 const HelpSectionView: React.FC<HelpSectionViewProps> = ({ section }) => (
-  <Box flexDirection="column" marginBottom={1}>
-    <Text bold underline>
-      {section.title}
-    </Text>
+  <Box flexDirection="column" marginTop={1} marginBottom={1}>
+    <Text bold>{section.title}</Text>
     {section.keys.map(({ key, description }) => (
-      <Box key={key}>
+      <Box key={key} marginTop={1}>
         <Box width={KEY_COLUMN_WIDTH}>
           <Text backgroundColor="black" color={CLI_COLORS.UNFOCUSED}>
             {" "}

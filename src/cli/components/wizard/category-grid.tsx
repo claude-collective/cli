@@ -110,7 +110,7 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
     if (option.selected) return CLI_COLORS.PRIMARY;
     if (option.state === "recommended") return CLI_COLORS.UNFOCUSED;
     if (option.state === "discouraged") return CLI_COLORS.WARNING;
-    // Normal unselected: muted color to clearly contrast with selected (cyan) skills
+
     return CLI_COLORS.NEUTRAL;
   };
 
@@ -122,7 +122,6 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
     return CLI_COLORS.UNFOCUSED;
   };
 
-  const isBold = isFocused || option.selected;
   const textColor = getTextColor();
   const compatibilityLabel = showLabels ? getCompatibilityLabel(option, isLocked) : null;
 
@@ -131,11 +130,10 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
       marginRight={1}
       borderColor={isFocused ? getStateBorderColor() : CLI_COLORS.NEUTRAL}
       borderStyle="single"
-      borderDimColor={!isFocused}
       flexShrink={0}
     >
       <>
-        <Text color={textColor} bold={isBold} dimColor={false}>
+        <Text color={textColor} bold>
           {" "}
           {option.label}{" "}
         </Text>
@@ -146,6 +144,7 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
 };
 
 type CategorySectionProps = {
+  isFirst: boolean;
   category: CategoryRow;
   options: CategoryOption[];
   isLocked: boolean;
@@ -155,6 +154,7 @@ type CategorySectionProps = {
 };
 
 const CategorySection: React.FC<CategorySectionProps> = ({
+  isFirst,
   category,
   options,
   isLocked,
@@ -163,9 +163,11 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   showLabels,
 }) => {
   return (
-    <Box flexDirection="column" marginTop={1}>
+    <Box flexDirection="column" marginTop={isFirst ? 0 : 1}>
       <Box flexDirection="row">
-        <Text dimColor={isLocked}>{category.displayName}</Text>
+        <Text dimColor={isLocked} color={isFocused ? "#fff" : "gray"}>
+          {category.displayName}
+        </Text>
         {category.required && (
           <Text color={isLocked ? CLI_COLORS.NEUTRAL : CLI_COLORS.ERROR} dimColor={isLocked}>
             {" "}
@@ -343,6 +345,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
           isFocused={index === focusedRow}
           focusedOptionIndex={focusedCol}
           showLabels={showLabels}
+          isFirst={index === 0}
         />
       </Box>
     );

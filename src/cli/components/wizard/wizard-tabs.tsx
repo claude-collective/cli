@@ -1,5 +1,5 @@
-import React from "react";
 import { Box, Text } from "ink";
+import React from "react";
 import { CLI_COLORS } from "../../consts.js";
 import type { WizardStep } from "../../stores/wizard-store.js";
 
@@ -66,7 +66,12 @@ const Tab: React.FC<TabProps> = ({ step, state }) => {
 
   switch (state) {
     case "current":
-      return <Text color={CLI_COLORS.PRIMARY}>{label}</Text>;
+      return (
+        <Text color={CLI_COLORS.UNFOCUSED} backgroundColor={CLI_COLORS.WARNING} bold>
+          {" "}
+          {label}{" "}
+        </Text>
+      );
     case "completed":
       return <Text>{label}</Text>;
     case "skipped":
@@ -93,6 +98,7 @@ export const WizardTabs: React.FC<WizardTabsProps> = ({
       borderColor="blackBright"
       borderStyle="single"
       paddingRight={1}
+      alignItems="center"
     >
       {steps.map((step) => {
         const state = getStepState(step.id, currentStep, completedSteps, skippedSteps);

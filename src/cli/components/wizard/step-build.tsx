@@ -1,5 +1,7 @@
-import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
+import React, { useState } from "react";
+import { CLI_COLORS } from "../../consts.js";
+import { validateBuildStep } from "../../lib/wizard/index.js";
 import type {
   Domain,
   MergedSkillsMatrix,
@@ -7,13 +9,11 @@ import type {
   Subcategory,
   SubcategorySelections,
 } from "../../types/index.js";
-import { validateBuildStep } from "../../lib/wizard/index.js";
-import { CLI_COLORS } from "../../consts.js";
 import { useFrameworkFiltering } from "../hooks/use-framework-filtering.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
 import { CategoryGrid } from "./category-grid.js";
-import { ViewTitle } from "./view-title.js";
 import { getDomainDisplayName } from "./utils.js";
+import { ViewTitle } from "./view-title.js";
 
 export type StepBuildProps = {
   matrix: MergedSkillsMatrix;
@@ -108,14 +108,14 @@ export const StepBuild: React.FC<StepBuildProps> = ({
           {selectedDomains.map((domain) => {
             const isActive = domain === activeDomain;
             return (
-              <Text key={domain} color={isActive ? CLI_COLORS.PRIMARY : undefined} bold={isActive}>
+              <Text key={domain} color={isActive ? CLI_COLORS.WARNING : undefined} bold={isActive}>
                 {getDomainDisplayName(domain)}
               </Text>
             );
           })}
         </Box>
       </Box>
-      <ViewTitle>{`[2] Customize your ${getDomainDisplayName(activeDomain)} stack`}</ViewTitle>
+      <ViewTitle>{`Customize your ${getDomainDisplayName(activeDomain)} stack`}</ViewTitle>
 
       <Box ref={gridRef} flexGrow={1} flexBasis={0}>
         <CategoryGrid

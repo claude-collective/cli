@@ -1,5 +1,5 @@
-import path from "path";
 import os from "os";
+import path from "path";
 import { fileURLToPath } from "url";
 import type { Domain, SkillId } from "./types/index.js";
 
@@ -169,6 +169,7 @@ export const CLI_COLORS = {
   NEUTRAL: "gray",
   FOCUS: "cyan",
   UNFOCUSED: "white",
+  WHITE: "white",
 } as const;
 
 /** Default domains pre-selected when "Start from scratch" is chosen (all except CLI) */

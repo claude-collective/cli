@@ -1,5 +1,5 @@
-import React from "react";
 import { Box, Text, useInput } from "ink";
+import React from "react";
 import { CLI_COLORS, DEFAULT_BRANDING } from "../../consts.js";
 
 export type RefineAction = "all-recommended" | "customize" | null;
@@ -60,8 +60,10 @@ export const StepRefine: React.FC<StepRefineProps> = ({
             <Text dimColor>{isRecommendedSelected ? "(Selected)" : "(Not selected)"}</Text>
           </Text>
           <Text> </Text>
-          <Text dimColor>This is the fastest option. All skills are verified and</Text>
-          <Text dimColor>maintained by {DEFAULT_BRANDING.NAME}</Text>
+          <Text dimColor>
+            This is the fastest option. All skills are verified and maintained by{" "}
+            {DEFAULT_BRANDING.NAME}
+          </Text>
         </Box>
       </Box>
 
