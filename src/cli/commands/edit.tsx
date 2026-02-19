@@ -8,6 +8,7 @@ import { loadSkillsMatrixFromSource, getMarketplaceLabel } from "../lib/loading/
 import { discoverAllPluginSkills } from "../lib/plugins/index.js";
 import { archiveLocalSkill, restoreArchivedSkill } from "../lib/skills/index.js";
 import { recompileAgents, getAgentDefinitions } from "../lib/agents/index.js";
+import { CLI_BIN_NAME } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { detectInstallation } from "../lib/installation/index.js";
 import { loadProjectConfig } from "../lib/configuration/index.js";
@@ -262,7 +263,7 @@ export default class Edit extends BaseCommand {
       }
     } catch (error) {
       this.warn(`Agent recompilation failed: ${getErrorMessage(error)}`);
-      this.log("You can manually recompile with 'agentsinc compile'.\n");
+      this.log(`You can manually recompile with '${CLI_BIN_NAME} compile'.\n`);
     }
 
     const summaryParts = [`${addedSkills.length} added`, `${removedSkills.length} removed`];

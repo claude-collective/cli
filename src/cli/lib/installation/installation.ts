@@ -4,6 +4,7 @@ import { loadProjectConfig } from "../configuration";
 import {
   CLAUDE_DIR,
   CLAUDE_SRC_DIR,
+  CLI_BIN_NAME,
   DEFAULT_BRANDING,
   PLUGINS_SUBDIR,
   STANDARD_FILES,
@@ -66,7 +67,7 @@ export async function getInstallationOrThrow(
 
   if (!installation) {
     throw new Error(
-      `No ${DEFAULT_BRANDING.NAME} installation found.\nRun 'agentsinc init' to create one.`,
+      `No ${DEFAULT_BRANDING.NAME} installation found.\nRun '${CLI_BIN_NAME} init' to create one.`,
     );
   }
 

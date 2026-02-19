@@ -9,7 +9,7 @@ import { loadSkillsMatrixFromSource } from "../lib/loading/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { compareLocalSkillsWithSource, type SkillComparisonResult } from "../lib/skills/index.js";
 import { fileExists } from "../utils/fs.js";
-import { LOCAL_SKILLS_PATH } from "../consts.js";
+import { CLI_BIN_NAME, LOCAL_SKILLS_PATH } from "../consts.js";
 
 type ComparisonSummary = {
   outdated: number;
@@ -76,7 +76,9 @@ export default class Outdated extends BaseCommand {
             }),
           );
         } else {
-          this.warn("No local skills found. Run `agentsinc init` or `agentsinc edit` first.");
+          this.warn(
+            `No local skills found. Run \`${CLI_BIN_NAME} init\` or \`${CLI_BIN_NAME} edit\` first.`,
+          );
         }
         return;
       }

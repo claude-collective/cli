@@ -21,7 +21,7 @@ import {
   claudePluginMarketplaceExists,
   claudePluginMarketplaceAdd,
 } from "../utils/exec.js";
-import { CLAUDE_DIR, DEFAULT_BRANDING, LOCAL_SKILLS_PATH } from "../consts.js";
+import { CLAUDE_DIR, CLI_BIN_NAME, DEFAULT_BRANDING, LOCAL_SKILLS_PATH } from "../consts.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import {
@@ -87,7 +87,7 @@ export default class Init extends BaseCommand {
         ? `.claude/settings.json`
         : (existingInstallation?.configPath ?? projectDir);
       this.warn(`${DEFAULT_BRANDING.NAME} is already initialized at ${location}`);
-      this.log(`Use 'agentsinc edit' to modify skills.`);
+      this.log(`Use '${CLI_BIN_NAME} edit' to modify skills.`);
       this.log(INFO_MESSAGES.NO_CHANGES_MADE);
       return;
     }
@@ -289,7 +289,7 @@ export default class Init extends BaseCommand {
       this.log("");
       this.log("To customize agent-skill assignments:");
       this.log(`  1. Edit .claude-src/config.yaml`);
-      this.log(`  2. Run 'agentsinc compile' to regenerate agents`);
+      this.log(`  2. Run '${CLI_BIN_NAME} compile' to regenerate agents`);
       this.log("");
 
       const permissionWarning = await checkPermissions(projectDir);
@@ -350,7 +350,7 @@ export default class Init extends BaseCommand {
       this.log("");
       this.log("To customize agent-skill assignments:");
       this.log(`  1. Edit .claude-src/config.yaml`);
-      this.log(`  2. Run 'agentsinc compile' to regenerate agents`);
+      this.log(`  2. Run '${CLI_BIN_NAME} compile' to regenerate agents`);
       this.log("");
 
       const permissionWarning = await checkPermissions(projectDir);

@@ -4,6 +4,7 @@ import { BaseCommand } from "../../base-command.js";
 import { resolveAuthor } from "../../lib/configuration/index.js";
 import { writeFile, directoryExists } from "../../utils/fs.js";
 import {
+  CLI_BIN_NAME,
   LOCAL_SKILLS_PATH,
   SCHEMA_PATHS,
   STANDARD_FILES,
@@ -198,7 +199,9 @@ export default class NewSkill extends BaseCommand {
       this.logSuccess(`Created ${STANDARD_FILES.SKILL_MD} at ${skillMdPath}`);
       this.logSuccess(`Created ${STANDARD_FILES.METADATA_YAML} at ${metadataPath}`);
       this.log("");
-      this.log("Skill created successfully! Run 'agentsinc compile' to include it in your agents.");
+      this.log(
+        `Skill created successfully! Run '${CLI_BIN_NAME} compile' to include it in your agents.`,
+      );
       this.log("");
     } catch (error) {
       this.handleError(error);

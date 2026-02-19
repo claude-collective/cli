@@ -1,5 +1,5 @@
 import { BaseCommand } from "../base-command.js";
-import { DEFAULT_BRANDING } from "../consts.js";
+import { CLI_BIN_NAME, DEFAULT_BRANDING } from "../consts.js";
 import { getInstallationInfo, formatInstallationDisplay } from "../lib/plugins/index.js";
 
 export default class List extends BaseCommand {
@@ -25,7 +25,7 @@ export default class List extends BaseCommand {
 
     if (!info) {
       this.log("No installation found.");
-      this.log("Run 'agentsinc init' to create one.");
+      this.log(`Run '${CLI_BIN_NAME} init' to create one.`);
       return;
     }
 

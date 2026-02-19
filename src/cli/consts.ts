@@ -21,6 +21,8 @@ export const DEFAULT_PLUGIN_NAME = "agents-inc";
 
 export const CACHE_DIR = path.join(os.homedir(), ".cache", DEFAULT_PLUGIN_NAME);
 
+export const CLI_BIN_NAME = "agentsinc";
+
 export const SKILLS_MATRIX_PATH = "config/skills-matrix.yaml";
 export const STACKS_FILE_PATH = "config/stacks.yaml";
 export const SKILLS_DIR_PATH = "src/skills";

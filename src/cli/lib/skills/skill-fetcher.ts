@@ -1,7 +1,7 @@
 import path from "path";
 import { copy, ensureDir, directoryExists, glob } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
-import { GITHUB_SOURCE } from "../../consts";
+import { CLI_BIN_NAME, GITHUB_SOURCE } from "../../consts";
 import type { Marketplace, MarketplacePlugin, SkillId } from "../../types";
 
 export type FetchSkillsOptions = {
@@ -55,7 +55,7 @@ export async function fetchSkills(
       throw new Error(
         `Skill not found: ${skillId}\n\n` +
           `Looked in: ${skillSourceDir}\n` +
-          `Run 'agentsinc search ${skillId}' to find available skills, or 'agentsinc init' to select skills interactively.`,
+          `Run '${CLI_BIN_NAME} search ${skillId}' to find available skills, or '${CLI_BIN_NAME} init' to select skills interactively.`,
       );
     }
 

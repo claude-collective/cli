@@ -16,7 +16,7 @@ import {
   type SkillComparisonResult,
 } from "../lib/skills/index.js";
 import { fileExists, copy } from "../utils/fs.js";
-import { LOCAL_SKILLS_PATH } from "../consts.js";
+import { CLI_BIN_NAME, LOCAL_SKILLS_PATH } from "../consts.js";
 import {
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,
@@ -191,7 +191,7 @@ export default class Update extends BaseCommand {
             this.log("");
           }
 
-          this.log(`Run \`agentsinc search ${args.skill}\` to search available skills.`);
+          this.log(`Run \`${CLI_BIN_NAME} search ${args.skill}\` to search available skills.`);
           this.log("");
           this.error(ERROR_MESSAGES.SKILL_NOT_FOUND, { exit: EXIT_CODES.ERROR });
         }

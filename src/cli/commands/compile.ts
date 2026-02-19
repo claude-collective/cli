@@ -9,7 +9,7 @@ import { resolveSource } from "../lib/configuration";
 import { directoryExists, ensureDir, glob, readFile, fileExists } from "../utils/fs";
 import { recompileAgents } from "../lib/agents";
 import { parseFrontmatter } from "../lib/loading";
-import { LOCAL_SKILLS_PATH, STANDARD_FILES } from "../consts";
+import { CLI_BIN_NAME, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
 import {
   ERROR_MESSAGES,
@@ -192,7 +192,7 @@ export default class Compile extends BaseCommand {
     if (totalSkillCount === 0) {
       this.log(ERROR_MESSAGES.NO_SKILLS_FOUND);
       this.error(
-        "No skills found. Add skills with 'agentsinc add <skill>' or create in .claude/skills/.",
+        `No skills found. Add skills with '${CLI_BIN_NAME} add <skill>' or create in .claude/skills/.`,
         { exit: EXIT_CODES.ERROR },
       );
     }

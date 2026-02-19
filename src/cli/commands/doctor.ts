@@ -9,7 +9,7 @@ import { discoverLocalSkills } from "../lib/skills";
 import { getStackSkillIds } from "../lib/stacks";
 import type { AgentName, MergedSkillsMatrix, ProjectConfig, SkillId } from "../types";
 import { fileExists, glob, directoryExists } from "../utils/fs";
-import { CLAUDE_DIR, DEFAULT_BRANDING } from "../consts";
+import { CLAUDE_DIR, CLI_BIN_NAME, DEFAULT_BRANDING } from "../consts";
 import { setVerbose } from "../utils/logger";
 
 type CheckResult = {
@@ -25,7 +25,7 @@ async function checkConfigValid(projectDir: string): Promise<CheckResult> {
     return {
       status: "fail",
       message: ".claude/config.yaml not found",
-      details: ["Run 'agentsinc init' to create a configuration"],
+      details: [`Run '${CLI_BIN_NAME} init' to create a configuration`],
     };
   }
 
@@ -288,10 +288,10 @@ function formatTips(results: CheckResult[]): string[] {
   const tips: string[] = [];
 
   if (hasAgentWarning) {
-    tips.push("  Tip: Run 'agentsinc compile' to generate missing agent files");
+    tips.push(`  Tip: Run '${CLI_BIN_NAME} compile' to generate missing agent files`);
   }
   if (hasConfigError) {
-    tips.push("  Tip: Run 'agentsinc init' to create or fix configuration");
+    tips.push(`  Tip: Run '${CLI_BIN_NAME} init' to create or fix configuration`);
   }
   if (hasSkillError) {
     tips.push("  Tip: Check skill IDs in config match available skills");
