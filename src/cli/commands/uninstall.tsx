@@ -307,9 +307,12 @@ export default class Uninstall extends BaseCommand {
 
           const pluginPath = path.join(target.pluginsDir, pluginName);
           await remove(pluginPath);
+          this.log(`  Uninstalled plugin '${pluginName}'`);
         }
 
-        this.logSuccess("Plugins uninstalled");
+        this.logSuccess(
+          `Uninstalled ${target.pluginNames.length} ${target.pluginNames.length === 1 ? "plugin" : "plugins"}`,
+        );
       } catch (error) {
         this.log("Plugin uninstall failed");
         this.error(getErrorMessage(error), {
@@ -364,6 +367,7 @@ export default class Uninstall extends BaseCommand {
         if (shouldRemove) {
           await remove(skillDir);
           removedSkillCount++;
+          this.log(`  Uninstalled skill '${skillDirName}'`);
         } else {
           this.warn(`Skipping '${skillDirName}': not created by ${DEFAULT_BRANDING.NAME} CLI`);
           skippedSkillCount++;
@@ -386,6 +390,15 @@ export default class Uninstall extends BaseCommand {
     if (target.hasLocalAgents) {
       // config.yaml presence indicates the CLI compiled these agents
       if (target.config !== null) {
+        const { readdir } = await import("fs/promises");
+        try {
+          const agentFiles = (await readdir(target.agentsDir)).filter((f) => f.endsWith(".md"));
+          for (const agentFile of agentFiles) {
+            this.log(`  Uninstalled agent '${agentFile.replace(/\.md$/, "")}'`);
+          }
+        } catch {
+          // Best-effort: directory listing may fail
+        }
         await remove(target.agentsDir);
         this.logSuccess("Removed compiled agents");
       }

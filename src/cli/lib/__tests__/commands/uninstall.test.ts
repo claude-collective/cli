@@ -564,7 +564,7 @@ describe("uninstall command", () => {
       const { stdout } = await runCliCommand(["uninstall", "--yes"]);
 
       expect(await directoryExists(pluginDir)).toBe(false);
-      expect(stdout).toContain("Plugins uninstalled");
+      expect(stdout).toContain("Uninstalled 1 plugin");
     });
 
     it("should show what will be removed", async () => {
@@ -717,7 +717,7 @@ describe("uninstall command", () => {
 
       expect(await directoryExists(pluginDir)).toBe(false);
       expect(await directoryExists(cliSkillDir)).toBe(false);
-      expect(stdout).toContain("Plugins uninstalled");
+      expect(stdout).toContain("Uninstalled 1 plugin");
       expect(stdout).toContain("Removed 1 CLI-installed skill");
     });
 
