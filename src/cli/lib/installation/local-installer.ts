@@ -267,6 +267,11 @@ function setConfigMetadata(
     config.expertMode = true;
   }
 
+  // Only persist domains when non-empty (sparse YAML output)
+  if (wizardResult.selectedDomains && wizardResult.selectedDomains.length > 0) {
+    config.domains = wizardResult.selectedDomains;
+  }
+
   if (sourceFlag) {
     config.source = sourceFlag;
   } else if (sourceResult.sourceConfig.source) {

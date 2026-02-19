@@ -125,6 +125,7 @@ export default class Edit extends BaseCommand {
         initialStep="build"
         initialInstallMode={initialInstallMode}
         initialExpertMode={projectConfig?.config?.expertMode}
+        initialDomains={projectConfig?.config?.domains}
         installedSkillIds={currentSkillIds}
         projectDir={process.cwd()}
         onComplete={(result) => {
