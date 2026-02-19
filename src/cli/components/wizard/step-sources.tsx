@@ -1,5 +1,8 @@
-import React, { useState, useCallback } from "react";
 import { Box, Text, useInput } from "ink";
+import React, { useCallback, useState } from "react";
+import { CLI_COLORS, DEFAULT_BRANDING } from "../../consts.js";
+import { resolveAllSources } from "../../lib/configuration/index.js";
+import { searchExtraSources } from "../../lib/loading/multi-source-loader.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import type {
   BoundSkillCandidate,
@@ -7,12 +10,10 @@ import type {
   SkillAlias,
   SkillId,
 } from "../../types/index.js";
-import { CLI_COLORS, DEFAULT_BRANDING } from "../../consts.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
+import { SelectionCard } from "./selection-card.js";
 import { SourceGrid } from "./source-grid.js";
 import { ViewTitle } from "./view-title.js";
-import { searchExtraSources } from "../../lib/loading/multi-source-loader.js";
-import { resolveAllSources } from "../../lib/configuration/index.js";
 
 export type StepSourcesProps = {
   matrix: MergedSkillsMatrix;
@@ -138,50 +139,26 @@ export const StepSources: React.FC<StepSourcesProps> = ({
       </Text>
       <Text> </Text>
 
-      <Box
-        borderStyle="round"
-        borderColor={isRecommendedSelected ? CLI_COLORS.SUCCESS : CLI_COLORS.NEUTRAL}
-        paddingX={2}
-        paddingY={1}
+      <SelectionCard
+        label={
+          hasLocalSkills ? "Use installed skill sources" : "Use all recommended skills (verified)"
+        }
+        description={
+          hasLocalSkills
+            ? "Keep your current local and public skill selections."
+            : [
+                `This is the fastest option. All skills are verified and maintained by ${DEFAULT_BRANDING.NAME}`,
+              ]
+        }
+        isFocused={isRecommendedSelected}
         marginBottom={1}
-      >
-        <Box flexDirection="column">
-          <Text
-            color={isRecommendedSelected ? CLI_COLORS.SUCCESS : undefined}
-            bold={isRecommendedSelected}
-          >
-            {isRecommendedSelected ? ">" : "\u25CB"}{" "}
-            {hasLocalSkills
-              ? "Use installed skill sources"
-              : "Use all recommended skills (verified)"}
-          </Text>
-          <Text> </Text>
-          <Text dimColor>
-            {hasLocalSkills
-              ? "Keep your current local and public skill selections."
-              : "This is the fastest option. All skills are verified and"}
-          </Text>
-          {!hasLocalSkills && <Text dimColor>maintained by {DEFAULT_BRANDING.NAME}</Text>}
-        </Box>
-      </Box>
+      />
 
-      <Box
-        borderStyle="round"
-        borderColor={!isRecommendedSelected ? CLI_COLORS.SUCCESS : CLI_COLORS.NEUTRAL}
-        paddingX={2}
-        paddingY={1}
-      >
-        <Box flexDirection="column">
-          <Text
-            color={!isRecommendedSelected ? CLI_COLORS.SUCCESS : undefined}
-            bold={!isRecommendedSelected}
-          >
-            {!isRecommendedSelected ? ">" : "\u25CB"} Customize skill sources
-          </Text>
-          <Text> </Text>
-          <Text dimColor>Choose alternative skills for each technology</Text>
-        </Box>
-      </Box>
+      <SelectionCard
+        label="Customize skill sources"
+        description="Choose alternative skills for each technology"
+        isFocused={!isRecommendedSelected}
+      />
     </Box>
   );
 };

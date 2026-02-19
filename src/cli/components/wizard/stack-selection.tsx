@@ -1,10 +1,10 @@
+import { Box, useInput } from "ink";
 import React, { useState } from "react";
-import { Box, Text, useInput } from "ink";
 import { DEFAULT_SCRATCH_DOMAINS } from "../../consts.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import type { MergedSkillsMatrix } from "../../types/index.js";
+import { SelectionCard } from "./selection-card.js";
 import { getDomainsFromStack } from "./utils.js";
-import { MenuItem } from "./menu-item.js";
 import { ViewTitle } from "./view-title.js";
 
 const INITIAL_FOCUSED_INDEX = 0;
@@ -13,9 +13,6 @@ const SCRATCH_DESCRIPTION = "Select domains and skills manually";
 
 /** Number of extra items after the stack list (scratch option) */
 const EXTRA_ITEMS_COUNT = 1;
-
-/** Width of the horizontal divider between stack list and scratch option */
-const DIVIDER_WIDTH = 30;
 
 export type StackSelectionProps = {
   matrix: MergedSkillsMatrix;
@@ -78,33 +75,22 @@ export const StackSelection: React.FC<StackSelectionProps> = ({ matrix, onCancel
 
   return (
     <Box flexDirection="column">
-      <ViewTitle>[1] Choose a stack</ViewTitle>
-      <Box flexDirection="column" marginTop={1}>
+      <ViewTitle>Choose a stack</ViewTitle>
+      <Box flexDirection="column">
         {stacks.map((stack, index) => (
-          <MenuItem
+          <SelectionCard
             key={stack.id}
             label={stack.name}
             description={stack.description}
             isFocused={index === focusedIndex}
+            marginBottom={1}
           />
         ))}
-        {stackCount > 0 && (
-          <Box marginTop={1}>
-            <Text dimColor>{"\u2500".repeat(DIVIDER_WIDTH)}</Text>
-          </Box>
-        )}
-        <Box marginTop={stackCount > 0 ? 0 : undefined}>
-          <MenuItem
-            label={SCRATCH_LABEL}
-            description={SCRATCH_DESCRIPTION}
-            isFocused={focusedIndex === scratchIndex}
-          />
-        </Box>
-      </Box>
-      <Box marginTop={1}>
-        <Text dimColor>
-          {"\u2191"}/{"\u2193"} navigate ENTER select ESC quit
-        </Text>
+        <SelectionCard
+          label={SCRATCH_LABEL}
+          description={SCRATCH_DESCRIPTION}
+          isFocused={focusedIndex === scratchIndex}
+        />
       </Box>
     </Box>
   );

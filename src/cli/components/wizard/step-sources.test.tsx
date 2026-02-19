@@ -14,7 +14,7 @@ import {
 } from "../../lib/__tests__/test-constants";
 import { createMockMatrix } from "../../lib/__tests__/helpers";
 import { getTestSkill } from "../../lib/__tests__/test-fixtures";
-import { DEFAULT_BRANDING } from "../../consts";
+import { DEFAULT_BRANDING, UI_SYMBOLS } from "../../consts";
 
 const reactSkill = getTestSkill("react");
 const zustandSkill = getTestSkill("zustand");
@@ -104,8 +104,8 @@ describe("StepSources component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      // The ">" indicator should be on the recommended option
-      expect(output).toContain(">");
+      // The chevron indicator should be on the recommended option
+      expect(output).toContain(UI_SYMBOLS.CHEVRON);
       expect(output).toContain("Use all recommended");
     });
   });
