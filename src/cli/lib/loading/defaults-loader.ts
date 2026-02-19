@@ -15,8 +15,13 @@ let cachedDefaults: DefaultMappings | null = null;
 
 function getDefaultsPath(): string {
   const currentDir = path.dirname(fileURLToPath(import.meta.url));
-
-  return path.join(currentDir, "../..", "defaults", "agent-mappings.yaml");
+  // After tsup build, dist/ is flat (chunks at dist/chunk-*.js) but defaults
+  // are copied to dist/cli/defaults/. In dev mode, this file lives at
+  // src/cli/lib/loading/ so ../../defaults/ resolves correctly.
+  const isInDist = currentDir.includes("/dist");
+  return isInDist
+    ? path.join(currentDir, "cli", "defaults", "agent-mappings.yaml")
+    : path.join(currentDir, "../..", "defaults", "agent-mappings.yaml");
 }
 
 export async function loadDefaultMappings(): Promise<DefaultMappings | null> {
