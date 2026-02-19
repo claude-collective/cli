@@ -14,6 +14,7 @@ import { StepAgents } from "./step-agents.js";
 import { resolveAlias, validateSelection } from "../../lib/matrix/index.js";
 import type {
   AgentName,
+  Domain,
   DomainSelections,
   MergedSkillsMatrix,
   SkillId,
@@ -28,6 +29,7 @@ export type WizardResultV2 = {
   selectedAgents: AgentName[];
   selectedStackId: string | null;
   domainSelections: DomainSelections;
+  selectedDomains: Domain[];
   sourceSelections: Partial<Record<SkillId, string>>;
   expertMode: boolean;
   installMode: "plugin" | "local";
@@ -49,6 +51,7 @@ type WizardProps = {
   initialStep?: WizardStep;
   initialInstallMode?: "plugin" | "local";
   initialExpertMode?: boolean;
+  initialDomains?: Domain[];
   installedSkillIds?: SkillId[];
   projectDir?: string;
 };
@@ -66,6 +69,7 @@ export const Wizard: React.FC<WizardProps> = ({
   initialStep,
   initialInstallMode,
   initialExpertMode,
+  initialDomains,
   installedSkillIds,
   projectDir,
 }) => {
@@ -83,6 +87,7 @@ export const Wizard: React.FC<WizardProps> = ({
     initialStep,
     initialInstallMode,
     initialExpertMode,
+    initialDomains,
     installedSkillIds,
   });
 
@@ -181,6 +186,7 @@ export const Wizard: React.FC<WizardProps> = ({
       selectedAgents: store.selectedAgents,
       selectedStackId: store.selectedStackId,
       domainSelections: store.domainSelections,
+      selectedDomains: store.selectedDomains,
       sourceSelections: store.sourceSelections,
       expertMode: store.expertMode,
       installMode: store.installMode,

@@ -16,6 +16,7 @@ function createWizardResult(overrides?: Partial<WizardResultV2>): WizardResultV2
     selectedAgents: [],
     selectedStackId: null,
     domainSelections: {},
+    selectedDomains: [],
     sourceSelections: {},
     expertMode: false,
     installMode: "local",

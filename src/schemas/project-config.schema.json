@@ -38,6 +38,13 @@
     "expertMode": {
       "type": "boolean"
     },
+    "domains": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["web", "api", "cli", "mobile", "shared"]
+      }
+    },
     "stack": {
       "type": "object",
       "propertyNames": {

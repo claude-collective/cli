@@ -1,4 +1,5 @@
 import type { AgentName } from "./agents";
+import type { Domain } from "./matrix";
 import type { SkillId, SkillReference } from "./skills";
 import type { StackAgentConfig } from "./stacks";
 
@@ -90,4 +91,11 @@ export type ProjectConfig = {
    * If not specified, uses the same source as skills.
    */
   agentsSource?: string;
+
+  /**
+   * Selected domains from the wizard.
+   * Persisted so edit mode can restore the user's domain selection.
+   * Omitted when empty (sparse YAML output).
+   */
+  domains?: Domain[];
 };
