@@ -285,6 +285,106 @@ Apply rate limiting to prevent abuse.
 `,
 };
 
+export const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
+  {
+    id: "meta-methodology-investigation-requirements",
+    name: "meta-methodology-investigation-requirements",
+    description: "Never speculate - read actual code first",
+    category: "shared-methodology",
+    author: TEST_AUTHOR,
+    tags: ["methodology", "foundational"],
+  },
+  {
+    id: "meta-methodology-anti-over-engineering",
+    name: "meta-methodology-anti-over-engineering",
+    description: "Surgical implementation, not architectural innovation",
+    category: "shared-methodology",
+    author: TEST_AUTHOR,
+    tags: ["methodology", "foundational"],
+  },
+  {
+    id: "meta-methodology-success-criteria",
+    name: "meta-methodology-success-criteria",
+    description: "Explicit, measurable criteria defining done",
+    category: "shared-methodology",
+    author: TEST_AUTHOR,
+    tags: ["methodology", "foundational"],
+  },
+  {
+    id: "meta-methodology-write-verification",
+    name: "meta-methodology-write-verification",
+    description: "Verify work was actually saved",
+    category: "shared-methodology",
+    author: TEST_AUTHOR,
+    tags: ["methodology", "foundational"],
+  },
+  {
+    id: "meta-methodology-improvement-protocol",
+    name: "meta-methodology-improvement-protocol",
+    description: "Evidence-based self-improvement",
+    category: "shared-methodology",
+    author: TEST_AUTHOR,
+    tags: ["methodology", "foundational"],
+  },
+  {
+    id: "meta-methodology-context-management",
+    name: "meta-methodology-context-management",
+    description: "Maintain project continuity across sessions",
+    category: "shared-methodology",
+    author: TEST_AUTHOR,
+    tags: ["methodology", "foundational"],
+  },
+];
+
+export const EXTRA_DOMAIN_TEST_SKILLS: TestSkill[] = [
+  {
+    id: "web-framework-vue",
+    name: "web-framework-vue",
+    description: "Progressive JavaScript framework",
+    category: "web-framework",
+    author: TEST_AUTHOR,
+    tags: ["vue", "web"],
+  },
+  {
+    id: "web-styling-scss-modules",
+    name: "web-styling-scss-modules",
+    description: "CSS Modules with SCSS",
+    category: "web-styling",
+    author: TEST_AUTHOR,
+    tags: ["css", "scss"],
+  },
+  {
+    id: "api-database-drizzle",
+    name: "api-database-drizzle",
+    description: "TypeScript ORM for SQL databases",
+    category: "api-database",
+    author: TEST_AUTHOR,
+    tags: ["database", "orm"],
+  },
+];
+
+export const COMPILE_LOCAL_SKILL: TestSkill = {
+  id: "web-tooling-local-skill",
+  name: "web-tooling-local-skill",
+  description: "A local project skill",
+  category: "web-tooling",
+  author: TEST_AUTHOR,
+  tags: ["local", "custom"],
+  content: `---
+name: web-tooling-local-skill
+description: A local project skill for testing
+---
+
+# Web Tooling Local Skill
+
+This is a locally defined skill for the project.
+
+## Usage
+
+Use this skill for project-specific patterns.
+`,
+};
+
 export const DEFAULT_TEST_SKILLS: TestSkill[] = [
   {
     id: "web-framework-react",

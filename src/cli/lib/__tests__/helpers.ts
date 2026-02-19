@@ -135,13 +135,19 @@ import type {
   ResolvedSkill,
   ResolvedStack,
   Skill,
+  SkillDefinition,
   SkillDisplayName,
   SkillId,
+  Stack,
+  StackAgentConfig,
   Subcategory,
 } from "../../types";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import type { SourceLoadResult } from "../loading/source-loader";
 import type { ResolvedConfig } from "../configuration/config";
+import { useWizardStore } from "../../stores/wizard-store";
+import { resolveAlias, validateSelection } from "../matrix";
+import type { TestProjectConfig } from "./fixtures/create-test-source";
 import { getTestSkill } from "./test-fixtures";
 
 export async function fileExists(filePath: string): Promise<boolean> {
@@ -786,6 +792,161 @@ export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): Merg
     } as Record<Subcategory, CategoryDefinition>,
     ...overrides,
   });
+}
+
+/**
+ * Replicates `handleComplete` from wizard.tsx for the "customize" path.
+ *
+ * Given the wizard store state (after simulated user selections), this
+ * builds the same WizardResultV2 that the real wizard produces:
+ * 1. Collects all selected technologies from domainSelections
+ * 2. Resolves aliases to canonical skill IDs
+ * 3. Adds methodology skills (DEFAULT_PRESELECTED_SKILLS)
+ * 4. Runs validation
+ */
+export function buildWizardResultFromStore(
+  matrix: MergedSkillsMatrix,
+  overrides?: Partial<WizardResultV2>,
+): WizardResultV2 {
+  const store = useWizardStore.getState();
+
+  let allSkills: SkillId[];
+
+  if (store.selectedStackId && store.stackAction === "defaults") {
+    const stack = matrix.suggestedStacks.find((s) => s.id === store.selectedStackId);
+    allSkills = [...(stack?.allSkillIds || [])];
+  } else {
+    const techNames = store.getAllSelectedTechnologies();
+    allSkills = techNames.map((tech) => resolveAlias(tech, matrix));
+  }
+
+  const methodologySkills = store.getDefaultMethodologySkills();
+  for (const skill of methodologySkills) {
+    if (!allSkills.includes(skill)) {
+      allSkills.push(skill);
+    }
+  }
+
+  const validation = validateSelection(allSkills, matrix);
+
+  return {
+    selectedSkills: allSkills,
+    selectedAgents: store.selectedAgents,
+    selectedStackId: store.selectedStackId,
+    domainSelections: store.domainSelections,
+    sourceSelections: store.sourceSelections,
+    expertMode: store.expertMode,
+    installMode: store.installMode,
+    cancelled: false,
+    validation,
+    ...overrides,
+  };
+}
+
+/**
+ * Simulates a user selecting specific skills via the wizard store.
+ *
+ * Sets up domainSelections as if the user toggled each skill in the build step,
+ * using the matrix to look up the correct domain and subcategory per skill.
+ */
+export function simulateSkillSelections(
+  skillIds: SkillId[],
+  matrix: MergedSkillsMatrix,
+  selectedDomains: string[],
+): void {
+  const domainSelections: DomainSelections = {};
+
+  for (const skillId of skillIds) {
+    const skill = matrix.skills[skillId];
+    if (!skill) continue;
+
+    // Boundary cast: skill.category is a Subcategory at runtime
+    const subcategory = skill.category as Subcategory;
+    const categoryDef = matrix.categories[subcategory];
+    const domain = categoryDef?.domain;
+    if (!domain) continue;
+
+    if (!domainSelections[domain]) {
+      domainSelections[domain] = {};
+    }
+    if (!domainSelections[domain][subcategory]) {
+      domainSelections[domain][subcategory] = [];
+    }
+    if (!domainSelections[domain][subcategory].includes(skillId)) {
+      domainSelections[domain][subcategory].push(skillId);
+    }
+  }
+
+  useWizardStore.setState({
+    domainSelections,
+    selectedDomains: selectedDomains as Domain[],
+    approach: "scratch",
+    step: "confirm",
+  });
+}
+
+/**
+ * Extracts skill IDs from a stack assignment value, which may be:
+ * - A bare string (e.g., "web-framework-react")
+ * - An object with .id (e.g., { id: "web-framework-react", preloaded: true })
+ * - An array of strings or objects
+ */
+export function extractSkillIdsFromAssignment(assignment: unknown): string[] {
+  if (typeof assignment === "string") {
+    return [assignment];
+  }
+  if (Array.isArray(assignment)) {
+    return assignment.flatMap((item) => extractSkillIdsFromAssignment(item));
+  }
+  if (typeof assignment === "object" && assignment !== null && "id" in assignment) {
+    return [String((assignment as { id: string }).id)];
+  }
+  return [];
+}
+
+export function buildTestProjectConfig(
+  agents: string[],
+  skills: Array<string | { id: string }>,
+  overrides?: Partial<TestProjectConfig>,
+): TestProjectConfig {
+  return {
+    name: "test-project",
+    description: "Test project",
+    agents,
+    skills,
+    ...overrides,
+  };
+}
+
+export function createMockSkillDefinition(
+  id: SkillId,
+  overrides?: Partial<SkillDefinition>,
+): SkillDefinition {
+  return {
+    id,
+    path: `skills/${id}/`,
+    description: `${id} skill`,
+    ...overrides,
+  };
+}
+
+export function createMockStack(
+  id: string,
+  config: {
+    name: string;
+    description?: string;
+    agents: Record<string, StackAgentConfig>;
+    philosophy?: string;
+  },
+): Stack {
+  return {
+    id,
+    name: config.name,
+    description: config.description ?? "",
+    // Boundary cast: test callers may pass arbitrary agent names (e.g., "nonexistent-agent")
+    agents: config.agents as Stack["agents"],
+    philosophy: config.philosophy,
+  };
 }
 
 export { getTestSkill } from "./test-fixtures";

@@ -1,10 +1,15 @@
 import path from "path";
-import os from "os";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { readFile, mkdir, mkdtemp, rm, writeFile } from "fs/promises";
+import { readFile, mkdir, writeFile } from "fs/promises";
 import { compileStackPlugin } from "../../stacks";
-import { fileExists, directoryExists, parseTestFrontmatter } from "../helpers";
-import type { Stack, StackAgentConfig } from "../../../types";
+import {
+  fileExists,
+  directoryExists,
+  parseTestFrontmatter,
+  createTempDir,
+  cleanupTempDir,
+  createMockStack,
+} from "../helpers";
 
 const PLUGIN_MANIFEST_DIR = ".claude-plugin";
 const PLUGIN_MANIFEST_FILE = "plugin.json";
@@ -100,38 +105,19 @@ ${config.content ?? `# ${config.name}\n\nSkill content here.`}
   );
 }
 
-function createStack(
-  stackId: string,
-  config: {
-    name: string;
-    description?: string;
-    agents: Record<string, StackAgentConfig>;
-    philosophy?: string;
-  },
-): Stack {
-  return {
-    id: stackId,
-    name: config.name,
-    description: config.description ?? "",
-    agents: config.agents,
-    philosophy: config.philosophy,
-  };
-}
-
 describe("User Journey: Install -> Compile -> Verify", () => {
   let tempDir: string;
   let projectRoot: string;
   let outputDir: string;
   let testCounter = 0;
 
-  // Generate unique stack ID to avoid cache collisions between tests
   function uniqueStackId(base = "test-stack"): string {
     testCounter++;
     return `${base}-${testCounter}-${Date.now()}`;
   }
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "install-compile-test-"));
+    tempDir = await createTempDir("install-compile-test-");
     projectRoot = path.join(tempDir, "project");
     outputDir = path.join(tempDir, "output");
 
@@ -140,7 +126,7 @@ describe("User Journey: Install -> Compile -> Verify", () => {
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should install stack plugin to correct location", async () => {
@@ -153,7 +139,7 @@ describe("User Journey: Install -> Compile -> Verify", () => {
     });
 
     const stackId = uniqueStackId();
-    const stack = createStack(stackId, {
+    const stack = createMockStack(stackId, {
       name: "React Fullstack",
       description: "A complete React development stack",
       agents: { "web-developer": {} },
@@ -189,7 +175,7 @@ describe("User Journey: Install -> Compile -> Verify", () => {
     });
 
     const stackId = uniqueStackId("react-stack");
-    const stack = createStack(stackId, {
+    const stack = createMockStack(stackId, {
       name: "React Fullstack",
       description: "A complete React development stack",
       agents: { "web-developer": {} },
@@ -229,7 +215,7 @@ describe("User Journey: Install -> Compile -> Verify", () => {
     });
 
     const stackId = uniqueStackId();
-    const stack = createStack(stackId, {
+    const stack = createMockStack(stackId, {
       name: "Minimal Stack",
       description: "A minimal stack for testing",
       agents: { "web-developer": {} },
@@ -278,7 +264,7 @@ describe("User Journey: Install -> Compile -> Verify", () => {
     });
 
     const stackId = uniqueStackId();
-    const stack = createStack(stackId, {
+    const stack = createMockStack(stackId, {
       name: "React Stack",
       description: "React development stack",
       agents: { "web-developer": {} },
@@ -325,7 +311,7 @@ describe("User Journey: Install -> Compile -> Verify", () => {
     });
 
     const stackId = uniqueStackId("full-stack");
-    const stack = createStack(stackId, {
+    const stack = createMockStack(stackId, {
       name: "Full Stack",
       description: "Complete development stack with three agents",
       agents: {
@@ -382,7 +368,7 @@ describe("User Journey: Plugin Structure Verification", () => {
   }
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "plugin-structure-test-"));
+    tempDir = await createTempDir("plugin-structure-test-");
     projectRoot = path.join(tempDir, "project");
     outputDir = path.join(tempDir, "output");
 
@@ -391,7 +377,7 @@ describe("User Journey: Plugin Structure Verification", () => {
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should create README.md with stack information", async () => {
@@ -404,7 +390,7 @@ describe("User Journey: Plugin Structure Verification", () => {
     });
 
     const stackId = uniqueStackId();
-    const stack = createStack(stackId, {
+    const stack = createMockStack(stackId, {
       name: "React Stack",
       description: "A modern React development stack",
       agents: { "web-developer": {} },
@@ -439,7 +425,7 @@ describe("User Journey: Plugin Structure Verification", () => {
     });
 
     const stackId = uniqueStackId();
-    const stack = createStack(stackId, {
+    const stack = createMockStack(stackId, {
       name: "Versioned Stack",
       description: "Stack with version tracking",
       agents: { "web-developer": {} },
@@ -478,7 +464,7 @@ describe("User Journey: Plugin Structure Verification", () => {
     const stackId = uniqueStackId("version-bump");
 
     // First compilation - only web-developer
-    const stack1 = createStack(stackId, {
+    const stack1 = createMockStack(stackId, {
       name: "Evolving Stack",
       description: "Stack that evolves",
       agents: { "web-developer": {} },
@@ -494,7 +480,7 @@ describe("User Journey: Plugin Structure Verification", () => {
     expect(result1.manifest.version).toBe("1.0.0");
 
     // Second compilation - add api-developer (stack changed)
-    const stack2 = createStack(stackId, {
+    const stack2 = createMockStack(stackId, {
       name: "Evolving Stack",
       description: "Stack that evolves",
       agents: { "web-developer": {}, "api-developer": {} },
@@ -522,7 +508,7 @@ describe("User Journey: Plugin Structure Verification", () => {
 
     const stackId = uniqueStackId("stable");
 
-    const stack = createStack(stackId, {
+    const stack = createMockStack(stackId, {
       name: "Stable Stack",
       description: "Stack that does not change",
       agents: { "web-developer": {} },
@@ -563,7 +549,7 @@ describe("User Journey: Agent Content Verification", () => {
   }
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "agent-content-test-"));
+    tempDir = await createTempDir("agent-content-test-");
     projectRoot = path.join(tempDir, "project");
     outputDir = path.join(tempDir, "output");
 
@@ -572,7 +558,7 @@ describe("User Journey: Agent Content Verification", () => {
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should include agent intro content in compiled output", async () => {
@@ -593,7 +579,7 @@ You are a specialized web developer with deep expertise in:
     });
 
     const stackId = uniqueStackId();
-    const stack = createStack(stackId, {
+    const stack = createMockStack(stackId, {
       name: "Custom Stack",
       agents: { "web-developer": {} },
     });
@@ -634,7 +620,7 @@ You are a specialized web developer with deep expertise in:
     });
 
     const stackId = uniqueStackId();
-    const stack = createStack(stackId, {
+    const stack = createMockStack(stackId, {
       name: "Workflow Stack",
       agents: { "web-developer": {} },
     });
@@ -666,7 +652,7 @@ You are a specialized web developer with deep expertise in:
     });
 
     const stackId = uniqueStackId();
-    const stack = createStack(stackId, {
+    const stack = createMockStack(stackId, {
       name: "Frontmatter Stack",
       agents: { "web-developer": {} },
     });
@@ -704,7 +690,7 @@ You are a specialized web developer with deep expertise in:
     });
 
     const stackId = uniqueStackId();
-    const stack = createStack(stackId, {
+    const stack = createMockStack(stackId, {
       name: "Principles Stack",
       agents: { "web-developer": {} },
     });
@@ -739,7 +725,7 @@ describe("User Journey: Install -> Compile Error Handling", () => {
   }
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "error-handling-test-"));
+    tempDir = await createTempDir("error-handling-test-");
     projectRoot = path.join(tempDir, "project");
     outputDir = path.join(tempDir, "output");
 
@@ -748,14 +734,14 @@ describe("User Journey: Install -> Compile Error Handling", () => {
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should throw when stack references missing agent", async () => {
     await createProjectStructure(projectRoot);
 
     const stackId = uniqueStackId();
-    const stack = createStack(stackId, {
+    const stack = createMockStack(stackId, {
       name: "Broken Stack",
       agents: { "nonexistent-agent": {} },
     });
@@ -794,7 +780,7 @@ describe("User Journey: Install -> Compile Error Handling", () => {
     });
 
     const stackId = uniqueStackId();
-    const stack = createStack(stackId, {
+    const stack = createMockStack(stackId, {
       name: "No Skills Stack",
       agents: { "web-developer": {} },
     });
@@ -825,7 +811,7 @@ describe("User Journey: Install -> Compile Error Handling", () => {
     });
 
     const stackId = uniqueStackId();
-    const stack = createStack(stackId, {
+    const stack = createMockStack(stackId, {
       name: "No Description Stack",
       // No description provided
       agents: { "web-developer": {} },

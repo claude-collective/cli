@@ -5,26 +5,24 @@ import { parse as parseYaml } from "yaml";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { installLocal, installPluginConfig } from "../../installation/local-installer";
 import { useWizardStore } from "../../../stores/wizard-store";
-import { resolveAlias, validateSelection } from "../../matrix";
 import { DEFAULT_PRESELECTED_SKILLS } from "../../../consts";
-import type {
-  AgentName,
-  DomainSelections,
-  MergedSkillsMatrix,
-  ProjectConfig,
-  SkillId,
-  Subcategory,
-} from "../../../types";
-import type { WizardResultV2 } from "../../../components/wizard/wizard";
+import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
 import {
   createComprehensiveMatrix,
   buildSourceResult,
+  buildWizardResultFromStore,
+  simulateSkillSelections,
+  extractSkillIdsFromAssignment,
   fileExists,
   directoryExists,
   readTestYaml,
 } from "../helpers";
-import { DEFAULT_TEST_SKILLS, type TestSkill } from "../fixtures/create-test-source";
+import {
+  DEFAULT_TEST_SKILLS,
+  METHODOLOGY_TEST_SKILLS,
+  EXTRA_DOMAIN_TEST_SKILLS,
+} from "../fixtures/create-test-source";
 import { loadDefaultMappings, clearDefaultsCache } from "../../loading";
 
 // ── Setup ───────────────────────────────────────────────────────────────────────
@@ -38,187 +36,13 @@ afterAll(() => {
   clearDefaultsCache();
 });
 
-// ── Helpers ─────────────────────────────────────────────────────────────────────
-
-/**
- * Replicates `handleComplete` from wizard.tsx for the "customize" path.
- *
- * Given the wizard store state (after simulated user selections), this
- * builds the same WizardResultV2 that the real wizard produces:
- * 1. Collects all selected technologies from domainSelections
- * 2. Resolves aliases to canonical skill IDs
- * 3. Adds methodology skills (DEFAULT_PRESELECTED_SKILLS)
- * 4. Runs validation
- */
-function buildWizardResultFromStore(
-  matrix: MergedSkillsMatrix,
-  overrides?: Partial<WizardResultV2>,
-): WizardResultV2 {
-  const store = useWizardStore.getState();
-
-  let allSkills: SkillId[];
-
-  if (store.selectedStackId && store.stackAction === "defaults") {
-    const stack = matrix.suggestedStacks.find((s) => s.id === store.selectedStackId);
-    allSkills = [...(stack?.allSkillIds || [])];
-  } else {
-    const techNames = store.getAllSelectedTechnologies();
-    allSkills = techNames.map((tech) => resolveAlias(tech, matrix));
-  }
-
-  // Add methodology skills (same as wizard.tsx handleComplete)
-  const methodologySkills = store.getDefaultMethodologySkills();
-  for (const skill of methodologySkills) {
-    if (!allSkills.includes(skill)) {
-      allSkills.push(skill);
-    }
-  }
-
-  const validation = validateSelection(allSkills, matrix);
-
-  return {
-    selectedSkills: allSkills,
-    selectedAgents: store.selectedAgents,
-    selectedStackId: store.selectedStackId,
-    domainSelections: store.domainSelections,
-    sourceSelections: store.sourceSelections,
-    expertMode: store.expertMode,
-    installMode: store.installMode,
-    cancelled: false,
-    validation,
-    ...overrides,
-  };
-}
-
-/**
- * Simulates a user selecting specific skills via the wizard store.
- *
- * Sets up domainSelections as if the user toggled each skill in the build step,
- * using the matrix to look up the correct domain and subcategory per skill.
- */
-function simulateSkillSelections(
-  skillIds: SkillId[],
-  matrix: MergedSkillsMatrix,
-  selectedDomains: string[],
-): void {
-  const store = useWizardStore.getState();
-  const domainSelections: DomainSelections = {};
-
-  for (const skillId of skillIds) {
-    const skill = matrix.skills[skillId];
-    if (!skill) continue;
-
-    // Boundary cast: skill.category is a Subcategory at runtime
-    const subcategory = skill.category as Subcategory;
-    const categoryDef = matrix.categories[subcategory];
-    const domain = categoryDef?.domain;
-    if (!domain) continue;
-
-    if (!domainSelections[domain]) {
-      domainSelections[domain] = {};
-    }
-    if (!domainSelections[domain][subcategory]) {
-      domainSelections[domain][subcategory] = [];
-    }
-    if (!domainSelections[domain][subcategory].includes(skillId)) {
-      domainSelections[domain][subcategory].push(skillId);
-    }
-  }
-
-  useWizardStore.setState({
-    domainSelections,
-    selectedDomains: selectedDomains as import("../../../types").Domain[],
-    approach: "scratch",
-    step: "confirm",
-  });
-}
-
 // ── Constants ───────────────────────────────────────────────────────────────────
 
-const TEST_AUTHOR = "@test";
-
-/**
- * Extra skills needed for comprehensive matrix tests that aren't in DEFAULT_TEST_SKILLS.
- * Includes technology skills and methodology skills (DEFAULT_PRESELECTED_SKILLS).
- */
-const EXTRA_TEST_SKILLS: TestSkill[] = [
-  {
-    id: "web-framework-vue",
-    name: "web-framework-vue",
-    description: "Progressive JavaScript framework",
-    category: "web-framework",
-    author: TEST_AUTHOR,
-    tags: ["vue", "web"],
-  },
-  {
-    id: "web-styling-scss-modules",
-    name: "web-styling-scss-modules",
-    description: "CSS Modules with SCSS",
-    category: "web-styling",
-    author: TEST_AUTHOR,
-    tags: ["css", "scss"],
-  },
-  {
-    id: "api-database-drizzle",
-    name: "api-database-drizzle",
-    description: "TypeScript ORM for SQL databases",
-    category: "api-database",
-    author: TEST_AUTHOR,
-    tags: ["database", "orm"],
-  },
-  // Methodology skills (DEFAULT_PRESELECTED_SKILLS) — auto-injected by wizard handleComplete
-  {
-    id: "meta-methodology-investigation-requirements",
-    name: "meta-methodology-investigation-requirements",
-    description: "Never speculate - read actual code first",
-    category: "shared-methodology",
-    author: TEST_AUTHOR,
-    tags: ["methodology", "foundational"],
-  },
-  {
-    id: "meta-methodology-anti-over-engineering",
-    name: "meta-methodology-anti-over-engineering",
-    description: "Surgical implementation, not architectural innovation",
-    category: "shared-methodology",
-    author: TEST_AUTHOR,
-    tags: ["methodology", "foundational"],
-  },
-  {
-    id: "meta-methodology-success-criteria",
-    name: "meta-methodology-success-criteria",
-    description: "Explicit, measurable criteria defining done",
-    category: "shared-methodology",
-    author: TEST_AUTHOR,
-    tags: ["methodology", "foundational"],
-  },
-  {
-    id: "meta-methodology-write-verification",
-    name: "meta-methodology-write-verification",
-    description: "Verify work was actually saved",
-    category: "shared-methodology",
-    author: TEST_AUTHOR,
-    tags: ["methodology", "foundational"],
-  },
-  {
-    id: "meta-methodology-improvement-protocol",
-    name: "meta-methodology-improvement-protocol",
-    description: "Evidence-based self-improvement",
-    category: "shared-methodology",
-    author: TEST_AUTHOR,
-    tags: ["methodology", "foundational"],
-  },
-  {
-    id: "meta-methodology-context-management",
-    name: "meta-methodology-context-management",
-    description: "Maintain project continuity across sessions",
-    category: "shared-methodology",
-    author: TEST_AUTHOR,
-    tags: ["methodology", "foundational"],
-  },
+const ALL_TEST_SKILLS = [
+  ...DEFAULT_TEST_SKILLS,
+  ...EXTRA_DOMAIN_TEST_SKILLS,
+  ...METHODOLOGY_TEST_SKILLS,
 ];
-
-/** All skills needed for the comprehensive matrix (DEFAULT_TEST_SKILLS + extras) */
-const ALL_TEST_SKILLS: TestSkill[] = [...DEFAULT_TEST_SKILLS, ...EXTRA_TEST_SKILLS];
 
 // ── Test Suites ─────────────────────────────────────────────────────────────────
 
@@ -811,24 +635,3 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
     });
   });
 });
-
-// ── Utility ─────────────────────────────────────────────────────────────────────
-
-/**
- * Extracts skill IDs from a stack assignment value, which may be:
- * - A bare string (e.g., "web-framework-react")
- * - An object with .id (e.g., { id: "web-framework-react", preloaded: true })
- * - An array of strings or objects
- */
-function extractSkillIdsFromAssignment(assignment: unknown): string[] {
-  if (typeof assignment === "string") {
-    return [assignment];
-  }
-  if (Array.isArray(assignment)) {
-    return assignment.flatMap((item) => extractSkillIdsFromAssignment(item));
-  }
-  if (typeof assignment === "object" && assignment !== null && "id" in assignment) {
-    return [String((assignment as { id: string }).id)];
-  }
-  return [];
-}

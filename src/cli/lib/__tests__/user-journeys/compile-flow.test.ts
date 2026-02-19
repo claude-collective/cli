@@ -8,11 +8,11 @@ import {
   directoryExists,
   readTestFile,
   type TestDirs,
-  type TestSkill,
   DEFAULT_TEST_SKILLS,
   DEFAULT_TEST_AGENTS,
+  COMPILE_LOCAL_SKILL,
 } from "../fixtures/create-test-source";
-import { runCliCommand, parseTestFrontmatter } from "../helpers";
+import { runCliCommand, parseTestFrontmatter, buildTestProjectConfig } from "../helpers";
 
 describe("User Journey: Compile Flow", () => {
   let dirs: TestDirs;
@@ -26,12 +26,11 @@ describe("User Journey: Compile Flow", () => {
     dirs = await createTestSource({
       skills: DEFAULT_TEST_SKILLS,
       agents: DEFAULT_TEST_AGENTS,
-      projectConfig: {
-        name: "test-project",
-        description: "Test project for compile flow",
-        agents: ["web-developer", "api-developer"],
-        skills: DEFAULT_TEST_SKILLS.map((s) => ({ id: s.id })),
-      },
+      projectConfig: buildTestProjectConfig(
+        ["web-developer", "api-developer"],
+        DEFAULT_TEST_SKILLS.map((s) => ({ id: s.id })),
+        { description: "Test project for compile flow" },
+      ),
       asPlugin: true,
     });
 
@@ -247,39 +246,15 @@ describe("User Journey: Compile with Local Skills", () => {
   beforeEach(async () => {
     originalCwd = process.cwd();
 
-    // Create test source with local skills
-    const localSkill: TestSkill = {
-      id: "web-tooling-local-skill",
-      name: "web-tooling-local-skill",
-      description: "A local project skill",
-      category: "web-tooling",
-      author: "@test",
-      tags: ["local", "custom"],
-      content: `---
-name: web-tooling-local-skill
-description: A local project skill for testing
----
-
-# Web Tooling Local Skill
-
-This is a locally defined skill for the project.
-
-## Usage
-
-Use this skill for project-specific patterns.
-`,
-    };
-
     dirs = await createTestSource({
       skills: DEFAULT_TEST_SKILLS,
       agents: DEFAULT_TEST_AGENTS,
-      projectConfig: {
-        name: "local-skills-project",
-        description: "Project with local skills",
-        agents: ["web-developer"],
-        skills: [...DEFAULT_TEST_SKILLS.map((s) => ({ id: s.id })), { id: localSkill.id }],
-      },
-      localSkills: [localSkill],
+      projectConfig: buildTestProjectConfig(
+        ["web-developer"],
+        [...DEFAULT_TEST_SKILLS.map((s) => ({ id: s.id })), { id: COMPILE_LOCAL_SKILL.id }],
+        { name: "local-skills-project", description: "Project with local skills" },
+      ),
+      localSkills: [COMPILE_LOCAL_SKILL],
       asPlugin: true,
     });
 

@@ -12,7 +12,7 @@ import {
   DEFAULT_TEST_SKILLS,
   DEFAULT_TEST_AGENTS,
 } from "../fixtures/create-test-source";
-import { writeTestSkill } from "../helpers";
+import { writeTestSkill, buildTestProjectConfig, createMockSkillDefinition } from "../helpers";
 import type { AgentName, SkillDefinition, SkillId } from "../../../types";
 
 const CLI_REPO_PATH = path.resolve(__dirname, "../../../../..");
@@ -48,12 +48,11 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
     dirs = await createTestSource({
       skills: DEFAULT_TEST_SKILLS,
       agents: DEFAULT_TEST_AGENTS,
-      projectConfig: {
-        name: "test-recompile-project",
-        description: "Test project for edit-recompile flow",
-        agents: ["web-developer", "api-developer"],
-        skills: DEFAULT_TEST_SKILLS.map((s) => ({ id: s.id })),
-      },
+      projectConfig: buildTestProjectConfig(
+        ["web-developer", "api-developer"],
+        DEFAULT_TEST_SKILLS.map((s) => ({ id: s.id })),
+        { name: "test-recompile-project", description: "Test project for edit-recompile flow" },
+      ),
       asPlugin: true,
     });
 
@@ -94,11 +93,9 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
     // Step 1: Initial compile with skills provided directly
     const reactSkillDef: Partial<Record<SkillId, SkillDefinition>> = {
-      "web-framework-react": {
-        id: "web-framework-react",
-        path: "skills/web-framework-react/",
+      "web-framework-react": createMockSkillDefinition("web-framework-react", {
         description: "React framework",
-      },
+      }),
     };
 
     const initialOptions = buildRecompileOptions(dirs, outputDir, {
@@ -195,16 +192,12 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
   it("should handle removing skills from agents", async () => {
     // Step 1: Initial compile with explicit skills
     const initialSkills: Partial<Record<SkillId, SkillDefinition>> = {
-      "web-framework-react": {
-        id: "web-framework-react",
-        path: "skills/web-framework-react/",
+      "web-framework-react": createMockSkillDefinition("web-framework-react", {
         description: "React framework",
-      },
-      "web-state-zustand": {
-        id: "web-state-zustand",
-        path: "skills/web-state-zustand/",
+      }),
+      "web-state-zustand": createMockSkillDefinition("web-state-zustand", {
         description: "State management",
-      },
+      }),
     };
 
     const initialOptions = buildRecompileOptions(dirs, outputDir, {
@@ -217,11 +210,9 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
 
     // Step 2: Recompile with fewer skills (simulating removal)
     const reducedSkills: Partial<Record<SkillId, SkillDefinition>> = {
-      "web-framework-react": {
-        id: "web-framework-react",
-        path: "skills/web-framework-react/",
+      "web-framework-react": createMockSkillDefinition("web-framework-react", {
         description: "React framework",
-      },
+      }),
     };
 
     const recompileOptions = buildRecompileOptions(dirs, outputDir, {

@@ -36,21 +36,15 @@ When creating multiple commits in sequence:
 2. ✅ Run tests on the **last commit** only
 3. ❌ Skip tests for intermediate commits (use `--no-verify`)
 
-## Changelog Management
+## Release Checklist
 
-### File Structure
+Every release MUST complete all steps. No exceptions.
 
-```
-CHANGELOG.md                    # Summary index
-changelogs/
-  └── {version}.md             # Detailed release notes
-```
-
-### On Release
-
-1. **Create** `changelogs/{version}.md` with full release notes
-2. **Prepend** brief summary to `CHANGELOG.md` with link to detailed file
-3. **Never edit** old entries in CHANGELOG.md or old version files
+- [ ] Bump version in `package.json` (semver: major = breaking, minor = feature, patch = fix)
+- [ ] Create `changelogs/{version}.md` with full release notes
+- [ ] Prepend brief summary to `CHANGELOG.md` with link to detailed file
+- [ ] Commit with message: `chore(release): {version} — brief summary`
+- [ ] Never edit old entries in `CHANGELOG.md` or old `changelogs/` files
 
 ### CHANGELOG.md Format (Summary)
 
@@ -61,7 +55,7 @@ changelogs/
 
 Key highlights (2-3 bullets max)
 
-[→ Full release notes](./changelogs/{version}.md)
+See [changelogs/{version}.md](./changelogs/{version}.md) for full details.
 ```
 
 ### changelogs/{version}.md Format (Detailed)
@@ -85,29 +79,3 @@ Key highlights (2-3 bullets max)
 
 - Removed feature descriptions
 ```
-
-## Version Bumping
-
-Follow semantic versioning:
-
-- **Major** (1.0.0): Breaking changes
-- **Minor** (0.1.0): New features, backward compatible
-- **Patch** (0.0.1): Bug fixes
-
-Update `package.json` version field.
-
-## Release Commit
-
-Final commit message format:
-
-```
-chore(release): {version}
-
-Brief summary of release
-```
-
-Include in release commit:
-
-- `package.json` (version bump)
-- `CHANGELOG.md` (prepended summary)
-- `changelogs/{version}.md` (new detailed file)

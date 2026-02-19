@@ -1,7 +1,6 @@
 import path from "path";
-import os from "os";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { readFile, mkdir, writeFile, rm } from "fs/promises";
+import { readFile, mkdir, writeFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
 import {
   resolveSource,
@@ -19,6 +18,7 @@ import {
   fileExists,
   type TestDirs,
 } from "../fixtures/create-test-source";
+import { createTempDir, cleanupTempDir } from "../helpers";
 
 const PROJECT_CONFIG_DIR = ".claude-src";
 
@@ -38,21 +38,16 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
   let projectDir: string;
 
   beforeEach(async () => {
-    // Create isolated temp directories for testing
-    const mkdtemp = await import("fs/promises").then((m) => m.mkdtemp);
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-config-precedence-"));
+    tempDir = await createTempDir("cc-config-precedence-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
 
-    // Clear environment variable
     delete process.env[SOURCE_ENV_VAR];
   });
 
   afterEach(async () => {
-    // Restore environment
     delete process.env[SOURCE_ENV_VAR];
-    // Clean up temp directory
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("flag precedence (highest)", () => {
@@ -263,14 +258,13 @@ describe("User Journey: Config Precedence - Agent Source Resolution", () => {
   let projectDir: string;
 
   beforeEach(async () => {
-    const mkdtemp = await import("fs/promises").then((m) => m.mkdtemp);
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-agent-precedence-"));
+    tempDir = await createTempDir("cc-agent-precedence-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("agentsSource precedence", () => {
@@ -316,14 +310,13 @@ describe("User Journey: Project Config Save and Load", () => {
   let projectDir: string;
 
   beforeEach(async () => {
-    const mkdtemp = await import("fs/promises").then((m) => m.mkdtemp);
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-save-load-"));
+    tempDir = await createTempDir("cc-save-load-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("saveProjectConfig", () => {
@@ -450,14 +443,13 @@ describe("User Journey: Config Edge Cases", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    const mkdtemp = await import("fs/promises").then((m) => m.mkdtemp);
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-edge-cases-"));
+    tempDir = await createTempDir("cc-edge-cases-");
     delete process.env[SOURCE_ENV_VAR];
   });
 
   afterEach(async () => {
     delete process.env[SOURCE_ENV_VAR];
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should handle config with only optional fields", async () => {

@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.41.1] - 2026-02-19
+
+**Missing changelog entries, commit protocol checklist, test helper extraction**
+
+- Add missing 0.41.0 and 0.33.0 entries to CHANGELOG.md
+- Convert commit protocol to mandatory release checklist
+- Extract shared test helpers and fixtures from inline test data
+
+See [changelogs/0.41.1.md](./changelogs/0.41.1.md) for full details.
+
+---
+
+## [0.41.0] - 2026-02-19
+
+**Fix config stack generation, CLI_BIN_NAME constant**
+
+- Fix config.yaml missing stack/agents after init (defaults-loader path resolution in dist builds)
+- Fix agent-mappings patterns for domain-prefixed subcategories (D-31 follow-up)
+- Fix wizard storing display names instead of canonical skill IDs
+- Add `CLI_BIN_NAME` constant replacing 19 hardcoded command references
+
+See [changelogs/0.41.0.md](./changelogs/0.41.0.md) for full details.
+
+---
+
 ## [0.40.0] - 2026-02-19
 
 **Domain-prefix all subcategory keys (D-31), add category enum to metadata schema (D-32)**
@@ -96,6 +121,20 @@ See [changelogs/0.34.1.md](./changelogs/0.34.1.md) for full details.
 **Wizard UX overhaul — layout, scrolling, navigation, and visual redesign**
 
 See [changelogs/0.34.0.md](./changelogs/0.34.0.md) for full details.
+
+---
+
+## [0.33.0] - 2026-02-16
+
+**Rebrand from claude-collective to agents-inc**
+
+- Package renamed: `@claude-collective/cli` → `@agents-inc/cli`
+- CLI binary renamed: `cc` → `agentsinc`
+- Update schema URLs, help text, branding, and documentation
+
+See [changelogs/0.33.0.md](./changelogs/0.33.0.md) for full details.
+
+---
 
 ## [0.32.1] - 2026-02-16
 

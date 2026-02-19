@@ -19,23 +19,15 @@ vi.mock("../configuration", () => ({
 let MOCK_PROJECT_ROOT: string;
 
 // Mock consts — PROJECT_ROOT points to a temp dir set up per test
-vi.mock("../../consts", () => ({
-  get PROJECT_ROOT() {
-    return MOCK_PROJECT_ROOT;
-  },
-  DIRS: {
-    agents: "src/agents",
-    skills: "src/skills",
-    stacks: "src/stacks",
-    templates: "src/agents/_templates",
-    commands: "src/commands",
-  },
-  CLAUDE_DIR: ".claude",
-  DEFAULT_BRANDING: {
-    NAME: "Agents Inc.",
-    TAGLINE: "AI-powered development tools",
-  },
-}));
+vi.mock("../../consts", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../consts")>();
+  return {
+    ...actual,
+    get PROJECT_ROOT() {
+      return MOCK_PROJECT_ROOT;
+    },
+  };
+});
 
 import {
   getAgentDefinitions,
