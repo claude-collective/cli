@@ -64,14 +64,15 @@ describe("CheckboxGrid component", () => {
       expect(output).toContain("Gamma");
     });
 
-    it("should render item descriptions", () => {
+    it("should render focused item description", () => {
       const { lastFrame, unmount } = renderCheckboxGrid();
       cleanup = unmount;
 
       const output = lastFrame();
+      // Only the focused item (first by default) shows its description
       expect(output).toContain("First item");
-      expect(output).toContain("Second item");
-      expect(output).toContain("Third item");
+      expect(output).not.toContain("Second item");
+      expect(output).not.toContain("Third item");
     });
 
     it("should show unchecked checkboxes when nothing selected", () => {
@@ -123,33 +124,25 @@ describe("CheckboxGrid component", () => {
       expect(output).toContain("beta");
     });
 
-    it("should show continue option when items are selected", () => {
+    it("should show selected summary when items are selected instead of continue label", () => {
       const { lastFrame, unmount } = renderCheckboxGrid({
         selectedIds: ["alpha"],
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Continue with 1 item(s)");
+      // Continue label is no longer rendered; selected summary is shown instead
+      expect(output).toContain("Selected:");
+      expect(output).toContain("alpha");
     });
 
-    it("should always show continue option even when nothing selected", () => {
+    it("should show empty message when nothing selected instead of continue label", () => {
       const { lastFrame, unmount } = renderCheckboxGrid();
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Continue with 0 item(s)");
-    });
-
-    it("should show navigation hints", () => {
-      const { lastFrame, unmount } = renderCheckboxGrid();
-      cleanup = unmount;
-
-      const output = lastFrame();
-      expect(output).toContain("navigate");
-      expect(output).toContain("SPACE");
-      expect(output).toContain("ENTER");
-      expect(output).toContain("ESC");
+      // Continue label is no longer rendered; empty message is shown instead
+      expect(output).toContain("Select at least one");
     });
   });
 
@@ -295,15 +288,17 @@ describe("CheckboxGrid component", () => {
   });
 
   describe("custom props", () => {
-    it("should use custom continueLabel", () => {
+    it("should show selected items in summary with custom selections", () => {
       const { lastFrame, unmount } = renderCheckboxGrid({
         selectedIds: ["alpha", "beta"],
-        continueLabel: (count) => `Proceed with ${count} selected`,
       });
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Proceed with 2 selected");
+      // Continue label is no longer rendered; verify selected summary instead
+      expect(output).toContain("Selected:");
+      expect(output).toContain("alpha");
+      expect(output).toContain("beta");
     });
 
     it("should use custom emptyMessage", () => {

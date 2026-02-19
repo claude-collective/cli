@@ -63,7 +63,7 @@ describe("Wizard integration", () => {
       await delay(RENDER_DELAY_MS);
 
       expect(lastFrame()).toContain("React Fullstack");
-      expect(lastFrame()).toContain("[1] Choose a stack");
+      expect(lastFrame()).toContain("Choose a stack");
 
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
@@ -312,7 +312,7 @@ describe("Wizard integration", () => {
 
       // Should show ViewTitle for current domain
       const frame = lastFrame();
-      expect(frame).toContain("[2] Customize your Web stack");
+      expect(frame).toContain("Customize your Web stack");
     });
 
     it("should advance to next domain when validation passes", async () => {
@@ -491,7 +491,7 @@ describe("Wizard integration", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Should be back at stack/scratch selection (approach reset to null)
-      expect(lastFrame()).toContain("[1] Choose a stack");
+      expect(lastFrame()).toContain("Choose a stack");
       expect(onCancel).not.toHaveBeenCalled();
 
       // Now escape at initial selection should cancel
@@ -600,7 +600,7 @@ describe("Wizard integration", () => {
       await delay(STEP_TRANSITION_DELAY_MS);
 
       // Should be back at stack/scratch selection
-      expect(lastFrame()).toContain("[1] Choose a stack");
+      expect(lastFrame()).toContain("Choose a stack");
       expect(onCancel).not.toHaveBeenCalled();
     });
   });
@@ -681,8 +681,8 @@ describe("Wizard integration", () => {
 
       // Centralized footer shows keyboard hints on all steps
       const frame = lastFrame();
-      // StackSelection shows quit hint (ESC cancels at initial step)
-      expect(frame).toContain("quit");
+      // Footer shows ESC/back hint
+      expect(frame).toContain("back");
     });
 
     it("should display navigation hints in step footer", async () => {

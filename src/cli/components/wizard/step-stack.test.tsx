@@ -99,7 +99,7 @@ describe("StepStack component", () => {
         cleanup = unmount;
 
         const output = lastFrame();
-        expect(output).toContain("[1] Choose a stack");
+        expect(output).toContain("Choose a stack");
       });
 
       it("should render divider between stacks and scratch option", () => {
@@ -283,7 +283,7 @@ describe("StepStack component", () => {
         cleanup = unmount;
 
         const output = lastFrame();
-        expect(output).toContain("[1] Choose a stack");
+        expect(output).toContain("Choose a stack");
         expect(output).toContain("Start from scratch");
       });
     });
@@ -318,8 +318,8 @@ describe("StepStack component", () => {
         cleanup = unmount;
 
         const output = lastFrame();
+        // Only the focused item (Web, first in list) shows its description
         expect(output).toContain("Frontend web applications");
-        expect(output).toContain("Backend APIs");
       });
     });
 
@@ -403,7 +403,7 @@ describe("StepStack component", () => {
         expect(approach).toBeNull();
 
         const output = lastFrame();
-        expect(output).toContain("[1] Choose a stack");
+        expect(output).toContain("Choose a stack");
       });
     });
   });
