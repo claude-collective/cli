@@ -40,7 +40,7 @@ const AGENT_GROUPS: AgentGroup[] = [
       },
       {
         id: "web-pattern-critique",
-        label: "Pattern Critique",
+        label: "Web Pattern Critique",
         description: "Critique patterns against industry standards",
       },
     ],

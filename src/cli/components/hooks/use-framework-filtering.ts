@@ -35,13 +35,6 @@ export function useFrameworkFiltering({
         selections,
         installedSkillIds,
       ),
-    [
-      domain,
-      allSelections,
-      matrix,
-      expertMode,
-      selections,
-      installedSkillIds,
-    ],
+    [domain, allSelections, matrix, expertMode, selections, installedSkillIds],
   );
 }

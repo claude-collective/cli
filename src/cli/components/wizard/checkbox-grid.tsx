@@ -72,7 +72,7 @@ export const CheckboxGrid = <T extends string = string>({
     <Box flexDirection="column">
       <Text bold>{title}</Text>
       <Text dimColor>{subtitle}</Text>
-      <Text>{" "}</Text>
+      <Text> </Text>
       {items.map((item, index) => {
         const isFocused = index === focusedIndex;
         const isSelected = selectedIds.includes(item.id);
@@ -83,24 +83,33 @@ export const CheckboxGrid = <T extends string = string>({
           <Text key={item.id}>
             <Text color={isFocused ? CLI_COLORS.PRIMARY : undefined}>{pointer}</Text>
             <Text color={isSelected || isFocused ? CLI_COLORS.PRIMARY : undefined} bold={isFocused}>
-              {" "}{checkbox} {item.label}
+              {" "}
+              {checkbox} {item.label}
             </Text>
             <Text dimColor> - {item.description}</Text>
           </Text>
         );
       })}
-      <Text color={focusedIndex === continueIndex ? CLI_COLORS.PRIMARY : undefined} bold={focusedIndex === continueIndex}>
-        {focusedIndex === continueIndex ? UI_SYMBOLS.CURRENT : " "} {"\u2192"} {continueLabel(selectedIds.length)}
+      <Text
+        color={focusedIndex === continueIndex ? CLI_COLORS.PRIMARY : undefined}
+        bold={focusedIndex === continueIndex}
+      >
+        {focusedIndex === continueIndex ? UI_SYMBOLS.CURRENT : " "} {"\u2192"}{" "}
+        {continueLabel(selectedIds.length)}
       </Text>
       {selectedIds.length > 0 ? (
         <Text>
           {"\n"}Selected: <Text color={CLI_COLORS.PRIMARY}>{selectedIds.join(", ")}</Text>
         </Text>
       ) : emptyMessage ? (
-        <Text dimColor>{"\n"}{emptyMessage}</Text>
+        <Text dimColor>
+          {"\n"}
+          {emptyMessage}
+        </Text>
       ) : null}
       <Text dimColor>
-        {"\n"}{"\u2191"}/{"\u2193"} navigate SPACE toggle ENTER continue ESC back
+        {"\n"}
+        {"\u2191"}/{"\u2193"} navigate SPACE toggle ENTER continue ESC back
       </Text>
     </Box>
   );
