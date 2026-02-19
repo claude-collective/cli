@@ -57,10 +57,13 @@ skillToAgents:
     - skill-summoner
     - documentor
 
-  "reviewing/*":
+  "meta-reviewing/*":
     - web-reviewer
     - api-reviewer
     - cli-reviewer
+    - web-developer
+    - api-developer
+    - cli-developer
     - web-pattern-critique
     - agent-summoner
     - skill-summoner
@@ -78,7 +81,7 @@ skillToAgents:
     - skill-summoner
     - documentor
 
-  "research/*":
+  "meta-research/*":
     - web-researcher
     - api-researcher
     - web-pm
@@ -88,14 +91,18 @@ skillToAgents:
     - agent-summoner
     - skill-summoner
 
-  "methodology/*":
+  "meta-methodology/*":
     - web-developer
     - api-developer
+    - cli-developer
     - web-reviewer
     - api-reviewer
+    - cli-reviewer
     - web-researcher
     - api-researcher
     - web-tester
+    - cli-tester
+    - cli-migrator
     - web-pm
     - web-architecture
     - pattern-scout
@@ -104,18 +111,18 @@ skillToAgents:
     - skill-summoner
     - documentor
 
-  # Specific patterns (more specific than wildcards)
-  "web/testing":
+  # Specific category overrides (exact match on skill category, checked before wildcards)
+  "web-testing":
     - web-tester
     - web-developer
     - web-reviewer
 
-  "api/testing":
+  "api-testing":
     - web-tester
     - api-developer
     - api-reviewer
 
-  "web/mocks":
+  "web-mocking":
     - web-tester
     - web-developer
     - web-reviewer
@@ -206,4 +213,3 @@ agentSkillPrefixes:
     - meta
   documentor:
     - meta
-
