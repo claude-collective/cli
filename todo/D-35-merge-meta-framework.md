@@ -51,20 +51,20 @@ Remove `"meta-framework"` from `SUBCATEGORY_VALUES` (line 62).
 
 **Update downstream requires rules** — skills that need a React/Vue framework must now accept meta-frameworks too:
 
-| Skill | Current `needs` | New `needs` | `needsAny` |
-|-------|----------------|-------------|------------|
-| zustand | [react, react-native] | [react, nextjs-app-router, remix, react-native] | true (already) |
-| redux-toolkit | [react, react-native] | [react, nextjs-app-router, remix, react-native] | true (already) |
-| mobx | [react] | [react, nextjs-app-router, remix] | true (ADD) |
-| react-query | [react, react-native] | [react, nextjs-app-router, remix, react-native] | true (already) |
-| swr | [react, react-native] | [react, nextjs-app-router, remix, react-native] | true (already) |
-| react-hook-form | [react, react-native] | [react, nextjs-app-router, remix, react-native] | true (already) |
-| react-testing-library | [react] | [react, nextjs-app-router, remix] | true (ADD) |
-| graphql-apollo | [react, vue, angular] | [react, vue, angular, nextjs-app-router, remix, nuxt] | true (already) |
-| graphql-urql | [react, vue, solidjs] | [react, vue, solidjs, nextjs-app-router, remix, nuxt] | true (already) |
-| pinia | [vue] | [vue, nuxt] | true (ADD) |
-| vee-validate | [vue] | [vue, nuxt] | true (ADD) |
-| vue-test-utils | [vue] | [vue, nuxt] | true (ADD) |
+| Skill                 | Current `needs`       | New `needs`                                           | `needsAny`     |
+| --------------------- | --------------------- | ----------------------------------------------------- | -------------- |
+| zustand               | [react, react-native] | [react, nextjs-app-router, remix, react-native]       | true (already) |
+| redux-toolkit         | [react, react-native] | [react, nextjs-app-router, remix, react-native]       | true (already) |
+| mobx                  | [react]               | [react, nextjs-app-router, remix]                     | true (ADD)     |
+| react-query           | [react, react-native] | [react, nextjs-app-router, remix, react-native]       | true (already) |
+| swr                   | [react, react-native] | [react, nextjs-app-router, remix, react-native]       | true (already) |
+| react-hook-form       | [react, react-native] | [react, nextjs-app-router, remix, react-native]       | true (already) |
+| react-testing-library | [react]               | [react, nextjs-app-router, remix]                     | true (ADD)     |
+| graphql-apollo        | [react, vue, angular] | [react, vue, angular, nextjs-app-router, remix, nuxt] | true (already) |
+| graphql-urql          | [react, vue, solidjs] | [react, vue, solidjs, nextjs-app-router, remix, nuxt] | true (already) |
+| pinia                 | [vue]                 | [vue, nuxt]                                           | true (ADD)     |
+| vee-validate          | [vue]                 | [vue, nuxt]                                           | true (ADD)     |
+| vue-test-utils        | [vue]                 | [vue, nuxt]                                           | true (ADD)     |
 
 **Special: `shadcn-ui`** currently has `needs: [react, tailwind]` (AND logic). Split into TWO rules:
 
@@ -88,6 +88,7 @@ Remove `"meta-framework"` from `SUBCATEGORY_VALUES` (line 62).
 In `/Users/vincentbollaert/dev/personal/claude-subagents` (4 files):
 
 **Category field changes:**
+
 - `web-framework-nextjs-app-router/metadata.yaml`: `category: meta-framework` → `category: framework`
 - `web-framework-nextjs-server-actions/metadata.yaml`: `category: meta-framework` → `category: framework`
 - `web-framework-remix/metadata.yaml`: `category: meta-framework` → `category: framework`
@@ -104,6 +105,7 @@ After the merge, metadata-level `requires` pointing to another skill in the same
 - `web-framework-remix/metadata.yaml`: No `requires` field — already clean
 
 **Schema in claude-subagents:**
+
 - `src/schemas/metadata.schema.json` line 143: remove `"meta-framework"` from category enum
 
 In `/Users/vincentbollaert/dev/claude/skills`:
@@ -203,6 +205,7 @@ With no categories using `parentDomain`, the entire prop-threading chain becomes
 - `src/cli/components/wizard/step-build.tsx` lines 27, 61, 77 — remove `parentDomainSelections` prop type and usage
 
 Optionally also remove the `parentDomain` field from:
+
 - `src/cli/types/matrix.ts` line 87 — `parentDomain?: Domain` on `CategoryDefinition`
 - `src/cli/lib/schemas.ts` — `parentDomain: domainSchema.optional()` on `categoryDefinitionSchema`
 - `src/schemas/skills-matrix.schema.json` line 110 — `parentDomain` property definition

@@ -35,18 +35,18 @@ Remove the `web-base-framework` and `mobile-platform` stacks-only subcategory ke
 
 The system already has robust relationship primitives:
 
-| Mechanism | Location | Purpose |
-|-----------|----------|---------|
-| `requires` (matrix level) | `skills-matrix.yaml` `relationships.requires` | Hard dependency: skill A needs skill B (supports `needsAny` OR logic) |
-| `requires` (skill level) | `metadata.yaml` `requires` field | Same, per-skill definition |
-| `compatibleWith` (skill level) | `metadata.yaml` `compatibleWith` field | Framework filtering in build step |
-| `conflictsWith` (matrix level) | `skills-matrix.yaml` `relationships.conflicts` | Mutual exclusion |
-| `conflictsWith` (skill level) | `metadata.yaml` `conflictsWith` field | Per-skill mutual exclusion |
-| `discourages` | `skills-matrix.yaml` `relationships.discourages` | Soft warnings |
-| `recommends` | `skills-matrix.yaml` `relationships.recommends` | Soft suggestions |
-| `alternatives` | `skills-matrix.yaml` `relationships.alternatives` | Informational grouping |
-| `categoryExclusive` | `metadata.yaml` per skill | Override category exclusivity |
-| `exclusive` | Category definition in `skills-matrix.yaml` | Category-level radio vs checkbox |
+| Mechanism                      | Location                                          | Purpose                                                               |
+| ------------------------------ | ------------------------------------------------- | --------------------------------------------------------------------- |
+| `requires` (matrix level)      | `skills-matrix.yaml` `relationships.requires`     | Hard dependency: skill A needs skill B (supports `needsAny` OR logic) |
+| `requires` (skill level)       | `metadata.yaml` `requires` field                  | Same, per-skill definition                                            |
+| `compatibleWith` (skill level) | `metadata.yaml` `compatibleWith` field            | Framework filtering in build step                                     |
+| `conflictsWith` (matrix level) | `skills-matrix.yaml` `relationships.conflicts`    | Mutual exclusion                                                      |
+| `conflictsWith` (skill level)  | `metadata.yaml` `conflictsWith` field             | Per-skill mutual exclusion                                            |
+| `discourages`                  | `skills-matrix.yaml` `relationships.discourages`  | Soft warnings                                                         |
+| `recommends`                   | `skills-matrix.yaml` `relationships.recommends`   | Soft suggestions                                                      |
+| `alternatives`                 | `skills-matrix.yaml` `relationships.alternatives` | Informational grouping                                                |
+| `categoryExclusive`            | `metadata.yaml` per skill                         | Override category exclusivity                                         |
+| `exclusive`                    | Category definition in `skills-matrix.yaml`       | Category-level radio vs checkbox                                      |
 
 ### How the wizard handles exclusivity
 
@@ -60,17 +60,17 @@ The system already has robust relationship primitives:
 
 ## Framework Compatibility Map
 
-| Framework | Type | Can be selected with | Requires |
-|-----------|------|---------------------|----------|
-| React | base | Remix, Next.js, React Native | -- |
-| Vue | base | Nuxt | -- |
-| Angular | base | (standalone only) | -- |
-| SolidJS | base | (standalone only) | -- |
-| Next.js | meta | React only | React |
-| Remix | meta | React only | React |
-| Nuxt | meta | Vue only | Vue |
-| React Native | mobile | React, Expo | React |
-| Expo | mobile | React, React Native | React Native |
+| Framework    | Type   | Can be selected with         | Requires     |
+| ------------ | ------ | ---------------------------- | ------------ |
+| React        | base   | Remix, Next.js, React Native | --           |
+| Vue          | base   | Nuxt                         | --           |
+| Angular      | base   | (standalone only)            | --           |
+| SolidJS      | base   | (standalone only)            | --           |
+| Next.js      | meta   | React only                   | React        |
+| Remix        | meta   | React only                   | React        |
+| Nuxt         | meta   | Vue only                     | Vue          |
+| React Native | mobile | React, Expo                  | React        |
+| Expo         | mobile | React, React Native          | React Native |
 
 ### Valid multi-selections (examples)
 
@@ -228,6 +228,7 @@ if (!isSelected && !exclusive) {
 For all stacks that use `web-base-framework`, merge the skill into the `web-framework` array:
 
 **nuxt-stack (currently):**
+
 ```yaml
 web-developer:
   web-framework:
@@ -239,6 +240,7 @@ web-developer:
 ```
 
 **nuxt-stack (after):**
+
 ```yaml
 web-developer:
   web-framework:
@@ -249,6 +251,7 @@ web-developer:
 ```
 
 **remix-stack (currently):**
+
 ```yaml
 web-developer:
   web-framework:
@@ -260,6 +263,7 @@ web-developer:
 ```
 
 **remix-stack (after):**
+
 ```yaml
 web-developer:
   web-framework:
@@ -270,6 +274,7 @@ web-developer:
 ```
 
 **react-native-stack (currently):**
+
 ```yaml
 web-developer:
   web-framework:
@@ -284,6 +289,7 @@ web-developer:
 ```
 
 **react-native-stack (after):**
+
 ```yaml
 web-developer:
   web-framework:
@@ -300,6 +306,7 @@ web-developer:
 Every agent entry in a stack (web-developer, web-reviewer, web-pm, web-researcher, pattern-scout, etc.) has the same pattern. Apply the merge to all of them.
 
 **Count of changes by stack:**
+
 - `nuxt-stack`: ~8 agents x 2 keys (`web-framework` + `web-base-framework`) = ~8 merges
 - `remix-stack`: ~8 agents x 2 keys = ~8 merges
 - `react-native-stack`: ~8 agents x 3 keys (`web-framework` + `mobile-platform` + `web-base-framework`) = ~8 merges
@@ -328,7 +335,11 @@ Total: ~24 merge operations in stacks.yaml, plus removing all `web-base-framewor
 
 ```typescript
 // BEFORE (line 102):
-export const stackSubcategorySchema = z.enum([...SUBCATEGORY_VALUES, "web-base-framework", "mobile-platform"]);
+export const stackSubcategorySchema = z.enum([
+  ...SUBCATEGORY_VALUES,
+  "web-base-framework",
+  "mobile-platform",
+]);
 
 // AFTER: stackSubcategorySchema is no longer needed as a separate schema
 // (or simply becomes identical to subcategorySchema)
@@ -338,10 +349,12 @@ export const stackSubcategorySchema = subcategorySchema;
 #### 3d. Update JSON schemas
 
 **src/schemas/stacks.schema.json:**
+
 - Remove `"web-base-framework"` (line 72) from subcategory enum
 - Remove `"mobile-platform"` (line 60) from subcategory enum
 
 **src/schemas/project-config.schema.json:**
+
 - Remove `"web-base-framework"` (line 88) from subcategory enum
 - Remove `"mobile-platform"` (line 76) from subcategory enum
 
@@ -350,6 +363,7 @@ export const stackSubcategorySchema = subcategorySchema;
 #### 4a. No rendering changes needed (minimal approach)
 
 The `CategoryGrid` already renders all skills in a category as a flat list. When `exclusive: false`, the toggle behavior is already checkbox-style. The only thing that changes is:
+
 - `web-framework` moves from `exclusive: true` to `exclusive: false`
 - The conflict rules prevent incompatible selections
 - The requires rules enforce base framework dependencies
@@ -389,6 +403,7 @@ The `mobile-framework` category already exists with `exclusive: true`. Expo (`mo
 **Option B: Merge everything into web-framework**
 
 Since React Native and Expo are already skill IDs that appear in `web-framework` slots in stacks.yaml (the react-native-stack has `web-framework: mobile-framework-react-native`), we could move them into the `web-framework` category entirely. This would mean:
+
 - The `mobile-framework` category is removed
 - React Native and Expo appear alongside React, Vue, etc. in the framework picker
 - The `mobile` domain might become empty
@@ -420,6 +435,7 @@ mobile-framework:
 ```
 
 Add requires rule:
+
 ```yaml
 - skill: expo
   needs: [react-native]
@@ -432,20 +448,21 @@ Add requires rule:
 
 Search for these strings in test files and update:
 
-| File | What to update |
-|------|---------------|
-| `src/cli/lib/__tests__/helpers.ts` | If `createMockMatrix()` or similar uses these subcategories |
-| `src/cli/lib/__tests__/fixtures/create-test-source.ts` | If test stacks use `web-base-framework` |
-| `src/cli/lib/stacks/stacks-loader.test.ts` | If stack loading tests reference these keys |
-| `src/cli/lib/matrix/matrix-resolver.test.ts` | If exclusivity tests use `web-framework` as exclusive |
-| `src/cli/components/wizard/category-grid.test.tsx` | If grid tests assume exclusive framework category |
-| `src/cli/stores/wizard-store.test.ts` | If toggle tests assume exclusive framework behavior |
-| `src/cli/lib/wizard/build-step-logic.test.ts` | If build step tests reference these subcategories |
-| `src/cli/lib/matrix/matrix-health-check.test.ts` | If health checks validate these subcategories |
+| File                                                   | What to update                                              |
+| ------------------------------------------------------ | ----------------------------------------------------------- |
+| `src/cli/lib/__tests__/helpers.ts`                     | If `createMockMatrix()` or similar uses these subcategories |
+| `src/cli/lib/__tests__/fixtures/create-test-source.ts` | If test stacks use `web-base-framework`                     |
+| `src/cli/lib/stacks/stacks-loader.test.ts`             | If stack loading tests reference these keys                 |
+| `src/cli/lib/matrix/matrix-resolver.test.ts`           | If exclusivity tests use `web-framework` as exclusive       |
+| `src/cli/components/wizard/category-grid.test.tsx`     | If grid tests assume exclusive framework category           |
+| `src/cli/stores/wizard-store.test.ts`                  | If toggle tests assume exclusive framework behavior         |
+| `src/cli/lib/wizard/build-step-logic.test.ts`          | If build step tests reference these subcategories           |
+| `src/cli/lib/matrix/matrix-health-check.test.ts`       | If health checks validate these subcategories               |
 
 #### 6b. Test for new multi-select behavior
 
 Add tests for:
+
 - Selecting React + Remix together succeeds (no validation error)
 - Selecting React + Vue together fails (conflict error)
 - Selecting Remix alone fails (missing requirement: React)
@@ -459,43 +476,43 @@ Add tests for:
 
 ### Config files
 
-| File | Changes |
-|------|---------|
-| `config/skills-matrix.yaml` | Change `web-framework.exclusive` to false; change `mobile-framework.exclusive` to false; rewrite framework conflict rules; add/update meta-framework requires rules |
-| `config/stacks.yaml` | Merge all `web-base-framework` entries into `web-framework` arrays (~24 agents); merge all `mobile-platform` entries into `web-framework`/`mobile-framework` arrays (~8 agents); remove all `web-base-framework:` and `mobile-platform:` keys |
+| File                        | Changes                                                                                                                                                                                                                                       |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config/skills-matrix.yaml` | Change `web-framework.exclusive` to false; change `mobile-framework.exclusive` to false; rewrite framework conflict rules; add/update meta-framework requires rules                                                                           |
+| `config/stacks.yaml`        | Merge all `web-base-framework` entries into `web-framework` arrays (~24 agents); merge all `mobile-platform` entries into `web-framework`/`mobile-framework` arrays (~8 agents); remove all `web-base-framework:` and `mobile-platform:` keys |
 
 ### Type system
 
-| File | Lines | Changes |
-|------|-------|---------|
-| `src/cli/types/matrix.ts` | 27, 36 | Remove `"web-base-framework"` and `"mobile-platform"` from `Subcategory` union |
-| `src/cli/lib/schemas.ts` | 72, 81, 99-102 | Remove from `SUBCATEGORY_VALUES`; simplify `stackSubcategorySchema` |
+| File                      | Lines          | Changes                                                                        |
+| ------------------------- | -------------- | ------------------------------------------------------------------------------ |
+| `src/cli/types/matrix.ts` | 27, 36         | Remove `"web-base-framework"` and `"mobile-platform"` from `Subcategory` union |
+| `src/cli/lib/schemas.ts`  | 72, 81, 99-102 | Remove from `SUBCATEGORY_VALUES`; simplify `stackSubcategorySchema`            |
 
 ### JSON schemas
 
-| File | Lines | Changes |
-|------|-------|---------|
-| `src/schemas/stacks.schema.json` | 60, 72 | Remove `"mobile-platform"` and `"web-base-framework"` from enum |
+| File                                     | Lines  | Changes                                                         |
+| ---------------------------------------- | ------ | --------------------------------------------------------------- |
+| `src/schemas/stacks.schema.json`         | 60, 72 | Remove `"mobile-platform"` and `"web-base-framework"` from enum |
 | `src/schemas/project-config.schema.json` | 76, 88 | Remove `"mobile-platform"` and `"web-base-framework"` from enum |
 
 ### External repos (metadata.yaml in claude-subagents)
 
-| File | Changes |
-|------|---------|
-| `web-framework-nextjs-app-router/metadata.yaml` | Add `requires: [web-framework-react]` if removed by D-35 |
-| `web-framework-remix/metadata.yaml` | Add `requires: [web-framework-react]` if not present |
-| `web-framework-nuxt/metadata.yaml` | Add `requires: [web-framework-vue-composition-api]` if removed by D-35 |
-| `mobile-framework-expo/metadata.yaml` | Add `requires: [mobile-framework-react-native]` |
+| File                                            | Changes                                                                |
+| ----------------------------------------------- | ---------------------------------------------------------------------- |
+| `web-framework-nextjs-app-router/metadata.yaml` | Add `requires: [web-framework-react]` if removed by D-35               |
+| `web-framework-remix/metadata.yaml`             | Add `requires: [web-framework-react]` if not present                   |
+| `web-framework-nuxt/metadata.yaml`              | Add `requires: [web-framework-vue-composition-api]` if removed by D-35 |
+| `mobile-framework-expo/metadata.yaml`           | Add `requires: [mobile-framework-react-native]`                        |
 
 ### Tests (need review)
 
-| File | Likely changes |
-|------|---------------|
-| `src/cli/lib/matrix/matrix-resolver.test.ts` | Update exclusivity tests for web-framework |
-| `src/cli/stores/wizard-store.test.ts` | Update toggle tests for non-exclusive framework |
-| `src/cli/lib/wizard/build-step-logic.test.ts` | Update if referencing exclusive framework |
-| `src/cli/lib/stacks/stacks-loader.test.ts` | Update if referencing web-base-framework |
-| `src/cli/lib/__tests__/fixtures/create-test-source.ts` | Update test stacks if they use web-base-framework |
+| File                                                                           | Likely changes                                    |
+| ------------------------------------------------------------------------------ | ------------------------------------------------- |
+| `src/cli/lib/matrix/matrix-resolver.test.ts`                                   | Update exclusivity tests for web-framework        |
+| `src/cli/stores/wizard-store.test.ts`                                          | Update toggle tests for non-exclusive framework   |
+| `src/cli/lib/wizard/build-step-logic.test.ts`                                  | Update if referencing exclusive framework         |
+| `src/cli/lib/stacks/stacks-loader.test.ts`                                     | Update if referencing web-base-framework          |
+| `src/cli/lib/__tests__/fixtures/create-test-source.ts`                         | Update test stacks if they use web-base-framework |
 | `src/cli/lib/__tests__/integration/consumer-stacks-matrix.integration.test.ts` | Update if referencing exclusive or base-framework |
 
 ---

@@ -12,45 +12,45 @@ Rename all bare subcategory keys to domain-prefixed form (`framework` -> `web-fr
 
 Derived from `config/skills-matrix.yaml` which is the canonical source of truth for domain-to-subcategory mapping.
 
-| #   | Current Subcategory | Domain     | New Value                   | Notes |
-| --- | ------------------- | ---------- | --------------------------- | ----- |
-| 1   | `framework`         | web        | `web-framework`             |       |
-| 2   | ~~`meta-framework`~~| ~~web~~    | ~~`web-meta-framework`~~    | **Removed by D-35** — merged into `framework` before D-31 runs |
-| 3   | `styling`           | web        | `web-styling`               |       |
-| 4   | `client-state`      | web        | `web-client-state`          |       |
-| 5   | `server-state`      | web        | `web-server-state`          |       |
-| 6   | `forms`             | web        | `web-forms`                 |       |
-| 7   | `testing`           | web        | `web-testing`               |       |
-| 8   | `ui-components`     | web        | `web-ui-components`         |       |
-| 9   | `mocking`           | web        | `web-mocking`               |       |
-| 10  | `error-handling`    | web-extras | `web-error-handling` | YAML domain is `web-extras`, prefixed as `web-` (D-33 removes web-extras) |
-| 11  | `i18n`              | web        | `web-i18n`                  |       |
-| 12  | `file-upload`       | web-extras | `web-file-upload`    | YAML domain is `web-extras`, prefixed as `web-` |
-| 13  | `files`             | web-extras | `web-files`          | YAML domain is `web-extras`, prefixed as `web-` |
-| 14  | `utilities`         | web-extras | `web-utilities`      | YAML domain is `web-extras`, prefixed as `web-` |
-| 15  | `realtime`          | web-extras | `web-realtime`       | YAML domain is `web-extras`, prefixed as `web-` |
-| 16  | `animation`         | web-extras | `web-animation`      | YAML domain is `web-extras`, prefixed as `web-` |
-| 17  | `pwa`               | web-extras | `web-pwa`            | YAML domain is `web-extras`, prefixed as `web-` |
-| 18  | `accessibility`     | web-extras | `web-accessibility`  | YAML domain is `web-extras`, prefixed as `web-` |
-| 19  | `web-performance`   | web        | `web-performance`       | Already prefixed — no change |
-| 20  | `api`               | api        | `api-api`                   |       |
-| 21  | `database`          | api        | `api-database`              |       |
-| 22  | `auth`              | api        | `api-auth`                  |       |
-| 23  | `observability`     | api        | `api-observability`         |       |
-| 24  | `analytics`         | api        | `api-analytics`             |       |
-| 25  | `email`             | api        | `api-email`                 |       |
-| 26  | `performance`       | api        | `api-performance`           |       |
-| 27  | `mobile-framework`  | mobile     | `mobile-framework`   | Already prefixed — no change |
-| 28  | `monorepo`          | shared     | `shared-monorepo`           |       |
-| 29  | `tooling`           | shared     | `shared-tooling`            |       |
-| 30  | `security`          | shared     | `shared-security`           |       |
-| 31  | `methodology`       | shared     | `shared-methodology`        |       |
-| 32  | `research`          | shared     | `shared-research`           |       |
-| 33  | `reviewing`         | shared     | `shared-reviewing`          |       |
-| 34  | `ci-cd`             | shared     | `shared-ci-cd`              |       |
-| 35  | `cli-framework`     | cli        | `cli-framework`         | Already prefixed — no change |
-| 36  | `cli-prompts`       | cli        | `cli-prompts`           | Already prefixed — no change |
-| 37  | `cli-testing`       | cli        | `cli-testing`           | Already prefixed — no change |
+| #   | Current Subcategory  | Domain     | New Value                | Notes                                                                     |
+| --- | -------------------- | ---------- | ------------------------ | ------------------------------------------------------------------------- |
+| 1   | `framework`          | web        | `web-framework`          |                                                                           |
+| 2   | ~~`meta-framework`~~ | ~~web~~    | ~~`web-meta-framework`~~ | **Removed by D-35** — merged into `framework` before D-31 runs            |
+| 3   | `styling`            | web        | `web-styling`            |                                                                           |
+| 4   | `client-state`       | web        | `web-client-state`       |                                                                           |
+| 5   | `server-state`       | web        | `web-server-state`       |                                                                           |
+| 6   | `forms`              | web        | `web-forms`              |                                                                           |
+| 7   | `testing`            | web        | `web-testing`            |                                                                           |
+| 8   | `ui-components`      | web        | `web-ui-components`      |                                                                           |
+| 9   | `mocking`            | web        | `web-mocking`            |                                                                           |
+| 10  | `error-handling`     | web-extras | `web-error-handling`     | YAML domain is `web-extras`, prefixed as `web-` (D-33 removes web-extras) |
+| 11  | `i18n`               | web        | `web-i18n`               |                                                                           |
+| 12  | `file-upload`        | web-extras | `web-file-upload`        | YAML domain is `web-extras`, prefixed as `web-`                           |
+| 13  | `files`              | web-extras | `web-files`              | YAML domain is `web-extras`, prefixed as `web-`                           |
+| 14  | `utilities`          | web-extras | `web-utilities`          | YAML domain is `web-extras`, prefixed as `web-`                           |
+| 15  | `realtime`           | web-extras | `web-realtime`           | YAML domain is `web-extras`, prefixed as `web-`                           |
+| 16  | `animation`          | web-extras | `web-animation`          | YAML domain is `web-extras`, prefixed as `web-`                           |
+| 17  | `pwa`                | web-extras | `web-pwa`                | YAML domain is `web-extras`, prefixed as `web-`                           |
+| 18  | `accessibility`      | web-extras | `web-accessibility`      | YAML domain is `web-extras`, prefixed as `web-`                           |
+| 19  | `web-performance`    | web        | `web-performance`        | Already prefixed — no change                                              |
+| 20  | `api`                | api        | `api-api`                |                                                                           |
+| 21  | `database`           | api        | `api-database`           |                                                                           |
+| 22  | `auth`               | api        | `api-auth`               |                                                                           |
+| 23  | `observability`      | api        | `api-observability`      |                                                                           |
+| 24  | `analytics`          | api        | `api-analytics`          |                                                                           |
+| 25  | `email`              | api        | `api-email`              |                                                                           |
+| 26  | `performance`        | api        | `api-performance`        |                                                                           |
+| 27  | `mobile-framework`   | mobile     | `mobile-framework`       | Already prefixed — no change                                              |
+| 28  | `monorepo`           | shared     | `shared-monorepo`        |                                                                           |
+| 29  | `tooling`            | shared     | `shared-tooling`         |                                                                           |
+| 30  | `security`           | shared     | `shared-security`        |                                                                           |
+| 31  | `methodology`        | shared     | `shared-methodology`     |                                                                           |
+| 32  | `research`           | shared     | `shared-research`        |                                                                           |
+| 33  | `reviewing`          | shared     | `shared-reviewing`       |                                                                           |
+| 34  | `ci-cd`              | shared     | `shared-ci-cd`           |                                                                           |
+| 35  | `cli-framework`      | cli        | `cli-framework`          | Already prefixed — no change                                              |
+| 36  | `cli-prompts`        | cli        | `cli-prompts`            | Already prefixed — no change                                              |
+| 37  | `cli-testing`        | cli        | `cli-testing`            | Already prefixed — no change                                              |
 
 **Stacks-only keys (not in skills-matrix.yaml categories but used in stacks.yaml):**
 
@@ -106,10 +106,7 @@ export type CategoryPath =
 // AFTER -- the `Subcategory` branch now has "domain-subcategory" format (hyphen separator)
 // which overlaps with `${SkillIdPrefix}-${string}` for most values.
 // Consider simplification:
-export type CategoryPath =
-  | `${SkillIdPrefix}-${string}`
-  | Subcategory
-  | "local";
+export type CategoryPath = `${SkillIdPrefix}-${string}` | Subcategory | "local";
 // Subcategory now IS domain-prefixed with "-": "web-framework", "api-database", etc.
 // The Subcategory branch matches `${SkillIdPrefix}-${string}` for web/api/cli/mobile
 // but NOT for "web-..." or "shared-..." since those are not SkillIdPrefix values.
@@ -386,43 +383,43 @@ All of these auto-update when the `Subcategory` union type changes. **No code ch
 
 **Current category values found (with counts):**
 
-| Current Value      | Count | New Value                   |
-| ------------------ | ----- | --------------------------- |
-| `testing`          | 6     | `web-testing`               |
-| `methodology`      | 6     | `shared-methodology`        |
-| `client-state`     | 6     | `web-client-state`          |
-| `server-state`     | 5     | `web-server-state`          |
-| ~~`meta-framework`~~| ~~4~~ | ~~`web-meta-framework`~~    | **D-35: merged into `framework` before D-31** |
-| `framework`        | 4     | `web-framework`             |
-| `ui-components`    | 3     | `web-ui-components`         |
-| `tooling`          | 3     | `shared-tooling`            |
-| `styling`          | 3     | `web-styling`               |
-| `realtime`         | 3     | `web-realtime`       |
-| `i18n`             | 3     | `web-i18n`                  |
-| `forms`            | 3     | `web-forms`                 |
-| `api`              | 3     | `api-api`                   |
-| `animation`        | 3     | `web-animation`      |
-| `analytics`        | 3     | `api-analytics`             |
-| `utilities`        | 2     | `web-utilities`      |
-| `reviewing`        | 2     | `shared-reviewing`          |
-| `pwa`              | 2     | `web-pwa`            |
-| `observability`    | 2     | `api-observability`         |
-| `mobile-framework` | 2     | `mobile-framework`   |
-| `error-handling`   | 2     | `web-error-handling` |
-| `email`            | 2     | `api-email`                 |
-| `database`         | 2     | `api-database`              |
-| `cli-framework`    | 2     | `cli-framework`         |
-| `web-performance`  | 1     | `web-performance`       |
-| `security`         | 1     | `shared-security`           |
-| `research`         | 1     | `shared-research`           |
-| `performance`      | 1     | `api-performance`           |
-| `monorepo`         | 1     | `shared-monorepo`           |
-| `mocking`          | 1     | `web-mocking`               |
-| `files`            | 1     | `web-files`          |
-| `file-upload`      | 1     | `web-file-upload`    |
-| `ci-cd`            | 1     | `shared-ci-cd`              |
-| `auth`             | 1     | `api-auth`                  |
-| `accessibility`    | 1     | `web-accessibility`  |
+| Current Value        | Count | New Value                |
+| -------------------- | ----- | ------------------------ | --------------------------------------------- |
+| `testing`            | 6     | `web-testing`            |
+| `methodology`        | 6     | `shared-methodology`     |
+| `client-state`       | 6     | `web-client-state`       |
+| `server-state`       | 5     | `web-server-state`       |
+| ~~`meta-framework`~~ | ~~4~~ | ~~`web-meta-framework`~~ | **D-35: merged into `framework` before D-31** |
+| `framework`          | 4     | `web-framework`          |
+| `ui-components`      | 3     | `web-ui-components`      |
+| `tooling`            | 3     | `shared-tooling`         |
+| `styling`            | 3     | `web-styling`            |
+| `realtime`           | 3     | `web-realtime`           |
+| `i18n`               | 3     | `web-i18n`               |
+| `forms`              | 3     | `web-forms`              |
+| `api`                | 3     | `api-api`                |
+| `animation`          | 3     | `web-animation`          |
+| `analytics`          | 3     | `api-analytics`          |
+| `utilities`          | 2     | `web-utilities`          |
+| `reviewing`          | 2     | `shared-reviewing`       |
+| `pwa`                | 2     | `web-pwa`                |
+| `observability`      | 2     | `api-observability`      |
+| `mobile-framework`   | 2     | `mobile-framework`       |
+| `error-handling`     | 2     | `web-error-handling`     |
+| `email`              | 2     | `api-email`              |
+| `database`           | 2     | `api-database`           |
+| `cli-framework`      | 2     | `cli-framework`          |
+| `web-performance`    | 1     | `web-performance`        |
+| `security`           | 1     | `shared-security`        |
+| `research`           | 1     | `shared-research`        |
+| `performance`        | 1     | `api-performance`        |
+| `monorepo`           | 1     | `shared-monorepo`        |
+| `mocking`            | 1     | `web-mocking`            |
+| `files`              | 1     | `web-files`              |
+| `file-upload`        | 1     | `web-file-upload`        |
+| `ci-cd`              | 1     | `shared-ci-cd`           |
+| `auth`               | 1     | `api-auth`               |
+| `accessibility`      | 1     | `web-accessibility`      |
 
 **Total files to change:** 87 metadata.yaml files
 
@@ -434,31 +431,31 @@ All of these auto-update when the `Subcategory` union type changes. **No code ch
 
 **Current category values found (with counts):**
 
-| Current Value    | Count | New Value              |
-| ---------------- | ----- | ---------------------- |
-| `methodology`    | 6     | `shared-methodology`   |
-| `testing`        | 3     | `web-testing`          |
-| `animation`      | 3     | `web-animation`        |
-| `reviewing`      | 2     | `shared-reviewing`     |
-| `tooling`        | 3     | `shared-tooling`       |
-| `utilities`      | 2     | `web-utilities`        |
-| `styling`        | 2     | `web-styling`          |
-| `i18n`           | 2     | `web-i18n`             |
-| `forms`          | 2     | `web-forms`            |
-| `error-handling` | 2     | `web-error-handling`   |
-| `client-state`   | 2     | `web-client-state`     |
-| `api`            | 2     | `api-api`              |
-| `web-performance`| 1     | `web-performance`      |
-| `accessibility`  | 1     | `web-accessibility`    |
-| `ui-components`  | 1     | `web-ui-components`    |
-| `server-state`   | 1     | `web-server-state`     |
-| `security`       | 1     | `shared-security`      |
-| `research`       | 1     | `shared-research`      |
-| `monorepo`       | 1     | `shared-monorepo`      |
-| `framework`      | 1     | `web-framework`        |
-| `files`          | 1     | `web-files`            |
-| `file-upload`    | 1     | `web-file-upload`      |
-| `database`       | 1     | `api-database`         |
+| Current Value     | Count | New Value            |
+| ----------------- | ----- | -------------------- |
+| `methodology`     | 6     | `shared-methodology` |
+| `testing`         | 3     | `web-testing`        |
+| `animation`       | 3     | `web-animation`      |
+| `reviewing`       | 2     | `shared-reviewing`   |
+| `tooling`         | 3     | `shared-tooling`     |
+| `utilities`       | 2     | `web-utilities`      |
+| `styling`         | 2     | `web-styling`        |
+| `i18n`            | 2     | `web-i18n`           |
+| `forms`           | 2     | `web-forms`          |
+| `error-handling`  | 2     | `web-error-handling` |
+| `client-state`    | 2     | `web-client-state`   |
+| `api`             | 2     | `api-api`            |
+| `web-performance` | 1     | `web-performance`    |
+| `accessibility`   | 1     | `web-accessibility`  |
+| `ui-components`   | 1     | `web-ui-components`  |
+| `server-state`    | 1     | `web-server-state`   |
+| `security`        | 1     | `shared-security`    |
+| `research`        | 1     | `shared-research`    |
+| `monorepo`        | 1     | `shared-monorepo`    |
+| `framework`       | 1     | `web-framework`      |
+| `files`           | 1     | `web-files`          |
+| `file-upload`     | 1     | `web-file-upload`    |
+| `database`        | 1     | `api-database`       |
 
 **Total files to change:** 42 metadata.yaml files (all purely mechanical renames)
 
@@ -618,95 +615,95 @@ Removed — dead code. Never consumed by TypeScript.
 
 **No anomalies — all current values are valid subcategories. Purely mechanical rename.**
 
-| # | Skill Directory | Current | Target |
-|---|----------------|---------|--------|
-| 1 | `api-analytics-posthog-analytics` | `analytics` | `api-analytics` |
-| 2 | `api-analytics-setup-posthog` | `analytics` | `api-analytics` |
-| 3 | `api-auth-better-auth-drizzle-hono` | `auth` | `api-auth` |
-| 4 | `api-ci-cd-github-actions` | `ci-cd` | `shared-ci-cd` |
-| 5 | `api-database-drizzle` | `database` | `api-database` |
-| 6 | `api-database-prisma` | `database` | `api-database` |
-| 7 | `api-email-resend-react-email` | `email` | `api-email` |
-| 8 | `api-email-setup-resend` | `email` | `api-email` |
-| 9 | `api-flags-posthog-flags` | `analytics` | `api-analytics` |
-| 10 | `api-framework-express` | `api` | `api-api` |
-| 11 | `api-framework-fastify` | `api` | `api-api` |
-| 12 | `api-framework-hono` | `api` | `api-api` |
-| 13 | `api-observability-axiom-pino-sentry` | `observability` | `api-observability` |
-| 14 | `api-observability-setup-axiom-pino-sentry` | `observability` | `api-observability` |
-| 15 | `api-performance-api-performance` | `performance` | `api-performance` |
-| 16 | `api-testing-api-testing` | `testing` | `web-testing` |
-| 17 | `cli-framework-cli-commander` | `cli-framework` | `cli-framework` |
-| 18 | `cli-framework-oclif-ink` | `cli-framework` | `cli-framework` |
-| 19 | `infra-env-setup-env` | `tooling` | `shared-tooling` |
-| 20 | `infra-monorepo-turborepo` | `monorepo` | `shared-monorepo` |
-| 21 | `infra-tooling-setup-tooling` | `tooling` | `shared-tooling` |
-| 22 | `meta-methodology-anti-over-engineering` | `methodology` | `shared-methodology` |
-| 23 | `meta-methodology-context-management` | `methodology` | `shared-methodology` |
-| 24 | `meta-methodology-improvement-protocol` | `methodology` | `shared-methodology` |
-| 25 | `meta-methodology-investigation-requirements` | `methodology` | `shared-methodology` |
-| 26 | `meta-methodology-success-criteria` | `methodology` | `shared-methodology` |
-| 27 | `meta-methodology-write-verification` | `methodology` | `shared-methodology` |
-| 28 | `meta-research-research-methodology` | `research` | `shared-research` |
-| 29 | `meta-reviewing-cli-reviewing` | `reviewing` | `shared-reviewing` |
-| 30 | `meta-reviewing-reviewing` | `reviewing` | `shared-reviewing` |
-| 31 | `mobile-framework-expo` | `mobile-framework` | `mobile-framework` |
-| 32 | `mobile-framework-react-native` | `mobile-framework` | `mobile-framework` |
-| 33 | `security-auth-security` | `security` | `shared-security` |
-| 34 | `web-accessibility-web-accessibility` | `accessibility` | `web-accessibility` |
-| 35 | `web-animation-css-animations` | `animation` | `web-animation` |
-| 36 | `web-animation-framer-motion` | `animation` | `web-animation` |
-| 37 | `web-animation-view-transitions` | `animation` | `web-animation` |
-| 38 | `web-data-fetching-graphql-apollo` | `server-state` | `web-server-state` |
-| 39 | `web-data-fetching-graphql-urql` | `server-state` | `web-server-state` |
-| 40 | `web-data-fetching-swr` | `server-state` | `web-server-state` |
-| 41 | `web-data-fetching-trpc` | `server-state` | `web-server-state` |
-| 42 | `web-error-handling-error-boundaries` | `error-handling` | `web-error-handling` |
-| 43 | `web-error-handling-result-types` | `error-handling` | `web-error-handling` |
-| 44 | `web-files-file-upload-patterns` | `file-upload` | `web-file-upload` |
-| 45 | `web-files-image-handling` | `files` | `web-files` |
-| 46 | `web-forms-react-hook-form` | `forms` | `web-forms` |
-| 47 | `web-forms-vee-validate` | `forms` | `web-forms` |
-| 48 | `web-forms-zod-validation` | `forms` | `web-forms` |
-| 49 | `web-framework-angular-standalone` | `framework` | `web-framework` |
-| 50 | `web-framework-nextjs-app-router` | `meta-framework` | `web-framework` | D-35 changes to `framework` first, then D-31 prefixes |
-| 51 | `web-framework-nextjs-server-actions` | `meta-framework` | `web-framework` | D-35 changes to `framework` first, then D-31 prefixes |
-| 52 | `web-framework-nuxt` | `meta-framework` | `web-framework` | D-35 changes to `framework` first, then D-31 prefixes |
-| 53 | `web-framework-react` | `framework` | `web-framework` |
-| 54 | `web-framework-remix` | `meta-framework` | `web-framework` | D-35 changes to `framework` first, then D-31 prefixes |
-| 55 | `web-framework-solidjs` | `framework` | `web-framework` |
-| 56 | `web-framework-vue-composition-api` | `framework` | `web-framework` |
-| 57 | `web-i18n-next-intl` | `i18n` | `web-i18n` |
-| 58 | `web-i18n-react-intl` | `i18n` | `web-i18n` |
-| 59 | `web-i18n-vue-i18n` | `i18n` | `web-i18n` |
-| 60 | `web-mocks-msw` | `mocking` | `web-mocking` |
-| 61 | `web-performance-web-performance` | `web-performance` | `web-performance` |
-| 62 | `web-pwa-offline-first` | `pwa` | `web-pwa` |
-| 63 | `web-pwa-service-workers` | `pwa` | `web-pwa` |
-| 64 | `web-realtime-socket-io` | `realtime` | `web-realtime` |
-| 65 | `web-realtime-sse` | `realtime` | `web-realtime` |
-| 66 | `web-realtime-websockets` | `realtime` | `web-realtime` |
-| 67 | `web-server-state-react-query` | `server-state` | `web-server-state` |
-| 68 | `web-state-jotai` | `client-state` | `web-client-state` |
-| 69 | `web-state-mobx` | `client-state` | `web-client-state` |
-| 70 | `web-state-ngrx-signalstore` | `client-state` | `web-client-state` |
-| 71 | `web-state-pinia` | `client-state` | `web-client-state` |
-| 72 | `web-state-redux-toolkit` | `client-state` | `web-client-state` |
-| 73 | `web-state-zustand` | `client-state` | `web-client-state` |
-| 74 | `web-styling-cva` | `styling` | `web-styling` |
-| 75 | `web-styling-scss-modules` | `styling` | `web-styling` |
-| 76 | `web-styling-tailwind` | `styling` | `web-styling` |
-| 77 | `web-testing-cypress-e2e` | `testing` | `web-testing` |
-| 78 | `web-testing-playwright-e2e` | `testing` | `web-testing` |
-| 79 | `web-testing-react-testing-library` | `testing` | `web-testing` |
-| 80 | `web-testing-vitest` | `testing` | `web-testing` |
-| 81 | `web-testing-vue-test-utils` | `testing` | `web-testing` |
-| 82 | `web-tooling-storybook` | `tooling` | `shared-tooling` |
-| 83 | `web-ui-radix-ui` | `ui-components` | `web-ui-components` |
-| 84 | `web-ui-shadcn-ui` | `ui-components` | `web-ui-components` |
-| 85 | `web-ui-tanstack-table` | `ui-components` | `web-ui-components` |
-| 86 | `web-utilities-date-fns` | `utilities` | `web-utilities` |
-| 87 | `web-utilities-native-js` | `utilities` | `web-utilities` |
+| #   | Skill Directory                               | Current            | Target               |
+| --- | --------------------------------------------- | ------------------ | -------------------- | ----------------------------------------------------- |
+| 1   | `api-analytics-posthog-analytics`             | `analytics`        | `api-analytics`      |
+| 2   | `api-analytics-setup-posthog`                 | `analytics`        | `api-analytics`      |
+| 3   | `api-auth-better-auth-drizzle-hono`           | `auth`             | `api-auth`           |
+| 4   | `api-ci-cd-github-actions`                    | `ci-cd`            | `shared-ci-cd`       |
+| 5   | `api-database-drizzle`                        | `database`         | `api-database`       |
+| 6   | `api-database-prisma`                         | `database`         | `api-database`       |
+| 7   | `api-email-resend-react-email`                | `email`            | `api-email`          |
+| 8   | `api-email-setup-resend`                      | `email`            | `api-email`          |
+| 9   | `api-flags-posthog-flags`                     | `analytics`        | `api-analytics`      |
+| 10  | `api-framework-express`                       | `api`              | `api-api`            |
+| 11  | `api-framework-fastify`                       | `api`              | `api-api`            |
+| 12  | `api-framework-hono`                          | `api`              | `api-api`            |
+| 13  | `api-observability-axiom-pino-sentry`         | `observability`    | `api-observability`  |
+| 14  | `api-observability-setup-axiom-pino-sentry`   | `observability`    | `api-observability`  |
+| 15  | `api-performance-api-performance`             | `performance`      | `api-performance`    |
+| 16  | `api-testing-api-testing`                     | `testing`          | `web-testing`        |
+| 17  | `cli-framework-cli-commander`                 | `cli-framework`    | `cli-framework`      |
+| 18  | `cli-framework-oclif-ink`                     | `cli-framework`    | `cli-framework`      |
+| 19  | `infra-env-setup-env`                         | `tooling`          | `shared-tooling`     |
+| 20  | `infra-monorepo-turborepo`                    | `monorepo`         | `shared-monorepo`    |
+| 21  | `infra-tooling-setup-tooling`                 | `tooling`          | `shared-tooling`     |
+| 22  | `meta-methodology-anti-over-engineering`      | `methodology`      | `shared-methodology` |
+| 23  | `meta-methodology-context-management`         | `methodology`      | `shared-methodology` |
+| 24  | `meta-methodology-improvement-protocol`       | `methodology`      | `shared-methodology` |
+| 25  | `meta-methodology-investigation-requirements` | `methodology`      | `shared-methodology` |
+| 26  | `meta-methodology-success-criteria`           | `methodology`      | `shared-methodology` |
+| 27  | `meta-methodology-write-verification`         | `methodology`      | `shared-methodology` |
+| 28  | `meta-research-research-methodology`          | `research`         | `shared-research`    |
+| 29  | `meta-reviewing-cli-reviewing`                | `reviewing`        | `shared-reviewing`   |
+| 30  | `meta-reviewing-reviewing`                    | `reviewing`        | `shared-reviewing`   |
+| 31  | `mobile-framework-expo`                       | `mobile-framework` | `mobile-framework`   |
+| 32  | `mobile-framework-react-native`               | `mobile-framework` | `mobile-framework`   |
+| 33  | `security-auth-security`                      | `security`         | `shared-security`    |
+| 34  | `web-accessibility-web-accessibility`         | `accessibility`    | `web-accessibility`  |
+| 35  | `web-animation-css-animations`                | `animation`        | `web-animation`      |
+| 36  | `web-animation-framer-motion`                 | `animation`        | `web-animation`      |
+| 37  | `web-animation-view-transitions`              | `animation`        | `web-animation`      |
+| 38  | `web-data-fetching-graphql-apollo`            | `server-state`     | `web-server-state`   |
+| 39  | `web-data-fetching-graphql-urql`              | `server-state`     | `web-server-state`   |
+| 40  | `web-data-fetching-swr`                       | `server-state`     | `web-server-state`   |
+| 41  | `web-data-fetching-trpc`                      | `server-state`     | `web-server-state`   |
+| 42  | `web-error-handling-error-boundaries`         | `error-handling`   | `web-error-handling` |
+| 43  | `web-error-handling-result-types`             | `error-handling`   | `web-error-handling` |
+| 44  | `web-files-file-upload-patterns`              | `file-upload`      | `web-file-upload`    |
+| 45  | `web-files-image-handling`                    | `files`            | `web-files`          |
+| 46  | `web-forms-react-hook-form`                   | `forms`            | `web-forms`          |
+| 47  | `web-forms-vee-validate`                      | `forms`            | `web-forms`          |
+| 48  | `web-forms-zod-validation`                    | `forms`            | `web-forms`          |
+| 49  | `web-framework-angular-standalone`            | `framework`        | `web-framework`      |
+| 50  | `web-framework-nextjs-app-router`             | `meta-framework`   | `web-framework`      | D-35 changes to `framework` first, then D-31 prefixes |
+| 51  | `web-framework-nextjs-server-actions`         | `meta-framework`   | `web-framework`      | D-35 changes to `framework` first, then D-31 prefixes |
+| 52  | `web-framework-nuxt`                          | `meta-framework`   | `web-framework`      | D-35 changes to `framework` first, then D-31 prefixes |
+| 53  | `web-framework-react`                         | `framework`        | `web-framework`      |
+| 54  | `web-framework-remix`                         | `meta-framework`   | `web-framework`      | D-35 changes to `framework` first, then D-31 prefixes |
+| 55  | `web-framework-solidjs`                       | `framework`        | `web-framework`      |
+| 56  | `web-framework-vue-composition-api`           | `framework`        | `web-framework`      |
+| 57  | `web-i18n-next-intl`                          | `i18n`             | `web-i18n`           |
+| 58  | `web-i18n-react-intl`                         | `i18n`             | `web-i18n`           |
+| 59  | `web-i18n-vue-i18n`                           | `i18n`             | `web-i18n`           |
+| 60  | `web-mocks-msw`                               | `mocking`          | `web-mocking`        |
+| 61  | `web-performance-web-performance`             | `web-performance`  | `web-performance`    |
+| 62  | `web-pwa-offline-first`                       | `pwa`              | `web-pwa`            |
+| 63  | `web-pwa-service-workers`                     | `pwa`              | `web-pwa`            |
+| 64  | `web-realtime-socket-io`                      | `realtime`         | `web-realtime`       |
+| 65  | `web-realtime-sse`                            | `realtime`         | `web-realtime`       |
+| 66  | `web-realtime-websockets`                     | `realtime`         | `web-realtime`       |
+| 67  | `web-server-state-react-query`                | `server-state`     | `web-server-state`   |
+| 68  | `web-state-jotai`                             | `client-state`     | `web-client-state`   |
+| 69  | `web-state-mobx`                              | `client-state`     | `web-client-state`   |
+| 70  | `web-state-ngrx-signalstore`                  | `client-state`     | `web-client-state`   |
+| 71  | `web-state-pinia`                             | `client-state`     | `web-client-state`   |
+| 72  | `web-state-redux-toolkit`                     | `client-state`     | `web-client-state`   |
+| 73  | `web-state-zustand`                           | `client-state`     | `web-client-state`   |
+| 74  | `web-styling-cva`                             | `styling`          | `web-styling`        |
+| 75  | `web-styling-scss-modules`                    | `styling`          | `web-styling`        |
+| 76  | `web-styling-tailwind`                        | `styling`          | `web-styling`        |
+| 77  | `web-testing-cypress-e2e`                     | `testing`          | `web-testing`        |
+| 78  | `web-testing-playwright-e2e`                  | `testing`          | `web-testing`        |
+| 79  | `web-testing-react-testing-library`           | `testing`          | `web-testing`        |
+| 80  | `web-testing-vitest`                          | `testing`          | `web-testing`        |
+| 81  | `web-testing-vue-test-utils`                  | `testing`          | `web-testing`        |
+| 82  | `web-tooling-storybook`                       | `tooling`          | `shared-tooling`     |
+| 83  | `web-ui-radix-ui`                             | `ui-components`    | `web-ui-components`  |
+| 84  | `web-ui-shadcn-ui`                            | `ui-components`    | `web-ui-components`  |
+| 85  | `web-ui-tanstack-table`                       | `ui-components`    | `web-ui-components`  |
+| 86  | `web-utilities-date-fns`                      | `utilities`        | `web-utilities`      |
+| 87  | `web-utilities-native-js`                     | `utilities`        | `web-utilities`      |
 
 **Note:** `api-testing-api-testing` (#16) has `testing` which maps to `web-testing` per skills-matrix.yaml. This is correct per the current matrix — there is no separate `api-testing` subcategory.
 
@@ -716,50 +713,50 @@ Removed — dead code. Never consumed by TypeScript.
 
 **No anomalies — all 8 former anomalies were fixed earlier this session.** All current values are valid subcategories. Purely mechanical rename.
 
-| # | Skill Directory | Current | Target |
-|---|----------------|---------|--------|
-| 1 | `api-database-drizzle` | `database` | `api-database` |
-| 2 | `api-framework-express` | `api` | `api-api` |
-| 3 | `api-framework-hono` | `api` | `api-api` |
-| 4 | `infra-env-setup-env` | `tooling` | `shared-tooling` |
-| 5 | `infra-monorepo-turborepo` | `monorepo` | `shared-monorepo` |
-| 6 | `infra-tooling-setup-tooling` | `tooling` | `shared-tooling` |
-| 7 | `meta-methodology-anti-over-engineering` | `methodology` | `shared-methodology` |
-| 8 | `meta-methodology-context-management` | `methodology` | `shared-methodology` |
-| 9 | `meta-methodology-improvement-protocol` | `methodology` | `shared-methodology` |
-| 10 | `meta-methodology-investigation-requirements` | `methodology` | `shared-methodology` |
-| 11 | `meta-methodology-success-criteria` | `methodology` | `shared-methodology` |
-| 12 | `meta-methodology-write-verification` | `methodology` | `shared-methodology` |
-| 13 | `meta-research-research-methodology` | `research` | `shared-research` |
-| 14 | `meta-reviewing-cli-reviewing` | `reviewing` | `shared-reviewing` |
-| 15 | `meta-reviewing-reviewing` | `reviewing` | `shared-reviewing` |
-| 16 | `security-auth-security` | `security` | `shared-security` |
-| 17 | `web-accessibility-web-accessibility` | `accessibility` | `web-accessibility` |
-| 18 | `web-animation-css-animations` | `animation` | `web-animation` |
-| 19 | `web-animation-framer-motion` | `animation` | `web-animation` |
-| 20 | `web-animation-view-transitions` | `animation` | `web-animation` |
-| 21 | `web-error-handling-error-boundaries` | `error-handling` | `web-error-handling` |
-| 22 | `web-error-handling-result-types` | `error-handling` | `web-error-handling` |
-| 23 | `web-files-file-upload-patterns` | `file-upload` | `web-file-upload` |
-| 24 | `web-files-image-handling` | `files` | `web-files` |
-| 25 | `web-forms-react-hook-form` | `forms` | `web-forms` |
-| 26 | `web-forms-zod-validation` | `forms` | `web-forms` |
-| 27 | `web-framework-react` | `framework` | `web-framework` |
-| 28 | `web-i18n-i18next` | `i18n` | `web-i18n` |
-| 29 | `web-i18n-react-intl` | `i18n` | `web-i18n` |
-| 30 | `web-performance-web-performance` | `web-performance` | `web-performance` |
-| 31 | `web-server-state-react-query` | `server-state` | `web-server-state` |
-| 32 | `web-state-mobx` | `client-state` | `web-client-state` |
-| 33 | `web-state-zustand` | `client-state` | `web-client-state` |
-| 34 | `web-styling-cva` | `styling` | `web-styling` |
-| 35 | `web-styling-tailwind-v3` | `styling` | `web-styling` |
-| 36 | `web-testing-playwright-e2e` | `testing` | `web-testing` |
-| 37 | `web-testing-react-testing-library` | `testing` | `web-testing` |
-| 38 | `web-testing-vitest` | `testing` | `web-testing` |
-| 39 | `web-tooling-storybook` | `tooling` | `shared-tooling` |
-| 40 | `web-ui-radix-ui` | `ui-components` | `web-ui-components` |
-| 41 | `web-utilities-date-fns` | `utilities` | `web-utilities` |
-| 42 | `web-utilities-native-js` | `utilities` | `web-utilities` |
+| #   | Skill Directory                               | Current           | Target               |
+| --- | --------------------------------------------- | ----------------- | -------------------- |
+| 1   | `api-database-drizzle`                        | `database`        | `api-database`       |
+| 2   | `api-framework-express`                       | `api`             | `api-api`            |
+| 3   | `api-framework-hono`                          | `api`             | `api-api`            |
+| 4   | `infra-env-setup-env`                         | `tooling`         | `shared-tooling`     |
+| 5   | `infra-monorepo-turborepo`                    | `monorepo`        | `shared-monorepo`    |
+| 6   | `infra-tooling-setup-tooling`                 | `tooling`         | `shared-tooling`     |
+| 7   | `meta-methodology-anti-over-engineering`      | `methodology`     | `shared-methodology` |
+| 8   | `meta-methodology-context-management`         | `methodology`     | `shared-methodology` |
+| 9   | `meta-methodology-improvement-protocol`       | `methodology`     | `shared-methodology` |
+| 10  | `meta-methodology-investigation-requirements` | `methodology`     | `shared-methodology` |
+| 11  | `meta-methodology-success-criteria`           | `methodology`     | `shared-methodology` |
+| 12  | `meta-methodology-write-verification`         | `methodology`     | `shared-methodology` |
+| 13  | `meta-research-research-methodology`          | `research`        | `shared-research`    |
+| 14  | `meta-reviewing-cli-reviewing`                | `reviewing`       | `shared-reviewing`   |
+| 15  | `meta-reviewing-reviewing`                    | `reviewing`       | `shared-reviewing`   |
+| 16  | `security-auth-security`                      | `security`        | `shared-security`    |
+| 17  | `web-accessibility-web-accessibility`         | `accessibility`   | `web-accessibility`  |
+| 18  | `web-animation-css-animations`                | `animation`       | `web-animation`      |
+| 19  | `web-animation-framer-motion`                 | `animation`       | `web-animation`      |
+| 20  | `web-animation-view-transitions`              | `animation`       | `web-animation`      |
+| 21  | `web-error-handling-error-boundaries`         | `error-handling`  | `web-error-handling` |
+| 22  | `web-error-handling-result-types`             | `error-handling`  | `web-error-handling` |
+| 23  | `web-files-file-upload-patterns`              | `file-upload`     | `web-file-upload`    |
+| 24  | `web-files-image-handling`                    | `files`           | `web-files`          |
+| 25  | `web-forms-react-hook-form`                   | `forms`           | `web-forms`          |
+| 26  | `web-forms-zod-validation`                    | `forms`           | `web-forms`          |
+| 27  | `web-framework-react`                         | `framework`       | `web-framework`      |
+| 28  | `web-i18n-i18next`                            | `i18n`            | `web-i18n`           |
+| 29  | `web-i18n-react-intl`                         | `i18n`            | `web-i18n`           |
+| 30  | `web-performance-web-performance`             | `web-performance` | `web-performance`    |
+| 31  | `web-server-state-react-query`                | `server-state`    | `web-server-state`   |
+| 32  | `web-state-mobx`                              | `client-state`    | `web-client-state`   |
+| 33  | `web-state-zustand`                           | `client-state`    | `web-client-state`   |
+| 34  | `web-styling-cva`                             | `styling`         | `web-styling`        |
+| 35  | `web-styling-tailwind-v3`                     | `styling`         | `web-styling`        |
+| 36  | `web-testing-playwright-e2e`                  | `testing`         | `web-testing`        |
+| 37  | `web-testing-react-testing-library`           | `testing`         | `web-testing`        |
+| 38  | `web-testing-vitest`                          | `testing`         | `web-testing`        |
+| 39  | `web-tooling-storybook`                       | `tooling`         | `shared-tooling`     |
+| 40  | `web-ui-radix-ui`                             | `ui-components`   | `web-ui-components`  |
+| 41  | `web-utilities-date-fns`                      | `utilities`       | `web-utilities`      |
+| 42  | `web-utilities-native-js`                     | `utilities`       | `web-utilities`      |
 
 ---
 
@@ -783,41 +780,41 @@ Use the **Current → Target Mapping** table at the top of this document for all
 
 **For the executing agent: this is the complete list of unique `category:` values found across all external repos and what each must become.** Apply this map to every `metadata.yaml` file in both repos. All values can be bulk-renamed — no per-skill exceptions remain (anomalies were fixed).
 
-| From (current `category:` value) | To (new `category:` value) | Repos affected |
-|----------------------------------|---------------------------|----------------|
-| `accessibility` | `web-accessibility` | both |
-| `analytics` | `api-analytics` | claude-subagents |
-| `animation` | `web-animation` | both |
-| `api` | `api-api` | both |
-| `auth` | `api-auth` | claude-subagents |
-| `ci-cd` | `shared-ci-cd` | claude-subagents |
-| `cli-framework` | `cli-framework` | claude-subagents |
-| `client-state` | `web-client-state` | both |
-| `database` | `api-database` | both |
-| `email` | `api-email` | claude-subagents |
-| `error-handling` | `web-error-handling` | both |
-| `file-upload` | `web-file-upload` | both |
-| `files` | `web-files` | both |
-| `forms` | `web-forms` | both |
-| `framework` | `web-framework` | both |
-| `i18n` | `web-i18n` | both |
-| `methodology` | `shared-methodology` | both |
-| `mobile-framework` | `mobile-framework` | claude-subagents |
-| `mocking` | `web-mocking` | claude-subagents |
-| `monorepo` | `shared-monorepo` | both |
-| `observability` | `api-observability` | claude-subagents |
-| `performance` | `api-performance` | claude-subagents |
-| `pwa` | `web-pwa` | claude-subagents |
-| `realtime` | `web-realtime` | claude-subagents |
-| `research` | `shared-research` | both |
-| `reviewing` | `shared-reviewing` | both |
-| `security` | `shared-security` | both |
-| `server-state` | `web-server-state` | both |
-| `styling` | `web-styling` | both |
-| `testing` | `web-testing` | both |
-| `tooling` | `shared-tooling` | both |
-| `ui-components` | `web-ui-components` | both |
-| `utilities` | `web-utilities` | both |
-| `web-performance` | `web-performance` | both |
+| From (current `category:` value) | To (new `category:` value) | Repos affected   |
+| -------------------------------- | -------------------------- | ---------------- |
+| `accessibility`                  | `web-accessibility`        | both             |
+| `analytics`                      | `api-analytics`            | claude-subagents |
+| `animation`                      | `web-animation`            | both             |
+| `api`                            | `api-api`                  | both             |
+| `auth`                           | `api-auth`                 | claude-subagents |
+| `ci-cd`                          | `shared-ci-cd`             | claude-subagents |
+| `cli-framework`                  | `cli-framework`            | claude-subagents |
+| `client-state`                   | `web-client-state`         | both             |
+| `database`                       | `api-database`             | both             |
+| `email`                          | `api-email`                | claude-subagents |
+| `error-handling`                 | `web-error-handling`       | both             |
+| `file-upload`                    | `web-file-upload`          | both             |
+| `files`                          | `web-files`                | both             |
+| `forms`                          | `web-forms`                | both             |
+| `framework`                      | `web-framework`            | both             |
+| `i18n`                           | `web-i18n`                 | both             |
+| `methodology`                    | `shared-methodology`       | both             |
+| `mobile-framework`               | `mobile-framework`         | claude-subagents |
+| `mocking`                        | `web-mocking`              | claude-subagents |
+| `monorepo`                       | `shared-monorepo`          | both             |
+| `observability`                  | `api-observability`        | claude-subagents |
+| `performance`                    | `api-performance`          | claude-subagents |
+| `pwa`                            | `web-pwa`                  | claude-subagents |
+| `realtime`                       | `web-realtime`             | claude-subagents |
+| `research`                       | `shared-research`          | both             |
+| `reviewing`                      | `shared-reviewing`         | both             |
+| `security`                       | `shared-security`          | both             |
+| `server-state`                   | `web-server-state`         | both             |
+| `styling`                        | `web-styling`              | both             |
+| `testing`                        | `web-testing`              | both             |
+| `tooling`                        | `shared-tooling`           | both             |
+| `ui-components`                  | `web-ui-components`        | both             |
+| `utilities`                      | `web-utilities`            | both             |
+| `web-performance`                | `web-performance`          | both             |
 
 **No-change values** (already prefixed): `cli-framework`, `mobile-framework`, `web-performance`.

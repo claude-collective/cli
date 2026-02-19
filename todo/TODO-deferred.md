@@ -28,11 +28,12 @@
 | D-25  | Auto-version check + source staleness                 | Deferred |
 | D-26  | Marketplace-specific uninstall                        | Deferred |
 | D-30  | Update schemas when generating new categories/domains | Deferred |
-| D-36  | Global install support with project-level override     | Deferred |
-| D-37  | Merge global + project installations in resolution     | Deferred |
-| D-38  | Remove web-base-framework, allow multi-framework       | Deferred |
-| D-39  | Couple meta-frameworks with base frameworks             | Deferred |
-| D-40  | `agentsinc register` command for local skills           | Deferred |
+| D-36  | Global install support with project-level override    | Deferred |
+| D-37  | Merge global + project installations in resolution    | Deferred |
+| D-38  | Remove web-base-framework, allow multi-framework      | Deferred |
+| D-39  | Couple meta-frameworks with base frameworks           | Deferred |
+| D-40  | `agentsinc register` command for local skills         | Deferred |
+| D-41  | Create Agents Inc config sub-agent                    | Deferred |
 
 ---
 
@@ -617,3 +618,54 @@ agentsinc register skill .claude/skills/my-custom-patterns
 - `src/cli/lib/configuration/config-generator.ts` — merge registered skill into existing config
 
 **Related:** D-32 (category enum), D-36 (global install)
+
+---
+
+## D-41: Create Agents Inc Config Sub-Agent
+
+**Priority:** Medium
+
+Create a specialized Claude Code sub-agent that understands the Agents Inc CLI's configuration system in depth. This is NOT a developer agent — it handles all configuration-related tasks that currently require manual knowledge of the CLI's YAML structures, schemas, and type system.
+
+**What it does:**
+
+- Creates and updates `metadata.yaml` files for skills (with correct domain-prefixed `category` values, author, cliName, etc.)
+- Creates and updates `stacks.yaml` entries (agent definitions, skill assignments, preloaded flags)
+- Updates `skills-matrix.yaml` (adding/modifying categories, skill entries, dependency rules)
+- Updates `.claude-src/config.yaml` mappings (source paths, plugin settings, skill assignments)
+- Updates `agent-mappings.yaml` skill-to-agent routing
+- Knows the valid `Subcategory` enum values and enforces them
+- Understands skill relationships (`requires`, `compatibleWith`, `conflictsWith`, `requiresSetup`, `providesSetupFor`)
+- Can validate configs against JSON schemas before writing
+
+**Key knowledge areas:**
+
+- The 38 domain-prefixed subcategory values and their domains
+- Stack structure: agents → subcategories → skill assignments (with `preloaded`, `selected` flags)
+- Skills matrix: categories with `id`, `displayName`, `domain`, `categoryExclusive`, `skills` arrays with dependency rules (`needsAny`, `conflictsWith`)
+- Metadata schema: required fields (`category`, `author`, `cliName`, `cliDescription`, `usageGuidance`)
+- The distinction between matrix categories (36) and stacks-only keys (+2: `web-base-framework`, `mobile-platform`)
+- How `extractSubcategoryFromPath` and `categoryPathSchema` resolve category paths
+
+**Why this is needed:**
+
+- Configuration tasks (creating metadata, adding stacks, updating the matrix) are error-prone and require deep familiarity with the schema
+- The D-31 migration showed how many files need coordinated updates when config values change
+- A dedicated config agent prevents developer agents from making config mistakes (wrong category values, invalid schema, missing required fields)
+- Useful as a building block for D-40 (`agentsinc register`) — the config agent handles the file generation
+
+**Implementation:**
+
+- Create `src/agents/meta/config-manager/` with the standard agent structure
+- Pre-load the JSON schemas, `SUBCATEGORY_VALUES`, and example configs into the agent's context
+- Give it Read, Write, Edit, Glob, Grep tools (no Bash needed — it's purely config manipulation)
+- Add it to `agent-mappings.yaml` so it's available as a sub-agent for other agents
+
+**Acceptance criteria:**
+
+- [ ] Can create a valid `metadata.yaml` from a skill name and category
+- [ ] Can add a new stack to `stacks.yaml` with correct agent/subcategory/skill structure
+- [ ] Can add a new category to `skills-matrix.yaml` with proper schema
+- [ ] Validates all output against JSON schemas
+- [ ] Refuses to use bare subcategory names (enforces domain-prefix)
+- [ ] Other agents can delegate config tasks to it via the Task tool

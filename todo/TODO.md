@@ -1,10 +1,11 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID   | Task                                                       | Status       |
-| ---- | ---------------------------------------------------------- | ------------ |
-| U13  | Run Documentor Agent on CLI Codebase                       | Pending      |
-| H18  | Tailor documentation-bible to CLI repo                     | Phase 3 only |
-| D-28 | Fix startup warning/error messages                         | Pending      |
+| ID   | Task                                                  | Status       |
+| ---- | ----------------------------------------------------- | ------------ |
+| B-01 | Edit wizard shows steps that were omitted during init | Bug          |
+| U13  | Run Documentor Agent on CLI Codebase                  | Pending      |
+| H18  | Tailor documentation-bible to CLI repo                | Phase 3 only |
+| D-28 | Fix startup warning/error messages                    | Pending      |
 
 ---
 
@@ -21,6 +22,16 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 ---
 
 ## Active Tasks
+
+### Bugs
+
+#### B-01: Edit wizard shows steps that were omitted during init
+
+When running `agentsinc edit`, the wizard presents build-phase steps (domain categories) that the user explicitly skipped during `agentsinc init`. For example, if you ran `init` and only selected web skills — deliberately skipping API, CLI, mobile — then running `edit` should only show the web step. Instead, it shows all domain steps again, forcing you to step through categories you already opted out of.
+
+The edit wizard should respect the domains the user chose during init and only present those. This is related to T4 (domain filtering tests exist and pass), which suggests the filtering logic may work at the unit level but not in the real CLI flow.
+
+---
 
 ### Documentation & Tooling
 
