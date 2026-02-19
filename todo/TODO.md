@@ -2,11 +2,14 @@
 
 | ID   | Task                                                   | Status       |
 | ---- | ------------------------------------------------------ | ------------ |
+| B-05 | Edit mode does not restore sub-agent selection         | Bug          |
+| B-04 | Disabled-selected skills need distinct visual state    | Bug          |
 | B-03 | Edit pre-selection allows incompatible skills          | Bug          |
 | B-02 | Validate compatibleWith/conflictsWith refs in metadata | Pending      |
 | B-01 | Edit wizard shows steps that were omitted during init  | Bug          |
 | U13  | Run Documentor Agent on CLI Codebase                   | Pending      |
 | H18  | Tailor documentation-bible to CLI repo                 | Phase 3 only |
+| D-37 | Install mode: per-skill overrides and mode switching   | Pending      |
 | D-28 | Fix startup warning/error messages                     | Pending      |
 | D-36 | Eject: check specific agent dirs, not just agents/     | Bug          |
 | D-35 | Config: `templates` path property as eject alternative | Pending      |
@@ -30,6 +33,24 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 ## Active Tasks
 
 ### Bugs
+
+#### B-05: Edit mode does not restore sub-agent selection
+
+When running `agentsinc init`, the user can select a subset of available sub-agents on the agents step. However, when running `agentsinc edit`, the agents step pre-selects all available sub-agents instead of restoring the subset the user originally chose. The user's agent selection is not persisted to (or restored from) the project config.
+
+**Fix:** Persist the selected agent names to config during init/compile (similar to how `domains` and `skills` are saved), and restore them in `edit` mode so the agents step shows the original selection.
+
+**Location:** `src/cli/commands/edit.tsx`, `src/cli/components/wizard/step-agents.tsx`, `src/cli/lib/installation/local-installer.ts` (config persistence).
+
+---
+
+#### B-04: Disabled-selected skills need distinct visual state
+
+When a framework skill (e.g., React) is deselected, all dependent skills become disabled. Currently these disabled skills all look the same regardless of whether they were previously selected. Skills that are both disabled AND selected should have a distinct visual state — a transparent/dimmed teal color, similar to the existing "discouraged" style — so the user can still see what was selected before the framework was toggled off.
+
+**Location:** `src/cli/components/wizard/` — the checkbox/skill rendering logic that determines colors based on skill state (selected, disabled, discouraged).
+
+---
 
 #### B-03: Edit pre-selection allows incompatible skills
 
@@ -119,6 +140,24 @@ The CLI shows warning/error messages and the ASCII logo on startup that flash br
 ---
 
 ### CLI Improvements
+
+#### D-37: Install mode: per-skill overrides and mode switching
+
+Currently `installMode` is a global toggle — either all skills are installed as `local` (copied to `.claude/skills/`) or all as `plugin`. Two issues:
+
+1. **Per-skill override:** Some skills might work better as local (editable) while others are fine as plugins. The install mode should be overridable per skill or per source, not just globally.
+
+2. **Mode switching during edit:** If a project was initialized with `plugin` mode and the user runs `edit` and switches to `local` (or vice versa), there's no migration. The old installation artifacts remain (e.g., plugin config entries still exist when switching to local, or `.claude/skills/` copies remain when switching to plugin). This could lead to duplicate or stale skill installations.
+
+**Questions to resolve:**
+
+- Should mode switching during edit clean up the previous mode's artifacts?
+- Should per-skill overrides live in config YAML or be a wizard UI choice?
+- How does this interact with multi-source (some sources local, some remote)?
+
+**Location:** `src/cli/lib/installation/local-installer.ts`, `src/cli/components/wizard/step-confirm.tsx` (mode toggle), `src/cli/stores/wizard-store.ts`.
+
+---
 
 #### D-36: Eject: check specific agent dirs, not just agents/
 
