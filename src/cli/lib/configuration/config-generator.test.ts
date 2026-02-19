@@ -244,7 +244,9 @@ describe("config-generator", () => {
 
       expect(config.stack).toBeDefined();
       // web-developer gets web-framework from web skill
-      expect(config.stack!["web-developer"]?.["web-framework"]?.[0]?.id).toBe("web-framework-react");
+      expect(config.stack!["web-developer"]?.["web-framework"]?.[0]?.id).toBe(
+        "web-framework-react",
+      );
       // api-developer gets api-api from api skill
       expect(config.stack!["api-developer"]?.["api-api"]?.[0]?.id).toBe("api-framework-hono");
     });
@@ -389,6 +391,34 @@ describe("config-generator", () => {
       ).toBe(true);
     });
 
+    it("filters stack entries to only include selectedAgents", () => {
+      const matrix = createMockMatrix({
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
+      });
+
+      const selectedAgents: AgentName[] = ["web-developer", "web-reviewer"];
+
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-framework-react"],
+        matrix,
+        { selectedAgents },
+      );
+
+      // Stack should only contain agents from selectedAgents, not from DEFAULT_AGENTS or
+      // other derived agents that the user did not select
+      const stackAgentIds = Object.keys(config.stack || {});
+      for (const agentId of stackAgentIds) {
+        expect(selectedAgents).toContain(agentId);
+      }
+
+      // Should NOT have default agents (agent-summoner, skill-summoner, documentor)
+      // in stack when they were not in selectedAgents
+      expect(config.stack?.["agent-summoner"]).toBeUndefined();
+      expect(config.stack?.["skill-summoner"]).toBeUndefined();
+      expect(config.stack?.["documentor"]).toBeUndefined();
+    });
+
     it("derives agents when selectedAgents is not provided", () => {
       const matrix = createMockMatrix({
         ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
@@ -406,7 +436,7 @@ describe("config-generator", () => {
         ["meta-methodology-anti-over-engineering"]: createMockSkill(
           "meta-methodology-anti-over-engineering",
           "shared-methodology",
-          { path: "skills/methodology/meta-methodology-anti-over-engineering/" },
+          { path: "skills/meta-methodology-anti-over-engineering/" },
         ),
       });
 
@@ -588,7 +618,9 @@ describe("config-generator", () => {
 
       // buildStackProperty now preserves full SkillAssignment[] including preloaded
       expect(result["web-developer"]?.["web-framework"]).toEqual([sa("web-framework-react", true)]);
-      expect(result["web-developer"]?.["web-styling"]).toEqual([sa("web-styling-scss-modules", false)]);
+      expect(result["web-developer"]?.["web-styling"]).toEqual([
+        sa("web-styling-scss-modules", false),
+      ]);
     });
 
     it("handles multiple agents with identical subcategories", () => {
