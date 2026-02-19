@@ -4,6 +4,7 @@ import { CLI_COLORS, SCROLL_VIEWPORT, UI_SYMBOLS } from "../../consts.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import type { AgentName } from "../../types/index.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
+import { ViewTitle } from "./view-title.js";
 
 type AgentItem = {
   id: AgentName;
@@ -207,8 +208,7 @@ export const StepAgents: React.FC = () => {
 
   return (
     <Box flexDirection="column" width="100%" flexGrow={1} flexBasis={0}>
-      <Text bold>Select agents to compile:</Text>
-      <Text dimColor>Toggle agents on/off, then continue</Text>
+      <ViewTitle>Select agents to compile:</ViewTitle>
 
       {!scrollEnabled ? (
         <Box ref={listRef} flexDirection="column" flexGrow={1} flexBasis={0} overflow="hidden">

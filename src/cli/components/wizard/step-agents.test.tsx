@@ -27,13 +27,12 @@ describe("StepAgents component", () => {
   });
 
   describe("rendering", () => {
-    it("should render title and subtitle", () => {
+    it("should render title", () => {
       const { lastFrame, unmount } = render(<StepAgents />);
       cleanup = unmount;
 
       const output = lastFrame();
       expect(output).toContain("Select agents to compile:");
-      expect(output).toContain("Toggle agents on/off, then continue");
     });
 
     it("should render all agents", () => {
