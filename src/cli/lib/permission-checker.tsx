@@ -29,7 +29,15 @@ export async function checkPermissions(projectRoot: string): Promise<React.React
         const content = await readFileSafe(filePath, MAX_CONFIG_FILE_SIZE);
         const raw = JSON.parse(content);
         if (typeof raw === "object" && raw !== null && !Array.isArray(raw)) {
-          const EXPECTED_SETTINGS_KEYS = ["permissions"] as const;
+          // Known Claude CLI settings.json fields (permissions is ours; the rest are managed by Claude CLI)
+          const EXPECTED_SETTINGS_KEYS = [
+            "permissions",
+            "enabledPlugins",
+            "env",
+            "allowedTools",
+            "customInstructions",
+            "defaultModel",
+          ] as const;
           warnUnknownFields(
             raw as Record<string, unknown>,
             EXPECTED_SETTINGS_KEYS,

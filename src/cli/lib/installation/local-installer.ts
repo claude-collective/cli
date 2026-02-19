@@ -172,6 +172,12 @@ async function buildLocalConfig(
 
   let localConfig: ProjectConfig;
 
+  // Pass user's agent selection when they explicitly selected agents in the wizard
+  const agentOptions =
+    wizardResult.selectedAgents.length > 0
+      ? { selectedAgents: wizardResult.selectedAgents }
+      : undefined;
+
   if (wizardResult.selectedStackId) {
     if (loadedStack) {
       // Use actual selections (may differ from stack defaults after user customization)
@@ -179,6 +185,7 @@ async function buildLocalConfig(
         DEFAULT_PLUGIN_NAME,
         wizardResult.selectedSkills,
         sourceResult.matrix,
+        agentOptions,
       );
 
       // Overlay preloaded flags from the stack definition — generateProjectConfigFromSkills
@@ -202,9 +209,14 @@ async function buildLocalConfig(
       }
 
       localConfig.description = loadedStack.description;
+      // Only add stack agents that the user selected (or all if no explicit selection)
       const stackAgentIds = typedKeys<AgentName>(loadedStack.agents);
       for (const agentId of stackAgentIds) {
-        if (!localConfig.agents.includes(agentId)) {
+        if (
+          !localConfig.agents.includes(agentId) &&
+          (wizardResult.selectedAgents.length === 0 ||
+            wizardResult.selectedAgents.includes(agentId))
+        ) {
           localConfig.agents.push(agentId);
         }
       }
@@ -220,6 +232,7 @@ async function buildLocalConfig(
       DEFAULT_PLUGIN_NAME,
       wizardResult.selectedSkills,
       sourceResult.matrix,
+      agentOptions,
     );
   }
 

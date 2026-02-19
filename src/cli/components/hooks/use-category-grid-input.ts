@@ -4,7 +4,7 @@ import { useInput } from "ink";
 import type { Subcategory, SkillId } from "../../types/index.js";
 import type { CategoryOption, CategoryRow } from "../wizard/category-grid.js";
 
-const FRAMEWORK_CATEGORY_ID = "framework";
+const FRAMEWORK_CATEGORY_ID = "web-framework";
 
 // Locked = non-framework section when no framework is selected
 export const isSectionLocked = (categoryId: Subcategory, categories: CategoryRow[]): boolean => {

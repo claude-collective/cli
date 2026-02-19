@@ -12,7 +12,7 @@ import type {
   OptionState,
 } from "../../components/wizard/category-grid.js";
 
-const FRAMEWORK_SUBCATEGORY_ID = "framework";
+const FRAMEWORK_SUBCATEGORY_ID = "web-framework";
 const WEB_DOMAIN_ID = "web";
 
 export type BuildStepValidation = {
@@ -134,9 +134,7 @@ export function buildCategoriesForDomain(
     });
 
     const useFrameworkFilter =
-      domain === WEB_DOMAIN_ID &&
-      cat.id !== FRAMEWORK_SUBCATEGORY_ID &&
-      frameworkSelected;
+      domain === WEB_DOMAIN_ID && cat.id !== FRAMEWORK_SUBCATEGORY_ID && frameworkSelected;
     const filteredSkillOptions = useFrameworkFilter
       ? skillOptions.filter((skill) =>
           isCompatibleWithSelectedFrameworks(skill.id, selectedFrameworkIds, matrix),

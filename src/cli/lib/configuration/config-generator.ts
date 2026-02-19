@@ -58,9 +58,7 @@ export type ProjectConfigOptions = {
 
 function extractSubcategoryFromPath(categoryPath: CategoryPath): Subcategory | undefined {
   if (categoryPath === "local") return undefined;
-  const parts = categoryPath.split("/");
-  // Boundary cast: the last segment of a CategoryPath is always a valid Subcategory
-  return (parts.length >= 2 ? parts[1] : parts[0]) as Subcategory;
+  return categoryPath as Subcategory;
 }
 
 /**

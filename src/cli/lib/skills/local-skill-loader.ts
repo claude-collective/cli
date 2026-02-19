@@ -11,7 +11,7 @@ import { LOCAL_DEFAULTS, METADATA_KEYS } from "../metadata-keys";
 type LocalRawMetadata = {
   cliName: string;
   cliDescription?: string;
-  /** Original skill category from source (e.g., "framework", "styling", "api") */
+  /** Original skill category from source (e.g., "web-framework", "web-styling", "api-api") */
   category?: CategoryPath;
   categoryExclusive?: boolean;
   usageGuidance?: string;
