@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.42.0] - 2026-02-19
+
+**SelectionCard component, eject --templates, edit local-mode fix, wizard UI refresh**
+
+- Extract reusable `SelectionCard` for stack selection, sources, and domain selection
+- Add `eject agent-partials --templates` flag for template-only ejection
+- Fix edit command falling back to project config skills in local mode
+- Refresh wizard UI: tabs, titles, category grid, help modal styling
+
+See [changelogs/0.42.0.md](./changelogs/0.42.0.md) for full details.
+
+---
+
 ## [0.41.2] - 2026-02-19
 
 **Fix README accuracy, add framework positioning task**
