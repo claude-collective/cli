@@ -162,12 +162,22 @@ async function buildLocalConfig(
   wizardResult: WizardResultV2,
   sourceResult: SourceLoadResult,
 ): Promise<{ config: ProjectConfig; loadedStack: Stack | null }> {
+  verbose(
+    `buildLocalConfig: selectedStackId='${wizardResult.selectedStackId}', ` +
+      `selectedSkills=[${wizardResult.selectedSkills.join(", ")}], ` +
+      `selectedAgents=[${wizardResult.selectedAgents.join(", ")}], ` +
+      `installMode='${wizardResult.installMode}'`,
+  );
+
   let loadedStack: Stack | null = null;
   if (wizardResult.selectedStackId) {
     loadedStack = await loadStackById(wizardResult.selectedStackId, sourceResult.sourcePath);
     if (!loadedStack) {
       loadedStack = await loadStackById(wizardResult.selectedStackId, PROJECT_ROOT);
     }
+    verbose(
+      `buildLocalConfig: loadedStack=${loadedStack ? `found (id='${loadedStack.id}')` : "NOT FOUND"}`,
+    );
   }
 
   let localConfig: ProjectConfig;
@@ -236,6 +246,11 @@ async function buildLocalConfig(
     );
   }
 
+  verbose(
+    `buildLocalConfig result: stack=${localConfig.stack ? Object.keys(localConfig.stack).length + " agents" : "UNDEFINED"}, ` +
+      `agents=[${localConfig.agents.join(", ")}], skills=${localConfig.skills.length}`,
+  );
+
   return { config: localConfig, loadedStack };
 }
 
@@ -270,8 +285,15 @@ async function buildAndMergeConfig(
   sourceFlag?: string,
 ): Promise<MergeResult> {
   const { config } = await buildLocalConfig(wizardResult, sourceResult);
+  verbose(
+    `buildAndMergeConfig: before merge — stack=${config.stack ? Object.keys(config.stack).length + " agents" : "UNDEFINED"}`,
+  );
   setConfigMetadata(config, wizardResult, sourceResult, sourceFlag);
-  return mergeWithExistingConfig(config, { projectDir });
+  const result = await mergeWithExistingConfig(config, { projectDir });
+  verbose(
+    `buildAndMergeConfig: after merge — stack=${result.config.stack ? Object.keys(result.config.stack).length + " agents" : "UNDEFINED"}, merged=${result.merged}`,
+  );
+  return result;
 }
 
 /** Commented-out config option hints appended to generated config.yaml for discoverability. */

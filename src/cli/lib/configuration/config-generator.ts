@@ -9,6 +9,7 @@ import type {
   StackAgentConfig,
   Subcategory,
 } from "../../types";
+import { verbose, warn } from "../../utils/logger";
 import { typedEntries } from "../../utils/typed-object";
 import { getCachedDefaults } from "../loading";
 
@@ -85,18 +86,52 @@ export function generateProjectConfigFromSkills(
   const neededAgents = new Set<AgentName>();
   const stackProperty: Record<string, StackAgentConfig> = {};
 
+  // When user explicitly selected agents, filter stack assignments to only those agents
+  const selectedAgentSet = options?.selectedAgents
+    ? new Set<AgentName>(options.selectedAgents)
+    : null;
+
+  verbose(
+    `generateProjectConfigFromSkills: ${selectedSkillIds.length} skills, ` +
+      `matrix has ${Object.keys(matrix.skills).length} entries, ` +
+      `selectedAgentSet=${selectedAgentSet ? `[${[...selectedAgentSet].join(", ")}]` : "null"}`,
+  );
+
+  let foundCount = 0;
+  let skippedCount = 0;
+
   for (const skillId of selectedSkillIds) {
     const skill = matrix.skills[skillId];
     if (!skill) {
+      skippedCount++;
+      warn(`Skill '${skillId}' NOT FOUND in matrix`);
       continue;
     }
+    foundCount++;
 
     const skillPath = skill.path;
     const category = skill.category;
     const agents = getAgentsForSkill(skillPath, category);
     const subcategory = extractSubcategoryFromPath(category);
 
-    for (const agentId of agents) {
+    // When user selected agents, only assign skills to agents in their selection
+    const effectiveAgents = selectedAgentSet
+      ? agents.filter((a) => selectedAgentSet.has(a))
+      : agents;
+
+    verbose(
+      `  skill '${skillId}': category='${category}', subcategory=${subcategory ?? "none"}, ` +
+        `agents=[${agents.join(", ")}], effectiveAgents=[${effectiveAgents.join(", ")}]`,
+    );
+
+    if (effectiveAgents.length === 0) {
+      warn(
+        `Skill '${skillId}': all agents filtered out by selectedAgentSet — ` +
+          `derived=[${agents.join(", ")}], selected=[${[...(selectedAgentSet ?? [])].join(", ")}]`,
+      );
+    }
+
+    for (const agentId of effectiveAgents) {
       neededAgents.add(agentId);
 
       if (subcategory) {
@@ -107,6 +142,19 @@ export function generateProjectConfigFromSkills(
         stackProperty[agentId][subcategory] = [{ id: skillId, preloaded: false }];
       }
     }
+  }
+
+  verbose(
+    `generateProjectConfigFromSkills: ${foundCount} found, ${skippedCount} not found, ` +
+      `${Object.keys(stackProperty).length} agents in stack`,
+  );
+
+  if (skippedCount > 0) {
+    const matrixSample = Object.keys(matrix.skills).slice(0, 5).join(", ");
+    warn(
+      `${skippedCount}/${selectedSkillIds.length} skills not found in matrix. ` +
+        `Matrix keys sample: [${matrixSample}]`,
+    );
   }
 
   // When the user explicitly selected agents, use their selection instead of the derived set
