@@ -8,6 +8,8 @@
 | U13  | Run Documentor Agent on CLI Codebase                  | Pending      |
 | H18  | Tailor documentation-bible to CLI repo                | Phase 3 only |
 | D-28 | Fix startup warning/error messages                    | Pending      |
+| D-35 | Config: `templates` path property as eject alternative | Pending      |
+| D-34 | Eject: make `templates` its own top-level type         | Pending      |
 | D-33 | README: frame Agents Inc. as an AI coding framework   | Pending      |
 
 ---
@@ -112,6 +114,24 @@ The CLI shows warning/error messages and the ASCII logo on startup that flash br
 - `src/cli/components/wizard/wizard-layout.tsx` — add `<Static>` block for startup messages
 - `src/cli/utils/logger.ts` + loading modules — support buffered output mode
 - Audit which warnings are actionable vs noise; downgrade informational messages to `verbose()`
+
+---
+
+### CLI Improvements
+
+#### D-34: Eject: make `templates` its own top-level type
+
+Currently `--templates` is a modifier flag on the `eject` command, requiring `eject agent-partials --templates`. This is unintuitive — `templates` should be a standalone eject type alongside `agent-partials`, `skills`, and `all`.
+
+**Current:** `eject agent-partials --templates`
+**Desired:** `eject templates`
+
+**Changes needed:**
+
+- Add `"templates"` to the `type` argument's valid options in `src/cli/commands/eject.ts`
+- Route `eject templates` to the same logic that `eject agent-partials --templates` currently uses
+- Deprecate or remove the `--templates` flag
+- Update tests in `src/cli/lib/__tests__/commands/eject.test.ts`
 
 ---
 
