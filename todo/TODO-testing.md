@@ -1,59 +1,68 @@
-> **Test Audit (2026-02-18, updated):** 2420 tests pass across 103 test files. T1: IMPLEMENTED (8 tests in "eject skills from initialized project" block — calls installLocal() then copySkillsToLocalFlattened). T2: IMPLEMENTED (8 tests in "eject in plugin mode" block — uses installPluginConfig()). T3: IMPLEMENTED. T4: IMPLEMENTED. T5: IMPLEMENTED. T6: IMPLEMENTED. T10: NOT POSSIBLE — global uninstall feature does not exist yet (no --global flag, no global install mechanism). 3 it.todo placeholders in uninstall.test.ts. Only remaining gap is T10 which is a feature gap, not a test gap.
+> **Test Audit (2026-02-19, updated):** 2420 tests pass across 103 test files. T1: IMPLEMENTED. T2: IMPLEMENTED. T3: IMPLEMENTED. T4: IMPLEMENTED. T5: IMPLEMENTED. T6: IMPLEMENTED. T10: NOT POSSIBLE — blocked on D-36 (global install feature). 3 it.todo placeholders in uninstall.test.ts.
+>
+> **Partial coverage notes:**
+> - `eject all`: Only flag acceptance tested (eject.test.ts:248-271). No test verifies both partials AND skills produced in one pass.
+> - `plugin mode install`: `installPluginConfig()` exercised as eject test setup but never directly tested. No test for `claude plugin install` invocation or `settings.json` enabledPlugins writing.
+>
+> **Small gaps from completed tasks (D-27/29/30/31/32/35):**
+> - D-29: No test verifies metadata.yaml is *written* with `$schema` — only that it can be stripped during reading.
+> - D-30: No integration test passes non-empty `selectedAgents` through the full wizard→install→config pipeline.
+> - D-32: No test asserts `metadataValidationSchema` rejects invalid categories or accepts valid ones.
 
 # Agents Inc. CLI - Testing
 
 ## Coverage Overview
 
-| Command / Area                                 | Description                                       | Automated  | Manual |
-| ---------------------------------------------- | ------------------------------------------------- | ---------- | ------ |
-| `agentsinc init`                               | Wizard flow, flag parsing, already-init guard     | ✅         |        |
-| `agentsinc edit` — flags                       | Flag parsing, no-installation error               | ✅         |        |
-| `agentsinc edit` — wizard pre-selection        | Prior skills pre-checked when wizard reopens      | ✅         |        |
-| `agentsinc edit` — domain filtering            | Domains absent if no skills were picked from them | ✅         |        |
-| `agentsinc compile`                            | Recompile agents, dry-run, output flag            | ✅         |        |
-| `agentsinc eject agent-partials`               | Copies partials, config guard, --force, --output  | ✅         |        |
-| `agentsinc eject agent-partials` (initialized) | Eject with a real install already in place        | ✅         |        |
-| `agentsinc eject skills` — flags only          | Flag parsing against a bare project               | ✅         |        |
-| `agentsinc eject skills` (initialized)         | Skills copied from a real initialized project     | ✅         |        |
-| `agentsinc eject all`                          | Runs both agent-partials + skills in one pass     | ✅ partial |        |
-| `agentsinc eject` — invalid types              | `templates`, `agents`, `config` all rejected      | ✅         |        |
-| `agentsinc eject` — plugin mode                | Eject from a plugin-mode project                  | ✅         |        |
-| `agentsinc diff`                               | Diff local skills against upstream source         | ✅         |        |
-| `agentsinc doctor`                             | Project health and config diagnostics             | ✅         |        |
-| `agentsinc info`                               | Show installed agents and skills                  | ✅         |        |
-| `agentsinc list`                               | List available skills from configured source      | ✅         |        |
-| `agentsinc outdated`                           | Report skills with newer upstream versions        | ✅         |        |
-| `agentsinc search`                             | Search marketplace by name/tag/category           | ✅         |        |
-| `agentsinc validate`                           | Schema and structure validation                   | ✅         |        |
-| `agentsinc update`                             | Pull updated skills from source                   | ✅         |        |
-| `agentsinc uninstall`                          | Flags, dry-run, local/plugin targeting, removal   | ✅         |        |
-| `agentsinc uninstall` — surgical scope         | Only removes CLI-owned files, not user content    | ✅         |        |
-| `agentsinc uninstall` — plugin mode            | Uninstall from plugin-mode project                | ✅         |        |
-| `agentsinc uninstall` — local mode             | Uninstall from local-mode project                 | ✅         |        |
-| `agentsinc uninstall` — project scope          | Default uninstall removes all CLI artifacts       | ✅         |        |
-| `agentsinc uninstall` — global                 | Global uninstall preserves user global content    | ⏳ T10     |        |
-| `agentsinc uninstall` — preservation           | Pre-existing skills/plugins/MCP/agents untouched  | ✅         |        |
-| Consumer stacks.yaml and matrix override       | Custom stacks/matrix in project or marketplace    | ✅         |        |
-| `agentsinc new skill`                          | Scaffold a new skill with correct structure       | ✅         |        |
-| `agentsinc new agent`                          | Scaffold a new agent                              | ✅         |        |
-| `agentsinc import skill`                       | Import a skill from an external URL or repo       | ✅         |        |
-| `agentsinc build stack`                        | Compile a stack into a standalone plugin          | ✅         |        |
-| `agentsinc build plugins`                      | Build individual skills as plugins                | ✅         |        |
-| `agentsinc build marketplace`                  | Generate marketplace.json from built plugins      | ✅         |        |
-| `agentsinc version` / `version:show`           | Display current CLI/plugin version                | ✅         |        |
-| `agentsinc version:bump`                       | Bump patch, minor, or major version               | ✅         |        |
-| `agentsinc version:set`                        | Set an explicit version string                    | ✅         |        |
-| `agentsinc config` / `config:show`             | Show resolved config with precedence layers       | ✅         |        |
-| `agentsinc config:path`                        | Show where config files live                      | ✅         |        |
-| `agentsinc config:get`                         | Get a single resolved config value                | ✅         |        |
-| `agentsinc config:set-project`                 | Write a value to project-level config             | ✅         |        |
-| `agentsinc config:unset-project`               | Remove a value from project-level config          | ✅         |        |
-| Local mode install flow                        | Config, skills copy, agent compile via installer  | ✅         |        |
-| Plugin mode install flow                       | `installMode: plugin` written to config           | ✅ partial |        |
-| Init → Compile pipeline                        | Wizard result → install → compile end-to-end      | ✅         |        |
-| Edit → Recompile pipeline                      | Skill edits reflected in recompile output         | ✅         |        |
-| Source switching                               | Archive/restore local skills on source change     | ✅         |        |
-| Config precedence                              | flag > env > project > default resolution order   | ✅         |        |
+| Task | Command / Area                                 | Description                                       | Automated  | Manual |
+| ---- | ---------------------------------------------- | ------------------------------------------------- | ---------- | ------ |
+|      | `agentsinc init`                               | Wizard flow, flag parsing, already-init guard     | ✅         |        |
+|      | `agentsinc edit` — flags                       | Flag parsing, no-installation error               | ✅         |        |
+| T3   | `agentsinc edit` — wizard pre-selection        | Prior skills pre-checked when wizard reopens      | ✅         |        |
+| T4   | `agentsinc edit` — domain filtering            | Domains absent if no skills were picked from them | ✅         |        |
+|      | `agentsinc compile`                            | Recompile agents, dry-run, output flag            | ✅         |        |
+|      | `agentsinc eject agent-partials`               | Copies partials, config guard, --force, --output  | ✅         |        |
+|      | `agentsinc eject agent-partials` (initialized) | Eject with a real install already in place        | ✅         |        |
+|      | `agentsinc eject skills` — flags only          | Flag parsing against a bare project               | ✅         |        |
+| T1   | `agentsinc eject skills` (initialized)         | Skills copied from a real initialized project     | ✅         |        |
+|      | `agentsinc eject all`                          | Runs both agent-partials + skills in one pass     | ✅ partial |        |
+|      | `agentsinc eject` — invalid types              | `templates`, `agents`, `config` all rejected      | ✅         |        |
+| T2   | `agentsinc eject` — plugin mode                | Eject from a plugin-mode project                  | ✅         |        |
+|      | `agentsinc diff`                               | Diff local skills against upstream source         | ✅         |        |
+|      | `agentsinc doctor`                             | Project health and config diagnostics             | ✅         |        |
+|      | `agentsinc info`                               | Show installed agents and skills                  | ✅         |        |
+|      | `agentsinc list`                               | List available skills from configured source      | ✅         |        |
+|      | `agentsinc outdated`                           | Report skills with newer upstream versions        | ✅         |        |
+|      | `agentsinc search`                             | Search marketplace by name/tag/category           | ✅         |        |
+|      | `agentsinc validate`                           | Schema and structure validation                   | ✅         |        |
+|      | `agentsinc update`                             | Pull updated skills from source                   | ✅         |        |
+|      | `agentsinc uninstall`                          | Flags, dry-run, local/plugin targeting, removal   | ✅         |        |
+| T5   | `agentsinc uninstall` — surgical scope         | Only removes CLI-owned files, not user content    | ✅         |        |
+| T7   | `agentsinc uninstall` — plugin mode            | Uninstall from plugin-mode project                | ✅         |        |
+| T8   | `agentsinc uninstall` — local mode             | Uninstall from local-mode project                 | ✅         |        |
+| T9   | `agentsinc uninstall` — project scope          | Default uninstall removes all CLI artifacts       | ✅         |        |
+| T10  | `agentsinc uninstall` — global                 | Global uninstall preserves user global content    | ⏳ T10     |        |
+| T11  | `agentsinc uninstall` — preservation           | Pre-existing skills/plugins/MCP/agents untouched  | ✅         |        |
+| T6   | Consumer stacks.yaml and matrix override       | Custom stacks/matrix in project or marketplace    | ✅         |        |
+|      | `agentsinc new skill`                          | Scaffold a new skill with correct structure       | ✅         |        |
+|      | `agentsinc new agent`                          | Scaffold a new agent                              | ✅         |        |
+|      | `agentsinc import skill`                       | Import a skill from an external URL or repo       | ✅         |        |
+|      | `agentsinc build stack`                        | Compile a stack into a standalone plugin          | ✅         |        |
+|      | `agentsinc build plugins`                      | Build individual skills as plugins                | ✅         |        |
+|      | `agentsinc build marketplace`                  | Generate marketplace.json from built plugins      | ✅         |        |
+|      | `agentsinc version` / `version:show`           | Display current CLI/plugin version                | ✅         |        |
+|      | `agentsinc version:bump`                       | Bump patch, minor, or major version               | ✅         |        |
+|      | `agentsinc version:set`                        | Set an explicit version string                    | ✅         |        |
+|      | `agentsinc config` / `config:show`             | Show resolved config with precedence layers       | ✅         |        |
+|      | `agentsinc config:path`                        | Show where config files live                      | ✅         |        |
+|      | `agentsinc config:get`                         | Get a single resolved config value                | ✅         |        |
+|      | `agentsinc config:set-project`                 | Write a value to project-level config             | ✅         |        |
+|      | `agentsinc config:unset-project`               | Remove a value from project-level config          | ✅         |        |
+|      | Local mode install flow                        | Config, skills copy, agent compile via installer  | ✅         |        |
+|      | Plugin mode install flow                       | `installMode: plugin` written to config           | ✅ partial |        |
+|      | Init → Compile pipeline                        | Wizard result → install → compile end-to-end      | ✅         |        |
+|      | Edit → Recompile pipeline                      | Skill edits reflected in recompile output         | ✅         |        |
+|      | Source switching                               | Archive/restore local skills on source change     | ✅         |        |
+|      | Config precedence                              | flag > env > project > default resolution order   | ✅         |        |
 
 **Legend:** ✅ covered · ✅ partial · ❌ gap (see task ID) · Manual: fill in after testing
 
@@ -548,3 +557,4 @@ agentsinc import skill web-framework-react --source /path/to/source
 | 26  | `info`                                         | Installed agents + skills shown                         |
 | 27  | `version`                                      | Version number shown                                    |
 | 28  | `search react`                                 | Results returned                                        |
+| 29  | `init` with specific agents selected           | `config.yaml` agents list matches wizard selection      |

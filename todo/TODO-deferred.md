@@ -3,7 +3,6 @@
 | ID    | Task                                                  | Status   |
 | ----- | ----------------------------------------------------- | -------- |
 | D-34  | Replace agent-mappings.yaml with schema-backed file   | Deferred |
-| D-31  | Prefix categories with their domain                   | Deferred |
 | D-05  | Improve `agentsinc init` when already initialized     | Deferred |
 | P4-17 | `agentsinc new` supports multiple items               | Deferred |
 | D-08  | Support user-defined stacks in consumer projects      | Deferred |
@@ -29,6 +28,11 @@
 | D-25  | Auto-version check + source staleness                 | Deferred |
 | D-26  | Marketplace-specific uninstall                        | Deferred |
 | D-30  | Update schemas when generating new categories/domains | Deferred |
+| D-36  | Global install support with project-level override     | Deferred |
+| D-37  | Merge global + project installations in resolution     | Deferred |
+| D-38  | Remove web-base-framework, allow multi-framework       | Deferred |
+| D-39  | Couple meta-frameworks with base frameworks             | Deferred |
+| D-40  | `agentsinc register` command for local skills           | Deferred |
 
 ---
 
@@ -55,45 +59,6 @@ Create a new `config/agent-defaults.yaml` (with `agent-defaults.schema.json`) th
 - Update `src/cli/lib/configuration/config-generator.ts` to use structured lookups instead of pattern matching
 - Update `src/cli/stores/wizard-store.ts` agent preselection to use the new structure
 - Update tests
-
----
-
-## D-31: Prefix Categories with Their Domain
-
-**Priority: Highest deferred task.**
-
-Currently, subcategory keys in stacks, the skills matrix, and metadata are bare names (e.g., `framework`, `testing`, `client-state`). These should be prefixed with their parent domain to avoid ambiguity and align with the `domain/subcategory` pattern already used in `CategoryPath` (e.g., `web/framework`, `api/testing`).
-
-**Example:**
-
-```yaml
-# Before (current)
-agents:
-  web-developer:
-    framework: web-framework-react
-
-# After (proposed)
-agents:
-  web-developer:
-    web/framework: web-framework-react
-```
-
-**Scope:**
-
-- Skills matrix categories: `framework` → `web/framework`, `testing` → `web/testing`, etc.
-- Stacks agent configs: subcategory keys become domain-prefixed
-- Metadata `category` field: currently bare subcategory, should become `domain/subcategory`
-- Schema enums: update all `subcategorySchema`, `stackSubcategorySchema`, and generated JSON schemas
-- TypeScript types: `Subcategory` type and `CategoryPath` may need to converge
-
-**Investigation needed:**
-
-- Audit all places where bare subcategory names are used vs `CategoryPath` (`domain/subcategory`)
-- Determine if `Subcategory` and `CategoryPath` can be unified
-- Assess impact on existing stacks.yaml, skills-matrix.yaml, and all metadata.yaml files
-- Plan migration for source marketplaces (claude-subagents, skills, etc.)
-
-**Related:** D-30 (schema generation for new categories)
 
 ---
 
@@ -523,3 +488,132 @@ When a user creates a new category or domain, the JSON schemas (e.g., `metadata.
 - Ensure `$schema` references in metadata.yaml remain valid after schema changes
 
 **Related:** D-29 (`$schema` in metadata.yaml)
+
+---
+
+## D-36: Global Install Support with Project-Level Override
+
+**Priority:** Medium
+
+Add a `--global` flag (or wizard prompt) to `agentsinc init` that lets users choose between global and project-level installation. Global installs go to `~/.claude-src/config.yaml`, `~/.claude/skills/`, `~/.claude/agents/`. Project-level installs remain at `{cwd}/.claude-src/` as today.
+
+**Resolution order for all commands (`edit`, `compile`, etc.):**
+
+1. Check `{cwd}/.claude-src/config.yaml` — if found, use project-level installation exclusively (full override)
+2. If not found, check `~/.claude-src/config.yaml` — if found, use global installation
+3. If neither found, error: "No installation found"
+
+**Phase 1 (this task):** Full override — project installation completely replaces global. No merging.
+
+**Changes needed:**
+
+- `src/cli/commands/init.tsx` — add global/project choice (flag or wizard prompt)
+- `src/cli/lib/installation/installation.ts` — `detectExistingInstallation()` gains fallback to home directory
+- `src/cli/lib/configuration/config.ts` — `loadProjectSourceConfig()` gains home-level fallback
+- `src/cli/lib/loading/source-loader.ts` — `discoverLocalSkills()` gains home-level fallback
+- `src/cli/lib/plugins/plugin-settings.ts` — `getEnabledPluginKeys()` gains home-level fallback
+- `src/cli/lib/permission-checker.tsx` — `checkPermissions()` gains home-level fallback
+- `src/cli/lib/installation/local-installer.ts` — `resolveInstallPaths()` supports home directory target
+- All fallbacks follow same pattern: project-level first, home-level second
+
+**Acceptance criteria:**
+
+- [ ] `agentsinc init --global` installs to home directory
+- [ ] `agentsinc init` (no flag) installs to `{cwd}` (current behavior)
+- [ ] `agentsinc edit` from a project with its own installation uses that project's config
+- [ ] `agentsinc edit` from a project without its own installation falls back to global
+- [ ] `agentsinc compile` follows the same resolution order
+- [ ] Plugin mode: `--scope user` used for global, `--scope project` for project-level
+
+---
+
+## D-37: Merge Global + Project Installations in Resolution
+
+**Priority:** Low (deferred until D-36 is stable)
+**Depends on:** D-36
+
+Extend D-36's full-override behavior to support merging global and project-level installations. When a project-level installation exists, it currently replaces the global one entirely. This task adds the option to merge them — project-level selections take priority for overlapping categories, global fills in the rest.
+
+**Example:**
+
+- Global: `web-framework-react`, `web-state-zustand`, `web-testing-vitest`
+- Project: `api-framework-hono`
+- Merged result: all four skills active
+
+**Open questions:**
+
+- Should merging be opt-in (flag/config) or the default behavior?
+- How to handle conflicts (same category, different skill)?
+- Should agents be merged or fully overridden?
+- How does `agentsinc edit` work in merge mode — edit only project-level? Both?
+
+---
+
+## D-38: Remove web-base-framework, Couple Meta+Base Frameworks
+
+**Priority:** Medium
+**See plan:** [D-38-remove-base-framework.md](./D-38-remove-base-framework.md)
+
+Remove the `web-base-framework` and `mobile-platform` stacks-only subcategory keys. Merge their skills into the `web-framework` / `mobile-framework` arrays. Change `web-framework` from fully exclusive to supporting compatible multi-selection (React + Remix, Vue + Nuxt, etc.).
+
+When a user selects a meta-framework (Next.js, Remix, Nuxt), the corresponding base framework (React, Vue) should be recommended or auto-included. However, some base framework patterns conflict with meta-framework patterns (e.g., React Router vs Next.js App Router). A "slimmed down" version of the base framework skill may be needed for meta-framework contexts.
+
+**Problem:** The React skill teaches generic React patterns including routing, but when using Next.js, you want Next.js routing, not React Router. Similarly for data fetching patterns. The full React skill includes patterns that conflict with Next.js conventions.
+
+**Possible approaches:**
+
+- **Skill variants:** Create slimmed-down variants of base framework skills for meta-framework contexts (e.g., `web-framework-react-for-nextjs` that excludes routing/data-fetching sections)
+- **Conditional sections:** Add conditional sections in SKILL.md that are included/excluded based on what other skills are selected (e.g., `<!-- if not: web-framework-nextjs -->` around the routing section)
+- **Skill composition:** Split framework skills into atomic sub-skills (react-components, react-routing, react-data-fetching) and let meta-frameworks exclude the ones they replace
+- **Conflict rules in metadata.yaml:** Use existing `conflictsWith` to mark specific patterns as conflicting, letting the system warn users
+
+**Investigation needed:**
+
+- Audit each meta-framework skill to identify which base framework patterns it replaces
+- Determine the right granularity (full skill variants vs conditional sections vs sub-skills)
+- Consider whether this is even a problem in practice — does having both the React routing skill and Next.js routing skill actually cause issues for the AI agent consuming them?
+
+---
+
+## D-40: `agentsinc register` Command for Local Skills
+
+**Priority:** Medium
+
+Add a command that registers pre-existing custom skills with the CLI. Users who create skills manually (or have skills from external sources) need a way to make them first-class citizens without manually editing metadata, config, schemas, and types.
+
+**What the command does:**
+
+1. Takes a path to an existing `.claude/skills/{skill-name}/SKILL.md`
+2. Generates a valid `metadata.yaml` with a proper `category` from the known subcategory enum (interactive prompt to pick one)
+3. Optionally adds `cliName` and other required fields
+4. Wires the skill into `.claude-src/config.yaml` under the selected agent(s)
+5. If the skill needs a new category not in the current enum, updates `SUBCATEGORY_VALUES`, the `Subcategory` type, and regenerates JSON schemas
+
+**Why this is needed:**
+
+- D-32 constrains `category` to a known enum — local skills using `category: "local"` or custom values would fail JSON schema validation in the IDE
+- Currently local skills require manual creation of `metadata.yaml` with exact field names and valid enum values
+- The `edit` command's recompile path (`discoverAllPluginSkills`) doesn't discover `.claude/skills/` — registered skills with proper metadata would work around this
+- Replaces the vague #4 ("Handle plugins + local skills together") with a concrete, user-facing solution
+
+**Example usage:**
+
+```bash
+# Register an existing local skill
+agentsinc register skill .claude/skills/my-custom-patterns
+
+# Interactive prompts:
+# - Category? (pick from known subcategories or create new)
+# - Which agents should use this skill?
+# - Should it be preloaded?
+```
+
+**Files to change:**
+
+- New command: `src/cli/commands/register.ts`
+- `src/cli/lib/schemas.ts` — if supporting new categories, update `SUBCATEGORY_VALUES`
+- `src/cli/types/matrix.ts` — update `Subcategory` union type
+- `scripts/generate-json-schemas.ts` — re-run after type changes
+- `src/cli/lib/configuration/config-generator.ts` — merge registered skill into existing config
+
+**Related:** D-32 (category enum), D-36 (global install)

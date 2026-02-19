@@ -17,3 +17,9 @@
 - **T5**: Create work-related agents and skills -- Identified gaps, created specialized agents and skills for work patterns.
 - **U-SOURCES-SCROLL**: Add scrolling to Sources step -- Replicated Build step's pixel-accurate scroll pattern in SourceGrid with `useMeasuredHeight` hook and retry measurement strategy [0, 16, 50ms].
 - **UX-14**: Build step compatibility labels toggle -- Replaced "descriptions" toggle with compatibility labels toggle showing "(Selected)", "(Recommended)", "(Discouraged)", "(Disabled)" on skill tags via `d` key.
+- **D-30**: Add Agents selection step to wizard -- Added new "Agents" wizard step with grouped checkbox layout. Agents pre-selected based on selected domains using `agentSkillPrefixes` from agent-mappings.yaml.
+- **D-35**: Pre-D-31 cleanup: merge meta-framework + remove web-extras -- Merged `meta-framework` into `framework`, removed `web-extras` domain/parentDomain plumbing, simplified agent preselection logic.
+- **D-27**: Switch config/metadata fields from snake_case to camelCase -- Renamed all 27 snake_case fields to camelCase across YAML configs, TypeScript types, Zod schemas, JSON schemas, and all property accesses.
+- **D-29**: Ensure skills metadata YAML includes $schema reference -- All 87 metadata.yaml files in the source marketplace now include `$schema` references.
+- **D-31**: Prefix categories with their domain -- Subcategory keys now use domain-prefixed format (e.g., `web-framework`, `api-testing`) across skills matrix, stacks, metadata, schemas, and TypeScript types.
+- **D-32**: Add category as enum in metadata JSON schema -- Changed `metadataValidationSchema` category field from `z.string()` to `subcategorySchema`, regenerated `metadata.schema.json` with 37-value enum.

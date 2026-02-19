@@ -4,13 +4,7 @@
 | ---- | ---------------------------------------------------------- | ------------ |
 | U13  | Run Documentor Agent on CLI Codebase                       | Pending      |
 | H18  | Tailor documentation-bible to CLI repo                     | Phase 3 only |
-| #4   | Handle plugins + local skills together                     | Pending      |
-| D-27 | Switch config/metadata fields from snake_case to camelCase | Done         |
 | D-28 | Fix startup warning/error messages                         | Pending      |
-| D-29 | Ensure skills metadata YAML includes $schema reference     | Pending      |
-| D-30 | Add Agents selection step to wizard                        | Pending      |
-| D-32 | Add category as enum in metadata JSON schema               | Pending      |
-| D-35 | Pre-D-31 cleanup: merge meta-framework + remove web-extras | Pending      |
 
 ---
 
@@ -66,25 +60,6 @@ Create `.claude/docs/` directory with:
 
 ---
 
-### Development
-
-#### #4: Handle plugins + local skills together
-
-Implement functionality to support both plugins and local skills working together simultaneously. This should allow users to use external plugins while also having access to their locally-defined skills without conflicts.
-
----
-
-### Config Standardization
-
-#### D-27: Switch Config/Metadata Fields from snake_case to camelCase
-
-Rename all 27 snake_case fields to camelCase across YAML configs, TypeScript types, Zod schemas, JSON schemas, and all property accesses. Affects ~50 files and 6 JSON schemas.
-
-**Full audit with field inventory, file touchpoints, migration layers, and special considerations:**
-[todo/D-27-snake-case-audit.md](./D-27-snake-case-audit.md)
-
----
-
 ### UX / Polish
 
 #### D-28: Fix Startup Warning/Error Messages
@@ -103,91 +78,6 @@ The CLI shows warning/error messages and the ASCII logo on startup that flash br
 - `src/cli/components/wizard/wizard-layout.tsx` — add `<Static>` block for startup messages
 - `src/cli/utils/logger.ts` + loading modules — support buffered output mode
 - Audit which warnings are actionable vs noise; downgrade informational messages to `verbose()`
-
----
-
-#### D-29: Ensure Skills Metadata YAML Includes $schema Reference
-
-Each `metadata.yaml` file for skills should include a `$schema` field pointing to the JSON schema, enabling IDE validation and ensuring consistency across all skill metadata files.
-
-**Changes needed:**
-
-- Add `$schema` reference to all `metadata.yaml` files in source skill directories
-- Update skill scaffolding (`new/skill.ts`) to include `$schema` in generated metadata
-- Update `createTestSource()` and `writeTestSkill()` to include `$schema` in test fixtures
-- Verify the validator accepts the `$schema` field (it should be ignored or explicitly allowed)
-
----
-
-#### D-32: Add Category as Enum in Metadata JSON Schema
-
-The `category` field in `src/schemas/metadata.schema.json` currently accepts any string. It should be an enum of valid `Subcategory` values so that IDE validation catches invalid categories (like `frontend`, `shared`, `setup`) immediately.
-
-**Changes needed:**
-
-- Update `src/schemas/metadata.schema.json` — add `enum` constraint to the `category` property with all valid subcategory values
-- Keep the enum in sync with `SUBCATEGORY_VALUES` in `src/cli/lib/schemas.ts`
-
----
-
-### Wizard / Features
-
-#### D-30: Add Agents Selection Step to Wizard
-
-**Problem:** Currently all agents are determined implicitly by `getAgentsForSkill()` in `config-generator.ts`, which pattern-matches selected skill paths against `skillToAgents` in `agent-mappings.yaml`. Users have zero visibility or control over which of the 18 agents get compiled.
-
-**Solution:** Add a new "Agents" wizard step (after Sources, before or after Build) where users can select/deselect which sub-agents to compile.
-
-**Pre-selection logic:**
-
-- Based on selected domains, auto-check domain-specific agents:
-  - `web` → web-developer, web-reviewer, web-researcher, web-tester
-  - `api` → api-developer, api-reviewer, api-researcher
-  - `cli` → cli-developer, cli-tester, cli-reviewer, cli-migrator
-- Cross-cutting agents (web-pm, web-architecture) → pre-selected if any domain is selected
-- **Meta agents NOT pre-selected by default:** agent-summoner, skill-summoner, documentor
-- **Pattern agents NOT pre-selected by default:** pattern-scout, web-pattern-critique
-
-**Existing mapping:** `agentSkillPrefixes` in `agent-mappings.yaml` already maps each agent to domain prefixes — this can drive the pre-selection logic by inverting the mapping (domain → agents with that prefix).
-
-**UI approach:**
-
-- Extract the domain selection checkbox grid from `domain-selection.tsx` into a reusable `CheckboxGrid` component
-- Reuse `CheckboxGrid` for both domain selection and agent selection
-- Group agents by category (developer, reviewer, researcher, tester, meta, pattern, planning, migration) — matches the `src/agents/` directory structure
-
-**Changes needed:**
-
-1. **Extract reusable component:** `domain-selection.tsx` → `CheckboxGrid` (generic) + `DomainSelection` (wraps it)
-2. **New component:** `step-agents.tsx` — renders `CheckboxGrid` with agent items grouped by category
-3. **Wizard store:** Add `selectedAgents: AgentName[]` state, `toggleAgent()`, `setAgentPreselection(domains: Domain[])` actions
-4. **Wizard flow:** Insert agents step into step sequence (wizard.tsx, wizard-layout.tsx)
-5. **Config generation:** Use `selectedAgents` from wizard result instead of deriving from skills
-6. **Types:** Add `selectedAgents` to `WizardResultV2`
-
-**Agent categories for grouping (from `src/agents/` directory structure):**
-
-- Developer: web-developer, api-developer, cli-developer, web-architecture
-- Reviewer: web-reviewer, api-reviewer, cli-reviewer
-- Researcher: web-researcher, api-researcher
-- Tester: web-tester, cli-tester
-- Planning: web-pm
-- Pattern: pattern-scout, web-pattern-critique
-- Meta: agent-summoner, skill-summoner, documentor
-- Migration: cli-migrator
-
----
-
-### Category Cleanup
-
-#### D-35: Pre-D-31 Cleanup — Merge meta-framework + Remove web-extras
-
-Two cleanup tasks combined, both prerequisite to D-31:
-
-1. **Merge `meta-framework` into `framework`** — the distinction causes real errors (nuxt-stack inverted), no code treats them differently, skill IDs already use `web-framework-*` for both
-2. **Remove `web-extras` domain** — not a real domain, just a wizard UI grouping. Now that scrolling is supported, all web categories fit in one step
-
-**Full plan:** [todo/D-35-merge-meta-framework.md](./D-35-merge-meta-framework.md)
 
 ---
 

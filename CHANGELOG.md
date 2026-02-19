@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.40.0] - 2026-02-19
+
+**Domain-prefix all subcategory keys (D-31), add category enum to metadata schema (D-32)**
+
+- Rename all 33 bare subcategory keys to domain-prefixed form (e.g., `framework` → `web-framework`, `methodology` → `shared-methodology`)
+- Add strict category enum validation to metadata schema
+- Simplify `extractSubcategoryFromPath` and `categoryPathSchema` (remove slash-separated paths)
+- Update all YAML configs, JSON schemas, types, source code, and 30+ test files
+
+See [changelogs/0.40.0.md](./changelogs/0.40.0.md) for full details.
+
+---
+
 ## [0.39.0] - 2026-02-19
 
 **Merge meta-framework into framework, remove web-extras domain, grouped agents step**
