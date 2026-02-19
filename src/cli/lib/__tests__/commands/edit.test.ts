@@ -65,8 +65,7 @@ vi.mock("../../plugins/index.js", async (importOriginal) => {
   const original = await importOriginal<typeof import("../../plugins/index.js")>();
   return {
     ...original,
-    discoverAllPluginSkills: (...args: unknown[]) =>
-      mockDiscoverAllPluginSkills(...(args as [])),
+    discoverAllPluginSkills: (...args: unknown[]) => mockDiscoverAllPluginSkills(...(args as [])),
   };
 });
 

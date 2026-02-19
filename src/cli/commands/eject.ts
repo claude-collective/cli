@@ -279,7 +279,9 @@ export default class Eject extends BaseCommand {
         : path.join(outputBase, path.basename(DIRS.agents));
 
     if ((await directoryExists(destDir)) && !force) {
-      this.warn(`${templatesOnly ? "Agent templates" : "Agent partials"} already exist at ${destDir}. Use --force to overwrite.`);
+      this.warn(
+        `${templatesOnly ? "Agent templates" : "Agent partials"} already exist at ${destDir}. Use --force to overwrite.`,
+      );
       return;
     }
 

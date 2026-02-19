@@ -265,12 +265,7 @@ describe("eject command", () => {
       await runCliCommand(["eject", "agent-partials", "--templates"]);
 
       // Second eject with --force
-      const { stdout } = await runCliCommand([
-        "eject",
-        "agent-partials",
-        "--templates",
-        "--force",
-      ]);
+      const { stdout } = await runCliCommand(["eject", "agent-partials", "--templates", "--force"]);
 
       expect(stdout).toContain("Agent templates ejected");
     });
