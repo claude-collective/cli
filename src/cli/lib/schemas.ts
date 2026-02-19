@@ -51,39 +51,41 @@ export const boundSkillSchema: z.ZodType<BoundSkill> = z.object({
 
 /** Raw subcategory values (before cast) — used to derive stackSubcategorySchema */
 const SUBCATEGORY_VALUES = [
-  "framework",
-  "styling",
-  "client-state",
-  "server-state",
-  "forms",
-  "testing",
-  "ui-components",
-  "mocking",
-  "error-handling",
-  "i18n",
-  "file-upload",
-  "files",
-  "utilities",
-  "realtime",
-  "animation",
-  "pwa",
-  "accessibility",
+  "web-framework",
+  "web-styling",
+  "web-client-state",
+  "web-server-state",
+  "web-forms",
+  "web-testing",
+  "web-ui-components",
+  "web-mocking",
+  "web-error-handling",
+  "web-i18n",
+  "web-file-upload",
+  "web-files",
+  "web-utilities",
+  "web-realtime",
+  "web-animation",
+  "web-pwa",
+  "web-accessibility",
   "web-performance",
-  "api",
-  "database",
-  "auth",
-  "observability",
-  "analytics",
-  "email",
-  "performance",
+  "web-base-framework",
+  "api-api",
+  "api-database",
+  "api-auth",
+  "api-observability",
+  "api-analytics",
+  "api-email",
+  "api-performance",
   "mobile-framework",
-  "monorepo",
-  "tooling",
-  "security",
-  "methodology",
-  "research",
-  "reviewing",
-  "ci-cd",
+  "mobile-platform",
+  "shared-monorepo",
+  "shared-tooling",
+  "shared-security",
+  "shared-methodology",
+  "shared-research",
+  "shared-reviewing",
+  "shared-ci-cd",
   "cli-framework",
   "cli-prompts",
   "cli-testing",
@@ -94,10 +96,10 @@ export const subcategorySchema = z.enum(SUBCATEGORY_VALUES) as z.ZodType<Subcate
 
 /**
  * Extended subcategory enum for stack configs.
- * Includes all matrix subcategories plus stacks-only keys (base-framework, platform)
- * that are used in stacks.yaml but not defined as matrix categories.
+ * Identical to subcategorySchema since SUBCATEGORY_VALUES already includes
+ * stacks-only keys (web-base-framework, mobile-platform).
  */
-export const stackSubcategorySchema = z.enum([...SUBCATEGORY_VALUES, "base-framework", "platform"]);
+export const stackSubcategorySchema = z.enum(SUBCATEGORY_VALUES);
 
 export const agentNameSchema = z.enum([
   "web-developer",
@@ -232,17 +234,15 @@ export const skillIdSchema = z
     "Must be a valid skill ID (e.g., 'web-framework-react')",
   ) as z.ZodType<SkillId>;
 
-// Accepts: "prefix/subcategory", "prefix-subcategory", bare subcategory, or "local"
+// Accepts: "prefix-subcategory", bare subcategory, or "local"
 export const categoryPathSchema = z.string().refine(
   (val): val is CategoryPath => {
     if (val === "local") return true;
-    if (/^(web|api|cli|mobile|infra|meta|security)\/.+$/.test(val)) return true;
-    if (/^(web|api|cli|mobile|infra|meta|security)-.+$/.test(val)) return true;
+    if (/^(web|api|cli|mobile|infra|meta|security|shared)-.+$/.test(val)) return true;
     return subcategorySchema.safeParse(val).success;
   },
   {
-    message:
-      "Must be a valid category path (e.g., 'web/framework', 'web-framework', 'testing', or 'local')",
+    message: "Must be a valid category path (e.g., 'web-framework', 'shared-testing', or 'local')",
   },
 ) as z.ZodType<CategoryPath>;
 
@@ -798,8 +798,8 @@ export const skillFrontmatterValidationSchema = z
 /** Strict validation for metadata.yaml in published skills (enforces author format, length limits) */
 export const metadataValidationSchema = z
   .object({
-    /** Subcategory path (e.g., "web/framework") */
-    category: z.string(),
+    /** Domain-prefixed subcategory (e.g., "web-framework") */
+    category: subcategorySchema,
     categoryExclusive: z.boolean().optional(),
     /** Author handle — must start with @ (e.g., "@vince") */
     author: z.string().regex(/^@[a-z][a-z0-9-]*$/),

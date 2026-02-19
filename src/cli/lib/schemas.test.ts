@@ -142,8 +142,8 @@ describe("projectConfigLoaderSchema", () => {
         agents: ["web-developer"],
         stack: {
           "web-developer": {
-            framework: "web-framework-react",
-            styling: "web-styling-scss-modules",
+            "web-framework": "web-framework-react",
+            "web-styling": "web-styling-scss-modules",
           },
         },
       };
@@ -158,7 +158,7 @@ describe("projectConfigLoaderSchema", () => {
         agents: ["web-developer"],
         stack: {
           "web-developer": {
-            methodology: [
+            "shared-methodology": [
               { id: "meta-methodology-investigation-requirements", preloaded: true },
               { id: "meta-methodology-anti-over-engineering", preloaded: true },
             ],
@@ -176,7 +176,7 @@ describe("projectConfigLoaderSchema", () => {
         agents: ["web-developer"],
         stack: {
           "web-developer": {
-            framework: { id: "web-framework-react", preloaded: true },
+            "web-framework": { id: "web-framework-react", preloaded: true },
           },
         },
       };
@@ -192,14 +192,14 @@ describe("projectConfigLoaderSchema", () => {
         stack: {
           "web-developer": {
             // Format 1: bare string
-            framework: "web-framework-react",
+            "web-framework": "web-framework-react",
             // Format 2: array of objects
-            methodology: [
+            "shared-methodology": [
               { id: "meta-methodology-investigation-requirements", preloaded: true },
               { id: "meta-methodology-anti-over-engineering", preloaded: true },
             ],
             // Format 3: single object
-            styling: { id: "web-styling-scss-modules", preloaded: true },
+            "web-styling": { id: "web-styling-scss-modules", preloaded: true },
           },
         },
       };
@@ -214,11 +214,11 @@ describe("projectConfigLoaderSchema", () => {
         agents: ["web-developer", "api-developer"],
         stack: {
           "web-developer": {
-            framework: "web-framework-react",
+            "web-framework": "web-framework-react",
           },
           "api-developer": {
-            api: { id: "api-framework-hono", preloaded: true },
-            database: [{ id: "api-database-drizzle" }],
+            "api-api": { id: "api-framework-hono", preloaded: true },
+            "api-database": [{ id: "api-database-drizzle" }],
           },
         },
       };
@@ -233,7 +233,7 @@ describe("projectConfigLoaderSchema", () => {
         agents: ["web-developer"],
         stack: {
           "web-developer": {
-            framework: "invalid", // Not a valid SkillId (needs 3+ segments)
+            "web-framework": "invalid", // Not a valid SkillId (needs 3+ segments)
           },
         },
       };
@@ -270,7 +270,7 @@ describe("projectConfigLoaderSchema", () => {
         agents: ["web-developer"],
         stack: {
           "web-developer": {
-            methodology: [
+            "shared-methodology": [
               "meta-methodology-investigation-requirements",
               { id: "meta-methodology-anti-over-engineering", preloaded: true },
             ],

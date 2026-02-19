@@ -121,11 +121,7 @@ export type SkillDisplayName =
  * Either "prefix-subcategory" (e.g., "web-framework"), a standalone subcategory,
  * or "local" for user-defined local skills.
  */
-export type CategoryPath =
-  | `${SkillIdPrefix}/${string}`
-  | `${SkillIdPrefix}-${string}`
-  | Subcategory
-  | "local";
+export type CategoryPath = `${SkillIdPrefix}-${string}` | Subcategory | "local";
 
 /**
  * Subcategory-keyed selections mapping to arrays of canonical skill IDs.
@@ -197,7 +193,7 @@ export type SkillFrontmatter = {
  * All fields optional because metadata.yaml is supplementary; SKILL.md is the primary source.
  */
 export type SkillMetadataConfig = {
-  /** Which subcategory this skill belongs to (e.g., "web-framework" or "testing") */
+  /** Which subcategory this skill belongs to (e.g., "web-framework" or "web-testing") */
   category?: CategoryPath;
   /** If true, only one skill from this category can be selected. Overrides CategoryDefinition. */
   categoryExclusive?: boolean;
