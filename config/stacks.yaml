@@ -7,16 +7,16 @@ stacks:
     description: React + Hono full-stack
     agents:
       web-developer:
-        framework:
+        web-framework:
           - id: web-framework-react
             preloaded: true
-        styling: web-styling-scss-modules
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        mocking: web-mocks-msw
-        accessibility: web-accessibility-web-accessibility
-        methodology:
+        web-styling: web-styling-scss-modules
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        web-mocking: web-mocks-msw
+        web-accessibility: web-accessibility-web-accessibility
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -30,19 +30,19 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-developer:
-        api:
+        api-api:
           - id: api-framework-hono
             preloaded: true
-        database:
+        api-database:
           - id: api-database-drizzle
             preloaded: true
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        analytics: api-analytics-posthog-analytics
-        email: api-email-resend-react-email
-        ci-cd: api-ci-cd-github-actions
-        testing: api-testing-api-testing
-        methodology:
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        api-analytics: api-analytics-posthog-analytics
+        api-email: api-email-resend-react-email
+        shared-ci-cd: api-ci-cd-github-actions
+        web-testing: api-testing-api-testing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -59,7 +59,7 @@ stacks:
         cli-framework:
           - id: cli-framework-cli-commander
             preloaded: true
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -73,16 +73,16 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-reviewer:
-        reviewing:
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        framework: web-framework-react
-        styling: web-styling-scss-modules
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        mocking: web-mocks-msw
-        methodology:
+        web-framework: web-framework-react
+        web-styling: web-styling-scss-modules
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        web-mocking: web-mocks-msw
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -96,15 +96,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-reviewer:
-        reviewing:
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        testing: api-testing-api-testing
-        methodology:
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        web-testing: api-testing-api-testing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -118,11 +118,11 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       cli-reviewer:
-        reviewing:
+        shared-reviewing:
           - id: meta-reviewing-cli-reviewing
             preloaded: true
         cli-framework: cli-framework-cli-commander
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -136,11 +136,11 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-tester:
-        testing:
+        web-testing:
           - web-testing-playwright-e2e
           - web-testing-vitest
-        mocking: web-mocks-msw
-        methodology:
+        web-mocking: web-mocks-msw
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -154,22 +154,22 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-pm:
-        framework: web-framework-react
-        styling: web-styling-scss-modules
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        mocking: web-mocks-msw
-        accessibility: web-accessibility-web-accessibility
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        analytics: api-analytics-posthog-analytics
-        email: api-email-resend-react-email
-        ci-cd: api-ci-cd-github-actions
+        web-framework: web-framework-react
+        web-styling: web-styling-scss-modules
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        web-mocking: web-mocks-msw
+        web-accessibility: web-accessibility-web-accessibility
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        api-analytics: api-analytics-posthog-analytics
+        api-email: api-email-resend-react-email
+        shared-ci-cd: api-ci-cd-github-actions
         cli-framework: cli-framework-cli-commander
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -183,15 +183,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-architecture:
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        analytics: api-analytics-posthog-analytics
-        email: api-email-resend-react-email
-        ci-cd: api-ci-cd-github-actions
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        api-analytics: api-analytics-posthog-analytics
+        api-email: api-email-resend-react-email
+        shared-ci-cd: api-ci-cd-github-actions
         cli-framework: cli-framework-cli-commander
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -205,14 +205,14 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-researcher:
-        framework: web-framework-react
-        styling: web-styling-scss-modules
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        mocking: web-mocks-msw
-        accessibility: web-accessibility-web-accessibility
-        methodology:
+        web-framework: web-framework-react
+        web-styling: web-styling-scss-modules
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        web-mocking: web-mocks-msw
+        web-accessibility: web-accessibility-web-accessibility
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -226,15 +226,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-researcher:
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        analytics: api-analytics-posthog-analytics
-        email: api-email-resend-react-email
-        ci-cd: api-ci-cd-github-actions
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        api-analytics: api-analytics-posthog-analytics
+        api-email: api-email-resend-react-email
+        shared-ci-cd: api-ci-cd-github-actions
         cli-framework: cli-framework-cli-commander
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -248,21 +248,21 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       pattern-scout:
-        framework: web-framework-react
-        styling: web-styling-scss-modules
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        mocking: web-mocks-msw
-        accessibility: web-accessibility-web-accessibility
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        analytics: api-analytics-posthog-analytics
-        email: api-email-resend-react-email
-        ci-cd: api-ci-cd-github-actions
-        methodology:
+        web-framework: web-framework-react
+        web-styling: web-styling-scss-modules
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        web-mocking: web-mocks-msw
+        web-accessibility: web-accessibility-web-accessibility
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        api-analytics: api-analytics-posthog-analytics
+        api-email: api-email-resend-react-email
+        shared-ci-cd: api-ci-cd-github-actions
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -276,24 +276,24 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-pattern-critique:
-        framework: web-framework-react
-        styling: web-styling-scss-modules
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        mocking: web-mocks-msw
-        accessibility: web-accessibility-web-accessibility
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        analytics: api-analytics-posthog-analytics
-        email: api-email-resend-react-email
-        ci-cd: api-ci-cd-github-actions
-        reviewing:
+        web-framework: web-framework-react
+        web-styling: web-styling-scss-modules
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        web-mocking: web-mocks-msw
+        web-accessibility: web-accessibility-web-accessibility
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        api-analytics: api-analytics-posthog-analytics
+        api-email: api-email-resend-react-email
+        shared-ci-cd: api-ci-cd-github-actions
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -307,23 +307,23 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       agent-summoner:
-        framework: web-framework-react
-        styling: web-styling-scss-modules
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        mocking: web-mocks-msw
-        accessibility: web-accessibility-web-accessibility
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        analytics: api-analytics-posthog-analytics
-        email: api-email-resend-react-email
-        ci-cd: api-ci-cd-github-actions
+        web-framework: web-framework-react
+        web-styling: web-styling-scss-modules
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        web-mocking: web-mocks-msw
+        web-accessibility: web-accessibility-web-accessibility
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        api-analytics: api-analytics-posthog-analytics
+        api-email: api-email-resend-react-email
+        shared-ci-cd: api-ci-cd-github-actions
         cli-framework: cli-framework-cli-commander
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -337,23 +337,23 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       skill-summoner:
-        framework: web-framework-react
-        styling: web-styling-scss-modules
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        mocking: web-mocks-msw
-        accessibility: web-accessibility-web-accessibility
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        analytics: api-analytics-posthog-analytics
-        email: api-email-resend-react-email
-        ci-cd: api-ci-cd-github-actions
+        web-framework: web-framework-react
+        web-styling: web-styling-scss-modules
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        web-mocking: web-mocks-msw
+        web-accessibility: web-accessibility-web-accessibility
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        api-analytics: api-analytics-posthog-analytics
+        api-email: api-email-resend-react-email
+        shared-ci-cd: api-ci-cd-github-actions
         cli-framework: cli-framework-cli-commander
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -367,23 +367,23 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       documentor:
-        framework: web-framework-react
-        styling: web-styling-scss-modules
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        mocking: web-mocks-msw
-        accessibility: web-accessibility-web-accessibility
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        analytics: api-analytics-posthog-analytics
-        email: api-email-resend-react-email
-        ci-cd: api-ci-cd-github-actions
+        web-framework: web-framework-react
+        web-styling: web-styling-scss-modules
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        web-mocking: web-mocks-msw
+        web-accessibility: web-accessibility-web-accessibility
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        api-analytics: api-analytics-posthog-analytics
+        api-email: api-email-resend-react-email
+        shared-ci-cd: api-ci-cd-github-actions
         cli-framework: cli-framework-cli-commander
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -405,12 +405,12 @@ stacks:
     description: Angular + Signals stack
     agents:
       web-developer:
-        framework:
+        web-framework:
           - id: web-framework-angular-standalone
             preloaded: true
-        client-state: web-state-ngrx-signalstore
-        testing: web-testing-vitest
-        methodology:
+        web-client-state: web-state-ngrx-signalstore
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -424,16 +424,16 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-developer:
-        api:
+        api-api:
           - id: api-framework-hono
             preloaded: true
-        database:
+        api-database:
           - id: api-database-drizzle
             preloaded: true
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        testing: api-testing-api-testing
-        methodology:
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        web-testing: api-testing-api-testing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -447,13 +447,13 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-reviewer:
-        reviewing:
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        framework: web-framework-angular-standalone
-        client-state: web-state-ngrx-signalstore
-        testing: web-testing-vitest
-        methodology:
+        web-framework: web-framework-angular-standalone
+        web-client-state: web-state-ngrx-signalstore
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -467,15 +467,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-reviewer:
-        reviewing:
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        testing: api-testing-api-testing
-        methodology:
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        web-testing: api-testing-api-testing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -489,14 +489,14 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-pm:
-        framework: web-framework-angular-standalone
-        client-state: web-state-ngrx-signalstore
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        web-framework: web-framework-angular-standalone
+        web-client-state: web-state-ngrx-signalstore
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -510,11 +510,11 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-architecture:
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -528,10 +528,10 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-researcher:
-        framework: web-framework-angular-standalone
-        client-state: web-state-ngrx-signalstore
-        testing: web-testing-vitest
-        methodology:
+        web-framework: web-framework-angular-standalone
+        web-client-state: web-state-ngrx-signalstore
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -545,11 +545,11 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-researcher:
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -563,14 +563,14 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       pattern-scout:
-        framework: web-framework-angular-standalone
-        client-state: web-state-ngrx-signalstore
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        web-framework: web-framework-angular-standalone
+        web-client-state: web-state-ngrx-signalstore
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -584,17 +584,17 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-pattern-critique:
-        framework: web-framework-angular-standalone
-        client-state: web-state-ngrx-signalstore
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing:
+        web-framework: web-framework-angular-standalone
+        web-client-state: web-state-ngrx-signalstore
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -608,15 +608,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       agent-summoner:
-        framework: web-framework-angular-standalone
-        client-state: web-state-ngrx-signalstore
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: web-framework-angular-standalone
+        web-client-state: web-state-ngrx-signalstore
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -630,15 +630,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       skill-summoner:
-        framework: web-framework-angular-standalone
-        client-state: web-state-ngrx-signalstore
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: web-framework-angular-standalone
+        web-client-state: web-state-ngrx-signalstore
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -652,15 +652,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       documentor:
-        framework: web-framework-angular-standalone
-        client-state: web-state-ngrx-signalstore
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: web-framework-angular-standalone
+        web-client-state: web-state-ngrx-signalstore
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -674,10 +674,10 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-tester:
-        testing:
+        web-testing:
           - web-testing-playwright-e2e
           - web-testing-vitest
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -697,15 +697,15 @@ stacks:
     description: Vue + Nuxt full-stack
     agents:
       web-developer:
-        framework:
+        web-framework:
           - id: web-framework-nuxt
             preloaded: true
-        base-framework:
+        web-base-framework:
           - id: web-framework-vue-composition-api
             preloaded: true
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        methodology:
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -719,16 +719,16 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-developer:
-        api:
+        api-api:
           - id: api-framework-hono
             preloaded: true
-        database:
+        api-database:
           - id: api-database-drizzle
             preloaded: true
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        testing: api-testing-api-testing
-        methodology:
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        web-testing: api-testing-api-testing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -742,14 +742,14 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-reviewer:
-        reviewing:
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        framework: web-framework-nuxt
-        base-framework: web-framework-vue-composition-api
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        methodology:
+        web-framework: web-framework-nuxt
+        web-base-framework: web-framework-vue-composition-api
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -763,15 +763,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-reviewer:
-        reviewing:
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        testing: api-testing-api-testing
-        methodology:
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        web-testing: api-testing-api-testing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -785,15 +785,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-pm:
-        framework: web-framework-nuxt
-        base-framework: web-framework-vue-composition-api
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        web-framework: web-framework-nuxt
+        web-base-framework: web-framework-vue-composition-api
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -807,11 +807,11 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-architecture:
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -825,11 +825,11 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-researcher:
-        framework: web-framework-nuxt
-        base-framework: web-framework-vue-composition-api
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        methodology:
+        web-framework: web-framework-nuxt
+        web-base-framework: web-framework-vue-composition-api
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -843,11 +843,11 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-researcher:
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -861,15 +861,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       pattern-scout:
-        framework: web-framework-nuxt
-        base-framework: web-framework-vue-composition-api
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        web-framework: web-framework-nuxt
+        web-base-framework: web-framework-vue-composition-api
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -883,18 +883,18 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-pattern-critique:
-        framework: web-framework-nuxt
-        base-framework: web-framework-vue-composition-api
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing:
+        web-framework: web-framework-nuxt
+        web-base-framework: web-framework-vue-composition-api
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -908,16 +908,16 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       agent-summoner:
-        framework: web-framework-nuxt
-        base-framework: web-framework-vue-composition-api
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: web-framework-nuxt
+        web-base-framework: web-framework-vue-composition-api
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -931,16 +931,16 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       skill-summoner:
-        framework: web-framework-nuxt
-        base-framework: web-framework-vue-composition-api
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: web-framework-nuxt
+        web-base-framework: web-framework-vue-composition-api
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -954,16 +954,16 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       documentor:
-        framework: web-framework-nuxt
-        base-framework: web-framework-vue-composition-api
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: web-framework-nuxt
+        web-base-framework: web-framework-vue-composition-api
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -977,10 +977,10 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-tester:
-        testing:
+        web-testing:
           - web-testing-playwright-e2e
           - web-testing-vitest
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1000,14 +1000,14 @@ stacks:
     description: Remix + form-centric DX
     agents:
       web-developer:
-        framework:
+        web-framework:
           - id: web-framework-remix
             preloaded: true
-        base-framework:
+        web-base-framework:
           - id: web-framework-react
             preloaded: true
-        testing: web-testing-vitest
-        methodology:
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1021,16 +1021,16 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-developer:
-        api:
+        api-api:
           - id: api-framework-hono
             preloaded: true
-        database:
+        api-database:
           - id: api-database-drizzle
             preloaded: true
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        testing: api-testing-api-testing
-        methodology:
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        web-testing: api-testing-api-testing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1044,13 +1044,13 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-reviewer:
-        reviewing:
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        framework: web-framework-remix
-        base-framework: web-framework-react
-        testing: web-testing-vitest
-        methodology:
+        web-framework: web-framework-remix
+        web-base-framework: web-framework-react
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1064,15 +1064,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-reviewer:
-        reviewing:
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        testing: api-testing-api-testing
-        methodology:
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        web-testing: api-testing-api-testing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1086,14 +1086,14 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-pm:
-        framework: web-framework-remix
-        base-framework: web-framework-react
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        web-framework: web-framework-remix
+        web-base-framework: web-framework-react
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1107,11 +1107,11 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-architecture:
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1125,10 +1125,10 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-researcher:
-        framework: web-framework-remix
-        base-framework: web-framework-react
-        testing: web-testing-vitest
-        methodology:
+        web-framework: web-framework-remix
+        web-base-framework: web-framework-react
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1142,11 +1142,11 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-researcher:
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1160,14 +1160,14 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       pattern-scout:
-        framework: web-framework-remix
-        base-framework: web-framework-react
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        web-framework: web-framework-remix
+        web-base-framework: web-framework-react
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1181,17 +1181,17 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-pattern-critique:
-        framework: web-framework-remix
-        base-framework: web-framework-react
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing:
+        web-framework: web-framework-remix
+        web-base-framework: web-framework-react
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1205,15 +1205,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       agent-summoner:
-        framework: web-framework-remix
-        base-framework: web-framework-react
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: web-framework-remix
+        web-base-framework: web-framework-react
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1227,15 +1227,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       skill-summoner:
-        framework: web-framework-remix
-        base-framework: web-framework-react
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: web-framework-remix
+        web-base-framework: web-framework-react
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1249,15 +1249,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       documentor:
-        framework: web-framework-remix
-        base-framework: web-framework-react
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: web-framework-remix
+        web-base-framework: web-framework-react
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1271,10 +1271,10 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-tester:
-        testing:
+        web-testing:
           - web-testing-playwright-e2e
           - web-testing-vitest
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1294,12 +1294,12 @@ stacks:
     description: Vue + Pinia + Tailwind
     agents:
       web-developer:
-        framework:
+        web-framework:
           - id: web-framework-vue-composition-api
             preloaded: true
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        methodology:
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1313,16 +1313,16 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-developer:
-        api:
+        api-api:
           - id: api-framework-hono
             preloaded: true
-        database:
+        api-database:
           - id: api-database-drizzle
             preloaded: true
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        testing: api-testing-api-testing
-        methodology:
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        web-testing: api-testing-api-testing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1336,13 +1336,13 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-reviewer:
-        reviewing:
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        framework: web-framework-vue-composition-api
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        methodology:
+        web-framework: web-framework-vue-composition-api
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1356,15 +1356,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-reviewer:
-        reviewing:
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        testing: api-testing-api-testing
-        methodology:
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        web-testing: api-testing-api-testing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1378,14 +1378,14 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-pm:
-        framework: web-framework-vue-composition-api
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        web-framework: web-framework-vue-composition-api
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1399,11 +1399,11 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-architecture:
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1417,10 +1417,10 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-researcher:
-        framework: web-framework-vue-composition-api
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        methodology:
+        web-framework: web-framework-vue-composition-api
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1434,11 +1434,11 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-researcher:
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1452,14 +1452,14 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       pattern-scout:
-        framework: web-framework-vue-composition-api
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        web-framework: web-framework-vue-composition-api
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1473,17 +1473,17 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-pattern-critique:
-        framework: web-framework-vue-composition-api
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing:
+        web-framework: web-framework-vue-composition-api
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1497,15 +1497,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       agent-summoner:
-        framework: web-framework-vue-composition-api
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: web-framework-vue-composition-api
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1519,15 +1519,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       skill-summoner:
-        framework: web-framework-vue-composition-api
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: web-framework-vue-composition-api
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1541,15 +1541,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       documentor:
-        framework: web-framework-vue-composition-api
-        client-state: web-state-pinia
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: web-framework-vue-composition-api
+        web-client-state: web-state-pinia
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1563,10 +1563,10 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-tester:
-        testing:
+        web-testing:
           - web-testing-playwright-e2e
           - web-testing-vitest
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1586,11 +1586,11 @@ stacks:
     description: SolidJS + Hono full-stack
     agents:
       web-developer:
-        framework:
+        web-framework:
           - id: web-framework-solidjs
             preloaded: true
-        testing: web-testing-vitest
-        methodology:
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1604,16 +1604,16 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-developer:
-        api:
+        api-api:
           - id: api-framework-hono
             preloaded: true
-        database:
+        api-database:
           - id: api-database-drizzle
             preloaded: true
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        testing: api-testing-api-testing
-        methodology:
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        web-testing: api-testing-api-testing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1627,12 +1627,12 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-reviewer:
-        reviewing:
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        framework: web-framework-solidjs
-        testing: web-testing-vitest
-        methodology:
+        web-framework: web-framework-solidjs
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1646,15 +1646,15 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-reviewer:
-        reviewing:
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        testing: api-testing-api-testing
-        methodology:
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        web-testing: api-testing-api-testing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1668,13 +1668,13 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-pm:
-        framework: web-framework-solidjs
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        web-framework: web-framework-solidjs
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1688,11 +1688,11 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-architecture:
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1706,9 +1706,9 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-researcher:
-        framework: web-framework-solidjs
-        testing: web-testing-vitest
-        methodology:
+        web-framework: web-framework-solidjs
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1722,11 +1722,11 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       api-researcher:
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1740,13 +1740,13 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       pattern-scout:
-        framework: web-framework-solidjs
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        methodology:
+        web-framework: web-framework-solidjs
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1760,16 +1760,16 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-pattern-critique:
-        framework: web-framework-solidjs
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing:
+        web-framework: web-framework-solidjs
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1783,14 +1783,14 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       agent-summoner:
-        framework: web-framework-solidjs
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: web-framework-solidjs
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1804,14 +1804,14 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       skill-summoner:
-        framework: web-framework-solidjs
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: web-framework-solidjs
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1825,14 +1825,14 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       documentor:
-        framework: web-framework-solidjs
-        testing: web-testing-vitest
-        api: api-framework-hono
-        database: api-database-drizzle
-        auth: api-auth-better-auth-drizzle-hono
-        observability: api-observability-axiom-pino-sentry
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: web-framework-solidjs
+        web-testing: web-testing-vitest
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
+        api-auth: api-auth-better-auth-drizzle-hono
+        api-observability: api-observability-axiom-pino-sentry
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1846,10 +1846,10 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-tester:
-        testing:
+        web-testing:
           - web-testing-playwright-e2e
           - web-testing-vitest
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1869,19 +1869,19 @@ stacks:
     description: React Native + Expo mobile
     agents:
       web-developer:
-        framework:
+        web-framework:
           - id: mobile-framework-react-native
             preloaded: true
-        platform:
+        mobile-platform:
           - id: mobile-framework-expo
             preloaded: true
-        base-framework:
+        web-base-framework:
           - id: web-framework-react
             preloaded: true
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        methodology:
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1895,16 +1895,16 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-reviewer:
-        reviewing:
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        framework: mobile-framework-react-native
-        platform: mobile-framework-expo
-        base-framework: web-framework-react
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        methodology:
+        web-framework: mobile-framework-react-native
+        mobile-platform: mobile-framework-expo
+        web-base-framework: web-framework-react
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1918,13 +1918,13 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-pm:
-        framework: mobile-framework-react-native
-        platform: mobile-framework-expo
-        base-framework: web-framework-react
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        methodology:
+        web-framework: mobile-framework-react-native
+        mobile-platform: mobile-framework-expo
+        web-base-framework: web-framework-react
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1938,7 +1938,7 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-architecture:
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1952,13 +1952,13 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-researcher:
-        framework: mobile-framework-react-native
-        platform: mobile-framework-expo
-        base-framework: web-framework-react
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        methodology:
+        web-framework: mobile-framework-react-native
+        mobile-platform: mobile-framework-expo
+        web-base-framework: web-framework-react
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1972,13 +1972,13 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       pattern-scout:
-        framework: mobile-framework-react-native
-        platform: mobile-framework-expo
-        base-framework: web-framework-react
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        methodology:
+        web-framework: mobile-framework-react-native
+        mobile-platform: mobile-framework-expo
+        web-base-framework: web-framework-react
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -1992,16 +1992,16 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-pattern-critique:
-        framework: mobile-framework-react-native
-        platform: mobile-framework-expo
-        base-framework: web-framework-react
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        reviewing:
+        web-framework: mobile-framework-react-native
+        mobile-platform: mobile-framework-expo
+        web-base-framework: web-framework-react
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -2015,14 +2015,14 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       agent-summoner:
-        framework: mobile-framework-react-native
-        platform: mobile-framework-expo
-        base-framework: web-framework-react
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: mobile-framework-react-native
+        mobile-platform: mobile-framework-expo
+        web-base-framework: web-framework-react
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -2036,14 +2036,14 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       skill-summoner:
-        framework: mobile-framework-react-native
-        platform: mobile-framework-expo
-        base-framework: web-framework-react
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: mobile-framework-react-native
+        mobile-platform: mobile-framework-expo
+        web-base-framework: web-framework-react
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -2057,14 +2057,14 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       documentor:
-        framework: mobile-framework-react-native
-        platform: mobile-framework-expo
-        base-framework: web-framework-react
-        client-state: web-state-zustand
-        server-state: web-server-state-react-query
-        testing: web-testing-vitest
-        reviewing: meta-reviewing-reviewing
-        methodology:
+        web-framework: mobile-framework-react-native
+        mobile-platform: mobile-framework-expo
+        web-base-framework: web-framework-react
+        web-client-state: web-state-zustand
+        web-server-state: web-server-state-react-query
+        web-testing: web-testing-vitest
+        shared-reviewing: meta-reviewing-reviewing
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -2078,8 +2078,8 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       web-tester:
-        testing: web-testing-vitest
-        methodology:
+        web-testing: web-testing-vitest
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -2099,7 +2099,7 @@ stacks:
     description: Meta-level agent tooling
     agents:
       skill-summoner:
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -2112,11 +2112,11 @@ stacks:
             preloaded: true
           - id: meta-methodology-context-management
             preloaded: true
-        research:
+        shared-research:
           - id: meta-research-research-methodology
             preloaded: true
       agent-summoner:
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -2129,11 +2129,11 @@ stacks:
             preloaded: true
           - id: meta-methodology-context-management
             preloaded: true
-        research:
+        shared-research:
           - id: meta-research-research-methodology
             preloaded: true
       documentor:
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -2146,11 +2146,11 @@ stacks:
             preloaded: true
           - id: meta-methodology-context-management
             preloaded: true
-        research:
+        shared-research:
           - id: meta-research-research-methodology
             preloaded: true
       pattern-scout:
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -2163,11 +2163,11 @@ stacks:
             preloaded: true
           - id: meta-methodology-context-management
             preloaded: true
-        reviewing:
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
       web-pattern-critique:
-        methodology:
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - id: meta-methodology-anti-over-engineering
@@ -2180,7 +2180,7 @@ stacks:
             preloaded: true
           - id: meta-methodology-context-management
             preloaded: true
-        reviewing:
+        shared-reviewing:
           - id: meta-reviewing-reviewing
             preloaded: true
     philosophy: Build tools that build tools

@@ -17,8 +17,8 @@ categories:
   # ─────────────────────────────────────────────────────────────────
   # Web categories
   # ─────────────────────────────────────────────────────────────────
-  framework:
-    id: framework
+  web-framework:
+    id: web-framework
     displayName: Framework
     description: UI framework (React, Vue, Angular, SolidJS, Next.js, Remix, Nuxt)
     domain: web
@@ -26,8 +26,8 @@ categories:
     required: true
     order: 1
 
-  styling:
-    id: styling
+  web-styling:
+    id: web-styling
     displayName: Styling
     description: CSS approach (SCSS Modules, Tailwind, CVA)
     domain: web
@@ -35,8 +35,8 @@ categories:
     required: true
     order: 3
 
-  client-state:
-    id: client-state
+  web-client-state:
+    id: web-client-state
     displayName: Client State Management
     description: UI state, forms, local data (Zustand, Redux, MobX)
     domain: web
@@ -44,8 +44,8 @@ categories:
     required: false
     order: 4
 
-  server-state:
-    id: server-state
+  web-server-state:
+    id: web-server-state
     displayName: Server State / Data Fetching
     description: API data caching (React Query, SWR)
     domain: web
@@ -53,8 +53,8 @@ categories:
     required: false
     order: 5
 
-  forms:
-    id: forms
+  web-forms:
+    id: web-forms
     displayName: Forms & Validation
     description: Form handling and schema validation
     domain: web
@@ -62,8 +62,8 @@ categories:
     required: false
     order: 6
 
-  testing:
-    id: testing
+  web-testing:
+    id: web-testing
     displayName: Testing
     description: Unit, integration, and E2E testing
     domain: web
@@ -71,8 +71,8 @@ categories:
     required: false
     order: 7
 
-  ui-components:
-    id: ui-components
+  web-ui-components:
+    id: web-ui-components
     displayName: UI Component Library
     description: Pre-built component systems (Radix, shadcn)
     domain: web
@@ -80,8 +80,8 @@ categories:
     required: false
     order: 8
 
-  mocking:
-    id: mocking
+  web-mocking:
+    id: web-mocking
     displayName: API Mocking
     description: Mock Service Worker for development and testing
     domain: web
@@ -89,8 +89,8 @@ categories:
     required: false
     order: 10
 
-  error-handling:
-    id: error-handling
+  web-error-handling:
+    id: web-error-handling
     displayName: Error Handling
     description: Error boundaries, result types, and error patterns
     domain: web
@@ -98,8 +98,8 @@ categories:
     required: false
     order: 11
 
-  i18n:
-    id: i18n
+  web-i18n:
+    id: web-i18n
     displayName: Internationalization
     description: i18n libraries (next-intl, react-intl, vue-i18n)
     domain: web
@@ -107,8 +107,8 @@ categories:
     required: false
     order: 12
 
-  file-upload:
-    id: file-upload
+  web-file-upload:
+    id: web-file-upload
     displayName: File Upload
     description: File upload patterns and handling
     domain: web
@@ -116,8 +116,8 @@ categories:
     required: false
     order: 13
 
-  files:
-    id: files
+  web-files:
+    id: web-files
     displayName: Files & Images
     description: Image handling and file processing
     domain: web
@@ -125,8 +125,8 @@ categories:
     required: false
     order: 14
 
-  utilities:
-    id: utilities
+  web-utilities:
+    id: web-utilities
     displayName: Utilities
     description: Utility libraries (date-fns, native JS patterns)
     domain: web
@@ -134,8 +134,8 @@ categories:
     required: false
     order: 15
 
-  realtime:
-    id: realtime
+  web-realtime:
+    id: web-realtime
     displayName: Realtime
     description: WebSockets, SSE, and real-time communication
     domain: web
@@ -143,8 +143,8 @@ categories:
     required: false
     order: 16
 
-  animation:
-    id: animation
+  web-animation:
+    id: web-animation
     displayName: Animation
     description: Animation libraries and CSS animations
     domain: web
@@ -152,8 +152,8 @@ categories:
     required: false
     order: 17
 
-  pwa:
-    id: pwa
+  web-pwa:
+    id: web-pwa
     displayName: Progressive Web App
     description: Service workers, offline-first patterns, and PWA features
     domain: web
@@ -161,8 +161,8 @@ categories:
     required: false
     order: 18
 
-  accessibility:
-    id: accessibility
+  web-accessibility:
+    id: web-accessibility
     displayName: Accessibility
     description: WCAG compliance, ARIA, and keyboard navigation
     domain: web
@@ -178,12 +178,20 @@ categories:
     exclusive: false
     required: false
     order: 20
+  web-base-framework:
+    id: web-base-framework
+    displayName: Base Framework
+    description: Base framework setup and configuration
+    domain: web
+    exclusive: false
+    required: false
+    order: 21
 
   # ─────────────────────────────────────────────────────────────────
   # API categories
   # ─────────────────────────────────────────────────────────────────
-  api:
-    id: api
+  api-api:
+    id: api-api
     displayName: API Framework
     description: Backend framework (Hono, Express, Fastify)
     domain: api
@@ -191,8 +199,8 @@ categories:
     required: true
     order: 1
 
-  database:
-    id: database
+  api-database:
+    id: api-database
     displayName: Database ORM
     description: Database access layer (Drizzle, Prisma)
     domain: api
@@ -200,8 +208,8 @@ categories:
     required: false
     order: 2
 
-  auth:
-    id: auth
+  api-auth:
+    id: api-auth
     displayName: Authentication
     description: Auth solution (Better Auth, Auth.js)
     domain: api
@@ -209,8 +217,8 @@ categories:
     required: false
     order: 3
 
-  observability:
-    id: observability
+  api-observability:
+    id: api-observability
     displayName: Observability
     description: Logging, monitoring, error tracking
     domain: api
@@ -218,8 +226,8 @@ categories:
     required: false
     order: 4
 
-  analytics:
-    id: analytics
+  api-analytics:
+    id: api-analytics
     displayName: Analytics
     description: Product analytics and tracking
     domain: api
@@ -227,8 +235,8 @@ categories:
     required: false
     order: 5
 
-  email:
-    id: email
+  api-email:
+    id: api-email
     displayName: Email
     description: Transactional email (Resend, Sendgrid)
     domain: api
@@ -236,8 +244,8 @@ categories:
     required: false
     order: 6
 
-  performance:
-    id: performance
+  api-performance:
+    id: api-performance
     displayName: Performance
     description: API performance patterns and optimization
     domain: api
@@ -256,12 +264,20 @@ categories:
     exclusive: true
     required: true
     order: 1
+  mobile-platform:
+    id: mobile-platform
+    displayName: Mobile Platform
+    description: Mobile platform tooling and configuration
+    domain: mobile
+    exclusive: false
+    required: false
+    order: 2
 
   # ─────────────────────────────────────────────────────────────────
   # Shared / Infrastructure categories
   # ─────────────────────────────────────────────────────────────────
-  monorepo:
-    id: monorepo
+  shared-monorepo:
+    id: shared-monorepo
     displayName: Monorepo
     description: Monorepo tooling (Turborepo, Nx)
     domain: shared
@@ -269,8 +285,8 @@ categories:
     required: false
     order: 1
 
-  tooling:
-    id: tooling
+  shared-tooling:
+    id: shared-tooling
     displayName: Build Tooling
     description: ESLint, Prettier, TypeScript, Vite
     domain: shared
@@ -278,8 +294,8 @@ categories:
     required: false
     order: 2
 
-  security:
-    id: security
+  shared-security:
+    id: shared-security
     displayName: Security
     description: Authentication security patterns and best practices
     domain: shared
@@ -287,8 +303,8 @@ categories:
     required: false
     order: 3
 
-  methodology:
-    id: methodology
+  shared-methodology:
+    id: shared-methodology
     displayName: Methodology
     description: Development methodology and engineering principles
     domain: shared
@@ -296,8 +312,8 @@ categories:
     required: false
     order: 4
 
-  research:
-    id: research
+  shared-research:
+    id: shared-research
     displayName: Research
     description: Codebase investigation and research methodology
     domain: shared
@@ -305,8 +321,8 @@ categories:
     required: false
     order: 5
 
-  reviewing:
-    id: reviewing
+  shared-reviewing:
+    id: shared-reviewing
     displayName: Code Review
     description: Code review patterns and guidance
     domain: shared
@@ -314,8 +330,8 @@ categories:
     required: false
     order: 6
 
-  ci-cd:
-    id: ci-cd
+  shared-ci-cd:
+    id: shared-ci-cd
     displayName: CI/CD
     description: Continuous integration and deployment pipelines
     domain: shared
