@@ -78,7 +78,7 @@ function resolveSkillForPopulation(
   categories: Partial<Record<Subcategory, { domain?: Domain }>>,
 ): { domain: Domain; subcat: Subcategory; techId: SkillId } | null {
   const skill = skills[skillId];
-  if (!skill?.category || !skill.displayName) {
+  if (!skill?.category) {
     warn(
       `Installed skill '${skillId}' is missing from the marketplace — it may have been removed or renamed`,
     );
@@ -93,8 +93,7 @@ function resolveSkillForPopulation(
     return null;
   }
 
-  // Boundary cast: display name resolved to SkillId downstream by resolveAlias
-  return { domain, subcat, techId: skill.displayName as SkillId };
+  return { domain, subcat, techId: skillId };
 }
 
 function buildBoundSkillOptions(

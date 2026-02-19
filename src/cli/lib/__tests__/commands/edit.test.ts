@@ -147,11 +147,11 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const { domainSelections } = useWizardStore.getState();
 
     // Web skills should appear under the web domain
-    expect(domainSelections.web?.["web-framework"]).toEqual(["react"]);
-    expect(domainSelections.web?.["web-client-state"]).toEqual(["zustand"]);
+    expect(domainSelections.web?.["web-framework"]).toEqual(["web-framework-react"]);
+    expect(domainSelections.web?.["web-client-state"]).toEqual(["web-state-zustand"]);
 
     // API skill should appear under the api domain
-    expect(domainSelections.api?.["api-api"]).toEqual(["hono"]);
+    expect(domainSelections.api?.["api-api"]).toEqual(["api-framework-hono"]);
   });
 
   it("should not pre-select skills that are not in the installed list", () => {
@@ -162,7 +162,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const { domainSelections } = useWizardStore.getState();
 
     // Only web/framework should be populated
-    expect(domainSelections.web?.["web-framework"]).toEqual(["react"]);
+    expect(domainSelections.web?.["web-framework"]).toEqual(["web-framework-react"]);
 
     // Other subcategories should not exist
     expect(domainSelections.web?.["web-client-state"]).toBeUndefined();
@@ -190,7 +190,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const { domainSelections } = useWizardStore.getState();
 
     // Testing category maps to the shared domain
-    expect(domainSelections.shared?.["web-testing"]).toEqual(["vitest"]);
+    expect(domainSelections.shared?.["web-testing"]).toEqual(["web-testing-vitest"]);
 
     // No web or api entries should exist
     expect(domainSelections.web).toBeUndefined();
@@ -207,11 +207,10 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     expect(Object.keys(domainSelections)).toHaveLength(0);
   });
 
-  it("should skip skills missing from the marketplace (no displayName)", () => {
-    // Skill exists in lookup but has no displayName, so resolveSkillForPopulation returns null
+  it("should skip skills missing a category", () => {
     const sparseSkills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
       "web-framework-react": { category: "web-framework", displayName: "react" },
-      "web-framework-unknown": { category: "web-framework" },
+      "web-framework-unknown": {} as { category: string },
     } as Partial<Record<SkillId, { category: string; displayName?: string }>>;
 
     const installedSkills: SkillId[] = ["web-framework-react", "web-framework-unknown"];
@@ -220,8 +219,8 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
 
     const { domainSelections } = useWizardStore.getState();
 
-    // Only the skill with a displayName should be populated
-    expect(domainSelections.web?.["web-framework"]).toEqual(["react"]);
+    // Only the skill with a valid category should be populated
+    expect(domainSelections.web?.["web-framework"]).toEqual(["web-framework-react"]);
     expect(domainSelections.web?.["web-framework"]).toHaveLength(1);
   });
 
@@ -238,10 +237,10 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const { domainSelections } = useWizardStore.getState();
 
     // Only the resolvable skill should be populated
-    expect(domainSelections.web?.["web-framework"]).toEqual(["react"]);
+    expect(domainSelections.web?.["web-framework"]).toEqual(["web-framework-react"]);
     // No domain should contain the unresolvable skill
     const allTechs = useWizardStore.getState().getAllSelectedTechnologies();
-    expect(allTechs).not.toContain("linter");
+    expect(allTechs).not.toContain("infra-tooling-linter");
   });
 
   it("should not duplicate skills when the same skill ID appears twice in installed list", () => {
@@ -252,7 +251,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const { domainSelections } = useWizardStore.getState();
 
     // Should deduplicate
-    expect(domainSelections.web?.["web-framework"]).toEqual(["react"]);
+    expect(domainSelections.web?.["web-framework"]).toEqual(["web-framework-react"]);
     expect(domainSelections.web?.["web-framework"]).toHaveLength(1);
   });
 
@@ -269,8 +268,8 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
 
     const { domainSelections } = useWizardStore.getState();
 
-    expect(domainSelections.shared?.["web-testing"]).toContain("vitest");
-    expect(domainSelections.shared?.["web-testing"]).toContain("playwright");
+    expect(domainSelections.shared?.["web-testing"]).toContain("web-testing-vitest");
+    expect(domainSelections.shared?.["web-testing"]).toContain("web-testing-playwright");
     expect(domainSelections.shared?.["web-testing"]).toHaveLength(2);
   });
 });
@@ -337,7 +336,7 @@ describe("edit wizard domain filtering", () => {
 
     // Only shared domain should have selections
     expect(perDomain.shared).toBeDefined();
-    expect(perDomain.shared).toEqual(["vitest"]);
+    expect(perDomain.shared).toEqual(["web-testing-vitest"]);
 
     // All other domains should be absent
     expect(perDomain.web).toBeUndefined();
@@ -382,5 +381,4 @@ describe("edit wizard domain filtering", () => {
     expect(perDomain.cli).toBeUndefined();
     expect(perDomain.mobile).toBeUndefined();
   });
-
 });
