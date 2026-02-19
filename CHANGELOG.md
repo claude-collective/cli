@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.41.2] - 2026-02-19
+
+**Fix README accuracy, add framework positioning task**
+
+- Fix CLI skills category listing inaccurate skills that don't exist yet
+- Add D-33 task for README framework positioning rewrite
+
+See [changelogs/0.41.2.md](./changelogs/0.41.2.md) for full details.
+
+---
+
 ## [0.41.1] - 2026-02-19
 
 **Missing changelog entries, commit protocol checklist, test helper extraction**

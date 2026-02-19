@@ -6,6 +6,7 @@
 | U13  | Run Documentor Agent on CLI Codebase                  | Pending      |
 | H18  | Tailor documentation-bible to CLI repo                | Phase 3 only |
 | D-28 | Fix startup warning/error messages                    | Pending      |
+| D-33 | README: frame Agents Inc. as an AI coding framework   | Pending      |
 
 ---
 
@@ -89,6 +90,45 @@ The CLI shows warning/error messages and the ASCII logo on startup that flash br
 - `src/cli/components/wizard/wizard-layout.tsx` — add `<Static>` block for startup messages
 - `src/cli/utils/logger.ts` + loading modules — support buffered output mode
 - Audit which warnings are actionable vs noise; downgrade informational messages to `verbose()`
+
+---
+
+### Positioning & README
+
+#### D-33: README: frame Agents Inc. as an AI coding framework
+
+Rewrite the README to position Agents Inc. as an AI coding framework, not just a CLI tool. The key differentiator is the composability model and the level of extensibility — this needs to be worded carefully to be credible, not buzzwordy.
+
+**What makes it genuinely a framework:**
+
+- **Composable knowledge primitives** — skills are atomic, typed, categorized knowledge modules with a defined schema (markdown + YAML metadata + categories + tags + conflict rules)
+- **Agent compilation pipeline** — skills are compiled into role-based agents via Liquid templates, YAML definitions, and markdown partials. This is a real build step, not just config
+- **Ejectable internals** — users can eject agent templates, the skills matrix, and compilation artifacts to fully customize the pipeline. This is framework-level extensibility
+- **Interactive agent composition** — the wizard lets you interactively build specialized sub-agents from modular skills, which is genuinely unique
+- **Marketplace/plugin architecture** — custom skill sources, multi-source resolution, publishable stack plugins
+- **Stack architecture** — pre-configured agent bundles with philosophy, agent roles, and skill assignments
+
+**Wording constraints:**
+
+- Must feel honest and specific, not like marketing fluff
+- Lead with what it does concretely, then explain the framework aspect
+- Avoid "revolutionary" / "powerful" / "game-changing" language
+- The framework angle should emerge naturally from describing the features
+- Don't overstate — it's a framework for composing Claude Code agents, not a general AI framework
+
+**Possible framing angles to explore:**
+
+- "A build system for AI coding agents" (emphasizes the compilation pipeline)
+- "Composable skills for Claude Code" (emphasizes the modularity)
+- "An agent composition framework" (emphasizes what makes it unique)
+- The eject model mirrors how frameworks like Next.js/CRA work — sane defaults but full escape hatches
+
+**Key sections to rework:**
+
+- Opening paragraph — currently "the CLI for working with Agents Inc. skills" is underselling it
+- "what this does" — should explain the framework concept
+- "how skills work" — could emphasize the schema/type system aspect
+- "architecture" — already describes framework internals, could be elevated
 
 ---
 
