@@ -1,16 +1,17 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID   | Task                                                  | Status       |
-| ---- | ----------------------------------------------------- | ------------ |
+| ID   | Task                                                   | Status       |
+| ---- | ------------------------------------------------------ | ------------ |
 | B-03 | Edit pre-selection allows incompatible skills          | Bug          |
 | B-02 | Validate compatibleWith/conflictsWith refs in metadata | Pending      |
-| B-01 | Edit wizard shows steps that were omitted during init | Bug          |
-| U13  | Run Documentor Agent on CLI Codebase                  | Pending      |
-| H18  | Tailor documentation-bible to CLI repo                | Phase 3 only |
-| D-28 | Fix startup warning/error messages                    | Pending      |
+| B-01 | Edit wizard shows steps that were omitted during init  | Bug          |
+| U13  | Run Documentor Agent on CLI Codebase                   | Pending      |
+| H18  | Tailor documentation-bible to CLI repo                 | Phase 3 only |
+| D-28 | Fix startup warning/error messages                     | Pending      |
+| D-36 | Eject: check specific agent dirs, not just agents/     | Bug          |
 | D-35 | Config: `templates` path property as eject alternative | Pending      |
 | D-34 | Eject: make `templates` its own top-level type         | Pending      |
-| D-33 | README: frame Agents Inc. as an AI coding framework   | Pending      |
+| D-33 | README: frame Agents Inc. as an AI coding framework    | Pending      |
 
 ---
 
@@ -118,6 +119,36 @@ The CLI shows warning/error messages and the ASCII logo on startup that flash br
 ---
 
 ### CLI Improvements
+
+#### D-36: Eject: check specific agent dirs, not just agents/
+
+The `eject agent-partials` command currently checks if an `agents/` folder exists to determine if partials have already been ejected. This is too broad — an `agents/` folder could exist because the user ejected templates only (`_templates/`). The check should look for the specific agent partial directories (e.g., `developer/`, `reviewer/`, `tester/`) rather than just the parent `agents/` folder.
+
+**Location:** `src/cli/commands/eject.ts` — the existence check in `ejectAgentPartials`.
+
+---
+
+#### D-35: Config: `templates` path property as eject alternative
+
+Instead of requiring `eject templates` to customize agent templates, allow users to define a `templates` path in their config YAML. The compilation pipeline would check for this path first and use those templates instead of the built-in defaults — no eject step needed.
+
+**Example config.yaml:**
+
+```yaml
+name: my-project
+templates: ./my-templates
+skills:
+  - web-framework-react
+```
+
+**Changes needed:**
+
+- Add optional `templates` property to the config schema (Zod)
+- Update the compilation pipeline to resolve templates from the config path before falling back to built-in/ejected templates
+- Update `src/cli/types/` with the new config field
+- Add tests for custom template resolution
+
+---
 
 #### D-34: Eject: make `templates` its own top-level type
 
