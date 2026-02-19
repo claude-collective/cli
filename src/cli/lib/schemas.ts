@@ -398,6 +398,8 @@ export const projectConfigLoaderSchema = z
     installMode: z.enum(["local", "plugin"]).optional(),
     /** Whether expert mode (advanced/niche skills) was enabled in the wizard */
     expertMode: z.boolean().optional(),
+    /** Selected domains from the wizard (persisted for edit mode restoration) */
+    domains: z.array(domainSchema).optional(),
     /** Agent-to-subcategory-to-skill mappings from selected stack (accepts same formats as stacks.yaml) */
     stack: z.record(z.string(), stackAgentConfigSchema).optional(),
     /** Skills source path or URL (e.g., "github:my-org/skills") */
@@ -430,6 +432,8 @@ export const projectConfigValidationSchema = z.object({
   installMode: z.enum(["local", "plugin"]),
   /** Whether expert mode (advanced/niche skills) was enabled in the wizard */
   expertMode: z.boolean().optional(),
+  /** Selected domains from the wizard (persisted for edit mode restoration) */
+  domains: z.array(domainSchema).optional(),
   /** Agent-to-subcategory-to-skill mappings from selected stack */
   stack: z.record(z.string(), stackAgentConfigSchema),
   /** Skills source path or URL (e.g., "github:my-org/skills") */

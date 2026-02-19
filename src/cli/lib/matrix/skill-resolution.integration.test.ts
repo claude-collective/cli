@@ -47,6 +47,7 @@ function buildWizardResult(
     selectedAgents: [],
     selectedStackId: null,
     domainSelections: {} as DomainSelections,
+    selectedDomains: [],
     sourceSelections: {},
     expertMode: false,
     installMode: "local",
