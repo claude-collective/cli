@@ -47,7 +47,7 @@ const TEST_SKILLS: TestSkill[] = [
     id: "web-framework-react",
     name: "web-framework-react",
     description: "React framework for building user interfaces",
-    category: "web/framework",
+    category: "web-framework",
     author: "@test",
     tags: ["react", "web"],
     content: `---
@@ -69,7 +69,7 @@ React is a JavaScript library for building user interfaces.
     id: "api-framework-hono",
     name: "api-framework-hono",
     description: "Hono API framework for the edge",
-    category: "api/framework",
+    category: "api-api",
     author: "@test",
     tags: ["hono", "api"],
     content: `---
@@ -86,7 +86,7 @@ Hono is a fast web framework for the edge.
     id: "web-testing-vitest",
     name: "web-testing-vitest",
     description: "Next generation testing framework",
-    category: "testing",
+    category: "web-testing",
     author: "@test",
     tags: ["testing", "vitest"],
     content: `---
@@ -107,15 +107,15 @@ Vitest is a fast unit test framework powered by Vite.
 // "{sourcePath}/src/skills/{category}/{id}/".
 function buildTestMatrix(): MergedSkillsMatrix {
   const skills: Record<string, ResolvedSkill> = {
-    "web-framework-react": createMockSkill("web-framework-react", "web/framework", {
+    "web-framework-react": createMockSkill("web-framework-react", "web-framework", {
       description: "React framework for building user interfaces",
       tags: ["react", "web"],
     }),
-    "api-framework-hono": createMockSkill("api-framework-hono", "api/framework", {
+    "api-framework-hono": createMockSkill("api-framework-hono", "api-api", {
       description: "Hono API framework for the edge",
       tags: ["hono", "api"],
     }),
-    "web-testing-vitest": createMockSkill("web-testing-vitest", "testing", {
+    "web-testing-vitest": createMockSkill("web-testing-vitest", "web-testing", {
       description: "Next generation testing framework",
       tags: ["testing", "vitest"],
     }),

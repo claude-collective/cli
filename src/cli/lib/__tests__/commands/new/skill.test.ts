@@ -117,8 +117,8 @@ describe("generateMetadataYaml", () => {
   });
 
   it("should use provided category", () => {
-    const content = generateMetadataYaml("my-skill", "@local", "web/framework");
-    expect(content).toContain("category: web/framework");
+    const content = generateMetadataYaml("my-skill", "@local", "web-framework");
+    expect(content).toContain("category: web-framework");
   });
 });
 
@@ -214,12 +214,12 @@ describe("new:skill command", () => {
     });
 
     it("should accept --category flag and use it in metadata", async () => {
-      await runCliCommand(["new:skill", "custom-skill", "--category", "web/framework"]);
+      await runCliCommand(["new:skill", "custom-skill", "--category", "web-framework"]);
 
       const metadataPath = path.join(projectDir, LOCAL_SKILLS_DIR, "custom-skill", "metadata.yaml");
       const content = await readFile(metadataPath, "utf-8");
 
-      expect(content).toContain("category: web/framework");
+      expect(content).toContain("category: web-framework");
     });
 
     it("should not create files with --dry-run flag", async () => {

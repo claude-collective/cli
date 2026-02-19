@@ -192,20 +192,20 @@ describe("local-skill-loader", () => {
 
     it("uses category from metadata.yaml when provided", async () => {
       await writeLocalSkill("categorized-skill", {
-        metadata: `cliName: Categorized Skill\ncategory: framework`,
+        metadata: `cliName: Categorized Skill\ncategory: web-framework`,
         skillMd: `---\nname: categorized-skill (@local)\ndescription: A categorized skill\n---\nContent`,
       });
 
       const result = await discoverLocalSkills(tempDir);
 
-      expect(result?.skills[0].category).toBe("framework");
+      expect(result?.skills[0].category).toBe("web-framework");
     });
 
     it("preserves metadata tags, conflicts, and requires from metadata.yaml", async () => {
       await writeLocalSkill("rich-skill", {
         metadata: [
           "cliName: Rich Skill",
-          "category: framework",
+          "category: web-framework",
           "categoryExclusive: true",
           "usageGuidance: When building components",
           "tags:",

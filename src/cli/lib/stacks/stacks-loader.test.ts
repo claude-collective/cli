@@ -27,18 +27,18 @@ stacks:
     description: Full-stack Next.js with Hono API
     agents:
       web-developer:
-        framework: web-framework-react
-        styling: web-styling-scss-modules
+        web-framework: web-framework-react
+        web-styling: web-styling-scss-modules
       api-developer:
-        api: api-framework-hono
-        database: api-database-drizzle
+        api-api: api-framework-hono
+        api-database: api-database-drizzle
   - id: vue-spa
     name: Vue SPA
     description: Vue single-page application
     agents:
       web-developer:
-        framework: web-framework-vue-composition-api
-        styling: web-styling-tailwind
+        web-framework: web-framework-vue-composition-api
+        web-styling: web-styling-tailwind
 `;
 }
 
@@ -50,16 +50,16 @@ stacks:
     description: Stack with array-valued subcategories
     agents:
       web-developer:
-        framework: web-framework-react
-        methodology:
+        web-framework: web-framework-react
+        shared-methodology:
           - meta-methodology-investigation-requirements
           - meta-methodology-anti-over-engineering
           - meta-methodology-success-criteria
       pattern-scout:
-        methodology:
+        shared-methodology:
           - meta-methodology-investigation-requirements
           - meta-methodology-anti-over-engineering
-        research: meta-research-research-methodology
+        shared-research: meta-research-research-methodology
 `;
 }
 
@@ -71,11 +71,11 @@ stacks:
     description: Stack with object-form skill assignments
     agents:
       web-developer:
-        framework:
+        web-framework:
           - id: web-framework-react
             preloaded: true
-        styling: web-styling-scss-modules
-        methodology:
+        web-styling: web-styling-scss-modules
+        shared-methodology:
           - id: meta-methodology-investigation-requirements
             preloaded: true
           - meta-methodology-anti-over-engineering
@@ -197,12 +197,12 @@ describe("stacks-loader", () => {
       const nextjsStack = stacks[0];
       // Bare YAML strings are normalized to SkillAssignment[] with preloaded: false
       expect(nextjsStack.agents["web-developer"]).toEqual({
-        framework: [sa("web-framework-react")],
-        styling: [sa("web-styling-scss-modules")],
+        "web-framework": [sa("web-framework-react")],
+        "web-styling": [sa("web-styling-scss-modules")],
       });
       expect(nextjsStack.agents["api-developer"]).toEqual({
-        api: [sa("api-framework-hono")],
-        database: [sa("api-database-drizzle")],
+        "api-api": [sa("api-framework-hono")],
+        "api-database": [sa("api-database-drizzle")],
       });
     });
 
@@ -218,15 +218,15 @@ describe("stacks-loader", () => {
       expect(stack.id).toBe("multi-select-stack");
 
       // Array values should be normalized to SkillAssignment[]
-      expect(stack.agents["web-developer"]!.methodology).toEqual([
+      expect(stack.agents["web-developer"]!["shared-methodology"]).toEqual([
         sa("meta-methodology-investigation-requirements"),
         sa("meta-methodology-anti-over-engineering"),
         sa("meta-methodology-success-criteria"),
       ]);
 
       // Single YAML values normalized to SkillAssignment[]
-      expect(stack.agents["web-developer"]!.framework).toEqual([sa("web-framework-react")]);
-      expect(stack.agents["pattern-scout"]!.research).toEqual([
+      expect(stack.agents["web-developer"]!["web-framework"]).toEqual([sa("web-framework-react")]);
+      expect(stack.agents["pattern-scout"]!["shared-research"]).toEqual([
         sa("meta-research-research-methodology"),
       ]);
     });
@@ -242,13 +242,13 @@ describe("stacks-loader", () => {
       expect(stack.id).toBe("object-stack");
 
       // Object-form with preloaded: true preserved
-      expect(stack.agents["web-developer"]!.framework).toEqual([sa("web-framework-react", true)]);
+      expect(stack.agents["web-developer"]!["web-framework"]).toEqual([sa("web-framework-react", true)]);
 
       // Bare string normalized to preloaded: false
-      expect(stack.agents["web-developer"]!.styling).toEqual([sa("web-styling-scss-modules")]);
+      expect(stack.agents["web-developer"]!["web-styling"]).toEqual([sa("web-styling-scss-modules")]);
 
       // Mixed array: object + bare string
-      expect(stack.agents["web-developer"]!.methodology).toEqual([
+      expect(stack.agents["web-developer"]!["shared-methodology"]).toEqual([
         sa("meta-methodology-investigation-requirements", true),
         sa("meta-methodology-anti-over-engineering"),
       ]);
@@ -291,8 +291,8 @@ describe("stacks-loader", () => {
   describe("resolveAgentConfigToSkills", () => {
     it("converts skill assignments to skill references", () => {
       const agentConfig: StackAgentConfig = {
-        framework: [sa("web-framework-react", true)],
-        styling: [sa("web-styling-scss-modules")],
+        "web-framework": [sa("web-framework-react", true)],
+        "web-styling": [sa("web-styling-scss-modules")],
       };
 
       const skills = resolveAgentConfigToSkills(agentConfig);
@@ -304,8 +304,8 @@ describe("stacks-loader", () => {
 
     it("reads preloaded from assignment directly", () => {
       const agentConfig: StackAgentConfig = {
-        framework: [sa("web-framework-react", true)],
-        styling: [sa("web-styling-scss-modules")],
+        "web-framework": [sa("web-framework-react", true)],
+        "web-styling": [sa("web-styling-scss-modules")],
       };
 
       const skills = resolveAgentConfigToSkills(agentConfig);
@@ -321,18 +321,18 @@ describe("stacks-loader", () => {
 
     it("includes usage description with subcategory context", () => {
       const agentConfig: StackAgentConfig = {
-        database: [sa("api-database-drizzle", true)],
+        "api-database": [sa("api-database-drizzle", true)],
       };
 
       const skills = resolveAgentConfigToSkills(agentConfig);
 
-      expect(skills[0].usage).toContain("database");
+      expect(skills[0].usage).toContain("api-database");
     });
 
     it("warns and skips invalid skill IDs", () => {
       // Boundary cast: intentionally invalid skill ID to test validation
       const agentConfig = {
-        framework: [{ id: "not-a-valid-id", preloaded: false }],
+        "web-framework": [{ id: "not-a-valid-id", preloaded: false }],
       } as unknown as StackAgentConfig;
 
       const skills = resolveAgentConfigToSkills(agentConfig);
@@ -349,8 +349,8 @@ describe("stacks-loader", () => {
 
     it("resolves full skill IDs directly", () => {
       const agentConfig: StackAgentConfig = {
-        framework: [sa("web-framework-react", true)],
-        database: [sa("api-database-drizzle", true)],
+        "web-framework": [sa("web-framework-react", true)],
+        "api-database": [sa("api-database-drizzle", true)],
       };
 
       const skills = resolveAgentConfigToSkills(agentConfig);
@@ -362,7 +362,7 @@ describe("stacks-loader", () => {
 
     it("resolves array of skill assignments for multi-select categories", () => {
       const agentConfig: StackAgentConfig = {
-        methodology: [
+        "shared-methodology": [
           sa("meta-methodology-investigation-requirements", true),
           sa("meta-methodology-anti-over-engineering", true),
           sa("meta-methodology-success-criteria", true),
@@ -381,12 +381,12 @@ describe("stacks-loader", () => {
 
     it("handles single-element arrays", () => {
       const agentConfig: StackAgentConfig = {
-        framework: [sa("web-framework-react", true)],
-        methodology: [
+        "web-framework": [sa("web-framework-react", true)],
+        "shared-methodology": [
           sa("meta-methodology-investigation-requirements", true),
           sa("meta-methodology-anti-over-engineering", true),
         ],
-        styling: [sa("web-styling-scss-modules")],
+        "web-styling": [sa("web-styling-scss-modules")],
       };
 
       const skills = resolveAgentConfigToSkills(agentConfig);
@@ -402,7 +402,7 @@ describe("stacks-loader", () => {
 
     it("handles empty array", () => {
       const agentConfig: StackAgentConfig = {
-        methodology: [],
+        "shared-methodology": [],
       };
 
       const skills = resolveAgentConfigToSkills(agentConfig);
@@ -413,7 +413,7 @@ describe("stacks-loader", () => {
     it("warns and skips invalid skill IDs within arrays", () => {
       // Boundary cast: intentionally invalid skill ID within array to test validation
       const agentConfig = {
-        methodology: [
+        "shared-methodology": [
           { id: "meta-methodology-investigation-requirements", preloaded: true },
           { id: "not-a-valid-id", preloaded: false },
           { id: "meta-methodology-anti-over-engineering", preloaded: true },
@@ -433,7 +433,7 @@ describe("stacks-loader", () => {
 
     it("reads preloaded from each assignment individually", () => {
       const agentConfig: StackAgentConfig = {
-        methodology: [
+        "shared-methodology": [
           sa("meta-methodology-investigation-requirements", true),
           sa("meta-methodology-anti-over-engineering", false),
         ],
@@ -459,11 +459,11 @@ describe("stacks-loader", () => {
         description: "Test",
         agents: {
           "web-developer": {
-            framework: [sa("web-framework-react", true)],
+            "web-framework": [sa("web-framework-react", true)],
           },
           "api-developer": {
-            api: [sa("api-framework-hono", true)],
-            database: [sa("api-database-drizzle", true)],
+            "api-api": [sa("api-framework-hono", true)],
+            "api-database": [sa("api-database-drizzle", true)],
           },
         },
       };
@@ -496,11 +496,11 @@ describe("stacks-loader", () => {
         description: "Test",
         agents: {
           "pattern-scout": {
-            methodology: [
+            "shared-methodology": [
               sa("meta-methodology-investigation-requirements", true),
               sa("meta-methodology-anti-over-engineering", true),
             ],
-            research: [sa("meta-research-research-methodology", true)],
+            "shared-research": [sa("meta-research-research-methodology", true)],
           },
         },
       };

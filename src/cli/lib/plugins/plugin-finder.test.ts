@@ -236,7 +236,7 @@ describe("plugin-finder", () => {
 
       const skillId = "web-framework-react" as SkillId;
       const matrix = createMockMatrix({
-        [skillId]: createMockSkill(skillId, "web/framework"),
+        [skillId]: createMockSkill(skillId, "web-framework"),
       });
 
       mockedReadFile.mockResolvedValue(
@@ -253,7 +253,7 @@ describe("plugin-finder", () => {
 
       const skillId = "web-framework-react" as SkillId;
       const matrix = createMockMatrix({
-        [skillId]: createMockSkill(skillId, "web/framework", {
+        [skillId]: createMockSkill(skillId, "web-framework", {
           displayName: "react",
         }),
       });
@@ -270,7 +270,7 @@ describe("plugin-finder", () => {
 
       const skillId = "web-framework-react" as SkillId;
       const matrix = createMockMatrix({
-        [skillId]: createMockSkill(skillId, "web/framework"),
+        [skillId]: createMockSkill(skillId, "web-framework"),
       });
 
       mockedReadFile.mockResolvedValue("# React\n\nA skill for React development.");
@@ -285,7 +285,7 @@ describe("plugin-finder", () => {
 
       const skillId = "web-framework-react" as SkillId;
       const matrix = createMockMatrix({
-        [skillId]: createMockSkill(skillId, "web/framework"),
+        [skillId]: createMockSkill(skillId, "web-framework"),
       });
 
       mockedReadFile.mockResolvedValue("# No frontmatter match");
@@ -303,9 +303,9 @@ describe("plugin-finder", () => {
       ]);
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react", "web/framework"),
-        "web-state-zustand": createMockSkill("web-state-zustand", "web/client-state"),
-        "api-framework-hono": createMockSkill("api-framework-hono", "api/api"),
+        "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+        "web-state-zustand": createMockSkill("web-state-zustand", "web-client-state"),
+        "api-framework-hono": createMockSkill("api-framework-hono", "api-api"),
       });
 
       mockedReadFile.mockImplementation((filePath) => {
@@ -337,7 +337,7 @@ describe("plugin-finder", () => {
       mockedGlob.mockResolvedValue(["unknown-skill/SKILL.md"]);
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react", "web/framework"),
+        "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
       });
 
       mockedReadFile.mockResolvedValue(
@@ -354,7 +354,7 @@ describe("plugin-finder", () => {
 
       const skillId = "web-framework-react" as SkillId;
       const matrix = createMockMatrix({
-        [skillId]: createMockSkill(skillId, "web/framework", {
+        [skillId]: createMockSkill(skillId, "web-framework", {
           displayName: "react",
         }),
       });
@@ -371,7 +371,7 @@ describe("plugin-finder", () => {
 
       const skillId = "web-framework-react" as SkillId;
       const matrix = createMockMatrix({
-        [skillId]: createMockSkill(skillId, "web/framework"),
+        [skillId]: createMockSkill(skillId, "web-framework"),
       });
 
       mockedReadFile.mockResolvedValue("# No frontmatter");
@@ -386,7 +386,7 @@ describe("plugin-finder", () => {
 
       const skillId = "web-framework-react" as SkillId;
       const matrix = createMockMatrix({
-        [skillId]: createMockSkill(skillId, "web/framework"),
+        [skillId]: createMockSkill(skillId, "web-framework"),
       });
 
       mockedReadFile.mockResolvedValue(
@@ -403,7 +403,7 @@ describe("plugin-finder", () => {
 
       const skillId = "web-framework-react" as SkillId;
       const matrix = createMockMatrix({
-        [skillId]: createMockSkill(skillId, "web/framework"),
+        [skillId]: createMockSkill(skillId, "web-framework"),
       });
 
       mockedReadFile.mockResolvedValue(
@@ -420,7 +420,7 @@ describe("plugin-finder", () => {
 
       const skillId = "web-framework-react" as SkillId;
       const matrix = createMockMatrix({
-        [skillId]: createMockSkill(skillId, "web/framework"),
+        [skillId]: createMockSkill(skillId, "web-framework"),
       });
 
       mockedReadFile.mockResolvedValue("# No frontmatter");

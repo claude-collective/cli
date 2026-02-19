@@ -29,7 +29,7 @@ describe("config-generator", () => {
   describe("generateProjectConfigFromSkills", () => {
     it("returns a minimal ProjectConfig structure with stack", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
       });
 
       const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], matrix);
@@ -41,7 +41,7 @@ describe("config-generator", () => {
       expect(config.stack).toBeDefined();
       expect(
         Object.values(config.stack!).some(
-          (agent) => agent.framework?.[0]?.id === "web-framework-react",
+          (agent) => agent["web-framework"]?.[0]?.id === "web-framework-react",
         ),
       ).toBe(true);
       // Should NOT have these fields by default
@@ -52,8 +52,8 @@ describe("config-generator", () => {
 
     it("builds stack with subcategory->SkillAssignment[] mappings for multiple skills", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
-        ["web-styling-scss-modules"]: createMockSkill("web-styling-scss-modules", "web/styling"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
+        ["web-styling-scss-modules"]: createMockSkill("web-styling-scss-modules", "web-styling"),
       });
 
       const config = generateProjectConfigFromSkills(
@@ -67,13 +67,13 @@ describe("config-generator", () => {
       // web-developer should have both framework and styling subcategories
       const webDev = config.stack!["web-developer"];
       expect(webDev).toBeDefined();
-      expect(webDev.framework?.[0]?.id).toBe("web-framework-react");
-      expect(webDev.styling?.[0]?.id).toBe("web-styling-scss-modules");
+      expect(webDev["web-framework"]?.[0]?.id).toBe("web-framework-react");
+      expect(webDev["web-styling"]?.[0]?.id).toBe("web-styling-scss-modules");
     });
 
     it("derives agents from skills via getAgentsForSkill", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
       });
 
       const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], matrix);
@@ -116,7 +116,7 @@ describe("config-generator", () => {
 
     it("handles both remote and local skills", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
         "meta-company-patterns": createMockSkill("meta-company-patterns", "local", {
           local: true,
           localPath: ".claude/skills/company-patterns/",
@@ -133,14 +133,14 @@ describe("config-generator", () => {
       expect(config.stack).toBeDefined();
       expect(
         Object.values(config.stack!).some(
-          (agent) => agent.framework?.[0]?.id === "web-framework-react",
+          (agent) => agent["web-framework"]?.[0]?.id === "web-framework-react",
         ),
       ).toBe(true);
     });
 
     it("includes optional fields when provided", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
       });
 
       const config = generateProjectConfigFromSkills(
@@ -159,7 +159,7 @@ describe("config-generator", () => {
 
     it("skips unknown skills gracefully", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
       });
 
       const config = generateProjectConfigFromSkills(
@@ -172,7 +172,7 @@ describe("config-generator", () => {
       expect(config.stack).toBeDefined();
       expect(
         Object.values(config.stack!).some(
-          (agent) => agent.framework?.[0]?.id === "web-framework-react",
+          (agent) => agent["web-framework"]?.[0]?.id === "web-framework-react",
         ),
       ).toBe(true);
       // But agents should only be derived from known skills
@@ -181,8 +181,8 @@ describe("config-generator", () => {
 
     it("deduplicates agents across skills in the same domain", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
-        ["web-styling-scss-modules"]: createMockSkill("web-styling-scss-modules", "web/styling"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
+        ["web-styling-scss-modules"]: createMockSkill("web-styling-scss-modules", "web-styling"),
       });
 
       const config = generateProjectConfigFromSkills(
@@ -198,7 +198,7 @@ describe("config-generator", () => {
 
     it("sorts agents alphabetically", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
       });
 
       const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], matrix);
@@ -209,8 +209,8 @@ describe("config-generator", () => {
 
     it("merges agents from different domains", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
-        ["api-framework-hono"]: createMockSkill("api-framework-hono", "api/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
+        ["api-framework-hono"]: createMockSkill("api-framework-hono", "api-api"),
       });
 
       const config = generateProjectConfigFromSkills(
@@ -232,8 +232,8 @@ describe("config-generator", () => {
 
     it("builds separate stack entries per agent for cross-domain skills", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
-        ["api-framework-hono"]: createMockSkill("api-framework-hono", "api/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
+        ["api-framework-hono"]: createMockSkill("api-framework-hono", "api-api"),
       });
 
       const config = generateProjectConfigFromSkills(
@@ -243,34 +243,34 @@ describe("config-generator", () => {
       );
 
       expect(config.stack).toBeDefined();
-      // web-developer gets framework from web skill
-      expect(config.stack!["web-developer"]?.framework?.[0]?.id).toBe("web-framework-react");
-      // api-developer gets framework from api skill
-      expect(config.stack!["api-developer"]?.framework?.[0]?.id).toBe("api-framework-hono");
+      // web-developer gets web-framework from web skill
+      expect(config.stack!["web-developer"]?.["web-framework"]?.[0]?.id).toBe("web-framework-react");
+      // api-developer gets api-api from api skill
+      expect(config.stack!["api-developer"]?.["api-api"]?.[0]?.id).toBe("api-framework-hono");
     });
 
     it("handles bare subcategory category paths", () => {
-      // Skills can have bare subcategory (no domain prefix) as their category
+      // Skills can have domain-prefixed subcategory as their category (without slash)
       const matrix = createMockMatrix({
-        ["web-testing-vitest"]: createMockSkill("web-testing-vitest", "testing"),
+        ["web-testing-vitest"]: createMockSkill("web-testing-vitest", "web-testing"),
       });
 
       const config = generateProjectConfigFromSkills("my-project", ["web-testing-vitest"], matrix);
 
-      // Bare subcategory "testing" should still extract as subcategory
+      // Bare subcategory "web-testing" should still extract as subcategory
       expect(config.stack).toBeDefined();
       expect(
         Object.values(config.stack!).some(
-          (agent) => agent.testing?.[0]?.id === "web-testing-vitest",
+          (agent) => agent["web-testing"]?.[0]?.id === "web-testing-vitest",
         ),
       ).toBe(true);
     });
 
     it("preserves all selected skill IDs in skills array", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
-        ["web-styling-scss-modules"]: createMockSkill("web-styling-scss-modules", "web/styling"),
-        ["api-framework-hono"]: createMockSkill("api-framework-hono", "api/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
+        ["web-styling-scss-modules"]: createMockSkill("web-styling-scss-modules", "web-styling"),
+        ["api-framework-hono"]: createMockSkill("api-framework-hono", "api-api"),
       });
 
       const selectedSkills: SkillId[] = [
@@ -286,7 +286,7 @@ describe("config-generator", () => {
 
     it("includes unknown skill IDs in skills array even when skipped for agents", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
       });
 
       const config = generateProjectConfigFromSkills(
@@ -316,7 +316,7 @@ describe("config-generator", () => {
 
     it("does not add description when options.description is empty string", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
       });
 
       const config = generateProjectConfigFromSkills(
@@ -333,7 +333,7 @@ describe("config-generator", () => {
 
     it("does not add author when options.author is empty string", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
       });
 
       const config = generateProjectConfigFromSkills(
@@ -350,7 +350,7 @@ describe("config-generator", () => {
 
     it("does not add optional fields when options is undefined", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
       });
 
       const config = generateProjectConfigFromSkills(
@@ -366,7 +366,7 @@ describe("config-generator", () => {
 
     it("uses selectedAgents when provided instead of derived agents", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
       });
 
       const selectedAgents: AgentName[] = ["web-developer", "web-reviewer"];
@@ -384,14 +384,14 @@ describe("config-generator", () => {
       expect(config.stack).toBeDefined();
       expect(
         Object.values(config.stack!).some(
-          (agent) => agent.framework?.[0]?.id === "web-framework-react",
+          (agent) => agent["web-framework"]?.[0]?.id === "web-framework-react",
         ),
       ).toBe(true);
     });
 
     it("derives agents when selectedAgents is not provided", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
       });
 
       const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], matrix);
@@ -405,7 +405,8 @@ describe("config-generator", () => {
       const matrix = createMockMatrix({
         ["meta-methodology-anti-over-engineering"]: createMockSkill(
           "meta-methodology-anti-over-engineering",
-          "methodology",
+          "shared-methodology",
+          { path: "skills/methodology/meta-methodology-anti-over-engineering/" },
         ),
       });
 
@@ -418,7 +419,7 @@ describe("config-generator", () => {
       // methodology/* maps to many agents including web-developer, api-developer, etc.
       expect(config.agents).toContain("web-developer");
       expect(config.agents).toContain("api-developer");
-      // Stack should have subcategory "methodology" from category path
+      // Stack should have subcategory "shared-methodology" from category path
       expect(config.stack).toBeDefined();
     });
   });
@@ -431,12 +432,12 @@ describe("config-generator", () => {
         description: "Test stack for unit tests",
         agents: {
           "web-developer": {
-            framework: [sa("web-framework-react", true)],
-            styling: [sa("web-styling-scss-modules")],
+            "web-framework": [sa("web-framework-react", true)],
+            "web-styling": [sa("web-styling-scss-modules")],
           },
           "api-developer": {
-            api: [sa("api-framework-hono", true)],
-            database: [sa("api-database-drizzle", true)],
+            "api-api": [sa("api-framework-hono", true)],
+            "api-database": [sa("api-database-drizzle", true)],
           },
         } as Partial<Record<AgentName, StackAgentConfig>>,
       };
@@ -445,12 +446,12 @@ describe("config-generator", () => {
 
       expect(result).toEqual({
         "web-developer": {
-          framework: [sa("web-framework-react", true)],
-          styling: [sa("web-styling-scss-modules")],
+          "web-framework": [sa("web-framework-react", true)],
+          "web-styling": [sa("web-styling-scss-modules")],
         },
         "api-developer": {
-          api: [sa("api-framework-hono", true)],
-          database: [sa("api-database-drizzle", true)],
+          "api-api": [sa("api-framework-hono", true)],
+          "api-database": [sa("api-database-drizzle", true)],
         },
       });
     });
@@ -462,7 +463,7 @@ describe("config-generator", () => {
         description: "Test stack",
         agents: {
           "web-developer": {
-            framework: [sa("web-framework-react", true)],
+            "web-framework": [sa("web-framework-react", true)],
           },
           "cli-tester": {},
           "web-pm": {},
@@ -473,7 +474,7 @@ describe("config-generator", () => {
 
       expect(result).toEqual({
         "web-developer": {
-          framework: [sa("web-framework-react", true)],
+          "web-framework": [sa("web-framework-react", true)],
         },
       });
       expect(result["cli-tester"]).toBeUndefined();
@@ -487,8 +488,8 @@ describe("config-generator", () => {
         description: "Test stack",
         agents: {
           "web-developer": {
-            framework: [sa("web-framework-react", true)],
-            styling: [sa("web-styling-tailwind")],
+            "web-framework": [sa("web-framework-react", true)],
+            "web-styling": [sa("web-styling-tailwind")],
           } as StackAgentConfig,
         } as Partial<Record<AgentName, StackAgentConfig>>,
       };
@@ -497,8 +498,8 @@ describe("config-generator", () => {
 
       expect(result).toEqual({
         "web-developer": {
-          framework: [sa("web-framework-react", true)],
-          styling: [sa("web-styling-tailwind")],
+          "web-framework": [sa("web-framework-react", true)],
+          "web-styling": [sa("web-styling-tailwind")],
         },
       });
     });
@@ -523,12 +524,12 @@ describe("config-generator", () => {
         description: "Test stack",
         agents: {
           "pattern-scout": {
-            methodology: [
+            "shared-methodology": [
               sa("meta-methodology-investigation-requirements", true),
               sa("meta-methodology-anti-over-engineering", true),
               sa("meta-methodology-success-criteria", true),
             ],
-            research: [sa("meta-research-research-methodology", true)],
+            "shared-research": [sa("meta-research-research-methodology", true)],
           } as StackAgentConfig,
         } as Partial<Record<AgentName, StackAgentConfig>>,
       };
@@ -537,12 +538,12 @@ describe("config-generator", () => {
 
       expect(result).toEqual({
         "pattern-scout": {
-          methodology: [
+          "shared-methodology": [
             sa("meta-methodology-investigation-requirements", true),
             sa("meta-methodology-anti-over-engineering", true),
             sa("meta-methodology-success-criteria", true),
           ],
-          research: [sa("meta-research-research-methodology", true)],
+          "shared-research": [sa("meta-research-research-methodology", true)],
         },
       });
     });
@@ -554,8 +555,8 @@ describe("config-generator", () => {
         description: "Test stack",
         agents: {
           "web-developer": {
-            framework: [sa("web-framework-react", true)],
-            methodology: [],
+            "web-framework": [sa("web-framework-react", true)],
+            "shared-methodology": [],
           } as StackAgentConfig,
         } as Partial<Record<AgentName, StackAgentConfig>>,
       };
@@ -564,7 +565,7 @@ describe("config-generator", () => {
 
       expect(result).toEqual({
         "web-developer": {
-          framework: [sa("web-framework-react", true)],
+          "web-framework": [sa("web-framework-react", true)],
           // Empty array is skipped
         },
       });
@@ -577,8 +578,8 @@ describe("config-generator", () => {
         description: "Test stack",
         agents: {
           "web-developer": {
-            framework: [sa("web-framework-react", true)],
-            styling: [sa("web-styling-scss-modules", false)],
+            "web-framework": [sa("web-framework-react", true)],
+            "web-styling": [sa("web-styling-scss-modules", false)],
           } as StackAgentConfig,
         } as Partial<Record<AgentName, StackAgentConfig>>,
       };
@@ -586,8 +587,8 @@ describe("config-generator", () => {
       const result = buildStackProperty(stack);
 
       // buildStackProperty now preserves full SkillAssignment[] including preloaded
-      expect(result["web-developer"]?.framework).toEqual([sa("web-framework-react", true)]);
-      expect(result["web-developer"]?.styling).toEqual([sa("web-styling-scss-modules", false)]);
+      expect(result["web-developer"]?.["web-framework"]).toEqual([sa("web-framework-react", true)]);
+      expect(result["web-developer"]?.["web-styling"]).toEqual([sa("web-styling-scss-modules", false)]);
     });
 
     it("handles multiple agents with identical subcategories", () => {
@@ -597,10 +598,10 @@ describe("config-generator", () => {
         description: "Test stack",
         agents: {
           "web-developer": {
-            framework: [sa("web-framework-react")],
+            "web-framework": [sa("web-framework-react")],
           },
           "web-reviewer": {
-            framework: [sa("web-framework-react")],
+            "web-framework": [sa("web-framework-react")],
           },
         } as Partial<Record<AgentName, StackAgentConfig>>,
       };
@@ -608,8 +609,8 @@ describe("config-generator", () => {
       const result = buildStackProperty(stack);
 
       // Each agent gets its own entry, even if they share the same subcategory skill
-      expect(result["web-developer"]?.framework).toEqual([sa("web-framework-react")]);
-      expect(result["web-reviewer"]?.framework).toEqual([sa("web-framework-react")]);
+      expect(result["web-developer"]?.["web-framework"]).toEqual([sa("web-framework-react")]);
+      expect(result["web-reviewer"]?.["web-framework"]).toEqual([sa("web-framework-react")]);
     });
 
     it("handles single agent with many subcategories", () => {
@@ -619,10 +620,10 @@ describe("config-generator", () => {
         description: "Fullstack stack",
         agents: {
           "web-developer": {
-            framework: [sa("web-framework-react")],
-            styling: [sa("web-styling-scss-modules")],
-            "client-state": [sa("web-state-zustand")],
-            testing: [sa("web-testing-vitest")],
+            "web-framework": [sa("web-framework-react")],
+            "web-styling": [sa("web-styling-scss-modules")],
+            "web-client-state": [sa("web-state-zustand")],
+            "web-testing": [sa("web-testing-vitest")],
           } as StackAgentConfig,
         } as Partial<Record<AgentName, StackAgentConfig>>,
       };
@@ -630,10 +631,10 @@ describe("config-generator", () => {
       const result = buildStackProperty(stack);
 
       expect(result["web-developer"]).toEqual({
-        framework: [sa("web-framework-react")],
-        styling: [sa("web-styling-scss-modules")],
-        "client-state": [sa("web-state-zustand")],
-        testing: [sa("web-testing-vitest")],
+        "web-framework": [sa("web-framework-react")],
+        "web-styling": [sa("web-styling-scss-modules")],
+        "web-client-state": [sa("web-state-zustand")],
+        "web-testing": [sa("web-testing-vitest")],
       });
     });
 
@@ -644,7 +645,7 @@ describe("config-generator", () => {
         description: "Test stack with local skill",
         agents: {
           "web-developer": {
-            framework: [
+            "web-framework": [
               {
                 id: "web-framework-react",
                 preloaded: true,
@@ -659,8 +660,8 @@ describe("config-generator", () => {
       const result = buildStackProperty(stack);
 
       // Full assignment is preserved including local/path
-      expect(result["web-developer"]?.framework?.[0]?.id).toBe("web-framework-react");
-      expect(result["web-developer"]?.framework?.[0]?.local).toBe(true);
+      expect(result["web-developer"]?.["web-framework"]?.[0]?.id).toBe("web-framework-react");
+      expect(result["web-developer"]?.["web-framework"]?.[0]?.local).toBe(true);
     });
   });
 });

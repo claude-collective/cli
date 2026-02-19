@@ -106,7 +106,7 @@ export const VALID_LOCAL_SKILL: TestSkill = {
   id: "web-tooling-valid",
   name: "web-tooling-valid",
   description: "A valid skill",
-  category: "web/tooling",
+  category: "web-tooling",
   author: TEST_AUTHOR,
 };
 
@@ -115,7 +115,7 @@ export const SKILL_WITHOUT_METADATA: TestSkill = {
   id: "web-tooling-incomplete",
   name: "web-tooling-incomplete",
   description: "Missing metadata",
-  category: "web/tooling",
+  category: "web-tooling",
   author: TEST_AUTHOR,
   skipMetadata: true,
 };
@@ -125,7 +125,7 @@ export const SKILL_WITHOUT_METADATA_CUSTOM: TestSkill = {
   id: "web-tooling-custom",
   name: "web-tooling-custom",
   description: "No metadata",
-  category: "web/tooling",
+  category: "web-tooling",
   author: TEST_AUTHOR,
   skipMetadata: true,
 };
@@ -135,7 +135,7 @@ export const DRY_RUN_SKILL: TestSkill = {
   id: "web-tooling-test",
   name: "web-tooling-test",
   description: "Test",
-  category: "web/tooling",
+  category: "web-tooling",
   author: TEST_AUTHOR,
 };
 
@@ -144,7 +144,7 @@ export const LOCAL_SKILL_BASIC: TestSkill = {
   id: "web-tooling-my-skill",
   name: "web-tooling-my-skill",
   description: "A test skill",
-  category: "web/tooling",
+  category: "web-tooling",
   author: TEST_AUTHOR,
   content: `---
 name: my-skill
@@ -163,7 +163,7 @@ export const LOCAL_SKILL_FORKED: TestSkill = {
   id: "web-tooling-forked-skill",
   name: "web-tooling-forked-skill",
   description: "A forked skill",
-  category: "web/tooling",
+  category: "web-tooling",
   author: TEST_AUTHOR,
   content: `---
 name: forked-skill
@@ -187,7 +187,7 @@ export const LOCAL_SKILL_FORKED_MINIMAL: TestSkill = {
   id: "web-tooling-test-minimal",
   name: "web-tooling-test-minimal",
   description: "Test skill",
-  category: "web/tooling",
+  category: "web-tooling",
   author: TEST_AUTHOR,
   content: `---
 name: test
@@ -235,7 +235,7 @@ Use composition over inheritance for flexible component design.
     version: 1,
     author: "@external-author",
     tags: ["react", "patterns", "web"],
-    category: "web/framework",
+    category: "web-framework",
   },
 };
 
@@ -261,7 +261,7 @@ Test component interactions and data flow.
     version: 1,
     author: "@external-author",
     tags: ["testing", "vitest"],
-    category: "testing",
+    category: "web-testing",
   },
 };
 
@@ -291,7 +291,7 @@ export const DEFAULT_TEST_SKILLS: TestSkill[] = [
     name: "web-framework-react",
     alias: "web-framework-react",
     description: "React framework for building user interfaces",
-    category: "web/framework",
+    category: "web-framework",
     author: TEST_AUTHOR,
     tags: ["react", "web", "ui"],
     content: `---
@@ -315,7 +315,7 @@ React is a JavaScript library for building user interfaces with components.
     name: "web-state-zustand",
     alias: "web-state-zustand",
     description: "Bear necessities state management",
-    category: "web/client-state",
+    category: "web-client-state",
     author: TEST_AUTHOR,
     tags: ["state", "react", "zustand"],
     content: `---
@@ -339,7 +339,7 @@ Zustand is a small, fast state management solution for React.
     name: "web-testing-vitest",
     alias: "web-testing-vitest",
     description: "Next generation testing framework",
-    category: "web/testing",
+    category: "web-testing",
     author: TEST_AUTHOR,
     tags: ["testing", "vitest", "unit"],
     content: `---
@@ -357,7 +357,7 @@ Vitest is a fast unit test framework powered by Vite.
     name: "api-framework-hono",
     alias: "api-framework-hono",
     description: "Lightweight web framework for the edge",
-    category: "api/framework",
+    category: "api-api",
     author: TEST_AUTHOR,
     tags: ["api", "hono", "edge"],
     content: `---
@@ -421,16 +421,16 @@ function generateMatrix(
     if (skill.alias) {
       aliases[skill.alias] = skill.id;
     }
-    const categoryParts = skill.category.split("/");
-    let categoryPath = "";
-    for (const part of categoryParts) {
-      categoryPath = categoryPath ? `${categoryPath}/${part}` : part;
-      if (!categories[categoryPath]) {
-        categories[categoryPath] = {
-          name: part.charAt(0).toUpperCase() + part.slice(1),
-          description: `${part} skills`,
-        };
-      }
+    // Category is hyphen-separated (e.g., "web-framework", "api-api")
+    const category = skill.category;
+    if (!categories[category]) {
+      // Extract display-friendly name from the subcategory part after the domain prefix
+      const dashIndex = category.indexOf("-");
+      const subcategoryPart = dashIndex >= 0 ? category.slice(dashIndex + 1) : category;
+      categories[category] = {
+        name: subcategoryPart.charAt(0).toUpperCase() + subcategoryPart.slice(1),
+        description: `${subcategoryPart} skills`,
+      };
     }
   }
 
@@ -448,15 +448,10 @@ function generateMatrix(
   // Skills carry their own category via metadata.yaml — these are only for UI grouping.
   const diskCategories: Record<string, Record<string, unknown>> = {};
   let order = 0;
-  const seenSubcategories = new Set<string>();
-  for (const [categoryPath, cat] of Object.entries(categories)) {
-    const parts = categoryPath.split("/");
-    const rawSubcategory = parts[parts.length - 1];
-    const subcategory = rawSubcategory;
-    // Skip domain-level entries (e.g., "web") and duplicate subcategories
-    if (parts.length < 2 || seenSubcategories.has(subcategory)) continue;
-    seenSubcategories.add(subcategory);
-    const domain = parts[0];
+  for (const [subcategory, cat] of Object.entries(categories)) {
+    // Category keys are already domain-prefixed (e.g., "web-framework", "api-api")
+    const dashIndex = subcategory.indexOf("-");
+    const domain = dashIndex >= 0 ? subcategory.slice(0, dashIndex) : subcategory;
     diskCategories[subcategory] = {
       id: subcategory,
       displayName: cat.name,
@@ -517,8 +512,7 @@ export async function createTestSource(options: TestSourceOptions = {}): Promise
   }
 
   for (const skill of skills) {
-    const categoryPath = skill.category.replace(/\//g, path.sep);
-    const skillDir = path.join(skillsDir, categoryPath, skill.name);
+    const skillDir = path.join(skillsDir, skill.category, skill.name);
     await mkdir(skillDir, { recursive: true });
 
     const content =

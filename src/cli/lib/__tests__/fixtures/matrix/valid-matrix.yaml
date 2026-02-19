@@ -8,120 +8,120 @@ version: "1.0.0"
 
 # All subcategory keys from subcategorySchema are required
 categories:
-  framework:
-    id: framework
+  web-framework:
+    id: web-framework
     displayName: Framework
     description: Core UI framework
     exclusive: true
     required: true
     order: 1
-  styling:
-    id: styling
+  web-styling:
+    id: web-styling
     displayName: Styling
     description: CSS approach
     exclusive: true
     required: true
     order: 3
-  client-state:
-    id: client-state
+  web-client-state:
+    id: web-client-state
     displayName: Client State
     description: UI state management
     exclusive: true
     required: false
     order: 4
-  server-state:
-    id: server-state
+  web-server-state:
+    id: web-server-state
     displayName: Server State
     description: API data caching
     exclusive: true
     required: false
     order: 5
-  forms:
-    id: forms
+  web-forms:
+    id: web-forms
     displayName: Forms
     description: Form handling
     exclusive: false
     required: false
     order: 6
-  testing:
-    id: testing
+  web-testing:
+    id: web-testing
     displayName: Testing
     description: Testing frameworks
     exclusive: false
     required: false
     order: 7
-  ui-components:
-    id: ui-components
+  web-ui-components:
+    id: web-ui-components
     displayName: UI Components
     description: Component libraries
     exclusive: false
     required: false
     order: 8
-  mocking:
-    id: mocking
+  web-mocking:
+    id: web-mocking
     displayName: Mocking
     description: API mocking
     exclusive: false
     required: false
     order: 9
-  error-handling:
-    id: error-handling
+  web-error-handling:
+    id: web-error-handling
     displayName: Error Handling
     description: Error patterns
     exclusive: false
     required: false
     order: 10
-  i18n:
-    id: i18n
+  web-i18n:
+    id: web-i18n
     displayName: i18n
     description: Internationalization
     exclusive: true
     required: false
     order: 11
-  file-upload:
-    id: file-upload
+  web-file-upload:
+    id: web-file-upload
     displayName: File Upload
     description: File uploads
     exclusive: false
     required: false
     order: 12
-  files:
-    id: files
+  web-files:
+    id: web-files
     displayName: Files
     description: File handling
     exclusive: false
     required: false
     order: 13
-  utilities:
-    id: utilities
+  web-utilities:
+    id: web-utilities
     displayName: Utilities
     description: Utility libraries
     exclusive: false
     required: false
     order: 14
-  realtime:
-    id: realtime
+  web-realtime:
+    id: web-realtime
     displayName: Realtime
     description: Realtime communication
     exclusive: true
     required: false
     order: 15
-  animation:
-    id: animation
+  web-animation:
+    id: web-animation
     displayName: Animation
     description: Animation libraries
     exclusive: false
     required: false
     order: 16
-  pwa:
-    id: pwa
+  web-pwa:
+    id: web-pwa
     displayName: PWA
     description: Progressive web apps
     exclusive: false
     required: false
     order: 17
-  accessibility:
-    id: accessibility
+  web-accessibility:
+    id: web-accessibility
     displayName: Accessibility
     description: WCAG compliance
     exclusive: false
@@ -134,50 +134,57 @@ categories:
     exclusive: false
     required: false
     order: 19
-  api:
-    id: api
+  web-base-framework:
+    id: web-base-framework
+    displayName: Base Framework
+    description: Base framework setup
+    exclusive: false
+    required: false
+    order: 20
+  api-api:
+    id: api-api
     displayName: API
     description: Backend framework
     exclusive: true
     required: true
     order: 1
-  database:
-    id: database
+  api-database:
+    id: api-database
     displayName: Database
     description: Database ORM
     exclusive: true
     required: false
     order: 2
-  auth:
-    id: auth
+  api-auth:
+    id: api-auth
     displayName: Auth
     description: Authentication
     exclusive: true
     required: false
     order: 3
-  observability:
-    id: observability
+  api-observability:
+    id: api-observability
     displayName: Observability
     description: Logging and monitoring
     exclusive: false
     required: false
     order: 4
-  analytics:
-    id: analytics
+  api-analytics:
+    id: api-analytics
     displayName: Analytics
     description: Product analytics
     exclusive: false
     required: false
     order: 5
-  email:
-    id: email
+  api-email:
+    id: api-email
     displayName: Email
     description: Transactional email
     exclusive: true
     required: false
     order: 6
-  performance:
-    id: performance
+  api-performance:
+    id: api-performance
     displayName: Performance
     description: API performance
     exclusive: false
@@ -190,50 +197,57 @@ categories:
     exclusive: true
     required: true
     order: 1
-  monorepo:
-    id: monorepo
+  mobile-platform:
+    id: mobile-platform
+    displayName: Platform
+    description: Mobile platform
+    exclusive: false
+    required: false
+    order: 2
+  shared-monorepo:
+    id: shared-monorepo
     displayName: Monorepo
     description: Monorepo tooling
     exclusive: true
     required: false
     order: 1
-  tooling:
-    id: tooling
+  shared-tooling:
+    id: shared-tooling
     displayName: Tooling
     description: Build tooling
     exclusive: false
     required: false
     order: 2
-  security:
-    id: security
+  shared-security:
+    id: shared-security
     displayName: Security
     description: Security patterns
     exclusive: false
     required: false
     order: 3
-  methodology:
-    id: methodology
+  shared-methodology:
+    id: shared-methodology
     displayName: Methodology
     description: Dev methodology
     exclusive: false
     required: false
     order: 4
-  research:
-    id: research
+  shared-research:
+    id: shared-research
     displayName: Research
     description: Research methodology
     exclusive: false
     required: false
     order: 5
-  reviewing:
-    id: reviewing
+  shared-reviewing:
+    id: shared-reviewing
     displayName: Code Review
     description: Code review guidance
     exclusive: false
     required: false
     order: 6
-  ci-cd:
-    id: ci-cd
+  shared-ci-cd:
+    id: shared-ci-cd
     displayName: CI/CD
     description: CI/CD pipelines
     exclusive: false

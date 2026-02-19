@@ -63,8 +63,8 @@ describe("resolveClaudeMd", () => {
 describe("buildSkillRefsFromConfig", () => {
   it("should build skill references from agent stack config", () => {
     const agentStack: StackAgentConfig = {
-      framework: [{ id: "web-framework-react" as SkillId, preloaded: false }],
-      styling: [{ id: "web-styling-scss-modules" as SkillId, preloaded: false }],
+      "web-framework": [{ id: "web-framework-react" as SkillId, preloaded: false }],
+      "web-styling": [{ id: "web-styling-scss-modules" as SkillId, preloaded: false }],
     };
 
     const result = buildSkillRefsFromConfig(agentStack);
@@ -76,7 +76,7 @@ describe("buildSkillRefsFromConfig", () => {
 
   it("should preserve preloaded flag from assignments", () => {
     const agentStack: StackAgentConfig = {
-      framework: [{ id: "web-framework-react" as SkillId, preloaded: true }],
+      "web-framework": [{ id: "web-framework-react" as SkillId, preloaded: true }],
     };
 
     const result = buildSkillRefsFromConfig(agentStack);
@@ -87,7 +87,7 @@ describe("buildSkillRefsFromConfig", () => {
 
   it("should set preloaded to false when not specified", () => {
     const agentStack: StackAgentConfig = {
-      framework: [{ id: "web-framework-react" as SkillId }],
+      "web-framework": [{ id: "web-framework-react" as SkillId }],
     };
 
     const result = buildSkillRefsFromConfig(agentStack);
@@ -98,12 +98,12 @@ describe("buildSkillRefsFromConfig", () => {
 
   it("should include usage guidance with subcategory name", () => {
     const agentStack: StackAgentConfig = {
-      framework: [{ id: "web-framework-react" as SkillId, preloaded: false }],
+      "web-framework": [{ id: "web-framework-react" as SkillId, preloaded: false }],
     };
 
     const result = buildSkillRefsFromConfig(agentStack);
 
-    expect(result[0].usage).toBe("when working with framework");
+    expect(result[0].usage).toBe("when working with web-framework");
   });
 
   it("should return empty array for empty config", () => {
@@ -115,7 +115,7 @@ describe("buildSkillRefsFromConfig", () => {
   it("when config has undefined assignment values, should skip them and return only defined refs", () => {
     // Partial record may have undefined values
     const agentStack: StackAgentConfig = {
-      framework: [{ id: "web-framework-react" as SkillId, preloaded: false }],
+      "web-framework": [{ id: "web-framework-react" as SkillId, preloaded: false }],
     };
 
     const result = buildSkillRefsFromConfig(agentStack);
@@ -126,7 +126,7 @@ describe("buildSkillRefsFromConfig", () => {
 
   it("should handle multiple skills per subcategory", () => {
     const agentStack: StackAgentConfig = {
-      methodology: [
+      "shared-methodology": [
         { id: "meta-methodology-investigation-requirements" as SkillId, preloaded: true },
         { id: "meta-methodology-anti-over-engineering" as SkillId, preloaded: true },
       ],
@@ -641,8 +641,8 @@ describe("resolveAgentSkillsFromStack", () => {
       description: "A test stack",
       agents: {
         "web-developer": {
-          framework: [sa("web-framework-react", true)],
-          styling: [sa("web-styling-scss-modules")],
+          "web-framework": [sa("web-framework-react", true)],
+          "web-styling": [sa("web-styling-scss-modules")],
         },
       },
     };
@@ -661,7 +661,7 @@ describe("resolveAgentSkillsFromStack", () => {
       description: "A test stack",
       agents: {
         "web-developer": {
-          framework: [sa("web-framework-react", true)],
+          "web-framework": [sa("web-framework-react", true)],
         },
       },
     };
@@ -680,7 +680,7 @@ describe("resolveAgentSkillsFromStack", () => {
       description: "A test stack",
       agents: {
         "web-developer": {
-          styling: [sa("web-styling-scss-modules")],
+          "web-styling": [sa("web-styling-scss-modules")],
         },
       },
     };
@@ -698,7 +698,7 @@ describe("resolveAgentSkillsFromStack", () => {
       name: "Test Stack",
       description: "A test stack",
       agents: {
-        "api-developer": { api: [sa("api-framework-hono", true)] },
+        "api-developer": { "api-api": [sa("api-framework-hono", true)] },
       },
     };
 
@@ -733,7 +733,7 @@ describe("resolveAgentSkillRefs", () => {
       description: "A test stack",
       agents: {
         "web-developer": {
-          framework: [sa("web-framework-react", true)],
+          "web-framework": [sa("web-framework-react", true)],
         },
       },
     };
@@ -762,7 +762,7 @@ describe("resolveAgentSkillRefs", () => {
       description: "A test stack",
       agents: {
         "web-developer": {
-          framework: [sa("web-framework-react", true)],
+          "web-framework": [sa("web-framework-react", true)],
         },
       },
     };
@@ -844,12 +844,12 @@ describe("resolveAgents with stack", () => {
       description: "A fullstack development stack",
       agents: {
         "web-developer": {
-          framework: [sa("web-framework-react", true)],
-          styling: [sa("web-styling-scss-modules")],
+          "web-framework": [sa("web-framework-react", true)],
+          "web-styling": [sa("web-styling-scss-modules")],
         },
         "api-developer": {
-          api: [sa("api-framework-hono", true)],
-          database: [sa("api-database-drizzle", true)],
+          "api-api": [sa("api-framework-hono", true)],
+          "api-database": [sa("api-database-drizzle", true)],
         },
       },
     };
@@ -991,7 +991,7 @@ describe("resolveAgents with stack", () => {
       description: "A web-only stack",
       agents: {
         "web-developer": {
-          framework: [sa("web-framework-react", true)],
+          "web-framework": [sa("web-framework-react", true)],
         },
       },
     };

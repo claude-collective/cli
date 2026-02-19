@@ -142,7 +142,7 @@ describe("stack-plugin-compiler", () => {
         agents: ["web-developer"],
         agentSkills: {
           "web-developer": {
-            framework: [{ id: frontmatterName, preloaded: true }],
+            "web-framework": [{ id: frontmatterName, preloaded: true }],
           },
         },
       });
@@ -354,7 +354,7 @@ describe("stack-plugin-compiler", () => {
         agents: ["web-developer"],
         agentSkills: {
           "web-developer": {
-            framework: [{ id: reactCanonicalId, preloaded: true }],
+            "web-framework": [{ id: reactCanonicalId, preloaded: true }],
             language: [{ id: tsCanonicalId }],
             // Boundary cast: string keys to branded Subcategory
           } as Partial<Record<Subcategory, SkillAssignment[]>>,
@@ -699,8 +699,8 @@ describe("stack-plugin-compiler", () => {
         agents: ["web-developer"],
         agentSkills: {
           "web-developer": {
-            framework: [{ id: reactCanonicalId, preloaded: true }],
-            "client-state": [{ id: zustandCanonicalId }],
+            "web-framework": [{ id: reactCanonicalId, preloaded: true }],
+            "web-client-state": [{ id: zustandCanonicalId }],
           },
         },
       });

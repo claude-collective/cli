@@ -327,7 +327,7 @@ describe("Wizard integration", () => {
         selectedDomains: ["web", "api"],
         currentDomainIndex: 0,
         domainSelections: {
-          web: { ["framework"]: ["web-framework-react"] },
+          web: { ["web-framework"]: ["web-framework-react"] },
         },
       });
 
@@ -359,7 +359,7 @@ describe("Wizard integration", () => {
         selectedDomains: ["web", "api"],
         currentDomainIndex: 1, // On API domain
         domainSelections: {
-          web: { ["framework"]: ["web-framework-react"] },
+          web: { ["web-framework"]: ["web-framework-react"] },
         },
         history: ["stack"],
       });
@@ -380,7 +380,7 @@ describe("Wizard integration", () => {
       expect(state.currentDomainIndex).toBe(0);
 
       // Web selections should be preserved
-      expect(state.domainSelections.web?.["framework"]).toContain("web-framework-react");
+      expect(state.domainSelections.web?.["web-framework"]).toContain("web-framework-react");
     });
   });
 

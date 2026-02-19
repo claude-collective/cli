@@ -288,7 +288,7 @@ describe("source-loader local skills integration", () => {
     );
     await writeFile(
       path.join(skillDir, "metadata.yaml"),
-      'category: web/testing\nauthor: "@test"\nversion: 1\ncliName: Vitest\ncliDescription: Marketplace vitest configuration\ncontentHash: abc1234\n',
+      'category: web-testing\nauthor: "@test"\nversion: 1\ncliName: Vitest\ncliDescription: Marketplace vitest configuration\ncontentHash: abc1234\n',
     );
 
     // Load skills from source to verify marketplace skill is present
@@ -361,7 +361,7 @@ describe("source-loader config-driven paths", () => {
     );
     await writeFile(
       path.join(skillsDir, "metadata.yaml"),
-      'category: web/framework\nauthor: "@test"\nversion: 1\ncliName: React\ncliDescription: React framework\nusageGuidance: Use React for building UIs\ncontentHash: abc1234\n',
+      'category: web-framework\nauthor: "@test"\nversion: 1\ncliName: React\ncliDescription: React framework\nusageGuidance: Use React for building UIs\ncontentHash: abc1234\n',
     );
 
     const result = await loadSkillsMatrixFromSource({
@@ -434,7 +434,7 @@ describe("source-loader config-driven paths", () => {
     await mkdir(dataDir, { recursive: true });
     await writeFile(
       path.join(dataDir, "stacks.yaml"),
-      `stacks:\n  - id: custom-path-stack\n    name: Custom Path Stack\n    description: Stack from custom path\n    agents:\n      web-developer:\n        framework: web-framework-react\n`,
+      `stacks:\n  - id: custom-path-stack\n    name: Custom Path Stack\n    description: Stack from custom path\n    agents:\n      web-developer:\n        web-framework: web-framework-react\n`,
     );
 
     // Create empty skills dir
@@ -545,7 +545,7 @@ describe("source-loader integration", () => {
     description: A test stack from the source
     agents:
       web-developer:
-        framework: web-framework-react
+        web-framework: web-framework-react
 `,
     );
 

@@ -277,7 +277,7 @@ describe("skill-copier", () => {
         }),
         ["web-framework-react"]: createMockSkill(
           "web-framework-react",
-          "web/framework",
+          "web-framework",
           remoteSkillRelPath,
         ),
       });
@@ -378,7 +378,7 @@ describe("skill-copier", () => {
       const matrix = createMockMatrix({
         "web-framework-react": createMockSkill(
           "web-framework-react",
-          "web/framework",
+          "web-framework",
           remoteSkillRelPath,
           { local: true, localPath: localSkillPath },
         ),
@@ -420,7 +420,7 @@ describe("skill-copier", () => {
       const matrix = createMockMatrix({
         "web-framework-react": createMockSkill(
           "web-framework-react",
-          "web/framework",
+          "web-framework",
           localSkillPath,
           {
             local: true,
@@ -474,7 +474,7 @@ describe("skill-copier", () => {
       const matrix = createMockMatrix({
         ["web-state-zustand"]: createMockSkill(
           "web-state-zustand",
-          "web/state",
+          "web-client-state",
           remoteSkillRelPath,
           {
             displayName: "zustand",
@@ -524,7 +524,7 @@ describe("skill-copier", () => {
       const matrix = createMockMatrix({
         ["api-framework-hono"]: createMockSkill(
           "api-framework-hono",
-          "api/api",
+          "api-api",
           remoteSkillRelPath,
           // No alias
         ),
@@ -616,7 +616,7 @@ describe("skill-copier", () => {
         }),
         ["web-framework-react"]: createMockSkill(
           "web-framework-react",
-          "web/framework",
+          "web-framework",
           remoteSkillRelPath,
           { displayName: "react" },
         ),
@@ -693,7 +693,7 @@ describe("skill-copier", () => {
       const matrix = createMockMatrix({
         ["web-framework-react"]: createMockSkill(
           "web-framework-react",
-          "web/framework/client-rendering",
+          "web-framework",
           deeplyNestedPath,
         ),
       });
@@ -771,16 +771,16 @@ describe("skill-copier", () => {
       const matrix = createMockMatrix({
         ["web-framework-react"]: createMockSkill(
           "web-framework-react",
-          "web/framework",
+          "web-framework",
           reactPath,
           {
             displayName: "react",
           },
         ),
-        ["api-framework-hono"]: createMockSkill("api-framework-hono", "api/api", honoPath, {
+        ["api-framework-hono"]: createMockSkill("api-framework-hono", "api-api", honoPath, {
           displayName: "hono",
         }),
-        ["web-testing-vitest"]: createMockSkill("web-testing-vitest", "testing", vitestPath, {
+        ["web-testing-vitest"]: createMockSkill("web-testing-vitest", "web-testing", vitestPath, {
           displayName: "vitest",
         }),
       });
@@ -841,7 +841,7 @@ describe("skill-copier", () => {
       const matrix = createMockMatrix({
         "web-tooling-vite": createMockSkill(
           "web-tooling-vite",
-          "web/tooling",
+          "web-tooling",
           nestedPath,
           // No alias!
         ),
@@ -885,7 +885,7 @@ describe("skill-copier", () => {
       const matrix = createMockMatrix({
         "web-framework-react": createMockSkill(
           "web-framework-react",
-          "web/framework",
+          "web-framework",
           remoteSkillRelPath,
           { local: true, localPath: localSkillPath },
         ),
@@ -936,7 +936,7 @@ describe("skill-copier", () => {
       const matrix = createMockMatrix({
         "web-framework-react": createMockSkill(
           "web-framework-react",
-          "web/framework",
+          "web-framework",
           localSkillPath,
           {
             local: true,
@@ -983,7 +983,7 @@ describe("skill-copier", () => {
       const matrix = createMockMatrix({
         "web-framework-react": createMockSkill(
           "web-framework-react",
-          "web/framework",
+          "web-framework",
           localSkillPath,
           {
             local: true,

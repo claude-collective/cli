@@ -445,7 +445,7 @@ describe("local-installer", () => {
         description: "A test stack",
         agents: {
           "web-developer": {
-            framework: [{ id: "web-framework-react", preloaded: true }],
+            "web-framework": [{ id: "web-framework-react", preloaded: true }],
           },
         },
       });
@@ -457,7 +457,7 @@ describe("local-installer", () => {
         skills: ["web-framework-react"],
         stack: {
           "web-developer": {
-            framework: [{ id: "web-framework-react", preloaded: false }],
+            "web-framework": [{ id: "web-framework-react", preloaded: false }],
           },
         },
       });
@@ -465,7 +465,7 @@ describe("local-installer", () => {
       // buildStackProperty extracts stack data preserving preloaded: true
       mockBuildStackProperty.mockReturnValueOnce({
         "web-developer": {
-          framework: [{ id: "web-framework-react", preloaded: true }],
+          "web-framework": [{ id: "web-framework-react", preloaded: true }],
         },
       });
 
@@ -485,7 +485,7 @@ describe("local-installer", () => {
       // Verify preloaded: true survived into the final config
       const webDevStack = result.config.stack?.["web-developer"];
       expect(webDevStack).toBeDefined();
-      const frameworkAssignments = webDevStack?.framework;
+      const frameworkAssignments = webDevStack?.["web-framework"];
       expect(frameworkAssignments).toBeDefined();
       expect(frameworkAssignments).toHaveLength(1);
       expect(frameworkAssignments![0].id).toBe("web-framework-react");
@@ -497,7 +497,7 @@ describe("local-installer", () => {
       const parsedConfig = parseYaml(configContent) as ProjectConfig;
       // compactStackForYaml converts preloaded: true to { id, preloaded: true } object form
       const parsedWebDev = parsedConfig.stack?.["web-developer"] as Record<string, unknown>;
-      expect(parsedWebDev?.framework).toEqual({ id: "web-framework-react", preloaded: true });
+      expect(parsedWebDev?.["web-framework"]).toEqual({ id: "web-framework-react", preloaded: true });
     });
   });
 });

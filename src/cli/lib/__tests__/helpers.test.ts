@@ -25,10 +25,10 @@ describe("test helpers", () => {
   describe("createMockSkill", () => {
     it("creates a valid skill with defaults", () => {
       // Using normalized skill ID format
-      const skill = createMockSkill("web-framework-react", "web/framework");
+      const skill = createMockSkill("web-framework-react", "web-framework");
 
       expect(skill.id).toBe("web-framework-react");
-      expect(skill.category).toBe("web/framework");
+      expect(skill.category).toBe("web-framework");
       expect(skill.author).toBe("@test");
     });
 

@@ -54,8 +54,8 @@ describe("multi-source-loader", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
-        "web-testing-vitest": createMockSkill("web-testing-vitest" as SkillId, "testing"),
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
+        "web-testing-vitest": createMockSkill("web-testing-vitest" as SkillId, "web-testing"),
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -89,8 +89,8 @@ describe("multi-source-loader", () => {
       };
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
-        "web-testing-vitest": createMockSkill("web-testing-vitest" as SkillId, "testing"),
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
+        "web-testing-vitest": createMockSkill("web-testing-vitest" as SkillId, "web-testing"),
       });
 
       await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test");
@@ -124,7 +124,7 @@ describe("multi-source-loader", () => {
       };
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
       });
 
       // marketplace parameter (from marketplace.json) takes precedence
@@ -153,7 +153,7 @@ describe("multi-source-loader", () => {
       };
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
       });
 
       await loadSkillsFromAllSources(matrix, configWithMarketplace, "/tmp/test");
@@ -174,7 +174,7 @@ describe("multi-source-loader", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing", {
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing", {
           local: true,
           localPath: ".claude/skills/react/",
         }),
@@ -211,7 +211,7 @@ describe("multi-source-loader", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing", {
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing", {
           local: true,
           localPath: ".claude/skills/react/",
         }),
@@ -238,7 +238,7 @@ describe("multi-source-loader", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing", {
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing", {
           local: true,
           localPath: ".claude/skills/react/",
         }),
@@ -260,7 +260,7 @@ describe("multi-source-loader", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -288,7 +288,7 @@ describe("multi-source-loader", () => {
       vi.mocked(fetchFromSource).mockRejectedValue(new Error("Network timeout"));
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
       });
 
       // Should not throw
@@ -332,7 +332,7 @@ describe("multi-source-loader", () => {
       ]);
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -376,7 +376,7 @@ describe("multi-source-loader", () => {
       >);
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -419,8 +419,8 @@ describe("multi-source-loader", () => {
       >);
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
-        "web-state-zustand": createMockSkill("web-state-zustand" as SkillId, "testing"),
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
+        "web-state-zustand": createMockSkill("web-state-zustand" as SkillId, "web-testing"),
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -482,8 +482,8 @@ describe("multi-source-loader", () => {
       };
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
-        "web-testing-vitest": createMockSkill("web-testing-vitest" as SkillId, "testing"),
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
+        "web-testing-vitest": createMockSkill("web-testing-vitest" as SkillId, "web-testing"),
       });
 
       await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test");
@@ -522,7 +522,7 @@ describe("multi-source-loader", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -571,7 +571,7 @@ describe("multi-source-loader", () => {
       };
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
       });
 
       await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test");
@@ -606,7 +606,7 @@ describe("multi-source-loader", () => {
       };
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "testing"),
+        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
       });
 
       // Should not throw

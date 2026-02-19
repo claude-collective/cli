@@ -70,7 +70,7 @@ const PIPELINE_TEST_SKILLS: TestSkill[] = [
     id: "web-framework-react",
     name: "web-framework-react",
     description: "React framework for building user interfaces",
-    category: "web/framework",
+    category: "web-framework",
     author: "@test",
     tags: ["react", "web"],
     content: `---
@@ -88,7 +88,7 @@ Use component-based architecture with JSX.
     id: "web-state-zustand",
     name: "web-state-zustand",
     description: "Bear necessities state management",
-    category: "web/client-state",
+    category: "web-client-state",
     author: "@test",
     tags: ["state", "zustand"],
     content: `---
@@ -105,7 +105,7 @@ Zustand is a minimal state management library for React.
     id: "web-styling-scss-modules",
     name: "web-styling-scss-modules",
     description: "CSS Modules with SCSS",
-    category: "web/styling",
+    category: "web-styling",
     author: "@test",
     tags: ["css", "scss"],
     content: `---
@@ -122,7 +122,7 @@ Use CSS Modules with SCSS for scoped styling.
     id: "web-testing-vitest",
     name: "web-testing-vitest",
     description: "Next generation testing framework",
-    category: "testing",
+    category: "web-testing",
     author: "@test",
     tags: ["testing", "vitest"],
     content: `---
@@ -139,7 +139,7 @@ Vitest is a fast unit test framework powered by Vite.
     id: "api-framework-hono",
     name: "api-framework-hono",
     description: "Lightweight web framework for the edge",
-    category: "api/framework",
+    category: "api-api",
     author: "@test",
     tags: ["api", "hono"],
     content: `---
@@ -156,7 +156,7 @@ Hono is a fast web framework for the edge.
     id: "api-database-drizzle",
     name: "api-database-drizzle",
     description: "TypeScript ORM for SQL databases",
-    category: "api/database",
+    category: "api-database",
     author: "@test",
     tags: ["database", "orm"],
     content: `---
@@ -173,7 +173,7 @@ Drizzle is a lightweight TypeScript ORM.
     id: "api-security-auth-patterns",
     name: "api-security-auth-patterns",
     description: "Authentication and authorization patterns",
-    category: "api/security",
+    category: "api-security",
     author: "@test",
     tags: ["auth", "security"],
     content: `---
@@ -190,7 +190,7 @@ JWT-based authentication and role-based authorization.
     id: "web-accessibility-a11y",
     name: "web-accessibility-a11y",
     description: "Web accessibility best practices",
-    category: "web/accessibility",
+    category: "web-accessibility",
     author: "@test",
     tags: ["a11y", "accessibility"],
     content: `---
@@ -207,7 +207,7 @@ Follow WCAG 2.1 guidelines for accessible web applications.
     id: "meta-methodology-investigation",
     name: "meta-methodology-investigation",
     description: "Investigation before implementation",
-    category: "meta/methodology",
+    category: "shared-methodology",
     author: "@test",
     tags: ["methodology"],
     content: `---
@@ -224,7 +224,7 @@ Always investigate before implementing. Read the code first.
     id: "web-animation-framer",
     name: "web-animation-framer",
     description: "Framer Motion animation library",
-    category: "web/animation",
+    category: "web-animation",
     author: "@test",
     tags: ["animation", "framer"],
     content: `---
@@ -263,13 +263,13 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         installMode: "local",
         domainSelections: {
           web: {
-            framework: ["web-framework-react"],
-            "client-state": ["web-state-zustand"],
-            styling: ["web-styling-scss-modules"],
+            "web-framework": ["web-framework-react"],
+            "web-client-state": ["web-state-zustand"],
+            "web-styling": ["web-styling-scss-modules"],
           },
           api: {
-            framework: ["api-framework-hono"],
-            database: ["api-database-drizzle"],
+            "api-api": ["api-framework-hono"],
+            "api-database": ["api-database-drizzle"],
           },
         },
       });

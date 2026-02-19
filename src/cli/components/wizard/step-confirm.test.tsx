@@ -152,8 +152,8 @@ describe("StepConfirm component", () => {
           onComplete={onComplete}
           selectedDomains={["web", "api"]}
           domainSelections={{
-            web: { framework: ["web-framework-react"], styling: ["web-styling-scss-modules"] },
-            api: { api: ["api-framework-hono"] },
+            web: { "web-framework": ["web-framework-react"], "web-styling": ["web-styling-scss-modules"] },
+            api: { "api-api": ["api-framework-hono"] },
           }}
           technologyCount={3}
           skillCount={3}
@@ -177,8 +177,8 @@ describe("StepConfirm component", () => {
           onComplete={onComplete}
           selectedDomains={["web", "api"]}
           domainSelections={{
-            web: { framework: ["web-framework-react"], styling: ["web-styling-scss-modules"] },
-            api: { api: ["api-framework-hono"] },
+            web: { "web-framework": ["web-framework-react"], "web-styling": ["web-styling-scss-modules"] },
+            api: { "api-api": ["api-framework-hono"] },
           }}
           technologyCount={3}
           skillCount={3}
@@ -205,7 +205,7 @@ describe("StepConfirm component", () => {
           onComplete={onComplete}
           selectedDomains={["web"]}
           domainSelections={{
-            web: { framework: ["web-framework-react"] },
+            web: { "web-framework": ["web-framework-react"] },
           }}
           technologyCount={1}
           skillCount={1}
@@ -229,7 +229,7 @@ describe("StepConfirm component", () => {
           onComplete={onComplete}
           selectedDomains={["web", "api"]}
           domainSelections={{
-            web: { framework: ["web-framework-react"] },
+            web: { "web-framework": ["web-framework-react"] },
             api: {}, // Empty selections
           }}
           technologyCount={1}

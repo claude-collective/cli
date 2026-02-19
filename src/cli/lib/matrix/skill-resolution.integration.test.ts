@@ -114,33 +114,33 @@ function createPrivateSource(name: string, url: string, installed = false): Skil
 
 // Source 1: Public marketplace (5 skills)
 const PUBLIC_SKILLS: Array<{ id: SkillId; category: CategoryPath; description: string }> = [
-  { id: "web-framework-react", category: "framework", description: "React framework" },
-  { id: "web-framework-vue", category: "framework", description: "Vue.js framework" },
-  { id: "web-state-zustand", category: "client-state", description: "Zustand state management" },
-  { id: "web-styling-scss-modules", category: "styling", description: "SCSS Modules styling" },
-  { id: "web-testing-vitest", category: "testing", description: "Vitest testing framework" },
+  { id: "web-framework-react", category: "web-framework", description: "React framework" },
+  { id: "web-framework-vue", category: "web-framework", description: "Vue.js framework" },
+  { id: "web-state-zustand", category: "web-client-state", description: "Zustand state management" },
+  { id: "web-styling-scss-modules", category: "web-styling", description: "SCSS Modules styling" },
+  { id: "web-testing-vitest", category: "web-testing", description: "Vitest testing framework" },
 ];
 
 // Source 2: Private marketplace "acme-corp" (5 skills, 2 overlap with public)
 const ACME_SKILLS: Array<{ id: SkillId; category: CategoryPath; description: string }> = [
-  { id: "web-framework-react", category: "framework", description: "React (acme custom fork)" },
-  { id: "api-framework-hono", category: "api", description: "Hono web framework" },
-  { id: "api-database-drizzle", category: "database", description: "Drizzle ORM" },
-  { id: "api-security-auth-patterns", category: "security", description: "Auth patterns" },
-  { id: "web-testing-vitest", category: "testing", description: "Vitest (acme custom)" },
+  { id: "web-framework-react", category: "web-framework", description: "React (acme custom fork)" },
+  { id: "api-framework-hono", category: "api-api", description: "Hono web framework" },
+  { id: "api-database-drizzle", category: "api-database", description: "Drizzle ORM" },
+  { id: "api-security-auth-patterns", category: "shared-security", description: "Auth patterns" },
+  { id: "web-testing-vitest", category: "web-testing", description: "Vitest (acme custom)" },
 ];
 
 // Source 3: Private marketplace "internal" (5 skills, 1 overlap with public)
 const INTERNAL_SKILLS: Array<{ id: SkillId; category: CategoryPath; description: string }> = [
-  { id: "web-framework-react", category: "framework", description: "React (internal build)" },
-  { id: "web-animation-framer", category: "animation", description: "Framer Motion" },
+  { id: "web-framework-react", category: "web-framework", description: "React (internal build)" },
+  { id: "web-animation-framer", category: "web-animation", description: "Framer Motion" },
   {
     id: "meta-methodology-investigation",
-    category: "methodology",
+    category: "shared-methodology",
     description: "Investigation first",
   },
-  { id: "web-accessibility-a11y", category: "accessibility", description: "Web accessibility" },
-  { id: "api-monitoring-sentry", category: "observability", description: "Sentry error tracking" },
+  { id: "web-accessibility-a11y", category: "web-accessibility", description: "Web accessibility" },
+  { id: "api-monitoring-sentry", category: "api-observability", description: "Sentry error tracking" },
 ];
 
 // ── Matrix Builder ─────────────────────────────────────────────────────────────
@@ -186,28 +186,28 @@ function buildMultiSourceMatrix(overrides?: Partial<MergedSkillsMatrix>): Merged
   }
 
   const categories = {
-    framework: createMockCategory("framework" as Subcategory, "Framework", {
+    "web-framework": createMockCategory("web-framework" as Subcategory, "Framework", {
       exclusive: true,
       required: true,
     }),
-    "client-state": createMockCategory("client-state" as Subcategory, "State", { order: 1 }),
-    styling: createMockCategory("styling" as Subcategory, "Styling", { order: 2 }),
-    testing: createMockCategory("testing" as Subcategory, "Testing", {
+    "web-client-state": createMockCategory("web-client-state" as Subcategory, "State", { order: 1 }),
+    "web-styling": createMockCategory("web-styling" as Subcategory, "Styling", { order: 2 }),
+    "web-testing": createMockCategory("web-testing" as Subcategory, "Testing", {
       exclusive: false,
       order: 3,
     }),
-    api: createMockCategory("api" as Subcategory, "Backend Framework", {
+    "api-api": createMockCategory("api-api" as Subcategory, "Backend Framework", {
       exclusive: true,
       order: 4,
     }),
-    database: createMockCategory("database" as Subcategory, "Database", { order: 5 }),
-    security: createMockCategory("security" as Subcategory, "Security", { order: 6 }),
-    animation: createMockCategory("animation" as Subcategory, "Animation", { order: 7 }),
-    methodology: createMockCategory("methodology" as Subcategory, "Methodology", { order: 8 }),
-    accessibility: createMockCategory("accessibility" as Subcategory, "Accessibility", {
+    "api-database": createMockCategory("api-database" as Subcategory, "Database", { order: 5 }),
+    "shared-security": createMockCategory("shared-security" as Subcategory, "Security", { order: 6 }),
+    "web-animation": createMockCategory("web-animation" as Subcategory, "Animation", { order: 7 }),
+    "shared-methodology": createMockCategory("shared-methodology" as Subcategory, "Methodology", { order: 8 }),
+    "web-accessibility": createMockCategory("web-accessibility" as Subcategory, "Accessibility", {
       order: 9,
     }),
-    observability: createMockCategory("observability" as Subcategory, "Observability", {
+    "api-observability": createMockCategory("api-observability" as Subcategory, "Observability", {
       order: 10,
     }),
   } as Partial<Record<Subcategory, CategoryDefinition>> as Record<Subcategory, CategoryDefinition>;
@@ -380,7 +380,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       // Add a skill that requires a non-existent skill
       matrix.skills["web-feature-advanced" as SkillId] = createMockSkill(
         "web-feature-advanced" as SkillId,
-        "framework",
+        "web-framework",
         {
           requires: [
             {
@@ -596,7 +596,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       const matrix = buildMultiSourceMatrix();
 
       // Get available framework skills
-      const available = getAvailableSkills("framework", [], matrix);
+      const available = getAvailableSkills("web-framework", [], matrix);
 
       // Should have react and vue
       const ids = available.map((o) => o.id);
@@ -619,7 +619,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
       id: "web-framework-react",
       name: "web-framework-react",
       description: "React framework (public source)",
-      category: "web/framework",
+      category: "web-framework",
       author: "@test",
       tags: ["react", "web"],
       content: `---\nname: web-framework-react\ndescription: React framework\n---\n\n# React\n\nReact framework from public source.\n`,
@@ -628,7 +628,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
       id: "api-framework-hono",
       name: "api-framework-hono",
       description: "Hono framework (acme source)",
-      category: "api/framework",
+      category: "api-api",
       author: "@acme",
       tags: ["api", "hono"],
       content: `---\nname: api-framework-hono\ndescription: Hono framework\n---\n\n# Hono\n\nHono framework from acme source.\n`,
@@ -637,7 +637,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
       id: "web-animation-framer",
       name: "web-animation-framer",
       description: "Framer Motion (internal source)",
-      category: "web/animation",
+      category: "web-animation",
       author: "@internal",
       tags: ["animation"],
       content: `---\nname: web-animation-framer\ndescription: Framer Motion\n---\n\n# Framer Motion\n\nFramer Motion from internal source.\n`,
@@ -646,7 +646,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
       id: "api-database-drizzle",
       name: "api-database-drizzle",
       description: "Drizzle ORM (acme source)",
-      category: "api/database",
+      category: "api-database",
       author: "@acme",
       tags: ["database"],
       content: `---\nname: api-database-drizzle\ndescription: Drizzle ORM\n---\n\n# Drizzle ORM\n\nDrizzle from acme source.\n`,
@@ -655,7 +655,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
       id: "web-testing-vitest",
       name: "web-testing-vitest",
       description: "Vitest testing (public source)",
-      category: "testing",
+      category: "web-testing",
       author: "@test",
       tags: ["testing"],
       content: `---\nname: web-testing-vitest\ndescription: Vitest testing\n---\n\n# Vitest\n\nVitest from public source.\n`,

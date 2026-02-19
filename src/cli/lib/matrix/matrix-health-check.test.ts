@@ -45,8 +45,8 @@ function createSkill(
 describe("matrix-health-check", () => {
   describe("checkMatrixHealth — healthy matrix", () => {
     it("returns no issues for a valid matrix with no broken references", () => {
-      const reactSkill = createSkill("web-framework-react", "framework");
-      const zustandSkill = createSkill("web-state-zustand", "client-state", {
+      const reactSkill = createSkill("web-framework-react", "web-framework");
+      const zustandSkill = createSkill("web-state-zustand", "web-client-state", {
         compatibleWith: ["web-framework-react"],
         recommends: [{ skillId: "web-framework-react", reason: "Works well with React" }],
       });
@@ -58,8 +58,8 @@ describe("matrix-health-check", () => {
         },
         {
           categories: {
-            framework: createCategory("framework"),
-            "client-state": createCategory("client-state"),
+            "web-framework": createCategory("web-framework"),
+            "web-client-state": createCategory("web-client-state"),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -70,7 +70,7 @@ describe("matrix-health-check", () => {
     });
 
     it("does not warn when all relationship targets exist", () => {
-      const skillA = createSkill("web-skill-a", "framework", {
+      const skillA = createSkill("web-skill-a", "web-framework", {
         conflictsWith: [{ skillId: "web-skill-b", reason: "Conflicts" }],
         requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "Requires B" }],
         alternatives: [{ skillId: "web-skill-b", purpose: "Alternative" }],
@@ -78,7 +78,7 @@ describe("matrix-health-check", () => {
         requiresSetup: ["web-skill-b"],
         providesSetupFor: ["web-skill-b"],
       });
-      const skillB = createSkill("web-skill-b", "framework");
+      const skillB = createSkill("web-skill-b", "web-framework");
 
       const matrix = createMockMatrix(
         {
@@ -87,7 +87,7 @@ describe("matrix-health-check", () => {
         },
         {
           categories: {
-            framework: createCategory("framework"),
+            "web-framework": createCategory("web-framework"),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -101,7 +101,7 @@ describe("matrix-health-check", () => {
 
   describe("checkMatrixHealth — ghost relationship targets", () => {
     it("detects conflictsWith referencing non-existent skill", () => {
-      const skill = createSkill("web-framework-react", "framework", {
+      const skill = createSkill("web-framework-react", "web-framework", {
         conflictsWith: [{ skillId: "web-framework-nonexistent", reason: "Conflict" }],
       });
 
@@ -109,7 +109,7 @@ describe("matrix-health-check", () => {
         { "web-framework-react": skill },
         {
           categories: {
-            framework: createCategory("framework"),
+            "web-framework": createCategory("web-framework"),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -124,7 +124,7 @@ describe("matrix-health-check", () => {
     });
 
     it("detects recommends referencing non-existent skill", () => {
-      const skill = createSkill("web-framework-react", "framework", {
+      const skill = createSkill("web-framework-react", "web-framework", {
         recommends: [{ skillId: "web-state-ghost", reason: "Recommend" }],
       });
 
@@ -132,7 +132,7 @@ describe("matrix-health-check", () => {
         { "web-framework-react": skill },
         {
           categories: {
-            framework: createCategory("framework"),
+            "web-framework": createCategory("web-framework"),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -146,7 +146,7 @@ describe("matrix-health-check", () => {
     });
 
     it("detects requires referencing non-existent skill (error severity)", () => {
-      const skill = createSkill("web-state-zustand", "client-state", {
+      const skill = createSkill("web-state-zustand", "web-client-state", {
         requires: [
           { skillIds: ["web-framework-ghost"], needsAny: false, reason: "Needs framework" },
         ],
@@ -156,7 +156,7 @@ describe("matrix-health-check", () => {
         { "web-state-zustand": skill },
         {
           categories: {
-            "client-state": createCategory("client-state"),
+            "web-client-state": createCategory("web-client-state"),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -170,7 +170,7 @@ describe("matrix-health-check", () => {
     });
 
     it("detects alternatives referencing non-existent skill", () => {
-      const skill = createSkill("web-framework-react", "framework", {
+      const skill = createSkill("web-framework-react", "web-framework", {
         alternatives: [{ skillId: "web-framework-ghost", purpose: "Alternative framework" }],
       });
 
@@ -178,7 +178,7 @@ describe("matrix-health-check", () => {
         { "web-framework-react": skill },
         {
           categories: {
-            framework: createCategory("framework"),
+            "web-framework": createCategory("web-framework"),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -191,7 +191,7 @@ describe("matrix-health-check", () => {
     });
 
     it("detects discourages referencing non-existent skill", () => {
-      const skill = createSkill("web-framework-react", "framework", {
+      const skill = createSkill("web-framework-react", "web-framework", {
         discourages: [{ skillId: "web-skill-ghost", reason: "Discourage" }],
       });
 
@@ -199,7 +199,7 @@ describe("matrix-health-check", () => {
         { "web-framework-react": skill },
         {
           categories: {
-            framework: createCategory("framework"),
+            "web-framework": createCategory("web-framework"),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -213,7 +213,7 @@ describe("matrix-health-check", () => {
     });
 
     it("detects requiresSetup referencing non-existent skill", () => {
-      const skill = createSkill("api-analytics-posthog-analytics", "analytics", {
+      const skill = createSkill("api-analytics-posthog-analytics", "api-analytics", {
         requiresSetup: ["api-analytics-posthog-setup-ghost"],
       });
 
@@ -221,7 +221,7 @@ describe("matrix-health-check", () => {
         { "api-analytics-posthog-analytics": skill },
         {
           categories: {
-            analytics: createCategory("analytics", { domain: "api" }),
+            "api-analytics": createCategory("api-analytics", { domain: "api" }),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -234,7 +234,7 @@ describe("matrix-health-check", () => {
     });
 
     it("detects providesSetupFor referencing non-existent skill", () => {
-      const skill = createSkill("api-analytics-posthog-setup", "analytics", {
+      const skill = createSkill("api-analytics-posthog-setup", "api-analytics", {
         providesSetupFor: ["api-analytics-ghost-usage"],
       });
 
@@ -242,7 +242,7 @@ describe("matrix-health-check", () => {
         { "api-analytics-posthog-setup": skill },
         {
           categories: {
-            analytics: createCategory("analytics", { domain: "api" }),
+            "api-analytics": createCategory("api-analytics", { domain: "api" }),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -255,7 +255,7 @@ describe("matrix-health-check", () => {
     });
 
     it("detects multiple ghost targets across different relationship types", () => {
-      const skill = createSkill("web-framework-react", "framework", {
+      const skill = createSkill("web-framework-react", "web-framework", {
         conflictsWith: [{ skillId: "web-ghost-a", reason: "Conflict" }],
         recommends: [{ skillId: "web-ghost-b", reason: "Recommend" }],
         requires: [{ skillIds: ["web-ghost-c"], needsAny: false, reason: "Require" }],
@@ -269,7 +269,7 @@ describe("matrix-health-check", () => {
         { "web-framework-react": skill },
         {
           categories: {
-            framework: createCategory("framework"),
+            "web-framework": createCategory("web-framework"),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -283,13 +283,13 @@ describe("matrix-health-check", () => {
 
   describe("checkMatrixHealth — category domains", () => {
     it("detects category missing domain field", () => {
-      const skill = createSkill("web-framework-react", "framework");
+      const skill = createSkill("web-framework-react", "web-framework");
 
       const matrix = createMockMatrix(
         { "web-framework-react": skill },
         {
           categories: {
-            framework: createCategory("framework", { domain: undefined }),
+            "web-framework": createCategory("web-framework", { domain: undefined }),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -304,13 +304,13 @@ describe("matrix-health-check", () => {
     });
 
     it("does not flag categories with valid domain", () => {
-      const skill = createSkill("web-framework-react", "framework");
+      const skill = createSkill("web-framework-react", "web-framework");
 
       const matrix = createMockMatrix(
         { "web-framework-react": skill },
         {
           categories: {
-            framework: createCategory("framework", { domain: "web" }),
+            "web-framework": createCategory("web-framework", { domain: "web" }),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -326,9 +326,9 @@ describe("matrix-health-check", () => {
         {},
         {
           categories: {
-            framework: createCategory("framework", { domain: undefined }),
-            styling: createCategory("styling", { domain: undefined }),
-            "client-state": createCategory("client-state", { domain: "web" }),
+            "web-framework": createCategory("web-framework", { domain: undefined }),
+            "web-styling": createCategory("web-styling", { domain: undefined }),
+            "web-client-state": createCategory("web-client-state", { domain: "web" }),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -348,7 +348,7 @@ describe("matrix-health-check", () => {
         { "web-framework-react": skill },
         {
           categories: {
-            framework: createCategory("framework"),
+            "web-framework": createCategory("web-framework"),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -363,13 +363,13 @@ describe("matrix-health-check", () => {
     });
 
     it("does not flag skill with valid category", () => {
-      const skill = createSkill("web-framework-react", "framework");
+      const skill = createSkill("web-framework-react", "web-framework");
 
       const matrix = createMockMatrix(
         { "web-framework-react": skill },
         {
           categories: {
-            framework: createCategory("framework"),
+            "web-framework": createCategory("web-framework"),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -383,7 +383,7 @@ describe("matrix-health-check", () => {
 
   describe("checkMatrixHealth — compatibleWith targets", () => {
     it("detects compatibleWith referencing non-existent skill", () => {
-      const skill = createSkill("web-state-zustand", "client-state", {
+      const skill = createSkill("web-state-zustand", "web-client-state", {
         compatibleWith: ["web-framework-ghost"],
       });
 
@@ -391,7 +391,7 @@ describe("matrix-health-check", () => {
         { "web-state-zustand": skill },
         {
           categories: {
-            "client-state": createCategory("client-state"),
+            "web-client-state": createCategory("web-client-state"),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -405,8 +405,8 @@ describe("matrix-health-check", () => {
     });
 
     it("does not flag compatibleWith for existing skills", () => {
-      const react = createSkill("web-framework-react", "framework");
-      const zustand = createSkill("web-state-zustand", "client-state", {
+      const react = createSkill("web-framework-react", "web-framework");
+      const zustand = createSkill("web-state-zustand", "web-client-state", {
         compatibleWith: ["web-framework-react"],
       });
 
@@ -417,8 +417,8 @@ describe("matrix-health-check", () => {
         },
         {
           categories: {
-            framework: createCategory("framework"),
-            "client-state": createCategory("client-state"),
+            "web-framework": createCategory("web-framework"),
+            "web-client-state": createCategory("web-client-state"),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -430,7 +430,7 @@ describe("matrix-health-check", () => {
     });
 
     it("detects multiple ghost compatibleWith entries", () => {
-      const skill = createSkill("web-state-zustand", "client-state", {
+      const skill = createSkill("web-state-zustand", "web-client-state", {
         compatibleWith: ["web-ghost-a", "web-ghost-b", "web-ghost-c"],
       });
 
@@ -438,7 +438,7 @@ describe("matrix-health-check", () => {
         { "web-state-zustand": skill },
         {
           categories: {
-            "client-state": createCategory("client-state"),
+            "web-client-state": createCategory("web-client-state"),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -479,13 +479,13 @@ describe("matrix-health-check", () => {
     });
 
     it("does not flag stack with valid skill references", () => {
-      const react = createSkill("web-framework-react", "framework");
+      const react = createSkill("web-framework-react", "web-framework");
 
       const matrix = createMockMatrix(
         { "web-framework-react": react },
         {
           categories: {
-            framework: createCategory("framework"),
+            "web-framework": createCategory("web-framework"),
           } as MergedSkillsMatrix["categories"],
           suggestedStacks: [
             {
@@ -567,7 +567,7 @@ describe("matrix-health-check", () => {
 
   describe("checkMatrixHealth — logging", () => {
     it("logs a warning for each issue found", () => {
-      const skill = createSkill("web-framework-react", "framework", {
+      const skill = createSkill("web-framework-react", "web-framework", {
         conflictsWith: [{ skillId: "web-ghost-a", reason: "Conflict" }],
         recommends: [{ skillId: "web-ghost-b", reason: "Recommend" }],
       });
@@ -576,7 +576,7 @@ describe("matrix-health-check", () => {
         { "web-framework-react": skill },
         {
           categories: {
-            framework: createCategory("framework"),
+            "web-framework": createCategory("web-framework"),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -590,13 +590,13 @@ describe("matrix-health-check", () => {
     });
 
     it("does not log when matrix is healthy", () => {
-      const skill = createSkill("web-framework-react", "framework");
+      const skill = createSkill("web-framework-react", "web-framework");
 
       const matrix = createMockMatrix(
         { "web-framework-react": skill },
         {
           categories: {
-            framework: createCategory("framework"),
+            "web-framework": createCategory("web-framework"),
           } as MergedSkillsMatrix["categories"],
         },
       );
@@ -617,13 +617,13 @@ describe("matrix-health-check", () => {
     });
 
     it("returns no issues for matrix with skills but no relationships", () => {
-      const skill = createSkill("web-framework-react", "framework");
+      const skill = createSkill("web-framework-react", "web-framework");
 
       const matrix = createMockMatrix(
         { "web-framework-react": skill },
         {
           categories: {
-            framework: createCategory("framework"),
+            "web-framework": createCategory("web-framework"),
           } as MergedSkillsMatrix["categories"],
         },
       );

@@ -49,10 +49,10 @@ const CUSTOM_STACKS: TestStack[] = [
     description: "A consumer-defined fullstack stack",
     agents: {
       "web-developer": {
-        framework: "web-framework-react",
+        "web-framework": "web-framework-react",
       },
       "api-developer": {
-        api: "api-framework-hono",
+        "api-api": "api-framework-hono",
       },
     },
   },
@@ -62,7 +62,7 @@ const CUSTOM_STACKS: TestStack[] = [
     description: "A consumer-defined testing stack",
     agents: {
       "web-developer": {
-        testing: "web-testing-vitest",
+        "web-testing": "web-testing-vitest",
       },
     },
   },
@@ -70,17 +70,20 @@ const CUSTOM_STACKS: TestStack[] = [
 
 function buildConsumerMatrix(): MergedSkillsMatrix {
   const skills: Record<string, ResolvedSkill> = {
-    "web-framework-react": createMockSkill("web-framework-react", "web/framework", {
+    "web-framework-react": createMockSkill("web-framework-react", "web-framework", {
       description: "React framework for building user interfaces",
       tags: ["react", "web"],
+      path: "skills/web-framework/web-framework-react/",
     }),
-    "api-framework-hono": createMockSkill("api-framework-hono", "api/framework", {
+    "api-framework-hono": createMockSkill("api-framework-hono", "api-api", {
       description: "Hono API framework for the edge",
       tags: ["hono", "api"],
+      path: "skills/api-api/api-framework-hono/",
     }),
-    "web-testing-vitest": createMockSkill("web-testing-vitest", "web/testing", {
+    "web-testing-vitest": createMockSkill("web-testing-vitest", "web-testing", {
       description: "Next generation testing framework",
       tags: ["testing", "vitest"],
+      path: "skills/web-testing/web-testing-vitest/",
     }),
   };
   return createMockMatrix(skills);
@@ -157,7 +160,7 @@ describe("Integration: Consumer-Defined Stacks", () => {
     // to SkillAssignment[] with preloaded: false
     const webDevConfig = fullstackStack.agents["web-developer"];
     expect(webDevConfig).toBeDefined();
-    expect(webDevConfig!.framework).toEqual([{ id: "web-framework-react", preloaded: false }]);
+    expect(webDevConfig!["web-framework"]).toEqual([{ id: "web-framework-react", preloaded: false }]);
   });
 
   it("should load stacks with philosophy field when provided", async () => {
@@ -168,7 +171,7 @@ describe("Integration: Consumer-Defined Stacks", () => {
         description: "Stack with philosophy",
         agents: {
           "web-developer": {
-            framework: "web-framework-react",
+            "web-framework": "web-framework-react",
           },
         },
         philosophy: "Modern fullstack with type safety",
@@ -238,8 +241,8 @@ describe("Integration: Stacks Precedence", () => {
         description: "Consumer override of Next.js stack",
         agents: {
           "web-developer": {
-            framework: "web-framework-react",
-            testing: "web-testing-vitest",
+            "web-framework": "web-framework-react",
+            "web-testing": "web-testing-vitest",
           },
         },
       },
@@ -270,10 +273,10 @@ describe("Integration: Marketplace Source Stacks", () => {
         description: "A stack from a marketplace source",
         agents: {
           "web-developer": {
-            framework: "web-framework-react",
+            "web-framework": "web-framework-react",
           },
           "api-developer": {
-            api: "api-framework-hono",
+            "api-api": "api-framework-hono",
           },
         },
       },
@@ -303,7 +306,7 @@ describe("Integration: Marketplace Source Stacks", () => {
         description: "Marketplace fullstack",
         agents: {
           "web-developer": {
-            framework: "web-framework-react",
+            "web-framework": "web-framework-react",
           },
         },
       },
@@ -319,8 +322,7 @@ describe("Integration: Marketplace Source Stacks", () => {
       // Skills are also available at the source skills dir (verify via file existence)
       const reactSkillPath = path.join(
         dirs.skillsDir,
-        "web",
-        "framework",
+        "web-framework",
         "web-framework-react",
         "SKILL.md",
       );
@@ -392,8 +394,8 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       const matrixConfig: SkillsMatrixConfig = {
         version: "1.0.0",
         categories: {
-          tooling: {
-            id: "tooling",
+          "shared-tooling": {
+            id: "shared-tooling",
             displayName: "Tooling",
             description: "Development tooling and infrastructure",
             domain: "shared",
@@ -401,8 +403,8 @@ describe("Integration: Custom Skills Matrix Loading", () => {
             required: false,
             order: 20,
           },
-          framework: {
-            id: "framework",
+          "web-framework": {
+            id: "web-framework",
             displayName: "Framework",
             description: "UI Framework",
             domain: "web",
@@ -425,7 +427,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       await writeSourceSkill(skillsDir, path.join("infra", "tooling", "docker"), {
         id: "infra-tooling-docker",
         description: "Docker containerization patterns",
-        category: "infra/tooling",
+        category: "infra-tooling",
         categoryExclusive: false,
         tags: ["docker", "devops", "containers"],
       });
@@ -436,9 +438,9 @@ describe("Integration: Custom Skills Matrix Loading", () => {
 
       // Assert the custom "tooling" category is present
       expect(merged.categories).toBeDefined();
-      expect(merged.categories.tooling).toBeDefined();
-      expect(merged.categories.tooling!.displayName).toBe("Tooling");
-      expect(merged.categories.tooling!.exclusive).toBe(false);
+      expect(merged.categories["shared-tooling"]).toBeDefined();
+      expect(merged.categories["shared-tooling"]!.displayName).toBe("Tooling");
+      expect(merged.categories["shared-tooling"]!.exclusive).toBe(false);
 
       // Assert the custom skill is present
       expect(merged.skills["infra-tooling-docker"]).toBeDefined();
@@ -446,7 +448,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
         "Docker containerization patterns",
       );
       expect(merged.skills["infra-tooling-docker"]!.tags).toContain("docker");
-      expect(merged.skills["infra-tooling-docker"]!.category).toBe("infra/tooling");
+      expect(merged.skills["infra-tooling-docker"]!.category).toBe("infra-tooling");
     } finally {
       await cleanupTempDir(tempDir);
     }
@@ -462,8 +464,8 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       const matrixConfig: SkillsMatrixConfig = {
         version: "1.0.0",
         categories: {
-          "ci-cd": {
-            id: "ci-cd",
+          "shared-ci-cd": {
+            id: "shared-ci-cd",
             displayName: "CI/CD",
             description: "Continuous integration and deployment",
             domain: "shared",
@@ -488,7 +490,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
         await writeSourceSkill(skillsDir, path.join("infra", "ci-cd", skillName), {
           id: skillId,
           description: `${skillName} CI/CD pipeline`,
-          category: "infra/ci-cd",
+          category: "infra-ci-cd",
           categoryExclusive: true,
           tags: ["ci-cd", skillName],
         });
@@ -498,8 +500,8 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       const merged = await mergeMatrixWithSkills(matrixConfig, skills);
 
       // Verify category exclusive flag
-      expect(merged.categories["ci-cd"]).toBeDefined();
-      expect(merged.categories["ci-cd"]!.exclusive).toBe(true);
+      expect(merged.categories["shared-ci-cd"]).toBeDefined();
+      expect(merged.categories["shared-ci-cd"]!.exclusive).toBe(true);
 
       // Verify both skills are loaded
       expect(merged.skills["infra-ci-cd-github-actions"]).toBeDefined();
@@ -523,8 +525,8 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       const matrixConfig: SkillsMatrixConfig = {
         version: "1.0.0",
         categories: {
-          framework: {
-            id: "framework",
+          "web-framework": {
+            id: "web-framework",
             displayName: "Framework",
             description: "UI Framework",
             domain: "web",
@@ -532,8 +534,8 @@ describe("Integration: Custom Skills Matrix Loading", () => {
             required: true,
             order: 1,
           },
-          styling: {
-            id: "styling",
+          "web-styling": {
+            id: "web-styling",
             displayName: "Styling",
             description: "CSS approach",
             domain: "web",
@@ -565,9 +567,9 @@ describe("Integration: Custom Skills Matrix Loading", () => {
 
       // Create the skills referenced in relationships
       const skillDefs = [
-        { name: "custom-a", id: "web-framework-custom-a", category: "web/framework" },
-        { name: "custom-b", id: "web-styling-custom-b", category: "web/styling" },
-        { name: "custom-c", id: "web-styling-custom-c", category: "web/styling" },
+        { name: "custom-a", id: "web-framework-custom-a", category: "web-framework" },
+        { name: "custom-b", id: "web-styling-custom-b", category: "web-styling" },
+        { name: "custom-c", id: "web-styling-custom-c", category: "web-styling" },
       ];
 
       for (const def of skillDefs) {
@@ -621,9 +623,9 @@ describe("Integration: Custom Skills Matrix Loading", () => {
             description: "Stack with preloaded skills",
             agents: {
               "web-developer": {
-                framework: [{ id: "web-framework-react", preloaded: true }],
-                testing: "web-testing-vitest",
-                methodology: [
+                "web-framework": [{ id: "web-framework-react", preloaded: true }],
+                "web-testing": "web-testing-vitest",
+                "shared-methodology": [
                   { id: "meta-methodology-investigation-requirements", preloaded: true },
                   "meta-methodology-anti-over-engineering",
                 ],
@@ -641,19 +643,19 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       const stack = stacks[0];
 
       // Framework: preloaded: true (object form)
-      const frameworkAssignments = stack.agents["web-developer"]!.framework;
+      const frameworkAssignments = stack.agents["web-developer"]!["web-framework"];
       expect(frameworkAssignments).toHaveLength(1);
       expect(frameworkAssignments![0].id).toBe("web-framework-react");
       expect(frameworkAssignments![0].preloaded).toBe(true);
 
       // Testing: bare string -> preloaded defaults to false
-      const testingAssignments = stack.agents["web-developer"]!.testing;
+      const testingAssignments = stack.agents["web-developer"]!["web-testing"];
       expect(testingAssignments).toHaveLength(1);
       expect(testingAssignments![0].id).toBe("web-testing-vitest");
       expect(testingAssignments![0].preloaded).toBe(false);
 
       // Methodology: mixed array — first preloaded: true, second defaults to false
-      const methodologyAssignments = stack.agents["web-developer"]!.methodology;
+      const methodologyAssignments = stack.agents["web-developer"]!["shared-methodology"];
       expect(methodologyAssignments).toHaveLength(2);
       expect(methodologyAssignments![0].id).toBe("meta-methodology-investigation-requirements");
       expect(methodologyAssignments![0].preloaded).toBe(true);
@@ -674,11 +676,11 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
         description: "Stack for testing the full pipeline",
         agents: {
           "web-developer": {
-            framework: "web-framework-react",
-            testing: "web-testing-vitest",
+            "web-framework": "web-framework-react",
+            "web-testing": "web-testing-vitest",
           },
           "api-developer": {
-            api: "api-framework-hono",
+            "api-api": "api-framework-hono",
           },
         },
       },
@@ -695,8 +697,7 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
       // 2. Verify skills exist at the source skills dir
       const reactSkillPath = path.join(
         dirs.skillsDir,
-        "web",
-        "framework",
+        "web-framework",
         "web-framework-react",
         "SKILL.md",
       );
@@ -751,7 +752,7 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
       expect(matrixContent).toContain("categories:");
 
       // Verify source also has skill directories
-      const reactDir = path.join(dirs.skillsDir, "web", "framework", "web-framework-react");
+      const reactDir = path.join(dirs.skillsDir, "web-framework", "web-framework-react");
       expect(await directoryExists(reactDir)).toBe(true);
     } finally {
       await cleanupTestSource(dirs);
@@ -766,7 +767,7 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
         description: "First stack",
         agents: {
           "web-developer": {
-            framework: "web-framework-react",
+            "web-framework": "web-framework-react",
           },
         },
       },
@@ -776,8 +777,8 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
         description: "Second stack also using React",
         agents: {
           "web-developer": {
-            framework: "web-framework-react",
-            testing: "web-testing-vitest",
+            "web-framework": "web-framework-react",
+            "web-testing": "web-testing-vitest",
           },
         },
       },
@@ -790,8 +791,8 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
       expect(stacks).toHaveLength(2);
 
       // Both stacks reference web-framework-react
-      const stackAReactAssignment = stacks[0].agents["web-developer"]?.framework;
-      const stackBReactAssignment = stacks[1].agents["web-developer"]?.framework;
+      const stackAReactAssignment = stacks[0].agents["web-developer"]?.["web-framework"];
+      const stackBReactAssignment = stacks[1].agents["web-developer"]?.["web-framework"];
 
       expect(stackAReactAssignment).toBeDefined();
       expect(stackBReactAssignment).toBeDefined();
@@ -814,8 +815,8 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
       const matrixConfig: SkillsMatrixConfig = {
         version: "1.0.0",
         categories: {
-          tooling: {
-            id: "tooling",
+          "shared-tooling": {
+            id: "shared-tooling",
             displayName: "Tooling",
             description: "Build and bundling tools",
             domain: "web",
@@ -838,7 +839,7 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
       await writeSourceSkill(skillsDir, path.join("web", "tooling", "vite"), {
         id: "web-tooling-vite",
         description: "Vite build tool",
-        category: "web/tooling",
+        category: "web-tooling",
         categoryExclusive: false,
         tags: ["vite", "bundler"],
       });
@@ -865,8 +866,8 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
       const matrixConfig: SkillsMatrixConfig = {
         version: "1.0.0",
         categories: {
-          observability: {
-            id: "observability",
+          "api-observability": {
+            id: "api-observability",
             displayName: "Observability",
             description: "Monitoring and observability tools",
             domain: "api",
@@ -889,7 +890,7 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
       await writeSourceSkill(skillsDir, path.join("api", "observability", "datadog"), {
         id: "api-observability-datadog",
         description: "Datadog APM integration",
-        category: "api/observability",
+        category: "api-observability",
         tags: customTags,
       });
 
@@ -914,8 +915,8 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
       const matrixConfig: SkillsMatrixConfig = {
         version: "1.0.0",
         categories: {
-          framework: {
-            id: "framework",
+          "web-framework": {
+            id: "web-framework",
             displayName: "Framework",
             description: "UI Framework",
             domain: "web",
@@ -923,8 +924,8 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
             required: true,
             order: 1,
           },
-          testing: {
-            id: "testing",
+          "web-testing": {
+            id: "web-testing",
             displayName: "Testing",
             description: "Testing tools",
             domain: "shared",
@@ -951,8 +952,8 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
 
       // Create the skills (use valid categoryPath prefixes — "shared" is not valid)
       for (const def of [
-        { name: "custom-react", id: "web-framework-custom-react", cat: "web/framework" },
-        { name: "custom-rtl", id: "web-testing-custom-rtl", cat: "web/testing" },
+        { name: "custom-react", id: "web-framework-custom-react", cat: "web-framework" },
+        { name: "custom-rtl", id: "web-testing-custom-rtl", cat: "web-testing" },
       ]) {
         const catPath = def.cat.replace(/\//g, path.sep);
         await writeSourceSkill(skillsDir, path.join(catPath, def.name), {

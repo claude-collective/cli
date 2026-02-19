@@ -176,37 +176,37 @@ describe("WizardStore", () => {
   describe("technology selection", () => {
     it("should toggle technology in exclusive mode", () => {
       const store = useWizardStore.getState();
-      store.toggleTechnology("web", "framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
       const { domainSelections } = useWizardStore.getState();
-      expect(domainSelections.web!.framework).toEqual(["web-framework-react"]);
+      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
     });
 
     it("should replace technology in exclusive mode", () => {
       const store = useWizardStore.getState();
-      store.toggleTechnology("web", "framework", "web-framework-react", true);
-      store.toggleTechnology("web", "framework", "web-framework-vue", true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-framework", "web-framework-vue", true);
 
       const { domainSelections } = useWizardStore.getState();
-      expect(domainSelections.web!.framework).toEqual(["web-framework-vue"]);
+      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-vue"]);
     });
 
     it("should toggle off technology in exclusive mode", () => {
       const store = useWizardStore.getState();
-      store.toggleTechnology("web", "framework", "web-framework-react", true);
-      store.toggleTechnology("web", "framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
       const { domainSelections } = useWizardStore.getState();
-      expect(domainSelections.web!.framework).toEqual([]);
+      expect(domainSelections.web!["web-framework"]).toEqual([]);
     });
 
     it("should allow multiple selections in non-exclusive mode", () => {
       const store = useWizardStore.getState();
-      store.toggleTechnology("web", "testing", "web-testing-vitest", false);
-      store.toggleTechnology("web", "testing", "web-testing-playwright-e2e", false);
+      store.toggleTechnology("web", "web-testing", "web-testing-vitest", false);
+      store.toggleTechnology("web", "web-testing", "web-testing-playwright-e2e", false);
 
       const { domainSelections } = useWizardStore.getState();
-      expect(domainSelections.web!.testing).toEqual([
+      expect(domainSelections.web!["web-testing"]).toEqual([
         "web-testing-vitest",
         "web-testing-playwright-e2e",
       ]);
@@ -214,12 +214,12 @@ describe("WizardStore", () => {
 
     it("should toggle off technology in non-exclusive mode", () => {
       const store = useWizardStore.getState();
-      store.toggleTechnology("web", "testing", "web-testing-vitest", false);
-      store.toggleTechnology("web", "testing", "web-testing-playwright-e2e", false);
-      store.toggleTechnology("web", "testing", "web-testing-vitest", false);
+      store.toggleTechnology("web", "web-testing", "web-testing-vitest", false);
+      store.toggleTechnology("web", "web-testing", "web-testing-playwright-e2e", false);
+      store.toggleTechnology("web", "web-testing", "web-testing-vitest", false);
 
       const { domainSelections } = useWizardStore.getState();
-      expect(domainSelections.web!.testing).toEqual(["web-testing-playwright-e2e"]);
+      expect(domainSelections.web!["web-testing"]).toEqual(["web-testing-playwright-e2e"]);
     });
   });
 
@@ -437,9 +437,9 @@ describe("WizardStore", () => {
   describe("computed getters", () => {
     it("should get all selected technologies", () => {
       const store = useWizardStore.getState();
-      store.toggleTechnology("web", "framework", "web-framework-react", true);
-      store.toggleTechnology("web", "styling", "web-styling-scss-modules", true);
-      store.toggleTechnology("api", "api", "api-framework-hono", true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", true);
+      store.toggleTechnology("api", "api-api", "api-framework-hono", true);
 
       const technologies = store.getAllSelectedTechnologies();
       expect(technologies).toContain("web-framework-react");
@@ -459,9 +459,9 @@ describe("WizardStore", () => {
 
     it("should get selected technologies per domain", () => {
       const store = useWizardStore.getState();
-      store.toggleTechnology("web", "framework", "web-framework-react", true);
-      store.toggleTechnology("web", "styling", "web-styling-scss-modules", true);
-      store.toggleTechnology("api", "api", "api-framework-hono", true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", true);
+      store.toggleTechnology("api", "api-api", "api-framework-hono", true);
 
       const perDomain = store.getSelectedTechnologiesPerDomain();
       expect(perDomain.web).toEqual(["web-framework-react", "web-styling-scss-modules"]);
@@ -477,8 +477,8 @@ describe("WizardStore", () => {
 
     it("should omit domains with empty subcategory arrays from getSelectedTechnologiesPerDomain", () => {
       const store = useWizardStore.getState();
-      store.toggleTechnology("web", "framework", "web-framework-react", true);
-      store.toggleTechnology("web", "framework", "web-framework-react", true); // toggle off
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true); // toggle off
 
       const perDomain = store.getSelectedTechnologiesPerDomain();
       expect(perDomain.web).toBeUndefined();
@@ -486,9 +486,9 @@ describe("WizardStore", () => {
 
     it("should get technology count", () => {
       const store = useWizardStore.getState();
-      store.toggleTechnology("web", "framework", "web-framework-react", true);
-      store.toggleTechnology("web", "styling", "web-styling-scss-modules", true);
-      store.toggleTechnology("api", "api", "api-framework-hono", true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", true);
+      store.toggleTechnology("api", "api-api", "api-framework-hono", true);
 
       expect(store.getTechnologyCount()).toBe(3);
     });
@@ -572,11 +572,11 @@ describe("WizardStore", () => {
 
       const stack: Parameters<typeof store.populateFromStack>[0] = {
         agents: {
-          web: { framework: [sa("web-framework-react", true)] },
+          web: { "web-framework": [sa("web-framework-react", true)] },
         },
       };
       const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
-        framework: { domain: "web" },
+        "web-framework": { domain: "web" },
       };
 
       store.populateFromStack(stack, categories);
@@ -586,7 +586,7 @@ describe("WizardStore", () => {
       expect(selectedDomains).toEqual(["web", "api", "cli", "mobile", "shared"]);
 
       expect(domainSelections.web).toBeDefined();
-      expect(domainSelections.web!.framework).toEqual(["web-framework-react"]);
+      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
       expect(domainSelections.api).toBeUndefined();
     });
 
@@ -596,25 +596,25 @@ describe("WizardStore", () => {
       const stack: Parameters<typeof store.populateFromStack>[0] = {
         agents: {
           web: {
-            framework: [sa("web-framework-react", true)],
-            "client-state": [sa("web-state-zustand")],
+            "web-framework": [sa("web-framework-react", true)],
+            "web-client-state": [sa("web-state-zustand")],
           },
-          api: { api: [sa("api-framework-hono", true)] },
+          api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
       const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
-        framework: { domain: "web" },
-        "client-state": { domain: "web" },
-        api: { domain: "api" },
+        "web-framework": { domain: "web" },
+        "web-client-state": { domain: "web" },
+        "api-api": { domain: "api" },
       };
 
       store.populateFromStack(stack, categories);
 
       const { domainSelections } = useWizardStore.getState();
 
-      expect(domainSelections.web!.framework).toEqual(["web-framework-react"]);
-      expect(domainSelections.web!["client-state"]).toEqual(["web-state-zustand"]);
-      expect(domainSelections.api!.api).toEqual(["api-framework-hono"]);
+      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
+      expect(domainSelections.web!["web-client-state"]).toEqual(["web-state-zustand"]);
+      expect(domainSelections.api!["api-api"]).toEqual(["api-framework-hono"]);
     });
 
     it("should skip entries without a domain", () => {
@@ -622,11 +622,11 @@ describe("WizardStore", () => {
 
       const stack: Parameters<typeof store.populateFromStack>[0] = {
         agents: {
-          misc: { methodology: [sa("meta-methodology-vitest" as SkillId)] },
+          misc: { "shared-methodology": [sa("meta-methodology-vitest" as SkillId)] },
         },
       };
       const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
-        methodology: {},
+        "shared-methodology": {},
       };
 
       store.populateFromStack(stack, categories);
@@ -642,7 +642,7 @@ describe("WizardStore", () => {
       const stack: Parameters<typeof store.populateFromStack>[0] = {
         agents: {
           "pattern-scout": {
-            methodology: [
+            "shared-methodology": [
               sa("meta-methodology-investigation-requirements", true),
               sa("meta-methodology-anti-over-engineering", true),
               sa("meta-methodology-success-criteria", true),
@@ -651,14 +651,14 @@ describe("WizardStore", () => {
         },
       };
       const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
-        methodology: { domain: "shared" },
+        "shared-methodology": { domain: "shared" },
       };
 
       store.populateFromStack(stack, categories);
 
       const { domainSelections } = useWizardStore.getState();
 
-      expect(domainSelections.shared!.methodology).toEqual([
+      expect(domainSelections.shared!["shared-methodology"]).toEqual([
         "meta-methodology-investigation-requirements",
         "meta-methodology-anti-over-engineering",
         "meta-methodology-success-criteria",
@@ -671,31 +671,31 @@ describe("WizardStore", () => {
       const stack: Parameters<typeof store.populateFromStack>[0] = {
         agents: {
           web: {
-            framework: [sa("web-framework-react", true)],
-            methodology: [
+            "web-framework": [sa("web-framework-react", true)],
+            "shared-methodology": [
               sa("meta-methodology-investigation-requirements", true),
               sa("meta-methodology-anti-over-engineering", true),
             ],
           },
-          api: { api: [sa("api-framework-hono", true)] },
+          api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
       const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
-        framework: { domain: "web" },
-        methodology: { domain: "shared" },
-        api: { domain: "api" },
+        "web-framework": { domain: "web" },
+        "shared-methodology": { domain: "shared" },
+        "api-api": { domain: "api" },
       };
 
       store.populateFromStack(stack, categories);
 
       const { domainSelections } = useWizardStore.getState();
 
-      expect(domainSelections.web!.framework).toEqual(["web-framework-react"]);
-      expect(domainSelections.shared!.methodology).toEqual([
+      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
+      expect(domainSelections.shared!["shared-methodology"]).toEqual([
         "meta-methodology-investigation-requirements",
         "meta-methodology-anti-over-engineering",
       ]);
-      expect(domainSelections.api!.api).toEqual(["api-framework-hono"]);
+      expect(domainSelections.api!["api-api"]).toEqual(["api-framework-hono"]);
     });
 
     it("should deduplicate skills from arrays across multiple agents", () => {
@@ -704,13 +704,13 @@ describe("WizardStore", () => {
       const stack: Parameters<typeof store.populateFromStack>[0] = {
         agents: {
           agent1: {
-            methodology: [
+            "shared-methodology": [
               sa("meta-methodology-investigation-requirements", true),
               sa("meta-methodology-anti-over-engineering", true),
             ],
           },
           agent2: {
-            methodology: [
+            "shared-methodology": [
               sa("meta-methodology-anti-over-engineering", true),
               sa("meta-methodology-success-criteria", true),
             ],
@@ -718,7 +718,7 @@ describe("WizardStore", () => {
         },
       };
       const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
-        methodology: { domain: "shared" },
+        "shared-methodology": { domain: "shared" },
       };
 
       store.populateFromStack(stack, categories);
@@ -726,7 +726,7 @@ describe("WizardStore", () => {
       const { domainSelections } = useWizardStore.getState();
 
       // Should deduplicate: anti-over-engineering appears in both agents
-      expect(domainSelections.shared!.methodology).toEqual([
+      expect(domainSelections.shared!["shared-methodology"]).toEqual([
         "meta-methodology-investigation-requirements",
         "meta-methodology-anti-over-engineering",
         "meta-methodology-success-criteria",
@@ -761,18 +761,18 @@ describe("WizardStore", () => {
       store.toggleDomain("api");
       store.setStep("build");
 
-      store.toggleTechnology("web", "framework", "web-framework-react", true);
-      store.toggleTechnology("web", "styling", "web-styling-scss-modules", true);
-      store.toggleTechnology("api", "api", "api-framework-hono", true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", true);
+      store.toggleTechnology("api", "api-api", "api-framework-hono", true);
       store.setStep("confirm");
 
       const state = useWizardStore.getState();
       expect(state.step).toBe("confirm");
       expect(state.approach).toBe("scratch");
       expect(state.selectedDomains).toEqual(["web", "api"]);
-      expect(state.domainSelections.web!.framework).toEqual(["web-framework-react"]);
-      expect(state.domainSelections.web!.styling).toEqual(["web-styling-scss-modules"]);
-      expect(state.domainSelections.api!.api).toEqual(["api-framework-hono"]);
+      expect(state.domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
+      expect(state.domainSelections.web!["web-styling"]).toEqual(["web-styling-scss-modules"]);
+      expect(state.domainSelections.api!["api-api"]).toEqual(["api-framework-hono"]);
     });
 
     it("should preserve selections when going back", () => {
@@ -781,13 +781,13 @@ describe("WizardStore", () => {
       store.setApproach("scratch");
       store.toggleDomain("web");
       store.setStep("build");
-      store.toggleTechnology("web", "framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
 
       store.goBack();
 
       const state = useWizardStore.getState();
       expect(state.selectedDomains).toContain("web");
-      expect(state.domainSelections.web!.framework).toEqual(["web-framework-react"]);
+      expect(state.domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
     });
   });
 
@@ -803,7 +803,7 @@ describe("WizardStore", () => {
     it("should sort local sources before scoped marketplace sources", () => {
       const store = useWizardStore.getState();
 
-      const skill = createMockSkill("web-framework-react" as SkillId, "framework", {
+      const skill = createMockSkill("web-framework-react" as SkillId, "web-framework", {
         displayName: "react" as SkillDisplayName,
         availableSources: [
           makeSource({ name: "Photoroom", type: "private", primary: true }),
@@ -820,7 +820,7 @@ describe("WizardStore", () => {
         },
       );
 
-      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react" as SkillId, true);
 
       const rows = store.buildSourceRows(matrix);
       expect(rows).toHaveLength(1);
@@ -831,7 +831,7 @@ describe("WizardStore", () => {
     it("should sort scoped marketplace before default public marketplace", () => {
       const store = useWizardStore.getState();
 
-      const skill = createMockSkill("web-framework-react" as SkillId, "framework", {
+      const skill = createMockSkill("web-framework-react" as SkillId, "web-framework", {
         displayName: "react" as SkillDisplayName,
         availableSources: [
           makeSource({ name: "Agents Inc", type: "public" }),
@@ -848,7 +848,7 @@ describe("WizardStore", () => {
         },
       );
 
-      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react" as SkillId, true);
 
       const rows = store.buildSourceRows(matrix);
       expect(rows).toHaveLength(1);
@@ -859,7 +859,7 @@ describe("WizardStore", () => {
     it("should sort default public marketplace before third-party sources", () => {
       const store = useWizardStore.getState();
 
-      const skill = createMockSkill("web-framework-react" as SkillId, "framework", {
+      const skill = createMockSkill("web-framework-react" as SkillId, "web-framework", {
         displayName: "react" as SkillDisplayName,
         availableSources: [
           makeSource({ name: "Extra Corp", type: "private" }),
@@ -876,7 +876,7 @@ describe("WizardStore", () => {
         },
       );
 
-      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react" as SkillId, true);
 
       const rows = store.buildSourceRows(matrix);
       expect(rows).toHaveLength(1);
@@ -887,7 +887,7 @@ describe("WizardStore", () => {
     it("should sort all four tiers in correct order", () => {
       const store = useWizardStore.getState();
 
-      const skill = createMockSkill("web-framework-react" as SkillId, "framework", {
+      const skill = createMockSkill("web-framework-react" as SkillId, "web-framework", {
         displayName: "react" as SkillDisplayName,
         availableSources: [
           makeSource({ name: "Extra Corp", type: "private" }),
@@ -906,7 +906,7 @@ describe("WizardStore", () => {
         },
       );
 
-      store.toggleTechnology("web", "framework", "web-framework-react" as SkillId, true);
+      store.toggleTechnology("web", "web-framework", "web-framework-react" as SkillId, true);
 
       const rows = store.buildSourceRows(matrix);
       expect(rows).toHaveLength(1);

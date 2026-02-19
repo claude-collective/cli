@@ -46,7 +46,7 @@ const createCategory = (
 
 const defaultCategories: CategoryRow[] = [
   createCategory(
-    "framework",
+    "web-framework",
     "Framework",
     [
       createOption("web-test-react", "React", {
@@ -60,7 +60,7 @@ const defaultCategories: CategoryRow[] = [
     { required: true },
   ),
   createCategory(
-    "styling",
+    "web-styling",
     "Styling",
     [
       createOption("web-scss-mod", "SCSS Modules", { selected: true }),
@@ -70,7 +70,7 @@ const defaultCategories: CategoryRow[] = [
     ],
     { required: true },
   ),
-  createCategory("client-state", "Client State", [
+  createCategory("web-client-state", "Client State", [
     createOption("web-test-zustand", "Zustand", { state: "recommended" }),
     createOption("web-test-jotai", "Jotai"),
     createOption("web-test-redux", "Redux", {
@@ -79,17 +79,17 @@ const defaultCategories: CategoryRow[] = [
     }),
     createOption("web-test-mobx", "MobX"),
   ]),
-  createCategory("server-state", "Server State", [
+  createCategory("web-server-state", "Server State", [
     createOption("web-react-query", "React Query", { selected: true }),
     createOption("web-test-swr", "SWR"),
     createOption("web-test-apollo", "Apollo"),
   ]),
-  createCategory("analytics", "Analytics", [createOption("web-test-posthog", "PostHog")]),
+  createCategory("api-analytics", "Analytics", [createOption("web-test-posthog", "PostHog")]),
 ];
 
 const categoriesWithFramework: CategoryRow[] = [
   createCategory(
-    "framework",
+    "web-framework",
     "Framework",
     [
       createOption("web-test-react", "React", {
@@ -104,7 +104,7 @@ const categoriesWithFramework: CategoryRow[] = [
     { required: true },
   ),
   createCategory(
-    "styling",
+    "web-styling",
     "Styling",
     [
       createOption("web-scss-mod", "SCSS Modules"),
@@ -114,7 +114,7 @@ const categoriesWithFramework: CategoryRow[] = [
     ],
     { required: true },
   ),
-  createCategory("client-state", "Client State", [
+  createCategory("web-client-state", "Client State", [
     createOption("web-test-zustand", "Zustand", { state: "recommended" }),
     createOption("web-test-jotai", "Jotai"),
     createOption("web-test-redux", "Redux", { state: "discouraged" }),
@@ -251,7 +251,7 @@ describe("CategoryGrid component", () => {
 
     it("should show disabled options with dimmed styling", () => {
       const categories: CategoryRow[] = [
-        createCategory("testing", "Test", [
+        createCategory("web-testing", "Test", [
           createOption("web-test-opt1", "Option 1"),
           createOption("web-test-opt2", "Option 2", { state: "disabled" }),
         ]),
@@ -267,7 +267,7 @@ describe("CategoryGrid component", () => {
 
     it("should render selected skills with label text", () => {
       const categories: CategoryRow[] = [
-        createCategory("forms", "Forms", [
+        createCategory("web-forms", "Forms", [
           createOption("web-test-opt1", "Selected Skill", { selected: true }),
         ]),
       ];
@@ -281,7 +281,7 @@ describe("CategoryGrid component", () => {
 
     it("should render unselected skills with label text", () => {
       const categories: CategoryRow[] = [
-        createCategory("forms", "Forms", [
+        createCategory("web-forms", "Forms", [
           createOption("web-test-opt1", "Unselected Skill", { state: "normal", selected: false }),
         ]),
       ];
@@ -295,7 +295,7 @@ describe("CategoryGrid component", () => {
 
     it("should render disabled skills with label text", () => {
       const categories: CategoryRow[] = [
-        createCategory("forms", "Forms", [
+        createCategory("web-forms", "Forms", [
           createOption("web-test-opt1", "Disabled Skill", { state: "disabled" }),
         ]),
       ];
@@ -309,7 +309,7 @@ describe("CategoryGrid component", () => {
 
     it("should render discouraged skills with label text", () => {
       const categories: CategoryRow[] = [
-        createCategory("forms", "Forms", [
+        createCategory("web-forms", "Forms", [
           createOption("web-test-opt1", "Discouraged Skill", { state: "discouraged" }),
         ]),
       ];
@@ -323,7 +323,7 @@ describe("CategoryGrid component", () => {
 
     it("should render both selected and unselected skills with labels", () => {
       const categories: CategoryRow[] = [
-        createCategory("forms", "Forms", [
+        createCategory("web-forms", "Forms", [
           createOption("web-test-opt1", "Active", { selected: true }),
           createOption("web-test-opt2", "Inactive", { selected: false }),
         ]),
@@ -339,7 +339,7 @@ describe("CategoryGrid component", () => {
 
     it("should render skill label regardless of selection state", () => {
       const categories1: CategoryRow[] = [
-        createCategory("forms", "Forms", [
+        createCategory("web-forms", "Forms", [
           createOption("web-test-opt1", "Toggle Skill", { selected: false }),
         ]),
       ];
@@ -350,7 +350,7 @@ describe("CategoryGrid component", () => {
 
       // Second render: same option selected
       const categories2: CategoryRow[] = [
-        createCategory("forms", "Forms", [
+        createCategory("web-forms", "Forms", [
           createOption("web-test-opt1", "Toggle Skill", { selected: true }),
         ]),
       ];
@@ -392,11 +392,11 @@ describe("CategoryGrid component", () => {
 
     it("should not lock any sections when no framework category exists", () => {
       const categoriesNoFramework: CategoryRow[] = [
-        createCategory("styling", "Styling", [
+        createCategory("web-styling", "Styling", [
           createOption("web-test-scss", "SCSS"),
           createOption("web-test-tailwind", "Tailwind"),
         ]),
-        createCategory("client-state", "State", [createOption("web-test-zustand", "Zustand")]),
+        createCategory("web-client-state", "State", [createOption("web-test-zustand", "Zustand")]),
       ];
 
       const { lastFrame, unmount } = renderGrid({
@@ -663,7 +663,7 @@ describe("CategoryGrid component", () => {
       await stdin.write(" "); // Space
       await delay(INPUT_DELAY_MS);
 
-      expect(onToggle).toHaveBeenCalledWith("framework", "web-test-vue");
+      expect(onToggle).toHaveBeenCalledWith("web-framework", "web-test-vue");
     });
 
     it("should call onToggle when pressing space on a selected option", async () => {
@@ -671,7 +671,7 @@ describe("CategoryGrid component", () => {
       // Use expertMode to preserve original option order
       const categories: CategoryRow[] = [
         createCategory(
-          "framework",
+          "web-framework",
           "Framework",
           [
             createOption("web-test-react", "React", { selected: true }),
@@ -693,13 +693,13 @@ describe("CategoryGrid component", () => {
       await stdin.write(" ");
       await delay(INPUT_DELAY_MS);
 
-      expect(onToggle).toHaveBeenCalledWith("framework", "web-test-react");
+      expect(onToggle).toHaveBeenCalledWith("web-framework", "web-test-react");
     });
 
     it("should NOT call onToggle when all options in a category are disabled", async () => {
       const onToggle = vi.fn();
       const categories: CategoryRow[] = [
-        createCategory("testing", "Test", [
+        createCategory("web-testing", "Test", [
           createOption("web-test-opt1", "Option 1", { state: "disabled" }),
           createOption("web-test-opt2", "Option 2", { state: "disabled" }),
         ]),
@@ -742,7 +742,7 @@ describe("CategoryGrid component", () => {
     it("should navigate to disabled options when navigating right", async () => {
       const onFocusChange = vi.fn();
       const categories: CategoryRow[] = [
-        createCategory("testing", "Test", [
+        createCategory("web-testing", "Test", [
           createOption("web-test-opt1", "Option 1"),
           createOption("web-test-opt2", "Option 2", { state: "disabled" }),
           createOption("web-test-opt3", "Option 3"),
@@ -770,7 +770,7 @@ describe("CategoryGrid component", () => {
     it("should navigate to disabled options when navigating left", async () => {
       const onFocusChange = vi.fn();
       const categories: CategoryRow[] = [
-        createCategory("testing", "Test", [
+        createCategory("web-testing", "Test", [
           createOption("web-test-opt1", "Option 1"),
           createOption("web-test-opt2", "Option 2", { state: "disabled" }),
           createOption("web-test-opt3", "Option 3"),
@@ -798,7 +798,7 @@ describe("CategoryGrid component", () => {
     it("should navigate between all-disabled options in a row", async () => {
       const onFocusChange = vi.fn();
       const categories: CategoryRow[] = [
-        createCategory("testing", "Test", [
+        createCategory("web-testing", "Test", [
           createOption("web-test-opt1", "Option 1", { state: "disabled" }),
           createOption("web-test-opt2", "Option 2", { state: "disabled" }),
         ]),
@@ -936,7 +936,7 @@ describe("CategoryGrid component", () => {
 
     it("should show Disabled label for disabled options when showLabels is true", () => {
       const categories: CategoryRow[] = [
-        createCategory("testing", "Test", [
+        createCategory("web-testing", "Test", [
           createOption("web-test-opt1", "Option 1"),
           createOption("web-test-opt2", "Option 2", { state: "disabled" }),
         ]),
@@ -985,7 +985,7 @@ describe("CategoryGrid component", () => {
   describe("edge cases", () => {
     it("should handle single category", () => {
       const categories: CategoryRow[] = [
-        createCategory("forms", "Single Category", [createOption("web-test-opt1", "Option 1")]),
+        createCategory("web-forms", "Single Category", [createOption("web-test-opt1", "Option 1")]),
       ];
 
       const { lastFrame, unmount } = renderGrid({ categories });
@@ -998,7 +998,7 @@ describe("CategoryGrid component", () => {
 
     it("should handle single option in category", () => {
       const categories: CategoryRow[] = [
-        createCategory("forms", "Single", [createOption("web-test-only", "Only Option")]),
+        createCategory("web-forms", "Single", [createOption("web-test-only", "Only Option")]),
       ];
 
       const { lastFrame, unmount } = renderGrid({ categories });
@@ -1012,7 +1012,7 @@ describe("CategoryGrid component", () => {
       const options = Array.from({ length: 10 }, (_, i) =>
         createOption(`web-test-opt${i}`, `Option ${i}`),
       );
-      const categories: CategoryRow[] = [createCategory("mocking", "Many Options", options)];
+      const categories: CategoryRow[] = [createCategory("web-mocking", "Many Options", options)];
 
       const { lastFrame, unmount } = renderGrid({ categories });
       cleanup = unmount;
@@ -1026,7 +1026,7 @@ describe("CategoryGrid component", () => {
 
     it("should handle long option labels", () => {
       const categories: CategoryRow[] = [
-        createCategory("i18n", "Long Labels", [
+        createCategory("web-i18n", "Long Labels", [
           createOption("web-test-long1", "Very Long Option Name"),
           createOption("web-test-long2", "Another Long Name"),
         ]),
@@ -1042,12 +1042,12 @@ describe("CategoryGrid component", () => {
 
     it("should handle categories with different option counts", () => {
       const categories: CategoryRow[] = [
-        createCategory("framework", "Category 1", [
+        createCategory("web-framework", "Category 1", [
           createOption("web-test-opt1", "Option 1"),
           createOption("web-test-opt2", "Option 2"),
         ]),
-        createCategory("styling", "Category 2", [createOption("web-test-opt3", "Option 3")]),
-        createCategory("client-state", "Category 3", [
+        createCategory("web-styling", "Category 2", [createOption("web-test-opt3", "Option 3")]),
+        createCategory("web-client-state", "Category 3", [
           createOption("web-test-opt4", "Option 4"),
           createOption("web-test-opt5", "Option 5"),
           createOption("web-test-opt6", "Option 6"),
@@ -1069,7 +1069,7 @@ describe("CategoryGrid component", () => {
       const onFocusChange = vi.fn();
       const categories: CategoryRow[] = [
         createCategory(
-          "framework",
+          "web-framework",
           "Framework",
           [
             createOption("web-test-opt1", "Option 1", { selected: true }), // Framework selected
@@ -1078,7 +1078,7 @@ describe("CategoryGrid component", () => {
           ],
           { required: true },
         ),
-        createCategory("styling", "Category 2", [createOption("web-test-opt4", "Option 4")]),
+        createCategory("web-styling", "Category 2", [createOption("web-test-opt4", "Option 4")]),
       ];
 
       const { stdin, unmount } = renderGrid({
@@ -1101,7 +1101,7 @@ describe("CategoryGrid component", () => {
   describe("installed skills", () => {
     it("should render installed skill with label only (no checkmark icon)", () => {
       const categories: CategoryRow[] = [
-        createCategory("forms", "Forms", [
+        createCategory("web-forms", "Forms", [
           createOption("web-test-opt1", "Option 1", { installed: true }),
         ]),
       ];
@@ -1116,7 +1116,7 @@ describe("CategoryGrid component", () => {
 
     it("should render installed and selected skill with label only", () => {
       const categories: CategoryRow[] = [
-        createCategory("forms", "Forms", [
+        createCategory("web-forms", "Forms", [
           createOption("web-test-opt1", "Option 1", { installed: true, selected: true }),
         ]),
       ];
@@ -1131,7 +1131,7 @@ describe("CategoryGrid component", () => {
 
     it("should render local installed skill without L badge or checkmark", () => {
       const categories: CategoryRow[] = [
-        createCategory("forms", "Forms", [
+        createCategory("web-forms", "Forms", [
           createOption("web-test-opt1", "Option 1", { local: true, installed: true }),
         ]),
       ];

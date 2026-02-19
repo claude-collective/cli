@@ -323,7 +323,7 @@ export function createMockExtractedSkill(
     id,
     directoryPath,
     description: `${id} skill`,
-    category: `${subcategory}` as CategoryPath,
+    category: `${domain}-${subcategory}` as CategoryPath,
     categoryExclusive: true,
     author: "@test",
     tags: [],
@@ -581,50 +581,48 @@ export function createMockResolvedStack(
 export function createComprehensiveMatrix(
   overrides?: Partial<MergedSkillsMatrix>,
 ): MergedSkillsMatrix {
-  // Skill categories use bare Subcategory IDs (matching production metadata.yaml
-  // and the categories map keys). The test fixture factories default to "web/framework"
-  // CategoryPath format, but the wizard's populateFromStack needs bare IDs to match
-  // the categories map lookup (e.g., "framework" not "web/framework").
+  // Skill categories use domain-prefixed Subcategory IDs (matching production
+  // metadata.yaml and the categories map keys, e.g., "web-framework", "api-api").
   const skills = {
-    "web-framework-react": getTestSkill("react", { category: "framework" }),
+    "web-framework-react": getTestSkill("react", { category: "web-framework" }),
     "web-framework-vue": getTestSkill("vue", {
-      category: "framework",
+      category: "web-framework",
       conflictsWith: [{ skillId: "web-framework-react", reason: "Choose one framework" }],
     }),
     "web-state-zustand": getTestSkill("zustand", {
-      category: "client-state",
+      category: "web-client-state",
       recommends: [{ skillId: "web-framework-react", reason: "Works great with React" }],
     }),
-    "web-styling-scss-modules": getTestSkill("scss-modules", { category: "styling" }),
-    "api-framework-hono": getTestSkill("hono", { category: "api" }),
-    "api-database-drizzle": getTestSkill("drizzle", { category: "database" }),
-    "web-testing-vitest": getTestSkill("vitest", { category: "testing" }),
+    "web-styling-scss-modules": getTestSkill("scss-modules", { category: "web-styling" }),
+    "api-framework-hono": getTestSkill("hono", { category: "api-api" }),
+    "api-database-drizzle": getTestSkill("drizzle", { category: "api-database" }),
+    "web-testing-vitest": getTestSkill("vitest", { category: "web-testing" }),
   };
 
   const categories = {
-    framework: createMockCategory("framework" as Subcategory, "Framework", {
+    "web-framework": createMockCategory("web-framework" as Subcategory, "Framework", {
       domain: "web" as Domain,
       exclusive: true,
       required: true,
     }),
-    "client-state": createMockCategory("client-state" as Subcategory, "State", {
+    "web-client-state": createMockCategory("web-client-state" as Subcategory, "State", {
       domain: "web" as Domain,
       order: 1,
     }),
-    styling: createMockCategory("styling" as Subcategory, "Styling", {
+    "web-styling": createMockCategory("web-styling" as Subcategory, "Styling", {
       domain: "web" as Domain,
       order: 2,
     }),
-    api: createMockCategory("api" as Subcategory, "Backend Framework", {
+    "api-api": createMockCategory("api-api" as Subcategory, "Backend Framework", {
       domain: "api" as Domain,
       exclusive: true,
       required: true,
     }),
-    database: createMockCategory("database" as Subcategory, "Database", {
+    "api-database": createMockCategory("api-database" as Subcategory, "Database", {
       domain: "api" as Domain,
       order: 1,
     }),
-    testing: createMockCategory("testing" as Subcategory, "Testing", {
+    "web-testing": createMockCategory("web-testing" as Subcategory, "Testing", {
       domain: "shared" as Domain,
       exclusive: false,
       order: 10,
@@ -637,13 +635,13 @@ export function createComprehensiveMatrix(
       audience: ["startups", "enterprise"],
       skills: {
         "web-developer": {
-          framework: "web-framework-react",
-          "client-state": "web-state-zustand",
-          styling: "web-styling-scss-modules",
+          "web-framework": "web-framework-react",
+          "web-client-state": "web-state-zustand",
+          "web-styling": "web-styling-scss-modules",
         },
         "api-developer": {
-          api: "api-framework-hono",
-          database: "api-database-drizzle",
+          "api-api": "api-framework-hono",
+          "api-database": "api-database-drizzle",
         },
       } as ResolvedStack["skills"],
       allSkillIds: [
@@ -660,7 +658,7 @@ export function createComprehensiveMatrix(
       audience: ["startups"],
       skills: {
         "web-developer": {
-          framework: "web-framework-vue",
+          "web-framework": "web-framework-vue",
         },
       } as ResolvedStack["skills"],
       allSkillIds: ["web-framework-vue"],
@@ -700,12 +698,12 @@ export function createComprehensiveMatrix(
  * @returns A minimal MergedSkillsMatrix for basic integration tests
  */
 export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): MergedSkillsMatrix {
-  // Bare Subcategory IDs — see createComprehensiveMatrix comment
+  // Domain-prefixed Subcategory IDs — see createComprehensiveMatrix comment
   const skills = {
-    "web-framework-react": getTestSkill("react", { category: "framework" }),
-    "web-state-zustand": getTestSkill("zustand", { category: "client-state" }),
-    "api-framework-hono": getTestSkill("hono", { category: "api" }),
-    "web-testing-vitest": getTestSkill("vitest", { category: "testing" }),
+    "web-framework-react": getTestSkill("react", { category: "web-framework" }),
+    "web-state-zustand": getTestSkill("zustand", { category: "web-client-state" }),
+    "api-framework-hono": getTestSkill("hono", { category: "api-api" }),
+    "web-testing-vitest": getTestSkill("vitest", { category: "web-testing" }),
   };
 
   const suggestedStacks: ResolvedStack[] = [
@@ -720,21 +718,21 @@ export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): Merg
   return createMockMatrix(skills, {
     suggestedStacks,
     categories: {
-      framework: createMockCategory("framework" as Subcategory, "Framework", {
+      "web-framework": createMockCategory("web-framework" as Subcategory, "Framework", {
         domain: "web" as Domain,
         exclusive: true,
         required: true,
       }),
-      "client-state": createMockCategory("client-state" as Subcategory, "State", {
+      "web-client-state": createMockCategory("web-client-state" as Subcategory, "State", {
         domain: "web" as Domain,
         order: 1,
       }),
-      api: createMockCategory("api" as Subcategory, "Backend Framework", {
+      "api-api": createMockCategory("api-api" as Subcategory, "Backend Framework", {
         domain: "api" as Domain,
         exclusive: true,
         required: true,
       }),
-      testing: createMockCategory("testing" as Subcategory, "Testing Framework", {
+      "web-testing": createMockCategory("web-testing" as Subcategory, "Testing Framework", {
         domain: "shared" as Domain,
         exclusive: false,
       }),

@@ -211,8 +211,8 @@ describe("config-merger", () => {
           skills: [],
           stack: {
             "web-developer": {
-              framework: sa("web-framework-react-existing"),
-              styling: sa("web-styling-scss-existing"),
+              "web-framework": sa("web-framework-react-existing"),
+              "web-styling": sa("web-styling-scss-existing"),
             },
           },
         });
@@ -223,8 +223,8 @@ describe("config-merger", () => {
           skills: [],
           stack: {
             "web-developer": {
-              framework: sa("web-framework-react-new"),
-              "client-state": sa("web-state-zustand-new"),
+              "web-framework": sa("web-framework-react-new"),
+              "web-client-state": sa("web-state-zustand-new"),
             },
           },
         };
@@ -238,9 +238,9 @@ describe("config-merger", () => {
         // New values added where not existing (client-state added)
         expect(result.config.stack).toEqual({
           "web-developer": {
-            framework: sa("web-framework-react-existing"),
-            styling: sa("web-styling-scss-existing"),
-            "client-state": sa("web-state-zustand-new"),
+            "web-framework": sa("web-framework-react-existing"),
+            "web-styling": sa("web-styling-scss-existing"),
+            "web-client-state": sa("web-state-zustand-new"),
           },
         });
       });
@@ -252,7 +252,7 @@ describe("config-merger", () => {
           skills: [],
           stack: {
             "web-developer": {
-              framework: sa("web-framework-react"),
+              "web-framework": sa("web-framework-react"),
             },
           },
         });
@@ -263,10 +263,10 @@ describe("config-merger", () => {
           skills: [],
           stack: {
             "web-developer": {
-              framework: sa("web-framework-vue"),
+              "web-framework": sa("web-framework-vue"),
             },
             "api-developer": {
-              api: sa("api-framework-hono"),
+              "api-api": sa("api-framework-hono"),
             },
           },
         };
@@ -278,10 +278,10 @@ describe("config-merger", () => {
         expect(result.merged).toBe(true);
         expect(result.config.stack).toEqual({
           "web-developer": {
-            framework: sa("web-framework-react"), // existing takes precedence
+            "web-framework": sa("web-framework-react"), // existing takes precedence
           },
           "api-developer": {
-            api: sa("api-framework-hono"), // new agent added
+            "api-api": sa("api-framework-hono"), // new agent added
           },
         });
       });
@@ -299,7 +299,7 @@ describe("config-merger", () => {
           skills: [],
           stack: {
             "web-developer": {
-              framework: sa("web-framework-react"),
+              "web-framework": sa("web-framework-react"),
             },
           },
         };
@@ -311,7 +311,7 @@ describe("config-merger", () => {
         expect(result.merged).toBe(true);
         expect(result.config.stack).toEqual({
           "web-developer": {
-            framework: sa("web-framework-react"),
+            "web-framework": sa("web-framework-react"),
           },
         });
       });

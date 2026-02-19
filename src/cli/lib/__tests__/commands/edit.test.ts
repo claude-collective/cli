@@ -118,17 +118,17 @@ describe("edit command", () => {
 
 describe("edit wizard pre-selection via populateFromSkillIds", () => {
   const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
-    framework: { domain: "web" },
-    "client-state": { domain: "web" },
-    api: { domain: "api" },
-    testing: { domain: "shared" },
+    "web-framework": { domain: "web" },
+    "web-client-state": { domain: "web" },
+    "api-api": { domain: "api" },
+    "web-testing": { domain: "shared" },
   };
 
   const skills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
-    "web-framework-react": { category: "framework", displayName: "react" },
-    "web-state-zustand": { category: "client-state", displayName: "zustand" },
-    "api-framework-hono": { category: "api", displayName: "hono" },
-    "web-testing-vitest": { category: "testing", displayName: "vitest" },
+    "web-framework-react": { category: "web-framework", displayName: "react" },
+    "web-state-zustand": { category: "web-client-state", displayName: "zustand" },
+    "api-framework-hono": { category: "api-api", displayName: "hono" },
+    "web-testing-vitest": { category: "web-testing", displayName: "vitest" },
   } as Partial<Record<SkillId, { category: string; displayName?: string }>>;
 
   beforeEach(() => {
@@ -147,11 +147,11 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const { domainSelections } = useWizardStore.getState();
 
     // Web skills should appear under the web domain
-    expect(domainSelections.web?.framework).toEqual(["react"]);
-    expect(domainSelections.web?.["client-state"]).toEqual(["zustand"]);
+    expect(domainSelections.web?.["web-framework"]).toEqual(["react"]);
+    expect(domainSelections.web?.["web-client-state"]).toEqual(["zustand"]);
 
     // API skill should appear under the api domain
-    expect(domainSelections.api?.api).toEqual(["hono"]);
+    expect(domainSelections.api?.["api-api"]).toEqual(["hono"]);
   });
 
   it("should not pre-select skills that are not in the installed list", () => {
@@ -162,10 +162,10 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const { domainSelections } = useWizardStore.getState();
 
     // Only web/framework should be populated
-    expect(domainSelections.web?.framework).toEqual(["react"]);
+    expect(domainSelections.web?.["web-framework"]).toEqual(["react"]);
 
     // Other subcategories should not exist
-    expect(domainSelections.web?.["client-state"]).toBeUndefined();
+    expect(domainSelections.web?.["web-client-state"]).toBeUndefined();
     expect(domainSelections.api).toBeUndefined();
   });
 
@@ -190,7 +190,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const { domainSelections } = useWizardStore.getState();
 
     // Testing category maps to the shared domain
-    expect(domainSelections.shared?.testing).toEqual(["vitest"]);
+    expect(domainSelections.shared?.["web-testing"]).toEqual(["vitest"]);
 
     // No web or api entries should exist
     expect(domainSelections.web).toBeUndefined();
@@ -210,8 +210,8 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
   it("should skip skills missing from the marketplace (no displayName)", () => {
     // Skill exists in lookup but has no displayName, so resolveSkillForPopulation returns null
     const sparseSkills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
-      "web-framework-react": { category: "framework", displayName: "react" },
-      "web-framework-unknown": { category: "framework" },
+      "web-framework-react": { category: "web-framework", displayName: "react" },
+      "web-framework-unknown": { category: "web-framework" },
     } as Partial<Record<SkillId, { category: string; displayName?: string }>>;
 
     const installedSkills: SkillId[] = ["web-framework-react", "web-framework-unknown"];
@@ -221,13 +221,13 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const { domainSelections } = useWizardStore.getState();
 
     // Only the skill with a displayName should be populated
-    expect(domainSelections.web?.framework).toEqual(["react"]);
-    expect(domainSelections.web?.framework).toHaveLength(1);
+    expect(domainSelections.web?.["web-framework"]).toEqual(["react"]);
+    expect(domainSelections.web?.["web-framework"]).toHaveLength(1);
   });
 
   it("should skip skills whose category has no domain mapping", () => {
     const extraSkills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
-      "web-framework-react": { category: "framework", displayName: "react" },
+      "web-framework-react": { category: "web-framework", displayName: "react" },
       "infra-tooling-linter": { category: "unmapped-category", displayName: "linter" },
     };
 
@@ -238,7 +238,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const { domainSelections } = useWizardStore.getState();
 
     // Only the resolvable skill should be populated
-    expect(domainSelections.web?.framework).toEqual(["react"]);
+    expect(domainSelections.web?.["web-framework"]).toEqual(["react"]);
     // No domain should contain the unresolvable skill
     const allTechs = useWizardStore.getState().getAllSelectedTechnologies();
     expect(allTechs).not.toContain("linter");
@@ -252,15 +252,15 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     const { domainSelections } = useWizardStore.getState();
 
     // Should deduplicate
-    expect(domainSelections.web?.framework).toEqual(["react"]);
-    expect(domainSelections.web?.framework).toHaveLength(1);
+    expect(domainSelections.web?.["web-framework"]).toEqual(["react"]);
+    expect(domainSelections.web?.["web-framework"]).toHaveLength(1);
   });
 
   it("should populate multiple skills within the same subcategory (non-exclusive)", () => {
     // testing category is non-exclusive, so multiple selections are valid
     const multiSkills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
       ...skills,
-      "web-testing-playwright": { category: "testing", displayName: "playwright" },
+      "web-testing-playwright": { category: "web-testing", displayName: "playwright" },
     } as Partial<Record<SkillId, { category: string; displayName?: string }>>;
 
     const installedSkills: SkillId[] = ["web-testing-vitest", "web-testing-playwright"];
@@ -269,9 +269,9 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
 
     const { domainSelections } = useWizardStore.getState();
 
-    expect(domainSelections.shared?.testing).toContain("vitest");
-    expect(domainSelections.shared?.testing).toContain("playwright");
-    expect(domainSelections.shared?.testing).toHaveLength(2);
+    expect(domainSelections.shared?.["web-testing"]).toContain("vitest");
+    expect(domainSelections.shared?.["web-testing"]).toContain("playwright");
+    expect(domainSelections.shared?.["web-testing"]).toHaveLength(2);
   });
 });
 
@@ -282,17 +282,17 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
 
 describe("edit wizard domain filtering", () => {
   const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
-    framework: { domain: "web" },
-    "client-state": { domain: "web" },
-    api: { domain: "api" },
-    testing: { domain: "shared" },
+    "web-framework": { domain: "web" },
+    "web-client-state": { domain: "web" },
+    "api-api": { domain: "api" },
+    "web-testing": { domain: "shared" },
   };
 
   const skills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
-    "web-framework-react": { category: "framework", displayName: "react" },
-    "web-state-zustand": { category: "client-state", displayName: "zustand" },
-    "api-framework-hono": { category: "api", displayName: "hono" },
-    "web-testing-vitest": { category: "testing", displayName: "vitest" },
+    "web-framework-react": { category: "web-framework", displayName: "react" },
+    "web-state-zustand": { category: "web-client-state", displayName: "zustand" },
+    "api-framework-hono": { category: "api-api", displayName: "hono" },
+    "web-testing-vitest": { category: "web-testing", displayName: "vitest" },
   } as Partial<Record<SkillId, { category: string; displayName?: string }>>;
 
   beforeEach(() => {

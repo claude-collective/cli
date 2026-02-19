@@ -11,7 +11,7 @@ import type { SkillId, Subcategory } from "../../types";
 
 describe("validateBuildStep", () => {
   const requiredCategory: CategoryRow = {
-    id: "framework",
+    id: "web-framework",
     displayName: "Framework",
     required: true,
     exclusive: true,
@@ -19,7 +19,7 @@ describe("validateBuildStep", () => {
   };
 
   const optionalCategory: CategoryRow = {
-    id: "tooling",
+    id: "shared-tooling",
     displayName: "Tooling",
     required: false,
     exclusive: false,
@@ -39,14 +39,14 @@ describe("validateBuildStep", () => {
 
   it("should return valid when required category has selections", () => {
     const result = validateBuildStep([requiredCategory], {
-      framework: ["web-framework-react"],
+      "web-framework": ["web-framework-react"],
     });
     expect(result).toEqual({ valid: true });
   });
 
   it("should return invalid for first missing required category", () => {
     const anotherRequired: CategoryRow = {
-      id: "client-state",
+      id: "web-client-state",
       displayName: "State Management",
       required: true,
       exclusive: true,
@@ -124,8 +124,8 @@ describe("getSkillDisplayLabel", () => {
 });
 
 describe("buildCategoriesForDomain", () => {
-  const frameworkCategory: Subcategory = "framework";
-  const stateCategory: Subcategory = "client-state";
+  const frameworkCategory: Subcategory = "web-framework";
+  const stateCategory: Subcategory = "web-client-state";
 
   function createMatrix() {
     const reactSkill = createMockSkill("web-framework-react", frameworkCategory, {
@@ -215,7 +215,7 @@ describe("buildCategoriesForDomain", () => {
     const matrix = createMatrix();
 
     // With React selected as framework, only Zustand (compatible with React) should show
-    const selections = { framework: ["web-framework-react" as SkillId] };
+    const selections = { "web-framework": ["web-framework-react" as SkillId] };
     const result = buildCategoriesForDomain("web", [], matrix, false, selections);
 
     const stateRow = result.find((r) => r.id === stateCategory);

@@ -42,72 +42,72 @@ const buildTestMatrix = (categories: CategoryDefinition[], skills: ResolvedSkill
   );
 };
 
-const frameworkCategory = createMockCategory("framework", "Framework", {
+const frameworkCategory = createMockCategory("web-framework", "Framework", {
   domain: "web",
   required: true,
   order: 0,
 });
 
-const stylingCategory = createMockCategory("styling", "Styling", {
+const stylingCategory = createMockCategory("web-styling", "Styling", {
   domain: "web",
   required: true,
   order: 1,
 });
 
-const stateCategory = createMockCategory("client-state", "Client State", {
+const stateCategory = createMockCategory("web-client-state", "Client State", {
   domain: "web",
   required: false,
   order: 2,
 });
 
-const apiFrameworkCategory = createMockCategory("api", "API Framework", {
+const apiFrameworkCategory = createMockCategory("api-api", "API Framework", {
   domain: "api",
   required: true,
   order: 0,
 });
 
-const databaseCategory = createMockCategory("database", "Database", {
+const databaseCategory = createMockCategory("api-database", "Database", {
   domain: "api",
   required: false,
   order: 1,
 });
 
-const reactSkill = createMockSkill("web-framework-react", "framework", {
+const reactSkill = createMockSkill("web-framework-react", "web-framework", {
   ...SKILL_DEFAULTS,
   displayName: "react",
 });
 
-const vueSkill = createMockSkill("web-framework-vue", "framework", {
+const vueSkill = createMockSkill("web-framework-vue", "web-framework", {
   ...SKILL_DEFAULTS,
   displayName: "vue",
 });
 
-const tailwindSkill = createMockSkill("web-styling-tailwind", "styling", {
+const tailwindSkill = createMockSkill("web-styling-tailwind", "web-styling", {
   ...SKILL_DEFAULTS,
   displayName: "tailwind",
 });
 
-const scssSkill = createMockSkill("web-styling-scss-modules", "styling", {
+const scssSkill = createMockSkill("web-styling-scss-modules", "web-styling", {
   ...SKILL_DEFAULTS,
   displayName: "scss-modules",
 });
 
-const zustandSkill = createMockSkill("web-state-zustand", "client-state", {
+const zustandSkill = createMockSkill("web-state-zustand", "web-client-state", {
   ...SKILL_DEFAULTS,
   displayName: "zustand",
 });
 
-const honoSkill = createMockSkill("api-framework-hono", "api", {
+const honoSkill = createMockSkill("api-framework-hono", "api-api", {
   ...SKILL_DEFAULTS,
   displayName: "hono",
 });
 
-const expressSkill = createMockSkill("api-framework-express", "api", {
+const expressSkill = createMockSkill("api-framework-express", "api-api", {
   ...SKILL_DEFAULTS,
   displayName: "express",
 });
 
-const postgresSkill = createMockSkill("api-database-postgres", "database", {
+const postgresSkill = createMockSkill("api-database-postgres", "api-database", {
   ...SKILL_DEFAULTS,
 });
 
@@ -156,7 +156,7 @@ describe("StepBuild component", () => {
       // For web domain with framework-first flow, initially only shows Framework
       // To see other categories, need a framework selection
       const { lastFrame, unmount } = renderStepBuild({
-        selections: { framework: ["web-framework-react"] }, // Framework selected to show other categories
+        selections: { "web-framework": ["web-framework-react"] }, // Framework selected to show other categories
       });
       cleanup = unmount;
 
@@ -188,7 +188,7 @@ describe("StepBuild component", () => {
     it("should render skills as options", () => {
       // Need framework selected to see other categories in web domain
       const { lastFrame, unmount } = renderStepBuild({
-        selections: { framework: ["web-framework-react"] },
+        selections: { "web-framework": ["web-framework-react"] },
       });
       cleanup = unmount;
 
@@ -212,7 +212,7 @@ describe("StepBuild component", () => {
 
     it("should render categories for the domain", () => {
       const { lastFrame, unmount } = renderStepBuild({
-        selections: { framework: ["web-framework-react"] },
+        selections: { "web-framework": ["web-framework-react"] },
       });
       cleanup = unmount;
 
@@ -272,7 +272,7 @@ describe("StepBuild component", () => {
       // Web domain with framework selected (to bypass framework-first filter)
       const { lastFrame: webFrame, unmount: webUnmount } = renderStepBuild({
         domain: "web",
-        selections: { framework: ["web-framework-react"] },
+        selections: { "web-framework": ["web-framework-react"] },
       });
       const webOutput = webFrame();
       webUnmount();
@@ -299,7 +299,7 @@ describe("StepBuild component", () => {
     it("should sort categories by order", () => {
       // Need framework selected to see all categories
       const { lastFrame, unmount } = renderStepBuild({
-        selections: { framework: ["web-framework-react"] },
+        selections: { "web-framework": ["web-framework-react"] },
       });
       cleanup = unmount;
 
@@ -319,7 +319,7 @@ describe("StepBuild component", () => {
     it("should show selected options correctly", () => {
       const { lastFrame, unmount } = renderStepBuild({
         allSelections: ["web-framework-react"],
-        selections: { framework: ["web-framework-react"] },
+        selections: { "web-framework": ["web-framework-react"] },
       });
       cleanup = unmount;
 
@@ -361,8 +361,8 @@ describe("StepBuild component", () => {
       const { stdin, unmount } = renderStepBuild({
         onContinue,
         selections: {
-          framework: ["web-framework-react"],
-          styling: ["web-styling-tailwind"],
+          "web-framework": ["web-framework-react"],
+          "web-styling": ["web-styling-tailwind"],
         },
       });
       cleanup = unmount;
@@ -463,7 +463,7 @@ describe("StepBuild component", () => {
       const { lastFrame, unmount } = renderStepBuild({
         domain: "web",
         allSelections: ["api-framework-hono", "api-database-drizzle"], // API skills (aliases)
-        selections: { framework: ["web-framework-react"] }, // Need framework to see other categories
+        selections: { "web-framework": ["web-framework-react"] }, // Need framework to see other categories
       });
       cleanup = unmount;
 
@@ -581,14 +581,14 @@ describe("StepBuild component", () => {
     it("should return valid when required categories have selections", () => {
       const categories: GridCategoryRow[] = [
         {
-          id: "framework",
+          id: "web-framework",
           displayName: "Framework",
           required: true,
           exclusive: true,
           options: [{ id: "web-framework-react", label: "React", state: "normal", selected: true }],
         },
       ];
-      const selections: SubcategorySelections = { framework: ["web-framework-react"] };
+      const selections: SubcategorySelections = { "web-framework": ["web-framework-react"] };
 
       const result = validateBuildStep(categories, selections);
       expect(result.valid).toBe(true);
@@ -598,7 +598,7 @@ describe("StepBuild component", () => {
     it("should return invalid when required category has no selection", () => {
       const categories: GridCategoryRow[] = [
         {
-          id: "framework",
+          id: "web-framework",
           displayName: "Framework",
           required: true,
           exclusive: true,
@@ -617,7 +617,7 @@ describe("StepBuild component", () => {
     it("should return valid when optional categories have no selections", () => {
       const categories: GridCategoryRow[] = [
         {
-          id: "client-state",
+          id: "web-client-state",
           displayName: "State Management",
           required: false,
           exclusive: true,
@@ -640,14 +640,14 @@ describe("StepBuild component", () => {
     it("should return invalid for first missing required category", () => {
       const categories: GridCategoryRow[] = [
         {
-          id: "framework",
+          id: "web-framework",
           displayName: "Framework",
           required: true,
           exclusive: true,
           options: [],
         },
         {
-          id: "styling",
+          id: "web-styling",
           displayName: "Styling",
           required: true,
           exclusive: true,
@@ -688,8 +688,8 @@ describe("StepBuild component", () => {
       const { stdin, unmount } = renderStepBuild({
         onContinue,
         selections: {
-          framework: ["web-framework-react"],
-          styling: ["web-styling-tailwind"],
+          "web-framework": ["web-framework-react"],
+          "web-styling": ["web-styling-tailwind"],
         },
       });
       cleanup = unmount;

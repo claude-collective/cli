@@ -22,13 +22,13 @@ import {
 
 const createMockStackWithSkills = (): MergedSkillsMatrix => {
   const skills = {
-    ["web-framework-react"]: createMockSkill("web-framework-react", "framework", {
+    ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework", {
       description: "React framework",
     }),
-    ["web-state-zustand"]: createMockSkill("web-state-zustand", "client-state", {
+    ["web-state-zustand"]: createMockSkill("web-state-zustand", "web-client-state", {
       description: "State management",
     }),
-    ["api-framework-hono"]: createMockSkill("api-framework-hono", "api", {
+    ["api-framework-hono"]: createMockSkill("api-framework-hono", "api-api", {
       description: "Web framework",
     }),
   };
@@ -47,11 +47,11 @@ const createMockStackWithSkills = (): MergedSkillsMatrix => {
   return createMockMatrix(skills, {
     suggestedStacks,
     categories: {
-      framework: createMockCategory("framework", "Web", {
+      "web-framework": createMockCategory("web-framework", "Web", {
         description: "Web skills",
         exclusive: false,
       }),
-      api: createMockCategory("api", "API", {
+      "api-api": createMockCategory("api-api", "API", {
         description: "API skills",
         exclusive: false,
         order: 1,

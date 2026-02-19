@@ -252,7 +252,7 @@ describe("User Journey: Compile with Local Skills", () => {
       id: "web-tooling-local-skill",
       name: "web-tooling-local-skill",
       description: "A local project skill",
-      category: "web/tooling",
+      category: "web-tooling",
       author: "@test",
       tags: ["local", "custom"],
       content: `---

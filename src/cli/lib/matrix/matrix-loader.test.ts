@@ -46,7 +46,7 @@ describe("matrix-loader", () => {
       expect(result.skillAliases).toBeDefined();
       expect(result.skillAliases.react).toBe("web-framework-react");
       expect(result.relationships).toBeDefined();
-      expect(result.categories.framework).toBeDefined();
+      expect(result.categories["web-framework"]).toBeDefined();
     });
 
     it("throws on invalid YAML structure", async () => {
@@ -143,7 +143,7 @@ skillAliases: {}
       mockReadFile.mockImplementation(async (filePath: string) => {
         if (filePath.includes("metadata.yaml")) {
           return `
-category: web/framework
+category: web-framework
 author: "@vince"
 version: "1"
 cliName: react
@@ -166,7 +166,7 @@ description: React framework
 
       expect(skills).toHaveLength(1);
       expect(skills[0].id).toBe("web-framework-react");
-      expect(skills[0].category).toBe("web/framework");
+      expect(skills[0].category).toBe("web-framework");
       expect(skills[0].author).toBe("@vince");
     });
 
@@ -201,7 +201,7 @@ description: React framework
       mockReadFile.mockImplementation(async (filePath: string) => {
         if (filePath.includes("metadata.yaml")) {
           return `
-category: web/framework
+category: web-framework
 author: "@test"
 version: "1"
 `;
@@ -224,7 +224,7 @@ version: "1"
       mockReadFile.mockImplementation(async (filePath: string) => {
         if (filePath.includes("metadata.yaml")) {
           return `
-category: web/framework
+category: web-framework
 author: "@test"
 version: "1"
 cliName: bad-fm
@@ -295,7 +295,7 @@ cliName: wrong
       });
       mockReadFile.mockImplementation(async (filePath: string) => {
         if (filePath.includes("skill-valid") && filePath.includes("metadata.yaml")) {
-          return `category: web/framework\nauthor: "@test"\nversion: "1"\ncliName: valid`;
+          return `category: web-framework\nauthor: "@test"\nversion: "1"\ncliName: valid`;
         }
         if (filePath.includes("skill-bad-meta") && filePath.includes("metadata.yaml")) {
           return "invalid: true\n";
@@ -320,7 +320,7 @@ cliName: wrong
       mockReadFile.mockImplementation(async (filePath: string) => {
         if (filePath.includes("metadata.yaml")) {
           return `
-category: web/styling
+category: web-styling
 author: "@test"
 version: "1"
 cliName: scss-modules
@@ -352,8 +352,8 @@ requires:
       const matrix: SkillsMatrixConfig = {
         version: "1.0.0",
         categories: {
-          framework: {
-            id: "framework",
+          "web-framework": {
+            id: "web-framework",
             displayName: "Framework",
             description: "Web frameworks",
             exclusive: true,
@@ -379,7 +379,7 @@ requires:
           directoryPath: "web-framework-react",
           description: "React framework",
           usageGuidance: undefined,
-          category: "web/framework" as const,
+          category: "web-framework" as const,
           categoryExclusive: true,
           author: "@vince",
           tags: ["react"],
@@ -426,7 +426,7 @@ requires:
           directoryPath: "web-framework-react",
           description: "React",
           usageGuidance: undefined,
-          category: "web/framework" as const,
+          category: "web-framework" as const,
           categoryExclusive: true,
           author: "@test",
           tags: [],
@@ -442,7 +442,7 @@ requires:
           directoryPath: "web-framework-vue",
           description: "Vue",
           usageGuidance: undefined,
-          category: "web/framework" as const,
+          category: "web-framework" as const,
           categoryExclusive: true,
           author: "@test",
           tags: [],
@@ -509,7 +509,7 @@ requires:
           directoryPath: "web-framework-react",
           description: "React",
           usageGuidance: undefined,
-          category: "web/framework" as const,
+          category: "web-framework" as const,
           categoryExclusive: true,
           author: "@test",
           tags: [],
@@ -556,7 +556,7 @@ requires:
           directoryPath: "web-framework-react",
           description: "React",
           usageGuidance: undefined,
-          category: "web/framework" as const,
+          category: "web-framework" as const,
           categoryExclusive: true,
           author: "@test",
           tags: [],
@@ -604,7 +604,7 @@ requires:
           directoryPath: "web-state-zustand",
           description: "Zustand",
           usageGuidance: undefined,
-          category: "web/client-state" as const,
+          category: "web-client-state" as const,
           categoryExclusive: true,
           author: "@test",
           tags: [],
@@ -620,7 +620,7 @@ requires:
           directoryPath: "web-state-jotai",
           description: "Jotai",
           usageGuidance: undefined,
-          category: "web/client-state" as const,
+          category: "web-client-state" as const,
           categoryExclusive: true,
           author: "@test",
           tags: [],
@@ -676,7 +676,7 @@ requires:
           directoryPath: "web-state-zustand",
           description: "Zustand",
           usageGuidance: undefined,
-          category: "web/client-state" as const,
+          category: "web-client-state" as const,
           categoryExclusive: true,
           author: "@test",
           tags: [],
@@ -692,7 +692,7 @@ requires:
           directoryPath: "web-framework-react",
           description: "React",
           usageGuidance: undefined,
-          category: "web/framework" as const,
+          category: "web-framework" as const,
           categoryExclusive: true,
           author: "@test",
           tags: [],

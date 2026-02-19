@@ -54,8 +54,8 @@ agents:
   - web-developer
 stack:
   web-developer:
-    framework: web-framework-react
-    styling: web-styling-scss-modules
+    web-framework: web-framework-react
+    web-styling: web-styling-scss-modules
 `,
       );
 
@@ -65,8 +65,8 @@ stack:
       // Bare strings are normalized to SkillAssignment[] at load time
       expect(result!.config.stack).toEqual({
         "web-developer": {
-          framework: [{ id: "web-framework-react", preloaded: false }],
-          styling: [{ id: "web-styling-scss-modules", preloaded: false }],
+          "web-framework": [{ id: "web-framework-react", preloaded: false }],
+          "web-styling": [{ id: "web-styling-scss-modules", preloaded: false }],
         },
       });
     });
@@ -81,13 +81,13 @@ agents:
   - web-developer
 stack:
   web-developer:
-    framework: web-framework-react
-    methodology:
+    web-framework: web-framework-react
+    shared-methodology:
       - id: meta-methodology-investigation-requirements
         preloaded: true
       - id: meta-methodology-anti-over-engineering
         preloaded: true
-    styling:
+    web-styling:
       id: web-styling-scss-modules
       preloaded: true
 `,
@@ -99,14 +99,14 @@ stack:
       expect(result!.config.stack).toEqual({
         "web-developer": {
           // bare string -> SkillAssignment[]
-          framework: [{ id: "web-framework-react", preloaded: false }],
+          "web-framework": [{ id: "web-framework-react", preloaded: false }],
           // array of objects -> SkillAssignment[]
-          methodology: [
+          "shared-methodology": [
             { id: "meta-methodology-investigation-requirements", preloaded: true },
             { id: "meta-methodology-anti-over-engineering", preloaded: true },
           ],
           // single object -> SkillAssignment[]
-          styling: [{ id: "web-styling-scss-modules", preloaded: true }],
+          "web-styling": [{ id: "web-styling-scss-modules", preloaded: true }],
         },
       });
     });
@@ -231,8 +231,8 @@ describe("round-trip tests", () => {
   it("should round-trip minimal config (name and stack only)", async () => {
     // Create mock matrix with skills
     const matrix = createMockMatrix({
-      ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
-      ["web-state-zustand"]: createMockSkill("web-state-zustand", "web/client-state"),
+      ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
+      ["web-state-zustand"]: createMockSkill("web-state-zustand", "web-client-state"),
     });
 
     // Generate config
@@ -260,7 +260,7 @@ describe("round-trip tests", () => {
   it("should round-trip config with options (description/author)", async () => {
     // Create mock matrix with skills
     const matrix = createMockMatrix({
-      ["web-framework-react"]: createMockSkill("web-framework-react", "web/framework"),
+      ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
     });
 
     // Generate config with options

@@ -280,7 +280,7 @@ describe("schema-validator", () => {
         [
           "version: 1",
           "author: '@test'",
-          "category: framework",
+          "category: web-framework",
           "cliName: React",
           "cliDescription: React component patterns and hooks",
           "usageGuidance: When building React components and hooks",
