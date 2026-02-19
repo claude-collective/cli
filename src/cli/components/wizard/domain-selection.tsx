@@ -20,8 +20,8 @@ export const DomainSelection: React.FC = () => {
 
   return (
     <CheckboxGrid
-      title="Select domains to configure:"
-      subtitle="Select one or more domains, then continue"
+      title="Select domains to configure"
+      // subtitle="Select one or more domains, then continue"
       items={AVAILABLE_DOMAINS}
       selectedIds={selectedDomains}
       onToggle={toggleDomain}

@@ -1,6 +1,7 @@
-import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
+import React, { useState } from "react";
 import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
+import { ViewTitle } from "./view-title.js";
 
 export type CheckboxItem<T extends string = string> = {
   id: T;
@@ -10,7 +11,7 @@ export type CheckboxItem<T extends string = string> = {
 
 export type CheckboxGridProps<T extends string = string> = {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   items: CheckboxItem<T>[];
   selectedIds: T[];
   onToggle: (id: T) => void;
@@ -70,14 +71,13 @@ export const CheckboxGrid = <T extends string = string>({
 
   return (
     <Box flexDirection="column">
-      <Text bold>{title}</Text>
-      <Text dimColor>{subtitle}</Text>
-      <Text> </Text>
+      <ViewTitle>{title}</ViewTitle>
+      {subtitle && <Text dimColor>{subtitle}</Text>}
       {items.map((item, index) => {
         const isFocused = index === focusedIndex;
         const isSelected = selectedIds.includes(item.id);
         const checkbox = isSelected ? "[\u2713]" : "[ ]";
-        const pointer = isFocused ? UI_SYMBOLS.CURRENT : " ";
+        const pointer = isFocused ? UI_SYMBOLS.CHEVRON : UI_SYMBOLS.CHEVRON_SPACER;
 
         return (
           <Text key={item.id}>
@@ -86,7 +86,12 @@ export const CheckboxGrid = <T extends string = string>({
               {" "}
               {checkbox} {item.label}
             </Text>
-            <Text dimColor> - {item.description}</Text>
+            {isFocused && (
+              <Text dimColor>
+                {"  "}
+                {item.description}
+              </Text>
+            )}
           </Text>
         );
       })}
@@ -94,12 +99,12 @@ export const CheckboxGrid = <T extends string = string>({
         color={focusedIndex === continueIndex ? CLI_COLORS.PRIMARY : undefined}
         bold={focusedIndex === continueIndex}
       >
-        {focusedIndex === continueIndex ? UI_SYMBOLS.CURRENT : " "} {"\u2192"}{" "}
-        {continueLabel(selectedIds.length)}
+        {/* {focusedIndex === continueIndex ? UI_SYMBOLS.CURRENT : " "} {"\u2192"}{" "} */}
+        {/* {continueLabel(selectedIds.length)} */}
       </Text>
       {selectedIds.length > 0 ? (
         <Text>
-          {"\n"}Selected: <Text color={CLI_COLORS.PRIMARY}>{selectedIds.join(", ")}</Text>
+          {"\n"}Selected: <Text color={CLI_COLORS.WARNING}>{selectedIds.join(", ")}</Text>
         </Text>
       ) : emptyMessage ? (
         <Text dimColor>
@@ -107,10 +112,6 @@ export const CheckboxGrid = <T extends string = string>({
           {emptyMessage}
         </Text>
       ) : null}
-      <Text dimColor>
-        {"\n"}
-        {"\u2191"}/{"\u2193"} navigate SPACE toggle ENTER continue ESC back
-      </Text>
     </Box>
   );
 };
