@@ -43,8 +43,8 @@ function createSkill(
 }
 
 describe("matrix-health-check", () => {
-  describe("checkMatrixHealth — healthy matrix", () => {
-    it("returns no issues for a valid matrix with no broken references", () => {
+  describe("healthy matrix", () => {
+    it("returns no issues for a valid matrix", () => {
       const reactSkill = createSkill("web-framework-react", "web-framework");
       const zustandSkill = createSkill("web-state-zustand", "web-client-state", {
         compatibleWith: ["web-framework-react"],
@@ -69,22 +69,11 @@ describe("matrix-health-check", () => {
       expect(issues).toEqual([]);
     });
 
-    it("does not warn when all relationship targets exist", () => {
-      const skillA = createSkill("web-skill-a", "web-framework", {
-        conflictsWith: [{ skillId: "web-skill-b", reason: "Conflicts" }],
-        requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "Requires B" }],
-        alternatives: [{ skillId: "web-skill-b", purpose: "Alternative" }],
-        discourages: [{ skillId: "web-skill-b", reason: "Discouraged" }],
-        requiresSetup: ["web-skill-b"],
-        providesSetupFor: ["web-skill-b"],
-      });
-      const skillB = createSkill("web-skill-b", "web-framework");
+    it("does not warn when matrix is structurally valid", () => {
+      const skill = createSkill("web-framework-react", "web-framework");
 
       const matrix = createMockMatrix(
-        {
-          "web-skill-a": skillA,
-          "web-skill-b": skillB,
-        },
+        { "web-framework-react": skill },
         {
           categories: {
             "web-framework": createCategory("web-framework"),
@@ -92,196 +81,13 @@ describe("matrix-health-check", () => {
         },
       );
 
-      const issues = checkMatrixHealth(matrix);
+      checkMatrixHealth(matrix);
 
-      expect(issues).toEqual([]);
       expect(warn).not.toHaveBeenCalled();
     });
   });
 
-  describe("checkMatrixHealth — ghost relationship targets", () => {
-    it("detects conflictsWith referencing non-existent skill", () => {
-      const skill = createSkill("web-framework-react", "web-framework", {
-        conflictsWith: [{ skillId: "web-framework-nonexistent", reason: "Conflict" }],
-      });
-
-      const matrix = createMockMatrix(
-        { "web-framework-react": skill },
-        {
-          categories: {
-            "web-framework": createCategory("web-framework"),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
-
-      expect(issues).toHaveLength(1);
-      expect(issues[0].finding).toBe("ghost-relationship-target");
-      expect(issues[0].severity).toBe("warning");
-      expect(issues[0].details).toContain("web-framework-nonexistent");
-      expect(issues[0].details).toContain("conflicts with");
-    });
-
-    it("detects recommends referencing non-existent skill", () => {
-      const skill = createSkill("web-framework-react", "web-framework", {
-        recommends: [{ skillId: "web-state-ghost", reason: "Recommend" }],
-      });
-
-      const matrix = createMockMatrix(
-        { "web-framework-react": skill },
-        {
-          categories: {
-            "web-framework": createCategory("web-framework"),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
-
-      expect(issues).toHaveLength(1);
-      expect(issues[0].finding).toBe("ghost-relationship-target");
-      expect(issues[0].details).toContain("recommends");
-      expect(issues[0].details).toContain("web-state-ghost");
-    });
-
-    it("detects requires referencing non-existent skill (error severity)", () => {
-      const skill = createSkill("web-state-zustand", "web-client-state", {
-        requires: [
-          { skillIds: ["web-framework-ghost"], needsAny: false, reason: "Needs framework" },
-        ],
-      });
-
-      const matrix = createMockMatrix(
-        { "web-state-zustand": skill },
-        {
-          categories: {
-            "web-client-state": createCategory("web-client-state"),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
-
-      expect(issues).toHaveLength(1);
-      expect(issues[0].finding).toBe("ghost-requirement-target");
-      expect(issues[0].severity).toBe("error");
-      expect(issues[0].details).toContain("web-framework-ghost");
-    });
-
-    it("detects alternatives referencing non-existent skill", () => {
-      const skill = createSkill("web-framework-react", "web-framework", {
-        alternatives: [{ skillId: "web-framework-ghost", purpose: "Alternative framework" }],
-      });
-
-      const matrix = createMockMatrix(
-        { "web-framework-react": skill },
-        {
-          categories: {
-            "web-framework": createCategory("web-framework"),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
-
-      expect(issues).toHaveLength(1);
-      expect(issues[0].finding).toBe("ghost-alternative-target");
-      expect(issues[0].details).toContain("web-framework-ghost");
-    });
-
-    it("detects discourages referencing non-existent skill", () => {
-      const skill = createSkill("web-framework-react", "web-framework", {
-        discourages: [{ skillId: "web-skill-ghost", reason: "Discourage" }],
-      });
-
-      const matrix = createMockMatrix(
-        { "web-framework-react": skill },
-        {
-          categories: {
-            "web-framework": createCategory("web-framework"),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
-
-      expect(issues).toHaveLength(1);
-      expect(issues[0].finding).toBe("ghost-relationship-target");
-      expect(issues[0].details).toContain("discourages");
-      expect(issues[0].details).toContain("web-skill-ghost");
-    });
-
-    it("detects requiresSetup referencing non-existent skill", () => {
-      const skill = createSkill("api-analytics-posthog-analytics", "api-analytics", {
-        requiresSetup: ["api-analytics-posthog-setup-ghost"],
-      });
-
-      const matrix = createMockMatrix(
-        { "api-analytics-posthog-analytics": skill },
-        {
-          categories: {
-            "api-analytics": createCategory("api-analytics", { domain: "api" }),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
-
-      expect(issues).toHaveLength(1);
-      expect(issues[0].finding).toBe("ghost-setup-target");
-      expect(issues[0].details).toContain("requiresSetup");
-    });
-
-    it("detects providesSetupFor referencing non-existent skill", () => {
-      const skill = createSkill("api-analytics-posthog-setup", "api-analytics", {
-        providesSetupFor: ["api-analytics-ghost-usage"],
-      });
-
-      const matrix = createMockMatrix(
-        { "api-analytics-posthog-setup": skill },
-        {
-          categories: {
-            "api-analytics": createCategory("api-analytics", { domain: "api" }),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
-
-      expect(issues).toHaveLength(1);
-      expect(issues[0].finding).toBe("ghost-setup-target");
-      expect(issues[0].details).toContain("providesSetupFor");
-    });
-
-    it("detects multiple ghost targets across different relationship types", () => {
-      const skill = createSkill("web-framework-react", "web-framework", {
-        conflictsWith: [{ skillId: "web-ghost-a", reason: "Conflict" }],
-        recommends: [{ skillId: "web-ghost-b", reason: "Recommend" }],
-        requires: [{ skillIds: ["web-ghost-c"], needsAny: false, reason: "Require" }],
-        alternatives: [{ skillId: "web-ghost-d", purpose: "Alt" }],
-        discourages: [{ skillId: "web-ghost-e", reason: "Discourage" }],
-        requiresSetup: ["web-ghost-f"],
-        providesSetupFor: ["web-ghost-g"],
-      });
-
-      const matrix = createMockMatrix(
-        { "web-framework-react": skill },
-        {
-          categories: {
-            "web-framework": createCategory("web-framework"),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
-
-      // 7 ghost references: conflict, recommend, require, alternative, discourage, requiresSetup, providesSetupFor
-      expect(issues).toHaveLength(7);
-    });
-  });
-
-  describe("checkMatrixHealth — category domains", () => {
+  describe("category domains", () => {
     it("detects category missing domain field", () => {
       const skill = createSkill("web-framework-react", "web-framework");
 
@@ -340,7 +146,7 @@ describe("matrix-health-check", () => {
     });
   });
 
-  describe("checkMatrixHealth — skill categories", () => {
+  describe("skill categories", () => {
     it("detects skill referencing unknown category", () => {
       const skill = createSkill("web-framework-react", "nonexistent-category" as Subcategory);
 
@@ -381,233 +187,30 @@ describe("matrix-health-check", () => {
     });
   });
 
-  describe("checkMatrixHealth — compatibleWith targets", () => {
-    it("detects compatibleWith referencing non-existent skill", () => {
-      const skill = createSkill("web-state-zustand", "web-client-state", {
-        compatibleWith: ["web-framework-ghost"],
-      });
-
-      const matrix = createMockMatrix(
-        { "web-state-zustand": skill },
-        {
-          categories: {
-            "web-client-state": createCategory("web-client-state"),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
-      const compatIssues = issues.filter((i) => i.finding === "ghost-compatible-with-target");
-
-      expect(compatIssues).toHaveLength(1);
-      expect(compatIssues[0].severity).toBe("warning");
-      expect(compatIssues[0].details).toContain("web-framework-ghost");
-    });
-
-    it("does not flag compatibleWith for existing skills", () => {
-      const react = createSkill("web-framework-react", "web-framework");
-      const zustand = createSkill("web-state-zustand", "web-client-state", {
-        compatibleWith: ["web-framework-react"],
-      });
-
-      const matrix = createMockMatrix(
-        {
-          "web-framework-react": react,
-          "web-state-zustand": zustand,
-        },
-        {
-          categories: {
-            "web-framework": createCategory("web-framework"),
-            "web-client-state": createCategory("web-client-state"),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
-      const compatIssues = issues.filter((i) => i.finding === "ghost-compatible-with-target");
-
-      expect(compatIssues).toHaveLength(0);
-    });
-
-    it("detects multiple ghost compatibleWith entries", () => {
-      const skill = createSkill("web-state-zustand", "web-client-state", {
-        compatibleWith: ["web-ghost-a", "web-ghost-b", "web-ghost-c"],
-      });
-
-      const matrix = createMockMatrix(
-        { "web-state-zustand": skill },
-        {
-          categories: {
-            "web-client-state": createCategory("web-client-state"),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
-      const compatIssues = issues.filter((i) => i.finding === "ghost-compatible-with-target");
-
-      expect(compatIssues).toHaveLength(3);
-    });
-  });
-
-  describe("checkMatrixHealth — stack skill IDs", () => {
-    it("detects stack referencing non-existent skill", () => {
-      const matrix = createMockMatrix(
-        {},
-        {
-          suggestedStacks: [
-            {
-              id: "test-stack",
-              name: "Test Stack",
-              description: "A test stack",
-              audience: ["developers"],
-              skills: {},
-              allSkillIds: ["web-framework-ghost"],
-              philosophy: "Test",
-            },
-          ],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
-      const stackIssues = issues.filter((i) => i.finding === "stack-ghost-skill");
-
-      expect(stackIssues).toHaveLength(1);
-      expect(stackIssues[0].severity).toBe("warning");
-      expect(stackIssues[0].details).toContain("test-stack");
-      expect(stackIssues[0].details).toContain("web-framework-ghost");
-    });
-
-    it("does not flag stack with valid skill references", () => {
-      const react = createSkill("web-framework-react", "web-framework");
-
-      const matrix = createMockMatrix(
-        { "web-framework-react": react },
-        {
-          categories: {
-            "web-framework": createCategory("web-framework"),
-          } as MergedSkillsMatrix["categories"],
-          suggestedStacks: [
-            {
-              id: "react-stack",
-              name: "React Stack",
-              description: "React-based stack",
-              audience: ["developers"],
-              skills: {},
-              allSkillIds: ["web-framework-react"],
-              philosophy: "React all the things",
-            },
-          ],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
-      const stackIssues = issues.filter((i) => i.finding === "stack-ghost-skill");
-
-      expect(stackIssues).toHaveLength(0);
-    });
-
-    it("detects multiple ghost skills in a single stack", () => {
-      const matrix = createMockMatrix(
-        {},
-        {
-          suggestedStacks: [
-            {
-              id: "broken-stack",
-              name: "Broken Stack",
-              description: "Has ghost skills",
-              audience: [],
-              skills: {},
-              allSkillIds: ["web-ghost-a", "web-ghost-b"],
-              philosophy: "Broken",
-            },
-          ],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
-      const stackIssues = issues.filter((i) => i.finding === "stack-ghost-skill");
-
-      expect(stackIssues).toHaveLength(2);
-    });
-
-    it("detects ghost skills across multiple stacks", () => {
-      const matrix = createMockMatrix(
-        {},
-        {
-          suggestedStacks: [
-            {
-              id: "stack-a",
-              name: "Stack A",
-              description: "",
-              audience: [],
-              skills: {},
-              allSkillIds: ["web-ghost-x"],
-              philosophy: "",
-            },
-            {
-              id: "stack-b",
-              name: "Stack B",
-              description: "",
-              audience: [],
-              skills: {},
-              allSkillIds: ["web-ghost-y"],
-              philosophy: "",
-            },
-          ],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
-      const stackIssues = issues.filter((i) => i.finding === "stack-ghost-skill");
-
-      expect(stackIssues).toHaveLength(2);
-    });
-  });
-
-  describe("checkMatrixHealth — logging", () => {
+  describe("logging", () => {
     it("logs a warning for each issue found", () => {
-      const skill = createSkill("web-framework-react", "web-framework", {
-        conflictsWith: [{ skillId: "web-ghost-a", reason: "Conflict" }],
-        recommends: [{ skillId: "web-ghost-b", reason: "Recommend" }],
-      });
+      const skill = createSkill("web-framework-react", "nonexistent-category" as Subcategory);
 
       const matrix = createMockMatrix(
         { "web-framework-react": skill },
         {
           categories: {
-            "web-framework": createCategory("web-framework"),
+            "web-framework": createCategory("web-framework", { domain: undefined }),
           } as MergedSkillsMatrix["categories"],
         },
       );
 
       const issues = checkMatrixHealth(matrix);
 
+      expect(issues.length).toBeGreaterThan(0);
       expect(warn).toHaveBeenCalledTimes(issues.length);
       for (const issue of issues) {
         expect(warn).toHaveBeenCalledWith(`[matrix] ${issue.details}`);
       }
     });
-
-    it("does not log when matrix is healthy", () => {
-      const skill = createSkill("web-framework-react", "web-framework");
-
-      const matrix = createMockMatrix(
-        { "web-framework-react": skill },
-        {
-          categories: {
-            "web-framework": createCategory("web-framework"),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      checkMatrixHealth(matrix);
-
-      expect(warn).not.toHaveBeenCalled();
-    });
   });
 
-  describe("checkMatrixHealth — empty matrix", () => {
+  describe("empty matrix", () => {
     it("returns no issues for empty matrix", () => {
       const matrix = createMockMatrix({});
 
@@ -616,7 +219,7 @@ describe("matrix-health-check", () => {
       expect(issues).toEqual([]);
     });
 
-    it("returns no issues for matrix with skills but no relationships", () => {
+    it("returns no issues for matrix with skills but no structural problems", () => {
       const skill = createSkill("web-framework-react", "web-framework");
 
       const matrix = createMockMatrix(

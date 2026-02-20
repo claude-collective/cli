@@ -1,20 +1,22 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID   | Task                                                   | Status       |
-| ---- | ------------------------------------------------------ | ------------ |
-| B-05 | Edit mode does not restore sub-agent selection         | Bug          |
-| B-04 | Disabled-selected skills need distinct visual state    | Bug          |
-| B-03 | Edit pre-selection allows incompatible skills          | Bug          |
-| B-02 | Validate compatibleWith/conflictsWith refs in metadata | Pending      |
-| B-01 | Edit wizard shows steps that were omitted during init  | Bug          |
-| U13  | Run Documentor Agent on CLI Codebase                   | Pending      |
-| H18  | Tailor documentation-bible to CLI repo                 | Phase 3 only |
-| D-37 | Install mode: per-skill overrides and mode switching   | Pending      |
-| D-28 | Fix startup warning/error messages                     | Pending      |
-| D-36 | Eject: check specific agent dirs, not just agents/     | Bug          |
-| D-35 | Config: `templates` path property as eject alternative | Pending      |
-| D-34 | Eject: make `templates` its own top-level type         | Pending      |
-| D-33 | README: frame Agents Inc. as an AI coding framework    | Pending      |
+| ID   | Task                                                                                                  | Status       |
+| ---- | ----------------------------------------------------------------------------------------------------- | ------------ |
+| D-39 | Remove `version` integer field from metadata.yaml schema (legacy, replaced by plugin content hashing) | Pending      |
+| D-38 | Remove `version` command group (legacy, redundant with build plugins auto-versioning)                 | Pending      |
+| B-05 | Edit mode does not restore sub-agent selection                                                        | Bug          |
+| B-04 | Disabled-selected skills need distinct visual state                                                   | Bug          |
+| B-03 | Edit pre-selection allows incompatible skills                                                         | Bug          |
+| B-02 | Validate compatibleWith/conflictsWith refs in metadata                                                | Pending      |
+| B-01 | Edit wizard shows steps that were omitted during init                                                 | Bug          |
+| U13  | Run Documentor Agent on CLI Codebase                                                                  | Pending      |
+| H18  | Tailor documentation-bible to CLI repo                                                                | Phase 3 only |
+| D-37 | Install mode: per-skill overrides and mode switching                                                  | Pending      |
+| D-28 | Fix startup warning/error messages                                                                    | Pending      |
+| D-36 | Eject: check specific agent dirs, not just agents/                                                    | Bug          |
+| D-35 | Config: `templates` path property as eject alternative                                                | Pending      |
+| D-34 | Eject: make `templates` its own top-level type                                                        | Pending      |
+| D-33 | README: frame Agents Inc. as an AI coding framework                                                   | Pending      |
 
 ---
 
