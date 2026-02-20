@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.43.0] - 2026-02-21
+
+**Remove legacy version commands, version metadata field, and ghost-reference health checks**
+
+- Remove `version` command group (redundant with build plugins auto-versioning)
+- Remove `version` field from skill metadata (parsed but never used)
+- Remove ghost-reference checks from matrix health check (expected for marketplace sources)
+
+See [changelogs/0.43.0.md](./changelogs/0.43.0.md) for full details.
+
+---
+
 ## [0.42.0] - 2026-02-19
 
 **SelectionCard component, eject --templates, edit local-mode fix, wizard UI refresh**
