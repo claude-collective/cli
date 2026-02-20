@@ -31,8 +31,6 @@ export {
   formatInstallationDisplay,
 } from "./plugin-info";
 
-export { type VersionBumpType, bumpPluginVersion, getPluginVersion } from "./plugin-version";
-
 export {
   validatePluginStructure,
   validatePluginManifest,
