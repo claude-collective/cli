@@ -232,7 +232,6 @@ Use composition over inheritance for flexible component design.
 - useMemo for expensive computations
 `,
   metadata: {
-    version: 1,
     author: "@external-author",
     tags: ["react", "patterns", "web"],
     category: "web-framework",
@@ -258,7 +257,6 @@ Write focused tests that verify single behaviors.
 Test component interactions and data flow.
 `,
   metadata: {
-    version: 1,
     author: "@external-author",
     tags: ["testing", "vitest"],
     category: "web-testing",
@@ -629,7 +627,6 @@ ${skill.description}
     await writeFile(path.join(skillDir, "SKILL.md"), content);
 
     const metadata = {
-      version: 1,
       author: skill.author,
       category: skill.category,
       tags: skill.tags ?? [],
@@ -763,7 +760,6 @@ ${skill.description}
       if (!skill.skipMetadata) {
         const metadata: Record<string, unknown> = {
           cliName: skill.name,
-          version: 1,
           author: skill.author,
         };
         if (skill.forkedFrom) {

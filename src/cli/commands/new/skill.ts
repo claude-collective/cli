@@ -99,7 +99,6 @@ export function generateMetadataYaml(name: string, author: string, category: Cat
 category: ${category}
 categoryExclusive: false
 author: "${author}"
-version: 1
 cliName: ${titleName}
 cliDescription: Brief description
 usageGuidance: Use when <guidance>.

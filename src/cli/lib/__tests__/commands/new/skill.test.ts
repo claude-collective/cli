@@ -199,7 +199,7 @@ describe("new:skill command", () => {
 
       expect(content).toContain("category: local");
       expect(content).toContain("cliName: My Test Skill");
-      expect(content).toContain("version: 1");
+      expect(content).not.toContain("version:");
     });
   });
 

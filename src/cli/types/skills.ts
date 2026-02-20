@@ -179,7 +179,7 @@ export type Skill = SkillDefinition & {
 
 /**
  * SKILL.md frontmatter - matches official Claude Code plugin format.
- * Note: `author` and `version` are in metadata.yaml (for marketplace.json), NOT here.
+ * Note: `author` is in metadata.yaml (for marketplace.json), NOT here.
  */
 export type SkillFrontmatter = {
   /** Skill identifier in kebab-case (e.g., "react", "api-hono") */
@@ -199,8 +199,6 @@ export type SkillMetadataConfig = {
   categoryExclusive?: boolean;
   /** Author handle (e.g., "@vince") */
   author?: string;
-  /** Content version integer as string; now DEPRECATED in favor of plugin.json version */
-  version?: string;
   /** Searchable tags for filtering (e.g., ["react", "hooks", "state"]) */
   tags?: string[];
   /** Skill IDs that must be selected before this skill (dependency) */

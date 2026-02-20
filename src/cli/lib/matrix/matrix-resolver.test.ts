@@ -26,7 +26,6 @@ function createSkill(id: SkillId, overrides: Partial<ResolvedSkill> = {}): Resol
   return createMockSkill(id, "web-framework", {
     description: `Description for ${id}`,
     categoryExclusive: true,
-    version: "1",
     ...overrides,
   });
 }

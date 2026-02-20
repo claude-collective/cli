@@ -288,7 +288,7 @@ describe("source-loader local skills integration", () => {
     );
     await writeFile(
       path.join(skillDir, "metadata.yaml"),
-      'category: web-testing\nauthor: "@test"\nversion: 1\ncliName: Vitest\ncliDescription: Marketplace vitest configuration\ncontentHash: abc1234\n',
+      'category: web-testing\nauthor: "@test"\ncliName: Vitest\ncliDescription: Marketplace vitest configuration\ncontentHash: abc1234\n',
     );
 
     // Load skills from source to verify marketplace skill is present
@@ -361,7 +361,7 @@ describe("source-loader config-driven paths", () => {
     );
     await writeFile(
       path.join(skillsDir, "metadata.yaml"),
-      'category: web-framework\nauthor: "@test"\nversion: 1\ncliName: React\ncliDescription: React framework\nusageGuidance: Use React for building UIs\ncontentHash: abc1234\n',
+      'category: web-framework\nauthor: "@test"\ncliName: React\ncliDescription: React framework\nusageGuidance: Use React for building UIs\ncontentHash: abc1234\n',
     );
 
     const result = await loadSkillsMatrixFromSource({

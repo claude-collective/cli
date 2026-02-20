@@ -479,7 +479,6 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
     expect(forkedFrom.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
     // Original metadata fields should be preserved
-    expect(metadata.version).toBe(1);
     expect(metadata.author).toBe("@external-author");
   });
 

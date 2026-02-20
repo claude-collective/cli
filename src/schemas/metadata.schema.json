@@ -55,11 +55,6 @@
       "type": "string",
       "pattern": "^@[a-z][a-z0-9-]*$"
     },
-    "version": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 9007199254740991
-    },
     "cliName": {
       "type": "string",
       "minLength": 1,

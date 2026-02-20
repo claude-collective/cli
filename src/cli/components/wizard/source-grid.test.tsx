@@ -385,7 +385,6 @@ describe("SourceGrid component", () => {
         sourceUrl: "github:awesome-dev/skills",
         sourceName: "awesome-dev",
         alias: "react",
-        version: 3,
         description: "Opinionated React with strict TS",
       },
       {
@@ -393,7 +392,6 @@ describe("SourceGrid component", () => {
         sourceUrl: "github:team-xyz/skills",
         sourceName: "team-xyz",
         alias: "react",
-        version: 1,
         description: "Strict mode React",
       },
     ];

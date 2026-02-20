@@ -88,7 +88,6 @@ function tagPrimarySourceSkills(
     const source: SkillSource = {
       name: sourceName,
       type: sourceType,
-      version: skill.version,
       installed: false,
       primary: true,
     };
@@ -145,7 +144,6 @@ async function tagPluginSkills(
       skill.availableSources.push({
         name: primarySourceName,
         type: primarySourceType,
-        version: skill.version,
         installed: true,
         installMode: "plugin",
         primary: true,

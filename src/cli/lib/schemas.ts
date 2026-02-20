@@ -286,14 +286,12 @@ export const skillFrontmatterLoaderSchema = z.object({
   model: modelNameSchema.optional(),
 });
 
-// Lenient version coercion: YAML parses bare `1` as number, not string.
-// All other fields remain strict — invalid category/skillId warnings are legitimate.
+// Lenient loader: invalid category/skillId warnings are legitimate.
 export const skillMetadataLoaderSchema = z
   .object({
     category: categoryPathSchema.optional(),
     categoryExclusive: z.boolean().optional(),
     author: z.string().optional(),
-    version: z.union([z.string(), z.number()]).transform(String).optional(),
     tags: z.array(z.string()).optional(),
     requires: z.array(skillIdSchema).optional(),
     compatibleWith: z.array(skillIdSchema).optional(),
@@ -608,18 +606,6 @@ export const marketplaceSchema: z.ZodType<Marketplace> = z.object({
   plugins: z.array(marketplacePluginSchema).min(1),
 });
 
-/** Versioned metadata for tracking skill content changes (used by outdated/diff commands) */
-export const versionedMetadataSchema = z
-  .object({
-    /** Content version integer (incremented on each publish) */
-    version: z.number(),
-    /** Short SHA hash of skill content for change detection */
-    contentHash: z.string().optional(),
-    /** ISO date of last update */
-    updated: z.string().optional(),
-  })
-  .passthrough();
-
 /** Default agent-skill mappings from config/defaults.yaml (fallback when no stack is selected) */
 export const defaultMappingsSchema = z.object({
   /** Maps skill path patterns to the agent IDs that should receive them */
@@ -807,8 +793,6 @@ export const metadataValidationSchema = z
     categoryExclusive: z.boolean().optional(),
     /** Author handle — must start with @ (e.g., "@vince") */
     author: z.string().regex(/^@[a-z][a-z0-9-]*$/),
-    /** Content version integer, incremented on each publish */
-    version: z.number().int().min(1).optional(),
     /** Short display name for the wizard grid (max 30 chars) */
     cliName: z.string().min(1).max(30),
     /** One-line description for the wizard (max 60 chars) */

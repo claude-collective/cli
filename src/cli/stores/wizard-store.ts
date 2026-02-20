@@ -61,13 +61,11 @@ const SOURCE_DISPLAY_NAMES: Record<string, string> = {
 
 function formatSourceLabel(source: {
   name: string;
-  version?: string;
   installed?: boolean;
 }): string {
   const displayName = SOURCE_DISPLAY_NAMES[source.name] ?? source.name;
   const prefix = source.installed ? "\u2713 " : "";
-  const versionSuffix = source.version ? ` \u00B7 v${source.version}` : "";
-  return `${prefix}${displayName}${versionSuffix}`;
+  return `${prefix}${displayName}`;
 }
 
 type SkillLookupEntry = { category: string; displayName?: string };
@@ -752,7 +750,6 @@ export const useWizardStore = create<WizardState>((set, get) => ({
               id: source.name,
               label: formatSourceLabel({
                 name: source.name,
-                version: source.version,
                 installed: source.installed,
               }),
               selected: selectedSource === source.name,

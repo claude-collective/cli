@@ -38,7 +38,6 @@ const rawMetadataSchema = z.object({
   category: categoryPathSchema,
   categoryExclusive: z.boolean().optional(),
   author: z.string(),
-  version: z.coerce.string(),
   cliName: z.string().optional(),
   cliDescription: z.string().optional(),
   usageGuidance: z.string().optional(),

@@ -36,7 +36,6 @@ function createValidMetadataYaml(skillId: string, contentHash: string, date: str
 
 function createMetadataWithoutForkedFrom(): string {
   return stringifyYaml({
-    version: 1,
     author: "@test",
   });
 }

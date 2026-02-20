@@ -278,7 +278,6 @@ describe("schema-validator", () => {
       await writeFile(
         path.join(metadataDir, "metadata.yaml"),
         [
-          "version: 1",
           "author: '@test'",
           "category: web-framework",
           "cliName: React",
@@ -300,7 +299,7 @@ describe("schema-validator", () => {
       const metadataDir = path.join(tempDir, "src", "skills", "invalid-skill");
       await mkdir(metadataDir, { recursive: true });
       // Missing required fields: category, cliName, cliDescription, usageGuidance
-      await writeFile(path.join(metadataDir, "metadata.yaml"), "author: '@test'\nversion: 1\n");
+      await writeFile(path.join(metadataDir, "metadata.yaml"), "author: '@test'\n");
 
       const result = await validateAllSchemas(tempDir);
 

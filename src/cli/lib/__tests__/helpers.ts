@@ -429,8 +429,7 @@ This is a test skill.
 }
 
 function createMetadataContent(author = "@test"): string {
-  return `version: 1
-author: ${author}
+  return `author: ${author}
 `;
 }
 
@@ -468,7 +467,6 @@ export async function writeTestSkill(
   if (!options?.skipMetadata) {
     if (options?.extraMetadata) {
       const metadata = {
-        version: 1,
         author: options?.author ?? "@test",
         ...options.extraMetadata,
       };
@@ -516,7 +514,6 @@ export async function writeSourceSkill(
     cliName: config.id,
     category: config.category,
     author: config.author ?? "@test",
-    version: "1",
   };
   if (config.tags) {
     metadata.tags = config.tags;

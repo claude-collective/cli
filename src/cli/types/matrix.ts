@@ -204,8 +204,6 @@ export type ResolvedSkill = {
   tags: string[];
   /** Author handle (e.g., "@vince") from metadata.yaml */
   author: string;
-  /** DEPRECATED: Version now lives in plugin.json */
-  version?: string;
   /** Selecting this skill disables these others (hard exclusion) */
   conflictsWith: SkillRelation[];
   /** Selecting this skill highlights these as good companions (soft suggestion) */
@@ -288,8 +286,6 @@ export type SkillSource = {
   type: SkillSourceType;
   /** Source URL for remote sources (e.g., "github:acme-corp/claude-skills") */
   url?: string;
-  /** Skill content version from metadata.yaml */
-  version?: string;
   /** Whether this source's version is currently installed on disk */
   installed: boolean;
   /** How the skill was installed on disk (separate from provenance) */
@@ -322,8 +318,6 @@ export type BoundSkillCandidate = {
   sourceName: string;
   /** Skill alias / display name from the source */
   alias: SkillAlias;
-  /** Skill content version from metadata */
-  version?: number;
   /** Skill description from the source */
   description?: string;
 };

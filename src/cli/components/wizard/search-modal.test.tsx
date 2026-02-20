@@ -18,7 +18,6 @@ const candidates: BoundSkillCandidate[] = [
     sourceUrl: "github:awesome-dev/skills",
     sourceName: "awesome-dev",
     alias: "react",
-    version: 3,
     description: "Opinionated React with strict TS",
   },
   {
@@ -26,7 +25,6 @@ const candidates: BoundSkillCandidate[] = [
     sourceUrl: "github:team-xyz/skills",
     sourceName: "team-xyz",
     alias: "react",
-    version: 1,
     description: "Strict mode React",
   },
   {
@@ -84,15 +82,6 @@ describe("SearchModal component", () => {
       const output = lastFrame();
       expect(output).toContain("Opinionated React with strict TS");
       expect(output).toContain("Strict mode React");
-    });
-
-    it("should render version labels", () => {
-      const { lastFrame, unmount } = renderModal();
-      cleanup = unmount;
-
-      const output = lastFrame();
-      expect(output).toContain("v3");
-      expect(output).toContain("v1");
     });
 
     it("should show focused marker on first result by default", () => {

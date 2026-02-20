@@ -21,7 +21,6 @@ type ResultRowProps = {
 
 const ResultRow: React.FC<ResultRowProps> = ({ candidate, isFocused }) => {
   const marker = isFocused ? MARKER_FOCUSED : MARKER_SPACER;
-  const versionLabel = candidate.version != null ? `v${candidate.version}` : "";
   const sourceLabel = `${candidate.sourceName}/${candidate.id}`;
 
   return (
@@ -32,12 +31,6 @@ const ResultRow: React.FC<ResultRowProps> = ({ candidate, isFocused }) => {
       <Text bold={isFocused} color={isFocused ? CLI_COLORS.PRIMARY : undefined}>
         {sourceLabel}
       </Text>
-      {versionLabel && (
-        <Text dimColor>
-          {"   "}
-          {versionLabel}
-        </Text>
-      )}
       {candidate.description && (
         <Text dimColor>
           {"   "}

@@ -32,7 +32,7 @@ export const LOCAL_DEFAULTS = {
 
 /**
  * Files included when computing a skill's content hash.
- * Shared by versioning.ts (for metadata version bumps) and
+ * Shared by versioning.ts (for plugin version bumps) and
  * skill-plugin-compiler.ts (for plugin compilation).
  */
 export const SKILL_CONTENT_FILES = [STANDARD_FILES.SKILL_MD, STANDARD_FILES.REFERENCE_MD] as const;

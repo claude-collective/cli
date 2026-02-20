@@ -30,7 +30,7 @@ async function createLocalSource(
     );
 
     if (options?.withMetadata) {
-      await writeFile(path.join(skillDir, METADATA_YAML_FILE), `version: 1\nauthor: "@external"\n`);
+      await writeFile(path.join(skillDir, METADATA_YAML_FILE), `author: "@external"\n`);
     }
   }
 }
@@ -287,7 +287,6 @@ describe("import:skill command", () => {
       const metadata = parseYaml(content);
 
       // Original metadata fields should be preserved
-      expect(metadata.version).toBe(1);
       expect(metadata.author).toBe("@external");
       // forkedFrom should be injected
       expect(metadata.forkedFrom).toBeDefined();
