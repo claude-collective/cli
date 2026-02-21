@@ -167,6 +167,7 @@ async function fetchFromRemoteSource(source: string, options: FetchOptions): Pro
 
   if (forceRefresh) {
     await clearGigetCache(source);
+    await remove(cacheDir);
   }
 
   await ensureDir(path.dirname(cacheDir));
