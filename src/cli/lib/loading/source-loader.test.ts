@@ -5,9 +5,9 @@ import { loadSkillsMatrixFromSource } from "./source-loader";
 import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
 import type { CategoryDefinition, ResolvedSkill } from "../../types";
 
-// Skills are in claude-subagents repo, not CLI repo
+// Skills are in the skills repo, not CLI repo
 // CLI tests need to point to the skills repo for integration tests
-const SKILLS_REPO_ROOT = path.resolve(__dirname, "../../../../../claude-subagents");
+const SKILLS_REPO_ROOT = path.resolve(__dirname, "../../../../../skills");
 // Fallback to the linked .claude folder's parent if skills repo not at expected path
 const SKILLS_SOURCE = process.env.CC_TEST_SKILLS_SOURCE || SKILLS_REPO_ROOT;
 

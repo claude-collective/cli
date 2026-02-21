@@ -106,6 +106,7 @@ const getCompatibilityLabel = (option: CategoryOption, isLocked: boolean): strin
 
 const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLabels }) => {
   const getTextColor = (): string => {
+    if (option.state === "disabled" && option.selected) return CLI_COLORS.PRIMARY;
     if (isLocked || option.state === "disabled") return CLI_COLORS.NEUTRAL;
     if (option.selected) return CLI_COLORS.PRIMARY;
     if (option.state === "recommended") return CLI_COLORS.UNFOCUSED;
@@ -115,6 +116,7 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
   };
 
   const getStateBorderColor = (): string => {
+    if (option.state === "disabled" && option.selected) return CLI_COLORS.PRIMARY;
     if (isLocked || option.state === "disabled") return CLI_COLORS.NEUTRAL;
     if (option.selected) return CLI_COLORS.PRIMARY;
     if (option.state === "recommended") return CLI_COLORS.UNFOCUSED;
@@ -133,7 +135,7 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
       flexShrink={0}
     >
       <>
-        <Text color={textColor} bold>
+        <Text color={textColor} bold dimColor={option.state === "disabled" && option.selected}>
           {" "}
           {option.label}{" "}
         </Text>

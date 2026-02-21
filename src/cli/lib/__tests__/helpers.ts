@@ -552,6 +552,7 @@ export function createMockCategory(
     id,
     displayName,
     description: `${displayName} category`,
+    domain: "web",
     exclusive: true,
     required: false,
     order: 0,
