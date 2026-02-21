@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.44.0] - 2026-02-21
+
+**README refresh, terminal logo support, task cleanup**
+
+- Redesign README skills section with inline code tags and add logo
+- Add terminal logo image rendering in wizard (terminal-image)
+- Clean up completed/deferred TODO tasks
+- Remove stale docs and config files
+
+See [changelogs/0.44.0.md](./changelogs/0.44.0.md) for full details.
+
+---
+
 ## [0.43.0] - 2026-02-21
 
 **Remove legacy version commands, version metadata field, and ghost-reference health checks**
