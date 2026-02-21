@@ -23,3 +23,6 @@
 - **D-29**: Ensure skills metadata YAML includes $schema reference -- All 87 metadata.yaml files in the source marketplace now include `$schema` references.
 - **D-31**: Prefix categories with their domain -- Subcategory keys now use domain-prefixed format (e.g., `web-framework`, `api-testing`) across skills matrix, stacks, metadata, schemas, and TypeScript types.
 - **D-32**: Add category as enum in metadata JSON schema -- Changed `metadataValidationSchema` category field from `z.string()` to `subcategorySchema`, regenerated `metadata.schema.json` with 37-value enum.
+- **D-38**: Remove `version` command group -- Deleted version commands (show, bump, set), core logic (`plugin-version.ts`), and all tests. Redundant with build plugins auto-versioning.
+- **D-39**: Remove `version` integer field from metadata.yaml schema -- Removed from schemas, types, loaders, UI, and test fixtures. Was parsed but silently dropped; actual versioning lives in plugin.json.
+- **B-01**: Edit wizard shows steps that were omitted during init -- Domains persisted to config during init; edit mode restores `initialDomains` to wizard, filtering build steps to only selected domains.

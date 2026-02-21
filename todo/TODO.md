@@ -2,13 +2,11 @@
 
 | ID   | Task                                                                                                  | Status       |
 | ---- | ----------------------------------------------------------------------------------------------------- | ------------ |
-| D-39 | Remove `version` integer field from metadata.yaml schema (legacy, replaced by plugin content hashing) | Pending      |
-| D-38 | Remove `version` command group (legacy, redundant with build plugins auto-versioning)                 | Pending      |
+| B-06 | --refresh leaves orphan skills from stale cache                                                       | Bug          |
 | B-05 | Edit mode does not restore sub-agent selection                                                        | Bug          |
 | B-04 | Disabled-selected skills need distinct visual state                                                   | Bug          |
 | B-03 | Edit pre-selection allows incompatible skills                                                         | Bug          |
 | B-02 | Validate compatibleWith/conflictsWith refs in metadata                                                | Pending      |
-| B-01 | Edit wizard shows steps that were omitted during init                                                 | Bug          |
 | U13  | Run Documentor Agent on CLI Codebase                                                                  | Pending      |
 | H18  | Tailor documentation-bible to CLI repo                                                                | Phase 3 only |
 | D-37 | Install mode: per-skill overrides and mode switching                                                  | Pending      |
@@ -35,6 +33,16 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 ## Active Tasks
 
 ### Bugs
+
+#### B-06: --refresh leaves orphan skills from stale cache
+
+When `--refresh` fetches a source, giget extracts the new tarball on top of the existing cache directory. Skills that were deleted or renamed in the source survive as orphans because the old directory is never cleaned. This causes validation warnings for skills that no longer exist (e.g., `api-testing-api-testing` with an old `category: testing` value).
+
+**Fix:** Delete the source's cache directory before fetching when `--refresh` is used. In `fetchFromRemoteSource()`, when `forceRefresh` is true, remove the entire `cacheDir` (not just the giget tarball cache) before calling `downloadTemplate()`.
+
+**Location:** `src/cli/lib/loading/source-fetcher.ts` — `fetchFromRemoteSource()`, around line 168.
+
+---
 
 #### B-05: Edit mode does not restore sub-agent selection
 
@@ -71,14 +79,6 @@ During matrix merge, `compatibleWith` and `conflictsWith` arrays in skill `metad
 **Fix:** Add a post-merge validation pass that checks every `compatibleWith` and `conflictsWith` entry on each resolved skill. If a reference doesn't match any known skill ID in `matrix.skills`, emit a `warn()` with the skill ID, the field name, and the unresolved reference. This catches the problem at load time instead of silently filtering skills out.
 
 **Location:** `src/cli/lib/matrix/matrix-loader.ts` — after `mergeMatrixWithSkills()` builds `resolvedSkills`, or in `checkMatrixHealth()` in `matrix-health-check.ts`.
-
----
-
-#### B-01: Edit wizard shows steps that were omitted during init
-
-When running `agentsinc edit`, the wizard presents build-phase steps (domain categories) that the user explicitly skipped during `agentsinc init`. For example, if you ran `init` and only selected web skills — deliberately skipping API, CLI, mobile — then running `edit` should only show the web step. Instead, it shows all domain steps again, forcing you to step through categories you already opted out of.
-
-The edit wizard should respect the domains the user chose during init and only present those. This is related to T4 (domain filtering tests exist and pass), which suggests the filtering logic may work at the unit level but not in the real CLI flow.
 
 ---
 

@@ -92,14 +92,6 @@ All commands inherit base flags `--dry-run` and `--source` / `-s` from `BaseComm
 |      | `agentsinc build plugins`     | Build skills as plugins; `--skills-dir` / `-s`, `--agents-dir` / `-a`, `--output-dir` / `-o`, `--skill` (single), `--verbose` / `-v`          | ✅        |       |        |        |
 |      | `agentsinc build marketplace` | Generate marketplace.json; `--plugins-dir` / `-p`, `--output` / `-o`, `--name`, `--version`, `--description`, `--owner-*`, `--verbose` / `-v` | ✅        |       |        |        |
 
-### Version
-
-| Task | Command / Area                       | Description                                                                              | Automated | Local | Plugin | Manual |
-| ---- | ------------------------------------ | ---------------------------------------------------------------------------------------- | --------- | ----- | ------ | ------ |
-|      | `agentsinc version` / `version:show` | Display current CLI/plugin version; base flags only                                      | ✅        |       |        |        |
-|      | `agentsinc version:bump`             | Bump version; required `<type>` arg (`major` / `minor` / `patch`), `--dry-run` respected | ✅        |       |        |        |
-|      | `agentsinc version:set`              | Set explicit version; required `<version>` arg (semver), `--dry-run` respected           | ✅        |       |        |        |
-
 ### Config
 
 | Task | Command / Area                     | Description                                                                                          | Automated | Local | Plugin | Manual |
@@ -552,22 +544,7 @@ agentsinc search react   # marketplace search results
 
 ---
 
-### 13. Version Commands
-
-```bash
-agentsinc version
-agentsinc version:show
-
-# Dry-run bumps (no files written)
-agentsinc version:bump patch --dry-run
-agentsinc version:bump minor --dry-run
-agentsinc version:bump major --dry-run
-agentsinc version:set 99.99.99 --dry-run
-```
-
----
-
-### 14. New Skill / New Agent / Import Skill
+### 13. New Skill / New Agent / Import Skill
 
 ```bash
 cd /tmp/cli-test-local   # initialized project
@@ -613,6 +590,5 @@ agentsinc import skill web-framework-react --source /path/to/source
 | 24  | `outdated`                                     | Outdated skills listed                                  |
 | 25  | `validate`                                     | Validation report shown                                 |
 | 26  | `info`                                         | Installed agents + skills shown                         |
-| 27  | `version`                                      | Version number shown                                    |
 | 28  | `search react`                                 | Results returned                                        |
 | 29  | `init` with specific agents selected           | `config.yaml` agents list matches wizard selection      |

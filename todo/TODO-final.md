@@ -6,8 +6,6 @@ These are the remaining tasks to complete for the CLI.
 | -------------- | --------------------------------- | ------- |
 | WUX-3          | Visually verify wizard UX changes | Pending |
 | U-UI-ITERATION | Wizard UI polish pass             | Pending |
-| U-LOGO         | Upload logo / branding asset      | Pending |
-| #15            | Create Agents Inc. logo           | Pending |
 | #2             | Add proper documentation          | Pending |
 | #1             | Create proper Work web stack      | Pending |
 | U15            | Add comprehensive help overlay    | Pending |
@@ -32,20 +30,6 @@ The agents reported success on wizard UX changes but visual verification is need
 Iterate over the full wizard UI to improve visual consistency, spacing, and clarity across all steps (Stack, Build, Sources, Confirm). Review column widths, alignment, color usage, empty states, and overall visual hierarchy.
 
 **Files:** `src/cli/components/wizard/`
-
----
-
-## U-LOGO: Upload Logo / Branding Asset
-
-Upload the Agents Inc. logo asset so it can be referenced from the README, marketplace listing, and any future web presence. (See also #15 — logo design.)
-
-**Files:** `README.md`, potentially `assets/` or `public/`
-
----
-
-## #15: Create Agents Inc. Logo
-
-Design and create a logo for the Agents Inc. brand. The logo should be professional, scalable (vector format), and suitable for use in CLI interface, documentation, GitHub, and marketing materials. Consider creating multiple variations (full logo, icon only, monochrome).
 
 ---
 

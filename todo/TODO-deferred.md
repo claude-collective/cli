@@ -15,7 +15,6 @@
 | D-19  | Improve template error messages                       | Deferred |
 | D-20  | Add Edit tool to documentor agent                     | Deferred |
 | D-22  | Automated agent-tester for quality assurance          | Deferred |
-| D-23  | Test version bumping, create version bump command     | Deferred |
 | D-24  | Configurable documentation file locations             | Deferred |
 | D-14  | Import skills from third-party marketplaces           | Deferred |
 | UX-04 | Interactive skill search polish                       | Deferred |
@@ -303,26 +302,6 @@ Based on comprehensive testing performed in the Ralph Loop session (TESTER 51+),
 
 ---
 
-## D-23: Test Version Bumping and Create Version Bump Command
-
-**M | D-23 | Test version bumping workflow and create dedicated command**
-
-Test the existing version bumping workflow and create a dedicated command (e.g., `agentsincversion bump`) to automate the release process. The command should:
-
-- Bump version in package.json (major, minor, patch)
-- Update version references in relevant files
-- Create a git commit with the version bump
-- **Important:** Ensure Claude is NOT added as co-author in the commit
-- Automatically update or generate changelog entry for the new version
-- Optionally create a git tag for the release
-- Follow semantic versioning conventions
-
-Add comprehensive tests for the version bumping logic to ensure it handles edge cases correctly.
-
-**Origin:** Hackathon Task #16
-
----
-
 ## D-24: Configurable Documentation File Locations for Agent Compilation
 
 **S | D-24 | Configure documentation file locations in consumer projects**
@@ -413,22 +392,6 @@ Polish pass for step transitions.
 
 **D | #5 | Agents command for skill assignment**
 Implement an agents command that allows users to assign specific skills to agents and configure whether those skills should be preloaded or loaded on-demand. This will give users fine-grained control over agent capabilities and performance characteristics.
-
----
-
-## UX-14: Build Step "Show Description" Toggle [DONE]
-
-**S | UX-14 | Add "show description" toggle to the Build step**
-
-Add a toggle to the Build step (alongside the existing toggles) called "show description". When enabled, it shows the recommended/discouraged/selected labels within the skill tags, giving users more context about each skill's status.
-
-**Behavior:**
-
-- Off by default (current compact view)
-- When toggled on, each skill tag displays its recommendation status (e.g., "Recommended", "Discouraged", "Selected")
-- Labels should use appropriate colors to match the existing color scheme
-
-**Files:** `src/cli/components/wizard/category-grid.tsx`, `src/cli/components/wizard/step-build.tsx`
 
 ---
 
