@@ -9,9 +9,10 @@
 | B-02 | Validate compatibleWith/conflictsWith refs in metadata                                 | Done         |
 | U13  | Run Documentor Agent on CLI Codebase                                                   | Pending      |
 | H18  | Tailor documentation-bible to CLI repo                                                 | Phase 3 only |
-| D-37 | Install mode: per-skill overrides and mode switching                                   | Pending      |
+| D-43 | Remove `getAgentsForSkill` / `skillToAgents` / `agentSkillPrefixes` (prerequisite for D-37, custom extensibility) | Pending      |
+| D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md)) | Pending      |
 | D-36 | Eject: check specific agent dirs, not just agents/                                     | Done         |
-| D-35 | Config: `templates` path property as eject alternative                                 | Pending      |
+| D-35 | Config: `templates` path property as eject alternative                                 | Deferred      |
 | D-33 | README: frame Agents Inc. as an AI coding framework                                    | Pending      |
 | D-42 | `agentsinc validate` command for skills repos                                          | Pending      |
 | T-07 | Replace real skills repo in source-loader.test.ts with fixtures                        | Pending      |
@@ -126,21 +127,37 @@ Create `.claude/docs/` directory with:
 
 ### CLI Improvements
 
-#### D-37: Install mode: per-skill overrides and mode switching
+#### D-43: Remove `getAgentsForSkill` / `skillToAgents` / `agentSkillPrefixes`
 
-Currently `installMode` is a global toggle — either all skills are installed as `local` (copied to `.claude/skills/`) or all as `plugin`. Two issues:
+Remove the legacy pattern-matching agent routing system. When no stack is selected, all selected skills should be assigned to all selected agents. Stacks remain the mechanism for fine-grained skill-to-agent mapping.
 
-1. **Per-skill override:** Some skills might work better as local (editable) while others are fine as plugins. The install mode should be overridable per skill or per source, not just globally.
+**What to remove:**
 
-2. **Mode switching during edit:** If a project was initialized with `plugin` mode and the user runs `edit` and switches to `local` (or vice versa), there's no migration. The old installation artifacts remain (e.g., plugin config entries still exist when switching to local, or `.claude/skills/` copies remain when switching to plugin). This could lead to duplicate or stale skill installations.
+- `getAgentsForSkill()` in `config-generator.ts:28-53`
+- `getEffectiveSkillToAgents()` in `config-generator.ts:19-26`
+- `DEFAULT_AGENTS` constant in `config-generator.ts:17`
+- `skillToAgents` section in `defaults/agent-mappings.yaml:8-129`
+- `agentSkillPrefixes` section in `defaults/agent-mappings.yaml:130-216` (already unused)
+- Related Zod schema fields in `defaultMappingsSchema` (`schemas.ts`)
+- `DefaultMappings` type if it becomes empty
 
-**Questions to resolve:**
+**Replacement behavior:** In `generateProjectConfigFromSkills()`, when building the `stack` property, assign every selected skill to every selected agent. If no agents are selected, there is no stack — just the skills list. Skills are still accessible to any agent at runtime; the stack is a preloading convenience, not a gate. No pattern matching, no fallback. If the user wants fine-grained control, they use a stack.
 
-- Should mode switching during edit clean up the previous mode's artifacts?
-- Should per-skill overrides live in config YAML or be a wizard UI choice?
-- How does this interact with multi-source (some sources local, some remote)?
+**Why:** The current `skillToAgents` wildcard matching is legacy code that will only get more complex with custom skills/domains. Stacks already provide explicit agent→skill mappings. The wizard's agent preselection already uses `DOMAIN_AGENTS` (hardcoded), not `skillToAgents`. Removing this simplifies config generation and eliminates a blocker for custom extensibility.
 
-**Location:** `src/cli/lib/installation/local-installer.ts`, `src/cli/components/wizard/step-confirm.tsx` (mode toggle), `src/cli/stores/wizard-store.ts`.
+**Prerequisite for:** D-37 (install mode redesign), custom extensibility design.
+
+**Location:** `src/cli/lib/configuration/config-generator.ts`, `src/cli/defaults/agent-mappings.yaml`, `src/cli/lib/schemas.ts`, `src/cli/lib/loading/defaults-loader.ts`
+
+---
+
+#### D-37: Install mode UX redesign
+
+Replace the hidden `P` hotkey toggle with an explicit install mode choice on the confirm step. Implement mode migration during edit (local to plugin, plugin to local, per-skill customize). The current `P` toggle during edit is completely broken -- config is never updated, artifacts are never migrated.
+
+**Design doc:** [`docs/features/proposed/install-mode-redesign.md`](../docs/features/proposed/install-mode-redesign.md)
+
+**Location:** `step-confirm.tsx`, `wizard.tsx`, `wizard-layout.tsx`, `help-modal.tsx`, `wizard-store.ts`, `edit.tsx`, `local-installer.ts`, `agent-recompiler.ts`, `types/config.ts`.
 
 ---
 
@@ -152,7 +169,7 @@ The `eject agent-partials` command currently checks if an `agents/` folder exist
 
 ---
 
-#### D-35: Config: `templates` path property as eject alternative
+#### D-35: Config: `templates` path property as eject alternative [DEFERRED]
 
 Instead of requiring `eject templates` to customize agent templates, allow users to define a `templates` path in their config YAML. The compilation pipeline would check for this path first and use those templates instead of the built-in defaults — no eject step needed.
 

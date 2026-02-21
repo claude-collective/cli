@@ -23,6 +23,8 @@ This file provides quick decision trees and essential conventions for working wi
 ## NEVER do this
 
 - NEVER use `git stash` — not in the main context, not in sub-agents, never
+- NEVER use git worktrees (`isolation: "worktree"`) — always work directly on the main branch
+- NEVER introduce new workflow patterns (tools, flags, strategies) that the user hasn't explicitly requested
 - NEVER construct test data inline — no inline configs, matrices, skills, stacks. Use factories from `helpers.ts` and fixtures from `create-test-source.ts`. If a factory doesn't exist, create one.
 - NEVER put TODO/task IDs (T1, T6, etc.) in test `describe()` blocks — test code is not a task tracker
 - NEVER add backward-compatibility shims, migration code, or legacy fallbacks. The project is pre-1.0 — backward compatibility is not a concern. Remove old code cleanly instead of maintaining two paths.
