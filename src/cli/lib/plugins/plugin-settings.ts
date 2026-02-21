@@ -15,7 +15,7 @@ import {
 
 /**
  * Plugin key format: "plugin-name@marketplace"
- * e.g., "web-framework-react@photoroom-marketplace"
+ * e.g., "web-framework-react@acme-marketplace"
  *
  * Kept as string — user-extensible identifiers (plugin names and marketplace names).
  */

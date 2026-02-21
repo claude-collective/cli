@@ -69,7 +69,7 @@ export async function hasIndividualPlugins(projectDir: string): Promise<boolean>
  * Lists the keys of all enabled plugins.
  *
  * @param projectDir - Absolute path to the project root
- * @returns Array of plugin keys (e.g., ["web-framework-react@photoroom-marketplace"])
+ * @returns Array of plugin keys (e.g., ["web-framework-react@acme-marketplace"])
  */
 export async function listPluginNames(projectDir: string): Promise<string[]> {
   try {

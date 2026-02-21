@@ -241,8 +241,8 @@ function extractSourceName(source: string): string {
  * Returns undefined when the source is local (no marketplace to display).
  *
  * Format examples:
- *   "Photoroom + 1 public"   — private marketplace with public also available
- *   "Photoroom"              — private marketplace only
+ *   "Acme Corp + 1 public"   — private marketplace with public also available
+ *   "Acme Corp"              — private marketplace only
  *   "agents-inc (public)" — default public marketplace
  */
 export function getMarketplaceLabel(sourceResult: SourceLoadResult): string | undefined {
