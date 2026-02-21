@@ -1,15 +1,5 @@
 # Agents Inc. CLI Documentation
 
-## System Overview
-
-Three directories work together:
-
-| Directory                          | Purpose                                               |
-| ---------------------------------- | ----------------------------------------------------- |
-| `/home/vince/dev/cli`              | CLI tool (this repo) - entry point for all operations |
-| `/home/vince/dev/claude-subagents` | Plugin marketplace - skills, agents, stacks           |
-| `/home/vince/dev/cv-launch`        | Test project - install targets for testing            |
-
 ## Documentation Index
 
 ### Standards

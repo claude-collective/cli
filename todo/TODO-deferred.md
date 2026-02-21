@@ -3,6 +3,8 @@
 | ID    | Task                                                  | Status   |
 | ----- | ----------------------------------------------------- | -------- |
 | D-34  | Replace agent-mappings.yaml with schema-backed file   | Deferred |
+| D-28  | Fix startup warning/error messages                    | Deferred |
+| D-43  | Eject templates as its own type, not a flag           | Deferred |
 | D-05  | Improve `agentsinc init` when already initialized     | Deferred |
 | P4-17 | `agentsinc new` supports multiple items               | Deferred |
 | D-08  | Support user-defined stacks in consumer projects      | Deferred |
@@ -59,6 +61,41 @@ Create a new `config/agent-defaults.yaml` (with `agent-defaults.schema.json`) th
 - Update `src/cli/lib/configuration/config-generator.ts` to use structured lookups instead of pattern matching
 - Update `src/cli/stores/wizard-store.ts` agent preselection to use the new structure
 - Update tests
+
+---
+
+## D-28: Fix Startup Warning/Error Messages
+
+**See research doc:** [docs/research/startup-message-persistence.md](../docs/research/startup-message-persistence.md)
+
+The CLI shows warning/error messages and the ASCII logo on startup that flash briefly then disappear. Ink's `clearTerminal` wipes all pre-Ink terminal output because `WizardLayout` uses `height={terminalHeight}`, triggering a full-screen clear on every render cycle.
+
+**Root cause:** Pre-Ink `this.log()` / `warn()` calls print to the terminal, then Ink's first render erases everything via `ansiEscapes.clearTerminal`.
+
+**Planned fix:** Buffer pre-Ink messages and render them via Ink's `<Static>` component (which survives `clearTerminal`).
+
+**Changes needed:**
+
+- `src/cli/commands/init.tsx`, `src/cli/commands/edit.tsx` — buffer messages instead of `this.log()` / `this.warn()`, pass buffer to `<Wizard>`
+- `src/cli/components/wizard/wizard-layout.tsx` — add `<Static>` block for startup messages
+- `src/cli/utils/logger.ts` + loading modules — support buffered output mode
+- Audit which warnings are actionable vs noise; downgrade informational messages to `verbose()`
+
+---
+
+## D-43: Eject Templates as Its Own Type, Not a Flag
+
+Currently `eject agent-partials --templates` uses a `--templates` flag to eject only agent templates. This should be its own eject type (`agentsinc eject templates`) instead of a flag on `agent-partials`.
+
+**Rationale:** Templates are conceptually separate from agent partials (intro, workflow, examples, etc.). Having `templates` as a first-class eject type is clearer and more consistent with the other eject types (`skills`, `agent-partials`, `all`).
+
+**Changes needed:**
+
+- Add `"templates"` to `EJECT_TYPES` in `src/cli/commands/eject.ts`
+- Add a dedicated `case "templates"` branch in the switch
+- Remove `--templates` flag (pre-1.0, no backward compatibility needed)
+- Update `"all"` to include templates as a separate step
+- Update examples and help text
 
 ---
 

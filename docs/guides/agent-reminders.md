@@ -47,4 +47,4 @@ When context usage reaches 70%, run `/compact`.
 
 ## R8: Cross-Repository Changes Allowed
 
-You may make changes in the claude-subagents directory (`/home/vince/dev/claude-subagents`) as well, if needed. This is the source marketplace for skills and agents.
+You may make changes in the skills directory (`/home/vince/dev/skills`) as well, if needed. This is the source marketplace for skills and agents.

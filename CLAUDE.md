@@ -1,8 +1,24 @@
+<critical-requirement>
+1. NEVER write implementation code or edit test files directly. Always delegate to CLI developer or CLI tester. No exceptions for "small" or "quick" fixes.
+
+2. When delegating to a sub-agent, tell it to read CLAUDE.md before starting work.
+
+3. After any fix, trace ALL scenarios through the code before calling it done.
+</critical-requirement>
+
 # Project Memory for Claude
 
 **For comprehensive documentation, see [docs/index.md](./docs/index.md)**
 
 This file provides quick decision trees and essential conventions for working with the Agents Inc. CLI codebase.
+
+## Workspace Directories
+
+| Directory                          | Purpose                                               |
+| ---------------------------------- | ----------------------------------------------------- |
+| `/home/vince/dev/cli`              | CLI tool (this repo) - entry point for all operations |
+| `/home/vince/dev/skills`           | Plugin marketplace - skills, agents, stacks           |
+| `/home/vince/dev/cv-launch`        | Test project - install targets for testing            |
 
 ## NEVER do this
 
@@ -13,6 +29,16 @@ This file provides quick decision trees and essential conventions for working wi
 - NEVER add unnecessary comments — only add comments when something is unintuitive, complex, or for edge cases. Self-explanatory code should not have comments. Do not add JSDoc to obvious functions.
 - NEVER reassign constants to other constants — use the original constant directly instead of creating aliases like `const FOO = BAR`
 - NEVER build intermediate data structures imperatively when the data is static or the rendering is straightforward. No `const arr = []; for (...) { arr.push(...) }` patterns. Use declarative const arrays, `.map()`, `.flatMap()`, or inline JSX. If data is known at write-time, write it as a literal. If it needs transforming, use functional array methods. Imperative accumulation into mutable arrays is never the answer.
+- NEVER put machine-specific absolute paths in any file tracked by git. If a file needs private paths, gitignore it first.
+
+## ALWAYS do this
+
+- ALWAYS delegate implementation and test code to sub-agents. Tell them to read CLAUDE.md before starting.
+- ALWAYS trace ALL scenarios through the code after any fix — not just the one that prompted the fix.
+- ALWAYS grep for the old value when changing test data or renaming anything — find all references repo-wide.
+- ALWAYS search for all call sites when removing a workaround.
+- When a task is deferred, ALWAYS move it to `TODO-deferred.md` — never delete.
+- When fixing test data, ALWAYS evaluate the construction pattern too, not just the values.
 
 ---
 
@@ -417,3 +443,8 @@ this.warn(`Warning: Failed to load skill ${skillId}`); // Don't add "Warning:" �
 this.log(`Compiled ${count} agents successfully`); // Complete sentences should end with period
 this.warn(`failed to load skill ${skillId}`); // Start with capital letter
 ```
+
+<critical-reminder>
+1. You do NOT write code. Delegate to sub-agents. Tell them to read CLAUDE.md.
+2. Trace ALL scenarios after any fix.
+</critical-reminder>

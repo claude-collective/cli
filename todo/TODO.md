@@ -1,20 +1,22 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID   | Task                                                                                                  | Status       |
-| ---- | ----------------------------------------------------------------------------------------------------- | ------------ |
-| B-06 | --refresh leaves orphan skills from stale cache                                                       | Bug          |
-| B-05 | Edit mode does not restore sub-agent selection                                                        | Bug          |
-| B-04 | Disabled-selected skills need distinct visual state                                                   | Bug          |
-| B-03 | Edit pre-selection allows incompatible skills                                                         | Bug          |
-| B-02 | Validate compatibleWith/conflictsWith refs in metadata                                                | Pending      |
-| U13  | Run Documentor Agent on CLI Codebase                                                                  | Pending      |
-| H18  | Tailor documentation-bible to CLI repo                                                                | Phase 3 only |
-| D-37 | Install mode: per-skill overrides and mode switching                                                  | Pending      |
-| D-28 | Fix startup warning/error messages                                                                    | Pending      |
-| D-36 | Eject: check specific agent dirs, not just agents/                                                    | Bug          |
-| D-35 | Config: `templates` path property as eject alternative                                                | Pending      |
-| D-34 | Eject: make `templates` its own top-level type                                                        | Pending      |
-| D-33 | README: frame Agents Inc. as an AI coding framework                                                   | Pending      |
+| ID   | Task                                                                                   | Status       |
+| ---- | -------------------------------------------------------------------------------------- | ------------ |
+| B-06 | --refresh leaves orphan skills from stale cache                                        | Done         |
+| B-05 | Edit mode does not restore sub-agent selection                                         | Bug          |
+| B-04 | Disabled-selected skills need distinct visual state                                    | Done         |
+| B-03 | Init allows incompatible skills that edit correctly filters                            | Bug          |
+| B-02 | Validate compatibleWith/conflictsWith refs in metadata                                 | Done         |
+| U13  | Run Documentor Agent on CLI Codebase                                                   | Pending      |
+| H18  | Tailor documentation-bible to CLI repo                                                 | Phase 3 only |
+| D-37 | Install mode: per-skill overrides and mode switching                                   | Pending      |
+| D-36 | Eject: check specific agent dirs, not just agents/                                     | Done         |
+| D-35 | Config: `templates` path property as eject alternative                                 | Pending      |
+| D-33 | README: frame Agents Inc. as an AI coding framework                                    | Pending      |
+| D-42 | `agentsinc validate` command for skills repos                                          | Pending      |
+| T-07 | Replace real skills repo in source-loader.test.ts with fixtures                        | Pending      |
+| T-08 | Audit all test files: extract fixtures, use real IDs                                   | Pending      |
+| T-09 | Extract shared base skill/category/matrix fixtures to eliminate cross-file duplication | Pending      |
 
 ---
 
@@ -62,13 +64,15 @@ When a framework skill (e.g., React) is deselected, all dependent skills become 
 
 ---
 
-#### B-03: Edit pre-selection allows incompatible skills
+#### B-03: Init allows incompatible skills that edit correctly filters
 
-When running `agentsinc edit`, the wizard pre-selects skills from the existing config. However, it does not apply the same compatibility/validation logic that `init` uses. For example, skills like `web-state-*` (client state) and `web-i18n-*` (internationalization) that have `compatibleWith` constraints get pre-selected even when the selected framework doesn't match — during `init` these would be filtered out, but during `edit` they appear as already selected.
+When running `agentsinc init`, the wizard allows selecting skills that have `compatibleWith` constraints even when the selected framework doesn't match. The `edit` command runs stricter validation (framework compatibility filtering via `isCompatibleWithSelectedFrameworks` in `build-step-logic.ts`) that correctly prevents this.
 
-The `edit` command's pre-selection path needs to run the same validation that the `init` build step uses (framework compatibility filtering via `isCompatibleWithSelectedFrameworks` in `build-step-logic.ts`). Currently the pre-selection just restores raw skill IDs from config without checking whether they're still compatible with the current framework selection.
+The `init` flow needs to run the same level of validation that `edit` already applies. Currently `init` is too loose — it lets incompatible skills through that `edit` would correctly filter out.
 
-**Location:** `src/cli/commands/edit.tsx` pre-selection logic, `src/cli/lib/wizard/build-step-logic.ts` filtering logic.
+**Fix:** Apply the same compatibility validation from `edit`'s path to the `init` build step.
+
+**Location:** `src/cli/commands/init.tsx`, `src/cli/lib/wizard/build-step-logic.ts` filtering logic — compare with `src/cli/commands/edit.tsx` to see what validation edit applies that init does not.
 
 ---
 
@@ -117,27 +121,6 @@ Create `.claude/docs/` directory with:
 - `type-system.md` — type conventions and branded types
 
 **Success criteria:** `.claude/docs/` exists with 5+ files that help agents answer "where is X?" and "how does Y work?"
-
----
-
-### UX / Polish
-
-#### D-28: Fix Startup Warning/Error Messages
-
-**See research doc:** [docs/research/startup-message-persistence.md](../docs/research/startup-message-persistence.md)
-
-The CLI shows warning/error messages and the ASCII logo on startup that flash briefly then disappear. Ink's `clearTerminal` wipes all pre-Ink terminal output because `WizardLayout` uses `height={terminalHeight}`, triggering a full-screen clear on every render cycle.
-
-**Root cause:** Pre-Ink `this.log()` / `warn()` calls print to the terminal, then Ink's first render erases everything via `ansiEscapes.clearTerminal`.
-
-**Planned fix:** Buffer pre-Ink messages and render them via Ink's `<Static>` component (which survives `clearTerminal`).
-
-**Changes needed:**
-
-- `src/cli/commands/init.tsx`, `src/cli/commands/edit.tsx` — buffer messages instead of `this.log()` / `this.warn()`, pass buffer to `<Wizard>`
-- `src/cli/components/wizard/wizard-layout.tsx` — add `<Static>` block for startup messages
-- `src/cli/utils/logger.ts` + loading modules — support buffered output mode
-- Audit which warnings are actionable vs noise; downgrade informational messages to `verbose()`
 
 ---
 
@@ -191,22 +174,6 @@ skills:
 
 ---
 
-#### D-34: Eject: make `templates` its own top-level type
-
-Currently `--templates` is a modifier flag on the `eject` command, requiring `eject agent-partials --templates`. This is unintuitive — `templates` should be a standalone eject type alongside `agent-partials`, `skills`, and `all`.
-
-**Current:** `eject agent-partials --templates`
-**Desired:** `eject templates`
-
-**Changes needed:**
-
-- Add `"templates"` to the `type` argument's valid options in `src/cli/commands/eject.ts`
-- Route `eject templates` to the same logic that `eject agent-partials --templates` currently uses
-- Deprecate or remove the `--templates` flag
-- Update tests in `src/cli/lib/__tests__/commands/eject.test.ts`
-
----
-
 ### Positioning & README
 
 #### D-33: README: frame Agents Inc. as an AI coding framework
@@ -246,6 +213,131 @@ Rewrite the README to position Agents Inc. as an AI coding framework, not just a
 
 ---
 
+#### D-42: `agentsinc validate` command for skills repos
+
+A standalone validation command that marketplace authors can run from within their skills repo to check all metadata for correctness. Currently `checkMatrixHealth` runs automatically during `loadSkillsMatrixFromSource`, but there's no user-facing command for it.
+
+**Usage:**
+
+```bash
+# Run from within a skills repo
+agentsinc validate --source .
+
+# Or point at a remote source
+agentsinc validate --source github:acme-corp/skills
+```
+
+**What it validates:**
+
+- Every `metadata.yaml` against the schema (required fields, field types)
+- `cliName` format and directory name consistency
+- `category` values against known domain-prefixed patterns
+- All cross-references (`compatibleWith`, `conflictsWith`, `requires`, `requiresSetup`, `providesSetupFor`) resolve to existing skill IDs
+- `categoryExclusive` is present when required
+- camelCase key convention (no snake_case)
+- Every skill directory has both `SKILL.md` and `metadata.yaml`
+
+**Implementation:**
+
+- New command: `src/cli/commands/validate.ts`
+- Reuse `loadSkillsMatrixFromSource` + `checkMatrixHealth` for cross-reference validation
+- Add per-skill schema validation using `skillMetadataLoaderSchema`
+- Report all issues with file paths and specific values
+- Exit with non-zero code if any errors found (warnings are OK)
+
+**Location:** `src/cli/commands/validate.ts`, leveraging existing `matrix-health-check.ts` and `schemas.ts`.
+
+---
+
+#### T-07: Replace real skills repo in source-loader.test.ts with fixtures
+
+`source-loader.test.ts` loads the real `/home/vince/dev/skills` sibling repo for 13 of its 24 tests. This is fragile, non-portable, and violates the project convention of using `createTestSource()`.
+
+**Key findings from investigation:**
+
+- 13 tests use `SKILLS_SOURCE` (the real repo); the other 11 are already self-contained
+- `createTestSource()` already supports everything needed — no infrastructure changes required
+- 3 tests hardcode count thresholds (`> 50` skills, `> 10` categories) that need adjusting
+- Test 11 (line 207) needs a skill with a domain-mapped category — already supported by `createTestSource()`'s `generateMatrix()` which sets `domain` from category prefix
+
+**Plan:**
+
+1. Create a single shared fixture via `createTestSource()` in a module-level `beforeAll`/`afterAll` with ~8 skills from `DEFAULT_TEST_SKILLS` + `EXTRA_DOMAIN_TEST_SKILLS`, plus 1 test stack
+2. Remove `SKILLS_REPO_ROOT` / `SKILLS_SOURCE` constants (lines 8-12)
+3. Replace all `SKILLS_SOURCE` references with `fixtureSource.sourceDir`
+4. Update 3 hardcoded count assertions (lines 272, 507-508, 588-589) to match fixture data
+5. Leave the 11 already self-contained tests untouched
+
+**Scope:** ~30-40 lines changed in `source-loader.test.ts`, 0 new files, 0 new helpers.
+
+**Location:** `src/cli/lib/loading/source-loader.test.ts`
+
+---
+
+#### T-08: Audit all test files: extract fixtures, use real IDs
+
+All test files should follow the conventions enforced in `matrix-health-check.test.ts` and `category-grid.test.tsx` during this session:
+
+1. **No fake skill IDs** — use real IDs from the skills repo (e.g., `web-framework-react`, not `web-test-react`). Only use fake IDs when explicitly testing error paths for invalid data.
+2. **No fake categories** — use valid `Subcategory` union members (e.g., `"web-framework"`, not `"test-category"`).
+3. **No inline test data construction** — never construct `SkillsMatrixConfig`, `MergedSkillsMatrix`, `ResolvedSkill`, configs, or stacks inline in test bodies. Use factories from `__tests__/helpers.ts` (`createMockSkill`, `createMockMatrix`, `createMockCategory`, etc.) or fixtures from `create-test-source.ts`.
+4. **Extract all test data to top-level named constants** — don't call factory functions inside `it()` blocks. Define every skill, category, and matrix variant as a named constant at the top of the file. Test bodies should only call the function under test + assertions.
+
+**Specific callout:** `category-grid.test.tsx` lines 1190-1226 manually re-lists `Subcategory` and `SkillId` values in hand-picked pools to generate dynamic test data. This duplicates data that already exists in types and fixtures. Use `createComprehensiveMatrix` or real fixture data instead of hand-building pools.
+
+**Files already done (skip these):**
+
+- `src/cli/lib/matrix/matrix-health-check.test.ts`
+- `src/cli/components/wizard/category-grid.test.tsx` (IDs fixed, but pools still need replacing per callout above)
+
+**Files to audit:** All other `*.test.ts` and `*.test.tsx` files under `src/cli/`. Prioritize files that construct matrices, skills, categories, or configs inline.
+
+**Location:** All test files under `src/cli/`
+
+---
+
+#### T-09: Extract shared base skill/category/matrix fixtures to eliminate cross-file duplication
+
+The same `createMockSkill("web-framework-react", "web-framework")` call is repeated across 10+ test files. The base skill is identical — only per-file overrides differ (`categoryExclusive`, `displayName`, `tags`, etc.). Same for common categories and simple matrices.
+
+**Approach:** Add shared base constants to `__tests__/helpers.ts` or `__tests__/test-fixtures.ts`:
+
+```typescript
+// Base fixtures — no overrides, just the canonical defaults
+export const REACT_SKILL = createMockSkill("web-framework-react", "web-framework");
+export const ZUSTAND_SKILL = createMockSkill("web-state-zustand", "web-client-state");
+export const HONO_SKILL = createMockSkill("api-framework-hono", "api-api");
+export const VITEST_SKILL = createMockSkill("web-testing-vitest", "web-testing");
+
+export const FRAMEWORK_CATEGORY = createMockCategory("web-framework", "Framework");
+export const CLIENT_STATE_CATEGORY = createMockCategory("web-client-state", "Client State");
+export const TESTING_CATEGORY = createMockCategory("web-testing", "Testing");
+```
+
+Per-file customization via spread:
+
+```typescript
+// Test that needs displayName
+const skill = { ...REACT_SKILL, displayName: "React", categoryExclusive: true };
+
+// Test that uses the base as-is
+const matrix = createMockMatrix({ "web-framework-react": REACT_SKILL });
+```
+
+**Files with highest duplication:**
+
+- `config-generator.test.ts` — 18 occurrences of bare react skill
+- `step-build.test.tsx` — react, vue, zustand, pinia skills
+- `build-step-logic.test.ts` — react, vue, zustand with displayName
+- `matrix-health-check.test.ts` — react, zustand, categories
+- `plugin-finder.test.ts`, `wizard-store.test.ts`, `init-flow.integration.test.ts`
+
+**Do NOT extract:** Pathological/error-case fixtures (orphan skills, unresolved refs, missing domains). These are single-consumer and belong in the test file that uses them.
+
+**Location:** `src/cli/lib/__tests__/helpers.ts` or `src/cli/lib/__tests__/test-fixtures.ts`
+
+---
+
 ## Testing Tasks
 
 See [TODO-testing.md](./TODO-testing.md) for the full testing guide: coverage table (what is and isn't tested), automated test tasks T1-T6, step-by-step manual procedures for every command, and the 28-point quick-pass checklist.
@@ -255,5 +347,5 @@ See [TODO-testing.md](./TODO-testing.md) for the full testing guide: coverage ta
 ## Notes
 
 - Test target directory: `/home/vince/dev/cv-launch`
-- Source marketplace: `/home/vince/dev/claude-subagents`
+- Source marketplace: `/home/vince/dev/skills`
 - CLI under test: `/home/vince/dev/cli`
