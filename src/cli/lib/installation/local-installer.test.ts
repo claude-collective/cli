@@ -7,7 +7,7 @@ import { installLocal } from "./local-installer";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import type { SourceLoadResult } from "../loading";
 import type { AgentConfig, AgentName, MergedSkillsMatrix, ProjectConfig } from "../../types";
-import { createMockMatrix } from "../__tests__/helpers";
+import { TEST_MATRICES } from "../__tests__/helpers";
 import { DEFAULT_PLUGIN_NAME } from "../../consts";
 
 function createWizardResult(overrides?: Partial<WizardResultV2>): WizardResultV2 {
@@ -106,7 +106,7 @@ describe("local-installer", () => {
 
   describe("installLocal", () => {
     it("should create required directories", async () => {
-      const matrix = createMockMatrix({});
+      const matrix = TEST_MATRICES.empty;
       const wizardResult = createWizardResult({
         selectedSkills: ["meta-test-skill"],
       });
@@ -126,7 +126,7 @@ describe("local-installer", () => {
     });
 
     it("should write config to .claude-src/config.yaml", async () => {
-      const matrix = createMockMatrix({});
+      const matrix = TEST_MATRICES.empty;
       const wizardResult = createWizardResult({
         selectedSkills: ["meta-test-skill"],
       });
@@ -148,7 +148,7 @@ describe("local-installer", () => {
     });
 
     it("should include source in config from sourceFlag", async () => {
-      const matrix = createMockMatrix({});
+      const matrix = TEST_MATRICES.empty;
       const wizardResult = createWizardResult({
         selectedSkills: ["meta-test-skill"],
       });
@@ -169,7 +169,7 @@ describe("local-installer", () => {
     });
 
     it("should include source from sourceResult when no sourceFlag", async () => {
-      const matrix = createMockMatrix({});
+      const matrix = TEST_MATRICES.empty;
       const wizardResult = createWizardResult({
         selectedSkills: ["meta-test-skill"],
       });
@@ -194,7 +194,7 @@ describe("local-installer", () => {
     });
 
     it("should include marketplace in config when available", async () => {
-      const matrix = createMockMatrix({});
+      const matrix = TEST_MATRICES.empty;
       const wizardResult = createWizardResult({
         selectedSkills: ["meta-test-skill"],
       });
@@ -216,7 +216,7 @@ describe("local-installer", () => {
     });
 
     it("should return correct result structure", async () => {
-      const matrix = createMockMatrix({});
+      const matrix = TEST_MATRICES.empty;
       const wizardResult = createWizardResult({
         selectedSkills: ["meta-test-skill"],
       });
@@ -250,7 +250,7 @@ describe("local-installer", () => {
         }),
       );
 
-      const matrix = createMockMatrix({});
+      const matrix = TEST_MATRICES.empty;
       const wizardResult = createWizardResult({
         selectedSkills: ["meta-test-skill"],
       });
@@ -271,7 +271,7 @@ describe("local-installer", () => {
     });
 
     it("should set installMode on config", async () => {
-      const matrix = createMockMatrix({});
+      const matrix = TEST_MATRICES.empty;
       const wizardResult = createWizardResult({
         selectedSkills: ["meta-test-skill"],
         installMode: "local",
@@ -288,7 +288,7 @@ describe("local-installer", () => {
     });
 
     it("should not set wasMerged when no existing config", async () => {
-      const matrix = createMockMatrix({});
+      const matrix = TEST_MATRICES.empty;
       const wizardResult = createWizardResult({
         selectedSkills: ["meta-test-skill"],
       });
@@ -318,7 +318,7 @@ describe("local-installer", () => {
         },
       } as unknown as Record<AgentName, AgentConfig>);
 
-      const matrix = createMockMatrix({});
+      const matrix = TEST_MATRICES.empty;
       const wizardResult = createWizardResult({
         selectedSkills: ["meta-test-skill"],
         installMode: "plugin",
@@ -356,7 +356,7 @@ describe("local-installer", () => {
         },
       } as unknown as Record<AgentName, AgentConfig>);
 
-      const matrix = createMockMatrix({});
+      const matrix = TEST_MATRICES.empty;
       const wizardResult = createWizardResult({
         selectedSkills: ["meta-test-skill"],
         installMode: "local",
@@ -381,7 +381,7 @@ describe("local-installer", () => {
     });
 
     it("should include commented path overrides in config.yaml", async () => {
-      const matrix = createMockMatrix({});
+      const matrix = TEST_MATRICES.empty;
       const wizardResult = createWizardResult({
         selectedSkills: ["meta-test-skill"],
       });
@@ -406,7 +406,7 @@ describe("local-installer", () => {
     });
 
     it("should not interfere with YAML parsing when path overrides are commented", async () => {
-      const matrix = createMockMatrix({});
+      const matrix = TEST_MATRICES.empty;
       const wizardResult = createWizardResult({
         selectedSkills: ["meta-test-skill"],
       });
@@ -470,7 +470,7 @@ describe("local-installer", () => {
         },
       });
 
-      const matrix = createMockMatrix({});
+      const matrix = TEST_MATRICES.empty;
       const wizardResult = createWizardResult({
         selectedSkills: ["web-framework-react"],
         selectedStackId: "test-stack",

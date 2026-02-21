@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { loadSkillsFromAllSources, searchExtraSources } from "./multi-source-loader";
 import type { SkillId } from "../../types";
 import type { ResolvedConfig, SourceEntry } from "../configuration";
-import { createMockSkill, createMockMatrix, createMockExtractedSkill } from "../__tests__/helpers";
+import { createMockMatrix, createMockExtractedSkill, TEST_SKILLS } from "../__tests__/helpers";
 
 // Mock external dependencies
 vi.mock("../../utils/logger", () => ({
@@ -54,8 +54,8 @@ describe("multi-source-loader", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
-        "web-testing-vitest": createMockSkill("web-testing-vitest" as SkillId, "web-testing"),
+        "web-framework-react": { ...TEST_SKILLS.react },
+        "web-testing-vitest": { ...TEST_SKILLS.vitest },
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -85,12 +85,12 @@ describe("multi-source-loader", () => {
       const privateSourceConfig: ResolvedConfig = {
         source: "github:private-org/skills",
         sourceOrigin: "flag",
-        marketplace: "Photoroom",
+        marketplace: "Acme Corp",
       };
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
-        "web-testing-vitest": createMockSkill("web-testing-vitest" as SkillId, "web-testing"),
+        "web-framework-react": { ...TEST_SKILLS.react },
+        "web-testing-vitest": { ...TEST_SKILLS.vitest },
       });
 
       await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test");
@@ -99,7 +99,7 @@ describe("multi-source-loader", () => {
       expect(react.availableSources).toBeDefined();
       expect(react.availableSources).toHaveLength(1);
       expect(react.availableSources![0].type).toBe("private");
-      expect(react.availableSources![0].name).toBe("Photoroom");
+      expect(react.availableSources![0].name).toBe("Acme Corp");
       expect(react.availableSources![0].installed).toBe(false);
       expect(react.availableSources![0].primary).toBe(true);
 
@@ -107,7 +107,7 @@ describe("multi-source-loader", () => {
       expect(vitest.availableSources).toBeDefined();
       expect(vitest.availableSources).toHaveLength(1);
       expect(vitest.availableSources![0].type).toBe("private");
-      expect(vitest.availableSources![0].name).toBe("Photoroom");
+      expect(vitest.availableSources![0].name).toBe("Acme Corp");
       expect(vitest.availableSources![0].primary).toBe(true);
     });
 
@@ -124,7 +124,7 @@ describe("multi-source-loader", () => {
       };
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
+        "web-framework-react": { ...TEST_SKILLS.react },
       });
 
       // marketplace parameter (from marketplace.json) takes precedence
@@ -153,7 +153,7 @@ describe("multi-source-loader", () => {
       };
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
+        "web-framework-react": { ...TEST_SKILLS.react },
       });
 
       await loadSkillsFromAllSources(matrix, configWithMarketplace, "/tmp/test");
@@ -174,10 +174,11 @@ describe("multi-source-loader", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing", {
+        "web-framework-react": {
+          ...TEST_SKILLS.react,
           local: true,
           localPath: ".claude/skills/react/",
-        }),
+        },
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -211,10 +212,11 @@ describe("multi-source-loader", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing", {
+        "web-framework-react": {
+          ...TEST_SKILLS.react,
           local: true,
           localPath: ".claude/skills/react/",
-        }),
+        },
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -238,10 +240,11 @@ describe("multi-source-loader", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing", {
+        "web-framework-react": {
+          ...TEST_SKILLS.react,
           local: true,
           localPath: ".claude/skills/react/",
-        }),
+        },
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -260,7 +263,7 @@ describe("multi-source-loader", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
+        "web-framework-react": { ...TEST_SKILLS.react },
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -279,16 +282,14 @@ describe("multi-source-loader", () => {
 
       vi.mocked(resolveAllSources).mockResolvedValue({
         primary: { name: "marketplace", url: "github:agents-inc/skills" },
-        extras: [
-          { name: "acme-corp", url: "github:acme-corp/skills", description: "Private skills" },
-        ],
+        extras: [{ name: "acme-corp", url: "github:acme-corp/skills" }],
       });
 
       const { fetchFromSource } = await import("./source-fetcher");
       vi.mocked(fetchFromSource).mockRejectedValue(new Error("Network timeout"));
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
+        "web-framework-react": { ...TEST_SKILLS.react },
       });
 
       // Should not throw
@@ -315,7 +316,7 @@ describe("multi-source-loader", () => {
 
       vi.mocked(resolveAllSources).mockResolvedValue({
         primary: { name: "marketplace", url: "github:agents-inc/skills" },
-        extras: [{ name: "acme-corp", url: "github:acme-corp/skills", description: "Acme skills" }],
+        extras: [{ name: "acme-corp", url: "github:acme-corp/skills" }],
       });
 
       vi.mocked(fetchFromSource).mockResolvedValue({
@@ -326,13 +327,12 @@ describe("multi-source-loader", () => {
 
       vi.mocked(extractAllSkills).mockResolvedValue([
         createMockExtractedSkill("web-framework-react" as SkillId, {
-          description: "Acme React",
           author: "@acme",
         }),
       ]);
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
+        "web-framework-react": { ...TEST_SKILLS.react },
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -376,7 +376,7 @@ describe("multi-source-loader", () => {
       >);
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
+        "web-framework-react": { ...TEST_SKILLS.react },
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -419,8 +419,8 @@ describe("multi-source-loader", () => {
       >);
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
-        "web-state-zustand": createMockSkill("web-state-zustand" as SkillId, "web-testing"),
+        "web-framework-react": { ...TEST_SKILLS.react },
+        "web-state-zustand": { ...TEST_SKILLS.zustand },
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -470,7 +470,6 @@ describe("multi-source-loader", () => {
       // extractAllSkills for public source -- react exists in public, vitest does not
       vi.mocked(extractAllSkills).mockResolvedValue([
         createMockExtractedSkill("web-framework-react" as SkillId, {
-          description: "Public React",
           author: "@agents-inc",
         }),
       ]);
@@ -478,24 +477,24 @@ describe("multi-source-loader", () => {
       const privateSourceConfig: ResolvedConfig = {
         source: "github:private-org/skills",
         sourceOrigin: "flag",
-        marketplace: "Photoroom",
+        marketplace: "Acme Corp",
       };
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
-        "web-testing-vitest": createMockSkill("web-testing-vitest" as SkillId, "web-testing"),
+        "web-framework-react": { ...TEST_SKILLS.react },
+        "web-testing-vitest": { ...TEST_SKILLS.vitest },
       });
 
       await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test");
 
-      // React should have both private (Photoroom) and public (Agents Inc) sources
+      // React should have both private (Acme Corp) and public (Agents Inc) sources
       const react = matrix.skills["web-framework-react" as SkillId]!;
       expect(react.availableSources).toBeDefined();
       expect(react.availableSources).toHaveLength(2);
 
       const privateSource = react.availableSources!.find((s) => s.type === "private");
       expect(privateSource).toBeDefined();
-      expect(privateSource!.name).toBe("Photoroom");
+      expect(privateSource!.name).toBe("Acme Corp");
       expect(privateSource!.primary).toBe(true);
 
       const publicSource = react.availableSources!.find((s) => s.type === "public");
@@ -508,7 +507,7 @@ describe("multi-source-loader", () => {
       const vitest = matrix.skills["web-testing-vitest" as SkillId]!;
       expect(vitest.availableSources).toHaveLength(1);
       expect(vitest.availableSources![0].type).toBe("private");
-      expect(vitest.availableSources![0].name).toBe("Photoroom");
+      expect(vitest.availableSources![0].name).toBe("Acme Corp");
       expect(vitest.availableSources![0].primary).toBe(true);
     });
 
@@ -522,7 +521,7 @@ describe("multi-source-loader", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
+        "web-framework-react": { ...TEST_SKILLS.react },
       });
 
       await loadSkillsFromAllSources(matrix, DEFAULT_SOURCE_CONFIG, "/tmp/test");
@@ -559,7 +558,6 @@ describe("multi-source-loader", () => {
 
       vi.mocked(extractAllSkills).mockResolvedValue([
         createMockExtractedSkill("web-framework-react" as SkillId, {
-          description: "Public React",
           author: "@agents-inc",
         }),
       ]);
@@ -567,11 +565,11 @@ describe("multi-source-loader", () => {
       const privateSourceConfig: ResolvedConfig = {
         source: "github:private-org/skills",
         sourceOrigin: "flag",
-        marketplace: "Photoroom",
+        marketplace: "Acme Corp",
       };
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
+        "web-framework-react": { ...TEST_SKILLS.react },
       });
 
       await loadSkillsFromAllSources(matrix, privateSourceConfig, "/tmp/test");
@@ -602,11 +600,11 @@ describe("multi-source-loader", () => {
       const privateSourceConfig: ResolvedConfig = {
         source: "github:private-org/skills",
         sourceOrigin: "flag",
-        marketplace: "Photoroom",
+        marketplace: "Acme Corp",
       };
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill("web-framework-react" as SkillId, "web-testing"),
+        "web-framework-react": { ...TEST_SKILLS.react },
       });
 
       // Should not throw
@@ -619,7 +617,7 @@ describe("multi-source-loader", () => {
       const react = matrix.skills["web-framework-react" as SkillId]!;
       expect(react.availableSources).toHaveLength(1);
       expect(react.availableSources![0].type).toBe("private");
-      expect(react.availableSources![0].name).toBe("Photoroom");
+      expect(react.availableSources![0].name).toBe("Acme Corp");
     });
   });
 
@@ -648,7 +646,6 @@ describe("multi-source-loader", () => {
         }),
         createMockExtractedSkill("web-framework-vue-pro" as SkillId, {
           directoryPath: "web/framework/vue",
-          description: "Acme Vue",
           author: "@acme",
           path: "skills/web/framework/vue/",
         }),
@@ -686,7 +683,6 @@ describe("multi-source-loader", () => {
         .mockResolvedValueOnce([
           createMockExtractedSkill("web-framework-react-pro" as SkillId, {
             directoryPath: "web/framework/react",
-            description: "Acme React Pro",
             author: "@acme",
             path: "skills/web/framework/react/",
           }),
@@ -694,7 +690,6 @@ describe("multi-source-loader", () => {
         .mockResolvedValueOnce([
           createMockExtractedSkill("web-framework-react-strict" as SkillId, {
             directoryPath: "web/framework/react",
-            description: "Strict React",
             author: "@team-xyz",
             path: "skills/web/framework/react/",
           }),
@@ -730,7 +725,6 @@ describe("multi-source-loader", () => {
       vi.mocked(extractAllSkills).mockResolvedValueOnce([
         createMockExtractedSkill("web-framework-react-strict" as SkillId, {
           directoryPath: "web/framework/react",
-          description: "Strict React",
           author: "@team-xyz",
           path: "skills/web/framework/react/",
         }),
@@ -766,7 +760,6 @@ describe("multi-source-loader", () => {
       vi.mocked(extractAllSkills).mockResolvedValue([
         createMockExtractedSkill("web-framework-vue-pro" as SkillId, {
           directoryPath: "web/framework/vue",
-          description: "Acme Vue",
           author: "@acme",
           path: "skills/web/framework/vue/",
         }),
@@ -791,7 +784,6 @@ describe("multi-source-loader", () => {
       vi.mocked(extractAllSkills).mockResolvedValue([
         createMockExtractedSkill("web-framework-react-pro" as SkillId, {
           directoryPath: "web/framework/React",
-          description: "Acme React Pro",
           author: "@acme",
           path: "skills/web/framework/React/",
         }),

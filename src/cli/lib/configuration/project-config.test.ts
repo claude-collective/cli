@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { stringify as stringifyYaml } from "yaml";
 import { loadProjectConfig, validateProjectConfig } from "./project-config";
 import { generateProjectConfigFromSkills } from "./config-generator";
-import { createMockSkill, createMockMatrix } from "../__tests__/helpers";
+import { TEST_MATRICES } from "../__tests__/helpers";
 
 describe("project-config", () => {
   let tempDir: string;
@@ -229,17 +229,11 @@ describe("round-trip tests", () => {
   });
 
   it("should round-trip minimal config (name and stack only)", async () => {
-    // Create mock matrix with skills
-    const matrix = createMockMatrix({
-      ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-      ["web-state-zustand"]: createMockSkill("web-state-zustand", "web-client-state"),
-    });
-
     // Generate config
     const generated = generateProjectConfigFromSkills(
       "test-project",
       ["web-framework-react", "web-state-zustand"],
-      matrix,
+      TEST_MATRICES.reactAndZustand,
     );
 
     // Write to temp dir
@@ -258,16 +252,11 @@ describe("round-trip tests", () => {
   });
 
   it("should round-trip config with options (description/author)", async () => {
-    // Create mock matrix with skills
-    const matrix = createMockMatrix({
-      ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-    });
-
     // Generate config with options
     const generated = generateProjectConfigFromSkills(
       "my-awesome-project",
       ["web-framework-react"],
-      matrix,
+      TEST_MATRICES.react,
       {
         description: "An awesome project for testing",
         author: "@testuser",

@@ -1,7 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
 import { checkMatrixHealth } from "./matrix-health-check";
-import { createMockSkill, createMockMatrix, createMockCategory } from "../__tests__/helpers";
-import type { SkillId, Subcategory } from "../../types";
+import {
+  createMockSkill,
+  createMockMatrix,
+  createMockCategory,
+  TEST_SKILLS,
+  TEST_CATEGORIES,
+} from "../__tests__/helpers";
+import type { ResolvedSkill, SkillId, Subcategory } from "../../types";
 
 vi.mock("../../utils/logger");
 
@@ -11,10 +17,6 @@ import { warn } from "../../utils/logger";
 // Categories
 // ---------------------------------------------------------------------------
 
-const frameworkCategory = createMockCategory("web-framework", "Framework");
-const clientStateCategory = createMockCategory("web-client-state", "Client State");
-const testingCategory = createMockCategory("web-testing", "Testing");
-const toolingCategory = createMockCategory("shared-tooling", "Tooling");
 const missingDomainFrameworkCategory = createMockCategory("web-framework", "Framework", {
   domain: undefined,
 });
@@ -26,22 +28,22 @@ const missingDomainStylingCategory = createMockCategory("web-styling", "Styling"
 // Skills
 // ---------------------------------------------------------------------------
 
-const reactSkill = createMockSkill("web-framework-react", "web-framework");
-
-const zustandSkill = createMockSkill("web-state-zustand", "web-client-state", {
-  compatibleWith: ["web-framework-react"],
+const zustandSkill: ResolvedSkill = {
+  ...TEST_SKILLS.zustand,
   recommends: [{ skillId: "web-framework-react", reason: "Works well with React" }],
-});
+};
 
 const orphanSkill = createMockSkill("web-framework-react", "nonexistent-category" as Subcategory);
 
-const unresolvedCompatibleWithSkill = createMockSkill("web-state-zustand", "web-client-state", {
+const unresolvedCompatibleWithSkill: ResolvedSkill = {
+  ...TEST_SKILLS.zustand,
   compatibleWith: ["web-framework-nonexistent" as SkillId],
-});
+};
 
-const unresolvedConflictsWithSkill = createMockSkill("web-framework-react", "web-framework", {
+const unresolvedConflictsWithSkill: ResolvedSkill = {
+  ...TEST_SKILLS.react,
   conflictsWith: [{ skillId: "web-framework-ghost" as SkillId, reason: "Conflicts" }],
-});
+};
 
 const unresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e", "web-testing", {
   requires: [
@@ -53,22 +55,24 @@ const unresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e", "web-
   ],
 });
 
-const unresolvedRequiresSetupSkill = createMockSkill("web-framework-react", "web-framework", {
+const unresolvedRequiresSetupSkill: ResolvedSkill = {
+  ...TEST_SKILLS.react,
   requiresSetup: ["infra-setup-missing" as SkillId],
-});
+};
 
 const unresolvedProvidesSetupForSkill = createMockSkill("infra-setup-env", "shared-tooling", {
   providesSetupFor: ["web-framework-missing" as SkillId],
 });
 
-const multipleUnresolvedRefsSkill = createMockSkill("web-state-zustand", "web-client-state", {
+const multipleUnresolvedRefsSkill: ResolvedSkill = {
+  ...TEST_SKILLS.zustand,
   compatibleWith: ["web-framework-missing" as SkillId],
   conflictsWith: [{ skillId: "web-state-ghost" as SkillId, reason: "Conflicts" }],
   requiresSetup: ["infra-setup-missing" as SkillId],
-});
+};
 
-const allRefsResolvedSkill = createMockSkill("web-state-zustand", "web-client-state", {
-  compatibleWith: ["web-framework-react"],
+const allRefsResolvedSkill: ResolvedSkill = {
+  ...TEST_SKILLS.zustand,
   conflictsWith: [{ skillId: "web-framework-react", reason: "Test" }],
   requires: [
     {
@@ -79,7 +83,7 @@ const allRefsResolvedSkill = createMockSkill("web-state-zustand", "web-client-st
   ],
   requiresSetup: ["web-framework-react"],
   providesSetupFor: ["web-framework-react"],
-});
+};
 
 const partialUnresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e", "web-testing", {
   requires: [
@@ -97,22 +101,22 @@ const partialUnresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e"
 
 const healthyMatrix = createMockMatrix(
   {
-    "web-framework-react": reactSkill,
+    "web-framework-react": TEST_SKILLS.react,
     "web-state-zustand": zustandSkill,
   },
   {
     categories: {
-      "web-framework": frameworkCategory,
-      "web-client-state": clientStateCategory,
+      "web-framework": TEST_CATEGORIES.framework,
+      "web-client-state": TEST_CATEGORIES.clientState,
     },
   },
 );
 
 const singleSkillMatrix = createMockMatrix(
-  { "web-framework-react": reactSkill },
+  { "web-framework-react": TEST_SKILLS.react },
   {
     categories: {
-      "web-framework": frameworkCategory,
+      "web-framework": TEST_CATEGORIES.framework,
     },
   },
 );
@@ -120,7 +124,7 @@ const singleSkillMatrix = createMockMatrix(
 const emptyMatrix = createMockMatrix({});
 
 const missingDomainMatrix = createMockMatrix(
-  { "web-framework-react": reactSkill },
+  { "web-framework-react": TEST_SKILLS.react },
   {
     categories: {
       "web-framework": missingDomainFrameworkCategory,
@@ -134,7 +138,7 @@ const multipleMissingDomainsMatrix = createMockMatrix(
     categories: {
       "web-framework": missingDomainFrameworkCategory,
       "web-styling": missingDomainStylingCategory,
-      "web-client-state": clientStateCategory,
+      "web-client-state": TEST_CATEGORIES.clientState,
     },
   },
 );
@@ -143,7 +147,7 @@ const unknownCategoryMatrix = createMockMatrix(
   { "web-framework-react": orphanSkill },
   {
     categories: {
-      "web-framework": frameworkCategory,
+      "web-framework": TEST_CATEGORIES.framework,
     },
   },
 );
@@ -161,7 +165,7 @@ const unresolvedCompatibleWithMatrix = createMockMatrix(
   { "web-state-zustand": unresolvedCompatibleWithSkill },
   {
     categories: {
-      "web-client-state": clientStateCategory,
+      "web-client-state": TEST_CATEGORIES.clientState,
     },
   },
 );
@@ -170,7 +174,7 @@ const unresolvedConflictsWithMatrix = createMockMatrix(
   { "web-framework-react": unresolvedConflictsWithSkill },
   {
     categories: {
-      "web-framework": frameworkCategory,
+      "web-framework": TEST_CATEGORIES.framework,
     },
   },
 );
@@ -179,7 +183,7 @@ const unresolvedRequiresMatrix = createMockMatrix(
   { "web-testing-cypress-e2e": unresolvedRequiresSkill },
   {
     categories: {
-      "web-testing": testingCategory,
+      "web-testing": TEST_CATEGORIES.testing,
     },
   },
 );
@@ -188,7 +192,7 @@ const unresolvedRequiresSetupMatrix = createMockMatrix(
   { "web-framework-react": unresolvedRequiresSetupSkill },
   {
     categories: {
-      "web-framework": frameworkCategory,
+      "web-framework": TEST_CATEGORIES.framework,
     },
   },
 );
@@ -197,7 +201,7 @@ const unresolvedProvidesSetupForMatrix = createMockMatrix(
   { "infra-setup-env": unresolvedProvidesSetupForSkill },
   {
     categories: {
-      "shared-tooling": toolingCategory,
+      "shared-tooling": TEST_CATEGORIES.tooling,
     },
   },
 );
@@ -206,33 +210,33 @@ const multipleUnresolvedRefsMatrix = createMockMatrix(
   { "web-state-zustand": multipleUnresolvedRefsSkill },
   {
     categories: {
-      "web-client-state": clientStateCategory,
+      "web-client-state": TEST_CATEGORIES.clientState,
     },
   },
 );
 
 const allRefsResolvedMatrix = createMockMatrix(
   {
-    "web-framework-react": reactSkill,
+    "web-framework-react": TEST_SKILLS.react,
     "web-state-zustand": allRefsResolvedSkill,
   },
   {
     categories: {
-      "web-framework": frameworkCategory,
-      "web-client-state": clientStateCategory,
+      "web-framework": TEST_CATEGORIES.framework,
+      "web-client-state": TEST_CATEGORIES.clientState,
     },
   },
 );
 
 const partialUnresolvedRequiresMatrix = createMockMatrix(
   {
-    "web-framework-react": reactSkill,
+    "web-framework-react": TEST_SKILLS.react,
     "web-testing-cypress-e2e": partialUnresolvedRequiresSkill,
   },
   {
     categories: {
-      "web-framework": frameworkCategory,
-      "web-testing": testingCategory,
+      "web-framework": TEST_CATEGORIES.framework,
+      "web-testing": TEST_CATEGORIES.testing,
     },
   },
 );

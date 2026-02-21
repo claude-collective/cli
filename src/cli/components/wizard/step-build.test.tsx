@@ -1,5 +1,5 @@
 import { render } from "ink-testing-library";
-import { indexBy, mapToObj } from "remeda";
+import { indexBy } from "remeda";
 import { describe, expect, it, afterEach, vi } from "vitest";
 import { StepBuild, type StepBuildProps } from "./step-build";
 import { validateBuildStep, getSkillDisplayLabel } from "../../lib/wizard/index";
@@ -7,8 +7,6 @@ import type { CategoryRow as GridCategoryRow } from "./category-grid";
 import type {
   CategoryDefinition,
   ResolvedSkill,
-  SkillDisplayName,
-  SkillId,
   Subcategory,
   SubcategorySelections,
 } from "../../types";
@@ -19,28 +17,23 @@ import {
   INPUT_DELAY_MS,
   delay,
 } from "../../lib/__tests__/test-constants";
-import { createMockCategory, createMockSkill, createMockMatrix } from "../../lib/__tests__/helpers";
+import {
+  createMockCategory,
+  createMockSkill,
+  createMockMatrix,
+  TEST_SKILLS,
+} from "../../lib/__tests__/helpers";
 
 const SKILL_DEFAULTS: Partial<ResolvedSkill> = { categoryExclusive: true };
 
-// Test data construction casts: indexBy/mapToObj return generic Records
-const buildTestMatrix = (categories: CategoryDefinition[], skills: ResolvedSkill[]) => {
-  const withDisplayName = skills.filter((s) => s.displayName);
-  return createMockMatrix(
+// Test data construction cast: indexBy returns generic Record
+const buildTestMatrix = (categories: CategoryDefinition[], skills: ResolvedSkill[]) =>
+  createMockMatrix(
     indexBy(skills, (s) => s.id),
     {
       categories: indexBy(categories, (c) => c.id) as Record<Subcategory, CategoryDefinition>,
-      displayNameToId: mapToObj(withDisplayName, (s) => [s.displayName!, s.id]) as Record<
-        SkillDisplayName,
-        SkillId
-      >,
-      displayNames: mapToObj(withDisplayName, (s) => [s.id, s.displayName!]) as Record<
-        SkillId,
-        SkillDisplayName
-      >,
     },
   );
-};
 
 const frameworkCategory = createMockCategory("web-framework", "Framework", {
   domain: "web",
@@ -72,35 +65,17 @@ const databaseCategory = createMockCategory("api-database", "Database", {
   order: 1,
 });
 
-const reactSkill = createMockSkill("web-framework-react", "web-framework", {
-  ...SKILL_DEFAULTS,
-  displayName: "react",
-});
-
-const vueSkill = createMockSkill("web-framework-vue", "web-framework", {
-  ...SKILL_DEFAULTS,
-  displayName: "vue",
-});
+const reactSkill = { ...TEST_SKILLS.react, ...SKILL_DEFAULTS, displayName: "react" as const };
+const vueSkill = { ...TEST_SKILLS.vue, ...SKILL_DEFAULTS, displayName: "vue" as const };
 
 const tailwindSkill = createMockSkill("web-styling-tailwind", "web-styling", {
   ...SKILL_DEFAULTS,
   displayName: "tailwind",
 });
 
-const scssSkill = createMockSkill("web-styling-scss-modules", "web-styling", {
-  ...SKILL_DEFAULTS,
-  displayName: "scss-modules",
-});
-
-const zustandSkill = createMockSkill("web-state-zustand", "web-client-state", {
-  ...SKILL_DEFAULTS,
-  displayName: "zustand",
-});
-
-const honoSkill = createMockSkill("api-framework-hono", "api-api", {
-  ...SKILL_DEFAULTS,
-  displayName: "hono",
-});
+const scssSkill = { ...TEST_SKILLS.scssModules, ...SKILL_DEFAULTS, displayName: "scss-modules" as const };
+const zustandSkill = { ...TEST_SKILLS.zustand, ...SKILL_DEFAULTS, displayName: "zustand" as const };
+const honoSkill = { ...TEST_SKILLS.hono, ...SKILL_DEFAULTS, displayName: "hono" as const };
 
 const expressSkill = createMockSkill("api-framework-express", "api-api", {
   ...SKILL_DEFAULTS,

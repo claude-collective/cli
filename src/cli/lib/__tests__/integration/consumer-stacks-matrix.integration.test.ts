@@ -24,10 +24,10 @@ import {
   readTestYaml,
   buildWizardResult,
   buildSourceResult,
-  createMockSkill,
   createMockMatrix,
   createTempDir,
   cleanupTempDir,
+  TEST_SKILLS,
 } from "../helpers";
 import { loadDefaultMappings, clearDefaultsCache } from "../../loading";
 import { loadStacks, loadStackById } from "../../stacks/stacks-loader";
@@ -70,21 +70,24 @@ const CUSTOM_STACKS: TestStack[] = [
 
 function buildConsumerMatrix(): MergedSkillsMatrix {
   const skills: Record<string, ResolvedSkill> = {
-    "web-framework-react": createMockSkill("web-framework-react", "web-framework", {
+    "web-framework-react": {
+      ...TEST_SKILLS.react,
       description: "React framework for building user interfaces",
       tags: ["react", "web"],
       path: "skills/web-framework/web-framework-react/",
-    }),
-    "api-framework-hono": createMockSkill("api-framework-hono", "api-api", {
+    },
+    "api-framework-hono": {
+      ...TEST_SKILLS.hono,
       description: "Hono API framework for the edge",
       tags: ["hono", "api"],
       path: "skills/api-api/api-framework-hono/",
-    }),
-    "web-testing-vitest": createMockSkill("web-testing-vitest", "web-testing", {
+    },
+    "web-testing-vitest": {
+      ...TEST_SKILLS.vitest,
       description: "Next generation testing framework",
       tags: ["testing", "vitest"],
       path: "skills/web-testing/web-testing-vitest/",
-    }),
+    },
   };
   return createMockMatrix(skills);
 }

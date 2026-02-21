@@ -18,13 +18,13 @@ import type {
 } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
 import {
-  createMockSkill,
   createMockMatrix,
   fileExists,
   directoryExists,
   readTestYaml,
   buildWizardResult,
   buildSourceResult,
+  TEST_SKILLS,
 } from "../helpers";
 import { loadDefaultMappings, clearDefaultsCache } from "../../loading";
 
@@ -48,7 +48,7 @@ const AGENTS_SUBDIR = "agents";
 // Skills whose IDs match directory names in the test source.
 // The skill.path in the matrix must align with the on-disk layout
 // created by createTestSource: src/skills/{category}/{name}/SKILL.md
-const TEST_SKILLS: TestSkill[] = [
+const INIT_TEST_SKILLS: TestSkill[] = [
   {
     id: "web-framework-react",
     name: "web-framework-react",
@@ -113,18 +113,21 @@ Vitest is a fast unit test framework powered by Vite.
 // "{sourcePath}/src/skills/{category}/{id}/".
 function buildTestMatrix(): MergedSkillsMatrix {
   const skills: Record<string, ResolvedSkill> = {
-    "web-framework-react": createMockSkill("web-framework-react", "web-framework", {
+    "web-framework-react": {
+      ...TEST_SKILLS.react,
       description: "React framework for building user interfaces",
       tags: ["react", "web"],
-    }),
-    "api-framework-hono": createMockSkill("api-framework-hono", "api-api", {
+    },
+    "api-framework-hono": {
+      ...TEST_SKILLS.hono,
       description: "Hono API framework for the edge",
       tags: ["hono", "api"],
-    }),
-    "web-testing-vitest": createMockSkill("web-testing-vitest", "web-testing", {
+    },
+    "web-testing-vitest": {
+      ...TEST_SKILLS.vitest,
       description: "Next generation testing framework",
       tags: ["testing", "vitest"],
-    }),
+    },
   };
   return createMockMatrix(skills);
 }
@@ -138,7 +141,7 @@ describe("Init Flow Integration: Local Mode", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    dirs = await createTestSource({ skills: TEST_SKILLS });
+    dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
 
     sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
@@ -288,7 +291,7 @@ describe("Init Flow Integration: Single Skill Selection", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    dirs = await createTestSource({ skills: TEST_SKILLS });
+    dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
     sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
   });
@@ -325,7 +328,7 @@ describe("Init Flow Integration: All Skills Selection", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    dirs = await createTestSource({ skills: TEST_SKILLS });
+    dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
     sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
   });
@@ -367,7 +370,7 @@ describe("Init Flow Integration: Source Configuration", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    dirs = await createTestSource({ skills: TEST_SKILLS });
+    dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
     sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
   });
@@ -412,7 +415,7 @@ describe("Init Flow Integration: Directory Structure Verification", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    dirs = await createTestSource({ skills: TEST_SKILLS });
+    dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
     sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
   });
@@ -499,7 +502,7 @@ describe("Init Flow Integration: Idempotency and Merge", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    dirs = await createTestSource({ skills: TEST_SKILLS });
+    dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
     sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
   });
@@ -542,7 +545,7 @@ describe("Init Flow Integration: Install Mode in Config", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    dirs = await createTestSource({ skills: TEST_SKILLS });
+    dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
     sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
   });
@@ -586,7 +589,7 @@ describe("Init Flow Integration: Skill Content Verification", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    dirs = await createTestSource({ skills: TEST_SKILLS });
+    dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
     sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
   });
@@ -648,7 +651,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    dirs = await createTestSource({ skills: TEST_SKILLS });
+    dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
     sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
   });

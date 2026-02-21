@@ -24,7 +24,6 @@ import { createMockSkill, createMockMatrix } from "../__tests__/helpers";
 
 function createSkill(id: SkillId, overrides: Partial<ResolvedSkill> = {}): ResolvedSkill {
   return createMockSkill(id, "web-framework", {
-    description: `Description for ${id}`,
     categoryExclusive: true,
     ...overrides,
   });

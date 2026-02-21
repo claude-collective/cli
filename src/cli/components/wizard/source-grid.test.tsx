@@ -385,14 +385,12 @@ describe("SourceGrid component", () => {
         sourceUrl: "github:awesome-dev/skills",
         sourceName: "awesome-dev",
         alias: "react",
-        description: "Opinionated React with strict TS",
       },
       {
         id: "web-framework-react-strict" as SkillId,
         sourceUrl: "github:team-xyz/skills",
         sourceName: "team-xyz",
         alias: "react",
-        description: "Strict mode React",
       },
     ];
 

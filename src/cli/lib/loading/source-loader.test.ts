@@ -1,15 +1,55 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterAll, afterEach } from "vitest";
 import path from "path";
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir, writeFile, rm } from "fs/promises";
 import { loadSkillsMatrixFromSource } from "./source-loader";
 import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
+import {
+  createTestSource,
+  cleanupTestSource,
+  DEFAULT_TEST_SKILLS,
+  EXTRA_DOMAIN_TEST_SKILLS,
+  type TestDirs,
+  type TestStack,
+} from "../__tests__/fixtures/create-test-source";
 import type { CategoryDefinition, ResolvedSkill } from "../../types";
 
-// Skills are in the skills repo, not CLI repo
-// CLI tests need to point to the skills repo for integration tests
-const SKILLS_REPO_ROOT = path.resolve(__dirname, "../../../../../skills");
-// Fallback to the linked .claude folder's parent if skills repo not at expected path
-const SKILLS_SOURCE = process.env.CC_TEST_SKILLS_SOURCE || SKILLS_REPO_ROOT;
+// ── Shared fixture ──────────────────────────────────────────────────────────────
+
+const FIXTURE_SKILLS = [...DEFAULT_TEST_SKILLS, ...EXTRA_DOMAIN_TEST_SKILLS];
+
+const FIXTURE_SKILL_COUNT = FIXTURE_SKILLS.length;
+
+const FIXTURE_STACKS: TestStack[] = [
+  {
+    id: "fixture-test-stack",
+    name: "Fixture Test Stack",
+    description: "A stack for source-loader tests",
+    agents: {
+      "web-developer": {
+        "web-framework": "web-framework-react",
+      },
+    },
+  },
+];
+
+let fixtureDirs: TestDirs;
+
+beforeAll(async () => {
+  fixtureDirs = await createTestSource({
+    skills: FIXTURE_SKILLS,
+    stacks: FIXTURE_STACKS,
+  });
+  // Remove the generated skills-matrix.yaml so the loader falls back to the
+  // CLI's built-in matrix (which passes the strict subcategory/alias schema).
+  // Skills are still extracted from src/skills/ and merged into the matrix.
+  await rm(path.join(fixtureDirs.sourceDir, "config", "skills-matrix.yaml"));
+});
+
+afterAll(async () => {
+  await cleanupTestSource(fixtureDirs);
+});
+
+// ── Tests ───────────────────────────────────────────────────────────────────────
 
 describe("source-loader", () => {
   let tempDir: string;
@@ -28,11 +68,8 @@ describe("source-loader", () => {
   describe("loadSkillsMatrixFromSource", () => {
     describe("dev mode detection", () => {
       it("should use local mode when devMode flag is explicitly set", async () => {
-        // Dev mode is now opt-in via the devMode flag
-        // When devMode is true, it loads from PROJECT_ROOT (which is CLI repo)
-        // Since CLI repo doesn't have skills, we need to provide sourceFlag
         const result = await loadSkillsMatrixFromSource({
-          sourceFlag: SKILLS_SOURCE,
+          sourceFlag: fixtureDirs.sourceDir,
           projectDir: tempDir,
           devMode: true,
         });
@@ -44,14 +81,13 @@ describe("source-loader", () => {
       });
 
       it("should use source flag when provided", async () => {
-        // Using an explicit local path as source
         const result = await loadSkillsMatrixFromSource({
-          sourceFlag: SKILLS_SOURCE,
+          sourceFlag: fixtureDirs.sourceDir,
           projectDir: tempDir,
         });
 
         expect(result.isLocal).toBe(true);
-        expect(result.sourceConfig.source).toBe(SKILLS_SOURCE);
+        expect(result.sourceConfig.source).toBe(fixtureDirs.sourceDir);
         expect(result.sourceConfig.sourceOrigin).toBe("flag");
       });
     });
@@ -59,7 +95,7 @@ describe("source-loader", () => {
     describe("local source loading", () => {
       it("should load matrix from local source", async () => {
         const result = await loadSkillsMatrixFromSource({
-          sourceFlag: SKILLS_SOURCE,
+          sourceFlag: fixtureDirs.sourceDir,
           projectDir: tempDir,
         });
 
@@ -72,16 +108,16 @@ describe("source-loader", () => {
 
       it("should set sourcePath to the root path", async () => {
         const result = await loadSkillsMatrixFromSource({
-          sourceFlag: SKILLS_SOURCE,
+          sourceFlag: fixtureDirs.sourceDir,
           projectDir: tempDir,
         });
 
-        expect(result.sourcePath).toBe(SKILLS_SOURCE);
+        expect(result.sourcePath).toBe(fixtureDirs.sourceDir);
       });
 
       it("should mark result as local", async () => {
         const result = await loadSkillsMatrixFromSource({
-          sourceFlag: SKILLS_SOURCE,
+          sourceFlag: fixtureDirs.sourceDir,
           projectDir: tempDir,
         });
 
@@ -150,7 +186,7 @@ describe("source-loader local skills integration", () => {
     );
 
     const result = await loadSkillsMatrixFromSource({
-      sourceFlag: SKILLS_SOURCE,
+      sourceFlag: fixtureDirs.sourceDir,
       projectDir: tempDir,
     });
 
@@ -179,7 +215,7 @@ describe("source-loader local skills integration", () => {
     );
 
     const result = await loadSkillsMatrixFromSource({
-      sourceFlag: SKILLS_SOURCE,
+      sourceFlag: fixtureDirs.sourceDir,
       projectDir: tempDir,
     });
 
@@ -193,7 +229,7 @@ describe("source-loader local skills integration", () => {
 
   it("should not modify matrix when no local skills exist", async () => {
     const result = await loadSkillsMatrixFromSource({
-      sourceFlag: SKILLS_SOURCE,
+      sourceFlag: fixtureDirs.sourceDir,
       projectDir: tempDir, // No .claude/skills directory
     });
 
@@ -205,26 +241,9 @@ describe("source-loader local skills integration", () => {
   });
 
   it("should preserve remote skill category when local skill overwrites with category 'local'", async () => {
-    // First, load the matrix without local skills to find a skill we can override
-    const initialResult = await loadSkillsMatrixFromSource({
-      sourceFlag: SKILLS_SOURCE,
-      projectDir: tempDir,
-    });
-
-    // Find a skill that has a domain-based category
-    // Boundary cast: branded SkillId/Subcategory keys widened to string for test indexing
-    const skillsMap = initialResult.matrix.skills as Record<string, ResolvedSkill>;
-    const categoriesMap = initialResult.matrix.categories as Record<string, CategoryDefinition>;
-    const targetSkillId = Object.keys(skillsMap).find((id) => {
-      const skill = skillsMap[id];
-      return skill.category !== "local" && categoriesMap[skill.category]?.domain;
-    });
-
-    // Skip if no suitable skill found (defensive)
-    if (!targetSkillId) return;
-
-    const originalSkill = skillsMap[targetSkillId];
-    const originalCategory = originalSkill.category;
+    // Use a known fixture skill with a domain-mapped category
+    const targetSkillId = "web-framework-react";
+    const expectedCategory = "web-framework";
 
     // Create a local skill with the SAME ID but no category in metadata
     // (so local-skill-loader defaults category to "local" from LOCAL_CATEGORY constant)
@@ -237,9 +256,9 @@ describe("source-loader local skills integration", () => {
       `---\nname: ${targetSkillId}\ndescription: Local override\n---\nContent`,
     );
 
-    // Load again with the local skill override
+    // Load with the local skill override
     const result = await loadSkillsMatrixFromSource({
-      sourceFlag: SKILLS_SOURCE,
+      sourceFlag: fixtureDirs.sourceDir,
       projectDir: tempDir,
     });
 
@@ -249,7 +268,7 @@ describe("source-loader local skills integration", () => {
     expect(overriddenSkill.local).toBe(true);
 
     // The category should be preserved from the remote skill
-    expect(overriddenSkill.category).toBe(originalCategory);
+    expect(overriddenSkill.category).toBe(expectedCategory);
   });
 
   it("should preserve existing skills when merging local skills", async () => {
@@ -263,13 +282,13 @@ describe("source-loader local skills integration", () => {
     );
 
     const result = await loadSkillsMatrixFromSource({
-      sourceFlag: SKILLS_SOURCE,
+      sourceFlag: fixtureDirs.sourceDir,
       projectDir: tempDir,
     });
 
     // Existing marketplace skills should still be present
     const marketplaceSkills = Object.values(result.matrix.skills).filter((s) => s!.local !== true);
-    expect(marketplaceSkills.length).toBeGreaterThan(50);
+    expect(marketplaceSkills.length).toBe(FIXTURE_SKILL_COUNT);
 
     // Local skill should also be present with normalized ID
     // Boundary cast: branded SkillId key widened to string for test indexing
@@ -500,12 +519,12 @@ describe("source-loader integration", () => {
 
   it("should load all skills from local source", async () => {
     const result = await loadSkillsMatrixFromSource({
-      sourceFlag: SKILLS_SOURCE,
+      sourceFlag: fixtureDirs.sourceDir,
     });
 
-    // Verify we loaded a reasonable number of skills
+    // Verify we loaded all fixture skills
     const skillCount = Object.keys(result.matrix.skills).length;
-    expect(skillCount).toBeGreaterThan(50); // We know there are 70+ skills
+    expect(skillCount).toBe(FIXTURE_SKILL_COUNT);
 
     // Verify skills have required properties
     const firstSkill = Object.values(result.matrix.skills)[0]!;
@@ -516,10 +535,10 @@ describe("source-loader integration", () => {
 
   it("should load suggested stacks", async () => {
     const result = await loadSkillsMatrixFromSource({
-      sourceFlag: SKILLS_SOURCE,
+      sourceFlag: fixtureDirs.sourceDir,
     });
 
-    // Stacks loaded from source or CLI fallback
+    // Stacks loaded from source
     expect(result.matrix.suggestedStacks).toBeDefined();
     expect(result.matrix.suggestedStacks.length).toBeGreaterThan(0);
 
@@ -581,11 +600,12 @@ describe("source-loader integration", () => {
 
   it("should load categories", async () => {
     const result = await loadSkillsMatrixFromSource({
-      sourceFlag: SKILLS_SOURCE,
+      sourceFlag: fixtureDirs.sourceDir,
     });
 
     expect(result.matrix.categories).toBeDefined();
     const categoryCount = Object.keys(result.matrix.categories).length;
-    expect(categoryCount).toBeGreaterThan(10); // We know there are 20+ categories
+    // Categories come from the CLI's built-in matrix (all defined subcategories)
+    expect(categoryCount).toBeGreaterThan(10);
   });
 });

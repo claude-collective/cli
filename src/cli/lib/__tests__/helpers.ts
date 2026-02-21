@@ -348,13 +348,23 @@ export function createMockMatrix(
   skills: Record<string, ResolvedSkill>,
   overrides?: Partial<MergedSkillsMatrix>,
 ): MergedSkillsMatrix {
+  // Auto-generate displayNames and displayNameToId from skills
+  const autoDisplayNames = {} as Record<SkillId, SkillDisplayName>;
+  const autoDisplayNameToId = {} as Record<SkillDisplayName, SkillId>;
+  for (const [id, skill] of typedEntries(skills)) {
+    if (skill.displayName) {
+      autoDisplayNames[id as SkillId] = skill.displayName;
+      autoDisplayNameToId[skill.displayName] = id as SkillId;
+    }
+  }
+
   return {
     version: "1.0.0",
     categories: {} as Record<Subcategory, import("../../types").CategoryDefinition>,
     skills,
     suggestedStacks: [],
-    displayNameToId: {} as Record<SkillDisplayName, SkillId>,
-    displayNames: {} as Record<SkillId, SkillDisplayName>,
+    displayNameToId: autoDisplayNameToId,
+    displayNames: autoDisplayNames,
     generatedAt: new Date().toISOString(),
     ...overrides,
   };
@@ -949,5 +959,5 @@ export function createMockStack(
   };
 }
 
-export { getTestSkill } from "./test-fixtures";
+export { getTestSkill, TEST_SKILLS, TEST_CATEGORIES, TEST_MATRICES } from "./test-fixtures";
 export type { TestSkillName } from "./test-fixtures";

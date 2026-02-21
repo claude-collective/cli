@@ -8,7 +8,12 @@ import type {
   Stack,
   StackAgentConfig,
 } from "../../types";
-import { createMockSkill, createMockMatrix } from "../__tests__/helpers";
+import {
+  createMockSkill,
+  createMockMatrix,
+  TEST_SKILLS,
+  TEST_MATRICES,
+} from "../__tests__/helpers";
 import { loadDefaultMappings, clearDefaultsCache } from "../loading";
 
 /** Shorthand: creates a SkillAssignment from an id and optional preloaded flag */
@@ -28,11 +33,11 @@ describe("config-generator", () => {
 
   describe("generateProjectConfigFromSkills", () => {
     it("returns a minimal ProjectConfig structure with stack", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-      });
-
-      const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], matrix);
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-framework-react"],
+        TEST_MATRICES.react,
+      );
 
       expect(config.name).toBe("my-project");
       expect(config.agents).toBeDefined();
@@ -51,15 +56,10 @@ describe("config-generator", () => {
     });
 
     it("builds stack with subcategory->SkillAssignment[] mappings for multiple skills", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-        ["web-styling-scss-modules"]: createMockSkill("web-styling-scss-modules", "web-styling"),
-      });
-
       const config = generateProjectConfigFromSkills(
         "my-project",
         ["web-framework-react", "web-styling-scss-modules"],
-        matrix,
+        TEST_MATRICES.reactAndScss,
       );
 
       // Stack should have agent entries with subcategory mappings
@@ -72,11 +72,11 @@ describe("config-generator", () => {
     });
 
     it("derives agents from skills via getAgentsForSkill", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-      });
-
-      const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], matrix);
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-framework-react"],
+        TEST_MATRICES.react,
+      );
 
       // web/* skills should include web-developer, web-reviewer, etc.
       expect(config.agents).toContain("web-developer");
@@ -84,9 +84,7 @@ describe("config-generator", () => {
     });
 
     it("handles empty skill selection", () => {
-      const matrix = createMockMatrix({});
-
-      const config = generateProjectConfigFromSkills("my-project", [], matrix);
+      const config = generateProjectConfigFromSkills("my-project", [], TEST_MATRICES.empty);
 
       expect(config.name).toBe("my-project");
       expect(config.agents).toEqual([]);
@@ -116,7 +114,7 @@ describe("config-generator", () => {
 
     it("handles both remote and local skills", () => {
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
+        ["web-framework-react"]: TEST_SKILLS.react,
         "meta-company-patterns": createMockSkill("meta-company-patterns", "local", {
           local: true,
           localPath: ".claude/skills/company-patterns/",
@@ -139,14 +137,10 @@ describe("config-generator", () => {
     });
 
     it("includes optional fields when provided", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-      });
-
       const config = generateProjectConfigFromSkills(
         "my-project",
         ["web-framework-react"],
-        matrix,
+        TEST_MATRICES.react,
         {
           description: "My awesome project",
           author: "@vince",
@@ -158,14 +152,10 @@ describe("config-generator", () => {
     });
 
     it("skips unknown skills gracefully", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-      });
-
       const config = generateProjectConfigFromSkills(
         "my-project",
         ["web-framework-react", "web-unknown-skill"],
-        matrix,
+        TEST_MATRICES.react,
       );
 
       // Stack should only contain known skills
@@ -180,15 +170,10 @@ describe("config-generator", () => {
     });
 
     it("deduplicates agents across skills in the same domain", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-        ["web-styling-scss-modules"]: createMockSkill("web-styling-scss-modules", "web-styling"),
-      });
-
       const config = generateProjectConfigFromSkills(
         "my-project",
         ["web-framework-react", "web-styling-scss-modules"],
-        matrix,
+        TEST_MATRICES.reactAndScss,
       );
 
       // Both web/* skills map to the same agent set, so agents should be deduplicated
@@ -197,26 +182,21 @@ describe("config-generator", () => {
     });
 
     it("sorts agents alphabetically", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-      });
-
-      const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], matrix);
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-framework-react"],
+        TEST_MATRICES.react,
+      );
 
       const sortedAgents = [...config.agents].sort();
       expect(config.agents).toEqual(sortedAgents);
     });
 
     it("merges agents from different domains", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-        ["api-framework-hono"]: createMockSkill("api-framework-hono", "api-api"),
-      });
-
       const config = generateProjectConfigFromSkills(
         "my-project",
         ["web-framework-react", "api-framework-hono"],
-        matrix,
+        TEST_MATRICES.reactAndHono,
       );
 
       // web/* agents
@@ -231,15 +211,10 @@ describe("config-generator", () => {
     });
 
     it("builds separate stack entries per agent for cross-domain skills", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-        ["api-framework-hono"]: createMockSkill("api-framework-hono", "api-api"),
-      });
-
       const config = generateProjectConfigFromSkills(
         "my-project",
         ["web-framework-react", "api-framework-hono"],
-        matrix,
+        TEST_MATRICES.reactAndHono,
       );
 
       expect(config.stack).toBeDefined();
@@ -253,11 +228,13 @@ describe("config-generator", () => {
 
     it("handles bare subcategory category paths", () => {
       // Skills can have domain-prefixed subcategory as their category (without slash)
-      const matrix = createMockMatrix({
-        ["web-testing-vitest"]: createMockSkill("web-testing-vitest", "web-testing"),
-      });
+      const vitestMatrix = createMockMatrix({ "web-testing-vitest": TEST_SKILLS.vitest });
 
-      const config = generateProjectConfigFromSkills("my-project", ["web-testing-vitest"], matrix);
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-testing-vitest"],
+        vitestMatrix,
+      );
 
       // Bare subcategory "web-testing" should still extract as subcategory
       expect(config.stack).toBeDefined();
@@ -269,32 +246,26 @@ describe("config-generator", () => {
     });
 
     it("preserves all selected skill IDs in skills array", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-        ["web-styling-scss-modules"]: createMockSkill("web-styling-scss-modules", "web-styling"),
-        ["api-framework-hono"]: createMockSkill("api-framework-hono", "api-api"),
-      });
-
       const selectedSkills: SkillId[] = [
         "web-framework-react",
         "web-styling-scss-modules",
         "api-framework-hono",
       ];
 
-      const config = generateProjectConfigFromSkills("my-project", selectedSkills, matrix);
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        selectedSkills,
+        TEST_MATRICES.reactScssAndHono,
+      );
 
       expect(config.skills).toEqual(selectedSkills);
     });
 
     it("includes unknown skill IDs in skills array even when skipped for agents", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-      });
-
       const config = generateProjectConfigFromSkills(
         "my-project",
         ["web-framework-react", "web-unknown-skill"],
-        matrix,
+        TEST_MATRICES.react,
       );
 
       // skills array is a direct copy of selectedSkillIds — includes unknowns
@@ -302,12 +273,10 @@ describe("config-generator", () => {
     });
 
     it("produces no stack when all skills are unknown", () => {
-      const matrix = createMockMatrix({});
-
       const config = generateProjectConfigFromSkills(
         "my-project",
         ["web-nonexistent-skill", "api-nonexistent-thing"],
-        matrix,
+        TEST_MATRICES.empty,
       );
 
       expect(config.agents).toEqual([]);
@@ -317,14 +286,10 @@ describe("config-generator", () => {
     });
 
     it("does not add description when options.description is empty string", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-      });
-
       const config = generateProjectConfigFromSkills(
         "my-project",
         ["web-framework-react"],
-        matrix,
+        TEST_MATRICES.react,
         { description: "", author: "@vince" },
       );
 
@@ -334,14 +299,10 @@ describe("config-generator", () => {
     });
 
     it("does not add author when options.author is empty string", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-      });
-
       const config = generateProjectConfigFromSkills(
         "my-project",
         ["web-framework-react"],
-        matrix,
+        TEST_MATRICES.react,
         { description: "A project", author: "" },
       );
 
@@ -351,14 +312,10 @@ describe("config-generator", () => {
     });
 
     it("does not add optional fields when options is undefined", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-      });
-
       const config = generateProjectConfigFromSkills(
         "my-project",
         ["web-framework-react"],
-        matrix,
+        TEST_MATRICES.react,
         undefined,
       );
 
@@ -367,16 +324,12 @@ describe("config-generator", () => {
     });
 
     it("uses selectedAgents when provided instead of derived agents", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-      });
-
       const selectedAgents: AgentName[] = ["web-developer", "web-reviewer"];
 
       const config = generateProjectConfigFromSkills(
         "my-project",
         ["web-framework-react"],
-        matrix,
+        TEST_MATRICES.react,
         { selectedAgents },
       );
 
@@ -392,16 +345,12 @@ describe("config-generator", () => {
     });
 
     it("filters stack entries to only include selectedAgents", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-      });
-
       const selectedAgents: AgentName[] = ["web-developer", "web-reviewer"];
 
       const config = generateProjectConfigFromSkills(
         "my-project",
         ["web-framework-react"],
-        matrix,
+        TEST_MATRICES.react,
         { selectedAgents },
       );
 
@@ -420,11 +369,11 @@ describe("config-generator", () => {
     });
 
     it("derives agents when selectedAgents is not provided", () => {
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework"),
-      });
-
-      const config = generateProjectConfigFromSkills("my-project", ["web-framework-react"], matrix);
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-framework-react"],
+        TEST_MATRICES.react,
+      );
 
       // Should derive agents from skills as before
       expect(config.agents).toContain("web-developer");

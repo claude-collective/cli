@@ -6,10 +6,9 @@ import {
   runCliCommand,
   createTempDir,
   cleanupTempDir,
-  createMockMatrix,
-  createMockSkill,
   buildSourceResult,
   CLI_ROOT,
+  TEST_MATRICES,
 } from "../helpers";
 import { EXIT_CODES } from "../../exit-codes";
 import { useWizardStore } from "../../../stores/wizard-store";
@@ -191,10 +190,10 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
   };
 
   const skills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
-    "web-framework-react": { category: "web-framework", displayName: "react" },
-    "web-state-zustand": { category: "web-client-state", displayName: "zustand" },
-    "api-framework-hono": { category: "api-api", displayName: "hono" },
-    "web-testing-vitest": { category: "web-testing", displayName: "vitest" },
+    "web-framework-react": { category: "web-framework" },
+    "web-state-zustand": { category: "web-client-state" },
+    "api-framework-hono": { category: "api-api" },
+    "web-testing-vitest": { category: "web-testing" },
   } as Partial<Record<SkillId, { category: string; displayName?: string }>>;
 
   beforeEach(() => {
@@ -275,7 +274,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
 
   it("should skip skills missing a category", () => {
     const sparseSkills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
-      "web-framework-react": { category: "web-framework", displayName: "react" },
+      "web-framework-react": { category: "web-framework" },
       "web-framework-unknown": {} as { category: string },
     } as Partial<Record<SkillId, { category: string; displayName?: string }>>;
 
@@ -292,8 +291,8 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
 
   it("should skip skills whose category has no domain mapping", () => {
     const extraSkills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
-      "web-framework-react": { category: "web-framework", displayName: "react" },
-      "infra-tooling-linter": { category: "unmapped-category", displayName: "linter" },
+      "web-framework-react": { category: "web-framework" },
+      "infra-tooling-linter": { category: "unmapped-category" },
     };
 
     const installedSkills: SkillId[] = ["web-framework-react", "infra-tooling-linter"];
@@ -325,7 +324,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     // testing category is non-exclusive, so multiple selections are valid
     const multiSkills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
       ...skills,
-      "web-testing-playwright": { category: "web-testing", displayName: "playwright" },
+      "web-testing-playwright": { category: "web-testing" },
     } as Partial<Record<SkillId, { category: string; displayName?: string }>>;
 
     const installedSkills: SkillId[] = ["web-testing-vitest", "web-testing-playwright"];
@@ -354,10 +353,10 @@ describe("edit wizard domain filtering", () => {
   };
 
   const skills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
-    "web-framework-react": { category: "web-framework", displayName: "react" },
-    "web-state-zustand": { category: "web-client-state", displayName: "zustand" },
-    "api-framework-hono": { category: "api-api", displayName: "hono" },
-    "web-testing-vitest": { category: "web-testing", displayName: "vitest" },
+    "web-framework-react": { category: "web-framework" },
+    "web-state-zustand": { category: "web-client-state" },
+    "api-framework-hono": { category: "api-api" },
+    "web-testing-vitest": { category: "web-testing" },
   } as Partial<Record<SkillId, { category: string; displayName?: string }>>;
 
   beforeEach(() => {
@@ -460,10 +459,7 @@ describe("edit command local-mode skill fallback", () => {
 
   const CONFIG_SKILLS: SkillId[] = ["web-framework-react", "api-framework-hono"];
 
-  const testMatrix = createMockMatrix({
-    "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
-    "api-framework-hono": createMockSkill("api-framework-hono", "api-api"),
-  });
+  const testMatrix = TEST_MATRICES.reactAndHono;
 
   const testSourceResult = buildSourceResult(testMatrix, "/test/source");
 

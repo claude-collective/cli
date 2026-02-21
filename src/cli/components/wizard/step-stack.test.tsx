@@ -6,7 +6,7 @@ import {
   createMockCategory,
   createMockMatrix,
   createMockResolvedStack,
-  createMockSkill,
+  TEST_SKILLS,
 } from "../../lib/__tests__/helpers";
 
 import type { MergedSkillsMatrix } from "../../types";
@@ -22,15 +22,9 @@ import {
 
 const createMockStackWithSkills = (): MergedSkillsMatrix => {
   const skills = {
-    ["web-framework-react"]: createMockSkill("web-framework-react", "web-framework", {
-      description: "React framework",
-    }),
-    ["web-state-zustand"]: createMockSkill("web-state-zustand", "web-client-state", {
-      description: "State management",
-    }),
-    ["api-framework-hono"]: createMockSkill("api-framework-hono", "api-api", {
-      description: "Web framework",
-    }),
+    ["web-framework-react"]: TEST_SKILLS.react,
+    ["web-state-zustand"]: TEST_SKILLS.zustand,
+    ["api-framework-hono"]: TEST_SKILLS.hono,
   };
 
   const suggestedStacks = [
@@ -39,7 +33,6 @@ const createMockStackWithSkills = (): MergedSkillsMatrix => {
       allSkillIds: ["web-framework-react", "web-state-zustand", "api-framework-hono"],
     }),
     createMockResolvedStack("react-minimal", "React Minimal", {
-      description: "Minimal React setup",
       allSkillIds: ["web-framework-react"],
     }),
   ];
@@ -48,11 +41,9 @@ const createMockStackWithSkills = (): MergedSkillsMatrix => {
     suggestedStacks,
     categories: {
       "web-framework": createMockCategory("web-framework", "Web", {
-        description: "Web skills",
         exclusive: false,
       }),
       "api-api": createMockCategory("api-api", "API", {
-        description: "API skills",
         exclusive: false,
         order: 1,
       }),

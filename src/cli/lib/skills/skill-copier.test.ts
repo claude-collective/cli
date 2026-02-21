@@ -15,6 +15,7 @@ import {
   createTempDir,
   cleanupTempDir,
   writeTestSkill,
+  TEST_SKILLS,
 } from "../__tests__/helpers";
 
 function createMockSkill(
@@ -275,11 +276,7 @@ describe("skill-copier", () => {
           local: true,
           localPath: localSkillPath,
         }),
-        ["web-framework-react"]: createMockSkill(
-          "web-framework-react",
-          "web-framework",
-          remoteSkillRelPath,
-        ),
+        "web-framework-react": { ...TEST_SKILLS.react, path: remoteSkillRelPath },
       });
 
       const sourceResult: SourceLoadResult = {
@@ -376,12 +373,12 @@ describe("skill-copier", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill(
-          "web-framework-react",
-          "web-framework",
-          remoteSkillRelPath,
-          { local: true, localPath: localSkillPath },
-        ),
+        "web-framework-react": {
+          ...TEST_SKILLS.react,
+          path: remoteSkillRelPath,
+          local: true,
+          localPath: localSkillPath,
+        },
       });
 
       const sourceResult: SourceLoadResult = {
@@ -418,15 +415,12 @@ describe("skill-copier", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill(
-          "web-framework-react",
-          "web-framework",
-          localSkillPath,
-          {
-            local: true,
-            localPath: localSkillPath,
-          },
-        ),
+        "web-framework-react": {
+          ...TEST_SKILLS.react,
+          path: localSkillPath,
+          local: true,
+          localPath: localSkillPath,
+        },
       });
 
       const sourceResult: SourceLoadResult = {
@@ -472,14 +466,7 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        ["web-state-zustand"]: createMockSkill(
-          "web-state-zustand",
-          "web-client-state",
-          remoteSkillRelPath,
-          {
-            displayName: "zustand",
-          },
-        ),
+        "web-state-zustand": { ...TEST_SKILLS.zustand, path: remoteSkillRelPath },
       });
 
       const sourceResult: SourceLoadResult = {
@@ -522,12 +509,7 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        ["api-framework-hono"]: createMockSkill(
-          "api-framework-hono",
-          "api-api",
-          remoteSkillRelPath,
-          // No alias
-        ),
+        "api-framework-hono": { ...TEST_SKILLS.hono, path: remoteSkillRelPath },
       });
 
       const sourceResult: SourceLoadResult = {
@@ -614,12 +596,7 @@ describe("skill-copier", () => {
           local: true,
           localPath: localSkillPath,
         }),
-        ["web-framework-react"]: createMockSkill(
-          "web-framework-react",
-          "web-framework",
-          remoteSkillRelPath,
-          { displayName: "react" },
-        ),
+        "web-framework-react": { ...TEST_SKILLS.react, path: remoteSkillRelPath },
       });
 
       const sourceResult: SourceLoadResult = {
@@ -691,11 +668,7 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill(
-          "web-framework-react",
-          "web-framework",
-          deeplyNestedPath,
-        ),
+        "web-framework-react": { ...TEST_SKILLS.react, path: deeplyNestedPath },
       });
 
       const sourceResult: SourceLoadResult = {
@@ -769,20 +742,9 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        ["web-framework-react"]: createMockSkill(
-          "web-framework-react",
-          "web-framework",
-          reactPath,
-          {
-            displayName: "react",
-          },
-        ),
-        ["api-framework-hono"]: createMockSkill("api-framework-hono", "api-api", honoPath, {
-          displayName: "hono",
-        }),
-        ["web-testing-vitest"]: createMockSkill("web-testing-vitest", "web-testing", vitestPath, {
-          displayName: "vitest",
-        }),
+        "web-framework-react": { ...TEST_SKILLS.react, path: reactPath },
+        "api-framework-hono": { ...TEST_SKILLS.hono, path: honoPath },
+        "web-testing-vitest": { ...TEST_SKILLS.vitest, path: vitestPath },
       });
 
       const sourceResult: SourceLoadResult = {
@@ -883,12 +845,12 @@ describe("skill-copier", () => {
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill(
-          "web-framework-react",
-          "web-framework",
-          remoteSkillRelPath,
-          { local: true, localPath: localSkillPath },
-        ),
+        "web-framework-react": {
+          ...TEST_SKILLS.react,
+          path: remoteSkillRelPath,
+          local: true,
+          localPath: localSkillPath,
+        },
       });
 
       const sourceResult: SourceLoadResult = {
@@ -934,15 +896,12 @@ describe("skill-copier", () => {
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill(
-          "web-framework-react",
-          "web-framework",
-          localSkillPath,
-          {
-            local: true,
-            localPath: localSkillPath,
-          },
-        ),
+        "web-framework-react": {
+          ...TEST_SKILLS.react,
+          path: localSkillPath,
+          local: true,
+          localPath: localSkillPath,
+        },
       });
 
       const sourceResult: SourceLoadResult = {
@@ -981,15 +940,12 @@ describe("skill-copier", () => {
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
 
       const matrix = createMockMatrix({
-        "web-framework-react": createMockSkill(
-          "web-framework-react",
-          "web-framework",
-          localSkillPath,
-          {
-            local: true,
-            localPath: localSkillPath,
-          },
-        ),
+        "web-framework-react": {
+          ...TEST_SKILLS.react,
+          path: localSkillPath,
+          local: true,
+          localPath: localSkillPath,
+        },
       });
 
       const sourceResult: SourceLoadResult = {

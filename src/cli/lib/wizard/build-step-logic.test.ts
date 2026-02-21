@@ -5,7 +5,7 @@ import {
   getSkillDisplayLabel,
   buildCategoriesForDomain,
 } from "./build-step-logic";
-import { createMockSkill, createMockMatrix } from "../__tests__/helpers";
+import { createMockMatrix, TEST_SKILLS, TEST_CATEGORIES } from "../__tests__/helpers";
 import type { CategoryRow } from "../../components/wizard/category-grid";
 import type { SkillId, Subcategory } from "../../types";
 
@@ -128,44 +128,19 @@ describe("buildCategoriesForDomain", () => {
   const stateCategory: Subcategory = "web-client-state";
 
   function createMatrix() {
-    const reactSkill = createMockSkill("web-framework-react", frameworkCategory, {
-      displayName: "react",
-    });
-    const vueSkill = createMockSkill("web-framework-vue", frameworkCategory, {
-      displayName: "vue",
-    });
-    const zustandSkill = createMockSkill("web-state-zustand", stateCategory, {
-      displayName: "zustand",
-      compatibleWith: ["web-framework-react"],
-    });
-    const piniaSkill = createMockSkill("web-state-pinia", stateCategory, {
-      displayName: "pinia",
-      compatibleWith: ["web-framework-vue"],
-    });
-
     return createMockMatrix(
       {
-        "web-framework-react": reactSkill,
-        "web-framework-vue": vueSkill,
-        "web-state-zustand": zustandSkill,
-        "web-state-pinia": piniaSkill,
+        "web-framework-react": TEST_SKILLS.react,
+        "web-framework-vue": TEST_SKILLS.vue,
+        "web-state-zustand": TEST_SKILLS.zustand,
+        "web-state-pinia": TEST_SKILLS.pinia,
       },
       {
         categories: {
-          [frameworkCategory]: {
-            id: frameworkCategory,
-            displayName: "Framework",
-            domain: "web",
-            required: true,
-            exclusive: true,
-            order: 0,
-          },
+          [frameworkCategory]: { ...TEST_CATEGORIES.framework, required: true },
           [stateCategory]: {
-            id: stateCategory,
+            ...TEST_CATEGORIES.clientState,
             displayName: "State Management",
-            domain: "web",
-            required: false,
-            exclusive: true,
             order: 1,
           },
         } as Record<Subcategory, import("../../types").CategoryDefinition>,
@@ -187,14 +162,7 @@ describe("buildCategoriesForDomain", () => {
       {},
       {
         categories: {
-          [frameworkCategory]: {
-            id: frameworkCategory,
-            displayName: "Framework",
-            domain: "web",
-            required: true,
-            exclusive: true,
-            order: 0,
-          },
+          [frameworkCategory]: { ...TEST_CATEGORIES.framework, required: true },
         } as Record<Subcategory, import("../../types").CategoryDefinition>,
       },
     );

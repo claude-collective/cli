@@ -1,5 +1,11 @@
-import type { CategoryPath, ResolvedSkill, SkillDisplayName, SkillId } from "../../types";
-import { createMockSkill } from "./helpers";
+import type {
+  CategoryPath,
+  MergedSkillsMatrix,
+  ResolvedSkill,
+  SkillDisplayName,
+  SkillId,
+} from "../../types";
+import { createMockSkill, createMockCategory, createMockMatrix } from "./helpers";
 
 interface SkillFixtureConfig {
   id: SkillId;
@@ -83,3 +89,70 @@ export function getTestSkill(
   const { id, category, ...defaults } = config;
   return createMockSkill(id, category, { ...defaults, ...overrides });
 }
+
+// ---------------------------------------------------------------------------
+// Shared base skill fixtures — canonical defaults with no overrides.
+// Use spread for per-test customization: `{ ...TEST_SKILLS.react, displayName: "react" }`
+// ---------------------------------------------------------------------------
+
+export const TEST_SKILLS = {
+  react: createMockSkill("web-framework-react", "web-framework"),
+  vue: createMockSkill("web-framework-vue", "web-framework"),
+  zustand: createMockSkill("web-state-zustand", "web-client-state", {
+    compatibleWith: ["web-framework-react"],
+  }),
+  pinia: createMockSkill("web-state-pinia", "web-client-state", {
+    compatibleWith: ["web-framework-vue"],
+  }),
+  hono: createMockSkill("api-framework-hono", "api-api"),
+  vitest: createMockSkill("web-testing-vitest", "web-testing"),
+  scssModules: createMockSkill("web-styling-scss-modules", "web-styling"),
+  drizzle: createMockSkill("api-database-drizzle", "api-database"),
+};
+
+// ---------------------------------------------------------------------------
+// Shared base category fixtures — canonical defaults with no overrides.
+// Use spread for per-test customization: `{ ...TEST_CATEGORIES.framework, required: true }`
+// ---------------------------------------------------------------------------
+
+export const TEST_CATEGORIES = {
+  framework: createMockCategory("web-framework", "Framework"),
+  clientState: createMockCategory("web-client-state", "Client State"),
+  testing: createMockCategory("web-testing", "Testing"),
+  tooling: createMockCategory("shared-tooling", "Tooling"),
+};
+
+// ---------------------------------------------------------------------------
+// Shared matrix fixtures — common skill combinations used across test files.
+// Use createMockMatrix overrides for per-test customization:
+//   `createMockMatrix(TEST_MATRICES.react.skills, { suggestedStacks: [...] })`
+// ---------------------------------------------------------------------------
+
+export const TEST_MATRICES: Record<string, MergedSkillsMatrix> = {
+  empty: createMockMatrix({}),
+  react: createMockMatrix({
+    "web-framework-react": TEST_SKILLS.react,
+  }),
+  reactAndZustand: createMockMatrix({
+    "web-framework-react": TEST_SKILLS.react,
+    "web-state-zustand": TEST_SKILLS.zustand,
+  }),
+  reactAndHono: createMockMatrix({
+    "web-framework-react": TEST_SKILLS.react,
+    "api-framework-hono": TEST_SKILLS.hono,
+  }),
+  reactAndScss: createMockMatrix({
+    "web-framework-react": TEST_SKILLS.react,
+    "web-styling-scss-modules": TEST_SKILLS.scssModules,
+  }),
+  reactScssAndHono: createMockMatrix({
+    "web-framework-react": TEST_SKILLS.react,
+    "web-styling-scss-modules": TEST_SKILLS.scssModules,
+    "api-framework-hono": TEST_SKILLS.hono,
+  }),
+  reactZustandAndHono: createMockMatrix({
+    "web-framework-react": TEST_SKILLS.react,
+    "web-state-zustand": TEST_SKILLS.zustand,
+    "api-framework-hono": TEST_SKILLS.hono,
+  }),
+};

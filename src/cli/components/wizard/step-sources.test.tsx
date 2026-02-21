@@ -12,17 +12,10 @@ import {
   INPUT_DELAY_MS,
   delay,
 } from "../../lib/__tests__/test-constants";
-import { createMockMatrix } from "../../lib/__tests__/helpers";
-import { getTestSkill } from "../../lib/__tests__/test-fixtures";
+import { TEST_MATRICES } from "../../lib/__tests__/helpers";
 import { DEFAULT_BRANDING, UI_SYMBOLS } from "../../consts";
 
-const reactSkill = getTestSkill("react");
-const zustandSkill = getTestSkill("zustand");
-
-const mockMatrix = createMockMatrix({
-  [reactSkill.id]: reactSkill,
-  [zustandSkill.id]: zustandSkill,
-});
+const mockMatrix = TEST_MATRICES.reactAndZustand;
 
 const defaultProps: StepSourcesProps = {
   matrix: mockMatrix,
