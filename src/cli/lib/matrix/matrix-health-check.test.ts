@@ -1,87 +1,256 @@
 import { describe, it, expect, vi } from "vitest";
 import { checkMatrixHealth } from "./matrix-health-check";
-import { createMockSkill, createMockMatrix } from "../__tests__/helpers";
-import type {
-  CategoryDefinition,
-  MergedSkillsMatrix,
-  ResolvedSkill,
-  SkillId,
-  Subcategory,
-} from "../../types";
+import { createMockSkill, createMockMatrix, createMockCategory } from "../__tests__/helpers";
+import type { SkillId, Subcategory } from "../../types";
 
-// Mock logger to suppress warnings during tests (manual mock from __mocks__ directory)
 vi.mock("../../utils/logger");
 
 import { warn } from "../../utils/logger";
 
-function createCategory(
-  id: Subcategory,
-  overrides?: Partial<CategoryDefinition>,
-): CategoryDefinition {
-  return {
-    id,
-    displayName: id,
-    description: `${id} category`,
-    domain: "web",
-    exclusive: true,
-    required: false,
-    order: 0,
-    ...overrides,
-  };
-}
+// ---------------------------------------------------------------------------
+// Categories
+// ---------------------------------------------------------------------------
 
-function createSkill(
-  id: SkillId,
-  category: Subcategory,
-  overrides?: Partial<ResolvedSkill>,
-): ResolvedSkill {
-  return createMockSkill(id, category, {
-    description: `${id} skill`,
-    categoryExclusive: true,
-    ...overrides,
-  });
-}
+const frameworkCategory = createMockCategory("web-framework", "Framework");
+const clientStateCategory = createMockCategory("web-client-state", "Client State");
+const testingCategory = createMockCategory("web-testing", "Testing");
+const toolingCategory = createMockCategory("shared-tooling", "Tooling");
+const missingDomainFrameworkCategory = createMockCategory("web-framework", "Framework", {
+  domain: undefined,
+});
+const missingDomainStylingCategory = createMockCategory("web-styling", "Styling", {
+  domain: undefined,
+});
+
+// ---------------------------------------------------------------------------
+// Skills
+// ---------------------------------------------------------------------------
+
+const reactSkill = createMockSkill("web-framework-react", "web-framework");
+
+const zustandSkill = createMockSkill("web-state-zustand", "web-client-state", {
+  compatibleWith: ["web-framework-react"],
+  recommends: [{ skillId: "web-framework-react", reason: "Works well with React" }],
+});
+
+const orphanSkill = createMockSkill("web-framework-react", "nonexistent-category" as Subcategory);
+
+const unresolvedCompatibleWithSkill = createMockSkill("web-state-zustand", "web-client-state", {
+  compatibleWith: ["web-framework-nonexistent" as SkillId],
+});
+
+const unresolvedConflictsWithSkill = createMockSkill("web-framework-react", "web-framework", {
+  conflictsWith: [{ skillId: "web-framework-ghost" as SkillId, reason: "Conflicts" }],
+});
+
+const unresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e", "web-testing", {
+  requires: [
+    {
+      skillIds: ["web-framework-missing" as SkillId],
+      needsAny: false,
+      reason: "Needs a framework",
+    },
+  ],
+});
+
+const unresolvedRequiresSetupSkill = createMockSkill("web-framework-react", "web-framework", {
+  requiresSetup: ["infra-setup-missing" as SkillId],
+});
+
+const unresolvedProvidesSetupForSkill = createMockSkill("infra-setup-env", "shared-tooling", {
+  providesSetupFor: ["web-framework-missing" as SkillId],
+});
+
+const multipleUnresolvedRefsSkill = createMockSkill("web-state-zustand", "web-client-state", {
+  compatibleWith: ["web-framework-missing" as SkillId],
+  conflictsWith: [{ skillId: "web-state-ghost" as SkillId, reason: "Conflicts" }],
+  requiresSetup: ["infra-setup-missing" as SkillId],
+});
+
+const allRefsResolvedSkill = createMockSkill("web-state-zustand", "web-client-state", {
+  compatibleWith: ["web-framework-react"],
+  conflictsWith: [{ skillId: "web-framework-react", reason: "Test" }],
+  requires: [
+    {
+      skillIds: ["web-framework-react"],
+      needsAny: false,
+      reason: "Needs React",
+    },
+  ],
+  requiresSetup: ["web-framework-react"],
+  providesSetupFor: ["web-framework-react"],
+});
+
+const partialUnresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e", "web-testing", {
+  requires: [
+    {
+      skillIds: ["web-framework-react", "web-framework-missing" as SkillId],
+      needsAny: true,
+      reason: "Needs one framework",
+    },
+  ],
+});
+
+// ---------------------------------------------------------------------------
+// Matrices
+// ---------------------------------------------------------------------------
+
+const healthyMatrix = createMockMatrix(
+  {
+    "web-framework-react": reactSkill,
+    "web-state-zustand": zustandSkill,
+  },
+  {
+    categories: {
+      "web-framework": frameworkCategory,
+      "web-client-state": clientStateCategory,
+    },
+  },
+);
+
+const singleSkillMatrix = createMockMatrix(
+  { "web-framework-react": reactSkill },
+  {
+    categories: {
+      "web-framework": frameworkCategory,
+    },
+  },
+);
+
+const emptyMatrix = createMockMatrix({});
+
+const missingDomainMatrix = createMockMatrix(
+  { "web-framework-react": reactSkill },
+  {
+    categories: {
+      "web-framework": missingDomainFrameworkCategory,
+    },
+  },
+);
+
+const multipleMissingDomainsMatrix = createMockMatrix(
+  {},
+  {
+    categories: {
+      "web-framework": missingDomainFrameworkCategory,
+      "web-styling": missingDomainStylingCategory,
+      "web-client-state": clientStateCategory,
+    },
+  },
+);
+
+const unknownCategoryMatrix = createMockMatrix(
+  { "web-framework-react": orphanSkill },
+  {
+    categories: {
+      "web-framework": frameworkCategory,
+    },
+  },
+);
+
+const orphanSkillWithMissingDomainMatrix = createMockMatrix(
+  { "web-framework-react": orphanSkill },
+  {
+    categories: {
+      "web-framework": missingDomainFrameworkCategory,
+    },
+  },
+);
+
+const unresolvedCompatibleWithMatrix = createMockMatrix(
+  { "web-state-zustand": unresolvedCompatibleWithSkill },
+  {
+    categories: {
+      "web-client-state": clientStateCategory,
+    },
+  },
+);
+
+const unresolvedConflictsWithMatrix = createMockMatrix(
+  { "web-framework-react": unresolvedConflictsWithSkill },
+  {
+    categories: {
+      "web-framework": frameworkCategory,
+    },
+  },
+);
+
+const unresolvedRequiresMatrix = createMockMatrix(
+  { "web-testing-cypress-e2e": unresolvedRequiresSkill },
+  {
+    categories: {
+      "web-testing": testingCategory,
+    },
+  },
+);
+
+const unresolvedRequiresSetupMatrix = createMockMatrix(
+  { "web-framework-react": unresolvedRequiresSetupSkill },
+  {
+    categories: {
+      "web-framework": frameworkCategory,
+    },
+  },
+);
+
+const unresolvedProvidesSetupForMatrix = createMockMatrix(
+  { "infra-setup-env": unresolvedProvidesSetupForSkill },
+  {
+    categories: {
+      "shared-tooling": toolingCategory,
+    },
+  },
+);
+
+const multipleUnresolvedRefsMatrix = createMockMatrix(
+  { "web-state-zustand": multipleUnresolvedRefsSkill },
+  {
+    categories: {
+      "web-client-state": clientStateCategory,
+    },
+  },
+);
+
+const allRefsResolvedMatrix = createMockMatrix(
+  {
+    "web-framework-react": reactSkill,
+    "web-state-zustand": allRefsResolvedSkill,
+  },
+  {
+    categories: {
+      "web-framework": frameworkCategory,
+      "web-client-state": clientStateCategory,
+    },
+  },
+);
+
+const partialUnresolvedRequiresMatrix = createMockMatrix(
+  {
+    "web-framework-react": reactSkill,
+    "web-testing-cypress-e2e": partialUnresolvedRequiresSkill,
+  },
+  {
+    categories: {
+      "web-framework": frameworkCategory,
+      "web-testing": testingCategory,
+    },
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
 
 describe("matrix-health-check", () => {
   describe("healthy matrix", () => {
     it("returns no issues for a valid matrix", () => {
-      const reactSkill = createSkill("web-framework-react", "web-framework");
-      const zustandSkill = createSkill("web-state-zustand", "web-client-state", {
-        compatibleWith: ["web-framework-react"],
-        recommends: [{ skillId: "web-framework-react", reason: "Works well with React" }],
-      });
-
-      const matrix = createMockMatrix(
-        {
-          "web-framework-react": reactSkill,
-          "web-state-zustand": zustandSkill,
-        },
-        {
-          categories: {
-            "web-framework": createCategory("web-framework"),
-            "web-client-state": createCategory("web-client-state"),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
+      const issues = checkMatrixHealth(healthyMatrix);
 
       expect(issues).toEqual([]);
     });
 
     it("does not warn when matrix is structurally valid", () => {
-      const skill = createSkill("web-framework-react", "web-framework");
-
-      const matrix = createMockMatrix(
-        { "web-framework-react": skill },
-        {
-          categories: {
-            "web-framework": createCategory("web-framework"),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      checkMatrixHealth(matrix);
+      checkMatrixHealth(singleSkillMatrix);
 
       expect(warn).not.toHaveBeenCalled();
     });
@@ -89,18 +258,7 @@ describe("matrix-health-check", () => {
 
   describe("category domains", () => {
     it("detects category missing domain field", () => {
-      const skill = createSkill("web-framework-react", "web-framework");
-
-      const matrix = createMockMatrix(
-        { "web-framework-react": skill },
-        {
-          categories: {
-            "web-framework": createCategory("web-framework", { domain: undefined }),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
+      const issues = checkMatrixHealth(missingDomainMatrix);
 
       const domainIssues = issues.filter((i) => i.finding === "category-missing-domain");
       expect(domainIssues).toHaveLength(1);
@@ -110,36 +268,14 @@ describe("matrix-health-check", () => {
     });
 
     it("does not flag categories with valid domain", () => {
-      const skill = createSkill("web-framework-react", "web-framework");
-
-      const matrix = createMockMatrix(
-        { "web-framework-react": skill },
-        {
-          categories: {
-            "web-framework": createCategory("web-framework", { domain: "web" }),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
+      const issues = checkMatrixHealth(singleSkillMatrix);
       const domainIssues = issues.filter((i) => i.finding === "category-missing-domain");
 
       expect(domainIssues).toHaveLength(0);
     });
 
     it("detects multiple categories missing domains", () => {
-      const matrix = createMockMatrix(
-        {},
-        {
-          categories: {
-            "web-framework": createCategory("web-framework", { domain: undefined }),
-            "web-styling": createCategory("web-styling", { domain: undefined }),
-            "web-client-state": createCategory("web-client-state", { domain: "web" }),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
+      const issues = checkMatrixHealth(multipleMissingDomainsMatrix);
       const domainIssues = issues.filter((i) => i.finding === "category-missing-domain");
 
       expect(domainIssues).toHaveLength(2);
@@ -148,18 +284,7 @@ describe("matrix-health-check", () => {
 
   describe("skill categories", () => {
     it("detects skill referencing unknown category", () => {
-      const skill = createSkill("web-framework-react", "nonexistent-category" as Subcategory);
-
-      const matrix = createMockMatrix(
-        { "web-framework-react": skill },
-        {
-          categories: {
-            "web-framework": createCategory("web-framework"),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
+      const issues = checkMatrixHealth(unknownCategoryMatrix);
       const categoryIssues = issues.filter((i) => i.finding === "skill-unknown-category");
 
       expect(categoryIssues).toHaveLength(1);
@@ -169,18 +294,7 @@ describe("matrix-health-check", () => {
     });
 
     it("does not flag skill with valid category", () => {
-      const skill = createSkill("web-framework-react", "web-framework");
-
-      const matrix = createMockMatrix(
-        { "web-framework-react": skill },
-        {
-          categories: {
-            "web-framework": createCategory("web-framework"),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
+      const issues = checkMatrixHealth(singleSkillMatrix);
       const categoryIssues = issues.filter((i) => i.finding === "skill-unknown-category");
 
       expect(categoryIssues).toHaveLength(0);
@@ -189,18 +303,7 @@ describe("matrix-health-check", () => {
 
   describe("logging", () => {
     it("logs a warning for each issue found", () => {
-      const skill = createSkill("web-framework-react", "nonexistent-category" as Subcategory);
-
-      const matrix = createMockMatrix(
-        { "web-framework-react": skill },
-        {
-          categories: {
-            "web-framework": createCategory("web-framework", { domain: undefined }),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
+      const issues = checkMatrixHealth(orphanSkillWithMissingDomainMatrix);
 
       expect(issues.length).toBeGreaterThan(0);
       expect(warn).toHaveBeenCalledTimes(issues.length);
@@ -210,28 +313,98 @@ describe("matrix-health-check", () => {
     });
   });
 
+  describe("skill relation refs", () => {
+    it("detects unresolved compatibleWith reference", () => {
+      const issues = checkMatrixHealth(unresolvedCompatibleWithMatrix);
+      const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
+
+      expect(refIssues).toHaveLength(1);
+      expect(refIssues[0].severity).toBe("warning");
+      expect(refIssues[0].details).toContain("web-state-zustand");
+      expect(refIssues[0].details).toContain("web-framework-nonexistent");
+      expect(refIssues[0].details).toContain("compatibleWith");
+    });
+
+    it("detects unresolved conflictsWith reference", () => {
+      const issues = checkMatrixHealth(unresolvedConflictsWithMatrix);
+      const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
+
+      expect(refIssues).toHaveLength(1);
+      expect(refIssues[0].details).toContain("web-framework-react");
+      expect(refIssues[0].details).toContain("web-framework-ghost");
+      expect(refIssues[0].details).toContain("conflictsWith");
+    });
+
+    it("detects unresolved requires reference", () => {
+      const issues = checkMatrixHealth(unresolvedRequiresMatrix);
+      const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
+
+      expect(refIssues).toHaveLength(1);
+      expect(refIssues[0].details).toContain("web-testing-cypress-e2e");
+      expect(refIssues[0].details).toContain("web-framework-missing");
+      expect(refIssues[0].details).toContain("requires");
+    });
+
+    it("detects unresolved requiresSetup reference", () => {
+      const issues = checkMatrixHealth(unresolvedRequiresSetupMatrix);
+      const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
+
+      expect(refIssues).toHaveLength(1);
+      expect(refIssues[0].details).toContain("web-framework-react");
+      expect(refIssues[0].details).toContain("infra-setup-missing");
+      expect(refIssues[0].details).toContain("requiresSetup");
+    });
+
+    it("detects unresolved providesSetupFor reference", () => {
+      const issues = checkMatrixHealth(unresolvedProvidesSetupForMatrix);
+      const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
+
+      expect(refIssues).toHaveLength(1);
+      expect(refIssues[0].details).toContain("infra-setup-env");
+      expect(refIssues[0].details).toContain("web-framework-missing");
+      expect(refIssues[0].details).toContain("providesSetupFor");
+    });
+
+    it("detects multiple unresolved references across fields", () => {
+      const issues = checkMatrixHealth(multipleUnresolvedRefsMatrix);
+      const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
+
+      expect(refIssues).toHaveLength(3);
+    });
+
+    it("does not flag references that resolve to existing skills", () => {
+      const issues = checkMatrixHealth(allRefsResolvedMatrix);
+      const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
+
+      expect(refIssues).toHaveLength(0);
+    });
+
+    it("does not flag skills with empty relation arrays", () => {
+      const issues = checkMatrixHealth(singleSkillMatrix);
+      const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
+
+      expect(refIssues).toHaveLength(0);
+    });
+
+    it("detects unresolved refs in requires with multiple skillIds", () => {
+      const issues = checkMatrixHealth(partialUnresolvedRequiresMatrix);
+      const refIssues = issues.filter((i) => i.finding === "skill-unresolved-relation-ref");
+
+      expect(refIssues).toHaveLength(1);
+      expect(refIssues[0].details).toContain("web-framework-missing");
+      expect(refIssues[0].details).not.toContain("web-framework-react");
+    });
+  });
+
   describe("empty matrix", () => {
     it("returns no issues for empty matrix", () => {
-      const matrix = createMockMatrix({});
-
-      const issues = checkMatrixHealth(matrix);
+      const issues = checkMatrixHealth(emptyMatrix);
 
       expect(issues).toEqual([]);
     });
 
     it("returns no issues for matrix with skills but no structural problems", () => {
-      const skill = createSkill("web-framework-react", "web-framework");
-
-      const matrix = createMockMatrix(
-        { "web-framework-react": skill },
-        {
-          categories: {
-            "web-framework": createCategory("web-framework"),
-          } as MergedSkillsMatrix["categories"],
-        },
-      );
-
-      const issues = checkMatrixHealth(matrix);
+      const issues = checkMatrixHealth(singleSkillMatrix);
 
       expect(issues).toEqual([]);
     });

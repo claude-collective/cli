@@ -8,8 +8,8 @@ import { METADATA_KEYS } from "../metadata-keys";
 import { parseFrontmatter } from "../loading";
 import {
   skillsMatrixConfigSchema,
-  categoryPathSchema,
   formatZodErrors,
+  categoryPathSchema,
   skillDisplayNameSchema,
   skillIdSchema,
 } from "../schemas";

@@ -19,6 +19,7 @@ export function checkMatrixHealth(matrix: MergedSkillsMatrix): MatrixHealthIssue
 
   checkSubcategoryDomains(matrix, issues);
   checkSkillCategories(matrix, issues);
+  checkSkillRelationRefs(matrix, issues);
 
   for (const issue of issues) {
     warn(`[matrix] ${issue.details}`);
@@ -51,6 +52,52 @@ function checkSkillCategories(matrix: MergedSkillsMatrix, issues: MatrixHealthIs
         finding: "skill-unknown-category",
         details: `Skill '${skillId}' references category '${skill.category}' which does not exist in the matrix`,
       });
+    }
+  }
+}
+
+const RELATION_FIELDS_SKILL_ID_ARRAY = [
+  "compatibleWith",
+  "requiresSetup",
+  "providesSetupFor",
+] as const;
+
+function checkSkillRelationRefs(matrix: MergedSkillsMatrix, issues: MatrixHealthIssue[]): void {
+  for (const [skillId, skill] of typedEntries<SkillId, ResolvedSkill>(matrix.skills)) {
+    if (!skill) continue;
+
+    for (const field of RELATION_FIELDS_SKILL_ID_ARRAY) {
+      for (const ref of skill[field]) {
+        if (!matrix.skills[ref]) {
+          issues.push({
+            severity: "warning",
+            finding: "skill-unresolved-relation-ref",
+            details: `Skill '${skillId}' has unresolved reference '${ref}' in '${field}'`,
+          });
+        }
+      }
+    }
+
+    for (const relation of skill.conflictsWith) {
+      if (!matrix.skills[relation.skillId]) {
+        issues.push({
+          severity: "warning",
+          finding: "skill-unresolved-relation-ref",
+          details: `Skill '${skillId}' has unresolved reference '${relation.skillId}' in 'conflictsWith'`,
+        });
+      }
+    }
+
+    for (const requirement of skill.requires) {
+      for (const ref of requirement.skillIds) {
+        if (!matrix.skills[ref]) {
+          issues.push({
+            severity: "warning",
+            finding: "skill-unresolved-relation-ref",
+            details: `Skill '${skillId}' has unresolved reference '${ref}' in 'requires'`,
+          });
+        }
+      }
     }
   }
 }
