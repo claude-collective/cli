@@ -157,6 +157,7 @@ But critically, `agentSkillPrefixes` is only used in one place: `preselectAgents
 The `getAgentsForSkill()` function in `config-generator.ts:28-53` matches against the skill's **directory path** (e.g., `web/framework/react`) and **category** (e.g., `web-testing`) using path patterns like `"web/*"` and exact category matches, not against the skill ID prefix. The path comes from `ExtractedSkillMetadata.path` which is set to `skills/${directoryPath}/` in `matrix-loader.ts:147`.
 
 The matching order in `getAgentsForSkill()`:
+
 1. Exact match on `category` string (e.g., `"web-testing"` -> `[web-tester, web-developer, web-reviewer]`)
 2. Exact match on normalized path
 3. Wildcard prefix match (e.g., `"web/*"` matches `web/framework/react`)
@@ -419,6 +420,7 @@ This is a convenience, not a hard requirement. Users can also edit the schemas m
 **JSON Schema `allOf` + `$ref` complication:** The base `metadata.schema.json` (`src/schemas/metadata.schema.json`) currently has `"additionalProperties": false`. When combined via `allOf`, the base schema's `additionalProperties: false` will reject the `customSkill` property added by the extending schema. This is a known JSON Schema draft-07 limitation where `additionalProperties` in `allOf` does not compose intuitively.
 
 **Resolution options:**
+
 1. The base schema must be updated to include `customSkill` as an optional property (even for built-in skills, where it would be absent/ignored)
 2. OR the base schema should remove `additionalProperties: false` in favor of documenting expected fields
 3. OR the local schema must NOT use `allOf` + `$ref` and instead be a standalone schema that duplicates the base fields
@@ -426,6 +428,7 @@ This is a convenience, not a hard requirement. Users can also edit the schemas m
 **Recommendation:** Option 1 is cleanest -- add `customSkill` to the base `metadata.schema.json` as an optional boolean. This is a non-breaking change for existing skills and makes the `allOf` extension pattern work correctly.
 
 **Existing schema directory:** The CLI already ships 12 JSON schemas in `src/schemas/`:
+
 - `metadata.schema.json`, `agent.schema.json`, `skill-frontmatter.schema.json`, `agent-frontmatter.schema.json`
 - `skills-matrix.schema.json`, `stacks.schema.json`, `stack.schema.json`
 - `project-config.schema.json`, `project-source-config.schema.json`
@@ -543,6 +546,7 @@ if (parsed.customSkill === true) {
 **The "simpler approach" problem:** If we keep `subcategorySchema` (enum) in the strict schema and only skip the check at the caller, then `z.strict()` will still reject unknown field combinations if `category` doesn't match the enum during Zod's `.safeParse()`. The Zod schema itself will fail before the caller can check `customSkill`. **The factory function approach OR a `z.union` that switches on `customSkill` is actually needed** for the Zod path. The caller-level skip only works for the JSON Schema path (where the validator already runs before code logic).
 
 **Clarification:** The "simpler approach" works if the validation flow is:
+
 1. Parse with lenient loader schema (already passes)
 2. At the validation command level, check `customSkill` FIRST
 3. If `customSkill: true`, use a relaxed validation schema variant
@@ -704,6 +708,7 @@ Categories declared in `custom-definitions.json` are merged into the matrix at l
 ### Codebase Audit Notes (Categories)
 
 **Approach A has a critical schema barrier.** The `skillsMatrixConfigSchema` (`schemas.ts:497-506`) validates category keys with `z.record(subcategorySchema, categoryDefinitionSchema)`. The `subcategorySchema` is a strict enum of 38 values. A custom category key like `acme-pipeline` will fail Zod validation at `loadSkillsMatrix()` (`matrix-loader.ts:60-73`). Approach A requires either:
+
 1. Making the categories record use `z.record(z.string(), ...)` when custom definitions are present
 2. OR using a separate custom categories section that bypasses enum validation
 
@@ -826,10 +831,10 @@ The `agentsinc new skill` and `agentsinc new agent` commands have fundamentally 
 
 **Two-pass generation:**
 
-| Pass     | Input                         | Output                                                             |
-| -------- | ----------------------------- | ------------------------------------------------------------------ |
-| Generic  | Topic description             | Best-practices skill from training knowledge (comprehensive coverage) |
-| Alignment | Generic skill + project codebase | Rewritten skill matching the project's real conventions             |
+| Pass      | Input                            | Output                                                                |
+| --------- | -------------------------------- | --------------------------------------------------------------------- |
+| Generic   | Topic description                | Best-practices skill from training knowledge (comprehensive coverage) |
+| Alignment | Generic skill + project codebase | Rewritten skill matching the project's real conventions               |
 
 The generic pass ensures comprehensive coverage -- it captures patterns the codebase might not demonstrate (error handling edge cases, lesser-used APIs, configuration options). The alignment pass ensures the skill reflects how THIS project actually uses the technology: real file structure, naming conventions, import patterns, preferred libraries.
 
@@ -856,13 +861,13 @@ There is no "align to project" toggle. The domain + role combination fully defin
 
 ### Why the Asymmetry
 
-| Aspect       | Skills                                                  | Agents                                                    |
-| ------------ | ------------------------------------------------------- | --------------------------------------------------------- |
-| Nature       | Knowledge -- infinite variety of topics and conventions  | Roles -- finite set of well-established archetypes        |
-| Input space  | Unbounded (any technology, pattern, or practice)         | Bounded (domain x role matrix)                            |
-| Ambiguity    | High -- "CVA" could mean many things in different codebases | Low -- "api-tester" means the same thing everywhere    |
-| Alignment    | Valuable -- project conventions vary widely              | Unnecessary -- role definition is project-independent     |
-| UX implication | Free-text is the only way to capture intent            | Guided selection prevents overlap and ensures coherence   |
+| Aspect         | Skills                                                      | Agents                                                  |
+| -------------- | ----------------------------------------------------------- | ------------------------------------------------------- |
+| Nature         | Knowledge -- infinite variety of topics and conventions     | Roles -- finite set of well-established archetypes      |
+| Input space    | Unbounded (any technology, pattern, or practice)            | Bounded (domain x role matrix)                          |
+| Ambiguity      | High -- "CVA" could mean many things in different codebases | Low -- "api-tester" means the same thing everywhere     |
+| Alignment      | Valuable -- project conventions vary widely                 | Unnecessary -- role definition is project-independent   |
+| UX implication | Free-text is the only way to capture intent                 | Guided selection prevents overlap and ensures coherence |
 
 Skills are knowledge. Free-form description is the only way to capture what the user wants to teach. Agents are roles. A guided picker prevents users from creating overlapping agents or agents that don't fit the established role taxonomy.
 
@@ -911,6 +916,7 @@ agentsinc new skill                    agentsinc new agent
 ### Codebase Audit Notes (Creation UX)
 
 **Current `new skill` implementation (`commands/new/skill.ts`) is very different from the proposed flow.** The current command:
+
 - Takes a `name` argument (required, positional): `agentsinc new skill <name>`
 - Accepts `--author`, `--category`, `--force` flags
 - Is NOT interactive -- no free-text prompt, no "align to codebase" toggle
@@ -919,6 +925,7 @@ agentsinc new skill                    agentsinc new agent
 - Output goes to `.claude/skills/{name}/` (via `LOCAL_SKILLS_PATH` constant)
 
 The proposed interactive free-text + two-pass generation flow would be a **complete rewrite** of the command. It would require:
+
 1. Removing the required `name` arg (the name would be derived from the topic)
 2. Adding a free-text prompt step (Ink `TextInput` or `@clack/prompts`)
 3. Adding an "align to codebase" boolean toggle
@@ -926,6 +933,7 @@ The proposed interactive free-text + two-pass generation flow would be a **compl
 5. A two-pass pipeline (generic then alignment) with spinner feedback
 
 **Current `new agent` implementation (`commands/new/agent.tsx`) is also different from the proposed flow.** The current command:
+
 - Takes a `name` argument (required, positional): `agentsinc new agent <name>`
 - Has an interactive `PurposeInput` component (free-text "What should this agent do?") -- the opposite of what the doc proposes
 - Uses `agent-summoner` meta-agent via Claude CLI to generate the agent
@@ -933,6 +941,7 @@ The proposed interactive free-text + two-pass generation flow would be a **compl
 - Does NOT have domain/role selection -- it's pure free-text like the current (not proposed) skill flow
 
 The proposed domain + role picker would also be a **significant rewrite**:
+
 1. Replace `PurposeInput` with a domain selector (list of domains from `ALL_DOMAINS` + custom)
 2. Add a role archetype selector (derived from `AgentName` role suffixes)
 3. The agent name would be computed from domain + role (e.g., `acme-deployer`)
@@ -941,6 +950,7 @@ The proposed domain + role picker would also be a **significant rewrite**:
 **Feasibility:** Both rewrites are feasible given the existing command infrastructure (oclif commands, Ink rendering, Claude CLI spawning). The `new agent` command already demonstrates the Claude CLI invocation pattern. The main new work is the interactive selection UI and the two-pass generation pipeline.
 
 **Marketplace detection specifics:** The doc says detection uses "config.yaml having a `marketplace` field or the presence of `marketplace.json`". In code:
+
 - `ProjectConfig.marketplace` (`types/config.ts:87`) is an optional string field loaded by `projectConfigLoaderSchema`
 - `marketplace.json` is detected via `source-loader.ts` and `source-fetcher.ts`
 - Checking both is straightforward: read project config and check for `marketplace` field, OR check for `marketplace.json` in the project root
@@ -1003,6 +1013,7 @@ For IDE validation of the `custom-definitions.json` file itself.
 **Q3 answer from code:** `getAgentsForSkill()` (`config-generator.ts:28-53`) has a clear fallback chain: exact category match -> exact path match -> wildcard prefix match -> `DEFAULT_AGENTS`. Custom agents would only receive skills if explicitly added to a `skillToAgents` mapping or via stack config. The fallback to `DEFAULT_AGENTS` (agent-summoner, skill-summoner, documentor) is correct for custom skills that don't have explicit mappings. **Recommendation (c) is strongly supported by the code structure.**
 
 **Q4 answer from code:** The codebase already uses this pattern extensively. Examples:
+
 - `normalizeAgentConfig()` in `stacks-loader.ts:30-40` casts `item as SkillId` at the parse boundary
 - `skillFrontmatterLoaderSchema` uses `z.string()` (not `skillIdSchema`) for the `name` field
 - `rawMetadataSchema` in `matrix-loader.ts:46-48` uses `z.string() as z.ZodType<SkillId>` for relationship refs

@@ -59,10 +59,7 @@ const SOURCE_DISPLAY_NAMES: Record<string, string> = {
   local: "Local",
 };
 
-function formatSourceLabel(source: {
-  name: string;
-  installed?: boolean;
-}): string {
+function formatSourceLabel(source: { name: string; installed?: boolean }): string {
   const displayName = SOURCE_DISPLAY_NAMES[source.name] ?? source.name;
   const prefix = source.installed ? "\u2713 " : "";
   return `${prefix}${displayName}`;

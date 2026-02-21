@@ -21,7 +21,13 @@ import {
   claudePluginMarketplaceExists,
   claudePluginMarketplaceAdd,
 } from "../utils/exec.js";
-import { ASCII_LOGO, CLAUDE_DIR, CLI_BIN_NAME, DEFAULT_BRANDING, LOCAL_SKILLS_PATH } from "../consts.js";
+import {
+  ASCII_LOGO,
+  CLAUDE_DIR,
+  CLI_BIN_NAME,
+  DEFAULT_BRANDING,
+  LOCAL_SKILLS_PATH,
+} from "../consts.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import {

@@ -1,23 +1,23 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID   | Task                                                                                   | Status       |
-| ---- | -------------------------------------------------------------------------------------- | ------------ |
-| B-06 | --refresh leaves orphan skills from stale cache                                        | Done         |
-| B-05 | Edit mode does not restore sub-agent selection                                         | Bug          |
-| B-04 | Disabled-selected skills need distinct visual state                                    | Done         |
-| B-03 | Init allows incompatible skills that edit correctly filters                            | Bug          |
-| B-02 | Validate compatibleWith/conflictsWith refs in metadata                                 | Done         |
-| U13  | Run Documentor Agent on CLI Codebase                                                   | Pending      |
-| H18  | Tailor documentation-bible to CLI repo                                                 | Phase 3 only |
+| ID   | Task                                                                                                              | Status       |
+| ---- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
+| B-06 | --refresh leaves orphan skills from stale cache                                                                   | Done         |
+| B-05 | Edit mode does not restore sub-agent selection                                                                    | Bug          |
+| B-04 | Disabled-selected skills need distinct visual state                                                               | Done         |
+| B-03 | Init allows incompatible skills that edit correctly filters                                                       | Bug          |
+| B-02 | Validate compatibleWith/conflictsWith refs in metadata                                                            | Done         |
+| U13  | Run Documentor Agent on CLI Codebase                                                                              | Pending      |
+| H18  | Tailor documentation-bible to CLI repo                                                                            | Phase 3 only |
 | D-43 | Remove `getAgentsForSkill` / `skillToAgents` / `agentSkillPrefixes` (prerequisite for D-37, custom extensibility) | Pending      |
-| D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md)) | Pending      |
-| D-36 | Eject: check specific agent dirs, not just agents/                                     | Done         |
-| D-35 | Config: `templates` path property as eject alternative                                 | Deferred      |
-| D-33 | README: frame Agents Inc. as an AI coding framework                                    | Pending      |
-| D-42 | `agentsinc validate` command for skills repos                                          | Pending      |
-| T-07 | Replace real skills repo in source-loader.test.ts with fixtures                        | Pending      |
-| T-08 | Audit all test files: extract fixtures, use real IDs                                   | Pending      |
-| T-09 | Extract shared base skill/category/matrix fixtures to eliminate cross-file duplication | Pending      |
+| D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                   | Pending      |
+| D-36 | Eject: check specific agent dirs, not just agents/                                                                | Done         |
+| D-35 | Config: `templates` path property as eject alternative                                                            | Deferred     |
+| D-33 | README: frame Agents Inc. as an AI coding framework                                                               | Pending      |
+| D-42 | `agentsinc validate` command for skills repos                                                                     | Pending      |
+| T-07 | Replace real skills repo in source-loader.test.ts with fixtures                                                   | Pending      |
+| T-08 | Audit all test files: extract fixtures, use real IDs                                                              | Pending      |
+| T-09 | Extract shared base skill/category/matrix fixtures to eliminate cross-file duplication                            | Pending      |
 
 ---
 

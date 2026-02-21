@@ -170,9 +170,15 @@ const manyCategories: CategoryRow[] = [
 const navCategories: CategoryRow[] = [
   createCategory("web-framework", "Category 0", [createOption("web-framework-react", "Option 0A")]),
   createCategory("web-styling", "Category 1", [createOption("web-styling-tailwind", "Option 1A")]),
-  createCategory("web-client-state", "Category 2", [createOption("web-state-zustand", "Option 2A")]),
-  createCategory("web-server-state", "Category 3", [createOption("web-server-state-react-query", "Option 3A")]),
-  createCategory("web-forms", "Category 4", [createOption("web-forms-react-hook-form", "Option 4A")]),
+  createCategory("web-client-state", "Category 2", [
+    createOption("web-state-zustand", "Option 2A"),
+  ]),
+  createCategory("web-server-state", "Category 3", [
+    createOption("web-server-state-react-query", "Option 3A"),
+  ]),
+  createCategory("web-forms", "Category 4", [
+    createOption("web-forms-react-hook-form", "Option 4A"),
+  ]),
   createCategory("web-testing", "Category 5", [createOption("web-testing-vitest", "Option 5A")]),
 ];
 
@@ -336,7 +342,10 @@ describe("CategoryGrid component", () => {
     it("should render unselected skills with label text", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", "Unselected Skill", { state: "normal", selected: false }),
+          createOption("web-forms-react-hook-form", "Unselected Skill", {
+            state: "normal",
+            selected: false,
+          }),
         ]),
       ];
 
@@ -364,8 +373,14 @@ describe("CategoryGrid component", () => {
     it("should render disabled+selected skills with label text", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", "Disabled Selected", { state: "disabled", selected: true }),
-          createOption("web-forms-vee-validate", "Disabled Only", { state: "disabled", selected: false }),
+          createOption("web-forms-react-hook-form", "Disabled Selected", {
+            state: "disabled",
+            selected: true,
+          }),
+          createOption("web-forms-vee-validate", "Disabled Only", {
+            state: "disabled",
+            selected: false,
+          }),
         ]),
       ];
 
@@ -1055,7 +1070,9 @@ describe("CategoryGrid component", () => {
   describe("edge cases", () => {
     it("should handle single category", () => {
       const categories: CategoryRow[] = [
-        createCategory("web-forms", "Single Category", [createOption("web-forms-react-hook-form", "Option 1")]),
+        createCategory("web-forms", "Single Category", [
+          createOption("web-forms-react-hook-form", "Option 1"),
+        ]),
       ];
 
       const { lastFrame, unmount } = renderGrid({ categories });
@@ -1068,7 +1085,9 @@ describe("CategoryGrid component", () => {
 
     it("should handle single option in category", () => {
       const categories: CategoryRow[] = [
-        createCategory("web-forms", "Single", [createOption("web-forms-react-hook-form", "Only Option")]),
+        createCategory("web-forms", "Single", [
+          createOption("web-forms-react-hook-form", "Only Option"),
+        ]),
       ];
 
       const { lastFrame, unmount } = renderGrid({ categories });
@@ -1126,7 +1145,9 @@ describe("CategoryGrid component", () => {
           createOption("web-forms-react-hook-form", "Option 1"),
           createOption("web-forms-vee-validate", "Option 2"),
         ]),
-        createCategory("web-styling", "Category 2", [createOption("web-forms-zod-validation", "Option 3")]),
+        createCategory("web-styling", "Category 2", [
+          createOption("web-forms-zod-validation", "Option 3"),
+        ]),
         createCategory("web-client-state", "Category 3", [
           createOption("web-testing-vitest", "Option 4"),
           createOption("web-testing-playwright-e2e", "Option 5"),
@@ -1158,7 +1179,9 @@ describe("CategoryGrid component", () => {
           ],
           { required: true },
         ),
-        createCategory("web-styling", "Category 2", [createOption("web-testing-vitest", "Option 4")]),
+        createCategory("web-styling", "Category 2", [
+          createOption("web-testing-vitest", "Option 4"),
+        ]),
       ];
 
       const { stdin, unmount } = renderGrid({
@@ -1197,7 +1220,10 @@ describe("CategoryGrid component", () => {
     it("should render installed and selected skill with label only", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", "Option 1", { installed: true, selected: true }),
+          createOption("web-forms-react-hook-form", "Option 1", {
+            installed: true,
+            selected: true,
+          }),
         ]),
       ];
 

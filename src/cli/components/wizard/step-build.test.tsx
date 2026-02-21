@@ -73,7 +73,11 @@ const tailwindSkill = createMockSkill("web-styling-tailwind", "web-styling", {
   displayName: "tailwind",
 });
 
-const scssSkill = { ...TEST_SKILLS.scssModules, ...SKILL_DEFAULTS, displayName: "scss-modules" as const };
+const scssSkill = {
+  ...TEST_SKILLS.scssModules,
+  ...SKILL_DEFAULTS,
+  displayName: "scss-modules" as const,
+};
 const zustandSkill = { ...TEST_SKILLS.zustand, ...SKILL_DEFAULTS, displayName: "zustand" as const };
 const honoSkill = { ...TEST_SKILLS.hono, ...SKILL_DEFAULTS, displayName: "hono" as const };
 
