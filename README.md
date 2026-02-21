@@ -1,179 +1,194 @@
-# Agents Inc. CLI
+<p align="center">
+  <img alt="Agents Inc" src="./assets/logo.svg" width="300">
+</p>
 
-the CLI for working with Agents Inc. skills. it's the entry point for everything: installing skills, creating stacks, and creating custom skills and subagents
+# Agents Inc
+
+An agent composition framework that builds stacks and compiles specialized subagents for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
+
+[![npm version](https://img.shields.io/npm/v/@agents-inc/cli)](https://www.npmjs.com/package/@agents-inc/cli)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue.svg)](https://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Node: 18+](https://img.shields.io/badge/Node-18%2B-green.svg)](https://nodejs.org/)
 
 ```bash
 npx @agents-inc/cli init
 ```
 
-## what this does
+<!-- TODO: Add animated GIF of the full init wizard flow (stack selection → skill grid → agent config → done).
+This is the hero image. It should show the complete happy path in ~15-20 seconds.
+<p align="center">
+  <img src="./assets/init-wizard.gif" alt="Agents Inc init wizard" width="700">
+</p>
+-->
 
-Claude Code is okay out of the box, but it doesn't know your stack. the skills repository has 80+ in-depth modules covering react, hono, drizzle, posthog, and a lot more. each skill is atomic, comprehensive, and composable into agents and stacks
+## What this does
 
-the CLI is how you work with all of it:
+Claude Code doesn't know your stack. It doesn't know your patterns, your conventions, or the specific way you use your tools. So you end up repeating the same instructions or maintaining freeform markdown skills that fail silently when something's wrong.
 
-- **install skills** as plugins or locally into your project
-- **create stacks** by bundling skills with a modular agent approach
-- **scaffold new skills** when you need something custom
-- **set up your own marketplace** if you're building for a team or org
+Agents Inc fixes this with structured skills: focused knowledge modules for specific technologies. Each skill covers patterns, conventions, anti-patterns, edge cases, and real code examples. Skills get compiled into specialized subagents (a web developer, a reviewer, a tester, a PM) that actually know what they're doing.
 
-## getting started
+The whole thing is opt-in and works alongside your existing Claude Code setup. It uses smart defaults, but there are progressive levels of customization: edit the config, swap skills, choose which to preload and which to load dynamically, eject templates, eject agent partials, or eject entire skills.
+
+Under the hood, the CLI is written in strict TypeScript with Zod for runtime validation and JSON Schema generation. Skills and agents are validated against these schemas, so misconfigurations surface immediately. Agent compilation uses Liquid templates, so the output format is fully customizable without touching CLI internals.
+
+## Getting started
 
 ```bash
-# run the wizard - picks skills, sets up agents
+# Run the wizard
 npx @agents-inc/cli init
 
-# or install globally
+# Or install globally
 npm install -g @agents-inc/cli
 ```
 
-requires node 18+ and [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
+Requires Node 18+ and [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
-## commands
+The wizard walks you through the full setup:
 
-| command             | what it does                                                  |
-| ------------------- | ------------------------------------------------------------- |
-| `init`              | interactive setup - pick skills, configure agents             |
-| `edit`              | modify your skill selection                                   |
-| `compile`           | recompile agents after changes                                |
-| `update`            | update local skills from source                               |
-| `list`              | show what's installed                                         |
-| `doctor`            | diagnose setup issues                                         |
-| `search`            | search skills (interactive multi-source or static query)      |
-| `info <skill>`      | show skill details                                            |
-| `diff`              | show skill differences vs source                              |
-| `outdated`          | check for outdated skills                                     |
-| `validate`          | check your setup is correct                                   |
-| `new skill`         | create a custom skill                                         |
-| `new agent`         | create a custom agent                                         |
-| `import skill`      | import a skill from an external GitHub repository             |
-| `eject`             | eject skills/agent partials for customization                 |
-| `uninstall`         | remove Agents Inc. from project                               |
-| `config`            | manage settings (show, get, set-project, unset-project, path) |
-| `version`           | show/manage plugin versions (show, set, bump)                 |
-| `build marketplace` | generate marketplace.json                                     |
-| `build plugins`     | build individual skill plugins                                |
-| `build stack`       | build a stack plugin                                          |
+### 1. Pick a stack or start from scratch
 
-every command supports `--dry-run` and `--source` flags. run `npx @agents-inc/cli <command> --help` for full options.
+<!-- TODO: Screenshot of the stack selection screen.
+Shows the list of available stacks (nextjs-fullstack, angular-stack, vue-stack, etc.)
+with descriptions and skill counts.
+<img src="./assets/screenshot-stacks.png" alt="Stack selection" width="700">
+-->
 
-## how skills work
+Stacks bundle skills together with pre-configured agents. Instead of picking skills individually, grab a stack that matches your setup:
 
-a skill is focused knowledge for one technology. not surface-level docs but actual patterns, edge cases, the things you'd normally have to explain repeatedly
+- **nextjs-fullstack**: Next.js + React + Hono + Drizzle + PostHog + Zustand + React Query
+- **angular-stack**: Angular 19 + Signals + NgRx SignalStore + Hono + Drizzle
+- **vue-stack**: Vue 3 Composition API + Pinia + Hono + Drizzle
+- **nuxt-stack**: Nuxt + Vue 3 full-stack + Pinia + Hono + Drizzle
+- **remix-stack**: Remix + React + Hono + Drizzle
+- **solidjs-stack**: SolidJS + Hono + Drizzle
+- **react-native-stack**: React Native + Expo + Zustand + React Query
+- **meta-stack**: Agents for creating agents, skills, docs, and extracting patterns
 
-skills live in the [agents-inc/skills](https://github.com/agents-inc/skills) repository, organized by category:
+Or select "Start from scratch" to browse domains and pick skills one by one.
 
-| category | what's there                                                                                                                                                                                                                                                                          |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| web      | react, vue, angular, solidjs, next.js, remix, nuxt, scss-modules, cva, zustand, pinia, ngrx-signalstore, jotai, react-query, swr, trpc, graphql, react-hook-form, zod, shadcn-ui, radix-ui, tanstack-table, vitest, playwright, cypress, msw, framer-motion, storybook, accessibility |
-| api      | hono, express, fastify, drizzle, prisma, better-auth, posthog, resend, axiom+pino+sentry, github-actions                                                                                                                                                                              |
-| mobile   | react-native, expo                                                                                                                                                                                                                                                                    |
-| cli      | commander, oclif+ink                                                                                                                                                                                                                                                                  |
-| infra    | turborepo, tooling, env config                                                                                                                                                                                                                                                        |
-| meta     | code reviewing, research methodology, investigation requirements, anti-over-engineering, context management                                                                                                                                                                           |
+### 2. Customize skills
 
-## stacks
+<!-- TODO: Screenshot of the skill selection grid.
+Shows skills organized by category (web, api, mobile, etc.) with checkboxes,
+tagged by source when multiple sources are configured.
+<img src="./assets/screenshot-skills.png" alt="Skill selection" width="700">
+-->
 
-stacks bundle skills together with pre-configured agents. instead of picking 20 skills individually, grab a stack that matches your setup:
+After picking a stack, you can add or remove individual skills. 87+ skills are available across these categories:
 
-- **nextjs-fullstack** - next.js + react + hono + drizzle + posthog + zustand + react-query
-- **angular-stack** - angular 19 + signals + ngrx signalstore + hono + drizzle
-- **vue-stack** - vue 3 composition API + pinia + hono + drizzle
-- **nuxt-stack** - nuxt + vue 3 full-stack + pinia + hono + drizzle
-- **remix-stack** - remix + react + hono + drizzle
-- **solidjs-stack** - solidjs + hono + drizzle
-- **react-native-stack** - react native + expo + zustand + react-query
-- **meta-stack** - agents for creating agents, skills, docs, and extracting patterns
+**Web**<br>
+`React` `Vue` `Angular` `SolidJS` `Next.js` `Remix` `Nuxt` `SCSS Modules` `CVA` `Zustand` `Pinia` `NgRx SignalStore` `Jotai` `React Query` `SWR` `tRPC` `GraphQL` `React Hook Form` `Zod` `shadcn/ui` `Radix UI` `TanStack Table` `Vitest` `Playwright` `Cypress` `MSW` `Framer Motion` `Storybook` `Accessibility`
 
-each stack includes agents like `web-developer`, `api-developer`, `web-reviewer`, `web-tester`, `web-researcher`, `pattern-scout`, `documentor` - roles that use the right skills for the job.
+**API**<br>
+`Hono` `Express` `Fastify` `Drizzle` `Prisma` `Better Auth` `PostHog` `Resend` `Axiom + Pino + Sentry` `GitHub Actions`
 
-## installation modes
+**Mobile**<br>
+`React Native` `Expo`
 
-the wizard starts by asking how you want to set up:
+**CLI**<br>
+`Commander` `oclif + Ink`
 
-**use a stack** (default):
+**Infra**<br>
+`Turborepo` `Tooling` `Env config`
 
-```bash
-npx @agents-inc/cli init
-# select "Use a stack" → pick a pre-built stack (e.g. nextjs-fullstack)
-# installs as a native Claude Code plugin to ./.claude/plugins/agents-inc/
-# you can customize skills after selecting a stack
-```
+**Meta**<br>
+`Code reviewing` `Research methodology` `Investigation requirements` `Anti-over-engineering` `Context management`
 
-**start from scratch** (pick individual skills):
+Skills live in the [Agents Inc marketplace](https://github.com/agents-inc/skills). Each one is a structured package with metadata, versioning, and compatibility declarations. Everything is validated against schemas, so if a skill name doesn't match or a config is malformed, you get an actual error instead of silent failure.
 
-```bash
-npx @agents-inc/cli init
-# select "Start from scratch" → browse domains and pick skills one by one
-# installs locally to ./.claude/skills/ in your repo
-```
+### 3. Configure subagents
 
-both modes compile agents and generate a config at `.claude-src/config.yaml`. use `agentsinc edit` to change skills after initial setup.
+<!-- TODO: Screenshot of the subagent configuration screen.
+Shows which agents will be compiled (web-developer, web-reviewer, web-tester, etc.)
+and which skills are mapped to each one.
+<img src="./assets/screenshot-agents.png" alt="Subagent configuration" width="700">
+-->
 
-## multi-source setup
+Each stack includes agents like `web-developer`, `api-developer`, `web-reviewer`, `web-tester`, `web-researcher`, `pattern-scout`, and `documentor`: roles that use the right skills for the job.
 
-you can install skills from multiple sources. the wizard supports adding extra marketplaces alongside the default source:
+---
 
-- press `G` in the wizard to open source settings
-- add marketplace URLs (e.g. `github:your-org/custom-marketplace`)
-- skills from all sources appear in the selection grid, tagged by origin
+Both modes (stack or from scratch) compile agents and generate a config at `.claude-src/config.yaml`. Use `agentsinc edit` to change your setup at any time.
 
-you can also manage sources after setup with `agentsinc edit` (same `G` hotkey).
+## Commands
 
-to search across all configured sources:
+| Command        | Description                                                |
+| -------------- | ---------------------------------------------------------- |
+| `init`         | Interactive setup: pick skills, configure agents           |
+| `edit`         | Modify your skill selection                                |
+| `compile`      | Recompile agents after changes                             |
+| `update`       | Pull latest skills from source                             |
+| `search`       | Search skills across sources (interactive or static query) |
+| `eject`        | Export skills or agent partials for customization          |
+| `new skill`    | Scaffold a custom skill                                    |
+| `new agent`    | Scaffold a custom agent                                    |
+| `import skill` | Import a skill from an external GitHub repository          |
+| `doctor`       | Diagnose setup issues                                      |
+| `uninstall`    | Remove Agents Inc from your project                        |
+
+Every command supports `--dry-run` and `--source` flags. Run `agentsinc --help` for the full command list including `config`, `version`, `build`, `diff`, `outdated`, `validate`, `info`, and `list`.
+
+## Importing third-party skills
+
+Import skills from any GitHub repository into your local setup:
 
 ```bash
-# interactive search across all sources
-agentsinc search
+# List available skills from a repository
+agentsinc import skill github:your-org/skills --list
 
-# static search with a query
-agentsinc search react
+# Import a specific skill
+agentsinc import skill github:your-org/skills --skill react-best-practices
+
+# Import all skills from a repository
+agentsinc import skill github:your-org/skills --all
 ```
 
-## importing third-party skills
+Imported skills are copied to `.claude/skills/` and tracked with metadata for future updates.
 
-import skills from any GitHub repository into your local setup:
+## Customization
+
+Everything is configured through `.claude-src/config.yaml` with schema validation. There are progressive levels of customization depending on how deep you want to go:
+
+**Edit the config directly** to change skill-to-agent mappings:
+
+```yaml
+web-developer:
+  web-framework:
+    id: web-framework-react
+    preloaded: true
+  web-styling: web-styling-tailwind-v3
+```
+
+**Eject** for deeper control:
 
 ```bash
-# list available skills from a repository
-agentsinc import skill github:vercel-labs/agent-skills --list
+# Eject agent partials (intro, workflow, critical requirements, etc.)
+npx @agents-inc/cli eject agent-partials
 
-# import a specific skill
-agentsinc import skill github:vercel-labs/agent-skills --skill react-best-practices
+# Eject the Liquid templates that control how agents are compiled
+npx @agents-inc/cli eject agent-partials --templates
 
-# import all skills from a repository
-agentsinc import skill github:vercel-labs/agent-skills --all
+# Eject skills for local editing
+npx @agents-inc/cli eject skills
 ```
 
-imported skills are copied to `.claude/skills/` and tracked with metadata for future updates.
-
-## creating custom skills
-
-if the existing skills don't cover what you need:
+**Create custom skills** when you need something that doesn't exist:
 
 ```bash
 npx @agents-inc/cli new skill my-custom-skill
 ```
 
-this scaffolds the structure. a skill is just markdown with examples - no special tooling required.
+## Architecture
 
-## architecture
+The CLI uses oclif for commands, Ink (React) for the terminal UI, and Zustand for wizard state. The codebase is organized into domain-driven library modules with barrel exports.
 
-built with TypeScript (strict mode), oclif for commands, Ink (React) for terminal UI, Zod for runtime validation, and Zustand for wizard state. the core pipeline:
+See [docs/reference/architecture.md](./docs/reference/architecture.md) for the full reference.
 
-```
-source resolution → skill loading → matrix merging → wizard selection → config generation → agent compilation → installation
-```
+## Links
 
-the codebase is organized into domain-driven library modules (`agents/`, `configuration/`, `loading/`, `matrix/`, `plugins/`, `skills/`, `stacks/`, `installation/`) with barrel exports. agents are compiled from YAML definitions + markdown partials through Liquid templates.
+- [Agents Inc Skills](https://github.com/agents-inc/skills): the marketplace
 
-see [docs/reference/architecture.md](./docs/reference/architecture.md) for the full reference.
-
-## links
-
-- [skills repository](https://github.com/agents-inc/skills) - all the skills and stacks
-- [Claude Code docs](https://docs.anthropic.com/en/docs/claude-code) - the tool this extends
-
-## license
+## License
 
 MIT
