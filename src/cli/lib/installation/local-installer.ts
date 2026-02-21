@@ -272,6 +272,11 @@ function setConfigMetadata(
     config.domains = wizardResult.selectedDomains;
   }
 
+  // Only persist selectedAgents when non-empty (sparse YAML output)
+  if (wizardResult.selectedAgents && wizardResult.selectedAgents.length > 0) {
+    config.selectedAgents = wizardResult.selectedAgents;
+  }
+
   if (sourceFlag) {
     config.source = sourceFlag;
   } else if (sourceResult.sourceConfig.source) {

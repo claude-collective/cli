@@ -52,6 +52,7 @@ type WizardProps = {
   initialInstallMode?: "plugin" | "local";
   initialExpertMode?: boolean;
   initialDomains?: Domain[];
+  initialAgents?: AgentName[];
   installedSkillIds?: SkillId[];
   projectDir?: string;
 };
@@ -70,6 +71,7 @@ export const Wizard: React.FC<WizardProps> = ({
   initialInstallMode,
   initialExpertMode,
   initialDomains,
+  initialAgents,
   installedSkillIds,
   projectDir,
 }) => {
@@ -88,6 +90,7 @@ export const Wizard: React.FC<WizardProps> = ({
     initialInstallMode,
     initialExpertMode,
     initialDomains,
+    initialAgents,
     installedSkillIds,
   });
 
@@ -225,7 +228,9 @@ export const Wizard: React.FC<WizardProps> = ({
             matrix={matrix}
             projectDir={projectDir}
             onContinue={() => {
-              store.preselectAgentsFromDomains();
+              if (!initialAgents?.length) {
+                store.preselectAgentsFromDomains();
+              }
               store.setStep("agents");
             }}
             onBack={store.goBack}

@@ -398,6 +398,8 @@ export const projectConfigLoaderSchema = z
     expertMode: z.boolean().optional(),
     /** Selected domains from the wizard (persisted for edit mode restoration) */
     domains: z.array(domainSchema).optional(),
+    /** Selected agents from the wizard (persisted for edit mode restoration) */
+    selectedAgents: z.array(z.string()).optional(),
     /** Agent-to-subcategory-to-skill mappings from selected stack (accepts same formats as stacks.yaml) */
     stack: z.record(z.string(), stackAgentConfigSchema).optional(),
     /** Skills source path or URL (e.g., "github:my-org/skills") */

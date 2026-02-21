@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { useWizardStore, type WizardStep } from "../../stores/wizard-store.js";
-import type { Domain, MergedSkillsMatrix, SkillId } from "../../types/index.js";
+import type { AgentName, Domain, MergedSkillsMatrix, SkillId } from "../../types/index.js";
 
 type UseWizardInitializationOptions = {
   matrix: MergedSkillsMatrix;
@@ -8,6 +8,7 @@ type UseWizardInitializationOptions = {
   initialInstallMode?: "plugin" | "local";
   initialExpertMode?: boolean;
   initialDomains?: Domain[];
+  initialAgents?: AgentName[];
   installedSkillIds?: SkillId[];
 };
 
@@ -21,6 +22,7 @@ export function useWizardInitialization({
   initialInstallMode,
   initialExpertMode,
   initialDomains,
+  initialAgents,
   installedSkillIds,
 }: UseWizardInitializationOptions): void {
   const initialized = useRef(false);
@@ -46,6 +48,10 @@ export function useWizardInitialization({
     // set by populateFromSkillIds
     if (initialDomains?.length) {
       useWizardStore.setState({ selectedDomains: initialDomains });
+    }
+    // Restore saved agents from config, overriding the default empty array
+    if (initialAgents?.length) {
+      useWizardStore.setState({ selectedAgents: initialAgents });
     }
   }
 }

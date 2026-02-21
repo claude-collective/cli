@@ -98,4 +98,11 @@ export type ProjectConfig = {
    * Omitted when empty (sparse YAML output).
    */
   domains?: Domain[];
+
+  /**
+   * Selected agents from the wizard.
+   * Persisted so edit mode can restore the user's agent selection.
+   * Omitted when empty (sparse YAML output).
+   */
+  selectedAgents?: AgentName[];
 };
