@@ -3,7 +3,14 @@ import path from "path";
 import os from "os";
 import { stringify as stringifyYaml } from "yaml";
 import { BaseCommand } from "../base-command.js";
-import { copy, ensureDir, directoryExists, fileExists, writeFile } from "../utils/fs.js";
+import {
+  copy,
+  ensureDir,
+  directoryExists,
+  fileExists,
+  listDirectories,
+  writeFile,
+} from "../utils/fs.js";
 import {
   CLAUDE_SRC_DIR,
   DEFAULT_BRANDING,
@@ -259,44 +266,73 @@ export default class Eject extends BaseCommand {
     outputBase: string,
     force: boolean,
     directOutput = false,
-    templatesOnly = false,
+    templatesFlag = false,
   ): Promise<void> {
-    const sourceDir = templatesOnly
+    const sourceDir = templatesFlag
       ? path.join(PROJECT_ROOT, DIRS.templates)
       : path.join(PROJECT_ROOT, DIRS.agents);
 
     if (!(await directoryExists(sourceDir))) {
       this.warn(
-        templatesOnly ? "No agent templates found in CLI." : "No agent partials found in CLI.",
+        templatesFlag ? "No agent templates found in CLI." : "No agent partials found in CLI.",
       );
       return;
     }
 
     const destDir = directOutput
       ? outputBase
-      : templatesOnly
+      : templatesFlag
         ? path.join(outputBase, path.basename(DIRS.agents), path.basename(DIRS.templates))
         : path.join(outputBase, path.basename(DIRS.agents));
 
+    const templatesBasename = path.basename(DIRS.templates);
+
     if ((await directoryExists(destDir)) && !force) {
-      this.warn(
-        `${templatesOnly ? "Agent templates" : "Agent partials"} already exist at ${destDir}. Use --force to overwrite.`,
-      );
-      return;
+      if (templatesFlag) {
+        this.warn(`Agent templates already exist at ${destDir}. Use --force to overwrite.`);
+        return;
+      }
+
+      const hasTemplates = await directoryExists(path.join(destDir, templatesBasename));
+      if ((await this.hasAgentPartialDirs(destDir)) && !hasTemplates) {
+        this.warn(`Agent partials already exist at ${destDir}. Use --force to overwrite.`);
+        return;
+      }
     }
 
     await ensureDir(destDir);
 
-    await copy(sourceDir, destDir);
+    const skipTemplates =
+      !templatesFlag && !force && (await directoryExists(path.join(destDir, templatesBasename)));
+
+    if (skipTemplates) {
+      const sourceEntries = await listDirectories(sourceDir);
+      const nonTemplateEntries = sourceEntries.filter((entry) => entry !== templatesBasename);
+      for (const entry of nonTemplateEntries) {
+        await copy(path.join(sourceDir, entry), path.join(destDir, entry));
+      }
+      this.warn(
+        "Agent templates already exist — skipping templates, only ejecting agent partials.",
+      );
+    } else {
+      await copy(sourceDir, destDir);
+    }
 
     this.logSuccess(
-      `${templatesOnly ? "Agent templates" : "Agent partials"} ejected to ${destDir}`,
+      `${templatesFlag ? "Agent templates" : "Agent partials"} ejected to ${destDir}`,
     );
     this.log(
-      templatesOnly
+      templatesFlag
         ? "You can now customize agent templates locally."
         : "You can now customize templates, agent intro, workflow, and examples locally.",
     );
+  }
+
+  /** Checks whether the agents directory contains any agent subdirectories (not just _templates). */
+  private async hasAgentPartialDirs(agentsDir: string): Promise<boolean> {
+    const subdirs = await listDirectories(agentsDir);
+    const templatesBasename = path.basename(DIRS.templates);
+    return subdirs.some((dir) => dir !== templatesBasename);
   }
 
   private async ejectSkills(

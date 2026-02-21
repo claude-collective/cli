@@ -229,6 +229,37 @@ describe("eject command", () => {
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
+
+    it("should preserve existing templates when ejecting agent-partials", async () => {
+      const agentsDir = path.join(projectDir, CLAUDE_SRC_DIR, path.basename(DIRS.agents));
+      const templatesDir = path.join(agentsDir, path.basename(DIRS.templates));
+
+      await mkdir(templatesDir, { recursive: true });
+      await writeFile(path.join(templatesDir, "agent.liquid"), "custom template content");
+
+      const { stdout, stderr } = await runCliCommand(["eject", "agent-partials"]);
+
+      expect(stderr).toContain("templates already exist");
+      expect(stdout).toContain("Agent partials ejected");
+
+      // Custom template content should be preserved
+      const templateContent = await readFile(path.join(templatesDir, "agent.liquid"), "utf-8");
+      expect(templateContent).toBe("custom template content");
+    });
+
+    it("should block agent-partials eject when agents/ contains actual agent dirs", async () => {
+      const agentsDir = path.join(projectDir, CLAUDE_SRC_DIR, path.basename(DIRS.agents));
+
+      // Manually create agents/ with an actual agent subdir to simulate a prior full eject
+      await mkdir(path.join(agentsDir, "developer"), { recursive: true });
+      await writeFile(path.join(agentsDir, "developer", "agent.yaml"), "id: developer");
+
+      // Second full eject without --force should be blocked
+      const { stderr } = await runCliCommand(["eject", "agent-partials"]);
+
+      expect(stderr).toContain("already exist");
+      expect(stderr).toContain("--force");
+    });
   });
 
   describe("eject agent-partials --templates", () => {
