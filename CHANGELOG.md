@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.45.0] - 2026-02-22
+
+**Persist agent selection, skill relation validation, eject fix, test fixtures**
+
+- Persist `selectedAgents` in config for edit mode restoration
+- Validate cross-skill relation refs in matrix health check
+- Fix eject preserving existing templates, fix cache --refresh orphan skills
+- Replace createMockSkill with TEST_SKILLS constants across test suite
+
+See [changelogs/0.45.0.md](./changelogs/0.45.0.md) for full details.
+
+---
+
 ## [0.44.0] - 2026-02-21
 
 **README refresh, terminal logo support, task cleanup**
