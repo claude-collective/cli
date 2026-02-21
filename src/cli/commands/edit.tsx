@@ -3,7 +3,7 @@ import { render } from "ink";
 
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
-import { CLI_BIN_NAME } from "../consts.js";
+import { ASCII_LOGO, CLI_BIN_NAME } from "../consts.js";
 import { getAgentDefinitions, recompileAgents } from "../lib/agents/index.js";
 import { loadProjectConfig } from "../lib/configuration/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
@@ -122,6 +122,7 @@ export default class Edit extends BaseCommand {
         matrix={sourceResult.matrix}
         version={this.config.version}
         marketplaceLabel={marketplaceLabel}
+        logo={ASCII_LOGO}
         initialStep="build"
         initialInstallMode={initialInstallMode}
         initialExpertMode={projectConfig?.config?.expertMode}

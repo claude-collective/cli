@@ -21,7 +21,7 @@ import {
   claudePluginMarketplaceExists,
   claudePluginMarketplaceAdd,
 } from "../utils/exec.js";
-import { CLAUDE_DIR, CLI_BIN_NAME, DEFAULT_BRANDING, LOCAL_SKILLS_PATH } from "../consts.js";
+import { ASCII_LOGO, CLAUDE_DIR, CLI_BIN_NAME, DEFAULT_BRANDING, LOCAL_SKILLS_PATH } from "../consts.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import {
@@ -68,13 +68,6 @@ export default class Init extends BaseCommand {
     const { flags } = await this.parse(Init);
     const projectDir = process.cwd();
 
-    const logo = ` █████╗  ██████╗ ███████╗███╗   ██╗████████╗███████╗      ██╗███╗   ██╗ ██████╗
-██╔══██╗██╔════╝ ██╔════╝████╗  ██║╚══██╔══╝██╔════╝      ██║████╗  ██║██╔════╝
-███████║██║  ███╗█████╗  ██╔██╗ ██║   ██║   ███████╗      ██║██╔██╗ ██║██║
-██╔══██║██║   ██║██╔══╝  ██║╚██╗██║   ██║   ╚════██║      ██║██║╚██╗██║██║
-██║  ██║╚██████╔╝███████╗██║ ╚████║   ██║   ███████║      ██║██║ ╚████║╚██████╗
-╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝      ╚═╝╚═╝  ╚═══╝ ╚═════╝`;
-
     if (flags["dry-run"]) {
       this.log(`${DRY_RUN_MESSAGES.PREVIEW_NO_FILES_CREATED}\n`);
     }
@@ -113,7 +106,7 @@ export default class Init extends BaseCommand {
         matrix={sourceResult.matrix}
         version={this.config.version}
         marketplaceLabel={marketplaceLabel}
-        logo={logo}
+        logo={ASCII_LOGO}
         projectDir={process.cwd()}
         initialInstallMode={sourceResult.marketplace ? "plugin" : "local"}
         initialExpertMode={!!flags.source}

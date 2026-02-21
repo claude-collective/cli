@@ -1,10 +1,10 @@
-import React, { Fragment } from "react";
 import { Box, Text } from "ink";
-import { useWizardStore } from "../../stores/wizard-store.js";
+import React, { Fragment } from "react";
 import { CLI_COLORS, DEFAULT_PLUGIN_NAME } from "../../consts.js";
+import { useWizardStore } from "../../stores/wizard-store.js";
 import { useTerminalDimensions } from "../hooks/use-terminal-dimensions.js";
-import { WizardTabs, WIZARD_STEPS } from "./wizard-tabs.js";
 import { HelpModal } from "./help-modal.js";
+import { WIZARD_STEPS, WizardTabs } from "./wizard-tabs.js";
 
 type KeyHintProps = {
   isVisible?: boolean;
@@ -95,7 +95,7 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
   return (
     <Box flexDirection="column" paddingX={1} height={terminalHeight}>
       {logo && (
-        <Box marginTop={1}>
+        <Box flexDirection="row" marginTop={1} columnGap={1}>
           <Text>{logo}</Text>
         </Box>
       )}
