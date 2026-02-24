@@ -1,23 +1,28 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID   | Task                                                                                                              | Status       |
-| ---- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
-| B-06 | --refresh leaves orphan skills from stale cache                                                                   | Done         |
-| B-05 | Edit mode does not restore sub-agent selection                                                                    | Bug          |
-| B-04 | Disabled-selected skills need distinct visual state                                                               | Done         |
-| B-03 | Init allows incompatible skills that edit correctly filters                                                       | Bug          |
-| B-02 | Validate compatibleWith/conflictsWith refs in metadata                                                            | Done         |
-| U13  | Run Documentor Agent on CLI Codebase                                                                              | Pending      |
-| H18  | Tailor documentation-bible to CLI repo                                                                            | Phase 3 only |
-| D-43 | Remove `getAgentsForSkill` / `skillToAgents` / `agentSkillPrefixes` (prerequisite for D-37, custom extensibility) | Pending      |
-| D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                   | Pending      |
-| D-36 | Eject: check specific agent dirs, not just agents/                                                                | Done         |
-| D-35 | Config: `templates` path property as eject alternative                                                            | Deferred     |
-| D-33 | README: frame Agents Inc. as an AI coding framework                                                               | Pending      |
-| D-42 | `agentsinc validate` command for skills repos                                                                     | Pending      |
-| T-07 | Replace real skills repo in source-loader.test.ts with fixtures                                                   | Pending      |
-| T-08 | Audit all test files: extract fixtures, use real IDs                                                              | Pending      |
-| T-09 | Extract shared base skill/category/matrix fixtures to eliminate cross-file duplication                            | Pending      |
+| ID   | Task                                                                                                                                                                                            | Status       |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| D-49 | Add `domain` field to skill `metadata.yaml` and agent `agent.yaml` so custom entities declare their own domain                                                                                  | Pending      |
+| D-50 | Eliminate skills-matrix.yaml: move all category metadata (required, exclusive, order, displayName, domain, icon) to individual skill `metadata.yaml`; derive matrix dynamically from skill scan | Pending      |
+| D-51 | Remove legacy slash-in-skill-ID code: `plugin-finder.ts:89` split, `skill-fetcher.ts:80-90` dead branch + tests, `compiler.ts:294` replace, `create-test-source.ts:711` replace                 | Pending      |
+| U13  | Run Documentor Agent on CLI Codebase                                                                                                                                                            | Pending      |
+| H18  | Tailor documentation-bible to CLI repo                                                                                                                                                          | Phase 3 only |
+| D-46 | Custom extensibility (see [design doc](../docs/features/proposed/custom-extensibility-design.md))                                                                                               | In Progress  |
+| D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                                                                                                 | Pending      |
+| D-33 | README: frame Agents Inc. as an AI coding framework                                                                                                                                             | Pending      |
+| D-42 | `agentsinc validate` command for skills repos                                                                                                                                                   | Pending      |
+| D-44 | Update README and Notion page for `eject templates` type                                                                                                                                        | Pending      |
+| D-45 | Marketplace/plugin build commands should verify `contentHash` in skill metadata                                                                                                                 | Pending      |
+| D-47 | Eject a standalone compile function for sub-agent compilation                                                                                                                                   | Pending      |
+| T-07 | Replace real skills repo in source-loader.test.ts with fixtures                                                                                                                                 | Pending      |
+| T-08 | Audit all test files: extract fixtures, use real IDs                                                                                                                                            | Pending      |
+| T-09 | Extract shared base skill/category/matrix fixtures to eliminate cross-file duplication                                                                                                          | Pending      |
+| T-12 | End-to-end tests for custom marketplace workflow (`--source`, `outdated`, build→version→update cycle)                                                                                           | Pending      |
+| D-48 | Revert `(string & {})` type widening on Domain/Subcategory/AgentName; design proper custom value type strategy                                                                                  | Pending      |
+| D-52 | Expand `new agent` command: add agent-summoner to skills repo so remote fetch works from any project                                                                                            | Pending      |
+| D-53 | Build step: show "X of N" counter for exclusive categories (e.g., "1 of 1" for client state); hide in expert mode                                                                               | Pending      |
+| D-54 | Build step: fix domain ordering — should always be Web, API, Mobile, CLI regardless of domain selection order                                                                                   | Pending      |
+| D-55 | Domain deselection should remove skills: deselecting a domain in the domain step should deselect all skills from that domain, so the confirm step count reflects only selected domains          | Pending      |
 
 ---
 
@@ -34,58 +39,6 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 ---
 
 ## Active Tasks
-
-### Bugs
-
-#### B-06: --refresh leaves orphan skills from stale cache
-
-When `--refresh` fetches a source, giget extracts the new tarball on top of the existing cache directory. Skills that were deleted or renamed in the source survive as orphans because the old directory is never cleaned. This causes validation warnings for skills that no longer exist (e.g., `api-testing-api-testing` with an old `category: testing` value).
-
-**Fix:** Delete the source's cache directory before fetching when `--refresh` is used. In `fetchFromRemoteSource()`, when `forceRefresh` is true, remove the entire `cacheDir` (not just the giget tarball cache) before calling `downloadTemplate()`.
-
-**Location:** `src/cli/lib/loading/source-fetcher.ts` — `fetchFromRemoteSource()`, around line 168.
-
----
-
-#### B-05: Edit mode does not restore sub-agent selection
-
-When running `agentsinc init`, the user can select a subset of available sub-agents on the agents step. However, when running `agentsinc edit`, the agents step pre-selects all available sub-agents instead of restoring the subset the user originally chose. The user's agent selection is not persisted to (or restored from) the project config.
-
-**Fix:** Persist the selected agent names to config during init/compile (similar to how `domains` and `skills` are saved), and restore them in `edit` mode so the agents step shows the original selection.
-
-**Location:** `src/cli/commands/edit.tsx`, `src/cli/components/wizard/step-agents.tsx`, `src/cli/lib/installation/local-installer.ts` (config persistence).
-
----
-
-#### B-04: Disabled-selected skills need distinct visual state
-
-When a framework skill (e.g., React) is deselected, all dependent skills become disabled. Currently these disabled skills all look the same regardless of whether they were previously selected. Skills that are both disabled AND selected should have a distinct visual state — a transparent/dimmed teal color, similar to the existing "discouraged" style — so the user can still see what was selected before the framework was toggled off.
-
-**Location:** `src/cli/components/wizard/` — the checkbox/skill rendering logic that determines colors based on skill state (selected, disabled, discouraged).
-
----
-
-#### B-03: Init allows incompatible skills that edit correctly filters
-
-When running `agentsinc init`, the wizard allows selecting skills that have `compatibleWith` constraints even when the selected framework doesn't match. The `edit` command runs stricter validation (framework compatibility filtering via `isCompatibleWithSelectedFrameworks` in `build-step-logic.ts`) that correctly prevents this.
-
-The `init` flow needs to run the same level of validation that `edit` already applies. Currently `init` is too loose — it lets incompatible skills through that `edit` would correctly filter out.
-
-**Fix:** Apply the same compatibility validation from `edit`'s path to the `init` build step.
-
-**Location:** `src/cli/commands/init.tsx`, `src/cli/lib/wizard/build-step-logic.ts` filtering logic — compare with `src/cli/commands/edit.tsx` to see what validation edit applies that init does not.
-
----
-
-#### B-02: Validate compatibleWith/conflictsWith refs in metadata
-
-During matrix merge, `compatibleWith` and `conflictsWith` arrays in skill `metadata.yaml` can contain unresolvable references (e.g. display names with `(@author)` suffixes like `"react (@vince)"` or non-canonical IDs like `"setup-tooling"`). When `resolveToCanonicalId` can't resolve these, they pass through as-is and silently break framework compatibility filtering — skills disappear from the build step without any warning.
-
-**Fix:** Add a post-merge validation pass that checks every `compatibleWith` and `conflictsWith` entry on each resolved skill. If a reference doesn't match any known skill ID in `matrix.skills`, emit a `warn()` with the skill ID, the field name, and the unresolved reference. This catches the problem at load time instead of silently filtering skills out.
-
-**Location:** `src/cli/lib/matrix/matrix-loader.ts` — after `mergeMatrixWithSkills()` builds `resolvedSkills`, or in `checkMatrixHealth()` in `matrix-health-check.ts`.
-
----
 
 ### Documentation & Tooling
 
@@ -127,30 +80,6 @@ Create `.claude/docs/` directory with:
 
 ### CLI Improvements
 
-#### D-43: Remove `getAgentsForSkill` / `skillToAgents` / `agentSkillPrefixes`
-
-Remove the legacy pattern-matching agent routing system. When no stack is selected, all selected skills should be assigned to all selected agents. Stacks remain the mechanism for fine-grained skill-to-agent mapping.
-
-**What to remove:**
-
-- `getAgentsForSkill()` in `config-generator.ts:28-53`
-- `getEffectiveSkillToAgents()` in `config-generator.ts:19-26`
-- `DEFAULT_AGENTS` constant in `config-generator.ts:17`
-- `skillToAgents` section in `defaults/agent-mappings.yaml:8-129`
-- `agentSkillPrefixes` section in `defaults/agent-mappings.yaml:130-216` (already unused)
-- Related Zod schema fields in `defaultMappingsSchema` (`schemas.ts`)
-- `DefaultMappings` type if it becomes empty
-
-**Replacement behavior:** In `generateProjectConfigFromSkills()`, when building the `stack` property, assign every selected skill to every selected agent. If no agents are selected, there is no stack — just the skills list. Skills are still accessible to any agent at runtime; the stack is a preloading convenience, not a gate. No pattern matching, no fallback. If the user wants fine-grained control, they use a stack.
-
-**Why:** The current `skillToAgents` wildcard matching is legacy code that will only get more complex with custom skills/domains. Stacks already provide explicit agent→skill mappings. The wizard's agent preselection already uses `DOMAIN_AGENTS` (hardcoded), not `skillToAgents`. Removing this simplifies config generation and eliminates a blocker for custom extensibility.
-
-**Prerequisite for:** D-37 (install mode redesign), custom extensibility design.
-
-**Location:** `src/cli/lib/configuration/config-generator.ts`, `src/cli/defaults/agent-mappings.yaml`, `src/cli/lib/schemas.ts`, `src/cli/lib/loading/defaults-loader.ts`
-
----
-
 #### D-37: Install mode UX redesign
 
 Replace the hidden `P` hotkey toggle with an explicit install mode choice on the confirm step. Implement mode migration during edit (local to plugin, plugin to local, per-skill customize). The current `P` toggle during edit is completely broken -- config is never updated, artifacts are never migrated.
@@ -158,36 +87,6 @@ Replace the hidden `P` hotkey toggle with an explicit install mode choice on the
 **Design doc:** [`docs/features/proposed/install-mode-redesign.md`](../docs/features/proposed/install-mode-redesign.md)
 
 **Location:** `step-confirm.tsx`, `wizard.tsx`, `wizard-layout.tsx`, `help-modal.tsx`, `wizard-store.ts`, `edit.tsx`, `local-installer.ts`, `agent-recompiler.ts`, `types/config.ts`.
-
----
-
-#### D-36: Eject: check specific agent dirs, not just agents/
-
-The `eject agent-partials` command currently checks if an `agents/` folder exists to determine if partials have already been ejected. This is too broad — an `agents/` folder could exist because the user ejected templates only (`_templates/`). The check should look for the specific agent partial directories (e.g., `developer/`, `reviewer/`, `tester/`) rather than just the parent `agents/` folder.
-
-**Location:** `src/cli/commands/eject.ts` — the existence check in `ejectAgentPartials`.
-
----
-
-#### D-35: Config: `templates` path property as eject alternative [DEFERRED]
-
-Instead of requiring `eject templates` to customize agent templates, allow users to define a `templates` path in their config YAML. The compilation pipeline would check for this path first and use those templates instead of the built-in defaults — no eject step needed.
-
-**Example config.yaml:**
-
-```yaml
-name: my-project
-templates: ./my-templates
-skills:
-  - web-framework-react
-```
-
-**Changes needed:**
-
-- Add optional `templates` property to the config schema (Zod)
-- Update the compilation pipeline to resolve templates from the config path before falling back to built-in/ejected templates
-- Update `src/cli/types/` with the new config field
-- Add tests for custom template resolution
 
 ---
 
@@ -263,6 +162,56 @@ agentsinc validate --source github:acme-corp/skills
 - Exit with non-zero code if any errors found (warnings are OK)
 
 **Location:** `src/cli/commands/validate.ts`, leveraging existing `matrix-health-check.ts` and `schemas.ts`.
+
+---
+
+#### D-44: Update README and Notion page for `eject templates` type
+
+Update external documentation to reflect D-43's change: `templates` is now a first-class eject type (`agentsinc eject templates`) instead of a flag (`--templates`) on `agent-partials`.
+
+**What to update:**
+
+- **README.md** — update any eject command examples or feature descriptions to show `agentsinc eject templates` instead of `agentsinc eject agent-partials --templates`
+- **Notion page** — update the eject command documentation to list `templates` as a separate type alongside `agent-partials`, `skills`, and `all`
+- Ensure the eject type list is consistent everywhere: `agent-partials | templates | skills | all`
+- Remove any references to the `--templates` / `-t` flag
+
+---
+
+#### D-47: Eject a standalone compile function for sub-agent compilation
+
+Expose a single ejectable function that users can call to compile their sub-agents — and nothing else. This gives consumers a programmatic escape hatch to run the compilation pipeline (skills → templates → agent markdown) without going through the full CLI wizard or command surface.
+
+**What it should do:**
+
+- Take a minimal input: selected skills, selected agents, source path, output directory
+- Run the compilation pipeline (resolve skills, apply templates, write agent markdown)
+- Return the compiled output (or write to disk)
+- No wizard, no interactive prompts, no config reading — just compile
+
+**Why:** Users who integrate agent compilation into their own build systems or CI pipelines need a clean function call, not a CLI command. This is the "framework" escape hatch — eject the compile function and call it however you want.
+
+**Implementation approach:**
+
+- Extract the core compilation logic from `src/cli/lib/compiler.ts` into a standalone, importable function
+- The function should have no dependency on oclif, Ink, Zustand, or any CLI/UI layer
+- Make it available via `agentsinc eject compile` (writes a self-contained `.ts` file to the project) or as a public export from the package
+
+**Location:** `src/cli/lib/compiler.ts` (extract from), new ejectable output TBD.
+
+---
+
+#### D-45: Marketplace/plugin build commands should verify `contentHash` in skill metadata
+
+The marketplace and plugin build commands should verify that the `contentHash` field in each skill's `metadata.yaml` is present and correct. This ensures published skills have integrity checks that consumers can verify during installation.
+
+**What to check:**
+
+- `contentHash` is present in `metadata.yaml` for every skill being built/published
+- The hash matches the actual content of the skill files (SKILL.md + metadata.yaml)
+- Build fails with a clear error if hashes are missing or mismatched
+
+**Location:** Plugin build pipeline, marketplace build pipeline, `agentsinc validate` (D-42) should also check this.
 
 ---
 
@@ -352,6 +301,54 @@ const matrix = createMockMatrix({ "web-framework-react": REACT_SKILL });
 **Do NOT extract:** Pathological/error-case fixtures (orphan skills, unresolved refs, missing domains). These are single-consumer and belong in the test file that uses them.
 
 **Location:** `src/cli/lib/__tests__/helpers.ts` or `src/cli/lib/__tests__/test-fixtures.ts`
+
+---
+
+#### D-48: Revert `(string & {})` type widening; design proper custom value type strategy
+
+Phase 3 of D-46 incorrectly widened `Domain`, `Subcategory`, and `AgentName` with `| (string & {})`. This defeats the purpose of strict union types — any string is now accepted at compile time without a compiler error. Casting custom values to the strict type (`"acme" as Domain`) is also wrong: it lies to TypeScript about what the value is, and downstream code that narrows on the union (switch statements, equality checks) silently fails on custom values.
+
+**Immediate action (option C from design doc Q3):**
+
+1. Remove `| (string & {})` from `Domain` (types/matrix.ts), `Subcategory` (types/matrix.ts), and `AgentName` (types/agents.ts)
+2. Restore the strict closed unions
+3. At parse boundaries where custom values enter the system (YAML loading, matrix merge), use boundary casts with comments explaining why
+4. Fix any resulting compile errors by adding boundary casts at the data entry points only
+
+**Follow-up (needs design):**
+
+Come up with a proper mechanism for custom values that doesn't lie to TypeScript. Casting is a stopgap — it pretends a custom value IS a built-in type when it isn't. If code later does pattern matching or string methods expecting built-in format, it silently breaks. Options to explore:
+
+- Branded/tagged union types that force callers to handle the custom case
+- Separate code paths for built-in vs custom values at the type level
+- Generic functions parameterized over the value set
+- A discriminated union wrapper (`{ kind: "builtin", value: Domain } | { kind: "custom", value: string }`)
+
+The right answer should make it impossible to accidentally treat a custom value as a built-in one without explicit handling.
+
+**Location:** `src/cli/types/matrix.ts`, `src/cli/types/agents.ts`, and all files that pass custom values through the system.
+
+---
+
+#### T-12: End-to-end tests for custom marketplace workflow
+
+Test the full custom marketplace lifecycle: using `--source` to point at a custom marketplace, checking for outdated skills, and the change→build→update cycle.
+
+**Test scenarios:**
+
+1. **`--source` flag works with custom marketplaces** — `agentsinc init --source /path/to/custom-marketplace` loads skills from the custom source, not the default. Verify the wizard shows skills from the custom source and the compiled output references them correctly.
+
+2. **`outdated` command detects stale skills** — After installing from a custom marketplace, make a change in the marketplace source, bump the version via `agentsinc build marketplace` + `agentsinc build plugins`, then verify `agentsinc outdated` correctly reports the consuming project has older versions.
+
+3. **Full update cycle** — Make a change in a custom marketplace (add/modify a skill), run `agentsinc build marketplace` and `agentsinc build plugins` to bump the version, then run `agentsinc edit --refresh` (or equivalent) in the consuming app and verify it picks up the newer version.
+
+**Test setup:**
+
+- Use `createTestSource()` to create a fixture marketplace with versioned skills
+- Use `/home/vince/dev/cv-launch` as the consuming project (or a temp directory)
+- Tests should be self-contained — no dependency on the real skills repo
+
+**Location:** `src/cli/lib/__tests__/integration/` or `src/cli/lib/__tests__/user-journeys/`
 
 ---
 

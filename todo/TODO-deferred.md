@@ -1,40 +1,40 @@
 # Agents Inc. CLI - Deferred Tasks
 
-| ID    | Task                                                  | Status   |
-| ----- | ----------------------------------------------------- | -------- |
-| D-34  | Replace agent-mappings.yaml with schema-backed file   | Deferred |
-| D-28  | Fix startup warning/error messages                    | Deferred |
-| D-43  | Eject templates as its own type, not a flag           | Deferred |
-| D-05  | Improve `agentsinc init` when already initialized     | Deferred |
-| P4-17 | `agentsinc new` supports multiple items               | Deferred |
-| D-08  | Support user-defined stacks in consumer projects      | Deferred |
-| P4-18 | Test: multiple skill/agent creation                   | Deferred |
-| D-01  | Update skill documentation conventions                | Deferred |
-| D-11  | Development hooks for type checking                   | Deferred |
-| D-12  | Eject full agents from custom sources                 | Deferred |
-| D-13  | Eject skills by domain/category                       | Deferred |
-| D-18  | Template system documentation improvements            | Deferred |
-| D-19  | Improve template error messages                       | Deferred |
-| D-20  | Add Edit tool to documentor agent                     | Deferred |
-| D-22  | Automated agent-tester for quality assurance          | Deferred |
-| D-24  | Configurable documentation file locations             | Deferred |
-| D-14  | Import skills from third-party marketplaces           | Deferred |
-| UX-04 | Interactive skill search polish                       | Deferred |
-| UX-05 | Refine step - skills.sh integration                   | Deferred |
-| UX-06 | Search with color highlighting                        | Deferred |
-| UX-07 | Incompatibility tooltips                              | Deferred |
-| UX-09 | Animations/transitions                                | Deferred |
-| #5    | Agents command for skill assignment                   | Deferred |
-| #19   | Sub-agent learning capture system                     | Deferred |
-| D-25  | Auto-version check + source staleness                 | Deferred |
-| D-26  | Marketplace-specific uninstall                        | Deferred |
-| D-30  | Update schemas when generating new categories/domains | Deferred |
-| D-36  | Global install support with project-level override    | Deferred |
-| D-37  | Merge global + project installations in resolution    | Deferred |
-| D-38  | Remove web-base-framework, allow multi-framework      | Deferred |
-| D-39  | Couple meta-frameworks with base frameworks           | Deferred |
-| D-40  | `agentsinc register` command for local skills         | Deferred |
-| D-41  | Create Agents Inc config sub-agent                    | Deferred |
+| ID    | Task                                                  | Status                       |
+| ----- | ----------------------------------------------------- | ---------------------------- |
+| D-34  | Replace agent-mappings.yaml with schema-backed file   | Deferred                     |
+| D-28  | Fix startup warning/error messages                    | Deferred                     |
+| D-43  | Eject templates as its own type, not a flag           | Done (see TODO-completed.md) |
+| D-05  | Improve `agentsinc init` when already initialized     | Deferred                     |
+| P4-17 | `agentsinc new` supports multiple items               | Deferred                     |
+| D-08  | Support user-defined stacks in consumer projects      | Deferred                     |
+| P4-18 | Test: multiple skill/agent creation                   | Deferred                     |
+| D-01  | Update skill documentation conventions                | Deferred                     |
+| D-11  | Development hooks for type checking                   | Deferred                     |
+| D-12  | Eject full agents from custom sources                 | Deferred                     |
+| D-13  | Eject skills by domain/category                       | Deferred                     |
+| D-18  | Template system documentation improvements            | Deferred                     |
+| D-19  | Improve template error messages                       | Deferred                     |
+| D-20  | Add Edit tool to documentor agent                     | Deferred                     |
+| D-22  | Automated agent-tester for quality assurance          | Deferred                     |
+| D-24  | Configurable documentation file locations             | Deferred                     |
+| D-14  | Import skills from third-party marketplaces           | Deferred                     |
+| UX-04 | Interactive skill search polish                       | Deferred                     |
+| UX-05 | Refine step - skills.sh integration                   | Deferred                     |
+| UX-06 | Search with color highlighting                        | Deferred                     |
+| UX-07 | Incompatibility tooltips                              | Deferred                     |
+| UX-09 | Animations/transitions                                | Deferred                     |
+| #5    | Agents command for skill assignment                   | Deferred                     |
+| #19   | Sub-agent learning capture system                     | Deferred                     |
+| D-25  | Auto-version check + source staleness                 | Deferred                     |
+| D-26  | Marketplace-specific uninstall                        | Deferred                     |
+| D-30  | Update schemas when generating new categories/domains | Deferred                     |
+| D-36  | Global install support with project-level override    | Deferred                     |
+| D-37  | Merge global + project installations in resolution    | Deferred                     |
+| D-38  | Remove web-base-framework, allow multi-framework      | Deferred                     |
+| D-39  | Couple meta-frameworks with base frameworks           | Deferred                     |
+| D-40  | `agentsinc register` command for local skills         | Deferred                     |
+| D-41  | Create Agents Inc config sub-agent                    | Deferred                     |
 
 ---
 
@@ -80,22 +80,6 @@ The CLI shows warning/error messages and the ASCII logo on startup that flash br
 - `src/cli/components/wizard/wizard-layout.tsx` — add `<Static>` block for startup messages
 - `src/cli/utils/logger.ts` + loading modules — support buffered output mode
 - Audit which warnings are actionable vs noise; downgrade informational messages to `verbose()`
-
----
-
-## D-43: Eject Templates as Its Own Type, Not a Flag
-
-Currently `eject agent-partials --templates` uses a `--templates` flag to eject only agent templates. This should be its own eject type (`agentsinc eject templates`) instead of a flag on `agent-partials`.
-
-**Rationale:** Templates are conceptually separate from agent partials (intro, workflow, examples, etc.). Having `templates` as a first-class eject type is clearer and more consistent with the other eject types (`skills`, `agent-partials`, `all`).
-
-**Changes needed:**
-
-- Add `"templates"` to `EJECT_TYPES` in `src/cli/commands/eject.ts`
-- Add a dedicated `case "templates"` branch in the switch
-- Remove `--templates` flag (pre-1.0, no backward compatibility needed)
-- Update `"all"` to include templates as a separate step
-- Update examples and help text
 
 ---
 

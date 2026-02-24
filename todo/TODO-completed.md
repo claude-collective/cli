@@ -26,3 +26,11 @@
 - **D-38**: Remove `version` command group -- Deleted version commands (show, bump, set), core logic (`plugin-version.ts`), and all tests. Redundant with build plugins auto-versioning.
 - **D-39**: Remove `version` integer field from metadata.yaml schema -- Removed from schemas, types, loaders, UI, and test fixtures. Was parsed but silently dropped; actual versioning lives in plugin.json.
 - **B-01**: Edit wizard shows steps that were omitted during init -- Domains persisted to config during init; edit mode restores `initialDomains` to wizard, filtering build steps to only selected domains.
+- **B-02**: Validate compatibleWith/conflictsWith refs in metadata -- Post-merge validation pass checks every `compatibleWith` and `conflictsWith` entry; emits `warn()` for unresolvable references.
+- **B-04**: Disabled-selected skills need distinct visual state -- Skills that are both disabled AND selected now show a distinct dimmed teal visual state.
+- **B-06**: --refresh leaves orphan skills from stale cache -- Source cache directory is now deleted before fetching when `--refresh` is used, preventing orphan skills from stale cache.
+- **D-36**: Eject: check specific agent dirs, not just agents/ -- `eject agent-partials` now checks for specific agent partial subdirectories rather than just the parent `agents/` folder.
+- **D-43**: Eject templates as its own type, not a flag -- `templates` is now a first-class eject type (`agentsinc eject templates`) instead of a `--templates` flag on `agent-partials`. Updated EJECT_TYPES, switch cases, examples, and tests.
+- **B-05**: Edit mode restores sub-agent selection -- `selectedAgents` persisted to ProjectConfig during init/compile and restored in edit mode. Commit c66c7a3, release 0.45.0.
+- **B-03**: Init applies same compatibility filtering as edit -- Both init and edit use the shared Wizard/StepBuild/useFrameworkFiltering path, which applies `isCompatibleWithSelectedFrameworks` filtering identically.
+- **D-43**: Remove `getAgentsForSkill` / `skillToAgents` / `agentSkillPrefixes` -- Deleted `agent-mappings.yaml`, `defaults-loader.ts` + test, removed `getAgentsForSkill`/`getEffectiveSkillToAgents`/`DEFAULT_AGENTS` from `config-generator.ts`, removed related schema fields. All selected skills now assigned to all selected agents; stacks remain the mechanism for fine-grained mapping.
