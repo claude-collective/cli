@@ -26,8 +26,8 @@ export const IMPORT_DEFAULTS = {
  * Default values used for local skills (created via `agentsinc new skill` or discovered locally).
  */
 export const LOCAL_DEFAULTS = {
-  CATEGORY: "local" as CategoryPath,
-  AUTHOR: "@local",
+  CATEGORY: "dummy-category" as CategoryPath,
+  AUTHOR: "@dummy-author",
 } as const;
 
 /**
