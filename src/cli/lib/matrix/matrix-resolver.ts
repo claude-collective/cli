@@ -22,7 +22,7 @@ function getLabel(
 
 /** Resolves a display name or alias to its canonical SkillId, passing through if no mapping exists. */
 export function resolveAlias(aliasOrId: SkillId, matrix: MergedSkillsMatrix): SkillId {
-  // Boundary cast: aliasOrId may contain a display name from legacy contexts — try display name lookup first, fall back to SkillId
+  // Boundary cast: aliasOrId may contain a display name — try display name lookup first, fall back to SkillId
   return matrix.displayNameToId[aliasOrId as unknown as SkillDisplayName] || aliasOrId;
 }
 

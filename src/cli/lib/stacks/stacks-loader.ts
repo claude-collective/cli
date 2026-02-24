@@ -13,7 +13,7 @@ import type {
   StackAgentConfig,
   Subcategory,
 } from "../../types";
-import { SKILL_ID_PATTERN, formatZodErrors, stacksConfigSchema } from "../schemas";
+import { isValidSkillId, formatZodErrors, stacksConfigSchema } from "../schemas";
 import { typedEntries } from "../../utils/typed-object";
 import { STACKS_FILE_PATH } from "../../consts";
 
@@ -115,7 +115,8 @@ export function resolveAgentConfigToSkills(agentConfig: StackAgentConfig): Skill
     if (!assignments) continue;
 
     for (const assignment of assignments) {
-      if (!SKILL_ID_PATTERN.test(assignment.id)) {
+      // Accept built-in skill ID patterns and custom IDs registered via extendSchemasWithCustomValues()
+      if (!isValidSkillId(assignment.id)) {
         warn(
           `Invalid skill ID '${assignment.id}' for subcategory '${subcategory}' in stack config. Skipping.`,
         );
@@ -144,7 +145,9 @@ export function getStackSkillIds(stack: Record<string, StackAgentConfig>): Skill
 }
 
 export function resolveStackSkills(stack: Stack): Record<string, SkillReference[]> {
-  const result = mapValues(stack.agents, (agentConfig) => resolveAgentConfigToSkills(agentConfig));
+  const result = mapValues(stack.agents, (agentConfig) =>
+    agentConfig ? resolveAgentConfigToSkills(agentConfig) : [],
+  );
 
   verbose(`Resolved skills for ${Object.keys(result).length} agents in stack '${stack.id}'`);
 

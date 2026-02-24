@@ -197,9 +197,9 @@ describe("source-loader local skills integration", () => {
     const localSkill = skills["my-local-skill"];
 
     expect(localSkill.id).toBe("my-local-skill");
-    // New local skill without a category in metadata.yaml gets "local" from local-skill-loader defaults
-    expect(localSkill.category).toBe("local");
-    expect(localSkill.author).toBe("@local");
+    // New local skill without a category in metadata.yaml gets default from LOCAL_DEFAULTS.CATEGORY
+    expect(localSkill.category).toBe("dummy-category");
+    expect(localSkill.author).toBe("@dummy-author");
     expect(localSkill.local).toBe(true);
     expect(localSkill.localPath).toBe(".claude/skills/test-my-skill/");
   });
@@ -345,7 +345,7 @@ describe("source-loader local skills integration", () => {
     expect(overriddenSkill.description).toBe("My custom vitest configuration");
     // Verify the original description was different (proves we actually overwrote something)
     expect(overriddenSkill.description).not.toBe(existingSkill.description);
-    expect(overriddenSkill.author).toBe("@local");
+    expect(overriddenSkill.author).toBe("@dummy-author");
     // When overwriting a remote skill, the remote skill's category is inherited
     expect(overriddenSkill.category).toBe(existingSkill.category);
     expect(overriddenSkill.localPath).toBe(".claude/skills/local-vitest/");
