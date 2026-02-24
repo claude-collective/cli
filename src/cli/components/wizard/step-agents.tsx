@@ -1,9 +1,11 @@
 import { Box, Text, useInput } from "ink";
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { CLI_COLORS, SCROLL_VIEWPORT, UI_SYMBOLS } from "../../consts.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
-import type { AgentName } from "../../types/index.js";
+import type { AgentName, MergedSkillsMatrix } from "../../types/index.js";
+import { typedKeys } from "../../utils/typed-object.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
+import { getDomainDisplayName } from "./utils.js";
 import { ViewTitle } from "./view-title.js";
 
 type AgentItem = {
@@ -17,7 +19,7 @@ type AgentGroup = {
   items: AgentItem[];
 };
 
-const AGENT_GROUPS: AgentGroup[] = [
+const BUILT_IN_AGENT_GROUPS: AgentGroup[] = [
   {
     label: "Web",
     items: [
@@ -90,34 +92,93 @@ const AGENT_GROUPS: AgentGroup[] = [
   },
 ];
 
-type FocusId = AgentName | "continue";
+/** IDs of all built-in agents for fast lookup. */
+const BUILT_IN_AGENT_IDS = new Set<string>(
+  BUILT_IN_AGENT_GROUPS.flatMap((group) => group.items.map((a) => a.id)),
+);
 
-const FOCUSABLE_IDS: FocusId[] = [
-  ...AGENT_GROUPS.flatMap((group) => group.items.map((a) => a.id)),
-  "continue",
-];
+/** Convert a kebab-case agent ID to a title-case label. */
+function agentIdToLabel(id: string): string {
+  return id
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+type FocusId = AgentName | "continue";
 
 type ListRow =
   | { type: "header"; label: string }
   | { type: "spacer" }
   | { type: "agent"; agent: AgentItem };
 
-const FLAT_ROWS: ListRow[] = AGENT_GROUPS.flatMap((group, groupIndex): ListRow[] => [
-  ...(groupIndex > 0 ? [{ type: "spacer" as const }] : []),
-  { type: "header" as const, label: group.label },
-  ...group.items.map((agent): ListRow => ({ type: "agent", agent })),
-]);
+function buildAgentGroups(matrix: MergedSkillsMatrix): AgentGroup[] {
+  const customAgentIds: string[] = [];
+  for (const stack of matrix.suggestedStacks) {
+    for (const agentName of typedKeys(stack.skills)) {
+      if (!BUILT_IN_AGENT_IDS.has(agentName) && !customAgentIds.includes(agentName)) {
+        customAgentIds.push(agentName);
+      }
+    }
+  }
 
-export const StepAgents: React.FC = () => {
+  if (customAgentIds.length === 0) return BUILT_IN_AGENT_GROUPS;
+
+  // Group custom agents by domain prefix (first segment of kebab-case ID)
+  const customGroupMap = new Map<string, AgentItem[]>();
+  for (const agentId of customAgentIds) {
+    const prefix = agentId.split("-")[0] || "custom";
+    const groupLabel = getDomainDisplayName(prefix);
+    if (!customGroupMap.has(groupLabel)) {
+      customGroupMap.set(groupLabel, []);
+    }
+    customGroupMap.get(groupLabel)!.push({
+      // Boundary cast: custom agent names from matrix stacks are not in the AgentName union
+      id: agentId as AgentName,
+      label: agentIdToLabel(agentId),
+      description: "Custom agent",
+    });
+  }
+
+  const customGroups: AgentGroup[] = [];
+  for (const [label, items] of customGroupMap) {
+    customGroups.push({ label, items });
+  }
+
+  return [...BUILT_IN_AGENT_GROUPS, ...customGroups];
+}
+
+function buildFlatRows(groups: AgentGroup[]): ListRow[] {
+  return groups.flatMap((group, groupIndex): ListRow[] => [
+    ...(groupIndex > 0 ? [{ type: "spacer" as const }] : []),
+    { type: "header" as const, label: group.label },
+    ...group.items.map((agent): ListRow => ({ type: "agent", agent })),
+  ]);
+}
+
+function buildFocusableIds(groups: AgentGroup[]): FocusId[] {
+  return [...groups.flatMap((group) => group.items.map((a) => a.id)), "continue"];
+}
+
+type StepAgentsProps = {
+  matrix: MergedSkillsMatrix;
+};
+
+export const StepAgents: React.FC<StepAgentsProps> = ({ matrix }) => {
   const store = useWizardStore();
-  const [focusedId, setFocusedId] = useState<FocusId>(FOCUSABLE_IDS[0]!);
+
+  const agentGroups = useMemo(() => buildAgentGroups(matrix), [matrix]);
+  const flatRows = useMemo(() => buildFlatRows(agentGroups), [agentGroups]);
+  const focusableIds = useMemo(() => buildFocusableIds(agentGroups), [agentGroups]);
+
+  const [focusedId, setFocusedId] = useState<FocusId>(focusableIds[0]!);
   const { ref: listRef, measuredHeight: listHeight } = useMeasuredHeight();
 
   const scrollTopRef = useRef(0);
   const scrollEnabled = listHeight > 0 && listHeight >= SCROLL_VIEWPORT.MIN_VIEWPORT_ROWS;
 
   if (scrollEnabled && focusedId !== "continue") {
-    const rowIndex = FLAT_ROWS.findIndex(
+    const rowIndex = flatRows.findIndex(
       (row) => row.type === "agent" && row.agent.id === focusedId,
     );
     if (rowIndex >= 0) {
@@ -135,17 +196,17 @@ export const StepAgents: React.FC = () => {
       return;
     }
 
-    const currentIdx = FOCUSABLE_IDS.indexOf(focusedId);
+    const currentIdx = focusableIds.indexOf(focusedId);
 
     if (key.upArrow || input === "k") {
-      const nextIdx = currentIdx <= 0 ? FOCUSABLE_IDS.length - 1 : currentIdx - 1;
-      setFocusedId(FOCUSABLE_IDS[nextIdx]!);
+      const nextIdx = currentIdx <= 0 ? focusableIds.length - 1 : currentIdx - 1;
+      setFocusedId(focusableIds[nextIdx]!);
       return;
     }
 
     if (key.downArrow || input === "j") {
-      const nextIdx = currentIdx >= FOCUSABLE_IDS.length - 1 ? 0 : currentIdx + 1;
-      setFocusedId(FOCUSABLE_IDS[nextIdx]!);
+      const nextIdx = currentIdx >= focusableIds.length - 1 ? 0 : currentIdx + 1;
+      setFocusedId(focusableIds[nextIdx]!);
       return;
     }
 
@@ -165,7 +226,7 @@ export const StepAgents: React.FC = () => {
 
   const isContinueFocused = focusedId === "continue";
 
-  const rowElements = FLAT_ROWS.map((row, index) => {
+  const rowElements = flatRows.map((row, index) => {
     switch (row.type) {
       case "header":
         return (

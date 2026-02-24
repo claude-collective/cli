@@ -122,6 +122,9 @@ export const GITHUB_SOURCE = {
 
 export const DEFAULT_SKILLS_SUBDIR = "skills";
 
+/** Strict kebab-case: starts with letter, segments separated by single hyphens, no trailing hyphens */
+export const KEBAB_CASE_PATTERN = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
+
 export const HASH_PREFIX_LENGTH = 7;
 
 /** Hex chars from SHA-256 hash used in cache directory names (64 bits of collision resistance) */

@@ -1,21 +1,21 @@
-import { mkdir, mkdtemp, rm, writeFile } from "fs/promises";
-import os from "os";
+import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { stringify as stringifyYaml } from "yaml";
 import { loadProjectConfig, validateProjectConfig } from "./project-config";
 import { generateProjectConfigFromSkills } from "./config-generator";
-import { TEST_MATRICES } from "../__tests__/helpers";
+import type { AgentName } from "../../types";
+import { createTempDir, cleanupTempDir, TEST_MATRICES } from "../__tests__/helpers";
 
 describe("project-config", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-project-config-test-"));
+    tempDir = await createTempDir("cc-project-config-test-");
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("loadProjectConfig", () => {
@@ -221,19 +221,22 @@ describe("round-trip tests", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-roundtrip-"));
+    tempDir = await createTempDir("cc-roundtrip-");
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   it("should round-trip minimal config (name and stack only)", async () => {
+    const selectedAgents: AgentName[] = ["web-developer"];
+
     // Generate config
     const generated = generateProjectConfigFromSkills(
       "test-project",
       ["web-framework-react", "web-state-zustand"],
       TEST_MATRICES.reactAndZustand,
+      { selectedAgents },
     );
 
     // Write to temp dir
@@ -252,6 +255,8 @@ describe("round-trip tests", () => {
   });
 
   it("should round-trip config with options (description/author)", async () => {
+    const selectedAgents: AgentName[] = ["web-developer"];
+
     // Generate config with options
     const generated = generateProjectConfigFromSkills(
       "my-awesome-project",
@@ -260,6 +265,7 @@ describe("round-trip tests", () => {
       {
         description: "An awesome project for testing",
         author: "@testuser",
+        selectedAgents,
       },
     );
 

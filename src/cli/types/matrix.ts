@@ -89,6 +89,8 @@ export type CategoryDefinition = {
   /** Display order within domain (lower = earlier) */
   order: number;
   icon?: string;
+  /** True if this category was defined outside the CLI's built-in vocabulary */
+  custom?: boolean;
 };
 
 /** Relationship rules between skills from skills-matrix.yaml */
@@ -161,7 +163,6 @@ export type SuggestedStack = {
   id: string;
   name: string;
   description: string;
-  audience: string[];
   /** Structure: { agentName: { subcategory: skillId } } */
   skills: Record<string, Partial<Record<Subcategory, SkillId>>>;
   philosophy: string;
@@ -265,9 +266,8 @@ export type ResolvedStack = {
   id: string;
   name: string;
   description: string;
-  audience: string[];
   /** Skill selections with resolved full skill IDs by category */
-  skills: Partial<Record<AgentName, Partial<Record<Subcategory, SkillId>>>>;
+  skills: Partial<Record<AgentName, Partial<Record<Subcategory, SkillId[]>>>>;
   /** Flat list of all skill IDs in this stack */
   allSkillIds: SkillId[];
   philosophy: string;
@@ -407,4 +407,6 @@ export type ExtractedSkillMetadata = {
   local?: boolean;
   /** Relative path from project root for local skills */
   localPath?: string;
+  /** True if this skill was created outside the CLI's built-in vocabulary */
+  custom?: boolean;
 };

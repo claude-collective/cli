@@ -1,7 +1,6 @@
 import { Hook } from "@oclif/core";
 import { resolveSource } from "../lib/configuration/index.js";
 import type { ResolvedConfig } from "../lib/configuration/index.js";
-import { loadDefaultMappings } from "../lib/loading/index.js";
 
 /** Narrow interface for attaching sourceConfig to oclif's Config object. */
 interface ConfigWithSource {
@@ -28,9 +27,6 @@ const hook: Hook<"init"> = async function (options) {
   if (sArgIndex !== -1 && sArgIndex + 1 < options.argv.length) {
     sourceFlag = options.argv[sArgIndex + 1];
   }
-
-  // Load default agent-skill mappings from agent-mappings.yaml
-  await loadDefaultMappings();
 
   try {
     const resolvedConfig = await resolveSource(sourceFlag, projectDir);

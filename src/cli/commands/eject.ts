@@ -31,20 +31,24 @@ import {
   saveSourceToProjectConfig,
 } from "../lib/configuration/index.js";
 
-const EJECT_TYPES = ["agent-partials", "skills", "all"] as const;
+const EJECT_TYPES = ["agent-partials", "templates", "skills", "all"] as const;
 type EjectType = (typeof EJECT_TYPES)[number];
 
 export default class Eject extends BaseCommand {
-  static summary = "Eject skills or agent partials for local customization";
+  static summary = "Eject skills, agent partials, or templates for local customization";
   static description =
-    "Copy agent partials or skills to your project for customization. " +
-    "Agent partials are always copied from the CLI. " +
+    "Copy agent partials, templates, or skills to your project for customization. " +
+    "Agent partials and templates are always copied from the CLI. " +
     "Skills are copied from the configured source (public marketplace by default).";
 
   static examples = [
     {
       description: "Eject agent partials for customization",
       command: "<%= config.bin %> <%= command.id %> agent-partials",
+    },
+    {
+      description: "Eject only agent templates",
+      command: "<%= config.bin %> <%= command.id %> templates",
     },
     {
       description: "Eject skills to local directory",
@@ -58,15 +62,11 @@ export default class Eject extends BaseCommand {
       description: "Eject to a custom output directory",
       command: "<%= config.bin %> <%= command.id %> skills -o ./custom-dir",
     },
-    {
-      description: "Eject only agent templates",
-      command: "<%= config.bin %> <%= command.id %> agent-partials --templates",
-    },
   ];
 
   static args = {
     type: Args.string({
-      description: "What to eject: agent-partials, skills, all",
+      description: "What to eject: agent-partials, templates, skills, all",
       required: false,
       options: EJECT_TYPES as unknown as string[],
     }),
@@ -87,11 +87,6 @@ export default class Eject extends BaseCommand {
       description: "Force refresh from remote source",
       default: false,
     }),
-    templates: Flags.boolean({
-      char: "t",
-      description: "Eject only agent templates (used with agent-partials)",
-      default: false,
-    }),
   };
 
   async run(): Promise<void> {
@@ -99,7 +94,7 @@ export default class Eject extends BaseCommand {
     const projectDir = process.cwd();
 
     if (!args.type) {
-      this.error("Please specify what to eject: agent-partials, skills, or all", {
+      this.error("Please specify what to eject: agent-partials, templates, skills, or all", {
         exit: EXIT_CODES.INVALID_ARGS,
       });
     }
@@ -137,10 +132,6 @@ export default class Eject extends BaseCommand {
     const ejectType = args.type as EjectType;
     const directOutput = !!flags.output;
 
-    if (flags.templates && ejectType === "skills") {
-      this.warn("The --templates flag only applies to agent-partials. Ignoring.");
-    }
-
     let sourceResult: SourceLoadResult | undefined;
     if (ejectType === "skills" || ejectType === "all") {
       sourceResult = await loadSkillsMatrixFromSource({
@@ -152,7 +143,10 @@ export default class Eject extends BaseCommand {
 
     switch (ejectType) {
       case "agent-partials":
-        await this.ejectAgentPartials(outputBase, flags.force, directOutput, flags.templates);
+        await this.ejectAgentPartials(outputBase, flags.force, directOutput, false);
+        break;
+      case "templates":
+        await this.ejectAgentPartials(outputBase, flags.force, directOutput, true);
         break;
       case "skills":
         await this.ejectSkills(
@@ -164,7 +158,8 @@ export default class Eject extends BaseCommand {
         );
         break;
       case "all":
-        await this.ejectAgentPartials(outputBase, flags.force, directOutput, flags.templates);
+        await this.ejectAgentPartials(outputBase, flags.force, directOutput, false);
+        await this.ejectAgentPartials(outputBase, true, directOutput, true);
         await this.ejectSkills(
           projectDir,
           flags.force,

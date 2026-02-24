@@ -1,5 +1,5 @@
 import path from "path";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readFile } from "fs/promises";
 
 import {
@@ -15,61 +15,35 @@ import {
   type TestDirs,
   type TestSkill,
 } from "../fixtures/create-test-source";
-import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
+import type { CategoryPath, MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
 import { LOCAL_SKILLS_PATH, ARCHIVED_SKILLS_DIR_NAME } from "../../../consts";
 import {
+  createMockSkill,
+  createMockMatrix,
   fileExists,
   directoryExists,
   readTestYaml,
   buildWizardResult,
   buildSourceResult,
 } from "../helpers";
-import { loadDefaultMappings, clearDefaultsCache } from "../../loading";
-
-// Load YAML defaults once for all tests in this file
-beforeAll(async () => {
-  await loadDefaultMappings();
-});
-
-afterAll(() => {
-  clearDefaultsCache();
-});
 
 const SKILL_COUNT = 4;
 
 function buildMatrix(skills: TestSkill[]): MergedSkillsMatrix {
-  const matrixSkills: Record<
-    string,
-    {
-      id: string;
-      description: string;
-      category: string;
-      path: string;
-      tags: string[];
-      author: string;
-    }
-  > = {};
+  const matrixSkills: Record<string, ReturnType<typeof createMockSkill>> = {};
   for (const skill of skills) {
-    matrixSkills[skill.name] = {
-      id: skill.name,
-      description: skill.description,
-      category: skill.category,
-      path: `skills/${skill.category}/${skill.name}/`,
-      tags: skill.tags ?? [],
-      author: skill.author,
-    };
+    matrixSkills[skill.name] = createMockSkill(
+      skill.name as SkillId,
+      skill.category as CategoryPath,
+      {
+        description: skill.description,
+        tags: skill.tags ?? [],
+        author: skill.author,
+        path: `skills/${skill.category}/${skill.name}/`,
+      },
+    );
   }
-
-  // Boundary cast: test data construction — cannot satisfy branded types directly
-  return {
-    version: "1.0.0",
-    categories: {},
-    skills: matrixSkills,
-    suggestedStacks: [],
-    displayNameToId: {},
-    displayNames: {},
-    generatedAt: new Date().toISOString(),
-  } as unknown as MergedSkillsMatrix;
+  return createMockMatrix(matrixSkills);
 }
 
 const SWITCHABLE_SKILLS: TestSkill[] = [
@@ -374,6 +348,7 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
 
       // Step 2: Run installLocal with all skills from marketplace
       const wizardResult = buildWizardResult(allSkillNames, {
+        selectedAgents: ["web-developer"],
         sourceSelections: {
           [reactSkillId]: "public",
           [zustandSkillId]: "public",
@@ -493,6 +468,7 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
 
       // Step 3: Install with local source selections
       const wizardResult = buildWizardResult(allSkillNames, {
+        selectedAgents: ["web-developer"],
         sourceSelections: {
           [reactSkillId]: "local",
           [zustandSkillId]: "local",
@@ -561,6 +537,7 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
       }
 
       const wizardResult1 = buildWizardResult(allSkillNames, {
+        selectedAgents: ["web-developer"],
         sourceSelections: { [reactSkillId]: "local" },
       });
       const sourceResult1 = buildSourceResult(matrixWithLocal, dirs.sourceDir);

@@ -21,7 +21,7 @@ export const StepStack: React.FC<StepStackProps> = ({ matrix, onCancel }) => {
   const { approach } = useWizardStore();
 
   if (approach !== null) {
-    return <DomainSelection />;
+    return <DomainSelection matrix={matrix} />;
   }
 
   return <StackSelection matrix={matrix} onCancel={onCancel} />;

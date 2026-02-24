@@ -1,5 +1,6 @@
 import { sortBy } from "remeda";
 import type {
+  CategoryDefinition,
   Domain,
   MergedSkillsMatrix,
   SkillId,
@@ -123,8 +124,11 @@ export function buildCategoriesForDomain(
     ? getSelectedFrameworks(frameworkSource, matrix)
     : [];
 
+  // Object.values() on a Partial record only yields values that exist — all are CategoryDefinition
   const subcategories = sortBy(
-    Object.values(matrix.categories).filter((cat) => cat.domain === domain),
+    (Object.values(matrix.categories) as CategoryDefinition[]).filter(
+      (cat) => cat.domain === domain,
+    ),
     (cat) => cat.order ?? 0,
   );
 

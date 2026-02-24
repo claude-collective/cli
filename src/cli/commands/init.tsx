@@ -234,7 +234,8 @@ export default class Init extends BaseCommand {
       if (!marketplaceExists) {
         this.log(`Registering marketplace "${sourceResult.marketplace}"...`);
         try {
-          await claudePluginMarketplaceAdd(sourceResult.marketplace);
+          const marketplaceSource = sourceResult.sourceConfig.source.replace(/^github:/, "");
+          await claudePluginMarketplaceAdd(marketplaceSource);
           this.log(`Registered marketplace: ${sourceResult.marketplace}`);
         } catch (error) {
           this.error(getErrorMessage(error), {

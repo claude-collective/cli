@@ -84,8 +84,7 @@
                         "type": "object",
                         "properties": {
                           "id": {
-                            "type": "string",
-                            "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+-.+$"
+                            "type": "string"
                           },
                           "preloaded": {
                             "type": "boolean"
@@ -114,8 +113,7 @@
                           "type": "object",
                           "properties": {
                             "id": {
-                              "type": "string",
-                              "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+-.+$"
+                              "type": "string"
                             },
                             "preloaded": {
                               "type": "boolean"

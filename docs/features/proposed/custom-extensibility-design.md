@@ -2,8 +2,8 @@
 
 Design document for allowing private marketplace users to create custom skills, agents, categories, and domains that the CLI can load, validate, and compile without requiring changes to the CLI's built-in type definitions.
 
-**Status:** Draft
-**Date:** 2026-02-21
+**Status:** Phase 1-2 implemented (foundation + matrix merge + auto-discovery + dynamic schema extension)
+**Date:** 2026-02-21 (design), 2026-02-22 (implementation)
 
 ---
 
@@ -14,10 +14,11 @@ Design document for allowing private marketplace users to create custom skills, 
 3. [Naming Convention Analysis](#naming-convention-analysis)
 4. [Local Schema Design](#local-schema-design)
 5. [Runtime Validation Behavior](#runtime-validation-behavior)
-6. [Impact by Entity Type](#impact-by-entity-type)
-7. [Skill & Agent Creation UX](#skill--agent-creation-ux)
-8. [Implementation Phases](#implementation-phases)
-9. [Open Questions](#open-questions)
+6. [Skills Matrix Merge Strategy](#skills-matrix-merge-strategy)
+7. [Impact by Entity Type](#impact-by-entity-type)
+8. [Skill & Agent Creation UX](#skill--agent-creation-ux)
+9. [Implementation Phases](#implementation-phases)
+10. [Open Questions](#open-questions)
 
 ---
 
@@ -57,17 +58,17 @@ These constraints serve the built-in skill marketplace well but block users who 
 
 ## The Custom Property
 
-### Recommendation: `customSkill: true`
+### Recommendation: `custom: true`
 
-A boolean `customSkill` property on each entity's config file.
+A boolean `custom` property on each entity's config file. The property is shared by both skills and agents.
 
 **Why boolean over enum:**
 
 - The only distinction that matters at runtime is "should the CLI enforce its built-in enum constraints on this entity?" -- a yes/no question
 - An enum like `origin: "custom" | "builtin" | "forked"` conflates provenance with validation behavior. Provenance is already tracked elsewhere: `SkillSourceType` for source classification, `forkedFrom` for fork lineage
-- A boolean is impossible to get wrong. Users writing YAML add `customSkill: true` and it works
+- A boolean is impossible to get wrong. Users writing YAML add `custom: true` and it works
 
-**Why `customSkill` over alternatives:**
+**Why `custom` over alternatives:**
 
 | Candidate           | Problem                                                              |
 | ------------------- | -------------------------------------------------------------------- |
@@ -75,44 +76,51 @@ A boolean `customSkill` property on each entity's config file.
 | `managed: true`     | Semantically backwards (all skills are "managed" by the CLI)         |
 | `builtin: false`    | Double negative; confusing for YAML authors                          |
 | `external: true`    | Ambiguous -- external to what?                                       |
-| `custom: true`      | Too generic -- could be confused with other "custom" concepts        |
-| `customSkill: true` | Clear, specific, no overlap with existing concepts                   |
+| `customSkill: true` | Awkward on agent YAML -- the property is not skill-specific          |
 
 **Where it lives in each entity:**
 
 ```yaml
 # metadata.yaml (skills)
-customSkill: true
+custom: true
 category: acme-pipeline
 author: "@acme"
 cliName: Deploy Pipeline
 # ...
 
 # agent.yaml (agents)
-customSkill: true
+custom: true
 id: acme-deployer
 title: Acme Deployer
 # ...
-
-# skills-matrix.yaml (categories and domains -- in a custom overlay file)
-# See "Local Schema Design" section for how custom categories/domains are declared
 ```
+
+**Note:** Categories and domains do NOT use `custom: true`. They are declared in the source's `skills-matrix.yaml` and merged with the CLI's built-in matrix at load time. See [Skills Matrix Merge Strategy](#skills-matrix-merge-strategy) for details.
 
 **Automatic vs manual:**
 
-- `agentsinc new skill` and `agentsinc new agent` should set `customSkill: true` automatically when running inside a private marketplace context (detected via `config.yaml` having a `marketplace` field or the presence of `marketplace.json`)
+- `agentsinc new skill` and `agentsinc new agent` should set `custom: true` automatically when running inside a private marketplace context (detected via `config.yaml` having a `marketplace` field or the presence of `marketplace.json`)
 - Users editing YAML directly can add it manually
 - Built-in skills shipped with the public marketplace never have this property
+
+### Where `custom: true` Is Actually Checked
+
+The `custom: true` flag is ONLY checked in two contexts:
+
+1. **`agentsinc validate` command** -- to decide whether to apply strict built-in naming conventions. This is centralized in one place: `schema-validator.ts`. When `custom: true`, the validator skips the `SKILL_ID_PATTERN` prefix check for skill IDs and the `agentNameSchema` enum check for agent names.
+2. **UI/UX** -- to show a visual indicator in the wizard (optional badge/label). This is purely cosmetic.
+
+It is NOT checked at any loader parse boundary. The dynamic schema extension (for categories, domains, agent names, and skill IDs via auto-discovery) handles all parse-time validation. This means `custom: true` does not infect the codebase with scattered conditionals -- it is a metadata flag for validation strictness and display purposes only.
 
 ### Codebase Audit Notes
 
 **`SkillSourceType` and `forkedFrom` verification:**
 
-- `SkillSourceType` (`src/cli/types/matrix.ts:280`): `"public" | "private" | "local"` -- classifies source provenance only. Lives on `SkillSource.type`, not on the metadata YAML. Confirmed no overlap with `customSkill`.
+- `SkillSourceType` (`src/cli/types/matrix.ts:280`): `"public" | "private" | "local"` -- classifies source provenance only. Lives on `SkillSource.type`, not on the metadata YAML. Confirmed no overlap with `custom`.
 - `forkedFrom` is used in two contexts:
   1. `localSkillMetadataSchema` (`schemas.ts:539-554`): tracks fork lineage for local skills copied from marketplace (`skillId`, `contentHash`, `date`, `source`)
-  2. `metadataValidationSchema` (`schemas.ts:819-832`): strict validation for published skills (`skillId`, `version`, `contentHash`, `source`, `date`)
-  3. `importedSkillMetadataSchema` (`schemas.ts:635-650`): tracks import origin (`source`, `skillName`, `contentHash`, `date`)
+  2. `metadataValidationSchema` (`schemas.ts:811-824`): strict validation for published skills (`skillId`, `version`, `contentHash`, `source`, `date`)
+  3. `importedSkillMetadataSchema` (`schemas.ts:627-642`): tracks import origin (`source`, `skillName`, `contentHash`, `date`)
 - Neither `SkillSourceType` nor `forkedFrom` conveys "this entity uses custom vocabulary" -- the doc's claim of no overlap is **correct**.
 
 **Marketplace detection:** The `marketplace` field exists on `ProjectConfig` (`src/cli/types/config.ts:87`). The `Marketplace` type (`src/cli/types/plugins.ts:58-66`) represents `marketplace.json`. Both detection paths described are viable.
@@ -144,36 +152,23 @@ I searched the codebase for all code that extracts or relies on the skill ID pre
 | `lib/skills/source-switcher.ts:16` | `SKILL_ID_PATTERN.test(skillId)`             | Rejects IDs for archive/restore operations   |
 | `lib/stacks/stacks-loader.ts:118`  | `SKILL_ID_PATTERN.test(assignment.id)`       | Warns and skips invalid IDs in stack configs |
 
-#### 2. Agent-Skill Mapping (1 location, indirect)
+#### 2. Agent-Skill Assignment (post D-43)
 
-| File                                   | Usage                                                          | Impact                            |
-| -------------------------------------- | -------------------------------------------------------------- | --------------------------------- |
-| `defaults/agent-mappings.yaml:135-216` | `agentSkillPrefixes` maps agents to prefixes like `web`, `api` | Used by wizard agent preselection |
+The `getAgentsForSkill()` function, `skillToAgents` mapping in `agent-mappings.yaml`, `agentSkillPrefixes`, `DEFAULT_AGENTS` constant, and `defaults-loader.ts` have all been removed by D-43. The current behavior is simpler: when no stack is selected, all skills are assigned to all selected agents. Stacks provide fine-grained skill-to-agent mapping via explicit config.
 
-But critically, `agentSkillPrefixes` is only used in one place: `preselectAgentsFromDomains()` in the wizard store. And that function does NOT parse skill ID prefixes -- it maps selected **domains** to agent lists via the hardcoded `DOMAIN_AGENTS` constant (`wizard-store.ts:24-37`). The `agentSkillPrefixes` config is loaded by `defaults-loader.ts:11` but never actually consumed for prefix parsing at runtime.
+This simplification means the skill ID prefix has zero routing significance -- it is purely a naming convention for human readability.
 
-#### 3. Agent Routing via Skill Path (NOT prefix)
-
-The `getAgentsForSkill()` function in `config-generator.ts:28-53` matches against the skill's **directory path** (e.g., `web/framework/react`) and **category** (e.g., `web-testing`) using path patterns like `"web/*"` and exact category matches, not against the skill ID prefix. The path comes from `ExtractedSkillMetadata.path` which is set to `skills/${directoryPath}/` in `matrix-loader.ts:147`.
-
-The matching order in `getAgentsForSkill()`:
-
-1. Exact match on `category` string (e.g., `"web-testing"` -> `[web-tester, web-developer, web-reviewer]`)
-2. Exact match on normalized path
-3. Wildcard prefix match (e.g., `"web/*"` matches `web/framework/react`)
-4. Fallback to `DEFAULT_AGENTS` (`["agent-summoner", "skill-summoner", "documentor"]`)
-
-#### 4. Display Name Fallback (1 location)
+#### 3. Display Name Fallback (1 location)
 
 ```typescript
-// stores/wizard-store.ts:119-120
+// stores/wizard-store.ts:116-117
 const segments = skillId.split("-");
 const fallback = segments[segments.length - 1] || skillId;
 ```
 
 This extracts the **last** segment as a display name fallback, not the first (prefix).
 
-#### 5. Domain Determination
+#### 4. Domain Determination
 
 The skill's domain is determined by its `category` field in `metadata.yaml`, which maps to a `CategoryDefinition` with a `domain` property. The skill ID prefix is **not** used to determine domain at runtime.
 
@@ -181,13 +176,13 @@ The skill's domain is determined by its `category` field in `metadata.yaml`, whi
 
 **The prefix only matters for:**
 
-1. Schema validation (3 regex checks) -- easily made conditional on `customSkill: true`
+1. Schema validation (3 regex checks) -- easily made conditional on `custom: true`
 2. Human readability -- `web-framework-react` tells you the domain at a glance
 
 **The prefix does NOT determine:**
 
 - Which domain a skill belongs to (determined by `category` -> `CategoryDefinition.domain`)
-- Which agents receive the skill (determined by `skillToAgents` path patterns in `agent-mappings.yaml`, resolved in `config-generator.ts:28-53`)
+- Which agents receive the skill (after D-43, all skills are assigned to all selected agents; stacks provide fine-grained mapping)
 - How the skill appears in the wizard (determined by category/subcategory)
 
 ### Recommendation: Allow Any Kebab-Case ID
@@ -205,15 +200,15 @@ The skill's placement in the system is determined entirely by its `category` fie
 
 **Implementation approach:**
 
-For custom entities (`customSkill: true`), relax the `SKILL_ID_PATTERN` to accept any kebab-case string:
+For custom entities (`custom: true`), relax the `SKILL_ID_PATTERN` to accept any kebab-case string:
 
 ```typescript
 // Proposed: general pattern for custom skills — any kebab-case string
 const CUSTOM_SKILL_ID_PATTERN = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 
 // At runtime, check:
-// 1. If entity has customSkill: true -> validate against CUSTOM_SKILL_ID_PATTERN
-// 2. If entity does NOT have customSkill: true -> validate against existing SKILL_ID_PATTERN
+// 1. If entity has custom: true -> validate against CUSTOM_SKILL_ID_PATTERN
+// 2. If entity does NOT have custom: true -> validate against existing SKILL_ID_PATTERN
 ```
 
 **What we do NOT do:**
@@ -228,10 +223,8 @@ const CUSTOM_SKILL_ID_PATTERN = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 - `SKILL_ID_PATTERN` at `schemas.ts:227` -- **confirmed**
 - `source-switcher.ts:16` uses `SKILL_ID_PATTERN.test(skillId)` -- **confirmed** (in `validateSkillId()` function, called by `archiveLocalSkill`, `restoreArchivedSkill`, and `hasArchivedSkill`)
 - `stacks-loader.ts:118` uses `SKILL_ID_PATTERN.test(assignment.id)` -- **confirmed** (in `resolveAgentConfigToSkills()`)
-- `agent-mappings.yaml:135` starts `agentSkillPrefixes` section -- **confirmed**
-- `preselectAgentsFromDomains()` at `wizard-store.ts:634-644` -- **confirmed** it uses only `DOMAIN_AGENTS` constant, NOT `agentSkillPrefixes`
-
-**Additional finding:** The JSDoc on `preselectAgentsFromDomains` (`wizard-store.ts:338`) misleadingly says "Matches domains against agentSkillPrefixes from cached defaults" but the implementation uses the hardcoded `DOMAIN_AGENTS` constant. The doc's analysis is correct about the actual behavior.
+- `preselectAgentsFromDomains()` at `wizard-store.ts:631-641` -- **confirmed** it uses only `DOMAIN_AGENTS` constant
+- `defaults/agent-mappings.yaml`, `defaults-loader.ts`, `agentSkillPrefixes`, `defaultMappingsSchema`, `getAgentsForSkill()`, and `DEFAULT_AGENTS` have all been removed by D-43
 
 **`categoryPathSchema` additional prefix:** The `categoryPathSchema` regex (`schemas.ts:241`) includes `shared` as an 8th valid prefix beyond the 7 in `SkillIdPrefix`. This means `shared-monorepo` is a valid category path even though `shared` is not a valid skill ID prefix. Custom extensibility must relax `categoryPathSchema` similarly.
 
@@ -239,56 +232,110 @@ const CUSTOM_SKILL_ID_PATTERN = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 
 ## Local Schema Design
 
+> **Status: DEFERRED.** Schema scaffolding is fully deferred. `new marketplace` and `new skill` no longer generate `$schema` comments in YAML files. No local schema files are generated. The CLI validates at runtime via Zod (which already supports custom values via dynamic schema extension from Phases 1-2). IDE schema validation for custom enum values will be implemented later via the base schema splitting approach described below.
+
 ### Purpose
 
-Users need IDE validation (yaml-language-server) for their custom entities. The CLI publishes base JSON schemas (e.g., `metadata.schema.json`). The user's marketplace repo extends these with local schema files that add custom enum values.
+Users need IDE validation (yaml-language-server) for their custom entities. The CLI publishes base JSON schemas (e.g., `metadata.schema.json`). The user's marketplace repo would extend these with local schema files that add custom enum values.
 
-### Directory Structure
+### What Works Today
+
+> **Decision (2026-02-23):** Base schemas upgraded to **JSON Schema draft 2020-12** with `unevaluatedProperties: false` (replacing `additionalProperties: false`). yaml-language-server supports draft 2020-12 as of February 2026 ([issue #478](https://github.com/redhat-developer/yaml-language-server/issues/478)).
+
+The `unevaluatedProperties` keyword solves the **property addition** problem: it sees across `allOf` boundaries, so an extending schema can add new properties (like `custom: true`) without the base schema rejecting them as unknown. This is working and correct.
+
+However, `unevaluatedProperties` does **NOT** solve the **enum widening** problem. `allOf` is always intersection (AND). If the base schema has `category: { enum: [38 built-in values] }` and the extension adds `category: { enum: ["acme-pipeline", "acme-ml"] }`, the `allOf` intersection produces an empty set (no value can be in both enums simultaneously). The extension's custom categories would always fail validation.
+
+### Why `$dynamicRef`/`$dynamicAnchor` Is Not Viable
+
+Research confirmed that `$dynamicRef`/`$dynamicAnchor` (the JSON Schema draft 2020-12 mechanism for "open" extension points) is not supported by the tooling:
+
+- **yaml-language-server** (AJV-based) restricts `$dynamicAnchor` to schema roots only -- it cannot be placed on individual property schemas
+- **VS Code JSON service** explicitly does not support `$dynamicRef`
+
+This rules out the "open anchor" approach to enum extensibility.
+
+### Planned Solution: Base Schema Splitting
+
+The planned approach splits each base schema into two variants:
+
+| Variant                                     | Purpose                                                                        | Enum fields                                | Used by                                |
+| ------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------ | -------------------------------------- |
+| **Structure schema** (`*-base.schema.json`) | All properties, types, patterns, required -- but NO enums on extensible fields | `category: { "type": "string" }` (no enum) | Extension schemas via `allOf` + `$ref` |
+| **Full schema** (`*.schema.json`)           | References structure via `allOf` + adds strict enums                           | `category: { "enum": [38 values] }`        | Built-in YAML files (same as today)    |
+
+Custom marketplace YAML files would point to tiny **extension schemas** (~10-15 lines) that `allOf` + `$ref` the structure schema and add ONLY custom enum values. This works because the structure schema has `category: { "type": "string" }` (no enum), so the extension's `category: { "enum": ["acme-pipeline", "acme-ml"] }` does not intersect with anything -- it simply constrains the open `string` type to the custom values.
+
+**Schemas that would need splitting (when implemented):**
+
+| Base schema                  | Structure variant                           | Extensible fields                                                                          |
+| ---------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `metadata.schema.json`       | `metadata-base.schema.json`                 | `category` relaxed to `{ "type": "string" }` (no enum)                                     |
+| `skills-matrix.schema.json`  | `skills-matrix-base.schema.json`            | `propertyNames` no enum, `id` no enum, `domain` no enum, no `required` array on categories |
+| `stacks.schema.json`         | `stacks-base.schema.json`                   | `propertyNames` no enum, skill ID no prefix pattern                                        |
+| `project-config.schema.json` | N/A -- consumer-side, no `$schema` comments | --                                                                                         |
+
+### Directory Structure (Planned)
 
 ```
-.claude-src/
-  schemas/
-    metadata.schema.json          # Extends CLI's base metadata schema
-    agent.schema.json             # Extends CLI's base agent schema
-    skills-matrix.schema.json     # Extends CLI's base matrix schema
-    custom-definitions.json       # Custom domains, categories, prefixes
+# CLI package (src/schemas/)
+metadata.schema.json              # Full schema (strict enums) -- built-in YAML files use this
+metadata-base.schema.json         # Structure schema (no enums on extensible fields)
+agent.schema.json                 # Full schema
+agent-base.schema.json            # Structure schema
+skills-matrix.schema.json         # Full schema
+skills-matrix-base.schema.json    # Structure schema
+
+# User's marketplace (.claude-src/schemas/)
+metadata.schema.json              # Extension: allOf $ref -> CLI's metadata-base + custom enums
+agent.schema.json                 # Extension: allOf $ref -> CLI's agent-base + custom enums
+skills-matrix.schema.json         # Extension: allOf $ref -> CLI's skills-matrix-base + custom enums
 ```
 
-### Schema Extension Pattern
-
-Use JSON Schema `allOf` + `$ref` so the base schema's structural rules are inherited and the local schema only overrides enum constraints:
+### Extension Schema Example (Planned)
 
 ```jsonc
-// .claude-src/schemas/metadata.schema.json
+// .claude-src/schemas/metadata.schema.json (~10-15 lines)
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Custom Skill Metadata",
-  "description": "Extends CLI base metadata schema with custom categories.",
+  "description": "Extends CLI structure schema with custom categories.",
   "allOf": [
     {
-      "$ref": "https://unpkg.com/@anthropic/agentsinc-cli@latest/dist/schemas/metadata.schema.json",
+      // References the STRUCTURE schema (no enums), NOT the full schema
+      "$ref": "../node_modules/@anthropic/agentsinc-cli/dist/schemas/metadata-base.schema.json",
     },
   ],
   "properties": {
-    "customSkill": {
+    "custom": {
       "type": "boolean",
       "const": true,
       "description": "Marks this entity as custom-created (bypasses built-in enum validation)",
     },
     "category": {
       "type": "string",
-      "enum": ["web-framework", "web-styling", "acme-pipeline", "acme-infra", "acme-ml"],
+      "enum": ["acme-pipeline", "acme-infra", "acme-ml"],
     },
   },
 }
 ```
 
-### How `$ref` Points to the CLI's Published Schema
+This works because:
 
-**Option A: npm package URL (recommended)**
+1. The structure schema defines `category: { "type": "string" }` with no enum constraint
+2. The extension's `allOf` inherits all structural rules (required fields, types, patterns)
+3. The extension's `category: { "enum": [...] }` constrains the open string to only custom values
+4. `unevaluatedProperties: false` on the structure schema allows the `custom` property addition
+5. No intersection conflict -- the structure schema's `"type": "string"` is compatible with any `"enum"` subset
+
+### How `$ref` Would Point to the CLI's Structure Schema
+
+**Option A: npm package URL**
 
 ```json
-{ "$ref": "https://unpkg.com/@anthropic/agentsinc-cli@latest/dist/schemas/metadata.schema.json" }
+{
+  "$ref": "https://unpkg.com/@anthropic/agentsinc-cli@latest/dist/schemas/metadata-base.schema.json"
+}
 ```
 
 Pros: Always resolves to the published version. Works with any JSON Schema tooling.
@@ -297,135 +344,45 @@ Cons: Requires internet access. `@latest` may introduce breaking changes.
 **Option B: Pinned version**
 
 ```json
-{ "$ref": "https://unpkg.com/@anthropic/agentsinc-cli@0.44.0/dist/schemas/metadata.schema.json" }
+{
+  "$ref": "https://unpkg.com/@anthropic/agentsinc-cli@0.44.0/dist/schemas/metadata-base.schema.json"
+}
 ```
 
 Pros: Deterministic. No surprise breakage.
 Cons: User must update version manually.
 
-**Option C: Relative path to node_modules**
+**Option C: Relative path to node_modules (recommended)**
 
 ```json
-{ "$ref": "../node_modules/@anthropic/agentsinc-cli/dist/schemas/metadata.schema.json" }
+{ "$ref": "../node_modules/@anthropic/agentsinc-cli/dist/schemas/metadata-base.schema.json" }
 ```
 
 Pros: Works offline. Always matches installed CLI version.
 Cons: Path may vary by project structure. Not all tools resolve relative `$ref` correctly.
 
-**Recommendation:** Option A with the caveat that `agentsinc new marketplace` (future command) should scaffold with Option B (pinned to the user's current CLI version). The scaffolded schemas should include a comment explaining how to update the version.
+**Recommendation:** Option C (relative path) is the primary approach. When schema scaffolding is implemented, `agentsinc new marketplace` would scaffold local schemas with a relative path to the CLI's `dist/schemas/` structure variants. This works offline, always matches the installed CLI version, and avoids the versioning problem. Options A and B remain viable for environments where the CLI is not installed locally.
 
-### Custom Definitions File
+### Schema Update on `new skill` / `new agent` (Deferred)
 
-A separate `custom-definitions.json` declares the custom vocabulary so the CLI knows what custom domains and categories exist without parsing every entity file:
+This subsection is deferred along with schema scaffolding. When implemented:
 
-```jsonc
-// .claude-src/schemas/custom-definitions.json
-{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Custom Definitions",
-  "description": "Declares custom domains, categories, and prefixes for this marketplace.",
-  "type": "object",
-  "properties": {
-    "domains": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-          "displayName": { "type": "string" },
-          "description": { "type": "string" },
-        },
-        "required": ["id", "displayName"],
-      },
-    },
-    "categories": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-          "displayName": { "type": "string" },
-          "description": { "type": "string" },
-          "domain": { "type": "string" },
-          "exclusive": { "type": "boolean", "default": true },
-          "required": { "type": "boolean", "default": false },
-          "order": { "type": "integer", "default": 100 },
-        },
-        "required": ["id", "displayName", "domain"],
-      },
-    },
-    "agentNames": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
-      },
-      "description": "Custom agent names beyond the built-in set",
-    },
-    "skillIdPrefixes": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "pattern": "^[a-z][a-z0-9]*$",
-      },
-      "description": "Custom skill ID prefixes (e.g., 'acme', 'dataeng')",
-    },
-  },
-}
-```
+1. `agentsinc new skill` would create the skill with `custom: true` in `metadata.yaml`
+2. Optionally update `.claude-src/schemas/metadata.schema.json` to add the new category to the local `category` enum (if not already present)
 
-Example usage:
-
-```jsonc
-// .claude-src/schemas/custom-definitions.json (actual content, not schema)
-{
-  "domains": [
-    { "id": "acme", "displayName": "Acme Platform", "description": "Internal platform tools" },
-  ],
-  "categories": [
-    {
-      "id": "acme-pipeline",
-      "displayName": "CI/CD Pipeline",
-      "description": "Deployment pipeline skills",
-      "domain": "acme",
-      "exclusive": false,
-      "order": 1,
-    },
-    {
-      "id": "acme-ml",
-      "displayName": "ML Tooling",
-      "description": "Machine learning workflow skills",
-      "domain": "acme",
-      "exclusive": true,
-      "order": 2,
-    },
-  ],
-  "agentNames": ["acme-deployer", "acme-ml-engineer"],
-  "skillIdPrefixes": ["acme", "dataeng"],
-}
-```
-
-### Schema Update on `new skill` / `new agent`
-
-When `agentsinc new skill acme-pipeline-deploy` runs inside a marketplace with `custom-definitions.json`:
-
-1. The CLI reads `custom-definitions.json` to learn valid custom prefixes/categories
-2. Creates the skill with `customSkill: true` in `metadata.yaml`
-3. Updates `.claude-src/schemas/metadata.schema.json` to add the new category to the local `category` enum (if not already present)
-
-This is a convenience, not a hard requirement. Users can also edit the schemas manually.
+Currently, `new skill` sets `custom: true` in metadata but does not generate or update any local JSON schema files.
 
 ### Codebase Audit Notes
 
-**JSON Schema `allOf` + `$ref` complication:** The base `metadata.schema.json` (`src/schemas/metadata.schema.json`) currently has `"additionalProperties": false`. When combined via `allOf`, the base schema's `additionalProperties: false` will reject the `customSkill` property added by the extending schema. This is a known JSON Schema draft-07 limitation where `additionalProperties` in `allOf` does not compose intuitively.
+**`allOf` + `$ref` enum widening: DOES NOT WORK.** `allOf` is intersection (AND). If the base schema has `category: { enum: [38 values] }` and the extension adds `category: { enum: [2 custom values] }`, the intersection is empty -- no value satisfies both constraints. The `unevaluatedProperties` upgrade solved the **property addition** problem (adding `custom` without rejection) but does NOT solve enum widening.
 
-**Resolution options:**
+**`$dynamicRef`/`$dynamicAnchor`: NOT SUPPORTED by tooling.** yaml-language-server (AJV-based) restricts `$dynamicAnchor` to schema roots only. VS Code JSON service explicitly does not support `$dynamicRef`. Not viable for per-property extension points.
 
-1. The base schema must be updated to include `customSkill` as an optional property (even for built-in skills, where it would be absent/ignored)
-2. OR the base schema should remove `additionalProperties: false` in favor of documenting expected fields
-3. OR the local schema must NOT use `allOf` + `$ref` and instead be a standalone schema that duplicates the base fields
+**Planned solution: base schema splitting.** Split each base schema into a structure variant (no enums on extensible fields) and a full variant (strict enums via `allOf` + structure ref). Extension schemas reference the structure variant, avoiding the intersection problem entirely. See "Planned Solution: Base Schema Splitting" above.
 
-**Recommendation:** Option 1 is cleanest -- add `customSkill` to the base `metadata.schema.json` as an optional boolean. This is a non-breaking change for existing skills and makes the `allOf` extension pattern work correctly.
+**Base schemas upgraded to draft 2020-12.** The base schemas now use JSON Schema draft 2020-12 with `unevaluatedProperties: false` instead of `additionalProperties: false`. The `unevaluatedProperties` keyword ([spec](https://json-schema.org/draft/2020-12/json-schema-core#section-11.3)) sees across `allOf` boundaries, allowing property addition. yaml-language-server supports this as of February 2026 ([issue #478](https://github.com/redhat-developer/yaml-language-server/issues/478)).
+
+Note: Adding `custom` to the base schema (done in Phase 1) remains useful as a convenience -- the base schema documents `custom` as a known optional property. But this alone does not enable enum widening for categories/domains in IDE schemas.
 
 **Existing schema directory:** The CLI already ships 12 JSON schemas in `src/schemas/`:
 
@@ -436,7 +393,7 @@ This is a convenience, not a hard requirement. Users can also edit the schemas m
 
 **Schema location:** The doc proposes `.claude-src/schemas/` for user schemas. The `CLAUDE_SRC_DIR` constant exists (`consts.ts:16`) as `".claude-src"`, confirming this is the established convention for source-level config.
 
-**`custom-definitions.json` is NOT a JSON Schema:** The document confusingly presents `custom-definitions.json` with a `$schema` header and JSON Schema structure in one block, then shows "actual content" in another. These are two different things: (a) the schema FOR the file, and (b) the file's actual content. The document should separate these clearly. The schema for `custom-definitions.json` should ship with the CLI (at `src/schemas/custom-definitions.schema.json`). The actual file the user creates would just have a `$schema` pointer to it.
+**Local schemas for IDE autocomplete:** Local JSON schemas in `.claude-src/schemas/` are useful for IDE autocomplete but independent of the runtime merge + auto-discovery pipeline.
 
 ---
 
@@ -455,34 +412,34 @@ The CLI has two validation tiers:
 
 #### Detection
 
-When the CLI loads an entity, it checks for the `customSkill` property:
+When the CLI loads an entity, it checks for the `custom` property:
 
 ```typescript
 // Pseudocode for the detection flow
 const rawMetadata = parseYaml(content);
-const isCustom = rawMetadata.customSkill === true;
+const isCustom = rawMetadata.custom === true;
 ```
 
 The check happens at the YAML parse boundary, before schema validation.
 
 #### What Changes
 
-| Check                  | Built-in Entity                               | Custom Entity (`customSkill: true`)                                  |
-| ---------------------- | --------------------------------------------- | -------------------------------------------------------------------- |
-| Skill ID format        | Must match `SKILL_ID_PATTERN` (7 prefixes)    | Must match `CUSTOM_SKILL_ID_PATTERN` (any kebab-case string)         |
-| Agent name             | Must be in `AgentName` union                  | Must be kebab-case, no other constraint                              |
-| Category               | Must be in `Subcategory` union                | Must be kebab-case, optionally declared in `custom-definitions.json` |
-| Domain                 | Must be in `Domain` union                     | Must be kebab-case, optionally declared in `custom-definitions.json` |
-| Structural fields      | `description`, `author`, `cliName` required   | Same -- structural requirements unchanged                            |
-| Relationship refs      | Resolved via `displayNameToId` and alias maps | Same -- references validated post-merge                              |
-| `additionalProperties` | Strict schemas reject unknown fields          | Same -- `customSkill` is added to the schema's known properties      |
+| Check                  | Built-in Entity                               | Custom Entity (`custom: true`)                                                                   |
+| ---------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Skill ID format        | Must match `SKILL_ID_PATTERN` (7 prefixes)    | Must match `CUSTOM_SKILL_ID_PATTERN` (any kebab-case string)                                     |
+| Agent name             | Must be in `AgentName` union                  | Must be kebab-case, no other constraint                                                          |
+| Category               | Must be in `Subcategory` union                | Validated by extended schema (see [Skills Matrix Merge Strategy](#skills-matrix-merge-strategy)) |
+| Domain                 | Must be in `Domain` union                     | Validated by extended schema (see [Skills Matrix Merge Strategy](#skills-matrix-merge-strategy)) |
+| Structural fields      | `description`, `author`, `cliName` required   | Same -- structural requirements unchanged                                                        |
+| Relationship refs      | Resolved via `displayNameToId` and alias maps | Same -- references validated post-merge                                                          |
+| `additionalProperties` | Strict schemas reject unknown fields          | Same -- `custom` is added to the schema's known properties                                       |
 
 #### What Does NOT Change
 
 1. **Structural validation** -- a custom skill still needs `cliName`, `cliDescription`, `usageGuidance`, `author`, and `category` in its `metadata.yaml`
 2. **Post-merge reference checking** -- if a custom skill declares `requires: ["acme-pipeline-setup"]`, the merge step verifies that `acme-pipeline-setup` actually exists in the loaded skill set
 3. **Compilation pipeline** -- `buildResolvedSkill()` (`matrix-loader.ts:435-483`) works identically for custom skills; the category determines agent routing, not the ID prefix
-4. **Schema validation command** (`agentsinc validate`) -- adds a `--custom-skill` flag or auto-detects from the entity's `customSkill: true` to apply relaxed enum checking
+4. **Schema validation command** (`agentsinc validate`) -- auto-detects from the entity's `custom: true` to apply relaxed enum checking
 
 #### Integration with Existing Schemas
 
@@ -497,66 +454,168 @@ export const skillFrontmatterLoaderSchema = z.object({
 });
 ```
 
-The strict validation schemas need conditional relaxation:
+The strict validation schemas need different treatment depending on the entity type:
+
+**Categories and domains: Dynamic schema extension (no `custom: true` needed)**
+
+Categories and domains are declared in the custom `skills-matrix.yaml`. The CLI reads the merged matrix at startup and knows all valid category/domain values before any entity YAML is parsed. The Zod enums are extended at runtime to include custom values:
 
 ```typescript
-// Proposed: factory function that creates a validation schema
-// appropriate for the entity's custom status
-function createMetadataValidationSchema(isCustom: boolean) {
-  return z
-    .object({
-      customSkill: z.literal(true).optional(),
-      category: isCustom
-        ? z.string().regex(/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/) // any kebab-case
-        : subcategorySchema, // built-in enum
-      // ... rest unchanged
-    })
-    .strict();
-}
+// After merging matrices (see "Skills Matrix Merge Strategy"), extract all valid values
+const allCategories = Object.keys(mergedMatrix.categories);
+const allDomains = unique(Object.values(mergedMatrix.categories).map((c) => c.domain));
+
+// Extend schemas dynamically -- still strict enums, just wider
+const extendedSubcategorySchema = z.enum([...SUBCATEGORY_VALUES, ...customCategories]);
+const extendedDomainSchema = z.enum([...DOMAIN_VALUES, ...customDomains]);
 ```
 
-Alternatively, the strict schemas can simply add `customSkill` as an optional known property so `.strict()` does not reject it, and the category/ID enum checks are skipped at the caller level:
+This eliminates the "simpler approach problem" documented below in the audit notes: Zod never rejects custom categories because they are already in the extended schema by the time any entity YAML is parsed. No factory functions, no two-schema variants, no caller-level skipping needed for categories and domains.
+
+**Initialization timing:** Schema extension happens early in the command lifecycle, after the merged matrix is loaded but before any entity YAML parsing. This could be in a `BaseCommand.init()` hook or an oclif lifecycle hook.
+
+**Skills and agents: `custom: true` with conditional relaxation**
+
+Skill IDs and agent names DO still need `custom: true` because they are per-entity identifiers (not declared in the matrix). For these, add `custom` as an optional known property so `.strict()` does not reject it:
 
 ```typescript
-// Simpler approach: add `customSkill` to schema, skip enum checks at caller
+// Add custom to schema so .strict() accepts it
 export const metadataValidationSchema = z
   .object({
-    customSkill: z.boolean().optional(), // <-- NEW
-    category: subcategorySchema,
+    custom: z.boolean().optional(), // <-- NEW
+    category: extendedSubcategorySchema, // <-- uses dynamically extended schema
     // ...
   })
   .strict();
 
-// In the validation command:
-if (parsed.customSkill === true) {
-  // skip category enum check, use relaxed ID pattern
+// In the validation command, only skill ID and agent name need conditional checks:
+if (parsed.custom === true) {
+  // skip skill ID prefix check, use relaxed CUSTOM_SKILL_ID_PATTERN
+  // skip agent name enum check, use kebab-case pattern
+  // category and domain are already valid via extended schemas
 }
 ```
 
-**Recommendation:** The simpler approach (add `customSkill` to existing schemas, conditional checks at the caller). This minimizes schema changes and avoids factory functions.
+**Recommendation:** Dynamic schema extension for categories/domains (eliminates the factory function problem entirely). `custom: true` with caller-level conditional checks for skill IDs and agent names only.
 
 ### Codebase Audit Notes
 
 **Two-tier architecture verified:**
 
 - Loader tier: `skillMetadataLoaderSchema` (`schemas.ts:290-300`) uses `.passthrough()` and `categoryPathSchema` (accepts any valid-looking category path). `skillFrontmatterLoaderSchema` (`schemas.ts:283-287`) uses `z.string()` for name.
-- Validation tier: `metadataValidationSchema` (`schemas.ts:791-834`) uses `.strict()` and `subcategorySchema` (enum). `skillFrontmatterValidationSchema` (`schemas.ts:769-788`) uses `.strict()`.
+- Validation tier: `metadataValidationSchema` (`schemas.ts:783-826`) uses `.strict()` and `subcategorySchema` (enum). `skillFrontmatterValidationSchema` (`schemas.ts:762-780`) uses `.strict()`.
 - The two-tier description is **accurate**.
 
-**The "simpler approach" problem:** If we keep `subcategorySchema` (enum) in the strict schema and only skip the check at the caller, then `z.strict()` will still reject unknown field combinations if `category` doesn't match the enum during Zod's `.safeParse()`. The Zod schema itself will fail before the caller can check `customSkill`. **The factory function approach OR a `z.union` that switches on `customSkill` is actually needed** for the Zod path. The caller-level skip only works for the JSON Schema path (where the validator already runs before code logic).
+**The "simpler approach" problem (RESOLVED by dynamic schema extension):** The original concern was that `subcategorySchema` (enum) in the strict schema would reject custom categories during `.safeParse()` before the caller could check `custom`. This is now moot for categories and domains: the dynamic schema extension approach (see "Integration with Existing Schemas" above) extends the Zod enums to include custom values BEFORE any entity parsing happens. The extended schema accepts custom categories natively -- no factory functions, no union switching, no caller-level skipping needed.
 
-**Clarification:** The "simpler approach" works if the validation flow is:
+**Remaining two-variant need:** The `custom: true` conditional check is still needed for skill IDs (`SKILL_ID_PATTERN` vs `CUSTOM_SKILL_ID_PATTERN`) and agent names (`agentNameSchema` vs kebab-case pattern). For these, the validation flow is:
 
 1. Parse with lenient loader schema (already passes)
-2. At the validation command level, check `customSkill` FIRST
-3. If `customSkill: true`, use a relaxed validation schema variant
-4. If not, use the strict built-in schema
+2. At the validation command level, check `custom` FIRST
+3. If `custom: true`, skip skill ID prefix check and agent name enum check
+4. Category and domain are already valid via the extended schemas
 
-This is effectively the factory function approach but with the decision at the call site rather than inside the schema. Either way, **two schema variants are needed**.
-
-**Third loader schema not mentioned:** `matrix-loader.ts:37-51` has its own `rawMetadataSchema` (separate from `skillMetadataLoaderSchema`) used by `extractAllSkills()`. This schema also needs `customSkill` added, and its `category` field validation (`categoryPathSchema`) already accepts arbitrary prefix paths -- so custom categories work at the loader level today.
+**Third loader schema not mentioned:** `matrix-loader.ts:37-51` has its own `rawMetadataSchema` (separate from `skillMetadataLoaderSchema`) used by `extractAllSkills()`. This schema also needs `custom` added, and its `category` field validation (`categoryPathSchema`) already accepts arbitrary prefix paths -- so custom categories work at the loader level today.
 
 **`agentsinc validate` current structure:** The validate command (`commands/validate.ts`) delegates to `schema-validator.ts` which uses the strict schemas. It has two modes: YAML schema validation and plugin validation. The custom entity detection would need to be added to the YAML validation path in `schema-validator.ts`, where each file is parsed and validated against the appropriate strict schema.
+
+---
+
+## Skills Matrix Merge Strategy
+
+### Current Behavior: One Matrix, No Merge
+
+Only ONE skills-matrix YAML is ever loaded. The CLI checks for a source's `config/skills-matrix.yaml` first; if it exists, that file is used. Otherwise, the CLI's built-in matrix at `config/skills-matrix.yaml` is used as a fallback. There is NO matrix-to-matrix merge. Code location: `source-loader.ts:152-188` (`loadAndMergeFromBasePath()`).
+
+```typescript
+// Current behavior in loadAndMergeFromBasePath() (source-loader.ts:159-169)
+const sourceMatrixPath = path.join(basePath, matrixRelPath);
+const cliMatrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
+
+let matrixPath: string;
+if (await fileExists(sourceMatrixPath)) {
+  matrixPath = sourceMatrixPath; // Source matrix REPLACES CLI matrix entirely
+} else {
+  matrixPath = cliMatrixPath; // CLI matrix used as fallback
+}
+```
+
+### Problem
+
+If a user creates a custom skills-matrix to add custom categories, it currently REPLACES the CLI matrix entirely. The user must duplicate ALL built-in categories they want to use, not just declare their custom ones. This is fragile -- CLI upgrades that add new built-in categories would not be picked up, and users must manually keep their matrix in sync with the CLI's.
+
+### Proposed Solution: Merge Custom Matrix Over Built-In
+
+The user's custom skills-matrix is MERGED with the built-in CLI matrix. User values win on conflicts:
+
+- Custom categories are ADDED to the built-in categories
+- If a user overrides a built-in category (e.g., changes `web-framework`'s display name or order), the user's version wins
+- All built-in categories NOT overridden are preserved
+
+**Implementation:** Simple record spread `{ ...builtInCategories, ...userCategories }` in `loadAndMergeFromBasePath()` (or a new merge function).
+
+### Order of Operations
+
+```
+1. Load CLI built-in matrix (always)
+2. Load source matrix (if exists)
+3. Merge categories: { ...cliMatrix.categories, ...sourceMatrix.categories }
+4. Extract skills from source
+5. mergeMatrixWithSkills(mergedMatrix, skills)
+6. Extend Zod schemas with custom categories/domains (see "Runtime Validation Behavior")
+7. (rest of pipeline unchanged)
+```
+
+### Implementation Sketch
+
+```typescript
+// Proposed replacement for source-loader.ts:159-176
+const cliMatrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
+const cliMatrix = await loadSkillsMatrix(cliMatrixPath);
+
+let mergedCategories = { ...cliMatrix.categories };
+
+const sourceMatrixPath = path.join(basePath, matrixRelPath);
+if (await fileExists(sourceMatrixPath)) {
+  const sourceMatrix = await loadSkillsMatrix(sourceMatrixPath);
+  // Source categories overlay CLI categories -- user values win on conflict
+  mergedCategories = { ...cliMatrix.categories, ...sourceMatrix.categories };
+  verbose(
+    `Matrix merged: CLI (${Object.keys(cliMatrix.categories).length} categories) + source (${Object.keys(sourceMatrix.categories).length} categories)`,
+  );
+} else {
+  verbose(`Matrix from CLI only (source has no matrix): ${cliMatrixPath}`);
+}
+
+const matrix = { ...cliMatrix, categories: mergedCategories };
+const skills = await extractAllSkills(skillsDir);
+const mergedMatrix = await mergeMatrixWithSkills(matrix, skills);
+```
+
+### Interaction with Zod Schema Extension
+
+After the merge, the CLI knows all valid categories and domains (both built-in and custom). This is when the dynamic Zod schema extension happens:
+
+```typescript
+// Extract custom values that aren't in the built-in enums
+const allCategoryIds = Object.keys(mergedCategories);
+const customCategories = allCategoryIds.filter((id) => !SUBCATEGORY_VALUES.includes(id));
+const allDomains = unique(Object.values(mergedCategories).map((c) => c.domain));
+const customDomains = allDomains.filter((d) => !DOMAIN_VALUES.includes(d));
+
+// Extend Zod schemas if custom values exist
+if (customCategories.length > 0 || customDomains.length > 0) {
+  extendValidationSchemas({ customCategories, customDomains });
+}
+```
+
+This is the key insight that simplifies the design: categories and domains do NOT need `custom: true` flags or per-entity detection. They are declared in the skills-matrix YAML, and the CLI learns about them at startup via the merge step.
+
+### Codebase Audit Notes
+
+**`loadSkillsMatrix()` schema barrier:** The `skillsMatrixConfigSchema` (`schemas.ts:497-506`) validates category keys with `z.record(subcategorySchema, categoryDefinitionSchema)`, where `subcategorySchema` is a strict enum of 38 values. Loading a source matrix with custom category keys like `acme-pipeline` will fail Zod validation. **Fix:** The source matrix must be loaded with a relaxed schema variant that accepts `z.record(z.string(), categoryDefinitionSchema)` for category keys. Alternatively, `loadSkillsMatrix()` can accept a `relaxed: boolean` parameter to switch schemas.
+
+**No other top-level matrix fields need merging.** The `SkillsMatrixConfig` type has `version: string` and `categories: Record<...>`. Only `categories` needs merging. The `version` field from the CLI matrix is kept (or the higher version if both are present).
 
 ---
 
@@ -567,7 +626,7 @@ This is effectively the factory function approach but with the decision at the c
 **Config location:** `metadata.yaml`
 
 ```yaml
-customSkill: true
+custom: true
 category: acme-pipeline
 author: "@acme"
 cliName: Deploy Pipeline
@@ -580,7 +639,7 @@ tags:
 
 **Validation changes:**
 
-- `SKILL_ID_PATTERN` check skipped when `customSkill: true`; `CUSTOM_SKILL_ID_PATTERN` (any kebab-case string) used instead
+- `SKILL_ID_PATTERN` check skipped when `custom: true`; `CUSTOM_SKILL_ID_PATTERN` (any kebab-case string) used instead
 - `category` field accepts any kebab-case string, not just built-in `Subcategory` values
 - All structural fields still required
 
@@ -593,26 +652,50 @@ The wizard rendering pipeline is 100% metadata-driven. Skill IDs are never parse
 - Skills appear via `getAvailableSkills(cat.id, ...)` which matches on `metadata.yaml`'s `category` field
 - A custom skill with `category: web-framework` appears next to React and Vue with no special handling
 - Custom skills in custom categories (e.g., `category: acme-pipeline`) appear in the custom domain tab under their category
-- The only prerequisite is that the custom category is loaded into `matrix.categories` (via `custom-definitions.json` merge) and has a `domain` property
+- The only prerequisite is that the custom category is loaded into `matrix.categories` (via the skills-matrix merge) and has a `domain` property
 - Optional: custom skills could be prefixed with a visual indicator (e.g., "C" badge) in the display label for clarity, but this is purely cosmetic
 
 **Compilation pipeline changes:**
 
 - None. `buildResolvedSkill()` (`matrix-loader.ts:435-483`) uses `category` for routing, which works with any string value
-- `getAgentsForSkill()` (`config-generator.ts:28-53`) falls back to `DEFAULT_AGENTS` when no `skillToAgents` pattern matches, which is the correct behavior for custom skills unless the user also adds custom `skillToAgents` mappings
+- After D-43, when no stack is selected, all skills are assigned to all selected agents. Stacks provide fine-grained skill-to-agent mapping. Custom skills are included alongside all other skills with no special handling needed
+
+### Skill ID Auto-Discovery
+
+Skill IDs can be auto-discovered from the source's `src/skills/` directory via `extractAllSkills()` (`matrix-loader.ts:91-155`). This function already scans all `metadata.yaml` files and parses the canonical skill ID from each skill's `SKILL.md` frontmatter.
+
+The `skillIdSchema` can be extended to accept either a match against `SKILL_ID_PATTERN` OR any ID found in the source's skills:
+
+```typescript
+// After extractAllSkills(), extend skillIdSchema
+const sourceSkillIds = skills.map((s) => s.id);
+const customSkillIds = sourceSkillIds.filter((id) => !SKILL_ID_PATTERN.test(id));
+if (customSkillIds.length > 0) {
+  // Accept built-in pattern OR any discovered custom ID
+  extendedSkillIdSchema = z.union([
+    z.string().regex(SKILL_ID_PATTERN),
+    z.enum(customSkillIds as [string, ...string[]]),
+  ]);
+}
+```
+
+The `custom: true` flag on skills is NOT needed for Zod schema extension -- it is only checked in two places:
+
+1. **`agentsinc validate`** -- to decide whether to apply strict built-in naming conventions (centralized in `schema-validator.ts`)
+2. **UI/UX** -- to show a visual indicator in the wizard (optional badge/label)
 
 ### Codebase Audit Notes (Skills)
 
-**`extractAllSkills()` (`matrix-loader.ts:91-155`) requires changes.** The function uses a local `rawMetadataSchema` (`matrix-loader.ts:37-51`) that includes `categoryPathSchema` for the `category` field. The `categoryPathSchema` (`schemas.ts:238-247`) already accepts any prefix matching `^(web|api|cli|mobile|infra|meta|security|shared)-.+$` OR bare `Subcategory` values OR `"local"`. A custom category like `acme-pipeline` would NOT match any of these -- it would be rejected by `categoryPathSchema`. **This is a critical gap:** the loader-level schema already blocks custom categories. The fix: when `customSkill: true` is detected at the raw YAML level, use a relaxed `categoryPathSchema` variant (or just `z.string()` for category).
+**`extractAllSkills()` (`matrix-loader.ts:91-155`) requires changes.** The function uses a local `rawMetadataSchema` (`matrix-loader.ts:37-51`) that includes `categoryPathSchema` for the `category` field. The `categoryPathSchema` (`schemas.ts:238-247`) already accepts any prefix matching `^(web|api|cli|mobile|infra|meta|security|shared)-.+$` OR bare `Subcategory` values OR `"local"`. A custom category like `acme-pipeline` would NOT match any of these -- it would be rejected by `categoryPathSchema`. **This is a critical gap:** the loader-level schema already blocks custom categories. The fix: when `custom: true` is detected at the raw YAML level, use a relaxed `categoryPathSchema` variant (or just `z.string()` for category).
 
-**`buildResolvedSkill()` path resolution:** For custom skills, `skill.path` is set to `skills/${directoryPath}/` at `matrix-loader.ts:147`. The `getAgentsForSkill()` function normalizes this path and matches against `skillToAgents` patterns. A custom skill in directory `acme/pipeline/deploy` would have path `skills/acme/pipeline/deploy/` -- this won't match any built-in pattern like `"web/*"` or `"api/*"`, so it correctly falls back to `DEFAULT_AGENTS`. Custom `skillToAgents` mappings (e.g., `"acme/*": ["acme-deployer"]`) would need to be defined in `custom-definitions.json` or a custom `agent-mappings.yaml` overlay.
+**`buildResolvedSkill()` path resolution:** For custom skills, `skill.path` is set to `skills/${directoryPath}/` at `matrix-loader.ts:147`. After D-43, when no stack is selected, all skills are assigned to all selected agents. Stacks provide fine-grained skill-to-agent mapping. A custom skill will be included alongside all other skills and assigned to whatever agents the user selects (or the stack specifies).
 
 ### Agents
 
 **Config location:** `agent.yaml`
 
 ```yaml
-customSkill: true
+custom: true
 id: acme-deployer
 title: Acme Deployer
 description: Handles Kubernetes deployments and rollbacks
@@ -625,54 +708,62 @@ model: opus
 
 **Validation changes:**
 
-- `id` field: `agentNameSchema` (enum check) skipped when `customSkill: true`; kebab-case check used instead
+- `id` field: `agentNameSchema` (enum check) skipped when `custom: true`; kebab-case check used instead
 - All structural fields still required (`title`, `description`, `tools`)
 
 **Wizard UI changes:**
 
 - Custom agents appear in the Agents step alongside built-in agents
-- `preselectAgentsFromDomains()` only preselects from `DOMAIN_AGENTS` (built-in); custom agents must be manually selected or auto-included if they appear in a custom `agentSkillPrefixes` mapping
+- `preselectAgentsFromDomains()` only preselects from `DOMAIN_AGENTS` (built-in); custom agents must be manually selected
 
 **Compilation pipeline changes:**
 
 - The compiler resolves agents by name from the `agents/` directory. Custom agents work as long as their directory structure matches the expected layout (`{agent-name}/agent.yaml`, template files, etc.)
 - Stack configs can reference custom agent names in the outer record (e.g., `stack["acme-deployer"]`) since `projectConfigLoaderSchema.stack` (`schemas.ts:404`) uses `z.record(z.string(), stackAgentConfigSchema)` for agent keys
 
+### Agent Name Auto-Discovery
+
+Agent names can be auto-discovered from the source's `agents/` directory by scanning `agent.yaml` files for their `id` field. This is the same pattern used for skill auto-discovery via `extractAllSkills()` in `matrix-loader.ts`. The existing `loadAllAgents()` function (`loading/loader.ts:29-57`) already scans `**/agent.yaml` files and parses their `id` fields.
+
+The `agentNameSchema` can be extended dynamically at runtime -- the same approach used for `subcategorySchema` and `domainSchema`. After scanning the source's agents directory, any agent IDs not in the built-in `AgentName` union are added to the extended schema:
+
+```typescript
+// After loading agents from source, extend agentNameSchema
+const sourceAgentIds = Object.keys(await loadAllAgents(sourcePath));
+const customAgentIds = sourceAgentIds.filter((id) => !AGENT_NAME_VALUES.includes(id));
+if (customAgentIds.length > 0) {
+  extendedAgentNameSchema = z.enum([...AGENT_NAME_VALUES, ...customAgentIds]);
+}
+```
+
+The `custom: true` flag on agents is NOT needed for Zod schema extension -- it is only checked in two places:
+
+1. **`agentsinc validate`** -- to decide whether to apply strict built-in naming conventions
+2. **UI/UX** -- to show a visual indicator in the wizard (optional badge/label)
+
 ### Codebase Audit Notes (Agents)
 
-**`agentYamlConfigSchema` blocks custom agents at loader level.** The schema (`schemas.ts:334-344`) uses `agentNameSchema` for the `id` field, which is a strict enum of 18 built-in names. Loading a custom agent's `agent.yaml` will fail at the Zod validation step. This needs the same conditional relaxation: when `customSkill: true` is present, use `z.string().regex(KEBAB_CASE_PATTERN)` instead of `agentNameSchema` for the `id` field.
+**`agentYamlConfigSchema` blocks custom agents at loader level.** The schema (`schemas.ts:334-344`) uses `agentNameSchema` for the `id` field, which is a strict enum of 18 built-in names. Loading a custom agent's `agent.yaml` will fail at the Zod validation step. **Fix:** Extend `agentNameSchema` dynamically at runtime with auto-discovered agent names from the source's `agents/` directory, using the same approach as `subcategorySchema` extension. Alternatively, when `custom: true` is present, use `z.string().regex(KEBAB_CASE_PATTERN)` instead of `agentNameSchema` for the `id` field.
 
-**`agentYamlGenerationSchema` already lenient.** The strict schema for compiled agent output (`schemas.ts:736-749`) uses `z.string().min(1)` for `id` -- already accepts any string. So compilation output of custom agents works without changes.
+**`agentYamlGenerationSchema` already lenient.** The strict schema for compiled agent output (`schemas.ts:728-741`) uses `z.string().min(1)` for `id` -- already accepts any string. So compilation output of custom agents works without changes.
 
 **Stack config agent key validation:** The outer `stack` record in `projectConfigLoaderSchema` (`schemas.ts:404`) uses `z.record(z.string(), ...)` -- accepts any string for agent keys. **Confirmed: custom agent names work as stack keys.**
 
-**Stack subcategory key validation blocks custom categories.** The inner `stackAgentConfigSchema` (`schemas.ts:360-375`) validates subcategory keys against `stackSubcategoryValues` (a `Set` of 38 built-in subcategory strings). Custom subcategory keys like `acme-pipeline` will trigger a Zod `addIssue()` with "Invalid subcategory". **This is a critical gap not mentioned in the doc.** The fix: skip subcategory key validation for agents/stacks that use custom categories.
+**Stack subcategory key validation blocks custom categories.** The inner `stackAgentConfigSchema` (`schemas.ts:360-375`) validates subcategory keys against `stackSubcategoryValues` (a `Set` of 38 built-in subcategory strings). Custom subcategory keys like `acme-pipeline` will trigger a Zod `addIssue()` with "Invalid subcategory". **This is a critical gap.** The fix: extend `stackSubcategoryValues` at runtime with custom category IDs from the merged matrix (same dynamic extension approach as `subcategorySchema`).
 
 ### Categories
 
-**Config location:** `skills-matrix.yaml` overlay or `custom-definitions.json`
+**Config location:** Source's `skills-matrix.yaml`
 
-Categories are not standalone entities -- they live inside `skills-matrix.yaml`. For custom categories, there are two approaches:
+Categories are not standalone entities -- they live inside `skills-matrix.yaml`. Custom categories are declared in the source's own `skills-matrix.yaml` and merged with the CLI's built-in matrix at load time (see [Skills Matrix Merge Strategy](#skills-matrix-merge-strategy)).
 
-**Approach A: Custom overlay matrix**
-
-The private marketplace ships its own `skills-matrix.yaml` that includes both built-in and custom categories. The CLI merges this during loading.
+**Categories do NOT need `custom: true`.** They are declared in the matrix YAML, and the CLI learns about them at startup via the merge step. The user's source matrix only needs to declare the CUSTOM categories -- all built-in categories are inherited from the CLI matrix automatically.
 
 ```yaml
 # Private marketplace's skills-matrix.yaml
+# Only custom categories needed -- built-in categories are inherited from CLI matrix
 version: "1.0.0"
 categories:
-  # Include built-in categories the marketplace uses:
-  web-framework:
-    id: web-framework
-    displayName: Framework
-    description: UI framework
-    domain: web
-    exclusive: true
-    required: true
-    order: 1
-
-  # Custom categories:
   acme-pipeline:
     id: acme-pipeline
     displayName: CI/CD Pipeline
@@ -681,21 +772,26 @@ categories:
     exclusive: false
     required: false
     order: 1
-    customSkill: true # marks this category as custom
+
+  acme-ml:
+    id: acme-ml
+    displayName: ML Tooling
+    description: Machine learning workflow skills
+    domain: acme
+    exclusive: true
+    order: 2
 ```
 
-**Approach B: Separate custom-definitions.json (recommended)**
-
-Categories declared in `custom-definitions.json` are merged into the matrix at load time. This keeps the matrix file cleaner and separates "what's custom" from "what's built-in."
+If the user wants to override a built-in category (e.g., change `web-framework`'s display name), they include it in their matrix and their version wins via the merge.
 
 **Validation changes:**
 
-- `subcategorySchema` (enum check) on category `id` field skipped for entries with `customSkill: true`
-- `CategoryDefinition.domain` accepts any string when the category is custom
+- No `custom: true` check needed -- the extended Zod schemas already include all categories from the merged matrix
+- `CategoryDefinition.domain` accepts custom domain values via the extended `domainSchema`
 
 **Wizard UI changes:**
 
-- `buildCategoriesForDomain()` at `build-step-logic.ts:112-164` already handles this generically
+- `buildCategoriesForDomain()` at `build-step-logic.ts:112-163` already handles this generically
 - `Object.values(matrix.categories).filter(cat => cat.domain === domain)` includes any category in the map
 - Categories are sorted by `cat.order` -- custom categories just need an `order` value
 - No code changes needed in `build-step-logic.ts` for custom categories to render
@@ -707,30 +803,29 @@ Categories declared in `custom-definitions.json` are merged into the matrix at l
 
 ### Codebase Audit Notes (Categories)
 
-**Approach A has a critical schema barrier.** The `skillsMatrixConfigSchema` (`schemas.ts:497-506`) validates category keys with `z.record(subcategorySchema, categoryDefinitionSchema)`. The `subcategorySchema` is a strict enum of 38 values. A custom category key like `acme-pipeline` will fail Zod validation at `loadSkillsMatrix()` (`matrix-loader.ts:60-73`). Approach A requires either:
+**Schema barrier for source matrix loading.** The `skillsMatrixConfigSchema` (`schemas.ts:497-506`) validates category keys with `z.record(subcategorySchema, categoryDefinitionSchema)`. The `subcategorySchema` is a strict enum of 38 values. Loading a source matrix with custom category keys like `acme-pipeline` will fail Zod validation at `loadSkillsMatrix()` (`matrix-loader.ts:60-73`). **Fix:** When loading the source matrix (as opposed to the CLI matrix), use a relaxed schema variant with `z.record(z.string(), categoryDefinitionSchema)` for category keys. The CLI matrix can continue using the strict schema since it only contains built-in categories.
 
-1. Making the categories record use `z.record(z.string(), ...)` when custom definitions are present
-2. OR using a separate custom categories section that bypasses enum validation
+**`CategoryDefinition.id` is typed as `Subcategory`.** The type (`types/matrix.ts:80`) constrains `id: Subcategory`. The `categoryDefinitionSchema` (`schemas.ts:447-456`) validates `id` with `subcategorySchema`. The relaxed source matrix schema should use `z.string()` for the `id` field. At runtime, custom category IDs are cast to `Subcategory` at the merge boundary (same pattern as Q3 recommendation for skill IDs).
 
-**Approach B avoids this.** Since `custom-definitions.json` is loaded separately and merged post-parse, it bypasses the `skillsMatrixConfigSchema` entirely.
-
-**`CategoryDefinition.id` is typed as `Subcategory`.** The type (`types/matrix.ts:80`) constrains `id: Subcategory`. The `categoryDefinitionSchema` (`schemas.ts:447-456`) validates `id` with `subcategorySchema`. Both need relaxation for custom categories. Consider adding `customSkill?: boolean` to `CategoryDefinition` and a conditional schema.
+**Categories and domains are declared in the source's `skills-matrix.yaml`** (the authoritative declaration via the merge strategy). Agent names and skill IDs are auto-discovered from the source's directory structure.
 
 ### Domains
 
-**Config location:** `custom-definitions.json`
+**Config location:** Derived from `CategoryDefinition.domain` in the merged skills-matrix
 
-Domains are not currently a first-class config entity -- they're derived from the `domain` field in `CategoryDefinition`. Custom domains emerge naturally when a custom category declares a `domain` value outside the built-in `Domain` union.
+Domains are not a first-class config entity -- they're derived from the `domain` field in `CategoryDefinition`. Custom domains emerge naturally when a custom category in the source's `skills-matrix.yaml` declares a `domain` value outside the built-in `Domain` union (e.g., `domain: acme`).
+
+**Domains do NOT need `custom: true`.** Like categories, they are known at startup via the matrix merge. The Zod `domainSchema` is extended dynamically to include custom domain values extracted from the merged matrix.
 
 **Validation changes:**
 
-- `domainSchema` (enum check) skipped for categories with `customSkill: true`
+- `domainSchema` is extended at runtime to include custom domains (see [Skills Matrix Merge Strategy](#skills-matrix-merge-strategy))
 - The wizard store's `ALL_DOMAINS` constant (`wizard-store.ts:21`) and `DOMAIN_AGENTS` mapping (`wizard-store.ts:24-37`) would need to be dynamically computed from the loaded matrix rather than hardcoded
 
 **Wizard UI changes:**
 
 - Custom domains appear as additional tabs in the Build step
-- Custom domains have no built-in agent preselection (no entries in `DOMAIN_AGENTS`) -- the user selects agents manually or the custom `custom-definitions.json` provides agent mappings
+- Custom domains have no built-in agent preselection (no entries in `DOMAIN_AGENTS`) -- the user selects agents manually
 
 **Compilation pipeline changes:**
 
@@ -738,9 +833,9 @@ Domains are not currently a first-class config entity -- they're derived from th
 
 ### Codebase Audit Notes (Domains)
 
-**`DomainSelections` type constraint.** The type (`types/matrix.ts:76`) is `Partial<Record<Domain, Partial<Record<Subcategory, SkillId[]>>>>`. Both `Domain` and `Subcategory` are compile-time-only constraints -- at runtime, JavaScript treats all string keys equally. The Partial wrapper means missing keys are fine. So custom domains/subcategories work at runtime BUT TypeScript will flag type errors at compile time. This aligns with the Q4 recommendation (boundary casts).
+**`DomainSelections` type constraint.** The type (`types/matrix.ts:76`) is `Partial<Record<Domain, Partial<Record<Subcategory, SkillId[]>>>>`. Both `Domain` and `Subcategory` are compile-time-only constraints -- at runtime, JavaScript treats all string keys equally. The Partial wrapper means missing keys are fine. So custom domains/subcategories work at runtime BUT TypeScript will flag type errors at compile time. This aligns with the Q3 recommendation (boundary casts).
 
-**`toggleDomain` and `toggleTechnology` type signatures.** These wizard store actions (`wizard-store.ts:246, 261-266`) accept `Domain` and `Subcategory` typed parameters. Callers would need boundary casts when passing custom values. The wizard components that call these would need to cast custom domain/subcategory strings at the data boundary.
+**`toggleDomain` and `toggleTechnology` type signatures.** These wizard store actions (`wizard-store.ts:243, 258-263`) accept `Domain` and `Subcategory` typed parameters. Callers would need boundary casts when passing custom values. The wizard components that call these would need to cast custom domain/subcategory strings at the data boundary.
 
 **`ProjectConfig.domains` field.** The `domains` field on `ProjectConfig` (`types/config.ts:100`) is typed `Domain[]`. The `projectConfigLoaderSchema` (`schemas.ts:400`) uses `z.array(domainSchema)`. Custom domains stored in the config would fail Zod validation. This needs relaxation in the loader schema when custom definitions are present.
 
@@ -748,49 +843,84 @@ Domains are not currently a first-class config entity -- they're derived from th
 
 ## Implementation Phases
 
-### Phase 1: Foundation (`customSkill` property + relaxed validation)
+### Phase 1: Foundation (`custom` property + relaxed validation)
 
-1. Add `customSkill?: boolean` to TypeScript types:
-   - `SkillMetadataConfig` (`types/skills.ts:195-210`) -- note: this type only has `category`, `categoryExclusive`, `author`, `tags`, `requires`, `compatibleWith`, `conflictsWith`. It does NOT have `cliName`, `cliDescription`, or `usageGuidance`. The broader metadata type with those fields is in `rawMetadataSchema` (`matrix-loader.ts:37-51`) and `metadataValidationSchema` (`schemas.ts:791-834`).
+1. Add `custom?: boolean` to TypeScript types:
+   - `SkillMetadataConfig` (`types/skills.ts:195-210`) -- note: this type only has `category`, `categoryExclusive`, `author`, `tags`, `requires`, `compatibleWith`, `conflictsWith`. It does NOT have `cliName`, `cliDescription`, or `usageGuidance`. The broader metadata type with those fields is in `rawMetadataSchema` (`matrix-loader.ts:37-51`) and `metadataValidationSchema` (`schemas.ts:783-826`).
    - `AgentYamlConfig` (`types/agents.ts:83-85`)
    - `CategoryDefinition` (`types/matrix.ts:79-92`)
-   - `ExtractedSkillMetadata` (`types/matrix.ts:379-410`) -- needs `customSkill?: boolean` to carry the flag through the pipeline
-2. Add `customSkill` to Zod schemas:
+   - `ExtractedSkillMetadata` (`types/matrix.ts:379-410`) -- needs `custom?: boolean` to carry the flag through the pipeline
+2. Add `custom` to Zod schemas:
    - Loader schemas: `skillMetadataLoaderSchema` (`schemas.ts:290-300`), `localRawMetadataSchema` (`schemas.ts:512-536`), `rawMetadataSchema` (`matrix-loader.ts:37-51`), `agentYamlConfigSchema` (`schemas.ts:334-344`)
-   - Validation schemas: `metadataValidationSchema` (`schemas.ts:791-834`), `agentFrontmatterValidationSchema` (`schemas.ts:751-767`), `categoryDefinitionSchema` (`schemas.ts:447-456`)
+   - Validation schemas: `metadataValidationSchema` (`schemas.ts:783-826`), `agentFrontmatterValidationSchema` (`schemas.ts:744-759`), `categoryDefinitionSchema` (`schemas.ts:447-456`)
    - JSON schemas: `metadata.schema.json`, `agent.schema.json`, `skills-matrix.schema.json`
 3. Create `CUSTOM_SKILL_ID_PATTERN` (any kebab-case string: `/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/`) in `schemas.ts` and conditional validation logic:
-   - Add a helper `isCustomEntity(raw: unknown): boolean` that checks `rawMetadata.customSkill === true`
+   - Add a helper `isCustomEntity(raw: unknown): boolean` that checks `rawMetadata.custom === true`
    - In `source-switcher.ts:validateSkillId()`: check custom flag before applying `SKILL_ID_PATTERN`
    - In `stacks-loader.ts:resolveAgentConfigToSkills()`: check custom flag before applying `SKILL_ID_PATTERN`
 4. Update `extractAllSkills()` (`matrix-loader.ts:91-155`) to:
-   - Read `customSkill` from raw metadata before Zod parse
+   - Read `custom` from raw metadata before Zod parse
    - When true, use a relaxed `rawMetadataSchema` variant (accepts any kebab-case category)
-   - Pass `customSkill` through to `ExtractedSkillMetadata`
+   - Pass `custom` through to `ExtractedSkillMetadata`
 5. Update `agentsinc validate` (`commands/validate.ts` -> `schema-validator.ts`) to:
-   - Detect `customSkill: true` in each file before applying strict schema
+   - Detect `custom: true` in each file before applying strict schema
    - Use relaxed validation variant for custom entities
 
-### Phase 2: Local schema infrastructure
+**Phase 1 Progress (2026-02-22): COMPLETE**
 
-1. Define `custom-definitions.schema.json` (ship with CLI in `src/schemas/`)
-2. Create `loadCustomDefinitions()` loader in `src/cli/lib/loading/`:
-   - Reads `.claude-src/schemas/custom-definitions.json`
-   - Validates against the schema
-   - Returns typed `CustomDefinitions` object
-3. Update `loadSkillsMatrix()` (`matrix-loader.ts:60-73`) to merge custom categories from `custom-definitions.json`:
-   - After loading the matrix, call `loadCustomDefinitions()`
-   - Merge custom categories into `matrix.categories` (with `customSkill: true` flag)
-   - Add custom domains to the matrix context
-4. Update `new skill` (`commands/new/skill.ts`) and `new agent` (`commands/new/agent.tsx`) to auto-detect marketplace context and set `customSkill: true`
-5. Relax `stackAgentConfigSchema` (`schemas.ts:360-375`) subcategory key validation to accept custom subcategory keys when custom definitions are loaded
+- Added `custom?: boolean` to `CategoryDefinition`, `ExtractedSkillMetadata` (types/matrix.ts), `AgentYamlConfig` (types/agents.ts), `SkillMetadataConfig` (types/skills.ts)
+- Added `custom: z.boolean().optional()` to all loader and validation Zod schemas: `skillMetadataLoaderSchema`, `localRawMetadataSchema`, `rawMetadataSchema` (matrix-loader.ts), `agentYamlConfigSchema`, `metadataValidationSchema`, `categoryDefinitionSchema`, `agentYamlGenerationSchema`
+- Added `custom` boolean property to JSON schemas: `metadata.schema.json`, `agent.schema.json`
+- Created `CUSTOM_SKILL_ID_PATTERN` (`/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/`) in `schemas.ts`
+- Updated `extractAllSkills()` to pass `custom` through to `ExtractedSkillMetadata`
+- Updated `source-switcher.ts:validateSkillId()` and `stacks-loader.ts:resolveAgentConfigToSkills()` to accept `CUSTOM_SKILL_ID_PATTERN` alongside `SKILL_ID_PATTERN`
+- Note: `isCustomEntity()` helper was NOT needed -- the dynamic schema extension approach (Phase 3) handles validation without per-entity `custom` checks at parse boundaries
+- Note: `agentsinc validate` changes deferred -- requires Phase 3 schema extension to be meaningful
+- 35 new tests added to `schemas.test.ts` covering patterns, custom property parsing, relaxed schemas, and dynamic extension
+- 2465 tests passing, 0 type errors
+
+### Phase 2: Matrix merge + auto-discovery
+
+1. Update `loadAndMergeFromBasePath()` (`source-loader.ts:152-188`) to merge source matrix with CLI matrix:
+   - Always load CLI built-in matrix first
+   - If source matrix exists, merge categories: `{ ...cliMatrix.categories, ...sourceMatrix.categories }`
+   - Load source matrix with a relaxed schema variant (`z.record(z.string(), categoryDefinitionSchema)`)
+2. Add agent name auto-discovery:
+   - Scan source's `agents/` directory for `agent.yaml` files
+   - Extract `id` fields and extend `agentNameSchema` dynamically
+3. Add skill ID auto-discovery:
+   - Use existing `extractAllSkills()` output to discover custom skill IDs
+   - Extend `skillIdSchema` dynamically with discovered IDs
+4. Extend Zod schemas dynamically after merge + discovery:
+   - `subcategorySchema` extended with custom category IDs
+   - `domainSchema` extended with custom domains from category definitions
+   - `agentNameSchema` extended with discovered agent names
+   - `stackSubcategoryValues` Set extended with custom category IDs
+5. Update `new skill` (`commands/new/skill.ts`) and `new agent` (`commands/new/agent.tsx`) to auto-detect marketplace context and set `custom: true`
+6. Relax `stackAgentConfigSchema` (`schemas.ts:360-375`) subcategory key validation to accept custom subcategory keys from the merged matrix
+
+**Phase 2 Progress (2026-02-22): COMPLETE (steps 1, 2, 3, 4, 6 done; step 5 deferred)**
+
+- **Step 1 (matrix merge):** Created `relaxedCategoryDefinitionSchema` and `relaxedSkillsMatrixConfigSchema` in `schemas.ts` for loading source matrices with custom category keys and domains. Added `loadSkillsMatrixRelaxed()` in `matrix-loader.ts`. Rewrote `loadAndMergeFromBasePath()` in `source-loader.ts` from either/or to always-merge. Relationships merged by concatenating arrays; skill aliases merged with source winning on conflict.
+- **Step 2 (agent auto-discovery):** Added `discoverAndExtendFromSource()` in `source-loader.ts` that pre-scans `agents/` directory for `agent.yaml` files, extracts `id` fields, and calls `extendSchemasWithCustomValues({ agentNames })`. Lightweight YAML parse avoids the chicken-and-egg problem (need extended schemas to load agents, but need to load agents to discover custom names).
+- **Step 3 (skill ID auto-discovery):** Same `discoverAndExtendFromSource()` function pre-scans `skills/` directory for `SKILL.md` frontmatter, extracts skill IDs that don't match `SKILL_ID_PATTERN`, and calls `extendSchemasWithCustomValues({ skillIds })`.
+- **Step 4 (dynamic Zod extension):** Created `customExtensions` object with runtime-extensible Sets in `schemas.ts`. Added `extendSchemasWithCustomValues()` and `resetSchemaExtensions()`. Updated `categoryPathSchema`, `stackAgentConfigSchema`, `agentYamlConfigSchema`, `skillAssignmentSchema`, `metadataValidationSchema`, and `projectConfigLoaderSchema` (skills + domains fields) to check custom extensions via `refine()` validators. Added `extendSchemasFromMatrix()` in `source-loader.ts` that extracts custom categories/domains from the merged matrix and extends schemas before entity loading.
+- **Step 5 (update `new skill`/`new agent`):** Deferred to Phase 4 -- `new skill` now always sets `custom: true` (Phase 4 progress notes). `new agent` deferred pending agent creation UX redesign.
+- **Step 6 (relax stackAgentConfigSchema):** `stackAgentConfigSchema.superRefine()` now accepts keys from `customExtensions.categories` alongside built-in subcategories.
+- 2465 tests passing, 0 type errors
+
+**Phase 2 Review Fixes (2026-02-22):**
+
+- **Issue #1:** Replaced hardcoded `BUILTIN_SUBCATEGORIES` Set in `extendSchemasFromMatrix()` with `stackSubcategorySchema.options` (single source of truth from schemas.ts). Added exported `DOMAIN_VALUES` const in schemas.ts and used it for `BUILTIN_DOMAINS` Set. Eliminates silent drift if subcategories or domains are added/removed.
+- **Issue #2:** Replaced `Object.keys()`/`Object.values()` with `typedKeys()`/`typedEntries()` from `utils/typed-object.ts` in `source-loader.ts` (codebase convention).
+- **Issue #3:** Filtered built-in agent names in `discoverAndExtendFromSource()` by checking against `agentNameSchema.safeParse()` before pushing to `customAgentNames`. Previously pushed ALL agent names including built-in ones like `"web-developer"`.
 
 ### Phase 3: Wizard support
 
 The rendering pipeline (`buildCategoriesForDomain()`, category grid, skill rendering, selection logic) already works generically on whatever is in the matrix -- no changes needed there. The real work is in the store initialization and domain tab generation:
 
 1. Make `ALL_DOMAINS` (`wizard-store.ts:21`) and `DOMAIN_AGENTS` (`wizard-store.ts:24-37`) dynamic:
-   - Compute from loaded matrix + custom definitions at wizard init time
+   - Compute from loaded matrix at wizard init time
    - Custom domains have empty agent lists in `DOMAIN_AGENTS`
 2. Surface custom agents in the Agents step alongside built-in agents
 3. Relax type signatures where needed:
@@ -798,21 +928,46 @@ The rendering pipeline (`buildCategoriesForDomain()`, category grid, skill rende
    - `DomainSelections` may need a more permissive type for runtime custom values
    - `ProjectConfig.domains` loader schema needs to accept custom domain strings
 
-### Phase 4: Schema scaffolding
+**Phase 3 Progress (2026-02-22): COMPLETE**
+
+- **Type widening:** Added `(string & {})` to `Domain` (types/matrix.ts), `Subcategory` (types/matrix.ts), and `AgentName` (types/agents.ts) to accept custom values while preserving IDE autocomplete for built-in values.
+- **Domain selection (Issue #1):** Replaced hardcoded `AVAILABLE_DOMAINS` in `domain-selection.tsx` with matrix-derived domains. Component now receives `matrix` prop, uses `useMemo` to extract unique domains from `matrix.categories`, preserves built-in order (web, api, cli, mobile) then appends custom domains.
+- **Display names (Issue #2):** Changed `getDomainDisplayName()` in `utils.ts` from `Record<Domain, string>` (crashes on custom) to `Record<string, string>` with fallback: `domain.charAt(0).toUpperCase() + domain.slice(1)`. Parameter widened from `Domain` to `string`.
+- **Store domains (Issue #3):** Replaced hardcoded `ALL_DOMAINS` constant in `wizard-store.ts` with `getAllDomainsFromCategories()` helper. Both `populateFromStack` and `populateFromSkillIds` now derive domains from the categories parameter, appending custom domains after built-in order.
+- **Agent preselection (Issue #4):** Changed `DOMAIN_AGENTS` from `Record<Domain, AgentName[]>` to `Partial<Record<string, AgentName[]>>`. Removed empty `mobile: []` and `shared: []` entries. Custom domains gracefully return no preselected agents via existing `if (domainAgents)` guard.
+- **Agent display (Issue #5):** Refactored `StepAgents` in `step-agents.tsx` from static module-level constants to dynamic computation. Component now accepts optional `matrix` prop. `buildAgentGroups()` extracts custom agents from `matrix.suggestedStacks` and groups them by domain prefix. `agentIdToLabel()` converts kebab-case IDs to title-case labels. All groups, flat rows, and focusable IDs are computed via `useMemo`.
+- **Cascading fixes:** Added `CategoryDefinition` type guard in `build-step-logic.ts:127` to handle `undefined` values from widened `Partial<Record<Subcategory, ...>>`. Added null guard in `stacks-loader.ts:153` for `mapValues` over widened `Partial<Record<AgentName, ...>>`. Updated boundary cast in `compilation-pipeline.test.ts` to use `as unknown as`.
+- **Test updates:** Updated `step-stack.test.tsx` mock matrix to set proper `domain` values on all categories (was previously relying on hardcoded domain list masking incorrect test data). Added `cli-framework` and `mobile-framework` categories to mock.
+- 2465 tests passing, 0 type errors
+
+### Phase 4: Schema scaffolding + marketplace tooling
 
 1. Add `agentsinc new marketplace` command (or extend existing setup)
 2. Scaffold `.claude-src/schemas/` with `$ref` to pinned CLI version
-3. Auto-update local schema enums on `new skill` / `new agent`
+3. Scaffold source `skills-matrix.yaml` with example custom categories
+4. Auto-update local schema enums on `new skill` / `new agent`
+
+**Phase 4 Progress (2026-02-23): PARTIAL (steps 1, 3, 4 done; step 2 fully deferred)**
+
+- **Step 1 (`agentsinc new marketplace`):** Created `commands/new/marketplace.ts` extending BaseCommand. Scaffolds a complete private marketplace directory with `src/skills/`, `src/agents/`, `src/stacks/`, `config/skills-matrix.yaml`, and `README.md`. Supports `--force`, `--dry-run`, and `--output` flags. Validates marketplace name is kebab-case. Example `skills-matrix.yaml` includes custom domain and two example categories with inline documentation. 28 tests added.
+- **Step 2 (scaffold local JSON schemas): FULLY DEFERRED.** Schema scaffolding is deferred pending the base schema splitting approach. Research confirmed that `allOf` + `$ref` CANNOT widen enums (intersection semantics produce an empty set). `$dynamicRef`/`$dynamicAnchor` is not supported by yaml-language-server or VS Code JSON service. The planned solution is to split each base schema into a **structure schema** (no enums on extensible fields) and a **full schema** (strict enums referencing the structure schema). Extension schemas would `allOf` + `$ref` the structure variant. See [Local Schema Design](#local-schema-design) for details. For now: `yamlSchemaComment()` calls removed from `new marketplace` and `new skill`. No local schema files are generated. No `$schema` comments in scaffolded YAML files. Runtime validation via Zod (with dynamic schema extension from Phases 1-2) handles all custom value validation.
+- **Step 3 (scaffold skills-matrix.yaml):** Done as part of step 1. The `generateSkillsMatrixYaml()` function creates a fully commented example matrix with custom domain, two categories, empty relationships, and empty skill aliases.
+- **Step 4 (auto-update schema enums):** Investigation complete -- **no explicit update needed.** The `discoverAndExtendFromSource()` function (Phase 2) already auto-discovers custom skill IDs and agent names from the source's directory structure at every load cycle. When `new skill` creates a skill file, the next `compile`/`edit`/`validate` invocation automatically discovers it via the SKILL.md frontmatter scan. Same for `new agent` with agent.yaml scanning.
+
+**Phase 2 Step 5 (`new skill` custom: true): COMPLETE (2026-02-22)**
+
+- Updated `generateMetadataYaml()` in `commands/new/skill.ts` to always include `custom: true` in generated metadata.yaml. This is unconditional (not dependent on marketplace context detection) since every skill created via `new skill` is user-created content. The `custom: true` flag marks it for relaxed validation (e.g., custom skill IDs bypass `SKILL_ID_PATTERN` prefix check).
+- 2 new tests added to `skill.test.ts` verifying `custom: true` presence and ordering.
 
 ### Codebase Audit Notes (Phases)
 
-**Phase ordering is correct.** Phase 1 (foundation) has no dependencies. Phase 2 (custom definitions) depends on Phase 1 for the `customSkill` property. Phase 3 (wizard) depends on Phase 2 for custom domain/category data. Phase 4 (scaffolding) is independent but benefits from Phase 1-3 being complete.
+**Phase ordering is correct.** Phase 1 (foundation) has no dependencies. Phase 2 (matrix merge + auto-discovery) depends on Phase 1 for the `custom` property. Phase 3 (wizard) depends on Phase 2 for custom domain/category data. Phase 4 (scaffolding) is independent but benefits from Phase 1-3 being complete.
 
 **Missing from Phase 1:** The `projectConfigLoaderSchema` (`schemas.ts:382-412`) uses `domainSchema` for `domains` and `skillIdSchema` for `skills`. Custom skills and domains stored in `.claude/config.yaml` will fail loading. This must be relaxed in Phase 1, not deferred.
 
-**Missing from Phase 2:** The `config-generator.ts:28-53` `getAgentsForSkill()` function needs a mechanism for custom `skillToAgents` mappings. Consider loading custom mappings from `custom-definitions.json` and merging with the built-in `agent-mappings.yaml`.
+**Phase 2 simplified by D-43:** The removal of `getAgentsForSkill()` and `agent-mappings.yaml` eliminates the need for custom `skillToAgents` mappings. All skills are now assigned to all selected agents (or mapped explicitly via stacks).
 
-**Lower-risk reordering possible:** Phase 2 steps 4 (update `new skill`/`new agent`) could be done in Phase 1 since the commands already exist and the change is small (add `customSkill: true` to generated YAML when marketplace detected).
+**Lower-risk reordering possible:** Phase 2 step 5 (update `new skill`/`new agent`) could be done in Phase 1 since the commands already exist and the change is small (add `custom: true` to generated YAML when marketplace detected).
 
 ---
 
@@ -842,7 +997,7 @@ If the user declines alignment, only the generic pass runs.
 
 **Output:** `SKILL.md` + `metadata.yaml` in `.claude/skills/{skill-name}/`
 
-**Marketplace context:** When running inside a private marketplace (detected via `config.yaml` having a `marketplace` field or the presence of `marketplace.json`), the CLI sets `customSkill: true` automatically in the generated `metadata.yaml`. The user does not need to know about this property.
+**Marketplace context:** When running inside a private marketplace (detected via `config.yaml` having a `marketplace` field or the presence of `marketplace.json`), the CLI sets `custom: true` automatically in the generated `metadata.yaml`. The user does not need to know about this property.
 
 ### Agents: Guided Domain + Role Picker
 
@@ -850,14 +1005,14 @@ If the user declines alignment, only the generic pass runs.
 
 **Flow:**
 
-1. **"Which domain?"** -- select from available domains (`web`, `api`, `cli`, `mobile`, `shared`, plus any custom domains from `custom-definitions.json`)
+1. **"Which domain?"** -- select from available domains (`web`, `api`, `cli`, `mobile`, `shared`, plus any custom domains from the merged skills matrix)
 2. **"What kind of agent?"** -- select from role archetypes (`developer`, `tester`, `reviewer`, `researcher`, `architect`, etc. -- drawn from the `AgentName` union, plus custom agent roles)
 
 There is no "align to project" toggle. The domain + role combination fully defines the agent's responsibilities, tools, and behavior. There is nothing ambiguous left to align -- an `api-developer` is an `api-developer` regardless of which project it lives in.
 
 **Output:** `agent.yaml` + template files in `agents/{agent-name}/`
 
-**Marketplace context:** Same as skills -- `customSkill: true` set automatically when running inside a marketplace context.
+**Marketplace context:** Same as skills -- `custom: true` set automatically when running inside a marketplace context.
 
 ### Why the Asymmetry
 
@@ -959,32 +1114,19 @@ The proposed domain + role picker would also be a **significant rewrite**:
 
 ## Open Questions
 
-### Q1: Should `custom-definitions.json` be required?
-
-If a marketplace has custom skills but no `custom-definitions.json`, should the CLI:
-
-- (a) Infer custom domains/categories from the entities it loads (more forgiving)
-- (b) Require `custom-definitions.json` as the source of truth (more explicit)
-
-**Lean:** (b) with a clear error message pointing the user to create the file. Inference is fragile and makes debugging harder.
-
-### Q2: How do custom categories interact with relationship rules?
+### Q1: How do custom categories interact with relationship rules?
 
 Built-in relationship rules in `skills-matrix.yaml` reference skills by display name or ID. Custom skills can participate in relationships (e.g., a custom skill can `require` a built-in skill). But can a custom skill appear in the built-in matrix's `conflicts` or `recommends` rules?
 
-**Lean:** No. The built-in matrix should not reference custom skills. Custom relationship rules should live in the marketplace's own overlay or `custom-definitions.json`.
+**Lean:** No. The built-in matrix should not reference custom skills. Custom relationship rules should live in the marketplace's own `skills-matrix.yaml` overlay (the source's matrix can define its own `relationships` section).
 
-### Q3: Should custom agents get automatic `skillToAgents` mappings?
+### Q2: ~~Should custom agents get automatic `skillToAgents` mappings?~~ RESOLVED
 
-Currently, `agent-mappings.yaml` maps skill path patterns to agents. For custom agents, should:
+~~Currently, `agent-mappings.yaml` maps skill path patterns to agents.~~
 
-- (a) Users define their own mappings in `custom-definitions.json`
-- (b) Custom agents receive all skills from their declared domain
-- (c) Custom agents receive no skills by default (explicit stack config required)
+**Resolved by D-43:** The `agent-mappings.yaml` and `getAgentsForSkill()` have been removed. After D-43, when no stack is selected, all skills are assigned to all selected agents. Stacks provide fine-grained skill-to-agent mapping. This question is no longer relevant -- custom agents receive all skills by default (same as built-in agents), and stacks override this when explicit mapping is needed.
 
-**Lean:** (c). Custom agents are explicitly configured via stack configs. Automatic mapping is a convenience for built-in agents that understand domain conventions.
-
-### Q4: TypeScript type widening strategy
+### Q3: TypeScript type widening strategy
 
 The `SkillId` type is a template literal that constrains prefixes at compile time. For custom skills, we need to accept arbitrary strings at boundaries. Options:
 
@@ -992,27 +1134,19 @@ The `SkillId` type is a template literal that constrains prefixes at compile tim
 - (b) Add a `CustomSkillId` type (`string`) and union it: `SkillId | CustomSkillId`
 - (c) Keep `SkillId` strict for internal use; boundary casts accept `string` and validate at runtime
 
-**Lean:** (c). This matches the existing pattern where boundary casts with Zod validation are already used. The `customSkill: true` flag determines which regex to apply at the boundary. Internal code continues to use `SkillId` -- custom IDs that pass the relaxed regex are cast to `SkillId` at the parse boundary with a comment explaining why.
+**Lean:** (c). This matches the existing pattern where boundary casts with Zod validation are already used. The `custom: true` flag determines which regex to apply at the boundary. Internal code continues to use `SkillId` -- custom IDs that pass the relaxed regex are cast to `SkillId` at the parse boundary with a comment explaining why.
 
-### Q5: Wizard tab ordering for custom domains
+### Q4: Wizard tab ordering for custom domains
 
 Built-in domains have a fixed order: web, api, cli, mobile, shared. Where do custom domains appear?
 
-**Lean:** After all built-in domains, in the order declared in `custom-definitions.json`. The `order` field on custom categories controls intra-domain ordering.
-
-### Q6: Should the CLI ship a `custom-definitions.schema.json`?
-
-For IDE validation of the `custom-definitions.json` file itself.
-
-**Lean:** Yes. This is a small addition and dramatically improves the authoring experience.
+**Lean:** After all built-in domains, in the order declared in the source's `skills-matrix.yaml`. The `order` field on custom categories controls intra-domain ordering.
 
 ### Codebase Audit Notes (Open Questions)
 
-**Q1 answer from code:** The code currently does NOT support inference. `loadSkillsMatrix()` uses strict schema validation -- unknown categories fail. Inference would require scanning all skill directories to build a category list before loading the matrix. This is complex and fragile. **Recommendation (b) is strongly supported by the codebase.**
+**Q2 resolved by D-43:** The `getAgentsForSkill()`, `skillToAgents`, `DEFAULT_AGENTS`, and `agent-mappings.yaml` have all been removed. All skills are now assigned to all selected agents. Stacks provide fine-grained skill-to-agent mapping when needed.
 
-**Q3 answer from code:** `getAgentsForSkill()` (`config-generator.ts:28-53`) has a clear fallback chain: exact category match -> exact path match -> wildcard prefix match -> `DEFAULT_AGENTS`. Custom agents would only receive skills if explicitly added to a `skillToAgents` mapping or via stack config. The fallback to `DEFAULT_AGENTS` (agent-summoner, skill-summoner, documentor) is correct for custom skills that don't have explicit mappings. **Recommendation (c) is strongly supported by the code structure.**
-
-**Q4 answer from code:** The codebase already uses this pattern extensively. Examples:
+**Q3 answer from code:** The codebase already uses this pattern extensively. Examples:
 
 - `normalizeAgentConfig()` in `stacks-loader.ts:30-40` casts `item as SkillId` at the parse boundary
 - `skillFrontmatterLoaderSchema` uses `z.string()` (not `skillIdSchema`) for the `name` field
@@ -1020,22 +1154,16 @@ For IDE validation of the `custom-definitions.json` file itself.
 
 **Recommendation (c) is the existing codebase pattern.** No new pattern needed.
 
-**Q6 answer from code:** The CLI already ships 12 JSON schemas in `src/schemas/`. Adding a 13th (`custom-definitions.schema.json`) follows the existing pattern exactly. The schema would be straightforward based on the structure defined in the "Custom Definitions File" section.
-
 ### Additional Questions the Doc Should Raise
 
-**Q7: How do custom categories interact with `stackAgentConfigSchema` subcategory key validation?**
+**Q5: How do custom categories interact with `stackAgentConfigSchema` subcategory key validation?**
 
-The `stackAgentConfigSchema` (`schemas.ts:360-375`) validates all record keys against the built-in `stackSubcategoryValues` set. Any stack config using custom subcategory keys (e.g., `acme-pipeline: web-framework-react`) will fail validation. This must be relaxed -- either by detecting custom definitions and expanding the valid set, or by skipping key validation when custom definitions are loaded.
+The `stackAgentConfigSchema` (`schemas.ts:360-375`) validates all record keys against the built-in `stackSubcategoryValues` set. Any stack config using custom subcategory keys (e.g., `acme-pipeline: web-framework-react`) will fail validation. This must be relaxed by extending `stackSubcategoryValues` at runtime with custom category IDs from the merged matrix (same dynamic extension approach as `subcategorySchema`).
 
-**Q8: How does the `projectConfigLoaderSchema` handle custom domains and skills?**
+**Q6: How does the `projectConfigLoaderSchema` handle custom domains and skills?**
 
-The loader schema (`schemas.ts:382-412`) uses `domainSchema` (strict enum) for `domains` and `skillIdSchema` (strict prefix regex) for `skills`. Saving and reloading a project config with custom domains/skills will fail. The loader schema must accept custom values when `customSkill` entities are present.
+The loader schema (`schemas.ts:382-412`) uses `domainSchema` (strict enum) for `domains` and `skillIdSchema` (strict prefix regex) for `skills`. Saving and reloading a project config with custom domains/skills will fail. The loader schema must accept custom values when custom entities are present.
 
-**Q9: Should `custom-definitions.json` support custom `skillToAgents` mappings?**
+**Q7: How do custom skills interact with `resolveToCanonicalId()` in matrix-loader?**
 
-Currently agent routing is defined in `agent-mappings.yaml`. Custom skills that don't match any `"web/*"`, `"api/*"`, etc. pattern fall through to `DEFAULT_AGENTS`. If Q3 answer is (c), users need a way to define custom routing. Adding a `skillToAgents` section to `custom-definitions.json` would solve this. Without it, the only option is stack configs, which are more verbose.
-
-**Q10: How do custom skills interact with `resolveToCanonicalId()` in matrix-loader?**
-
-The `resolveToCanonicalId()` function (`matrix-loader.ts:226-249`) resolves display names, directory paths, and aliases to canonical skill IDs. Custom skills won't be in `displayNameToId` (the built-in alias map from skills-matrix.yaml). They need their own alias registration, either via `custom-definitions.json` or a separate `skillAliases` section in the custom definitions file.
+The `resolveToCanonicalId()` function (`matrix-loader.ts:226-249`) resolves display names, directory paths, and aliases to canonical skill IDs. Custom skills won't be in `displayNameToId` (the built-in alias map from skills-matrix.yaml) unless they are added to the source's `skills-matrix.yaml` `skillAliases` section. The source's matrix can define aliases for custom skills in the same way the CLI matrix defines aliases for built-in skills -- these are merged alongside categories.

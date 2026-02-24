@@ -113,6 +113,7 @@ All commands inherit base flags `--dry-run` and `--source` / `-s` from `BaseComm
 |      | Source switching                         | Archive/restore local skills on source change                                                | ✅         |       |        |        |
 |      | Config precedence                        | flag > env > project > default resolution order                                              | ✅         |       |        |        |
 | T6   | Consumer stacks.yaml and matrix override | Custom stacks/matrix loaded, merged with built-ins, respected through install pipeline       | ✅         |       |        |        |
+| T12  | Custom marketplace workflow              | `--source` flag, `outdated` detection, build marketplace→build plugins→update cycle          | ⏳ T12     |       |        |        |
 
 **Legend:** ✅ covered · ✅ partial · ⏳ blocked (see task ID) · Manual: fill in after testing
 
@@ -301,6 +302,50 @@ Verify across all uninstall flavors that pre-existing user content is never remo
 - `--dry-run` output lists CLI artifacts only, not user content
 
 **File:** `src/cli/lib/__tests__/commands/uninstall.test.ts`
+
+---
+
+### T12: Custom Marketplace End-to-End Workflow
+
+Test the full custom marketplace lifecycle: using `--source` to point at a custom marketplace, checking for outdated skills, and the change→build→update cycle.
+
+**Scenario 1: `--source` flag with custom marketplace**
+
+1. Create a fixture marketplace via `createTestSource()` with versioned skills and a `marketplace.json`
+2. Run `agentsinc init --source /path/to/fixture-marketplace` (or call the internal init flow with the source flag)
+3. Verify the wizard loads skills from the custom source, not the default
+4. Verify the compiled output references skills from the custom source
+5. Verify `.claude-src/config.yaml` records the custom source path
+
+**Scenario 2: `outdated` detects stale skills**
+
+1. Create a fixture marketplace with `marketplace.json` at version 1.0.0
+2. Install skills from that marketplace into a consuming project
+3. Update the fixture marketplace: modify a skill, run `build marketplace` + `build plugins` to produce version 1.1.0
+4. Run `agentsinc outdated` in the consuming project
+5. Verify it reports the skill as outdated with version diff (1.0.0 → 1.1.0)
+
+**Scenario 3: Full change→build→update cycle**
+
+1. Create a fixture marketplace, install into a consuming project
+2. Make a change in the marketplace (modify skill content or add a new skill)
+3. Run `agentsinc build marketplace` — verify `marketplace.json` is regenerated with updated metadata
+4. Run `agentsinc build plugins` — verify plugin versions are bumped
+5. Run `agentsinc edit --refresh` (or `update`) in the consuming project
+6. Verify the consuming project picks up the newer skill version
+7. Verify recompiled agents reflect the updated skill content
+
+**Test setup:**
+
+- Use `createTestSource()` for the fixture marketplace
+- Use a temp directory as the consuming project
+- Tests must be self-contained — no dependency on the real skills repo at `/home/vince/dev/skills`
+
+**Files:**
+
+- `src/cli/lib/__tests__/integration/custom-marketplace-workflow.integration.test.ts` (new)
+- Leverages `src/cli/lib/__tests__/fixtures/create-test-source.ts` for fixture setup
+- Exercises: `source-loader.ts`, `build marketplace`, `build plugins`, `outdated`, `update`/`edit --refresh`
 
 ---
 
@@ -556,6 +601,38 @@ cat .claude-src/skills/my-custom-skill/SKILL.md
 agentsinc new agent my-custom-agent
 
 agentsinc import skill web-framework-react --source /path/to/source
+```
+
+---
+
+### 14. Custom Marketplace Workflow
+
+```bash
+# --- Setup: use the real custom marketplace at /home/vince/dev/skills ---
+
+# Init with custom source
+mkdir -p /tmp/cli-test-marketplace && cd /tmp/cli-test-marketplace
+agentsinc init --source /home/vince/dev/skills
+cat .claude-src/config.yaml   # source should point to /home/vince/dev/skills
+
+# Check outdated
+agentsinc outdated
+# Expected: lists any skills with newer versions in source
+
+# --- Change→Build→Update cycle ---
+# 1. Make a change in the marketplace
+cd /home/vince/dev/skills
+# Edit any skill's SKILL.md (add a comment or trivial change)
+
+# 2. Build marketplace + plugins
+agentsinc build plugins --skills-dir skills --agents-dir agents --output-dir plugins
+agentsinc build marketplace --plugins-dir plugins --output marketplace.json
+
+# 3. Update the consuming project
+cd /tmp/cli-test-marketplace
+agentsinc outdated              # should show the changed skill as outdated
+agentsinc edit --refresh        # should pick up the newer version
+agentsinc outdated              # should show no outdated skills
 ```
 
 ---

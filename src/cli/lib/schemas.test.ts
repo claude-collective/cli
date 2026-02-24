@@ -1,8 +1,21 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
+  agentYamlConfigSchema,
   brandingConfigSchema,
+  categoryDefinitionSchema,
+  categoryPathSchema,
+  extendSchemasWithCustomValues,
+  isValidSkillId,
+  localRawMetadataSchema,
+  metadataValidationSchema,
   projectConfigLoaderSchema,
   projectSourceConfigSchema,
+  resetSchemaExtensions,
+  skillAssignmentSchema,
+  skillMetadataLoaderSchema,
+  skillsMatrixConfigSchema,
+  SKILL_ID_PATTERN,
+  stackAgentConfigSchema,
   validateNestingDepth,
   warnUnknownFields,
 } from "./schemas";
@@ -343,5 +356,534 @@ describe("projectSourceConfigSchema with branding", () => {
       source: "github:myorg/skills",
     });
     expect(result.success).toBe(true);
+  });
+});
+
+describe("isValidSkillId", () => {
+  afterEach(() => {
+    resetSchemaExtensions();
+  });
+
+  it("should accept built-in skill IDs matching SKILL_ID_PATTERN", () => {
+    expect(isValidSkillId("web-framework-react")).toBe(true);
+    expect(isValidSkillId("api-database-drizzle")).toBe(true);
+    expect(isValidSkillId("meta-methodology-anti-over-engineering")).toBe(true);
+  });
+
+  it("should reject non-built-in IDs when no custom extensions registered", () => {
+    expect(isValidSkillId("acme-pipeline-deploy")).toBe(false);
+    expect(isValidSkillId("deploy")).toBe(false);
+    expect(isValidSkillId("acme-deploy")).toBe(false);
+  });
+
+  it("should accept custom skill IDs after extendSchemasWithCustomValues()", () => {
+    extendSchemasWithCustomValues({ skillIds: ["acme-pipeline-deploy", "deploy"] });
+
+    expect(isValidSkillId("acme-pipeline-deploy")).toBe(true);
+    expect(isValidSkillId("deploy")).toBe(true);
+  });
+
+  it("should reject unregistered custom IDs even after extending with others", () => {
+    extendSchemasWithCustomValues({ skillIds: ["acme-pipeline-deploy"] });
+
+    expect(isValidSkillId("acme-other-skill")).toBe(false);
+  });
+
+  it("should reject IDs with uppercase characters", () => {
+    expect(isValidSkillId("Acme-Deploy")).toBe(false);
+    expect(isValidSkillId("Not-Valid-Id")).toBe(false);
+  });
+
+  it("should reject empty strings", () => {
+    expect(isValidSkillId("")).toBe(false);
+  });
+
+  it("should still accept built-in IDs after extending with custom ones", () => {
+    extendSchemasWithCustomValues({ skillIds: ["acme-pipeline-deploy"] });
+
+    expect(isValidSkillId("web-framework-react")).toBe(true);
+    expect(isValidSkillId("acme-pipeline-deploy")).toBe(true);
+  });
+});
+
+describe("SKILL_ID_PATTERN", () => {
+  it("should match valid built-in skill IDs with 3+ segments", () => {
+    expect(SKILL_ID_PATTERN.test("web-framework-react")).toBe(true);
+    expect(SKILL_ID_PATTERN.test("api-database-drizzle")).toBe(true);
+    expect(SKILL_ID_PATTERN.test("meta-methodology-anti-over-engineering")).toBe(true);
+  });
+
+  it("should reject IDs without a valid prefix", () => {
+    expect(SKILL_ID_PATTERN.test("acme-pipeline-deploy")).toBe(false);
+    expect(SKILL_ID_PATTERN.test("custom-skill-name")).toBe(false);
+  });
+
+  it("should reject IDs with only 2 segments", () => {
+    expect(SKILL_ID_PATTERN.test("web-framework")).toBe(false);
+  });
+});
+
+describe("custom: true in schemas", () => {
+  it("should accept custom: true in skillMetadataLoaderSchema", () => {
+    const result = skillMetadataLoaderSchema.safeParse({
+      category: "web-framework",
+      custom: true,
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.custom).toBe(true);
+  });
+
+  it("should accept metadata without custom field", () => {
+    const result = skillMetadataLoaderSchema.safeParse({
+      category: "web-framework",
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.custom).toBeUndefined();
+  });
+
+  it("should accept custom: true in agentYamlConfigSchema", () => {
+    const result = agentYamlConfigSchema.safeParse({
+      id: "web-developer",
+      title: "Web Developer",
+      description: "Builds web UIs",
+      tools: ["Read", "Write"],
+      custom: true,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept custom: true in metadataValidationSchema", () => {
+    const result = metadataValidationSchema.safeParse({
+      category: "web-framework",
+      categoryExclusive: true,
+      author: "@acme",
+      cliName: "My Custom Skill",
+      cliDescription: "A custom skill for deployment",
+      usageGuidance: "Use when deploying services to staging or production.",
+      custom: true,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept custom: true in categoryDefinitionSchema", () => {
+    const result = categoryDefinitionSchema.safeParse({
+      id: "web-framework",
+      displayName: "Framework",
+      description: "Web frameworks",
+      domain: "web",
+      exclusive: true,
+      required: false,
+      order: 1,
+      custom: true,
+    });
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("category validation with custom: true bypass", () => {
+  describe("skillMetadataLoaderSchema", () => {
+    it("should reject non-custom skill with invalid category", () => {
+      const result = skillMetadataLoaderSchema.safeParse({
+        category: "foo-bar",
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject non-custom skill with custom: false and invalid category", () => {
+      const result = skillMetadataLoaderSchema.safeParse({
+        category: "acme-core",
+        custom: false,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("should accept custom: true with kebab-case category", () => {
+      const result = skillMetadataLoaderSchema.safeParse({
+        category: "acme-core",
+        custom: true,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject custom: true with non-kebab-case category", () => {
+      const result = skillMetadataLoaderSchema.safeParse({
+        category: "NOT KEBAB",
+        custom: true,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject custom: true with uppercase category", () => {
+      const result = skillMetadataLoaderSchema.safeParse({
+        category: "Acme-Core",
+        custom: true,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("should accept non-custom skill with valid built-in category", () => {
+      const result = skillMetadataLoaderSchema.safeParse({
+        category: "web-framework",
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("should accept metadata without category field", () => {
+      const result = skillMetadataLoaderSchema.safeParse({
+        author: "@test",
+      });
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe("localRawMetadataSchema", () => {
+    it("should reject non-custom skill with invalid category", () => {
+      const result = localRawMetadataSchema.safeParse({
+        category: "foo-bar",
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject non-custom skill with custom: false and invalid category", () => {
+      const result = localRawMetadataSchema.safeParse({
+        category: "acme-core",
+        custom: false,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("should accept custom: true with kebab-case category", () => {
+      const result = localRawMetadataSchema.safeParse({
+        category: "acme-core",
+        custom: true,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject custom: true with non-kebab-case category", () => {
+      const result = localRawMetadataSchema.safeParse({
+        category: "NOT KEBAB",
+        custom: true,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject custom: true with uppercase category", () => {
+      const result = localRawMetadataSchema.safeParse({
+        category: "Acme-Core",
+        custom: true,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("should accept non-custom skill with valid built-in category", () => {
+      const result = localRawMetadataSchema.safeParse({
+        category: "web-framework",
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("should accept metadata without category field", () => {
+      const result = localRawMetadataSchema.safeParse({
+        cliName: "my-skill",
+      });
+      expect(result.success).toBe(true);
+    });
+  });
+});
+
+describe("skillsMatrixConfigSchema with pre-scan + extend + strict-load", () => {
+  afterEach(() => {
+    resetSchemaExtensions();
+  });
+
+  it("should accept custom category keys after extending schemas", () => {
+    extendSchemasWithCustomValues({ categories: ["acme-pipeline"], domains: ["acme"] });
+
+    const result = skillsMatrixConfigSchema.safeParse({
+      version: "1.0.0",
+      categories: {
+        "acme-pipeline": {
+          id: "acme-pipeline",
+          displayName: "CI/CD Pipeline",
+          description: "Deployment pipeline skills",
+          domain: "acme",
+          exclusive: false,
+          required: false,
+          order: 1,
+        },
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept custom domain values after extending schemas", () => {
+    extendSchemasWithCustomValues({ categories: ["acme-ml"], domains: ["acme"] });
+
+    const result = skillsMatrixConfigSchema.safeParse({
+      version: "1.0.0",
+      categories: {
+        "acme-ml": {
+          id: "acme-ml",
+          displayName: "ML Tooling",
+          description: "Machine learning workflow skills",
+          domain: "acme",
+          exclusive: true,
+          required: false,
+          order: 2,
+        },
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept missing relationships and skillAliases", () => {
+    const result = skillsMatrixConfigSchema.safeParse({
+      version: "1.0.0",
+      categories: {
+        "web-framework": {
+          id: "web-framework",
+          displayName: "Framework",
+          description: "Web frameworks",
+          exclusive: true,
+          required: true,
+          order: 1,
+        },
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept custom: true on category definitions", () => {
+    extendSchemasWithCustomValues({ categories: ["acme-pipeline"], domains: ["acme"] });
+
+    const result = skillsMatrixConfigSchema.safeParse({
+      version: "1.0.0",
+      categories: {
+        "acme-pipeline": {
+          id: "acme-pipeline",
+          displayName: "CI/CD Pipeline",
+          description: "Deployment pipeline skills",
+          domain: "acme",
+          exclusive: false,
+          required: false,
+          order: 1,
+          custom: true,
+        },
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept custom skill alias entries after extending schemas", () => {
+    extendSchemasWithCustomValues({ skillIds: ["acme-deploy", "acme-pipeline-deploy"] });
+
+    const result = skillsMatrixConfigSchema.safeParse({
+      version: "1.0.0",
+      categories: {},
+      skillAliases: {
+        "acme-deploy": "acme-pipeline-deploy",
+        react: "web-framework-react",
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject missing version", () => {
+    const result = skillsMatrixConfigSchema.safeParse({
+      categories: {},
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject custom categories without extending schemas first", () => {
+    const result = skillsMatrixConfigSchema.safeParse({
+      version: "1.0.0",
+      categories: {
+        "acme-pipeline": {
+          id: "acme-pipeline",
+          displayName: "CI/CD Pipeline",
+          description: "Deployment pipeline skills",
+          domain: "acme",
+          exclusive: false,
+          required: false,
+          order: 1,
+        },
+      },
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("dynamic schema extension", () => {
+  afterEach(() => {
+    resetSchemaExtensions();
+  });
+
+  describe("extendSchemasWithCustomValues", () => {
+    it("should make custom categories pass categoryPathSchema", () => {
+      // Before extension, custom category fails
+      const beforeResult = categoryPathSchema.safeParse("acme-pipeline");
+      expect(beforeResult.success).toBe(false);
+
+      // Extend with custom category
+      extendSchemasWithCustomValues({ categories: ["acme-pipeline"] });
+
+      // After extension, custom category passes
+      const afterResult = categoryPathSchema.safeParse("acme-pipeline");
+      expect(afterResult.success).toBe(true);
+    });
+
+    it("should make custom categories pass stackAgentConfigSchema", () => {
+      extendSchemasWithCustomValues({ categories: ["acme-pipeline"] });
+
+      const result = stackAgentConfigSchema.safeParse({
+        "acme-pipeline": "web-framework-react",
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("should make custom categories pass metadataValidationSchema", () => {
+      extendSchemasWithCustomValues({ categories: ["acme-pipeline"] });
+
+      const result = metadataValidationSchema.safeParse({
+        category: "acme-pipeline",
+        author: "@acme",
+        cliName: "Deploy Pipeline",
+        cliDescription: "Kubernetes deployment automation",
+        usageGuidance: "Use when deploying services to staging or production.",
+        custom: true,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("should make custom agent names pass agentYamlConfigSchema", () => {
+      extendSchemasWithCustomValues({ agentNames: ["acme-deployer"] });
+
+      const result = agentYamlConfigSchema.safeParse({
+        id: "acme-deployer",
+        title: "Acme Deployer",
+        description: "Handles Kubernetes deployments",
+        tools: ["Bash", "Read", "Write"],
+        custom: true,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("should make custom skill IDs pass skillAssignmentSchema", () => {
+      extendSchemasWithCustomValues({ skillIds: ["acme-pipeline-deploy"] });
+
+      const result = skillAssignmentSchema.safeParse({
+        id: "acme-pipeline-deploy",
+        preloaded: false,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("should make custom skill IDs pass projectConfigLoaderSchema skills array", () => {
+      extendSchemasWithCustomValues({ skillIds: ["acme-pipeline-deploy"] });
+
+      const result = projectConfigLoaderSchema.safeParse({
+        name: "test-project",
+        agents: ["web-developer"],
+        skills: ["web-framework-react", "acme-pipeline-deploy"],
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("should make custom domains pass projectConfigLoaderSchema domains array", () => {
+      extendSchemasWithCustomValues({ domains: ["acme"] });
+
+      const result = projectConfigLoaderSchema.safeParse({
+        name: "test-project",
+        agents: ["web-developer"],
+        domains: ["web", "acme"],
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("should be idempotent (calling multiple times accumulates values)", () => {
+      extendSchemasWithCustomValues({ categories: ["acme-pipeline"] });
+      extendSchemasWithCustomValues({ categories: ["acme-ml"] });
+
+      expect(categoryPathSchema.safeParse("acme-pipeline").success).toBe(true);
+      expect(categoryPathSchema.safeParse("acme-ml").success).toBe(true);
+    });
+
+    it("should preserve built-in values after extension", () => {
+      extendSchemasWithCustomValues({
+        categories: ["acme-pipeline"],
+        domains: ["acme"],
+        agentNames: ["acme-deployer"],
+      });
+
+      // Built-in category still works
+      expect(categoryPathSchema.safeParse("web-framework").success).toBe(true);
+
+      // Built-in agent still works
+      const agentResult = agentYamlConfigSchema.safeParse({
+        id: "web-developer",
+        title: "Web Developer",
+        description: "Builds web UIs",
+        tools: ["Read", "Write"],
+      });
+      expect(agentResult.success).toBe(true);
+
+      // Built-in domain still works
+      const configResult = projectConfigLoaderSchema.safeParse({
+        name: "test",
+        domains: ["web", "api"],
+      });
+      expect(configResult.success).toBe(true);
+    });
+
+    it("should still reject truly invalid values after extension", () => {
+      extendSchemasWithCustomValues({ categories: ["acme-pipeline"] });
+
+      // Invalid category (uppercase) still rejected
+      expect(categoryPathSchema.safeParse("Acme-Pipeline").success).toBe(false);
+
+      // Unknown custom agent name still rejected
+      const agentResult = agentYamlConfigSchema.safeParse({
+        id: "unknown-agent",
+        title: "Unknown",
+        description: "Not registered",
+        tools: ["Read"],
+      });
+      expect(agentResult.success).toBe(false);
+    });
+  });
+
+  describe("resetSchemaExtensions", () => {
+    it("should clear all custom extensions", () => {
+      extendSchemasWithCustomValues({
+        categories: ["acme-pipeline"],
+        domains: ["acme"],
+        agentNames: ["acme-deployer"],
+        skillIds: ["acme-pipeline-deploy"],
+      });
+
+      // Verify extensions are active
+      expect(categoryPathSchema.safeParse("acme-pipeline").success).toBe(true);
+
+      // Reset
+      resetSchemaExtensions();
+
+      // Verify extensions are cleared
+      expect(categoryPathSchema.safeParse("acme-pipeline").success).toBe(false);
+
+      const agentResult = agentYamlConfigSchema.safeParse({
+        id: "acme-deployer",
+        title: "Acme Deployer",
+        description: "Handles deployments",
+        tools: ["Bash"],
+      });
+      expect(agentResult.success).toBe(false);
+
+      const skillResult = skillAssignmentSchema.safeParse({
+        id: "acme-pipeline-deploy",
+      });
+      expect(skillResult.success).toBe(false);
+    });
   });
 });

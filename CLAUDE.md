@@ -32,6 +32,7 @@ This file provides quick decision trees and essential conventions for working wi
 - NEVER reassign constants to other constants — use the original constant directly instead of creating aliases like `const FOO = BAR`
 - NEVER build intermediate data structures imperatively when the data is static or the rendering is straightforward. No `const arr = []; for (...) { arr.push(...) }` patterns. Use declarative const arrays, `.map()`, `.flatMap()`, or inline JSX. If data is known at write-time, write it as a literal. If it needs transforming, use functional array methods. Imperative accumulation into mutable arrays is never the answer.
 - NEVER put machine-specific absolute paths in any file tracked by git. If a file needs private paths, gitignore it first.
+- NEVER use inline regex to extract SKILL.md frontmatter fields. Use `parseFrontmatter()` from `lib/loading/loader.ts` — it handles YAML parsing and Zod validation.
 
 ## ALWAYS do this
 

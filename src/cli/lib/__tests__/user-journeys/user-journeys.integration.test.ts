@@ -1,6 +1,6 @@
 import path from "path";
 import { readFile } from "fs/promises";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   createTestSource,
   cleanupTestSource,
@@ -13,7 +13,7 @@ import { installLocal } from "../../installation/local-installer";
 import { recompileAgents } from "../../agents";
 import { useWizardStore } from "../../../stores/wizard-store";
 import { loadProjectConfig } from "../../configuration";
-import { DEFAULT_PRESELECTED_SKILLS } from "../../../consts";
+import { DEFAULT_PRESELECTED_SKILLS, STANDARD_FILES } from "../../../consts";
 import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
 import {
@@ -26,17 +26,7 @@ import {
   directoryExists,
   readTestYaml,
 } from "../helpers";
-import { loadDefaultMappings, clearDefaultsCache } from "../../loading";
-
 // ── Setup ───────────────────────────────────────────────────────────────────────
-
-beforeAll(async () => {
-  await loadDefaultMappings();
-});
-
-afterAll(() => {
-  clearDefaultsCache();
-});
 
 // ── Constants ───────────────────────────────────────────────────────────────────
 
@@ -689,7 +679,7 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
 
     // Each selected skill should have been copied
     for (const copiedSkill of result.copiedSkills) {
-      expect(await fileExists(path.join(copiedSkill.destPath, "SKILL.md"))).toBe(true);
+      expect(await fileExists(path.join(copiedSkill.destPath, STANDARD_FILES.SKILL_MD))).toBe(true);
     }
   });
 

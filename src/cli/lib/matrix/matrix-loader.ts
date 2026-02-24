@@ -48,6 +48,7 @@ const rawMetadataSchema = z.object({
   requires: z.array(z.string() as z.ZodType<SkillId>).optional(),
   requiresSetup: z.array(z.string() as z.ZodType<SkillId>).optional(),
   providesSetupFor: z.array(z.string() as z.ZodType<SkillId>).optional(),
+  custom: z.boolean().optional(),
 });
 
 /**
@@ -68,8 +69,25 @@ export async function loadSkillsMatrix(configPath: string): Promise<SkillsMatrix
     );
   }
 
+  // Ensure optional fields have defaults for SkillsMatrixConfig compatibility
+  // (relationships and skillAliases are optional in the schema for source matrices
+  // that may only define custom categories)
+  const data = result.data;
+  const matrix: SkillsMatrixConfig = {
+    version: data.version,
+    categories: data.categories,
+    relationships: data.relationships ?? {
+      conflicts: [],
+      discourages: [],
+      recommends: [],
+      requires: [],
+      alternatives: [],
+    },
+    skillAliases: data.skillAliases ?? {},
+  };
+
   verbose(`Loaded skills matrix: ${configPath}`);
-  return result.data;
+  return matrix;
 }
 
 /**
@@ -145,6 +163,7 @@ export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkil
       requiresSetup: metadata.requiresSetup ?? [],
       providesSetupFor: metadata.providesSetupFor ?? [],
       path: `skills/${skillDir}/`,
+      ...(metadata.custom === true ? { custom: true } : {}),
     };
 
     skills.push(extracted);
@@ -173,46 +192,6 @@ function buildReverseDisplayNames(
   return reverse;
 }
 
-// Maps short names, directory paths, and old alias targets to canonical skill IDs
-function buildAliasTargetToSkillIdMap(
-  displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,
-  skills: ExtractedSkillMetadata[],
-): Record<string, SkillId> {
-  const map: Record<string, SkillId> = {};
-
-  for (const skill of skills) {
-    const parts = skill.id.split("/");
-    const shortForm = parts[parts.length - 1];
-
-    if (shortForm && shortForm !== skill.id) {
-      map[shortForm] = skill.id;
-    }
-
-    if (skill.directoryPath && skill.directoryPath !== skill.id) {
-      map[skill.directoryPath] = skill.id;
-    }
-  }
-
-  // Also include any old-style alias targets that might still be referenced
-  // Uses Set for O(1) suffix lookups instead of nested iteration over all aliases
-  const aliasTargets = new Set(Object.values(displayNameToId));
-  for (const skill of skills) {
-    // Check each suffix of skill.id after "/" delimiters against the alias set
-    let slashIdx = skill.id.indexOf("/");
-    while (slashIdx !== -1) {
-      const suffix = skill.id.slice(slashIdx + 1);
-      if (suffix && aliasTargets.has(suffix as SkillId) && suffix !== skill.id) {
-        map[suffix] = skill.id;
-      }
-      slashIdx = skill.id.indexOf("/", slashIdx + 1);
-    }
-    // Note: original also checked skill.id === aliasTarget, but that was excluded
-    // by the aliasTarget !== skill.id guard, making it a no-op
-  }
-
-  return map;
-}
-
 function buildDirectoryPathToIdMap(skills: ExtractedSkillMetadata[]): Record<string, SkillId> {
   const map: Record<string, SkillId> = {};
   for (const skill of skills) {
@@ -227,7 +206,6 @@ function resolveToCanonicalId(
   nameOrId: SkillId,
   displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,
   directoryPathToId: Record<string, SkillId> = {},
-  aliasTargetToSkillId: Record<string, SkillId> = {},
   context?: string,
 ): SkillId {
   // Boundary cast: nameOrId may contain a display name from YAML — narrow to SkillDisplayName for lookup
@@ -237,10 +215,6 @@ function resolveToCanonicalId(
   }
   if (directoryPathToId[nameOrId]) {
     return directoryPathToId[nameOrId];
-  }
-  // Handle "short author" format like "react (@vince)" that maps to full ID
-  if (aliasTargetToSkillId[nameOrId]) {
-    return aliasTargetToSkillId[nameOrId];
   }
   if (context) {
     verbose(`Unresolved ID '${nameOrId}' in ${context} — passing through as-is`);
@@ -272,7 +246,6 @@ export async function mergeMatrixWithSkills(
   const displayNameToId = matrix.skillAliases;
   const displayNames = buildReverseDisplayNames(displayNameToId);
   const directoryPathToId = buildDirectoryPathToIdMap(skills);
-  const aliasTargetToSkillId = buildAliasTargetToSkillIdMap(displayNameToId, skills);
   const resolvedSkills: Partial<Record<SkillId, ResolvedSkill>> = {};
 
   for (const skill of skills) {
@@ -282,7 +255,6 @@ export async function mergeMatrixWithSkills(
       displayNameToId,
       displayNames,
       directoryPathToId,
-      aliasTargetToSkillId,
     );
     resolvedSkills[skill.id] = resolved;
   }
@@ -438,14 +410,12 @@ function buildResolvedSkill(
   displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,
   displayNames: Partial<Record<SkillId, SkillDisplayName>>,
   directoryPathToId: Record<string, SkillId>,
-  aliasTargetToSkillId: Record<string, SkillId>,
 ): ResolvedSkill {
   const resolve: ResolveId = (id, context) =>
     resolveToCanonicalId(
       id,
       displayNameToId,
       directoryPathToId,
-      aliasTargetToSkillId,
       context ? `${skill.id} ${context}` : undefined,
     );
 

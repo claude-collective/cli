@@ -1,7 +1,7 @@
 import type { ModelName, PermissionMode } from "./matrix";
 import type { PluginSkillRef, Skill, SkillId } from "./skills";
 
-/** Valid built-in agent names derived from src/agents/ directory structure and stacks.yaml */
+/** Valid agent names for built-in agents */
 export type AgentName =
   // Developers
   | "web-developer"
@@ -82,6 +82,8 @@ export type AgentConfig = AgentDefinition & {
 /** Agent configuration from agent.yaml (co-located in each agent folder) */
 export type AgentYamlConfig = BaseAgentFields & {
   id: AgentName;
+  /** True if this agent was created outside the CLI's built-in vocabulary */
+  custom?: boolean;
 };
 
 /** Agent frontmatter matching official Claude Code plugin format for compiled .md files */

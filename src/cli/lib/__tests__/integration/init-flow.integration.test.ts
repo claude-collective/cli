@@ -1,5 +1,5 @@
 import path from "path";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readFile } from "fs/promises";
 import { parse as parseYaml } from "yaml";
 import {
@@ -26,23 +26,8 @@ import {
   buildSourceResult,
   TEST_SKILLS,
 } from "../helpers";
-import { loadDefaultMappings, clearDefaultsCache } from "../../loading";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_SKILLS_SUBDIR, STANDARD_FILES } from "../../../consts";
 
-// Load YAML defaults once for all tests in this file
-beforeAll(async () => {
-  await loadDefaultMappings();
-});
-
-afterAll(() => {
-  clearDefaultsCache();
-});
-
-// ── Constants ──────────────────────────────────────────────────────────────────
-
-const CLAUDE_SRC_DIR = ".claude-src";
-const CLAUDE_DIR = ".claude";
-const CONFIG_YAML = "config.yaml";
-const SKILLS_SUBDIR = "skills";
 const AGENTS_SUBDIR = "agents";
 
 // Skills whose IDs match directory names in the test source.
@@ -154,16 +139,17 @@ describe("Init Flow Integration: Local Mode", () => {
 
   it("should create .claude-src/config.yaml with correct structure", async () => {
     const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
+    const selectedAgents: AgentName[] = ["web-developer", "api-developer"];
 
     const result = await installLocal({
-      wizardResult: buildWizardResult(selectedSkills),
+      wizardResult: buildWizardResult(selectedSkills, { selectedAgents }),
       sourceResult,
       projectDir: dirs.projectDir,
       sourceFlag: dirs.sourceDir,
     });
 
     // config.yaml should exist in .claude-src/
-    const configPath = path.join(dirs.projectDir, CLAUDE_SRC_DIR, CONFIG_YAML);
+    const configPath = path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
     expect(result.configPath).toBe(configPath);
     expect(await fileExists(configPath)).toBe(true);
 
@@ -172,7 +158,7 @@ describe("Init Flow Integration: Local Mode", () => {
     expect(config.name).toBeDefined();
     expect(config.agents).toBeDefined();
     expect(Array.isArray(config.agents)).toBe(true);
-    expect(config.agents.length).toBeGreaterThan(0);
+    expect(config.agents).toEqual(["api-developer", "web-developer"]);
     expect(config.skills).toBeDefined();
     expect(config.installMode).toBe("local");
     expect(config.source).toBe(dirs.sourceDir);
@@ -188,7 +174,7 @@ describe("Init Flow Integration: Local Mode", () => {
     });
 
     // Skills directory should exist
-    const skillsDir = path.join(dirs.projectDir, CLAUDE_DIR, SKILLS_SUBDIR);
+    const skillsDir = path.join(dirs.projectDir, CLAUDE_DIR, DEFAULT_SKILLS_SUBDIR);
     expect(result.skillsDir).toBe(skillsDir);
     expect(await directoryExists(skillsDir)).toBe(true);
 
@@ -197,7 +183,7 @@ describe("Init Flow Integration: Local Mode", () => {
 
     // Each copied skill should have a SKILL.md
     for (const copiedSkill of result.copiedSkills) {
-      expect(await fileExists(path.join(copiedSkill.destPath, "SKILL.md"))).toBe(true);
+      expect(await fileExists(path.join(copiedSkill.destPath, STANDARD_FILES.SKILL_MD))).toBe(true);
     }
 
     // Skill IDs should match what was selected
@@ -208,9 +194,10 @@ describe("Init Flow Integration: Local Mode", () => {
 
   it("should compile agents to .claude/agents/", async () => {
     const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
+    const selectedAgents: AgentName[] = ["web-developer", "api-developer"];
 
     const result = await installLocal({
-      wizardResult: buildWizardResult(selectedSkills),
+      wizardResult: buildWizardResult(selectedSkills, { selectedAgents }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -256,11 +243,12 @@ describe("Init Flow Integration: Local Mode", () => {
     }
   });
 
-  it("should assign skills to correct agents based on category", async () => {
+  it("should assign all skills to all selected agents", async () => {
     const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
+    const selectedAgents: AgentName[] = ["web-developer", "api-developer"];
 
     const result = await installLocal({
-      wizardResult: buildWizardResult(selectedSkills),
+      wizardResult: buildWizardResult(selectedSkills, { selectedAgents }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -270,17 +258,13 @@ describe("Init Flow Integration: Local Mode", () => {
     // Stack property should exist and map agents to skills
     expect(config.stack).toBeDefined();
 
-    // The stack should have at least one agent with skill assignments
-    const agentNames = Object.keys(config.stack || {});
-    expect(agentNames.length).toBeGreaterThan(0);
-
-    // web-framework-react should be assigned to a web-related agent
-    // api-framework-hono should be assigned to an api-related agent
-    const allStackSkills = Object.values(config.stack || {}).flatMap((agentStack) =>
-      Object.values(agentStack as Record<string, string>),
-    );
-    expect(allStackSkills).toContain("web-framework-react");
-    expect(allStackSkills).toContain("api-framework-hono");
+    // Every selected agent should have every skill's subcategory
+    for (const agentId of selectedAgents) {
+      const agentStack = config.stack![agentId] as Record<string, unknown> | undefined;
+      expect(agentStack).toBeDefined();
+      expect(agentStack!["web-framework"]).toBeDefined();
+      expect(agentStack!["api-api"]).toBeDefined();
+    }
   });
 });
 
@@ -344,9 +328,10 @@ describe("Init Flow Integration: All Skills Selection", () => {
       "api-framework-hono",
       "web-testing-vitest",
     ];
+    const selectedAgents: AgentName[] = ["web-developer", "api-developer"];
 
     const result = await installLocal({
-      wizardResult: buildWizardResult(selectedSkills),
+      wizardResult: buildWizardResult(selectedSkills, { selectedAgents }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -358,8 +343,8 @@ describe("Init Flow Integration: All Skills Selection", () => {
     const config = await readTestYaml<ProjectConfig>(result.configPath);
     expect(config.skills).toHaveLength(3);
 
-    // Agents should cover web + api domains
-    expect(result.compiledAgents.length).toBeGreaterThanOrEqual(1);
+    // Agents should be exactly the selected agents
+    expect(config.agents).toEqual(["api-developer", "web-developer"]);
   });
 });
 
@@ -400,7 +385,7 @@ describe("Init Flow Integration: Source Configuration", () => {
       // No sourceFlag — falls back to sourceResult.sourceConfig.source
     });
 
-    const configPath = path.join(dirs.projectDir, CLAUDE_SRC_DIR, CONFIG_YAML);
+    const configPath = path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
     const config = await readTestYaml<ProjectConfig>(configPath);
 
     // Source comes from sourceResult.sourceConfig.source
@@ -438,10 +423,14 @@ describe("Init Flow Integration: Directory Structure Verification", () => {
     expect(await directoryExists(path.join(dirs.projectDir, CLAUDE_SRC_DIR))).toBe(true);
 
     // .claude-src/config.yaml should exist
-    expect(await fileExists(path.join(dirs.projectDir, CLAUDE_SRC_DIR, CONFIG_YAML))).toBe(true);
+    expect(
+      await fileExists(path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML)),
+    ).toBe(true);
 
     // .claude/skills/ should exist
-    expect(await directoryExists(path.join(dirs.projectDir, CLAUDE_DIR, SKILLS_SUBDIR))).toBe(true);
+    expect(
+      await directoryExists(path.join(dirs.projectDir, CLAUDE_DIR, DEFAULT_SKILLS_SUBDIR)),
+    ).toBe(true);
 
     // .claude/agents/ should exist
     expect(await directoryExists(path.join(dirs.projectDir, CLAUDE_DIR, AGENTS_SUBDIR))).toBe(true);
@@ -459,7 +448,7 @@ describe("Init Flow Integration: Directory Structure Verification", () => {
     expect(await directoryExists(skillDir)).toBe(true);
 
     // SKILL.md should contain the skill content
-    const skillMdPath = path.join(skillDir, "SKILL.md");
+    const skillMdPath = path.join(skillDir, STANDARD_FILES.SKILL_MD);
     expect(await fileExists(skillMdPath)).toBe(true);
 
     const content = await readFile(skillMdPath, "utf-8");
@@ -468,9 +457,10 @@ describe("Init Flow Integration: Directory Structure Verification", () => {
 
   it("should produce agent markdown with valid frontmatter", async () => {
     const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
+    const selectedAgents: AgentName[] = ["web-developer", "api-developer"];
 
     const result = await installLocal({
-      wizardResult: buildWizardResult(selectedSkills),
+      wizardResult: buildWizardResult(selectedSkills, { selectedAgents }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -610,7 +600,10 @@ describe("Init Flow Integration: Skill Content Verification", () => {
     const reactSkill = result.copiedSkills.find((s) => s.skillId === "web-framework-react");
     expect(reactSkill).toBeDefined();
 
-    const reactContent = await readFile(path.join(reactSkill!.destPath, "SKILL.md"), "utf-8");
+    const reactContent = await readFile(
+      path.join(reactSkill!.destPath, STANDARD_FILES.SKILL_MD),
+      "utf-8",
+    );
     expect(reactContent).toContain("React");
     expect(reactContent).toContain("Component-based architecture");
 
@@ -618,7 +611,10 @@ describe("Init Flow Integration: Skill Content Verification", () => {
     const honoSkill = result.copiedSkills.find((s) => s.skillId === "api-framework-hono");
     expect(honoSkill).toBeDefined();
 
-    const honoContent = await readFile(path.join(honoSkill!.destPath, "SKILL.md"), "utf-8");
+    const honoContent = await readFile(
+      path.join(honoSkill!.destPath, STANDARD_FILES.SKILL_MD),
+      "utf-8",
+    );
     expect(honoContent).toContain("Hono");
     expect(honoContent).toContain("fast web framework");
   });
@@ -703,7 +699,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
     expect(config.stack?.["documentor"]).toBeUndefined();
   });
 
-  it("should assign skills to their appropriate selected agents based on category", async () => {
+  it("should assign all skills to all selected agents", async () => {
     const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
     const selectedAgents: AgentName[] = ["web-developer", "web-reviewer", "api-developer"];
 
@@ -717,26 +713,12 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
 
     expect(config.stack).toBeDefined();
 
-    // web-framework-react should be assigned to web-developer and/or web-reviewer
-    // (both are in the web/* mapping and in selectedAgents)
-    const webAgentsWithFramework = Object.entries(config.stack || {}).filter(([, agentConfig]) => {
-      const typedConfig = agentConfig as Record<string, unknown>;
-      return typedConfig["web-framework"] !== undefined;
-    });
-    expect(webAgentsWithFramework.length).toBeGreaterThan(0);
-    for (const [agentId] of webAgentsWithFramework) {
-      expect(["web-developer", "web-reviewer"]).toContain(agentId);
-    }
-
-    // api-framework-hono should be assigned to api-developer
-    // (api-developer is in the api/* mapping and in selectedAgents)
-    const apiAgentsWithFramework = Object.entries(config.stack || {}).filter(([, agentConfig]) => {
-      const typedConfig = agentConfig as Record<string, unknown>;
-      return typedConfig["api-api"] !== undefined;
-    });
-    expect(apiAgentsWithFramework.length).toBeGreaterThan(0);
-    for (const [agentId] of apiAgentsWithFramework) {
-      expect(agentId).toBe("api-developer");
+    // Every agent should have every skill's subcategory
+    for (const agentId of selectedAgents) {
+      const agentStack = config.stack![agentId] as Record<string, unknown> | undefined;
+      expect(agentStack).toBeDefined();
+      expect(agentStack!["web-framework"]).toBeDefined();
+      expect(agentStack!["api-api"]).toBeDefined();
     }
   });
 });

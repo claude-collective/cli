@@ -239,7 +239,7 @@ export const Wizard: React.FC<WizardProps> = ({
       }
 
       case "agents":
-        return <StepAgents />;
+        return <StepAgents matrix={matrix} />;
 
       case "confirm": {
         const stackName = getStackName(store.selectedStackId, matrix);

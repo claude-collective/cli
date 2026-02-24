@@ -4,19 +4,18 @@ import { Args, Flags } from "@oclif/core";
 import { TextInput } from "@inkjs/ui";
 import { spawn } from "child_process";
 import matter from "gray-matter";
-import { render, Box, Text, useInput } from "ink";
+import { render, Box, Text, useApp, useInput } from "ink";
 import path from "path";
 
 import { BaseCommand } from "../../base-command.js";
 import { CLAUDE_DIR, CLI_COLORS } from "../../consts.js";
-import { EXIT_CODES } from "../../lib/exit-codes.js";
+import { getAgentDefinitions } from "../../lib/agents/index.js";
 import { resolveSource } from "../../lib/configuration/index.js";
-import { fetchFromSource } from "../../lib/loading/index.js";
+import { EXIT_CODES } from "../../lib/exit-codes.js";
 import { isClaudeCLIAvailable } from "../../utils/exec.js";
 import { fileExists, readFile } from "../../utils/fs.js";
 
 const META_AGENT_NAME = "agent-summoner";
-const AGENTS_SUBDIR = ".claude/agents";
 
 type NewAgentInput = {
   description: string;
@@ -25,25 +24,19 @@ type NewAgentInput = {
   tools?: string[];
 };
 
-type AgentSourceFrontmatter = {
-  name: string;
-  description: string;
-  tools?: string;
-  model?: string;
-  permissionMode?: string;
-};
-
 type PurposeInputProps = {
   onSubmit: (purpose: string) => void;
   onCancel: () => void;
 };
 
 const PurposeInput: React.FC<PurposeInputProps> = ({ onSubmit, onCancel }) => {
+  const { exit } = useApp();
   const [error, setError] = useState<string | null>(null);
 
   useInput((_input, key) => {
     if (key.escape) {
       onCancel();
+      exit();
     }
   });
 
@@ -54,6 +47,7 @@ const PurposeInput: React.FC<PurposeInputProps> = ({ onSubmit, onCancel }) => {
       return;
     }
     onSubmit(trimmed);
+    exit();
   };
 
   return (
@@ -72,38 +66,56 @@ const PurposeInput: React.FC<PurposeInputProps> = ({ onSubmit, onCancel }) => {
   );
 };
 
-async function fetchMetaAgent(source: string, forceRefresh: boolean): Promise<NewAgentInput> {
-  const result = await fetchFromSource(source, {
-    forceRefresh,
-    subdir: AGENTS_SUBDIR,
-  });
-
-  const agentPath = path.join(result.path, `${META_AGENT_NAME}.md`);
-
-  if (!(await fileExists(agentPath))) {
-    throw new Error(
-      `Meta-agent not found: ${META_AGENT_NAME}.md\n\n` +
-        `Expected at: ${agentPath}\n` +
-        `The source repository may not contain the agent-summoner agent.`,
-    );
-  }
-
-  const content = await readFile(agentPath);
-
+function parseCompiledAgent(content: string): NewAgentInput {
   const { data: frontmatter, content: body } = matter(content);
-  const fm = frontmatter as AgentSourceFrontmatter;
-
-  const tools = fm.tools ? fm.tools.split(",").map((t: string) => t.trim()) : undefined;
+  const tools =
+    typeof frontmatter.tools === "string"
+      ? frontmatter.tools.split(",").map((t: string) => t.trim())
+      : frontmatter.tools;
 
   return {
-    description: fm.description || "Creates new agents",
-    prompt: body,
-    model: fm.model,
+    description: frontmatter.description || "Creates new agents",
+    prompt: body.trim(),
+    model: frontmatter.model,
     tools,
   };
 }
 
-function buildAgentPrompt(agentName: string, purpose: string, outputDir: string): string {
+async function loadMetaAgent(
+  projectDir: string,
+  source: string,
+  forceRefresh: boolean,
+): Promise<NewAgentInput> {
+  const compiledFileName = `${META_AGENT_NAME}.md`;
+
+  // Check for compiled agent in the current project
+  const localAgentPath = path.join(projectDir, CLAUDE_DIR, "agents", compiledFileName);
+  if (await fileExists(localAgentPath)) {
+    return parseCompiledAgent(await readFile(localAgentPath));
+  }
+
+  // Fall back to remote source (may not have agents)
+  try {
+    const agentPaths = await getAgentDefinitions(source, { forceRefresh, projectDir });
+    const remoteAgentPath = path.join(
+      agentPaths.sourcePath,
+      CLAUDE_DIR,
+      "agents",
+      compiledFileName,
+    );
+    if (await fileExists(remoteAgentPath)) {
+      return parseCompiledAgent(await readFile(remoteAgentPath));
+    }
+  } catch {
+    // Source does not contain agents — fall through to error
+  }
+
+  throw new Error(
+    `Agent '${META_AGENT_NAME}' not found.\n\n` + `Run 'compile' first to generate agents.`,
+  );
+}
+
+export function buildAgentPrompt(agentName: string, purpose: string, outputDir: string): string {
   return `Create a new Claude Code agent named "${agentName}" in the directory "${outputDir}".
 
 Agent Purpose: ${purpose}
@@ -115,6 +127,7 @@ Requirements:
 4. Create workflow.md with the agent's operational process
 5. Optionally create examples.md if relevant examples would help
 6. Optionally create critical-requirements.md for important rules
+7. Include \`custom: true\` in the agent.yaml configuration
 
 Follow the existing agent patterns in the codebase. Keep the agent focused and practical.`;
 }
@@ -144,7 +157,6 @@ async function invokeMetaAgent(
   return new Promise((resolve, reject) => {
     const child = spawn("claude", args, {
       stdio: "inherit",
-      shell: true,
     });
 
     child.on("error", (error) => {
@@ -180,14 +192,14 @@ export default class NewAgent extends BaseCommand {
       description: "Purpose/description of the agent",
       required: false,
     }),
-    refresh: Flags.boolean({
-      char: "r",
-      description: "Force refresh remote source",
-      default: false,
-    }),
     "non-interactive": Flags.boolean({
       char: "n",
       description: "Run in non-interactive mode",
+      default: false,
+    }),
+    refresh: Flags.boolean({
+      char: "r",
+      description: "Force refresh remote source",
       default: false,
     }),
   };
@@ -204,9 +216,6 @@ export default class NewAgent extends BaseCommand {
         { exit: EXIT_CODES.ERROR },
       );
     }
-
-    const sourceConfig = await resolveSource(flags.source, projectDir);
-    const source = sourceConfig.source;
 
     let purpose = flags.purpose;
 
@@ -246,7 +255,8 @@ export default class NewAgent extends BaseCommand {
     this.log("Fetching agent-summoner from source...");
 
     try {
-      const agentDef = await fetchMetaAgent(source, flags.refresh);
+      const sourceConfig = await resolveSource(flags.source, projectDir);
+      const agentDef = await loadMetaAgent(projectDir, sourceConfig.source, flags.refresh);
       this.log("Meta-agent loaded");
       this.log("");
 

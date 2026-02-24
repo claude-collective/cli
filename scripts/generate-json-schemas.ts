@@ -18,13 +18,13 @@ import {
   skillsMatrixConfigSchema,
   stackConfigValidationSchema,
   stacksConfigSchema,
-  stackSubcategorySchema,
+  SUBCATEGORY_VALUES,
 } from "../src/cli/lib/schemas.ts";
 
 const SCHEMAS_DIR = path.resolve(import.meta.dirname, "../src/schemas");
 
-/** All valid subcategory values for stack configs (includes stacks-only keys like base-framework, platform) */
-const STACK_SUBCATEGORY_ENUM = [...stackSubcategorySchema.options];
+/** All valid subcategory values for stack configs */
+const STACK_SUBCATEGORY_ENUM = [...SUBCATEGORY_VALUES];
 
 type SchemaEntry = {
   filename: string;

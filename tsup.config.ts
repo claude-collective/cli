@@ -23,15 +23,6 @@ export default defineConfig({
   // Note: We need to handle multiple entry points - outDir will create structure
   outDir: "dist",
   onSuccess: async () => {
-    // Copy static assets (YAML defaults) to dist
-    const srcDefaults = path.join("src", "cli", "defaults");
-    const destDefaults = path.join("dist", "cli", "defaults");
-
-    if (await fs.pathExists(srcDefaults)) {
-      await fs.copy(srcDefaults, destDefaults);
-      console.log("Copied defaults/ to dist/cli/defaults/");
-    }
-
     // Copy config/ (skills-matrix.yaml, stacks.yaml) to dist/config/
     // so it's available regardless of how PROJECT_ROOT resolves at runtime
     const srcConfig = "config";

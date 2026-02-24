@@ -13,6 +13,7 @@ vi.mock("../../utils/logger");
 import { resolveAgentConfigToSkills, resolveStackSkills } from "./stacks-loader";
 import { readFile, fileExists } from "../../utils/fs";
 import { warn } from "../../utils/logger";
+import { extendSchemasWithCustomValues, resetSchemaExtensions } from "../schemas";
 
 /** Shorthand: creates a SkillAssignment from an id and optional preloaded flag */
 function sa(id: SkillId, preloaded = false): SkillAssignment {
@@ -334,15 +335,15 @@ describe("stacks-loader", () => {
     });
 
     it("warns and skips invalid skill IDs", () => {
-      // Boundary cast: intentionally invalid skill ID to test validation
+      // Boundary cast: intentionally invalid skill ID (uppercase) to test validation
       const agentConfig = {
-        "web-framework": [{ id: "not-a-valid-id", preloaded: false }],
+        "web-framework": [{ id: "Not-A-Valid-Id", preloaded: false }],
       } as unknown as StackAgentConfig;
 
       const skills = resolveAgentConfigToSkills(agentConfig);
 
       expect(skills).toHaveLength(0);
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("not-a-valid-id"));
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Not-A-Valid-Id"));
     });
 
     it("handles empty agent config", () => {
@@ -415,11 +416,11 @@ describe("stacks-loader", () => {
     });
 
     it("warns and skips invalid skill IDs within arrays", () => {
-      // Boundary cast: intentionally invalid skill ID within array to test validation
+      // Boundary cast: intentionally invalid skill ID (uppercase) within array to test validation
       const agentConfig = {
         "shared-methodology": [
           { id: "meta-methodology-investigation-requirements", preloaded: true },
-          { id: "not-a-valid-id", preloaded: false },
+          { id: "Not-A-Valid-Id", preloaded: false },
           { id: "meta-methodology-anti-over-engineering", preloaded: true },
         ],
       } as unknown as StackAgentConfig;
@@ -432,7 +433,7 @@ describe("stacks-loader", () => {
         skills.find((s) => s.id === "meta-methodology-investigation-requirements"),
       ).toBeDefined();
       expect(skills.find((s) => s.id === "meta-methodology-anti-over-engineering")).toBeDefined();
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("not-a-valid-id"));
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Not-A-Valid-Id"));
     });
 
     it("reads preloaded from each assignment individually", () => {
@@ -452,6 +453,36 @@ describe("stacks-loader", () => {
 
       const dynamicSkill = skills.find((s) => s.id === "meta-methodology-anti-over-engineering");
       expect(dynamicSkill!.preloaded).toBe(false);
+    });
+
+    it("accepts custom skill IDs registered via extendSchemasWithCustomValues()", () => {
+      extendSchemasWithCustomValues({ skillIds: ["acme-pipeline-deploy"] });
+
+      // Boundary cast: custom skill IDs bypass the SkillId template literal type
+      const agentConfig = {
+        "web-framework": [{ id: "acme-pipeline-deploy", preloaded: true }],
+      } as unknown as StackAgentConfig;
+
+      const skills = resolveAgentConfigToSkills(agentConfig);
+
+      expect(skills).toHaveLength(1);
+      expect(skills[0].id).toBe("acme-pipeline-deploy");
+      expect(skills[0].preloaded).toBe(true);
+      expect(warn).not.toHaveBeenCalled();
+
+      resetSchemaExtensions();
+    });
+
+    it("rejects custom skill IDs not registered via extendSchemasWithCustomValues()", () => {
+      // Boundary cast: custom skill IDs bypass the SkillId template literal type
+      const agentConfig = {
+        "web-framework": [{ id: "acme-pipeline-deploy", preloaded: true }],
+      } as unknown as StackAgentConfig;
+
+      const skills = resolveAgentConfigToSkills(agentConfig);
+
+      expect(skills).toHaveLength(0);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("acme-pipeline-deploy"));
     });
   });
 

@@ -2,7 +2,7 @@ import { unique } from "remeda";
 import type { CategoryMap, Domain, MergedSkillsMatrix, ResolvedStack } from "../../types/index.js";
 import { typedKeys } from "../../utils/typed-object.js";
 
-export function getDomainDisplayName(domain: Domain): string {
+export function getDomainDisplayName(domain: string): string {
   const displayNames: Record<Domain, string> = {
     web: "Web",
     api: "API",
@@ -10,7 +10,10 @@ export function getDomainDisplayName(domain: Domain): string {
     mobile: "Mobile",
     shared: "Shared",
   };
-  return displayNames[domain];
+  return (
+    (domain in displayNames ? displayNames[domain as Domain] : null) ??
+    domain.charAt(0).toUpperCase() + domain.slice(1)
+  );
 }
 
 export function getStackName(

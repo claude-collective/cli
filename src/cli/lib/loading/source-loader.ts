@@ -1,17 +1,26 @@
 import path from "path";
-import { PROJECT_ROOT, SKILLS_DIR_PATH, SKILLS_MATRIX_PATH } from "../../consts";
+import { unique } from "remeda";
+import {
+  DIRS,
+  PROJECT_ROOT,
+  SKILLS_DIR_PATH,
+  SKILLS_MATRIX_PATH,
+  STANDARD_FILES,
+} from "../../consts";
 import { LOCAL_DEFAULTS } from "../metadata-keys";
 import type {
   AgentName,
   MergedSkillsMatrix,
   ResolvedSkill,
   ResolvedStack,
+  SkillAssignment,
   SkillId,
   Stack,
+  Subcategory,
 } from "../../types";
-import { fileExists } from "../../utils/fs";
+import { directoryExists, fileExists, glob, readFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
-import { typedKeys } from "../../utils/typed-object";
+import { typedEntries, typedKeys } from "../../utils/typed-object";
 import {
   DEFAULT_SOURCE,
   isLocalSource,
@@ -26,8 +35,16 @@ import {
   loadSkillsMatrix,
   mergeMatrixWithSkills,
 } from "../matrix";
+import {
+  agentNameSchema,
+  extendSchemasWithCustomValues,
+  isValidSkillId,
+  SKILL_ID_PATTERN,
+  SUBCATEGORY_VALUES,
+} from "../schemas";
 import { fetchFromSource, fetchMarketplace } from "./source-fetcher";
 import { loadSkillsFromAllSources } from "./multi-source-loader";
+import { parseFrontmatter } from "./loader";
 import { loadStacks, resolveAgentConfigToSkills } from "../stacks";
 
 export type SourceLoadOptions = {
@@ -156,22 +173,51 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
   const skillsDirRelPath = sourceProjectConfig?.skillsDir ?? SKILLS_DIR_PATH;
   const stacksRelFile = sourceProjectConfig?.stacksFile;
 
-  const sourceMatrixPath = path.join(basePath, matrixRelPath);
   const cliMatrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
+  const cliMatrix = await loadSkillsMatrix(cliMatrixPath);
 
-  let matrixPath: string;
+  let matrix = cliMatrix;
+
+  // Discover custom values from source entities BEFORE strict matrix load
+  await discoverAndExtendFromSource(basePath);
+
+  const sourceMatrixPath = path.join(basePath, matrixRelPath);
   if (await fileExists(sourceMatrixPath)) {
-    matrixPath = sourceMatrixPath;
-    verbose(`Matrix from source: ${matrixPath}`);
+    const sourceMatrix = await loadSkillsMatrix(sourceMatrixPath);
+    // Source categories overlay CLI categories — source values win on conflict
+    const mergedCategories = { ...cliMatrix.categories, ...sourceMatrix.categories };
+    // Merge relationships: concatenate arrays from both matrices
+    const mergedRelationships = {
+      conflicts: [...cliMatrix.relationships.conflicts, ...sourceMatrix.relationships.conflicts],
+      discourages: [
+        ...cliMatrix.relationships.discourages,
+        ...sourceMatrix.relationships.discourages,
+      ],
+      recommends: [...cliMatrix.relationships.recommends, ...sourceMatrix.relationships.recommends],
+      requires: [...cliMatrix.relationships.requires, ...sourceMatrix.relationships.requires],
+      alternatives: [
+        ...cliMatrix.relationships.alternatives,
+        ...sourceMatrix.relationships.alternatives,
+      ],
+    };
+    // Merge skill aliases: source wins on conflict
+    const mergedAliases = { ...cliMatrix.skillAliases, ...sourceMatrix.skillAliases };
+    matrix = {
+      version: cliMatrix.version,
+      categories: mergedCategories,
+      relationships: mergedRelationships,
+      skillAliases: mergedAliases,
+    };
+    verbose(
+      `Matrix merged: CLI (${typedKeys(cliMatrix.categories).length} categories) + source (${typedKeys(sourceMatrix.categories).length} categories)`,
+    );
   } else {
-    matrixPath = cliMatrixPath;
-    verbose(`Matrix from CLI (source has no matrix): ${matrixPath}`);
+    verbose(`Matrix from CLI only (source has no matrix): ${cliMatrixPath}`);
   }
 
   const skillsDir = path.join(basePath, skillsDirRelPath);
   verbose(`Skills from source: ${skillsDir}`);
 
-  const matrix = await loadSkillsMatrix(matrixPath);
   const skills = await extractAllSkills(skillsDir);
   const mergedMatrix = await mergeMatrixWithSkills(matrix, skills);
 
@@ -191,12 +237,26 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
 function convertStackToResolvedStack(stack: Stack): ResolvedStack {
   const allSkillIds: SkillId[] = [];
   const seenSkillIds = new Set<SkillId>();
+  const skills: Partial<Record<AgentName, Partial<Record<Subcategory, SkillId[]>>>> = {};
 
   for (const agentId of typedKeys<AgentName>(stack.agents)) {
     const agentConfig = stack.agents[agentId];
     if (!agentConfig) continue;
 
     const skillRefs = resolveAgentConfigToSkills(agentConfig);
+    const agentSkills: Partial<Record<Subcategory, SkillId[]>> = {};
+
+    for (const [subcategory, assignments] of typedEntries<Subcategory, SkillAssignment[]>(
+      agentConfig,
+    )) {
+      if (!assignments || assignments.length === 0) continue;
+      const validIds = assignments.filter((a) => isValidSkillId(a.id)).map((a) => a.id);
+      if (validIds.length > 0) {
+        agentSkills[subcategory] = validIds;
+      }
+    }
+
+    skills[agentId] = agentSkills;
 
     for (const ref of skillRefs) {
       if (!seenSkillIds.has(ref.id)) {
@@ -213,8 +273,7 @@ function convertStackToResolvedStack(stack: Stack): ResolvedStack {
     id: stack.id,
     name: stack.name,
     description: stack.description,
-    audience: [], // Not used in new format
-    skills: {} as ResolvedStack["skills"], // Skills come from stack agent configs, resolved at runtime
+    skills,
     allSkillIds,
     philosophy: stack.philosophy || "",
   };
@@ -263,6 +322,122 @@ export function getMarketplaceLabel(sourceResult: SourceLoadResult): string | un
   }
 
   return marketplace;
+}
+
+/** Extract a custom agent name from a single agent.yaml if it declares `custom: true`. */
+async function discoverCustomAgentName(
+  agentsDir: string,
+  file: string,
+  parseYaml: (content: string) => unknown,
+): Promise<string | undefined> {
+  const content = await readFile(path.join(agentsDir, file));
+  // Boundary cast: raw YAML parse for lightweight pre-scan
+  const raw = parseYaml(content) as Record<string, unknown>;
+  if (raw?.custom !== true) return undefined;
+  if (typeof raw?.id !== "string") return undefined;
+  if (agentNameSchema.safeParse(raw.id).success) return undefined;
+  return raw.id;
+}
+
+/** Extract custom skill ID and category from a single skill directory if it declares `custom: true`. */
+async function discoverCustomSkillValues(
+  skillsDir: string,
+  file: string,
+  parseYaml: (content: string) => unknown,
+  builtinSubcategories: Set<string>,
+): Promise<{ skillId?: string; category?: string }> {
+  const content = await readFile(path.join(skillsDir, file));
+  const frontmatter = parseFrontmatter(content);
+  if (!frontmatter) return {};
+
+  const skillId = frontmatter.name;
+  const skillDir = path.dirname(path.join(skillsDir, file));
+  const metadataPath = path.join(skillDir, STANDARD_FILES.METADATA_YAML);
+  if (!(await fileExists(metadataPath))) return {};
+
+  const metadataContent = await readFile(metadataPath);
+  // Boundary cast: raw YAML parse for lightweight pre-scan
+  const metadataRaw = parseYaml(metadataContent) as Record<string, unknown>;
+  if (metadataRaw?.custom !== true) return {};
+
+  const result: { skillId?: string; category?: string } = {};
+
+  if (!SKILL_ID_PATTERN.test(skillId)) {
+    result.skillId = skillId;
+  }
+
+  const category = metadataRaw.category;
+  if (typeof category === "string" && !builtinSubcategories.has(category)) {
+    result.category = category;
+  }
+
+  return result;
+}
+
+/**
+ * Pre-scans the source's agents/ and skills/ directories for custom values
+ * and extends schemas before the full load.
+ *
+ * Discovers:
+ * - Custom agent names from agents with `custom: true` in agent.yaml
+ * - Custom skill IDs from skills with `custom: true` in metadata.yaml
+ * - Custom categories from `category` field of skills with `custom: true`
+ */
+async function discoverAndExtendFromSource(basePath: string): Promise<void> {
+  const { parse: parseYaml } = await import("yaml");
+
+  const builtinSubcategories = new Set<string>(SUBCATEGORY_VALUES);
+  const customCategories: string[] = [];
+  const customAgentNames: string[] = [];
+  const customSkillIds: string[] = [];
+
+  // Discover custom agent names (only from agents that declare custom: true)
+  const agentsDir = path.join(basePath, DIRS.agents);
+  if (await directoryExists(agentsDir)) {
+    const agentFiles = await glob(`**/${STANDARD_FILES.AGENT_YAML}`, agentsDir);
+    for (const file of agentFiles) {
+      try {
+        const name = await discoverCustomAgentName(agentsDir, file, parseYaml);
+        if (name) customAgentNames.push(name);
+      } catch {
+        // Skip unreadable files — full loader will handle errors
+      }
+    }
+  }
+
+  // Discover custom skill IDs and categories from skills that declare custom: true in metadata.yaml
+  const skillsDir = path.join(basePath, DIRS.skills);
+  if (await directoryExists(skillsDir)) {
+    const skillFiles = await glob(`**/${STANDARD_FILES.SKILL_MD}`, skillsDir);
+    for (const file of skillFiles) {
+      try {
+        const result = await discoverCustomSkillValues(
+          skillsDir,
+          file,
+          parseYaml,
+          builtinSubcategories,
+        );
+        if (result.skillId) customSkillIds.push(result.skillId);
+        if (result.category) customCategories.push(result.category);
+      } catch {
+        // Skip unreadable files
+      }
+    }
+  }
+
+  const hasCustomValues =
+    customCategories.length > 0 || customAgentNames.length > 0 || customSkillIds.length > 0;
+
+  if (hasCustomValues) {
+    extendSchemasWithCustomValues({
+      categories: unique(customCategories),
+      agentNames: customAgentNames,
+      skillIds: customSkillIds,
+    });
+    verbose(
+      `Extended schemas with ${unique(customCategories).length} custom categories, ${customAgentNames.length} custom agents, ${customSkillIds.length} custom skill IDs`,
+    );
+  }
 }
 
 function mergeLocalSkillsIntoMatrix(

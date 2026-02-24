@@ -1,8 +1,40 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir } from "fs/promises";
-import { runCliCommand } from "../../helpers";
+import { mkdir } from "fs/promises";
+import { runCliCommand, createTempDir, cleanupTempDir } from "../../helpers";
+import { buildAgentPrompt } from "../../../../commands/new/agent";
+
+describe("buildAgentPrompt", () => {
+  it("should include agent name in prompt", () => {
+    const result = buildAgentPrompt("my-agent", "test purpose", "/output/dir");
+    expect(result).toContain('"my-agent"');
+  });
+
+  it("should include purpose in prompt", () => {
+    const result = buildAgentPrompt("my-agent", "Manages database migrations", "/output/dir");
+    expect(result).toContain("Manages database migrations");
+  });
+
+  it("should include output directory in prompt", () => {
+    const result = buildAgentPrompt("my-agent", "test purpose", "/output/dir");
+    expect(result).toContain("/output/dir");
+  });
+
+  it("should include custom: true instruction", () => {
+    const result = buildAgentPrompt("my-agent", "test purpose", "/output/dir");
+    expect(result).toContain("`custom: true`");
+    expect(result).toContain("agent.yaml");
+  });
+
+  it("should include all required instructions", () => {
+    const result = buildAgentPrompt("my-agent", "test purpose", "/output/dir");
+    expect(result).toContain("agent.yaml");
+    expect(result).toContain("intro.md");
+    expect(result).toContain("workflow.md");
+    expect(result).toContain("examples.md");
+    expect(result).toContain("critical-requirements.md");
+  });
+});
 
 describe("new:agent command", () => {
   let tempDir: string;
@@ -11,7 +43,7 @@ describe("new:agent command", () => {
 
   beforeEach(async () => {
     originalCwd = process.cwd();
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-new-agent-test-"));
+    tempDir = await createTempDir("cc-new-agent-test-");
     projectDir = path.join(tempDir, "project");
     await mkdir(projectDir, { recursive: true });
     process.chdir(projectDir);
@@ -19,7 +51,7 @@ describe("new:agent command", () => {
 
   afterEach(async () => {
     process.chdir(originalCwd);
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   async function expectFlagAccepted(args: string[]): Promise<void> {
@@ -56,10 +88,6 @@ describe("new:agent command", () => {
       ]);
     });
 
-    it("should accept --refresh flag without parsing error", async () => {
-      await expectFlagAccepted(["new:agent", "my-agent", "--refresh"]);
-    });
-
     it("should accept --source flag without parsing error", async () => {
       await expectFlagAccepted(["new:agent", "my-agent", "--source", "/some/path"]);
     });
@@ -72,10 +100,6 @@ describe("new:agent command", () => {
       await expectFlagAccepted(["new:agent", "my-agent", "-p", "test purpose"]);
     });
 
-    it("should accept -r shorthand for refresh flag", async () => {
-      await expectFlagAccepted(["new:agent", "my-agent", "-r"]);
-    });
-
     it("should accept -n shorthand for non-interactive flag", async () => {
       await expectFlagAccepted(["new:agent", "my-agent", "-n"]);
     });
@@ -83,34 +107,26 @@ describe("new:agent command", () => {
     it("should accept -s shorthand for source flag (from base command)", async () => {
       await expectFlagAccepted(["new:agent", "my-agent", "-s", "/some/source"]);
     });
+
+    it("should accept --refresh flag without parsing error", async () => {
+      await expectFlagAccepted(["new:agent", "my-agent", "--refresh"]);
+    });
+
+    it("should accept -r shorthand for refresh flag", async () => {
+      await expectFlagAccepted(["new:agent", "my-agent", "-r"]);
+    });
   });
 
   describe("error handling", () => {
-    it("should error when source path does not exist", async () => {
-      const { error } = await runCliCommand([
-        "new:agent",
-        "my-agent",
-        "--purpose",
-        "test agent",
-        "--source",
-        "/nonexistent/path/that/does/not/exist",
-      ]);
-
-      // Should fail with a non-zero exit code
-      expect(error?.oclif?.exit).toBeDefined();
-      expect(error?.oclif?.exit).not.toBe(0);
-    });
-
     it("should pass arg and flag parsing with all flags combined", async () => {
       // Providing valid args/flags should not trigger parsing errors.
-      // The command may still fail at runtime (source resolution, meta-agent fetch)
+      // The command may still fail at runtime (e.g., claude CLI not found)
       // but should not fail with "unknown flag" or "missing required arg".
       const { error } = await runCliCommand([
         "new:agent",
         "test-agent",
         "--purpose",
         "testing",
-        "--refresh",
         "--non-interactive",
       ]);
 

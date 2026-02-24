@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.46.0] - 2026-02-24
+
+**Custom extensibility, new commands, agent-mapping removal, wizard improvements**
+
+- Custom extensibility foundation: runtime-extensible schemas for custom skills, agents, categories, and domains from private marketplaces
+- Remove agent-mappings.yaml and skill-to-agent routing — all skills assigned to all selected agents
+- Promote `eject templates` to first-class type, add `new marketplace` command, improve `new skill` and `new agent`
+- Dynamic wizard domains/agents from merged matrix, fix stack domain preselection
+- Fix plugin mode marketplace registration (strip `github:` prefix)
+
+See [changelogs/0.46.0.md](./changelogs/0.46.0.md) for full details.
+
+---
+
 ## [0.45.0] - 2026-02-22
 
 **Persist agent selection, skill relation validation, eject fix, test fixtures**

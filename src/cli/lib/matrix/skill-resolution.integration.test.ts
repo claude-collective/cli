@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readFile } from "fs/promises";
 import { parse as parseYaml } from "yaml";
+import { mapToObj } from "remeda";
 
 import {
   createTestSource,
@@ -16,12 +17,16 @@ import {
   getDisableReason,
   resolveAlias,
 } from ".";
-import { createMockSkill, createMockMatrix, createMockCategory } from "../__tests__/helpers";
-import type { WizardResultV2 } from "../../components/wizard/wizard";
+import {
+  createMockSkill,
+  createMockMatrix,
+  createMockCategory,
+  buildWizardResult,
+  buildSourceResult,
+} from "../__tests__/helpers";
 import type {
   CategoryDefinition,
   CategoryPath,
-  DomainSelections,
   MergedSkillsMatrix,
   ProjectConfig,
   ResolvedSkill,
@@ -29,50 +34,11 @@ import type {
   SkillSource,
   Subcategory,
 } from "../../types";
-import type { SourceLoadResult } from "../loading/source-loader";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const TOTAL_SOURCE_COUNT = 3;
 const SELECTED_SKILL_COUNT = 10;
-
-// ── Builder Helpers ────────────────────────────────────────────────────────────
-
-function buildWizardResult(
-  selectedSkills: SkillId[],
-  overrides?: Partial<WizardResultV2>,
-): WizardResultV2 {
-  return {
-    selectedSkills,
-    selectedAgents: [],
-    selectedStackId: null,
-    domainSelections: {} as DomainSelections,
-    selectedDomains: [],
-    sourceSelections: {},
-    expertMode: false,
-    installMode: "local",
-    cancelled: false,
-    validation: { valid: true, errors: [], warnings: [] },
-    ...overrides,
-  };
-}
-
-function buildSourceResult(
-  matrix: MergedSkillsMatrix,
-  sourcePath: string,
-  overrides?: Partial<SourceLoadResult>,
-): SourceLoadResult {
-  return {
-    matrix,
-    sourceConfig: {
-      source: sourcePath,
-      sourceOrigin: "flag",
-    },
-    sourcePath,
-    isLocal: true,
-    ...overrides,
-  };
-}
 
 /**
  * Creates a ResolvedSkill with availableSources annotation for multi-source testing.
@@ -679,6 +645,20 @@ describe("Integration: Multi-Source Install Pipeline", () => {
 
   const PIPELINE_SKILL_COUNT = 5;
 
+  function buildPipelineMatrix(): MergedSkillsMatrix {
+    return createMockMatrix(
+      mapToObj(PIPELINE_SKILLS, (skill) => [
+        skill.name,
+        createMockSkill(skill.name as SkillId, skill.category as CategoryPath, {
+          description: skill.description,
+          tags: skill.tags ?? [],
+          author: skill.author,
+          path: `skills/${skill.category}/${skill.name}/`,
+        }),
+      ]),
+    );
+  }
+
   beforeEach(async () => {
     dirs = await createTestSource({ skills: PIPELINE_SKILLS });
   });
@@ -691,40 +671,11 @@ describe("Integration: Multi-Source Install Pipeline", () => {
     // Boundary cast: frontmatter names from test fixtures are SkillIds by convention
     const selectedSkills = PIPELINE_SKILLS.map((s) => s.name) as unknown as SkillId[];
 
-    const matrixSkills: Record<
-      string,
-      {
-        id: string;
-        description: string;
-        category: string;
-        path: string;
-        tags: string[];
-        author: string;
-      }
-    > = {};
-    for (const skill of PIPELINE_SKILLS) {
-      matrixSkills[skill.name] = {
-        id: skill.name,
-        description: skill.description,
-        category: skill.category,
-        path: `skills/${skill.category}/${skill.name}/`,
-        tags: skill.tags ?? [],
-        author: skill.author,
-      };
-    }
-
-    const matrix = {
-      version: "1.0.0",
-      categories: {},
-      skills: matrixSkills,
-      suggestedStacks: [],
-      displayNameToId: {},
-      displayNames: {},
-      generatedAt: new Date().toISOString(),
-    } as unknown as MergedSkillsMatrix;
+    const matrix = buildPipelineMatrix();
 
     const wizardResult = buildWizardResult(selectedSkills, {
       installMode: "local",
+      selectedAgents: ["web-developer", "api-developer"],
       sourceSelections: {
         "web-framework-react": "public",
         "api-framework-hono": "acme-corp",
@@ -760,37 +711,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
     // Boundary cast: frontmatter names from test fixtures are SkillIds by convention
     const selectedSkills = PIPELINE_SKILLS.map((s) => s.name) as unknown as SkillId[];
 
-    const matrixSkills: Record<
-      string,
-      {
-        id: string;
-        description: string;
-        category: string;
-        path: string;
-        tags: string[];
-        author: string;
-      }
-    > = {};
-    for (const skill of PIPELINE_SKILLS) {
-      matrixSkills[skill.name] = {
-        id: skill.name,
-        description: skill.description,
-        category: skill.category,
-        path: `skills/${skill.category}/${skill.name}/`,
-        tags: skill.tags ?? [],
-        author: skill.author,
-      };
-    }
-
-    const matrix = {
-      version: "1.0.0",
-      categories: {},
-      skills: matrixSkills,
-      suggestedStacks: [],
-      displayNameToId: {},
-      displayNames: {},
-      generatedAt: new Date().toISOString(),
-    } as unknown as MergedSkillsMatrix;
+    const matrix = buildPipelineMatrix();
 
     const wizardResult = buildWizardResult(selectedSkills, {
       installMode: "local",

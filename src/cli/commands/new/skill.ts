@@ -2,19 +2,18 @@ import { Args, Flags } from "@oclif/core";
 import path from "path";
 import { BaseCommand } from "../../base-command.js";
 import { resolveAuthor } from "../../lib/configuration/index.js";
-import { writeFile, directoryExists } from "../../utils/fs.js";
+import { writeFile, directoryExists, fileExists } from "../../utils/fs.js";
 import {
   CLI_BIN_NAME,
+  KEBAB_CASE_PATTERN,
   LOCAL_SKILLS_PATH,
-  SCHEMA_PATHS,
+  PLUGIN_MANIFEST_DIR,
+  SKILLS_DIR_PATH,
   STANDARD_FILES,
-  yamlSchemaComment,
 } from "../../consts.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 import { LOCAL_DEFAULTS } from "../../lib/metadata-keys.js";
 import type { CategoryPath } from "../../types/index.js";
-
-const KEBAB_CASE_PATTERN = /^[a-z][a-z0-9-]*$/;
 
 export function validateSkillName(name: string): string | null {
   if (!name || name.trim() === "") {
@@ -35,12 +34,11 @@ export function toTitleCase(kebabCase: string): string {
     .join(" ");
 }
 
-export function generateSkillMd(name: string, author: string): string {
+export function generateSkillMd(name: string): string {
   const titleName = toTitleCase(name);
-  const skillId = `${name} (${author})`;
 
   return `---
-name: ${skillId}
+name: ${name}
 description: Brief description of this skill
 ---
 
@@ -95,7 +93,7 @@ Add your patterns here.
 export function generateMetadataYaml(name: string, author: string, category: CategoryPath): string {
   const titleName = toTitleCase(name);
 
-  return `${yamlSchemaComment(SCHEMA_PATHS.metadata)}
+  return `custom: true
 category: ${category}
 categoryExclusive: false
 author: "${author}"
@@ -136,6 +134,10 @@ export default class NewSkill extends BaseCommand {
       description: "Overwrite existing skill directory",
       default: false,
     }),
+    output: Flags.string({
+      char: "o",
+      description: "Output directory for the skill (overrides marketplace detection)",
+    }),
   };
 
   async run(): Promise<void> {
@@ -160,7 +162,21 @@ export default class NewSkill extends BaseCommand {
     // CLI flag is an untyped string — cast at data boundary
     const category = flags.category as CategoryPath;
 
-    const skillDir = path.join(projectDir, LOCAL_SKILLS_PATH, args.name);
+    // Determine skill output path: --output flag > marketplace detection > local default
+    let skillsBasePath: string;
+    if (flags.output) {
+      skillsBasePath = path.resolve(flags.output);
+    } else {
+      const marketplacePath = path.join(projectDir, PLUGIN_MANIFEST_DIR, "marketplace.json");
+      if (await fileExists(marketplacePath)) {
+        this.log(`Detected marketplace context, creating skill in ${SKILLS_DIR_PATH}/`);
+        skillsBasePath = path.join(projectDir, SKILLS_DIR_PATH);
+      } else {
+        skillsBasePath = path.join(projectDir, LOCAL_SKILLS_PATH);
+      }
+    }
+
+    const skillDir = path.join(skillsBasePath, args.name);
 
     if (await directoryExists(skillDir)) {
       if (!flags.force) {
@@ -185,7 +201,7 @@ export default class NewSkill extends BaseCommand {
     this.log("Creating skill files...");
 
     try {
-      const skillMdContent = generateSkillMd(args.name, author);
+      const skillMdContent = generateSkillMd(args.name);
       const metadataContent = generateMetadataYaml(args.name, author, category);
 
       const skillMdPath = path.join(skillDir, STANDARD_FILES.SKILL_MD);

@@ -68,8 +68,8 @@ describe("local-skill-loader", () => {
       expect(result).not.toBeNull();
       expect(result?.skills).toHaveLength(1);
       expect(result?.skills[0].id).toBe("my-normal-skill (@local)");
-      expect(result?.skills[0].category).toBe("local");
-      expect(result?.skills[0].author).toBe("@local");
+      expect(result?.skills[0].category).toBe("dummy-category");
+      expect(result?.skills[0].author).toBe("@dummy-author");
       expect(result?.skills[0].local).toBe(true);
       expect(result?.skills[0].localPath).toBe(`${LOCAL_SKILLS_PATH}/my-normal-skill/`);
     });
@@ -172,9 +172,9 @@ describe("local-skill-loader", () => {
       expect(skill?.description).toBe("Complete skill for testing");
 
       // Catalog data
-      expect(skill?.category).toBe("local");
+      expect(skill?.category).toBe("dummy-category");
       expect(skill?.categoryExclusive).toBe(false);
-      expect(skill?.author).toBe("@local");
+      expect(skill?.author).toBe("@dummy-author");
       expect(skill?.tags).toEqual([]);
 
       // Relationships (empty for local skills)
