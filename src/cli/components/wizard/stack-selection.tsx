@@ -4,7 +4,6 @@ import { DEFAULT_SCRATCH_DOMAINS } from "../../consts.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import type { MergedSkillsMatrix } from "../../types/index.js";
 import { SelectionCard } from "./selection-card.js";
-import { getDomainsFromStack } from "./utils.js";
 import { ViewTitle } from "./view-title.js";
 
 const INITIAL_FOCUSED_INDEX = 0;
@@ -22,6 +21,7 @@ export type StackSelectionProps = {
 export const StackSelection: React.FC<StackSelectionProps> = ({ matrix, onCancel }) => {
   const { selectStack, setApproach, setStackAction, populateFromSkillIds, toggleDomain } =
     useWizardStore();
+
   const [focusedIndex, setFocusedIndex] = useState(INITIAL_FOCUSED_INDEX);
 
   const stacks = matrix.suggestedStacks;
@@ -53,12 +53,6 @@ export const StackSelection: React.FC<StackSelectionProps> = ({ matrix, onCancel
         selectStack(focusedStack.id);
         setStackAction("customize");
         populateFromSkillIds(focusedStack.allSkillIds, matrix.skills, matrix.categories);
-
-        const stackDomains = getDomainsFromStack(focusedStack, matrix.categories);
-        for (const domain of stackDomains) {
-          toggleDomain(domain);
-        }
-
         setApproach("stack");
       }
       return;

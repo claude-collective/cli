@@ -40,12 +40,24 @@ const createMockStackWithSkills = (): MergedSkillsMatrix => {
   return createMockMatrix(skills, {
     suggestedStacks,
     categories: {
-      "web-framework": createMockCategory("web-framework", "Web", {
+      "web-framework": createMockCategory("web-framework", "Web Framework", {
+        domain: "web",
         exclusive: false,
       }),
-      "api-api": createMockCategory("api-api", "API", {
+      "api-api": createMockCategory("api-api", "API Framework", {
+        domain: "api",
         exclusive: false,
         order: 1,
+      }),
+      "cli-framework": createMockCategory("cli-framework", "CLI Framework", {
+        domain: "cli",
+        exclusive: false,
+        order: 2,
+      }),
+      "mobile-framework": createMockCategory("mobile-framework", "Mobile Framework", {
+        domain: "mobile",
+        exclusive: false,
+        order: 3,
       }),
     },
   });

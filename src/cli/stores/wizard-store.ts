@@ -1,3 +1,4 @@
+import { unique } from "remeda";
 import { create } from "zustand";
 import { DEFAULT_PRESELECTED_SKILLS, DEFAULT_PUBLIC_SOURCE_NAME } from "../consts.js";
 import { resolveAlias } from "../lib/matrix/index.js";
@@ -18,10 +19,22 @@ import type {
 import { warn } from "../utils/logger.js";
 import { typedEntries, typedKeys } from "../utils/typed-object.js";
 
-const ALL_DOMAINS: Domain[] = ["web", "api", "cli", "mobile", "shared"];
+const BUILT_IN_DOMAINS: Domain[] = ["web", "api", "cli", "mobile", "shared"];
 
-/** All known agent names grouped by domain prefix. */
-const DOMAIN_AGENTS: Record<Domain, AgentName[]> = {
+/** Derive all unique domains from a categories map, preserving built-in order then appending custom. */
+function getAllDomainsFromCategories(
+  categories: Partial<Record<Subcategory, { domain?: Domain }>>,
+): Domain[] {
+  const allDomains = unique(
+    Object.values(categories)
+      .map((cat) => cat?.domain)
+      .filter((d): d is Domain => d != null),
+  );
+  return [...BUILT_IN_DOMAINS, ...allDomains.filter((d) => !BUILT_IN_DOMAINS.includes(d))];
+}
+
+/** Built-in agent names grouped by domain prefix. Custom domains return no preselected agents. */
+const DOMAIN_AGENTS: Partial<Record<string, AgentName[]>> = {
   web: [
     "web-developer",
     "web-reviewer",
@@ -32,8 +45,6 @@ const DOMAIN_AGENTS: Record<Domain, AgentName[]> = {
   ],
   api: ["api-developer", "api-reviewer", "api-researcher"],
   cli: ["cli-developer", "cli-tester", "cli-reviewer", "cli-migrator"],
-  mobile: [],
-  shared: [],
 };
 
 /**
@@ -227,7 +238,7 @@ export type WizardState = {
    * @param skills - Skill lookup providing category and displayName per skill ID
    * @param categories - Category definitions used to resolve subcategory -> domain mapping
    *
-   * Side effects: sets `domainSelections`, sets `selectedDomains` to ALL_DOMAINS
+   * Side effects: sets `domainSelections`, sets `selectedDomains` to domains found in the provided skill IDs
    */
   populateFromSkillIds: (
     skillIds: SkillId[],
@@ -332,7 +343,7 @@ export type WizardState = {
   toggleAgent: (agent: AgentName) => void;
   /**
    * Preselect agents based on selected domains from the first wizard step.
-   * Matches domains against agentSkillPrefixes from cached defaults.
+   * Matches domains against DOMAIN_AGENTS mapping.
    * Optional agents (meta/pattern) are excluded.
    *
    * Side effects: replaces `selectedAgents` with computed preselection
@@ -385,7 +396,7 @@ export type WizardState = {
    * @returns Array of row objects, one per selected technology, each containing:
    *   - `skillId` - Canonical resolved skill ID
    *   - `displayName` - Human-readable skill alias
-   *   - `alias` - Same as displayName (for backward compatibility)
+   *   - `alias` - Search-friendly display name used by source grid search
    *   - `options` - Available sources with selection state and install status
    */
   buildSourceRows: (matrix: MergedSkillsMatrix) => {
@@ -468,7 +479,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
       return {
         domainSelections,
-        selectedDomains: ALL_DOMAINS,
+        selectedDomains: getAllDomainsFromCategories(categories),
       };
     }),
 
@@ -497,7 +508,9 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         warn(`${skippedCount} installed skill(s) could not be resolved and were skipped`);
       }
 
-      return { domainSelections, selectedDomains: ALL_DOMAINS };
+      const selectedDomains = typedKeys<Domain>(domainSelections);
+
+      return { domainSelections, selectedDomains };
     }),
 
   toggleDomain: (domain) =>

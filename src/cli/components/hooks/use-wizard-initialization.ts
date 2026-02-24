@@ -44,8 +44,8 @@ export function useWizardInitialization({
     if (initialExpertMode) {
       useWizardStore.setState({ expertMode: initialExpertMode });
     }
-    // Restore saved domains from config, overriding the ALL_DOMAINS default
-    // set by populateFromSkillIds
+    // Restore saved domains from config, overriding the domains
+    // derived by populateFromSkillIds
     if (initialDomains?.length) {
       useWizardStore.setState({ selectedDomains: initialDomains });
     }

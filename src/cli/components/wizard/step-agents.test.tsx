@@ -11,8 +11,10 @@ import {
   INPUT_DELAY_MS,
   delay,
 } from "../../lib/__tests__/test-constants";
+import { createMockMatrix } from "../../lib/__tests__/helpers";
 
 const EXPECTED_AGENT_COUNT = 18;
+const EMPTY_MATRIX = createMockMatrix({});
 
 describe("StepAgents component", () => {
   let cleanup: (() => void) | undefined;
@@ -28,7 +30,7 @@ describe("StepAgents component", () => {
 
   describe("rendering", () => {
     it("should render title", () => {
-      const { lastFrame, unmount } = render(<StepAgents />);
+      const { lastFrame, unmount } = render(<StepAgents matrix={EMPTY_MATRIX} />);
       cleanup = unmount;
 
       const output = lastFrame();
@@ -36,7 +38,7 @@ describe("StepAgents component", () => {
     });
 
     it("should render all agents", () => {
-      const { lastFrame, unmount } = render(<StepAgents />);
+      const { lastFrame, unmount } = render(<StepAgents matrix={EMPTY_MATRIX} />);
       cleanup = unmount;
 
       const output = lastFrame();
@@ -61,7 +63,7 @@ describe("StepAgents component", () => {
     });
 
     it("should render agent descriptions", () => {
-      const { lastFrame, unmount } = render(<StepAgents />);
+      const { lastFrame, unmount } = render(<StepAgents matrix={EMPTY_MATRIX} />);
       cleanup = unmount;
 
       const output = lastFrame();
@@ -71,7 +73,7 @@ describe("StepAgents component", () => {
     });
 
     it("should render group headers", () => {
-      const { lastFrame, unmount } = render(<StepAgents />);
+      const { lastFrame, unmount } = render(<StepAgents matrix={EMPTY_MATRIX} />);
       cleanup = unmount;
 
       const output = lastFrame();
@@ -82,7 +84,7 @@ describe("StepAgents component", () => {
     });
 
     it("should show continue arrow", () => {
-      const { lastFrame, unmount } = render(<StepAgents />);
+      const { lastFrame, unmount } = render(<StepAgents matrix={EMPTY_MATRIX} />);
       cleanup = unmount;
 
       const output = lastFrame();
@@ -96,7 +98,7 @@ describe("StepAgents component", () => {
       store.toggleAgent("api-developer");
       store.toggleAgent("web-reviewer");
 
-      const { lastFrame, unmount } = render(<StepAgents />);
+      const { lastFrame, unmount } = render(<StepAgents matrix={EMPTY_MATRIX} />);
       cleanup = unmount;
 
       const output = lastFrame();
@@ -104,7 +106,7 @@ describe("StepAgents component", () => {
     });
 
     it("should show 'Continue without agents' when no agents selected", () => {
-      const { lastFrame, unmount } = render(<StepAgents />);
+      const { lastFrame, unmount } = render(<StepAgents matrix={EMPTY_MATRIX} />);
       cleanup = unmount;
 
       const output = lastFrame();
@@ -114,7 +116,7 @@ describe("StepAgents component", () => {
 
   describe("keyboard interaction", () => {
     it("should toggle agent on SPACE", async () => {
-      const { stdin, lastFrame, unmount } = render(<StepAgents />);
+      const { stdin, lastFrame, unmount } = render(<StepAgents matrix={EMPTY_MATRIX} />);
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
@@ -126,7 +128,7 @@ describe("StepAgents component", () => {
     });
 
     it("should toggle correct agent after navigation", async () => {
-      const { stdin, unmount } = render(<StepAgents />);
+      const { stdin, unmount } = render(<StepAgents matrix={EMPTY_MATRIX} />);
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
@@ -145,7 +147,7 @@ describe("StepAgents component", () => {
       // Set step to agents so setStep("confirm") actually navigates
       store.setStep("agents");
 
-      const { stdin, unmount } = render(<StepAgents />);
+      const { stdin, unmount } = render(<StepAgents matrix={EMPTY_MATRIX} />);
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
@@ -160,7 +162,7 @@ describe("StepAgents component", () => {
       const store = useWizardStore.getState();
       store.setStep("agents");
 
-      const { stdin, unmount } = render(<StepAgents />);
+      const { stdin, unmount } = render(<StepAgents matrix={EMPTY_MATRIX} />);
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
@@ -176,7 +178,7 @@ describe("StepAgents component", () => {
       store.setStep("sources");
       store.setStep("agents");
 
-      const { stdin, unmount } = render(<StepAgents />);
+      const { stdin, unmount } = render(<StepAgents matrix={EMPTY_MATRIX} />);
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
@@ -191,7 +193,7 @@ describe("StepAgents component", () => {
       const store = useWizardStore.getState();
       store.toggleAgent("web-developer");
 
-      const { stdin, unmount } = render(<StepAgents />);
+      const { stdin, unmount } = render(<StepAgents matrix={EMPTY_MATRIX} />);
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
