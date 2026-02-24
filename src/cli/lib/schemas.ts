@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { KEBAB_CASE_PATTERN } from "../consts";
 import { warn } from "../utils/logger";
 import type {
   AgentHookAction,
@@ -32,8 +33,24 @@ import type {
   Subcategory,
 } from "../types";
 
+/**
+ * Runtime-extensible sets of custom values discovered from source matrices.
+ * Populated by extendSchemasWithCustomValues() after matrix merge.
+ * Checked by categoryPathSchema, stackAgentConfigSchema, and agentYamlConfigSchema
+ * to accept custom categories, domains, and agent names at parse time.
+ */
+const customExtensions = {
+  categories: new Set<string>(),
+  domains: new Set<string>(),
+  agentNames: new Set<string>(),
+  skillIds: new Set<string>(),
+};
+
+/** Raw domain values (before cast) — single source of truth for built-in domains */
+export const DOMAIN_VALUES = ["web", "api", "cli", "mobile", "shared"] as const;
+
 // Bridge pattern: z.ZodType<ExistingType> ensures Zod output matches our union types
-export const domainSchema = z.enum(["web", "api", "cli", "mobile", "shared"]) as z.ZodType<Domain>;
+export const domainSchema = z.enum(DOMAIN_VALUES) as z.ZodType<Domain>;
 
 export const skillSourceTypeSchema = z.enum([
   "public",
@@ -49,8 +66,8 @@ export const boundSkillSchema: z.ZodType<BoundSkill> = z.object({
   description: z.string().optional(),
 });
 
-/** Raw subcategory values (before cast) — used to derive stackSubcategorySchema */
-const SUBCATEGORY_VALUES = [
+/** Raw subcategory values (before cast) — single source of truth for built-in subcategories */
+export const SUBCATEGORY_VALUES = [
   "web-framework",
   "web-styling",
   "web-client-state",
@@ -93,13 +110,6 @@ const SUBCATEGORY_VALUES = [
 
 // Bridge pattern: z.ZodType<ExistingType> ensures Zod output matches our union types
 export const subcategorySchema = z.enum(SUBCATEGORY_VALUES) as z.ZodType<Subcategory>;
-
-/**
- * Extended subcategory enum for stack configs.
- * Identical to subcategorySchema since SUBCATEGORY_VALUES already includes
- * stacks-only keys (web-base-framework, mobile-platform).
- */
-export const stackSubcategorySchema = z.enum(SUBCATEGORY_VALUES);
 
 export const agentNameSchema = z.enum([
   "web-developer",
@@ -226,6 +236,15 @@ export const skillDisplayNameSchema = z.enum([
 /** Matches SkillId format: prefix-subcategory-name (at least 3 dash-separated segments) */
 export const SKILL_ID_PATTERN = /^(web|api|cli|mobile|infra|meta|security)-.+-.+$/;
 
+/**
+ * Checks if a string is a valid skill ID: either matches the built-in prefix pattern
+ * (web|api|cli|mobile|infra|meta|security) or was registered as a custom skill ID
+ * via extendSchemasWithCustomValues().
+ */
+export function isValidSkillId(id: string): boolean {
+  return SKILL_ID_PATTERN.test(id) || customExtensions.skillIds.has(id);
+}
+
 // Regex-based since Zod cannot express template literal types natively
 export const skillIdSchema = z
   .string()
@@ -234,12 +253,92 @@ export const skillIdSchema = z
     "Must be a valid skill ID (e.g., 'web-framework-react')",
   ) as z.ZodType<SkillId>;
 
-// Accepts: "prefix-subcategory", bare subcategory, or "local"
+/** Extensible schemas that accept both built-in values and custom values registered via extendSchemasWithCustomValues() */
+const extensibleDomainSchema = z
+  .string()
+  .refine(
+    (val): val is Domain =>
+      domainSchema.safeParse(val).success || customExtensions.domains.has(val),
+    { message: "Must be a valid domain" },
+  ) as z.ZodType<Domain>;
+
+const extensibleSkillIdSchema = z
+  .string()
+  .refine(
+    (val): val is SkillId =>
+      skillIdSchema.safeParse(val).success || customExtensions.skillIds.has(val),
+    { message: "Must be a valid skill ID" },
+  ) as z.ZodType<SkillId>;
+
+const extensibleSubcategorySchema = z
+  .string()
+  .refine(
+    (val): val is Subcategory =>
+      subcategorySchema.safeParse(val).success || customExtensions.categories.has(val),
+    { message: "Must be a valid subcategory" },
+  ) as z.ZodType<Subcategory>;
+
+const extensibleAgentNameSchema = z
+  .string()
+  .refine(
+    (val): val is AgentName =>
+      agentNameSchema.safeParse(val).success || customExtensions.agentNames.has(val),
+    { message: "Must be a valid agent name" },
+  ) as z.ZodType<AgentName>;
+
+/** Validates category: strict categoryPathSchema by default, any kebab-case string when custom: true */
+function validateCategoryField(
+  val: { category?: string; custom?: boolean },
+  ctx: z.RefinementCtx,
+): void {
+  if (!val.category) return;
+
+  if (val.custom) {
+    if (!KEBAB_CASE_PATTERN.test(val.category)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["category"],
+        message: "Custom category must be kebab-case",
+      });
+    }
+    return;
+  }
+
+  const result = categoryPathSchema.safeParse(val.category);
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      ctx.addIssue({ ...issue, path: ["category"] });
+    }
+  }
+}
+
+/** Creates a superRefine callback that validates record keys against built-in + custom extension sets */
+function validateExtensibleRecordKeys(
+  builtinSet: Set<string>,
+  extensionSet: Set<string>,
+  label: string,
+) {
+  return (val: Record<string, unknown>, ctx: z.RefinementCtx) => {
+    for (const key of Object.keys(val)) {
+      if (!builtinSet.has(key) && !extensionSet.has(key)) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `Invalid ${label} '${key}'.`,
+        });
+      }
+    }
+  };
+}
+
+// Accepts: "prefix-subcategory", bare subcategory, "local", or custom category from extended schema
 export const categoryPathSchema = z.string().refine(
   (val): val is CategoryPath => {
     if (val === "local") return true;
     if (/^(web|api|cli|mobile|infra|meta|security|shared)-.+$/.test(val)) return true;
-    return subcategorySchema.safeParse(val).success;
+    if (subcategorySchema.safeParse(val).success) return true;
+    // Accept custom categories registered via extendSchemasWithCustomValues()
+    return customExtensions.categories.has(val);
   },
   {
     message: "Must be a valid category path (e.g., 'web-framework', 'shared-testing', or 'local')",
@@ -273,7 +372,7 @@ export const strictHooksRecordSchema = z.record(
 );
 
 export const skillAssignmentSchema: z.ZodType<SkillAssignment> = z.object({
-  id: skillIdSchema,
+  id: extensibleSkillIdSchema,
   preloaded: z.boolean().optional(),
   local: z.boolean().optional(),
   path: z.string().optional(),
@@ -286,18 +385,21 @@ export const skillFrontmatterLoaderSchema = z.object({
   model: modelNameSchema.optional(),
 });
 
-// Lenient loader: invalid category/skillId warnings are legitimate.
+// Loader schema: category strictness depends on custom field (see validateCategoryField)
 export const skillMetadataLoaderSchema = z
   .object({
-    category: categoryPathSchema.optional(),
+    // Field accepts any string; cross-field validation in superRefine enforces strict/custom rules
+    category: (z.string() as z.ZodType<CategoryPath>).optional(),
     categoryExclusive: z.boolean().optional(),
     author: z.string().optional(),
     tags: z.array(z.string()).optional(),
     requires: z.array(skillIdSchema).optional(),
     compatibleWith: z.array(skillIdSchema).optional(),
     conflictsWith: z.array(skillIdSchema).optional(),
+    custom: z.boolean().optional(),
   })
-  .passthrough();
+  .passthrough()
+  .superRefine(validateCategoryField);
 
 export const pluginAuthorSchema: z.ZodType<PluginAuthor> = z.object({
   name: z.string().min(1),
@@ -332,7 +434,7 @@ export const pluginManifestValidationSchema = z
   .strict();
 
 export const agentYamlConfigSchema: z.ZodType<AgentYamlConfig> = z.object({
-  id: agentNameSchema,
+  id: extensibleAgentNameSchema,
   title: z.string(),
   description: z.string(),
   model: modelNameSchema.optional(),
@@ -341,6 +443,7 @@ export const agentYamlConfigSchema: z.ZodType<AgentYamlConfig> = z.object({
   permissionMode: permissionModeSchema.optional(),
   hooks: hooksRecordSchema.optional(),
   outputFormat: z.string().optional(),
+  custom: z.boolean().optional(),
 });
 
 // Defined before projectConfigLoaderSchema so it can reference stackAgentConfigSchema
@@ -356,23 +459,19 @@ const skillAssignmentElementSchema = z.union([skillIdSchema, skillAssignmentSche
  * Uses z.record(z.string()) with superRefine for key validation because
  * z.record(z.enum()) treats all enum values as required properties.
  */
-const stackSubcategoryValues: Set<string> = new Set(stackSubcategorySchema.options);
+const stackSubcategoryValues: Set<string> = new Set(SUBCATEGORY_VALUES);
 export const stackAgentConfigSchema = z
   .record(
     z.string(),
     z.union([skillAssignmentElementSchema, z.array(skillAssignmentElementSchema)]),
   )
-  .superRefine((val, ctx) => {
-    for (const key of Object.keys(val)) {
-      if (!stackSubcategoryValues.has(key)) {
-        ctx.addIssue({
-          code: "custom",
-          path: [key],
-          message: `Invalid subcategory '${key}'. Must be one of: ${[...stackSubcategoryValues].join(", ")}`,
-        });
-      }
-    }
-  });
+  .superRefine(
+    validateExtensibleRecordKeys(
+      stackSubcategoryValues,
+      customExtensions.categories,
+      "subcategory",
+    ),
+  );
 
 /**
  * Lenient loader for .claude/config.yaml (ProjectConfig).
@@ -388,7 +487,7 @@ export const projectConfigLoaderSchema = z
     /** Agent IDs to compile (e.g., ["web-developer", "api-developer"]) */
     agents: z.array(z.string()).optional(),
     /** Flat list of all skill IDs used by this project */
-    skills: z.array(skillIdSchema).optional(),
+    skills: z.array(extensibleSkillIdSchema).optional(),
 
     /** Author handle (e.g., "@vince") */
     author: z.string().optional(),
@@ -397,7 +496,7 @@ export const projectConfigLoaderSchema = z
     /** Whether expert mode (advanced/niche skills) was enabled in the wizard */
     expertMode: z.boolean().optional(),
     /** Selected domains from the wizard (persisted for edit mode restoration) */
-    domains: z.array(domainSchema).optional(),
+    domains: z.array(extensibleDomainSchema).optional(),
     /** Selected agents from the wizard (persisted for edit mode restoration) */
     selectedAgents: z.array(z.string()).optional(),
     /** Agent-to-subcategory-to-skill mappings from selected stack (accepts same formats as stacks.yaml) */
@@ -434,6 +533,8 @@ export const projectConfigValidationSchema = z.object({
   expertMode: z.boolean().optional(),
   /** Selected domains from the wizard (persisted for edit mode restoration) */
   domains: z.array(domainSchema).optional(),
+  /** Selected agents from the wizard (persisted for edit mode restoration) */
+  selectedAgents: z.array(z.string()).optional(),
   /** Agent-to-subcategory-to-skill mappings from selected stack */
   stack: z.record(z.string(), stackAgentConfigSchema),
   /** Skills source path or URL (e.g., "github:my-org/skills") */
@@ -445,14 +546,15 @@ export const projectConfigValidationSchema = z.object({
 });
 
 export const categoryDefinitionSchema: z.ZodType<CategoryDefinition> = z.object({
-  id: subcategorySchema,
+  id: extensibleSubcategorySchema,
   displayName: z.string(),
   description: z.string(),
-  domain: domainSchema.optional(),
+  domain: extensibleDomainSchema.optional() as z.ZodType<Domain | undefined>,
   exclusive: z.boolean(),
   required: z.boolean(),
   order: z.number(),
   icon: z.string().optional(),
+  custom: z.boolean().optional(),
 });
 
 // Lenient: accepts both SkillId and SkillDisplayName, resolved to canonical IDs by matrix-loader
@@ -494,15 +596,32 @@ export const relationshipDefinitionsSchema: z.ZodType<RelationshipDefinitions> =
   alternatives: z.array(alternativeGroupSchema),
 });
 
-export const skillsMatrixConfigSchema: z.ZodType<SkillsMatrixConfig> = z.object({
+/**
+ * Skills matrix config schema with runtime-extensible key validation.
+ * Category keys and skill alias entries accept custom values registered via
+ * extendSchemasWithCustomValues() (called by discoverAndExtendFromSource).
+ *
+ * Uses z.record(z.string()) + superRefine for key validation (same pattern as
+ * stackAgentConfigSchema) because z.record(z.enum()) cannot be extended at runtime.
+ *
+ * Relationships and skillAliases are optional since source matrices may only define
+ * custom categories without relationships or aliases.
+ */
+const builtinSubcategoryValues: Set<string> = new Set(SUBCATEGORY_VALUES);
+// Bridge cast removed: optional fields require runtime defaults in loadSkillsMatrix()
+export const skillsMatrixConfigSchema = z.object({
   version: z.string(),
-  categories: z.record(subcategorySchema, categoryDefinitionSchema) as z.ZodType<
-    SkillsMatrixConfig["categories"]
-  >,
-  relationships: relationshipDefinitionsSchema,
-  skillAliases: z.record(skillDisplayNameSchema, skillIdSchema) as z.ZodType<
-    SkillsMatrixConfig["skillAliases"]
-  >,
+  categories: z
+    .record(z.string(), categoryDefinitionSchema)
+    .superRefine(
+      validateExtensibleRecordKeys(
+        builtinSubcategoryValues,
+        customExtensions.categories,
+        "category key",
+      ),
+    ) as z.ZodType<SkillsMatrixConfig["categories"]>,
+  relationships: relationshipDefinitionsSchema.optional(),
+  skillAliases: z.record(z.string(), extensibleSkillIdSchema).optional(),
 });
 
 /**
@@ -516,7 +635,8 @@ export const localRawMetadataSchema = z
     /** One-line description for the wizard */
     cliDescription: z.string().optional(),
     /** Subcategory to place this skill in (e.g., "web-framework") */
-    category: categoryPathSchema.optional(),
+    // Field accepts any string; cross-field validation in superRefine enforces strict/custom rules
+    category: (z.string() as z.ZodType<CategoryPath>).optional(),
     /** If true, only one skill from this category can be selected */
     categoryExclusive: z.boolean().optional(),
     /** When an AI agent should invoke this skill */
@@ -532,8 +652,11 @@ export const localRawMetadataSchema = z
     requiresSetup: z.array(skillIdSchema).optional(),
     /** Usage skills this setup skill configures (inverse relationship) */
     providesSetupFor: z.array(skillIdSchema).optional(),
+    /** True if this skill was created outside the CLI's built-in vocabulary */
+    custom: z.boolean().optional(),
   })
-  .passthrough();
+  .passthrough()
+  .superRefine(validateCategoryField);
 
 /** Metadata for local skills that were forked/copied from a marketplace skill */
 export const localSkillMetadataSchema = z
@@ -606,14 +729,6 @@ export const marketplaceSchema: z.ZodType<Marketplace> = z.object({
   owner: marketplaceOwnerSchema,
   metadata: marketplaceMetadataSchema.optional(),
   plugins: z.array(marketplacePluginSchema).min(1),
-});
-
-/** Default agent-skill mappings from config/defaults.yaml (fallback when no stack is selected) */
-export const defaultMappingsSchema = z.object({
-  /** Maps skill path patterns to the agent IDs that should receive them */
-  skillToAgents: z.record(z.string(), z.array(z.string())),
-  /** Maps agent IDs to skill ID prefixes they should receive by default */
-  agentSkillPrefixes: z.record(z.string(), z.array(z.string())).optional(),
 });
 
 /** Tool permission overrides (allow/deny lists for Claude Code tool access) */
@@ -729,8 +844,7 @@ export const projectSourceConfigValidationSchema = z.object({
 });
 
 // Strict validation schemas enforce all constraints and use .strict() to reject unknown fields,
-// unlike the lenient loader schemas above which use .passthrough() for backward compatibility
-const KEBAB_CASE_PATTERN = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
+// unlike the lenient loader schemas above which use .passthrough() for forward compatibility at parse boundaries
 
 /** Strict schema for compiled agent.yaml output. Lenient id (any string) since marketplace agents may use custom identifiers. */
 export const agentYamlGenerationSchema = z
@@ -745,6 +859,7 @@ export const agentYamlGenerationSchema = z
     permissionMode: permissionModeSchema.optional(),
     hooks: strictHooksRecordSchema.optional(),
     outputFormat: z.string().optional(),
+    custom: z.boolean().optional(),
   })
   .strict();
 
@@ -791,7 +906,7 @@ export const skillFrontmatterValidationSchema = z
 export const metadataValidationSchema = z
   .object({
     /** Domain-prefixed subcategory (e.g., "web-framework") */
-    category: subcategorySchema,
+    category: extensibleSubcategorySchema,
     categoryExclusive: z.boolean().optional(),
     /** Author handle — must start with @ (e.g., "@vince") */
     author: z.string().regex(/^@[a-z][a-z0-9-]*$/),
@@ -830,6 +945,8 @@ export const metadataValidationSchema = z
         date: z.string(),
       })
       .optional(),
+    /** True if this skill was created outside the CLI's built-in vocabulary */
+    custom: z.boolean().optional(),
   })
   .strict();
 
@@ -933,7 +1050,7 @@ export function validateNestingDepth(value: unknown, maxDepth: number): boolean 
 /**
  * Logs warnings for unknown fields in a parsed object compared to a list of expected keys.
  * Used at security-critical parsing boundaries (marketplace, settings) where `.passthrough()`
- * is kept for backward compatibility but unexpected fields should be surfaced.
+ * is kept for forward compatibility but unexpected fields should be surfaced.
  */
 export function warnUnknownFields(
   parsed: Record<string, unknown>,
@@ -945,4 +1062,46 @@ export function warnUnknownFields(
   if (unknownKeys.length > 0) {
     warn(`Unknown fields in ${context}: ${unknownKeys.join(", ")}`);
   }
+}
+
+export type SchemaExtensionOptions = {
+  categories?: string[];
+  domains?: string[];
+  agentNames?: string[];
+  skillIds?: string[];
+};
+
+/**
+ * Extends runtime schema validation to accept custom values discovered from
+ * source matrices, agent directories, and skill directories.
+ *
+ * This populates the customExtensions sets checked by categoryPathSchema,
+ * stackAgentConfigSchema, agentYamlConfigSchema, metadataValidationSchema,
+ * skillAssignmentSchema, and projectConfigLoaderSchema at parse time.
+ *
+ * Idempotent: calling multiple times accumulates values (Set deduplicates).
+ */
+export function extendSchemasWithCustomValues(options: SchemaExtensionOptions): void {
+  for (const category of options.categories ?? []) {
+    customExtensions.categories.add(category);
+  }
+  for (const domain of options.domains ?? []) {
+    customExtensions.domains.add(domain);
+  }
+  for (const agentName of options.agentNames ?? []) {
+    customExtensions.agentNames.add(agentName);
+  }
+  for (const skillId of options.skillIds ?? []) {
+    customExtensions.skillIds.add(skillId);
+  }
+}
+
+/**
+ * Clears all custom schema extensions. Used in tests to reset state between runs.
+ */
+export function resetSchemaExtensions(): void {
+  customExtensions.categories.clear();
+  customExtensions.domains.clear();
+  customExtensions.agentNames.clear();
+  customExtensions.skillIds.clear();
 }
