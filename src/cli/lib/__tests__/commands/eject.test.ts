@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { mkdir, readFile, readdir, writeFile } from "fs/promises";
 import {
@@ -22,7 +22,6 @@ import {
 } from "../fixtures/create-test-source";
 import { installLocal, installPluginConfig } from "../../installation/local-installer";
 import { copySkillsToLocalFlattened } from "../../skills/skill-copier";
-import { loadDefaultMappings, clearDefaultsCache } from "../../loading";
 import { CLAUDE_SRC_DIR, DIRS, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../../consts";
 import { typedKeys } from "../../../utils/typed-object";
 import type { MergedSkillsMatrix, ProjectConfig, ResolvedSkill, SkillId } from "../../../types";
@@ -79,10 +78,11 @@ describe("eject command", () => {
       expect(output.toLowerCase()).not.toContain("unexpected argument");
     });
 
-    it("should reject old type 'templates'", async () => {
+    it("should accept 'templates' as type", async () => {
       const { error } = await runCliCommand(["eject", "templates"]);
 
-      expect(error?.oclif?.exit).toBeDefined();
+      const output = error?.message || "";
+      expect(output.toLowerCase()).not.toContain("unexpected argument");
     });
 
     it("should reject old type 'config'", async () => {
@@ -133,20 +133,6 @@ describe("eject command", () => {
 
     it("should accept --refresh flag", async () => {
       const { error } = await runCliCommand(["eject", "skills", "--refresh"]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
-    it("should accept --templates flag", async () => {
-      const { error } = await runCliCommand(["eject", "agent-partials", "--templates"]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
-    it("should accept -t shorthand for templates", async () => {
-      const { error } = await runCliCommand(["eject", "agent-partials", "-t"]);
 
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
@@ -262,9 +248,9 @@ describe("eject command", () => {
     });
   });
 
-  describe("eject agent-partials --templates", () => {
-    it("should eject only templates directory when --templates is used", async () => {
-      const { stdout } = await runCliCommand(["eject", "agent-partials", "--templates"]);
+  describe("eject templates", () => {
+    it("should eject only templates directory", async () => {
+      const { stdout } = await runCliCommand(["eject", "templates"]);
 
       expect(stdout).toContain("Agent templates ejected");
 
@@ -281,8 +267,8 @@ describe("eject command", () => {
       expect(entries).toContain("agent.liquid");
     });
 
-    it("should not eject other agent partials when --templates is used", async () => {
-      await runCliCommand(["eject", "agent-partials", "--templates"]);
+    it("should not eject other agent partials", async () => {
+      await runCliCommand(["eject", "templates"]);
 
       const agentsDir = path.join(projectDir, CLAUDE_SRC_DIR, path.basename(DIRS.agents));
       const entries = await readdir(agentsDir);
@@ -291,35 +277,23 @@ describe("eject command", () => {
       expect(entries).toEqual([path.basename(DIRS.templates)]);
     });
 
-    it("should work with --force flag combined with --templates", async () => {
+    it("should work with --force flag", async () => {
       // First eject
-      await runCliCommand(["eject", "agent-partials", "--templates"]);
+      await runCliCommand(["eject", "templates"]);
 
       // Second eject with --force
-      const { stdout } = await runCliCommand(["eject", "agent-partials", "--templates", "--force"]);
+      const { stdout } = await runCliCommand(["eject", "templates", "--force"]);
 
       expect(stdout).toContain("Agent templates ejected");
     });
 
-    it("should work with --output flag combined with --templates", async () => {
+    it("should work with --output flag", async () => {
       const outputDir = path.join(tempDir, "custom-templates");
 
-      const { stdout } = await runCliCommand([
-        "eject",
-        "agent-partials",
-        "--templates",
-        "--output",
-        outputDir,
-      ]);
+      const { stdout } = await runCliCommand(["eject", "templates", "--output", outputDir]);
 
       expect(stdout).toContain("Agent templates ejected");
       expect(await directoryExists(outputDir)).toBe(true);
-    });
-
-    it("should warn when --templates is used with skills type", async () => {
-      const { stderr } = await runCliCommand(["eject", "skills", "--templates"]);
-
-      expect(stderr).toContain("--templates flag only applies to agent-partials");
     });
   });
 
@@ -375,25 +349,20 @@ describe("eject command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
 
-    it("should eject only templates for agent-partials portion when --templates is used", async () => {
-      const { stdout } = await runCliCommand(["eject", "all", "--templates"]);
+    it("should eject both agent-partials and templates", async () => {
+      const { stdout } = await runCliCommand(["eject", "all"]);
 
-      // Agent-partials portion should use templates only
+      expect(stdout).toContain("Agent partials ejected");
       expect(stdout).toContain("Agent templates ejected");
 
-      const templatesDir = path.join(
-        projectDir,
-        CLAUDE_SRC_DIR,
-        path.basename(DIRS.agents),
-        path.basename(DIRS.templates),
-      );
+      const agentsDir = path.join(projectDir, CLAUDE_SRC_DIR, path.basename(DIRS.agents));
+      const templatesDir = path.join(agentsDir, path.basename(DIRS.templates));
       expect(await directoryExists(templatesDir)).toBe(true);
 
-      const agentsDir = path.join(projectDir, CLAUDE_SRC_DIR, path.basename(DIRS.agents));
       const entries = await readdir(agentsDir);
-
-      // Only _templates should exist under agents/, not developer/, reviewer/, etc.
-      expect(entries).toEqual([path.basename(DIRS.templates)]);
+      // Should have templates AND other agent dirs
+      expect(entries).toContain(path.basename(DIRS.templates));
+      expect(entries.length).toBeGreaterThan(1);
     });
   });
 
@@ -470,14 +439,6 @@ function buildEjectMatrix(localSkillIds: SkillId[] = []): MergedSkillsMatrix {
 describe("eject skills from initialized project", () => {
   let dirs: TestDirs;
   let originalCwd: string;
-
-  beforeAll(async () => {
-    await loadDefaultMappings();
-  });
-
-  afterAll(() => {
-    clearDefaultsCache();
-  });
 
   beforeEach(async () => {
     originalCwd = process.cwd();
@@ -658,14 +619,6 @@ describe("eject skills from initialized project", () => {
 describe("eject in plugin mode", () => {
   let dirs: TestDirs;
   let originalCwd: string;
-
-  beforeAll(async () => {
-    await loadDefaultMappings();
-  });
-
-  afterAll(() => {
-    clearDefaultsCache();
-  });
 
   beforeEach(async () => {
     originalCwd = process.cwd();
