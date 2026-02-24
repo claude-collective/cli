@@ -8,6 +8,7 @@ vi.mock("../../utils/logger");
 import { archiveLocalSkill, restoreArchivedSkill, hasArchivedSkill } from "./source-switcher";
 import { copy, directoryExists, ensureDir, remove } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
+import { extendSchemasWithCustomValues, resetSchemaExtensions } from "../schemas";
 
 const ENOENT_ERROR = new Error(
   "ENOENT: no such file or directory, stat '/project/.claude/skills/web-framework-react'",
@@ -76,18 +77,34 @@ describe("source-switcher", () => {
       expect(copy).not.toHaveBeenCalled();
     });
 
-    it("blocks skill ID that does not match SkillId pattern", async () => {
-      await archiveLocalSkill("/project", "not-a-valid-id" as SkillId);
+    it("blocks skill ID with uppercase characters", async () => {
+      await archiveLocalSkill("/project", "Not-Valid-Id" as SkillId);
 
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
       expect(copy).not.toHaveBeenCalled();
     });
 
-    it("blocks skill ID with only one segment", async () => {
-      await archiveLocalSkill("/project", "web" as SkillId);
+    it("blocks skill ID starting with a number", async () => {
+      await archiveLocalSkill("/project", "123-invalid" as SkillId);
 
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
       expect(copy).not.toHaveBeenCalled();
+    });
+
+    it("accepts custom skill IDs registered via extendSchemasWithCustomValues()", async () => {
+      extendSchemasWithCustomValues({ skillIds: ["acme-pipeline-deploy"] });
+
+      await archiveLocalSkill("/project", "acme-pipeline-deploy" as SkillId);
+
+      expect(ensureDir).toHaveBeenCalledWith("/project/.claude/skills/_archived");
+      expect(copy).toHaveBeenCalledWith(
+        "/project/.claude/skills/acme-pipeline-deploy",
+        "/project/.claude/skills/_archived/acme-pipeline-deploy",
+      );
+      expect(remove).toHaveBeenCalledWith("/project/.claude/skills/acme-pipeline-deploy");
+      expect(verbose).toHaveBeenCalledWith(expect.stringContaining("Archived"));
+
+      resetSchemaExtensions();
     });
   });
 
@@ -134,6 +151,22 @@ describe("source-switcher", () => {
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
       expect(copy).not.toHaveBeenCalled();
     });
+
+    it("restores custom skill IDs registered via extendSchemasWithCustomValues()", async () => {
+      extendSchemasWithCustomValues({ skillIds: ["acme-pipeline-deploy"] });
+
+      const result = await restoreArchivedSkill("/project", "acme-pipeline-deploy" as SkillId);
+
+      expect(result).toBe(true);
+      expect(copy).toHaveBeenCalledWith(
+        "/project/.claude/skills/_archived/acme-pipeline-deploy",
+        "/project/.claude/skills/acme-pipeline-deploy",
+      );
+      expect(remove).toHaveBeenCalledWith("/project/.claude/skills/_archived/acme-pipeline-deploy");
+      expect(verbose).toHaveBeenCalledWith(expect.stringContaining("Restored"));
+
+      resetSchemaExtensions();
+    });
   });
 
   describe("hasArchivedSkill", () => {
@@ -173,6 +206,20 @@ describe("source-switcher", () => {
       expect(result).toBe(false);
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill ID"));
       expect(directoryExists).not.toHaveBeenCalled();
+    });
+
+    it("checks archive for custom skill IDs registered via extendSchemasWithCustomValues()", async () => {
+      extendSchemasWithCustomValues({ skillIds: ["acme-pipeline-deploy"] });
+      vi.mocked(directoryExists).mockResolvedValue(true);
+
+      const result = await hasArchivedSkill("/project", "acme-pipeline-deploy" as SkillId);
+
+      expect(result).toBe(true);
+      expect(directoryExists).toHaveBeenCalledWith(
+        "/project/.claude/skills/_archived/acme-pipeline-deploy",
+      );
+
+      resetSchemaExtensions();
     });
   });
 });

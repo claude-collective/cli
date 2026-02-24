@@ -170,7 +170,8 @@ describe("Integration: Full Stack Pipeline", () => {
           id: TEST_STACK.id,
           name: TEST_STACK.name,
           description: TEST_STACK.description,
-          agents: TEST_STACK.agents as Record<string, Record<string, string>>,
+          // Boundary cast: createTestSource expects simplified agent record
+          agents: TEST_STACK.agents as unknown as Record<string, Record<string, string>>,
         },
       ],
     });

@@ -234,17 +234,17 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     expect(domainSelections.api).toBeUndefined();
   });
 
-  it("should set selectedDomains to all domains for domain filtering in build step", () => {
+  it("should set selectedDomains to only the domains found in the provided skill IDs", () => {
     const installedSkills: SkillId[] = ["web-framework-react"];
 
     useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
 
     const { selectedDomains } = useWizardStore.getState();
 
-    // populateFromSkillIds sets ALL_DOMAINS (same as populateFromStack)
+    // populateFromSkillIds sets only domains derived from the skill IDs
     expect(selectedDomains).toContain("web");
-    expect(selectedDomains).toContain("api");
-    expect(selectedDomains).toContain("shared");
+    expect(selectedDomains).not.toContain("api");
+    expect(selectedDomains).not.toContain("shared");
   });
 
   it("should place shared-domain skills under the shared domain key", () => {

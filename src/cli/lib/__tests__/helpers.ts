@@ -579,7 +579,6 @@ export function createMockResolvedStack(
     id,
     name,
     description: `${name} stack`,
-    audience: [],
     skills: {},
     allSkillIds: [],
     philosophy: "",
@@ -688,16 +687,15 @@ export function createComprehensiveMatrix(
   const suggestedStacks: ResolvedStack[] = [
     createMockResolvedStack("nextjs-fullstack", "Next.js Fullstack", {
       description: "Complete Next.js stack with React and Hono",
-      audience: ["startups", "enterprise"],
       skills: {
         "web-developer": {
-          "web-framework": "web-framework-react",
-          "web-client-state": "web-state-zustand",
-          "web-styling": "web-styling-scss-modules",
+          "web-framework": ["web-framework-react"],
+          "web-client-state": ["web-state-zustand"],
+          "web-styling": ["web-styling-scss-modules"],
         },
         "api-developer": {
-          "api-api": "api-framework-hono",
-          "api-database": "api-database-drizzle",
+          "api-api": ["api-framework-hono"],
+          "api-database": ["api-database-drizzle"],
         },
       } as ResolvedStack["skills"],
       allSkillIds: [
@@ -711,10 +709,9 @@ export function createComprehensiveMatrix(
     }),
     createMockResolvedStack("vue-stack", "Vue Stack", {
       description: "Vue.js frontend stack",
-      audience: ["startups"],
       skills: {
         "web-developer": {
-          "web-framework": "web-framework-vue",
+          "web-framework": ["web-framework-vue"],
         },
       } as ResolvedStack["skills"],
       allSkillIds: ["web-framework-vue"],

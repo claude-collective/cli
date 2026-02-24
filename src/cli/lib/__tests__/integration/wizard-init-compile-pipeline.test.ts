@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import path from "path";
 import { readFile, readdir } from "fs/promises";
 import { parse as parseYaml } from "yaml";
@@ -11,59 +11,39 @@ import {
   type TestDirs,
   type TestSkill,
 } from "../fixtures/create-test-source";
-import type { MergedSkillsMatrix, ProjectConfig } from "../../../types";
-import { DEFAULT_PLUGIN_NAME } from "../../../consts";
-import { fileExists, directoryExists, buildWizardResult, buildSourceResult } from "../helpers";
-import { loadDefaultMappings, clearDefaultsCache } from "../../loading";
+import type {
+  AgentName,
+  MergedSkillsMatrix,
+  ProjectConfig,
+  SkillId,
+  CategoryPath,
+} from "../../../types";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../../../consts";
+import {
+  createMockSkill,
+  createMockMatrix,
+  fileExists,
+  directoryExists,
+  buildWizardResult,
+  buildSourceResult,
+} from "../helpers";
 
-/**
- * Builds a MergedSkillsMatrix from PIPELINE_TEST_SKILLS for pipeline integration tests.
- * Boundary cast: test data construction — the object literal satisfies the runtime shape
- * but cannot satisfy branded types (SkillId, CategoryPath, SkillDisplayName) directly.
- */
 function buildPipelineMatrix(skills: TestSkill[]): MergedSkillsMatrix {
-  const matrixSkills: Record<
-    string,
-    {
-      id: string;
-      description: string;
-      category: string;
-      path: string;
-      tags: string[];
-      author: string;
-    }
-  > = {};
+  const matrixSkills: Record<string, ReturnType<typeof createMockSkill>> = {};
   for (const skill of skills) {
-    matrixSkills[skill.name] = {
-      id: skill.name,
-      description: skill.description,
-      category: skill.category,
-      path: `skills/${skill.category}/${skill.name}/`,
-      tags: skill.tags ?? [],
-      author: skill.author,
-    };
+    matrixSkills[skill.name] = createMockSkill(
+      skill.name as SkillId,
+      skill.category as CategoryPath,
+      {
+        description: skill.description,
+        tags: skill.tags ?? [],
+        author: skill.author,
+        path: `skills/${skill.category}/${skill.name}/`,
+      },
+    );
   }
-
-  // Boundary cast: test data construction — cannot satisfy branded types directly
-  return {
-    version: "1.0.0",
-    categories: {},
-    skills: matrixSkills,
-    suggestedStacks: [],
-    displayNameToId: {},
-    displayNames: {},
-    generatedAt: new Date().toISOString(),
-  } as unknown as MergedSkillsMatrix;
+  return createMockMatrix(matrixSkills);
 }
-
-// Load YAML defaults once for all tests in this file
-beforeAll(async () => {
-  await loadDefaultMappings();
-});
-
-afterAll(() => {
-  clearDefaultsCache();
-});
 
 const PIPELINE_TEST_SKILLS: TestSkill[] = [
   {
@@ -243,6 +223,8 @@ const SKILL_COUNT = 10;
 
 const SKILL_NAMES = PIPELINE_TEST_SKILLS.map((s) => s.name);
 
+const PIPELINE_AGENTS: AgentName[] = ["web-developer", "api-developer"];
+
 describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
   let dirs: TestDirs;
 
@@ -260,6 +242,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
       const wizardResult = buildWizardResult([], {
         selectedSkills: SKILL_NAMES,
+        selectedAgents: PIPELINE_AGENTS,
         installMode: "local",
         domainSelections: {
           web: {
@@ -282,7 +265,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         projectDir: dirs.projectDir,
       });
 
-      const configPath = path.join(dirs.projectDir, ".claude-src", "config.yaml");
+      const configPath = path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
       expect(await fileExists(configPath)).toBe(true);
       expect(installResult.configPath).toBe(configPath);
 
@@ -297,13 +280,13 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       expect(config.agents.length).toBeGreaterThan(0);
       expect(config.installMode).toBe("local");
 
-      const skillsDir = path.join(dirs.projectDir, ".claude", "skills");
+      const skillsDir = path.join(dirs.projectDir, CLAUDE_DIR, "skills");
       expect(await directoryExists(skillsDir)).toBe(true);
       expect(installResult.skillsDir).toBe(skillsDir);
 
       expect(installResult.copiedSkills.length).toBe(SKILL_COUNT);
 
-      const agentsDir = path.join(dirs.projectDir, ".claude", "agents");
+      const agentsDir = path.join(dirs.projectDir, CLAUDE_DIR, "agents");
       expect(await directoryExists(agentsDir)).toBe(true);
       expect(installResult.agentsDir).toBe(agentsDir);
 
@@ -325,6 +308,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
       const wizardResult = buildWizardResult([], {
         selectedSkills: SKILL_NAMES,
+        selectedAgents: PIPELINE_AGENTS,
         installMode: "local",
       });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
@@ -337,7 +321,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
       let foundSkillContent = false;
       for (const agentName of installResult.compiledAgents) {
-        const agentFilePath = path.join(dirs.projectDir, ".claude", "agents", `${agentName}.md`);
+        const agentFilePath = path.join(dirs.projectDir, CLAUDE_DIR, "agents", `${agentName}.md`);
         const agentContent = await readFile(agentFilePath, "utf-8");
 
         for (const skill of PIPELINE_TEST_SKILLS) {
@@ -359,6 +343,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
       const wizardResult = buildWizardResult([], {
         selectedSkills: SKILL_NAMES,
+        selectedAgents: PIPELINE_AGENTS,
         installMode: "local",
       });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
@@ -374,7 +359,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
       const initialAgentContents: Record<string, string> = {};
       for (const agentName of installResult.compiledAgents) {
-        const agentPath = path.join(dirs.projectDir, ".claude", "agents", `${agentName}.md`);
+        const agentPath = path.join(dirs.projectDir, CLAUDE_DIR, "agents", `${agentName}.md`);
         initialAgentContents[agentName] = await readFile(agentPath, "utf-8");
       }
 
@@ -383,14 +368,14 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         pluginDir: dirs.projectDir,
         sourcePath: dirs.sourceDir,
         projectDir: dirs.projectDir,
-        outputDir: path.join(dirs.projectDir, ".claude", "agents"),
+        outputDir: path.join(dirs.projectDir, CLAUDE_DIR, "agents"),
       });
 
       expect(recompileResult.failed.length).toBe(0);
       expect(recompileResult.compiled.length).toBeGreaterThan(0);
 
       for (const agentName of recompileResult.compiled) {
-        const agentPath = path.join(dirs.projectDir, ".claude", "agents", `${agentName}.md`);
+        const agentPath = path.join(dirs.projectDir, CLAUDE_DIR, "agents", `${agentName}.md`);
         expect(await fileExists(agentPath)).toBe(true);
 
         const recompiledContent = await readFile(agentPath, "utf-8");
@@ -408,6 +393,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
       const wizardResult = buildWizardResult([], {
         selectedSkills,
+        selectedAgents: PIPELINE_AGENTS,
         installMode: "local",
       });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
@@ -441,7 +427,11 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
       const matrix = buildPipelineMatrix(PIPELINE_TEST_SKILLS);
 
-      const wizardResult = buildWizardResult([], { selectedSkills, installMode: "local" });
+      const wizardResult = buildWizardResult([], {
+        selectedSkills,
+        selectedAgents: PIPELINE_AGENTS,
+        installMode: "local",
+      });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir, {
         marketplace: "test-marketplace",
       });
@@ -454,7 +444,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       });
 
       const configContent = await readFile(
-        path.join(dirs.projectDir, ".claude-src", "config.yaml"),
+        path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML),
         "utf-8",
       );
       // Boundary cast: YAML parse returns `unknown`
@@ -471,6 +461,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
       const wizardResult = buildWizardResult([], {
         selectedSkills: SKILL_NAMES,
+        selectedAgents: PIPELINE_AGENTS,
         installMode: "local",
       });
       const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
@@ -493,20 +484,22 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       //     agents/
       //       <agent-name>.md
 
-      expect(await fileExists(path.join(dirs.projectDir, ".claude-src", "config.yaml"))).toBe(true);
+      expect(
+        await fileExists(path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML)),
+      ).toBe(true);
 
-      const skillsDir = path.join(dirs.projectDir, ".claude", "skills");
+      const skillsDir = path.join(dirs.projectDir, CLAUDE_DIR, "skills");
       expect(await directoryExists(skillsDir)).toBe(true);
 
       const skillDirs = await readdir(skillsDir);
       expect(skillDirs.length).toBe(SKILL_COUNT);
 
       for (const skillDir of skillDirs) {
-        const skillMdPath = path.join(skillsDir, skillDir, "SKILL.md");
+        const skillMdPath = path.join(skillsDir, skillDir, STANDARD_FILES.SKILL_MD);
         expect(await fileExists(skillMdPath)).toBe(true);
       }
 
-      const agentsDir = path.join(dirs.projectDir, ".claude", "agents");
+      const agentsDir = path.join(dirs.projectDir, CLAUDE_DIR, "agents");
       expect(await directoryExists(agentsDir)).toBe(true);
 
       const agentFiles = await readdir(agentsDir);

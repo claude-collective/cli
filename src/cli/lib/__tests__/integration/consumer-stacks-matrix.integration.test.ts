@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import path from "path";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
@@ -29,18 +29,8 @@ import {
   cleanupTempDir,
   TEST_SKILLS,
 } from "../helpers";
-import { loadDefaultMappings, clearDefaultsCache } from "../../loading";
 import { loadStacks, loadStackById } from "../../stacks/stacks-loader";
 import { extractAllSkills, mergeMatrixWithSkills } from "../../matrix";
-
-// Load YAML defaults once for all tests in this file
-beforeAll(async () => {
-  await loadDefaultMappings();
-});
-
-afterAll(() => {
-  clearDefaultsCache();
-});
 
 const CUSTOM_STACKS: TestStack[] = [
   {
@@ -371,11 +361,10 @@ describe("Integration: Consumer-Defined Skills Matrix", () => {
     const sourceResult = buildSourceResult(buildConsumerMatrix(), dirs.sourceDir);
 
     const result = await installLocal({
-      wizardResult: buildWizardResult([
-        "web-framework-react",
-        "api-framework-hono",
-        "web-testing-vitest",
-      ]),
+      wizardResult: buildWizardResult(
+        ["web-framework-react", "api-framework-hono", "web-testing-vitest"],
+        { selectedAgents: ["web-developer", "api-developer"] },
+      ),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -715,11 +704,10 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
       // 4. Install with the custom stack skills
       const sourceResult = buildSourceResult(buildConsumerMatrix(), dirs.sourceDir);
       const result = await installLocal({
-        wizardResult: buildWizardResult([
-          "web-framework-react",
-          "web-testing-vitest",
-          "api-framework-hono",
-        ]),
+        wizardResult: buildWizardResult(
+          ["web-framework-react", "web-testing-vitest", "api-framework-hono"],
+          { selectedAgents: ["web-developer", "api-developer"] },
+        ),
         sourceResult,
         projectDir: dirs.projectDir,
       });

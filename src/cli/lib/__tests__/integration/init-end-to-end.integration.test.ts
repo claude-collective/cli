@@ -1,11 +1,11 @@
 import path from "path";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readFile } from "fs/promises";
 import { parse as parseYaml } from "yaml";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { installLocal, installPluginConfig } from "../../installation/local-installer";
 import { useWizardStore } from "../../../stores/wizard-store";
-import { DEFAULT_PRESELECTED_SKILLS } from "../../../consts";
+import { DEFAULT_PRESELECTED_SKILLS, STANDARD_FILES } from "../../../consts";
 import type { MergedSkillsMatrix, ProjectConfig, SkillId } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
 import {
@@ -23,18 +23,7 @@ import {
   METHODOLOGY_TEST_SKILLS,
   EXTRA_DOMAIN_TEST_SKILLS,
 } from "../fixtures/create-test-source";
-import { loadDefaultMappings, clearDefaultsCache } from "../../loading";
-
 // ── Setup ───────────────────────────────────────────────────────────────────────
-
-// Load YAML defaults once for all tests (agent-mappings.yaml drives skill-to-agent routing)
-beforeAll(async () => {
-  await loadDefaultMappings();
-});
-
-afterAll(() => {
-  clearDefaultsCache();
-});
 
 // ── Constants ───────────────────────────────────────────────────────────────────
 
@@ -176,7 +165,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
   });
 
   describe("accept defaults path (selectedAgents = empty)", () => {
-    it("should derive agents from agent-mappings.yaml when no explicit agent selection", async () => {
+    it("should produce empty agents when no explicit agent selection", async () => {
       const selectedSkillIds: SkillId[] = [
         "web-framework-react",
         "web-state-zustand",
@@ -197,9 +186,8 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
 
       const config = await readTestYaml<ProjectConfig>(result.configPath);
 
-      // When selectedAgents is empty, agents are derived from agent-mappings.yaml
-      // via getAgentsForSkill. The default mapping should produce some agents.
-      expect(config.agents.length).toBeGreaterThan(0);
+      // When selectedAgents is empty, no agents are assigned
+      expect(config.agents).toEqual([]);
 
       // Every skill in config.skills should be in selectedSkills + methodology skills
       for (const skillId of config.skills) {
@@ -209,7 +197,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       }
     });
 
-    it("should include DEFAULT_AGENTS in stack when no agent selection is made", async () => {
+    it("should produce empty agents and no stack when no agent selection is made", async () => {
       const selectedSkillIds: SkillId[] = ["web-framework-react"];
 
       simulateSkillSelections(selectedSkillIds, matrix, ["web"]);
@@ -224,10 +212,8 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
 
       const config = await readTestYaml<ProjectConfig>(result.configPath);
 
-      // When no agents are selected, the default agents (agent-summoner, etc.)
-      // may appear in config.agents as determined by the agent-mappings.yaml
-      // At minimum, some agents should be derived from skill categories
-      expect(config.agents.length).toBeGreaterThan(0);
+      // When no agents are selected, agents list is empty and no stack is built
+      expect(config.agents).toEqual([]);
     });
   });
 
@@ -570,7 +556,9 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
 
       // Copied skills should have SKILL.md
       for (const copiedSkill of result.copiedSkills) {
-        expect(await fileExists(path.join(copiedSkill.destPath, "SKILL.md"))).toBe(true);
+        expect(await fileExists(path.join(copiedSkill.destPath, STANDARD_FILES.SKILL_MD))).toBe(
+          true,
+        );
       }
     });
 

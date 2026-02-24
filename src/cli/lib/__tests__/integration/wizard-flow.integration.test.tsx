@@ -978,7 +978,7 @@ describe("Wizard integration", () => {
       expect(state.domainSelections.web?.["web-framework"]).toContain("web-framework-react");
       expect(state.domainSelections.api?.["api-api"]).toContain("api-framework-hono");
 
-      // selectedDomains should be populated (ALL_DOMAINS is set by populateFromSkillIds)
+      // selectedDomains should be populated (domains derived from skill IDs by populateFromSkillIds)
       expect(state.selectedDomains.length).toBeGreaterThan(0);
 
       // The Build step should be visible
