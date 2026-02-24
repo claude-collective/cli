@@ -11,46 +11,6 @@ import type {
 } from "../../types";
 import { verbose, warn } from "../../utils/logger";
 import { typedEntries } from "../../utils/typed-object";
-import { getCachedDefaults } from "../loading";
-
-// Boundary cast: literal strings are valid AgentName values
-const DEFAULT_AGENTS: AgentName[] = ["agent-summoner", "skill-summoner", "documentor"];
-
-function getEffectiveSkillToAgents(): Record<string, AgentName[]> {
-  const defaults = getCachedDefaults();
-  if (defaults?.skillToAgents) {
-    // Boundary cast: YAML-loaded mappings contain valid AgentName values
-    return defaults.skillToAgents as Record<string, AgentName[]>;
-  }
-  return {};
-}
-
-function getAgentsForSkill(skillPath: string, category: CategoryPath): AgentName[] {
-  const normalizedPath = skillPath.replace(/^skills\//, "").replace(/\/$/, "");
-
-  const skillToAgents = getEffectiveSkillToAgents();
-
-  if (skillToAgents[category]) {
-    return skillToAgents[category];
-  }
-
-  for (const [pattern, agents] of Object.entries(skillToAgents)) {
-    if (normalizedPath === pattern || normalizedPath.startsWith(`${pattern}/`)) {
-      return agents;
-    }
-  }
-
-  for (const [pattern, agents] of Object.entries(skillToAgents)) {
-    if (pattern.endsWith("/*")) {
-      const prefix = pattern.slice(0, -2);
-      if (normalizedPath.startsWith(prefix)) {
-        return agents;
-      }
-    }
-  }
-
-  return DEFAULT_AGENTS;
-}
 
 export type ProjectConfigOptions = {
   description?: string;
@@ -63,18 +23,17 @@ function extractSubcategoryFromPath(categoryPath: CategoryPath): Subcategory | u
 }
 
 /**
- * Generates a ProjectConfig from a list of selected skill IDs by resolving which
- * agents are needed and building the stack property (agent -> subcategory -> SkillAssignment[]).
+ * Generates a ProjectConfig from a list of selected skill IDs by building the
+ * stack property (agent -> subcategory -> SkillAssignment[]).
  *
- * For each selected skill, looks up its category and determines which agents
- * should receive it (via `getAgentsForSkill`). The resulting config includes
- * the deduplicated sorted agent list, full skill list, and optional stack
- * mappings for subcategory-based skill resolution during compilation.
+ * Every selected skill is assigned to every selected agent. When no agents are
+ * provided, the agents list is empty (the wizard always provides selectedAgents
+ * via the agents step).
  *
  * @param name - Project name for the config
  * @param selectedSkillIds - Skill IDs selected by the user in the wizard
  * @param matrix - Merged skills matrix (used to look up skill metadata)
- * @param options - Optional description and author fields
+ * @param options - Optional description, author, and selectedAgents fields
  * @returns Complete ProjectConfig ready to be saved to config.yaml
  */
 export function generateProjectConfigFromSkills(
@@ -83,18 +42,13 @@ export function generateProjectConfigFromSkills(
   matrix: MergedSkillsMatrix,
   options?: ProjectConfigOptions & { selectedAgents?: AgentName[] },
 ): ProjectConfig {
-  const neededAgents = new Set<AgentName>();
+  const agentList = options?.selectedAgents ? [...options.selectedAgents].sort() : [];
   const stackProperty: Record<string, StackAgentConfig> = {};
-
-  // When user explicitly selected agents, filter stack assignments to only those agents
-  const selectedAgentSet = options?.selectedAgents
-    ? new Set<AgentName>(options.selectedAgents)
-    : null;
 
   verbose(
     `generateProjectConfigFromSkills: ${selectedSkillIds.length} skills, ` +
       `matrix has ${Object.keys(matrix.skills).length} entries, ` +
-      `selectedAgentSet=${selectedAgentSet ? `[${[...selectedAgentSet].join(", ")}]` : "null"}`,
+      `agents=[${agentList.join(", ")}]`,
   );
 
   let foundCount = 0;
@@ -109,38 +63,14 @@ export function generateProjectConfigFromSkills(
     }
     foundCount++;
 
-    const skillPath = skill.path;
-    const category = skill.category;
-    const agents = getAgentsForSkill(skillPath, category);
-    const subcategory = extractSubcategoryFromPath(category);
+    const subcategory = extractSubcategoryFromPath(skill.category);
+    if (!subcategory) continue;
 
-    // When user selected agents, only assign skills to agents in their selection
-    const effectiveAgents = selectedAgentSet
-      ? agents.filter((a) => selectedAgentSet.has(a))
-      : agents;
-
-    verbose(
-      `  skill '${skillId}': category='${category}', subcategory=${subcategory ?? "none"}, ` +
-        `agents=[${agents.join(", ")}], effectiveAgents=[${effectiveAgents.join(", ")}]`,
-    );
-
-    if (effectiveAgents.length === 0) {
-      warn(
-        `Skill '${skillId}': all agents filtered out by selectedAgentSet — ` +
-          `derived=[${agents.join(", ")}], selected=[${[...(selectedAgentSet ?? [])].join(", ")}]`,
-      );
-    }
-
-    for (const agentId of effectiveAgents) {
-      neededAgents.add(agentId);
-
-      if (subcategory) {
-        if (!stackProperty[agentId]) {
-          stackProperty[agentId] = {};
-        }
-        // Wizard selections are bare IDs with preloaded: false
-        stackProperty[agentId][subcategory] = [{ id: skillId, preloaded: false }];
+    for (const agentId of agentList) {
+      if (!stackProperty[agentId]) {
+        stackProperty[agentId] = {};
       }
+      stackProperty[agentId][subcategory] = [{ id: skillId, preloaded: false }];
     }
   }
 
@@ -156,11 +86,6 @@ export function generateProjectConfigFromSkills(
         `Matrix keys sample: [${matrixSample}]`,
     );
   }
-
-  // When the user explicitly selected agents, use their selection instead of the derived set
-  const agentList = options?.selectedAgents
-    ? [...options.selectedAgents].sort()
-    : Array.from(neededAgents).sort();
 
   const config: ProjectConfig = {
     name,

@@ -21,11 +21,4 @@ export {
   fetchMarketplace,
 } from "./source-fetcher";
 
-export {
-  type DefaultMappings,
-  loadDefaultMappings,
-  getCachedDefaults,
-  clearDefaultsCache,
-} from "./defaults-loader";
-
 export { loadSkillsFromAllSources } from "./multi-source-loader";
