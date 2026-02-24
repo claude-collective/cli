@@ -86,6 +86,9 @@
     },
     "outputFormat": {
       "type": "string"
+    },
+    "custom": {
+      "type": "boolean"
     }
   },
   "required": ["id", "title", "description", "tools"],

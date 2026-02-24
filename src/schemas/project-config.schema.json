@@ -45,6 +45,12 @@
         "enum": ["web", "api", "cli", "mobile", "shared"]
       }
     },
+    "selectedAgents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "stack": {
       "type": "object",
       "propertyNames": {
@@ -107,8 +113,7 @@
                   "type": "object",
                   "properties": {
                     "id": {
-                      "type": "string",
-                      "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+-.+$"
+                      "type": "string"
                     },
                     "preloaded": {
                       "type": "boolean"
@@ -137,8 +142,7 @@
                     "type": "object",
                     "properties": {
                       "id": {
-                        "type": "string",
-                        "pattern": "^(web|api|cli|mobile|infra|meta|security)-.+-.+$"
+                        "type": "string"
                       },
                       "preloaded": {
                         "type": "boolean"

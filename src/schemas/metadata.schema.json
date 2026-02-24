@@ -6,47 +6,7 @@
   "type": "object",
   "properties": {
     "category": {
-      "type": "string",
-      "enum": [
-        "web-framework",
-        "web-styling",
-        "web-client-state",
-        "web-server-state",
-        "web-forms",
-        "web-testing",
-        "web-ui-components",
-        "web-mocking",
-        "web-error-handling",
-        "web-i18n",
-        "web-file-upload",
-        "web-files",
-        "web-utilities",
-        "web-realtime",
-        "web-animation",
-        "web-pwa",
-        "web-accessibility",
-        "web-performance",
-        "web-base-framework",
-        "api-api",
-        "api-database",
-        "api-auth",
-        "api-observability",
-        "api-analytics",
-        "api-email",
-        "api-performance",
-        "mobile-framework",
-        "mobile-platform",
-        "shared-monorepo",
-        "shared-tooling",
-        "shared-security",
-        "shared-methodology",
-        "shared-research",
-        "shared-reviewing",
-        "shared-ci-cd",
-        "cli-framework",
-        "cli-prompts",
-        "cli-testing"
-      ]
+      "type": "string"
     },
     "categoryExclusive": {
       "type": "boolean"
@@ -141,6 +101,9 @@
       },
       "required": ["skillId", "contentHash", "date"],
       "additionalProperties": false
+    },
+    "custom": {
+      "type": "boolean"
     }
   },
   "required": ["category", "author", "cliName", "cliDescription", "usageGuidance"],
