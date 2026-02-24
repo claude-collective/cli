@@ -207,4 +207,6 @@ export type SkillMetadataConfig = {
   compatibleWith?: SkillId[];
   /** Skill IDs that cannot be selected alongside this skill (mutual exclusion) */
   conflictsWith?: SkillId[];
+  /** True if this skill was created outside the CLI's built-in vocabulary */
+  custom?: boolean;
 };
