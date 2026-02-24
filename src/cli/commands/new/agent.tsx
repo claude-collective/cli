@@ -97,7 +97,12 @@ async function loadMetaAgent(
   // Fall back to remote source (may not have agents)
   try {
     const agentPaths = await getAgentDefinitions(source, { forceRefresh, projectDir });
-    const remoteAgentPath = path.join(agentPaths.sourcePath, CLAUDE_DIR, "agents", compiledFileName);
+    const remoteAgentPath = path.join(
+      agentPaths.sourcePath,
+      CLAUDE_DIR,
+      "agents",
+      compiledFileName,
+    );
     if (await fileExists(remoteAgentPath)) {
       return parseCompiledAgent(await readFile(remoteAgentPath));
     }
@@ -106,8 +111,7 @@ async function loadMetaAgent(
   }
 
   throw new Error(
-    `Agent '${META_AGENT_NAME}' not found.\n\n` +
-      `Run 'compile' first to generate agents.`,
+    `Agent '${META_AGENT_NAME}' not found.\n\n` + `Run 'compile' first to generate agents.`,
   );
 }
 

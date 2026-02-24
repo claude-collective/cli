@@ -39,8 +39,7 @@ export const DomainSelection: React.FC<DomainSelectionProps> = ({ matrix }) => {
     return ordered.map((domain) => ({
       id: domain,
       label: getDomainDisplayName(domain),
-      description:
-        BUILT_IN_DOMAIN_DESCRIPTIONS[domain] ?? `${getDomainDisplayName(domain)} skills`,
+      description: BUILT_IN_DOMAIN_DESCRIPTIONS[domain] ?? `${getDomainDisplayName(domain)} skills`,
     }));
   }, [matrix]);
 
