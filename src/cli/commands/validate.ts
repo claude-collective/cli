@@ -10,18 +10,30 @@ import {
   validateAllPlugins,
   printPluginValidationResult,
 } from "../lib/plugins/index.js";
+import { validateSource } from "../lib/source-validator.js";
 
 export default class Validate extends BaseCommand {
-  static summary = "Validate YAML files against schemas or validate compiled plugins";
+  static summary =
+    "Validate YAML files against schemas, validate compiled plugins, or validate a skills source";
   static description =
-    "Validates skill/agent YAML files against JSON schemas, or validates compiled plugin structure and content. " +
+    "Validates skill/agent YAML files against JSON schemas, validates compiled plugin structure and content, " +
+    "or validates a skills source repository for metadata correctness. " +
     "Without arguments, validates all YAML files in the current directory against their schemas. " +
+    "With --source, validates all skills in the source for schema compliance, cross-references, and conventions. " +
     "With a path argument or --plugins flag, validates plugin(s) instead.";
 
   static examples = [
     {
       description: "Validate all YAML schemas",
       command: "<%= config.bin %> <%= command.id %>",
+    },
+    {
+      description: "Validate a skills source repository",
+      command: "<%= config.bin %> <%= command.id %> --source .",
+    },
+    {
+      description: "Validate a remote skills source",
+      command: "<%= config.bin %> <%= command.id %> --source github:acme-corp/skills",
     },
     {
       description: "Validate a specific plugin",
@@ -66,7 +78,9 @@ export default class Validate extends BaseCommand {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Validate);
 
-    if (args.path || flags.plugins) {
+    if (flags.source) {
+      await this.validateSkillsSource(flags.source);
+    } else if (args.path || flags.plugins) {
       await this.validatePlugins(args.path, flags.verbose, flags.all);
     } else {
       await this.validateSchemas();
@@ -176,6 +190,46 @@ export default class Validate extends BaseCommand {
       } else {
         this.log("");
         this.error(ERROR_MESSAGES.VALIDATION_FAILED, { exit: EXIT_CODES.ERROR });
+      }
+    } catch (error) {
+      const message = getErrorMessage(error);
+      this.error(`${ERROR_MESSAGES.VALIDATION_FAILED}: ${message}`, { exit: EXIT_CODES.ERROR });
+    }
+  }
+
+  private async validateSkillsSource(source: string): Promise<void> {
+    this.log("");
+    this.log(`Validating source: ${source}`);
+    this.log("");
+
+    try {
+      const result = await validateSource(source);
+
+      this.log(`Checked ${result.skillCount} skill(s)`);
+      this.log("");
+
+      for (const issue of result.issues) {
+        const prefix = issue.severity === "error" ? "ERROR" : "WARN";
+        this.log(`  [${prefix}] ${issue.file}: ${issue.message}`);
+      }
+
+      if (result.issues.length > 0) {
+        this.log("");
+      }
+
+      this.log(`Result: ${result.errorCount} error(s), ${result.warningCount} warning(s)`);
+
+      if (result.errorCount > 0) {
+        this.log("");
+        this.error(ERROR_MESSAGES.VALIDATION_FAILED, { exit: EXIT_CODES.ERROR });
+      } else if (result.warningCount > 0) {
+        this.log("");
+        this.logWarning("Source valid with warnings");
+        this.log("");
+      } else {
+        this.log("");
+        this.logSuccess("Source validated successfully");
+        this.log("");
       }
     } catch (error) {
       const message = getErrorMessage(error);
