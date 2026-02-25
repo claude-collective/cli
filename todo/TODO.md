@@ -2,27 +2,23 @@
 
 | ID   | Task                                                                                                                                                                                            | Status       |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| D-49 | Add `domain` field to skill `metadata.yaml` and agent `agent.yaml` so custom entities declare their own domain                                                                                  | Pending      |
-| D-50 | Eliminate skills-matrix.yaml: move all category metadata (required, exclusive, order, displayName, domain, icon) to individual skill `metadata.yaml`; derive matrix dynamically from skill scan | Pending      |
-| D-51 | Remove legacy slash-in-skill-ID code: `plugin-finder.ts:89` split, `skill-fetcher.ts:80-90` dead branch + tests, `compiler.ts:294` replace, `create-test-source.ts:711` replace                 | Pending      |
+| D-50 | Eliminate skills-matrix.yaml: derive matrix dynamically from skill metadata (see detailed notes below)                                                                                          | Pending      |
 | U13  | Run Documentor Agent on CLI Codebase                                                                                                                                                            | Pending      |
 | H18  | Tailor documentation-bible to CLI repo                                                                                                                                                          | Phase 3 only |
 | D-46 | Custom extensibility (see [design doc](../docs/features/proposed/custom-extensibility-design.md))                                                                                               | In Progress  |
 | D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                                                                                                 | Pending      |
 | D-33 | README: frame Agents Inc. as an AI coding framework                                                                                                                                             | Pending      |
-| D-42 | `agentsinc validate` command for skills repos                                                                                                                                                   | Pending      |
 | D-44 | Update README and Notion page for `eject templates` type                                                                                                                                        | Pending      |
-| D-45 | Marketplace/plugin build commands should verify `contentHash` in skill metadata                                                                                                                 | Pending      |
 | D-47 | Eject a standalone compile function for sub-agent compilation                                                                                                                                   | Pending      |
-| T-07 | Replace real skills repo in source-loader.test.ts with fixtures                                                                                                                                 | Pending      |
 | T-08 | Audit all test files: extract fixtures, use real IDs                                                                                                                                            | Pending      |
-| T-09 | Extract shared base skill/category/matrix fixtures to eliminate cross-file duplication                                                                                                          | Pending      |
 | T-12 | End-to-end tests for custom marketplace workflow (`--source`, `outdated`, build→version→update cycle)                                                                                           | Pending      |
-| D-48 | Revert `(string & {})` type widening on Domain/Subcategory/AgentName; design proper custom value type strategy                                                                                  | Pending      |
 | D-52 | Expand `new agent` command: add agent-summoner to skills repo so remote fetch works from any project                                                                                            | Pending      |
-| D-53 | Build step: show "X of N" counter for exclusive categories (e.g., "1 of 1" for client state); hide in expert mode                                                                               | Pending      |
-| D-54 | Build step: fix domain ordering — should always be Web, API, Mobile, CLI regardless of domain selection order                                                                                   | Pending      |
-| D-55 | Domain deselection should remove skills: deselecting a domain in the domain step should deselect all skills from that domain, so the confirm step count reflects only selected domains          | Pending      |
+| D-53 | Rename `agent.yaml` to `metadata.yaml` for consistency with skills                                                                                                                              | Pending      |
+| D-54 | Remove expert mode: make expert mode behavior the default, then remove the concept entirely                                                                                                     | Pending      |
+| D-55 | Clean up dead code: remove `escapedSkillId` regex and `(@author)` stripping in `skill-fetcher.ts` — skill IDs are kebab-case only                                                               | Pending      |
+| D-56 | Rename `agentDomains` / "domain overrides" — agents _define_ their domain, they don't override. Also consider moving off `MergedSkillsMatrix`                                                   | Pending      |
+| D-57 | Fix `TEST_SKILLS.antiOverEngineering` path: include `path` in fixture so tests don't need inline overrides                                                                                      | Pending      |
+| D-58 | `orderDomains`: put custom domains first, then built-in domains                                                                                                                                 | Pending      |
 
 ---
 
@@ -78,6 +74,30 @@ Create `.claude/docs/` directory with:
 
 ---
 
+### D-50: Eliminate skills-matrix.yaml — derive matrix from skill metadata
+
+Move all category metadata (required, exclusive, order, displayName, domain, icon) to individual skill `metadata.yaml` files; derive the `MergedSkillsMatrix` dynamically from scanning skills.
+
+**Current problem (blocking custom marketplaces):**
+
+The wizard UI reads category/domain info from `matrix.categories` (`MergedSkillsMatrix.categories`), which is populated exclusively from `skills-matrix.yaml`. Skills from a custom marketplace that don't have a corresponding `skills-matrix.yaml` entry are invisible in the wizard — even if they declare `domain` and `category` in their own `metadata.yaml`.
+
+**Key code locations that need to change:**
+
+1. **`matrix-loader.ts:mergeMatrixWithSkills()`** — line 270 sets `categories: matrix.categories` (from skills-matrix.yaml only). Must auto-synthesize `CategoryDefinition` entries from skill metadata when the category doesn't already exist in the matrix. The skill's `domain`, `category`, `categoryExclusive` fields should be sufficient to create a category entry.
+
+2. **Wizard UI components** — `step-build.tsx`, `category-grid.tsx`, `domain-selection.tsx` all look up `matrix.categories[subcategory].domain` to organize skills by domain tab. If a category isn't in the matrix, the skill is invisible regardless of what's on the `ResolvedSkill` itself. These need to work even when the category was synthesized from metadata.
+
+3. **`matrix-health-check.ts`** — warns "category has no domain" by checking `matrix.categories`. This check should still work but may need adjustment once categories can come from skill metadata.
+
+4. **`source-loader.ts:discoverAndExtendFromSource()`** — already discovers custom domains/categories/skillIds and registers them with `extendSchemasWithCustomValues()`. But this only extends *schema validation* — it doesn't create `CategoryDefinition` entries in the matrix. The schema extension is necessary but not sufficient.
+
+**What `metadata.yaml` already supports:** `domain`, `category`, `categoryExclusive`, `custom`, `tags`, `author`. What's missing from metadata: `displayName`, `icon`, `order`, `required` (these currently live in `skills-matrix.yaml` category definitions).
+
+**End state:** A custom marketplace with only skills (no `skills-matrix.yaml`) should work out of the box. Each skill's `metadata.yaml` provides enough info (`domain`, `category`, `categoryExclusive`) to appear in the wizard.
+
+---
+
 ### CLI Improvements
 
 #### D-37: Install mode UX redesign
@@ -129,42 +149,6 @@ Rewrite the README to position Agents Inc. as an AI coding framework, not just a
 
 ---
 
-#### D-42: `agentsinc validate` command for skills repos
-
-A standalone validation command that marketplace authors can run from within their skills repo to check all metadata for correctness. Currently `checkMatrixHealth` runs automatically during `loadSkillsMatrixFromSource`, but there's no user-facing command for it.
-
-**Usage:**
-
-```bash
-# Run from within a skills repo
-agentsinc validate --source .
-
-# Or point at a remote source
-agentsinc validate --source github:acme-corp/skills
-```
-
-**What it validates:**
-
-- Every `metadata.yaml` against the schema (required fields, field types)
-- `cliName` format and directory name consistency
-- `category` values against known domain-prefixed patterns
-- All cross-references (`compatibleWith`, `conflictsWith`, `requires`, `requiresSetup`, `providesSetupFor`) resolve to existing skill IDs
-- `categoryExclusive` is present when required
-- camelCase key convention (no snake_case)
-- Every skill directory has both `SKILL.md` and `metadata.yaml`
-
-**Implementation:**
-
-- New command: `src/cli/commands/validate.ts`
-- Reuse `loadSkillsMatrixFromSource` + `checkMatrixHealth` for cross-reference validation
-- Add per-skill schema validation using `skillMetadataLoaderSchema`
-- Report all issues with file paths and specific values
-- Exit with non-zero code if any errors found (warnings are OK)
-
-**Location:** `src/cli/commands/validate.ts`, leveraging existing `matrix-health-check.ts` and `schemas.ts`.
-
----
-
 #### D-44: Update README and Notion page for `eject templates` type
 
 Update external documentation to reflect D-43's change: `templates` is now a first-class eject type (`agentsinc eject templates`) instead of a flag (`--templates`) on `agent-partials`.
@@ -201,45 +185,6 @@ Expose a single ejectable function that users can call to compile their sub-agen
 
 ---
 
-#### D-45: Marketplace/plugin build commands should verify `contentHash` in skill metadata
-
-The marketplace and plugin build commands should verify that the `contentHash` field in each skill's `metadata.yaml` is present and correct. This ensures published skills have integrity checks that consumers can verify during installation.
-
-**What to check:**
-
-- `contentHash` is present in `metadata.yaml` for every skill being built/published
-- The hash matches the actual content of the skill files (SKILL.md + metadata.yaml)
-- Build fails with a clear error if hashes are missing or mismatched
-
-**Location:** Plugin build pipeline, marketplace build pipeline, `agentsinc validate` (D-42) should also check this.
-
----
-
-#### T-07: Replace real skills repo in source-loader.test.ts with fixtures
-
-`source-loader.test.ts` loads the real `/home/vince/dev/skills` sibling repo for 13 of its 24 tests. This is fragile, non-portable, and violates the project convention of using `createTestSource()`.
-
-**Key findings from investigation:**
-
-- 13 tests use `SKILLS_SOURCE` (the real repo); the other 11 are already self-contained
-- `createTestSource()` already supports everything needed — no infrastructure changes required
-- 3 tests hardcode count thresholds (`> 50` skills, `> 10` categories) that need adjusting
-- Test 11 (line 207) needs a skill with a domain-mapped category — already supported by `createTestSource()`'s `generateMatrix()` which sets `domain` from category prefix
-
-**Plan:**
-
-1. Create a single shared fixture via `createTestSource()` in a module-level `beforeAll`/`afterAll` with ~8 skills from `DEFAULT_TEST_SKILLS` + `EXTRA_DOMAIN_TEST_SKILLS`, plus 1 test stack
-2. Remove `SKILLS_REPO_ROOT` / `SKILLS_SOURCE` constants (lines 8-12)
-3. Replace all `SKILLS_SOURCE` references with `fixtureSource.sourceDir`
-4. Update 3 hardcoded count assertions (lines 272, 507-508, 588-589) to match fixture data
-5. Leave the 11 already self-contained tests untouched
-
-**Scope:** ~30-40 lines changed in `source-loader.test.ts`, 0 new files, 0 new helpers.
-
-**Location:** `src/cli/lib/loading/source-loader.test.ts`
-
----
-
 #### T-08: Audit all test files: extract fixtures, use real IDs
 
 All test files should follow the conventions enforced in `matrix-health-check.test.ts` and `category-grid.test.tsx` during this session:
@@ -259,74 +204,6 @@ All test files should follow the conventions enforced in `matrix-health-check.te
 **Files to audit:** All other `*.test.ts` and `*.test.tsx` files under `src/cli/`. Prioritize files that construct matrices, skills, categories, or configs inline.
 
 **Location:** All test files under `src/cli/`
-
----
-
-#### T-09: Extract shared base skill/category/matrix fixtures to eliminate cross-file duplication
-
-The same `createMockSkill("web-framework-react", "web-framework")` call is repeated across 10+ test files. The base skill is identical — only per-file overrides differ (`categoryExclusive`, `displayName`, `tags`, etc.). Same for common categories and simple matrices.
-
-**Approach:** Add shared base constants to `__tests__/helpers.ts` or `__tests__/test-fixtures.ts`:
-
-```typescript
-// Base fixtures — no overrides, just the canonical defaults
-export const REACT_SKILL = createMockSkill("web-framework-react", "web-framework");
-export const ZUSTAND_SKILL = createMockSkill("web-state-zustand", "web-client-state");
-export const HONO_SKILL = createMockSkill("api-framework-hono", "api-api");
-export const VITEST_SKILL = createMockSkill("web-testing-vitest", "web-testing");
-
-export const FRAMEWORK_CATEGORY = createMockCategory("web-framework", "Framework");
-export const CLIENT_STATE_CATEGORY = createMockCategory("web-client-state", "Client State");
-export const TESTING_CATEGORY = createMockCategory("web-testing", "Testing");
-```
-
-Per-file customization via spread:
-
-```typescript
-// Test that needs displayName
-const skill = { ...REACT_SKILL, displayName: "React", categoryExclusive: true };
-
-// Test that uses the base as-is
-const matrix = createMockMatrix({ "web-framework-react": REACT_SKILL });
-```
-
-**Files with highest duplication:**
-
-- `config-generator.test.ts` — 18 occurrences of bare react skill
-- `step-build.test.tsx` — react, vue, zustand, pinia skills
-- `build-step-logic.test.ts` — react, vue, zustand with displayName
-- `matrix-health-check.test.ts` — react, zustand, categories
-- `plugin-finder.test.ts`, `wizard-store.test.ts`, `init-flow.integration.test.ts`
-
-**Do NOT extract:** Pathological/error-case fixtures (orphan skills, unresolved refs, missing domains). These are single-consumer and belong in the test file that uses them.
-
-**Location:** `src/cli/lib/__tests__/helpers.ts` or `src/cli/lib/__tests__/test-fixtures.ts`
-
----
-
-#### D-48: Revert `(string & {})` type widening; design proper custom value type strategy
-
-Phase 3 of D-46 incorrectly widened `Domain`, `Subcategory`, and `AgentName` with `| (string & {})`. This defeats the purpose of strict union types — any string is now accepted at compile time without a compiler error. Casting custom values to the strict type (`"acme" as Domain`) is also wrong: it lies to TypeScript about what the value is, and downstream code that narrows on the union (switch statements, equality checks) silently fails on custom values.
-
-**Immediate action (option C from design doc Q3):**
-
-1. Remove `| (string & {})` from `Domain` (types/matrix.ts), `Subcategory` (types/matrix.ts), and `AgentName` (types/agents.ts)
-2. Restore the strict closed unions
-3. At parse boundaries where custom values enter the system (YAML loading, matrix merge), use boundary casts with comments explaining why
-4. Fix any resulting compile errors by adding boundary casts at the data entry points only
-
-**Follow-up (needs design):**
-
-Come up with a proper mechanism for custom values that doesn't lie to TypeScript. Casting is a stopgap — it pretends a custom value IS a built-in type when it isn't. If code later does pattern matching or string methods expecting built-in format, it silently breaks. Options to explore:
-
-- Branded/tagged union types that force callers to handle the custom case
-- Separate code paths for built-in vs custom values at the type level
-- Generic functions parameterized over the value set
-- A discriminated union wrapper (`{ kind: "builtin", value: Domain } | { kind: "custom", value: string }`)
-
-The right answer should make it impossible to accidentally treat a custom value as a built-in one without explicit handling.
-
-**Location:** `src/cli/types/matrix.ts`, `src/cli/types/agents.ts`, and all files that pass custom values through the system.
 
 ---
 
