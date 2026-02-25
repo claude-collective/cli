@@ -4,13 +4,13 @@
 2. When delegating to a sub-agent, tell it to read CLAUDE.md before starting work.
 
 3. After any fix, trace ALL scenarios through the code before calling it done.
+
+4. ALWAYS read [.ai-docs/DOCUMENTATION_MAP.md](./.ai-docs/DOCUMENTATION_MAP.md) before working on any area of the codebase. It indexes verified documentation for every major system.
 </critical-requirement>
 
 # Project Memory for Claude
 
-**For comprehensive documentation, see [docs/index.md](./docs/index.md)**
-
-This file provides quick decision trees and essential conventions for working with the Agents Inc. CLI codebase.
+This file provides decision trees, behavioral rules, and conventions. For codebase reference documentation, see `.ai-docs/`.
 
 ## Workspace Directories
 
@@ -234,62 +234,6 @@ this.error(message, { exit: 2 });
 
 ---
 
-## Architecture Quick Reference
-
-### Directory Structure
-
-```
-src/cli/
-├── base-command.ts     # Shared oclif base command class
-├── commands/           # oclif CLI commands
-├── components/         # Ink React components for interactive UI
-├── consts.ts           # Global constants
-├── defaults/           # Default configuration/templates
-├── hooks/              # oclif lifecycle hooks
-├── index.ts            # CLI entry point
-├── lib/               # Core business logic
-│   ├── agents/        # Agent loading/compilation
-│   ├── configuration/ # Config loading/saving/merging
-│   ├── exit-codes.ts  # Named exit code constants
-│   ├── installation/  # Installation utilities
-│   ├── loading/       # YAML/file loading utilities
-│   ├── matrix/        # Skills matrix operations
-│   ├── plugins/       # Plugin discovery/validation
-│   ├── skills/        # Skill loading/resolution
-│   ├── stacks/        # Stack compilation
-│   ├── wizard/        # Wizard flow logic
-│   └── compiler.ts    # Main compilation pipeline
-├── stores/            # Zustand state management (for wizard)
-├── types/             # TypeScript type definitions
-└── utils/             # Cross-cutting utilities
-```
-
-### Test Structure
-
-```
-src/cli/lib/__tests__/
-├── commands/               # Command-level tests
-├── fixtures/
-│   └── create-test-source.ts  # Integration test source factory
-├── helpers.ts              # Shared test utilities (factories, temp dirs)
-├── helpers.test.ts         # Tests for helpers themselves
-├── integration/            # Integration tests
-├── test-constants.ts       # Shared test constants
-├── test-fixtures.ts        # Named skill fixtures (getTestSkill)
-└── user-journeys/          # End-to-end user journey tests
-
-test/fixtures/             # Static fixture files
-├── agents/                # Agent markdown/YAML
-├── commands/              # Command fixture files
-├── configs/               # Config YAML files
-├── matrix/                # Matrix YAML files
-├── plugins/               # Plugin structures
-├── skills/                # Skill markdown files
-└── stacks/                # Stack fixture files
-```
-
----
-
 ## Quick Checklists
 
 ### Before Committing Code
@@ -334,118 +278,10 @@ test/fixtures/             # Static fixture files
 
 ## Key Documentation
 
-| Document                                                                                     | Purpose                                     |
-| -------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| [docs/index.md](./docs/index.md)                                                             | Documentation index and system overview     |
-| [docs/reference/architecture.md](./docs/reference/architecture.md)                           | System architecture and data flow           |
-| [docs/standards/code/clean-code-standards.md](./docs/standards/code/clean-code-standards.md) | Enforceable code quality rules              |
-| [typescript-types-bible.md](./typescript-types-bible.md)                                     | Type narrowing patterns and cast guidelines |
-| [docs/reference/commands.md](./docs/reference/commands.md)                                   | CLI command reference                       |
-| [docs/reference/data-models.md](./docs/reference/data-models.md)                             | Type definitions and schemas                |
-| [TODO.md](./todo/TODO.md)                                                                    | Active tasks and blockers                   |
-
----
-
-## Common Patterns
-
-### Factory Functions (Test Helpers)
-
-```typescript
-// Pattern: (requiredParams, overrides?: Partial<T>): T
-export function createMockSkill(
-  id: SkillId,
-  category: CategoryPath,
-  overrides?: Partial<ResolvedSkill>,
-): ResolvedSkill {
-  return {
-    id,
-    description: `${id} skill`,
-    category,
-    // ... defaults (categoryExclusive, tags, author, etc.)
-    ...overrides,
-  };
-}
-```
-
-### Test Data (MANDATORY: Use Factories)
-
-```typescript
-// GOOD: Use factories for EVERYTHING
-import { createMockSkill, createMockMatrix, createMockCategory } from "../helpers.js";
-import { createTestSource } from "../fixtures/create-test-source.js";
-
-const skill = createMockSkill("web-framework-react", "web/framework");
-const matrix = createMockMatrix({ "web-framework-react": skill });
-const dirs = await createTestSource({ stacks: CUSTOM_STACKS });
-
-// BAD: NEVER construct configs/matrices/skills inline in tests
-const matrixConfig: SkillsMatrixConfig = {
-  // NO! Use createMockMatrix()
-  version: "1.0.0",
-  categories: { framework: { name: "..." } }, // NO! Use createMockCategory()
-};
-await writeFile(path.join(dir, "SKILL.md"), "---\nname: ..."); // NO! Use writeTestSkill()
-const skills: Record<string, ResolvedSkill> = {}; // NO! Use createMockSkill()
-```
-
-### Temp Directory Lifecycle (Tests)
-
-```typescript
-// GOOD: Use shared helpers
-import { createTempDir, cleanupTempDir } from "../__tests__/helpers.js";
-
-let tempDir: string;
-beforeEach(async () => {
-  tempDir = await createTempDir();
-});
-afterEach(async () => {
-  await cleanupTempDir(tempDir);
-});
-
-// BAD: Raw mkdtemp/rm
-import { mkdtemp, rm } from "fs/promises";
-import os from "os";
-```
-
-### Zod Schema Validation
-
-```typescript
-// GOOD: Use safeLoadYamlFile helper (returns T | null, logs warnings internally)
-import { safeLoadYamlFile } from "./utils/yaml.js";
-import { skillMetadataLoaderSchema } from "./schemas.js";
-
-const data = await safeLoadYamlFile(filePath, skillMetadataLoaderSchema);
-if (!data) return null;
-
-// GOOD: Direct safeParse + formatZodErrors (for inline validation)
-import { formatZodErrors, skillFrontmatterLoaderSchema } from "./schemas.js";
-
-const parsed = skillFrontmatterLoaderSchema.safeParse(parseYaml(content));
-if (!parsed.success) {
-  warn(`Invalid frontmatter in '${location}': ${formatZodErrors(parsed.error.issues)}`);
-  return null;
-}
-
-// BAD: Manual parse + validate
-const content = await readFile(path, "utf-8");
-const parsed = parseYaml(content);
-const validated = schema.parse(parsed); // throws
-```
-
-### Error Messages in Commands
-
-```typescript
-// GOOD: Consistent with logger style (see utils/logger.ts style guide)
-this.warn(`Failed to load skill '${skillId}'`); // No "Warning:" prefix — added automatically
-this.log(`Compiled ${count} agents successfully.`); // Period: complete sentence
-this.log(`Skipping '${id}': missing SKILL.md`); // No period: fragment after colon
-verbose(`Resolved source path: '${sourcePath}'`); // Single-quoted dynamic values
-
-// BAD: Inconsistent style
-this.warn(`Warning: Failed to load skill ${skillId}`); // Don't add "Warning:" — both oclif this.warn() and logger warn() add it
-this.log(`Compiled ${count} agents successfully`); // Complete sentences should end with period
-this.warn(`failed to load skill ${skillId}`); // Start with capital letter
-```
+| Document                                     | Purpose                         |
+| -------------------------------------------- | ------------------------------- |
+| [.ai-docs/DOCUMENTATION_MAP.md](./.ai-docs/DOCUMENTATION_MAP.md) | Codebase documentation index    |
+| [TODO.md](./todo/TODO.md)                    | Active tasks and blockers       |
 
 <critical-reminder>
 1. You do NOT write code. Delegate to sub-agents. Tell them to read CLAUDE.md.

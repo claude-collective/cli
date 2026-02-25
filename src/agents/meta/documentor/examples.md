@@ -19,10 +19,10 @@
 
 **Action:**
 
-1. Glob to find all stores: `**/*Store.ts`
+1. Glob to find all stores: `**/stores/*.ts` (kebab-case files)
 2. Read each store file completely
-3. Identify patterns (MobX? Redux? Context?)
-4. Map relationships between stores
+3. Identify patterns (Zustand `create<State>()`? Context? Other?)
+4. Map relationships between stores and consuming components
 5. Create `store-map.md` using template
 6. Update `DOCUMENTATION_MAP.md` marking stores as complete
 
@@ -52,30 +52,29 @@
 
 ## State Management Library
 
-**Library:** MobX
-**Pattern:** Root store with individual stores
+**Library:** Zustand
+**Pattern:** `create<State>()` stores with selectors
 
 ## Stores
 
-| Store       | File Path                    | Purpose      | Key Actions            |
-| ----------- | ---------------------------- | ------------ | ---------------------- |
-| EditorStore | `/src/stores/EditorStore.ts` | Editor state | `addLayer()`, `undo()` |
-| UserStore   | `/src/stores/UserStore.ts`   | User session | `login()`, `logout()`  |
+| Store       | File Path                        | Purpose           | Key Actions                      |
+| ----------- | -------------------------------- | ----------------- | -------------------------------- |
+| WizardStore | `src/cli/stores/wizard-store.ts` | Wizard flow state | `toggleSkill()`, `resetWizard()` |
 
 ## Store Relationships
 
-- RootStore: `/src/stores/RootStore.ts` - Initializes all stores
-- EditorStore imports LayerStore for layer management
+- WizardStore consumed by wizard step components (`step-build.tsx`, `step-stack.tsx`, etc.)
+- No root store pattern; each store is independent
 
 ## Usage Pattern
 
 ```typescript
-import { useStore } from "@/contexts/StoreContext";
-const { editorStore } = useStore();
+import { useWizardStore } from "../../stores/wizard-store.js";
+const domains = useWizardStore((s) => s.domains);
 ```
 ````
 
-**Example files:** `/src/components/Editor/EditorCanvas.tsx:15`
+**Example files:** `src/cli/components/wizard/step-build.tsx`
 
 ````
 
@@ -90,20 +89,21 @@ const { editorStore } = useStore();
 
 ## State Management
 
-### Direct Store Mutation
+### Inline Test Data Construction
 
-**What:** Mutating store state directly without actions
+**What:** Constructing test configs, matrices, or skills inline instead of using factories
 
-**Where:** `/src/legacy/OldEditor.tsx:123`
+**Where:** [document actual locations found]
 
-**Why wrong:** Breaks MobX reactivity, no undo support
+**Why wrong:** Violates project convention; bypasses shared test helpers; leads to stale/inconsistent test data
 
 **Do instead:**
 ```typescript
-editorStore.addLayer(newLayer)  // Use store actions
+import { createMockSkill, createMockMatrix } from "../__tests__/helpers.js";
+const skill = createMockSkill("web-framework-react", "web/framework");
 ````
 
-**Correct pattern:** `/src/components/Editor/EditorCanvas.tsx`
+**Correct pattern:** `src/cli/lib/__tests__/helpers.ts` (factory functions)
 
 ````
 
@@ -118,30 +118,29 @@ editorStore.addLayer(newLayer)  // Use store actions
 
 ## Overview
 
-**Purpose:** Image editing with layers, tools, and export
-**Route:** `/editor/:imageId`
-**Main Component:** `/src/features/editor/EditorPage.tsx`
+**Purpose:** Interactive wizard for configuring agent/skill stacks
+**Entry Point:** `src/cli/commands/init.ts` (oclif command)
+**Main Component:** `src/cli/components/wizard/wizard.tsx`
 
 ## File Structure
 
 ````
 
-src/features/editor/
-├── components/
-│ ├── EditorCanvas.tsx # Main canvas
-│ └── Toolbar.tsx # Tool selection
-├── hooks/
-│ └── useEditorState.ts # State management
-└── stores/
-└── EditorStore.ts # MobX store
+src/cli/components/wizard/
+├── wizard.tsx # Main wizard orchestrator
+├── step-stack.tsx # Stack selection step
+├── step-build.tsx # Build configuration step
+├── step-sources.tsx # Source selection step
+├── step-confirm.tsx # Confirmation step
+└── utils.ts # Wizard utility functions
 
 ```
 
 ## Key Files
 
-| File               | Lines | Purpose          |
-| ------------------ | ----- | ---------------- |
-| `EditorPage.tsx`   | 234   | Main page        |
-| `EditorCanvas.tsx` | 456   | Rendering engine |
-| `EditorStore.ts`   | 189   | State management |
+| File               | Lines | Purpose              |
+| ------------------ | ----- | -------------------- |
+| `wizard.tsx`       | ~200  | Step orchestration   |
+| `step-build.tsx`   | ~300  | Skill selection UI   |
+| `wizard-store.ts`  | ~500  | Zustand state store  |
 ```

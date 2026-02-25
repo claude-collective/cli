@@ -5,7 +5,7 @@
 **If you notice yourself:**
 
 - **Documenting without reading code first** → STOP. Read the actual files before making claims.
-- **Using generic descriptions instead of file paths** → STOP. Replace with specific paths like `/src/stores/UserStore.ts:45-89`.
+- **Using generic descriptions instead of file paths** → STOP. Replace with specific paths like `src/cli/stores/wizard-store.ts:45-89`.
 - **Describing patterns based on assumptions** → STOP. Verify with Grep/Glob before documenting.
 - **Skipping the documentation map update** → STOP. Update DOCUMENTATION_MAP.md before finishing.
 - **Skipping CLAUDE.md update** → STOP. Add reference to generated docs in project CLAUDE.md.
@@ -234,78 +234,75 @@ Use the output format to show what was accomplished.
 
 ## State Management Library
 
-**Library:** [MobX | Redux | Zustand | Context | other]
+**Library:** [Zustand | Redux | MobX | Context | other]
 **Version:** [if known]
-**Pattern:** [Root store | Individual stores | Slices | other]
+**Pattern:** [create<State>() stores | Slices | Root store | other]
 
 ## Stores
 
-| Store       | File Path                    | Purpose              | Key Observables                     | Key Actions                      |
-| ----------- | ---------------------------- | -------------------- | ----------------------------------- | -------------------------------- |
-| EditorStore | `/src/stores/EditorStore.ts` | Manages editor state | `layers`, `selectedTool`, `history` | `addLayer()`, `undo()`, `redo()` |
-| UserStore   | `/src/stores/UserStore.ts`   | User session         | `currentUser`, `isAuthenticated`    | `login()`, `logout()`            |
+| Store       | File Path                        | Purpose           | Key State                                       | Key Actions                                     |
+| ----------- | -------------------------------- | ----------------- | ----------------------------------------------- | ----------------------------------------------- |
+| WizardStore | `src/cli/stores/wizard-store.ts` | Wizard flow state | `domains`, `selectedSkills`, `sourceSelections` | `toggleSkill()`, `setSource()`, `resetWizard()` |
 
 ## Store Relationships
 
 ```mermaid
 graph TD
-  RootStore --> EditorStore
-  RootStore --> UserStore
-  EditorStore --> LayerStore
+  WizardStore --> StepBuild[step-build.tsx]
+  WizardStore --> StepStack[step-stack.tsx]
+  WizardStore --> StepConfirm[step-confirm.tsx]
 ```
 ````
 
 **Description:**
 
-- RootStore: `/src/stores/RootStore.ts` - Initializes and provides all stores
-- EditorStore imports LayerStore for layer management
-- UserStore is independent
+- WizardStore: `src/cli/stores/wizard-store.ts` - Manages wizard flow state
+- Accessed by Ink components via `useWizardStore()` selectors
 
 ## Usage Pattern
 
 **How stores are accessed:**
 
 ```typescript
-// Pattern used in this codebase
-import { useStore } from "@/contexts/StoreContext";
-const { editorStore } = useStore();
+// Pattern used in this codebase (Zustand selectors)
+import { useWizardStore } from "../../stores/wizard-store.js";
+const domains = useWizardStore((s) => s.domains);
+const toggleSkill = useWizardStore((s) => s.toggleSkill);
 ```
 
 **Example files using this pattern:**
 
-- `/src/components/Editor/EditorCanvas.tsx:15`
-- `/src/components/Toolbar/ToolSelector.tsx:8`
+- `src/cli/components/wizard/step-build.tsx`
+- `src/cli/components/wizard/step-stack.tsx`
 
 ## State Update Patterns
 
-**MobX patterns used:**
+**Zustand patterns used:**
 
-- `makeAutoObservable` in all stores
-- Actions are async functions with `flow` wrapper
-- No decorators (class-based with makeAutoObservable)
+- `create<State>()` for store creation
+- Actions defined inside the store creator with `set`/`get`
+- No class-based stores, no decorators, no observer wrappers
 
 **Example:**
 
 ```typescript
-// From EditorStore.ts:45-67
-class EditorStore {
-  layers: Layer[] = [];
+// From wizard-store.ts (simplified)
+export const useWizardStore = create<WizardState>((set, get) => ({
+  domains: [],
+  selectedSkills: {},
 
-  constructor() {
-    makeAutoObservable(this);
-  }
-
-  addLayer = flow(function* (this: EditorStore, layer: Layer) {
-    yield api.saveLayer(layer);
-    this.layers.push(layer);
-  });
-}
+  toggleSkill: (skillId: SkillId) => {
+    set((state) => ({
+      /* toggle logic */
+    }));
+  },
+}));
 ```
 
 ## Anti-Patterns Found
 
-- ❌ Direct store mutation without actions (found in `/src/legacy/OldEditor.tsx:123`)
-- ❌ Accessing stores outside React tree (found in `/src/utils/legacy-helper.ts:45`)
+- [Document actual anti-patterns found in codebase]
+- [e.g., Destructuring store state outside selectors, accessing store outside React tree]
 
 ## Related Documentation
 
@@ -529,32 +526,36 @@ components/editor-toolbar/
 **Standard pattern:**
 
 ```typescript
-// From: /src/components/editor-canvas/editor-canvas.tsx
+// From: src/cli/components/wizard/step-build.tsx
 
-import { observer } from "mobx-react-lite";
-import { useStore } from "@/contexts/StoreContext";
-import styles from "./editor-canvas.module.scss";
+import { Box, Text } from "ink";
+import { useWizardStore } from "../../stores/wizard-store.js";
 
-export const EditorCanvas = observer(() => {
-  const { editorStore } = useStore();
+export const StepBuild = () => {
+  const domains = useWizardStore((s) => s.domains);
 
-  return <canvas className={styles.canvas}>{/* ... */}</canvas>;
-});
+  return (
+    <Box flexDirection="column">
+      <Text bold>Build Configuration</Text>
+      {/* ... */}
+    </Box>
+  );
+};
 ```
 
 **Key patterns:**
 
 - Named exports (no default exports)
-- `observer` wrapper for components using stores
-- SCSS Modules for styling
-- Store access via `useStore()` hook
+- Ink components (`<Box>`, `<Text>`) for terminal UI
+- Zustand selectors for store access (no wrapper needed)
+- Inline Ink props for styling (`bold`, `color`, `dimColor`)
 
 **Files following pattern:**
 
-- `/src/components/editor-canvas/editor-canvas.tsx`
-- `/src/components/toolbar/toolbar.tsx`
-- `/src/components/layer-panel/layer-panel.tsx`
-  (45 more files...)
+- `src/cli/components/wizard/step-build.tsx`
+- `src/cli/components/wizard/step-stack.tsx`
+- `src/cli/components/wizard/step-confirm.tsx`
+  (more files...)
 
 ## Props Pattern
 
@@ -580,75 +581,60 @@ export const Button = ({ variant = "primary", size = "sm", ...props }: ButtonPro
 
 ## Store Usage Pattern
 
-**Standard pattern:**
+**Standard pattern (Zustand selectors):**
 
 ```typescript
-const { editorStore, userStore } = useStore()
-
-// ✅ Observe specific properties
-<div>{editorStore.selectedTool}</div>
-
-// ✅ Call actions
-<button onClick={() => editorStore.setTool('brush')}>
+// ✅ Select specific state slices
+const domains = useWizardStore((s) => s.domains);
+const toggleSkill = useWizardStore((s) => s.toggleSkill);
 ```
 
 **Anti-patterns:**
 
 ```typescript
-// ❌ Don't destructure observables
-const { selectedTool } = editorStore; // Breaks reactivity!
+// ❌ Don't select the entire store (causes unnecessary re-renders)
+const store = useWizardStore();
 
-// ❌ Don't mutate directly
-editorStore.selectedTool = "brush"; // Use actions!
+// ❌ Don't mutate state directly outside set()
 ```
 
 ## Styling Pattern
 
-**SCSS Modules:**
+**Ink terminal components (no CSS/SCSS):**
 
 ```typescript
-import styles from './component.module.scss'
+import { Box, Text } from "ink";
+import { CLI_COLORS } from "../../consts.js";
 
-<div className={styles.container}>
-  <button className={styles.button}>
-</div>
+<Box flexDirection="column" gap={1}>
+  <Text bold color={CLI_COLORS.PRIMARY}>Title</Text>
+  <Text dimColor>Subtitle</Text>
+</Box>
 ```
 
-**Design tokens:**
-
-```scss
-.container {
-  padding: var(--space-md);
-  color: var(--color-text-default);
-}
-```
-
-**Files:** All components use SCSS Modules
+**Constants:** Use `CLI_COLORS.*` and `UI_SYMBOLS.*` from `src/cli/consts.ts`
 
 ## Testing Pattern
 
-**Co-located tests:**
+**Test framework: Vitest**
 
-```
-component.tsx
-component.test.tsx
-```
+**Test location:** `src/cli/lib/__tests__/` and co-located `*.test.ts` files
 
 **Pattern:**
 
 ```typescript
-import { render, screen } from "@testing-library/react";
-import { EditorCanvas } from "./editor-canvas";
+import { describe, it, expect, beforeEach } from "vitest";
+import { createMockSkill, createTempDir, cleanupTempDir } from "../__tests__/helpers.js";
 
-describe("EditorCanvas", () => {
-  it("renders canvas", () => {
-    render(<EditorCanvas />);
-    expect(screen.getByRole("img")).toBeInTheDocument();
+describe("feature-name", () => {
+  it("does expected behavior", () => {
+    const skill = createMockSkill("web-framework-react", "web/framework");
+    expect(skill.id).toBe("web-framework-react");
   });
 });
 ```
 
-**Coverage:** 78% of components have tests
+**Key:** Always use factory functions from `helpers.ts` for test data, never inline
 
 ````
 
@@ -837,7 +823,7 @@ EditorPage imports:
 - Commands: `src/cli/commands/*.ts`
 - Components: `src/cli/components/wizard/*.tsx`
 - Business logic: `src/cli/lib/**/*.ts`
-- Types: `src/cli/types/*.ts`, `src/cli/types-matrix.ts`
+- Types: `src/cli/types/*.ts`, `src/cli/types/matrix.ts`
 - Constants: `src/cli/consts.ts`
 - Test helpers: `src/cli/lib/__tests__/helpers.ts`
 
@@ -1177,23 +1163,23 @@ fi
 **✅ Good:**
 
 ```markdown
-## EditorStore
+## WizardStore
 
-**File:** `/src/stores/EditorStore.ts`
-**Pattern:** MobX with makeAutoObservable
+**File:** `src/cli/stores/wizard-store.ts`
+**Pattern:** Zustand create<State>() with selectors
 
 **Key Actions:**
 
-- `setTool(tool: Tool)` - Changes active tool (line 45)
-- `addLayer(layer: Layer)` - Adds layer to canvas (line 67)
+- `toggleSkill(skillId: SkillId)` - Toggles skill selection (line ~450)
+- `resetWizard()` - Resets wizard to initial state (line ~480)
 ```
 
 **❌ Bad:**
 
 ```markdown
-## EditorStore
+## WizardStore
 
-The editor store manages editor state. It uses MobX for reactivity and follows best practices.
+The wizard store manages wizard state. It uses Zustand for state management and follows best practices.
 ```
 
 **Why good example is better:**
@@ -1254,18 +1240,18 @@ We use kebab-case for component files. Most components follow this.
 
 **You DON'T handle:**
 
-- Writing code or implementing features -> web-developer, api-developer
+- Writing code or implementing features -> cli-developer, web-developer, api-developer
 - Creating specifications for new features -> web-pm
-- Reviewing code for quality issues -> web-reviewer, api-reviewer
-- Writing tests -> web-tester
+- Reviewing code for quality issues -> cli-reviewer, web-reviewer, api-reviewer
+- Writing tests -> cli-tester, web-tester
 - Creating tutorial-style documentation for humans
 - Writing README files or setup guides
 
 **When to defer:**
 
-- "Implement this feature" -> web-developer or api-developer
+- "Implement this feature" -> cli-developer, web-developer, or api-developer
 - "Create a spec for X" -> web-pm
-- "Review this code" -> web-reviewer or api-reviewer
-- "Write tests for X" -> web-tester
+- "Review this code" -> cli-reviewer, web-reviewer, or api-reviewer
+- "Write tests for X" -> cli-tester or web-tester
 
 </domain_scope>
