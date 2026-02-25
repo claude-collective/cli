@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.47.0] - 2026-02-25
+
+**Custom domain support, source validation, wizard improvements, dead code cleanup**
+
+- Domain field on skill metadata and agent YAML for custom marketplace support
+- `validate --source` command for source repository validation
+- Fix custom skill ID rejection in stacks validation
+- Remove redundant verifyHash and legacy slash-in-skill-ID code
+
+See [changelogs/0.47.0.md](./changelogs/0.47.0.md) for full details.
+
+---
+
 ## [0.46.0] - 2026-02-24
 
 **Custom extensibility, new commands, agent-mapping removal, wizard improvements**
