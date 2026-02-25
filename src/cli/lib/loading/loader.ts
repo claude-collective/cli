@@ -46,6 +46,7 @@ export async function loadAllAgents(projectRoot: string): Promise<Record<string,
         tools: config.tools,
         path: agentPath,
         sourceRoot: projectRoot,
+        ...(config.domain ? { domain: config.domain } : {}),
       };
 
       verbose(`Loaded agent: ${config.id} from ${file}`);
@@ -85,6 +86,7 @@ export async function loadProjectAgents(
         path: agentPath,
         sourceRoot: projectRoot,
         agentBaseDir: `${CLAUDE_SRC_DIR}/agents`, // Project agents are in .claude-src/agents/
+        ...(config.domain ? { domain: config.domain } : {}),
       };
 
       verbose(`Loaded project agent: ${config.id} from ${file}`);

@@ -87,6 +87,9 @@
     "outputFormat": {
       "type": "string"
     },
+    "domain": {
+      "type": "string"
+    },
     "custom": {
       "type": "boolean"
     }

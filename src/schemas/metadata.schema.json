@@ -102,6 +102,9 @@
       "required": ["skillId", "contentHash", "date"],
       "additionalProperties": false
     },
+    "domain": {
+      "type": "string"
+    },
     "custom": {
       "type": "boolean"
     }

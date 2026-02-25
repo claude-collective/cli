@@ -1,4 +1,4 @@
-import type { ModelName, PermissionMode } from "./matrix";
+import type { Domain, ModelName, PermissionMode } from "./matrix";
 import type { PluginSkillRef, Skill, SkillId } from "./skills";
 
 /** Valid agent names for built-in agents */
@@ -70,6 +70,8 @@ export type AgentDefinition = BaseAgentFields & {
   sourceRoot?: string;
   /** Base directory for agent files relative to sourceRoot (e.g., "src/agents" or ".claude-src/agents") */
   agentBaseDir?: string;
+  /** Explicit domain for wizard grouping (overrides inference from kebab prefix) */
+  domain?: Domain;
 };
 
 /** Fully resolved agent config (agent definition + stack config) used by the compiler */
@@ -82,6 +84,8 @@ export type AgentConfig = AgentDefinition & {
 /** Agent configuration from agent.yaml (co-located in each agent folder) */
 export type AgentYamlConfig = BaseAgentFields & {
   id: AgentName;
+  /** Explicit domain for wizard grouping (overrides inference from kebab prefix) */
+  domain?: Domain;
   /** True if this agent was created outside the CLI's built-in vocabulary */
   custom?: boolean;
 };

@@ -183,6 +183,8 @@ export type MergedSkillsMatrix = {
   displayNameToId: Partial<Record<SkillDisplayName, SkillId>>;
   /** Reverse map: canonical skill ID to display name */
   displayNames: Partial<Record<SkillId, SkillDisplayName>>;
+  /** Explicit domain overrides for agents (from agent.yaml `domain` field) */
+  agentDomains?: Partial<Record<AgentName, Domain>>;
   /** ISO timestamp of when this matrix was generated */
   generatedAt: string;
 };
@@ -407,6 +409,8 @@ export type ExtractedSkillMetadata = {
   local?: boolean;
   /** Relative path from project root for local skills */
   localPath?: string;
+  /** Explicit domain assignment (overrides inference from category prefix) */
+  domain?: Domain;
   /** True if this skill was created outside the CLI's built-in vocabulary */
   custom?: boolean;
 };

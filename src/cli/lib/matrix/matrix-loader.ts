@@ -12,11 +12,13 @@ import {
   categoryPathSchema,
   skillDisplayNameSchema,
   skillIdSchema,
+  extensibleDomainSchema,
 } from "../schemas";
 import type {
   AlternativeGroup,
   ConflictRule,
   DiscourageRule,
+  Domain,
   ExtractedSkillMetadata,
   MergedSkillsMatrix,
   RecommendRule,
@@ -48,6 +50,7 @@ const rawMetadataSchema = z.object({
   requires: z.array(z.string() as z.ZodType<SkillId>).optional(),
   requiresSetup: z.array(z.string() as z.ZodType<SkillId>).optional(),
   providesSetupFor: z.array(z.string() as z.ZodType<SkillId>).optional(),
+  domain: extensibleDomainSchema.optional(),
   custom: z.boolean().optional(),
 });
 
@@ -163,6 +166,7 @@ export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkil
       requiresSetup: metadata.requiresSetup ?? [],
       providesSetupFor: metadata.providesSetupFor ?? [],
       path: `skills/${skillDir}/`,
+      ...(metadata.domain ? { domain: metadata.domain } : {}),
       ...(metadata.custom === true ? { custom: true } : {}),
     };
 

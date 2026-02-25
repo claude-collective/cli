@@ -10,6 +10,7 @@ import {
 import { LOCAL_DEFAULTS } from "../metadata-keys";
 import type {
   AgentName,
+  Domain,
   MergedSkillsMatrix,
   ResolvedSkill,
   ResolvedStack,
@@ -35,11 +36,12 @@ import {
   loadSkillsMatrix,
   mergeMatrixWithSkills,
 } from "../matrix";
+import { loadAllAgents } from "./loader";
 import {
   agentNameSchema,
+  DOMAIN_VALUES,
   extendSchemasWithCustomValues,
   isValidSkillId,
-  SKILL_ID_PATTERN,
   SUBCATEGORY_VALUES,
 } from "../schemas";
 import { fetchFromSource, fetchMarketplace } from "./source-fetcher";
@@ -230,6 +232,20 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
     verbose(`Loaded ${stacks.length} stacks from ${stackSource}`);
   }
 
+  // Collect explicit domain overrides from agent.yaml files
+  const agents = await loadAllAgents(basePath);
+  const agentDomains: Partial<Record<AgentName, Domain>> = {};
+  for (const [agentId, agentDef] of typedEntries(agents)) {
+    if (agentDef.domain) {
+      // Boundary cast: agent IDs from YAML may not be in the AgentName union
+      agentDomains[agentId as AgentName] = agentDef.domain;
+    }
+  }
+  if (Object.keys(agentDomains).length > 0) {
+    mergedMatrix.agentDomains = agentDomains;
+    verbose(`Loaded ${Object.keys(agentDomains).length} agent domain override(s)`);
+  }
+
   return mergedMatrix;
 }
 
@@ -324,28 +340,39 @@ export function getMarketplaceLabel(sourceResult: SourceLoadResult): string | un
   return marketplace;
 }
 
-/** Extract a custom agent name from a single agent.yaml if it declares `custom: true`. */
-async function discoverCustomAgentName(
+/** Extract custom values from a single agent.yaml if it declares `custom: true`. */
+async function discoverCustomAgentValues(
   agentsDir: string,
   file: string,
   parseYaml: (content: string) => unknown,
-): Promise<string | undefined> {
+  builtinDomains: Set<string>,
+): Promise<{ agentName?: string; domain?: string }> {
   const content = await readFile(path.join(agentsDir, file));
   // Boundary cast: raw YAML parse for lightweight pre-scan
   const raw = parseYaml(content) as Record<string, unknown>;
-  if (raw?.custom !== true) return undefined;
-  if (typeof raw?.id !== "string") return undefined;
-  if (agentNameSchema.safeParse(raw.id).success) return undefined;
-  return raw.id;
+  if (raw?.custom !== true) return {};
+
+  const result: { agentName?: string; domain?: string } = {};
+
+  if (typeof raw?.id === "string" && !agentNameSchema.safeParse(raw.id).success) {
+    result.agentName = raw.id;
+  }
+
+  if (typeof raw?.domain === "string" && !builtinDomains.has(raw.domain)) {
+    result.domain = raw.domain;
+  }
+
+  return result;
 }
 
-/** Extract custom skill ID and category from a single skill directory if it declares `custom: true`. */
+/** Extract custom skill ID, category, and domain from a single skill directory if it declares `custom: true`. */
 async function discoverCustomSkillValues(
   skillsDir: string,
   file: string,
   parseYaml: (content: string) => unknown,
   builtinSubcategories: Set<string>,
-): Promise<{ skillId?: string; category?: string }> {
+  builtinDomains: Set<string>,
+): Promise<{ skillId?: string; category?: string; domain?: string }> {
   const content = await readFile(path.join(skillsDir, file));
   const frontmatter = parseFrontmatter(content);
   if (!frontmatter) return {};
@@ -360,15 +387,18 @@ async function discoverCustomSkillValues(
   const metadataRaw = parseYaml(metadataContent) as Record<string, unknown>;
   if (metadataRaw?.custom !== true) return {};
 
-  const result: { skillId?: string; category?: string } = {};
+  const result: { skillId?: string; category?: string; domain?: string } = {};
 
-  if (!SKILL_ID_PATTERN.test(skillId)) {
-    result.skillId = skillId;
-  }
+  result.skillId = skillId;
 
   const category = metadataRaw.category;
   if (typeof category === "string" && !builtinSubcategories.has(category)) {
     result.category = category;
+  }
+
+  const domain = metadataRaw.domain;
+  if (typeof domain === "string" && !builtinDomains.has(domain)) {
+    result.domain = domain;
   }
 
   return result;
@@ -380,6 +410,7 @@ async function discoverCustomSkillValues(
  *
  * Discovers:
  * - Custom agent names from agents with `custom: true` in agent.yaml
+ * - Custom domains from `domain` field of agents/skills with `custom: true`
  * - Custom skill IDs from skills with `custom: true` in metadata.yaml
  * - Custom categories from `category` field of skills with `custom: true`
  */
@@ -387,25 +418,28 @@ async function discoverAndExtendFromSource(basePath: string): Promise<void> {
   const { parse: parseYaml } = await import("yaml");
 
   const builtinSubcategories = new Set<string>(SUBCATEGORY_VALUES);
+  const builtinDomains = new Set<string>(DOMAIN_VALUES);
   const customCategories: string[] = [];
+  const customDomains: string[] = [];
   const customAgentNames: string[] = [];
   const customSkillIds: string[] = [];
 
-  // Discover custom agent names (only from agents that declare custom: true)
+  // Discover custom agent names and domains (only from agents that declare custom: true)
   const agentsDir = path.join(basePath, DIRS.agents);
   if (await directoryExists(agentsDir)) {
     const agentFiles = await glob(`**/${STANDARD_FILES.AGENT_YAML}`, agentsDir);
     for (const file of agentFiles) {
       try {
-        const name = await discoverCustomAgentName(agentsDir, file, parseYaml);
-        if (name) customAgentNames.push(name);
+        const result = await discoverCustomAgentValues(agentsDir, file, parseYaml, builtinDomains);
+        if (result.agentName) customAgentNames.push(result.agentName);
+        if (result.domain) customDomains.push(result.domain);
       } catch {
         // Skip unreadable files — full loader will handle errors
       }
     }
   }
 
-  // Discover custom skill IDs and categories from skills that declare custom: true in metadata.yaml
+  // Discover custom skill IDs, categories, and domains from skills that declare custom: true in metadata.yaml
   const skillsDir = path.join(basePath, DIRS.skills);
   if (await directoryExists(skillsDir)) {
     const skillFiles = await glob(`**/${STANDARD_FILES.SKILL_MD}`, skillsDir);
@@ -416,9 +450,11 @@ async function discoverAndExtendFromSource(basePath: string): Promise<void> {
           file,
           parseYaml,
           builtinSubcategories,
+          builtinDomains,
         );
         if (result.skillId) customSkillIds.push(result.skillId);
         if (result.category) customCategories.push(result.category);
+        if (result.domain) customDomains.push(result.domain);
       } catch {
         // Skip unreadable files
       }
@@ -426,16 +462,20 @@ async function discoverAndExtendFromSource(basePath: string): Promise<void> {
   }
 
   const hasCustomValues =
-    customCategories.length > 0 || customAgentNames.length > 0 || customSkillIds.length > 0;
+    customCategories.length > 0 ||
+    customDomains.length > 0 ||
+    customAgentNames.length > 0 ||
+    customSkillIds.length > 0;
 
   if (hasCustomValues) {
     extendSchemasWithCustomValues({
       categories: unique(customCategories),
+      domains: unique(customDomains),
       agentNames: customAgentNames,
       skillIds: customSkillIds,
     });
     verbose(
-      `Extended schemas with ${unique(customCategories).length} custom categories, ${customAgentNames.length} custom agents, ${customSkillIds.length} custom skill IDs`,
+      `Extended schemas with ${unique(customCategories).length} custom categories, ${unique(customDomains).length} custom domains, ${customAgentNames.length} custom agents, ${customSkillIds.length} custom skill IDs`,
     );
   }
 }

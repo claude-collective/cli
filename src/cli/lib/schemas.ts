@@ -254,7 +254,7 @@ export const skillIdSchema = z
   ) as z.ZodType<SkillId>;
 
 /** Extensible schemas that accept both built-in values and custom values registered via extendSchemasWithCustomValues() */
-const extensibleDomainSchema = z
+export const extensibleDomainSchema = z
   .string()
   .refine(
     (val): val is Domain =>
@@ -393,9 +393,10 @@ export const skillMetadataLoaderSchema = z
     categoryExclusive: z.boolean().optional(),
     author: z.string().optional(),
     tags: z.array(z.string()).optional(),
-    requires: z.array(skillIdSchema).optional(),
-    compatibleWith: z.array(skillIdSchema).optional(),
-    conflictsWith: z.array(skillIdSchema).optional(),
+    requires: z.array(extensibleSkillIdSchema).optional(),
+    compatibleWith: z.array(extensibleSkillIdSchema).optional(),
+    conflictsWith: z.array(extensibleSkillIdSchema).optional(),
+    domain: extensibleDomainSchema.optional(),
     custom: z.boolean().optional(),
   })
   .passthrough()
@@ -443,12 +444,13 @@ export const agentYamlConfigSchema: z.ZodType<AgentYamlConfig> = z.object({
   permissionMode: permissionModeSchema.optional(),
   hooks: hooksRecordSchema.optional(),
   outputFormat: z.string().optional(),
+  domain: extensibleDomainSchema.optional(),
   custom: z.boolean().optional(),
 });
 
 // Defined before projectConfigLoaderSchema so it can reference stackAgentConfigSchema
 // Single skill assignment element: either a bare SkillId string or an object { id, preloaded? }
-const skillAssignmentElementSchema = z.union([skillIdSchema, skillAssignmentSchema]);
+const skillAssignmentElementSchema = z.union([extensibleSkillIdSchema, skillAssignmentSchema]);
 
 /**
  * Agent config within a stack: maps subcategory to skill assignment(s).
@@ -643,15 +645,17 @@ export const localRawMetadataSchema = z
     usageGuidance: z.string().optional(),
     tags: z.array(z.string()).optional(),
     /** Framework skills this is compatible with (for Build step filtering) */
-    compatibleWith: z.array(skillIdSchema).optional(),
+    compatibleWith: z.array(extensibleSkillIdSchema).optional(),
     /** Skills that cannot coexist with this one */
-    conflictsWith: z.array(skillIdSchema).optional(),
+    conflictsWith: z.array(extensibleSkillIdSchema).optional(),
     /** Skills that must be selected before this one */
-    requires: z.array(skillIdSchema).optional(),
+    requires: z.array(extensibleSkillIdSchema).optional(),
     /** Setup skills that must be installed first (e.g., env setup) */
-    requiresSetup: z.array(skillIdSchema).optional(),
+    requiresSetup: z.array(extensibleSkillIdSchema).optional(),
     /** Usage skills this setup skill configures (inverse relationship) */
-    providesSetupFor: z.array(skillIdSchema).optional(),
+    providesSetupFor: z.array(extensibleSkillIdSchema).optional(),
+    /** Explicit domain assignment (overrides inference from category prefix) */
+    domain: extensibleDomainSchema.optional(),
     /** True if this skill was created outside the CLI's built-in vocabulary */
     custom: z.boolean().optional(),
   })
@@ -859,6 +863,7 @@ export const agentYamlGenerationSchema = z
     permissionMode: permissionModeSchema.optional(),
     hooks: strictHooksRecordSchema.optional(),
     outputFormat: z.string().optional(),
+    domain: extensibleDomainSchema.optional(),
     custom: z.boolean().optional(),
   })
   .strict();
@@ -945,6 +950,8 @@ export const metadataValidationSchema = z
         date: z.string(),
       })
       .optional(),
+    /** Explicit domain assignment (overrides inference from category prefix) */
+    domain: extensibleDomainSchema.optional(),
     /** True if this skill was created outside the CLI's built-in vocabulary */
     custom: z.boolean().optional(),
   })

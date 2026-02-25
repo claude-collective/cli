@@ -1,4 +1,4 @@
-import type { ModelName, Subcategory } from "./matrix";
+import type { Domain, ModelName, Subcategory } from "./matrix";
 
 /** Prefix segments used in skill IDs, including non-domain prefixes (infra, meta, security) */
 export type SkillIdPrefix = "web" | "api" | "cli" | "mobile" | "infra" | "meta" | "security";
@@ -207,6 +207,8 @@ export type SkillMetadataConfig = {
   compatibleWith?: SkillId[];
   /** Skill IDs that cannot be selected alongside this skill (mutual exclusion) */
   conflictsWith?: SkillId[];
+  /** Explicit domain assignment (overrides inference from category prefix) */
+  domain?: Domain;
   /** True if this skill was created outside the CLI's built-in vocabulary */
   custom?: boolean;
 };
