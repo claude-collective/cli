@@ -2,6 +2,7 @@
 
 | ID    | Task                                                  | Status                       |
 | ----- | ----------------------------------------------------- | ---------------------------- |
+| D-53  | Rename `agent.yaml` to `metadata.yaml`                | Deferred                     |
 | D-34  | Replace agent-mappings.yaml with schema-backed file   | Deferred                     |
 | D-28  | Fix startup warning/error messages                    | Deferred                     |
 | D-43  | Eject templates as its own type, not a flag           | Done (see TODO-completed.md) |

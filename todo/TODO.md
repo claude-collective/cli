@@ -1,25 +1,25 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID   | Task                                                                                                                                                  | Status       |
-| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| D-50 | Eliminate skills-matrix.yaml: derive matrix dynamically from skill metadata (see detailed notes below)                                                | Pending      |
-| U13  | Run Documentor Agent on CLI Codebase                                                                                                                  | Pending      |
-| H18  | Tailor documentation-bible to CLI repo                                                                                                                | Phase 3 only |
-| D-46 | Custom extensibility (see [design doc](../docs/features/proposed/custom-extensibility-design.md))                                                     | In Progress  |
-| D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                                                       | Pending      |
-| D-33 | README: frame Agents Inc. as an AI coding framework                                                                                                   | Pending      |
-| D-44 | Update README and Notion page for `eject templates` type                                                                                              | Pending      |
-| D-47 | Eject a standalone compile function for sub-agent compilation                                                                                         | Pending      |
-| T-08 | Audit all test files: extract fixtures, use real IDs                                                                                                  | Pending      |
-| T-12 | End-to-end tests for custom marketplace workflow (`--source`, `outdated`, build→version→update cycle)                                                 | Pending      |
-| D-52 | Expand `new agent` command: add agent-summoner to skills repo so remote fetch works from any project                                                  | Pending      |
-| D-53 | Rename `agent.yaml` to `metadata.yaml` for consistency with skills                                                                                    | Pending      |
-| D-54 | Remove expert mode: make expert mode behavior the default, then remove the concept entirely                                                           | Pending      |
-| D-55 | Clean up dead code: remove `escapedSkillId` regex and `(@author)` stripping in `skill-fetcher.ts` — skill IDs are kebab-case only                     | Done         |
-| D-56 | Rename `agentDomains` → `agentDefinedDomains`, update "override" comments to "define/precedence" language                                             | Done         |
-| D-57 | Fix `TEST_SKILLS.antiOverEngineering`: remove unnecessary inline `path` override in config-generator test                                             | Done         |
-| D-58 | `orderDomains`: put custom domains first, then built-in domains                                                                                       | Done         |
-| D-59 | Unified scrolling across all wizard views — apply the same scrolling pattern (marginTop offset + `useMeasuredHeight`) to every step that can overflow | Pending      |
+| ID   | Task                                                                                                                                                  | Status      |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| D-50 | Eliminate skills-matrix.yaml: derive matrix dynamically from skill metadata (see detailed notes below)                                                | Pending     |
+| U13  | Run Documentor Agent on CLI Codebase                                                                                                                  | Done        |
+| H18  | Tailor documentation-bible to CLI repo                                                                                                                | Done        |
+| D-46 | Custom extensibility (see [design doc](../docs/features/proposed/custom-extensibility-design.md))                                                     | In Progress |
+| D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                                                       | Pending     |
+| D-33 | README: frame Agents Inc. as an AI coding framework                                                                                                   | Pending     |
+| D-44 | Update README and Notion page for `eject templates` type                                                                                              | Pending     |
+| D-47 | Eject a standalone compile function for sub-agent compilation                                                                                         | Pending     |
+| T-08 | Audit all test files: extract fixtures, use real IDs                                                                                                  | Pending     |
+| T-12 | End-to-end tests for custom marketplace workflow (`--source`, `outdated`, build→version→update cycle)                                                 | Pending     |
+| D-52 | Expand `new agent` command: add agent-summoner to skills repo so remote fetch works from any project                                                  | Pending     |
+| D-53 | Rename `agent.yaml` to `metadata.yaml` for consistency with skills                                                                                    | Deferred    |
+| D-54 | Remove expert mode: make expert mode behavior the default, then remove the concept entirely                                                           | Pending     |
+| D-55 | Clean up dead code: remove `escapedSkillId` regex and `(@author)` stripping in `skill-fetcher.ts` — skill IDs are kebab-case only                     | Done        |
+| D-56 | Rename `agentDomains` → `agentDefinedDomains`, update "override" comments to "define/precedence" language                                             | Done        |
+| D-57 | Fix `TEST_SKILLS.antiOverEngineering`: remove unnecessary inline `path` override in config-generator test                                             | Done        |
+| D-58 | `orderDomains`: put custom domains first, then built-in domains                                                                                       | Done        |
+| D-59 | Unified scrolling across all wizard views — apply the same scrolling pattern (marginTop offset + `useMeasuredHeight`) to every step that can overflow | Pending     |
 
 ---
 
