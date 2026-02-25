@@ -13,6 +13,7 @@ import {
 } from "../../consts.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 import { LOCAL_DEFAULTS } from "../../lib/metadata-keys.js";
+import { computeSkillFolderHash } from "../../lib/versioning.js";
 import type { CategoryPath } from "../../types/index.js";
 
 export function validateSkillName(name: string): string | null {
@@ -90,7 +91,12 @@ Add your patterns here.
 `;
 }
 
-export function generateMetadataYaml(name: string, author: string, category: CategoryPath): string {
+export function generateMetadataYaml(
+  name: string,
+  author: string,
+  category: CategoryPath,
+  contentHash: string,
+): string {
   const titleName = toTitleCase(name);
 
   return `custom: true
@@ -100,6 +106,7 @@ author: "${author}"
 cliName: ${titleName}
 cliDescription: Brief description
 usageGuidance: Use when <guidance>.
+contentHash: ${contentHash}
 tags:
   - local
   - custom
@@ -202,12 +209,14 @@ export default class NewSkill extends BaseCommand {
 
     try {
       const skillMdContent = generateSkillMd(args.name);
-      const metadataContent = generateMetadataYaml(args.name, author, category);
 
       const skillMdPath = path.join(skillDir, STANDARD_FILES.SKILL_MD);
       const metadataPath = path.join(skillDir, STANDARD_FILES.METADATA_YAML);
 
       await writeFile(skillMdPath, skillMdContent);
+
+      const contentHash = await computeSkillFolderHash(skillDir);
+      const metadataContent = generateMetadataYaml(args.name, author, category, contentHash);
       await writeFile(metadataPath, metadataContent);
 
       this.log("");

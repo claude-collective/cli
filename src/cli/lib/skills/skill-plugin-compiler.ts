@@ -141,6 +141,7 @@ export async function compileSkillPlugin(
   await ensureDir(skillsDir);
 
   const newHash = await computeSkillFolderHash(skillPath);
+
   const { version, contentHash } = await determinePluginVersion(
     newHash,
     pluginDir,

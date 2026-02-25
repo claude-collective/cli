@@ -22,6 +22,8 @@ import {
   STANDARD_FILES,
 } from "../../../../consts";
 
+const TEST_CONTENT_HASH = "abc1234";
+
 describe("validateSkillName", () => {
   it("should return null for valid kebab-case name", () => {
     expect(validateSkillName("my-skill")).toBeNull();
@@ -124,35 +126,40 @@ describe("generateSkillMd", () => {
 
 describe("generateMetadataYaml", () => {
   it("should contain category field", () => {
-    const content = generateMetadataYaml("my-skill", "@local", "local");
+    const content = generateMetadataYaml("my-skill", "@local", "local", TEST_CONTENT_HASH);
     expect(content).toContain("category: local");
   });
 
   it("should contain author field", () => {
-    const content = generateMetadataYaml("my-skill", "@vince", "local");
+    const content = generateMetadataYaml("my-skill", "@vince", "local", TEST_CONTENT_HASH);
     expect(content).toContain('author: "@vince"');
   });
 
   it("should contain title-cased cliName", () => {
-    const content = generateMetadataYaml("web-framework", "@local", "local");
+    const content = generateMetadataYaml("web-framework", "@local", "local", TEST_CONTENT_HASH);
     expect(content).toContain("cliName: Web Framework");
   });
 
   it("should use provided category", () => {
-    const content = generateMetadataYaml("my-skill", "@local", "web-framework");
+    const content = generateMetadataYaml("my-skill", "@local", "web-framework", TEST_CONTENT_HASH);
     expect(content).toContain("category: web-framework");
   });
 
   it("should always include custom: true", () => {
-    const content = generateMetadataYaml("my-skill", "@local", "local");
+    const content = generateMetadataYaml("my-skill", "@local", "local", TEST_CONTENT_HASH);
     expect(content).toContain("custom: true");
   });
 
   it("should place custom: true before category", () => {
-    const content = generateMetadataYaml("my-skill", "@local", "local");
+    const content = generateMetadataYaml("my-skill", "@local", "local", TEST_CONTENT_HASH);
     const customIndex = content.indexOf("custom: true");
     const categoryIndex = content.indexOf("category: local");
     expect(customIndex).toBeLessThan(categoryIndex);
+  });
+
+  it("should contain contentHash field", () => {
+    const content = generateMetadataYaml("my-skill", "@local", "local", TEST_CONTENT_HASH);
+    expect(content).toContain(`contentHash: ${TEST_CONTENT_HASH}`);
   });
 });
 
@@ -239,6 +246,7 @@ describe("new:skill command", () => {
       expect(content).toContain("custom: true");
       expect(content).toContain("category: dummy-category");
       expect(content).toContain("cliName: My Test Skill");
+      expect(content).toContain("contentHash:");
       expect(content).not.toContain("version:");
     });
   });

@@ -3,6 +3,7 @@ import { mkdir, writeFile, readFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
 import { DEFAULT_PLUGIN_NAME } from "../../../consts";
 import type { CategoryPath, SkillId } from "../../../types";
+import { computeSkillFolderHash } from "../../versioning";
 import {
   fileExists,
   directoryExists,
@@ -626,12 +627,14 @@ ${skill.description}
 `;
     await writeFile(path.join(skillDir, "SKILL.md"), content);
 
+    const contentHash = await computeSkillFolderHash(skillDir);
     const metadata = {
       author: skill.author,
       category: skill.category,
       tags: skill.tags ?? [],
       // cliName is required by extractAllSkills for source-based matrix loading
       cliName: skill.name,
+      contentHash,
     };
     await writeFile(path.join(skillDir, "metadata.yaml"), stringifyYaml(metadata));
   }
@@ -708,7 +711,7 @@ permissionMode: {{ agent.permissionMode }}
     );
 
     for (const skill of skills) {
-      const categoryPath = skill.category.replace(/\//g, path.sep);
+      const categoryPath = skill.category;
       const srcSkillDir = path.join(skillsDir, categoryPath, skill.name);
       const destSkillDir = path.join(pluginDir, "skills", skill.name);
       await mkdir(destSkillDir, { recursive: true });

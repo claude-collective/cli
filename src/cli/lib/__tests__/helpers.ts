@@ -7,6 +7,7 @@ import { run, Errors } from "@oclif/core";
 import ansis from "ansis";
 import { DEFAULT_BRANDING, DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../../consts";
 import { typedEntries } from "../../utils/typed-object";
+import { computeSkillFolderHash } from "../versioning";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -148,7 +149,7 @@ import type { ResolvedConfig } from "../configuration/config";
 import { useWizardStore } from "../../stores/wizard-store";
 import { resolveAlias, validateSelection } from "../matrix";
 import type { TestProjectConfig } from "./fixtures/create-test-source";
-import { getTestSkill } from "./test-fixtures";
+import { getTestSkill, TEST_SKILLS, TEST_CATEGORIES } from "./test-fixtures";
 
 export async function fileExists(filePath: string): Promise<boolean> {
   try {
@@ -439,7 +440,7 @@ This is a test skill.
 }
 
 function createMetadataContent(author = "@test"): string {
-  return `author: ${author}
+  return `author: "${author}"
 `;
 }
 
@@ -475,17 +476,20 @@ export async function writeTestSkill(
   );
 
   if (!options?.skipMetadata) {
+    const contentHash = await computeSkillFolderHash(skillDir);
     if (options?.extraMetadata) {
       const metadata = {
         author: options?.author ?? "@test",
-        ...options.extraMetadata,
+        contentHash,
+        ...options?.extraMetadata,
       };
       await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));
     } else {
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        createMetadataContent(options?.author),
-      );
+      const metadata = {
+        author: options?.author ?? "@test",
+        contentHash,
+      };
+      await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));
     }
   }
 
@@ -613,75 +617,38 @@ export function createComprehensiveMatrix(
     "api-database-drizzle": getTestSkill("drizzle", { category: "api-database" }),
     "web-testing-vitest": getTestSkill("vitest", { category: "web-testing" }),
     // Methodology skills (DEFAULT_PRESELECTED_SKILLS) — auto-injected by wizard
-    "meta-methodology-investigation-requirements": createMockSkill(
-      "meta-methodology-investigation-requirements",
-      "shared-methodology",
-      { description: "Never speculate - read actual code first", categoryExclusive: false },
-    ),
-    "meta-methodology-anti-over-engineering": createMockSkill(
-      "meta-methodology-anti-over-engineering",
-      "shared-methodology",
-      {
-        description: "Surgical implementation, not architectural innovation",
-        categoryExclusive: false,
-      },
-    ),
-    "meta-methodology-success-criteria": createMockSkill(
-      "meta-methodology-success-criteria",
-      "shared-methodology",
-      { description: "Explicit, measurable criteria defining done", categoryExclusive: false },
-    ),
-    "meta-methodology-write-verification": createMockSkill(
-      "meta-methodology-write-verification",
-      "shared-methodology",
-      { description: "Verify work was actually saved", categoryExclusive: false },
-    ),
-    "meta-methodology-improvement-protocol": createMockSkill(
-      "meta-methodology-improvement-protocol",
-      "shared-methodology",
-      { description: "Evidence-based self-improvement", categoryExclusive: false },
-    ),
-    "meta-methodology-context-management": createMockSkill(
-      "meta-methodology-context-management",
-      "shared-methodology",
-      { description: "Maintain project continuity across sessions", categoryExclusive: false },
-    ),
+    "meta-methodology-investigation-requirements": TEST_SKILLS.investigationRequirements,
+    "meta-methodology-anti-over-engineering": TEST_SKILLS.antiOverEngineering,
+    "meta-methodology-success-criteria": TEST_SKILLS.successCriteria,
+    "meta-methodology-write-verification": TEST_SKILLS.writeVerification,
+    "meta-methodology-improvement-protocol": TEST_SKILLS.improvementProtocol,
+    "meta-methodology-context-management": TEST_SKILLS.contextManagement,
   };
 
   const categories = {
-    "web-framework": createMockCategory("web-framework" as Subcategory, "Framework", {
+    "web-framework": {
+      ...TEST_CATEGORIES.framework,
       domain: "web" as Domain,
       exclusive: true,
       required: true,
-    }),
-    "web-client-state": createMockCategory("web-client-state" as Subcategory, "State", {
-      domain: "web" as Domain,
-      order: 1,
-    }),
-    "web-styling": createMockCategory("web-styling" as Subcategory, "Styling", {
-      domain: "web" as Domain,
-      order: 2,
-    }),
-    "api-api": createMockCategory("api-api" as Subcategory, "Backend Framework", {
-      domain: "api" as Domain,
-      exclusive: true,
-      required: true,
-    }),
-    "api-database": createMockCategory("api-database" as Subcategory, "Database", {
-      domain: "api" as Domain,
-      order: 1,
-    }),
-    "web-testing": createMockCategory("web-testing" as Subcategory, "Testing", {
+    },
+    "web-client-state": { ...TEST_CATEGORIES.clientState, domain: "web" as Domain, order: 1 },
+    "web-styling": { ...TEST_CATEGORIES.styling, domain: "web" as Domain, order: 2 },
+    "api-api": { ...TEST_CATEGORIES.api, domain: "api" as Domain, exclusive: true, required: true },
+    "api-database": { ...TEST_CATEGORIES.database, domain: "api" as Domain, order: 1 },
+    "web-testing": {
+      ...TEST_CATEGORIES.testing,
       domain: "shared" as Domain,
       exclusive: false,
       order: 10,
-    }),
-    "shared-methodology": createMockCategory("shared-methodology" as Subcategory, "Methodology", {
+    },
+    "shared-methodology": {
+      ...TEST_CATEGORIES.methodology,
       domain: "shared" as Domain,
       exclusive: false,
       required: false,
       order: 11,
-    }),
+    },
   } as Record<Subcategory, CategoryDefinition>;
 
   const suggestedStacks: ResolvedStack[] = [
@@ -777,24 +744,25 @@ export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): Merg
   return createMockMatrix(skills, {
     suggestedStacks,
     categories: {
-      "web-framework": createMockCategory("web-framework" as Subcategory, "Framework", {
+      "web-framework": {
+        ...TEST_CATEGORIES.framework,
         domain: "web" as Domain,
         exclusive: true,
         required: true,
-      }),
-      "web-client-state": createMockCategory("web-client-state" as Subcategory, "State", {
-        domain: "web" as Domain,
-        order: 1,
-      }),
-      "api-api": createMockCategory("api-api" as Subcategory, "Backend Framework", {
+      },
+      "web-client-state": { ...TEST_CATEGORIES.clientState, domain: "web" as Domain, order: 1 },
+      "api-api": {
+        ...TEST_CATEGORIES.api,
         domain: "api" as Domain,
         exclusive: true,
         required: true,
-      }),
-      "web-testing": createMockCategory("web-testing" as Subcategory, "Testing Framework", {
+      },
+      "web-testing": {
+        ...TEST_CATEGORIES.testing,
+        displayName: "Testing Framework",
         domain: "shared" as Domain,
         exclusive: false,
-      }),
+      },
     } as Record<Subcategory, CategoryDefinition>,
     ...overrides,
   });
