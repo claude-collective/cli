@@ -522,9 +522,12 @@ describe("source-loader integration", () => {
       sourceFlag: fixtureDirs.sourceDir,
     });
 
-    // Verify we loaded all fixture skills
-    const skillCount = Object.keys(result.matrix.skills).length;
-    expect(skillCount).toBe(FIXTURE_SKILL_COUNT);
+    // Verify all fixture skills are present (built-in matrix may add more)
+    const loadedSkillIds = Object.keys(result.matrix.skills);
+    expect(loadedSkillIds.length).toBeGreaterThanOrEqual(FIXTURE_SKILL_COUNT);
+    for (const skill of FIXTURE_SKILLS) {
+      expect(loadedSkillIds).toContain(skill.id);
+    }
 
     // Verify skills have required properties
     const firstSkill = Object.values(result.matrix.skills)[0]!;
