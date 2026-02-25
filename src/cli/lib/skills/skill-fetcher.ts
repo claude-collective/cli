@@ -77,18 +77,6 @@ async function findSkillPath(baseDir: string, skillId: SkillId): Promise<string 
     return null;
   }
 
-  if (skillId.includes("/")) {
-    const fullPath = path.join(baseDir, skillId);
-    if (await directoryExists(fullPath)) {
-      return fullPath;
-    }
-    const pathWithoutAuthor = skillId.replace(/\s*\(@\w+\)$/, "");
-    const pathWithoutAuthorFull = path.join(baseDir, pathWithoutAuthor);
-    if (await directoryExists(pathWithoutAuthorFull)) {
-      return pathWithoutAuthorFull;
-    }
-  }
-
   const escapedSkillId = skillId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const matches = await glob(`**/${escapedSkillId}*/SKILL.md`, baseDir);
 

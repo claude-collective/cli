@@ -291,7 +291,7 @@ export async function compileAllSkills(
   const uniqueSkills = uniqueBy(allSkills, (s) => s.id);
 
   for (const skill of uniqueSkills) {
-    const id = skill.id.replace("/", "-");
+    const id = skill.id;
     const outDir = path.join(ctx.outputDir, "skills", id);
     await ensureDir(outDir);
 

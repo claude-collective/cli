@@ -91,23 +91,6 @@ describe("skill-fetcher", () => {
       expect(copyCallDest).toBe(path.join(SKILLS_OUTPUT_DIR, "web/framework/web-framework-react"));
     });
 
-    it("should find a skill by direct path when skillId contains a slash", async () => {
-      const marketplace = createMarketplace();
-      const skillId = "web/framework-react" as SkillId;
-      const skillSourceDir = path.join(SOURCE_PATH, "src", "skills");
-
-      // findSkillPath: baseDir exists, then direct path exists
-      mockDirectoryExists
-        .mockResolvedValueOnce(true) // baseDir exists
-        .mockResolvedValueOnce(true); // fullPath (skillId with slash) exists
-
-      const result = await fetchSkills([skillId], marketplace, OUTPUT_DIR, SOURCE_PATH);
-
-      expect(result).toEqual([skillId]);
-      expect(mockCopy).toHaveBeenCalledTimes(1);
-      expect(mockCopy.mock.calls[0][0]).toBe(path.join(skillSourceDir, skillId));
-    });
-
     it("should throw when skill is not found", async () => {
       const marketplace = createMarketplace();
       const skillId = "web-nonexistent-skill" as SkillId;
@@ -242,25 +225,6 @@ describe("skill-fetcher", () => {
       const result = await fetchSkills([skillId], marketplace, OUTPUT_DIR, SOURCE_PATH);
 
       expect(result).toEqual([skillId]);
-    });
-
-    it("should try path without author suffix for slash-containing IDs", async () => {
-      const marketplace = createMarketplace();
-      // Skill ID with a slash and an author suffix pattern
-      const skillId = "web/react (@author)" as SkillId;
-      const skillSourceDir = path.join(SOURCE_PATH, "src", "skills");
-
-      mockDirectoryExists
-        .mockResolvedValueOnce(true) // baseDir exists
-        .mockResolvedValueOnce(false) // fullPath with author doesn't exist
-        .mockResolvedValueOnce(true); // path without author exists
-
-      const result = await fetchSkills([skillId], marketplace, OUTPUT_DIR, SOURCE_PATH);
-
-      expect(result).toEqual([skillId]);
-      expect(mockCopy).toHaveBeenCalledTimes(1);
-      // The copy source should be the path without the author suffix
-      expect(mockCopy.mock.calls[0][0]).toBe(path.join(skillSourceDir, "web/react"));
     });
 
     it("should try glob without author suffix when initial glob finds nothing", async () => {

@@ -1,7 +1,7 @@
 import os from "os";
 import path from "path";
 
-import { last, zip } from "remeda";
+import { zip } from "remeda";
 
 import { fileExists, readFileSafe, readFile, glob } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
@@ -86,11 +86,7 @@ export async function getPluginSkillIds(
 
   const dirToId = new Map<string, SkillId>();
   for (const [id] of typedEntries<SkillId, ResolvedSkill>(matrix.skills)) {
-    const idParts = id.split("/");
-    const lastPart = last(idParts);
-    if (lastPart) {
-      dirToId.set(lastPart.toLowerCase(), id);
-    }
+    dirToId.set(id.toLowerCase(), id);
   }
 
   const fileContents = await Promise.all(
