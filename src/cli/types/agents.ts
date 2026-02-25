@@ -70,7 +70,7 @@ export type AgentDefinition = BaseAgentFields & {
   sourceRoot?: string;
   /** Base directory for agent files relative to sourceRoot (e.g., "src/agents" or ".claude-src/agents") */
   agentBaseDir?: string;
-  /** Explicit domain for wizard grouping (overrides inference from kebab prefix) */
+  /** Explicit domain for wizard grouping (takes precedence over inference from kebab prefix) */
   domain?: Domain;
 };
 
@@ -84,7 +84,7 @@ export type AgentConfig = AgentDefinition & {
 /** Agent configuration from agent.yaml (co-located in each agent folder) */
 export type AgentYamlConfig = BaseAgentFields & {
   id: AgentName;
-  /** Explicit domain for wizard grouping (overrides inference from kebab prefix) */
+  /** Explicit domain for wizard grouping (takes precedence over inference from kebab prefix) */
   domain?: Domain;
   /** True if this agent was created outside the CLI's built-in vocabulary */
   custom?: boolean;

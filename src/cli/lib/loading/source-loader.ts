@@ -232,18 +232,18 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
     verbose(`Loaded ${stacks.length} stacks from ${stackSource}`);
   }
 
-  // Collect explicit domain overrides from agent.yaml files
+  // Collect explicit domain definitions from agent.yaml files
   const agents = await loadAllAgents(basePath);
-  const agentDomains: Partial<Record<AgentName, Domain>> = {};
+  const agentDefinedDomains: Partial<Record<AgentName, Domain>> = {};
   for (const [agentId, agentDef] of typedEntries(agents)) {
     if (agentDef.domain) {
       // Boundary cast: agent IDs from YAML may not be in the AgentName union
-      agentDomains[agentId as AgentName] = agentDef.domain;
+      agentDefinedDomains[agentId as AgentName] = agentDef.domain;
     }
   }
-  if (Object.keys(agentDomains).length > 0) {
-    mergedMatrix.agentDomains = agentDomains;
-    verbose(`Loaded ${Object.keys(agentDomains).length} agent domain override(s)`);
+  if (Object.keys(agentDefinedDomains).length > 0) {
+    mergedMatrix.agentDefinedDomains = agentDefinedDomains;
+    verbose(`Loaded ${Object.keys(agentDefinedDomains).length} agent domain definition(s)`);
   }
 
   return mergedMatrix;

@@ -128,7 +128,7 @@ function buildAgentGroups(matrix: MergedSkillsMatrix): AgentGroup[] {
   const customGroupMap = new Map<string, AgentItem[]>();
   for (const agentId of customAgentIds) {
     // Boundary cast: custom agent names from matrix stacks are not in the AgentName union
-    const explicitDomain = matrix.agentDomains?.[agentId as AgentName];
+    const explicitDomain = matrix.agentDefinedDomains?.[agentId as AgentName];
     const domainKey = explicitDomain ?? (agentId.split("-")[0] || "custom");
     const groupLabel = getDomainDisplayName(domainKey);
     if (!customGroupMap.has(groupLabel)) {
