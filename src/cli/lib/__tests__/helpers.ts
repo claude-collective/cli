@@ -126,8 +126,11 @@ export async function runCliCommand(args: string[]) {
 import type {
   AgentConfig,
   AgentDefinition,
+  AgentName,
   CategoryDefinition,
   CategoryPath,
+  CompileAgentConfig,
+  CompileConfig,
   CompileContext,
   Domain,
   DomainSelections,
@@ -136,13 +139,18 @@ import type {
   ResolvedSkill,
   ResolvedStack,
   Skill,
+  SkillAssignment,
   SkillDefinition,
   SkillDisplayName,
   SkillId,
+  SkillSource,
+  SkillSourceType,
+  SkillsMatrixConfig,
   Stack,
   StackAgentConfig,
   Subcategory,
 } from "../../types";
+import type { CompiledStackPlugin } from "../stacks/stack-plugin-compiler";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import type { SourceLoadResult } from "../loading/source-loader";
 import type { ResolvedConfig } from "../configuration/config";
@@ -310,6 +318,23 @@ export function createMockSkill(
     path: `skills/${category}/${id}/`,
     ...overrides,
   };
+}
+
+export function createMockSkillSource(
+  type: SkillSourceType,
+  overrides?: Partial<SkillSource>,
+): SkillSource {
+  const defaults: Record<SkillSourceType, SkillSource> = {
+    public: { name: "public", type: "public", installed: false },
+    private: {
+      name: "private-source",
+      type: "private",
+      url: "github:org/skills",
+      installed: false,
+    },
+    local: { name: "local", type: "local", installed: true, installMode: "local" },
+  };
+  return { ...defaults[type], ...overrides };
 }
 
 /**
@@ -905,6 +930,26 @@ export function createMockSkillDefinition(
   };
 }
 
+export function createMockMatrixConfig(
+  categories: Record<string, CategoryDefinition>,
+  overrides?: Partial<SkillsMatrixConfig>,
+): SkillsMatrixConfig {
+  return {
+    version: "1.0.0",
+    // Boundary cast: test callers may pass arbitrary category keys
+    categories: categories as SkillsMatrixConfig["categories"],
+    relationships: {
+      conflicts: [],
+      discourages: [],
+      recommends: [],
+      requires: [],
+      alternatives: [],
+    },
+    skillAliases: {},
+    ...overrides,
+  };
+}
+
 export function createMockStack(
   id: string,
   config: {
@@ -922,6 +967,36 @@ export function createMockStack(
     agents: config.agents as Stack["agents"],
     philosophy: config.philosophy,
   };
+}
+
+export function createMockCompileConfig(
+  agents: Record<string, CompileAgentConfig>,
+  overrides?: Partial<CompileConfig>,
+): CompileConfig {
+  return {
+    name: "Test Plugin",
+    description: "Test description",
+    agents,
+    ...overrides,
+  };
+}
+
+export function createMockCompiledStackPlugin(
+  overrides?: Partial<CompiledStackPlugin>,
+): CompiledStackPlugin {
+  return {
+    pluginPath: "/tmp/cc-stack-123456/test-stack",
+    manifest: { name: "test-stack", version: "1.0.0" },
+    stackName: "Test Stack",
+    agents: ["web-developer"] as AgentName[],
+    skillPlugins: ["web-framework-react"] as SkillId[],
+    hasHooks: false,
+    ...overrides,
+  };
+}
+
+export function createMockSkillAssignment(id: SkillId, preloaded = false): SkillAssignment {
+  return { id, preloaded };
 }
 
 export { getTestSkill, TEST_SKILLS, TEST_CATEGORIES, TEST_MATRICES } from "./test-fixtures";
