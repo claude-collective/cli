@@ -77,20 +77,10 @@ async function findSkillPath(baseDir: string, skillId: SkillId): Promise<string 
     return null;
   }
 
-  const escapedSkillId = skillId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const matches = await glob(`**/${escapedSkillId}*/SKILL.md`, baseDir);
+  const matches = await glob(`**/${skillId}*/SKILL.md`, baseDir);
 
   if (matches.length > 0) {
     return path.join(baseDir, path.dirname(matches[0]));
-  }
-
-  const skillNameWithoutAuthor = skillId.replace(/\s*\(@\w+\)$/, "");
-  if (skillNameWithoutAuthor !== skillId) {
-    const escapedName = skillNameWithoutAuthor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const matchesWithoutAuthor = await glob(`**/${escapedName}*/SKILL.md`, baseDir);
-    if (matchesWithoutAuthor.length > 0) {
-      return path.join(baseDir, path.dirname(matchesWithoutAuthor[0]));
-    }
   }
 
   return null;

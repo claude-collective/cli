@@ -80,7 +80,6 @@ describe("skill-fetcher", () => {
       expect(result).toEqual([skillId]);
 
       // Should have called glob to find the skill
-      // Dashes are NOT escaped by the regex - only special regex chars are
       expect(mockGlob).toHaveBeenCalledWith(`**/web-framework-react*/SKILL.md`, skillSourceDir);
 
       // Should have copied the skill
@@ -210,42 +209,6 @@ describe("skill-fetcher", () => {
       const result = await fetchSkills([skillId], marketplace, OUTPUT_DIR, SOURCE_PATH);
 
       expect(result).toEqual([skillId]);
-    });
-
-    it("should handle skill with author suffix in findSkillPath fallback", async () => {
-      const marketplace = createMarketplace();
-      // A skill ID that has an author-like suffix pattern - tested via glob fallback
-      const skillId: SkillId = "web-framework-react";
-
-      mockDirectoryExists.mockResolvedValueOnce(true); // baseDir exists
-      // First glob (exact) finds nothing, so no author suffix stripping happens
-      // (author suffix stripping only occurs for IDs matching /\s*\(@\w+\)$/)
-      mockGlob.mockResolvedValueOnce(["web/framework/web-framework-react/SKILL.md"]);
-
-      const result = await fetchSkills([skillId], marketplace, OUTPUT_DIR, SOURCE_PATH);
-
-      expect(result).toEqual([skillId]);
-    });
-
-    it("should try glob without author suffix when initial glob finds nothing", async () => {
-      const marketplace = createMarketplace();
-      // Skill ID with author suffix (non-slash form)
-      const skillId = "web-react (@author)" as SkillId;
-
-      mockDirectoryExists.mockResolvedValueOnce(true); // baseDir exists
-
-      // First glob (with author suffix, escaped) finds nothing
-      mockGlob.mockResolvedValueOnce([]);
-      // Second glob (without author suffix) finds the skill
-      mockGlob.mockResolvedValueOnce(["web/framework/web-react/SKILL.md"]);
-
-      const result = await fetchSkills([skillId], marketplace, OUTPUT_DIR, SOURCE_PATH);
-
-      expect(result).toEqual([skillId]);
-      expect(mockGlob).toHaveBeenCalledTimes(2);
-      // Second glob should be called without the author suffix
-      // Dashes are NOT escaped by the regex - only special regex chars are
-      expect(mockGlob.mock.calls[1][0]).toBe(`**/web-react*/SKILL.md`);
     });
 
     it("should handle marketplace plugin with repo source but no ref", async () => {
