@@ -2,11 +2,12 @@ import { describe, it, expect, vi } from "vitest";
 import { checkMatrixHealth } from "./matrix-health-check";
 import {
   createMockSkill,
+  createMockCategory,
   createMockMatrix,
   TEST_SKILLS,
   TEST_CATEGORIES,
 } from "../__tests__/helpers";
-import type { ResolvedSkill, SkillId, Subcategory } from "../../types";
+import type { SkillId, Subcategory } from "../../types";
 
 vi.mock("../../utils/logger");
 
@@ -16,29 +17,30 @@ import { warn } from "../../utils/logger";
 // Categories
 // ---------------------------------------------------------------------------
 
-const missingDomainFrameworkCategory = { ...TEST_CATEGORIES.framework, domain: undefined };
-const missingDomainStylingCategory = { ...TEST_CATEGORIES.styling, domain: undefined };
+const missingDomainFrameworkCategory = createMockCategory("web-framework", "Framework", {
+  domain: undefined,
+});
+const missingDomainStylingCategory = createMockCategory("web-styling", "Styling", {
+  domain: undefined,
+});
 
 // ---------------------------------------------------------------------------
 // Skills
 // ---------------------------------------------------------------------------
 
-const zustandSkill: ResolvedSkill = {
-  ...TEST_SKILLS.zustand,
+const zustandSkill = createMockSkill("web-state-zustand", "web-client-state", {
   recommends: [{ skillId: "web-framework-react", reason: "Works well with React" }],
-};
+});
 
 const orphanSkill = createMockSkill("web-framework-react", "nonexistent-category" as Subcategory);
 
-const unresolvedCompatibleWithSkill: ResolvedSkill = {
-  ...TEST_SKILLS.zustand,
+const unresolvedCompatibleWithSkill = createMockSkill("web-state-zustand", "web-client-state", {
   compatibleWith: ["web-framework-nonexistent" as SkillId],
-};
+});
 
-const unresolvedConflictsWithSkill: ResolvedSkill = {
-  ...TEST_SKILLS.react,
+const unresolvedConflictsWithSkill = createMockSkill("web-framework-react", "web-framework", {
   conflictsWith: [{ skillId: "web-framework-ghost" as SkillId, reason: "Conflicts" }],
-};
+});
 
 const unresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e", "web-testing", {
   requires: [
@@ -50,24 +52,21 @@ const unresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e", "web-
   ],
 });
 
-const unresolvedRequiresSetupSkill: ResolvedSkill = {
-  ...TEST_SKILLS.react,
+const unresolvedRequiresSetupSkill = createMockSkill("web-framework-react", "web-framework", {
   requiresSetup: ["infra-setup-missing" as SkillId],
-};
+});
 
 const unresolvedProvidesSetupForSkill = createMockSkill("infra-setup-env", "shared-tooling", {
   providesSetupFor: ["web-framework-missing" as SkillId],
 });
 
-const multipleUnresolvedRefsSkill: ResolvedSkill = {
-  ...TEST_SKILLS.zustand,
+const multipleUnresolvedRefsSkill = createMockSkill("web-state-zustand", "web-client-state", {
   compatibleWith: ["web-framework-missing" as SkillId],
   conflictsWith: [{ skillId: "web-state-ghost" as SkillId, reason: "Conflicts" }],
   requiresSetup: ["infra-setup-missing" as SkillId],
-};
+});
 
-const allRefsResolvedSkill: ResolvedSkill = {
-  ...TEST_SKILLS.zustand,
+const allRefsResolvedSkill = createMockSkill("web-state-zustand", "web-client-state", {
   conflictsWith: [{ skillId: "web-framework-react", reason: "Test" }],
   requires: [
     {
@@ -78,7 +77,7 @@ const allRefsResolvedSkill: ResolvedSkill = {
   ],
   requiresSetup: ["web-framework-react"],
   providesSetupFor: ["web-framework-react"],
-};
+});
 
 const partialUnresolvedRequiresSkill = createMockSkill("web-testing-cypress-e2e", "web-testing", {
   requires: [

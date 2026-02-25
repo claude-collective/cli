@@ -5,7 +5,6 @@ import {
   compileAgentForPlugin,
   compileStackPlugin,
   printStackCompilationSummary,
-  type CompiledStackPlugin,
 } from "./stack-plugin-compiler";
 import {
   createTestSource,
@@ -13,16 +12,13 @@ import {
   writeTestFile,
   type TestDirs,
 } from "../__tests__/fixtures/create-test-source";
+import {
+  createMockSkillEntry,
+  createMockAgentConfig,
+  createMockCompiledStackPlugin,
+} from "../__tests__/helpers";
 
-import type {
-  AgentConfig,
-  Skill,
-  SkillAssignment,
-  SkillId,
-  Stack,
-  StackAgentConfig,
-  Subcategory,
-} from "../../types";
+import type { SkillAssignment, SkillId, Stack, StackAgentConfig, Subcategory } from "../../types";
 
 describe("stack-plugin-compiler", () => {
   let dirs: TestDirs;
@@ -783,16 +779,11 @@ describe("stack-plugin-compiler", () => {
     it("should print stack name and path", () => {
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-      const result: CompiledStackPlugin = {
-        pluginPath: "/output/test-stack",
-        manifest: { name: "test-stack", version: "1.0.0" },
-        stackName: "Test Stack",
-        agents: ["web-developer"],
-        skillPlugins: ["web-framework-react"],
-        hasHooks: false,
-      };
-
-      printStackCompilationSummary(result);
+      printStackCompilationSummary(
+        createMockCompiledStackPlugin({
+          pluginPath: "/output/test-stack",
+        }),
+      );
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Test Stack"));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("/output/test-stack"));
@@ -803,16 +794,12 @@ describe("stack-plugin-compiler", () => {
     it("should print agent count and list", () => {
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-      const result: CompiledStackPlugin = {
-        pluginPath: "/output/test-stack",
-        manifest: { name: "test-stack" },
-        stackName: "Test Stack",
-        agents: ["web-developer", "api-developer", "web-tester"],
-        skillPlugins: [],
-        hasHooks: false,
-      };
-
-      printStackCompilationSummary(result);
+      printStackCompilationSummary(
+        createMockCompiledStackPlugin({
+          agents: ["web-developer", "api-developer", "web-tester"],
+          skillPlugins: [],
+        }),
+      );
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Agents: 3"));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("web-developer"));
@@ -825,16 +812,11 @@ describe("stack-plugin-compiler", () => {
     it("should print skill plugins when present", () => {
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-      const result: CompiledStackPlugin = {
-        pluginPath: "/output/test-stack",
-        manifest: { name: "test-stack" },
-        stackName: "Test Stack",
-        agents: ["web-developer"],
-        skillPlugins: ["web-framework-react", "web-state-zustand", "web-language-typescript"],
-        hasHooks: false,
-      };
-
-      printStackCompilationSummary(result);
+      printStackCompilationSummary(
+        createMockCompiledStackPlugin({
+          skillPlugins: ["web-framework-react", "web-state-zustand", "web-language-typescript"],
+        }),
+      );
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Skills included: 3"));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("web-framework-react"));
@@ -847,16 +829,11 @@ describe("stack-plugin-compiler", () => {
     it("should not print skill plugins section when empty", () => {
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-      const result: CompiledStackPlugin = {
-        pluginPath: "/output/test-stack",
-        manifest: { name: "test-stack" },
-        stackName: "Test Stack",
-        agents: ["web-developer"],
-        skillPlugins: [],
-        hasHooks: false,
-      };
-
-      printStackCompilationSummary(result);
+      printStackCompilationSummary(
+        createMockCompiledStackPlugin({
+          skillPlugins: [],
+        }),
+      );
 
       // Check that "Skills included" was never called
       const calls = consoleSpy.mock.calls.flat().join("\n");
@@ -868,16 +845,12 @@ describe("stack-plugin-compiler", () => {
     it("should print hooks status when enabled", () => {
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-      const result: CompiledStackPlugin = {
-        pluginPath: "/output/test-stack",
-        manifest: { name: "test-stack" },
-        stackName: "Test Stack",
-        agents: ["web-developer"],
-        skillPlugins: [],
-        hasHooks: true,
-      };
-
-      printStackCompilationSummary(result);
+      printStackCompilationSummary(
+        createMockCompiledStackPlugin({
+          skillPlugins: [],
+          hasHooks: true,
+        }),
+      );
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Hooks: enabled"));
 
@@ -887,16 +860,11 @@ describe("stack-plugin-compiler", () => {
     it("should not print hooks status when disabled", () => {
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-      const result: CompiledStackPlugin = {
-        pluginPath: "/output/test-stack",
-        manifest: { name: "test-stack" },
-        stackName: "Test Stack",
-        agents: ["web-developer"],
-        skillPlugins: [],
-        hasHooks: false,
-      };
-
-      printStackCompilationSummary(result);
+      printStackCompilationSummary(
+        createMockCompiledStackPlugin({
+          skillPlugins: [],
+        }),
+      );
 
       const calls = consoleSpy.mock.calls.flat().join("\n");
       expect(calls).not.toContain("Hooks:");
@@ -908,6 +876,30 @@ describe("stack-plugin-compiler", () => {
   describe("compileAgentForPlugin - plugin-aware skill references", () => {
     // Use the real agent.liquid template (includes dynamic skills section)
     const realTemplateDir = path.resolve(__dirname, "../../../../src/agents/_templates");
+
+    const PRELOADED_REACT_SKILL = createMockSkillEntry("web-framework-react", true, {
+      path: "src/skills/web/framework/react",
+      description: "React patterns",
+      usage: "when working with framework",
+    });
+
+    const DYNAMIC_VITEST_SKILL = createMockSkillEntry("web-testing-vitest", false, {
+      path: "src/skills/web/testing/vitest",
+      description: "Vitest testing",
+      usage: "when working with testing",
+    });
+
+    const AGENT_WITH_BOTH_SKILLS = createMockAgentConfig(
+      "web-developer",
+      [PRELOADED_REACT_SKILL, DYNAMIC_VITEST_SKILL],
+      { title: "Frontend Developer", description: "A frontend developer agent" },
+    );
+
+    const AGENT_WITH_PRELOADED_ONLY = createMockAgentConfig(
+      "web-developer",
+      [PRELOADED_REACT_SKILL],
+      { title: "Frontend Developer", description: "A frontend developer agent" },
+    );
 
     it("should emit pluginRef format in frontmatter when installMode is plugin", async () => {
       await createAgent("web-developer", {
@@ -926,33 +918,9 @@ describe("stack-plugin-compiler", () => {
         strictFilters: true,
       });
 
-      const preloadedSkill: Skill = {
-        id: "web-framework-react",
-        path: "src/skills/web/framework/react",
-        description: "React patterns",
-        usage: "when working with framework",
-        preloaded: true,
-      };
-
-      const dynamicSkill: Skill = {
-        id: "web-testing-vitest",
-        path: "src/skills/web/testing/vitest",
-        description: "Vitest testing",
-        usage: "when working with testing",
-        preloaded: false,
-      };
-
-      const agent: AgentConfig = {
-        name: "web-developer",
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
-        tools: ["Read", "Write"],
-        skills: [preloadedSkill, dynamicSkill],
-      };
-
       const output = await compileAgentForPlugin(
         "web-developer",
-        agent,
+        AGENT_WITH_BOTH_SKILLS,
         projectRoot,
         engine,
         "plugin",
@@ -981,33 +949,9 @@ describe("stack-plugin-compiler", () => {
         strictFilters: true,
       });
 
-      const preloadedSkill: Skill = {
-        id: "web-framework-react",
-        path: "src/skills/web/framework/react",
-        description: "React patterns",
-        usage: "when working with framework",
-        preloaded: true,
-      };
-
-      const dynamicSkill: Skill = {
-        id: "web-testing-vitest",
-        path: "src/skills/web/testing/vitest",
-        description: "Vitest testing",
-        usage: "when working with testing",
-        preloaded: false,
-      };
-
-      const agent: AgentConfig = {
-        name: "web-developer",
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
-        tools: ["Read", "Write"],
-        skills: [preloadedSkill, dynamicSkill],
-      };
-
       const output = await compileAgentForPlugin(
         "web-developer",
-        agent,
+        AGENT_WITH_BOTH_SKILLS,
         projectRoot,
         engine,
         "local",
@@ -1038,24 +982,13 @@ describe("stack-plugin-compiler", () => {
         strictFilters: true,
       });
 
-      const skill: Skill = {
-        id: "web-framework-react",
-        path: "src/skills/web/framework/react",
-        description: "React patterns",
-        usage: "when working with framework",
-        preloaded: true,
-      };
-
-      const agent: AgentConfig = {
-        name: "web-developer",
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
-        tools: ["Read", "Write"],
-        skills: [skill],
-      };
-
       // No installMode (default behavior)
-      const output = await compileAgentForPlugin("web-developer", agent, projectRoot, engine);
+      const output = await compileAgentForPlugin(
+        "web-developer",
+        AGENT_WITH_PRELOADED_ONLY,
+        projectRoot,
+        engine,
+      );
 
       // Should use bare IDs when no installMode specified
       expect(output).toContain("web-framework-react");

@@ -5,11 +5,23 @@ import { readFile as fsReadFile, stat } from "fs/promises";
 import type { AgentConfig, Skill } from "../types";
 import { DEFAULT_PLUGIN_NAME } from "../consts";
 import {
+  createCompileContext,
   createMockAgentConfig,
   createMockSkillEntry,
   createTempDir,
   cleanupTempDir,
 } from "./__tests__/helpers";
+import {
+  REACT_SKILL_PRELOADED,
+  REACT_SKILL,
+  VITEST_SINGLE_FILE_SKILL,
+  WEB_DEV_NO_SKILLS,
+  API_DEV_NO_SKILLS,
+  WEB_DEV_WITH_REACT,
+  WEB_DEV_WITH_PRELOADED_REACT,
+  WEB_DEV_WITH_VITEST,
+  TWO_AGENTS_SHARED_SKILL,
+} from "./__tests__/mock-data";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -137,18 +149,79 @@ async function createProjectFromFixtures(): Promise<string> {
   return tempDir;
 }
 
-function createCompileContext(
-  projectRoot: string,
-  overrides?: Partial<import("../types").CompileContext>,
-): import("../types").CompileContext {
-  return {
-    stackId: "test-stack",
-    verbose: false,
+function contextForProject(projectRoot: string) {
+  return createCompileContext({
     projectRoot,
     outputDir: path.join(projectRoot, `.claude/plugins/${DEFAULT_PLUGIN_NAME}`),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Error-path / test-specific skill entries (not shared)
+// ---------------------------------------------------------------------------
+
+const REACT_SKILL_WITH_PATH: Skill = {
+  ...createMockSkillEntry("web-framework-react"),
+  path: "skills/web-framework-react/",
+};
+const MISSING_SKILL: Skill = {
+  ...createMockSkillEntry("web-missing-skill"),
+  path: "skills/missing.md",
+};
+
+// ---------------------------------------------------------------------------
+// Error-path / test-specific agent maps (not shared)
+// ---------------------------------------------------------------------------
+
+const WEB_DEV_NONEXISTENT_PATH: Record<string, AgentConfig> = {
+  "web-developer": createMockAgentConfig("web-developer", [], {
+    path: "nonexistent-agent",
+  }),
+};
+
+const WEB_DEV_MISSING_SKILL: Record<string, AgentConfig> = {
+  "web-developer": createMockAgentConfig("web-developer", [MISSING_SKILL]),
+};
+
+const WEB_DEV_LIQUID_INJECTION: Record<string, AgentConfig> = {
+  "web-developer": createMockAgentConfig("web-developer", [], {
+    name: '{{ "INJECTED" }}',
+    title: "{% assign x = 1 %}Injected",
+  }),
+};
+
+// ---------------------------------------------------------------------------
+// CompiledAgentData factory (specific to sanitization tests)
+// ---------------------------------------------------------------------------
+
+function createTestAgentData(overrides?: Partial<AgentConfig>): CompiledAgentData {
+  const agent = createMockAgentConfig("test-agent", [], {
+    title: "Test Agent",
+    description: "A test agent",
     ...overrides,
+  });
+
+  return {
+    agent,
+    intro: "Test intro",
+    workflow: "Test workflow",
+    examples: "Test examples",
+    criticalRequirementsTop: "",
+    criticalReminders: "",
+    outputFormat: "",
+    skills: agent.skills,
+    preloadedSkills: [],
+    dynamicSkills: [],
+    preloadedSkillIds: [],
   };
 }
+
+// ---------------------------------------------------------------------------
+// Engine mock values
+// ---------------------------------------------------------------------------
+
+const COMPILED_OUTPUT = "---\nname: test\n---\n# Compiled output";
+const STUB_OUTPUT = "---\nname: test\n---\n# output";
 
 describe("compiler", () => {
   let projectDir: string;
@@ -164,37 +237,20 @@ describe("compiler", () => {
   describe("compileAllAgents", () => {
     describe("output directory and file writing", () => {
       it("when compiling agents, should create the agents output directory", async () => {
-        const engine = {
-          renderFile: vi.fn().mockResolvedValue("---\nname: test\n---\n# Compiled output"),
-        };
+        const engine = { renderFile: vi.fn().mockResolvedValue(COMPILED_OUTPUT) };
 
-        const agents: Record<string, AgentConfig> = {
-          "web-developer": createMockAgentConfig("web-developer", [
-            createMockSkillEntry("web-framework-react", true),
-          ]),
-        };
-
-        const ctx = createCompileContext(projectDir);
-        await compileAllAgents(agents, ctx, engine as never);
+        const ctx = contextForProject(projectDir);
+        await compileAllAgents(WEB_DEV_WITH_PRELOADED_REACT, ctx, engine as never);
 
         const dirStat = await stat(path.join(ctx.outputDir, "agents"));
         expect(dirStat.isDirectory()).toBe(true);
       });
 
       it("when compiling agents, should write compiled agent to output file", async () => {
-        const COMPILED_OUTPUT = "---\nname: test\n---\n# Compiled output";
-        const engine = {
-          renderFile: vi.fn().mockResolvedValue(COMPILED_OUTPUT),
-        };
+        const engine = { renderFile: vi.fn().mockResolvedValue(COMPILED_OUTPUT) };
 
-        const agents: Record<string, AgentConfig> = {
-          "web-developer": createMockAgentConfig("web-developer", [
-            createMockSkillEntry("web-framework-react", true),
-          ]),
-        };
-
-        const ctx = createCompileContext(projectDir);
-        await compileAllAgents(agents, ctx, engine as never);
+        const ctx = contextForProject(projectDir);
+        await compileAllAgents(WEB_DEV_WITH_PRELOADED_REACT, ctx, engine as never);
 
         const outputPath = path.join(ctx.outputDir, "agents/web-developer.md");
         const content = await fsReadFile(outputPath, "utf-8");
@@ -204,16 +260,10 @@ describe("compiler", () => {
 
     describe("reading agent source files", () => {
       it("when compiling an agent, should pass agent data to template engine", async () => {
-        const engine = {
-          renderFile: vi.fn().mockResolvedValue("---\nname: test\n---\n# output"),
-        };
+        const engine = { renderFile: vi.fn().mockResolvedValue(STUB_OUTPUT) };
 
-        const agents: Record<string, AgentConfig> = {
-          "api-developer": createMockAgentConfig("api-developer"),
-        };
-
-        const ctx = createCompileContext(projectDir);
-        await compileAllAgents(agents, ctx, engine as never);
+        const ctx = contextForProject(projectDir);
+        await compileAllAgents(API_DEV_NO_SKILLS, ctx, engine as never);
 
         expect(engine.renderFile).toHaveBeenCalledWith(
           "agent",
@@ -225,16 +275,10 @@ describe("compiler", () => {
       });
 
       it("when compiling an agent, should read optional files like examples.md", async () => {
-        const engine = {
-          renderFile: vi.fn().mockResolvedValue("---\nname: test\n---\n# output"),
-        };
+        const engine = { renderFile: vi.fn().mockResolvedValue(STUB_OUTPUT) };
 
-        const agents: Record<string, AgentConfig> = {
-          "web-developer": createMockAgentConfig("web-developer"),
-        };
-
-        const ctx = createCompileContext(projectDir);
-        await compileAllAgents(agents, ctx, engine as never);
+        const ctx = contextForProject(projectDir);
+        await compileAllAgents(WEB_DEV_NO_SKILLS, ctx, engine as never);
 
         expect(engine.renderFile).toHaveBeenCalledWith(
           "agent",
@@ -248,14 +292,13 @@ describe("compiler", () => {
     describe("error handling", () => {
       it("when agent file read fails, should throw descriptive error with agent name", async () => {
         const engine = { renderFile: vi.fn() };
-        const agents: Record<string, AgentConfig> = {
-          "web-developer": createMockAgentConfig("web-developer", [], {
-            path: "nonexistent-agent",
-          }),
-        };
 
         await expect(
-          compileAllAgents(agents, createCompileContext(projectDir), engine as never),
+          compileAllAgents(
+            WEB_DEV_NONEXISTENT_PATH,
+            contextForProject(projectDir),
+            engine as never,
+          ),
         ).rejects.toThrow(/Failed to compile agent 'web-developer'/);
       });
     });
@@ -268,15 +311,9 @@ describe("compiler", () => {
           warnings: ["Missing <role> section"],
         });
 
-        const engine = {
-          renderFile: vi.fn().mockResolvedValue("---\nname: test\n---\n# output"),
-        };
+        const engine = { renderFile: vi.fn().mockResolvedValue(STUB_OUTPUT) };
 
-        const agents: Record<string, AgentConfig> = {
-          "web-developer": createMockAgentConfig("web-developer"),
-        };
-
-        await compileAllAgents(agents, createCompileContext(projectDir), engine as never);
+        await compileAllAgents(WEB_DEV_NO_SKILLS, contextForProject(projectDir), engine as never);
 
         expect(validateCompiledAgent).toHaveBeenCalled();
       });
@@ -288,15 +325,9 @@ describe("compiler", () => {
           warnings: ["Missing <role> section"],
         });
 
-        const engine = {
-          renderFile: vi.fn().mockResolvedValue("---\nname: test\n---\n# output"),
-        };
+        const engine = { renderFile: vi.fn().mockResolvedValue(STUB_OUTPUT) };
 
-        const agents: Record<string, AgentConfig> = {
-          "web-developer": createMockAgentConfig("web-developer"),
-        };
-
-        await compileAllAgents(agents, createCompileContext(projectDir), engine as never);
+        await compileAllAgents(WEB_DEV_NO_SKILLS, contextForProject(projectDir), engine as never);
 
         const { printOutputValidationResult } = await import("./output-validator");
         expect(printOutputValidationResult).toHaveBeenCalledWith(
@@ -309,15 +340,8 @@ describe("compiler", () => {
 
   describe("compileAllSkills", () => {
     it("copies folder-based skills with SKILL.md", async () => {
-      const agents: Record<string, AgentConfig> = {
-        "web-developer": createMockAgentConfig("web-developer", [
-          createMockSkillEntry("web-framework-react"),
-        ]),
-      };
-      agents["web-developer"].skills[0].path = "skills/web-framework-react/";
-
-      const ctx = createCompileContext(projectDir);
-      await compileAllSkills(agents, ctx);
+      const ctx = contextForProject(projectDir);
+      await compileAllSkills(WEB_DEV_WITH_REACT, ctx);
 
       const outputPath = path.join(ctx.outputDir, "skills/web-framework-react/SKILL.md");
       const content = await fsReadFile(outputPath, "utf-8");
@@ -325,14 +349,8 @@ describe("compiler", () => {
     });
 
     it("copies single-file skills", async () => {
-      const agents: Record<string, AgentConfig> = {
-        "web-developer": createMockAgentConfig("web-developer", [
-          { ...createMockSkillEntry("web-testing-vitest"), path: "skills/web-testing-vitest.md" },
-        ]),
-      };
-
-      const ctx = createCompileContext(projectDir);
-      await compileAllSkills(agents, ctx);
+      const ctx = contextForProject(projectDir);
+      await compileAllSkills(WEB_DEV_WITH_VITEST, ctx);
 
       const outputPath = path.join(ctx.outputDir, "skills/web-testing-vitest/SKILL.md");
       const content = await fsReadFile(outputPath, "utf-8");
@@ -340,18 +358,8 @@ describe("compiler", () => {
     });
 
     it("deduplicates skills across agents", async () => {
-      const sharedSkill: Skill = {
-        ...createMockSkillEntry("web-framework-react"),
-        path: "skills/web-framework-react/",
-      };
-
-      const agents: Record<string, AgentConfig> = {
-        "web-developer": createMockAgentConfig("web-developer", [sharedSkill]),
-        "web-reviewer": createMockAgentConfig("web-reviewer", [sharedSkill]),
-      };
-
-      const ctx = createCompileContext(projectDir);
-      await compileAllSkills(agents, ctx);
+      const ctx = contextForProject(projectDir);
+      await compileAllSkills(TWO_AGENTS_SHARED_SKILL, ctx);
 
       const outputPath = path.join(ctx.outputDir, "skills/web-framework-react/SKILL.md");
       const content = await fsReadFile(outputPath, "utf-8");
@@ -359,21 +367,15 @@ describe("compiler", () => {
     });
 
     it("throws descriptive error when skill file is missing", async () => {
-      const agents: Record<string, AgentConfig> = {
-        "web-developer": createMockAgentConfig("web-developer", [
-          { ...createMockSkillEntry("web-missing-skill"), path: "skills/missing.md" },
-        ]),
-      };
-
-      await expect(compileAllSkills(agents, createCompileContext(projectDir))).rejects.toThrow(
-        /Failed to compile skill 'web-missing-skill'/,
-      );
+      await expect(
+        compileAllSkills(WEB_DEV_MISSING_SKILL, contextForProject(projectDir)),
+      ).rejects.toThrow(/Failed to compile skill 'web-missing-skill'/);
     });
   });
 
   describe("copyClaudeMdToOutput", () => {
     it("reads resolved CLAUDE.md and writes to output", async () => {
-      const ctx = createCompileContext(projectDir);
+      const ctx = contextForProject(projectDir);
       await copyClaudeMdToOutput(ctx);
 
       const outputPath = path.join(ctx.outputDir, "../CLAUDE.md");
@@ -386,7 +388,7 @@ describe("compiler", () => {
     it("skips when commands directory does not exist", async () => {
       const emptyProject = await createTempDir("compiler-no-cmds-");
 
-      const ctx = createCompileContext(emptyProject);
+      const ctx = contextForProject(emptyProject);
       await compileAllCommands(ctx);
 
       await expect(stat(path.join(ctx.outputDir, "commands"))).rejects.toThrow();
@@ -395,7 +397,7 @@ describe("compiler", () => {
     });
 
     it("copies command files to output directory", async () => {
-      const ctx = createCompileContext(projectDir);
+      const ctx = contextForProject(projectDir);
       await compileAllCommands(ctx);
 
       const deployContent = await fsReadFile(
@@ -413,7 +415,7 @@ describe("compiler", () => {
       const { mkdir } = await import("fs/promises");
       await mkdir(path.join(emptyProject, "src/commands"), { recursive: true });
 
-      const ctx = createCompileContext(emptyProject);
+      const ctx = contextForProject(emptyProject);
       await compileAllCommands(ctx);
 
       await expect(stat(path.join(ctx.outputDir, "commands"))).rejects.toThrow();
@@ -429,7 +431,7 @@ describe("compiler", () => {
       await fsWrite(path.join(cmdDir, "deploy.md"), "content");
       await chmod(path.join(cmdDir, "deploy.md"), 0o000);
 
-      await expect(compileAllCommands(createCompileContext(brokenProject))).rejects.toThrow(
+      await expect(compileAllCommands(contextForProject(brokenProject))).rejects.toThrow(
         /Failed to compile command 'deploy\.md'/,
       );
 
@@ -522,31 +524,6 @@ describe("compiler", () => {
   });
 
   describe("sanitizeCompiledAgentData", () => {
-    function createTestAgentData(overrides?: Partial<AgentConfig>): CompiledAgentData {
-      const agent: AgentConfig = {
-        name: "test-agent",
-        title: "Test Agent",
-        description: "A test agent",
-        tools: ["Read", "Write"],
-        skills: [],
-        ...overrides,
-      };
-
-      return {
-        agent,
-        intro: "Test intro",
-        workflow: "Test workflow",
-        examples: "Test examples",
-        criticalRequirementsTop: "",
-        criticalReminders: "",
-        outputFormat: "",
-        skills: agent.skills,
-        preloadedSkills: [],
-        dynamicSkills: [],
-        preloadedSkillIds: [],
-      };
-    }
-
     it("passes through clean data unchanged", () => {
       const data = createTestAgentData();
       const result = sanitizeCompiledAgentData(data);
@@ -640,19 +617,10 @@ describe("compiler", () => {
 
   describe("template injection prevention (integration)", () => {
     it("when agent.name contains Liquid syntax, should not execute it", async () => {
-      const engine = {
-        renderFile: vi.fn().mockResolvedValue("---\nname: test\n---\n# output"),
-      };
+      const engine = { renderFile: vi.fn().mockResolvedValue(STUB_OUTPUT) };
 
-      const agents: Record<string, AgentConfig> = {
-        "web-developer": createMockAgentConfig("web-developer", [], {
-          name: '{{ "INJECTED" }}',
-          title: "{% assign x = 1 %}Injected",
-        }),
-      };
-
-      const ctx = createCompileContext(projectDir);
-      await compileAllAgents(agents, ctx, engine as never);
+      const ctx = contextForProject(projectDir);
+      await compileAllAgents(WEB_DEV_LIQUID_INJECTION, ctx, engine as never);
 
       const renderCall = engine.renderFile.mock.calls[0][1] as CompiledAgentData;
       expect(renderCall.agent.name).not.toContain("{{");

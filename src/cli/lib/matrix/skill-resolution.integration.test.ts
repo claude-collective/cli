@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readFile } from "fs/promises";
 import { parse as parseYaml } from "yaml";
-import { mapToObj } from "remeda";
+import { groupBy, mapToObj, mapValues } from "remeda";
 
 import {
   createTestSource,
@@ -24,6 +24,7 @@ import {
   buildWizardResult,
   buildSourceResult,
 } from "../__tests__/helpers";
+import { PUBLIC_SOURCE, ACME_SOURCE, INTERNAL_SOURCE } from "../__tests__/mock-data";
 import type {
   CategoryDefinition,
   CategoryPath,
@@ -40,9 +41,11 @@ import type {
 const TOTAL_SOURCE_COUNT = 3;
 const SELECTED_SKILL_COUNT = 10;
 
+// ── Local Helpers ────────────────────────────────────────────────────────────
+
 /**
  * Creates a ResolvedSkill with availableSources annotation for multi-source testing.
- * This simulates what multi-source-loader.ts does after tagging.
+ * Simulates what multi-source-loader.ts does after tagging.
  */
 function createMultiSourceSkill(
   id: SkillId,
@@ -58,29 +61,12 @@ function createMultiSourceSkill(
   });
 }
 
-function createPublicSource(installed = false): SkillSource {
-  return {
-    name: "public",
-    type: "public",
-    installed,
-    ...(installed ? { installMode: "local" as const } : {}),
-  };
-}
-
-function createPrivateSource(name: string, url: string, installed = false): SkillSource {
-  return {
-    name,
-    type: "private",
-    url,
-    installed,
-    ...(installed ? { installMode: "local" as const } : {}),
-  };
-}
-
 // ── Test Data: 15 skills across 3 sources ──────────────────────────────────────
 
-// Source 1: Public marketplace (5 skills)
-const PUBLIC_SKILLS: Array<{ id: SkillId; category: CategoryPath; description: string }> = [
+type SkillEntry = { id: SkillId; category: CategoryPath; description: string };
+type TaggedSkillEntry = SkillEntry & { source: SkillSource };
+
+const PUBLIC_SKILLS: SkillEntry[] = [
   { id: "web-framework-react", category: "web-framework", description: "React framework" },
   { id: "web-framework-vue", category: "web-framework", description: "Vue.js framework" },
   {
@@ -92,8 +78,7 @@ const PUBLIC_SKILLS: Array<{ id: SkillId; category: CategoryPath; description: s
   { id: "web-testing-vitest", category: "web-testing", description: "Vitest testing framework" },
 ];
 
-// Source 2: Private marketplace "acme-corp" (5 skills, 2 overlap with public)
-const ACME_SKILLS: Array<{ id: SkillId; category: CategoryPath; description: string }> = [
+const ACME_SKILLS: SkillEntry[] = [
   { id: "web-framework-react", category: "web-framework", description: "React (acme custom fork)" },
   { id: "api-framework-hono", category: "api-api", description: "Hono web framework" },
   { id: "api-database-drizzle", category: "api-database", description: "Drizzle ORM" },
@@ -101,8 +86,7 @@ const ACME_SKILLS: Array<{ id: SkillId; category: CategoryPath; description: str
   { id: "web-testing-vitest", category: "web-testing", description: "Vitest (acme custom)" },
 ];
 
-// Source 3: Private marketplace "internal" (5 skills, 1 overlap with public)
-const INTERNAL_SKILLS: Array<{ id: SkillId; category: CategoryPath; description: string }> = [
+const INTERNAL_SKILLS: SkillEntry[] = [
   { id: "web-framework-react", category: "web-framework", description: "React (internal build)" },
   { id: "web-animation-framer", category: "web-animation", description: "Framer Motion" },
   {
@@ -118,6 +102,25 @@ const INTERNAL_SKILLS: Array<{ id: SkillId; category: CategoryPath; description:
   },
 ];
 
+// ── Category Fixtures ────────────────────────────────────────────────────────
+
+const MULTI_SOURCE_CATEGORIES = {
+  "web-framework": createMockCategory("web-framework", "Framework", {
+    exclusive: true,
+    required: true,
+  }),
+  "web-client-state": createMockCategory("web-client-state", "State", { order: 1 }),
+  "web-styling": createMockCategory("web-styling", "Styling", { order: 2 }),
+  "web-testing": createMockCategory("web-testing", "Testing", { exclusive: false, order: 3 }),
+  "api-api": createMockCategory("api-api", "Backend Framework", { exclusive: true, order: 4 }),
+  "api-database": createMockCategory("api-database", "Database", { order: 5 }),
+  "shared-security": createMockCategory("shared-security", "Security", { order: 6 }),
+  "web-animation": createMockCategory("web-animation", "Animation", { order: 7 }),
+  "shared-methodology": createMockCategory("shared-methodology", "Methodology", { order: 8 }),
+  "web-accessibility": createMockCategory("web-accessibility", "Accessibility", { order: 9 }),
+  "api-observability": createMockCategory("api-observability", "Observability", { order: 10 }),
+} as Partial<Record<Subcategory, CategoryDefinition>> as Record<Subcategory, CategoryDefinition>;
+
 // ── Matrix Builder ─────────────────────────────────────────────────────────────
 
 /**
@@ -125,76 +128,22 @@ const INTERNAL_SKILLS: Array<{ id: SkillId; category: CategoryPath; description:
  * Simulates the output of multi-source-loader after tagging all sources.
  */
 function buildMultiSourceMatrix(overrides?: Partial<MergedSkillsMatrix>): MergedSkillsMatrix {
-  const skills: Record<string, ResolvedSkill> = {};
-
-  // Collect unique skill IDs and their sources
-  const skillSources = new Map<SkillId, SkillSource[]>();
-
-  for (const s of PUBLIC_SKILLS) {
-    skillSources.set(s.id, [createPublicSource()]);
-  }
-
-  for (const s of ACME_SKILLS) {
-    const existing = skillSources.get(s.id) ?? [];
-    existing.push(createPrivateSource("acme-corp", "github:acme-corp/skills"));
-    skillSources.set(s.id, existing);
-  }
-
-  for (const s of INTERNAL_SKILLS) {
-    const existing = skillSources.get(s.id) ?? [];
-    existing.push(createPrivateSource("internal", "github:internal/skills"));
-    skillSources.set(s.id, existing);
-  }
-
-  // Build unique skills with all sources annotated
-  const allSkillDefs = [...PUBLIC_SKILLS, ...ACME_SKILLS, ...INTERNAL_SKILLS];
-  const seen = new Set<SkillId>();
-
-  for (const def of allSkillDefs) {
-    if (seen.has(def.id)) continue;
-    seen.add(def.id);
-
-    const sources = skillSources.get(def.id) ?? [];
-    skills[def.id] = createMultiSourceSkill(def.id, def.category, sources, {
-      description: def.description,
+  const taggedEntries: TaggedSkillEntry[] = [
+    ...PUBLIC_SKILLS.map((s) => ({ ...s, source: { ...PUBLIC_SOURCE } })),
+    ...ACME_SKILLS.map((s) => ({ ...s, source: { ...ACME_SOURCE } })),
+    ...INTERNAL_SKILLS.map((s) => ({ ...s, source: { ...INTERNAL_SOURCE } })),
+  ];
+  const grouped = groupBy(taggedEntries, (e) => e.id);
+  const skills = mapValues(grouped, (entries) => {
+    const first = entries[0]!;
+    const sources = entries.map((e) => e.source);
+    return createMultiSourceSkill(first.id, first.category, sources, {
+      description: first.description,
     });
-  }
-
-  const categories = {
-    "web-framework": createMockCategory("web-framework" as Subcategory, "Framework", {
-      exclusive: true,
-      required: true,
-    }),
-    "web-client-state": createMockCategory("web-client-state" as Subcategory, "State", {
-      order: 1,
-    }),
-    "web-styling": createMockCategory("web-styling" as Subcategory, "Styling", { order: 2 }),
-    "web-testing": createMockCategory("web-testing" as Subcategory, "Testing", {
-      exclusive: false,
-      order: 3,
-    }),
-    "api-api": createMockCategory("api-api" as Subcategory, "Backend Framework", {
-      exclusive: true,
-      order: 4,
-    }),
-    "api-database": createMockCategory("api-database" as Subcategory, "Database", { order: 5 }),
-    "shared-security": createMockCategory("shared-security" as Subcategory, "Security", {
-      order: 6,
-    }),
-    "web-animation": createMockCategory("web-animation" as Subcategory, "Animation", { order: 7 }),
-    "shared-methodology": createMockCategory("shared-methodology" as Subcategory, "Methodology", {
-      order: 8,
-    }),
-    "web-accessibility": createMockCategory("web-accessibility" as Subcategory, "Accessibility", {
-      order: 9,
-    }),
-    "api-observability": createMockCategory("api-observability" as Subcategory, "Observability", {
-      order: 10,
-    }),
-  } as Partial<Record<Subcategory, CategoryDefinition>> as Record<Subcategory, CategoryDefinition>;
+  });
 
   return createMockMatrix(skills, {
-    categories,
+    categories: MULTI_SOURCE_CATEGORIES,
     ...overrides,
   });
 }

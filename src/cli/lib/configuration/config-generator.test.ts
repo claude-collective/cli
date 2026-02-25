@@ -1,24 +1,27 @@
 import { describe, it, expect } from "vitest";
 import { generateProjectConfigFromSkills, buildStackProperty } from "./config-generator";
-import type {
-  AgentName,
-  CategoryPath,
-  SkillAssignment,
-  SkillId,
-  Stack,
-  StackAgentConfig,
-} from "../../types";
+import type { AgentName, SkillAssignment, SkillId } from "../../types";
+import { createMockSkillAssignment, TEST_MATRICES } from "../__tests__/helpers";
 import {
-  createMockSkill,
-  createMockMatrix,
-  TEST_SKILLS,
-  TEST_MATRICES,
-} from "../__tests__/helpers";
+  FULLSTACK_STACK,
+  EMPTY_AGENTS_STACK,
+  PRELOADED_FLAG_STACK,
+  SHARED_SUBCATEGORY_STACK,
+  STACK_WITH_EMPTY_AGENTS,
+  SINGLE_AGENT_STACK,
+  MULTI_METHODOLOGY_STACK,
+  STACK_WITH_EMPTY_SUBCATEGORY,
+  MANY_SUBCATEGORIES_STACK,
+  LOCAL_SKILL_STACK,
+  LOCAL_SKILL_MATRIX,
+  MIXED_LOCAL_REMOTE_MATRIX,
+  METHODOLOGY_MATRIX,
+  VITEST_MATRIX,
+} from "../__tests__/mock-data";
 
 /** Shorthand: creates a SkillAssignment from an id and optional preloaded flag */
-function sa(id: SkillId, preloaded = false): SkillAssignment {
-  return { id, preloaded };
-}
+const sa = (id: SkillId, preloaded = false): SkillAssignment =>
+  createMockSkillAssignment(id, preloaded);
 
 describe("config-generator", () => {
   describe("generateProjectConfigFromSkills", () => {
@@ -89,16 +92,13 @@ describe("config-generator", () => {
 
     it("skips local skills in stack (no subcategory)", () => {
       const selectedAgents: AgentName[] = ["web-developer"];
-      const matrix = createMockMatrix({
-        "web-local-skill": createMockSkill("web-local-skill", "local", {
-          local: true,
-          localPath: ".claude/skills/my-local-skill/",
-        }),
-      });
 
-      const config = generateProjectConfigFromSkills("my-project", ["web-local-skill"], matrix, {
-        selectedAgents,
-      });
+      const config = generateProjectConfigFromSkills(
+        "my-project",
+        ["web-local-skill"],
+        LOCAL_SKILL_MATRIX,
+        { selectedAgents },
+      );
 
       // Local skills have category "local" which has no subcategory
       // Agents are still set from selectedAgents
@@ -113,18 +113,11 @@ describe("config-generator", () => {
 
     it("handles both remote and local skills", () => {
       const selectedAgents: AgentName[] = ["web-developer", "web-reviewer"];
-      const matrix = createMockMatrix({
-        ["web-framework-react"]: TEST_SKILLS.react,
-        "meta-company-patterns": createMockSkill("meta-company-patterns", "local", {
-          local: true,
-          localPath: ".claude/skills/company-patterns/",
-        }),
-      });
 
       const config = generateProjectConfigFromSkills(
         "my-project",
         ["web-framework-react", "meta-company-patterns"],
-        matrix,
+        MIXED_LOCAL_REMOTE_MATRIX,
         { selectedAgents },
       );
 
@@ -244,12 +237,11 @@ describe("config-generator", () => {
 
     it("handles bare subcategory category paths", () => {
       const selectedAgents: AgentName[] = ["web-tester"];
-      const vitestMatrix = createMockMatrix({ "web-testing-vitest": TEST_SKILLS.vitest });
 
       const config = generateProjectConfigFromSkills(
         "my-project",
         ["web-testing-vitest"],
-        vitestMatrix,
+        VITEST_MATRIX,
         { selectedAgents },
       );
 
@@ -384,14 +376,11 @@ describe("config-generator", () => {
 
     it("assigns methodology skills to all selectedAgents", () => {
       const selectedAgents: AgentName[] = ["web-developer", "api-developer"];
-      const matrix = createMockMatrix({
-        ["meta-methodology-anti-over-engineering"]: TEST_SKILLS.antiOverEngineering,
-      });
 
       const config = generateProjectConfigFromSkills(
         "my-project",
         ["meta-methodology-anti-over-engineering"],
-        matrix,
+        METHODOLOGY_MATRIX,
         { selectedAgents },
       );
 
@@ -408,23 +397,7 @@ describe("config-generator", () => {
 
   describe("buildStackProperty", () => {
     it("preserves full SkillAssignment[] from stack agents", () => {
-      const stack: Stack = {
-        id: "test-stack",
-        name: "Test Stack",
-        description: "Test stack for unit tests",
-        agents: {
-          "web-developer": {
-            "web-framework": [sa("web-framework-react", true)],
-            "web-styling": [sa("web-styling-scss-modules")],
-          },
-          "api-developer": {
-            "api-api": [sa("api-framework-hono", true)],
-            "api-database": [sa("api-database-drizzle", true)],
-          },
-        } as Partial<Record<AgentName, StackAgentConfig>>,
-      };
-
-      const result = buildStackProperty(stack);
+      const result = buildStackProperty(FULLSTACK_STACK);
 
       expect(result).toEqual({
         "web-developer": {
@@ -439,20 +412,7 @@ describe("config-generator", () => {
     });
 
     it("skips agents with empty config", () => {
-      const stack: Stack = {
-        id: "test-stack",
-        name: "Test Stack",
-        description: "Test stack",
-        agents: {
-          "web-developer": {
-            "web-framework": [sa("web-framework-react", true)],
-          },
-          "cli-tester": {},
-          "web-pm": {},
-        } as Partial<Record<AgentName, StackAgentConfig>>,
-      };
-
-      const result = buildStackProperty(stack);
+      const result = buildStackProperty(STACK_WITH_EMPTY_AGENTS);
 
       expect(result).toEqual({
         "web-developer": {
@@ -464,19 +424,7 @@ describe("config-generator", () => {
     });
 
     it("preserves single-element arrays", () => {
-      const stack: Stack = {
-        id: "test-stack",
-        name: "Test Stack",
-        description: "Test stack",
-        agents: {
-          "web-developer": {
-            "web-framework": [sa("web-framework-react", true)],
-            "web-styling": [sa("web-styling-tailwind")],
-          } as StackAgentConfig,
-        } as Partial<Record<AgentName, StackAgentConfig>>,
-      };
-
-      const result = buildStackProperty(stack);
+      const result = buildStackProperty(SINGLE_AGENT_STACK);
 
       expect(result).toEqual({
         "web-developer": {
@@ -487,36 +435,13 @@ describe("config-generator", () => {
     });
 
     it("handles stack with no agents", () => {
-      const stack: Stack = {
-        id: "empty-stack",
-        name: "Empty Stack",
-        description: "No agents",
-        agents: {} as Partial<Record<AgentName, StackAgentConfig>>,
-      };
-
-      const result = buildStackProperty(stack);
+      const result = buildStackProperty(EMPTY_AGENTS_STACK);
 
       expect(result).toEqual({});
     });
 
     it("preserves multi-element arrays with all assignments", () => {
-      const stack: Stack = {
-        id: "test-stack",
-        name: "Test Stack",
-        description: "Test stack",
-        agents: {
-          "pattern-scout": {
-            "shared-methodology": [
-              sa("meta-methodology-investigation-requirements", true),
-              sa("meta-methodology-anti-over-engineering", true),
-              sa("meta-methodology-success-criteria", true),
-            ],
-            "shared-research": [sa("meta-research-research-methodology", true)],
-          } as StackAgentConfig,
-        } as Partial<Record<AgentName, StackAgentConfig>>,
-      };
-
-      const result = buildStackProperty(stack);
+      const result = buildStackProperty(MULTI_METHODOLOGY_STACK);
 
       expect(result).toEqual({
         "pattern-scout": {
@@ -531,19 +456,7 @@ describe("config-generator", () => {
     });
 
     it("skips empty array subcategories", () => {
-      const stack: Stack = {
-        id: "test-stack",
-        name: "Test Stack",
-        description: "Test stack",
-        agents: {
-          "web-developer": {
-            "web-framework": [sa("web-framework-react", true)],
-            "shared-methodology": [],
-          } as StackAgentConfig,
-        } as Partial<Record<AgentName, StackAgentConfig>>,
-      };
-
-      const result = buildStackProperty(stack);
+      const result = buildStackProperty(STACK_WITH_EMPTY_SUBCATEGORY);
 
       expect(result).toEqual({
         "web-developer": {
@@ -554,19 +467,7 @@ describe("config-generator", () => {
     });
 
     it("preserves preloaded flag in assignments", () => {
-      const stack: Stack = {
-        id: "test-stack",
-        name: "Test Stack",
-        description: "Test stack",
-        agents: {
-          "web-developer": {
-            "web-framework": [sa("web-framework-react", true)],
-            "web-styling": [sa("web-styling-scss-modules", false)],
-          } as StackAgentConfig,
-        } as Partial<Record<AgentName, StackAgentConfig>>,
-      };
-
-      const result = buildStackProperty(stack);
+      const result = buildStackProperty(PRELOADED_FLAG_STACK);
 
       expect(result["web-developer"]?.["web-framework"]).toEqual([sa("web-framework-react", true)]);
       expect(result["web-developer"]?.["web-styling"]).toEqual([
@@ -575,42 +476,14 @@ describe("config-generator", () => {
     });
 
     it("handles multiple agents with identical subcategories", () => {
-      const stack: Stack = {
-        id: "test-stack",
-        name: "Test Stack",
-        description: "Test stack",
-        agents: {
-          "web-developer": {
-            "web-framework": [sa("web-framework-react")],
-          },
-          "web-reviewer": {
-            "web-framework": [sa("web-framework-react")],
-          },
-        } as Partial<Record<AgentName, StackAgentConfig>>,
-      };
-
-      const result = buildStackProperty(stack);
+      const result = buildStackProperty(SHARED_SUBCATEGORY_STACK);
 
       expect(result["web-developer"]?.["web-framework"]).toEqual([sa("web-framework-react")]);
       expect(result["web-reviewer"]?.["web-framework"]).toEqual([sa("web-framework-react")]);
     });
 
     it("handles single agent with many subcategories", () => {
-      const stack: Stack = {
-        id: "fullstack",
-        name: "Fullstack",
-        description: "Fullstack stack",
-        agents: {
-          "web-developer": {
-            "web-framework": [sa("web-framework-react")],
-            "web-styling": [sa("web-styling-scss-modules")],
-            "web-client-state": [sa("web-state-zustand")],
-            "web-testing": [sa("web-testing-vitest")],
-          } as StackAgentConfig,
-        } as Partial<Record<AgentName, StackAgentConfig>>,
-      };
-
-      const result = buildStackProperty(stack);
+      const result = buildStackProperty(MANY_SUBCATEGORIES_STACK);
 
       expect(result["web-developer"]).toEqual({
         "web-framework": [sa("web-framework-react")],
@@ -621,25 +494,7 @@ describe("config-generator", () => {
     });
 
     it("handles local skill assignments in stack", () => {
-      const stack: Stack = {
-        id: "test-stack",
-        name: "Test Stack",
-        description: "Test stack with local skill",
-        agents: {
-          "web-developer": {
-            "web-framework": [
-              {
-                id: "web-framework-react",
-                preloaded: true,
-                local: true,
-                path: ".claude/skills/react/",
-              },
-            ],
-          } as StackAgentConfig,
-        } as Partial<Record<AgentName, StackAgentConfig>>,
-      };
-
-      const result = buildStackProperty(stack);
+      const result = buildStackProperty(LOCAL_SKILL_STACK);
 
       expect(result["web-developer"]?.["web-framework"]?.[0]?.id).toBe("web-framework-react");
       expect(result["web-developer"]?.["web-framework"]?.[0]?.local).toBe(true);

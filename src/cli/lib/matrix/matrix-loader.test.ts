@@ -3,6 +3,20 @@ import { describe, it, expect, vi } from "vitest";
 import { readFile as realReadFile } from "fs/promises";
 import type { SkillsMatrixConfig } from "../../types";
 
+import { createMockMatrixConfig } from "../__tests__/helpers";
+import {
+  FRAMEWORK_CATEGORY,
+  MERGE_BASIC_MATRIX,
+  REACT_EXTRACTED,
+  REACT_EXTRACTED_BASIC,
+  VUE_EXTRACTED_BASIC,
+  CONFLICT_MATRIX,
+  ALTERNATIVES_MATRIX,
+  ZUSTAND_EXTRACTED,
+  JOTAI_EXTRACTED,
+  REQUIRES_MATRIX,
+} from "../__tests__/mock-data";
+
 // For extractAllSkills tests, we mock fs/loader. For loadSkillsMatrix, we
 // use the real fs to load the actual config file for the happy path.
 const mockReadFile = vi.fn();
@@ -29,6 +43,41 @@ import { warn } from "../../utils/logger";
 const FIXTURES_ROOT = path.resolve(__dirname, "../__tests__/fixtures");
 const VALID_MATRIX_PATH = path.join(FIXTURES_ROOT, "matrix/valid-matrix.yaml");
 const INVALID_MATRIX_PATH = path.join(FIXTURES_ROOT, "matrix/invalid-matrix.yaml");
+
+// ---------------------------------------------------------------------------
+// Top-level test data for mergeMatrixWithSkills tests
+// ---------------------------------------------------------------------------
+
+const EMPTY_MATRIX = createMockMatrixConfig({});
+
+const INVALID_ALIAS_MATRIX = createMockMatrixConfig(
+  {},
+  {
+    // Boundary cast: intentionally invalid alias key to test error handling
+    skillAliases: {
+      react: "web-framework-react",
+      "": "invalid-empty-key",
+    } as SkillsMatrixConfig["skillAliases"],
+  },
+);
+
+const UNRESOLVED_CONFLICT_MATRIX = createMockMatrixConfig(
+  {},
+  {
+    relationships: {
+      conflicts: [
+        {
+          skills: ["web-framework-react", "web-framework-nonexistent"],
+          reason: "Conflict with missing skill",
+        },
+      ],
+      discourages: [],
+      recommends: [],
+      requires: [],
+      alternatives: [],
+    },
+  },
+);
 
 async function loadFixture(fixturePath: string): Promise<string> {
   return realReadFile(fixturePath, "utf-8");
@@ -349,50 +398,7 @@ requires:
 
   describe("mergeMatrixWithSkills", () => {
     it("merges matrix config with extracted skills into resolved format", async () => {
-      const matrix: SkillsMatrixConfig = {
-        version: "1.0.0",
-        categories: {
-          "web-framework": {
-            id: "web-framework",
-            displayName: "Framework",
-            description: "Web frameworks",
-            exclusive: true,
-            required: false,
-            order: 1,
-          },
-        } as SkillsMatrixConfig["categories"],
-        relationships: {
-          conflicts: [],
-          discourages: [],
-          recommends: [],
-          requires: [],
-          alternatives: [],
-        },
-        skillAliases: {
-          react: "web-framework-react",
-        } as SkillsMatrixConfig["skillAliases"],
-      };
-
-      const skills = [
-        {
-          id: "web-framework-react" as const,
-          directoryPath: "web-framework-react",
-          description: "React framework",
-          usageGuidance: undefined,
-          category: "web-framework" as const,
-          categoryExclusive: true,
-          author: "@vince",
-          tags: ["react"],
-          compatibleWith: [],
-          conflictsWith: [],
-          requires: [],
-          requiresSetup: [],
-          providesSetupFor: [],
-          path: "skills/web-framework-react/",
-        },
-      ];
-
-      const merged = await mergeMatrixWithSkills(matrix, skills);
+      const merged = await mergeMatrixWithSkills(MERGE_BASIC_MATRIX, [REACT_EXTRACTED]);
 
       expect(merged.version).toBe("1.0.0");
       expect(merged.skills["web-framework-react"]).toBeDefined();
@@ -402,62 +408,11 @@ requires:
     });
 
     it("resolves conflict references using display name aliases", async () => {
-      const matrix: SkillsMatrixConfig = {
-        version: "1.0.0",
-        categories: {} as SkillsMatrixConfig["categories"],
-        relationships: {
-          conflicts: [
-            { skills: ["web-framework-react", "web-framework-vue"], reason: "Pick one framework" },
-          ],
-          discourages: [],
-          recommends: [],
-          requires: [],
-          alternatives: [],
-        },
-        skillAliases: {
-          react: "web-framework-react",
-          vue: "web-framework-vue",
-        } as SkillsMatrixConfig["skillAliases"],
-      };
+      const merged = await mergeMatrixWithSkills(CONFLICT_MATRIX, [
+        REACT_EXTRACTED_BASIC,
+        VUE_EXTRACTED_BASIC,
+      ]);
 
-      const skills = [
-        {
-          id: "web-framework-react" as const,
-          directoryPath: "web-framework-react",
-          description: "React",
-          usageGuidance: undefined,
-          category: "web-framework" as const,
-          categoryExclusive: true,
-          author: "@test",
-          tags: [],
-          compatibleWith: [],
-          conflictsWith: [],
-          requires: [],
-          requiresSetup: [],
-          providesSetupFor: [],
-          path: "skills/web-framework-react/",
-        },
-        {
-          id: "web-framework-vue" as const,
-          directoryPath: "web-framework-vue",
-          description: "Vue",
-          usageGuidance: undefined,
-          category: "web-framework" as const,
-          categoryExclusive: true,
-          author: "@test",
-          tags: [],
-          compatibleWith: [],
-          conflictsWith: [],
-          requires: [],
-          requiresSetup: [],
-          providesSetupFor: [],
-          path: "skills/web-framework-vue/",
-        },
-      ];
-
-      const merged = await mergeMatrixWithSkills(matrix, skills);
-
-      // React should have vue in its conflictsWith
       const reactSkill = merged.skills["web-framework-react"];
       expect(reactSkill).toBeDefined();
       expect(reactSkill!.conflictsWith).toEqual(
@@ -466,112 +421,24 @@ requires:
     });
 
     it("handles empty skills array", async () => {
-      const matrix: SkillsMatrixConfig = {
-        version: "1.0.0",
-        categories: {} as SkillsMatrixConfig["categories"],
-        relationships: {
-          conflicts: [],
-          discourages: [],
-          recommends: [],
-          requires: [],
-          alternatives: [],
-        },
-        skillAliases: {} as SkillsMatrixConfig["skillAliases"],
-      };
-
-      const merged = await mergeMatrixWithSkills(matrix, []);
+      const merged = await mergeMatrixWithSkills(EMPTY_MATRIX, []);
 
       expect(Object.keys(merged.skills)).toHaveLength(0);
       expect(merged.suggestedStacks).toEqual([]);
     });
 
     it("warns when skillAliases contains invalid entries", async () => {
-      const matrix: SkillsMatrixConfig = {
-        version: "1.0.0",
-        categories: {} as SkillsMatrixConfig["categories"],
-        relationships: {
-          conflicts: [],
-          discourages: [],
-          recommends: [],
-          requires: [],
-          alternatives: [],
-        },
-        // Invalid alias: value is not a valid SkillId format
-        skillAliases: {
-          react: "web-framework-react",
-          "": "invalid-empty-key",
-        } as SkillsMatrixConfig["skillAliases"],
-      };
+      const merged = await mergeMatrixWithSkills(INVALID_ALIAS_MATRIX, [REACT_EXTRACTED_BASIC]);
 
-      const skills = [
-        {
-          id: "web-framework-react" as const,
-          directoryPath: "web-framework-react",
-          description: "React",
-          usageGuidance: undefined,
-          category: "web-framework" as const,
-          categoryExclusive: true,
-          author: "@test",
-          tags: [],
-          compatibleWith: [],
-          conflictsWith: [],
-          requires: [],
-          requiresSetup: [],
-          providesSetupFor: [],
-          path: "skills/web-framework-react/",
-        },
-      ];
-
-      const merged = await mergeMatrixWithSkills(matrix, skills);
-
-      // Valid alias should still work
       expect(merged.displayNames["web-framework-react"]).toBe("react");
-
-      // The empty-key alias should trigger a warn
       expect(warn).toHaveBeenCalledWith(expect.stringContaining("Invalid skill alias mapping"));
     });
 
     it("passes through unresolved conflict references as-is", async () => {
-      const matrix: SkillsMatrixConfig = {
-        version: "1.0.0",
-        categories: {} as SkillsMatrixConfig["categories"],
-        relationships: {
-          conflicts: [
-            {
-              skills: ["web-framework-react", "web-framework-nonexistent"],
-              reason: "Conflict with missing skill",
-            },
-          ],
-          discourages: [],
-          recommends: [],
-          requires: [],
-          alternatives: [],
-        },
-        skillAliases: {} as SkillsMatrixConfig["skillAliases"],
-      };
+      const merged = await mergeMatrixWithSkills(UNRESOLVED_CONFLICT_MATRIX, [
+        REACT_EXTRACTED_BASIC,
+      ]);
 
-      const skills = [
-        {
-          id: "web-framework-react" as const,
-          directoryPath: "web-framework-react",
-          description: "React",
-          usageGuidance: undefined,
-          category: "web-framework" as const,
-          categoryExclusive: true,
-          author: "@test",
-          tags: [],
-          compatibleWith: [],
-          conflictsWith: [],
-          requires: [],
-          requiresSetup: [],
-          providesSetupFor: [],
-          path: "skills/web-framework-react/",
-        },
-      ];
-
-      const merged = await mergeMatrixWithSkills(matrix, skills);
-
-      // Unresolved reference should be passed through as-is
       const reactSkill = merged.skills["web-framework-react"];
       expect(reactSkill).toBeDefined();
       expect(reactSkill!.conflictsWith).toEqual(
@@ -580,62 +447,11 @@ requires:
     });
 
     it("resolves alternative groups correctly between skills", async () => {
-      const matrix: SkillsMatrixConfig = {
-        version: "1.0.0",
-        categories: {} as SkillsMatrixConfig["categories"],
-        relationships: {
-          conflicts: [],
-          discourages: [],
-          recommends: [],
-          requires: [],
-          alternatives: [
-            {
-              purpose: "State management",
-              skills: ["web-state-zustand", "web-state-jotai"],
-            },
-          ],
-        },
-        skillAliases: {} as SkillsMatrixConfig["skillAliases"],
-      };
+      const merged = await mergeMatrixWithSkills(ALTERNATIVES_MATRIX, [
+        ZUSTAND_EXTRACTED,
+        JOTAI_EXTRACTED,
+      ]);
 
-      const skills = [
-        {
-          id: "web-state-zustand" as const,
-          directoryPath: "web-state-zustand",
-          description: "Zustand",
-          usageGuidance: undefined,
-          category: "web-client-state" as const,
-          categoryExclusive: true,
-          author: "@test",
-          tags: [],
-          compatibleWith: [],
-          conflictsWith: [],
-          requires: [],
-          requiresSetup: [],
-          providesSetupFor: [],
-          path: "skills/web-state-zustand/",
-        },
-        {
-          id: "web-state-jotai" as const,
-          directoryPath: "web-state-jotai",
-          description: "Jotai",
-          usageGuidance: undefined,
-          category: "web-client-state" as const,
-          categoryExclusive: true,
-          author: "@test",
-          tags: [],
-          compatibleWith: [],
-          conflictsWith: [],
-          requires: [],
-          requiresSetup: [],
-          providesSetupFor: [],
-          path: "skills/web-state-jotai/",
-        },
-      ];
-
-      const merged = await mergeMatrixWithSkills(matrix, skills);
-
-      // Zustand should list Jotai as alternative and vice versa
       const zustand = merged.skills["web-state-zustand"];
       const jotai = merged.skills["web-state-jotai"];
       expect(zustand!.alternatives).toEqual(
@@ -651,61 +467,10 @@ requires:
     });
 
     it("resolves require rules correctly", async () => {
-      const matrix: SkillsMatrixConfig = {
-        version: "1.0.0",
-        categories: {} as SkillsMatrixConfig["categories"],
-        relationships: {
-          conflicts: [],
-          discourages: [],
-          recommends: [],
-          requires: [
-            {
-              skill: "web-state-zustand",
-              needs: ["web-framework-react"],
-              reason: "Zustand needs React",
-            },
-          ],
-          alternatives: [],
-        },
-        skillAliases: {} as SkillsMatrixConfig["skillAliases"],
-      };
-
-      const skills = [
-        {
-          id: "web-state-zustand" as const,
-          directoryPath: "web-state-zustand",
-          description: "Zustand",
-          usageGuidance: undefined,
-          category: "web-client-state" as const,
-          categoryExclusive: true,
-          author: "@test",
-          tags: [],
-          compatibleWith: [],
-          conflictsWith: [],
-          requires: [],
-          requiresSetup: [],
-          providesSetupFor: [],
-          path: "skills/web-state-zustand/",
-        },
-        {
-          id: "web-framework-react" as const,
-          directoryPath: "web-framework-react",
-          description: "React",
-          usageGuidance: undefined,
-          category: "web-framework" as const,
-          categoryExclusive: true,
-          author: "@test",
-          tags: [],
-          compatibleWith: [],
-          conflictsWith: [],
-          requires: [],
-          requiresSetup: [],
-          providesSetupFor: [],
-          path: "skills/web-framework-react/",
-        },
-      ];
-
-      const merged = await mergeMatrixWithSkills(matrix, skills);
+      const merged = await mergeMatrixWithSkills(REQUIRES_MATRIX, [
+        ZUSTAND_EXTRACTED,
+        REACT_EXTRACTED_BASIC,
+      ]);
 
       const zustand = merged.skills["web-state-zustand"];
       expect(zustand!.requires).toEqual(

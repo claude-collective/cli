@@ -6,29 +6,17 @@ import {
   copySkillsToLocalFlattened,
   validateSkillPath,
 } from "./skill-copier";
-import type { CategoryPath, ResolvedSkill, SkillId } from "../../types";
-import type { SourceLoadResult } from "../loading";
+import type { SkillId } from "../../types";
 import { CLAUDE_DIR, PROJECT_ROOT, STANDARD_DIRS, STANDARD_FILES } from "../../consts";
 import {
-  createMockSkill as _createMockSkill,
+  buildSourceResult,
+  createMockSkill,
   createMockMatrix,
   createTempDir,
   cleanupTempDir,
   writeTestSkill,
   TEST_SKILLS,
 } from "../__tests__/helpers";
-
-function createMockSkill(
-  id: SkillId,
-  category: CategoryPath,
-  skillPath: string,
-  overrides?: Partial<ResolvedSkill>,
-): ResolvedSkill {
-  return _createMockSkill(id, category, {
-    path: skillPath,
-    ...overrides,
-  });
-}
 
 /**
  * Write a local skill SKILL.md to .claude/skills/<name>/ in the project directory.
@@ -40,7 +28,6 @@ async function writeLocalSkillOnDisk(
   options?: { description?: string },
 ): Promise<string> {
   const localSkillPath = `.claude/skills/${skillName}/`;
-  const localSkillDir = path.join(projectDir, localSkillPath);
   await writeTestSkill(path.join(projectDir, ".claude/skills"), skillName, {
     description: options?.description ?? `${skillName} skill`,
     skillContent: `---\nname: ${skillName} (@local)\ndescription: ${options?.description ?? `${skillName} skill`}\n---\n${skillName} content`,
@@ -167,18 +154,16 @@ describe("skill-copier", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-local-skill": createMockSkill("web-local-skill", "local", localSkillPath, {
+        "web-local-skill": createMockSkill("web-local-skill", "local", {
+          path: localSkillPath,
           local: true,
           localPath: localSkillPath,
         }),
       });
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       // Change cwd to project dir for local skill resolution
       const originalCwd = process.cwd();
@@ -220,18 +205,16 @@ describe("skill-copier", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-test-local": createMockSkill("web-test-local", "local", localSkillPath, {
+        "web-test-local": createMockSkill("web-test-local", "local", {
+          path: localSkillPath,
           local: true,
           localPath: localSkillPath,
         }),
       });
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       const originalCwd = process.cwd();
       process.chdir(projectDir);
@@ -272,19 +255,17 @@ describe("skill-copier", () => {
       });
 
       const matrix = createMockMatrix({
-        "web-my-local": createMockSkill("web-my-local", "local", localSkillPath, {
+        "web-my-local": createMockSkill("web-my-local", "local", {
+          path: localSkillPath,
           local: true,
           localPath: localSkillPath,
         }),
         "web-framework-react": { ...TEST_SKILLS.react, path: remoteSkillRelPath },
       });
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       const originalCwd = process.cwd();
       process.chdir(projectDir);
@@ -323,12 +304,9 @@ describe("skill-copier", () => {
 
       const matrix = createMockMatrix({});
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       const result = await copySkillsToPluginFromSource(
         ["web-unknown-skill"],
@@ -346,12 +324,9 @@ describe("skill-copier", () => {
     it("handles empty skill selection", async () => {
       const matrix = createMockMatrix({});
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       const result = await copySkillsToPluginFromSource([], pluginDir, matrix, sourceResult);
 
@@ -381,12 +356,9 @@ describe("skill-copier", () => {
         },
       });
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       const originalCwd = process.cwd();
       process.chdir(projectDir);
@@ -423,12 +395,9 @@ describe("skill-copier", () => {
         },
       });
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       const originalCwd = process.cwd();
       process.chdir(projectDir);
@@ -469,12 +438,9 @@ describe("skill-copier", () => {
         "web-state-zustand": { ...TEST_SKILLS.zustand, path: remoteSkillRelPath },
       });
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       const result = await copySkillsToLocalFlattened(
         ["web-state-zustand"],
@@ -512,12 +478,9 @@ describe("skill-copier", () => {
         "api-framework-hono": { ...TEST_SKILLS.hono, path: remoteSkillRelPath },
       });
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       const result = await copySkillsToLocalFlattened(
         ["api-framework-hono"],
@@ -540,18 +503,16 @@ describe("skill-copier", () => {
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
 
       const matrix = createMockMatrix({
-        "web-local-skill": createMockSkill("web-local-skill", "local", localSkillPath, {
+        "web-local-skill": createMockSkill("web-local-skill", "local", {
+          path: localSkillPath,
           local: true,
           localPath: localSkillPath,
         }),
       });
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       const originalCwd = process.cwd();
       process.chdir(projectDir);
@@ -592,19 +553,17 @@ describe("skill-copier", () => {
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
 
       const matrix = createMockMatrix({
-        "web-my-local": createMockSkill("web-my-local", "local", localSkillPath, {
+        "web-my-local": createMockSkill("web-my-local", "local", {
+          path: localSkillPath,
           local: true,
           localPath: localSkillPath,
         }),
         "web-framework-react": { ...TEST_SKILLS.react, path: remoteSkillRelPath },
       });
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       const originalCwd = process.cwd();
       process.chdir(projectDir);
@@ -641,12 +600,9 @@ describe("skill-copier", () => {
 
       const matrix = createMockMatrix({});
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       const result = await copySkillsToLocalFlattened([], localSkillsDir, matrix, sourceResult);
 
@@ -671,12 +627,9 @@ describe("skill-copier", () => {
         "web-framework-react": { ...TEST_SKILLS.react, path: deeplyNestedPath },
       });
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       const result = await copySkillsToLocalFlattened(
         ["web-framework-react"],
@@ -747,12 +700,9 @@ describe("skill-copier", () => {
         "web-testing-vitest": { ...TEST_SKILLS.vitest, path: vitestPath },
       });
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       const result = await copySkillsToLocalFlattened(
         ["web-framework-react", "api-framework-hono", "web-testing-vitest"],
@@ -801,20 +751,14 @@ describe("skill-copier", () => {
       await mkdir(localSkillsDir, { recursive: true });
 
       const matrix = createMockMatrix({
-        "web-tooling-vite": createMockSkill(
-          "web-tooling-vite",
-          "web-tooling",
-          nestedPath,
-          // No alias!
-        ),
+        "web-tooling-vite": createMockSkill("web-tooling-vite", "web-tooling", {
+          path: nestedPath,
+        }),
       });
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       const result = await copySkillsToLocalFlattened(
         ["web-tooling-vite"],
@@ -853,12 +797,9 @@ describe("skill-copier", () => {
         },
       });
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       const originalCwd = process.cwd();
       process.chdir(projectDir);
@@ -904,12 +845,9 @@ describe("skill-copier", () => {
         },
       });
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       const originalCwd = process.cwd();
       process.chdir(projectDir);
@@ -948,18 +886,15 @@ describe("skill-copier", () => {
         },
       });
 
-      const sourceResult: SourceLoadResult = {
-        matrix,
+      const sourceResult = buildSourceResult(matrix, projectDir, {
         sourceConfig: { source: PROJECT_ROOT, sourceOrigin: "flag" },
-        sourcePath: projectDir,
-        isLocal: true,
-      };
+      });
 
       const originalCwd = process.cwd();
       process.chdir(projectDir);
 
       try {
-        // No sourceSelections passed — should behave as before (preserve local)
+        // No sourceSelections passed -- should behave as before (preserve local)
         const result = await copySkillsToLocalFlattened(
           ["web-framework-react"],
           localSkillsDir,

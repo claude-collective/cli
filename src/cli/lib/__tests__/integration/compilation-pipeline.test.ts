@@ -10,7 +10,7 @@ import {
 } from "../../marketplace-generator";
 import { validateAllPlugins, validatePlugin } from "../../plugins";
 import { DEFAULT_BRANDING, DEFAULT_PLUGIN_NAME } from "../../../consts";
-import type { Marketplace, PluginManifest, Stack } from "../../../types";
+import type { Marketplace, PluginManifest } from "../../../types";
 import {
   createTestSource,
   cleanupTestSource,
@@ -18,20 +18,7 @@ import {
   type TestDirs,
 } from "../fixtures/create-test-source";
 import { createTempDir, cleanupTempDir } from "../helpers";
-
-const TEST_STACK: Stack = {
-  id: "test-stack",
-  name: "Test Stack",
-  description: "A test stack for integration testing",
-  agents: {
-    "web-developer": {
-      "web-framework": [{ id: "web-framework-react", preloaded: true }],
-    },
-    "api-developer": {
-      "api-api": [{ id: "api-framework-hono", preloaded: true }],
-    },
-  },
-};
+import { COMPILATION_TEST_STACK } from "../mock-data";
 
 async function readPluginManifest(pluginDir: string): Promise<PluginManifest | null> {
   const manifestPath = path.join(pluginDir, ".claude-plugin", "plugin.json");
@@ -167,11 +154,14 @@ describe("Integration: Full Stack Pipeline", () => {
     const stackDirs = await createTestSource({
       stacks: [
         {
-          id: TEST_STACK.id,
-          name: TEST_STACK.name,
-          description: TEST_STACK.description,
+          id: COMPILATION_TEST_STACK.id,
+          name: COMPILATION_TEST_STACK.name,
+          description: COMPILATION_TEST_STACK.description,
           // Boundary cast: createTestSource expects simplified agent record
-          agents: TEST_STACK.agents as unknown as Record<string, Record<string, string>>,
+          agents: COMPILATION_TEST_STACK.agents as unknown as Record<
+            string,
+            Record<string, string>
+          >,
         },
       ],
     });
@@ -186,14 +176,14 @@ describe("Integration: Full Stack Pipeline", () => {
 
   it("should compile test stack successfully", async () => {
     const result = await compileStackPlugin({
-      stackId: TEST_STACK.id,
+      stackId: COMPILATION_TEST_STACK.id,
       outputDir,
       projectRoot: dirs.sourceDir,
       agentSourcePath: dirs.sourceDir,
-      stack: TEST_STACK,
+      stack: COMPILATION_TEST_STACK,
     });
 
-    expect(result.pluginPath).toBe(path.join(outputDir, TEST_STACK.id));
+    expect(result.pluginPath).toBe(path.join(outputDir, COMPILATION_TEST_STACK.id));
     expect(result.stackName).toBeTruthy();
     expect(result.agents.length).toBeGreaterThan(0);
 
@@ -206,18 +196,18 @@ describe("Integration: Full Stack Pipeline", () => {
 
     const manifest = await readPluginManifest(result.pluginPath);
     expect(manifest).not.toBeNull();
-    expect(manifest!.name).toBe(TEST_STACK.id);
+    expect(manifest!.name).toBe(COMPILATION_TEST_STACK.id);
     // Claude Code discovers agents automatically from ./agents/ directory
     expect(manifest!.agents).toBeUndefined();
   });
 
   it("should generate README with agent list", async () => {
     const result = await compileStackPlugin({
-      stackId: TEST_STACK.id,
+      stackId: COMPILATION_TEST_STACK.id,
       outputDir,
       projectRoot: dirs.sourceDir,
       agentSourcePath: dirs.sourceDir,
-      stack: TEST_STACK,
+      stack: COMPILATION_TEST_STACK,
     });
 
     const readmePath = path.join(result.pluginPath, "README.md");
@@ -234,11 +224,11 @@ describe("Integration: Full Stack Pipeline", () => {
 
   it("should include skill plugin references in manifest", async () => {
     const result = await compileStackPlugin({
-      stackId: TEST_STACK.id,
+      stackId: COMPILATION_TEST_STACK.id,
       outputDir,
       projectRoot: dirs.sourceDir,
       agentSourcePath: dirs.sourceDir,
-      stack: TEST_STACK,
+      stack: COMPILATION_TEST_STACK,
     });
 
     expect(result.skillPlugins.length).toBeGreaterThan(0);
@@ -250,14 +240,14 @@ describe("Integration: Full Stack Pipeline", () => {
 
   it("should validate compiled stack plugins", async () => {
     await compileStackPlugin({
-      stackId: TEST_STACK.id,
+      stackId: COMPILATION_TEST_STACK.id,
       outputDir,
       projectRoot: dirs.sourceDir,
       agentSourcePath: dirs.sourceDir,
-      stack: TEST_STACK,
+      stack: COMPILATION_TEST_STACK,
     });
 
-    const pluginPath = path.join(outputDir, TEST_STACK.id);
+    const pluginPath = path.join(outputDir, COMPILATION_TEST_STACK.id);
     const validationResult = await validatePlugin(pluginPath);
 
     expect(validationResult.valid).toBe(true);
@@ -443,11 +433,11 @@ describe("Integration: End-to-End Pipeline", () => {
     expect(skillValidation.summary.invalid).toBe(0);
 
     const stackResult = await compileStackPlugin({
-      stackId: TEST_STACK.id,
+      stackId: COMPILATION_TEST_STACK.id,
       outputDir: stacksDir,
       projectRoot: dirs.sourceDir,
       agentSourcePath: dirs.sourceDir,
-      stack: TEST_STACK,
+      stack: COMPILATION_TEST_STACK,
     });
     expect(stackResult.agents.length).toBeGreaterThan(0);
 
@@ -470,11 +460,11 @@ describe("Integration: End-to-End Pipeline", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const stackResult = await compileStackPlugin({
-      stackId: TEST_STACK.id,
+      stackId: COMPILATION_TEST_STACK.id,
       outputDir: stacksDir,
       projectRoot: dirs.sourceDir,
       agentSourcePath: dirs.sourceDir,
-      stack: TEST_STACK,
+      stack: COMPILATION_TEST_STACK,
     });
 
     expect(stackResult.skillPlugins.length).toBeGreaterThan(0);
@@ -494,11 +484,11 @@ describe("Integration: End-to-End Pipeline", () => {
     const skillResults = await compileAllSkillPlugins(dirs.skillsDir, pluginsDir);
 
     const stackResult = await compileStackPlugin({
-      stackId: TEST_STACK.id,
+      stackId: COMPILATION_TEST_STACK.id,
       outputDir: stacksDir,
       projectRoot: dirs.sourceDir,
       agentSourcePath: dirs.sourceDir,
-      stack: TEST_STACK,
+      stack: COMPILATION_TEST_STACK,
     });
 
     const extractBaseName = (id: string) => id;

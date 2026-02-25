@@ -4,20 +4,9 @@ import { mkdir, readFile, writeFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
 import { writeSourceSkill } from "../helpers";
 
-import {
-  createTestSource,
-  cleanupTestSource,
-  type TestDirs,
-  type TestStack,
-} from "../fixtures/create-test-source";
+import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { installLocal } from "../../installation/local-installer";
-import type {
-  MergedSkillsMatrix,
-  ProjectConfig,
-  ResolvedSkill,
-  SkillId,
-  SkillsMatrixConfig,
-} from "../../../types";
+import type { ProjectConfig } from "../../../types";
 import {
   fileExists,
   directoryExists,
@@ -27,59 +16,30 @@ import {
   createMockMatrix,
   createTempDir,
   cleanupTempDir,
-  TEST_SKILLS,
 } from "../helpers";
 import { loadStacks, loadStackById } from "../../stacks/stacks-loader";
 import { extractAllSkills, mergeMatrixWithSkills } from "../../matrix";
+import {
+  CUSTOM_TEST_STACKS,
+  PHILOSOPHY_TEST_STACKS,
+  OVERRIDING_TEST_STACKS,
+  MARKETPLACE_TEST_STACKS,
+  MARKETPLACE_FULLSTACK_TEST_STACKS,
+  PIPELINE_TEST_STACKS,
+  MULTI_TEST_STACKS,
+} from "../mock-data/mock-stacks.js";
+import {
+  TOOLING_AND_FRAMEWORK_CONFIG,
+  CI_CD_CONFIG,
+  FRAMEWORK_AND_STYLING_CONFIG,
+  TOOLING_CONFIG,
+  OBSERVABILITY_CONFIG,
+  FRAMEWORK_AND_TESTING_CONFIG,
+} from "../mock-data/mock-matrices.js";
+import { CONSUMER_MATRIX_SKILLS } from "../mock-data/mock-skills.js";
 
-const CUSTOM_STACKS: TestStack[] = [
-  {
-    id: "custom-fullstack",
-    name: "Custom Fullstack",
-    description: "A consumer-defined fullstack stack",
-    agents: {
-      "web-developer": {
-        "web-framework": "web-framework-react",
-      },
-      "api-developer": {
-        "api-api": "api-framework-hono",
-      },
-    },
-  },
-  {
-    id: "custom-testing",
-    name: "Custom Testing",
-    description: "A consumer-defined testing stack",
-    agents: {
-      "web-developer": {
-        "web-testing": "web-testing-vitest",
-      },
-    },
-  },
-];
-
-function buildConsumerMatrix(): MergedSkillsMatrix {
-  const skills: Record<string, ResolvedSkill> = {
-    "web-framework-react": {
-      ...TEST_SKILLS.react,
-      description: "React framework for building user interfaces",
-      tags: ["react", "web"],
-      path: "skills/web-framework/web-framework-react/",
-    },
-    "api-framework-hono": {
-      ...TEST_SKILLS.hono,
-      description: "Hono API framework for the edge",
-      tags: ["hono", "api"],
-      path: "skills/api-api/api-framework-hono/",
-    },
-    "web-testing-vitest": {
-      ...TEST_SKILLS.vitest,
-      description: "Next generation testing framework",
-      tags: ["testing", "vitest"],
-      path: "skills/web-testing/web-testing-vitest/",
-    },
-  };
-  return createMockMatrix(skills);
+function buildConsumerMatrix() {
+  return createMockMatrix(CONSUMER_MATRIX_SKILLS);
 }
 
 describe("Integration: Consumer-Defined Stacks", () => {
@@ -87,7 +47,7 @@ describe("Integration: Consumer-Defined Stacks", () => {
 
   beforeEach(async () => {
     dirs = await createTestSource({
-      stacks: CUSTOM_STACKS,
+      stacks: CUSTOM_TEST_STACKS,
     });
   });
 
@@ -159,21 +119,7 @@ describe("Integration: Consumer-Defined Stacks", () => {
   });
 
   it("should load stacks with philosophy field when provided", async () => {
-    const stacksWithPhilosophy: TestStack[] = [
-      {
-        id: "philo-stack",
-        name: "Philosophy Stack",
-        description: "Stack with philosophy",
-        agents: {
-          "web-developer": {
-            "web-framework": "web-framework-react",
-          },
-        },
-        philosophy: "Modern fullstack with type safety",
-      },
-    ];
-
-    const philoDirs = await createTestSource({ stacks: stacksWithPhilosophy });
+    const philoDirs = await createTestSource({ stacks: PHILOSOPHY_TEST_STACKS });
 
     try {
       const stacks = await loadStacks(philoDirs.sourceDir);
@@ -188,7 +134,7 @@ describe("Integration: Consumer-Defined Stacks", () => {
 describe("Integration: Stacks Precedence", () => {
   it("should load source stacks independently from CLI stacks", async () => {
     // Source with custom stacks
-    const dirs = await createTestSource({ stacks: CUSTOM_STACKS });
+    const dirs = await createTestSource({ stacks: CUSTOM_TEST_STACKS });
 
     try {
       const sourceStacks = await loadStacks(dirs.sourceDir);
@@ -207,7 +153,7 @@ describe("Integration: Stacks Precedence", () => {
   it("should use source stacks when source has stacks.yaml (source overrides CLI)", async () => {
     // In loadAndMergeFromBasePath, if sourceStacks.length > 0, CLI stacks are NOT loaded.
     // This test verifies source stacks are self-contained.
-    const dirs = await createTestSource({ stacks: CUSTOM_STACKS });
+    const dirs = await createTestSource({ stacks: CUSTOM_TEST_STACKS });
 
     try {
       const sourceStacks = await loadStacks(dirs.sourceDir);
@@ -229,21 +175,7 @@ describe("Integration: Stacks Precedence", () => {
     // A source can define a stack with the same ID as a CLI built-in.
     // Since loadAndMergeFromBasePath uses source stacks when available,
     // the source's version effectively takes precedence.
-    const overridingStacks: TestStack[] = [
-      {
-        id: "nextjs-fullstack", // Same ID as CLI built-in
-        name: "Custom Next.js",
-        description: "Consumer override of Next.js stack",
-        agents: {
-          "web-developer": {
-            "web-framework": "web-framework-react",
-            "web-testing": "web-testing-vitest",
-          },
-        },
-      },
-    ];
-
-    const dirs = await createTestSource({ stacks: overridingStacks });
+    const dirs = await createTestSource({ stacks: OVERRIDING_TEST_STACKS });
 
     try {
       const stacks = await loadStacks(dirs.sourceDir);
@@ -261,23 +193,7 @@ describe("Integration: Stacks Precedence", () => {
 describe("Integration: Marketplace Source Stacks", () => {
   it("should load stacks from a marketplace-like source directory", async () => {
     // A marketplace source has its own config/stacks.yaml alongside skills
-    const marketplaceStacks: TestStack[] = [
-      {
-        id: "marketplace-stack",
-        name: "Marketplace Stack",
-        description: "A stack from a marketplace source",
-        agents: {
-          "web-developer": {
-            "web-framework": "web-framework-react",
-          },
-          "api-developer": {
-            "api-api": "api-framework-hono",
-          },
-        },
-      },
-    ];
-
-    const dirs = await createTestSource({ stacks: marketplaceStacks });
+    const dirs = await createTestSource({ stacks: MARKETPLACE_TEST_STACKS });
 
     try {
       const stacks = await loadStacks(dirs.sourceDir);
@@ -294,20 +210,7 @@ describe("Integration: Marketplace Source Stacks", () => {
   });
 
   it("should load stacks alongside skills in the same source", async () => {
-    const marketplaceStacks: TestStack[] = [
-      {
-        id: "mp-fullstack",
-        name: "MP Fullstack",
-        description: "Marketplace fullstack",
-        agents: {
-          "web-developer": {
-            "web-framework": "web-framework-react",
-          },
-        },
-      },
-    ];
-
-    const dirs = await createTestSource({ stacks: marketplaceStacks });
+    const dirs = await createTestSource({ stacks: MARKETPLACE_FULLSTACK_TEST_STACKS });
 
     try {
       // Stacks load from source config/stacks.yaml
@@ -337,7 +240,7 @@ describe("Integration: Consumer-Defined Skills Matrix", () => {
 
   beforeEach(async () => {
     dirs = await createTestSource({
-      stacks: CUSTOM_STACKS,
+      stacks: CUSTOM_TEST_STACKS,
     });
   });
 
@@ -383,40 +286,6 @@ describe("Integration: Custom Skills Matrix Loading", () => {
     try {
       const skillsDir = path.join(tempDir, "src", "skills");
 
-      // Build matrix config programmatically (bypasses strict Zod schema
-      // which requires ALL subcategory/alias keys — a separate concern)
-      const matrixConfig: SkillsMatrixConfig = {
-        version: "1.0.0",
-        categories: {
-          "shared-tooling": {
-            id: "shared-tooling",
-            displayName: "Tooling",
-            description: "Development tooling and infrastructure",
-            domain: "shared",
-            exclusive: false,
-            required: false,
-            order: 20,
-          },
-          "web-framework": {
-            id: "web-framework",
-            displayName: "Framework",
-            description: "UI Framework",
-            domain: "web",
-            exclusive: true,
-            required: true,
-            order: 1,
-          },
-        },
-        relationships: {
-          conflicts: [],
-          discourages: [],
-          recommends: [],
-          requires: [],
-          alternatives: [],
-        },
-        skillAliases: {},
-      };
-
       // Create a skill in the tooling category (use "infra" prefix — valid categoryPath prefix)
       await writeSourceSkill(skillsDir, path.join("infra", "tooling", "docker"), {
         id: "infra-tooling-docker",
@@ -428,7 +297,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
 
       // Extract skills from filesystem and merge with matrix config
       const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(matrixConfig, skills);
+      const merged = await mergeMatrixWithSkills(TOOLING_AND_FRAMEWORK_CONFIG, skills);
 
       // Assert the custom "tooling" category is present
       expect(merged.categories).toBeDefined();
@@ -454,30 +323,6 @@ describe("Integration: Custom Skills Matrix Loading", () => {
     try {
       const skillsDir = path.join(tempDir, "src", "skills");
 
-      // Build matrix config programmatically
-      const matrixConfig: SkillsMatrixConfig = {
-        version: "1.0.0",
-        categories: {
-          "shared-ci-cd": {
-            id: "shared-ci-cd",
-            displayName: "CI/CD",
-            description: "Continuous integration and deployment",
-            domain: "shared",
-            exclusive: true, // Only one CI/CD tool at a time
-            required: false,
-            order: 30,
-          },
-        },
-        relationships: {
-          conflicts: [],
-          discourages: [],
-          recommends: [],
-          requires: [],
-          alternatives: [],
-        },
-        skillAliases: {},
-      };
-
       // Create skills in the exclusive category (use "infra" prefix — valid categoryPath prefix)
       for (const skillName of ["github-actions", "gitlab-ci"]) {
         const skillId = `infra-ci-cd-${skillName}`;
@@ -491,7 +336,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       }
 
       const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(matrixConfig, skills);
+      const merged = await mergeMatrixWithSkills(CI_CD_CONFIG, skills);
 
       // Verify category exclusive flag
       expect(merged.categories["shared-ci-cd"]).toBeDefined();
@@ -515,50 +360,6 @@ describe("Integration: Custom Skills Matrix Loading", () => {
     try {
       const skillsDir = path.join(tempDir, "src", "skills");
 
-      // Build matrix config programmatically with relationship rules
-      const matrixConfig: SkillsMatrixConfig = {
-        version: "1.0.0",
-        categories: {
-          "web-framework": {
-            id: "web-framework",
-            displayName: "Framework",
-            description: "UI Framework",
-            domain: "web",
-            exclusive: true,
-            required: true,
-            order: 1,
-          },
-          "web-styling": {
-            id: "web-styling",
-            displayName: "Styling",
-            description: "CSS approach",
-            domain: "web",
-            exclusive: false,
-            required: false,
-            order: 2,
-          },
-        },
-        relationships: {
-          conflicts: [],
-          discourages: [
-            {
-              skills: ["web-framework-custom-a" as SkillId, "web-styling-custom-b" as SkillId],
-              reason: "These tools have conflicting design philosophies",
-            },
-          ],
-          recommends: [
-            {
-              when: "web-framework-custom-a" as SkillId,
-              suggest: ["web-styling-custom-c" as SkillId],
-              reason: "These work great together",
-            },
-          ],
-          requires: [],
-          alternatives: [],
-        },
-        skillAliases: {},
-      };
-
       // Create the skills referenced in relationships
       const skillDefs = [
         { name: "custom-a", id: "web-framework-custom-a", category: "web-framework" },
@@ -576,7 +377,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       }
 
       const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(matrixConfig, skills);
+      const merged = await mergeMatrixWithSkills(FRAMEWORK_AND_STYLING_CONFIG, skills);
 
       // Verify discourages relationship is applied to both skills
       const skillA = merged.skills["web-framework-custom-a"];
@@ -663,24 +464,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
 
 describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
   it("should install skills from a source with both custom matrix and stacks", async () => {
-    const customStacks: TestStack[] = [
-      {
-        id: "custom-pipeline",
-        name: "Custom Pipeline",
-        description: "Stack for testing the full pipeline",
-        agents: {
-          "web-developer": {
-            "web-framework": "web-framework-react",
-            "web-testing": "web-testing-vitest",
-          },
-          "api-developer": {
-            "api-api": "api-framework-hono",
-          },
-        },
-      },
-    ];
-
-    const dirs = await createTestSource({ stacks: customStacks });
+    const dirs = await createTestSource({ stacks: PIPELINE_TEST_STACKS });
 
     try {
       // 1. Verify stacks loaded from source
@@ -753,31 +537,7 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
   });
 
   it("should handle a source with multiple stacks referencing the same skills", async () => {
-    const multiStacks: TestStack[] = [
-      {
-        id: "stack-a",
-        name: "Stack A",
-        description: "First stack",
-        agents: {
-          "web-developer": {
-            "web-framework": "web-framework-react",
-          },
-        },
-      },
-      {
-        id: "stack-b",
-        name: "Stack B",
-        description: "Second stack also using React",
-        agents: {
-          "web-developer": {
-            "web-framework": "web-framework-react",
-            "web-testing": "web-testing-vitest",
-          },
-        },
-      },
-    ];
-
-    const dirs = await createTestSource({ stacks: multiStacks });
+    const dirs = await createTestSource({ stacks: MULTI_TEST_STACKS });
 
     try {
       const stacks = await loadStacks(dirs.sourceDir);
@@ -804,30 +564,6 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
     try {
       const skillsDir = path.join(tempDir, "src", "skills");
 
-      // Build matrix config programmatically
-      const matrixConfig: SkillsMatrixConfig = {
-        version: "1.0.0",
-        categories: {
-          "shared-tooling": {
-            id: "shared-tooling",
-            displayName: "Tooling",
-            description: "Build and bundling tools",
-            domain: "web",
-            exclusive: false, // Category is non-exclusive
-            required: false,
-            order: 5,
-          },
-        },
-        relationships: {
-          conflicts: [],
-          discourages: [],
-          recommends: [],
-          requires: [],
-          alternatives: [],
-        },
-        skillAliases: {},
-      };
-
       // Create a skill with categoryExclusive: false in metadata
       await writeSourceSkill(skillsDir, path.join("web", "tooling", "vite"), {
         id: "web-tooling-vite",
@@ -838,7 +574,7 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
       });
 
       const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(matrixConfig, skills);
+      const merged = await mergeMatrixWithSkills(TOOLING_CONFIG, skills);
 
       // Verify the skill's categoryExclusive is false (from metadata)
       const viteSkill = merged.skills["web-tooling-vite"];
@@ -855,30 +591,6 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
     try {
       const skillsDir = path.join(tempDir, "src", "skills");
 
-      // Build matrix config programmatically
-      const matrixConfig: SkillsMatrixConfig = {
-        version: "1.0.0",
-        categories: {
-          "api-observability": {
-            id: "api-observability",
-            displayName: "Observability",
-            description: "Monitoring and observability tools",
-            domain: "api",
-            exclusive: false,
-            required: false,
-            order: 15,
-          },
-        },
-        relationships: {
-          conflicts: [],
-          discourages: [],
-          recommends: [],
-          requires: [],
-          alternatives: [],
-        },
-        skillAliases: {},
-      };
-
       const customTags = ["monitoring", "observability", "apm", "custom-tag"];
       await writeSourceSkill(skillsDir, path.join("api", "observability", "datadog"), {
         id: "api-observability-datadog",
@@ -888,7 +600,7 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
       });
 
       const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(matrixConfig, skills);
+      const merged = await mergeMatrixWithSkills(OBSERVABILITY_CONFIG, skills);
 
       const datadogSkill = merged.skills["api-observability-datadog"];
       expect(datadogSkill).toBeDefined();
@@ -904,45 +616,6 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
     try {
       const skillsDir = path.join(tempDir, "src", "skills");
 
-      // Build matrix config programmatically with requires relationship
-      const matrixConfig: SkillsMatrixConfig = {
-        version: "1.0.0",
-        categories: {
-          "web-framework": {
-            id: "web-framework",
-            displayName: "Framework",
-            description: "UI Framework",
-            domain: "web",
-            exclusive: true,
-            required: true,
-            order: 1,
-          },
-          "web-testing": {
-            id: "web-testing",
-            displayName: "Testing",
-            description: "Testing tools",
-            domain: "shared",
-            exclusive: false,
-            required: false,
-            order: 10,
-          },
-        },
-        relationships: {
-          conflicts: [],
-          discourages: [],
-          recommends: [],
-          requires: [
-            {
-              skill: "web-testing-custom-rtl" as SkillId,
-              needs: ["web-framework-custom-react" as SkillId],
-              reason: "RTL requires React to function",
-            },
-          ],
-          alternatives: [],
-        },
-        skillAliases: {},
-      };
-
       // Create the skills (use valid categoryPath prefixes — "shared" is not valid)
       for (const def of [
         { name: "custom-react", id: "web-framework-custom-react", cat: "web-framework" },
@@ -957,7 +630,7 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
       }
 
       const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(matrixConfig, skills);
+      const merged = await mergeMatrixWithSkills(FRAMEWORK_AND_TESTING_CONFIG, skills);
 
       // Verify requires relationship is applied
       const rtlSkill = merged.skills["web-testing-custom-rtl"];

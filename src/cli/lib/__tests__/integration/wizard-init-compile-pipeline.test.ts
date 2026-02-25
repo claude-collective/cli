@@ -11,13 +11,7 @@ import {
   type TestDirs,
   type TestSkill,
 } from "../fixtures/create-test-source";
-import type {
-  AgentName,
-  MergedSkillsMatrix,
-  ProjectConfig,
-  SkillId,
-  CategoryPath,
-} from "../../../types";
+import type { AgentName, CategoryPath, ProjectConfig, SkillId } from "../../../types";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../../../consts";
 import {
   createMockSkill,
@@ -27,23 +21,6 @@ import {
   buildWizardResult,
   buildSourceResult,
 } from "../helpers";
-
-function buildPipelineMatrix(skills: TestSkill[]): MergedSkillsMatrix {
-  const matrixSkills: Record<string, ReturnType<typeof createMockSkill>> = {};
-  for (const skill of skills) {
-    matrixSkills[skill.name] = createMockSkill(
-      skill.name as SkillId,
-      skill.category as CategoryPath,
-      {
-        description: skill.description,
-        tags: skill.tags ?? [],
-        author: skill.author,
-        path: `skills/${skill.category}/${skill.name}/`,
-      },
-    );
-  }
-  return createMockMatrix(matrixSkills);
-}
 
 const PIPELINE_TEST_SKILLS: TestSkill[] = [
   {
@@ -219,9 +196,21 @@ Production-ready motion library for React.
   },
 ];
 
-const SKILL_COUNT = 10;
-
 const SKILL_NAMES = PIPELINE_TEST_SKILLS.map((s) => s.name);
+
+const PIPELINE_MATRIX = createMockMatrix(
+  Object.fromEntries(
+    PIPELINE_TEST_SKILLS.map((skill) => [
+      skill.name,
+      createMockSkill(skill.name as SkillId, skill.category as CategoryPath, {
+        description: skill.description,
+        tags: skill.tags ?? [],
+        author: skill.author,
+        path: `skills/${skill.category}/${skill.name}/`,
+      }),
+    ]),
+  ),
+);
 
 const PIPELINE_AGENTS: AgentName[] = ["web-developer", "api-developer"];
 
@@ -238,8 +227,6 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
   describe("Scenario 1: Full pipeline with 10 skills from scratch flow", () => {
     it("should install skills, generate config, and compile agents", async () => {
-      const matrix = buildPipelineMatrix(PIPELINE_TEST_SKILLS);
-
       const wizardResult = buildWizardResult([], {
         selectedSkills: SKILL_NAMES,
         selectedAgents: PIPELINE_AGENTS,
@@ -257,7 +244,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         },
       });
 
-      const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
+      const sourceResult = buildSourceResult(PIPELINE_MATRIX, dirs.sourceDir);
 
       const installResult = await installLocal({
         wizardResult,
@@ -284,7 +271,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       expect(await directoryExists(skillsDir)).toBe(true);
       expect(installResult.skillsDir).toBe(skillsDir);
 
-      expect(installResult.copiedSkills.length).toBe(SKILL_COUNT);
+      expect(installResult.copiedSkills.length).toBe(PIPELINE_TEST_SKILLS.length);
 
       const agentsDir = path.join(dirs.projectDir, CLAUDE_DIR, "agents");
       expect(await directoryExists(agentsDir)).toBe(true);
@@ -304,14 +291,12 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
     });
 
     it("should produce agents that contain skill content from source", async () => {
-      const matrix = buildPipelineMatrix(PIPELINE_TEST_SKILLS);
-
       const wizardResult = buildWizardResult([], {
         selectedSkills: SKILL_NAMES,
         selectedAgents: PIPELINE_AGENTS,
         installMode: "local",
       });
-      const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
+      const sourceResult = buildSourceResult(PIPELINE_MATRIX, dirs.sourceDir);
 
       const installResult = await installLocal({
         wizardResult,
@@ -339,14 +324,12 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
   describe("Scenario 2: Compile round-trip (init then recompile)", () => {
     it("should recompile agents from installLocal output", async () => {
-      const matrix = buildPipelineMatrix(PIPELINE_TEST_SKILLS);
-
       const wizardResult = buildWizardResult([], {
         selectedSkills: SKILL_NAMES,
         selectedAgents: PIPELINE_AGENTS,
         installMode: "local",
       });
-      const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
+      const sourceResult = buildSourceResult(PIPELINE_MATRIX, dirs.sourceDir);
 
       const installResult = await installLocal({
         wizardResult,
@@ -389,14 +372,12 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       const SUBSET_COUNT = 5;
       const selectedSkills = SKILL_NAMES.slice(0, SUBSET_COUNT);
 
-      const matrix = buildPipelineMatrix(PIPELINE_TEST_SKILLS);
-
       const wizardResult = buildWizardResult([], {
         selectedSkills,
         selectedAgents: PIPELINE_AGENTS,
         installMode: "local",
       });
-      const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
+      const sourceResult = buildSourceResult(PIPELINE_MATRIX, dirs.sourceDir);
 
       const installResult = await installLocal({
         wizardResult,
@@ -425,14 +406,12 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
     it("should set source metadata in config when sourceFlag is provided", async () => {
       const selectedSkills = SKILL_NAMES.slice(0, 3);
 
-      const matrix = buildPipelineMatrix(PIPELINE_TEST_SKILLS);
-
       const wizardResult = buildWizardResult([], {
         selectedSkills,
         selectedAgents: PIPELINE_AGENTS,
         installMode: "local",
       });
-      const sourceResult = buildSourceResult(matrix, dirs.sourceDir, {
+      const sourceResult = buildSourceResult(PIPELINE_MATRIX, dirs.sourceDir, {
         marketplace: "test-marketplace",
       });
 
@@ -457,14 +436,12 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
 
   describe("Scenario 4: Directory structure verification", () => {
     it("should create complete directory structure matching init expectations", async () => {
-      const matrix = buildPipelineMatrix(PIPELINE_TEST_SKILLS);
-
       const wizardResult = buildWizardResult([], {
         selectedSkills: SKILL_NAMES,
         selectedAgents: PIPELINE_AGENTS,
         installMode: "local",
       });
-      const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
+      const sourceResult = buildSourceResult(PIPELINE_MATRIX, dirs.sourceDir);
 
       await installLocal({
         wizardResult,
@@ -492,7 +469,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       expect(await directoryExists(skillsDir)).toBe(true);
 
       const skillDirs = await readdir(skillsDir);
-      expect(skillDirs.length).toBe(SKILL_COUNT);
+      expect(skillDirs.length).toBe(PIPELINE_TEST_SKILLS.length);
 
       for (const skillDir of skillDirs) {
         const skillMdPath = path.join(skillsDir, skillDir, STANDARD_FILES.SKILL_MD);

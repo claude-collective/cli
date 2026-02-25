@@ -23,11 +23,15 @@ import {
   createMockCategory,
   createMockSkill,
   createMockMatrix,
-  TEST_SKILLS,
-  TEST_CATEGORIES,
+  getTestSkill,
 } from "../../lib/__tests__/helpers";
-
-const SKILL_DEFAULTS: Partial<ResolvedSkill> = { categoryExclusive: true };
+import {
+  WEB_FRAMEWORK_CATEGORY,
+  WEB_STYLING_CATEGORY,
+  WEB_STATE_CATEGORY,
+  API_FRAMEWORK_CATEGORY,
+  API_DATABASE_CATEGORY,
+} from "../../lib/__tests__/mock-data";
 
 // Test data construction cast: indexBy returns generic Record
 const buildTestMatrix = (categories: CategoryDefinition[], skills: ResolvedSkill[]) =>
@@ -38,69 +42,25 @@ const buildTestMatrix = (categories: CategoryDefinition[], skills: ResolvedSkill
     },
   );
 
-const frameworkCategory = {
-  ...TEST_CATEGORIES.framework,
-  domain: "web" as const,
-  required: true,
-  order: 0,
-};
+const EXCLUSIVE = { categoryExclusive: true };
 
-const stylingCategory = {
-  ...TEST_CATEGORIES.styling,
-  domain: "web" as const,
-  required: true,
-  order: 1,
-};
-
-const stateCategory = {
-  ...TEST_CATEGORIES.clientState,
-  domain: "web" as const,
-  required: false,
-  order: 2,
-};
-
-const apiFrameworkCategory = {
-  ...TEST_CATEGORIES.api,
-  displayName: "API Framework",
-  domain: "api" as const,
-  required: true,
-  order: 0,
-};
-
-const databaseCategory = {
-  ...TEST_CATEGORIES.database,
-  domain: "api" as const,
-  required: false,
-  order: 1,
-};
-
-const reactSkill = { ...TEST_SKILLS.react, ...SKILL_DEFAULTS, displayName: "react" as const };
-const vueSkill = { ...TEST_SKILLS.vue, ...SKILL_DEFAULTS, displayName: "vue" as const };
-
+const reactSkill = getTestSkill("react", { ...EXCLUSIVE, displayName: "react" });
+const vueSkill = getTestSkill("vue", { ...EXCLUSIVE, displayName: "vue" });
 const tailwindSkill = createMockSkill("web-styling-tailwind", "web-styling", {
-  ...SKILL_DEFAULTS,
+  ...EXCLUSIVE,
   displayName: "tailwind",
 });
-
-const scssSkill = {
-  ...TEST_SKILLS.scssModules,
-  ...SKILL_DEFAULTS,
-  displayName: "scss-modules" as const,
-};
-const zustandSkill = { ...TEST_SKILLS.zustand, ...SKILL_DEFAULTS, displayName: "zustand" as const };
-const honoSkill = { ...TEST_SKILLS.hono, ...SKILL_DEFAULTS, displayName: "hono" as const };
-
+const scssSkill = getTestSkill("scss-modules", { ...EXCLUSIVE, displayName: "scss-modules" });
+const zustandSkill = getTestSkill("zustand", { ...EXCLUSIVE, displayName: "zustand" });
+const honoSkill = getTestSkill("hono", { ...EXCLUSIVE, displayName: "hono" });
 const expressSkill = createMockSkill("api-framework-express", "api-api", {
-  ...SKILL_DEFAULTS,
+  ...EXCLUSIVE,
   displayName: "express",
 });
-
-const postgresSkill = createMockSkill("api-database-postgres", "api-database", {
-  ...SKILL_DEFAULTS,
-});
+const postgresSkill = createMockSkill("api-database-postgres", "api-database", EXCLUSIVE);
 
 const defaultMatrix = buildTestMatrix(
-  [frameworkCategory, stylingCategory, stateCategory, apiFrameworkCategory, databaseCategory],
+  [WEB_FRAMEWORK_CATEGORY, WEB_STYLING_CATEGORY, WEB_STATE_CATEGORY, API_FRAMEWORK_CATEGORY, API_DATABASE_CATEGORY],
   [
     reactSkill,
     vueSkill,
@@ -514,17 +474,17 @@ describe("StepBuild component", () => {
         order: 0,
       });
       const commanderSkill = createMockSkill("cli-cli-framework-commander", "cli-framework", {
-        ...SKILL_DEFAULTS,
+        ...EXCLUSIVE,
         displayName: "commander",
       });
 
       const matrixWithCli = buildTestMatrix(
         [
-          frameworkCategory,
-          stylingCategory,
-          stateCategory,
-          apiFrameworkCategory,
-          databaseCategory,
+          WEB_FRAMEWORK_CATEGORY,
+          WEB_STYLING_CATEGORY,
+          WEB_STATE_CATEGORY,
+          API_FRAMEWORK_CATEGORY,
+          API_DATABASE_CATEGORY,
           cliFrameworkCategory,
         ],
         [

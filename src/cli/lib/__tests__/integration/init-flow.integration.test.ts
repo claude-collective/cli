@@ -5,17 +5,11 @@ import { parse as parseYaml } from "yaml";
 import {
   createTestSource,
   cleanupTestSource,
+  DEFAULT_TEST_SKILLS,
   type TestDirs,
-  type TestSkill,
 } from "../fixtures/create-test-source";
 import { installLocal } from "../../installation/local-installer";
-import type {
-  AgentName,
-  MergedSkillsMatrix,
-  ProjectConfig,
-  ResolvedSkill,
-  SkillId,
-} from "../../../types";
+import type { AgentName, ProjectConfig, SkillId } from "../../../types";
 import type { SourceLoadResult } from "../../loading/source-loader";
 import {
   createMockMatrix,
@@ -24,98 +18,43 @@ import {
   readTestYaml,
   buildWizardResult,
   buildSourceResult,
-  TEST_SKILLS,
+  getTestSkill,
 } from "../helpers";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_SKILLS_SUBDIR, STANDARD_FILES } from "../../../consts";
 
 const AGENTS_SUBDIR = "agents";
 
-// Skills whose IDs match directory names in the test source.
-// The skill.path in the matrix must align with the on-disk layout
-// created by createTestSource: src/skills/{category}/{name}/SKILL.md
-const INIT_TEST_SKILLS: TestSkill[] = [
-  {
-    id: "web-framework-react",
-    name: "web-framework-react",
-    description: "React framework for building user interfaces",
-    category: "web-framework",
-    author: "@test",
-    tags: ["react", "web"],
-    content: `---
-name: web-framework-react
-description: React framework for building user interfaces
----
-
-# React
-
-React is a JavaScript library for building user interfaces.
-
-## Key Patterns
-
-- Component-based architecture
-- Hooks for state and effects
-`,
-  },
-  {
-    id: "api-framework-hono",
-    name: "api-framework-hono",
-    description: "Hono API framework for the edge",
-    category: "api-api",
-    author: "@test",
-    tags: ["hono", "api"],
-    content: `---
-name: api-framework-hono
-description: Hono API framework for the edge
----
-
-# Hono
-
-Hono is a fast web framework for the edge.
-`,
-  },
-  {
-    id: "web-testing-vitest",
-    name: "web-testing-vitest",
-    description: "Next generation testing framework",
-    category: "web-testing",
-    author: "@test",
-    tags: ["testing", "vitest"],
-    content: `---
-name: web-testing-vitest
-description: Next generation testing framework
----
-
-# Vitest
-
-Vitest is a fast unit test framework powered by Vite.
-`,
-  },
+// Use the 3 skills needed for init flow tests, filtered from the shared fixture.
+// DEFAULT_TEST_SKILLS has 4 skills; init tests only need react, hono, vitest.
+const INIT_SKILL_IDS: SkillId[] = [
+  "web-framework-react",
+  "api-framework-hono",
+  "web-testing-vitest",
 ];
+const INIT_TEST_SKILLS = DEFAULT_TEST_SKILLS.filter((s) => INIT_SKILL_IDS.includes(s.id));
 
-// Build a MergedSkillsMatrix whose skill.path values match the file system
-// layout created by createTestSource. The path format in createMockSkill is
-// "skills/{category}/{id}/" and the copier resolves to
+// Matrix whose skill.path values match the file system layout from createTestSource.
+// createMockSkill sets path to "skills/{category}/{id}/" and the copier resolves to
 // "{sourcePath}/src/skills/{category}/{id}/".
-function buildTestMatrix(): MergedSkillsMatrix {
-  const skills: Record<string, ResolvedSkill> = {
-    "web-framework-react": {
-      ...TEST_SKILLS.react,
-      description: "React framework for building user interfaces",
-      tags: ["react", "web"],
-    },
-    "api-framework-hono": {
-      ...TEST_SKILLS.hono,
-      description: "Hono API framework for the edge",
-      tags: ["hono", "api"],
-    },
-    "web-testing-vitest": {
-      ...TEST_SKILLS.vitest,
-      description: "Next generation testing framework",
-      tags: ["testing", "vitest"],
-    },
-  };
-  return createMockMatrix(skills);
-}
+const INIT_TEST_MATRIX = createMockMatrix({
+  "web-framework-react": getTestSkill("react"),
+  "api-framework-hono": getTestSkill("hono"),
+  "web-testing-vitest": getTestSkill("vitest"),
+});
+
+// Reusable selections for tests that need multiple skills and agents
+const SELECTED_SKILLS_REACT_HONO: SkillId[] = ["web-framework-react", "api-framework-hono"];
+const SELECTED_SKILLS_ALL: SkillId[] = [
+  "web-framework-react",
+  "api-framework-hono",
+  "web-testing-vitest",
+];
+const SELECTED_AGENTS_WEB_API: AgentName[] = ["web-developer", "api-developer"];
+const SELECTED_AGENTS_WITH_REVIEWER: AgentName[] = [
+  "web-developer",
+  "web-reviewer",
+  "api-developer",
+];
 
 // ── Test Suites ────────────────────────────────────────────────────────────────
 
@@ -129,7 +68,7 @@ describe("Init Flow Integration: Local Mode", () => {
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
 
-    sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
+    sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
   });
 
   afterEach(async () => {
@@ -138,11 +77,10 @@ describe("Init Flow Integration: Local Mode", () => {
   });
 
   it("should create .claude-src/config.yaml with correct structure", async () => {
-    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
-    const selectedAgents: AgentName[] = ["web-developer", "api-developer"];
-
     const result = await installLocal({
-      wizardResult: buildWizardResult(selectedSkills, { selectedAgents }),
+      wizardResult: buildWizardResult(SELECTED_SKILLS_REACT_HONO, {
+        selectedAgents: SELECTED_AGENTS_WEB_API,
+      }),
       sourceResult,
       projectDir: dirs.projectDir,
       sourceFlag: dirs.sourceDir,
@@ -165,10 +103,8 @@ describe("Init Flow Integration: Local Mode", () => {
   });
 
   it("should copy selected skills to .claude/skills/", async () => {
-    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
-
     const result = await installLocal({
-      wizardResult: buildWizardResult(selectedSkills),
+      wizardResult: buildWizardResult(SELECTED_SKILLS_REACT_HONO),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -193,11 +129,10 @@ describe("Init Flow Integration: Local Mode", () => {
   });
 
   it("should compile agents to .claude/agents/", async () => {
-    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
-    const selectedAgents: AgentName[] = ["web-developer", "api-developer"];
-
     const result = await installLocal({
-      wizardResult: buildWizardResult(selectedSkills, { selectedAgents }),
+      wizardResult: buildWizardResult(SELECTED_SKILLS_REACT_HONO, {
+        selectedAgents: SELECTED_AGENTS_WEB_API,
+      }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -223,14 +158,8 @@ describe("Init Flow Integration: Local Mode", () => {
   });
 
   it("should include selected skills in config.yaml skills array", async () => {
-    const selectedSkills: SkillId[] = [
-      "web-framework-react",
-      "api-framework-hono",
-      "web-testing-vitest",
-    ];
-
     const result = await installLocal({
-      wizardResult: buildWizardResult(selectedSkills),
+      wizardResult: buildWizardResult(SELECTED_SKILLS_ALL),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -238,17 +167,16 @@ describe("Init Flow Integration: Local Mode", () => {
     const config = await readTestYaml<ProjectConfig>(result.configPath);
 
     // All selected skill IDs should appear in config.skills
-    for (const skillId of selectedSkills) {
+    for (const skillId of SELECTED_SKILLS_ALL) {
       expect(config.skills).toContain(skillId);
     }
   });
 
   it("should assign all skills to all selected agents", async () => {
-    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
-    const selectedAgents: AgentName[] = ["web-developer", "api-developer"];
-
     const result = await installLocal({
-      wizardResult: buildWizardResult(selectedSkills, { selectedAgents }),
+      wizardResult: buildWizardResult(SELECTED_SKILLS_REACT_HONO, {
+        selectedAgents: SELECTED_AGENTS_WEB_API,
+      }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -259,7 +187,7 @@ describe("Init Flow Integration: Local Mode", () => {
     expect(config.stack).toBeDefined();
 
     // Every selected agent should have every skill's subcategory
-    for (const agentId of selectedAgents) {
+    for (const agentId of SELECTED_AGENTS_WEB_API) {
       const agentStack = config.stack![agentId] as Record<string, unknown> | undefined;
       expect(agentStack).toBeDefined();
       expect(agentStack!["web-framework"]).toBeDefined();
@@ -277,7 +205,7 @@ describe("Init Flow Integration: Single Skill Selection", () => {
     originalCwd = process.cwd();
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
-    sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
+    sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
   });
 
   afterEach(async () => {
@@ -314,7 +242,7 @@ describe("Init Flow Integration: All Skills Selection", () => {
     originalCwd = process.cwd();
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
-    sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
+    sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
   });
 
   afterEach(async () => {
@@ -323,15 +251,10 @@ describe("Init Flow Integration: All Skills Selection", () => {
   });
 
   it("should handle all skills selected from matrix", async () => {
-    const selectedSkills: SkillId[] = [
-      "web-framework-react",
-      "api-framework-hono",
-      "web-testing-vitest",
-    ];
-    const selectedAgents: AgentName[] = ["web-developer", "api-developer"];
-
     const result = await installLocal({
-      wizardResult: buildWizardResult(selectedSkills, { selectedAgents }),
+      wizardResult: buildWizardResult(SELECTED_SKILLS_ALL, {
+        selectedAgents: SELECTED_AGENTS_WEB_API,
+      }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -357,7 +280,7 @@ describe("Init Flow Integration: Source Configuration", () => {
     originalCwd = process.cwd();
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
-    sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
+    sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
   });
 
   afterEach(async () => {
@@ -402,7 +325,7 @@ describe("Init Flow Integration: Directory Structure Verification", () => {
     originalCwd = process.cwd();
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
-    sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
+    sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
   });
 
   afterEach(async () => {
@@ -411,10 +334,8 @@ describe("Init Flow Integration: Directory Structure Verification", () => {
   });
 
   it("should create complete directory structure", async () => {
-    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
-
     await installLocal({
-      wizardResult: buildWizardResult(selectedSkills),
+      wizardResult: buildWizardResult(SELECTED_SKILLS_REACT_HONO),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -456,11 +377,10 @@ describe("Init Flow Integration: Directory Structure Verification", () => {
   });
 
   it("should produce agent markdown with valid frontmatter", async () => {
-    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
-    const selectedAgents: AgentName[] = ["web-developer", "api-developer"];
-
     const result = await installLocal({
-      wizardResult: buildWizardResult(selectedSkills, { selectedAgents }),
+      wizardResult: buildWizardResult(SELECTED_SKILLS_REACT_HONO, {
+        selectedAgents: SELECTED_AGENTS_WEB_API,
+      }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -494,7 +414,7 @@ describe("Init Flow Integration: Idempotency and Merge", () => {
     originalCwd = process.cwd();
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
-    sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
+    sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
   });
 
   afterEach(async () => {
@@ -514,7 +434,7 @@ describe("Init Flow Integration: Idempotency and Merge", () => {
 
     // Second init with additional skill
     const secondResult = await installLocal({
-      wizardResult: buildWizardResult(["web-framework-react", "api-framework-hono"]),
+      wizardResult: buildWizardResult(SELECTED_SKILLS_REACT_HONO),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -537,7 +457,7 @@ describe("Init Flow Integration: Install Mode in Config", () => {
     originalCwd = process.cwd();
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
-    sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
+    sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
   });
 
   afterEach(async () => {
@@ -581,7 +501,7 @@ describe("Init Flow Integration: Skill Content Verification", () => {
     originalCwd = process.cwd();
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
-    sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
+    sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
   });
 
   afterEach(async () => {
@@ -591,7 +511,7 @@ describe("Init Flow Integration: Skill Content Verification", () => {
 
   it("should preserve skill content when copying", async () => {
     const result = await installLocal({
-      wizardResult: buildWizardResult(["web-framework-react", "api-framework-hono"]),
+      wizardResult: buildWizardResult(SELECTED_SKILLS_REACT_HONO),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -649,7 +569,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
     originalCwd = process.cwd();
     dirs = await createTestSource({ skills: INIT_TEST_SKILLS });
     process.chdir(dirs.projectDir);
-    sourceResult = buildSourceResult(buildTestMatrix(), dirs.sourceDir);
+    sourceResult = buildSourceResult(INIT_TEST_MATRIX, dirs.sourceDir);
   });
 
   afterEach(async () => {
@@ -658,11 +578,10 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
   });
 
   it("should only include selected agents in config.agents", async () => {
-    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
-    const selectedAgents: AgentName[] = ["web-developer", "web-reviewer", "api-developer"];
-
     const result = await installLocal({
-      wizardResult: buildWizardResult(selectedSkills, { selectedAgents }),
+      wizardResult: buildWizardResult(SELECTED_SKILLS_REACT_HONO, {
+        selectedAgents: SELECTED_AGENTS_WITH_REVIEWER,
+      }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -670,15 +589,14 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
     const config = await readTestYaml<ProjectConfig>(result.configPath);
 
     // config.agents should contain exactly the selected agents (sorted)
-    expect(config.agents).toEqual([...selectedAgents].sort());
+    expect(config.agents).toEqual([...SELECTED_AGENTS_WITH_REVIEWER].sort());
   });
 
   it("should only have stack entries for selected agents, not DEFAULT_AGENTS", async () => {
-    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
-    const selectedAgents: AgentName[] = ["web-developer", "web-reviewer", "api-developer"];
-
     const result = await installLocal({
-      wizardResult: buildWizardResult(selectedSkills, { selectedAgents }),
+      wizardResult: buildWizardResult(SELECTED_SKILLS_REACT_HONO, {
+        selectedAgents: SELECTED_AGENTS_WITH_REVIEWER,
+      }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -690,7 +608,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
     // Stack should NOT contain default agents that were not in selectedAgents
     const stackAgentIds = Object.keys(config.stack || {});
     for (const agentId of stackAgentIds) {
-      expect(selectedAgents).toContain(agentId);
+      expect(SELECTED_AGENTS_WITH_REVIEWER).toContain(agentId);
     }
 
     // Specifically verify DEFAULT_AGENTS are absent from stack
@@ -700,11 +618,10 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
   });
 
   it("should assign all skills to all selected agents", async () => {
-    const selectedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
-    const selectedAgents: AgentName[] = ["web-developer", "web-reviewer", "api-developer"];
-
     const result = await installLocal({
-      wizardResult: buildWizardResult(selectedSkills, { selectedAgents }),
+      wizardResult: buildWizardResult(SELECTED_SKILLS_REACT_HONO, {
+        selectedAgents: SELECTED_AGENTS_WITH_REVIEWER,
+      }),
       sourceResult,
       projectDir: dirs.projectDir,
     });
@@ -714,7 +631,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
     expect(config.stack).toBeDefined();
 
     // Every agent should have every skill's subcategory
-    for (const agentId of selectedAgents) {
+    for (const agentId of SELECTED_AGENTS_WITH_REVIEWER) {
       const agentStack = config.stack![agentId] as Record<string, unknown> | undefined;
       expect(agentStack).toBeDefined();
       expect(agentStack!["web-framework"]).toBeDefined();

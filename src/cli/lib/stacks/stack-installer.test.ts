@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import os from "os";
-import type { CompiledStackPlugin } from "./stack-plugin-compiler";
 import type { AgentName, SkillId } from "../../types";
+import { createMockCompiledStackPlugin } from "../__tests__/helpers";
 
 // Mock dependencies before imports
 vi.mock("./stack-plugin-compiler", () => ({
@@ -21,18 +21,6 @@ import { compileStackPlugin } from "./stack-plugin-compiler";
 import { claudePluginInstall, isClaudeCLIAvailable } from "../../utils/exec";
 import { ensureDir, remove } from "../../utils/fs";
 
-function createMockCompiledResult(overrides?: Partial<CompiledStackPlugin>): CompiledStackPlugin {
-  return {
-    pluginPath: "/tmp/cc-stack-123456/test-stack",
-    manifest: { name: "test-stack", version: "1.0.0" },
-    stackName: "Test Stack",
-    agents: ["web-developer"] as AgentName[],
-    skillPlugins: ["web-framework-react"] as SkillId[],
-    hasHooks: false,
-    ...overrides,
-  };
-}
-
 describe("stack-installer", () => {
   beforeEach(() => {
     // Set default mock return values
@@ -44,7 +32,7 @@ describe("stack-installer", () => {
 
   describe("compileStackToTemp", () => {
     it("should create a temp directory and compile the stack", async () => {
-      const mockResult = createMockCompiledResult();
+      const mockResult = createMockCompiledStackPlugin();
       vi.mocked(compileStackPlugin).mockResolvedValue(mockResult);
 
       const { result } = await compileStackToTemp({
@@ -64,7 +52,7 @@ describe("stack-installer", () => {
     });
 
     it("should pass agentSourcePath through to compileStackPlugin", async () => {
-      const mockResult = createMockCompiledResult();
+      const mockResult = createMockCompiledStackPlugin();
       vi.mocked(compileStackPlugin).mockResolvedValue(mockResult);
 
       await compileStackToTemp({
@@ -81,7 +69,7 @@ describe("stack-installer", () => {
     });
 
     it("should return a cleanup function that removes the temp directory", async () => {
-      const mockResult = createMockCompiledResult();
+      const mockResult = createMockCompiledStackPlugin();
       vi.mocked(compileStackPlugin).mockResolvedValue(mockResult);
 
       const { cleanup } = await compileStackToTemp({
@@ -99,7 +87,7 @@ describe("stack-installer", () => {
     });
 
     it("should use os.tmpdir() as base for the temp directory", async () => {
-      const mockResult = createMockCompiledResult();
+      const mockResult = createMockCompiledStackPlugin();
       vi.mocked(compileStackPlugin).mockResolvedValue(mockResult);
 
       await compileStackToTemp({
@@ -195,7 +183,7 @@ describe("stack-installer", () => {
     });
 
     it("should compile locally and install when no marketplace is specified", async () => {
-      const mockResult = createMockCompiledResult({
+      const mockResult = createMockCompiledStackPlugin({
         pluginPath: "/tmp/cc-stack-999/test-stack",
         stackName: "Test Stack",
         agents: ["web-developer", "api-developer"] as AgentName[],
@@ -236,7 +224,7 @@ describe("stack-installer", () => {
     });
 
     it("should clean up temp directory after successful installation", async () => {
-      const mockResult = createMockCompiledResult();
+      const mockResult = createMockCompiledStackPlugin();
       vi.mocked(compileStackPlugin).mockResolvedValue(mockResult);
 
       await installStackAsPlugin({
@@ -251,7 +239,7 @@ describe("stack-installer", () => {
     });
 
     it("should clean up temp directory even when installation fails", async () => {
-      const mockResult = createMockCompiledResult();
+      const mockResult = createMockCompiledStackPlugin();
       vi.mocked(compileStackPlugin).mockResolvedValue(mockResult);
       vi.mocked(claudePluginInstall).mockRejectedValue(
         new Error("Plugin installation failed: permission denied"),
