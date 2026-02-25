@@ -7,6 +7,7 @@ import { orderDomains } from "./utils";
 import type { CategoryRow as GridCategoryRow } from "./category-grid";
 import type {
   CategoryDefinition,
+  Domain,
   ResolvedSkill,
   Subcategory,
   SubcategorySelections,
@@ -266,6 +267,12 @@ describe("StepBuild component", () => {
     it("should preserve canonical order with partial domain selection", () => {
       // Only CLI and Web selected, in reverse order
       expect(orderDomains(["cli", "web"])).toEqual(["web", "cli"]);
+    });
+
+    it("should place custom domains before built-in domains", () => {
+      expect(
+        orderDomains(["web", "gaming" as Domain, "api", "devops" as Domain]),
+      ).toEqual(["devops", "gaming", "web", "api"]);
     });
   });
 

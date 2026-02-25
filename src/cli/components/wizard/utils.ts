@@ -26,11 +26,11 @@ export function getStackName(
   return stack?.name;
 }
 
-/** Sort domains into canonical display order: built-in domains first (per BUILT_IN_DOMAIN_ORDER), then custom alphabetically. */
+/** Sort domains into canonical display order: custom domains first (alphabetically), then built-in domains (per BUILT_IN_DOMAIN_ORDER). */
 export function orderDomains(domains: Domain[]): Domain[] {
   const builtIn = BUILT_IN_DOMAIN_ORDER.filter((d) => domains.includes(d));
   const custom = domains.filter((d) => !BUILT_IN_DOMAIN_ORDER.includes(d)).sort();
-  return [...builtIn, ...custom];
+  return [...custom, ...builtIn];
 }
 
 /** Extract unique domains from a stack's agent-to-skill mappings. */

@@ -175,7 +175,7 @@ export const CLI_COLORS = {
   WHITE: "white",
 } as const;
 
-/** Canonical display order for built-in domains. Custom domains appear after these, alphabetically. */
+/** Canonical display order for built-in domains. Custom domains appear before these, alphabetically. */
 export const BUILT_IN_DOMAIN_ORDER: readonly Domain[] = ["web", "api", "mobile", "cli"];
 
 /** Default domains pre-selected when "Start from scratch" is chosen (all except CLI) */
