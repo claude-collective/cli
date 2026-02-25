@@ -170,6 +170,60 @@ describe("WizardStore", () => {
       const { selectedDomains } = useWizardStore.getState();
       expect(selectedDomains).toEqual(["web", "api", "cli"]);
     });
+
+    it("should remove skills from deselected domain", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", true);
+
+      store.toggleDomain("web");
+
+      const { domainSelections } = useWizardStore.getState();
+      expect(domainSelections.web).toBeUndefined();
+      expect(store.getAllSelectedTechnologies()).toEqual([]);
+      expect(store.getTechnologyCount()).toBe(0);
+    });
+
+    it("should not affect skills in other domains when deselecting a domain", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+      store.toggleDomain("api");
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("api", "api-api", "api-framework-hono", true);
+
+      store.toggleDomain("web");
+
+      const { domainSelections } = useWizardStore.getState();
+      expect(domainSelections.web).toBeUndefined();
+      expect(domainSelections.api!["api-api"]).toEqual(["api-framework-hono"]);
+      expect(store.getAllSelectedTechnologies()).toEqual(["api-framework-hono"]);
+    });
+
+    it("should not auto-select skills when toggling domain on", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+
+      const { domainSelections } = useWizardStore.getState();
+      expect(domainSelections.web).toBeUndefined();
+      expect(store.getAllSelectedTechnologies()).toEqual([]);
+    });
+
+    it("should reflect correct technology count after domain deselection", () => {
+      const store = useWizardStore.getState();
+      store.toggleDomain("web");
+      store.toggleDomain("api");
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", true);
+      store.toggleTechnology("api", "api-api", "api-framework-hono", true);
+
+      expect(store.getTechnologyCount()).toBe(3);
+
+      store.toggleDomain("web");
+
+      expect(store.getTechnologyCount()).toBe(1);
+      expect(store.getAllSelectedTechnologies()).toEqual(["api-framework-hono"]);
+    });
   });
 
   describe("technology selection", () => {

@@ -516,10 +516,15 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   toggleDomain: (domain) =>
     set((state) => {
       const isSelected = state.selectedDomains.includes(domain);
+      if (isSelected) {
+        const { [domain]: _removed, ...remainingSelections } = state.domainSelections;
+        return {
+          selectedDomains: state.selectedDomains.filter((d) => d !== domain),
+          domainSelections: remainingSelections,
+        };
+      }
       return {
-        selectedDomains: isSelected
-          ? state.selectedDomains.filter((d) => d !== domain)
-          : [...state.selectedDomains, domain],
+        selectedDomains: [...state.selectedDomains, domain],
       };
     }),
 

@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { unique } from "remeda";
+import { BUILT_IN_DOMAIN_ORDER } from "../../consts.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import type { Domain, MergedSkillsMatrix } from "../../types/index.js";
 import { typedEntries } from "../../utils/typed-object.js";
@@ -13,9 +14,6 @@ const BUILT_IN_DOMAIN_DESCRIPTIONS: Record<Domain, string> = {
   mobile: "Mobile applications",
   shared: "Shared utilities and methodology",
 };
-
-/** Built-in domain display order. Custom domains appear after these. */
-const BUILT_IN_DOMAIN_ORDER: Domain[] = ["web", "api", "cli", "mobile"];
 
 type DomainSelectionProps = {
   matrix: MergedSkillsMatrix;

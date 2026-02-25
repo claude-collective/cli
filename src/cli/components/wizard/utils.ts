@@ -1,4 +1,5 @@
 import { unique } from "remeda";
+import { BUILT_IN_DOMAIN_ORDER } from "../../consts.js";
 import type { CategoryMap, Domain, MergedSkillsMatrix, ResolvedStack } from "../../types/index.js";
 import { typedKeys } from "../../utils/typed-object.js";
 
@@ -23,6 +24,13 @@ export function getStackName(
   if (!stackId) return undefined;
   const stack = matrix.suggestedStacks.find((s) => s.id === stackId);
   return stack?.name;
+}
+
+/** Sort domains into canonical display order: built-in domains first (per BUILT_IN_DOMAIN_ORDER), then custom alphabetically. */
+export function orderDomains(domains: Domain[]): Domain[] {
+  const builtIn = BUILT_IN_DOMAIN_ORDER.filter((d) => domains.includes(d));
+  const custom = domains.filter((d) => !BUILT_IN_DOMAIN_ORDER.includes(d)).sort();
+  return [...builtIn, ...custom];
 }
 
 /** Extract unique domains from a stack's agent-to-skill mappings. */

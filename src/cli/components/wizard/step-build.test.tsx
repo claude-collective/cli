@@ -3,6 +3,7 @@ import { indexBy } from "remeda";
 import { describe, expect, it, afterEach, vi } from "vitest";
 import { StepBuild, type StepBuildProps } from "./step-build";
 import { validateBuildStep, getSkillDisplayLabel } from "../../lib/wizard/index";
+import { orderDomains } from "./utils";
 import type { CategoryRow as GridCategoryRow } from "./category-grid";
 import type {
   CategoryDefinition,
@@ -22,6 +23,7 @@ import {
   createMockSkill,
   createMockMatrix,
   TEST_SKILLS,
+  TEST_CATEGORIES,
 } from "../../lib/__tests__/helpers";
 
 const SKILL_DEFAULTS: Partial<ResolvedSkill> = { categoryExclusive: true };
@@ -35,35 +37,41 @@ const buildTestMatrix = (categories: CategoryDefinition[], skills: ResolvedSkill
     },
   );
 
-const frameworkCategory = createMockCategory("web-framework", "Framework", {
-  domain: "web",
+const frameworkCategory = {
+  ...TEST_CATEGORIES.framework,
+  domain: "web" as const,
   required: true,
   order: 0,
-});
+};
 
-const stylingCategory = createMockCategory("web-styling", "Styling", {
-  domain: "web",
+const stylingCategory = {
+  ...TEST_CATEGORIES.styling,
+  domain: "web" as const,
   required: true,
   order: 1,
-});
+};
 
-const stateCategory = createMockCategory("web-client-state", "Client State", {
-  domain: "web",
+const stateCategory = {
+  ...TEST_CATEGORIES.clientState,
+  domain: "web" as const,
   required: false,
   order: 2,
-});
+};
 
-const apiFrameworkCategory = createMockCategory("api-api", "API Framework", {
-  domain: "api",
+const apiFrameworkCategory = {
+  ...TEST_CATEGORIES.api,
+  displayName: "API Framework",
+  domain: "api" as const,
   required: true,
   order: 0,
-});
+};
 
-const databaseCategory = createMockCategory("api-database", "Database", {
-  domain: "api",
+const databaseCategory = {
+  ...TEST_CATEGORIES.database,
+  domain: "api" as const,
   required: false,
   order: 1,
-});
+};
 
 const reactSkill = { ...TEST_SKILLS.react, ...SKILL_DEFAULTS, displayName: "react" as const };
 const vueSkill = { ...TEST_SKILLS.vue, ...SKILL_DEFAULTS, displayName: "vue" as const };
@@ -243,6 +251,21 @@ describe("StepBuild component", () => {
 
       const output = lastFrame();
       expect(output).toContain("Customize your API stack");
+    });
+
+    it("should display domains in canonical order regardless of selection order", () => {
+      // Domains selected in reverse order: CLI, Mobile, API, Web
+      expect(orderDomains(["cli", "mobile", "api", "web"])).toEqual([
+        "web",
+        "api",
+        "mobile",
+        "cli",
+      ]);
+    });
+
+    it("should preserve canonical order with partial domain selection", () => {
+      // Only CLI and Web selected, in reverse order
+      expect(orderDomains(["cli", "web"])).toEqual(["web", "cli"]);
     });
   });
 

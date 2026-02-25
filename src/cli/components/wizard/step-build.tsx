@@ -1,5 +1,5 @@
 import { Box, Text, useInput } from "ink";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { CLI_COLORS } from "../../consts.js";
 import { validateBuildStep } from "../../lib/wizard/index.js";
 import type {
@@ -12,7 +12,7 @@ import type {
 import { useFrameworkFiltering } from "../hooks/use-framework-filtering.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
 import { CategoryGrid } from "./category-grid.js";
-import { getDomainDisplayName } from "./utils.js";
+import { getDomainDisplayName, orderDomains } from "./utils.js";
 import { ViewTitle } from "./view-title.js";
 
 export type StepBuildProps = {
@@ -65,6 +65,8 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   const [validationError, setValidationError] = useState<string | undefined>(undefined);
   const { ref: gridRef, measuredHeight: gridHeight } = useMeasuredHeight();
 
+  const orderedDomains = useMemo(() => orderDomains(selectedDomains), [selectedDomains]);
+
   const categories = useFrameworkFiltering({
     domain: activeDomain,
     allSelections,
@@ -105,7 +107,7 @@ export const StepBuild: React.FC<StepBuildProps> = ({
         borderStyle="single"
       >
         <Box columnGap={2} flexDirection="row">
-          {selectedDomains.map((domain) => {
+          {orderedDomains.map((domain) => {
             const isActive = domain === activeDomain;
             return (
               <Text key={domain} color={isActive ? CLI_COLORS.WARNING : undefined} bold={isActive}>

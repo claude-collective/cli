@@ -1300,4 +1300,142 @@ describe("CategoryGrid component", () => {
       expect(output).toContain("Category 3");
     });
   });
+
+  describe("selection counter", () => {
+    it("should show 'X of 1' for exclusive categories with no selection", () => {
+      const categories = [
+        createCategory(
+          "web-framework",
+          "Framework",
+          [
+            createOption("web-framework-react", "React"),
+            createOption("web-framework-vue-composition-api", "Vue"),
+          ],
+          { exclusive: true },
+        ),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ categories });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("(0 of 1)");
+    });
+
+    it("should show '1 of 1' for exclusive categories with one selection", () => {
+      const categories = [
+        createCategory(
+          "web-framework",
+          "Framework",
+          [
+            createOption("web-framework-react", "React", { selected: true }),
+            createOption("web-framework-vue-composition-api", "Vue"),
+          ],
+          { exclusive: true },
+        ),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ categories });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("(1 of 1)");
+    });
+
+    it("should show 'X selected' for non-exclusive categories", () => {
+      const categories = [
+        createCategory(
+          "web-testing",
+          "Testing",
+          [
+            createOption("web-testing-vitest", "Vitest", { selected: true }),
+            createOption("web-testing-playwright-e2e", "Playwright", { selected: true }),
+            createOption("web-testing-cypress-e2e", "Cypress"),
+          ],
+          { exclusive: false },
+        ),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ categories });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("(2 selected)");
+    });
+
+    it("should show '0 selected' for non-exclusive categories with no selection", () => {
+      const categories = [
+        createCategory(
+          "web-testing",
+          "Testing",
+          [
+            createOption("web-testing-vitest", "Vitest"),
+            createOption("web-testing-playwright-e2e", "Playwright"),
+          ],
+          { exclusive: false },
+        ),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ categories });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("(0 selected)");
+    });
+
+    it("should hide counter in expert mode", () => {
+      const categories = [
+        createCategory(
+          "web-framework",
+          "Framework",
+          [createOption("web-framework-react", "React", { selected: true })],
+          { exclusive: true },
+        ),
+        createCategory(
+          "web-testing",
+          "Testing",
+          [createOption("web-testing-vitest", "Vitest", { selected: true })],
+          { exclusive: false },
+        ),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ categories, expertMode: true });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).not.toContain("of 1");
+      expect(output).not.toContain("selected");
+    });
+
+    it("should show correct counts for mixed exclusive and non-exclusive categories", () => {
+      const categories = [
+        createCategory(
+          "web-framework",
+          "Framework",
+          [
+            createOption("web-framework-react", "React", { selected: true }),
+            createOption("web-framework-vue-composition-api", "Vue"),
+          ],
+          { exclusive: true },
+        ),
+        createCategory(
+          "web-testing",
+          "Testing",
+          [
+            createOption("web-testing-vitest", "Vitest", { selected: true }),
+            createOption("web-testing-playwright-e2e", "Playwright", { selected: true }),
+            createOption("web-testing-cypress-e2e", "Cypress"),
+          ],
+          { exclusive: false },
+        ),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ categories });
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("(1 of 1)");
+      expect(output).toContain("(2 selected)");
+    });
+  });
 });

@@ -124,16 +124,17 @@ function buildAgentGroups(matrix: MergedSkillsMatrix): AgentGroup[] {
 
   if (customAgentIds.length === 0) return BUILT_IN_AGENT_GROUPS;
 
-  // Group custom agents by domain prefix (first segment of kebab-case ID)
+  // Group custom agents by explicit domain (from agent.yaml) or kebab prefix fallback
   const customGroupMap = new Map<string, AgentItem[]>();
   for (const agentId of customAgentIds) {
-    const prefix = agentId.split("-")[0] || "custom";
-    const groupLabel = getDomainDisplayName(prefix);
+    // Boundary cast: custom agent names from matrix stacks are not in the AgentName union
+    const explicitDomain = matrix.agentDomains?.[agentId as AgentName];
+    const domainKey = explicitDomain ?? (agentId.split("-")[0] || "custom");
+    const groupLabel = getDomainDisplayName(domainKey);
     if (!customGroupMap.has(groupLabel)) {
       customGroupMap.set(groupLabel, []);
     }
     customGroupMap.get(groupLabel)!.push({
-      // Boundary cast: custom agent names from matrix stacks are not in the AgentName union
       id: agentId as AgentName,
       label: agentIdToLabel(agentId),
       description: "Custom agent",

@@ -153,6 +153,7 @@ type CategorySectionProps = {
   isFocused: boolean;
   focusedOptionIndex: number;
   showLabels: boolean;
+  expertMode: boolean;
 };
 
 const CategorySection: React.FC<CategorySectionProps> = ({
@@ -163,7 +164,16 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   isFocused,
   focusedOptionIndex,
   showLabels,
+  expertMode,
 }) => {
+  const selectedCount = options.filter((o) => o.selected).length;
+
+  const selectionCounter = expertMode
+    ? null
+    : category.exclusive
+      ? `(${selectedCount} of 1)`
+      : `(${selectedCount} selected)`;
+
   return (
     <Box flexDirection="column" marginTop={isFirst ? 0 : 1}>
       <Box flexDirection="row">
@@ -176,6 +186,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
             {SYMBOL_REQUIRED}
           </Text>
         )}
+        {selectionCounter && <Text dimColor> {selectionCounter}</Text>}
       </Box>
 
       <Box flexDirection="row" flexWrap="wrap" marginTop={0}>
@@ -347,6 +358,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
           isFocused={index === focusedRow}
           focusedOptionIndex={focusedCol}
           showLabels={showLabels}
+          expertMode={expertMode}
           isFirst={index === 0}
         />
       </Box>
