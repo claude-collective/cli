@@ -1,24 +1,25 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID   | Task                                                                                                                                                                                            | Status       |
-| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| D-50 | Eliminate skills-matrix.yaml: derive matrix dynamically from skill metadata (see detailed notes below)                                                                                          | Pending      |
-| U13  | Run Documentor Agent on CLI Codebase                                                                                                                                                            | Pending      |
-| H18  | Tailor documentation-bible to CLI repo                                                                                                                                                          | Phase 3 only |
-| D-46 | Custom extensibility (see [design doc](../docs/features/proposed/custom-extensibility-design.md))                                                                                               | In Progress  |
-| D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                                                                                                 | Pending      |
-| D-33 | README: frame Agents Inc. as an AI coding framework                                                                                                                                             | Pending      |
-| D-44 | Update README and Notion page for `eject templates` type                                                                                                                                        | Pending      |
-| D-47 | Eject a standalone compile function for sub-agent compilation                                                                                                                                   | Pending      |
-| T-08 | Audit all test files: extract fixtures, use real IDs                                                                                                                                            | Pending      |
-| T-12 | End-to-end tests for custom marketplace workflow (`--source`, `outdated`, build→version→update cycle)                                                                                           | Pending      |
-| D-52 | Expand `new agent` command: add agent-summoner to skills repo so remote fetch works from any project                                                                                            | Pending      |
-| D-53 | Rename `agent.yaml` to `metadata.yaml` for consistency with skills                                                                                                                              | Pending      |
-| D-54 | Remove expert mode: make expert mode behavior the default, then remove the concept entirely                                                                                                     | Pending      |
-| D-55 | Clean up dead code: remove `escapedSkillId` regex and `(@author)` stripping in `skill-fetcher.ts` — skill IDs are kebab-case only                                                               | Pending      |
-| D-56 | Rename `agentDomains` / "domain overrides" — agents _define_ their domain, they don't override. Also consider moving off `MergedSkillsMatrix`                                                   | Pending      |
-| D-57 | Fix `TEST_SKILLS.antiOverEngineering` path: include `path` in fixture so tests don't need inline overrides                                                                                      | Pending      |
-| D-58 | `orderDomains`: put custom domains first, then built-in domains                                                                                                                                 | Pending      |
+| ID   | Task                                                                                                                                                  | Status       |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| D-50 | Eliminate skills-matrix.yaml: derive matrix dynamically from skill metadata (see detailed notes below)                                                | Pending      |
+| U13  | Run Documentor Agent on CLI Codebase                                                                                                                  | Pending      |
+| H18  | Tailor documentation-bible to CLI repo                                                                                                                | Phase 3 only |
+| D-46 | Custom extensibility (see [design doc](../docs/features/proposed/custom-extensibility-design.md))                                                     | In Progress  |
+| D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                                                       | Pending      |
+| D-33 | README: frame Agents Inc. as an AI coding framework                                                                                                   | Pending      |
+| D-44 | Update README and Notion page for `eject templates` type                                                                                              | Pending      |
+| D-47 | Eject a standalone compile function for sub-agent compilation                                                                                         | Pending      |
+| T-08 | Audit all test files: extract fixtures, use real IDs                                                                                                  | Pending      |
+| T-12 | End-to-end tests for custom marketplace workflow (`--source`, `outdated`, build→version→update cycle)                                                 | Pending      |
+| D-52 | Expand `new agent` command: add agent-summoner to skills repo so remote fetch works from any project                                                  | Pending      |
+| D-53 | Rename `agent.yaml` to `metadata.yaml` for consistency with skills                                                                                    | Pending      |
+| D-54 | Remove expert mode: make expert mode behavior the default, then remove the concept entirely                                                           | Pending      |
+| D-55 | Clean up dead code: remove `escapedSkillId` regex and `(@author)` stripping in `skill-fetcher.ts` — skill IDs are kebab-case only                     | Done         |
+| D-56 | Rename `agentDomains` → `agentDefinedDomains`, update "override" comments to "define/precedence" language                                             | Done         |
+| D-57 | Fix `TEST_SKILLS.antiOverEngineering`: remove unnecessary inline `path` override in config-generator test                                             | Done         |
+| D-58 | `orderDomains`: put custom domains first, then built-in domains                                                                                       | Done         |
+| D-59 | Unified scrolling across all wizard views — apply the same scrolling pattern (marginTop offset + `useMeasuredHeight`) to every step that can overflow | Pending      |
 
 ---
 
@@ -90,7 +91,7 @@ The wizard UI reads category/domain info from `matrix.categories` (`MergedSkills
 
 3. **`matrix-health-check.ts`** — warns "category has no domain" by checking `matrix.categories`. This check should still work but may need adjustment once categories can come from skill metadata.
 
-4. **`source-loader.ts:discoverAndExtendFromSource()`** — already discovers custom domains/categories/skillIds and registers them with `extendSchemasWithCustomValues()`. But this only extends *schema validation* — it doesn't create `CategoryDefinition` entries in the matrix. The schema extension is necessary but not sufficient.
+4. **`source-loader.ts:discoverAndExtendFromSource()`** — already discovers custom domains/categories/skillIds and registers them with `extendSchemasWithCustomValues()`. But this only extends _schema validation_ — it doesn't create `CategoryDefinition` entries in the matrix. The schema extension is necessary but not sufficient.
 
 **What `metadata.yaml` already supports:** `domain`, `category`, `categoryExclusive`, `custom`, `tags`, `author`. What's missing from metadata: `displayName`, `icon`, `order`, `required` (these currently live in `skills-matrix.yaml` category definitions).
 
@@ -226,6 +227,52 @@ Test the full custom marketplace lifecycle: using `--source` to point at a custo
 - Tests should be self-contained — no dependency on the real skills repo
 
 **Location:** `src/cli/lib/__tests__/integration/` or `src/cli/lib/__tests__/user-journeys/`
+
+---
+
+### Wizard UX
+
+#### D-59: Unified scrolling across all wizard views
+
+Apply the same scrolling pattern used in `step-agents.tsx`, `category-grid.tsx`, and `source-grid.tsx` to every wizard step that can overflow the terminal viewport. Currently only 3 of 8 step views support scrolling.
+
+**Views that already scroll:**
+
+- `step-build.tsx` → delegates to `category-grid.tsx` (pixel-offset + `measureElement`)
+- `step-sources.tsx` → delegates to `source-grid.tsx` (same pattern)
+- `step-agents.tsx` (row-based marginTop offset)
+
+**Views that need scrolling:**
+
+- **`step-stack.tsx`** (stack selection) — most important. With custom marketplace stacks + built-in stacks, the list can overflow. Currently delegates to `StackSelection` / `DomainSelection` subcomponents with no scroll support.
+- **`step-settings.tsx`** (source management) — users with many custom sources (5+) will overflow.
+- **`checkbox-grid.tsx`** (domain selection within `step-stack.tsx`) — with many custom domains, can overflow.
+
+**Views that don't need scrolling:**
+
+- `step-confirm.tsx` — intentionally brief summary
+- `step-refine.tsx` — only 2 options
+
+**Existing pattern to reuse (all three scrolling views use the same approach):**
+
+1. Measure viewport height via `useMeasuredHeight()` hook
+2. Pass `availableHeight` to the content component
+3. Gate scrolling: `scrollEnabled = availableHeight > 0 && availableHeight >= SCROLL_VIEWPORT.MIN_VIEWPORT_ROWS`
+4. Track focused item position, adjust `scrollTopPx` offset to keep it visible
+5. Render: `<Box height={availableHeight} overflow="hidden"><Box marginTop={-scrollTopPx}>{content}</Box></Box>`
+
+**Key files:**
+
+- Scrolling pattern reference: `src/cli/components/wizard/category-grid.tsx:294-384`
+- Height measurement hook: `src/cli/components/hooks/use-measured-height.ts`
+- Scroll constants: `src/cli/consts.ts:145-156` (`SCROLL_VIEWPORT`)
+- Unused virtual scroll hook (potential alternative): `src/cli/components/hooks/use-virtual-scroll.ts`
+
+**Targets:**
+
+- `src/cli/components/wizard/step-stack.tsx` + `stack-selection.tsx`
+- `src/cli/components/wizard/step-settings.tsx`
+- `src/cli/components/wizard/checkbox-grid.tsx`
 
 ---
 
