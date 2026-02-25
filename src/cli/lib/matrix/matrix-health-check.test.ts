@@ -3,7 +3,6 @@ import { checkMatrixHealth } from "./matrix-health-check";
 import {
   createMockSkill,
   createMockMatrix,
-  createMockCategory,
   TEST_SKILLS,
   TEST_CATEGORIES,
 } from "../__tests__/helpers";
@@ -17,12 +16,8 @@ import { warn } from "../../utils/logger";
 // Categories
 // ---------------------------------------------------------------------------
 
-const missingDomainFrameworkCategory = createMockCategory("web-framework", "Framework", {
-  domain: undefined,
-});
-const missingDomainStylingCategory = createMockCategory("web-styling", "Styling", {
-  domain: undefined,
-});
+const missingDomainFrameworkCategory = { ...TEST_CATEGORIES.framework, domain: undefined };
+const missingDomainStylingCategory = { ...TEST_CATEGORIES.styling, domain: undefined };
 
 // ---------------------------------------------------------------------------
 // Skills

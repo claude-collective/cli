@@ -108,6 +108,37 @@ export const TEST_SKILLS = {
   vitest: createMockSkill("web-testing-vitest", "web-testing"),
   scssModules: createMockSkill("web-styling-scss-modules", "web-styling"),
   drizzle: createMockSkill("api-database-drizzle", "api-database"),
+  // Methodology skills (DEFAULT_PRESELECTED_SKILLS) — used by createComprehensiveMatrix
+  investigationRequirements: createMockSkill(
+    "meta-methodology-investigation-requirements",
+    "shared-methodology",
+    { description: "Never speculate - read actual code first", categoryExclusive: false },
+  ),
+  antiOverEngineering: createMockSkill(
+    "meta-methodology-anti-over-engineering",
+    "shared-methodology",
+    {
+      description: "Surgical implementation, not architectural innovation",
+      categoryExclusive: false,
+    },
+  ),
+  successCriteria: createMockSkill("meta-methodology-success-criteria", "shared-methodology", {
+    description: "Explicit, measurable criteria defining done",
+    categoryExclusive: false,
+  }),
+  writeVerification: createMockSkill("meta-methodology-write-verification", "shared-methodology", {
+    description: "Verify work was actually saved",
+    categoryExclusive: false,
+  }),
+  improvementProtocol: createMockSkill(
+    "meta-methodology-improvement-protocol",
+    "shared-methodology",
+    { description: "Evidence-based self-improvement", categoryExclusive: false },
+  ),
+  contextManagement: createMockSkill("meta-methodology-context-management", "shared-methodology", {
+    description: "Maintain project continuity across sessions",
+    categoryExclusive: false,
+  }),
 };
 
 // ---------------------------------------------------------------------------
@@ -118,7 +149,11 @@ export const TEST_SKILLS = {
 export const TEST_CATEGORIES = {
   framework: createMockCategory("web-framework", "Framework"),
   clientState: createMockCategory("web-client-state", "Client State"),
+  styling: createMockCategory("web-styling", "Styling"),
   testing: createMockCategory("web-testing", "Testing"),
+  api: createMockCategory("api-api", "Backend Framework"),
+  database: createMockCategory("api-database", "Database"),
+  methodology: createMockCategory("shared-methodology", "Methodology"),
   tooling: createMockCategory("shared-tooling", "Tooling"),
 };
 

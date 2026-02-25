@@ -385,11 +385,10 @@ describe("config-generator", () => {
     it("assigns methodology skills to all selectedAgents", () => {
       const selectedAgents: AgentName[] = ["web-developer", "api-developer"];
       const matrix = createMockMatrix({
-        ["meta-methodology-anti-over-engineering"]: createMockSkill(
-          "meta-methodology-anti-over-engineering",
-          "shared-methodology",
-          { path: "skills/meta-methodology-anti-over-engineering/" },
-        ),
+        ["meta-methodology-anti-over-engineering"]: {
+          ...TEST_SKILLS.antiOverEngineering,
+          path: "skills/meta-methodology-anti-over-engineering/",
+        },
       });
 
       const config = generateProjectConfigFromSkills(
