@@ -69,6 +69,7 @@
     "agentsinc": "node dist/index.js",
     "agentsinc:dev": "bun src/cli/index.ts",
     "test": "vitest run",
+    "test:e2e": "vitest --config e2e/vitest.config.ts --run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "format": "prettier --write .",

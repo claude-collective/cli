@@ -21,9 +21,9 @@ describe("TerminalSession smoke tests", () => {
   it("should capture --help output via PTY", async () => {
     session = new TerminalSession(["--help"], process.cwd());
 
-    await session.waitForText("USAGE");
+    await session.waitForExit();
 
-    const screen = getScreen();
+    const screen = session!.getFullOutput();
 
     expect(screen).toContain("agentsinc");
     expect(screen).toContain("TOPICS");
