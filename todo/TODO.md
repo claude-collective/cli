@@ -1,25 +1,28 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID   | Task                                                                                                                                                                                     | Status        |
-| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| D-50 | ~~Eliminate skills-matrix.yaml~~ — superseded by [matrix decomposition design](../docs/features/proposed/matrix-decomposition-design.md) + [phased plan](./TODO-matrix-decomposition.md) | Superseded    |
-| D-46 | Custom extensibility (see [design doc](../docs/features/proposed/custom-extensibility-design.md))                                                                                        | In Progress   |
-| D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                                                                                          | Refined       |
-| D-33 | README: frame Agents Inc. as an AI coding framework (see [implementation plan](./D-33-readme-reframe.md))                                                                                | Ready for Dev |
-| D-44 | Update README and Notion page for `eject templates` type (see [implementation plan](./D-44-docs-eject-templates.md))                                                                     | Ready for Dev |
-| D-47 | ~~Eject a standalone compile function~~ — deferred, low priority (see [TODO-deferred.md](./TODO-deferred.md))                                                                            | Deferred      |
-| T-12 | End-to-end tests for custom marketplace workflow (see [implementation plan](./T-12-e2e-marketplace-tests.md))                                                                            | Has Open Qs   |
-| D-52 | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md))                                                                    | Ready for Dev |
-| D-54 | Remove expert mode: make expert mode behavior the default (see [implementation plan](./D-54-remove-expert-mode.md))                                                                      | Ready for Dev |
-| D-59 | Unified scrolling across all wizard views (see [implementation plan](./D-59-unified-scrolling.md))                                                                                       | Ready for Dev |
-| D-36 | Global install support with project-level override (see [implementation plan](./D-36-global-install.md))                                                                                 | Ready for Dev |
-| D-37 | Merge global + project installations in resolution (see [implementation plan](./D-37-merge-installs.md))                                                                                 | Has Open Qs   |
-| D-08 | ~~User-defined stacks~~ — deferred, not important (see [TODO-deferred.md](./TODO-deferred.md))                                                                                           | Deferred      |
-| D-53 | Rename `agent.yaml` to `metadata.yaml` (see [implementation plan](./D-53-rename-agent-yaml.md))                                                                                          | Ready for Dev |
-| D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))                                                                            | Has Open Qs   |
-| D-39 | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))                                                                                | Ready for Dev |
-| D-40 | ~~`agentsinc register` command~~ — absorbed into D-41 (config sub-agent handles registration) (see [TODO-deferred.md](./TODO-deferred.md))                                               | Deferred      |
-| D-41 | Create Agents Inc config sub-agent (see [implementation plan](./D-41-config-sub-agent.md))                                                                                               | Ready for Dev |
+| ID   | Task                                                                                                                                       | Status        |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
+| D-50 | Matrix decomposition — Phases 1-5 done, 6-8 remain (see [phased plan](./TODO-matrix-decomposition.md))                                     | In Progress   |
+| D-46 | Custom extensibility (see [design doc](../docs/features/proposed/custom-extensibility-design.md))                                          | In Progress   |
+| D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                                            | Refined       |
+| D-33 | README: frame Agents Inc. as an AI coding framework (see [implementation plan](./D-33-readme-reframe.md))                                  | Ready for Dev |
+| D-44 | Update README and Notion page for `eject templates` type (see [implementation plan](./D-44-docs-eject-templates.md))                       | Ready for Dev |
+| D-47 | ~~Eject a standalone compile function~~ — deferred, low priority (see [TODO-deferred.md](./TODO-deferred.md))                              | Deferred      |
+| T-12 | End-to-end tests for custom marketplace workflow (see [implementation plan](./T-12-e2e-marketplace-tests.md))                              | Has Open Qs   |
+| D-52 | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md))                      | Ready for Dev |
+| D-54 | Remove expert mode: make expert mode behavior the default (see [implementation plan](./D-54-remove-expert-mode.md))                        | Ready for Dev |
+| D-59 | Unified scrolling across all wizard views (see [implementation plan](./D-59-unified-scrolling.md))                                         | Ready for Dev |
+| D-36 | Global install support with project-level override (see [implementation plan](./D-36-global-install.md))                                   | Ready for Dev |
+| D-37 | Merge global + project installations in resolution (see [implementation plan](./D-37-merge-installs.md))                                   | Has Open Qs   |
+| D-08 | ~~User-defined stacks~~ — deferred, not important (see [TODO-deferred.md](./TODO-deferred.md))                                             | Deferred      |
+| D-53 | Rename `agent.yaml` to `metadata.yaml` (see [implementation plan](./D-53-rename-agent-yaml.md))                                            | Ready for Dev |
+| D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))                              | Has Open Qs   |
+| D-39 | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))                                  | Ready for Dev |
+| D-40 | ~~`agentsinc register` command~~ — absorbed into D-41 (config sub-agent handles registration) (see [TODO-deferred.md](./TODO-deferred.md)) | Deferred      |
+| D-41 | Create Agents Inc config sub-agent (see [implementation plan](./D-41-config-sub-agent.md))                                                 | Ready for Dev |
+| D-60 | Remove `cli-migrator` subagent                                                                                                             | Ready for Dev |
+| D-61 | Preserve stack skill selections when toggling domains                                                                                      | Ready for Dev |
+| D-62 | Review default stacks: include meta/methodology/reviewing skills                                                                           | Ready for Dev |
 
 ---
 
@@ -37,27 +40,15 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 
 ## Active Tasks
 
-### D-50: Eliminate skills-matrix.yaml — derive matrix from skill metadata
+### D-50: Matrix Decomposition — remaining phases
 
-Move all category metadata (required, exclusive, order, displayName, domain, icon) to individual skill `metadata.yaml` files; derive the `MergedSkillsMatrix` dynamically from scanning skills.
+Phases 1-5 complete. `skills-matrix.yaml` deleted, replaced by `skill-categories.yaml` + `skill-rules.yaml`. Auto-synthesis active. See [phased plan](./TODO-matrix-decomposition.md) for full details.
 
-**Current problem (blocking custom marketplaces):**
+**Remaining phases:**
 
-The wizard UI reads category/domain info from `matrix.categories` (`MergedSkillsMatrix.categories`), which is populated exclusively from `skills-matrix.yaml`. Skills from a custom marketplace that don't have a corresponding `skills-matrix.yaml` entry are invisible in the wizard — even if they declare `domain` and `category` in their own `metadata.yaml`.
-
-**Key code locations that need to change:**
-
-1. **`matrix-loader.ts:mergeMatrixWithSkills()`** — line 270 sets `categories: matrix.categories` (from skills-matrix.yaml only). Must auto-synthesize `CategoryDefinition` entries from skill metadata when the category doesn't already exist in the matrix. The skill's `domain`, `category`, `categoryExclusive` fields should be sufficient to create a category entry.
-
-2. **Wizard UI components** — `step-build.tsx`, `category-grid.tsx`, `domain-selection.tsx` all look up `matrix.categories[subcategory].domain` to organize skills by domain tab. If a category isn't in the matrix, the skill is invisible regardless of what's on the `ResolvedSkill` itself. These need to work even when the category was synthesized from metadata.
-
-3. **`matrix-health-check.ts`** — warns "category has no domain" by checking `matrix.categories`. This check should still work but may need adjustment once categories can come from skill metadata.
-
-4. **`source-loader.ts:discoverAndExtendFromSource()`** — already discovers custom domains/categories/skillIds and registers them with `extendSchemasWithCustomValues()`. But this only extends _schema validation_ — it doesn't create `CategoryDefinition` entries in the matrix. The schema extension is necessary but not sufficient.
-
-**What `metadata.yaml` already supports:** `domain`, `category`, `categoryExclusive`, `custom`, `tags`, `author`. What's missing from metadata: `displayName`, `icon`, `order`, `required` (these currently live in `skills-matrix.yaml` category definitions).
-
-**End state:** A custom marketplace with only skills (no `skills-matrix.yaml`) should work out of the box. Each skill's `metadata.yaml` provides enough info (`domain`, `category`, `categoryExclusive`) to appear in the wizard.
+- **Phase 6:** `new skill` / `new marketplace` commands should create/update `skill-categories.yaml` and `skill-rules.yaml` when scaffolding
+- **Phase 7:** Remove `categoryExclusive` from skill metadata — it's a category-level property (`exclusive` in `skill-categories.yaml`), not per-skill. Cross-repo change (~90 metadata.yaml files in skills repo)
+- **Phase 8:** Rename `cliName` → `displayName` in all skill metadata. Cross-repo change (~90 files). Deferred until structural changes are stable
 
 ---
 
@@ -342,6 +333,41 @@ Apply the same scrolling pattern used in `step-agents.tsx`, `category-grid.tsx`,
 - `src/cli/components/wizard/step-stack.tsx` + `stack-selection.tsx`
 - `src/cli/components/wizard/step-settings.tsx`
 - `src/cli/components/wizard/checkbox-grid.tsx`
+
+---
+
+#### D-62: Review default stacks: include meta/methodology/reviewing skills
+
+Go through all default stacks and ensure they include the shared meta skills (methodology, reviewing, research, etc.) that should be part of every reasonable setup. Currently stacks only include domain-specific skills and miss the cross-cutting concerns.
+
+**Skills to consider adding to stacks:**
+
+- `meta-methodology-*` — investigation-requirements, anti-over-engineering, success-criteria, write-verification, improvement-protocol, context-management
+- `meta-reviewing-*` — reviewing, cli-reviewing
+- `meta-research-*` — research-methodology
+- `security-auth-security` — where auth skills are selected
+
+**Key files:**
+
+- `stacks.yaml` in the skills repo (`/home/vince/dev/skills`)
+- Stack definitions that feed into the wizard's stack selection step
+
+---
+
+#### D-61: Preserve stack skill selections when toggling domains
+
+When a stack is selected and the user deselects a domain in the domain selection view, all skills for that domain are cleared. If the user re-selects the domain, the skills should be restored to the stack's defaults — currently they come back empty.
+
+**Expected behavior:**
+
+- Deselect a domain → skills for that domain are cleared (current behavior, correct)
+- Re-select the same domain → skills are restored from the stack's preset selections
+
+**Key files:**
+
+- `src/cli/components/wizard/step-stack.tsx` — domain toggle handler
+- `src/cli/components/wizard/wizard-store.ts` — domain/skill selection state
+- `src/cli/components/wizard/checkbox-grid.tsx` — domain checkbox rendering
 
 ---
 
