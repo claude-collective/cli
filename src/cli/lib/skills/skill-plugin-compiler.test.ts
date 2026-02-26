@@ -251,7 +251,10 @@ describe("skill-plugin-compiler", () => {
       const newHash = await computeSkillFolderHash(skillPath);
       const metadataPath = path.join(skillPath, STANDARD_FILES.METADATA_YAML);
       const metadataContent = await readFile(metadataPath, "utf-8");
-      const updatedMetadata = metadataContent.replace(/contentHash: [a-f0-9]+/, `contentHash: ${newHash}`);
+      const updatedMetadata = metadataContent.replace(
+        /contentHash: [a-f0-9]+/,
+        `contentHash: ${newHash}`,
+      );
       await writeFile(metadataPath, updatedMetadata);
 
       // Recompile with changes - version should bump major (1.0.0 -> 2.0.0)

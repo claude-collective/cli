@@ -60,7 +60,13 @@ const expressSkill = createMockSkill("api-framework-express", "api-api", {
 const postgresSkill = createMockSkill("api-database-postgres", "api-database", EXCLUSIVE);
 
 const defaultMatrix = buildTestMatrix(
-  [WEB_FRAMEWORK_CATEGORY, WEB_STYLING_CATEGORY, WEB_STATE_CATEGORY, API_FRAMEWORK_CATEGORY, API_DATABASE_CATEGORY],
+  [
+    WEB_FRAMEWORK_CATEGORY,
+    WEB_STYLING_CATEGORY,
+    WEB_STATE_CATEGORY,
+    API_FRAMEWORK_CATEGORY,
+    API_DATABASE_CATEGORY,
+  ],
   [
     reactSkill,
     vueSkill,
@@ -230,9 +236,12 @@ describe("StepBuild component", () => {
     });
 
     it("should place custom domains before built-in domains", () => {
-      expect(
-        orderDomains(["web", "gaming" as Domain, "api", "devops" as Domain]),
-      ).toEqual(["devops", "gaming", "web", "api"]);
+      expect(orderDomains(["web", "gaming" as Domain, "api", "devops" as Domain])).toEqual([
+        "devops",
+        "gaming",
+        "web",
+        "api",
+      ]);
     });
   });
 
