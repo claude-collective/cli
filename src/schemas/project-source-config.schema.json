@@ -85,7 +85,10 @@
     "stacksFile": {
       "type": "string"
     },
-    "matrixFile": {
+    "categoriesFile": {
+      "type": "string"
+    },
+    "rulesFile": {
       "type": "string"
     }
   },

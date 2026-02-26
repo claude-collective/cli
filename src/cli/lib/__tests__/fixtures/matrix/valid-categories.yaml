@@ -1,0 +1,27 @@
+# Minimal test fixture for skill-categories.yaml validation tests.
+# Contains a subset of categories sufficient for testing.
+
+version: "1.0.0"
+
+categories:
+  web-framework:
+    id: web-framework
+    displayName: Framework
+    description: Core UI framework
+    exclusive: true
+    required: true
+    order: 1
+  web-styling:
+    id: web-styling
+    displayName: Styling
+    description: CSS approach
+    exclusive: true
+    required: true
+    order: 3
+  api-api:
+    id: api-api
+    displayName: API
+    description: Backend framework
+    exclusive: true
+    required: true
+    order: 1

@@ -297,6 +297,34 @@ describe("matrix-health-check", () => {
 
       expect(categoryIssues).toHaveLength(0);
     });
+
+    it("does not produce warning for auto-synthesized categories", () => {
+      // Boundary cast: custom category not in built-in Subcategory union
+      const autoSynthesizedCategory = createMockCategory(
+        "web-custom" as Subcategory,
+        "Web Custom",
+        { custom: true, order: 999 },
+      );
+      const skillInSynthesizedCategory = createMockSkill(
+        "web-custom-tool",
+        "web-custom" as Subcategory,
+        {},
+      );
+      const matrixWithSynthesized = createMockMatrix(
+        { "web-custom-tool": skillInSynthesizedCategory },
+        {
+          categories: {
+            // Boundary cast: custom category key
+            ["web-custom" as Subcategory]: autoSynthesizedCategory,
+          } as Record<Subcategory, import("../../types").CategoryDefinition>,
+        },
+      );
+
+      const issues = checkMatrixHealth(matrixWithSynthesized);
+      const categoryIssues = issues.filter((i) => i.finding === "skill-unknown-category");
+
+      expect(categoryIssues).toHaveLength(0);
+    });
   });
 
   describe("logging", () => {

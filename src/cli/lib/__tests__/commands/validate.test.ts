@@ -248,7 +248,7 @@ async function writeValidSourceSkill(
   await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));
 }
 
-/** Creates a minimal skills-matrix.yaml with the given categories */
+/** Creates minimal skill-categories.yaml and skill-rules.yaml with the given categories */
 async function writeTestMatrix(
   configDir: string,
   categories: Record<string, { domain: string; displayName: string }>,
@@ -267,20 +267,28 @@ async function writeTestMatrix(
     };
   }
 
-  const matrix = {
-    version: "1.0.0",
-    categories: matrixCategories,
-    relationships: {
-      conflicts: [],
-      discourages: [],
-      recommends: [],
-      requires: [],
-      alternatives: [],
-    },
-    skillAliases: {},
-  };
+  await writeFile(
+    path.join(configDir, "skill-categories.yaml"),
+    stringifyYaml({
+      version: "1.0.0",
+      categories: matrixCategories,
+    }),
+  );
 
-  await writeFile(path.join(configDir, "skills-matrix.yaml"), stringifyYaml(matrix));
+  await writeFile(
+    path.join(configDir, "skill-rules.yaml"),
+    stringifyYaml({
+      version: "1.0.0",
+      aliases: {},
+      relationships: {
+        conflicts: [],
+        discourages: [],
+        recommends: [],
+        requires: [],
+        alternatives: [],
+      },
+    }),
+  );
 }
 
 describe("source validation (validateSource)", () => {
@@ -468,7 +476,7 @@ describe("source validation (validateSource)", () => {
     const configDir = path.join(sourceDir, "config");
     await mkdir(configDir, { recursive: true });
 
-    // Create skill directory manually with a reference to non-existent skill
+    // Create skill directory
     const skillDir = path.join(skillsDir, "web", "framework", "react");
     await mkdir(skillDir, { recursive: true });
 
@@ -485,13 +493,49 @@ describe("source validation (validateSource)", () => {
         cliName: "react",
         cliDescription: "React JavaScript framework",
         usageGuidance: "Use React for building component-based UIs",
-        compatibleWith: ["web-state-nonexistent"],
       }),
     );
 
-    await writeTestMatrix(configDir, {
-      "web-framework": { domain: "web", displayName: "Framework" },
-    });
+    // Add a conflict rule referencing a non-existent skill to trigger cross-reference error
+    const matrixCategories = {
+      "web-framework": {
+        id: "web-framework",
+        displayName: "Framework",
+        description: "Framework skills",
+        domain: "web",
+        exclusive: true,
+        required: false,
+        order: 0,
+      },
+    };
+
+    await writeFile(
+      path.join(configDir, "skill-categories.yaml"),
+      stringifyYaml({
+        version: "1.0.0",
+        categories: matrixCategories,
+      }),
+    );
+
+    await writeFile(
+      path.join(configDir, "skill-rules.yaml"),
+      stringifyYaml({
+        version: "1.0.0",
+        aliases: {},
+        relationships: {
+          conflicts: [
+            {
+              skills: ["web-framework-react", "web-state-nonexistent"],
+              reason: "Test conflict with nonexistent skill",
+            },
+          ],
+          discourages: [],
+          recommends: [],
+          requires: [],
+          alternatives: [],
+        },
+      }),
+    );
 
     const result = await validateSource(sourceDir);
 

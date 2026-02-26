@@ -430,7 +430,7 @@ function buildEjectMatrix(localSkillIds: SkillId[] = []): MergedSkillsMatrix {
 // These tests exercise the eject skill-copying pipeline directly by calling
 // copySkillsToLocalFlattened. The production eject command calls this same
 // function after loading the matrix via loadSkillsMatrixFromSource, but the
-// production skillsMatrixConfigSchema has hardcoded z.enum values that
+// production skillCategoriesFileSchema has hardcoded z.enum values that
 // require ALL subcategories and display names to be present — which prevents
 // test source matrices from validating. By testing the copying logic directly,
 // we verify the core eject behavior (filtering, file copying, metadata

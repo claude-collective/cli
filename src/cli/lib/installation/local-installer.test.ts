@@ -402,7 +402,8 @@ describe("local-installer", () => {
       expect(configContent).toContain("# skillsDir: src/skills");
       expect(configContent).toContain("# agentsDir: src/agents");
       expect(configContent).toContain("# stacksFile: config/stacks.yaml");
-      expect(configContent).toContain("# matrixFile: config/skills-matrix.yaml");
+      expect(configContent).toContain("# categoriesFile:");
+      expect(configContent).toContain("# rulesFile:");
     });
 
     it("should not interfere with YAML parsing when path overrides are commented", async () => {
@@ -427,7 +428,8 @@ describe("local-installer", () => {
       expect((config as Record<string, unknown>)["skillsDir"]).toBeUndefined();
       expect((config as Record<string, unknown>)["agentsDir"]).toBeUndefined();
       expect((config as Record<string, unknown>)["stacksFile"]).toBeUndefined();
-      expect((config as Record<string, unknown>)["matrixFile"]).toBeUndefined();
+      expect((config as Record<string, unknown>)["categoriesFile"]).toBeUndefined();
+      expect((config as Record<string, unknown>)["rulesFile"]).toBeUndefined();
     });
 
     it("should preserve preloaded flags from stack skill assignments", async () => {

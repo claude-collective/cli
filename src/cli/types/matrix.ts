@@ -4,7 +4,7 @@ import type { AgentName } from "./agents";
 /** Wizard domain grouping for skill categories */
 export type Domain = "web" | "api" | "cli" | "mobile" | "shared";
 
-/** Keys in skills-matrix.yaml `categories` section */
+/** Keys in skill-categories.yaml `categories` section */
 export type Subcategory =
   | "web-framework"
   | "web-styling"
@@ -75,7 +75,7 @@ export type CategoryMap = Partial<Record<Subcategory, CategoryDefinition>>;
  */
 export type DomainSelections = Partial<Record<Domain, Partial<Record<Subcategory, SkillId[]>>>>;
 
-/** Single category definition from skills-matrix.yaml */
+/** Single category definition from skill-categories.yaml */
 export type CategoryDefinition = {
   id: Subcategory;
   displayName: string;
@@ -93,7 +93,7 @@ export type CategoryDefinition = {
   custom?: boolean;
 };
 
-/** Relationship rules between skills from skills-matrix.yaml */
+/** Relationship rules between skills from skill-rules.yaml */
 export type RelationshipDefinitions = {
   /** Selecting one disables the others */
   conflicts: ConflictRule[];
@@ -149,13 +149,24 @@ export type AlternativeGroup = {
   skills: SkillId[];
 };
 
-/** Root configuration from skills-matrix.yaml */
-export type SkillsMatrixConfig = {
+/** Per-skill relationship rules from skill-rules.yaml per-skill section */
+export type PerSkillRules = {
+  compatibleWith?: SkillId[];
+  conflictsWith?: SkillId[];
+  requires?: SkillId[];
+  requiresSetup?: SkillId[];
+  providesSetupFor?: SkillId[];
+};
+
+/** Parsed configuration from skill-rules.yaml */
+export type SkillRulesConfig = {
   version: string;
-  categories: CategoryMap;
+  /** Short name aliases mapping to canonical skill IDs */
+  aliases: Partial<Record<SkillDisplayName, SkillId>>;
+  /** Aggregate relationship rules between skills */
   relationships: RelationshipDefinitions;
-  /** Maps short display names to normalized skill IDs */
-  skillAliases: Partial<Record<SkillDisplayName, SkillId>>;
+  /** Per-skill relationship rules keyed by alias */
+  perSkill: Partial<Record<SkillDisplayName, PerSkillRules>>;
 };
 
 /** Pre-configured stack of skills for a specific use case */
@@ -169,7 +180,7 @@ export type SuggestedStack = {
 };
 
 /**
- * Output of mergeMatrixWithSkills() combining skills-matrix.yaml with extracted metadata.
+ * Output of mergeMatrixWithSkills() combining skill-categories.yaml + skill-rules.yaml with extracted metadata.
  * This is the primary read model consumed by the wizard and CLI commands.
  */
 export type MergedSkillsMatrix = {
@@ -374,9 +385,8 @@ export type ValidationWarning = {
 /**
  * Skill metadata extracted from SKILL.md frontmatter + metadata.yaml before matrix merge.
  *
- * Important: relationship fields (compatibleWith, conflictsWith, requires) may contain
- * display names (e.g., "react") at this stage. They are resolved to canonical SkillIds
- * (e.g., "web-framework-react") during mergeMatrixWithSkills() via resolveAlias().
+ * Relationship fields (compatibleWith, conflictsWith, requires, etc.) are loaded from
+ * skill-rules.yaml via perSkillRules — not from individual skill metadata.
  */
 export type ExtractedSkillMetadata = {
   /** Normalized from frontmatter name, e.g. "web-framework-react" */
@@ -391,18 +401,6 @@ export type ExtractedSkillMetadata = {
   categoryExclusive: boolean;
   author: string;
   tags: string[];
-  /**
-   * May contain display names at parse time; resolved to canonical IDs during matrix merge.
-   */
-  compatibleWith: SkillId[];
-  /** May contain display names at parse time; resolved during matrix merge */
-  conflictsWith: SkillId[];
-  /** May contain display names at parse time; resolved during matrix merge */
-  requires: SkillId[];
-  /** Setup skills that must be completed first. Resolved during matrix merge. */
-  requiresSetup: SkillId[];
-  /** Usage skills this setup skill configures. Resolved during matrix merge. */
-  providesSetupFor: SkillId[];
   /** Relative path from src/ to the skill directory */
   path: string;
   /** True if from .claude/skills/ (user-defined local skill) */

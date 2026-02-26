@@ -16,11 +16,6 @@ type LocalRawMetadata = {
   categoryExclusive?: boolean;
   usageGuidance?: string;
   tags?: string[];
-  compatibleWith?: SkillId[];
-  conflictsWith?: SkillId[];
-  requires?: SkillId[];
-  requiresSetup?: SkillId[];
-  providesSetupFor?: SkillId[];
 };
 
 export type LocalSkillDiscoveryResult = {
@@ -123,11 +118,6 @@ async function extractLocalSkill(
     categoryExclusive: metadata.categoryExclusive ?? false,
     author: LOCAL_DEFAULTS.AUTHOR,
     tags: metadata.tags ?? [],
-    compatibleWith: metadata.compatibleWith ?? [],
-    conflictsWith: metadata.conflictsWith ?? [],
-    requires: metadata.requires ?? [],
-    requiresSetup: metadata.requiresSetup ?? [],
-    providesSetupFor: metadata.providesSetupFor ?? [],
     path: relativePath,
     local: true,
     localPath: relativePath,

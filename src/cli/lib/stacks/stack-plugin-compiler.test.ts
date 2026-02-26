@@ -760,7 +760,7 @@ describe("stack-plugin-compiler", () => {
 
       const stackId = uniqueStackId("matrix-fallback-stack");
 
-      // Create stacks.yaml in projectRoot but no skills-matrix.yaml
+      // Create stacks.yaml in projectRoot but no skill-categories.yaml
       await createStacksYaml(projectRoot, stackId, ["web-developer"]);
 
       // Should succeed using CLI's skills matrix as fallback

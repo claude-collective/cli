@@ -226,9 +226,9 @@ describe("Integration: Marketplace Source Stacks", () => {
       );
       expect(await fileExists(reactSkillPath)).toBe(true);
 
-      // Matrix file also exists alongside stacks
-      const matrixPath = path.join(dirs.sourceDir, "config", "skills-matrix.yaml");
-      expect(await fileExists(matrixPath)).toBe(true);
+      // Categories and rules files also exist alongside stacks
+      const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.yaml");
+      expect(await fileExists(categoriesPath)).toBe(true);
     } finally {
       await cleanupTestSource(dirs);
     }
@@ -248,16 +248,18 @@ describe("Integration: Consumer-Defined Skills Matrix", () => {
     await cleanupTestSource(dirs);
   });
 
-  it("should use source skills-matrix.yaml when present", async () => {
-    const matrixPath = path.join(dirs.sourceDir, "config", "skills-matrix.yaml");
-    expect(await fileExists(matrixPath)).toBe(true);
+  it("should use source skill-categories.yaml and skill-rules.yaml when present", async () => {
+    const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.yaml");
+    const rulesPath = path.join(dirs.sourceDir, "config", "skill-rules.yaml");
+    expect(await fileExists(categoriesPath)).toBe(true);
+    expect(await fileExists(rulesPath)).toBe(true);
 
-    // The disk matrix contains category definitions (not skill IDs — those
+    // The disk categories file contains category definitions (not skill IDs — those
     // come from metadata scanning in src/skills/).
-    const matrixContent = await readFile(matrixPath, "utf-8");
-    expect(matrixContent).toContain("framework");
-    expect(matrixContent).toContain("testing");
-    expect(matrixContent).toContain("version:");
+    const categoriesContent = await readFile(categoriesPath, "utf-8");
+    expect(categoriesContent).toContain("framework");
+    expect(categoriesContent).toContain("testing");
+    expect(categoriesContent).toContain("version:");
   });
 
   it("should install all skills from source and compile agents", async () => {
@@ -280,7 +282,7 @@ describe("Integration: Consumer-Defined Skills Matrix", () => {
 });
 
 describe("Integration: Custom Skills Matrix Loading", () => {
-  it("should load a custom skills-matrix.yaml with categories and skills", async () => {
+  it("should load custom categories and skills from a matrix config", async () => {
     const tempDir = await createTempDir("matrix-test-");
 
     try {
@@ -297,7 +299,12 @@ describe("Integration: Custom Skills Matrix Loading", () => {
 
       // Extract skills from filesystem and merge with matrix config
       const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(TOOLING_AND_FRAMEWORK_CONFIG, skills);
+      const merged = await mergeMatrixWithSkills(
+        TOOLING_AND_FRAMEWORK_CONFIG.categories,
+        TOOLING_AND_FRAMEWORK_CONFIG.relationships,
+        TOOLING_AND_FRAMEWORK_CONFIG.aliases,
+        skills,
+      );
 
       // Assert the custom "tooling" category is present
       expect(merged.categories).toBeDefined();
@@ -336,7 +343,12 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       }
 
       const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(CI_CD_CONFIG, skills);
+      const merged = await mergeMatrixWithSkills(
+        CI_CD_CONFIG.categories,
+        CI_CD_CONFIG.relationships,
+        CI_CD_CONFIG.aliases,
+        skills,
+      );
 
       // Verify category exclusive flag
       expect(merged.categories["shared-ci-cd"]).toBeDefined();
@@ -377,7 +389,12 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       }
 
       const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(FRAMEWORK_AND_STYLING_CONFIG, skills);
+      const merged = await mergeMatrixWithSkills(
+        FRAMEWORK_AND_STYLING_CONFIG.categories,
+        FRAMEWORK_AND_STYLING_CONFIG.relationships,
+        FRAMEWORK_AND_STYLING_CONFIG.aliases,
+        skills,
+      );
 
       // Verify discourages relationship is applied to both skills
       const skillA = merged.skills["web-framework-custom-a"];
@@ -481,9 +498,9 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
       );
       expect(await fileExists(reactSkillPath)).toBe(true);
 
-      // 3. Verify matrix is loadable
-      const matrixPath = path.join(dirs.sourceDir, "config", "skills-matrix.yaml");
-      expect(await fileExists(matrixPath)).toBe(true);
+      // 3. Verify categories/rules are loadable
+      const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.yaml");
+      expect(await fileExists(categoriesPath)).toBe(true);
 
       // 4. Install with the custom stack skills
       const sourceResult = buildSourceResult(buildConsumerMatrix(), dirs.sourceDir);
@@ -510,23 +527,23 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
     }
   });
 
-  it("should load matrix config from a custom source directory", async () => {
+  it("should load categories and rules from a custom source directory", async () => {
     const dirs = await createTestSource();
 
     try {
-      // Verify the source's skills-matrix.yaml can be loaded and parsed
-      const matrixPath = path.join(dirs.sourceDir, "config", "skills-matrix.yaml");
-      expect(await fileExists(matrixPath)).toBe(true);
+      // Verify the source's skill-categories.yaml can be loaded and parsed
+      const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.yaml");
+      expect(await fileExists(categoriesPath)).toBe(true);
 
-      const matrixContent = await readFile(matrixPath, "utf-8");
+      const categoriesContent = await readFile(categoriesPath, "utf-8");
 
-      // Verify the disk matrix contains category definitions and structure.
-      // Skill IDs are not in the matrix file — they come from metadata scanning
+      // Verify the disk categories file contains category definitions and structure.
+      // Skill IDs are not in the categories file — they come from metadata scanning
       // in the skills directory (src/skills/).
-      expect(matrixContent).toContain("framework");
-      expect(matrixContent).toContain("testing");
-      expect(matrixContent).toContain("version:");
-      expect(matrixContent).toContain("categories:");
+      expect(categoriesContent).toContain("framework");
+      expect(categoriesContent).toContain("testing");
+      expect(categoriesContent).toContain("version:");
+      expect(categoriesContent).toContain("categories:");
 
       // Verify source also has skill directories
       const reactDir = path.join(dirs.skillsDir, "web-framework", "web-framework-react");
@@ -574,7 +591,12 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
       });
 
       const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(TOOLING_CONFIG, skills);
+      const merged = await mergeMatrixWithSkills(
+        TOOLING_CONFIG.categories,
+        TOOLING_CONFIG.relationships,
+        TOOLING_CONFIG.aliases,
+        skills,
+      );
 
       // Verify the skill's categoryExclusive is false (from metadata)
       const viteSkill = merged.skills["web-tooling-vite"];
@@ -600,7 +622,12 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
       });
 
       const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(OBSERVABILITY_CONFIG, skills);
+      const merged = await mergeMatrixWithSkills(
+        OBSERVABILITY_CONFIG.categories,
+        OBSERVABILITY_CONFIG.relationships,
+        OBSERVABILITY_CONFIG.aliases,
+        skills,
+      );
 
       const datadogSkill = merged.skills["api-observability-datadog"];
       expect(datadogSkill).toBeDefined();
@@ -630,7 +657,12 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
       }
 
       const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(FRAMEWORK_AND_TESTING_CONFIG, skills);
+      const merged = await mergeMatrixWithSkills(
+        FRAMEWORK_AND_TESTING_CONFIG.categories,
+        FRAMEWORK_AND_TESTING_CONFIG.relationships,
+        FRAMEWORK_AND_TESTING_CONFIG.aliases,
+        skills,
+      );
 
       // Verify requires relationship is applied
       const rtlSkill = merged.skills["web-testing-custom-rtl"];

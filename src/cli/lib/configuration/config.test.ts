@@ -767,11 +767,18 @@ describe("config", () => {
       expect(config?.stacksFile).toBe("data/stacks.yaml");
     });
 
-    it("should load matrixFile from project config", async () => {
-      await writeConfigYaml(tempDir, "matrixFile: data/matrix.yaml\n");
+    it("should load categoriesFile from project config", async () => {
+      await writeConfigYaml(tempDir, "categoriesFile: data/categories.yaml\n");
 
       const config = await loadProjectSourceConfig(tempDir);
-      expect(config?.matrixFile).toBe("data/matrix.yaml");
+      expect(config?.categoriesFile).toBe("data/categories.yaml");
+    });
+
+    it("should load rulesFile from project config", async () => {
+      await writeConfigYaml(tempDir, "rulesFile: data/rules.yaml\n");
+
+      const config = await loadProjectSourceConfig(tempDir);
+      expect(config?.rulesFile).toBe("data/rules.yaml");
     });
 
     it("should return undefined for missing path fields (defaults applied by consumer)", async () => {
@@ -781,7 +788,8 @@ describe("config", () => {
       expect(config?.skillsDir).toBeUndefined();
       expect(config?.agentsDir).toBeUndefined();
       expect(config?.stacksFile).toBeUndefined();
-      expect(config?.matrixFile).toBeUndefined();
+      expect(config?.categoriesFile).toBeUndefined();
+      expect(config?.rulesFile).toBeUndefined();
     });
 
     it("should load all path fields together", async () => {
@@ -792,7 +800,8 @@ describe("config", () => {
           "skillsDir: lib/skills",
           "agentsDir: lib/agents",
           "stacksFile: data/stacks.yaml",
-          "matrixFile: data/matrix.yaml",
+          "categoriesFile: data/categories.yaml",
+          "rulesFile: data/rules.yaml",
         ].join("\n") + "\n",
       );
 
@@ -801,7 +810,8 @@ describe("config", () => {
       expect(config?.skillsDir).toBe("lib/skills");
       expect(config?.agentsDir).toBe("lib/agents");
       expect(config?.stacksFile).toBe("data/stacks.yaml");
-      expect(config?.matrixFile).toBe("data/matrix.yaml");
+      expect(config?.categoriesFile).toBe("data/categories.yaml");
+      expect(config?.rulesFile).toBe("data/rules.yaml");
     });
   });
 

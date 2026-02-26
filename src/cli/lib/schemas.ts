@@ -9,6 +9,7 @@ import type {
   AlternativeGroup,
   BoundSkill,
   CategoryDefinition,
+  CategoryMap,
   CategoryPath,
   ConflictRule,
   DiscourageRule,
@@ -29,7 +30,6 @@ import type {
   SkillDisplayName,
   SkillId,
   SkillSourceType,
-  SkillsMatrixConfig,
   Subcategory,
 } from "../types";
 
@@ -207,11 +207,13 @@ export const skillDisplayNameSchema = z.enum([
   "view-transitions",
   "storybook",
   "error-boundaries",
+  "result-types",
   "accessibility",
   "websockets",
   "sse",
   "socket-io",
   "service-workers",
+  "offline-first",
   "file-upload",
   "image-handling",
   "date-fns",
@@ -454,7 +456,7 @@ const skillAssignmentElementSchema = z.union([extensibleSkillIdSchema, skillAssi
 
 /**
  * Agent config within a stack: maps subcategory to skill assignment(s).
- * Keys restricted to valid Subcategory values from skills-matrix.yaml.
+ * Keys restricted to valid Subcategory values from skill-categories.yaml.
  * Lenient: accepts bare string, object, or array from YAML.
  * Consumers normalize all values to SkillAssignment[] after parsing.
  *
@@ -598,20 +600,13 @@ export const relationshipDefinitionsSchema: z.ZodType<RelationshipDefinitions> =
   alternatives: z.array(alternativeGroupSchema),
 });
 
-/**
- * Skills matrix config schema with runtime-extensible key validation.
- * Category keys and skill alias entries accept custom values registered via
- * extendSchemasWithCustomValues() (called by discoverAndExtendFromSource).
- *
- * Uses z.record(z.string()) + superRefine for key validation (same pattern as
- * stackAgentConfigSchema) because z.record(z.enum()) cannot be extended at runtime.
- *
- * Relationships and skillAliases are optional since source matrices may only define
- * custom categories without relationships or aliases.
- */
 const builtinSubcategoryValues: Set<string> = new Set(SUBCATEGORY_VALUES);
-// Bridge cast removed: optional fields require runtime defaults in loadSkillsMatrix()
-export const skillsMatrixConfigSchema = z.object({
+
+/**
+ * Standalone skill-categories.yaml file schema.
+ * Top-level object with version string and categories map using existing categoryDefinitionSchema.
+ */
+export const skillCategoriesFileSchema = z.object({
   version: z.string(),
   categories: z
     .record(z.string(), categoryDefinitionSchema)
@@ -621,9 +616,31 @@ export const skillsMatrixConfigSchema = z.object({
         customExtensions.categories,
         "category key",
       ),
-    ) as z.ZodType<SkillsMatrixConfig["categories"]>,
+    ) as z.ZodType<CategoryMap>,
+});
+
+/**
+ * Per-skill relationship rules from skill-rules.yaml.
+ * All 5 fields use canonical skill IDs (aliases resolved at load time).
+ */
+export const perSkillRulesSchema = z.object({
+  compatibleWith: z.array(extensibleSkillIdSchema).optional(),
+  conflictsWith: z.array(extensibleSkillIdSchema).optional(),
+  requires: z.array(extensibleSkillIdSchema).optional(),
+  requiresSetup: z.array(extensibleSkillIdSchema).optional(),
+  providesSetupFor: z.array(extensibleSkillIdSchema).optional(),
+});
+
+/**
+ * Standalone skill-rules.yaml file schema.
+ * Contains aliases (short name -> canonical skill ID), aggregate relationship rules,
+ * and per-skill relationship rules previously stored in individual metadata.yaml files.
+ */
+export const skillRulesFileSchema = z.object({
+  version: z.string(),
+  aliases: z.record(z.string(), extensibleSkillIdSchema).optional(),
   relationships: relationshipDefinitionsSchema.optional(),
-  skillAliases: z.record(z.string(), extensibleSkillIdSchema).optional(),
+  "per-skill": z.record(z.string(), perSkillRulesSchema).optional(),
 });
 
 /**
@@ -644,16 +661,6 @@ export const localRawMetadataSchema = z
     /** When an AI agent should invoke this skill */
     usageGuidance: z.string().optional(),
     tags: z.array(z.string()).optional(),
-    /** Framework skills this is compatible with (for Build step filtering) */
-    compatibleWith: z.array(extensibleSkillIdSchema).optional(),
-    /** Skills that cannot coexist with this one */
-    conflictsWith: z.array(extensibleSkillIdSchema).optional(),
-    /** Skills that must be selected before this one */
-    requires: z.array(extensibleSkillIdSchema).optional(),
-    /** Setup skills that must be installed first (e.g., env setup) */
-    requiresSetup: z.array(extensibleSkillIdSchema).optional(),
-    /** Usage skills this setup skill configures (inverse relationship) */
-    providesSetupFor: z.array(extensibleSkillIdSchema).optional(),
     /** Explicit domain assignment (overrides inference from category prefix) */
     domain: extensibleDomainSchema.optional(),
     /** True if this skill was created outside the CLI's built-in vocabulary */
@@ -814,8 +821,10 @@ export const projectSourceConfigSchema = z
     agentsDir: z.string().optional(),
     /** Custom stacks file path override (default: "config/stacks.yaml") */
     stacksFile: z.string().optional(),
-    /** Custom matrix file path override (default: "config/skills-matrix.yaml") */
-    matrixFile: z.string().optional(),
+    /** Custom categories file path override (default: "config/skill-categories.yaml") */
+    categoriesFile: z.string().optional(),
+    /** Custom rules file path override (default: "config/skill-rules.yaml") */
+    rulesFile: z.string().optional(),
   })
   .passthrough();
 
@@ -844,7 +853,8 @@ export const projectSourceConfigValidationSchema = z.object({
   skillsDir: z.string().optional(),
   agentsDir: z.string().optional(),
   stacksFile: z.string().optional(),
-  matrixFile: z.string().optional(),
+  categoriesFile: z.string().optional(),
+  rulesFile: z.string().optional(),
 });
 
 // Strict validation schemas enforce all constraints and use .strict() to reject unknown fields,

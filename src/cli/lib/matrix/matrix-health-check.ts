@@ -1,4 +1,4 @@
-import { warn } from "../../utils/logger";
+import { verbose, warn } from "../../utils/logger";
 import type {
   CategoryDefinition,
   MergedSkillsMatrix,
@@ -45,13 +45,15 @@ function checkSubcategoryDomains(matrix: MergedSkillsMatrix, issues: MatrixHealt
 function checkSkillCategories(matrix: MergedSkillsMatrix, issues: MatrixHealthIssue[]): void {
   for (const [skillId, skill] of typedEntries<SkillId, ResolvedSkill>(matrix.skills)) {
     if (!skill) continue;
-    // Narrowing cast: skill.category is CategoryPath which includes Subcategory | "local" | prefixed forms
-    if (!matrix.categories[skill.category as Subcategory]) {
+    const category = matrix.categories[skill.category as Subcategory];
+    if (!category) {
       issues.push({
         severity: "warning",
         finding: "skill-unknown-category",
         details: `Skill '${skillId}' references category '${skill.category}' which does not exist in the matrix`,
       });
+    } else if (category.custom) {
+      verbose(`Skill '${skillId}' uses auto-synthesized category '${skill.category}'`);
     }
   }
 }

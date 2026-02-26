@@ -8,7 +8,8 @@ import fg from "fast-glob";
 import { extractFrontmatter } from "../utils/frontmatter";
 import { log } from "../utils/logger";
 import {
-  skillsMatrixConfigSchema,
+  skillCategoriesFileSchema,
+  skillRulesFileSchema,
   metadataValidationSchema,
   stackConfigValidationSchema,
   skillFrontmatterValidationSchema,
@@ -56,10 +57,16 @@ type ValidationTarget = {
 
 const VALIDATION_TARGETS: ValidationTarget[] = [
   {
-    name: "Skills Matrix",
-    schema: skillsMatrixConfigSchema,
-    pattern: STANDARD_FILES.SKILLS_MATRIX_YAML,
-    baseDir: "src/config",
+    name: "Skill Categories",
+    schema: skillCategoriesFileSchema,
+    pattern: STANDARD_FILES.SKILL_CATEGORIES_YAML,
+    baseDir: "config",
+  },
+  {
+    name: "Skill Rules",
+    schema: skillRulesFileSchema,
+    pattern: STANDARD_FILES.SKILL_RULES_YAML,
+    baseDir: "config",
   },
   {
     name: "Skill Metadata",

@@ -1,0 +1,740 @@
+version: "1.0.0"
+
+aliases:
+  # Frameworks
+  react: "web-framework-react"
+  vue: "web-framework-vue-composition-api"
+  angular: "web-framework-angular-standalone"
+  solidjs: "web-framework-solidjs"
+  nextjs-app-router: "web-framework-nextjs-app-router"
+  nextjs-server-actions: "web-framework-nextjs-server-actions"
+  remix: "web-framework-remix"
+  nuxt: "web-framework-nuxt"
+
+  # Styling
+  scss-modules: "web-styling-scss-modules"
+  cva: "web-styling-cva"
+  tailwind: "web-styling-tailwind"
+
+  # Client State
+  zustand: "web-state-zustand"
+  redux-toolkit: "web-state-redux-toolkit"
+  pinia: "web-state-pinia"
+  ngrx-signalstore: "web-state-ngrx-signalstore"
+  jotai: "web-state-jotai"
+  mobx: "web-state-mobx"
+
+  # Server State
+  react-query: "web-server-state-react-query"
+  swr: "web-data-fetching-swr"
+  graphql-apollo: "web-data-fetching-graphql-apollo"
+  graphql-urql: "web-data-fetching-graphql-urql"
+  trpc: "web-data-fetching-trpc"
+
+  # Forms
+  react-hook-form: "web-forms-react-hook-form"
+  vee-validate: "web-forms-vee-validate"
+  zod-validation: "web-forms-zod-validation"
+
+  # Testing
+  vitest: "web-testing-vitest"
+  playwright-e2e: "web-testing-playwright-e2e"
+  cypress-e2e: "web-testing-cypress-e2e"
+  react-testing-library: "web-testing-react-testing-library"
+  vue-test-utils: "web-testing-vue-test-utils"
+  msw: "web-mocks-msw"
+
+  # UI Components
+  shadcn-ui: "web-ui-shadcn-ui"
+  tanstack-table: "web-ui-tanstack-table"
+  radix-ui: "web-ui-radix-ui"
+
+  # Backend
+  hono: "api-framework-hono"
+  express: "api-framework-express"
+  fastify: "api-framework-fastify"
+  drizzle: "api-database-drizzle"
+  prisma: "api-database-prisma"
+  better-auth: "api-auth-better-auth-drizzle-hono"
+  axiom-pino-sentry: "api-observability-axiom-pino-sentry"
+  posthog: "api-analytics-posthog-analytics"
+  posthog-flags: "api-flags-posthog-flags"
+  resend: "api-email-resend-react-email"
+  github-actions: "api-ci-cd-github-actions"
+
+  # Mobile
+  react-native: "mobile-framework-react-native"
+  expo: "mobile-framework-expo"
+
+  # Infrastructure
+  turborepo: "infra-monorepo-turborepo"
+  tooling: "infra-tooling-setup-tooling"
+  posthog-setup: "api-analytics-setup-posthog"
+  env: "infra-env-setup-env"
+  observability-setup: "api-observability-setup-axiom-pino-sentry"
+  email-setup: "api-email-setup-resend"
+
+  # Animation, PWA, Realtime, etc.
+  framer-motion: "web-animation-framer-motion"
+  css-animations: "web-animation-css-animations"
+  view-transitions: "web-animation-view-transitions"
+  storybook: "web-tooling-storybook"
+  error-boundaries: "web-error-handling-error-boundaries"
+  result-types: "web-error-handling-result-types"
+  accessibility: "web-accessibility-web-accessibility"
+  websockets: "web-realtime-websockets"
+  sse: "web-realtime-sse"
+  socket-io: "web-realtime-socket-io"
+  service-workers: "web-pwa-service-workers"
+  offline-first: "web-pwa-offline-first"
+  file-upload: "web-files-file-upload-patterns"
+  image-handling: "web-files-image-handling"
+  date-fns: "web-utilities-date-fns"
+
+  # Backend-specific
+  api-testing: "api-testing-api-testing"
+  api-performance: "api-performance-api-performance"
+  web-performance: "web-performance-web-performance"
+  security: "security-auth-security"
+
+  # CLI
+  commander: "cli-framework-cli-commander"
+  cli-commander: "cli-framework-cli-commander"
+  oclif: "cli-framework-oclif-ink"
+
+  # Reviewing / Meta
+  reviewing: "meta-reviewing-reviewing"
+  cli-reviewing: "meta-reviewing-cli-reviewing"
+  research-methodology: "meta-research-research-methodology"
+
+  # Methodology
+  investigation-requirements: "meta-methodology-investigation-requirements"
+  anti-over-engineering: "meta-methodology-anti-over-engineering"
+  success-criteria: "meta-methodology-success-criteria"
+  write-verification: "meta-methodology-write-verification"
+  improvement-protocol: "meta-methodology-improvement-protocol"
+  context-management: "meta-methodology-context-management"
+
+relationships:
+  conflicts:
+    - skills: [react, vue, angular, solidjs, nextjs-app-router, remix, nuxt]
+      reason: "Frameworks are mutually exclusive"
+
+    - skills: [pinia, zustand, redux-toolkit, mobx]
+      reason: "Pinia is Vue-only; zustand/redux-toolkit/mobx skills teach React patterns"
+
+    - skills: [ngrx-signalstore, zustand, pinia, redux-toolkit, mobx]
+      reason: "NgRx SignalStore is Angular-only"
+
+    - skills: [react-query, swr]
+      reason: "Both solve server state caching"
+
+    - skills: [graphql-apollo, graphql-urql]
+      reason: "Both are GraphQL clients"
+
+    - skills: [playwright-e2e, cypress-e2e]
+      reason: "Both are E2E frameworks"
+
+    - skills: [react-hook-form, vee-validate]
+      reason: "react-hook-form is React-only, vee-validate is Vue-only"
+
+    - skills: [react-testing-library, vue-test-utils]
+      reason: "Framework-specific testing libraries"
+
+    - skills: [hono, express, fastify]
+      reason: "API frameworks are mutually exclusive within a single service"
+
+    - skills: [drizzle, prisma]
+      reason: "Both are ORMs serving similar purposes"
+
+    - skills: [commander, oclif]
+      reason: "CLI frameworks are mutually exclusive"
+
+  discourages:
+    - skills: [zustand, redux-toolkit, mobx]
+      reason: "Using multiple React state libraries adds complexity"
+
+    - skills: [redux-toolkit, zustand]
+      reason: "Redux Toolkit adds more boilerplate than Zustand"
+
+    - skills: [swr, react-query]
+      reason: "SWR is simpler but React Query has more features"
+
+    - skills: [express, hono]
+      reason: "Express is mature but Hono offers better performance and edge support"
+
+    - skills: [express, fastify]
+      reason: "Express is mature but Fastify offers better performance"
+
+    - skills: [cypress-e2e, playwright-e2e]
+      reason: "Cypress excels at interactive debugging; Playwright has better cross-browser support and CI performance"
+
+  recommends:
+    - when: react
+      suggest: [zustand, react-query, vitest, react-hook-form, react-testing-library]
+      reason: "Best-in-class React libraries"
+
+    - when: nextjs-app-router
+      suggest: [react-query, zustand, shadcn-ui]
+      reason: "Next.js App Router ecosystem"
+
+    - when: remix
+      suggest: [zustand, vitest, zod-validation]
+      reason: "Remix-compatible libraries"
+
+    - when: vue
+      suggest: [pinia, vee-validate, vue-test-utils]
+      reason: "Vue community standard libraries"
+
+    - when: angular
+      suggest: [ngrx-signalstore]
+      reason: "Angular Signals-based state management"
+
+    - when: solidjs
+      suggest: [vitest, tailwind]
+      reason: "SolidJS-compatible libraries"
+
+    - when: hono
+      suggest: [drizzle, better-auth, zod-validation]
+      reason: "Hono + Drizzle + Better Auth is a powerful combo"
+
+    - when: drizzle
+      suggest: [zod-validation]
+      reason: "Drizzle types work great with Zod"
+
+    - when: scss-modules
+      suggest: [radix-ui]
+      reason: "Radix primitives work well with any CSS approach"
+
+    - when: tailwind
+      suggest: [shadcn-ui, cva]
+      reason: "shadcn/ui is built for Tailwind; CVA provides type-safe variant management"
+
+    - when: cva
+      suggest: [tailwind]
+      reason: "CVA is designed for Tailwind utility classes"
+
+    - when: shadcn-ui
+      suggest: [radix-ui, tailwind]
+      reason: "shadcn/ui uses Radix primitives and Tailwind"
+
+    - when: react-hook-form
+      suggest: [zod-validation]
+      reason: "react-hook-form + Zod is the standard pattern"
+
+    - when: vee-validate
+      suggest: [zod-validation]
+      reason: "vee-validate supports Zod schemas"
+
+    - when: vitest
+      suggest: [react-testing-library, msw]
+      reason: "Vitest + RTL + MSW is the modern testing stack"
+
+    - when: playwright-e2e
+      suggest: [vitest]
+      reason: "Playwright for E2E, Vitest for unit/integration"
+
+    - when: react-query
+      suggest: [zod-validation]
+      reason: "Type-safe API responses with Zod"
+
+    - when: react-native
+      suggest: [zustand, react-query, react-hook-form, zod-validation]
+      reason: "React Native shares React ecosystem"
+
+    - when: axiom-pino-sentry
+      suggest: [posthog]
+      reason: "Complete observability with analytics"
+
+    - when: fastify
+      suggest: [drizzle, zod-validation]
+      reason: "Fastify + Drizzle + Zod is a solid backend stack"
+
+    - when: express
+      suggest: [prisma]
+      reason: "Express + Prisma is a classic combination"
+
+    - when: nuxt
+      suggest: [pinia, tailwind, playwright-e2e]
+      reason: "Nuxt ecosystem libraries"
+
+    - when: msw
+      suggest: [vitest, react-testing-library]
+      reason: "MSW + Vitest + RTL is the modern testing stack"
+
+    - when: cypress-e2e
+      suggest: [vitest]
+      reason: "Cypress for E2E, Vitest for unit tests"
+
+    - when: oclif
+      suggest: [vitest]
+      reason: "oclif pairs well with Vitest for CLI testing"
+
+    - when: commander
+      suggest: [vitest]
+      reason: "Commander pairs well with Vitest for CLI testing"
+
+  requires:
+    - skill: zustand
+      needs: [react, nextjs-app-router, remix, react-native]
+      needsAny: true
+      reason: "Our Zustand skill covers React/React Native patterns"
+
+    - skill: redux-toolkit
+      needs: [react, nextjs-app-router, remix, react-native]
+      needsAny: true
+      reason: "Our Redux Toolkit skill covers React/React Native patterns"
+
+    - skill: mobx
+      needs: [react, nextjs-app-router, remix]
+      needsAny: true
+      reason: "Our MobX skill teaches React patterns"
+
+    - skill: react-query
+      needs: [react, nextjs-app-router, remix, react-native]
+      needsAny: true
+      reason: "TanStack Query's React adapter"
+
+    - skill: swr
+      needs: [react, nextjs-app-router, remix, react-native]
+      needsAny: true
+      reason: "SWR is a React Hooks library"
+
+    - skill: react-hook-form
+      needs: [react, nextjs-app-router, remix, react-native]
+      needsAny: true
+      reason: "React Hook Form is React only"
+
+    - skill: react-testing-library
+      needs: [react, nextjs-app-router, remix]
+      needsAny: true
+      reason: "React Testing Library is React only"
+
+    - skill: pinia
+      needs: [vue, nuxt]
+      needsAny: true
+      reason: "Pinia is Vue only"
+
+    - skill: vee-validate
+      needs: [vue, nuxt]
+      needsAny: true
+      reason: "VeeValidate is Vue only"
+
+    - skill: vue-test-utils
+      needs: [vue, nuxt]
+      needsAny: true
+      reason: "Vue Test Utils is Vue only"
+
+    - skill: ngrx-signalstore
+      needs: [angular]
+      reason: "NgRx SignalStore is Angular only"
+
+    - skill: better-auth
+      needs: [drizzle, prisma]
+      needsAny: true
+      reason: "Better Auth requires a database adapter"
+
+    - skill: shadcn-ui
+      needs: [react, nextjs-app-router, remix]
+      needsAny: true
+      reason: "shadcn/ui requires a React-based framework"
+
+    - skill: shadcn-ui
+      needs: [tailwind]
+      reason: "shadcn/ui requires Tailwind CSS"
+
+    - skill: graphql-apollo
+      needs: [react, vue, angular, nextjs-app-router, remix, nuxt]
+      needsAny: true
+      reason: "Apollo Client requires a UI framework"
+
+    - skill: graphql-urql
+      needs: [react, vue, solidjs, nextjs-app-router, remix, nuxt]
+      needsAny: true
+      reason: "URQL supports React, Vue, and Solid"
+
+  alternatives:
+    - purpose: "Frontend Framework"
+      skills: [react, vue, angular, solidjs, nextjs-app-router, remix, nuxt]
+
+    - purpose: "Styling"
+      skills: [scss-modules, tailwind, cva]
+
+    - purpose: "Client State (React)"
+      skills: [zustand, redux-toolkit, mobx, jotai]
+
+    - purpose: "Client State (Vue)"
+      skills: [pinia]
+
+    - purpose: "Client State (Angular)"
+      skills: [ngrx-signalstore]
+
+    - purpose: "Server State / Data Fetching"
+      skills: [react-query, swr]
+
+    - purpose: "GraphQL Client"
+      skills: [graphql-apollo, graphql-urql]
+
+    - purpose: "API Framework"
+      skills: [hono, express, fastify]
+
+    - purpose: "Database ORM"
+      skills: [drizzle, prisma]
+
+    - purpose: "Forms (React)"
+      skills: [react-hook-form]
+
+    - purpose: "Forms (Vue)"
+      skills: [vee-validate]
+
+    - purpose: "Validation"
+      skills: [zod-validation]
+
+    - purpose: "Unit Testing"
+      skills: [vitest]
+
+    - purpose: "Component Testing (React)"
+      skills: [react-testing-library]
+
+    - purpose: "Component Testing (Vue)"
+      skills: [vue-test-utils]
+
+    - purpose: "E2E Testing"
+      skills: [playwright-e2e, cypress-e2e]
+
+    - purpose: "API Mocking"
+      skills: [msw]
+
+    - purpose: "UI Components (React + Tailwind)"
+      skills: [shadcn-ui]
+
+    - purpose: "Mobile"
+      skills: [react-native]
+
+    - purpose: "CLI Framework"
+      skills: [commander, oclif]
+
+per-skill:
+  posthog:
+    compatibleWith: [api-flags-posthog-flags]
+    requiresSetup: [api-analytics-setup-posthog]
+  posthog-setup:
+    compatibleWith: [api-analytics-posthog-analytics, api-flags-posthog-flags, infra-env-setup-env]
+    providesSetupFor: [api-analytics-posthog-analytics, api-flags-posthog-flags]
+  posthog-flags:
+    compatibleWith: [api-analytics-posthog-analytics]
+    requiresSetup: [api-analytics-setup-posthog]
+
+  better-auth:
+    compatibleWith:
+      [api-framework-hono, api-framework-express, api-framework-fastify, security-auth-security]
+    requires: [api-database-drizzle]
+
+  github-actions:
+    compatibleWith: [infra-monorepo-turborepo, infra-tooling-setup-tooling]
+
+  drizzle:
+    compatibleWith:
+      [
+        api-framework-hono,
+        api-framework-express,
+        api-framework-fastify,
+        api-auth-better-auth-drizzle-hono,
+      ]
+  prisma:
+    compatibleWith:
+      [
+        api-framework-hono,
+        api-framework-express,
+        api-framework-fastify,
+        api-auth-better-auth-drizzle-hono,
+      ]
+
+  resend:
+    requiresSetup: [api-email-setup-resend]
+  email-setup:
+    compatibleWith: [api-email-resend-react-email, infra-env-setup-env]
+    providesSetupFor: [api-email-resend-react-email]
+
+  express:
+    compatibleWith:
+      [
+        api-auth-better-auth-drizzle-hono,
+        api-database-drizzle,
+        api-database-prisma,
+        security-auth-security,
+        api-observability-axiom-pino-sentry,
+      ]
+  fastify:
+    compatibleWith:
+      [
+        api-auth-better-auth-drizzle-hono,
+        api-database-drizzle,
+        api-database-prisma,
+        api-observability-axiom-pino-sentry,
+        security-auth-security,
+      ]
+  hono:
+    compatibleWith:
+      [
+        api-auth-better-auth-drizzle-hono,
+        api-database-drizzle,
+        api-database-prisma,
+        security-auth-security,
+      ]
+
+  axiom-pino-sentry:
+    requiresSetup: [api-observability-setup-axiom-pino-sentry]
+  observability-setup:
+    compatibleWith: [api-observability-axiom-pino-sentry, infra-env-setup-env]
+    providesSetupFor: [api-observability-axiom-pino-sentry]
+
+  api-performance:
+    compatibleWith:
+      [
+        api-database-drizzle,
+        api-database-prisma,
+        api-framework-hono,
+        api-framework-express,
+        api-framework-fastify,
+      ]
+
+  commander:
+    compatibleWith: [infra-tooling-setup-tooling, web-testing-vitest]
+  oclif:
+    compatibleWith: [web-framework-react, web-state-zustand, web-testing-vitest]
+    conflictsWith: [cli-framework-cli-commander]
+
+  env:
+    compatibleWith: [security-auth-security, infra-monorepo-turborepo]
+  turborepo:
+    compatibleWith: [infra-tooling-setup-tooling, api-ci-cd-github-actions]
+  tooling:
+    compatibleWith: [infra-monorepo-turborepo]
+
+  cli-reviewing:
+    compatibleWith: [meta-reviewing-reviewing, web-testing-vitest]
+    requires: [cli-framework-cli-commander]
+
+  react-native:
+    compatibleWith:
+      [
+        web-state-zustand,
+        web-server-state-react-query,
+        web-forms-react-hook-form,
+        web-forms-zod-validation,
+      ]
+
+  security:
+    compatibleWith:
+      [
+        api-auth-better-auth-drizzle-hono,
+        api-framework-hono,
+        api-framework-express,
+        api-framework-fastify,
+        infra-env-setup-env,
+      ]
+
+  accessibility:
+    compatibleWith:
+      [
+        web-framework-react,
+        web-framework-vue-composition-api,
+        web-framework-angular-standalone,
+        web-framework-solidjs,
+      ]
+
+  css-animations:
+    compatibleWith:
+      [
+        web-styling-scss-modules,
+        web-styling-tailwind,
+        web-accessibility-web-accessibility,
+        web-performance-web-performance,
+      ]
+  framer-motion:
+    compatibleWith:
+      [web-styling-scss-modules, web-styling-tailwind, web-accessibility-web-accessibility]
+    requires: [web-framework-react]
+
+  graphql-apollo:
+    compatibleWith:
+      [web-framework-react, web-state-zustand, web-state-jotai, web-state-redux-toolkit]
+  graphql-urql:
+    compatibleWith:
+      [web-framework-react, web-state-zustand, web-state-jotai, web-state-redux-toolkit]
+  swr:
+    compatibleWith:
+      [web-framework-react, web-framework-nextjs-app-router, web-framework-nextjs-server-actions]
+  trpc:
+    compatibleWith:
+      [web-framework-react, web-state-zustand, web-state-jotai, web-state-redux-toolkit]
+
+  error-boundaries:
+    compatibleWith: [web-framework-react]
+  result-types:
+    compatibleWith:
+      [web-framework-react, api-framework-hono, api-framework-express, api-framework-fastify]
+
+  file-upload:
+    compatibleWith:
+      [web-framework-react, web-forms-react-hook-form, web-forms-vee-validate, api-framework-hono]
+  image-handling:
+    compatibleWith: [web-framework-react, web-forms-react-hook-form, web-forms-vee-validate]
+
+  nextjs-app-router:
+    compatibleWith:
+      [
+        web-styling-scss-modules,
+        web-styling-tailwind,
+        web-server-state-react-query,
+        web-state-zustand,
+      ]
+  nextjs-server-actions:
+    compatibleWith:
+      [
+        web-forms-react-hook-form,
+        web-forms-zod-validation,
+        api-database-drizzle,
+        api-database-prisma,
+        api-auth-better-auth-drizzle-hono,
+      ]
+    requires: [web-framework-nextjs-app-router]
+  nuxt:
+    compatibleWith: [web-forms-zod-validation, web-testing-playwright-e2e]
+  remix:
+    compatibleWith:
+      [
+        web-styling-scss-modules,
+        web-styling-tailwind,
+        web-testing-vitest,
+        web-testing-playwright-e2e,
+        web-testing-cypress-e2e,
+      ]
+  solidjs:
+    compatibleWith:
+      [
+        web-styling-scss-modules,
+        web-styling-tailwind,
+        web-testing-vitest,
+        web-testing-playwright-e2e,
+        web-testing-cypress-e2e,
+      ]
+  vue:
+    compatibleWith:
+      [
+        web-styling-scss-modules,
+        web-styling-tailwind,
+        web-testing-vitest,
+        web-testing-playwright-e2e,
+        web-testing-cypress-e2e,
+      ]
+
+  msw:
+    compatibleWith:
+      [
+        web-testing-vitest,
+        web-testing-playwright-e2e,
+        web-testing-cypress-e2e,
+        web-server-state-react-query,
+        web-data-fetching-swr,
+      ]
+
+  web-performance:
+    compatibleWith:
+      [
+        web-framework-react,
+        web-framework-vue-composition-api,
+        web-framework-angular-standalone,
+        web-framework-solidjs,
+      ]
+
+  offline-first:
+    compatibleWith:
+      [web-framework-react, web-state-zustand, web-state-jotai, web-state-redux-toolkit]
+
+  socket-io:
+    compatibleWith:
+      [web-framework-react, web-state-zustand, web-state-jotai, web-state-redux-toolkit]
+  websockets:
+    compatibleWith:
+      [web-framework-react, web-state-zustand, web-state-jotai, web-state-redux-toolkit]
+
+  react-query:
+    compatibleWith:
+      [web-framework-react, web-state-zustand, web-state-jotai, web-state-redux-toolkit]
+
+  jotai:
+    compatibleWith: [web-framework-react, web-server-state-react-query, web-data-fetching-swr]
+  mobx:
+    compatibleWith: [web-framework-react]
+    conflictsWith: [web-state-zustand, web-state-redux-toolkit]
+  ngrx-signalstore:
+    compatibleWith:
+      [web-framework-angular-standalone, web-server-state-react-query, web-data-fetching-swr]
+  pinia:
+    compatibleWith:
+      [web-framework-vue-composition-api, web-server-state-react-query, web-data-fetching-swr]
+  redux-toolkit:
+    compatibleWith: [web-framework-react, web-server-state-react-query, web-data-fetching-swr]
+  zustand:
+    compatibleWith: [web-framework-react, web-server-state-react-query, web-data-fetching-swr]
+
+  cva:
+    compatibleWith: [web-styling-scss-modules, web-styling-tailwind]
+  scss-modules:
+    compatibleWith:
+      [
+        web-framework-react,
+        web-framework-vue-composition-api,
+        web-framework-angular-standalone,
+        web-framework-solidjs,
+      ]
+  tailwind:
+    compatibleWith: [web-framework-react, web-styling-cva]
+    conflictsWith: [web-styling-scss-modules]
+
+  cypress-e2e:
+    compatibleWith:
+      [
+        web-framework-react,
+        web-framework-vue-composition-api,
+        web-framework-angular-standalone,
+        web-framework-solidjs,
+      ]
+  playwright-e2e:
+    compatibleWith:
+      [
+        web-framework-react,
+        web-framework-vue-composition-api,
+        web-framework-angular-standalone,
+        web-framework-solidjs,
+      ]
+  react-testing-library:
+    compatibleWith: [web-framework-react, web-testing-vitest]
+  vitest:
+    compatibleWith:
+      [
+        web-framework-react,
+        web-framework-vue-composition-api,
+        web-framework-angular-standalone,
+        web-framework-solidjs,
+        web-mocks-msw,
+      ]
+  vue-test-utils:
+    compatibleWith: [web-framework-vue-composition-api, web-state-pinia]
+
+  storybook:
+    compatibleWith:
+      [
+        web-framework-react,
+        web-framework-vue-composition-api,
+        web-framework-angular-standalone,
+        web-testing-vitest,
+        web-testing-playwright-e2e,
+      ]
+
+  shadcn-ui:
+    compatibleWith: [web-framework-react, web-styling-tailwind]
+  tanstack-table:
+    compatibleWith: [web-framework-react, web-framework-vue-composition-api, web-framework-solidjs]

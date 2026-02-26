@@ -6,4 +6,5 @@ agentsSource: https://agents.example.com
 skillsDir: lib/skills
 agentsDir: lib/agents
 stacksFile: data/stacks.yaml
-matrixFile: data/matrix.yaml
+categoriesFile: data/categories.yaml
+rulesFile: data/rules.yaml

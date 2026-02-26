@@ -144,7 +144,7 @@ import type {
   SkillId,
   SkillSource,
   SkillSourceType,
-  SkillsMatrixConfig,
+  RelationshipDefinitions,
   Stack,
   StackAgentConfig,
   Subcategory,
@@ -158,10 +158,7 @@ import { resolveAlias, validateSelection } from "../matrix";
 import type { TestProjectConfig } from "./fixtures/create-test-source";
 import { getTestSkill, TEST_SKILLS, TEST_CATEGORIES } from "./test-fixtures";
 
-export {
-  fileExists,
-  directoryExists,
-} from "./test-fs-utils";
+export { fileExists, directoryExists } from "./test-fs-utils";
 
 export async function readTestYaml<T>(filePath: string): Promise<T> {
   const content = await readFile(filePath, "utf-8");
@@ -323,11 +320,6 @@ export function createMockExtractedSkill(
     categoryExclusive: true,
     author: "@test",
     tags: [],
-    compatibleWith: [],
-    conflictsWith: [],
-    requires: [],
-    requiresSetup: [],
-    providesSetupFor: [],
     path: `skills/${directoryPath}/`,
     ...overrides,
   };
@@ -893,23 +885,30 @@ export function createMockSkillDefinition(
   };
 }
 
+/** Decomposed matrix config returned by createMockMatrixConfig (replaces SkillsMatrixConfig) */
+export type MockMatrixConfig = {
+  categories: Record<string, CategoryDefinition>;
+  relationships: RelationshipDefinitions;
+  aliases: Partial<Record<SkillDisplayName, SkillId>>;
+};
+
 export function createMockMatrixConfig(
   categories: Record<string, CategoryDefinition>,
-  overrides?: Partial<SkillsMatrixConfig>,
-): SkillsMatrixConfig {
+  overrides?: {
+    relationships?: RelationshipDefinitions;
+    skillAliases?: Partial<Record<SkillDisplayName, SkillId>>;
+  },
+): MockMatrixConfig {
   return {
-    version: "1.0.0",
-    // Boundary cast: test callers may pass arbitrary category keys
-    categories: categories as SkillsMatrixConfig["categories"],
-    relationships: {
+    categories,
+    relationships: overrides?.relationships ?? {
       conflicts: [],
       discourages: [],
       recommends: [],
       requires: [],
       alternatives: [],
     },
-    skillAliases: {},
-    ...overrides,
+    aliases: overrides?.skillAliases ?? {},
   };
 }
 

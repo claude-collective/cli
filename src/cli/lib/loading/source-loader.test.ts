@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll, afterEach } from "vitest";
 import path from "path";
-import { mkdir, writeFile, rm } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import { loadSkillsMatrixFromSource } from "./source-loader";
 import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
 import {
@@ -39,10 +39,6 @@ beforeAll(async () => {
     skills: FIXTURE_SKILLS,
     stacks: FIXTURE_STACKS,
   });
-  // Remove the generated skills-matrix.yaml so the loader falls back to the
-  // CLI's built-in matrix (which passes the strict subcategory/alias schema).
-  // Skills are still extracted from src/skills/ and merged into the matrix.
-  await rm(path.join(fixtureDirs.sourceDir, "config", "skills-matrix.yaml"));
 });
 
 afterAll(async () => {
@@ -392,15 +388,15 @@ describe("source-loader config-driven paths", () => {
     expect(result.matrix.skills["web-framework-react"]).toBeDefined();
   });
 
-  it("should use custom matrixFile path from source config", async () => {
-    const sourceDir = path.join(tempDir, "custom-matrix-source");
+  it("should use custom categoriesFile path from source config", async () => {
+    const sourceDir = path.join(tempDir, "custom-categories-source");
 
-    // Create source config with custom matrixFile pointing to a non-existent path
+    // Create source config with custom categoriesFile pointing to a non-existent path
     const configDir = path.join(sourceDir, ".claude-src");
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.yaml"), "matrixFile: data/matrix.yaml\n");
+    await writeFile(path.join(configDir, "config.yaml"), "categoriesFile: data/categories.yaml\n");
 
-    // Do NOT create matrix at data/matrix.yaml — loader should fall back to CLI matrix
+    // Do NOT create categories at data/categories.yaml — loader should fall back to CLI categories
     await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
 
     const result = await loadSkillsMatrixFromSource({
@@ -408,26 +404,19 @@ describe("source-loader config-driven paths", () => {
       projectDir: tempDir,
     });
 
-    // Falls back to CLI matrix since custom path doesn't exist
+    // Falls back to CLI categories since custom path doesn't exist
     expect(result.matrix).toBeDefined();
     expect(result.matrix.categories).toBeDefined();
     expect(Object.keys(result.matrix.categories).length).toBeGreaterThan(0);
   });
 
-  it("should prefer matrix at custom path over convention path", async () => {
-    // Verify that when matrixFile is set and file exists at that path,
-    // the loader uses it (verified by skillsDir test above which loads
-    // matrix from CLI fallback, showing the path resolution works)
-    const sourceDir = path.join(tempDir, "matrix-path-pref-source");
+  it("should use custom rulesFile path from source config", async () => {
+    const sourceDir = path.join(tempDir, "custom-rules-source");
+
+    // Create source config with custom rulesFile pointing to a non-existent path
     const configDir = path.join(sourceDir, ".claude-src");
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.yaml"), "matrixFile: nonexistent/matrix.yaml\n");
-
-    // Also create convention-path matrix to verify it doesn't use it
-    // (it should check nonexistent/matrix.yaml first, not find it,
-    // then fall back to CLI)
-    const conventionDir = path.join(sourceDir, "config");
-    await mkdir(conventionDir, { recursive: true });
+    await writeFile(path.join(configDir, "config.yaml"), "rulesFile: data/rules.yaml\n");
 
     await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
 
@@ -436,7 +425,7 @@ describe("source-loader config-driven paths", () => {
       projectDir: tempDir,
     });
 
-    // Should fall back to CLI matrix (not convention-path, because config overrides convention)
+    // Falls back to CLI rules since custom path doesn't exist
     expect(result.matrix).toBeDefined();
   });
 

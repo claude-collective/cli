@@ -3,18 +3,23 @@ import { unique } from "remeda";
 import {
   DIRS,
   PROJECT_ROOT,
+  SKILL_CATEGORIES_YAML_PATH,
+  SKILL_RULES_YAML_PATH,
   SKILLS_DIR_PATH,
-  SKILLS_MATRIX_PATH,
   STANDARD_FILES,
 } from "../../consts";
 import { LOCAL_DEFAULTS } from "../metadata-keys";
 import type {
   AgentName,
+  CategoryMap,
   Domain,
   MergedSkillsMatrix,
+  PerSkillRules,
+  RelationshipDefinitions,
   ResolvedSkill,
   ResolvedStack,
   SkillAssignment,
+  SkillDisplayName,
   SkillId,
   Stack,
   Subcategory,
@@ -33,7 +38,8 @@ import { discoverLocalSkills, type LocalSkillDiscoveryResult } from "../skills";
 import {
   checkMatrixHealth,
   extractAllSkills,
-  loadSkillsMatrix,
+  loadSkillCategories,
+  loadSkillRules,
   mergeMatrixWithSkills,
 } from "../matrix";
 import { loadAllAgents } from "./loader";
@@ -171,57 +177,82 @@ async function loadFromRemote(
 async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsMatrix> {
   const sourceProjectConfig = await loadProjectSourceConfig(basePath);
 
-  const matrixRelPath = sourceProjectConfig?.matrixFile ?? SKILLS_MATRIX_PATH;
   const skillsDirRelPath = sourceProjectConfig?.skillsDir ?? SKILLS_DIR_PATH;
   const stacksRelFile = sourceProjectConfig?.stacksFile;
 
-  const cliMatrixPath = path.join(PROJECT_ROOT, SKILLS_MATRIX_PATH);
-  const cliMatrix = await loadSkillsMatrix(cliMatrixPath);
+  // Load CLI categories and rules from standalone files
+  const cliCategoriesPath = path.join(PROJECT_ROOT, SKILL_CATEGORIES_YAML_PATH);
+  const cliRulesPath = path.join(PROJECT_ROOT, SKILL_RULES_YAML_PATH);
 
-  let matrix = cliMatrix;
+  const cliCategories = await loadSkillCategories(cliCategoriesPath);
+  const cliRules = await loadSkillRules(cliRulesPath);
 
-  // Discover custom values from source entities BEFORE strict matrix load
+  let categories: CategoryMap = cliCategories;
+  let relationships: RelationshipDefinitions = cliRules.relationships;
+  let aliases: Partial<Record<SkillDisplayName, SkillId>> = cliRules.aliases;
+  let perSkillRules: Partial<Record<SkillDisplayName, PerSkillRules>> = cliRules.perSkill;
+
+  // Discover custom values from source entities BEFORE strict schema validation
   await discoverAndExtendFromSource(basePath);
 
-  const sourceMatrixPath = path.join(basePath, matrixRelPath);
-  if (await fileExists(sourceMatrixPath)) {
-    const sourceMatrix = await loadSkillsMatrix(sourceMatrixPath);
-    // Source categories overlay CLI categories — source values win on conflict
-    const mergedCategories = { ...cliMatrix.categories, ...sourceMatrix.categories };
-    // Merge relationships: concatenate arrays from both matrices
-    const mergedRelationships = {
-      conflicts: [...cliMatrix.relationships.conflicts, ...sourceMatrix.relationships.conflicts],
-      discourages: [
-        ...cliMatrix.relationships.discourages,
-        ...sourceMatrix.relationships.discourages,
-      ],
-      recommends: [...cliMatrix.relationships.recommends, ...sourceMatrix.relationships.recommends],
-      requires: [...cliMatrix.relationships.requires, ...sourceMatrix.relationships.requires],
-      alternatives: [
-        ...cliMatrix.relationships.alternatives,
-        ...sourceMatrix.relationships.alternatives,
-      ],
-    };
-    // Merge skill aliases: source wins on conflict
-    const mergedAliases = { ...cliMatrix.skillAliases, ...sourceMatrix.skillAliases };
-    matrix = {
-      version: cliMatrix.version,
-      categories: mergedCategories,
-      relationships: mergedRelationships,
-      skillAliases: mergedAliases,
-    };
-    verbose(
-      `Matrix merged: CLI (${typedKeys(cliMatrix.categories).length} categories) + source (${typedKeys(sourceMatrix.categories).length} categories)`,
-    );
+  // Load source categories and rules (if they exist)
+  const sourceCategoriesPath = path.join(basePath, SKILL_CATEGORIES_YAML_PATH);
+  const sourceRulesPath = path.join(basePath, SKILL_RULES_YAML_PATH);
+  const hasSourceCategories = await fileExists(sourceCategoriesPath);
+  const hasSourceRules = await fileExists(sourceRulesPath);
+
+  if (hasSourceCategories || hasSourceRules) {
+    if (hasSourceCategories) {
+      const sourceCategories = await loadSkillCategories(sourceCategoriesPath);
+      categories = { ...cliCategories, ...sourceCategories };
+      verbose(
+        `Loaded source categories: ${sourceCategoriesPath} (${typedKeys(sourceCategories).length} categories)`,
+      );
+    }
+
+    if (hasSourceRules) {
+      const sourceRules = await loadSkillRules(sourceRulesPath);
+
+      // Merge relationships: concatenate arrays
+      relationships = {
+        conflicts: [...cliRules.relationships.conflicts, ...sourceRules.relationships.conflicts],
+        discourages: [
+          ...cliRules.relationships.discourages,
+          ...sourceRules.relationships.discourages,
+        ],
+        recommends: [...cliRules.relationships.recommends, ...sourceRules.relationships.recommends],
+        requires: [...cliRules.relationships.requires, ...sourceRules.relationships.requires],
+        alternatives: [
+          ...cliRules.relationships.alternatives,
+          ...sourceRules.relationships.alternatives,
+        ],
+      };
+
+      // Merge aliases: source wins on same key
+      aliases = { ...cliRules.aliases, ...sourceRules.aliases };
+
+      // Merge per-skill rules: source wins on same key
+      perSkillRules = { ...cliRules.perSkill, ...sourceRules.perSkill };
+
+      verbose(`Loaded source rules: ${sourceRulesPath}`);
+    }
+
+    verbose(`Matrix merged: CLI (${typedKeys(cliCategories).length} categories) + source`);
   } else {
-    verbose(`Matrix from CLI only (source has no matrix): ${cliMatrixPath}`);
+    verbose(`Matrix from CLI only (source has no categories/rules files)`);
   }
 
   const skillsDir = path.join(basePath, skillsDirRelPath);
   verbose(`Skills from source: ${skillsDir}`);
 
   const skills = await extractAllSkills(skillsDir);
-  const mergedMatrix = await mergeMatrixWithSkills(matrix, skills);
+  const mergedMatrix = await mergeMatrixWithSkills(
+    categories,
+    relationships,
+    aliases,
+    skills,
+    perSkillRules,
+  );
 
   // Load stacks from source first, fall back to CLI's config/stacks.yaml
   const sourceStacks = await loadStacks(basePath, stacksRelFile);

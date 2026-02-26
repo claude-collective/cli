@@ -1,0 +1,32 @@
+version: "1.0.0"
+
+aliases:
+  react: "web-framework-react"
+  vue: "web-framework-vue-composition-api"
+  zustand: "web-state-zustand"
+
+relationships:
+  conflicts:
+    - skills: [react, vue]
+      reason: "Frameworks are mutually exclusive"
+  discourages:
+    - skills: [zustand, react]
+      reason: "Test discourage rule"
+  recommends:
+    - when: react
+      suggest: [zustand]
+      reason: "Best React libraries"
+  requires:
+    - skill: zustand
+      needs: [react]
+      reason: "Zustand requires React"
+  alternatives:
+    - purpose: "Frontend Framework"
+      skills: [react, vue]
+
+per-skill:
+  react:
+    compatibleWith: [web-state-zustand]
+    conflictsWith: [web-framework-vue-composition-api]
+  zustand:
+    compatibleWith: [web-framework-react, web-server-state-react-query]

@@ -177,13 +177,6 @@ describe("local-skill-loader", () => {
       expect(skill?.author).toBe("@dummy-author");
       expect(skill?.tags).toEqual([]);
 
-      // Relationships (empty for local skills)
-      expect(skill?.compatibleWith).toEqual([]);
-      expect(skill?.conflictsWith).toEqual([]);
-      expect(skill?.requires).toEqual([]);
-      expect(skill?.requiresSetup).toEqual([]);
-      expect(skill?.providesSetupFor).toEqual([]);
-
       // Location
       expect(skill?.path).toBe(`${LOCAL_SKILLS_PATH}/full-skill/`);
       expect(skill?.local).toBe(true);
@@ -201,7 +194,7 @@ describe("local-skill-loader", () => {
       expect(result?.skills[0].category).toBe("web-framework");
     });
 
-    it("preserves metadata tags, conflicts, and requires from metadata.yaml", async () => {
+    it("preserves metadata tags and optional fields from metadata.yaml", async () => {
       await writeLocalSkill("rich-skill", {
         metadata: [
           "cliName: Rich Skill",
@@ -211,16 +204,6 @@ describe("local-skill-loader", () => {
           "tags:",
           "  - frontend",
           "  - react",
-          "compatibleWith:",
-          "  - web-state-zustand",
-          "conflictsWith:",
-          "  - web-framework-vue",
-          "requires:",
-          "  - web-testing-vitest",
-          "requiresSetup:",
-          "  - web-styling-scss-modules",
-          "providesSetupFor:",
-          "  - web-build-webpack",
         ].join("\n"),
         skillMd: `---\nname: rich-skill (@local)\ndescription: A rich skill\n---\nContent`,
       });
@@ -231,11 +214,6 @@ describe("local-skill-loader", () => {
       expect(skill?.categoryExclusive).toBe(true);
       expect(skill?.usageGuidance).toBe("When building components");
       expect(skill?.tags).toEqual(["frontend", "react"]);
-      expect(skill?.compatibleWith).toEqual(["web-state-zustand"]);
-      expect(skill?.conflictsWith).toEqual(["web-framework-vue"]);
-      expect(skill?.requires).toEqual(["web-testing-vitest"]);
-      expect(skill?.requiresSetup).toEqual(["web-styling-scss-modules"]);
-      expect(skill?.providesSetupFor).toEqual(["web-build-webpack"]);
     });
 
     it("skips skill when metadata.yaml has wrong field types", async () => {

@@ -2,14 +2,15 @@ import path from "path";
 import { parse as parseYaml } from "yaml";
 import { glob, readFile, fileExists, directoryExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import { STANDARD_FILES } from "../consts";
+import { SKILL_CATEGORIES_YAML_PATH, SKILL_RULES_YAML_PATH, STANDARD_FILES } from "../consts";
 import { metadataValidationSchema, formatZodErrors, SKILL_ID_PATTERN } from "./schemas";
 import { parseFrontmatter } from "./loading/loader";
 import { loadProjectSourceConfig } from "./configuration";
 import {
   checkMatrixHealth,
   extractAllSkills,
-  loadSkillsMatrix,
+  loadSkillCategories,
+  loadSkillRules,
   mergeMatrixWithSkills,
 } from "./matrix";
 
@@ -195,30 +196,56 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
 
   // Phase 3: Cross-reference validation via matrix health check
   try {
-    const matrixRelPath = sourceProjectConfig?.matrixFile ?? "config/skills-matrix.yaml";
-    const matrixPath = path.join(resolvedPath, matrixRelPath);
+    const categoriesPath = path.join(resolvedPath, SKILL_CATEGORIES_YAML_PATH);
+    const rulesPath = path.join(resolvedPath, SKILL_RULES_YAML_PATH);
 
-    if (await fileExists(matrixPath)) {
-      const matrix = await loadSkillsMatrix(matrixPath);
+    const hasCats = await fileExists(categoriesPath);
+    const hasRules = await fileExists(rulesPath);
+
+    if (hasCats || hasRules) {
+      const cats = hasCats ? await loadSkillCategories(categoriesPath) : {};
+      const defaultRelationships = {
+        conflicts: [],
+        discourages: [],
+        recommends: [],
+        requires: [],
+        alternatives: [],
+      };
+      const rules = hasRules
+        ? await loadSkillRules(rulesPath)
+        : {
+            version: "1.0.0",
+            aliases: {},
+            relationships: defaultRelationships,
+            perSkill: {},
+          };
       const skills = await extractAllSkills(skillsDir);
-      const mergedMatrix = await mergeMatrixWithSkills(matrix, skills);
+      const mergedMatrix = await mergeMatrixWithSkills(
+        cats,
+        rules.relationships,
+        rules.aliases,
+        skills,
+        rules.perSkill,
+      );
       const healthIssues = checkMatrixHealth(mergedMatrix);
 
       for (const healthIssue of healthIssues) {
         issues.push({
           severity: healthIssue.severity,
-          file: matrixRelPath,
+          file: SKILL_CATEGORIES_YAML_PATH,
           message: healthIssue.details,
         });
       }
     } else {
-      verbose(`No matrix file at '${matrixPath}' — skipping cross-reference validation`);
+      verbose(
+        `No categories/rules files at '${resolvedPath}' — skipping cross-reference validation`,
+      );
     }
   } catch (error) {
     issues.push({
       severity: "warning",
-      file: "config/skills-matrix.yaml",
-      message: `Cross-reference validation skipped: failed to load matrix`,
+      file: SKILL_CATEGORIES_YAML_PATH,
+      message: `Cross-reference validation skipped: failed to load categories/rules`,
     });
   }
 

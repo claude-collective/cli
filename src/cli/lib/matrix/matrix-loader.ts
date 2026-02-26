@@ -7,21 +7,28 @@ import { DIRS, STANDARD_FILES } from "../../consts";
 import { METADATA_KEYS } from "../metadata-keys";
 import { parseFrontmatter } from "../loading";
 import {
-  skillsMatrixConfigSchema,
+  skillCategoriesFileSchema,
+  skillRulesFileSchema,
   formatZodErrors,
   categoryPathSchema,
   skillDisplayNameSchema,
   skillIdSchema,
   extensibleDomainSchema,
+  DOMAIN_VALUES,
 } from "../schemas";
 import type {
   AlternativeGroup,
+  CategoryDefinition,
+  CategoryMap,
+  CategoryPath,
   ConflictRule,
   DiscourageRule,
   Domain,
   ExtractedSkillMetadata,
   MergedSkillsMatrix,
+  PerSkillRules,
   RecommendRule,
+  RelationshipDefinitions,
   RequireRule,
   ResolvedSkill,
   ResolvedStack,
@@ -30,7 +37,8 @@ import type {
   SkillId,
   SkillRelation,
   SkillRequirement,
-  SkillsMatrixConfig,
+  SkillRulesConfig,
+  Subcategory,
 } from "../../types";
 
 /** Resolves a raw ID (which may be a display name or alias) to a canonical SkillId */
@@ -44,41 +52,86 @@ const rawMetadataSchema = z.object({
   cliDescription: z.string().optional(),
   usageGuidance: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  // Lenient: accepts display names and skill IDs from YAML, resolved to canonical IDs during matrix merge
-  compatibleWith: z.array(z.string() as z.ZodType<SkillId>).optional(),
-  conflictsWith: z.array(z.string() as z.ZodType<SkillId>).optional(),
-  requires: z.array(z.string() as z.ZodType<SkillId>).optional(),
-  requiresSetup: z.array(z.string() as z.ZodType<SkillId>).optional(),
-  providesSetupFor: z.array(z.string() as z.ZodType<SkillId>).optional(),
   domain: extensibleDomainSchema.optional(),
   custom: z.boolean().optional(),
 });
 
+const KNOWN_DOMAINS = new Set<string>(DOMAIN_VALUES);
+const AUTO_SYNTH_ORDER = 999;
+
 /**
- * Loads and validates a skills matrix YAML configuration file.
+ * Synthesizes a basic CategoryDefinition for a category not defined in any
+ * skill-categories.yaml. This is a safety net — the preferred path is for
+ * skill authors to maintain proper skill-categories.yaml entries.
+ */
+export function synthesizeCategory(
+  categoryPath: CategoryPath,
+  skillDomain?: Domain,
+): CategoryDefinition {
+  const prefix = categoryPath.split("-")[0];
+  const domain = skillDomain ?? (KNOWN_DOMAINS.has(prefix) ? (prefix as Domain) : undefined);
+
+  const displayName = categoryPath
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
+  return {
+    id: categoryPath as Subcategory,
+    displayName,
+    description: `Auto-generated category for ${categoryPath}`,
+    domain,
+    exclusive: true,
+    required: false,
+    order: AUTO_SYNTH_ORDER,
+    custom: true,
+  };
+}
+
+/**
+ * Loads and validates a skill-categories.yaml configuration file.
  *
- * @param configPath - Absolute path to the skills-matrix.yaml file
- * @returns Parsed and validated skills matrix config
+ * @param configPath - Absolute path to the skill-categories.yaml file
+ * @returns Parsed and validated categories map
  * @throws When the file cannot be read or fails Zod schema validation
  */
-export async function loadSkillsMatrix(configPath: string): Promise<SkillsMatrixConfig> {
+export async function loadSkillCategories(configPath: string): Promise<CategoryMap> {
   const content = await readFile(configPath);
   const raw = parseYaml(content);
-  const result = skillsMatrixConfigSchema.safeParse(raw);
+  const result = skillCategoriesFileSchema.safeParse(raw);
 
   if (!result.success) {
     throw new Error(
-      `Invalid skills matrix at '${configPath}': ${formatZodErrors(result.error.issues)}`,
+      `Invalid skill categories at '${configPath}': ${formatZodErrors(result.error.issues)}`,
     );
   }
 
-  // Ensure optional fields have defaults for SkillsMatrixConfig compatibility
-  // (relationships and skillAliases are optional in the schema for source matrices
-  // that may only define custom categories)
+  verbose(`Loaded skill categories: ${configPath}`);
+  return result.data.categories;
+}
+
+/**
+ * Loads and validates a skill-rules.yaml configuration file.
+ *
+ * @param configPath - Absolute path to the skill-rules.yaml file
+ * @returns Parsed and validated skill rules config
+ * @throws When the file cannot be read or fails Zod schema validation
+ */
+export async function loadSkillRules(configPath: string): Promise<SkillRulesConfig> {
+  const content = await readFile(configPath);
+  const raw = parseYaml(content);
+  const result = skillRulesFileSchema.safeParse(raw);
+
+  if (!result.success) {
+    throw new Error(
+      `Invalid skill rules at '${configPath}': ${formatZodErrors(result.error.issues)}`,
+    );
+  }
+
   const data = result.data;
-  const matrix: SkillsMatrixConfig = {
+  const config: SkillRulesConfig = {
     version: data.version,
-    categories: data.categories,
+    aliases: data.aliases ?? {},
     relationships: data.relationships ?? {
       conflicts: [],
       discourages: [],
@@ -86,11 +139,11 @@ export async function loadSkillsMatrix(configPath: string): Promise<SkillsMatrix
       requires: [],
       alternatives: [],
     },
-    skillAliases: data.skillAliases ?? {},
+    perSkill: data["per-skill"] ?? {},
   };
 
-  verbose(`Loaded skills matrix: ${configPath}`);
-  return matrix;
+  verbose(`Loaded skill rules: ${configPath}`);
+  return config;
 }
 
 /**
@@ -160,11 +213,6 @@ export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkil
       categoryExclusive: metadata.categoryExclusive ?? true,
       author: metadata.author,
       tags: metadata.tags ?? [],
-      compatibleWith: metadata.compatibleWith ?? [],
-      conflictsWith: metadata.conflictsWith ?? [],
-      requires: metadata.requires ?? [],
-      requiresSetup: metadata.requiresSetup ?? [],
-      providesSetupFor: metadata.providesSetupFor ?? [],
       path: `skills/${skillDir}/`,
       ...(metadata.domain ? { domain: metadata.domain } : {}),
       ...(metadata.custom === true ? { custom: true } : {}),
@@ -227,27 +275,27 @@ function resolveToCanonicalId(
 }
 
 /**
- * Merges a skills matrix configuration with extracted skill metadata into a
- * fully resolved MergedSkillsMatrix.
+ * Merges category definitions, relationship rules, and extracted skill metadata
+ * into a fully resolved MergedSkillsMatrix.
  *
  * This is the core resolution step that combines:
- * - Category definitions and display name aliases from the matrix config
+ * - Category definitions from skill-categories.yaml
+ * - Display name aliases and relationship rules from skill-rules.yaml
  * - Extracted skill metadata (from scanning skill directories)
- * - Relationship rules (conflicts, requirements, recommendations, alternatives, discourages)
+ * - Per-skill relationship rules from skill-rules.yaml
  *
  * Each skill's raw relationship references (which may use display names, directory paths,
  * or short aliases) are resolved to canonical SkillIds. The result is the complete
  * data structure consumed by the wizard UI and validation logic.
- *
- * @param matrix - Parsed skills matrix config (categories, aliases, relationship rules)
- * @param skills - Extracted skill metadata from scanning skill directories
- * @returns Fully resolved matrix with canonical IDs, display names, and relationship data
  */
 export async function mergeMatrixWithSkills(
-  matrix: SkillsMatrixConfig,
+  categories: CategoryMap,
+  relationships: RelationshipDefinitions,
+  aliases: Partial<Record<SkillDisplayName, SkillId>>,
   skills: ExtractedSkillMetadata[],
+  perSkillRules?: Partial<Record<SkillDisplayName, PerSkillRules>>,
 ): Promise<MergedSkillsMatrix> {
-  const displayNameToId = matrix.skillAliases;
+  const displayNameToId = aliases;
   const displayNames = buildReverseDisplayNames(displayNameToId);
   const directoryPathToId = buildDirectoryPathToIdMap(skills);
   const resolvedSkills: Partial<Record<SkillId, ResolvedSkill>> = {};
@@ -255,19 +303,32 @@ export async function mergeMatrixWithSkills(
   for (const skill of skills) {
     const resolved = buildResolvedSkill(
       skill,
-      matrix,
+      categories,
+      relationships,
       displayNameToId,
       displayNames,
       directoryPathToId,
+      perSkillRules,
     );
     resolvedSkills[skill.id] = resolved;
+  }
+
+  // Auto-synthesize missing categories for skills that reference undefined categories
+  const synthesizedCategories = { ...categories };
+  for (const skill of skills) {
+    const subcategory = skill.category as Subcategory;
+    if (!synthesizedCategories[subcategory]) {
+      const synthesized = synthesizeCategory(skill.category, skill.domain);
+      synthesizedCategories[subcategory] = synthesized;
+      verbose(`Auto-synthesized category '${skill.category}' for skill '${skill.id}'`);
+    }
   }
 
   const suggestedStacks = resolveSuggestedStacks();
 
   const merged: MergedSkillsMatrix = {
-    version: matrix.version,
-    categories: matrix.categories,
+    version: "1.0.0",
+    categories: synthesizedCategories,
     skills: resolvedSkills,
     suggestedStacks,
     displayNameToId,
@@ -410,10 +471,12 @@ function resolveDiscourages(
 
 function buildResolvedSkill(
   skill: ExtractedSkillMetadata,
-  matrix: SkillsMatrixConfig,
+  _categories: CategoryMap,
+  relationships: RelationshipDefinitions,
   displayNameToId: Partial<Record<SkillDisplayName, SkillId>>,
   displayNames: Partial<Record<SkillId, SkillDisplayName>>,
   directoryPathToId: Record<string, SkillId>,
+  perSkillRules?: Partial<Record<SkillDisplayName, PerSkillRules>>,
 ): ResolvedSkill {
   const resolve: ResolveId = (id, context) =>
     resolveToCanonicalId(
@@ -423,7 +486,9 @@ function buildResolvedSkill(
       context ? `${skill.id} ${context}` : undefined,
     );
 
-  const { relationships } = matrix;
+  // Look up per-skill rules by alias (display name)
+  const skillAlias = displayNames[skill.id];
+  const perSkill = skillAlias ? perSkillRules?.[skillAlias] : undefined;
 
   return {
     id: skill.id,
@@ -436,22 +501,29 @@ function buildResolvedSkill(
     author: skill.author,
     conflictsWith: resolveConflicts(
       skill.id,
-      skill.conflictsWith,
+      perSkill?.conflictsWith ?? [],
       relationships.conflicts,
       resolve,
     ),
     recommends: resolveRecommends(
       skill.id,
-      skill.compatibleWith,
+      perSkill?.compatibleWith ?? [],
       relationships.recommends,
       resolve,
     ),
-    requires: resolveRequirements(skill.id, skill.requires, relationships.requires, resolve),
+    requires: resolveRequirements(
+      skill.id,
+      perSkill?.requires ?? [],
+      relationships.requires,
+      resolve,
+    ),
     alternatives: resolveAlternatives(skill.id, relationships.alternatives, resolve),
     discourages: resolveDiscourages(skill.id, relationships.discourages, resolve),
-    compatibleWith: skill.compatibleWith.map((id) => resolve(id, "compatibleWith")),
-    requiresSetup: skill.requiresSetup.map((id) => resolve(id, "requiresSetup")),
-    providesSetupFor: skill.providesSetupFor.map((id) => resolve(id, "providesSetupFor")),
+    compatibleWith: (perSkill?.compatibleWith ?? []).map((id) => resolve(id, "compatibleWith")),
+    requiresSetup: (perSkill?.requiresSetup ?? []).map((id) => resolve(id, "requiresSetup")),
+    providesSetupFor: (perSkill?.providesSetupFor ?? []).map((id) =>
+      resolve(id, "providesSetupFor"),
+    ),
     path: skill.path,
   };
 }
@@ -461,19 +533,29 @@ function resolveSuggestedStacks(): ResolvedStack[] {
 }
 
 /**
- * Convenience function that loads a skills matrix file, extracts all skills from
- * the project's skills directory, and merges them into a MergedSkillsMatrix.
+ * Convenience function that loads categories and rules from standalone files,
+ * extracts all skills from the project's skills directory, and merges them
+ * into a MergedSkillsMatrix.
  *
- * @param matrixPath - Path to the skills-matrix.yaml config file
+ * @param categoriesPath - Path to the skill-categories.yaml config file
+ * @param rulesPath - Path to the skill-rules.yaml config file
  * @param projectRoot - Project root directory (skills are scanned from `{root}/src/skills`)
  * @returns Fully resolved and merged skills matrix
  */
 export async function loadAndMergeSkillsMatrix(
-  matrixPath: string,
+  categoriesPath: string,
+  rulesPath: string,
   projectRoot: string,
 ): Promise<MergedSkillsMatrix> {
-  const matrix = await loadSkillsMatrix(matrixPath);
+  const categories = await loadSkillCategories(categoriesPath);
+  const rules = await loadSkillRules(rulesPath);
   const skillsDir = path.join(projectRoot, DIRS.skills);
   const skills = await extractAllSkills(skillsDir);
-  return mergeMatrixWithSkills(matrix, skills);
+  return mergeMatrixWithSkills(
+    categories,
+    rules.relationships,
+    rules.aliases,
+    skills,
+    rules.perSkill,
+  );
 }

@@ -1,8 +1,10 @@
 export {
-  loadSkillsMatrix,
+  loadSkillCategories,
+  loadSkillRules,
   extractAllSkills,
   mergeMatrixWithSkills,
   loadAndMergeSkillsMatrix,
+  synthesizeCategory,
 } from "./matrix-loader";
 
 export {

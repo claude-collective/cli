@@ -497,20 +497,23 @@ export const DEFAULT_TEST_AGENTS: TestAgent[] = [
 export { fileExists, directoryExists };
 
 /**
- * Generates two matrix representations from skill definitions:
+ * Generates matrix representations from skill definitions:
  * 1. `testMatrix` — the internal TestMatrix used by test assertions
- * 2. `diskMatrix` — a skills-matrix.yaml-compatible structure for
- *    `loadSkillsMatrix()` (schema: skillsMatrixConfigSchema)
+ * 2. `diskCategories` — a skill-categories.yaml-compatible structure
+ * 3. `diskRules` — a skill-rules.yaml-compatible structure (empty relationships/aliases)
  *
  * The disk format requires `categories` as CategoryDefinition objects
- * keyed by valid subcategorySchema values, `relationships` (empty arrays),
- * and `skillAliases` (empty — test aliases are not valid SkillDisplayName
- * enum members). Skill data is loaded separately via `extractAllSkills`.
+ * keyed by valid subcategorySchema values. Skill data is loaded separately
+ * via `extractAllSkills`.
  */
 function generateMatrix(
   skills: TestSkill[],
   overrides?: Partial<TestMatrix>,
-): { testMatrix: TestMatrix; diskMatrix: Record<string, unknown> } {
+): {
+  testMatrix: TestMatrix;
+  diskCategories: Record<string, unknown>;
+  diskRules: Record<string, unknown>;
+} {
   const skillsMap: Record<string, TestSkill> = {};
   const aliases: Record<string, string> = {};
   const categories: Record<string, { name: string; description: string }> = {};
@@ -542,16 +545,16 @@ function generateMatrix(
     ...overrides,
   };
 
-  // Build skillsMatrixConfigSchema-compatible structure for disk serialization.
+  // Build skill-categories.yaml-compatible structure for disk serialization.
   // Categories need full CategoryDefinition fields keyed by valid subcategory enum values.
   // Skills carry their own category via metadata.yaml — these are only for UI grouping.
-  const diskCategories: Record<string, Record<string, unknown>> = {};
+  const diskCategoriesMap: Record<string, Record<string, unknown>> = {};
   let order = 0;
   for (const [subcategory, cat] of Object.entries(categories)) {
     // Category keys are already domain-prefixed (e.g., "web-framework", "api-api")
     const dashIndex = subcategory.indexOf("-");
     const domain = dashIndex >= 0 ? subcategory.slice(0, dashIndex) : subcategory;
-    diskCategories[subcategory] = {
+    diskCategoriesMap[subcategory] = {
       id: subcategory,
       displayName: cat.name,
       description: cat.description,
@@ -562,12 +565,14 @@ function generateMatrix(
     };
   }
 
-  // skillAliases must be empty — test skill aliases (e.g., "web-framework-react")
-  // are not valid skillDisplayNameSchema enum members (which expects values like
-  // "react", "zustand", "vitest"). The aliases are only for wizard display names.
-  const diskMatrix: Record<string, unknown> = {
+  const diskCategories = {
     version: "1.0.0",
-    categories: diskCategories,
+    categories: diskCategoriesMap,
+  };
+
+  const diskRules = {
+    version: "1.0.0",
+    aliases: {},
     relationships: {
       conflicts: [],
       discourages: [],
@@ -575,22 +580,21 @@ function generateMatrix(
       requires: [],
       alternatives: [],
     },
-    skillAliases: {},
   };
 
-  return { testMatrix, diskMatrix };
+  return { testMatrix, diskCategories, diskRules };
 }
 
 /**
  * Creates a complete test source directory structure with skills, agents,
- * matrix config, and optionally a plugin layout. Sets up temp directories
- * that must be cleaned up via cleanupTestSource.
+ * categories/rules config, and optionally a plugin layout. Sets up temp
+ * directories that must be cleaned up via cleanupTestSource.
  * @returns TestDirs containing all created directory paths for assertions
  */
 export async function createTestSource(options: TestSourceOptions = {}): Promise<TestDirs> {
   const skills = options.skills ?? DEFAULT_TEST_SKILLS;
   const agents = options.agents ?? DEFAULT_TEST_AGENTS;
-  const { diskMatrix } = generateMatrix(skills, options.matrix);
+  const { diskCategories, diskRules } = generateMatrix(skills, options.matrix);
 
   const tempDir = await createTempDir("ai-test-");
   const projectDir = path.join(tempDir, "project");
@@ -604,7 +608,8 @@ export async function createTestSource(options: TestSourceOptions = {}): Promise
   await mkdir(agentsDir, { recursive: true });
   await mkdir(configDir, { recursive: true });
 
-  await writeFile(path.join(configDir, "skills-matrix.yaml"), stringifyYaml(diskMatrix));
+  await writeFile(path.join(configDir, "skill-categories.yaml"), stringifyYaml(diskCategories));
+  await writeFile(path.join(configDir, "skill-rules.yaml"), stringifyYaml(diskRules));
 
   if (options.stacks && options.stacks.length > 0) {
     await writeFile(path.join(configDir, "stacks.yaml"), stringifyYaml({ stacks: options.stacks }));

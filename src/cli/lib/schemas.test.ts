@@ -13,7 +13,7 @@ import {
   resetSchemaExtensions,
   skillAssignmentSchema,
   skillMetadataLoaderSchema,
-  skillsMatrixConfigSchema,
+  skillCategoriesFileSchema,
   SKILL_ID_PATTERN,
   stackAgentConfigSchema,
   validateNestingDepth,
@@ -592,7 +592,7 @@ describe("category validation with custom: true bypass", () => {
   });
 });
 
-describe("skillsMatrixConfigSchema with pre-scan + extend + strict-load", () => {
+describe("skillCategoriesFileSchema with pre-scan + extend + strict-load", () => {
   afterEach(() => {
     resetSchemaExtensions();
   });
@@ -600,7 +600,7 @@ describe("skillsMatrixConfigSchema with pre-scan + extend + strict-load", () => 
   it("should accept custom category keys after extending schemas", () => {
     extendSchemasWithCustomValues({ categories: ["acme-pipeline"], domains: ["acme"] });
 
-    const result = skillsMatrixConfigSchema.safeParse({
+    const result = skillCategoriesFileSchema.safeParse({
       version: "1.0.0",
       categories: {
         "acme-pipeline": {
@@ -620,7 +620,7 @@ describe("skillsMatrixConfigSchema with pre-scan + extend + strict-load", () => 
   it("should accept custom domain values after extending schemas", () => {
     extendSchemasWithCustomValues({ categories: ["acme-ml"], domains: ["acme"] });
 
-    const result = skillsMatrixConfigSchema.safeParse({
+    const result = skillCategoriesFileSchema.safeParse({
       version: "1.0.0",
       categories: {
         "acme-ml": {
@@ -637,8 +637,8 @@ describe("skillsMatrixConfigSchema with pre-scan + extend + strict-load", () => 
     expect(result.success).toBe(true);
   });
 
-  it("should accept missing relationships and skillAliases", () => {
-    const result = skillsMatrixConfigSchema.safeParse({
+  it("should accept built-in category keys without extending", () => {
+    const result = skillCategoriesFileSchema.safeParse({
       version: "1.0.0",
       categories: {
         "web-framework": {
@@ -657,7 +657,7 @@ describe("skillsMatrixConfigSchema with pre-scan + extend + strict-load", () => 
   it("should accept custom: true on category definitions", () => {
     extendSchemasWithCustomValues({ categories: ["acme-pipeline"], domains: ["acme"] });
 
-    const result = skillsMatrixConfigSchema.safeParse({
+    const result = skillCategoriesFileSchema.safeParse({
       version: "1.0.0",
       categories: {
         "acme-pipeline": {
@@ -675,29 +675,15 @@ describe("skillsMatrixConfigSchema with pre-scan + extend + strict-load", () => 
     expect(result.success).toBe(true);
   });
 
-  it("should accept custom skill alias entries after extending schemas", () => {
-    extendSchemasWithCustomValues({ skillIds: ["acme-deploy", "acme-pipeline-deploy"] });
-
-    const result = skillsMatrixConfigSchema.safeParse({
-      version: "1.0.0",
-      categories: {},
-      skillAliases: {
-        "acme-deploy": "acme-pipeline-deploy",
-        react: "web-framework-react",
-      },
-    });
-    expect(result.success).toBe(true);
-  });
-
   it("should reject missing version", () => {
-    const result = skillsMatrixConfigSchema.safeParse({
+    const result = skillCategoriesFileSchema.safeParse({
       categories: {},
     });
     expect(result.success).toBe(false);
   });
 
   it("should reject custom categories without extending schemas first", () => {
-    const result = skillsMatrixConfigSchema.safeParse({
+    const result = skillCategoriesFileSchema.safeParse({
       version: "1.0.0",
       categories: {
         "acme-pipeline": {

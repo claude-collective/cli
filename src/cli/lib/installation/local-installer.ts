@@ -35,8 +35,9 @@ import {
   LOCAL_SKILLS_PATH,
   PROJECT_ROOT,
   SCHEMA_PATHS,
+  SKILL_CATEGORIES_YAML_PATH,
+  SKILL_RULES_YAML_PATH,
   SKILLS_DIR_PATH,
-  SKILLS_MATRIX_PATH,
   STACKS_FILE_PATH,
   STANDARD_FILES,
   YAML_FORMATTING,
@@ -323,7 +324,8 @@ const PATH_OVERRIDES_COMMENT = [
   `# skillsDir: ${SKILLS_DIR_PATH}`,
   `# agentsDir: ${DIRS.agents}`,
   `# stacksFile: ${STACKS_FILE_PATH}`,
-  `# matrixFile: ${SKILLS_MATRIX_PATH}`,
+  `# categoriesFile: ${SKILL_CATEGORIES_YAML_PATH}`,
+  `# rulesFile: ${SKILL_RULES_YAML_PATH}`,
   "",
 ].join("\n");
 

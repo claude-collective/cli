@@ -23,7 +23,8 @@ export const CACHE_DIR = path.join(os.homedir(), ".cache", DEFAULT_PLUGIN_NAME);
 
 export const CLI_BIN_NAME = "agentsinc";
 
-export const SKILLS_MATRIX_PATH = "config/skills-matrix.yaml";
+export const SKILL_CATEGORIES_YAML_PATH = "config/skill-categories.yaml";
+export const SKILL_RULES_YAML_PATH = "config/skill-rules.yaml";
 export const STACKS_FILE_PATH = "config/stacks.yaml";
 export const SKILLS_DIR_PATH = "src/skills";
 export const LOCAL_SKILLS_PATH = ".claude/skills";
@@ -42,7 +43,8 @@ export const STANDARD_FILES = {
   METADATA_YAML: "metadata.yaml",
   METADATA_JSON: "metadata.json",
   CONFIG_YAML: "config.yaml",
-  SKILLS_MATRIX_YAML: "skills-matrix.yaml",
+  SKILL_CATEGORIES_YAML: "skill-categories.yaml",
+  SKILL_RULES_YAML: "skill-rules.yaml",
   AGENT_YAML: "agent.yaml",
   PLUGIN_JSON: "plugin.json",
   CLAUDE_MD: "CLAUDE.md",
@@ -76,7 +78,6 @@ export const SCHEMA_PATHS = {
   marketplace: `${SCHEMA_PKG_PREFIX}/marketplace.schema.json`,
   projectConfig: `${SCHEMA_PKG_PREFIX}/project-config.schema.json`,
   projectSourceConfig: `${SCHEMA_PKG_PREFIX}/project-source-config.schema.json`,
-  skillsMatrix: `${SCHEMA_PKG_PREFIX}/skills-matrix.schema.json`,
   stacks: `${SCHEMA_PKG_PREFIX}/stacks.schema.json`,
 } as const;
 

@@ -47,7 +47,8 @@ export type ProjectSourceConfig = {
   skillsDir?: string; // default: src/skills (SKILLS_DIR_PATH)
   agentsDir?: string; // default: src/agents (DIRS.agents)
   stacksFile?: string; // default: config/stacks.yaml (STACKS_FILE)
-  matrixFile?: string; // default: config/skills-matrix.yaml (SKILLS_MATRIX_PATH)
+  categoriesFile?: string; // default: config/skill-categories.yaml (SKILL_CATEGORIES_YAML_PATH)
+  rulesFile?: string; // default: config/skill-rules.yaml (SKILL_RULES_YAML_PATH)
 };
 
 export type ResolvedConfig = {
