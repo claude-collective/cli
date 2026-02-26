@@ -1,25 +1,25 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID   | Task                                                                                                                                                  | Status      |
-| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| D-50 | Eliminate skills-matrix.yaml: derive matrix dynamically from skill metadata (see detailed notes below)                                                | Pending     |
-| U13  | Run Documentor Agent on CLI Codebase                                                                                                                  | Done        |
-| H18  | Tailor documentation-bible to CLI repo                                                                                                                | Done        |
-| D-46 | Custom extensibility (see [design doc](../docs/features/proposed/custom-extensibility-design.md))                                                     | In Progress |
-| D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                                                       | Pending     |
-| D-33 | README: frame Agents Inc. as an AI coding framework                                                                                                   | Pending     |
-| D-44 | Update README and Notion page for `eject templates` type                                                                                              | Pending     |
-| D-47 | Eject a standalone compile function for sub-agent compilation                                                                                         | Pending     |
-| T-08 | Audit all test files: extract fixtures, use real IDs                                                                                                  | Pending     |
-| T-12 | End-to-end tests for custom marketplace workflow (`--source`, `outdated`, build→version→update cycle)                                                 | Pending     |
-| D-52 | Expand `new agent` command: add agent-summoner to skills repo so remote fetch works from any project                                                  | Pending     |
-| D-53 | Rename `agent.yaml` to `metadata.yaml` for consistency with skills                                                                                    | Deferred    |
-| D-54 | Remove expert mode: make expert mode behavior the default, then remove the concept entirely                                                           | Pending     |
-| D-55 | Clean up dead code: remove `escapedSkillId` regex and `(@author)` stripping in `skill-fetcher.ts` — skill IDs are kebab-case only                     | Done        |
-| D-56 | Rename `agentDomains` → `agentDefinedDomains`, update "override" comments to "define/precedence" language                                             | Done        |
-| D-57 | Fix `TEST_SKILLS.antiOverEngineering`: remove unnecessary inline `path` override in config-generator test                                             | Done        |
-| D-58 | `orderDomains`: put custom domains first, then built-in domains                                                                                       | Done        |
-| D-59 | Unified scrolling across all wizard views — apply the same scrolling pattern (marginTop offset + `useMeasuredHeight`) to every step that can overflow | Pending     |
+| ID   | Task                                                                                                                                                                                     | Status        |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| D-50 | ~~Eliminate skills-matrix.yaml~~ — superseded by [matrix decomposition design](../docs/features/proposed/matrix-decomposition-design.md) + [phased plan](./TODO-matrix-decomposition.md) | Superseded    |
+| D-46 | Custom extensibility (see [design doc](../docs/features/proposed/custom-extensibility-design.md))                                                                                        | In Progress   |
+| D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                                                                                          | Refined       |
+| D-33 | README: frame Agents Inc. as an AI coding framework (see [implementation plan](./D-33-readme-reframe.md))                                                                                | Ready for Dev |
+| D-44 | Update README and Notion page for `eject templates` type (see [implementation plan](./D-44-docs-eject-templates.md))                                                                     | Ready for Dev |
+| D-47 | ~~Eject a standalone compile function~~ — deferred, low priority (see [TODO-deferred.md](./TODO-deferred.md))                                                                            | Deferred      |
+| T-12 | End-to-end tests for custom marketplace workflow (see [implementation plan](./T-12-e2e-marketplace-tests.md))                                                                            | Has Open Qs   |
+| D-52 | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md))                                                                    | Ready for Dev |
+| D-54 | Remove expert mode: make expert mode behavior the default (see [implementation plan](./D-54-remove-expert-mode.md))                                                                      | Ready for Dev |
+| D-59 | Unified scrolling across all wizard views (see [implementation plan](./D-59-unified-scrolling.md))                                                                                       | Ready for Dev |
+| D-36 | Global install support with project-level override (see [implementation plan](./D-36-global-install.md))                                                                                 | Ready for Dev |
+| D-37 | Merge global + project installations in resolution (see [implementation plan](./D-37-merge-installs.md))                                                                                 | Has Open Qs   |
+| D-08 | ~~User-defined stacks~~ — deferred, not important (see [TODO-deferred.md](./TODO-deferred.md))                                                                                           | Deferred      |
+| D-53 | Rename `agent.yaml` to `metadata.yaml` (see [implementation plan](./D-53-rename-agent-yaml.md))                                                                                          | Ready for Dev |
+| D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))                                                                            | Has Open Qs   |
+| D-39 | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))                                                                                | Ready for Dev |
+| D-40 | ~~`agentsinc register` command~~ — absorbed into D-41 (config sub-agent handles registration) (see [TODO-deferred.md](./TODO-deferred.md))                                               | Deferred      |
+| D-41 | Create Agents Inc config sub-agent (see [implementation plan](./D-41-config-sub-agent.md))                                                                                               | Ready for Dev |
 
 ---
 
@@ -36,44 +36,6 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 ---
 
 ## Active Tasks
-
-### Documentation & Tooling
-
-#### U13: Run Documentor Agent on CLI Codebase
-
-Use the `documentor` sub-agent to create AI-focused documentation that helps other agents understand where and how to implement features. The documentor should work incrementally and track progress over time.
-
-**What to document:**
-
-- Component structure and patterns
-- State management patterns (Zustand)
-- Testing patterns and conventions
-- CLI command structure
-- Wizard flow and navigation
-- Key utilities and helpers
-
-**Output:** Documentation in `docs/` directory
-
----
-
-#### H18: Generate CLI Documentation via Documentor Agent
-
-Phases 1 (documentation-bible.md) and 2 (documentor workflow.md) are complete. Only Phase 3 remains.
-
-##### Phase 3: Run documentor agent to generate docs
-
-Create `.claude/docs/` directory with:
-
-- `DOCUMENTATION_MAP.md` — master index tracking coverage
-- `command-patterns.md` — oclif command conventions
-- `wizard-architecture.md` — wizard flow, state management
-- `compilation-system.md` — agent/skill compilation pipeline
-- `test-patterns.md` — test infrastructure and fixtures
-- `type-system.md` — type conventions and branded types
-
-**Success criteria:** `.claude/docs/` exists with 5+ files that help agents answer "where is X?" and "how does Y work?"
-
----
 
 ### D-50: Eliminate skills-matrix.yaml — derive matrix from skill metadata
 
@@ -108,6 +70,158 @@ Replace the hidden `P` hotkey toggle with an explicit install mode choice on the
 **Design doc:** [`docs/features/proposed/install-mode-redesign.md`](../docs/features/proposed/install-mode-redesign.md)
 
 **Location:** `step-confirm.tsx`, `wizard.tsx`, `wizard-layout.tsx`, `help-modal.tsx`, `wizard-store.ts`, `edit.tsx`, `local-installer.ts`, `agent-recompiler.ts`, `types/config.ts`.
+
+---
+
+### Framework Infrastructure
+
+#### D-36: Global install support with project-level override
+
+**Priority:** Medium
+**Implementation plan:** [`D-36-global-install.md`](./D-36-global-install.md)
+
+Add a `--global` flag to `agentsinc init` for global vs project-level installation. Global installs go to `~/.claude-src/config.yaml`, `~/.claude/skills/`, `~/.claude/agents/`. Project-level installs remain at `{cwd}/.claude-src/` as today. Phase 1: full override (project replaces global, no merging).
+
+**Acceptance criteria:**
+
+- [ ] `agentsinc init --global` installs to home directory
+- [ ] `agentsinc init` (no flag) installs to `{cwd}` (current behavior)
+- [ ] `agentsinc edit` from a project with its own installation uses that project's config
+- [ ] `agentsinc edit` from a project without its own installation falls back to global
+- [ ] `agentsinc compile` follows the same resolution order
+- [ ] Plugin mode: `--scope user` used for global, `--scope project` for project-level
+
+---
+
+#### D-37: Merge global + project installations in resolution
+
+**Priority:** Low (deferred until D-36 is stable)
+**Depends on:** D-36
+**Implementation plan:** [`D-37-merge-installs.md`](./D-37-merge-installs.md)
+
+Extend D-36's full-override behavior to support merging global and project-level installations. When a project-level installation exists, it currently replaces the global one entirely. This task adds the option to merge them — project-level selections take priority for overlapping categories, global fills in the rest.
+
+**Example:**
+
+- Global: `web-framework-react`, `web-state-zustand`, `web-testing-vitest`
+- Project: `api-framework-hono`
+- Merged result: all four skills active
+
+**Key design decisions (from implementation plan):**
+
+- Merge is opt-in via `merge: true` in project config (preserves D-36 full-override default)
+- Exclusive category conflicts: project wins. Non-exclusive categories: union.
+- Agents are merged (union), with project overriding per-agent per-subcategory stack mappings
+- `edit` always modifies the project-level config; global skills shown as inherited
+- `excludeGlobalSkills` deferred to a later phase for simplicity
+- Merge operates at the config level, not the matrix loading level
+
+---
+
+#### D-53: Rename `agent.yaml` to `metadata.yaml`
+
+**Implementation plan:** [`D-53-rename-agent-yaml.md`](./D-53-rename-agent-yaml.md)
+
+Rename the agent definition file from `agent.yaml` to `metadata.yaml` for consistency with skill metadata files. CLI-repo-only change (~52 files). No fallback period needed (pre-1.0).
+
+---
+
+### Framework Features
+
+#### D-38: Remove web-base-framework, allow multi-framework
+
+**Priority:** Medium
+**See plan:** [D-38-remove-base-framework.md](./D-38-remove-base-framework.md)
+
+Remove the `web-base-framework` and `mobile-platform` stacks-only subcategory keys. Merge their skills into the `web-framework` / `mobile-framework` arrays. Change `web-framework` from fully exclusive to supporting compatible multi-selection (React + Remix, Vue + Nuxt, etc.).
+
+When a user selects a meta-framework (Next.js, Remix, Nuxt), the corresponding base framework (React, Vue) should be recommended or auto-included. However, some base framework patterns conflict with meta-framework patterns (e.g., React Router vs Next.js App Router). A "slimmed down" version of the base framework skill may be needed for meta-framework contexts.
+
+**Problem:** The React skill teaches generic React patterns including routing, but when using Next.js, you want Next.js routing, not React Router. Similarly for data fetching patterns. The full React skill includes patterns that conflict with Next.js conventions.
+
+**Possible approaches:**
+
+- **Skill variants:** Create slimmed-down variants of base framework skills for meta-framework contexts (e.g., `web-framework-react-for-nextjs` that excludes routing/data-fetching sections)
+- **Conditional sections:** Add conditional sections in SKILL.md that are included/excluded based on what other skills are selected (e.g., `<!-- if not: web-framework-nextjs -->` around the routing section)
+- **Skill composition:** Split framework skills into atomic sub-skills (react-components, react-routing, react-data-fetching) and let meta-frameworks exclude the ones they replace
+- **Conflict rules in metadata.yaml:** Use existing `conflictsWith` to mark specific patterns as conflicting, letting the system warn users
+
+**Investigation needed:**
+
+- Audit each meta-framework skill to identify which base framework patterns it replaces
+- Determine the right granularity (full skill variants vs conditional sections vs sub-skills)
+- Consider whether this is even a problem in practice — does having both the React routing skill and Next.js routing skill actually cause issues for the AI agent consuming them?
+
+---
+
+#### D-39: Couple meta-frameworks with base frameworks
+
+**Priority:** Medium
+**Depends on:** D-38
+**See plan:** [D-39-couple-meta-frameworks.md](./D-39-couple-meta-frameworks.md)
+
+When a user selects a meta-framework (e.g., Next.js), automatically select the corresponding base framework skill (e.g., React) and block deselection while the meta-framework depends on it. This ensures users get both the meta-framework-specific patterns and the underlying framework knowledge.
+
+**Key decisions (from refinement):**
+
+- Auto-select base framework when meta-framework is toggled on (not just validation)
+- Block deselection of base framework while dependents exist
+- Add `requiredBy` visual indicator ("required by Next.js") to locked skills
+- Auto-select logic lives in `use-build-step-props.ts` hook (not the store)
+- Only same-subcategory auto-selection (no cross-category)
+- Expert mode bypasses auto-select and deselect blocking
+
+---
+
+#### D-41: Create Agents Inc config sub-agent
+
+**Priority:** Medium
+
+Create a specialized Claude Code sub-agent that understands the Agents Inc CLI's configuration system in depth. This is NOT a developer agent — it handles all configuration-related tasks that currently require manual knowledge of the CLI's YAML structures, schemas, and type system.
+
+**What it does:**
+
+- Creates and updates `metadata.yaml` files for skills (with correct domain-prefixed `category` values, author, cliName, etc.)
+- Creates and updates `stacks.yaml` entries (agent definitions, skill assignments, preloaded flags)
+- Updates `skills-matrix.yaml` (adding/modifying categories, skill entries, dependency rules)
+- Updates `.claude-src/config.yaml` mappings (source paths, plugin settings, skill assignments)
+- Updates `agent-mappings.yaml` skill-to-agent routing
+- Knows the valid `Subcategory` enum values and enforces them
+- Understands skill relationships (`requires`, `compatibleWith`, `conflictsWith`, `requiresSetup`, `providesSetupFor`)
+- Can validate configs against JSON schemas before writing
+
+**Key knowledge areas:**
+
+- The 38 domain-prefixed subcategory values and their domains
+- Stack structure: agents → subcategories → skill assignments (with `preloaded`, `selected` flags)
+- Skills matrix: categories with `id`, `displayName`, `domain`, `categoryExclusive`, `skills` arrays with dependency rules (`needsAny`, `conflictsWith`)
+- Metadata schema: required fields (`category`, `author`, `cliName`, `cliDescription`, `usageGuidance`)
+- The distinction between matrix categories (36) and stacks-only keys (+2: `web-base-framework`, `mobile-platform`)
+- How `extractSubcategoryFromPath` and `categoryPathSchema` resolve category paths
+
+**Why this is needed:**
+
+- Configuration tasks (creating metadata, adding stacks, updating the matrix) are error-prone and require deep familiarity with the schema
+- The D-31 migration showed how many files need coordinated updates when config values change
+- A dedicated config agent prevents developer agents from making config mistakes (wrong category values, invalid schema, missing required fields)
+- Replaces D-40 (`agentsinc register`) entirely — the config agent handles skill registration conversationally (read SKILL.md, infer category, generate metadata.yaml, wire config.yaml) instead of requiring users to memorize flags
+
+**Implementation:**
+
+- Create `src/agents/meta/config-manager/` with the standard agent structure
+- Pre-load the JSON schemas, `SUBCATEGORY_VALUES`, and example configs into the agent's context
+- Give it Read, Write, Edit, Glob, Grep tools (no Bash needed — it's purely config manipulation)
+- Add it to `agent-mappings.yaml` so it's available as a sub-agent for other agents
+
+**Acceptance criteria:**
+
+- [ ] Can create a valid `metadata.yaml` from a skill name and category
+- [ ] Can register an existing skill: read its SKILL.md, infer category/description, generate metadata.yaml, wire into config.yaml (replaces D-40)
+- [ ] Can add a new stack to `stacks.yaml` with correct agent/subcategory/skill structure
+- [ ] Can add a new category to `skills-matrix.yaml` with proper schema
+- [ ] Validates all output against schema rules
+- [ ] Refuses to use bare subcategory names (enforces domain-prefix)
+- [ ] Other agents can delegate config tasks to it via the Task tool
 
 ---
 
@@ -160,51 +274,6 @@ Update external documentation to reflect D-43's change: `templates` is now a fir
 - **Notion page** — update the eject command documentation to list `templates` as a separate type alongside `agent-partials`, `skills`, and `all`
 - Ensure the eject type list is consistent everywhere: `agent-partials | templates | skills | all`
 - Remove any references to the `--templates` / `-t` flag
-
----
-
-#### D-47: Eject a standalone compile function for sub-agent compilation
-
-Expose a single ejectable function that users can call to compile their sub-agents — and nothing else. This gives consumers a programmatic escape hatch to run the compilation pipeline (skills → templates → agent markdown) without going through the full CLI wizard or command surface.
-
-**What it should do:**
-
-- Take a minimal input: selected skills, selected agents, source path, output directory
-- Run the compilation pipeline (resolve skills, apply templates, write agent markdown)
-- Return the compiled output (or write to disk)
-- No wizard, no interactive prompts, no config reading — just compile
-
-**Why:** Users who integrate agent compilation into their own build systems or CI pipelines need a clean function call, not a CLI command. This is the "framework" escape hatch — eject the compile function and call it however you want.
-
-**Implementation approach:**
-
-- Extract the core compilation logic from `src/cli/lib/compiler.ts` into a standalone, importable function
-- The function should have no dependency on oclif, Ink, Zustand, or any CLI/UI layer
-- Make it available via `agentsinc eject compile` (writes a self-contained `.ts` file to the project) or as a public export from the package
-
-**Location:** `src/cli/lib/compiler.ts` (extract from), new ejectable output TBD.
-
----
-
-#### T-08: Audit all test files: extract fixtures, use real IDs
-
-All test files should follow the conventions enforced in `matrix-health-check.test.ts` and `category-grid.test.tsx` during this session:
-
-1. **No fake skill IDs** — use real IDs from the skills repo (e.g., `web-framework-react`, not `web-test-react`). Only use fake IDs when explicitly testing error paths for invalid data.
-2. **No fake categories** — use valid `Subcategory` union members (e.g., `"web-framework"`, not `"test-category"`).
-3. **No inline test data construction** — never construct `SkillsMatrixConfig`, `MergedSkillsMatrix`, `ResolvedSkill`, configs, or stacks inline in test bodies. Use factories from `__tests__/helpers.ts` (`createMockSkill`, `createMockMatrix`, `createMockCategory`, etc.) or fixtures from `create-test-source.ts`.
-4. **Extract all test data to top-level named constants** — don't call factory functions inside `it()` blocks. Define every skill, category, and matrix variant as a named constant at the top of the file. Test bodies should only call the function under test + assertions.
-
-**Specific callout:** `category-grid.test.tsx` lines 1190-1226 manually re-lists `Subcategory` and `SkillId` values in hand-picked pools to generate dynamic test data. This duplicates data that already exists in types and fixtures. Use `createComprehensiveMatrix` or real fixture data instead of hand-building pools.
-
-**Files already done (skip these):**
-
-- `src/cli/lib/matrix/matrix-health-check.test.ts`
-- `src/cli/components/wizard/category-grid.test.tsx` (IDs fixed, but pools still need replacing per callout above)
-
-**Files to audit:** All other `*.test.ts` and `*.test.tsx` files under `src/cli/`. Prioritize files that construct matrices, skills, categories, or configs inline.
-
-**Location:** All test files under `src/cli/`
 
 ---
 

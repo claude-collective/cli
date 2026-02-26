@@ -1,67 +1,33 @@
 # Agents Inc. CLI - Deferred Tasks
 
-| ID    | Task                                                  | Status                       |
-| ----- | ----------------------------------------------------- | ---------------------------- |
-| D-53  | Rename `agent.yaml` to `metadata.yaml`                | Deferred                     |
-| D-34  | Replace agent-mappings.yaml with schema-backed file   | Deferred                     |
-| D-28  | Fix startup warning/error messages                    | Deferred                     |
-| D-43  | Eject templates as its own type, not a flag           | Done (see TODO-completed.md) |
-| D-05  | Improve `agentsinc init` when already initialized     | Deferred                     |
-| P4-17 | `agentsinc new` supports multiple items               | Deferred                     |
-| D-08  | Support user-defined stacks in consumer projects      | Deferred                     |
-| P4-18 | Test: multiple skill/agent creation                   | Deferred                     |
-| D-01  | Update skill documentation conventions                | Deferred                     |
-| D-11  | Development hooks for type checking                   | Deferred                     |
-| D-12  | Eject full agents from custom sources                 | Deferred                     |
-| D-13  | Eject skills by domain/category                       | Deferred                     |
-| D-18  | Template system documentation improvements            | Deferred                     |
-| D-19  | Improve template error messages                       | Deferred                     |
-| D-20  | Add Edit tool to documentor agent                     | Deferred                     |
-| D-22  | Automated agent-tester for quality assurance          | Deferred                     |
-| D-24  | Configurable documentation file locations             | Deferred                     |
-| D-14  | Import skills from third-party marketplaces           | Deferred                     |
-| UX-04 | Interactive skill search polish                       | Deferred                     |
-| UX-05 | Refine step - skills.sh integration                   | Deferred                     |
-| UX-06 | Search with color highlighting                        | Deferred                     |
-| UX-07 | Incompatibility tooltips                              | Deferred                     |
-| UX-09 | Animations/transitions                                | Deferred                     |
-| #5    | Agents command for skill assignment                   | Deferred                     |
-| #19   | Sub-agent learning capture system                     | Deferred                     |
-| D-25  | Auto-version check + source staleness                 | Deferred                     |
-| D-26  | Marketplace-specific uninstall                        | Deferred                     |
-| D-30  | Update schemas when generating new categories/domains | Deferred                     |
-| D-36  | Global install support with project-level override    | Deferred                     |
-| D-37  | Merge global + project installations in resolution    | Deferred                     |
-| D-38  | Remove web-base-framework, allow multi-framework      | Deferred                     |
-| D-39  | Couple meta-frameworks with base frameworks           | Deferred                     |
-| D-40  | `agentsinc register` command for local skills         | Deferred                     |
-| D-41  | Create Agents Inc config sub-agent                    | Deferred                     |
-
----
-
-## D-34: Replace agent-mappings.yaml with Schema-Backed Agent-Skills Config
-
-The current `src/cli/defaults/agent-mappings.yaml` is brittle — it's a free-form YAML file without a JSON schema, doing pattern matching (`"web/*"`, `"api/*"`) to route skills to agents. It should be replaced with a proper schema-backed file similar to `stacks.yaml`.
-
-**Problems with agent-mappings.yaml:**
-
-- No `$schema` reference, no IDE validation
-- `skillToAgents` uses glob-like patterns (`"web/*"`) that are string-matched at runtime — easy to break silently
-- `agentSkillPrefixes` duplicates information that could be derived from the skill-to-agent mapping
-- The file's structure doesn't match any of the CLI's existing JSON schemas
-
-**Proposed replacement:**
-
-Create a new `config/agent-defaults.yaml` (with `agent-defaults.schema.json`) that explicitly maps each agent to its default skill categories, similar to how `stacks.yaml` maps agents to specific skills per stack. The routing logic in `config-generator.ts` would read from this structured config instead of pattern-matching.
-
-**Files to change:**
-
-- Remove `src/cli/defaults/agent-mappings.yaml`
-- Create `config/agent-defaults.yaml` + `src/schemas/agent-defaults.schema.json`
-- Update `src/cli/lib/loading/defaults-loader.ts` to load the new file
-- Update `src/cli/lib/configuration/config-generator.ts` to use structured lookups instead of pattern matching
-- Update `src/cli/stores/wizard-store.ts` agent preselection to use the new structure
-- Update tests
+| ID    | Task                                                                                                                               | Status                         |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| D-28  | Fix startup warning/error messages (see [plan](./D-28-fix-startup-messages.md))                                                    | Refined                        |
+| D-05  | Project dashboard — default command + already-initialized (see [plan](./D-05-improve-init-existing.md))                            | Ready for Dev                  |
+| P4-17 | `agentsinc new` supports multiple items (see [plan](./P4-17-new-multiple-items.md))                                                | Refined                        |
+| P4-18 | Test: multiple skill/agent creation (depends on P4-17)                                                                             | Deferred                       |
+| D-01  | Update skill documentation conventions                                                                                             | Needs Assistance               |
+| D-11  | Development hooks for type checking                                                                                                | Needs Assistance               |
+| D-12  | ~~Eject full agents from custom sources~~ — scrapped; agents are compiled, not plugins to be ejected                               | Deleted                        |
+| D-13  | Eject skills by domain/category (see [plan](./D-13-eject-skills-filtered.md))                                                      | Refined                        |
+| D-18  | Template system documentation improvements                                                                                         | Trivial (no refinement needed) |
+| D-19  | Improve template error messages (see [plan](./D-19-template-error-messages.md))                                                    | Deferred — nice to have        |
+| D-20  | Add Edit tool to documentor agent                                                                                                  | Trivial (no refinement needed) |
+| D-22  | ~~Automated agent-tester~~ — scrapped; existing validation should be made stricter over time instead                               | Deleted                        |
+| D-24  | ~~Configurable documentation file locations~~ — convention-only, no code needed (see [plan](./D-24-configurable-doc-locations.md)) | Closed                         |
+| D-14  | Import skills from third-party marketplaces                                                                                        | Needs Assistance               |
+| UX-04 | Interactive skill search polish                                                                                                    | Needs Assistance               |
+| UX-05 | Refine step - skills.sh integration                                                                                                | Needs Assistance               |
+| UX-06 | Search with color highlighting                                                                                                     | Needs Assistance               |
+| UX-07 | Incompatibility tooltips                                                                                                           | Needs Assistance               |
+| UX-09 | Animations/transitions                                                                                                             | Needs Assistance               |
+| #5    | Agents command for skill assignment                                                                                                | Needs Assistance               |
+| #19   | Sub-agent learning capture system                                                                                                  | Needs Assistance               |
+| D-25  | Auto-version check + source staleness (see [plan](./D-25-auto-version-check.md))                                                   | Ready for Dev                  |
+| D-26  | Marketplace-specific uninstall (see [plan](./D-26-marketplace-uninstall.md))                                                       | Ready for Dev                  |
+| D-08  | User-defined stacks in consumer projects (see [plan](./D-08-user-defined-stacks.md))                                               | Deferred                       |
+| D-40  | `agentsinc register` command — absorbed into D-41 (see [plan](./D-40-register-command.md))                                         | Deferred — replaced by D-41    |
+| D-47  | Eject standalone compile function (see [plan](./D-47-eject-compile-function.md))                                                   | Deferred — low priority        |
 
 ---
 
@@ -91,7 +57,11 @@ The CLI shows warning/error messages and the ASCII logo on startup that flash br
 
 ## D-05: Improve `agentsinc init` When Already Initialized
 
-When `agentsinc init` is run in a project that's already initialized, show a richer experience than simply redirecting to the edit view. The exact UX is TBD — something more nuanced than a plain redirect (e.g. a summary of what's installed, options to edit/recompile/update).
+**See refinement doc:** [D-05-improve-init-existing.md](./D-05-improve-init-existing.md)
+
+When `agentsinc init` is run in a project that's already initialized, show a summary dashboard (mode, skill count, agent names, config path, source) and suggest next steps (`edit`, `compile`, `doctor`, `list`) instead of a terse warning.
+
+**Recommended approach:** Non-interactive summary (Option A). Single file change in `src/cli/commands/init.tsx` (~40 lines added, ~5 removed). Reuses existing `loadProjectConfig()` and `Installation` type.
 
 **Files:** `src/cli/commands/init.tsx`
 
@@ -104,23 +74,6 @@ Deferred until after migration. Allow creating multiple skills/agents in one com
 
 **S | P4-18 | Test: Multiple skill/agent creation works**
 Depends on P4-17. Test coverage for multi-item creation.
-
----
-
-## D-08: Support User-Defined Stacks in Consumer Projects
-
-**See research doc:** [docs/research/user-defined-stacks.md](../docs/research/user-defined-stacks.md)
-
-Allow consumers to define stacks at four levels with a clear hierarchy in the wizard:
-
-1. **Project-level stacks** (top) — defined in a `stacks.yaml` referenced from `.claude-src/config.yaml` via the existing `stacks_file` field
-2. **Global stacks** — user-defined stacks that apply across all projects (e.g., `~/.config/agents-inc/stacks.yaml`)
-3. **Private marketplace stacks** — from configured marketplace sources
-4. **Public stacks** (bottom) — built-in CLI stacks from `config/stacks.yaml`, hidden when a private source is configured
-
-Each section has its own heading in the Stack Selection screen. Stacks are tagged with a `StackOrigin` (`"project" | "global" | "marketplace" | "public"`) and `originLabel` for display. The loader needs to change from either/or to merging from all origins.
-
-**Files:** `src/cli/lib/stacks/stacks-loader.ts`, `src/cli/lib/loading/source-loader.ts`
 
 ---
 
@@ -172,22 +125,7 @@ Add configurable development hooks that can run commands like `tsc --noEmit` aft
 
 ## D-12: Eject Full Agents from Custom Sources
 
-**M | D-12 | Support ejecting full compiled agents from custom sources**
-
-Add support for ejecting complete agent markdown files from custom sources/marketplaces.
-
-```bash
-agentsinc eject agents --source /path/to/marketplace
-```
-
-Currently `eject agent-partials` only ejects the CLI's bundled partials and templates (the building blocks). This future feature would allow ejecting fully-compiled agent files from third-party sources.
-
-### Implementation Notes
-
-- Different from `agent-partials` which are building blocks
-- Would copy compiled `.md` agent files from `<source>/agents/`
-- Useful for forking/customizing agents from other marketplaces
-- When implemented, update `EJECT_TYPES` to include `agents` as separate option
+**See refinement doc:** [D-12-eject-full-agents.md](./D-12-eject-full-agents.md)
 
 ---
 
@@ -326,24 +264,11 @@ Based on comprehensive testing performed in the Ralph Loop session (TESTER 51+),
 
 ## D-24: Configurable Documentation File Locations for Agent Compilation
 
+**See refinement doc:** [D-24-configurable-doc-locations.md](./D-24-configurable-doc-locations.md)
+
 **S | D-24 | Configure documentation file locations in consumer projects**
 
-Agent markdown files reference documentation files by filename only (e.g., `claude-architecture-bible.md`, `prompt-bible.md`, `documentation-bible.md`). Eventually, consumer projects should be able to configure where these files live so they can be resolved and included during agent compilation.
-
-### Implementation Notes
-
-- Add a `documentation` section to `config.yaml` in consuming projects:
-
-  ```yaml
-  documentation:
-    claude-architecture-bible: docs/standards/content/claude-architecture-bible.md
-    prompt-bible: docs/standards/content/prompt-bible.md
-    documentation-bible: docs/standards/content/documentation-bible.md
-  ```
-
-- During `agentsinccompile`, if a doc file location is configured and the file exists, inject its content into the compiled agent output (e.g., as a `<preloaded_content>` section or inline reference)
-- If a doc file is not configured or does not exist, omit the reference entirely from compiled output
-- Agent source files continue to reference docs by filename only -- resolution is the compiler's responsibility
+Agent markdown files reference documentation files by filename only (e.g., `claude-architecture-bible.md`, `prompt-bible.md`, `documentation-bible.md`). Consumer projects can configure where these files live so they can be resolved and included during agent compilation.
 
 ### Acceptance Criteria
 
@@ -461,196 +386,3 @@ This would:
 **Depends on:** Uninstall redesign (config-based removal logic) being completed first.
 
 ---
-
-## D-30: Update Schemas When Generating New Categories/Domains
-
-When a user creates a new category or domain, the JSON schemas (e.g., `metadata.schema.json`, `skills-matrix.schema.json`) should be updated to include the new values. Currently there is no code that handles this — generating a new category or domain does not update any schemas.
-
-**Investigation needed:**
-
-- Determine whether categories/domains are currently hardcoded in schemas or dynamically derived
-- Identify what flows create new categories or domains (if any exist yet)
-- Design how schema regeneration should be triggered (automatic on compile? explicit command? pre-commit hook?)
-- Ensure `$schema` references in metadata.yaml remain valid after schema changes
-
-**Related:** D-29 (`$schema` in metadata.yaml)
-
----
-
-## D-36: Global Install Support with Project-Level Override
-
-**Priority:** Medium
-
-Add a `--global` flag (or wizard prompt) to `agentsinc init` that lets users choose between global and project-level installation. Global installs go to `~/.claude-src/config.yaml`, `~/.claude/skills/`, `~/.claude/agents/`. Project-level installs remain at `{cwd}/.claude-src/` as today.
-
-**Resolution order for all commands (`edit`, `compile`, etc.):**
-
-1. Check `{cwd}/.claude-src/config.yaml` — if found, use project-level installation exclusively (full override)
-2. If not found, check `~/.claude-src/config.yaml` — if found, use global installation
-3. If neither found, error: "No installation found"
-
-**Phase 1 (this task):** Full override — project installation completely replaces global. No merging.
-
-**Changes needed:**
-
-- `src/cli/commands/init.tsx` — add global/project choice (flag or wizard prompt)
-- `src/cli/lib/installation/installation.ts` — `detectExistingInstallation()` gains fallback to home directory
-- `src/cli/lib/configuration/config.ts` — `loadProjectSourceConfig()` gains home-level fallback
-- `src/cli/lib/loading/source-loader.ts` — `discoverLocalSkills()` gains home-level fallback
-- `src/cli/lib/plugins/plugin-settings.ts` — `getEnabledPluginKeys()` gains home-level fallback
-- `src/cli/lib/permission-checker.tsx` — `checkPermissions()` gains home-level fallback
-- `src/cli/lib/installation/local-installer.ts` — `resolveInstallPaths()` supports home directory target
-- All fallbacks follow same pattern: project-level first, home-level second
-
-**Acceptance criteria:**
-
-- [ ] `agentsinc init --global` installs to home directory
-- [ ] `agentsinc init` (no flag) installs to `{cwd}` (current behavior)
-- [ ] `agentsinc edit` from a project with its own installation uses that project's config
-- [ ] `agentsinc edit` from a project without its own installation falls back to global
-- [ ] `agentsinc compile` follows the same resolution order
-- [ ] Plugin mode: `--scope user` used for global, `--scope project` for project-level
-
----
-
-## D-37: Merge Global + Project Installations in Resolution
-
-**Priority:** Low (deferred until D-36 is stable)
-**Depends on:** D-36
-
-Extend D-36's full-override behavior to support merging global and project-level installations. When a project-level installation exists, it currently replaces the global one entirely. This task adds the option to merge them — project-level selections take priority for overlapping categories, global fills in the rest.
-
-**Example:**
-
-- Global: `web-framework-react`, `web-state-zustand`, `web-testing-vitest`
-- Project: `api-framework-hono`
-- Merged result: all four skills active
-
-**Open questions:**
-
-- Should merging be opt-in (flag/config) or the default behavior?
-- How to handle conflicts (same category, different skill)?
-- Should agents be merged or fully overridden?
-- How does `agentsinc edit` work in merge mode — edit only project-level? Both?
-
----
-
-## D-38: Remove web-base-framework, Couple Meta+Base Frameworks
-
-**Priority:** Medium
-**See plan:** [D-38-remove-base-framework.md](./D-38-remove-base-framework.md)
-
-Remove the `web-base-framework` and `mobile-platform` stacks-only subcategory keys. Merge their skills into the `web-framework` / `mobile-framework` arrays. Change `web-framework` from fully exclusive to supporting compatible multi-selection (React + Remix, Vue + Nuxt, etc.).
-
-When a user selects a meta-framework (Next.js, Remix, Nuxt), the corresponding base framework (React, Vue) should be recommended or auto-included. However, some base framework patterns conflict with meta-framework patterns (e.g., React Router vs Next.js App Router). A "slimmed down" version of the base framework skill may be needed for meta-framework contexts.
-
-**Problem:** The React skill teaches generic React patterns including routing, but when using Next.js, you want Next.js routing, not React Router. Similarly for data fetching patterns. The full React skill includes patterns that conflict with Next.js conventions.
-
-**Possible approaches:**
-
-- **Skill variants:** Create slimmed-down variants of base framework skills for meta-framework contexts (e.g., `web-framework-react-for-nextjs` that excludes routing/data-fetching sections)
-- **Conditional sections:** Add conditional sections in SKILL.md that are included/excluded based on what other skills are selected (e.g., `<!-- if not: web-framework-nextjs -->` around the routing section)
-- **Skill composition:** Split framework skills into atomic sub-skills (react-components, react-routing, react-data-fetching) and let meta-frameworks exclude the ones they replace
-- **Conflict rules in metadata.yaml:** Use existing `conflictsWith` to mark specific patterns as conflicting, letting the system warn users
-
-**Investigation needed:**
-
-- Audit each meta-framework skill to identify which base framework patterns it replaces
-- Determine the right granularity (full skill variants vs conditional sections vs sub-skills)
-- Consider whether this is even a problem in practice — does having both the React routing skill and Next.js routing skill actually cause issues for the AI agent consuming them?
-
----
-
-## D-40: `agentsinc register` Command for Local Skills
-
-**Priority:** Medium
-
-Add a command that registers pre-existing custom skills with the CLI. Users who create skills manually (or have skills from external sources) need a way to make them first-class citizens without manually editing metadata, config, schemas, and types.
-
-**What the command does:**
-
-1. Takes a path to an existing `.claude/skills/{skill-name}/SKILL.md`
-2. Generates a valid `metadata.yaml` with a proper `category` from the known subcategory enum (interactive prompt to pick one)
-3. Optionally adds `cliName` and other required fields
-4. Wires the skill into `.claude-src/config.yaml` under the selected agent(s)
-5. If the skill needs a new category not in the current enum, updates `SUBCATEGORY_VALUES`, the `Subcategory` type, and regenerates JSON schemas
-
-**Why this is needed:**
-
-- D-32 constrains `category` to a known enum — local skills using `category: "local"` or custom values would fail JSON schema validation in the IDE
-- Currently local skills require manual creation of `metadata.yaml` with exact field names and valid enum values
-- The `edit` command's recompile path (`discoverAllPluginSkills`) doesn't discover `.claude/skills/` — registered skills with proper metadata would work around this
-- Replaces the vague #4 ("Handle plugins + local skills together") with a concrete, user-facing solution
-
-**Example usage:**
-
-```bash
-# Register an existing local skill
-agentsinc register skill .claude/skills/my-custom-patterns
-
-# Interactive prompts:
-# - Category? (pick from known subcategories or create new)
-# - Which agents should use this skill?
-# - Should it be preloaded?
-```
-
-**Files to change:**
-
-- New command: `src/cli/commands/register.ts`
-- `src/cli/lib/schemas.ts` — if supporting new categories, update `SUBCATEGORY_VALUES`
-- `src/cli/types/matrix.ts` — update `Subcategory` union type
-- `scripts/generate-json-schemas.ts` — re-run after type changes
-- `src/cli/lib/configuration/config-generator.ts` — merge registered skill into existing config
-
-**Related:** D-32 (category enum), D-36 (global install)
-
----
-
-## D-41: Create Agents Inc Config Sub-Agent
-
-**Priority:** Medium
-
-Create a specialized Claude Code sub-agent that understands the Agents Inc CLI's configuration system in depth. This is NOT a developer agent — it handles all configuration-related tasks that currently require manual knowledge of the CLI's YAML structures, schemas, and type system.
-
-**What it does:**
-
-- Creates and updates `metadata.yaml` files for skills (with correct domain-prefixed `category` values, author, cliName, etc.)
-- Creates and updates `stacks.yaml` entries (agent definitions, skill assignments, preloaded flags)
-- Updates `skills-matrix.yaml` (adding/modifying categories, skill entries, dependency rules)
-- Updates `.claude-src/config.yaml` mappings (source paths, plugin settings, skill assignments)
-- Updates `agent-mappings.yaml` skill-to-agent routing
-- Knows the valid `Subcategory` enum values and enforces them
-- Understands skill relationships (`requires`, `compatibleWith`, `conflictsWith`, `requiresSetup`, `providesSetupFor`)
-- Can validate configs against JSON schemas before writing
-
-**Key knowledge areas:**
-
-- The 38 domain-prefixed subcategory values and their domains
-- Stack structure: agents → subcategories → skill assignments (with `preloaded`, `selected` flags)
-- Skills matrix: categories with `id`, `displayName`, `domain`, `categoryExclusive`, `skills` arrays with dependency rules (`needsAny`, `conflictsWith`)
-- Metadata schema: required fields (`category`, `author`, `cliName`, `cliDescription`, `usageGuidance`)
-- The distinction between matrix categories (36) and stacks-only keys (+2: `web-base-framework`, `mobile-platform`)
-- How `extractSubcategoryFromPath` and `categoryPathSchema` resolve category paths
-
-**Why this is needed:**
-
-- Configuration tasks (creating metadata, adding stacks, updating the matrix) are error-prone and require deep familiarity with the schema
-- The D-31 migration showed how many files need coordinated updates when config values change
-- A dedicated config agent prevents developer agents from making config mistakes (wrong category values, invalid schema, missing required fields)
-- Useful as a building block for D-40 (`agentsinc register`) — the config agent handles the file generation
-
-**Implementation:**
-
-- Create `src/agents/meta/config-manager/` with the standard agent structure
-- Pre-load the JSON schemas, `SUBCATEGORY_VALUES`, and example configs into the agent's context
-- Give it Read, Write, Edit, Glob, Grep tools (no Bash needed — it's purely config manipulation)
-- Add it to `agent-mappings.yaml` so it's available as a sub-agent for other agents
-
-**Acceptance criteria:**
-
-- [ ] Can create a valid `metadata.yaml` from a skill name and category
-- [ ] Can add a new stack to `stacks.yaml` with correct agent/subcategory/skill structure
-- [ ] Can add a new category to `skills-matrix.yaml` with proper schema
-- [ ] Validates all output against JSON schemas
-- [ ] Refuses to use bare subcategory names (enforces domain-prefix)
-- [ ] Other agents can delegate config tasks to it via the Task tool
