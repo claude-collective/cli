@@ -1,7 +1,6 @@
 import path from "path";
-import os from "os";
 import { fileURLToPath } from "url";
-import { mkdtemp, rm, mkdir, writeFile, readFile, stat } from "fs/promises";
+import { mkdir, writeFile, readFile } from "fs/promises";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { run, Errors } from "@oclif/core";
 import ansis from "ansis";
@@ -159,23 +158,10 @@ import { resolveAlias, validateSelection } from "../matrix";
 import type { TestProjectConfig } from "./fixtures/create-test-source";
 import { getTestSkill, TEST_SKILLS, TEST_CATEGORIES } from "./test-fixtures";
 
-export async function fileExists(filePath: string): Promise<boolean> {
-  try {
-    const s = await stat(filePath);
-    return s.isFile();
-  } catch {
-    return false;
-  }
-}
-
-export async function directoryExists(dirPath: string): Promise<boolean> {
-  try {
-    const s = await stat(dirPath);
-    return s.isDirectory();
-  } catch {
-    return false;
-  }
-}
+export {
+  fileExists,
+  directoryExists,
+} from "./test-fs-utils";
 
 export async function readTestYaml<T>(filePath: string): Promise<T> {
   const content = await readFile(filePath, "utf-8");
@@ -244,31 +230,8 @@ export function parseTestFrontmatter(content: string): Record<string, unknown> |
   }
 }
 
-export async function createTempDir(prefix = "cc-test-"): Promise<string> {
-  return mkdtemp(path.join(os.tmpdir(), prefix));
-}
-
-const CLEANUP_MAX_RETRIES = 3;
-const CLEANUP_RETRY_DELAY_MS = 100;
-
-export async function cleanupTempDir(dirPath: string): Promise<void> {
-  for (let attempt = 0; attempt < CLEANUP_MAX_RETRIES; attempt++) {
-    try {
-      await rm(dirPath, { recursive: true, force: true });
-      return;
-    } catch (error: unknown) {
-      const isRetryable =
-        error instanceof Error &&
-        "code" in error &&
-        (error as NodeJS.ErrnoException).code === "ENOTEMPTY";
-      if (!isRetryable || attempt === CLEANUP_MAX_RETRIES - 1) {
-        throw error;
-      }
-      // Transient ENOTEMPTY on macOS: kernel hasn't released directory entries yet
-      await new Promise((resolve) => setTimeout(resolve, CLEANUP_RETRY_DELAY_MS));
-    }
-  }
-}
+import { createTempDir, cleanupTempDir } from "./test-fs-utils";
+export { createTempDir, cleanupTempDir };
 
 export interface TestDirs {
   tempDir: string;
@@ -278,7 +241,7 @@ export interface TestDirs {
   agentsDir: string;
 }
 
-export async function createTestDirs(prefix = "cc-test-"): Promise<TestDirs> {
+export async function createTestDirs(prefix = "ai-test-"): Promise<TestDirs> {
   const tempDir = await createTempDir(prefix);
   const projectDir = path.join(tempDir, "project");
   const pluginDir = path.join(projectDir, ".claude", "plugins", DEFAULT_PLUGIN_NAME);
