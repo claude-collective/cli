@@ -592,7 +592,7 @@ export async function createTestSource(options: TestSourceOptions = {}): Promise
   const agents = options.agents ?? DEFAULT_TEST_AGENTS;
   const { diskMatrix } = generateMatrix(skills, options.matrix);
 
-  const tempDir = await createTempDir("cc-test-");
+  const tempDir = await createTempDir("ai-test-");
   const projectDir = path.join(tempDir, "project");
   const sourceDir = path.join(tempDir, "source");
   const skillsDir = path.join(sourceDir, "src", "skills");
