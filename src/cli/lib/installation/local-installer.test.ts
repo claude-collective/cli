@@ -22,9 +22,13 @@ vi.mock("../loading/loader", () => ({
   loadAllAgents: vi.fn().mockResolvedValue({}),
 }));
 
-vi.mock("../stacks/stacks-loader", () => ({
-  loadStackById: vi.fn().mockResolvedValue(null),
-}));
+vi.mock("../stacks/stacks-loader", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../stacks/stacks-loader")>();
+  return {
+    ...actual,
+    loadStackById: vi.fn().mockResolvedValue(null),
+  };
+});
 
 vi.mock("../resolver", () => ({
   resolveAgents: vi.fn().mockResolvedValue({}),

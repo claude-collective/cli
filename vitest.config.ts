@@ -7,6 +7,7 @@ export default defineConfig({
     // Required for @oclif/test and ink-testing-library
     disableConsoleIntercept: true,
     clearMocks: true,
+    setupFiles: ["./vitest.setup.ts"],
     testTimeout: 10000,
     hookTimeout: 10000,
     coverage: {

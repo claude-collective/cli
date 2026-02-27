@@ -147,7 +147,8 @@ describe("plugin-settings", () => {
   });
 
   describe("resolvePluginInstallPaths", () => {
-    const registryPath = path.join(os.homedir(), ".claude", "plugins", "installed_plugins.json");
+    const getRegistryPath = () =>
+      path.join(os.homedir(), ".claude", "plugins", "installed_plugins.json");
 
     it("should return empty array when pluginKeys is empty", async () => {
       const result = await resolvePluginInstallPaths([], "/project");
@@ -165,7 +166,7 @@ describe("plugin-settings", () => {
       );
 
       expect(result).toEqual([]);
-      expect(mockFileExists).toHaveBeenCalledWith(registryPath);
+      expect(mockFileExists).toHaveBeenCalledWith(getRegistryPath());
     });
 
     it("should resolve project-scoped installations", async () => {
