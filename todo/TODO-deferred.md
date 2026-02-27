@@ -10,7 +10,7 @@
 | D-11  | Development hooks for type checking                                                                                                | Needs Assistance               |
 | D-12  | ~~Eject full agents from custom sources~~ — scrapped; agents are compiled, not plugins to be ejected                               | Deleted                        |
 | D-13  | Eject skills by domain/category (see [plan](./D-13-eject-skills-filtered.md))                                                      | Refined                        |
-| D-18  | Template system documentation improvements                                                                                         | Trivial (no refinement needed) |
+| D-18  | ~~Template system documentation improvements~~ — deleted, not useful                                                               | Deleted                        |
 | D-19  | Improve template error messages (see [plan](./D-19-template-error-messages.md))                                                    | Deferred — nice to have        |
 | D-20  | Add Edit tool to documentor agent                                                                                                  | Trivial (no refinement needed) |
 | D-22  | ~~Automated agent-tester~~ — scrapped; existing validation should be made stricter over time instead                               | Deleted                        |
@@ -155,18 +155,8 @@ agentsinc eject skills --domain backend --category api
 
 ---
 
-## D-18: Template System Documentation Improvements
+## D-19: Improve Template Error Messages
 
-**S | D-18 | Add inline documentation to agent.liquid template**
-
-From agent architecture research:
-
-1. Add comments in `agent.liquid` explaining each section's variables and purpose
-2. Document which variables are required vs optional
-3. Document where each variable comes from in the source files
-4. Document cascading resolution order in agent-summoner
-
-**S | D-19 | Improve template error messages**
 When template compilation fails, show which variables are missing and suggest which source files should be created.
 
 ---
@@ -194,7 +184,7 @@ Based on comprehensive testing performed in the Ralph Loop session (TESTER 51+),
    - "Think" alternatives, just-in-time loading, write verification, doc-first ordering
 
 2. **Canonical Agent Structure (7 tests)**
-   - Required files: agent.yaml, intro.md, workflow.md, critical-requirements.md, critical-reminders.md, output-format.md, examples.md
+   - Required files: metadata.yaml, intro.md, workflow.md, critical-requirements.md, critical-reminders.md, output-format.md, examples.md
    - Template integration, XML nesting, compilation verification
 
 3. **Domain Scope and Boundaries (6 tests)**

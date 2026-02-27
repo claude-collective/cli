@@ -173,17 +173,17 @@ All user-facing strings centralized in constant objects:
 
 `STANDARD_FILES` and `STANDARD_DIRS` constants enumerate all well-known file and directory names used throughout the codebase. Key entries:
 
-| Constant                       | Value           |
-| ------------------------------ | --------------- |
-| `STANDARD_FILES.SKILL_MD`      | `SKILL.md`      |
-| `STANDARD_FILES.METADATA_YAML` | `metadata.yaml` |
-| `STANDARD_FILES.CONFIG_YAML`   | `config.yaml`   |
-| `STANDARD_FILES.AGENT_YAML`    | `agent.yaml`    |
-| `STANDARD_FILES.PLUGIN_JSON`   | `plugin.json`   |
-| `STANDARD_FILES.CLAUDE_MD`     | `CLAUDE.md`     |
-| `STANDARD_DIRS.EXAMPLES`       | `examples`      |
-| `STANDARD_DIRS.SCRIPTS`        | `scripts`       |
-| `STANDARD_DIRS.SKILLS`         | `skills`        |
+| Constant                             | Value           |
+| ------------------------------------ | --------------- |
+| `STANDARD_FILES.SKILL_MD`            | `SKILL.md`      |
+| `STANDARD_FILES.METADATA_YAML`       | `metadata.yaml` |
+| `STANDARD_FILES.CONFIG_YAML`         | `config.yaml`   |
+| `STANDARD_FILES.AGENT_METADATA_YAML` | `metadata.yaml` |
+| `STANDARD_FILES.PLUGIN_JSON`         | `plugin.json`   |
+| `STANDARD_FILES.CLAUDE_MD`           | `CLAUDE.md`     |
+| `STANDARD_DIRS.EXAMPLES`             | `examples`      |
+| `STANDARD_DIRS.SCRIPTS`              | `scripts`       |
+| `STANDARD_DIRS.SKILLS`               | `skills`        |
 
 ### Limits
 

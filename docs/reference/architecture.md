@@ -57,7 +57,6 @@ and installs them as Claude plugins or local files.
 |   +-- agents/                   # Agent source partials (YAML + markdown)
 |   |   +-- developer/            #   web-developer, api-developer, cli-developer, web-architecture
 |   |   +-- meta/                 #   agent-summoner, documentor, skill-summoner
-|   |   +-- migration/            #   cli-migrator
 |   |   +-- pattern/              #   pattern-scout, web-pattern-critique
 |   |   +-- planning/             #   web-pm
 |   |   +-- researcher/           #   api-researcher, web-researcher
@@ -963,7 +962,7 @@ agents_source: https://github.com/org/agents
 Each agent in `src/agents/{category}/{agent-name}/`:
 
 ```
-agent.yaml           # Agent definition (title, description, model, tools, permissions)
+metadata.yaml           # Agent definition (title, description, model, tools, permissions)
 intro.md             # Required: introduction section
 workflow.md          # Required: workflow section
 examples.md          # Optional: examples section
@@ -974,7 +973,7 @@ output-format.md          # Optional: output format section
 
 ### Compilation Process
 
-1. Load agent definition from `agent.yaml` (validated by `agentYamlConfigSchema`)
+1. Load agent definition from `metadata.yaml` (validated by `agentYamlConfigSchema`)
 2. Read all markdown partials (intro, workflow, examples, etc.)
 3. Resolve skills: preloaded (embedded) vs dynamic (via Skill tool)
 4. Render through **liquidjs** Liquid template

@@ -62,7 +62,6 @@ type WizardProps = {
   logo?: string; // ASCII logo for header
   initialStep?: WizardStep; // "build" for edit mode
   initialInstallMode?: "plugin" | "local";
-  initialExpertMode?: boolean;
   initialDomains?: Domain[]; // Restore for edit mode
   initialAgents?: AgentName[]; // Restore for edit mode
   installedSkillIds?: SkillId[]; // Current skills for edit mode
@@ -80,7 +79,6 @@ type WizardResultV2 = {
   domainSelections: DomainSelections;
   selectedDomains: Domain[];
   sourceSelections: Partial<Record<SkillId, string>>;
-  expertMode: boolean;
   installMode: "plugin" | "local";
   cancelled: boolean;
   validation: { valid: boolean; errors: [...]; warnings: [...] };

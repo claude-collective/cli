@@ -91,7 +91,7 @@ src/agents/{agent-name}/
   critical-requirements.md    # Optional: top-of-prompt requirements
   critical-reminders.md       # Optional: bottom-of-prompt reminders
   output-format.md            # Optional: output format specification
-  agent.yaml                  # Agent configuration (tools, model, permissions)
+  metadata.yaml               # Agent configuration (tools, model, permissions)
 ```
 
 Output format resolution falls back from agent-specific dir to parent category dir.

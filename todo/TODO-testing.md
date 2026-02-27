@@ -43,7 +43,8 @@ All commands inherit base flags `--dry-run` and `--source` / `-s` from `BaseComm
 |      | `agentsinc eject skills` — flags only          | `--force`, `--output`, `--refresh` parsing against a bare project                                | ✅         |       |        |        |
 | T1   | `agentsinc eject skills` (initialized)         | Skills copied from a real initialized project; content preserved                                 | ✅         | ✅    |        |        |
 |      | `agentsinc eject all`                          | Runs both agent-partials + skills in one pass (no test verifies both outputs together)           | ✅ partial |       |        |        |
-|      | `agentsinc eject` — invalid types              | `templates`, `agents`, `config`, no arg, unknown value all rejected with error exit              | ✅         |       |        |        |
+|      | `agentsinc eject` — invalid types              | `agents`, `config`, no arg, unknown value all rejected with error exit                           | ✅         |       |        |        |
+|      | `agentsinc eject templates`                    | Copies Liquid templates to `.claude-src/agents/_templates/`                                      | ✅         |       |        |        |
 | T2   | `agentsinc eject` — plugin mode                | Eject from a plugin-mode project; output goes to correct plugin directories                      | ✅         |       | ✅     |        |
 
 ### Diff, Doctor, Info, List
@@ -488,11 +489,16 @@ agentsinc eject agent-partials
 ### 8. Eject — Invalid Types Rejected
 
 ```bash
-agentsinc eject templates    # Expected: error exit (invalid type)
 agentsinc eject agents       # Expected: error exit (invalid type)
 agentsinc eject config       # Expected: error exit (invalid type)
 agentsinc eject              # Expected: error exit (type required)
 agentsinc eject bad-value    # Expected: error exit (unknown type)
+```
+
+### 8b. Eject Templates
+
+```bash
+agentsinc eject templates    # Expected: copies templates to .claude-src/agents/_templates/
 ```
 
 ---
@@ -651,7 +657,7 @@ agentsinc outdated              # should show no outdated skills
 | 8   | `compile --dry-run`                            | No files written                                        |
 | 9   | `eject agent-partials`                         | `.claude-src/agents/` created; config created if absent |
 | 10  | `eject agent-partials` twice without `--force` | Warns, does not crash or overwrite                      |
-| 11  | `eject templates`                              | Error exit (invalid type)                               |
+| 11  | `eject templates`                              | Templates copied to `.claude-src/agents/_templates/`    |
 | 12  | `eject skills`                                 | Skill files copied from source                          |
 | 13  | `eject all`                                    | Runs both agent-partials + skills                       |
 | 14  | `uninstall --dry-run`                          | Shows preview, removes nothing                          |

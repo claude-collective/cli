@@ -79,11 +79,9 @@ src/
 │   │   ├── agent-summoner/
 │   │   ├── skill-summoner/
 │   │   └── documentor/
-│   ├── tester/                # Tester category
-│   │   ├── web-tester/
-│   │   └── cli-tester/
-│   └── migration/             # Migration category
-│       └── cli-migrator/
+│   └── tester/                # Tester category
+│       ├── web-tester/
+│       └── cli-tester/
 │
 ├── cli/                    # CLI implementation
 │   └── lib/compiler.ts        # Compiler
@@ -800,13 +798,13 @@ As of January 2026, Claude Code **enables extended thinking by default** with a 
 
 ## Agent Definitions
 
-> **NOTE:** The `src/agents.yaml` file no longer exists. Agents are loaded from the marketplace or defined locally via `agent.yaml` files in each agent's source directory.
+> **NOTE:** The `src/agents.yaml` file no longer exists. Agents are loaded from the marketplace or defined locally via `metadata.yaml` files in each agent's source directory.
 
 Each agent is defined by its source files in `src/agents/{category}/{agent-name}/`:
 
 ```
 src/agents/developer/web-developer/
-├── agent.yaml           # Agent metadata (id, title, description, model, tools)
+├── metadata.yaml           # Agent metadata (id, title, description, model, tools)
 ├── intro.md             # Role definition
 ├── workflow.md          # Agent-specific processes
 ├── critical-requirements.md
@@ -964,7 +962,7 @@ Create directory: `src/agents/{category}/{agent-name}/`
 
 ```
 src/agents/{category}/my-new-agent/
-├── agent.yaml                # REQUIRED: Agent metadata (id, title, description, model, tools)
+├── metadata.yaml                # REQUIRED: Agent metadata (id, title, description, model, tools)
 ├── intro.md                  # REQUIRED: Role definition (no <role> tags)
 ├── workflow.md               # REQUIRED: Agent-specific processes with XML tags
 ├── critical-requirements.md  # OPTIONAL: Top MUST rules (no XML wrapper)
@@ -982,16 +980,15 @@ src/agents/{category}/my-new-agent/
 - `pattern/` - Pattern discovery agents (pattern-scout, web-pattern-critique)
 - `meta/` - Meta-level agents (agent-summoner, skill-summoner, documentor)
 - `tester/` - Testing agents (web-tester, cli-tester)
-- `migration/` - Migration agents (cli-migrator)
 
-**Note:** Only `agent.yaml`, `intro.md` and `workflow.md` are required. The optional files enhance agent behavior but compilation will succeed without them.
+**Note:** Only `metadata.yaml`, `intro.md` and `workflow.md` are required. The optional files enhance agent behavior but compilation will succeed without them.
 
-### Step 2: Create agent.yaml
+### Step 2: Create metadata.yaml
 
-Create `agent.yaml` in the agent directory with metadata:
+Create `metadata.yaml` in the agent directory with metadata:
 
 ```yaml
-# src/agents/{category}/my-new-agent/agent.yaml
+# src/agents/{category}/my-new-agent/metadata.yaml
 $schema: ../../../schemas/agent.schema.json
 id: my-new-agent
 title: My New Agent
@@ -1031,7 +1028,7 @@ agentsinc compile
 
 ### Key Points
 
-- **Agent definitions** live in `agent.yaml` within each agent's source directory
+- **Agent definitions** live in `metadata.yaml` within each agent's source directory
 - **Agent source files** live in `src/agents/{category}/{agent}/` (organized by category)
 - **Skill assignments** live in `.claude-src/config.yaml` under `agents`
 - Core principles are automatically included via the template

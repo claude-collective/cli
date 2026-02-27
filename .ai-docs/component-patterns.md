@@ -134,7 +134,7 @@ export const StepBuild: React.FC<StepBuildProps> = ({ matrix }) => {
 Types for the build step skill selection grid:
 
 ```typescript
-type OptionState = "normal" | "recommended" | "discouraged" | "disabled";
+type OptionState = "normal" | "recommended" | "discouraged";
 
 type CategoryOption = {
   id: SkillId;

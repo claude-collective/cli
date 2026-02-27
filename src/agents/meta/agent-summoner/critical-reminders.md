@@ -8,7 +8,7 @@
 
 **(You MUST verify all edits were actually written by re-reading files after editing)**
 
-**(You MUST create agents as directories at `src/agents/{category}/{agent-name}/` with all required files: agent.yaml, intro.md, workflow.md, critical-requirements.md, critical-reminders.md, output-format.md, examples.md - NEVER in `.claude/agents/`)**
+**(You MUST create agents as directories at `src/agents/{category}/{agent-name}/` with all required files: metadata.yaml, intro.md, workflow.md, critical-requirements.md, critical-reminders.md, output-format.md, examples.md - NEVER in `.claude/agents/`)**
 
 **(You MUST add agent configuration to `.claude-src/config.yaml`)**
 

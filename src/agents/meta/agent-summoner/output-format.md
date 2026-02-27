@@ -10,7 +10,7 @@ Provide your agent definition in this structure:
 **Category:** [developer | reviewer | researcher | planning | pattern | meta | tester]
 **Purpose:** [one sentence]
 
-### agent.yaml
+### metadata.yaml
 
 ```yaml
 $schema: ../../../schemas/agent.schema.json

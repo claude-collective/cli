@@ -15,34 +15,34 @@ All commands extend `BaseCommand` (`src/cli/base-command.ts`).
 
 ## Commands Index
 
-| Command                | File                                       | Type | Summary                                 |
-| ---------------------- | ------------------------------------------ | ---- | --------------------------------------- |
-| `init`                 | `src/cli/commands/init.tsx`                | tsx  | Initialize project (interactive wizard) |
-| `edit`                 | `src/cli/commands/edit.tsx`                | tsx  | Edit installed skills via wizard        |
-| `compile`              | `src/cli/commands/compile.ts`              | ts   | Compile agents from skills              |
-| `validate`             | `src/cli/commands/validate.ts`             | ts   | Validate installation                   |
-| `info`                 | `src/cli/commands/info.ts`                 | ts   | Show installation info                  |
-| `list`                 | `src/cli/commands/list.ts`                 | ts   | List installed skills                   |
-| `diff`                 | `src/cli/commands/diff.ts`                 | ts   | Show skill differences                  |
-| `doctor`               | `src/cli/commands/doctor.ts`               | ts   | Health check                            |
-| `eject`                | `src/cli/commands/eject.ts`                | ts   | Eject to local mode                     |
-| `outdated`             | `src/cli/commands/outdated.ts`             | ts   | Check for skill updates                 |
-| `search`               | `src/cli/commands/search.tsx`              | tsx  | Search skills across sources            |
-| `uninstall`            | `src/cli/commands/uninstall.tsx`           | tsx  | Uninstall from project                  |
-| `update`               | `src/cli/commands/update.tsx`              | tsx  | Update skills                           |
-| `import skill`         | `src/cli/commands/import/skill.ts`         | ts   | Import a skill from source              |
-| `new skill`            | `src/cli/commands/new/skill.ts`            | ts   | Create a new skill                      |
-| `new agent`            | `src/cli/commands/new/agent.tsx`           | tsx  | Create a new agent                      |
-| `new marketplace`      | `src/cli/commands/new/marketplace.ts`      | ts   | Create a new marketplace                |
-| `build marketplace`    | `src/cli/commands/build/marketplace.ts`    | ts   | Build marketplace.json                  |
-| `build plugins`        | `src/cli/commands/build/plugins.ts`        | ts   | Build skill/agent plugins               |
-| `build stack`          | `src/cli/commands/build/stack.tsx`         | tsx  | Build a stack plugin                    |
-| `config`               | `src/cli/commands/config/index.ts`         | ts   | Show config overview                    |
-| `config get`           | `src/cli/commands/config/get.ts`           | ts   | Get a config value                      |
-| `config show`          | `src/cli/commands/config/show.ts`          | ts   | Show all config values                  |
-| `config path`          | `src/cli/commands/config/path.ts`          | ts   | Show config file paths                  |
-| `config set-project`   | `src/cli/commands/config/set-project.ts`   | ts   | Set project config value                |
-| `config unset-project` | `src/cli/commands/config/unset-project.ts` | ts   | Remove project config value             |
+| Command                | File                                       | Type | Summary                                    |
+| ---------------------- | ------------------------------------------ | ---- | ------------------------------------------ |
+| `init`                 | `src/cli/commands/init.tsx`                | tsx  | Initialize project (interactive wizard)    |
+| `edit`                 | `src/cli/commands/edit.tsx`                | tsx  | Edit installed skills via wizard           |
+| `compile`              | `src/cli/commands/compile.ts`              | ts   | Compile agents from skills                 |
+| `validate`             | `src/cli/commands/validate.ts`             | ts   | Validate installation                      |
+| `info`                 | `src/cli/commands/info.ts`                 | ts   | Show installation info                     |
+| `list`                 | `src/cli/commands/list.ts`                 | ts   | List installed skills                      |
+| `diff`                 | `src/cli/commands/diff.ts`                 | ts   | Show skill differences                     |
+| `doctor`               | `src/cli/commands/doctor.ts`               | ts   | Health check                               |
+| `eject`                | `src/cli/commands/eject.ts`                | ts   | Eject skills, agent partials, or templates |
+| `outdated`             | `src/cli/commands/outdated.ts`             | ts   | Check for skill updates                    |
+| `search`               | `src/cli/commands/search.tsx`              | tsx  | Search skills across sources               |
+| `uninstall`            | `src/cli/commands/uninstall.tsx`           | tsx  | Uninstall from project                     |
+| `update`               | `src/cli/commands/update.tsx`              | tsx  | Update skills                              |
+| `import skill`         | `src/cli/commands/import/skill.ts`         | ts   | Import a skill from source                 |
+| `new skill`            | `src/cli/commands/new/skill.ts`            | ts   | Create a new skill                         |
+| `new agent`            | `src/cli/commands/new/agent.tsx`           | tsx  | Create a new agent                         |
+| `new marketplace`      | `src/cli/commands/new/marketplace.ts`      | ts   | Create a new marketplace                   |
+| `build marketplace`    | `src/cli/commands/build/marketplace.ts`    | ts   | Build marketplace.json                     |
+| `build plugins`        | `src/cli/commands/build/plugins.ts`        | ts   | Build skill/agent plugins                  |
+| `build stack`          | `src/cli/commands/build/stack.tsx`         | tsx  | Build a stack plugin                       |
+| `config`               | `src/cli/commands/config/index.ts`         | ts   | Show config overview                       |
+| `config get`           | `src/cli/commands/config/get.ts`           | ts   | Get a config value                         |
+| `config show`          | `src/cli/commands/config/show.ts`          | ts   | Show all config values                     |
+| `config path`          | `src/cli/commands/config/path.ts`          | ts   | Show config file paths                     |
+| `config set-project`   | `src/cli/commands/config/set-project.ts`   | ts   | Set project config value                   |
+| `config unset-project` | `src/cli/commands/config/unset-project.ts` | ts   | Remove project config value                |
 
 ## Primary Commands (Detailed)
 

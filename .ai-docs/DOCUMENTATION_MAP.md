@@ -113,7 +113,7 @@ Full validation of all 12 documentation files against actual source code. Errors
 - Added missing `sourcePath: string` field to SourceLoadResult type
 - Added line references to SourceLoadResult type definition
 - Added line numbers for all matrix-resolver.ts functions
-- Added undocumented utility functions: getAvailableSkills, getSkillsByCategory, isCategoryAllDisabled
+- Added undocumented utility functions: getAvailableSkills, getSkillsByCategory
 
 ## Notes for Next Session
 

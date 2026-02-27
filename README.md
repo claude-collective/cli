@@ -82,7 +82,7 @@ The wizard has three steps:
 
 ## Subagents
 
-18 roles across 8 categories:
+17 roles across 7 categories:
 
 | Category         | Subagents                                                          |
 | ---------------- | ------------------------------------------------------------------ |
@@ -92,7 +92,6 @@ The wizard has three steps:
 | Researchers      | `web-researcher` `api-researcher`                                  |
 | Planning         | `web-pm`                                                           |
 | Pattern Analysis | `pattern-scout` `web-pattern-critique`                             |
-| Migration        | `cli-migrator`                                                     |
 | Documentation    | `documentor`                                                       |
 | Meta             | `skill-summoner` `agent-summoner`                                  |
 

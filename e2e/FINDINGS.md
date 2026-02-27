@@ -328,7 +328,7 @@
 
 - **File(s):** `e2e/helpers/create-e2e-source.ts`, `src/cli/lib/__tests__/fixtures/create-test-source.ts`
 - **Issue:** `createE2ESource()` creates a full source directory with skills, stacks, and agents for E2E testing. The unit test fixture `createTestSource()` does similar work but with different data and structure. Key differences:
-  - `createE2ESource` writes real SKILL.md files, metadata.yaml, stacks.yaml, agent.yaml, and liquid templates — it builds a genuine source directory that the CLI can consume end-to-end.
+  - `createE2ESource` writes real SKILL.md files, metadata.yaml, stacks.yaml, metadata.yaml (agents), and liquid templates — it builds a genuine source directory that the CLI can consume end-to-end.
   - `createTestSource` creates mock source structures optimized for unit/integration tests with in-process CLI calls.
   - `createE2ESource` imports `createMockSkillAssignment` from the unit helpers, showing that cross-referencing already exists.
 - **Recommendation:** Do NOT merge these two. They serve different purposes: `createE2ESource` builds a real filesystem source for subprocess-based tests; `createTestSource` builds lightweight mock structures for in-process tests. The cross-import of `createMockSkillAssignment` is fine and shows appropriate reuse. However, the duplicated `createTempDir`/`cleanupTempDir`/`fileExists`/`directoryExists` utilities (Finding 30) should be shared.

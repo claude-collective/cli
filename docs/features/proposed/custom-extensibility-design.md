@@ -47,7 +47,7 @@ These constraints serve the built-in skill marketplace well but block users who 
 **Counts verified against actual source (2026-02-21):**
 
 - `SkillIdPrefix` (`src/cli/types/skills.ts:4`): 7 values -- `"web" | "api" | "cli" | "mobile" | "infra" | "meta" | "security"`. **Correct as stated.**
-- `AgentName` (`src/cli/types/agents.ts:5-31`): **18 members, not 20.** The actual list: `web-developer`, `api-developer`, `cli-developer`, `web-architecture`, `agent-summoner`, `documentor`, `skill-summoner`, `cli-migrator`, `pattern-scout`, `web-pattern-critique`, `web-pm`, `api-researcher`, `web-researcher`, `api-reviewer`, `cli-reviewer`, `web-reviewer`, `cli-tester`, `web-tester`. The Zod schema in `schemas.ts:104-123` has the same 18 values.
+- `AgentName` (`src/cli/types/agents.ts:5-29`): **17 members.** The actual list: `web-developer`, `api-developer`, `cli-developer`, `web-architecture`, `agent-summoner`, `documentor`, `skill-summoner`, `pattern-scout`, `web-pattern-critique`, `web-pm`, `api-researcher`, `web-researcher`, `api-reviewer`, `cli-reviewer`, `web-reviewer`, `cli-tester`, `web-tester`. The Zod schema in `schemas.ts` has the same 17 values.
 - `Subcategory` (`src/cli/types/matrix.ts:8-46`): **38 members, not 37.** Count includes: 19 web-prefixed (web-framework through web-base-framework), 7 api-prefixed, 2 mobile-prefixed, 7 shared-prefixed, 3 cli-prefixed = 38 total. The `SUBCATEGORY_VALUES` array in `schemas.ts:53-92` matches with the same 38 entries.
 - `Domain` (`src/cli/types/matrix.ts:5`): 5 values -- confirmed.
 - `SkillSourceType` (`src/cli/types/matrix.ts:280`): `"public" | "private" | "local"` -- **confirmed.** The claim about it marking provenance is accurate.
@@ -88,7 +88,7 @@ author: "@acme"
 displayName: Deploy Pipeline
 # ...
 
-# agent.yaml (agents)
+# metadata.yaml (agents)
 custom: true
 id: acme-deployer
 title: Acme Deployer
@@ -692,7 +692,7 @@ The `custom: true` flag on skills is NOT needed for Zod schema extension -- it i
 
 ### Agents
 
-**Config location:** `agent.yaml`
+**Config location:** `metadata.yaml`
 
 ```yaml
 custom: true
@@ -718,12 +718,12 @@ model: opus
 
 **Compilation pipeline changes:**
 
-- The compiler resolves agents by name from the `agents/` directory. Custom agents work as long as their directory structure matches the expected layout (`{agent-name}/agent.yaml`, template files, etc.)
+- The compiler resolves agents by name from the `agents/` directory. Custom agents work as long as their directory structure matches the expected layout (`{agent-name}/metadata.yaml`, template files, etc.)
 - Stack configs can reference custom agent names in the outer record (e.g., `stack["acme-deployer"]`) since `projectConfigLoaderSchema.stack` (`schemas.ts:404`) uses `z.record(z.string(), stackAgentConfigSchema)` for agent keys
 
 ### Agent Name Auto-Discovery
 
-Agent names can be auto-discovered from the source's `agents/` directory by scanning `agent.yaml` files for their `id` field. This is the same pattern used for skill auto-discovery via `extractAllSkills()` in `matrix-loader.ts`. The existing `loadAllAgents()` function (`loading/loader.ts:29-57`) already scans `**/agent.yaml` files and parses their `id` fields.
+Agent names can be auto-discovered from the source's `agents/` directory by scanning `metadata.yaml` files for their `id` field. This is the same pattern used for skill auto-discovery via `extractAllSkills()` in `matrix-loader.ts`. The existing `loadAllAgents()` function (`loading/loader.ts:29-57`) already scans `**/metadata.yaml` files and parses their `id` fields.
 
 The `agentNameSchema` can be extended dynamically at runtime -- the same approach used for `subcategorySchema` and `domainSchema`. After scanning the source's agents directory, any agent IDs not in the built-in `AgentName` union are added to the extended schema:
 
@@ -743,7 +743,7 @@ The `custom: true` flag on agents is NOT needed for Zod schema extension -- it i
 
 ### Codebase Audit Notes (Agents)
 
-**`agentYamlConfigSchema` blocks custom agents at loader level.** The schema (`schemas.ts:334-344`) uses `agentNameSchema` for the `id` field, which is a strict enum of 18 built-in names. Loading a custom agent's `agent.yaml` will fail at the Zod validation step. **Fix:** Extend `agentNameSchema` dynamically at runtime with auto-discovered agent names from the source's `agents/` directory, using the same approach as `subcategorySchema` extension. Alternatively, when `custom: true` is present, use `z.string().regex(KEBAB_CASE_PATTERN)` instead of `agentNameSchema` for the `id` field.
+**`agentYamlConfigSchema` blocks custom agents at loader level.** The schema (`schemas.ts:334-344`) uses `agentNameSchema` for the `id` field, which is a strict enum of 18 built-in names. Loading a custom agent's `metadata.yaml` will fail at the Zod validation step. **Fix:** Extend `agentNameSchema` dynamically at runtime with auto-discovered agent names from the source's `agents/` directory, using the same approach as `subcategorySchema` extension. Alternatively, when `custom: true` is present, use `z.string().regex(KEBAB_CASE_PATTERN)` instead of `agentNameSchema` for the `id` field.
 
 **`agentYamlGenerationSchema` already lenient.** The strict schema for compiled agent output (`schemas.ts:728-741`) uses `z.string().min(1)` for `id` -- already accepts any string. So compilation output of custom agents works without changes.
 
@@ -886,7 +886,7 @@ Domains are not a first-class config entity -- they're derived from the `domain`
    - If source matrix exists, merge categories: `{ ...cliMatrix.categories, ...sourceMatrix.categories }`
    - Load source matrix with a relaxed schema variant (`z.record(z.string(), categoryDefinitionSchema)`)
 2. Add agent name auto-discovery:
-   - Scan source's `agents/` directory for `agent.yaml` files
+   - Scan source's `agents/` directory for `metadata.yaml` files
    - Extract `id` fields and extend `agentNameSchema` dynamically
 3. Add skill ID auto-discovery:
    - Use existing `extractAllSkills()` output to discover custom skill IDs
@@ -902,7 +902,7 @@ Domains are not a first-class config entity -- they're derived from the `domain`
 **Phase 2 Progress (2026-02-22): COMPLETE (steps 1, 2, 3, 4, 6 done; step 5 deferred)**
 
 - **Step 1 (matrix merge):** Created `relaxedCategoryDefinitionSchema` and `relaxedSkillsMatrixConfigSchema` in `schemas.ts` for loading source matrices with custom category keys and domains. Added `loadSkillsMatrixRelaxed()` in `matrix-loader.ts`. Rewrote `loadAndMergeFromBasePath()` in `source-loader.ts` from either/or to always-merge. Relationships merged by concatenating arrays; skill aliases merged with source winning on conflict.
-- **Step 2 (agent auto-discovery):** Added `discoverAndExtendFromSource()` in `source-loader.ts` that pre-scans `agents/` directory for `agent.yaml` files, extracts `id` fields, and calls `extendSchemasWithCustomValues({ agentNames })`. Lightweight YAML parse avoids the chicken-and-egg problem (need extended schemas to load agents, but need to load agents to discover custom names).
+- **Step 2 (agent auto-discovery):** Added `discoverAndExtendFromSource()` in `source-loader.ts` that pre-scans `agents/` directory for `metadata.yaml` files, extracts `id` fields, and calls `extendSchemasWithCustomValues({ agentNames })`. Lightweight YAML parse avoids the chicken-and-egg problem (need extended schemas to load agents, but need to load agents to discover custom names).
 - **Step 3 (skill ID auto-discovery):** Same `discoverAndExtendFromSource()` function pre-scans `skills/` directory for `SKILL.md` frontmatter, extracts skill IDs that don't match `SKILL_ID_PATTERN`, and calls `extendSchemasWithCustomValues({ skillIds })`.
 - **Step 4 (dynamic Zod extension):** Created `customExtensions` object with runtime-extensible Sets in `schemas.ts`. Added `extendSchemasWithCustomValues()` and `resetSchemaExtensions()`. Updated `categoryPathSchema`, `stackAgentConfigSchema`, `agentYamlConfigSchema`, `skillAssignmentSchema`, `metadataValidationSchema`, and `projectConfigLoaderSchema` (skills + domains fields) to check custom extensions via `refine()` validators. Added `extendSchemasFromMatrix()` in `source-loader.ts` that extracts custom categories/domains from the merged matrix and extends schemas before entity loading.
 - **Step 5 (update `new skill`/`new agent`):** Deferred to Phase 4 -- `new skill` now always sets `custom: true` (Phase 4 progress notes). `new agent` deferred pending agent creation UX redesign.
@@ -952,7 +952,7 @@ The rendering pipeline (`buildCategoriesForDomain()`, category grid, skill rende
 - **Step 1 (`agentsinc new marketplace`):** Created `commands/new/marketplace.ts` extending BaseCommand. Scaffolds a complete private marketplace directory with `src/skills/`, `src/agents/`, `src/stacks/`, `config/skills-matrix.yaml`, and `README.md`. Supports `--force`, `--dry-run`, and `--output` flags. Validates marketplace name is kebab-case. Example `skills-matrix.yaml` includes custom domain and two example categories with inline documentation. 28 tests added.
 - **Step 2 (scaffold local JSON schemas): FULLY DEFERRED.** Schema scaffolding is deferred pending the base schema splitting approach. Research confirmed that `allOf` + `$ref` CANNOT widen enums (intersection semantics produce an empty set). `$dynamicRef`/`$dynamicAnchor` is not supported by yaml-language-server or VS Code JSON service. The planned solution is to split each base schema into a **structure schema** (no enums on extensible fields) and a **full schema** (strict enums referencing the structure schema). Extension schemas would `allOf` + `$ref` the structure variant. See [Local Schema Design](#local-schema-design) for details. For now: `yamlSchemaComment()` calls removed from `new marketplace` and `new skill`. No local schema files are generated. No `$schema` comments in scaffolded YAML files. Runtime validation via Zod (with dynamic schema extension from Phases 1-2) handles all custom value validation.
 - **Step 3 (scaffold skills-matrix.yaml):** Done as part of step 1. The `generateSkillsMatrixYaml()` function creates a fully commented example matrix with custom domain, two categories, empty relationships, and empty skill aliases.
-- **Step 4 (auto-update schema enums):** Investigation complete -- **no explicit update needed.** The `discoverAndExtendFromSource()` function (Phase 2) already auto-discovers custom skill IDs and agent names from the source's directory structure at every load cycle. When `new skill` creates a skill file, the next `compile`/`edit`/`validate` invocation automatically discovers it via the SKILL.md frontmatter scan. Same for `new agent` with agent.yaml scanning.
+- **Step 4 (auto-update schema enums):** Investigation complete -- **no explicit update needed.** The `discoverAndExtendFromSource()` function (Phase 2) already auto-discovers custom skill IDs and agent names from the source's directory structure at every load cycle. When `new skill` creates a skill file, the next `compile`/`edit`/`validate` invocation automatically discovers it via the SKILL.md frontmatter scan. Same for `new agent` with metadata.yaml scanning.
 
 **Phase 2 Step 5 (`new skill` custom: true): COMPLETE (2026-02-22)**
 
@@ -1010,7 +1010,7 @@ If the user declines alignment, only the generic pass runs.
 
 There is no "align to project" toggle. The domain + role combination fully defines the agent's responsibilities, tools, and behavior. There is nothing ambiguous left to align -- an `api-developer` is an `api-developer` regardless of which project it lives in.
 
-**Output:** `agent.yaml` + template files in `agents/{agent-name}/`
+**Output:** `metadata.yaml` + template files in `agents/{agent-name}/`
 
 **Marketplace context:** Same as skills -- `custom: true` set automatically when running inside a marketplace context.
 
@@ -1064,7 +1064,7 @@ agentsinc new skill                    agentsinc new agent
 |   .claude/skills/cva-design-     |   +----------------------------------+
 |     tokens/SKILL.md              |   | Created:                         |
 |   .claude/skills/cva-design-     |   |   agents/api-tester/             |
-|     tokens/metadata.yaml         |   |     agent.yaml                   |
+|     tokens/metadata.yaml         |   |     metadata.yaml                   |
 +----------------------------------+   +----------------------------------+
 ```
 

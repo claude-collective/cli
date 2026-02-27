@@ -250,7 +250,7 @@ The system compiles modular source files into standalone agent markdown using Ty
 ```
 src/
 ├── agents/{category}/{agent-name}/   # Agent source files (organized by category)
-│   ├── agent.yaml                    # REQUIRED: Agent metadata (id, title, description, model, tools)
+│   ├── metadata.yaml                    # REQUIRED: Agent metadata (id, title, description, model, tools)
 │   ├── intro.md                      # REQUIRED: Role definition (NO <role> tags - template adds them)
 │   ├── workflow.md                   # REQUIRED: Agent-specific workflow and processes
 │   ├── critical-requirements.md      # REQUIRED: Top-of-file MUST rules (NO XML wrapper - template adds it)
@@ -426,7 +426,7 @@ Boundaries:
 **Directory Structure Rules:**
 
 - **Source directory:** `src/agents/{category}/{agent-name}/` (relative to project root)
-- **Required files:** `agent.yaml`, `intro.md`, `workflow.md`, `critical-requirements.md`, `critical-reminders.md`, `output-format.md`, `examples.md`
+- **Required files:** `metadata.yaml`, `intro.md`, `workflow.md`, `critical-requirements.md`, `critical-reminders.md`, `output-format.md`, `examples.md`
 - **DO NOT create files in `.claude/agents/`** - That directory is for compiled output only
 
 **Agent Categories:**
@@ -438,7 +438,6 @@ Boundaries:
 - `pattern/` - Pattern discovery agents (pattern-scout, web-pattern-critique)
 - `meta/` - Meta-level agents (agent-summoner, skill-summoner, documentor)
 - `tester/` - Testing agents (web-tester, cli-tester)
-- `migration/` - Migration agents (cli-migrator)
 
 **Directory structure:**
 
@@ -1252,7 +1251,7 @@ stack:
 <creation_checklist>
 **Directory and Files:**
 - [ ] Agent directory created at `src/agents/{category}/{agent-name}/`
-- [ ] Has `agent.yaml` with metadata (REQUIRED)
+- [ ] Has `metadata.yaml` with metadata (REQUIRED)
 - [ ] Has `intro.md` with expansion modifiers (REQUIRED - NO <role> tags)
 - [ ] Has `workflow.md` with semantic XML sections (REQUIRED)
 - [ ] Has `critical-requirements.md` (REQUIRED - NO XML wrapper tags)
@@ -1265,7 +1264,7 @@ stack:
 - [ ] Skill assignments added to `.claude-src/config.yaml` under agent name
 
 **Source File Content:**
-- [ ] `agent.yaml` has id, title, description, model, tools
+- [ ] `metadata.yaml` has id, title, description, model, tools
 - [ ] `intro.md` has expansion modifiers ("comprehensive and thorough")
 - [ ] `intro.md` has NO `<role>` tags (template adds them)
 - [ ] `workflow.md` has `<self_correction_triggers>` section
@@ -1449,7 +1448,7 @@ Result: Wrong location or old format.
 ```markdown
 mkdir -p src/agents/{category}/my-agent/
 
-# Then create required files: agent.yaml, intro.md, workflow.md
+# Then create required files: metadata.yaml, intro.md, workflow.md
 
 # Then create required files: critical-requirements.md, critical-reminders.md, output-format.md, examples.md
 ```
@@ -1503,7 +1502,6 @@ Output formats are determined by the file system with cascading resolution:
 | tester     | web-tester, cli-tester                      |
 | pattern    | pattern-scout, web-pattern-critique         |
 | meta       | documentor, agent-summoner, skill-summoner  |
-| migration  | cli-migrator                                |
 
 ---
 

@@ -441,7 +441,7 @@ description: Component architecture, hooks, patterns
 ---
 ```
 
-## Agent Definition (`agent.yaml`)
+## Agent Definition (`metadata.yaml`)
 
 Schema: `src/schemas/agent.schema.json`
 

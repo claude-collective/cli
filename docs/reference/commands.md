@@ -96,17 +96,22 @@ agentsinc compile --agent-source github:org/repo  # Remote agent definitions
 Export bundled content for customization.
 
 ```bash
-agentsinc eject agent-partials         # Export agent partial templates
-agentsinc eject skills                 # Export skills from plugin
+agentsinc eject agent-partials         # Export agent partials (intro, workflow, etc.)
+agentsinc eject templates              # Export Liquid templates for agent compilation
+agentsinc eject skills                 # Export skills from source
 agentsinc eject all                    # Export everything
-agentsinc eject agent-partials -o ./custom  # Custom output dir
-agentsinc eject agent-partials -f           # Force overwrite
+agentsinc eject skills -o ./custom     # Custom output dir
+agentsinc eject all -f                 # Force overwrite
 ```
 
-**Output locations:**
+**Eject types:**
 
-- `agent-partials` -> `.claude/agents/_partials/`
-- `skills` -> `.claude/skills/`
+| Type             | What it ejects                                     | Output location                  |
+| ---------------- | -------------------------------------------------- | -------------------------------- |
+| `agent-partials` | Agent intro, workflow, critical requirements, etc. | `.claude-src/agents/`            |
+| `templates`      | Liquid templates that control agent compilation    | `.claude-src/agents/_templates/` |
+| `skills`         | All skills from configured source                  | `.claude/skills/`                |
+| `all`            | Agent partials + templates + skills                | All of the above                 |
 
 ---
 

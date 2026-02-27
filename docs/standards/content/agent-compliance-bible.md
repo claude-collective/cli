@@ -69,7 +69,7 @@ Each test has 3 verification steps. An agent passes when all 3 steps are verifie
 - [ ] Test 2: Cross-reference verification
   - "specifications" → critical-reminders MUST rules
   - "conventions" → pattern enforcement throughout
-  - "surgical" → agent.yaml, workflow.md
+  - "surgical" → metadata.yaml, workflow.md
   - "verify" → test MUST rule
 - [ ] Test 3: FINAL SIGN-OFF - Intro quality excellent
   - Concise (3 sentences)
@@ -210,7 +210,7 @@ Each test has 3 verification steps. An agent passes when all 3 steps are verifie
 ## Test: File Naming Convention Compliance
 
 - [ ] Test 1: Required files audit - 7/7 present with kebab-case
-  - agent.yaml, intro.md, workflow.md, critical-requirements.md
+  - metadata.yaml, intro.md, workflow.md, critical-requirements.md
   - critical-reminders.md, output-format.md, examples.md
   - Directory: kebab-case naming
 - [ ] Test 2: Content rule compliance verification
@@ -234,7 +234,7 @@ Each test has 3 verification steps. An agent passes when all 3 steps are verifie
   - Emphatic reminder: "DISPLAY ALL 5 CORE PRINCIPLES AT START OF EVERY RESPONSE"
 - [ ] Test 2: Agent alignment verification - 5/5 principles aligned
   - Principle 1: critical-requirements + workflow STOP trigger
-  - Principle 2: critical-requirements + agent.yaml description
+  - Principle 2: critical-requirements + metadata.yaml description
   - Principle 3: critical-requirements + intro "surgical" + workflow default
   - Principle 4: workflow "existing utilities" throughout
   - Principle 5: critical-requirements + workflow verification step
@@ -256,7 +256,7 @@ Each test has 3 verification steps. An agent passes when all 3 steps are verifie
 - [ ] Test 2: Anti-over-engineering alignment verification
   - intro.md: "surgical implementation...Nothing more, nothing less"
   - critical-reminders: "minimal and necessary changes ONLY"
-  - agent.yaml: "surgical execution"
+  - metadata.yaml: "surgical execution"
   - output-format: "Scope Control" with "Did NOT add" section
   - examples: "tempting but out of scope" demonstration
 - [ ] Test 3: FINAL SIGN-OFF - Implementation scope comprehensive
@@ -275,7 +275,7 @@ Each test has 3 verification steps. An agent passes when all 3 steps are verifie
 - [ ] Test 2: Cross-reference verification - 8+ references across files
   - intro.md: job definition includes spec reading
   - critical-reminders: 3 MUST rules reference specification
-  - agent.yaml: description mentions "from detailed specs"
+  - metadata.yaml: description mentions "from detailed specs"
   - output-format.md: template has "[From specification]"
   - examples.md: shows "not in spec" scope control
 - [ ] Test 3: FINAL SIGN-OFF - Spec reading guidance comprehensive
@@ -314,7 +314,7 @@ Each test has 3 verification steps. An agent passes when all 3 steps are verifie
   - Don't ask if: 4 self-resolution scenarios
   - When in doubt: investigate-first guidance
 - [ ] Test 2: Cross-reference verification - 6 agents referenced consistently
-  - agent.yaml references upstream agent for orchestration
+  - metadata.yaml references upstream agent for orchestration
   - domain_scope references related agents
   - Integration section references: Tester Agent, Reviewer
   - output-format has "For Reviewer" notes section
@@ -394,7 +394,7 @@ Each test has 3 verification steps. An agent passes when all 3 steps are verifie
   - Grep example: `Grep("importantPattern", type="ts")` with purpose
   - Self-correction trigger references Grep, Glob for searching
 - [ ] Test 3: FINAL SIGN-OFF - Just-in-time loading properly implemented
-  - agent.yaml tools (Read, Grep, Glob) align with retrieval_strategy
+  - metadata.yaml tools (Read, Grep, Glob) align with retrieval_strategy
   - Priority order: spec files → integration points → additional context
   - Purpose clear: preserve context window for implementation
 
@@ -524,7 +524,7 @@ Each test has 3 verification steps. An agent passes when all 3 steps are verifie
   - Semantic XML tags properly used in workflow.md
   - Config entry present with skill mappings
 - [ ] Test 2: Verify template integration
-  - agent.yaml metadata correct
+  - metadata.yaml metadata correct
   - intro.md compatibility
   - workflow.md XML sections
   - critical files match (7/7 rules)

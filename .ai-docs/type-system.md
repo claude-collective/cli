@@ -39,7 +39,6 @@ type AgentName =
   | "agent-summoner"
   | "documentor"
   | "skill-summoner"
-  | "cli-migrator"
   | "pattern-scout"
   | "web-pattern-critique"
   | "web-pm"
@@ -149,7 +148,6 @@ Unified project configuration stored at `.claude-src/config.yaml`:
 - `stack?: Record<string, StackAgentConfig>`
 - `source`, `marketplace`, `agentsSource`
 - `domains?: Domain[]`, `selectedAgents?: AgentName[]`
-- `expertMode?: boolean`
 
 ### CompileConfig (`src/cli/types/config.ts:12-19`)
 
@@ -199,17 +197,17 @@ Skill metadata extracted from SKILL.md frontmatter + metadata.yaml before matrix
 
 ### Wizard/UI Types in `matrix.ts`
 
-| Type                  | Lines   | Purpose                                                            |
-| --------------------- | ------- | ------------------------------------------------------------------ | --------- | -------- |
-| `SkillOption`         | 331-351 | Skill as displayed in wizard (disabled/recommended/selected state) |
-| `SelectionValidation` | 354-358 | Result of validating skill selections                              |
-| `ValidationError`     | 361-365 | Blocking validation error                                          |
-| `ValidationWarning`   | 368-372 | Non-blocking validation warning                                    |
-| `SkillSource`         | 285-297 | Source from which a skill can be obtained                          |
-| `SkillSourceType`     | 282     | `"public"                                                          | "private" | "local"` |
-| `BoundSkill`          | 300-311 | Foreign skill bound to subcategory via search                      |
-| `BoundSkillCandidate` | 314-325 | Search result candidate before binding                             |
-| `ResolvedStack`       | 267-276 | Stack with resolved skill IDs                                      |
+| Type                  | Lines   | Purpose                                                               |
+| --------------------- | ------- | --------------------------------------------------------------------- | --------- | -------- |
+| `SkillOption`         | 331-351 | Skill as displayed in wizard (discouraged/recommended/selected state) |
+| `SelectionValidation` | 354-358 | Result of validating skill selections                                 |
+| `ValidationError`     | 361-365 | Blocking validation error                                             |
+| `ValidationWarning`   | 368-372 | Non-blocking validation warning                                       |
+| `SkillSource`         | 285-297 | Source from which a skill can be obtained                             |
+| `SkillSourceType`     | 282     | `"public"                                                             | "private" | "local"` |
+| `BoundSkill`          | 300-311 | Foreign skill bound to subcategory via search                         |
+| `BoundSkillCandidate` | 314-325 | Search result candidate before binding                                |
+| `ResolvedStack`       | 267-276 | Stack with resolved skill IDs                                         |
 
 ## Type Narrowing Rules
 
@@ -239,7 +237,7 @@ All schemas in `src/cli/lib/schemas.ts`. Key schemas:
 | `stacksConfigSchema`           | stacks.yaml                | `.passthrough()` |
 | `marketplaceSchema`            | marketplace.json           | `.passthrough()` |
 | `pluginManifestSchema`         | plugin.json                | `.passthrough()` |
-| `agentYamlConfigSchema`        | agent.yaml                 | `.passthrough()` |
+| `agentYamlConfigSchema`        | agent metadata.yaml        | `.passthrough()` |
 | `boundSkillSchema`             | BoundSkill                 | `z.object()`     |
 | `settingsFileSchema`           | settings.json              | `.passthrough()` |
 | `metadataValidationSchema`     | Strict metadata validation | Strict schema    |

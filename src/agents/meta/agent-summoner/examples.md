@@ -89,10 +89,10 @@ Your job is **surgical implementation**: read the spec, examine the patterns, im
 **Failure to follow these rules will produce inconsistent code.**
 ```
 
-### Step 6: Create agent.yaml
+### Step 6: Create metadata.yaml
 
 ```yaml
-# src/agents/developer/example-developer/agent.yaml
+# src/agents/developer/example-developer/metadata.yaml
 $schema: ../../../schemas/agent.schema.json
 id: example-developer
 title: Example Developer Agent

@@ -157,17 +157,17 @@ Defined in `skills-matrix.yaml` under `relationships`:
 
 Checked per-skill by functions in `matrix-resolver.ts`:
 
-- `getDependentSkills()` (line 56)
-- `isDisabled()` (line 114), `getDisableReason()` (line 175)
-- `isDiscouraged()` (line 226), `getDiscourageReason()` (line 254)
-- `isRecommended()` (line 286), `getRecommendReason()` (line 310)
+- `getDependentSkills()` - Find skills that depend on a given skill
+- `isDiscouraged()` - Check if skill is discouraged (conflicts, unmet requirements, or discourages relationships)
+- `getDiscourageReason()` - Get human-readable reason for discouragement
+- `isRecommended()` - Check if skill is recommended by selected skills
+- `getRecommendReason()` - Get human-readable recommendation reason
 
 Additional utilities:
 
-- `validateSelection()` (line 512) - Full selection validation
-- `getAvailableSkills()` (line 548) - Get skills available for a category
-- `getSkillsByCategory()` (line 591) - Get skills grouped by category
-- `isCategoryAllDisabled()` (line 620) - Check if all skills in a category are disabled
+- `validateSelection()` - Full selection validation (conflicts, requirements, exclusivity)
+- `getAvailableSkills()` - Get skills available for a category with state annotations
+- `getSkillsByCategory()` - Get skills grouped by category
 
 ## Validation
 

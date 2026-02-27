@@ -52,7 +52,6 @@ Step progression: `stack -> build -> sources -> agents -> confirm`
 | Field          | Type      | Purpose                                 |
 | -------------- | --------- | --------------------------------------- |
 | `showLabels`   | `boolean` | Show compatibility labels on skill tags |
-| `expertMode`   | `boolean` | Show advanced/niche skills              |
 | `showSettings` | `boolean` | Settings overlay visible                |
 | `showHelp`     | `boolean` | Help overlay visible                    |
 
@@ -98,7 +97,6 @@ Step progression: `stack -> build -> sources -> agents -> confirm`
 | Action              | Signature    | Effect                                 |
 | ------------------- | ------------ | -------------------------------------- |
 | `toggleShowLabels`  | `() => void` | Toggle compatibility labels visibility |
-| `toggleExpertMode`  | `() => void` | Toggle expert mode (advanced skills)   |
 | `toggleInstallMode` | `() => void` | Toggle between "plugin" and "local"    |
 | `toggleSettings`    | `() => void` | Toggle settings overlay                |
 | `toggleHelp`        | `() => void` | Toggle help overlay                    |
@@ -182,7 +180,7 @@ DOMAIN_AGENTS = {
     "web-architecture",
   ],
   api: ["api-developer", "api-reviewer", "api-researcher"],
-  cli: ["cli-developer", "cli-tester", "cli-reviewer", "cli-migrator"],
+  cli: ["cli-developer", "cli-tester", "cli-reviewer"],
 };
 ```
 
@@ -201,5 +199,5 @@ Initial state:
 
 - `step: "stack"`, `approach: null`, `selectedStackId: null`
 - `selectedDomains: []`, `currentDomainIndex: 0`, `domainSelections: {}`
-- `installMode: "local"`, `expertMode: false`
+- `installMode: "local"`
 - `history: []`, `selectedAgents: []`, `boundSkills: []`
