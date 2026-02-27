@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.48.0] - 2026-02-27
+
+**Matrix decomposition, displayName rename, E2E test infrastructure**
+
+- Decompose `skills-matrix.yaml` into `skill-categories.yaml` + `skill-rules.yaml` with directory-based skill discovery
+- Rename `cliName` to `displayName` in metadata schema, loaders, and validators
+- Remove per-skill `categoryExclusive` — exclusivity now driven by category definitions
+- Full PTY-based E2E test suite with 264 tests covering all commands and interactive flows
+
+See [changelogs/0.48.0.md](./changelogs/0.48.0.md) for full details.
+
+---
+
 ## [0.47.0] - 2026-02-25
 
 **Custom domain support, source validation, wizard improvements, dead code cleanup**
