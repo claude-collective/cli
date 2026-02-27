@@ -64,7 +64,7 @@ Every new skill requires a corresponding `skillAliases` entry in `skills-matrix.
 ```
 skills-matrix.yaml          metadata.yaml (per skill)       SKILL.md (per skill)
   categories: {...}           category: web-framework         name: web-framework-react
-  relationships: {...}        cliName: react
+  relationships: {...}        displayName: react
   skillAliases: {...}         author: @vince
          |                         |                              |
          v                         v                              v
@@ -166,7 +166,7 @@ The `skillAliases` section moves from `skills-matrix.yaml` to `skill-rules.yaml`
 - The schema validates aliases against a strict enum of valid skill IDs.
 - The `displayNameToId` and `displayNames` maps on `MergedSkillsMatrix` are built from the `aliases` section in `skill-rules.yaml`.
 - At load time, aliases in rules are resolved to canonical IDs before merging into `MergedSkillsMatrix`.
-- The `cliName` -> `displayName` rename is deferred to Phase 8.
+- The `displayName` -> `displayName` rename is deferred to Phase 8.
 
 ---
 
@@ -317,7 +317,7 @@ After decomposition, `metadata.yaml` is **pure identity**. It contains only fiel
 ```yaml
 # Fields that STAY in metadata.yaml (identity):
 category: web-framework
-cliName: react # renamed to displayName in Phase 8
+displayName: react # renamed to displayName in Phase 8
 cliDescription: React...
 usageGuidance: ...
 tags: [frontend, ui]
@@ -336,7 +336,7 @@ domain: web # optional synthesis hint (D-49)
 # categoryExclusive -> skill-categories.yaml exclusive (category-level property, not a per-skill rule)
 ```
 
-The `cliName` field continues to serve as the display name. The rename from `cliName` to `displayName` is deferred to Phase 8 (after all structural changes are stable) since it touches ~90 files.
+The `displayName` field continues to serve as the display name. The rename from `displayName` to `displayName` is deferred to Phase 8 (after all structural changes are stable) since it touches ~90 files.
 
 The optional `domain` field (added in D-49) serves as a synthesis hint for custom marketplace skills whose category prefix doesn't match a known domain.
 
@@ -348,7 +348,7 @@ The optional `domain` field (added in D-49) serves as a synthesis hint for custo
 
 ```
 skill-categories.yaml        skill-rules.yaml                metadata.yaml (per skill)
-  categories: {...}            aliases: {...}                  cliName: react
+  categories: {...}            aliases: {...}                  displayName: react
        |                       relationships: {...}            category: web-framework
        v                       per-skill: {...}                      |
   loadSkillCategories()              |                               v
@@ -370,11 +370,11 @@ skill-categories.yaml        skill-rules.yaml                metadata.yaml (per 
 
 ### Merge Precedence (unchanged from today)
 
-| Data          | CLI Built-in                     | Source Override                             | Merge Rule                                                    |
-| ------------- | -------------------------------- | ------------------------------------------ | ------------------------------------------------------------- |
-| Categories    | `config/skill-categories.yaml`   | `config/skill-categories.yaml` in source   | Source wins on same key                                       |
-| Skill Rules   | `config/skill-rules.yaml`        | `config/skill-rules.yaml` in source        | Concatenated (aggregate); source wins on same key (per-skill) |
-| Aliases       | `config/skill-rules.yaml`        | `config/skill-rules.yaml` in source        | Source wins on same key                                       |
+| Data        | CLI Built-in                   | Source Override                          | Merge Rule                                                    |
+| ----------- | ------------------------------ | ---------------------------------------- | ------------------------------------------------------------- |
+| Categories  | `config/skill-categories.yaml` | `config/skill-categories.yaml` in source | Source wins on same key                                       |
+| Skill Rules | `config/skill-rules.yaml`      | `config/skill-rules.yaml` in source      | Concatenated (aggregate); source wins on same key (per-skill) |
+| Aliases     | `config/skill-rules.yaml`      | `config/skill-rules.yaml` in source      | Source wins on same key                                       |
 
 ### source-loader.ts Changes
 
@@ -473,7 +473,7 @@ This replaces the current health check warning (`skill-unknown-category`) with a
 
 ### Phase 2: Extract aggregate rules and aliases
 
-**Constraint:** Aliases are internal to the loading/merge layer. No alias values are exposed to consumers. Outside the matrix loading code, `cliName` (later `displayName`) from skill metadata is the user-facing display name everywhere (UI, commands, search). The `displayNameToId` map on `MergedSkillsMatrix` is used only for resolving user input (e.g., in the `info` command) to canonical IDs.
+**Constraint:** Aliases are internal to the loading/merge layer. No alias values are exposed to consumers. Outside the matrix loading code, `displayName` (later `displayName`) from skill metadata is the user-facing display name everywhere (UI, commands, search). The `displayNameToId` map on `MergedSkillsMatrix` is used only for resolving user input (e.g., in the `info` command) to canonical IDs.
 
 1. Create `config/skill-rules.yaml` with the `relationships` and `skillAliases` sections from `skills-matrix.yaml`. Keep aliases in all rules for readability. Move `skillAliases` to an `aliases` section.
 2. Add `loadSkillRules()` function to `matrix-loader.ts`.
@@ -548,14 +548,14 @@ Update the `new skill` command to create/update `skill-categories.yaml` and `ski
 
 **Cross-repo:** This phase modifies the skills repo. Skills repo changes come FIRST, then CLI repo changes.
 
-### Phase 8: Rename `cliName` to `displayName` (deferred)
+### Phase 8: Rename `displayName` to `displayName` (deferred)
 
 > **Note:** This phase is intentionally deferred until all other changes are stable. It touches ~90 `metadata.yaml` files across the skills repo and is a pure rename with no functional change. Doing it last avoids churn during the structural migration phases above. By this point, `metadata.yaml` contains only identity fields, making this a clean rename.
 
-1. Rename `cliName` to `displayName` in all skill `metadata.yaml` files across all sources (~90 files).
+1. Rename `displayName` to `displayName` in all skill `metadata.yaml` files across all sources (~90 files).
 2. Update `rawMetadataSchema` and `localRawMetadataSchema` in `schemas.ts` (rename field).
 3. Update `METADATA_KEYS.CLI_NAME` constant to `METADATA_KEYS.DISPLAY_NAME` in `metadata-keys.ts`.
-4. Update all code referencing `cliName` to use `displayName`.
+4. Update all code referencing `displayName` to use `displayName`.
 5. Update tests.
 
 **Cross-repo:** This phase modifies the skills repo. Skills repo changes come FIRST, then CLI repo changes.
@@ -571,22 +571,22 @@ Update the `new skill` command to create/update `skill-categories.yaml` and `ski
 | `SkillsMatrixConfig`     | Split into `CategoriesConfig` + `SkillRulesConfig`, or removed                                                                                                                                |
 | `MergedSkillsMatrix`     | `displayNameToId` and `displayNames` populated from `aliases` section in `skill-rules.yaml` instead of from `skillAliases` in `skills-matrix.yaml`                                            |
 | `SkillDisplayName`       | Populated from `aliases` section in `skill-rules.yaml` (validated by strict enum schema)                                                                                                      |
-| `ExtractedSkillMetadata` | Relationship fields removed (`compatibleWith`, `conflictsWith`, `requires`, `requiresSetup`, `providesSetupFor`); `cliName` rename to `displayName` deferred to Phase 8                       |
+| `ExtractedSkillMetadata` | Relationship fields removed (`compatibleWith`, `conflictsWith`, `requires`, `requiresSetup`, `providesSetupFor`); `displayName` rename to `displayName` deferred to Phase 8                   |
 | `CategoryDefinition`     | No change (already has `custom?: boolean` and `exclusive: boolean`)                                                                                                                           |
 | `ResolvedSkill`          | Relationship fields populated from `skill-rules.yaml` `per-skill` section instead of from metadata; `categoryExclusive` removed (Phase 7) -- read from `CategoryDefinition.exclusive` instead |
-| `SkillRulesConfig` (NEW) | New type for the parsed `skill-rules.yaml` file: `{ aliases: Record<string, SkillId>; relationships: RelationshipDefinitions; perSkill: Record<string, PerSkillRules> }`                       |
+| `SkillRulesConfig` (NEW) | New type for the parsed `skill-rules.yaml` file: `{ aliases: Record<string, SkillId>; relationships: RelationshipDefinitions; perSkill: Record<string, PerSkillRules> }`                      |
 | `PerSkillRules` (NEW)    | New type for per-skill entries: `{ compatibleWith?, conflictsWith?, requires?, requiresSetup?, providesSetupFor? }`                                                                           |
 
 ### Files Modified
 
-| File                     | Change                                                                                                                                                                                                              |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `consts.ts`              | Add `SKILL_CATEGORIES_YAML_PATH`, `SKILL_RULES_YAML_PATH`; remove `SKILLS_MATRIX_PATH`                                                                                                                              |
-| `matrix-loader.ts`       | Add `loadSkillCategories()`, `loadSkillRules()`; update `mergeMatrixWithSkills()` to build display names from aliases and apply per-skill rules; add `synthesizeCategory()`                                          |
-| `source-loader.ts`       | Update `loadAndMergeFromBasePath()` to load separate files; merge per-skill rules (source wins on same key)                                                                                                         |
-| `schemas.ts`             | Add `skillCategoriesFileSchema`, `skillRulesFileSchema`, `perSkillRulesSchema`; remove `skillsMatrixConfigSchema`; remove relationship fields from `rawMetadataSchema`; validate aliases with strict enum schema     |
-| `matrix-health-check.ts` | Update `skill-unknown-category` handling                                                                                                                                                                            |
-| `types/matrix.ts`        | Update or split `SkillsMatrixConfig`; add `SkillRulesConfig` + `PerSkillRules`; remove relationship fields from `ExtractedSkillMetadata`                                                                            |
+| File                     | Change                                                                                                                                                                                                           |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `consts.ts`              | Add `SKILL_CATEGORIES_YAML_PATH`, `SKILL_RULES_YAML_PATH`; remove `SKILLS_MATRIX_PATH`                                                                                                                           |
+| `matrix-loader.ts`       | Add `loadSkillCategories()`, `loadSkillRules()`; update `mergeMatrixWithSkills()` to build display names from aliases and apply per-skill rules; add `synthesizeCategory()`                                      |
+| `source-loader.ts`       | Update `loadAndMergeFromBasePath()` to load separate files; merge per-skill rules (source wins on same key)                                                                                                      |
+| `schemas.ts`             | Add `skillCategoriesFileSchema`, `skillRulesFileSchema`, `perSkillRulesSchema`; remove `skillsMatrixConfigSchema`; remove relationship fields from `rawMetadataSchema`; validate aliases with strict enum schema |
+| `matrix-health-check.ts` | Update `skill-unknown-category` handling                                                                                                                                                                         |
+| `types/matrix.ts`        | Update or split `SkillsMatrixConfig`; add `SkillRulesConfig` + `PerSkillRules`; remove relationship fields from `ExtractedSkillMetadata`                                                                         |
 
 ### Files NOT Modified (consumers)
 

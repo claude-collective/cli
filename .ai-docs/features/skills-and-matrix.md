@@ -123,7 +123,6 @@ Parsed by `parseFrontmatter()` from `src/cli/lib/loading/loader.ts`.
 
 ```yaml
 category: web-framework
-categoryExclusive: true
 author: "@vince"
 tags: ["react", "hooks", "components"]
 compatibleWith: ["web-framework-react"]

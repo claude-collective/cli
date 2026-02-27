@@ -119,7 +119,7 @@ The primary skill representation after matrix merge. Contains:
 
 - Identity: `id`, `displayName`, `description`, `category`, `path`
 - Relationships: `conflictsWith`, `recommends`, `requires`, `alternatives`, `discourages`
-- Metadata: `tags`, `author`, `categoryExclusive`, `compatibleWith`
+- Metadata: `tags`, `author`, `compatibleWith`
 - Setup: `requiresSetup`, `providesSetupFor`
 - Sources: `availableSources`, `activeSource`
 - Local: `local`, `localPath`
@@ -193,7 +193,7 @@ Template context for Liquid rendering:
 Skill metadata extracted from SKILL.md frontmatter + metadata.yaml before matrix merge:
 
 - Identity: `id`, `directoryPath`, `description`, `category`, `path`
-- Metadata: `categoryExclusive`, `author`, `tags`, `usageGuidance`
+- Metadata: `author`, `tags`, `usageGuidance`
 - Relationships (may contain display names at this stage): `compatibleWith`, `conflictsWith`, `requires`, `requiresSetup`, `providesSetupFor`
 - Flags: `local`, `localPath`, `domain`, `custom`
 

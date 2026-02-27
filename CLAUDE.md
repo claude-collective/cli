@@ -6,6 +6,8 @@
 3. After any fix, trace ALL scenarios through the code before calling it done.
 
 4. ALWAYS read [.ai-docs/DOCUMENTATION_MAP.md](./.ai-docs/DOCUMENTATION_MAP.md) before working on any area of the codebase. It indexes verified documentation for every major system.
+
+5. NEVER stash changes while developing, only while performing sequential commits
 </critical-requirement>
 
 # Project Memory for Claude
@@ -286,4 +288,5 @@ this.error(message, { exit: 2 });
 <critical-reminder>
 1. You do NOT write code. Delegate to sub-agents. Tell them to read CLAUDE.md.
 2. Trace ALL scenarios after any fix.
+3. NEVER stash changes while developing, only while performing sequential commits
 </critical-reminder>

@@ -4,7 +4,7 @@
 
 ### Finding 1: Ink overwrites pre-wizard log output in xterm buffer
 
-- **What happened:** The edit command logs status messages ("Edit Local Skills", "Loading marketplace source...", "Current plugin has N skills") before launching the Ink wizard. However, once Ink renders its full-screen UI, the xterm headless buffer no longer contains these pre-render messages in `getFullOutput()`. Tests that waited for these messages (`waitForText("skills")`) timed out because the word was only present in Ink's UI context (e.g., "Framework * (1 of 1)") not as the pre-wizard log text.
+- **What happened:** The edit command logs status messages ("Edit Local Skills", "Loading marketplace source...", "Current plugin has N skills") before launching the Ink wizard. However, once Ink renders its full-screen UI, the xterm headless buffer no longer contains these pre-render messages in `getFullOutput()`. Tests that waited for these messages (`waitForText("skills")`) timed out because the word was only present in Ink's UI context (e.g., "Framework \* (1 of 1)") not as the pre-wizard log text.
 - **Why:** Ink uses alternate screen buffer and full-screen rendering. When it takes over, previous stdout output is pushed out of the terminal buffer. The `getFullOutput()` method reads from the active xterm buffer, which only contains what Ink is currently rendering.
 - **Workaround/Pattern:** Wait for wizard-specific UI text like `"Customize your Web stack"` instead of generic log messages like `"skills"`. The very first log lines ("Edit Local Skills", "Loading marketplace source...") can sometimes be caught if `waitForText` polls fast enough before Ink takes over, but this is timing-sensitive.
 - **Should this become a standard?** YES. For interactive wizard tests, always wait for wizard-rendered UI text, never pre-wizard log output. Document in test helpers.
@@ -178,12 +178,12 @@
 
 ## Info Command (info.e2e.test.ts)
 
-### Finding 21: Info command requires `cliName` in metadata for local skill discovery
+### Finding 21: Info command requires `displayName` in metadata for local skill discovery
 
-- **What happened:** When testing whether `info` shows "Local Status: Installed", the test initially failed because `createEditableProject()` writes minimal metadata (just `author` and `contentHash`). The `discoverLocalSkills()` function requires `cliName` in the metadata to match skills.
-- **Why:** The local skill discovery logic (`discoverLocalSkills`) reads `metadata.yaml` and needs `cliName` to build the skill's display name and match it against the source skill. Without it, the skill is not recognized as locally installed.
-- **Workaround/Pattern:** Overwrite the skill's `metadata.yaml` with complete metadata including `cliName` after calling `createEditableProject()`.
-- **Should this become a standard?** YES. Tests verifying local skill detection must include `cliName` in metadata.
+- **What happened:** When testing whether `info` shows "Local Status: Installed", the test initially failed because `createEditableProject()` writes minimal metadata (just `author` and `contentHash`). The `discoverLocalSkills()` function requires `displayName` in the metadata to match skills.
+- **Why:** The local skill discovery logic (`discoverLocalSkills`) reads `metadata.yaml` and needs `displayName` to build the skill's display name and match it against the source skill. Without it, the skill is not recognized as locally installed.
+- **Workaround/Pattern:** Overwrite the skill's `metadata.yaml` with complete metadata including `displayName` after calling `createEditableProject()`.
+- **Should this become a standard?** YES. Tests verifying local skill detection must include `displayName` in metadata.
 
 ---
 
@@ -208,7 +208,7 @@
 - **What happened:** Three test files had `expect(output).toContain("text")` immediately after `session.waitForText("text")`. The `waitForText` call already guarantees the text is present (it throws if not found), making the assertion redundant.
 - **Why:** The redundant assertions were likely added for documentation/clarity, but they add no testing value and increase noise.
 - **Fix applied:** Removed 3 redundant assertions from `search.e2e.test.ts`, `build-stack.e2e.test.ts`, and `update.e2e.test.ts`.
-- **Should this become a standard?** YES. Never follow `waitForText("X")` with `toContain("X")` for the same text. The wait is the assertion. Additional assertions should verify *different* text or *different* properties of the output.
+- **Should this become a standard?** YES. Never follow `waitForText("X")` with `toContain("X")` for the same text. The wait is the assertion. Additional assertions should verify _different_ text or _different_ properties of the output.
 
 ---
 

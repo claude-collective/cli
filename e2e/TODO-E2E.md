@@ -1,6 +1,7 @@
 # E2E Test Framework - Progress Tracker
 
 ## Status Legend
+
 - [ ] Not started
 - [~] In progress
 - [x] Done
@@ -105,7 +106,7 @@
   - Completion details shown
   - Agent files have substantial content (>500 chars)
 - [x] Edit with real marketplace source
-  - Pre-selection from real skills (Framework * indicator)
+  - Pre-selection from real skills (Framework \* indicator)
   - Build step renders with real categories
 - [x] Compile with real installed project
   - Verify real agent markdown content (frontmatter + >1000 chars)
@@ -169,7 +170,7 @@
 
 The purpose of E2E tests is to surface bugs, not to produce a green dashboard. Rules:
 
-1. **Write correct assertions.** Assert exactly what the CLI *should* do, not what it *currently* does.
+1. **Write correct assertions.** Assert exactly what the CLI _should_ do, not what it _currently_ does.
 2. **If a test fails, that's a FINDING.** Do NOT weaken the assertion to make it pass.
 3. **Use `it.fails()` for known bugs.** This documents the expected behavior AND keeps the suite green.
 4. **Never accept multiple outcomes.** No `expect(output).toMatch(/success|error|failure/)`. Each test asserts ONE specific outcome.
@@ -182,18 +183,21 @@ The purpose of E2E tests is to surface bugs, not to produce a green dashboard. R
 Expand thin command tests and audit ALL existing tests for weak/multi-outcome assertions.
 
 ### Assertion audit (review all existing tests)
+
 - [x] Scan ALL test files for multi-outcome regex patterns (e.g., `/a|b|c/`)
 - [x] Scan ALL test files for `toBeGreaterThan(0)` on output length
 - [x] Verify every `execa` call with `reject: false` has an `exitCode` assertion
 - [x] Split any multi-outcome tests into separate specific tests
 
 ### `update` command (now 9 tests)
+
 - [x] Fix: split "up to date" test into specific assertions per outcome
 - [x] Add: `skill` arg not found → "Did you mean" suggestions
 - [x] Add: `skill` arg is `local-only` → "Cannot update local-only skills"
 - [x] Add: `--no-recompile` flag → verify no "Recompiling agents" in output
 
 ### `import skill` command (now 10 tests, 5 `it.fails()` — local source bug)
+
 - [x] Add: `--skill` and `--all` together → mutual exclusion error
 - [x] Add: `--subdir` with absolute path → error (`it.fails()`)
 - [x] Add: local source with `--list` → verify skill listing format (`it.fails()`)
@@ -202,27 +206,32 @@ Expand thin command tests and audit ALL existing tests for weak/multi-outcome as
 - [x] Add: `--force` with existing skill → verify overwrite succeeds (`it.fails()`)
 
 ### `build plugins` command (now 5 tests)
+
 - [x] Add: `--skill` flag with nonexistent path → error
 - [x] Add: `--output-dir` flag → custom output path
 - [x] Add: `--verbose` flag → accepted (exit 0)
 - [ ] Add: `--skills-dir` flag → accepted (deferred — needs installed project fixture)
 
 ### `build marketplace` command (now 4 tests)
+
 - [x] Add: `--output` flag → custom output path
 - [x] Add: `--name` flag → custom name in output
 - [ ] Add: `--verbose` flag → accepted (exit 0) (deferred — duplicate of plugins --verbose)
 
 ### `new agent` command (now 5 tests)
+
 - [x] Add: `--help` verifies `--refresh` flag in output
 - [x] Add: `Output:` path line includes `_custom` dir path
 
 ### `doctor` command (now 11 tests)
+
 - [x] Add: `--verbose` flag → additional detail in output
 - [x] Add: valid config + local source → "Connected to local:" with skill count
 - [x] Add: config with agents compiled → "Agents Compiled" pass
 - [x] Add: orphaned agent files → "No Orphans" warning
 
 ### `eject` command (now 11 tests)
+
 - [x] Add: `eject skills` with local source → "N skills ejected"
 - [x] Add: `eject all` → all three phases complete
 - [x] Add: `--source` flag → source saved to project config

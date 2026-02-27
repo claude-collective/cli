@@ -85,7 +85,7 @@ A boolean `custom` property on each entity's config file. The property is shared
 custom: true
 category: acme-pipeline
 author: "@acme"
-cliName: Deploy Pipeline
+displayName: Deploy Pipeline
 # ...
 
 # agent.yaml (agents)
@@ -424,19 +424,19 @@ The check happens at the YAML parse boundary, before schema validation.
 
 #### What Changes
 
-| Check                  | Built-in Entity                               | Custom Entity (`custom: true`)                                                                   |
-| ---------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Skill ID format        | Must match `SKILL_ID_PATTERN` (7 prefixes)    | Must match `CUSTOM_SKILL_ID_PATTERN` (any kebab-case string)                                     |
-| Agent name             | Must be in `AgentName` union                  | Must be kebab-case, no other constraint                                                          |
-| Category               | Must be in `Subcategory` union                | Validated by extended schema (see [Skills Matrix Merge Strategy](#skills-matrix-merge-strategy)) |
-| Domain                 | Must be in `Domain` union                     | Validated by extended schema (see [Skills Matrix Merge Strategy](#skills-matrix-merge-strategy)) |
-| Structural fields      | `description`, `author`, `cliName` required   | Same -- structural requirements unchanged                                                        |
-| Relationship refs      | Resolved via `displayNameToId` and alias maps | Same -- references validated post-merge                                                          |
-| `additionalProperties` | Strict schemas reject unknown fields          | Same -- `custom` is added to the schema's known properties                                       |
+| Check                  | Built-in Entity                                 | Custom Entity (`custom: true`)                                                                   |
+| ---------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Skill ID format        | Must match `SKILL_ID_PATTERN` (7 prefixes)      | Must match `CUSTOM_SKILL_ID_PATTERN` (any kebab-case string)                                     |
+| Agent name             | Must be in `AgentName` union                    | Must be kebab-case, no other constraint                                                          |
+| Category               | Must be in `Subcategory` union                  | Validated by extended schema (see [Skills Matrix Merge Strategy](#skills-matrix-merge-strategy)) |
+| Domain                 | Must be in `Domain` union                       | Validated by extended schema (see [Skills Matrix Merge Strategy](#skills-matrix-merge-strategy)) |
+| Structural fields      | `description`, `author`, `displayName` required | Same -- structural requirements unchanged                                                        |
+| Relationship refs      | Resolved via `displayNameToId` and alias maps   | Same -- references validated post-merge                                                          |
+| `additionalProperties` | Strict schemas reject unknown fields            | Same -- `custom` is added to the schema's known properties                                       |
 
 #### What Does NOT Change
 
-1. **Structural validation** -- a custom skill still needs `cliName`, `cliDescription`, `usageGuidance`, `author`, and `category` in its `metadata.yaml`
+1. **Structural validation** -- a custom skill still needs `displayName`, `cliDescription`, `usageGuidance`, `author`, and `category` in its `metadata.yaml`
 2. **Post-merge reference checking** -- if a custom skill declares `requires: ["acme-pipeline-setup"]`, the merge step verifies that `acme-pipeline-setup` actually exists in the loaded skill set
 3. **Compilation pipeline** -- `buildResolvedSkill()` (`matrix-loader.ts:435-483`) works identically for custom skills; the category determines agent routing, not the ID prefix
 4. **Schema validation command** (`agentsinc validate`) -- auto-detects from the entity's `custom: true` to apply relaxed enum checking
@@ -629,7 +629,7 @@ This is the key insight that simplifies the design: categories and domains do NO
 custom: true
 category: acme-pipeline
 author: "@acme"
-cliName: Deploy Pipeline
+displayName: Deploy Pipeline
 cliDescription: Kubernetes deployment automation
 usageGuidance: Use when deploying services to staging or production.
 tags:
@@ -846,7 +846,7 @@ Domains are not a first-class config entity -- they're derived from the `domain`
 ### Phase 1: Foundation (`custom` property + relaxed validation)
 
 1. Add `custom?: boolean` to TypeScript types:
-   - `SkillMetadataConfig` (`types/skills.ts:195-210`) -- note: this type only has `category`, `categoryExclusive`, `author`, `tags`, `requires`, `compatibleWith`, `conflictsWith`. It does NOT have `cliName`, `cliDescription`, or `usageGuidance`. The broader metadata type with those fields is in `rawMetadataSchema` (`matrix-loader.ts:37-51`) and `metadataValidationSchema` (`schemas.ts:783-826`).
+   - `SkillMetadataConfig` (`types/skills.ts:195-210`) -- note: this type only has `category`, `categoryExclusive`, `author`, `tags`, `requires`, `compatibleWith`, `conflictsWith`. It does NOT have `displayName`, `cliDescription`, or `usageGuidance`. The broader metadata type with those fields is in `rawMetadataSchema` (`matrix-loader.ts:37-51`) and `metadataValidationSchema` (`schemas.ts:783-826`).
    - `AgentYamlConfig` (`types/agents.ts:83-85`)
    - `CategoryDefinition` (`types/matrix.ts:79-92`)
    - `ExtractedSkillMetadata` (`types/matrix.ts:379-410`) -- needs `custom?: boolean` to carry the flag through the pipeline
