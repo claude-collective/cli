@@ -9,11 +9,10 @@ import { formatZodErrors, localRawMetadataSchema } from "../schemas";
 import { LOCAL_DEFAULTS, METADATA_KEYS } from "../metadata-keys";
 
 type LocalRawMetadata = {
-  cliName: string;
+  displayName: string;
   cliDescription?: string;
   /** Original skill category from source (e.g., "web-framework", "web-styling", "api-api") */
   category?: CategoryPath;
-  categoryExclusive?: boolean;
   usageGuidance?: string;
   tags?: string[];
 };
@@ -81,11 +80,10 @@ async function extractLocalSkill(
 
   const metadata = parsed.data as LocalRawMetadata;
 
-  if (!metadata.cliName) {
-    warn(
-      `Skipping local skill '${skillDirName}': missing required '${METADATA_KEYS.CLI_NAME}' in metadata.yaml`,
+  if (!metadata.displayName) {
+    throw new Error(
+      `Local skill '${skillDirName}' is missing required '${METADATA_KEYS.DISPLAY_NAME}' field in metadata.yaml`,
     );
-    return null;
   }
 
   const skillMdContent = await readFile(skillMdPath);
@@ -115,7 +113,6 @@ async function extractLocalSkill(
     description: metadata.cliDescription || frontmatter.description,
     usageGuidance: metadata.usageGuidance,
     category,
-    categoryExclusive: metadata.categoryExclusive ?? false,
     author: LOCAL_DEFAULTS.AUTHOR,
     tags: metadata.tags ?? [],
     path: relativePath,

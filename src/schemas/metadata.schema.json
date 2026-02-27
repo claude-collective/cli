@@ -8,14 +8,11 @@
     "category": {
       "type": "string"
     },
-    "categoryExclusive": {
-      "type": "boolean"
-    },
     "author": {
       "type": "string",
       "pattern": "^@[a-z][a-z0-9-]*$"
     },
-    "cliName": {
+    "displayName": {
       "type": "string",
       "minLength": 1,
       "maxLength": 30
@@ -109,6 +106,6 @@
       "type": "boolean"
     }
   },
-  "required": ["category", "author", "cliName", "cliDescription", "usageGuidance"],
+  "required": ["category", "author", "displayName", "cliDescription", "usageGuidance"],
   "additionalProperties": false
 }

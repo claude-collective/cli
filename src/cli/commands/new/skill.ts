@@ -101,9 +101,8 @@ export function generateMetadataYaml(
 
   return `custom: true
 category: ${category}
-categoryExclusive: false
 author: "${author}"
-cliName: ${titleName}
+displayName: ${titleName}
 cliDescription: Brief description
 usageGuidance: Use when <guidance>.
 contentHash: ${contentHash}

@@ -530,7 +530,6 @@ function mergeLocalSkillsIntoMatrix(
       usageGuidance: metadata.usageGuidance,
 
       category,
-      categoryExclusive: metadata.categoryExclusive,
       tags: metadata.tags ?? [],
 
       author: LOCAL_DEFAULTS.AUTHOR,

@@ -213,8 +213,6 @@ export type ResolvedSkill = {
   usageGuidance?: string;
   /** Matches key in matrix.categories; determines which wizard subcategory grid this skill appears in */
   category: CategoryPath;
-  /** If true, selecting this skill deselects others in the same category (radio vs checkbox behavior) */
-  categoryExclusive: boolean;
   tags: string[];
   /** Author handle (e.g., "@vince") from metadata.yaml */
   author: string;
@@ -397,8 +395,6 @@ export type ExtractedSkillMetadata = {
   /** When an AI agent should invoke this skill (decision criteria) */
   usageGuidance?: string;
   category: CategoryPath;
-  /** @default true */
-  categoryExclusive: boolean;
   author: string;
   tags: string[];
   /** Relative path from src/ to the skill directory */

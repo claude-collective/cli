@@ -6,7 +6,7 @@ import type { CategoryPath } from "../types";
  * Centralized to avoid string duplication across loaders and compilers.
  */
 export const METADATA_KEYS = {
-  CLI_NAME: "cliName",
+  DISPLAY_NAME: "displayName",
   CLI_DESCRIPTION: "cliDescription",
   CATEGORY: "category",
   FORKED_FROM: "forkedFrom",

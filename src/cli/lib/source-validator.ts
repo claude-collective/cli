@@ -37,11 +37,10 @@ function isSnakeCase(key: string): boolean {
  *
  * Checks:
  * 1. Every metadata.yaml against the strict validation schema
- * 2. cliName format and directory name consistency
+ * 2. displayName format and directory name consistency
  * 3. category values against known domain-prefixed patterns
  * 4. Cross-references resolve to existing skill IDs (via checkMatrixHealth)
- * 5. categoryExclusive presence when required
- * 6. camelCase key convention (no snake_case)
+ * 5. camelCase key convention (no snake_case)
  * 7. Every skill directory has both SKILL.md and metadata.yaml
  */
 export async function validateSource(sourcePath: string): Promise<SourceValidationResult> {
@@ -158,17 +157,17 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
 
     const metadata = result.data;
 
-    // Check cliName matches directory name
+    // Check displayName matches directory name
     const dirName = path.basename(skillDir);
-    if (metadata.cliName !== dirName) {
+    if (metadata.displayName !== dirName) {
       issues.push({
         severity: "warning",
         file: relPath,
-        message: `cliName '${metadata.cliName}' does not match directory name '${dirName}'`,
+        message: `displayName '${metadata.displayName}' does not match directory name '${dirName}'`,
       });
     }
 
-    // Parse SKILL.md frontmatter and check name matches cliName
+    // Parse SKILL.md frontmatter and check name matches displayName
     const skillMdContent = await readFile(skillMdPath);
     const frontmatter = parseFrontmatter(skillMdContent, skillMdPath);
     if (frontmatter) {

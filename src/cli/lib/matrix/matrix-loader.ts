@@ -46,9 +46,8 @@ type ResolveId = (id: SkillId, context?: string) => SkillId;
 
 const rawMetadataSchema = z.object({
   category: categoryPathSchema,
-  categoryExclusive: z.boolean().optional(),
   author: z.string(),
-  cliName: z.string().optional(),
+  displayName: z.string().optional(),
   cliDescription: z.string().optional(),
   usageGuidance: z.string().optional(),
   tags: z.array(z.string()).optional(),
@@ -156,11 +155,11 @@ export async function loadSkillRules(configPath: string): Promise<SkillRulesConf
  * 4. Merges metadata fields into an ExtractedSkillMetadata object
  *
  * Skills with invalid metadata are warned and skipped. Skills missing
- * the required `cliName` field in metadata.yaml cause a hard error.
+ * the required `displayName` field in metadata.yaml cause a hard error.
  *
  * @param skillsDir - Absolute path to the skills root directory (e.g., `{root}/src/skills`)
  * @returns Array of extracted skill metadata, one per valid skill found
- * @throws When a skill's metadata.yaml is missing the required `cliName` field
+ * @throws When a skill's metadata.yaml is missing the required `displayName` field
  */
 export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkillMetadata[]> {
   const skills: ExtractedSkillMetadata[] = [];
@@ -196,9 +195,9 @@ export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkil
       continue;
     }
 
-    if (!metadata.cliName) {
+    if (!metadata.displayName) {
       throw new Error(
-        `Skill at ${metadataFile} is missing required '${METADATA_KEYS.CLI_NAME}' field in metadata.yaml`,
+        `Skill at ${metadataFile} is missing required '${METADATA_KEYS.DISPLAY_NAME}' field in metadata.yaml`,
       );
     }
 
@@ -210,7 +209,6 @@ export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkil
       description: metadata.cliDescription || frontmatter.description,
       usageGuidance: metadata.usageGuidance,
       category: metadata.category,
-      categoryExclusive: metadata.categoryExclusive ?? true,
       author: metadata.author,
       tags: metadata.tags ?? [],
       path: `skills/${skillDir}/`,
@@ -496,7 +494,6 @@ function buildResolvedSkill(
     description: skill.description,
     usageGuidance: skill.usageGuidance,
     category: skill.category,
-    categoryExclusive: skill.categoryExclusive,
     tags: skill.tags,
     author: skill.author,
     conflictsWith: resolveConflicts(

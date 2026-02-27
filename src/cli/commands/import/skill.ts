@@ -375,7 +375,7 @@ export default class ImportSkill extends BaseCommand {
         this.warn(
           `Malformed metadata.yaml at ${metadataYamlPath} — existing fields may be lost\n` +
             `  Validation errors: ${parseResult.error.issues.map((i) => i.message).join(", ")}\n` +
-            `  Expected fields: cliName (string), cliDescription (string), category (string)\n` +
+            `  Expected fields: displayName (string), cliDescription (string), category (string)\n` +
             `  Validate your YAML syntax at https://yamllint.com`,
         );
       }
@@ -416,13 +416,12 @@ export default class ImportSkill extends BaseCommand {
     }
 
     const minimalMetadata: SkillMetadata = {
-      cliName: skillName
+      displayName: skillName
         .split("-")
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" "),
       cliDescription: "Imported from third-party repository",
       category: IMPORT_DEFAULTS.CATEGORY,
-      categoryExclusive: false,
       author: IMPORT_DEFAULTS.AUTHOR,
       forkedFrom: forkedFrom,
     };

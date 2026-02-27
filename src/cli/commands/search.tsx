@@ -74,7 +74,6 @@ async function fetchSkillsFromSource(
           description: `Skill from ${source.name}`,
           // Synthetic category for third-party sources — not in CategoryPath union
           category: "imported" as CategoryPath,
-          categoryExclusive: false,
           tags: [],
           author: `@${source.name}`,
           conflictsWith: [],

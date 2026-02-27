@@ -197,8 +197,6 @@ export type SkillFrontmatter = {
 export type SkillMetadataConfig = {
   /** Which subcategory this skill belongs to (e.g., "web-framework" or "web-testing") */
   category?: CategoryPath;
-  /** If true, only one skill from this category can be selected. Overrides CategoryDefinition. */
-  categoryExclusive?: boolean;
   /** Author handle (e.g., "@vince") */
   author?: string;
   /** Searchable tags for filtering (e.g., ["react", "hooks", "state"]) */

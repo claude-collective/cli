@@ -392,7 +392,6 @@ export const skillMetadataLoaderSchema = z
   .object({
     // Field accepts any string; cross-field validation in superRefine enforces strict/custom rules
     category: (z.string() as z.ZodType<CategoryPath>).optional(),
-    categoryExclusive: z.boolean().optional(),
     author: z.string().optional(),
     tags: z.array(z.string()).optional(),
     requires: z.array(extensibleSkillIdSchema).optional(),
@@ -645,19 +644,17 @@ export const skillRulesFileSchema = z.object({
 
 /**
  * Raw metadata from a local skill's metadata.yaml.
- * All fields optional — the loader validates cliName after parsing.
+ * All fields optional — the loader validates displayName after parsing.
  */
 export const localRawMetadataSchema = z
   .object({
     /** Short name shown in the wizard grid (e.g., "my-custom-react") */
-    cliName: z.string().optional(),
+    displayName: z.string().optional(),
     /** One-line description for the wizard */
     cliDescription: z.string().optional(),
     /** Subcategory to place this skill in (e.g., "web-framework") */
     // Field accepts any string; cross-field validation in superRefine enforces strict/custom rules
     category: (z.string() as z.ZodType<CategoryPath>).optional(),
-    /** If true, only one skill from this category can be selected */
-    categoryExclusive: z.boolean().optional(),
     /** When an AI agent should invoke this skill */
     usageGuidance: z.string().optional(),
     tags: z.array(z.string()).optional(),
@@ -922,11 +919,10 @@ export const metadataValidationSchema = z
   .object({
     /** Domain-prefixed subcategory (e.g., "web-framework") */
     category: extensibleSubcategorySchema,
-    categoryExclusive: z.boolean().optional(),
     /** Author handle — must start with @ (e.g., "@vince") */
     author: z.string().regex(/^@[a-z][a-z0-9-]*$/),
     /** Short display name for the wizard grid (max 30 chars) */
-    cliName: z.string().min(1).max(30),
+    displayName: z.string().min(1).max(30),
     /** One-line description for the wizard (max 60 chars) */
     cliDescription: z.string().min(1).max(60),
     /** When an AI agent should invoke this skill (min 10 chars to ensure usefulness) */
