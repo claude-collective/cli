@@ -1,19 +1,19 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
-import os from "os";
-import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import { validateAllSchemas, printValidationResults } from "./schema-validator";
 import type { FullValidationResult } from "./schema-validator";
+import { createTempDir, cleanupTempDir } from "./__tests__/helpers";
 
 describe("schema-validator", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "schema-validator-test-"));
+    tempDir = await createTempDir("schema-validator-test-");
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("validateAllSchemas", () => {
@@ -47,13 +47,13 @@ describe("schema-validator", () => {
       expect(schemaNames).toContain("Agent Definition");
     });
 
-    it("should validate a valid agent.yaml file", async () => {
-      // Create a valid agent.yaml matching the inline Zod agentValidationSchema
+    it("should validate a valid metadata.yaml file", async () => {
+      // Create a valid metadata.yaml matching the inline Zod agentValidationSchema
       // Required fields: id, title, description, tools
       const agentDir = path.join(tempDir, "src", "agents", "test-agent");
       await mkdir(agentDir, { recursive: true });
       await writeFile(
-        path.join(agentDir, "agent.yaml"),
+        path.join(agentDir, "metadata.yaml"),
         [
           "id: test-agent",
           "title: Test Agent",
@@ -75,12 +75,12 @@ describe("schema-validator", () => {
       expect(agentResult!.invalidFiles).toHaveLength(0);
     });
 
-    it("should detect invalid agent.yaml file", async () => {
-      // Create an invalid agent.yaml (missing required "description" and "tools" fields)
+    it("should detect invalid metadata.yaml file", async () => {
+      // Create an invalid metadata.yaml (missing required "description" and "tools" fields)
       const agentDir = path.join(tempDir, "src", "agents", "bad-agent");
       await mkdir(agentDir, { recursive: true });
       await writeFile(
-        path.join(agentDir, "agent.yaml"),
+        path.join(agentDir, "metadata.yaml"),
         ["id: bad-agent", "title: Bad Agent"].join("\n"),
       );
 
@@ -130,7 +130,7 @@ describe("schema-validator", () => {
         const dir = path.join(tempDir, "src", "agents", name);
         await mkdir(dir, { recursive: true });
         await writeFile(
-          path.join(dir, "agent.yaml"),
+          path.join(dir, "metadata.yaml"),
           [
             `id: ${name}`,
             `title: Agent ${name}`,
@@ -144,7 +144,7 @@ describe("schema-validator", () => {
       const invalidDir = path.join(tempDir, "src", "agents", "agent-bad");
       await mkdir(invalidDir, { recursive: true });
       await writeFile(
-        path.join(invalidDir, "agent.yaml"),
+        path.join(invalidDir, "metadata.yaml"),
         ["id: agent-bad"].join("\n"), // missing required fields
       );
 
@@ -166,7 +166,7 @@ describe("schema-validator", () => {
       // Agent missing required fields (title, description, tools) will fail Zod validation
       const agentDir = path.join(tempDir, "src", "agents", "incomplete-agent");
       await mkdir(agentDir, { recursive: true });
-      await writeFile(path.join(agentDir, "agent.yaml"), "id: incomplete-agent\n");
+      await writeFile(path.join(agentDir, "metadata.yaml"), "id: incomplete-agent\n");
 
       const result = await validateAllSchemas(tempDir);
 
@@ -178,13 +178,13 @@ describe("schema-validator", () => {
       const validDir = path.join(tempDir, "src", "agents", "valid-agent");
       await mkdir(validDir, { recursive: true });
       await writeFile(
-        path.join(validDir, "agent.yaml"),
+        path.join(validDir, "metadata.yaml"),
         "id: valid\ntitle: Valid\ndescription: Valid\ntools:\n  - Read\n",
       );
 
       const invalidDir = path.join(tempDir, "src", "agents", "invalid-agent");
       await mkdir(invalidDir, { recursive: true });
-      await writeFile(path.join(invalidDir, "agent.yaml"), "id: invalid\n");
+      await writeFile(path.join(invalidDir, "metadata.yaml"), "id: invalid\n");
 
       const result = await validateAllSchemas(tempDir);
 
@@ -196,7 +196,7 @@ describe("schema-validator", () => {
     it("should handle YAML parse errors gracefully", async () => {
       const agentDir = path.join(tempDir, "src", "agents", "bad-yaml");
       await mkdir(agentDir, { recursive: true });
-      await writeFile(path.join(agentDir, "agent.yaml"), "id: [invalid: yaml: :::");
+      await writeFile(path.join(agentDir, "metadata.yaml"), "id: [invalid: yaml: :::");
 
       const result = await validateAllSchemas(tempDir);
 
@@ -458,7 +458,7 @@ describe("schema-validator", () => {
             validFiles: 0,
             invalidFiles: [
               {
-                file: "src/agents/bad/agent.yaml",
+                file: "src/agents/bad/metadata.yaml",
                 errors: ["Missing required field: tools"],
               },
             ],
@@ -536,7 +536,7 @@ describe("schema-validator", () => {
             validFiles: 0,
             invalidFiles: [
               {
-                file: "src/agents/broken/agent.yaml",
+                file: "src/agents/broken/metadata.yaml",
                 errors: ["Missing required field: tools", "Missing required field: description"],
               },
             ],
@@ -553,7 +553,7 @@ describe("schema-validator", () => {
       printValidationResults(result);
 
       const output = consoleSpy.mock.calls.map((c) => c[0]).join("\n");
-      expect(output).toContain("src/agents/broken/agent.yaml");
+      expect(output).toContain("src/agents/broken/metadata.yaml");
       expect(output).toContain("Missing required field: tools");
       expect(output).toContain("Missing required field: description");
 

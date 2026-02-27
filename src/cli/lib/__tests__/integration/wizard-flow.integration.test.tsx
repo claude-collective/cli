@@ -155,11 +155,14 @@ describe("Wizard integration", () => {
 
       await delay(RENDER_DELAY_MS);
 
+      expect(lastFrame()).toContain("Choose a stack");
+      await stdin.write(ARROW_DOWN);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      await stdin.write(ARROW_DOWN);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // After scrolling down, "Start from scratch" should be visible in the viewport
       expect(lastFrame()).toContain("Start from scratch");
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
-      await stdin.write(ARROW_DOWN);
-      await delay(STEP_TRANSITION_DELAY_MS);
       await stdin.write(ENTER);
       await delay(STEP_TRANSITION_DELAY_MS);
 
@@ -703,25 +706,6 @@ describe("Wizard integration", () => {
   });
 
   describe("mode selection", () => {
-    it("should toggle expert mode via keyboard shortcut", async () => {
-      const onComplete = vi.fn();
-      const onCancel = vi.fn();
-
-      const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
-      );
-      cleanup = unmount;
-
-      await delay(RENDER_DELAY_MS);
-
-      // Toggle expert mode with 'e' keyboard shortcut (global handler)
-      await stdin.write("e");
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // Expert mode indicator is shown in wizard-layout with cyan color when active
-      expect(lastFrame()).toContain("Expert mode");
-    });
-
     it("should toggle install mode via keyboard shortcut", async () => {
       const onComplete = vi.fn();
       const onCancel = vi.fn();
@@ -817,7 +801,6 @@ describe("Wizard integration", () => {
       expect(result).toHaveProperty("selectedStackId");
       expect(result).toHaveProperty("domainSelections");
       expect(result).toHaveProperty("sourceSelections");
-      expect(result).toHaveProperty("expertMode");
       expect(result).toHaveProperty("installMode");
       expect(result).toHaveProperty("cancelled");
       expect(result).toHaveProperty("validation");
@@ -825,7 +808,6 @@ describe("Wizard integration", () => {
       expect(result.selectedStackId).toBe("react-fullstack");
       expect(result.cancelled).toBe(false);
       expect(result.installMode).toBe("local");
-      expect(result.expertMode).toBe(false);
     });
 
     it("should include preselected skills in result", async () => {

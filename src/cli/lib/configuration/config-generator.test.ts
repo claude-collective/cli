@@ -13,11 +13,13 @@ import {
   STACK_WITH_EMPTY_SUBCATEGORY,
   MANY_SUBCATEGORIES_STACK,
   LOCAL_SKILL_STACK,
+} from "../__tests__/mock-data/mock-stacks.js";
+import {
   LOCAL_SKILL_MATRIX,
   MIXED_LOCAL_REMOTE_MATRIX,
   METHODOLOGY_MATRIX,
   VITEST_MATRIX,
-} from "../__tests__/mock-data";
+} from "../__tests__/mock-data/mock-matrices.js";
 
 /** Shorthand: creates a SkillAssignment from an id and optional preloaded flag */
 const sa = (id: SkillId, preloaded = false): SkillAssignment =>

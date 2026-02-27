@@ -18,7 +18,7 @@ import {
   type TestDirs,
 } from "../fixtures/create-test-source";
 import { createTempDir, cleanupTempDir } from "../helpers";
-import { COMPILATION_TEST_STACK } from "../mock-data";
+import { COMPILATION_TEST_STACK } from "../mock-data/mock-stacks.js";
 
 async function readPluginManifest(pluginDir: string): Promise<PluginManifest | null> {
   const manifestPath = path.join(pluginDir, ".claude-plugin", "plugin.json");

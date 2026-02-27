@@ -28,7 +28,6 @@ const defaultProps: CheckboxGridProps<TestItem> = {
   onToggle: vi.fn(),
   onContinue: vi.fn(),
   onBack: vi.fn(),
-  continueLabel: (count) => `Continue with ${count} item(s)`,
   emptyMessage: "Select at least one",
 };
 

@@ -1,6 +1,7 @@
 import { Box, Text, useInput } from "ink";
-import React, { useMemo, useRef, useState } from "react";
-import { CLI_COLORS, SCROLL_VIEWPORT, UI_SYMBOLS } from "../../consts.js";
+import React, { useMemo, useState } from "react";
+import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
+import { useRowScroll } from "../hooks/use-row-scroll.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import type { AgentName, MergedSkillsMatrix } from "../../types/index.js";
 import { typedKeys } from "../../utils/typed-object.js";
@@ -70,7 +71,6 @@ const BUILT_IN_AGENT_GROUPS: AgentGroup[] = [
       },
       { id: "cli-tester", label: "CLI Tester", description: "CLI application tests" },
       { id: "cli-reviewer", label: "CLI Reviewer", description: "CLI code review" },
-      { id: "cli-migrator", label: "CLI Migrator", description: "Commander.js to oclif migration" },
     ],
   },
   {
@@ -124,7 +124,7 @@ function buildAgentGroups(matrix: MergedSkillsMatrix): AgentGroup[] {
 
   if (customAgentIds.length === 0) return BUILT_IN_AGENT_GROUPS;
 
-  // Group custom agents by explicit domain (from agent.yaml) or kebab prefix fallback
+  // Group custom agents by explicit domain (from metadata.yaml) or kebab prefix fallback
   const customGroupMap = new Map<string, AgentItem[]>();
   for (const agentId of customAgentIds) {
     // Boundary cast: custom agent names from matrix stacks are not in the AgentName union
@@ -175,21 +175,14 @@ export const StepAgents: React.FC<StepAgentsProps> = ({ matrix }) => {
   const [focusedId, setFocusedId] = useState<FocusId>(focusableIds[0]!);
   const { ref: listRef, measuredHeight: listHeight } = useMeasuredHeight();
 
-  const scrollTopRef = useRef(0);
-  const scrollEnabled = listHeight > 0 && listHeight >= SCROLL_VIEWPORT.MIN_VIEWPORT_ROWS;
-
-  if (scrollEnabled && focusedId !== "continue") {
-    const rowIndex = flatRows.findIndex(
-      (row) => row.type === "agent" && row.agent.id === focusedId,
-    );
-    if (rowIndex >= 0) {
-      if (rowIndex < scrollTopRef.current) {
-        scrollTopRef.current = rowIndex;
-      } else if (rowIndex + 1 > scrollTopRef.current + listHeight) {
-        scrollTopRef.current = rowIndex + 1 - listHeight;
-      }
-    }
-  }
+  const focusedRowIndex = focusedId !== "continue"
+    ? flatRows.findIndex((row) => row.type === "agent" && row.agent.id === focusedId)
+    : -1;
+  const { scrollEnabled, scrollTop } = useRowScroll({
+    focusedIndex: Math.max(0, focusedRowIndex),
+    itemCount: flatRows.length,
+    availableHeight: listHeight,
+  });
 
   useInput((input, key) => {
     if (key.escape) {
@@ -272,23 +265,21 @@ export const StepAgents: React.FC<StepAgentsProps> = ({ matrix }) => {
     <Box flexDirection="column" width="100%" flexGrow={1} flexBasis={0}>
       <ViewTitle>Select agents to compile:</ViewTitle>
 
-      {!scrollEnabled ? (
-        <Box ref={listRef} flexDirection="column" flexGrow={1} flexBasis={0} overflow="hidden">
-          {rowElements}
-        </Box>
-      ) : (
-        <Box ref={listRef} flexDirection="column" flexGrow={1} flexBasis={0}>
-          <Box flexDirection="column" overflow="hidden" flexGrow={1}>
-            <Box
-              flexDirection="column"
-              marginTop={scrollTopRef.current > 0 ? -scrollTopRef.current : 0}
-              flexShrink={0}
-            >
-              {rowElements}
-            </Box>
+      <Box ref={listRef} flexDirection="column" flexGrow={1} flexBasis={0}>
+        <Box
+          flexDirection="column"
+          flexGrow={1}
+          {...(scrollEnabled && { overflow: "hidden" as const })}
+        >
+          <Box
+            flexDirection="column"
+            marginTop={scrollTop > 0 ? -scrollTop : 0}
+            {...(scrollEnabled && { flexShrink: 0 })}
+          >
+            {rowElements}
           </Box>
         </Box>
-      )}
+      </Box>
 
       <Text color={isContinueFocused ? CLI_COLORS.PRIMARY : undefined} bold={isContinueFocused}>
         {isContinueFocused ? UI_SYMBOLS.CURRENT : " "} {"\u2192"} {continueLabel}

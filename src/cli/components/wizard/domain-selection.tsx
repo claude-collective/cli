@@ -55,7 +55,6 @@ export const DomainSelection: React.FC<DomainSelectionProps> = ({ matrix }) => {
       onToggle={toggleDomain}
       onContinue={() => setStep("build")}
       onBack={handleBack}
-      continueLabel={(count) => `Continue with ${count} domain(s)`}
       emptyMessage="Please select at least one domain"
     />
   );

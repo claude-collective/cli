@@ -263,11 +263,6 @@ function setConfigMetadata(
 ): void {
   config.installMode = wizardResult.installMode;
 
-  // Only persist expertMode when true (sparse YAML output)
-  if (wizardResult.expertMode) {
-    config.expertMode = true;
-  }
-
   // Only persist domains when non-empty (sparse YAML output)
   if (wizardResult.selectedDomains && wizardResult.selectedDomains.length > 0) {
     config.domains = wizardResult.selectedDomains;

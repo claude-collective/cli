@@ -65,7 +65,7 @@ async function createAgent(
   await mkdir(agentDir, { recursive: true });
 
   await writeFile(
-    path.join(agentDir, "agent.yaml"),
+    path.join(agentDir, "metadata.yaml"),
     `id: ${agentId}
 title: ${config.title}
 description: ${config.description}

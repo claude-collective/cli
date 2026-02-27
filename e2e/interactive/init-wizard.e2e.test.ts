@@ -522,20 +522,6 @@ describe("init wizard", () => {
       expect(fullOutput).toContain("Agents");
       expect(fullOutput).toContain("Confirm");
     });
-
-    it("should toggle expert mode with E key", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
-
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      session.write("e");
-      await delay(KEYSTROKE_DELAY_MS);
-
-      const fullOutput = session.getFullOutput();
-      expect(fullOutput).toContain("Expert mode");
-    });
   });
 
   describe("permission checker", () => {
@@ -592,7 +578,7 @@ describe("init wizard", () => {
   });
 
   describe("already initialized project", () => {
-    it("should warn when project already has a config", async () => {
+    it("should show dashboard when project already has a config", async () => {
       await createProjectAndSource();
 
       const configDir = path.join(projectDir!, CLAUDE_SRC_DIR);
@@ -601,7 +587,12 @@ describe("init wizard", () => {
 
       session = spawnInitWizard(projectDir!, sourceDir!);
 
-      await session.waitForText("already initialized", WIZARD_LOAD_TIMEOUT_MS);
+      // Dashboard renders instead of the wizard when project is already initialized
+      await session.waitForText("Agents Inc.", WIZARD_LOAD_TIMEOUT_MS);
+
+      // Press Escape to dismiss the dashboard
+      await delay(STEP_TRANSITION_DELAY_MS);
+      session.escape();
 
       const exitCode = await session.waitForExit();
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);

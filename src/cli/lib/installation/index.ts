@@ -1,7 +1,9 @@
 export {
   type InstallMode,
+  type InstallScope,
   type Installation,
   detectInstallation,
+  detectProjectInstallation,
   getInstallationOrThrow,
 } from "./installation";
 

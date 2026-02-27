@@ -64,46 +64,20 @@ describe("validateBuildStep", () => {
 });
 
 describe("computeOptionState", () => {
-  it("should return disabled when skill is disabled", () => {
-    expect(computeOptionState({ disabled: true, discouraged: false, recommended: false })).toBe(
-      "disabled",
-    );
-  });
-
   it("should return discouraged when skill is discouraged", () => {
-    expect(computeOptionState({ disabled: false, discouraged: true, recommended: false })).toBe(
-      "discouraged",
-    );
+    expect(computeOptionState({ discouraged: true, recommended: false })).toBe("discouraged");
   });
 
   it("should return recommended when skill is recommended", () => {
-    expect(computeOptionState({ disabled: false, discouraged: false, recommended: true })).toBe(
-      "recommended",
-    );
+    expect(computeOptionState({ discouraged: false, recommended: true })).toBe("recommended");
   });
 
   it("should return normal when no special state", () => {
-    expect(computeOptionState({ disabled: false, discouraged: false, recommended: false })).toBe(
-      "normal",
-    );
-  });
-
-  it("should prioritize disabled over discouraged", () => {
-    expect(computeOptionState({ disabled: true, discouraged: true, recommended: false })).toBe(
-      "disabled",
-    );
-  });
-
-  it("should prioritize disabled over recommended", () => {
-    expect(computeOptionState({ disabled: true, discouraged: false, recommended: true })).toBe(
-      "disabled",
-    );
+    expect(computeOptionState({ discouraged: false, recommended: false })).toBe("normal");
   });
 
   it("should prioritize discouraged over recommended", () => {
-    expect(computeOptionState({ disabled: false, discouraged: true, recommended: true })).toBe(
-      "discouraged",
-    );
+    expect(computeOptionState({ discouraged: true, recommended: true })).toBe("discouraged");
   });
 });
 
@@ -150,7 +124,7 @@ describe("buildCategoriesForDomain", () => {
 
   it("should return categories with options for the given domain", () => {
     const matrix = createMatrix();
-    const result = buildCategoriesForDomain("web", [], matrix, false, {});
+    const result = buildCategoriesForDomain("web", [], matrix, {});
 
     expect(result).toHaveLength(2);
     expect(result[0].id).toBe(frameworkCategory);
@@ -167,13 +141,13 @@ describe("buildCategoriesForDomain", () => {
       },
     );
 
-    const result = buildCategoriesForDomain("web", [], emptyMatrix, false, {});
+    const result = buildCategoriesForDomain("web", [], emptyMatrix, {});
     expect(result).toHaveLength(0);
   });
 
   it("should sort categories by order", () => {
     const matrix = createMatrix();
-    const result = buildCategoriesForDomain("web", [], matrix, false, {});
+    const result = buildCategoriesForDomain("web", [], matrix, {});
 
     expect(result[0].id).toBe(frameworkCategory);
     expect(result[1].id).toBe(stateCategory);
@@ -184,7 +158,7 @@ describe("buildCategoriesForDomain", () => {
 
     // With React selected as framework, only Zustand (compatible with React) should show
     const selections = { "web-framework": ["web-framework-react" as SkillId] };
-    const result = buildCategoriesForDomain("web", [], matrix, false, selections);
+    const result = buildCategoriesForDomain("web", [], matrix, selections);
 
     const stateRow = result.find((r) => r.id === stateCategory);
     expect(stateRow).toBeDefined();
@@ -195,7 +169,7 @@ describe("buildCategoriesForDomain", () => {
   it("should not apply framework filtering when no framework is selected", () => {
     const matrix = createMatrix();
 
-    const result = buildCategoriesForDomain("web", [], matrix, false, {});
+    const result = buildCategoriesForDomain("web", [], matrix, {});
 
     const stateRow = result.find((r) => r.id === stateCategory);
     expect(stateRow).toBeDefined();
@@ -206,7 +180,7 @@ describe("buildCategoriesForDomain", () => {
     const matrix = createMatrix();
     const installedSkillIds = ["web-framework-react" as import("../../types").SkillId];
 
-    const result = buildCategoriesForDomain("web", [], matrix, false, {}, installedSkillIds);
+    const result = buildCategoriesForDomain("web", [], matrix, {}, installedSkillIds);
 
     const frameworkRow = result.find((r) => r.id === frameworkCategory);
     const reactOption = frameworkRow?.options.find((o) => o.id === "web-framework-react");

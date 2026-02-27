@@ -1,8 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { log, setVerbose, verbose, warn } from "./logger";
+import {
+  disableBuffering,
+  drainBuffer,
+  enableBuffering,
+  log,
+  pushBufferMessage,
+  setVerbose,
+  verbose,
+  warn,
+} from "./logger";
 
 afterEach(() => {
   setVerbose(false);
+  disableBuffering();
   vi.restoreAllMocks();
 });
 
@@ -106,5 +116,107 @@ describe("warn", () => {
     const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
     warn("Skipping 'foo': missing SKILL.md");
     expect(spy).toHaveBeenCalledWith("  Warning: Skipping 'foo': missing SKILL.md");
+  });
+});
+
+describe("buffering", () => {
+  it("enableBuffering causes warn to push to buffer instead of console.warn", () => {
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    enableBuffering();
+    warn("buffered warning");
+    expect(spy).not.toHaveBeenCalled();
+
+    const messages = drainBuffer();
+    expect(messages).toEqual([{ level: "warn", text: "buffered warning" }]);
+  });
+
+  it("drainBuffer returns all buffered messages and empties the buffer", () => {
+    enableBuffering();
+    warn("first");
+    warn("second");
+
+    const messages = drainBuffer();
+    expect(messages).toHaveLength(2);
+    expect(messages[0]).toEqual({ level: "warn", text: "first" });
+    expect(messages[1]).toEqual({ level: "warn", text: "second" });
+
+    const empty = drainBuffer();
+    expect(empty).toHaveLength(0);
+  });
+
+  it("disableBuffering restores warn to console.warn behavior", () => {
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    enableBuffering();
+    warn("buffered");
+    expect(spy).not.toHaveBeenCalled();
+
+    disableBuffering();
+    warn("direct");
+    expect(spy).toHaveBeenCalledWith("  Warning: direct");
+  });
+
+  it("verbose is never affected by buffer mode", () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    setVerbose(true);
+    enableBuffering();
+
+    verbose("verbose message");
+    expect(spy).toHaveBeenCalledWith("  verbose message");
+
+    const messages = drainBuffer();
+    expect(messages).toHaveLength(0);
+  });
+
+  it("log is never affected by buffer mode", () => {
+    const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    enableBuffering();
+
+    log("log message");
+    expect(spy).toHaveBeenCalledWith("log message");
+
+    const messages = drainBuffer();
+    expect(messages).toHaveLength(0);
+  });
+
+  it("multiple warn calls accumulate in order", () => {
+    enableBuffering();
+    warn("alpha");
+    warn("beta");
+    warn("gamma");
+
+    const messages = drainBuffer();
+    expect(messages).toHaveLength(3);
+    expect(messages.map((m) => m.text)).toEqual(["alpha", "beta", "gamma"]);
+  });
+
+  it("draining twice returns empty on second call", () => {
+    enableBuffering();
+    warn("once");
+
+    const first = drainBuffer();
+    expect(first).toHaveLength(1);
+
+    const second = drainBuffer();
+    expect(second).toHaveLength(0);
+  });
+
+  it("pushBufferMessage adds messages with specified level", () => {
+    enableBuffering();
+    pushBufferMessage("info", "info message");
+    pushBufferMessage("error", "error message");
+
+    const messages = drainBuffer();
+    expect(messages).toHaveLength(2);
+    expect(messages[0]).toEqual({ level: "info", text: "info message" });
+    expect(messages[1]).toEqual({ level: "error", text: "error message" });
+  });
+
+  it("enableBuffering resets any previous buffer", () => {
+    enableBuffering();
+    warn("leftover");
+
+    enableBuffering();
+    const messages = drainBuffer();
+    expect(messages).toHaveLength(0);
   });
 });

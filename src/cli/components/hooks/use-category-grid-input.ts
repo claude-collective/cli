@@ -138,7 +138,7 @@ export function useCategoryGridInput({
     if (input === " ") {
       if (currentLocked) return;
       const currentOption = currentOptions[focusedCol];
-      if (currentOption && currentOption.state !== "disabled") {
+      if (currentOption) {
         onToggle(currentRow.id, currentOption.id);
       }
       return;

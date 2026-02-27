@@ -30,7 +30,7 @@ export async function loadAllAgents(projectRoot: string): Promise<Record<string,
   const agents: Record<string, AgentDefinition> = {};
   const agentSourcesDir = path.join(projectRoot, DIRS.agents);
 
-  const files = await glob("**/agent.yaml", agentSourcesDir);
+  const files = await glob(`**/${STANDARD_FILES.AGENT_METADATA_YAML}`, agentSourcesDir);
 
   for (const file of files) {
     const fullPath = path.join(agentSourcesDir, file);
@@ -51,7 +51,7 @@ export async function loadAllAgents(projectRoot: string): Promise<Record<string,
 
       verbose(`Loaded agent: ${config.id} from ${file}`);
     } catch (error) {
-      warn(`Skipping invalid agent.yaml at '${fullPath}': ${getErrorMessage(error)}`);
+      warn(`Skipping invalid metadata.yaml at '${fullPath}': ${getErrorMessage(error)}`);
     }
   }
 
@@ -69,7 +69,7 @@ export async function loadProjectAgents(
     return agents;
   }
 
-  const files = await glob("**/agent.yaml", projectAgentsDir);
+  const files = await glob(`**/${STANDARD_FILES.AGENT_METADATA_YAML}`, projectAgentsDir);
 
   for (const file of files) {
     const fullPath = path.join(projectAgentsDir, file);
@@ -91,7 +91,7 @@ export async function loadProjectAgents(
 
       verbose(`Loaded project agent: ${config.id} from ${file}`);
     } catch (error) {
-      warn(`Skipping invalid agent.yaml at '${fullPath}': ${getErrorMessage(error)}`);
+      warn(`Skipping invalid metadata.yaml at '${fullPath}': ${getErrorMessage(error)}`);
     }
   }
 

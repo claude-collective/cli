@@ -26,9 +26,13 @@ import {
   ZUSTAND_DEFINITION,
   SCSS_DEFINITION,
   DRIZZLE_DEFINITION,
+} from "./__tests__/mock-data/mock-skills.js";
+import {
   WEB_DEVELOPER_DEFINITION,
   API_DEVELOPER_DEFINITION,
   RESOLVE_AGENTS_DEFINITIONS,
+} from "./__tests__/mock-data/mock-agents.js";
+import {
   FULLSTACK_STACK,
   WEB_REACT_AND_SCSS_STACK,
   WEB_REACT_ONLY_STACK,
@@ -36,9 +40,11 @@ import {
   API_HONO_ONLY_STACK,
   WEB_EMPTY_AGENT_STACK,
   WEB_ONLY_PARTIAL_STACK,
+} from "./__tests__/mock-data/mock-stacks.js";
+import {
   WEB_AND_API_COMPILE_CONFIG,
   WEB_ONLY_COMPILE_CONFIG,
-} from "./__tests__/mock-data";
+} from "./__tests__/mock-data/mock-matrices.js";
 import type {
   AgentName,
   CompiledAgentData,

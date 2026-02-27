@@ -20,7 +20,7 @@ import type {
   SkillId,
 } from "../../types/index.js";
 import { getStackName } from "./utils.js";
-import { warn } from "../../utils/logger.js";
+import { warn, type StartupMessage } from "../../utils/logger.js";
 import { useWizardInitialization } from "../hooks/use-wizard-initialization.js";
 import { useBuildStepProps } from "../hooks/use-build-step-props.js";
 
@@ -31,7 +31,6 @@ export type WizardResultV2 = {
   domainSelections: DomainSelections;
   selectedDomains: Domain[];
   sourceSelections: Partial<Record<SkillId, string>>;
-  expertMode: boolean;
   installMode: "plugin" | "local";
   cancelled: boolean;
   validation: {
@@ -50,11 +49,11 @@ type WizardProps = {
   logo?: string;
   initialStep?: WizardStep;
   initialInstallMode?: "plugin" | "local";
-  initialExpertMode?: boolean;
   initialDomains?: Domain[];
   initialAgents?: AgentName[];
   installedSkillIds?: SkillId[];
   projectDir?: string;
+  startupMessages?: StartupMessage[];
 };
 
 const MIN_TERMINAL_WIDTH = 80;
@@ -69,11 +68,11 @@ export const Wizard: React.FC<WizardProps> = ({
   logo,
   initialStep,
   initialInstallMode,
-  initialExpertMode,
   initialDomains,
   initialAgents,
   installedSkillIds,
   projectDir,
+  startupMessages,
 }) => {
   const store = useWizardStore();
   const { exit } = useApp();
@@ -88,7 +87,6 @@ export const Wizard: React.FC<WizardProps> = ({
     matrix,
     initialStep,
     initialInstallMode,
-    initialExpertMode,
     initialDomains,
     initialAgents,
     installedSkillIds,
@@ -144,10 +142,6 @@ export const Wizard: React.FC<WizardProps> = ({
       return;
     }
 
-    if (input === "e" || input === "E") {
-      store.toggleExpertMode();
-      return;
-    }
     if (input === "p" || input === "P") {
       store.toggleInstallMode();
     }
@@ -191,7 +185,6 @@ export const Wizard: React.FC<WizardProps> = ({
       domainSelections: store.domainSelections,
       selectedDomains: store.selectedDomains,
       sourceSelections: store.sourceSelections,
-      expertMode: store.expertMode,
       installMode: store.installMode,
       cancelled: false,
       validation,
@@ -280,7 +273,12 @@ export const Wizard: React.FC<WizardProps> = ({
 
   return (
     <ThemeProvider theme={cliTheme}>
-      <WizardLayout version={version} marketplaceLabel={marketplaceLabel} logo={logo}>
+      <WizardLayout
+        version={version}
+        marketplaceLabel={marketplaceLabel}
+        logo={logo}
+        startupMessages={startupMessages}
+      >
         {renderStep()}
       </WizardLayout>
     </ThemeProvider>

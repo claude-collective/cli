@@ -89,7 +89,7 @@ const VALIDATION_TARGETS: ValidationTarget[] = [
   {
     name: "Agent Definition",
     schema: agentYamlGenerationSchema,
-    pattern: `**/${STANDARD_FILES.AGENT_YAML}`,
+    pattern: `**/${STANDARD_FILES.AGENT_METADATA_YAML}`,
     baseDir: "src/agents",
   },
   {
@@ -147,7 +147,7 @@ const VALIDATION_TARGETS: ValidationTarget[] = [
   },
 ];
 
-function formatZodErrors(error: z.ZodError): string[] {
+export function formatZodErrors(error: z.ZodError): string[] {
   return error.issues.map((issue) => {
     const path = issue.path.join(".");
     if (issue.code === "unrecognized_keys") {

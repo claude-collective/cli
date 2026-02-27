@@ -1,3 +1,4 @@
+import os from "os";
 import path from "path";
 import { fileExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
@@ -15,7 +16,10 @@ export type LoadedProjectConfig = {
   configPath: string;
 };
 
-export async function loadProjectConfig(projectDir: string): Promise<LoadedProjectConfig | null> {
+/** Load project config from a specific directory only (no global fallback). */
+export async function loadProjectConfigFromDir(
+  projectDir: string,
+): Promise<LoadedProjectConfig | null> {
   // Check .claude-src/config.yaml first (new location)
   const srcConfigPath = path.join(projectDir, CONFIG_PATH);
   // Fall back to .claude/config.yaml (legacy location)
@@ -61,6 +65,23 @@ export async function loadProjectConfig(projectDir: string): Promise<LoadedProje
     config,
     configPath,
   };
+}
+
+/**
+ * Load project config with global fallback.
+ * Checks the given projectDir first, then falls back to the home directory.
+ */
+export async function loadProjectConfig(projectDir: string): Promise<LoadedProjectConfig | null> {
+  const projectResult = await loadProjectConfigFromDir(projectDir);
+  if (projectResult) return projectResult;
+
+  // Global fallback: try home directory
+  const homeDir = os.homedir();
+  if (projectDir !== homeDir) {
+    return loadProjectConfigFromDir(homeDir);
+  }
+
+  return null;
 }
 
 export function validateProjectConfig(config: unknown): ValidationResult {

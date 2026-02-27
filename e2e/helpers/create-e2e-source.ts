@@ -192,7 +192,7 @@ async function writeAgents(sourceDir: string): Promise<void> {
     await mkdir(agentDir, { recursive: true });
 
     await writeFile(
-      path.join(agentDir, STANDARD_FILES.AGENT_YAML),
+      path.join(agentDir, STANDARD_FILES.AGENT_METADATA_YAML),
       `id: ${agent.name}\ntitle: ${agent.title}\ndescription: ${agent.description}\ntools:\n  - Read\n  - Write\n  - Edit\n  - Grep\n  - Glob\n  - Bash\nmodel: opus\npermissionMode: default\n`,
     );
 

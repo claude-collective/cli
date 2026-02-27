@@ -10,9 +10,6 @@ export {
 export {
   resolveAlias,
   getDependentSkills,
-  type SkillCheckOptions,
-  isDisabled,
-  getDisableReason,
   isDiscouraged,
   getDiscourageReason,
   isRecommended,
@@ -20,7 +17,6 @@ export {
   validateSelection,
   getAvailableSkills,
   getSkillsByCategory,
-  isCategoryAllDisabled,
 } from "./matrix-resolver";
 
 export { type MatrixHealthIssue, checkMatrixHealth } from "./matrix-health-check";

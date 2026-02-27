@@ -51,7 +51,6 @@ export function useBuildStepProps({
     selections: store.domainSelections[activeDomain] || {},
     allSelections,
     showLabels: store.showLabels,
-    expertMode: store.expertMode,
     installedSkillIds,
     onToggle,
     onToggleLabels: store.toggleShowLabels,

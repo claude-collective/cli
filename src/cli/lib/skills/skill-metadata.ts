@@ -86,21 +86,8 @@ export type SkillComparisonResult = {
  * ```
  */
 export async function readForkedFromMetadata(skillDir: string): Promise<ForkedFromMetadata | null> {
-  const metadataPath = path.join(skillDir, STANDARD_FILES.METADATA_YAML);
-
-  if (!(await fileExists(metadataPath))) {
-    return null;
-  }
-
-  const content = await readFile(metadataPath);
-  const result = localSkillMetadataSchema.safeParse(parseYaml(content));
-
-  if (!result.success) {
-    warn(`Invalid metadata.yaml at ${metadataPath}: ${formatZodErrors(result.error.issues)}`);
-    return null;
-  }
-
-  return (result.data as LocalSkillMetadata).forkedFrom ?? null;
+  const metadata = await readLocalSkillMetadata(skillDir);
+  return metadata?.forkedFrom ?? null;
 }
 
 /**

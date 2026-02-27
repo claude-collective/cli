@@ -1,6 +1,7 @@
 import { Box, Text, useInput } from "ink";
 import React, { useState } from "react";
 import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
+import { useRowScroll } from "../hooks/use-row-scroll.js";
 import { ViewTitle } from "./view-title.js";
 
 export type CheckboxItem<T extends string = string> = {
@@ -14,11 +15,11 @@ export type CheckboxGridProps<T extends string = string> = {
   subtitle?: string;
   items: CheckboxItem<T>[];
   selectedIds: T[];
+  /** Available height in terminal lines for the scrollable viewport. 0 = no constraint. */
+  availableHeight?: number;
   onToggle: (id: T) => void;
   onContinue: () => void;
   onBack: () => void;
-  /** Label for the continue button, e.g. "Continue with 3 domain(s)" */
-  continueLabel?: (count: number) => string;
   /** Message shown when nothing is selected */
   emptyMessage?: string;
 };
@@ -28,10 +29,10 @@ export const CheckboxGrid = <T extends string = string>({
   subtitle,
   items,
   selectedIds,
+  availableHeight = 0,
   onToggle,
   onContinue,
   onBack,
-  continueLabel = (count) => `Continue with ${count} item(s)`,
   emptyMessage = "Please select at least one item",
 }: CheckboxGridProps<T>): React.ReactElement => {
   // Items + continue option at the end
@@ -69,49 +70,65 @@ export const CheckboxGrid = <T extends string = string>({
 
   const continueIndex = items.length;
 
+  // When focus is on continue (past items), scroll to show last items
+  const effectiveRow = focusedIndex >= items.length ? items.length - 1 : focusedIndex;
+  const { scrollEnabled, scrollTop } = useRowScroll({
+    focusedIndex: effectiveRow,
+    itemCount: items.length,
+    availableHeight,
+  });
+
+  const itemElements = items.map((item, index) => {
+    const isFocused = index === focusedIndex;
+    const isSelected = selectedIds.includes(item.id);
+    const checkbox = isSelected ? "[\u2713]" : "[ ]";
+    const pointer = isFocused ? UI_SYMBOLS.CHEVRON : UI_SYMBOLS.CHEVRON_SPACER;
+
+    return (
+      <Text key={item.id}>
+        <Text color={isFocused ? CLI_COLORS.PRIMARY : undefined}>{pointer}</Text>
+        <Text color={isSelected || isFocused ? CLI_COLORS.PRIMARY : undefined} bold={isFocused}>
+          {" "}
+          {checkbox} {item.label}
+        </Text>
+        {isFocused && (
+          <Text dimColor>
+            {"  "}
+            {item.description}
+          </Text>
+        )}
+      </Text>
+    );
+  });
+
+  const footerElement = selectedIds.length > 0 ? (
+    <Text>
+      {"\n"}Selected: <Text color={CLI_COLORS.WARNING}>{selectedIds.join(", ")}</Text>
+    </Text>
+  ) : emptyMessage ? (
+    <Text dimColor>
+      {"\n"}
+      {emptyMessage}
+    </Text>
+  ) : null;
+
   return (
     <Box flexDirection="column">
       <ViewTitle>{title}</ViewTitle>
       {subtitle && <Text dimColor>{subtitle}</Text>}
-      {items.map((item, index) => {
-        const isFocused = index === focusedIndex;
-        const isSelected = selectedIds.includes(item.id);
-        const checkbox = isSelected ? "[\u2713]" : "[ ]";
-        const pointer = isFocused ? UI_SYMBOLS.CHEVRON : UI_SYMBOLS.CHEVRON_SPACER;
-
-        return (
-          <Text key={item.id}>
-            <Text color={isFocused ? CLI_COLORS.PRIMARY : undefined}>{pointer}</Text>
-            <Text color={isSelected || isFocused ? CLI_COLORS.PRIMARY : undefined} bold={isFocused}>
-              {" "}
-              {checkbox} {item.label}
-            </Text>
-            {isFocused && (
-              <Text dimColor>
-                {"  "}
-                {item.description}
-              </Text>
-            )}
-          </Text>
-        );
-      })}
-      <Text
-        color={focusedIndex === continueIndex ? CLI_COLORS.PRIMARY : undefined}
-        bold={focusedIndex === continueIndex}
+      <Box
+        flexDirection="column"
+        {...(scrollEnabled && { height: availableHeight, overflow: "hidden" as const })}
       >
-        {/* {focusedIndex === continueIndex ? UI_SYMBOLS.CURRENT : " "} {"\u2192"}{" "} */}
-        {/* {continueLabel(selectedIds.length)} */}
-      </Text>
-      {selectedIds.length > 0 ? (
-        <Text>
-          {"\n"}Selected: <Text color={CLI_COLORS.WARNING}>{selectedIds.join(", ")}</Text>
-        </Text>
-      ) : emptyMessage ? (
-        <Text dimColor>
-          {"\n"}
-          {emptyMessage}
-        </Text>
-      ) : null}
+        <Box
+          flexDirection="column"
+          marginTop={scrollTop > 0 ? -scrollTop : 0}
+          {...(scrollEnabled && { flexShrink: 0 })}
+        >
+          {itemElements}
+        </Box>
+      </Box>
+      {footerElement}
     </Box>
   );
 };

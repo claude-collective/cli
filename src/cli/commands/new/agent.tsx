@@ -16,6 +16,7 @@ import { isClaudeCLIAvailable } from "../../utils/exec.js";
 import { fileExists, readFile } from "../../utils/fs.js";
 
 const META_AGENT_NAME = "agent-summoner";
+const SEPARATOR_WIDTH = 60;
 
 type NewAgentInput = {
   description: string;
@@ -122,12 +123,12 @@ Agent Purpose: ${purpose}
 
 Requirements:
 1. Create the agent directory structure at ${outputDir}/${agentName}/
-2. Create agent.yaml with appropriate configuration
+2. Create metadata.yaml with appropriate configuration
 3. Create intro.md with the agent's role and context
 4. Create workflow.md with the agent's operational process
 5. Optionally create examples.md if relevant examples would help
 6. Optionally create critical-requirements.md for important rules
-7. Include \`custom: true\` in the agent.yaml configuration
+7. Include \`custom: true\` in the metadata.yaml configuration
 
 Follow the existing agent patterns in the codebase. Keep the agent focused and practical.`;
 }
@@ -263,13 +264,13 @@ export default class NewAgent extends BaseCommand {
       const agentPrompt = buildAgentPrompt(args.name, purpose, outputDir);
 
       this.log("Invoking agent-summoner to create your agent...");
-      this.log("─".repeat(60));
+      this.log("─".repeat(SEPARATOR_WIDTH));
       this.log("");
 
       await invokeMetaAgent(agentDef, agentPrompt, flags["non-interactive"]);
 
       this.log("");
-      this.log("─".repeat(60));
+      this.log("─".repeat(SEPARATOR_WIDTH));
       this.logSuccess("Agent creation complete!");
     } catch (error) {
       this.handleError(error);

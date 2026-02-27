@@ -19,6 +19,9 @@ export const PLUGIN_MANIFEST_DIR = ".claude-plugin";
 export const PLUGIN_MANIFEST_FILE = "plugin.json";
 export const DEFAULT_PLUGIN_NAME = "agents-inc";
 
+/** Home directory used as the root for global installations */
+export const GLOBAL_INSTALL_ROOT = os.homedir();
+
 export const CACHE_DIR = path.join(os.homedir(), ".cache", DEFAULT_PLUGIN_NAME);
 
 export const CLI_BIN_NAME = "agentsinc";
@@ -45,7 +48,7 @@ export const STANDARD_FILES = {
   CONFIG_YAML: "config.yaml",
   SKILL_CATEGORIES_YAML: "skill-categories.yaml",
   SKILL_RULES_YAML: "skill-rules.yaml",
-  AGENT_YAML: "agent.yaml",
+  AGENT_METADATA_YAML: "metadata.yaml",
   PLUGIN_JSON: "plugin.json",
   CLAUDE_MD: "CLAUDE.md",
   REFERENCE_MD: "reference.md",
@@ -164,6 +167,12 @@ export const DEFAULT_BRANDING = {
 /** Fallback name for the default public marketplace when marketplace.json is unavailable */
 export const DEFAULT_PUBLIC_SOURCE_NAME = "Agents Inc";
 
+/** Human-readable labels for skill source types shown in the wizard and edit command */
+export const SOURCE_DISPLAY_NAMES: Record<string, string> = {
+  public: "Public",
+  local: "Local",
+};
+
 export const CLI_COLORS = {
   PRIMARY: "cyan",
   SUCCESS: "green",
@@ -177,7 +186,7 @@ export const CLI_COLORS = {
 } as const;
 
 /** Canonical display order for built-in domains. Custom domains appear before these, alphabetically. */
-export const BUILT_IN_DOMAIN_ORDER: readonly Domain[] = ["web", "api", "mobile", "cli"];
+export const BUILT_IN_DOMAIN_ORDER: readonly Domain[] = ["web", "api", "mobile", "cli", "shared"];
 
 /** Default domains pre-selected when "Start from scratch" is chosen (all except CLI) */
 export const DEFAULT_SCRATCH_DOMAINS: readonly Domain[] = ["web", "api", "mobile"];

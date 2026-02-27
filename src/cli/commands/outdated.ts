@@ -7,9 +7,11 @@ import { BaseCommand } from "../base-command.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { loadSkillsMatrixFromSource } from "../lib/loading/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
+import { detectInstallation } from "../lib/installation/index.js";
 import { compareLocalSkillsWithSource, type SkillComparisonResult } from "../lib/skills/index.js";
 import { fileExists } from "../utils/fs.js";
 import { CLI_BIN_NAME, LOCAL_SKILLS_PATH } from "../consts.js";
+import { typedEntries } from "../utils/typed-object.js";
 
 type ComparisonSummary = {
   outdated: number;
@@ -63,7 +65,8 @@ export default class Outdated extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Outdated);
-    const projectDir = process.cwd();
+    const installation = await detectInstallation();
+    const projectDir = installation?.projectDir ?? process.cwd();
 
     try {
       const localSkillsPath = path.join(projectDir, LOCAL_SKILLS_PATH);
@@ -97,7 +100,7 @@ export default class Outdated extends BaseCommand {
       }
 
       const sourceSkills: Record<string, { path: string }> = {};
-      for (const [skillId, skill] of Object.entries(matrix.skills)) {
+      for (const [skillId, skill] of typedEntries(matrix.skills)) {
         if (!skill) continue;
         if (!skill.local) {
           sourceSkills[skillId] = { path: skill.path };

@@ -1,14 +1,29 @@
 import { Hook } from "@oclif/core";
 import { resolveSource } from "../lib/configuration/index.js";
-import type { ResolvedConfig } from "../lib/configuration/index.js";
-
-/** Narrow interface for attaching sourceConfig to oclif's Config object. */
-interface ConfigWithSource {
-  sourceConfig?: ResolvedConfig;
-}
+import { detectInstallation } from "../lib/installation/installation.js";
+import { hasIndividualPlugins } from "../lib/plugins/index.js";
+import { showDashboard } from "../commands/init.js";
+import { EXIT_CODES } from "../lib/exit-codes.js";
+import type { ConfigWithSource } from "../base-command.js";
 
 const hook: Hook<"init"> = async function (options) {
   const projectDir = process.cwd();
+
+  // When no command is given and project is already initialized, show dashboard
+  if (options.id === undefined) {
+    const [installation, individualPlugins] = await Promise.all([
+      detectInstallation(projectDir),
+      hasIndividualPlugins(projectDir),
+    ]);
+
+    if (installation || individualPlugins) {
+      const selectedCommand = await showDashboard(projectDir);
+      if (selectedCommand) {
+        await options.config.runCommand(selectedCommand);
+      }
+      this.exit(EXIT_CODES.SUCCESS);
+    }
+  }
 
   // Extract --source flag from argv (not yet parsed by oclif at this point)
   let sourceFlag: string | undefined;

@@ -15,7 +15,6 @@ import {
   projectConfigValidationSchema,
   projectSourceConfigValidationSchema,
   skillFrontmatterValidationSchema,
-  skillsMatrixConfigSchema,
   stackConfigValidationSchema,
   stacksConfigSchema,
   SUBCATEGORY_VALUES,
@@ -91,7 +90,7 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
     metadata: {
       $id: "schemas/agent.schema.json",
       title: "Agent Definition",
-      description: "Schema for agent.yaml files defining Claude Code agents.",
+      description: "Schema for agent metadata.yaml files defining Claude Code agents.",
     },
   },
   {
@@ -168,16 +167,6 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
       $id: "schemas/skill-frontmatter.schema.json",
       title: "Skill Frontmatter",
       description: "Schema for SKILL.md file frontmatter fields.",
-    },
-  },
-  {
-    filename: "skills-matrix.schema.json",
-    schema: skillsMatrixConfigSchema,
-    metadata: {
-      $id: "schemas/skills-matrix.schema.json",
-      title: "Skills Matrix Configuration",
-      description:
-        "Schema for config/skills-matrix.yaml defining skill categories and relationships.",
     },
   },
   {

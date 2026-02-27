@@ -15,13 +15,15 @@ import {
   REACT_SKILL_PRELOADED,
   REACT_SKILL,
   VITEST_SINGLE_FILE_SKILL,
+} from "./__tests__/mock-data/mock-skills.js";
+import {
   WEB_DEV_NO_SKILLS,
   API_DEV_NO_SKILLS,
   WEB_DEV_WITH_REACT,
   WEB_DEV_WITH_PRELOADED_REACT,
   WEB_DEV_WITH_VITEST,
   TWO_AGENTS_SHARED_SKILL,
-} from "./__tests__/mock-data";
+} from "./__tests__/mock-data/mock-agents.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

@@ -187,7 +187,6 @@ const defaultProps: CategoryGridProps = {
   defaultFocusedRow: 0,
   defaultFocusedCol: 0,
   showLabels: false,
-  expertMode: false,
   onToggle: vi.fn(),
   onFocusChange: vi.fn(),
   onToggleLabels: vi.fn(),
@@ -309,11 +308,11 @@ describe("CategoryGrid component", () => {
       expect(output).not.toContain("\u26A0");
     });
 
-    it("should show disabled options with dimmed styling", () => {
+    it("should show discouraged options with warning styling", () => {
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
           createOption("web-forms-react-hook-form", "Option 1"),
-          createOption("web-forms-vee-validate", "Option 2", { state: "disabled" }),
+          createOption("web-forms-vee-validate", "Option 2", { state: "discouraged" }),
         ]),
       ];
 
@@ -321,7 +320,7 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      // Disabled options should show label (dimmed text)
+      // Discouraged options should show label
       expect(output).toContain("Option 2");
     });
 
@@ -356,10 +355,10 @@ describe("CategoryGrid component", () => {
       expect(output).toContain("Unselected Skill");
     });
 
-    it("should render disabled skills with label text", () => {
+    it("should render discouraged skills with label text", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", "Disabled Skill", { state: "disabled" }),
+          createOption("web-forms-react-hook-form", "Discouraged Skill", { state: "discouraged" }),
         ]),
       ];
 
@@ -367,18 +366,18 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Disabled Skill");
+      expect(output).toContain("Discouraged Skill");
     });
 
-    it("should render disabled+selected skills with label text", () => {
+    it("should render discouraged+selected skills with label text", () => {
       const categories: CategoryRow[] = [
         createCategory("web-forms", "Forms", [
-          createOption("web-forms-react-hook-form", "Disabled Selected", {
-            state: "disabled",
+          createOption("web-forms-react-hook-form", "Discouraged Selected", {
+            state: "discouraged",
             selected: true,
           }),
-          createOption("web-forms-vee-validate", "Disabled Only", {
-            state: "disabled",
+          createOption("web-forms-vee-validate", "Discouraged Only", {
+            state: "discouraged",
             selected: false,
           }),
         ]),
@@ -388,8 +387,8 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Disabled Selected");
-      expect(output).toContain("Disabled Only");
+      expect(output).toContain("Discouraged Selected");
+      expect(output).toContain("Discouraged Only");
     });
 
     it("should render discouraged skills with label text", () => {
@@ -414,7 +413,7 @@ describe("CategoryGrid component", () => {
         ]),
       ];
 
-      const { lastFrame, unmount } = renderGrid({ categories, expertMode: true });
+      const { lastFrame, unmount } = renderGrid({ categories });
       cleanup = unmount;
 
       const output = lastFrame();
@@ -753,7 +752,6 @@ describe("CategoryGrid component", () => {
 
     it("should call onToggle when pressing space on a selected option", async () => {
       const onToggle = vi.fn();
-      // Use expertMode to preserve original option order
       const categories: CategoryRow[] = [
         createCategory(
           "web-framework",
@@ -769,8 +767,7 @@ describe("CategoryGrid component", () => {
         categories,
         defaultFocusedRow: 0,
         defaultFocusedCol: 0, // react (selected)
-        expertMode: true,
-        onToggle,
+               onToggle,
       });
       cleanup = unmount;
 
@@ -781,12 +778,12 @@ describe("CategoryGrid component", () => {
       expect(onToggle).toHaveBeenCalledWith("web-framework", "web-framework-react");
     });
 
-    it("should NOT call onToggle when all options in a category are disabled", async () => {
+    it("should call onToggle for discouraged options (still selectable)", async () => {
       const onToggle = vi.fn();
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
-          createOption("web-forms-react-hook-form", "Option 1", { state: "disabled" }),
-          createOption("web-forms-vee-validate", "Option 2", { state: "disabled" }),
+          createOption("web-forms-react-hook-form", "Option 1", { state: "discouraged" }),
+          createOption("web-forms-vee-validate", "Option 2", { state: "discouraged" }),
         ]),
       ];
 
@@ -794,8 +791,7 @@ describe("CategoryGrid component", () => {
         categories,
         defaultFocusedRow: 0,
         defaultFocusedCol: 0,
-        expertMode: true,
-        onToggle,
+               onToggle,
       });
       cleanup = unmount;
 
@@ -803,7 +799,7 @@ describe("CategoryGrid component", () => {
       await stdin.write(" ");
       await delay(INPUT_DELAY_MS);
 
-      expect(onToggle).not.toHaveBeenCalled();
+      expect(onToggle).toHaveBeenCalled();
     });
 
     it("should bounce focus away from locked sections on mount", async () => {
@@ -823,24 +819,23 @@ describe("CategoryGrid component", () => {
     });
   });
 
-  describe("disabled options navigation", () => {
-    it("should navigate to disabled options when navigating right", async () => {
+  describe("discouraged options navigation", () => {
+    it("should navigate to discouraged options when navigating right", async () => {
       const onFocusChange = vi.fn();
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
           createOption("web-forms-react-hook-form", "Option 1"),
-          createOption("web-forms-vee-validate", "Option 2", { state: "disabled" }),
+          createOption("web-forms-vee-validate", "Option 2", { state: "discouraged" }),
           createOption("web-forms-zod-validation", "Option 3"),
         ]),
       ];
 
-      // Initial sort moves disabled options to end: [opt1, opt3, opt2(disabled)]
+      // Options stay in original order: [opt1, opt2(discouraged), opt3]
       const { stdin, unmount } = renderGrid({
         categories,
         defaultFocusedRow: 0,
         defaultFocusedCol: 0,
-        expertMode: true,
-        onFocusChange,
+               onFocusChange,
       });
       cleanup = unmount;
 
@@ -848,27 +843,26 @@ describe("CategoryGrid component", () => {
       await stdin.write(ARROW_RIGHT);
       await delay(INPUT_DELAY_MS);
 
-      // opt3 is now at index 1 (after initial state-based sort), so navigating right goes to 1
+      // Navigating right from index 0 goes to index 1 (opt2, discouraged but hoverable)
       expect(onFocusChange).toHaveBeenCalledWith(0, 1);
     });
 
-    it("should navigate to disabled options when navigating left", async () => {
+    it("should navigate to discouraged options when navigating left", async () => {
       const onFocusChange = vi.fn();
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
           createOption("web-forms-react-hook-form", "Option 1"),
-          createOption("web-forms-vee-validate", "Option 2", { state: "disabled" }),
+          createOption("web-forms-vee-validate", "Option 2", { state: "discouraged" }),
           createOption("web-forms-zod-validation", "Option 3"),
         ]),
       ];
 
-      // Initial sort: [opt1, opt3, opt2(disabled)] — disabled moves to end
+      // Options stay in original order: [opt1, opt2(discouraged), opt3]
       const { stdin, unmount } = renderGrid({
         categories,
         defaultFocusedRow: 0,
-        defaultFocusedCol: 2, // Start at opt2 (disabled, sorted to end)
-        expertMode: true,
-        onFocusChange,
+        defaultFocusedCol: 2, // Start at opt3 (index 2)
+               onFocusChange,
       });
       cleanup = unmount;
 
@@ -876,26 +870,24 @@ describe("CategoryGrid component", () => {
       await stdin.write(ARROW_LEFT);
       await delay(INPUT_DELAY_MS);
 
-      // Disabled options are hoverable — navigates to index 1 (opt3)
+      // Discouraged options are hoverable — navigates to index 1 (opt2)
       expect(onFocusChange).toHaveBeenCalledWith(0, 1);
     });
 
-    it("should navigate between all-disabled options in a row", async () => {
+    it("should navigate between all-discouraged options in a row", async () => {
       const onFocusChange = vi.fn();
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
-          createOption("web-forms-react-hook-form", "Option 1", { state: "disabled" }),
-          createOption("web-forms-vee-validate", "Option 2", { state: "disabled" }),
+          createOption("web-forms-react-hook-form", "Option 1", { state: "discouraged" }),
+          createOption("web-forms-vee-validate", "Option 2", { state: "discouraged" }),
         ]),
       ];
 
-      // Use expertMode to preserve original option order
       const { stdin, unmount } = renderGrid({
         categories,
         defaultFocusedRow: 0,
         defaultFocusedCol: 0,
-        expertMode: true,
-        onFocusChange,
+               onFocusChange,
       });
       cleanup = unmount;
 
@@ -903,7 +895,7 @@ describe("CategoryGrid component", () => {
       await stdin.write(ARROW_RIGHT);
       await delay(INPUT_DELAY_MS);
 
-      // Disabled options are hoverable — navigates to index 1
+      // Discouraged options are hoverable — navigates to index 1
       expect(onFocusChange).toHaveBeenCalledWith(0, 1);
     });
   });
@@ -1016,14 +1008,13 @@ describe("CategoryGrid component", () => {
       expect(output).not.toContain("(recommended)");
       expect(output).not.toContain("(selected)");
       expect(output).not.toContain("(discouraged)");
-      expect(output).not.toContain("(disabled)");
     });
 
-    it("should show Disabled label for disabled options when showLabels is true", () => {
+    it("should show discouraged label for discouraged options when showLabels is true", () => {
       const categories: CategoryRow[] = [
         createCategory("web-testing", "Test", [
           createOption("web-forms-react-hook-form", "Option 1"),
-          createOption("web-forms-vee-validate", "Option 2", { state: "disabled" }),
+          createOption("web-forms-vee-validate", "Option 2", { state: "discouraged" }),
         ]),
       ];
 
@@ -1031,39 +1022,106 @@ describe("CategoryGrid component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("(disabled)");
-    });
-  });
-
-  describe("expert mode", () => {
-    it("should not handle expert mode toggle locally (handled globally)", () => {
-      // Expert mode toggle is now handled at wizard.tsx level via global useInput
-      // CategoryGrid no longer has onToggleExpertMode prop
-      const { lastFrame, unmount } = renderGrid();
-      cleanup = unmount;
-
-      const output = lastFrame();
-      // Header should not show expert mode toggle hint
-      expect(output).not.toContain("[e] Expert Mode");
+      expect(output).toContain("(discouraged)");
     });
   });
 
   describe("option ordering", () => {
     it("should preserve original order regardless of state", () => {
-      // Options should never reorder based on recommended/discouraged/disabled state
-      const { lastFrame, unmount } = renderGrid({ expertMode: false });
+      const categories: CategoryRow[] = [
+        createCategory("web-client-state", "State", [
+          createOption("web-state-jotai", "Jotai"),
+          createOption("web-state-zustand", "Zustand", { state: "recommended" }),
+          createOption("web-state-redux-toolkit", "Redux", { state: "discouraged" }),
+          createOption("web-state-mobx", "MobX"),
+        ]),
+      ];
+
+      const { lastFrame, unmount } = renderGrid({ categories });
       cleanup = unmount;
 
-      const output = lastFrame();
-      expect(output).toBeDefined();
+      const output = lastFrame()!;
+      const jotaiIdx = output.indexOf("Jotai");
+      const zustandIdx = output.indexOf("Zustand");
+      const reduxIdx = output.indexOf("Redux");
+      const mobxIdx = output.indexOf("MobX");
+
+      // Order should match the input array, not be sorted by state
+      expect(jotaiIdx).toBeLessThan(zustandIdx);
+      expect(zustandIdx).toBeLessThan(reduxIdx);
+      expect(reduxIdx).toBeLessThan(mobxIdx);
     });
 
-    it("should preserve original order in expert mode", () => {
-      const { lastFrame, unmount } = renderGrid({ expertMode: true });
-      cleanup = unmount;
+    it("should not change order when a skill is selected", () => {
+      const categoriesBefore: CategoryRow[] = [
+        createCategory("web-client-state", "State", [
+          createOption("web-state-jotai", "Jotai"),
+          createOption("web-state-zustand", "Zustand"),
+          createOption("web-state-redux-toolkit", "Redux"),
+        ]),
+      ];
 
-      const output = lastFrame();
-      expect(output).toBeDefined();
+      const categoriesAfter: CategoryRow[] = [
+        createCategory("web-client-state", "State", [
+          createOption("web-state-jotai", "Jotai"),
+          createOption("web-state-zustand", "Zustand", { selected: true }),
+          createOption("web-state-redux-toolkit", "Redux"),
+        ]),
+      ];
+
+      const { lastFrame: frameBefore, unmount: unmountBefore } = renderGrid({
+        categories: categoriesBefore,
+      });
+      const outputBefore = frameBefore()!;
+      unmountBefore();
+
+      const { lastFrame: frameAfter, unmount: unmountAfter } = renderGrid({
+        categories: categoriesAfter,
+      });
+      cleanup = unmountAfter;
+      const outputAfter = frameAfter()!;
+
+      // Verify order is preserved: Jotai < Zustand < Redux in both
+      expect(outputBefore.indexOf("Jotai")).toBeLessThan(outputBefore.indexOf("Zustand"));
+      expect(outputBefore.indexOf("Zustand")).toBeLessThan(outputBefore.indexOf("Redux"));
+      expect(outputAfter.indexOf("Jotai")).toBeLessThan(outputAfter.indexOf("Zustand"));
+      expect(outputAfter.indexOf("Zustand")).toBeLessThan(outputAfter.indexOf("Redux"));
+    });
+
+    it("should not change order when a skill state changes from normal to discouraged", () => {
+      const categoriesBefore: CategoryRow[] = [
+        createCategory("web-client-state", "State", [
+          createOption("web-state-jotai", "Jotai"),
+          createOption("web-state-zustand", "Zustand"),
+          createOption("web-state-redux-toolkit", "Redux"),
+        ]),
+      ];
+
+      const categoriesAfter: CategoryRow[] = [
+        createCategory("web-client-state", "State", [
+          createOption("web-state-jotai", "Jotai"),
+          createOption("web-state-zustand", "Zustand", { state: "discouraged" }),
+          createOption("web-state-redux-toolkit", "Redux"),
+        ]),
+      ];
+
+      const { lastFrame: frameBefore, unmount: unmountBefore } = renderGrid({
+        categories: categoriesBefore,
+      });
+      const outputBefore = frameBefore()!;
+      unmountBefore();
+
+      const { lastFrame: frameAfter, unmount: unmountAfter } = renderGrid({
+        categories: categoriesAfter,
+      });
+      cleanup = unmountAfter;
+      const outputAfter = frameAfter()!;
+
+      // Zustand stays in the middle even after becoming discouraged
+      expect(outputBefore.indexOf("Jotai")).toBeLessThan(outputBefore.indexOf("Zustand"));
+      expect(outputBefore.indexOf("Zustand")).toBeLessThan(outputBefore.indexOf("Redux"));
+      expect(outputAfter.indexOf("Jotai")).toBeLessThan(outputAfter.indexOf("Zustand"));
+      expect(outputAfter.indexOf("Zustand")).toBeLessThan(outputAfter.indexOf("Redux"));
     });
   });
 
@@ -1383,7 +1441,7 @@ describe("CategoryGrid component", () => {
       expect(output).toContain("(0 selected)");
     });
 
-    it("should hide counter in expert mode", () => {
+    it("should always show selection counter", () => {
       const categories = [
         createCategory(
           "web-framework",
@@ -1399,12 +1457,13 @@ describe("CategoryGrid component", () => {
         ),
       ];
 
-      const { lastFrame, unmount } = renderGrid({ categories, expertMode: true });
+      const { lastFrame, unmount } = renderGrid({ categories });
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).not.toContain("of 1");
-      expect(output).not.toContain("selected");
+      // Counters are always visible now (no expert mode to hide them)
+      expect(output).toContain("1 of 1");
+      expect(output).toContain("1 selected");
     });
 
     it("should show correct counts for mixed exclusive and non-exclusive categories", () => {

@@ -1,6 +1,11 @@
 import { unique } from "remeda";
 import { create } from "zustand";
-import { DEFAULT_PRESELECTED_SKILLS, DEFAULT_PUBLIC_SOURCE_NAME } from "../consts.js";
+import {
+  BUILT_IN_DOMAIN_ORDER,
+  DEFAULT_PRESELECTED_SKILLS,
+  DEFAULT_PUBLIC_SOURCE_NAME,
+  SOURCE_DISPLAY_NAMES,
+} from "../consts.js";
 import { resolveAlias } from "../lib/matrix/index.js";
 import { getSkillDisplayLabel } from "../lib/wizard/build-step-logic.js";
 import type {
@@ -33,6 +38,15 @@ function getAllDomainsFromCategories(
   return [...BUILT_IN_DOMAINS, ...allDomains.filter((d) => !BUILT_IN_DOMAINS.includes(d))];
 }
 
+/** Sort domains into canonical order: built-in domains per BUILT_IN_DOMAIN_ORDER, then custom domains alphabetically. */
+function sortDomainsCanonically(domains: Domain[]): Domain[] {
+  const builtInSet = new Set<Domain>(BUILT_IN_DOMAIN_ORDER);
+  return [
+    ...BUILT_IN_DOMAIN_ORDER.filter((d) => domains.includes(d)),
+    ...domains.filter((d) => !builtInSet.has(d)).sort(),
+  ];
+}
+
 /** Built-in agent names grouped by domain prefix. Custom domains return no preselected agents. */
 const DOMAIN_AGENTS: Partial<Record<string, AgentName[]>> = {
   web: [
@@ -44,7 +58,7 @@ const DOMAIN_AGENTS: Partial<Record<string, AgentName[]>> = {
     "web-architecture",
   ],
   api: ["api-developer", "api-reviewer", "api-researcher"],
-  cli: ["cli-developer", "cli-tester", "cli-reviewer", "cli-migrator"],
+  cli: ["cli-developer", "cli-tester", "cli-reviewer"],
 };
 
 /**
@@ -65,10 +79,6 @@ function getSourceSortTier(source: SkillSource): number {
   if (source.type === "public") return SOURCE_SORT_TIER_PUBLIC;
   return SOURCE_SORT_TIER_THIRD_PARTY;
 }
-
-const SOURCE_DISPLAY_NAMES: Record<string, string> = {
-  local: "Local",
-};
 
 function formatSourceLabel(source: { name: string; installed?: boolean }): string {
   const displayName = SOURCE_DISPLAY_NAMES[source.name] ?? source.name;
@@ -165,9 +175,10 @@ export type WizardState = {
 
   currentDomainIndex: number;
   domainSelections: DomainSelections;
+  /** Snapshot of stack-provided domain selections for restoration on domain re-toggle */
+  _stackDomainSelections: DomainSelections | null;
 
   showLabels: boolean;
-  expertMode: boolean;
 
   installMode: "plugin" | "local";
 
@@ -288,8 +299,6 @@ export type WizardState = {
   prevDomain: () => boolean;
   /** Toggle compatibility label visibility on skill tags in the build step grid. */
   toggleShowLabels: () => void;
-  /** Toggle expert mode (shows advanced/niche skills in the build step). */
-  toggleExpertMode: () => void;
   /** Toggle between "plugin" and "local" install modes. */
   toggleInstallMode: () => void;
   /**
@@ -415,8 +424,9 @@ const createInitialState = () => ({
   selectedDomains: [] as Domain[],
   currentDomainIndex: 0,
   domainSelections: {} as DomainSelections,
+  /** Snapshot of domainSelections from populateFromStack/populateFromSkillIds, used to restore on domain re-toggle */
+  _stackDomainSelections: null as DomainSelections | null,
   showLabels: false,
-  expertMode: false,
   installMode: "local" as "plugin" | "local",
   sourceSelections: {} as Partial<Record<SkillId, string>>,
   customizeSources: false,
@@ -479,7 +489,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
       return {
         domainSelections,
-        selectedDomains: getAllDomainsFromCategories(categories),
+        _stackDomainSelections: structuredClone(domainSelections),
+        selectedDomains: sortDomainsCanonically(getAllDomainsFromCategories(categories)),
       };
     }),
 
@@ -508,9 +519,13 @@ export const useWizardStore = create<WizardState>((set, get) => ({
         warn(`${skippedCount} installed skill(s) could not be resolved and were skipped`);
       }
 
-      const selectedDomains = typedKeys<Domain>(domainSelections);
+      const selectedDomains = sortDomainsCanonically(typedKeys<Domain>(domainSelections));
 
-      return { domainSelections, selectedDomains };
+      return {
+        domainSelections,
+        _stackDomainSelections: structuredClone(domainSelections),
+        selectedDomains,
+      };
     }),
 
   toggleDomain: (domain) =>
@@ -523,8 +538,19 @@ export const useWizardStore = create<WizardState>((set, get) => ({
           domainSelections: remainingSelections,
         };
       }
+
+      // Restore stack selections for this domain if a stack snapshot exists
+      const stackSelections = state._stackDomainSelections?.[domain];
       return {
-        selectedDomains: [...state.selectedDomains, domain],
+        selectedDomains: sortDomainsCanonically([...state.selectedDomains, domain]),
+        ...(stackSelections
+          ? {
+              domainSelections: {
+                ...state.domainSelections,
+                [domain]: structuredClone(stackSelections),
+              },
+            }
+          : {}),
       };
     }),
 
@@ -576,8 +602,6 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   toggleShowLabels: () => set((state) => ({ showLabels: !state.showLabels })),
-
-  toggleExpertMode: () => set((state) => ({ expertMode: !state.expertMode })),
 
   toggleInstallMode: () =>
     set((state) => ({

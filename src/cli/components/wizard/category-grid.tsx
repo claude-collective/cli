@@ -1,13 +1,14 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 
-import { Box, type DOMElement, Text, measureElement } from "ink";
+import { Box, Text } from "ink";
 
-import { CLI_COLORS, SCROLL_VIEWPORT } from "../../consts.js";
+import { CLI_COLORS } from "../../consts.js";
 import type { SkillId, Subcategory } from "../../types/index.js";
 import { isSectionLocked, useCategoryGridInput } from "../hooks/use-category-grid-input.js";
 import { useFocusedListItem } from "../hooks/use-focused-list-item.js";
+import { useSectionScroll } from "../hooks/use-section-scroll.js";
 
-export type OptionState = "normal" | "recommended" | "discouraged" | "disabled";
+export type OptionState = "normal" | "recommended" | "discouraged";
 
 export type CategoryOption = {
   id: SkillId;
@@ -32,7 +33,6 @@ export type CategoryGridProps = {
   /** Available height in terminal lines for the scrollable viewport. 0 = no constraint. */
   availableHeight?: number;
   showLabels: boolean;
-  expertMode: boolean;
   onToggle: (categoryId: Subcategory, technologyId: SkillId) => void;
   onToggleLabels: () => void;
   /** Optional initial focus row (default: 0). Use with React `key` to reset. */
@@ -44,28 +44,6 @@ export type CategoryGridProps = {
 };
 
 const SYMBOL_REQUIRED = "*";
-
-/**
- * Priority order for skill states in the initial sort.
- * Lower numbers appear first. Selected skills are sorted above all states.
- */
-const STATE_PRIORITY: Record<OptionState, number> = {
-  recommended: 0,
-  normal: 1,
-  discouraged: 2,
-  disabled: 3,
-};
-
-/**
- * Sort options by: selected first, then by state priority.
- * Within each group, original matrix order is preserved (stable sort).
- */
-const stableSortByState = (options: CategoryOption[]): CategoryOption[] => {
-  return [...options].sort((a, b) => {
-    if (a.selected !== b.selected) return a.selected ? -1 : 1;
-    return STATE_PRIORITY[a.state] - STATE_PRIORITY[b.state];
-  });
-};
 
 const findNextValidOption = (
   options: CategoryOption[],
@@ -98,7 +76,7 @@ type SkillTagProps = {
 
 const getCompatibilityLabel = (option: CategoryOption, isLocked: boolean): string | null => {
   if (option.selected) return "(selected)";
-  if (isLocked || option.state === "disabled") return "(disabled)";
+  if (isLocked) return "(disabled)";
   if (option.state === "recommended") return "(recommended)";
   if (option.state === "discouraged") return "(discouraged)";
   return null;
@@ -106,8 +84,7 @@ const getCompatibilityLabel = (option: CategoryOption, isLocked: boolean): strin
 
 const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLabels }) => {
   const getTextColor = (): string => {
-    if (option.state === "disabled" && option.selected) return CLI_COLORS.PRIMARY;
-    if (isLocked || option.state === "disabled") return CLI_COLORS.NEUTRAL;
+    if (isLocked) return CLI_COLORS.NEUTRAL;
     if (option.selected) return CLI_COLORS.PRIMARY;
     if (option.state === "recommended") return CLI_COLORS.UNFOCUSED;
     if (option.state === "discouraged") return CLI_COLORS.WARNING;
@@ -116,8 +93,7 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
   };
 
   const getStateBorderColor = (): string => {
-    if (option.state === "disabled" && option.selected) return CLI_COLORS.PRIMARY;
-    if (isLocked || option.state === "disabled") return CLI_COLORS.NEUTRAL;
+    if (isLocked) return CLI_COLORS.NEUTRAL;
     if (option.selected) return CLI_COLORS.PRIMARY;
     if (option.state === "recommended") return CLI_COLORS.UNFOCUSED;
     if (option.state === "discouraged") return CLI_COLORS.WARNING;
@@ -135,7 +111,7 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
       flexShrink={0}
     >
       <>
-        <Text color={textColor} bold dimColor={option.state === "disabled" && option.selected}>
+        <Text color={textColor} bold>
           {" "}
           {option.label}{" "}
         </Text>
@@ -153,7 +129,6 @@ type CategorySectionProps = {
   isFocused: boolean;
   focusedOptionIndex: number;
   showLabels: boolean;
-  expertMode: boolean;
 };
 
 const CategorySection: React.FC<CategorySectionProps> = ({
@@ -164,15 +139,12 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   isFocused,
   focusedOptionIndex,
   showLabels,
-  expertMode,
 }) => {
   const selectedCount = options.filter((o) => o.selected).length;
 
-  const selectionCounter = expertMode
-    ? null
-    : category.exclusive
-      ? `(${selectedCount} of 1)`
-      : `(${selectedCount} selected)`;
+  const selectionCounter = category.exclusive
+    ? `(${selectedCount} of 1)`
+    : `(${selectedCount} selected)`;
 
   return (
     <Box flexDirection="column" marginTop={isFirst ? 0 : 1}>
@@ -210,37 +182,15 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
   categories,
   availableHeight = 0,
   showLabels,
-  expertMode,
   onToggle,
   onToggleLabels,
   defaultFocusedRow = 0,
   defaultFocusedCol = 0,
   onFocusChange,
 }) => {
-  // Cache the initial sort order per category so toggling selections does not reorder skills.
-  // The ref resets when the component remounts (e.g., domain change via key={activeDomain}).
-  const initialOrderRef = useRef<Map<string, SkillId[]>>(new Map());
-
   const processedCategories = useMemo(
     () =>
-      categories.map((category) => {
-        const cached = initialOrderRef.current.get(category.id);
-        if (cached) {
-          const orderMap = new Map(cached.map((id, idx) => [id, idx]));
-          const sorted = [...category.options].sort((a, b) => {
-            const aIdx = orderMap.get(a.id) ?? Infinity;
-            const bIdx = orderMap.get(b.id) ?? Infinity;
-            return aIdx - bIdx;
-          });
-          return { ...category, sortedOptions: sorted };
-        }
-        const sorted = stableSortByState(category.options);
-        initialOrderRef.current.set(
-          category.id,
-          sorted.map((o) => o.id),
-        );
-        return { ...category, sortedOptions: sorted };
-      }),
+      categories.map((category) => ({ ...category, sortedOptions: category.options })),
     [categories],
   );
 
@@ -291,52 +241,11 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
     onToggleLabels,
   });
 
-  const sectionRefs = useRef<(DOMElement | null)[]>([]);
-  const [sectionHeights, setSectionHeights] = useState<number[]>([]);
-  const [scrollTopPx, setScrollTopPx] = useState(0);
-
-  const setSectionRef = useCallback((index: number, el: DOMElement | null) => {
-    sectionRefs.current[index] = el;
-  }, []);
-
-  useEffect(() => {
-    const heights = sectionRefs.current.map((el) => {
-      if (el) {
-        const { height } = measureElement(el);
-        return height;
-      }
-      return 0;
-    });
-    setSectionHeights((prev) => {
-      if (prev.length === heights.length && prev.every((h, i) => h === heights[i])) {
-        return prev;
-      }
-      return heights;
-    });
+  const { setSectionRef, scrollEnabled, scrollTopPx } = useSectionScroll({
+    sectionCount: processedCategories.length,
+    focusedIndex: focusedRow,
+    availableHeight,
   });
-
-  const scrollEnabled = availableHeight > 0 && availableHeight >= SCROLL_VIEWPORT.MIN_VIEWPORT_ROWS;
-
-  useEffect(() => {
-    if (!scrollEnabled || sectionHeights.length === 0) return;
-
-    let topOfFocused = 0;
-    for (let i = 0; i < focusedRow; i++) {
-      topOfFocused += sectionHeights[i] ?? 0;
-    }
-    const focusedHeight = sectionHeights[focusedRow] ?? 0;
-    const bottomOfFocused = topOfFocused + focusedHeight;
-
-    setScrollTopPx((prev) => {
-      if (topOfFocused < prev) {
-        return topOfFocused;
-      }
-      if (bottomOfFocused > prev + availableHeight) {
-        return bottomOfFocused - availableHeight;
-      }
-      return prev;
-    });
-  }, [focusedRow, sectionHeights, scrollEnabled, availableHeight]);
 
   if (categories.length === 0) {
     return (
@@ -346,11 +255,13 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
     );
   }
 
+  const noShrink = scrollEnabled ? { flexShrink: 0 } : {};
+
   const sectionElements = processedCategories.map((category, index) => {
     const isLocked = isSectionLocked(category.id, categories);
 
     return (
-      <Box key={category.id} ref={(el) => setSectionRef(index, el)} flexShrink={0}>
+      <Box key={category.id} ref={(el) => setSectionRef(index, el)} {...noShrink}>
         <CategorySection
           category={category}
           options={category.sortedOptions}
@@ -358,25 +269,20 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
           isFocused={index === focusedRow}
           focusedOptionIndex={focusedCol}
           showLabels={showLabels}
-          expertMode={expertMode}
           isFirst={index === 0}
         />
       </Box>
     );
   });
 
-  // When no height constraint, render flat (tests, or before first measurement)
-  if (!scrollEnabled) {
-    return (
-      <Box flexDirection="column" flexGrow={1} overflow="hidden">
-        {sectionElements}
-      </Box>
-    );
-  }
-
   return (
-    <Box flexDirection="column" height={availableHeight} overflow="hidden">
-      <Box flexDirection="column" marginTop={scrollTopPx > 0 ? -scrollTopPx : 0} flexShrink={0}>
+    <Box
+      flexDirection="column"
+      {...(scrollEnabled
+        ? { height: availableHeight, overflow: "hidden" as const }
+        : { flexGrow: 1 })}
+    >
+      <Box flexDirection="column" marginTop={scrollTopPx > 0 ? -scrollTopPx : 0} {...noShrink}>
         {sectionElements}
       </Box>
     </Box>

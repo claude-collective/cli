@@ -3,8 +3,8 @@ import React, { useState } from "react";
 import { DEFAULT_SCRATCH_DOMAINS } from "../../consts.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import type { MergedSkillsMatrix } from "../../types/index.js";
+import { useSectionScroll } from "../hooks/use-section-scroll.js";
 import { SelectionCard } from "./selection-card.js";
-import { ViewTitle } from "./view-title.js";
 
 const INITIAL_FOCUSED_INDEX = 0;
 const SCRATCH_LABEL = "Start from scratch";
@@ -15,10 +15,16 @@ const EXTRA_ITEMS_COUNT = 1;
 
 export type StackSelectionProps = {
   matrix: MergedSkillsMatrix;
+  /** Available height in terminal lines for the scrollable viewport. 0 = no constraint. */
+  availableHeight?: number;
   onCancel?: () => void;
 };
 
-export const StackSelection: React.FC<StackSelectionProps> = ({ matrix, onCancel }) => {
+export const StackSelection: React.FC<StackSelectionProps> = ({
+  matrix,
+  availableHeight = 0,
+  onCancel,
+}) => {
   const { selectStack, setApproach, setStackAction, populateFromSkillIds, toggleDomain } =
     useWizardStore();
 
@@ -28,6 +34,12 @@ export const StackSelection: React.FC<StackSelectionProps> = ({ matrix, onCancel
   const stackCount = stacks.length;
   const scratchIndex = stackCount;
   const totalItems = stackCount + EXTRA_ITEMS_COUNT;
+
+  const { setSectionRef, scrollEnabled, scrollTopPx } = useSectionScroll({
+    sectionCount: totalItems,
+    focusedIndex,
+    availableHeight,
+  });
 
   useInput((input, key) => {
     if (key.escape) {
@@ -67,24 +79,44 @@ export const StackSelection: React.FC<StackSelectionProps> = ({ matrix, onCancel
     }
   });
 
+  const noShrink = scrollEnabled ? { flexShrink: 0 } : {};
+
+  const sectionElements = stacks.map((stack, index) => (
+    <Box key={stack.id} ref={(el) => setSectionRef(index, el)} width="100%" {...noShrink}>
+      <SelectionCard
+        label={stack.name}
+        description={stack.description}
+        isFocused={index === focusedIndex}
+        marginBottom={1}
+      />
+    </Box>
+  ));
+
+  const scratchElement = (
+    <Box ref={(el) => setSectionRef(scratchIndex, el)} width="100%" {...noShrink}>
+      <SelectionCard
+        label={SCRATCH_LABEL}
+        description={SCRATCH_DESCRIPTION}
+        isFocused={focusedIndex === scratchIndex}
+      />
+    </Box>
+  );
+
   return (
-    <Box flexDirection="column">
-      <ViewTitle>Choose a stack</ViewTitle>
-      <Box flexDirection="column">
-        {stacks.map((stack, index) => (
-          <SelectionCard
-            key={stack.id}
-            label={stack.name}
-            description={stack.description}
-            isFocused={index === focusedIndex}
-            marginBottom={1}
-          />
-        ))}
-        <SelectionCard
-          label={SCRATCH_LABEL}
-          description={SCRATCH_DESCRIPTION}
-          isFocused={focusedIndex === scratchIndex}
-        />
+    <Box
+      flexDirection="column"
+      width="100%"
+      {...(scrollEnabled
+        ? { height: availableHeight, overflow: "hidden" as const }
+        : { flexGrow: 1 })}
+    >
+      <Box
+        flexDirection="column"
+        marginTop={scrollTopPx > 0 ? -scrollTopPx : 0}
+        {...noShrink}
+      >
+        {sectionElements}
+        {scratchElement}
       </Box>
     </Box>
   );

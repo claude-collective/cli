@@ -72,7 +72,7 @@ async function extractLocalSkill(
   const parsed = localRawMetadataSchema.safeParse(parseYaml(metadataContent));
 
   if (!parsed.success) {
-    warn(
+    verbose(
       `Skipping local skill '${skillDirName}': invalid metadata.yaml — ${formatZodErrors(parsed.error.issues)}`,
     );
     return null;
@@ -90,7 +90,7 @@ async function extractLocalSkill(
   const frontmatter = parseFrontmatter(skillMdContent, skillMdPath);
 
   if (!frontmatter) {
-    warn(`Skipping local skill '${skillDirName}': invalid SKILL.md frontmatter`);
+    verbose(`Skipping local skill '${skillDirName}': invalid SKILL.md frontmatter`);
     return null;
   }
 

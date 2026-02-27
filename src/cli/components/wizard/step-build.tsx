@@ -22,7 +22,6 @@ export type StepBuildProps = {
   selections: SubcategorySelections;
   allSelections: SkillId[];
   showLabels: boolean;
-  expertMode: boolean;
   /** Skill IDs already installed on disk, shown with a dimmed checkmark */
   installedSkillIds?: SkillId[];
   onToggle: (subcategoryId: Subcategory, technologyId: SkillId) => void;
@@ -55,7 +54,6 @@ export const StepBuild: React.FC<StepBuildProps> = ({
   selections,
   allSelections,
   showLabels,
-  expertMode,
   installedSkillIds,
   onToggle,
   onToggleLabels,
@@ -71,7 +69,6 @@ export const StepBuild: React.FC<StepBuildProps> = ({
     domain: activeDomain,
     allSelections,
     matrix,
-    expertMode,
     selections,
     installedSkillIds,
   });
@@ -124,7 +121,6 @@ export const StepBuild: React.FC<StepBuildProps> = ({
           key={activeDomain}
           categories={categories}
           availableHeight={gridHeight}
-          expertMode={expertMode}
           showLabels={showLabels}
           onToggle={onToggle}
           onToggleLabels={onToggleLabels}

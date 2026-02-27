@@ -6,6 +6,7 @@ import { getSourceSummary, type SourceSummary } from "../../lib/configuration/so
 import { DEFAULT_SOURCE } from "../../lib/configuration/config.js";
 import { useKeyboardNavigation } from "../hooks/use-keyboard-navigation.js";
 import { useModalState } from "../hooks/use-modal-state.js";
+import { useRowScroll } from "../hooks/use-row-scroll.js";
 import { useSourceOperations } from "../hooks/use-source-operations.js";
 import { useTextInput } from "../hooks/use-text-input.js";
 import { verbose } from "../../utils/logger.js";
@@ -13,12 +14,21 @@ import { getErrorMessage } from "../../utils/errors.js";
 
 const DEFAULT_SOURCE_NAME = "public";
 
+/** Fixed lines around the source list: border top/bottom (2) */
+const SOURCE_LIST_BORDER_LINES = 2;
+
 export type StepSettingsProps = {
   projectDir: string;
+  /** Available height in terminal lines for the scrollable source list. 0 = no constraint. */
+  availableHeight?: number;
   onClose: () => void;
 };
 
-export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose }) => {
+export const StepSettings: React.FC<StepSettingsProps> = ({
+  projectDir,
+  availableHeight = 0,
+  onClose,
+}) => {
   const [summary, setSummary] = useState<SourceSummary | null>(null);
   const addModal = useModalState();
   const {
@@ -59,6 +69,16 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
     { onEscape: onClose },
     { wrap: false, vimKeys: false, active: !addModal.isOpen },
   );
+
+  // Compute scroll offset for source list
+  const sourceViewportHeight = availableHeight > SOURCE_LIST_BORDER_LINES
+    ? availableHeight - SOURCE_LIST_BORDER_LINES
+    : 0;
+  const { scrollEnabled, scrollTop } = useRowScroll({
+    focusedIndex,
+    itemCount: sourceCount,
+    availableHeight: sourceViewportHeight,
+  });
 
   useInput((input, key) => {
     if (statusMessage) {
@@ -119,6 +139,27 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
     );
   }
 
+  const sourceElements = summary?.sources.map((source, index) => {
+    const isFocused = index === focusedIndex && !addModal.isOpen;
+    const isDefault = source.name === DEFAULT_SOURCE_NAME;
+    const checkmark = source.enabled ? "\u2713" : " ";
+    const displayName = isDefault ? "Public" : source.name;
+    const suffix = isDefault ? " (default)" : "";
+
+    return (
+      <Box key={source.name} flexShrink={0}>
+        <Text color={isFocused ? CLI_COLORS.PRIMARY : undefined} bold={isFocused}>
+          {isFocused ? ">" : " "} {checkmark} {displayName}
+        </Text>
+        <Text dimColor>
+          {"  "}
+          {source.url}
+          {suffix}
+        </Text>
+      </Box>
+    );
+  });
+
   return (
     <Box flexDirection="column" paddingX={2}>
       <ViewTitle>Skill Sources</ViewTitle>
@@ -132,26 +173,18 @@ export const StepSettings: React.FC<StepSettingsProps> = ({ projectDir, onClose 
         paddingX={1}
         marginTop={1}
       >
-        {summary?.sources.map((source, index) => {
-          const isFocused = index === focusedIndex && !addModal.isOpen;
-          const isDefault = source.name === DEFAULT_SOURCE_NAME;
-          const checkmark = source.enabled ? "\u2713" : " ";
-          const displayName = isDefault ? "Public" : source.name;
-          const suffix = isDefault ? " (default)" : "";
-
-          return (
-            <Box key={source.name}>
-              <Text color={isFocused ? CLI_COLORS.PRIMARY : undefined} bold={isFocused}>
-                {isFocused ? ">" : " "} {checkmark} {displayName}
-              </Text>
-              <Text dimColor>
-                {"  "}
-                {source.url}
-                {suffix}
-              </Text>
-            </Box>
-          );
-        })}
+        <Box
+          flexDirection="column"
+          {...(scrollEnabled && { height: sourceViewportHeight, overflow: "hidden" as const })}
+        >
+          <Box
+            flexDirection="column"
+            marginTop={scrollTop > 0 ? -scrollTop : 0}
+            {...(scrollEnabled && { flexShrink: 0 })}
+          >
+            {sourceElements}
+          </Box>
+        </Box>
       </Box>
 
       <Box

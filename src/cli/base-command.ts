@@ -4,7 +4,7 @@ import { EXIT_CODES } from "./lib/exit-codes.js";
 import type { ResolvedConfig } from "./lib/configuration/index.js";
 
 /** Narrow interface for the sourceConfig we attach to oclif's Config in the init hook. */
-interface ConfigWithSource {
+export interface ConfigWithSource {
   sourceConfig?: ResolvedConfig;
 }
 

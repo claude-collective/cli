@@ -35,9 +35,6 @@
       "type": "string",
       "enum": ["local", "plugin"]
     },
-    "expertMode": {
-      "type": "boolean"
-    },
     "domains": {
       "type": "array",
       "items": {

@@ -161,6 +161,10 @@ export default class Compile extends BaseCommand {
       });
     }
 
+    if (installation.scope === "global") {
+      this.log("Using global installation from ~/.claude-src/");
+    }
+
     if (installation.mode === "local") {
       this.log("");
       this.log("Local Mode Compile (auto-detected)");
@@ -174,8 +178,7 @@ export default class Compile extends BaseCommand {
     }
   }
 
-  private async discoverAllSkills(): Promise<DiscoveredSkills> {
-    const projectDir = process.cwd();
+  private async discoverAllSkills(projectDir: string = process.cwd()): Promise<DiscoveredSkills> {
     this.log(STATUS_MESSAGES.DISCOVERING_SKILLS);
 
     const pluginSkills = await discoverAllPluginSkills(projectDir);
@@ -288,7 +291,7 @@ export default class Compile extends BaseCommand {
       verbose(`  No config.yaml found - using defaults`);
     }
 
-    const { allSkills, totalSkillCount } = await this.discoverAllSkills();
+    const { allSkills, totalSkillCount } = await this.discoverAllSkills(projectDir);
     await this.resolveSourceForCompile(flags);
     const agentDefs = await this.loadAgentDefsForCompile(flags);
 

@@ -1,3 +1,4 @@
+import os from "os";
 import path from "path";
 import { stringify as stringifyYaml } from "yaml";
 import { writeFile, fileExists, ensureDir } from "../../utils/fs";
@@ -85,6 +86,23 @@ export async function loadProjectSourceConfig(
   return data as ProjectSourceConfig;
 }
 
+/** Load source config from the global home directory (~/.claude-src/config.yaml). */
+export async function loadGlobalSourceConfig(): Promise<ProjectSourceConfig | null> {
+  const homeDir = os.homedir();
+  const globalConfigPath = path.join(homeDir, CLAUDE_SRC_DIR, PROJECT_CONFIG_FILE);
+
+  if (!(await fileExists(globalConfigPath))) {
+    verbose(`Global config not found at ${globalConfigPath}`);
+    return null;
+  }
+
+  const data = await safeLoadYamlFile(globalConfigPath, projectSourceConfigSchema);
+  if (!data) return null;
+
+  verbose(`Loaded global config from ${globalConfigPath}`);
+  return data as ProjectSourceConfig;
+}
+
 export async function saveProjectConfig(
   projectDir: string,
   config: ProjectSourceConfig,
@@ -97,13 +115,18 @@ export async function saveProjectConfig(
   verbose(`Saved project config to ${configPath}`);
 }
 
-// Precedence: flag > env > project > default
+async function loadEffectiveSourceConfig(projectDir?: string): Promise<ProjectSourceConfig | null> {
+  const projectConfig = projectDir ? await loadProjectSourceConfig(projectDir) : null;
+  return projectConfig ?? (await loadGlobalSourceConfig());
+}
+
+// Precedence: flag > env > project > global > default
 export async function resolveSource(
   flagValue?: string,
   projectDir?: string,
 ): Promise<ResolvedConfig> {
-  const projectConfig = projectDir ? await loadProjectSourceConfig(projectDir) : null;
-  const marketplace = projectConfig?.marketplace;
+  const effectiveConfig = await loadEffectiveSourceConfig(projectDir);
+  const marketplace = effectiveConfig?.marketplace;
 
   if (flagValue !== undefined) {
     if (flagValue === "" || flagValue.trim() === "") {
@@ -135,10 +158,10 @@ export async function resolveSource(
     }
   }
 
-  if (projectConfig?.source) {
-    verbose(`Source from project config: ${projectConfig.source}`);
+  if (effectiveConfig?.source) {
+    verbose(`Source from project config: ${effectiveConfig.source}`);
     return {
-      source: projectConfig.source,
+      source: effectiveConfig.source,
       sourceOrigin: "project",
       marketplace,
     };
@@ -155,7 +178,7 @@ export type ResolvedAgentsSource = {
   agentsSourceOrigin: AgentsSourceOrigin;
 };
 
-// Precedence: flag > project > default (undefined)
+// Precedence: flag > project > global > default (undefined)
 export async function resolveAgentsSource(
   flagValue?: string,
   projectDir?: string,
@@ -171,11 +194,11 @@ export async function resolveAgentsSource(
     return { agentsSource: flagValue, agentsSourceOrigin: "flag" };
   }
 
-  const projectConfig = projectDir ? await loadProjectSourceConfig(projectDir) : null;
-  if (projectConfig?.agentsSource) {
-    verbose(`Agents source from project config: ${projectConfig.agentsSource}`);
+  const effectiveConfig = await loadEffectiveSourceConfig(projectDir);
+  if (effectiveConfig?.agentsSource) {
+    verbose(`Agents source from project config: ${effectiveConfig.agentsSource}`);
     return {
-      agentsSource: projectConfig.agentsSource,
+      agentsSource: effectiveConfig.agentsSource,
       agentsSourceOrigin: "project",
     };
   }
@@ -219,8 +242,8 @@ export function formatOrigin(
 }
 
 export async function resolveAuthor(projectDir?: string): Promise<string | undefined> {
-  const projectConfig = projectDir ? await loadProjectSourceConfig(projectDir) : null;
-  return projectConfig?.author;
+  const effectiveConfig = await loadEffectiveSourceConfig(projectDir);
+  return effectiveConfig?.author;
 }
 
 /** Resolved branding with defaults applied for any missing fields */
@@ -229,19 +252,19 @@ export type ResolvedBranding = {
   tagline: string;
 };
 
-/** Resolves branding from project config, falling back to DEFAULT_BRANDING for missing fields. */
+/** Resolves branding from project config, falling back to global then DEFAULT_BRANDING. */
 export async function resolveBranding(projectDir?: string): Promise<ResolvedBranding> {
-  const projectConfig = projectDir ? await loadProjectSourceConfig(projectDir) : null;
+  const effectiveConfig = await loadEffectiveSourceConfig(projectDir);
   return {
-    name: projectConfig?.branding?.name ?? DEFAULT_BRANDING.NAME,
-    tagline: projectConfig?.branding?.tagline ?? DEFAULT_BRANDING.TAGLINE,
+    name: effectiveConfig?.branding?.name ?? DEFAULT_BRANDING.NAME,
+    tagline: effectiveConfig?.branding?.tagline ?? DEFAULT_BRANDING.TAGLINE,
   };
 }
 
 export async function resolveAllSources(
   projectDir?: string,
 ): Promise<{ primary: SourceEntry; extras: SourceEntry[] }> {
-  const projectConfig = projectDir ? await loadProjectSourceConfig(projectDir) : null;
+  const effectiveConfig = await loadEffectiveSourceConfig(projectDir);
 
   const resolvedConfig = await resolveSource(undefined, projectDir);
   const primary: SourceEntry = {
@@ -253,8 +276,8 @@ export async function resolveAllSources(
   const extras: SourceEntry[] = [];
   const seenNames = new Set<string>();
 
-  if (projectConfig?.sources) {
-    for (const source of projectConfig.sources) {
+  if (effectiveConfig?.sources) {
+    for (const source of effectiveConfig.sources) {
       if (!seenNames.has(source.name)) {
         seenNames.add(source.name);
         extras.push(source);

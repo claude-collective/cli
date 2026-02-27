@@ -676,7 +676,7 @@ permissionMode: {{ agent.permissionMode }}
       model: agent.model ?? "opus",
       permissionMode: agent.permissionMode ?? "default",
     };
-    await writeFile(path.join(agentDir, "agent.yaml"), stringifyYaml(agentYaml));
+    await writeFile(path.join(agentDir, "metadata.yaml"), stringifyYaml(agentYaml));
 
     await writeFile(
       path.join(agentDir, "intro.md"),

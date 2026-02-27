@@ -138,6 +138,7 @@ describe("plugin-info", () => {
     it("should return local installation info", async () => {
       const installation: Installation = {
         mode: "local",
+        scope: "project",
         configPath: "/project/.claude-src/config.yaml",
         agentsDir: "/project/.claude/agents",
         skillsDir: "/project/.claude/skills",
@@ -188,6 +189,7 @@ describe("plugin-info", () => {
     it("should return plugin installation info", async () => {
       const installation: Installation = {
         mode: "plugin",
+        scope: "project",
         configPath: "/project/.claude-src/config.yaml",
         agentsDir: "/project/.claude/agents",
         skillsDir: "/project/.claude/plugins",
@@ -240,6 +242,7 @@ describe("plugin-info", () => {
     it("should use default name when local config has no name", async () => {
       const installation: Installation = {
         mode: "local",
+        scope: "project",
         configPath: "/project/.claude-src/config.yaml",
         agentsDir: "/project/.claude/agents",
         skillsDir: "/project/.claude/skills",
@@ -266,6 +269,7 @@ describe("plugin-info", () => {
     it("should use default name when loadProjectConfig returns null", async () => {
       const installation: Installation = {
         mode: "local",
+        scope: "project",
         configPath: "/project/.claude-src/config.yaml",
         agentsDir: "/project/.claude/agents",
         skillsDir: "/project/.claude/skills",
@@ -286,6 +290,7 @@ describe("plugin-info", () => {
     it("should handle readdir errors gracefully for skills", async () => {
       const installation: Installation = {
         mode: "local",
+        scope: "project",
         configPath: "/project/.claude-src/config.yaml",
         agentsDir: "/project/.claude/agents",
         skillsDir: "/project/.claude/skills",

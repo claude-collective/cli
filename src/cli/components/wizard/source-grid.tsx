@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Box, type DOMElement, Text, measureElement, useInput } from "ink";
+import React, { useCallback } from "react";
+import { Box, Text, useInput } from "ink";
 import type { BoundSkillCandidate, SkillAlias, SkillId } from "../../types/index.js";
-import { CLI_COLORS, SCROLL_VIEWPORT } from "../../consts.js";
+import { CLI_COLORS } from "../../consts.js";
 import { useFocusedListItem } from "../hooks/use-focused-list-item.js";
+import { useSectionScroll } from "../hooks/use-section-scroll.js";
 import { useSourceGridSearchModal } from "../hooks/use-source-grid-search-modal.js";
 import { SearchModal } from "./search-modal.js";
 
@@ -163,52 +164,11 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
     initialCol: defaultFocusedCol,
   });
 
-  const sectionRefs = useRef<(DOMElement | null)[]>([]);
-  const [sectionHeights, setSectionHeights] = useState<number[]>([]);
-  const [scrollTopPx, setScrollTopPx] = useState(0);
-
-  const setSectionRef = useCallback((index: number, el: DOMElement | null) => {
-    sectionRefs.current[index] = el;
-  }, []);
-
-  useEffect(() => {
-    const heights = sectionRefs.current.map((el) => {
-      if (el) {
-        const { height } = measureElement(el);
-        return height;
-      }
-      return 0;
-    });
-    setSectionHeights((prev) => {
-      if (prev.length === heights.length && prev.every((h, i) => h === heights[i])) {
-        return prev;
-      }
-      return heights;
-    });
+  const { setSectionRef, scrollEnabled, scrollTopPx } = useSectionScroll({
+    sectionCount: rows.length,
+    focusedIndex: focusedRow,
+    availableHeight,
   });
-
-  const scrollEnabled = availableHeight > 0 && availableHeight >= SCROLL_VIEWPORT.MIN_VIEWPORT_ROWS;
-
-  useEffect(() => {
-    if (!scrollEnabled || sectionHeights.length === 0) return;
-
-    let topOfFocused = 0;
-    for (let i = 0; i < focusedRow; i++) {
-      topOfFocused += sectionHeights[i] ?? 0;
-    }
-    const focusedHeight = sectionHeights[focusedRow] ?? 0;
-    const bottomOfFocused = topOfFocused + focusedHeight;
-
-    setScrollTopPx((prev) => {
-      if (topOfFocused < prev) {
-        return topOfFocused;
-      }
-      if (bottomOfFocused > prev + availableHeight) {
-        return bottomOfFocused - availableHeight;
-      }
-      return prev;
-    });
-  }, [focusedRow, sectionHeights, scrollEnabled, availableHeight]);
 
   useInput(
     useCallback(
@@ -266,8 +226,10 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
     );
   }
 
+  const noShrink = scrollEnabled ? { flexShrink: 0 } : {};
+
   const sectionElements = rows.map((row, rowIndex) => (
-    <Box key={row.skillId} ref={(el) => setSectionRef(rowIndex, el)} flexShrink={0}>
+    <Box key={row.skillId} ref={(el) => setSectionRef(rowIndex, el)} {...noShrink}>
       <SourceSection
         row={row}
         isFocused={rowIndex === focusedRow}
@@ -286,22 +248,13 @@ export const SourceGrid: React.FC<SourceGridProps> = ({
     />
   );
 
-  // When no height constraint, render flat (tests, or before first measurement)
-  if (!scrollEnabled) {
-    return (
-      <Box flexDirection="column" flexGrow={1}>
-        <Box flexDirection="column" flexGrow={1} overflow="hidden">
-          {sectionElements}
-        </Box>
-        {searchModalElement}
-      </Box>
-    );
-  }
-
   return (
-    <Box flexDirection="column" height={availableHeight}>
+    <Box
+      flexDirection="column"
+      {...(scrollEnabled ? { height: availableHeight } : { flexGrow: 1 })}
+    >
       <Box flexDirection="column" overflow="hidden" flexGrow={1}>
-        <Box flexDirection="column" marginTop={scrollTopPx > 0 ? -scrollTopPx : 0} flexShrink={0}>
+        <Box flexDirection="column" marginTop={scrollTopPx > 0 ? -scrollTopPx : 0} {...noShrink}>
           {sectionElements}
         </Box>
       </Box>

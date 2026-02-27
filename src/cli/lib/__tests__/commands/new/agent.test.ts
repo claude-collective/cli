@@ -23,12 +23,12 @@ describe("buildAgentPrompt", () => {
   it("should include custom: true instruction", () => {
     const result = buildAgentPrompt("my-agent", "test purpose", "/output/dir");
     expect(result).toContain("`custom: true`");
-    expect(result).toContain("agent.yaml");
+    expect(result).toContain("metadata.yaml");
   });
 
   it("should include all required instructions", () => {
     const result = buildAgentPrompt("my-agent", "test purpose", "/output/dir");
-    expect(result).toContain("agent.yaml");
+    expect(result).toContain("metadata.yaml");
     expect(result).toContain("intro.md");
     expect(result).toContain("workflow.md");
     expect(result).toContain("examples.md");

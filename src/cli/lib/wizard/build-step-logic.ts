@@ -40,13 +40,9 @@ export function validateBuildStep(
 }
 
 export function computeOptionState(skill: {
-  disabled: boolean;
   discouraged: boolean;
   recommended: boolean;
 }): OptionState {
-  if (skill.disabled) {
-    return "disabled";
-  }
   if (skill.discouraged) {
     return "discouraged";
   }
@@ -61,16 +57,11 @@ export function getSkillDisplayLabel(skill: { displayName?: string; id: string }
 }
 
 function getStateReason(skill: {
-  disabled: boolean;
-  disabledReason?: string;
   discouraged: boolean;
   discouragedReason?: string;
   recommended: boolean;
   recommendedReason?: string;
 }): string | undefined {
-  if (skill.disabled && skill.disabledReason) {
-    return skill.disabledReason;
-  }
   if (skill.discouraged && skill.discouragedReason) {
     return skill.discouragedReason;
   }
@@ -114,7 +105,6 @@ export function buildCategoriesForDomain(
   domain: Domain,
   allSelections: SkillId[],
   matrix: MergedSkillsMatrix,
-  expertMode: boolean,
   selections: SubcategorySelections,
   installedSkillIds?: SkillId[],
 ): CategoryRow[] {
@@ -133,9 +123,7 @@ export function buildCategoriesForDomain(
   );
 
   const categoryRows: CategoryRow[] = subcategories.map((cat) => {
-    const skillOptions = getAvailableSkills(cat.id, allSelections, matrix, {
-      expertMode,
-    });
+    const skillOptions = getAvailableSkills(cat.id, allSelections, matrix);
 
     const useFrameworkFilter =
       domain === WEB_DOMAIN_ID && cat.id !== FRAMEWORK_SUBCATEGORY_ID && frameworkSelected;

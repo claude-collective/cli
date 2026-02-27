@@ -341,13 +341,9 @@ export type SkillOption = {
   id: SkillId;
   displayName?: SkillDisplayName;
   description: string;
-  /** True if a conflict rule prevents selection (grayed out in UI) */
-  disabled: boolean;
-  /** Explains which conflict rule caused the disable (shown as tooltip) */
-  disabledReason?: string;
-  /** True if a discourage rule applies (shown with warning indicator) */
+  /** True if a discourage rule, conflict, or unmet requirement applies (shown with warning indicator) */
   discouraged: boolean;
-  /** Explains which discourage rule applies */
+  /** Explains which discourage/conflict/requirement rule applies */
   discouragedReason?: string;
   /** True if a recommend rule from another selected skill suggests this one */
   recommended: boolean;

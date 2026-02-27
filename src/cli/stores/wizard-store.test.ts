@@ -37,11 +37,6 @@ describe("WizardStore", () => {
       expect(selectedStackId).toBeNull();
     });
 
-    it("should have expert mode off", () => {
-      const { expertMode } = useWizardStore.getState();
-      expect(expertMode).toBe(false);
-    });
-
     it("should default to local install mode", () => {
       const { installMode } = useWizardStore.getState();
       expect(installMode).toBe("local");
@@ -224,6 +219,108 @@ describe("WizardStore", () => {
       expect(store.getTechnologyCount()).toBe(1);
       expect(store.getAllSelectedTechnologies()).toEqual(["api-framework-hono"]);
     });
+
+    it("should restore stack skills when re-toggling a domain ON after populateFromStack", () => {
+      const store = useWizardStore.getState();
+
+      const stack: Parameters<typeof store.populateFromStack>[0] = {
+        agents: {
+          web: {
+            "web-framework": [sa("web-framework-react", true)],
+            "web-client-state": [sa("web-state-zustand")],
+          },
+          api: { "api-api": [sa("api-framework-hono", true)] },
+        },
+      };
+      const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
+        "web-framework": { domain: "web" },
+        "web-client-state": { domain: "web" },
+        "api-api": { domain: "api" },
+      };
+
+      store.populateFromStack(stack, categories);
+
+      // Deselect web domain (clears its skills)
+      store.toggleDomain("web");
+      expect(useWizardStore.getState().domainSelections.web).toBeUndefined();
+
+      // Re-select web domain (should restore stack skills)
+      store.toggleDomain("web");
+      const { domainSelections } = useWizardStore.getState();
+      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
+      expect(domainSelections.web!["web-client-state"]).toEqual(["web-state-zustand"]);
+    });
+
+    it("should restore stack skills when re-toggling a domain ON after populateFromSkillIds", () => {
+      const store = useWizardStore.getState();
+
+      const skills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
+        "web-framework-react": { category: "web-framework", displayName: "React" },
+        "api-framework-hono": { category: "api-api", displayName: "Hono" },
+      };
+      const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
+        "web-framework": { domain: "web" },
+        "api-api": { domain: "api" },
+      };
+
+      store.populateFromSkillIds(["web-framework-react", "api-framework-hono"], skills, categories);
+
+      // Deselect web domain (clears its skills)
+      store.toggleDomain("web");
+      expect(useWizardStore.getState().domainSelections.web).toBeUndefined();
+
+      // Re-select web domain (should restore stack skills)
+      store.toggleDomain("web");
+      const { domainSelections } = useWizardStore.getState();
+      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
+    });
+
+    it("should not restore skills when no stack was populated", () => {
+      const store = useWizardStore.getState();
+
+      // Manually toggle domain and add skills (no stack)
+      store.toggleDomain("web");
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+
+      // Deselect web domain
+      store.toggleDomain("web");
+
+      // Re-select web domain — no stack snapshot, so no restoration
+      store.toggleDomain("web");
+      const { domainSelections } = useWizardStore.getState();
+      expect(domainSelections.web).toBeUndefined();
+      expect(store.getAllSelectedTechnologies()).toEqual([]);
+    });
+
+    it("should not affect other domains when restoring stack skills for one domain", () => {
+      const store = useWizardStore.getState();
+
+      const stack: Parameters<typeof store.populateFromStack>[0] = {
+        agents: {
+          web: { "web-framework": [sa("web-framework-react", true)] },
+          api: { "api-api": [sa("api-framework-hono", true)] },
+        },
+      };
+      const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
+        "web-framework": { domain: "web" },
+        "api-api": { domain: "api" },
+      };
+
+      store.populateFromStack(stack, categories);
+
+      // Manually change api skills
+      store.toggleTechnology("api", "api-api", "api-framework-hono", true); // deselect
+      store.toggleTechnology("api", "api-api", "api-framework-express" as SkillId, true); // select new
+
+      // Toggle web off then on
+      store.toggleDomain("web");
+      store.toggleDomain("web");
+
+      // Web should be restored from stack, api should keep manual changes
+      const { domainSelections } = useWizardStore.getState();
+      expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
+      expect(domainSelections.api!["api-api"]).toEqual(["api-framework-express"]);
+    });
   });
 
   describe("technology selection", () => {
@@ -338,25 +435,6 @@ describe("WizardStore", () => {
   });
 
   describe("mode toggles", () => {
-    it("should toggle expert mode on", () => {
-      const store = useWizardStore.getState();
-
-      store.toggleExpertMode();
-
-      const { expertMode } = useWizardStore.getState();
-      expect(expertMode).toBe(true);
-    });
-
-    it("should toggle expert mode off", () => {
-      const store = useWizardStore.getState();
-
-      store.toggleExpertMode();
-      store.toggleExpertMode();
-
-      const { expertMode } = useWizardStore.getState();
-      expect(expertMode).toBe(false);
-    });
-
     it("should toggle install mode to plugin", () => {
       const store = useWizardStore.getState();
 
@@ -604,7 +682,6 @@ describe("WizardStore", () => {
       store.setApproach("scratch");
       store.selectStack("nextjs-fullstack");
       store.toggleDomain("web");
-      store.toggleExpertMode();
 
       store.reset();
 
@@ -613,7 +690,6 @@ describe("WizardStore", () => {
       expect(state.approach).toBeNull();
       expect(state.selectedStackId).toBeNull();
       expect(state.selectedDomains).toEqual([]);
-      expect(state.expertMode).toBe(false);
       expect(state.installMode).toBe("local");
       expect(state.history).toEqual([]);
     });
@@ -636,7 +712,7 @@ describe("WizardStore", () => {
 
       const { selectedDomains, domainSelections } = useWizardStore.getState();
 
-      expect(selectedDomains).toEqual(["web", "api", "cli", "mobile", "shared"]);
+      expect(selectedDomains).toEqual(["web", "api", "mobile", "cli", "shared"]);
 
       expect(domainSelections.web).toBeDefined();
       expect(domainSelections.web!["web-framework"]).toEqual(["web-framework-react"]);
@@ -1020,7 +1096,6 @@ describe("WizardStore", () => {
       expect(selectedAgents).toContain("cli-developer");
       expect(selectedAgents).toContain("cli-tester");
       expect(selectedAgents).toContain("cli-reviewer");
-      expect(selectedAgents).toContain("cli-migrator");
     });
 
     it("should never include optional agents regardless of domains", () => {

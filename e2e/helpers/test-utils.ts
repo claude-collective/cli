@@ -276,9 +276,13 @@ export async function createEditableProject(
       `---\nname: ${skillId}\ndescription: Test skill for E2E\n---\n\n# ${skillId}\n\nTest content.\n`,
     );
 
+    // Derive category from skill ID (e.g., "web-framework-react" -> "web-framework")
+    const parts = skillId.split("-");
+    const category = parts.slice(0, 2).join("-");
+
     await writeFile(
       path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-      `author: "@test"\ndisplayName: ${skillId}\ncontentHash: "e2e-hash-${skillId}"\n`,
+      `author: "@test"\ndisplayName: ${skillId}\ncategory: ${category}\ncontentHash: "e2e-hash-${skillId}"\n`,
     );
   }
 

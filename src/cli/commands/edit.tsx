@@ -3,7 +3,7 @@ import { render } from "ink";
 
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
-import { ASCII_LOGO, CLI_BIN_NAME } from "../consts.js";
+import { ASCII_LOGO, CLI_BIN_NAME, SOURCE_DISPLAY_NAMES } from "../consts.js";
 import { getAgentDefinitions, recompileAgents } from "../lib/agents/index.js";
 import { loadProjectConfig } from "../lib/configuration/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
@@ -14,13 +14,15 @@ import { archiveLocalSkill, restoreArchivedSkill } from "../lib/skills/index.js"
 import type { SkillId } from "../types/index.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { claudePluginInstall, claudePluginUninstall } from "../utils/exec.js";
+import {
+  enableBuffering,
+  drainBuffer,
+  disableBuffering,
+  pushBufferMessage,
+  type StartupMessage,
+} from "../utils/logger.js";
 import { ERROR_MESSAGES, INFO_MESSAGES, STATUS_MESSAGES } from "../utils/messages.js";
 import { typedEntries } from "../utils/typed-object.js";
-
-const SOURCE_DISPLAY_NAMES: Record<string, string> = {
-  public: "Public",
-  local: "Local",
-};
 
 function formatSourceDisplayName(sourceName: string): string {
   return SOURCE_DISPLAY_NAMES[sourceName] ?? sourceName;
@@ -67,14 +69,17 @@ export default class Edit extends BaseCommand {
       });
     }
 
-    const projectDir = process.cwd();
+    const projectDir = installation.projectDir;
     const isPluginMode = installation.mode === "plugin";
+    const pluginScope = installation.scope === "global" ? "user" : "project";
 
-    const modeLabel = installation.mode === "local" ? "Local" : "Plugin";
-    this.log(`Edit ${modeLabel} Skills\n`);
+    if (installation.scope === "global") {
+      this.log("No project installation found. Using global installation from ~/.claude-src/\n");
+    }
 
-    this.log(STATUS_MESSAGES.LOADING_MARKETPLACE_SOURCE);
+    enableBuffering();
     let sourceResult;
+    let startupMessages: StartupMessage[] = [];
     try {
       sourceResult = await loadSkillsMatrixFromSource({
         sourceFlag: flags.source,
@@ -83,16 +88,17 @@ export default class Edit extends BaseCommand {
       });
 
       const sourceInfo = sourceResult.isLocal ? "local" : sourceResult.sourceConfig.sourceOrigin;
-      this.log(
-        `✓ Loaded ${Object.keys(sourceResult.matrix.skills).length} skills (${sourceInfo})\n`,
+      pushBufferMessage(
+        "info",
+        `Loaded ${Object.keys(sourceResult.matrix.skills).length} skills (${sourceInfo})`,
       );
     } catch (error) {
+      disableBuffering();
       this.handleError(error);
     }
 
     const projectConfig = await loadProjectConfig(projectDir);
 
-    this.log("Reading current skills...");
     let currentSkillIds: SkillId[];
     try {
       const discoveredSkills = await discoverAllPluginSkills(projectDir);
@@ -102,13 +108,17 @@ export default class Edit extends BaseCommand {
       // In local mode, plugin discovery returns empty — fall back to project config skills
       if (currentSkillIds.length === 0 && projectConfig?.config?.skills?.length) {
         currentSkillIds = projectConfig.config.skills;
-        this.log(`✓ Found ${currentSkillIds.length} skills from project config\n`);
+        pushBufferMessage("info", `Found ${currentSkillIds.length} skills from project config`);
       } else {
-        this.log(`✓ Current plugin has ${currentSkillIds.length} skills\n`);
+        pushBufferMessage("info", `Current plugin has ${currentSkillIds.length} skills`);
       }
     } catch (error) {
+      disableBuffering();
       this.handleError(error);
     }
+
+    startupMessages = drainBuffer();
+    disableBuffering();
 
     let wizardResult: WizardResultV2 | null = null;
     const marketplaceLabel = getMarketplaceLabel(sourceResult);
@@ -125,11 +135,11 @@ export default class Edit extends BaseCommand {
         logo={ASCII_LOGO}
         initialStep="build"
         initialInstallMode={initialInstallMode}
-        initialExpertMode={projectConfig?.config?.expertMode}
         initialDomains={projectConfig?.config?.domains}
         initialAgents={projectConfig?.config?.selectedAgents}
         installedSkillIds={currentSkillIds}
-        projectDir={process.cwd()}
+        projectDir={projectDir}
+        startupMessages={startupMessages}
         onComplete={(result) => {
           wizardResult = result as WizardResultV2;
         }}
@@ -217,7 +227,7 @@ export default class Edit extends BaseCommand {
         const pluginRef = `${skillId}@${sourceResult.marketplace}`;
         this.log(`Installing plugin: ${pluginRef}...`);
         try {
-          await claudePluginInstall(pluginRef, "project", projectDir);
+          await claudePluginInstall(pluginRef, pluginScope, projectDir);
         } catch (error) {
           this.warn(`Failed to install plugin ${pluginRef}: ${getErrorMessage(error)}`);
         }
@@ -225,7 +235,7 @@ export default class Edit extends BaseCommand {
       for (const skillId of removedSkills) {
         this.log(`Uninstalling plugin: ${skillId}...`);
         try {
-          await claudePluginUninstall(skillId, "project", projectDir);
+          await claudePluginUninstall(skillId, pluginScope, projectDir);
         } catch (error) {
           this.warn(`Failed to uninstall plugin ${skillId}: ${getErrorMessage(error)}`);
         }

@@ -1,6 +1,7 @@
-import { Box, Text } from "ink";
+import { Box, Static, Text } from "ink";
 import React, { Fragment } from "react";
 import { CLI_COLORS, DEFAULT_PLUGIN_NAME } from "../../consts.js";
+import type { StartupMessage } from "../../utils/logger.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import { useTerminalDimensions } from "../hooks/use-terminal-dimensions.js";
 import { HelpModal } from "./help-modal.js";
@@ -79,6 +80,7 @@ type WizardLayoutProps = {
   version?: string;
   marketplaceLabel?: string;
   logo?: string;
+  startupMessages?: StartupMessage[];
   children: React.ReactNode;
 };
 
@@ -86,6 +88,7 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
   version,
   marketplaceLabel,
   logo,
+  startupMessages,
   children,
 }) => {
   const store = useWizardStore();
@@ -93,54 +96,70 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
   const { rows: terminalHeight } = useTerminalDimensions();
 
   return (
-    <Box flexDirection="column" paddingX={1} height={terminalHeight}>
-      {logo && (
-        <Box flexDirection="row" marginTop={1} columnGap={1}>
-          <Text>{logo}</Text>
+    <>
+      {startupMessages && startupMessages.length > 0 && (
+        <Static items={startupMessages}>
+          {(msg, index) => (
+            <Box key={index}>
+              <Text
+                color={
+                  msg.level === "warn" ? "yellow" : msg.level === "error" ? "red" : undefined
+                }
+              >
+                {msg.level === "warn" ? `  Warning: ${msg.text}` : msg.text}
+              </Text>
+            </Box>
+          )}
+        </Static>
+      )}
+      <Box flexDirection="column" paddingX={1} height={terminalHeight}>
+        {logo && (
+          <Box flexDirection="row" marginTop={1} columnGap={1}>
+            <Text>{logo}</Text>
+          </Box>
+        )}
+        <Box>
+          <Text dimColor>Marketplace: </Text>
+          <Text bold>{marketplaceLabel || `${DEFAULT_PLUGIN_NAME} (public)`}</Text>
         </Box>
-      )}
-      <Box>
-        <Text dimColor>Marketplace: </Text>
-        <Text bold>{marketplaceLabel || `${DEFAULT_PLUGIN_NAME} (public)`}</Text>
+        <WizardTabs
+          steps={WIZARD_STEPS}
+          currentStep={store.step}
+          completedSteps={completedSteps}
+          skippedSteps={skippedSteps}
+          version={version}
+        />
+        {store.showHelp ? (
+          <HelpModal currentStep={store.step} />
+        ) : (
+          <>
+            <Box flexDirection="column" flexGrow={1} flexBasis={0} marginTop={1}>
+              {children}
+            </Box>
+            <Box paddingX={1} columnGap={2} marginTop={2}>
+              <DefinitionItem
+                label="Labels"
+                values={["D"]}
+                isVisible={store.step === "build"}
+                isActive={store.showLabels}
+              />
+              <DefinitionItem
+                label="Plugin mode"
+                values={["P"]}
+                isActive={store.installMode === "plugin"}
+              />
+              <DefinitionItem
+                label="Settings"
+                values={["G"]}
+                isVisible={store.step === "sources"}
+                isActive={store.showSettings}
+              />
+              <DefinitionItem label="Help" values={["?"]} />
+            </Box>
+            <WizardFooter />
+          </>
+        )}
       </Box>
-      <WizardTabs
-        steps={WIZARD_STEPS}
-        currentStep={store.step}
-        completedSteps={completedSteps}
-        skippedSteps={skippedSteps}
-        version={version}
-      />
-      {store.showHelp ? (
-        <HelpModal currentStep={store.step} />
-      ) : (
-        <>
-          <Box flexDirection="column" flexGrow={1} flexBasis={0} marginTop={1}>
-            {children}
-          </Box>
-          <Box paddingX={1} columnGap={2} marginTop={2}>
-            <DefinitionItem label="Expert mode" values={["E"]} isActive={store.expertMode} />
-            <DefinitionItem
-              label="Labels"
-              values={["D"]}
-              isVisible={store.step === "build"}
-              isActive={store.showLabels}
-            />
-            <DefinitionItem
-              label="Plugin mode"
-              values={["P"]}
-              isActive={store.installMode === "plugin"}
-            />
-            <DefinitionItem
-              label="Settings"
-              values={["G"]}
-              isVisible={store.step === "sources"}
-              isActive={store.showSettings}
-            />
-            <DefinitionItem label="Help" values={["?"]} />
-          </Box>
-          <WizardFooter />
-        </>
-      )}
-    </Box>
+    </>
   );
 };

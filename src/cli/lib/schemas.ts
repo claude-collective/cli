@@ -111,6 +111,9 @@ export const SUBCATEGORY_VALUES = [
 // Bridge pattern: z.ZodType<ExistingType> ensures Zod output matches our union types
 export const subcategorySchema = z.enum(SUBCATEGORY_VALUES) as z.ZodType<Subcategory>;
 
+/** Built-in subcategory values as a Set — used for record key validation in stack and category schemas */
+const SUBCATEGORY_VALUES_SET = new Set<Subcategory>(SUBCATEGORY_VALUES);
+
 export const agentNameSchema = z.enum([
   "web-developer",
   "api-developer",
@@ -119,7 +122,6 @@ export const agentNameSchema = z.enum([
   "agent-summoner",
   "documentor",
   "skill-summoner",
-  "cli-migrator",
   "pattern-scout",
   "web-pattern-critique",
   "web-pm",
@@ -462,7 +464,6 @@ const skillAssignmentElementSchema = z.union([extensibleSkillIdSchema, skillAssi
  * Uses z.record(z.string()) with superRefine for key validation because
  * z.record(z.enum()) treats all enum values as required properties.
  */
-const stackSubcategoryValues: Set<string> = new Set(SUBCATEGORY_VALUES);
 export const stackAgentConfigSchema = z
   .record(
     z.string(),
@@ -470,7 +471,7 @@ export const stackAgentConfigSchema = z
   )
   .superRefine(
     validateExtensibleRecordKeys(
-      stackSubcategoryValues,
+      SUBCATEGORY_VALUES_SET,
       customExtensions.categories,
       "subcategory",
     ),
@@ -496,8 +497,6 @@ export const projectConfigLoaderSchema = z
     author: z.string().optional(),
     /** "local" = .claude/agents, "plugin" = .claude/plugins/ (DEFAULT_PLUGIN_NAME) */
     installMode: z.enum(["local", "plugin"]).optional(),
-    /** Whether expert mode (advanced/niche skills) was enabled in the wizard */
-    expertMode: z.boolean().optional(),
     /** Selected domains from the wizard (persisted for edit mode restoration) */
     domains: z.array(extensibleDomainSchema).optional(),
     /** Selected agents from the wizard (persisted for edit mode restoration) */
@@ -532,8 +531,6 @@ export const projectConfigValidationSchema = z.object({
   author: z.string().optional(),
   /** "local" = .claude/agents, "plugin" = .claude/plugins/ (DEFAULT_PLUGIN_NAME) */
   installMode: z.enum(["local", "plugin"]),
-  /** Whether expert mode (advanced/niche skills) was enabled in the wizard */
-  expertMode: z.boolean().optional(),
   /** Selected domains from the wizard (persisted for edit mode restoration) */
   domains: z.array(domainSchema).optional(),
   /** Selected agents from the wizard (persisted for edit mode restoration) */
@@ -599,8 +596,6 @@ export const relationshipDefinitionsSchema: z.ZodType<RelationshipDefinitions> =
   alternatives: z.array(alternativeGroupSchema),
 });
 
-const builtinSubcategoryValues: Set<string> = new Set(SUBCATEGORY_VALUES);
-
 /**
  * Standalone skill-categories.yaml file schema.
  * Top-level object with version string and categories map using existing categoryDefinitionSchema.
@@ -611,7 +606,7 @@ export const skillCategoriesFileSchema = z.object({
     .record(z.string(), categoryDefinitionSchema)
     .superRefine(
       validateExtensibleRecordKeys(
-        builtinSubcategoryValues,
+        SUBCATEGORY_VALUES_SET,
         customExtensions.categories,
         "category key",
       ),
@@ -857,7 +852,7 @@ export const projectSourceConfigValidationSchema = z.object({
 // Strict validation schemas enforce all constraints and use .strict() to reject unknown fields,
 // unlike the lenient loader schemas above which use .passthrough() for forward compatibility at parse boundaries
 
-/** Strict schema for compiled agent.yaml output. Lenient id (any string) since marketplace agents may use custom identifiers. */
+/** Strict schema for compiled agent metadata.yaml output. Lenient id (any string) since marketplace agents may use custom identifiers. */
 export const agentYamlGenerationSchema = z
   .object({
     $schema: z.string().optional(),

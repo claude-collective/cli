@@ -1,5 +1,8 @@
+import React, { useState } from "react";
+
 import { Flags } from "@oclif/core";
-import { render } from "ink";
+import { render, Box, Text, useApp, useInput } from "ink";
+import os from "os";
 import path from "path";
 
 import { BaseCommand } from "../base-command.js";
@@ -12,9 +15,10 @@ import {
 import {
   installLocal,
   installPluginConfig,
-  detectInstallation as detectExistingInstallation,
+  detectProjectInstallation,
 } from "../lib/installation/index.js";
 import { checkPermissions } from "../lib/permission-checker.js";
+import { getInstallationInfo } from "../lib/plugins/plugin-info.js";
 import { hasIndividualPlugins } from "../lib/plugins/index.js";
 import {
   claudePluginInstall,
@@ -25,18 +29,184 @@ import {
   ASCII_LOGO,
   CLAUDE_DIR,
   CLI_BIN_NAME,
+  CLI_COLORS,
   DEFAULT_BRANDING,
   LOCAL_SKILLS_PATH,
 } from "../consts.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
+import { loadProjectConfig } from "../lib/configuration/project-config.js";
 import {
-  ERROR_MESSAGES,
+  enableBuffering,
+  drainBuffer,
+  disableBuffering,
+  pushBufferMessage,
+  type StartupMessage,
+} from "../utils/logger.js";
+import {
   SUCCESS_MESSAGES,
   STATUS_MESSAGES,
-  INFO_MESSAGES,
   DRY_RUN_MESSAGES,
 } from "../utils/messages.js";
+
+type DashboardOption = {
+  label: string;
+  command: string;
+};
+
+const DASHBOARD_OPTIONS: DashboardOption[] = [
+  { label: "Edit", command: "edit" },
+  { label: "Compile", command: "compile" },
+  { label: "Doctor", command: "doctor" },
+  { label: "List", command: "list" },
+];
+
+type DashboardProps = {
+  skillCount: number;
+  agentCount: number;
+  source?: string;
+  mode: string;
+  onSelect: (command: string) => void;
+  onCancel: () => void;
+};
+
+const Dashboard: React.FC<DashboardProps> = ({
+  skillCount,
+  agentCount,
+  source,
+  mode,
+  onSelect,
+  onCancel,
+}) => {
+  const { exit } = useApp();
+  const [focusIndex, setFocusIndex] = useState(0);
+
+  useInput((input, key) => {
+    if (key.escape) {
+      onCancel();
+      exit();
+      return;
+    }
+    if (key.return) {
+      onSelect(DASHBOARD_OPTIONS[focusIndex].command);
+      exit();
+      return;
+    }
+    if (key.leftArrow) {
+      setFocusIndex((i) => (i > 0 ? i - 1 : DASHBOARD_OPTIONS.length - 1));
+    }
+    if (key.rightArrow) {
+      setFocusIndex((i) => (i < DASHBOARD_OPTIONS.length - 1 ? i + 1 : 0));
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Text bold>{DEFAULT_BRANDING.NAME}</Text>
+      <Text> </Text>
+      <Text>  Skills:  {skillCount} installed</Text>
+      <Text>  Agents:  {agentCount} compiled</Text>
+      <Text>  Mode:    {mode === "plugin" ? "Plugin" : "Local"}</Text>
+      {source && <Text>  Source:  {source}</Text>}
+      <Text> </Text>
+      <Box>
+        <Text>  </Text>
+        {DASHBOARD_OPTIONS.map((option, index) => (
+          <Box key={option.command} marginRight={1}>
+            <Text
+              color={index === focusIndex ? CLI_COLORS.FOCUS : undefined}
+              bold={index === focusIndex}
+            >
+              [{option.label}]
+            </Text>
+          </Box>
+        ))}
+      </Box>
+      <Text dimColor>  Use arrow keys to select, Enter to confirm, Esc to exit</Text>
+    </Box>
+  );
+};
+
+export type DashboardData = {
+  skillCount: number;
+  agentCount: number;
+  mode: string;
+  source?: string;
+};
+
+/** Gathers dashboard data from the installation and project config. */
+export async function getDashboardData(projectDir: string): Promise<DashboardData> {
+  const [info, loaded] = await Promise.all([
+    getInstallationInfo(),
+    loadProjectConfig(projectDir),
+  ]);
+
+  // Skill count from config (canonical source of truth for installed skills)
+  const skillCount = loaded?.config?.skills?.length ?? 0;
+  // Agent count from filesystem (compiled .md files in agents dir)
+  const agentCount = info?.agentCount ?? 0;
+  const mode = info?.mode ?? loaded?.config?.installMode ?? "local";
+  const source = loaded?.config?.source;
+
+  return { skillCount, agentCount, mode, source };
+}
+
+/** Formats the dashboard summary as plain text lines (for non-interactive/test output). */
+export function formatDashboardText(data: DashboardData): string {
+  const modeLabel = data.mode === "plugin" ? "Plugin" : "Local";
+  const lines = [
+    DEFAULT_BRANDING.NAME,
+    "",
+    `  Skills:  ${data.skillCount} installed`,
+    `  Agents:  ${data.agentCount} compiled`,
+    `  Mode:    ${modeLabel}`,
+  ];
+  if (data.source) {
+    lines.push(`  Source:  ${data.source}`);
+  }
+  lines.push("");
+  lines.push(`  [Edit]  [Compile]  [Doctor]  [List]`);
+  return lines.join("\n");
+}
+
+/**
+ * Shows the project dashboard and returns the selected command (or null if cancelled).
+ * In non-interactive environments (no TTY), prints the summary text and returns null.
+ */
+export async function showDashboard(
+  projectDir: string,
+  log?: (message: string) => void,
+): Promise<string | null> {
+  const data = await getDashboardData(projectDir);
+
+  // Non-interactive: print text summary and exit (CI, piped, tests)
+  if (!process.stdin.isTTY) {
+    const output = log ?? console.log;
+    output(formatDashboardText(data));
+    return null;
+  }
+
+  let selectedCommand: string | null = null;
+
+  const { waitUntilExit } = render(
+    <Dashboard
+      skillCount={data.skillCount}
+      agentCount={data.agentCount}
+      source={data.source}
+      mode={data.mode}
+      onSelect={(command) => {
+        selectedCommand = command;
+      }}
+      onCancel={() => {
+        selectedCommand = null;
+      }}
+    />,
+  );
+
+  await waitUntilExit();
+
+  return selectedCommand;
+}
 
 export default class Init extends BaseCommand {
   static summary = `Initialize ${DEFAULT_BRANDING.NAME} in this project`;
@@ -47,6 +217,10 @@ export default class Init extends BaseCommand {
     {
       description: "Start the setup wizard",
       command: "<%= config.bin %> <%= command.id %>",
+    },
+    {
+      description: "Install globally to home directory",
+      command: "<%= config.bin %> <%= command.id %> --global",
     },
     {
       description: "Initialize from a custom marketplace",
@@ -64,6 +238,11 @@ export default class Init extends BaseCommand {
 
   static flags = {
     ...BaseCommand.baseFlags,
+    global: Flags.boolean({
+      char: "g",
+      description: "Install globally to home directory (~/.claude-src/)",
+      default: false,
+    }),
     refresh: Flags.boolean({
       description: "Force refresh from remote source",
       default: false,
@@ -72,26 +251,32 @@ export default class Init extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Init);
-    const projectDir = process.cwd();
+    const projectDir = flags.global ? os.homedir() : process.cwd();
 
-    if (flags["dry-run"]) {
-      this.log(`${DRY_RUN_MESSAGES.PREVIEW_NO_FILES_CREATED}\n`);
-    }
-
+    // For "already initialized" check, only look at the target directory (no global fallback)
     const individualPluginsExist = await hasIndividualPlugins(projectDir);
-    const existingInstallation = await detectExistingInstallation(projectDir);
+    const existingInstallation = await detectProjectInstallation(projectDir);
 
     if (individualPluginsExist || existingInstallation) {
-      const location = individualPluginsExist
-        ? `.claude/settings.json`
-        : (existingInstallation?.configPath ?? projectDir);
-      this.warn(`${DEFAULT_BRANDING.NAME} is already initialized at ${location}`);
-      this.log(`Use '${CLI_BIN_NAME} edit' to modify skills.`);
-      this.log(INFO_MESSAGES.NO_CHANGES_MADE);
+      const selectedCommand = await showDashboard(projectDir, (msg) => this.log(msg));
+      if (selectedCommand) {
+        await this.config.runCommand(selectedCommand);
+      }
       return;
     }
 
+    if (flags.global) {
+      this.log("Installing globally to home directory...");
+    }
+
+    enableBuffering();
+
+    if (flags["dry-run"]) {
+      pushBufferMessage("info", DRY_RUN_MESSAGES.PREVIEW_NO_FILES_CREATED);
+    }
+
     let sourceResult: SourceLoadResult;
+    let startupMessages: StartupMessage[] = [];
     try {
       sourceResult = await loadSkillsMatrixFromSource({
         sourceFlag: flags.source,
@@ -99,10 +284,14 @@ export default class Init extends BaseCommand {
         forceRefresh: flags.refresh,
       });
     } catch (error) {
+      disableBuffering();
       this.error(getErrorMessage(error), {
         exit: EXIT_CODES.ERROR,
       });
     }
+
+    startupMessages = drainBuffer();
+    disableBuffering();
 
     let wizardResult: WizardResultV2 | null = null;
 
@@ -113,9 +302,9 @@ export default class Init extends BaseCommand {
         version={this.config.version}
         marketplaceLabel={marketplaceLabel}
         logo={ASCII_LOGO}
-        projectDir={process.cwd()}
+        projectDir={projectDir}
         initialInstallMode={sourceResult.marketplace ? "plugin" : "local"}
-        initialExpertMode={!!flags.source}
+        startupMessages={startupMessages}
         onComplete={(result) => {
           // Boundary cast: Ink render callback returns unknown result type
           wizardResult = result as WizardResultV2;
@@ -144,9 +333,10 @@ export default class Init extends BaseCommand {
   private async handleInstallation(
     result: WizardResultV2,
     sourceResult: SourceLoadResult,
-    flags: { "dry-run": boolean; source?: string; refresh: boolean },
+    flags: { "dry-run": boolean; source?: string; refresh: boolean; global: boolean },
   ): Promise<void> {
-    const projectDir = process.cwd();
+    const projectDir = flags.global ? os.homedir() : process.cwd();
+    const pluginScope = flags.global ? "user" : "project";
     const dryRun = flags["dry-run"];
 
     this.log("\n");
@@ -163,14 +353,14 @@ export default class Init extends BaseCommand {
             `[dry-run] Would install stack "${result.selectedStackId}" from marketplace "${sourceResult.marketplace}"`,
           );
           this.log(
-            `[dry-run]   claude plugin install ${result.selectedStackId}@${sourceResult.marketplace} --scope project`,
+            `[dry-run]   claude plugin install ${result.selectedStackId}@${sourceResult.marketplace} --scope ${pluginScope}`,
           );
         } else {
           this.log(
             `[dry-run] Would compile and install stack "${result.selectedStackId}" as a native plugin`,
           );
           this.log(
-            `[dry-run]   claude plugin install ./compiled-stack/${result.selectedStackId} --scope project`,
+            `[dry-run]   claude plugin install ./compiled-stack/${result.selectedStackId} --scope ${pluginScope}`,
           );
           this.log(
             `[dry-run] Stack includes ${result.selectedSkills.length} skills and agents bundled together`,
@@ -182,7 +372,7 @@ export default class Init extends BaseCommand {
         );
         for (const skillId of result.selectedSkills) {
           this.log(
-            `[dry-run]   claude plugin install ${skillId}@${sourceResult.marketplace} --scope project`,
+            `[dry-run]   claude plugin install ${skillId}@${sourceResult.marketplace} --scope ${pluginScope}`,
           );
         }
         const localAgentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
@@ -208,25 +398,26 @@ export default class Init extends BaseCommand {
 
     if (result.installMode === "plugin") {
       if (sourceResult.marketplace) {
-        await this.installIndividualPlugins(result, sourceResult, flags);
+        await this.installIndividualPlugins(result, sourceResult, flags, projectDir, pluginScope);
       } else {
         this.warn("Plugin Mode requires a marketplace for individual skill installation.");
         this.log(`Falling back to Local Mode (copying to .claude/skills/)...`);
         this.log("To use Plugin Mode, either select a stack or configure a marketplace source.\n");
-        await this.installLocalMode(result, sourceResult, flags);
+        await this.installLocalMode(result, sourceResult, flags, projectDir);
       }
       return;
     }
 
-    await this.installLocalMode(result, sourceResult, flags);
+    await this.installLocalMode(result, sourceResult, flags, projectDir);
   }
 
   private async installIndividualPlugins(
     result: WizardResultV2,
     sourceResult: SourceLoadResult,
     flags: { source?: string },
+    projectDir: string,
+    pluginScope: "project" | "user",
   ): Promise<void> {
-    const projectDir = process.cwd();
 
     if (sourceResult.marketplace) {
       const marketplaceExists = await claudePluginMarketplaceExists(sourceResult.marketplace);
@@ -249,7 +440,7 @@ export default class Init extends BaseCommand {
     for (const skillId of result.selectedSkills) {
       const pluginRef = `${skillId}@${sourceResult.marketplace}`;
       try {
-        await claudePluginInstall(pluginRef, "project", projectDir);
+        await claudePluginInstall(pluginRef, pluginScope, projectDir);
         this.log(`  Installed ${pluginRef}`);
       } catch (error) {
         this.error(`Failed to install plugin ${pluginRef}: ${getErrorMessage(error)}`, {
@@ -306,8 +497,8 @@ export default class Init extends BaseCommand {
     result: WizardResultV2,
     sourceResult: SourceLoadResult,
     flags: { source?: string },
+    projectDir: string,
   ): Promise<void> {
-    const projectDir = process.cwd();
     const matrix = sourceResult.matrix;
 
     this.log("Copying skills to local directory...");

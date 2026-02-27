@@ -397,7 +397,6 @@ stacks:
           - id: meta-methodology-context-management
             preloaded: true
       cli-tester: {}
-      cli-migrator: {}
     philosophy: Ship fast, iterate faster
 
   - id: angular-stack

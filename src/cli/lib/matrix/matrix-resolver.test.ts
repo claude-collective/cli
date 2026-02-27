@@ -2,14 +2,12 @@ import { describe, it, expect } from "vitest";
 import {
   resolveAlias,
   getDependentSkills,
-  isDisabled,
   isDiscouraged,
+  getDiscourageReason,
   isRecommended,
-  getDisableReason,
   validateSelection,
   getSkillsByCategory,
   getAvailableSkills,
-  isCategoryAllDisabled,
 } from "./matrix-resolver";
 import type {
   CategoryDefinition,
@@ -57,123 +55,6 @@ describe("resolveAlias", () => {
   });
 });
 
-describe("isDisabled", () => {
-  it("should return false for skill with no conflicts or requirements", () => {
-    const skill = createMockSkill("web-skill-a", "web-framework");
-    const matrix = createMockMatrix({ "web-skill-a": skill });
-
-    const result = isDisabled("web-skill-a", [], matrix);
-    expect(result).toBe(false);
-  });
-
-  it("should return true if skill conflicts with a selected skill", () => {
-    const skillA = createMockSkill("web-skill-a", "web-framework", {
-      conflictsWith: [{ skillId: "web-skill-b", reason: "Incompatible" }],
-    });
-    const skillB = createMockSkill("web-skill-b", "web-framework");
-    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
-
-    const result = isDisabled("web-skill-a", ["web-skill-b"], matrix);
-    expect(result).toBe(true);
-  });
-
-  it("should return true if selected skill conflicts with this skill", () => {
-    const skillA = createMockSkill("web-skill-a", "web-framework");
-    const skillB = createMockSkill("web-skill-b", "web-framework", {
-      conflictsWith: [{ skillId: "web-skill-a", reason: "Incompatible" }],
-    });
-    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
-
-    const result = isDisabled("web-skill-a", ["web-skill-b"], matrix);
-    expect(result).toBe(true);
-  });
-
-  it("should return true if required skills are not selected (AND logic)", () => {
-    const skillA = createMockSkill("web-skill-a", "web-framework", {
-      requires: [
-        {
-          skillIds: ["web-skill-b", "web-skill-c"],
-          needsAny: false,
-          reason: "Needs both",
-        },
-      ],
-    });
-    const skillB = createMockSkill("web-skill-b", "web-framework");
-    const skillC = createMockSkill("web-skill-c", "web-framework");
-    const matrix = createMockMatrix({
-      "web-skill-a": skillA,
-      "web-skill-b": skillB,
-      "web-skill-c": skillC,
-    });
-
-    // Only skill-b selected, but needs both
-    const result = isDisabled("web-skill-a", ["web-skill-b"], matrix);
-    expect(result).toBe(true);
-  });
-
-  it("should return false if required skills are selected (AND logic)", () => {
-    const skillA = createMockSkill("web-skill-a", "web-framework", {
-      requires: [
-        {
-          skillIds: ["web-skill-b", "web-skill-c"],
-          needsAny: false,
-          reason: "Needs both",
-        },
-      ],
-    });
-    const skillB = createMockSkill("web-skill-b", "web-framework");
-    const skillC = createMockSkill("web-skill-c", "web-framework");
-    const matrix = createMockMatrix({
-      "web-skill-a": skillA,
-      "web-skill-b": skillB,
-      "web-skill-c": skillC,
-    });
-
-    const result = isDisabled("web-skill-a", ["web-skill-b", "web-skill-c"], matrix);
-    expect(result).toBe(false);
-  });
-
-  it("should return true if none of the required skills are selected (OR logic)", () => {
-    const skillA = createMockSkill("web-skill-a", "web-framework", {
-      requires: [
-        {
-          skillIds: ["web-skill-b", "web-skill-c"],
-          needsAny: true,
-          reason: "Needs one",
-        },
-      ],
-    });
-    const matrix = createMockMatrix({
-      "web-skill-a": skillA,
-      "web-skill-b": createMockSkill("web-skill-b", "web-framework"),
-      "web-skill-c": createMockSkill("web-skill-c", "web-framework"),
-    });
-
-    const result = isDisabled("web-skill-a", [], matrix);
-    expect(result).toBe(true);
-  });
-
-  it("should return false if any required skill is selected (OR logic)", () => {
-    const skillA = createMockSkill("web-skill-a", "web-framework", {
-      requires: [
-        {
-          skillIds: ["web-skill-b", "web-skill-c"],
-          needsAny: true,
-          reason: "Needs one",
-        },
-      ],
-    });
-    const matrix = createMockMatrix({
-      "web-skill-a": skillA,
-      "web-skill-b": createMockSkill("web-skill-b", "web-framework"),
-      "web-skill-c": createMockSkill("web-skill-c", "web-framework"),
-    });
-
-    const result = isDisabled("web-skill-a", ["web-skill-c"], matrix);
-    expect(result).toBe(false);
-  });
-});
-
 describe("isDiscouraged", () => {
   it("should return false for skill with no discourages", () => {
     const skill = createMockSkill("web-skill-a", "web-framework");
@@ -203,6 +84,92 @@ describe("isDiscouraged", () => {
 
     const result = isDiscouraged("web-skill-a", ["web-skill-b"], matrix);
     expect(result).toBe(true);
+  });
+
+  it("should return true if skill conflicts with a selected skill", () => {
+    const skillA = createMockSkill("web-skill-a", "web-framework", {
+      conflictsWith: [{ skillId: "web-skill-b", reason: "Incompatible" }],
+    });
+    const skillB = createMockSkill("web-skill-b", "web-framework");
+    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+
+    const result = isDiscouraged("web-skill-a", ["web-skill-b"], matrix);
+    expect(result).toBe(true);
+  });
+
+  it("should return true if selected skill conflicts with this skill (reverse)", () => {
+    const skillA = createMockSkill("web-skill-a", "web-framework");
+    const skillB = createMockSkill("web-skill-b", "web-framework", {
+      conflictsWith: [{ skillId: "web-skill-a", reason: "Incompatible" }],
+    });
+    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+
+    const result = isDiscouraged("web-skill-a", ["web-skill-b"], matrix);
+    expect(result).toBe(true);
+  });
+
+  it("should return true if required skills are not selected (AND logic)", () => {
+    const skillA = createMockSkill("web-skill-a", "web-framework", {
+      requires: [
+        { skillIds: ["web-skill-b", "web-skill-c"], needsAny: false, reason: "Needs both" },
+      ],
+    });
+    const skillB = createMockSkill("web-skill-b", "web-framework");
+    const skillC = createMockSkill("web-skill-c", "web-framework");
+    const matrix = createMockMatrix({
+      "web-skill-a": skillA,
+      "web-skill-b": skillB,
+      "web-skill-c": skillC,
+    });
+
+    const result = isDiscouraged("web-skill-a", ["web-skill-b"], matrix);
+    expect(result).toBe(true);
+  });
+
+  it("should return false if required skills are all selected (AND logic)", () => {
+    const skillA = createMockSkill("web-skill-a", "web-framework", {
+      requires: [
+        { skillIds: ["web-skill-b", "web-skill-c"], needsAny: false, reason: "Needs both" },
+      ],
+    });
+    const skillB = createMockSkill("web-skill-b", "web-framework");
+    const skillC = createMockSkill("web-skill-c", "web-framework");
+    const matrix = createMockMatrix({
+      "web-skill-a": skillA,
+      "web-skill-b": skillB,
+      "web-skill-c": skillC,
+    });
+
+    const result = isDiscouraged("web-skill-a", ["web-skill-b", "web-skill-c"], matrix);
+    expect(result).toBe(false);
+  });
+
+  it("should return true if none of the required skills are selected (OR logic)", () => {
+    const skillA = createMockSkill("web-skill-a", "web-framework", {
+      requires: [{ skillIds: ["web-skill-b", "web-skill-c"], needsAny: true, reason: "Needs one" }],
+    });
+    const matrix = createMockMatrix({
+      "web-skill-a": skillA,
+      "web-skill-b": createMockSkill("web-skill-b", "web-framework"),
+      "web-skill-c": createMockSkill("web-skill-c", "web-framework"),
+    });
+
+    const result = isDiscouraged("web-skill-a", [], matrix);
+    expect(result).toBe(true);
+  });
+
+  it("should return false if any required skill is selected (OR logic)", () => {
+    const skillA = createMockSkill("web-skill-a", "web-framework", {
+      requires: [{ skillIds: ["web-skill-b", "web-skill-c"], needsAny: true, reason: "Needs one" }],
+    });
+    const matrix = createMockMatrix({
+      "web-skill-a": skillA,
+      "web-skill-b": createMockSkill("web-skill-b", "web-framework"),
+      "web-skill-c": createMockSkill("web-skill-c", "web-framework"),
+    });
+
+    const result = isDiscouraged("web-skill-a", ["web-skill-c"], matrix);
+    expect(result).toBe(false);
   });
 });
 
@@ -244,17 +211,49 @@ describe("isRecommended", () => {
   });
 });
 
-describe("getDisableReason", () => {
-  it("should return undefined for enabled skill", () => {
+describe("getDiscourageReason", () => {
+  it("should return undefined for non-discouraged skill", () => {
     const skill = createMockSkill("web-skill-a", "web-framework");
     const matrix = createMockMatrix({ "web-skill-a": skill });
 
-    const result = getDisableReason("web-skill-a", [], matrix);
+    const result = getDiscourageReason("web-skill-a", [], matrix);
     expect(result).toBeUndefined();
   });
 
-  // Conflict reason tests are in "Conflicting skills with expert mode off (P1-22)"
-  // Requirement reason tests are in "Missing skill dependencies (P1-24)"
+  it("should return reason for discouraged skill", () => {
+    const skillA = createMockSkill("web-skill-a", "web-framework");
+    const skillB = createMockSkill("web-skill-b", "web-framework", {
+      discourages: [{ skillId: "web-skill-a", reason: "Not recommended together" }],
+    });
+    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+
+    const result = getDiscourageReason("web-skill-a", ["web-skill-b"], matrix);
+    expect(result).toContain("Not recommended together");
+  });
+
+  it("should return conflict reason when skill conflicts with selected skill", () => {
+    const skillA = createMockSkill("web-skill-a", "web-framework", {
+      conflictsWith: [{ skillId: "web-skill-b", reason: "Incompatible architectures" }],
+    });
+    const skillB = createMockSkill("web-skill-b", "web-framework");
+    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+
+    const reason = getDiscourageReason("web-skill-a", ["web-skill-b"], matrix);
+    expect(reason).toContain("Incompatible architectures");
+    expect(reason).toContain("conflicts with");
+  });
+
+  it("should return requirement reason when dependencies are unmet", () => {
+    const skillA = createMockSkill("web-skill-a", "web-framework", {
+      requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "Framework required" }],
+    });
+    const skillB = createMockSkill("web-skill-b", "web-framework");
+    const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
+
+    const reason = getDiscourageReason("web-skill-a", [], matrix);
+    expect(reason).toContain("Framework required");
+    expect(reason).toContain("requires");
+  });
 });
 
 describe("validateSelection", () => {
@@ -435,25 +434,23 @@ describe("Empty skill selection (P1-21)", () => {
     });
   });
 
-  describe("isDisabled with empty current selections", () => {
-    it("should not disable skills when nothing is selected", () => {
+  describe("isDiscouraged with empty current selections", () => {
+    it("should not discourage skills when nothing is selected (no conflicts)", () => {
       const skill = createMockSkill("web-skill-a", "web-framework");
       const matrix = createMockMatrix({ "web-skill-a": skill });
 
-      // With no selections, nothing should be disabled (except requirements)
-      const result = isDisabled("web-skill-a", [], matrix);
+      const result = isDiscouraged("web-skill-a", [], matrix);
       expect(result).toBe(false);
     });
 
-    it("should still disable skills with unmet requirements", () => {
-      // Skill A requires B, but nothing is selected
+    it("should discourage skills with unmet requirements even with no selections", () => {
       const skillA = createMockSkill("web-skill-a", "web-framework", {
         requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "Needs B" }],
       });
       const skillB = createMockSkill("web-skill-b", "web-framework");
       const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
-      const result = isDisabled("web-skill-a", [], matrix);
+      const result = isDiscouraged("web-skill-a", [], matrix);
       expect(result).toBe(true);
     });
   });
@@ -487,7 +484,7 @@ describe("Empty skill selection (P1-21)", () => {
   });
 });
 
-describe("Conflicting skills with expert mode off (P1-22)", () => {
+describe("Conflicting skills (P1-22)", () => {
   describe("validateSelection catches conflicts", () => {
     it("should return error when conflicting skills are both selected", () => {
       const skillA = createMockSkill("web-skill-a", "web-framework", {
@@ -529,14 +526,12 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
     });
 
     it("should catch conflicts when declaring skill comes first in selection", () => {
-      // Conflict is declared on skill-a, which is first in selection
       const skillA = createMockSkill("web-skill-a", "web-framework", {
         conflictsWith: [{ skillId: "web-skill-b", reason: "A conflicts with B" }],
       });
       const skillB = createMockSkill("web-skill-b", "web-framework");
       const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
-      // Order: skill-a first (has the conflict), skill-b second
       const result = validateSelection(["web-skill-a", "web-skill-b"], matrix);
 
       expect(result.valid).toBe(false);
@@ -546,82 +541,21 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
     it("documents: validateSelection depends on conflict declaration order", () => {
       // NOTE: validateSelection only checks skillA.conflictsWith where skillA
       // comes BEFORE the conflicting skill in the selection array.
-      // This is a limitation - the primary protection is isDisabled() which
-      // checks bidirectionally and prevents invalid selections in the first place.
+      // This is a limitation — the primary protection is isDiscouraged() which
+      // checks bidirectionally and warns about invalid selections in the UI.
       const skillA = createMockSkill("web-skill-a", "web-framework", {
         conflictsWith: [{ skillId: "web-skill-b", reason: "A conflicts with B" }],
       });
       const skillB = createMockSkill("web-skill-b", "web-framework");
       const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
-      // Order: skill-b first, skill-a second (conflict declared on later skill)
       const result = validateSelection(["web-skill-b", "web-skill-a"], matrix);
 
-      // The loop checks i=0 (skill-b), j=1 (skill-a) -> skill-b.conflictsWith is empty
-      // Then i=1 (skill-a) but no j>1 exists, so skill-a.conflictsWith isn't checked
-      // This documents current behavior: real protection is via isDisabled()
       expect(result.valid).toBe(true);
     });
   });
 
-  describe("isDisabled prevents selection of conflicting skills (non-expert mode)", () => {
-    it("should disable skill that conflicts with already-selected skill", () => {
-      const skillA = createMockSkill("web-skill-a", "web-framework", {
-        conflictsWith: [{ skillId: "web-skill-b", reason: "Cannot use together" }],
-      });
-      const skillB = createMockSkill("web-skill-b", "web-framework");
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
-
-      // skill-b already selected, skill-a should be disabled
-      const result = isDisabled("web-skill-a", ["web-skill-b"], matrix);
-      expect(result).toBe(true);
-    });
-
-    it("should disable skill when selected skill declares conflict with it", () => {
-      const skillA = createMockSkill("web-skill-a", "web-framework");
-      const skillB = createMockSkill("web-skill-b", "web-framework", {
-        conflictsWith: [{ skillId: "web-skill-a", reason: "Cannot use together" }],
-      });
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
-
-      // skill-b already selected, skill-a should be disabled (reverse lookup)
-      const result = isDisabled("web-skill-a", ["web-skill-b"], matrix);
-      expect(result).toBe(true);
-    });
-
-    it("should provide correct disable reason for conflicts", () => {
-      const skillA = createMockSkill("web-skill-a", "web-framework", {
-        conflictsWith: [{ skillId: "web-skill-b", reason: "Incompatible architectures" }],
-      });
-      const skillB = createMockSkill("web-skill-b", "web-framework");
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
-
-      const reason = getDisableReason("web-skill-a", ["web-skill-b"], matrix);
-
-      expect(reason).toContain("Incompatible architectures");
-      expect(reason).toContain("conflicts with");
-      expect(reason).toContain("web-skill-b");
-    });
-
-    it("should not disable non-conflicting skills", () => {
-      const skillA = createMockSkill("web-skill-a", "web-framework", {
-        conflictsWith: [{ skillId: "web-skill-c", reason: "Conflicts with C" }],
-      });
-      const skillB = createMockSkill("web-skill-b", "web-framework");
-      const skillC = createMockSkill("web-skill-c", "web-framework");
-      const matrix = createMockMatrix({
-        "web-skill-a": skillA,
-        "web-skill-b": skillB,
-        "web-skill-c": skillC,
-      });
-
-      // skill-b is selected, but skill-a only conflicts with skill-c
-      const result = isDisabled("web-skill-a", ["web-skill-b"], matrix);
-      expect(result).toBe(false);
-    });
-  });
-
-  describe("non-expert mode auto-disables conflicting skills in getAvailableSkills", () => {
+  describe("conflicting skills are discouraged in getAvailableSkills", () => {
     const skillA = createMockSkill("web-skill-a", "web-framework", {
       category: "web-framework",
       conflictsWith: [{ skillId: "web-skill-b", reason: "Different paradigms" }],
@@ -645,202 +579,20 @@ describe("Conflicting skills with expert mode off (P1-22)", () => {
       },
     );
 
-    it("when conflicting skill is selected, should mark skill as disabled", () => {
+    it("when conflicting skill is selected, should mark skill as discouraged", () => {
       const options = getAvailableSkills("web-framework", ["web-skill-b"], matrix);
 
       const skillAOption = options.find((o: { id: string }) => o.id === "web-skill-a");
       expect(skillAOption).toBeDefined();
-      expect(skillAOption!.disabled).toBe(true);
+      expect(skillAOption!.discouraged).toBe(true);
     });
 
-    it("when conflicting skill is selected, should set disabledReason with conflict reason", () => {
+    it("when conflicting skill is selected, should set discouragedReason with conflict reason", () => {
       const options = getAvailableSkills("web-framework", ["web-skill-b"], matrix);
 
       const skillAOption = options.find((o: { id: string }) => o.id === "web-skill-a");
       expect(skillAOption).toBeDefined();
-      expect(skillAOption!.disabledReason).toContain("Different paradigms");
-    });
-  });
-});
-
-describe("Conflicting skills with expert mode on (P1-23)", () => {
-  describe("isDisabled allows conflicts in expert mode", () => {
-    it("should NOT disable conflicting skill when expertMode is true", () => {
-      const skillA = createMockSkill("web-skill-a", "web-framework", {
-        conflictsWith: [{ skillId: "web-skill-b", reason: "Cannot use together" }],
-      });
-      const skillB = createMockSkill("web-skill-b", "web-framework");
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
-
-      // skill-b already selected, but expert mode allows skill-a
-      const result = isDisabled("web-skill-a", ["web-skill-b"], matrix, {
-        expertMode: true,
-      });
-      expect(result).toBe(false);
-    });
-
-    it("should NOT disable skill with reverse conflict in expert mode", () => {
-      const skillA = createMockSkill("web-skill-a", "web-framework");
-      const skillB = createMockSkill("web-skill-b", "web-framework", {
-        conflictsWith: [{ skillId: "web-skill-a", reason: "Cannot use together" }],
-      });
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
-
-      // skill-b already selected, but expert mode allows skill-a
-      const result = isDisabled("web-skill-a", ["web-skill-b"], matrix, {
-        expertMode: true,
-      });
-      expect(result).toBe(false);
-    });
-
-    it("should NOT disable skill with unmet requirements in expert mode", () => {
-      const skillA = createMockSkill("web-skill-a", "web-framework", {
-        requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "Needs B" }],
-      });
-      const skillB = createMockSkill("web-skill-b", "web-framework");
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
-
-      // skill-a requires skill-b which is NOT selected, but expert mode allows it
-      const result = isDisabled("web-skill-a", [], matrix, { expertMode: true });
-      expect(result).toBe(false);
-    });
-  });
-
-  describe("validateSelection still reports conflicts (expert mode does not suppress validation)", () => {
-    // NOTE: validateSelection is used AFTER selection is finalized
-    // Expert mode affects isDisabled (during selection), not validateSelection
-    it("should still report conflict errors even if user selected them in expert mode", () => {
-      const skillA = createMockSkill("web-skill-a", "web-framework", {
-        conflictsWith: [{ skillId: "web-skill-b", reason: "These conflict" }],
-      });
-      const skillB = createMockSkill("web-skill-b", "web-framework");
-      const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
-
-      // User selected both in expert mode, but validateSelection still catches it
-      const result = validateSelection(["web-skill-a", "web-skill-b"], matrix);
-
-      // Validation DOES report the conflict (for warnings/documentation)
-      // but expert mode allowed the user to make this choice
-      expect(result.valid).toBe(false);
-      expect(result.errors[0].type).toBe("conflict");
-    });
-  });
-
-  describe("expert mode in getAvailableSkills", () => {
-    it("should NOT disable conflicting skill in available skills list with expert mode", () => {
-      const skillA = createMockSkill("web-skill-a", "web-framework", {
-        category: "web-framework",
-        conflictsWith: [{ skillId: "web-skill-b", reason: "Different paradigms" }],
-      });
-      const skillB = createMockSkill("web-skill-b", "web-framework", {
-        category: "web-framework",
-      });
-      const matrix = createMockMatrix(
-        { "web-skill-a": skillA, "web-skill-b": skillB },
-        {
-          categories: {
-            "web-framework": {
-              id: "web-framework",
-              displayName: "Framework",
-              description: "Frameworks",
-              exclusive: false,
-              required: false,
-              order: 1,
-            },
-          },
-        },
-      );
-
-      // skill-b is already selected, but expert mode allows selecting skill-a
-      const options = getAvailableSkills("web-framework", ["web-skill-b"], matrix, {
-        expertMode: true,
-      });
-
-      const skillAOption = options.find((o: { id: string }) => o.id === "web-skill-a");
-      expect(skillAOption).toBeDefined();
-      expect(skillAOption!.disabled).toBe(false);
-    });
-
-    it("should still show selection status correctly in expert mode", () => {
-      const skillA = createMockSkill("web-skill-a", "web-framework", {
-        category: "web-framework",
-      });
-      const skillB = createMockSkill("web-skill-b", "web-framework", {
-        category: "web-framework",
-      });
-      const matrix = createMockMatrix(
-        { "web-skill-a": skillA, "web-skill-b": skillB },
-        {
-          categories: {
-            "web-framework": {
-              id: "web-framework",
-              displayName: "Framework",
-              description: "Frameworks",
-              exclusive: false,
-              required: false,
-              order: 1,
-            },
-          },
-        },
-      );
-
-      const options = getAvailableSkills("web-framework", ["web-skill-b"], matrix, {
-        expertMode: true,
-      });
-
-      const skillBOption = options.find((o: { id: string }) => o.id === "web-skill-b");
-      expect(skillBOption).toBeDefined();
-      expect(skillBOption!.selected).toBe(true);
-    });
-  });
-
-  describe("isCategoryAllDisabled respects expert mode", () => {
-    it("should return disabled=false in expert mode even when all skills conflict", () => {
-      const skillA = createMockSkill("web-skill-a", "web-framework", {
-        category: "web-styling",
-        conflictsWith: [{ skillId: "web-skill-x", reason: "Conflicts with X" }],
-      });
-      const skillB = createMockSkill("web-skill-b", "web-framework", {
-        category: "web-styling",
-        conflictsWith: [{ skillId: "web-skill-x", reason: "Conflicts with X" }],
-      });
-      const skillX = createMockSkill("web-skill-x", "web-framework", {
-        category: "web-framework",
-      });
-      const matrix = createMockMatrix(
-        { "web-skill-a": skillA, "web-skill-b": skillB, "web-skill-x": skillX },
-        {
-          categories: {
-            "web-styling": {
-              id: "web-styling",
-              displayName: "Styling",
-              description: "Styling options",
-              exclusive: false,
-              required: false,
-              order: 2,
-            },
-            "web-framework": {
-              id: "web-framework",
-              displayName: "Framework",
-              description: "Frameworks",
-              exclusive: false,
-              required: false,
-              order: 1,
-            },
-          } as Record<Subcategory, CategoryDefinition>,
-        },
-      );
-
-      // skill-x is selected, which conflicts with all skills in styling category
-      // Without expert mode, category should be disabled
-      const nonExpert = isCategoryAllDisabled("web-styling", ["web-skill-x"], matrix);
-      expect(nonExpert.disabled).toBe(true);
-
-      // With expert mode, category should NOT be disabled
-      const expert = isCategoryAllDisabled("web-styling", ["web-skill-x"], matrix, {
-        expertMode: true,
-      });
-      expect(expert.disabled).toBe(false);
+      expect(skillAOption!.discouragedReason).toContain("Different paradigms");
     });
   });
 });
@@ -1089,33 +841,33 @@ describe("Missing skill dependencies (P1-24)", () => {
     });
   });
 
-  describe("isDisabled prevents selecting skills with unmet dependencies", () => {
-    it("should disable skill when required dependency is not selected", () => {
+  describe("isDiscouraged warns about skills with unmet dependencies", () => {
+    it("should discourage skill when required dependency is not selected", () => {
       const skillA = createMockSkill("web-skill-a", "web-framework", {
         requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "Needs framework" }],
       });
       const skillB = createMockSkill("web-skill-b", "web-framework");
       const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
-      const result = isDisabled("web-skill-a", [], matrix);
+      const result = isDiscouraged("web-skill-a", [], matrix);
 
       expect(result).toBe(true);
     });
 
-    it("should enable skill when required dependency is selected", () => {
+    it("should not discourage skill when required dependency is selected", () => {
       const skillA = createMockSkill("web-skill-a", "web-framework", {
         requires: [{ skillIds: ["web-skill-b"], needsAny: false, reason: "Needs framework" }],
       });
       const skillB = createMockSkill("web-skill-b", "web-framework");
       const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
-      const result = isDisabled("web-skill-a", ["web-skill-b"], matrix);
+      const result = isDiscouraged("web-skill-a", ["web-skill-b"], matrix);
 
       expect(result).toBe(false);
     });
   });
 
-  describe("getDisableReason explains why skill is disabled due to missing dependencies", () => {
+  describe("getDiscourageReason explains why skill is discouraged due to missing dependencies", () => {
     it("should explain missing required skill", () => {
       const skillA = createMockSkill("web-skill-a", "web-framework", {
         requires: [
@@ -1129,7 +881,7 @@ describe("Missing skill dependencies (P1-24)", () => {
       const skillB = createMockSkill("web-skill-b", "web-framework");
       const matrix = createMockMatrix({ "web-skill-a": skillA, "web-skill-b": skillB });
 
-      const reason = getDisableReason("web-skill-a", [], matrix);
+      const reason = getDiscourageReason("web-skill-a", [], matrix);
 
       expect(reason).toContain("Framework required");
       expect(reason).toContain("requires");
@@ -1154,7 +906,7 @@ describe("Missing skill dependencies (P1-24)", () => {
         "web-skill-c": skillC,
       });
 
-      const reason = getDisableReason("web-skill-a", [], matrix);
+      const reason = getDiscourageReason("web-skill-a", [], matrix);
 
       expect(reason).toContain("web-skill-b");
       expect(reason).toContain("web-skill-c");
@@ -1178,7 +930,7 @@ describe("Missing skill dependencies (P1-24)", () => {
         "web-skill-c": skillC,
       });
 
-      const reason = getDisableReason("web-skill-a", [], matrix);
+      const reason = getDiscourageReason("web-skill-a", [], matrix);
 
       expect(reason).toContain("Need a framework");
       expect(reason).toContain("or");
@@ -1498,7 +1250,6 @@ describe("getAvailableSkills edge cases", () => {
 
     const result = getAvailableSkills("api-performance", [], matrix);
     expect(result).toHaveLength(SKILL_COUNT);
-    expect(result.every((o) => !o.disabled)).toBe(true);
     expect(result.every((o) => !o.selected)).toBe(true);
   });
 
@@ -1628,7 +1379,7 @@ describe("getAvailableSkills edge cases", () => {
     expect(optionB!.recommendedReason).toContain("Great combination");
   });
 
-  it("should not mark discouraged when skill is already disabled", () => {
+  it("should mark discouraged when skill conflicts with selected skill", () => {
     const skillA = createMockSkill("web-skill-a", "web-framework", {
       category: "web-framework",
       conflictsWith: [{ skillId: "web-skill-b", reason: "Incompatible" }],
@@ -1655,12 +1406,11 @@ describe("getAvailableSkills edge cases", () => {
 
     const result = getAvailableSkills("web-framework", ["web-skill-a"], matrix);
     const optionB = result.find((o) => o.id === "web-skill-b");
-    // B is disabled by conflict, so discouraged should be false
-    expect(optionB!.disabled).toBe(true);
-    expect(optionB!.discouraged).toBe(false);
+    // Conflicts now produce discouraged state (not disabled)
+    expect(optionB!.discouraged).toBe(true);
   });
 
-  it("should not mark recommended when skill is disabled", () => {
+  it("discouraged takes priority over recommended when skill has conflicts", () => {
     const skillA = createMockSkill("web-skill-a", "web-framework", {
       category: "web-framework",
       conflictsWith: [{ skillId: "web-skill-b", reason: "Incompatible" }],
@@ -1687,148 +1437,9 @@ describe("getAvailableSkills edge cases", () => {
 
     const result = getAvailableSkills("web-framework", ["web-skill-a"], matrix);
     const optionB = result.find((o) => o.id === "web-skill-b");
-    expect(optionB!.disabled).toBe(true);
+    // Discouraged takes priority over recommended
+    expect(optionB!.discouraged).toBe(true);
     expect(optionB!.recommended).toBe(false);
-  });
-});
-
-describe("isCategoryAllDisabled edge cases", () => {
-  it("should return disabled=false for category with 0 skills", () => {
-    const matrix = createMockMatrix(
-      {},
-      {
-        categories: {
-          "shared-tooling": {
-            id: "shared-tooling",
-            displayName: "Tooling",
-            description: "No skills here",
-            exclusive: false,
-            required: false,
-            order: 1,
-          },
-        } as Record<Subcategory, CategoryDefinition>,
-      },
-    );
-
-    const result = isCategoryAllDisabled("shared-tooling", [], matrix);
-    expect(result.disabled).toBe(false);
-    expect(result.reason).toBeUndefined();
-  });
-
-  it("should return disabled=false for unknown category", () => {
-    const matrix = createMockMatrix({});
-
-    const result = isCategoryAllDisabled("web-nonexistent-category", [], matrix);
-    expect(result.disabled).toBe(false);
-  });
-
-  it("should return disabled=true only when ALL skills in category are disabled", () => {
-    const skillA = createMockSkill("web-skill-a", "web-framework", {
-      category: "web-testing",
-      requires: [{ skillIds: ["web-skill-x"], needsAny: false, reason: "Needs X" }],
-    });
-    const skillB = createMockSkill("web-skill-b", "web-framework", {
-      category: "web-testing",
-    });
-    const skillX = createMockSkill("web-skill-x", "web-framework", {
-      category: "web-framework",
-    });
-    const matrix = createMockMatrix(
-      { "web-skill-a": skillA, "web-skill-b": skillB, "web-skill-x": skillX },
-      {
-        categories: {
-          "web-testing": {
-            id: "web-testing",
-            displayName: "Testing",
-            description: "Testing tools",
-            exclusive: false,
-            required: false,
-            order: 1,
-          },
-        } as Record<Subcategory, CategoryDefinition>,
-      },
-    );
-
-    // skill-a is disabled (needs X which is not selected), but skill-b is still enabled
-    const result = isCategoryAllDisabled("web-testing", [], matrix);
-    expect(result.disabled).toBe(false);
-  });
-
-  it("should include reason from first disabled skill", () => {
-    const skillA = createMockSkill("web-skill-a", "web-framework", {
-      category: "web-styling",
-      conflictsWith: [{ skillId: "web-skill-x", reason: "Style conflict" }],
-    });
-    const skillB = createMockSkill("web-skill-b", "web-framework", {
-      category: "web-styling",
-      conflictsWith: [{ skillId: "web-skill-x", reason: "Another conflict" }],
-    });
-    const skillX = createMockSkill("web-skill-x", "web-framework", {
-      category: "web-framework",
-    });
-    const matrix = createMockMatrix(
-      { "web-skill-a": skillA, "web-skill-b": skillB, "web-skill-x": skillX },
-      {
-        categories: {
-          "web-styling": {
-            id: "web-styling",
-            displayName: "Styling",
-            description: "Styling options",
-            exclusive: false,
-            required: false,
-            order: 1,
-          },
-        } as Record<Subcategory, CategoryDefinition>,
-      },
-    );
-
-    const result = isCategoryAllDisabled("web-styling", ["web-skill-x"], matrix);
-    expect(result.disabled).toBe(true);
-    // Reason comes from first disabled skill, truncated before " ("
-    expect(result.reason).toBeDefined();
-    expect(result.reason).not.toContain("(conflicts with");
-  });
-
-  it("should return disabled=false for category with single enabled skill among disabled", () => {
-    const skillA = createMockSkill("web-skill-a", "web-framework", {
-      category: "shared-tooling",
-      conflictsWith: [{ skillId: "web-skill-x", reason: "Conflicts" }],
-    });
-    const skillB = createMockSkill("web-skill-b", "web-framework", {
-      category: "shared-tooling",
-      conflictsWith: [{ skillId: "web-skill-x", reason: "Conflicts" }],
-    });
-    const skillC = createMockSkill("web-skill-c", "web-framework", {
-      category: "shared-tooling",
-      // No conflicts -- this one is enabled
-    });
-    const skillX = createMockSkill("web-skill-x", "web-framework", {
-      category: "web-framework",
-    });
-    const matrix = createMockMatrix(
-      {
-        "web-skill-a": skillA,
-        "web-skill-b": skillB,
-        "web-skill-c": skillC,
-        "web-skill-x": skillX,
-      },
-      {
-        categories: {
-          "shared-tooling": {
-            id: "shared-tooling",
-            displayName: "Tooling",
-            description: "Dev tooling",
-            exclusive: false,
-            required: false,
-            order: 1,
-          },
-        } as Record<Subcategory, CategoryDefinition>,
-      },
-    );
-
-    // A and B are disabled by conflict with X, but C is still available
-    const result = isCategoryAllDisabled("shared-tooling", ["web-skill-x"], matrix);
-    expect(result.disabled).toBe(false);
   });
 });
 

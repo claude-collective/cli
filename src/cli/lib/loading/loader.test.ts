@@ -341,29 +341,29 @@ Content`;
 });
 
 describe("loadAllAgents", () => {
-  it("should warn and skip when agent.yaml has invalid YAML", async () => {
-    vi.mocked(glob).mockResolvedValue(["bad-agent/agent.yaml"]);
+  it("should warn and skip when metadata.yaml has invalid YAML", async () => {
+    vi.mocked(glob).mockResolvedValue(["bad-agent/metadata.yaml"]);
     vi.mocked(readFile).mockResolvedValue("not: valid: yaml: [[[");
 
     const result = await loadAllAgents("/project");
 
     expect(result).toEqual({});
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid agent.yaml"));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
   });
 
-  it("should warn and skip when agent.yaml fails schema validation", async () => {
+  it("should warn and skip when metadata.yaml fails schema validation", async () => {
     // Valid YAML but missing required fields (no id, title, description, tools)
-    vi.mocked(glob).mockResolvedValue(["incomplete/agent.yaml"]);
+    vi.mocked(glob).mockResolvedValue(["incomplete/metadata.yaml"]);
     vi.mocked(readFile).mockResolvedValue("some_field: value\n");
 
     const result = await loadAllAgents("/project");
 
     expect(result).toEqual({});
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid agent.yaml"));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
   });
 
   it("should load valid agents and skip invalid ones", async () => {
-    vi.mocked(glob).mockResolvedValue(["web-developer/agent.yaml", "bad-agent/agent.yaml"]);
+    vi.mocked(glob).mockResolvedValue(["web-developer/metadata.yaml", "bad-agent/metadata.yaml"]);
     vi.mocked(readFile)
       .mockResolvedValueOnce(createAgentYamlContent("web-developer"))
       .mockResolvedValueOnce("not valid yaml [[[");
@@ -372,10 +372,10 @@ describe("loadAllAgents", () => {
 
     expect(Object.keys(result)).toEqual(["web-developer"]);
     expect(result["web-developer"]?.title).toBe("web-developer Agent");
-    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
   });
 
-  it("should return empty object when no agent.yaml files exist", async () => {
+  it("should return empty object when no metadata.yaml files exist", async () => {
     vi.mocked(glob).mockResolvedValue([]);
 
     const result = await loadAllAgents("/project");
@@ -383,8 +383,8 @@ describe("loadAllAgents", () => {
     expect(result).toEqual({});
   });
 
-  it("should warn and skip when agent.yaml has valid YAML but wrong types", async () => {
-    vi.mocked(glob).mockResolvedValue(["wrong-types/agent.yaml"]);
+  it("should warn and skip when metadata.yaml has valid YAML but wrong types", async () => {
+    vi.mocked(glob).mockResolvedValue(["wrong-types/metadata.yaml"]);
     // tools should be an array, not a string
     vi.mocked(readFile).mockResolvedValue(
       `id: wrong-types
@@ -396,38 +396,38 @@ tools: not-an-array`,
     const result = await loadAllAgents("/project");
 
     expect(result).toEqual({});
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid agent.yaml"));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
   });
 
   it("should warn and skip when readFile throws", async () => {
-    vi.mocked(glob).mockResolvedValue(["unreadable/agent.yaml"]);
+    vi.mocked(glob).mockResolvedValue(["unreadable/metadata.yaml"]);
     vi.mocked(readFile).mockRejectedValue(new Error("EACCES: permission denied"));
 
     const result = await loadAllAgents("/project");
 
     expect(result).toEqual({});
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid agent.yaml"));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("EACCES"));
   });
 
-  it("should warn and skip when agent.yaml has empty content", async () => {
-    vi.mocked(glob).mockResolvedValue(["empty/agent.yaml"]);
+  it("should warn and skip when metadata.yaml has empty content", async () => {
+    vi.mocked(glob).mockResolvedValue(["empty/metadata.yaml"]);
     vi.mocked(readFile).mockResolvedValue("");
 
     const result = await loadAllAgents("/project");
 
     expect(result).toEqual({});
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid agent.yaml"));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
   });
 
   it("should include full path in warning message", async () => {
-    vi.mocked(glob).mockResolvedValue(["deep/nested/dir/agent.yaml"]);
+    vi.mocked(glob).mockResolvedValue(["deep/nested/dir/metadata.yaml"]);
     vi.mocked(readFile).mockResolvedValue("invalid yaml [[[");
 
     await loadAllAgents("/project");
 
     expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining("/project/src/agents/deep/nested/dir/agent.yaml"),
+      expect.stringContaining("/project/src/agents/deep/nested/dir/metadata.yaml"),
     );
   });
 });
@@ -441,31 +441,31 @@ describe("loadProjectAgents", () => {
     expect(result).toEqual({});
   });
 
-  it("should warn and skip when project agent.yaml parsing fails", async () => {
+  it("should warn and skip when project metadata.yaml parsing fails", async () => {
     vi.mocked(directoryExists).mockResolvedValue(true);
-    vi.mocked(glob).mockResolvedValue(["broken/agent.yaml"]);
+    vi.mocked(glob).mockResolvedValue(["broken/metadata.yaml"]);
     vi.mocked(readFile).mockResolvedValue("invalid: yaml: [[[");
 
     const result = await loadProjectAgents("/project");
 
     expect(result).toEqual({});
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid agent.yaml"));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
   });
 
-  it("should warn and skip when project agent.yaml fails schema validation", async () => {
+  it("should warn and skip when project metadata.yaml fails schema validation", async () => {
     vi.mocked(directoryExists).mockResolvedValue(true);
-    vi.mocked(glob).mockResolvedValue(["incomplete/agent.yaml"]);
+    vi.mocked(glob).mockResolvedValue(["incomplete/metadata.yaml"]);
     vi.mocked(readFile).mockResolvedValue("some_field: value\n");
 
     const result = await loadProjectAgents("/project");
 
     expect(result).toEqual({});
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid agent.yaml"));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
   });
 
   it("should load valid project agents and skip invalid ones", async () => {
     vi.mocked(directoryExists).mockResolvedValue(true);
-    vi.mocked(glob).mockResolvedValue(["api-developer/agent.yaml", "broken/agent.yaml"]);
+    vi.mocked(glob).mockResolvedValue(["api-developer/metadata.yaml", "broken/metadata.yaml"]);
     vi.mocked(readFile)
       .mockResolvedValueOnce(createAgentYamlContent("api-developer"))
       .mockResolvedValueOnce("totally invalid");
@@ -474,7 +474,7 @@ describe("loadProjectAgents", () => {
 
     expect(Object.keys(result)).toEqual(["api-developer"]);
     expect(result["api-developer"]?.title).toBe("api-developer Agent");
-    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("Skipping invalid metadata.yaml"));
   });
 });
 

@@ -31,7 +31,7 @@ import {
   WEB_STATE_CATEGORY,
   API_FRAMEWORK_CATEGORY,
   API_DATABASE_CATEGORY,
-} from "../../lib/__tests__/mock-data";
+} from "../../lib/__tests__/mock-data/mock-categories.js";
 
 // Test data construction cast: indexBy returns generic Record
 const buildTestMatrix = (categories: CategoryDefinition[], skills: ResolvedSkill[]) =>
@@ -82,7 +82,6 @@ const defaultProps: StepBuildProps = {
   selections: {},
   allSelections: [],
   showLabels: false,
-  expertMode: false,
   onToggle: vi.fn(),
   onToggleLabels: vi.fn(),
   onContinue: vi.fn(),
@@ -303,18 +302,6 @@ describe("StepBuild component", () => {
       expect(output).toContain("react");
     });
 
-    it("should pass expertMode to CategoryGrid", () => {
-      const { lastFrame, unmount } = renderStepBuild({
-        expertMode: true,
-      });
-      cleanup = unmount;
-
-      const output = lastFrame();
-      // Expert mode is passed to CategoryGrid for option sorting behavior
-      // The visual indicator is now shown globally in wizard-layout, not in CategoryGrid header
-      expect(output).toBeDefined();
-    });
-
     it("should pass showLabels to CategoryGrid", () => {
       const { lastFrame, unmount } = renderStepBuild({
         showLabels: true,
@@ -389,15 +376,6 @@ describe("StepBuild component", () => {
       expect(onToggleLabels).toHaveBeenCalled();
     });
 
-    it("should not handle expert mode toggle locally (handled globally)", () => {
-      // Expert mode toggle is now handled at wizard.tsx level
-      // StepBuild no longer has onToggleExpertMode prop
-      const { lastFrame, unmount } = renderStepBuild();
-      cleanup = unmount;
-
-      const output = lastFrame();
-      expect(output).toBeDefined();
-    });
   });
 
   describe("edge cases", () => {

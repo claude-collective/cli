@@ -6,7 +6,6 @@ type UseWizardInitializationOptions = {
   matrix: MergedSkillsMatrix;
   initialStep?: WizardStep;
   initialInstallMode?: "plugin" | "local";
-  initialExpertMode?: boolean;
   initialDomains?: Domain[];
   initialAgents?: AgentName[];
   installedSkillIds?: SkillId[];
@@ -20,7 +19,6 @@ export function useWizardInitialization({
   matrix,
   initialStep,
   initialInstallMode,
-  initialExpertMode,
   initialDomains,
   initialAgents,
   installedSkillIds,
@@ -40,9 +38,6 @@ export function useWizardInitialization({
     }
     if (initialInstallMode) {
       useWizardStore.setState({ installMode: initialInstallMode });
-    }
-    if (initialExpertMode) {
-      useWizardStore.setState({ expertMode: initialExpertMode });
     }
     // Restore saved domains from config, overriding the domains
     // derived by populateFromSkillIds

@@ -238,7 +238,7 @@ describe("eject command", () => {
 
       // Manually create agents/ with an actual agent subdir to simulate a prior full eject
       await mkdir(path.join(agentsDir, "developer"), { recursive: true });
-      await writeFile(path.join(agentsDir, "developer", "agent.yaml"), "id: developer");
+      await writeFile(path.join(agentsDir, "developer", "metadata.yaml"), "id: developer");
 
       // Second full eject without --force should be blocked
       const { stderr } = await runCliCommand(["eject", "agent-partials"]);
@@ -427,6 +427,20 @@ function buildEjectMatrix(localSkillIds: SkillId[] = []): MergedSkillsMatrix {
   return createMockMatrix(skills);
 }
 
+/**
+ * Builds the matrix, source result, and skill IDs for eject operations.
+ * When localSkillIds is provided, marks those skills as local and filters them out.
+ * When omitted, returns all skill IDs (plugin mode behavior).
+ */
+async function runEjectCopy(dirs: TestDirs, outputDir: string, localSkillIds?: SkillId[]) {
+  const matrix = buildEjectMatrix(localSkillIds);
+  const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
+  const skillIds = localSkillIds
+    ? typedKeys<SkillId>(matrix.skills).filter((id) => !matrix.skills[id]?.local)
+    : typedKeys<SkillId>(matrix.skills);
+  return copySkillsToLocalFlattened(skillIds, outputDir, matrix, sourceResult);
+}
+
 // These tests exercise the eject skill-copying pipeline directly by calling
 // copySkillsToLocalFlattened. The production eject command calls this same
 // function after loading the matrix via loadSkillsMatrixFromSource, but the
@@ -464,17 +478,7 @@ describe("eject skills from initialized project", () => {
     const outputDir = path.join(dirs.tempDir, "ejected-skills");
     await mkdir(outputDir, { recursive: true });
 
-    // Simulate eject: build matrix with local skills marked, filter them out,
-    // then copy the remaining (non-local) skills to the output directory.
-    const matrix = buildEjectMatrix(INSTALLED_SKILL_IDS);
-    const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-
-    // Filter out local skills (same logic as eject command line 289-291)
-    const skillIds = typedKeys<SkillId>(matrix.skills).filter(
-      (skillId) => !matrix.skills[skillId]?.local,
-    );
-
-    await copySkillsToLocalFlattened(skillIds, outputDir, matrix, sourceResult);
+    await runEjectCopy(dirs, outputDir, INSTALLED_SKILL_IDS);
 
     for (const skill of NON_INSTALLED_SKILLS) {
       const skillDir = path.join(outputDir, skill.id);
@@ -486,14 +490,7 @@ describe("eject skills from initialized project", () => {
     const outputDir = path.join(dirs.tempDir, "ejected-skills");
     await mkdir(outputDir, { recursive: true });
 
-    const matrix = buildEjectMatrix(INSTALLED_SKILL_IDS);
-    const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-
-    const skillIds = typedKeys<SkillId>(matrix.skills).filter(
-      (skillId) => !matrix.skills[skillId]?.local,
-    );
-
-    await copySkillsToLocalFlattened(skillIds, outputDir, matrix, sourceResult);
+    await runEjectCopy(dirs, outputDir, INSTALLED_SKILL_IDS);
 
     for (const skillId of INSTALLED_SKILL_IDS) {
       const skillDir = path.join(outputDir, skillId);
@@ -505,14 +502,7 @@ describe("eject skills from initialized project", () => {
     const outputDir = path.join(dirs.tempDir, "ejected-skills");
     await mkdir(outputDir, { recursive: true });
 
-    const matrix = buildEjectMatrix(INSTALLED_SKILL_IDS);
-    const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-
-    const skillIds = typedKeys<SkillId>(matrix.skills).filter(
-      (skillId) => !matrix.skills[skillId]?.local,
-    );
-
-    await copySkillsToLocalFlattened(skillIds, outputDir, matrix, sourceResult);
+    await runEjectCopy(dirs, outputDir, INSTALLED_SKILL_IDS);
 
     for (const skill of NON_INSTALLED_SKILLS) {
       const ejectedSkillMd = path.join(outputDir, skill.id, STANDARD_FILES.SKILL_MD);
@@ -529,14 +519,7 @@ describe("eject skills from initialized project", () => {
     const outputDir = path.join(dirs.tempDir, "ejected-skills");
     await mkdir(outputDir, { recursive: true });
 
-    const matrix = buildEjectMatrix(INSTALLED_SKILL_IDS);
-    const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-
-    const skillIds = typedKeys<SkillId>(matrix.skills).filter(
-      (skillId) => !matrix.skills[skillId]?.local,
-    );
-
-    await copySkillsToLocalFlattened(skillIds, outputDir, matrix, sourceResult);
+    await runEjectCopy(dirs, outputDir, INSTALLED_SKILL_IDS);
 
     const targetSkill = NON_INSTALLED_SKILLS[0];
     const metadataPath = path.join(outputDir, targetSkill.id, STANDARD_FILES.METADATA_YAML);
@@ -556,19 +539,7 @@ describe("eject skills from initialized project", () => {
     const outputDir = path.join(dirs.tempDir, "ejected-skills");
     await mkdir(outputDir, { recursive: true });
 
-    const matrix = buildEjectMatrix(INSTALLED_SKILL_IDS);
-    const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-
-    const skillIds = typedKeys<SkillId>(matrix.skills).filter(
-      (skillId) => !matrix.skills[skillId]?.local,
-    );
-
-    const copiedSkills = await copySkillsToLocalFlattened(
-      skillIds,
-      outputDir,
-      matrix,
-      sourceResult,
-    );
+    const copiedSkills = await runEjectCopy(dirs, outputDir, INSTALLED_SKILL_IDS);
 
     expect(copiedSkills.length).toBe(NON_INSTALLED_SKILLS.length);
   });
@@ -577,14 +548,7 @@ describe("eject skills from initialized project", () => {
     const defaultSkillsDir = path.join(dirs.projectDir, LOCAL_SKILLS_PATH);
     await mkdir(defaultSkillsDir, { recursive: true });
 
-    const matrix = buildEjectMatrix(INSTALLED_SKILL_IDS);
-    const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-
-    const skillIds = typedKeys<SkillId>(matrix.skills).filter(
-      (skillId) => !matrix.skills[skillId]?.local,
-    );
-
-    await copySkillsToLocalFlattened(skillIds, defaultSkillsDir, matrix, sourceResult);
+    await runEjectCopy(dirs, defaultSkillsDir, INSTALLED_SKILL_IDS);
 
     for (const skill of NON_INSTALLED_SKILLS) {
       const skillDir = path.join(defaultSkillsDir, skill.id);
@@ -655,14 +619,7 @@ describe("eject in plugin mode", () => {
     const outputDir = path.join(dirs.tempDir, "ejected-plugin-skills");
     await mkdir(outputDir, { recursive: true });
 
-    // In plugin mode, no skills are in .claude/skills/, so none are marked local.
-    // All source skills should be ejectable.
-    const matrix = buildEjectMatrix();
-    const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-
-    const skillIds = typedKeys<SkillId>(matrix.skills);
-
-    await copySkillsToLocalFlattened(skillIds, outputDir, matrix, sourceResult);
+    await runEjectCopy(dirs, outputDir);
 
     for (const skill of DEFAULT_TEST_SKILLS) {
       const skillDir = path.join(outputDir, skill.id);
@@ -674,11 +631,7 @@ describe("eject in plugin mode", () => {
     const outputDir = path.join(dirs.tempDir, "ejected-plugin-skills");
     await mkdir(outputDir, { recursive: true });
 
-    const matrix = buildEjectMatrix();
-    const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-    const skillIds = typedKeys<SkillId>(matrix.skills);
-
-    await copySkillsToLocalFlattened(skillIds, outputDir, matrix, sourceResult);
+    await runEjectCopy(dirs, outputDir);
 
     const targetSkill = DEFAULT_TEST_SKILLS[0];
     const skillMdPath = path.join(outputDir, targetSkill.id, STANDARD_FILES.SKILL_MD);
@@ -694,11 +647,7 @@ describe("eject in plugin mode", () => {
     const outputDir = path.join(dirs.tempDir, "ejected-plugin-skills");
     await mkdir(outputDir, { recursive: true });
 
-    const matrix = buildEjectMatrix();
-    const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-    const skillIds = typedKeys<SkillId>(matrix.skills);
-
-    await copySkillsToLocalFlattened(skillIds, outputDir, matrix, sourceResult);
+    await runEjectCopy(dirs, outputDir);
 
     const targetSkill = DEFAULT_TEST_SKILLS[0];
     const metadataPath = path.join(outputDir, targetSkill.id, STANDARD_FILES.METADATA_YAML);
@@ -716,11 +665,7 @@ describe("eject in plugin mode", () => {
     const defaultSkillsDir = path.join(dirs.projectDir, LOCAL_SKILLS_PATH);
     await mkdir(defaultSkillsDir, { recursive: true });
 
-    const matrix = buildEjectMatrix();
-    const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-    const skillIds = typedKeys<SkillId>(matrix.skills);
-
-    await copySkillsToLocalFlattened(skillIds, defaultSkillsDir, matrix, sourceResult);
+    await runEjectCopy(dirs, defaultSkillsDir);
 
     // All source skills should be present (none are local in plugin mode)
     for (const skill of DEFAULT_TEST_SKILLS) {
@@ -733,16 +678,7 @@ describe("eject in plugin mode", () => {
     const outputDir = path.join(dirs.tempDir, "ejected-plugin-skills");
     await mkdir(outputDir, { recursive: true });
 
-    const matrix = buildEjectMatrix();
-    const sourceResult = buildSourceResult(matrix, dirs.sourceDir);
-    const skillIds = typedKeys<SkillId>(matrix.skills);
-
-    const copiedSkills = await copySkillsToLocalFlattened(
-      skillIds,
-      outputDir,
-      matrix,
-      sourceResult,
-    );
+    const copiedSkills = await runEjectCopy(dirs, outputDir);
 
     // All source skills should be ejected (none are local in plugin mode)
     expect(copiedSkills.length).toBe(DEFAULT_TEST_SKILLS.length);

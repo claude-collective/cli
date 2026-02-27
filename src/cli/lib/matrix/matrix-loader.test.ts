@@ -7,18 +7,20 @@ import {
   createMockExtractedSkill,
   createMockCategory,
 } from "../__tests__/helpers";
+import { FRAMEWORK_CATEGORY } from "../__tests__/mock-data/mock-categories.js";
 import {
-  FRAMEWORK_CATEGORY,
-  MERGE_BASIC_MATRIX,
   REACT_EXTRACTED,
   REACT_EXTRACTED_BASIC,
   VUE_EXTRACTED_BASIC,
-  CONFLICT_MATRIX,
-  ALTERNATIVES_MATRIX,
   ZUSTAND_EXTRACTED,
   JOTAI_EXTRACTED,
+} from "../__tests__/mock-data/mock-skills.js";
+import {
+  MERGE_BASIC_MATRIX,
+  CONFLICT_MATRIX,
+  ALTERNATIVES_MATRIX,
   REQUIRES_MATRIX,
-} from "../__tests__/mock-data";
+} from "../__tests__/mock-data/mock-matrices.js";
 
 // For extractAllSkills tests, we mock fs/loader. For loadSkillCategories/loadSkillRules,
 // we use the real fs to load the actual config file for the happy path.

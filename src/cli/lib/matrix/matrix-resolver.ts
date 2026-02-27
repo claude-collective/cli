@@ -89,38 +89,27 @@ export function getDependentSkills(
   return dependents;
 }
 
-export type SkillCheckOptions = {
-  expertMode?: boolean;
-};
-
 /**
- * Determines whether a skill should be disabled (unselectable) in the wizard
- * given the current selection state.
+ * Determines whether a skill should be discouraged (shown with yellow warning)
+ * in the wizard given the current selection state.
  *
- * A skill is disabled when any of these conditions are true:
- * 1. It conflicts with a currently selected skill (bidirectional check)
- * 2. It has unmet `requires` dependencies -- either all required skills are
- *    missing (AND mode) or none of the alternatives are selected (OR/needsAny mode)
+ * A skill is discouraged when any of these conditions are true:
+ * 1. It has a `discourages` relationship with a currently selected skill (bidirectional)
+ * 2. It conflicts with a currently selected skill (bidirectional `conflictsWith` check)
+ * 3. It has unmet `requires` dependencies (AND mode or OR/needsAny mode)
  *
- * In expert mode, all constraints are bypassed and the skill is always enabled.
- * This is a pure function with no side effects.
+ * Discouraged skills remain selectable but show a yellow warning to inform the user.
  *
  * @param skillId - The skill to check (resolved via alias lookup)
  * @param currentSelections - Currently selected skill IDs
- * @param matrix - Merged skills matrix with conflict and requirement rules
- * @param options - Optional flags; `expertMode` bypasses all constraint checks
- * @returns true if the skill cannot be selected given current state
+ * @param matrix - Merged skills matrix with relationship data
+ * @returns true if the skill should show a discouraged warning
  */
-export function isDisabled(
+export function isDiscouraged(
   skillId: SkillId,
   currentSelections: SkillId[],
   matrix: MergedSkillsMatrix,
-  options?: SkillCheckOptions,
 ): boolean {
-  if (options?.expertMode) {
-    return false;
-  }
-
   const fullId = resolveAlias(skillId, matrix);
   const skill = matrix.skills[fullId];
 
@@ -128,21 +117,33 @@ export function isDisabled(
     return false;
   }
 
-  for (const selectedId of currentSelections) {
-    const selectedFullId = resolveAlias(selectedId, matrix);
+  const { resolvedSelections, selectedSet } = initializeSelectionContext(currentSelections, matrix);
 
-    if (skill.conflictsWith.some((c) => c.skillId === selectedFullId)) {
+  // Check discourages relationships (bidirectional)
+  for (const selectedId of resolvedSelections) {
+    const selectedSkill = matrix.skills[selectedId];
+    if (selectedSkill?.discourages.some((d) => d.skillId === fullId)) {
       return true;
     }
 
-    const selectedSkill = matrix.skills[selectedFullId];
+    if (skill.discourages.some((d) => d.skillId === selectedId)) {
+      return true;
+    }
+  }
+
+  // Check conflictsWith relationships (bidirectional)
+  for (const selectedId of resolvedSelections) {
+    if (skill.conflictsWith.some((c) => c.skillId === selectedId)) {
+      return true;
+    }
+
+    const selectedSkill = matrix.skills[selectedId];
     if (selectedSkill?.conflictsWith.some((c) => c.skillId === fullId)) {
       return true;
     }
   }
 
-  const { selectedSet } = initializeSelectionContext(currentSelections, matrix);
-
+  // Check unmet requires dependencies
   for (const requirement of skill.requires) {
     if (requirement.needsAny) {
       const hasAny = requirement.skillIds.some((reqId) => selectedSet.has(reqId));
@@ -161,18 +162,17 @@ export function isDisabled(
 }
 
 /**
- * Returns a human-readable reason why a skill is disabled, or undefined if it is not.
+ * Returns a human-readable reason why a skill is discouraged, or undefined if it is not.
  *
- * Checks conflicts (bidirectional) and unmet requirements in the same order as
- * `isDisabled()`, returning the first matching reason with context about which
- * selected skill caused the constraint.
+ * Checks discourages relationships, conflicts (bidirectional), and unmet requirements,
+ * returning the first matching reason with context.
  *
- * @param skillId - The skill to get the disable reason for
+ * @param skillId - The skill to get the discourage reason for
  * @param currentSelections - Currently selected skill IDs
  * @param matrix - Merged skills matrix with relationship data
- * @returns Formatted reason string (e.g., "Incompatible (conflicts with React)") or undefined
+ * @returns Formatted reason string or undefined
  */
-export function getDisableReason(
+export function getDiscourageReason(
   skillId: SkillId,
   currentSelections: SkillId[],
   matrix: MergedSkillsMatrix,
@@ -186,6 +186,23 @@ export function getDisableReason(
 
   const { resolvedSelections, selectedSet } = initializeSelectionContext(currentSelections, matrix);
 
+  // Check discourages relationships (bidirectional)
+  for (const selectedId of resolvedSelections) {
+    const selectedSkill = matrix.skills[selectedId];
+    if (selectedSkill) {
+      const discourage = selectedSkill.discourages.find((d) => d.skillId === fullId);
+      if (discourage) {
+        return discourage.reason;
+      }
+    }
+
+    const reverseDiscourage = skill.discourages.find((d) => d.skillId === selectedId);
+    if (reverseDiscourage) {
+      return reverseDiscourage.reason;
+    }
+  }
+
+  // Check conflictsWith relationships (bidirectional)
   for (const selectedId of resolvedSelections) {
     const conflict = skill.conflictsWith.find((c) => c.skillId === selectedId);
     if (conflict) {
@@ -202,6 +219,7 @@ export function getDisableReason(
     }
   }
 
+  // Check unmet requires dependencies
   for (const requirement of skill.requires) {
     if (requirement.needsAny) {
       const hasAny = requirement.skillIds.some((reqId) => selectedSet.has(reqId));
@@ -217,66 +235,6 @@ export function getDisableReason(
         const missingNames = missingIds.map((id) => getLabel(matrix.skills[id], id)).join(", ");
         return `${requirement.reason} (requires ${missingNames})`;
       }
-    }
-  }
-
-  return undefined;
-}
-
-export function isDiscouraged(
-  skillId: SkillId,
-  currentSelections: SkillId[],
-  matrix: MergedSkillsMatrix,
-): boolean {
-  const fullId = resolveAlias(skillId, matrix);
-  const skill = matrix.skills[fullId];
-
-  if (!skill) {
-    return false;
-  }
-
-  const { resolvedSelections } = initializeSelectionContext(currentSelections, matrix);
-
-  for (const selectedId of resolvedSelections) {
-    const selectedSkill = matrix.skills[selectedId];
-    if (selectedSkill?.discourages.some((d) => d.skillId === fullId)) {
-      return true;
-    }
-
-    if (skill.discourages.some((d) => d.skillId === selectedId)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-export function getDiscourageReason(
-  skillId: SkillId,
-  currentSelections: SkillId[],
-  matrix: MergedSkillsMatrix,
-): string | undefined {
-  const fullId = resolveAlias(skillId, matrix);
-  const skill = matrix.skills[fullId];
-
-  if (!skill) {
-    return undefined;
-  }
-
-  const { resolvedSelections } = initializeSelectionContext(currentSelections, matrix);
-
-  for (const selectedId of resolvedSelections) {
-    const selectedSkill = matrix.skills[selectedId];
-    if (selectedSkill) {
-      const discourage = selectedSkill.discourages.find((d) => d.skillId === fullId);
-      if (discourage) {
-        return discourage.reason;
-      }
-    }
-
-    const reverseDiscourage = skill.discourages.find((d) => d.skillId === selectedId);
-    if (reverseDiscourage) {
-      return reverseDiscourage.reason;
     }
   }
 
@@ -532,24 +490,22 @@ export function validateSelection(
 
 /**
  * Builds a list of skill options for a category, annotated with their current
- * state (disabled, discouraged, recommended, selected) relative to the wizard's
+ * state (discouraged, recommended, selected) relative to the wizard's
  * selection state.
  *
  * Each skill is checked against the current selections to determine its visual
  * and interactive state in the wizard UI. States are mutually prioritized:
- * disabled takes precedence over discouraged, which takes precedence over recommended.
+ * discouraged takes precedence over recommended.
  *
  * @param categoryId - Category path to filter skills by
  * @param currentSelections - Currently selected skill IDs
  * @param matrix - Merged skills matrix
- * @param options - Optional flags (e.g., expertMode bypasses constraint checks)
  * @returns Array of skill options with state annotations and reasons
  */
 export function getAvailableSkills(
   categoryId: CategoryPath,
   currentSelections: SkillId[],
   matrix: MergedSkillsMatrix,
-  options?: SkillCheckOptions,
 ): SkillOption[] {
   const skillOptions: SkillOption[] = [];
   const { selectedSet } = initializeSelectionContext(currentSelections, matrix);
@@ -560,17 +516,13 @@ export function getAvailableSkills(
       continue;
     }
 
-    const disabled = isDisabled(skill.id, currentSelections, matrix, options);
-    const discouraged = !disabled && isDiscouraged(skill.id, currentSelections, matrix);
-    const recommended =
-      !disabled && !discouraged && isRecommended(skill.id, currentSelections, matrix);
+    const discouraged = isDiscouraged(skill.id, currentSelections, matrix);
+    const recommended = !discouraged && isRecommended(skill.id, currentSelections, matrix);
 
     skillOptions.push({
       id: skill.id,
       displayName: skill.displayName,
       description: skill.description,
-      disabled,
-      disabledReason: disabled ? getDisableReason(skill.id, currentSelections, matrix) : undefined,
       discouraged,
       discouragedReason: discouraged
         ? getDiscourageReason(skill.id, currentSelections, matrix)
@@ -602,53 +554,4 @@ export function getSkillsByCategory(
   }
 
   return skills;
-}
-
-/**
- * Checks whether every skill in a category is disabled given the current selections.
- *
- * Used by the wizard to dim entire category tiles when no selectable skills remain.
- * Returns the first disable reason (truncated to the core message before parenthetical
- * details) when all skills are disabled.
- *
- * @param categoryId - Category path to check
- * @param currentSelections - Currently selected skill IDs
- * @param matrix - Merged skills matrix
- * @param options - Optional flags; expertMode always returns not disabled
- * @returns Object with `disabled` flag and optional short `reason` string
- */
-export function isCategoryAllDisabled(
-  categoryId: CategoryPath,
-  currentSelections: SkillId[],
-  matrix: MergedSkillsMatrix,
-  options?: SkillCheckOptions,
-): { disabled: boolean; reason?: string } {
-  if (options?.expertMode) {
-    return { disabled: false };
-  }
-
-  const skills = getSkillsByCategory(categoryId, matrix);
-
-  if (skills.length === 0) {
-    return { disabled: false };
-  }
-
-  const disabledSkills: Array<{ skillId: SkillId; reason: string | undefined }> = [];
-
-  for (const skill of skills) {
-    if (isDisabled(skill.id, currentSelections, matrix, options)) {
-      disabledSkills.push({
-        skillId: skill.id,
-        reason: getDisableReason(skill.id, currentSelections, matrix),
-      });
-    }
-  }
-
-  if (disabledSkills.length === skills.length) {
-    const firstReason = disabledSkills[0]?.reason;
-    const shortReason = firstReason?.split(" (")[0] || "requirements not met";
-    return { disabled: true, reason: shortReason };
-  }
-
-  return { disabled: false };
 }

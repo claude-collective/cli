@@ -175,6 +175,21 @@ describe("edit command", () => {
   });
 });
 
+// Shared test data for populateFromSkillIds and domain filtering tests
+const EDIT_CATEGORIES: Partial<Record<Subcategory, { domain?: Domain }>> = {
+  "web-framework": { domain: "web" },
+  "web-client-state": { domain: "web" },
+  "api-api": { domain: "api" },
+  "web-testing": { domain: "shared" },
+};
+
+const EDIT_SKILLS: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
+  "web-framework-react": { category: "web-framework" },
+  "web-state-zustand": { category: "web-client-state" },
+  "api-framework-hono": { category: "api-api" },
+  "web-testing-vitest": { category: "web-testing" },
+} as Partial<Record<SkillId, { category: string; displayName?: string }>>;
+
 // The edit command uses populateFromSkillIds() on the Zustand wizard store
 // to restore prior selections. Testing at the store level because the edit
 // command itself launches an interactive wizard that cannot be driven from
@@ -182,20 +197,6 @@ describe("edit command", () => {
 // use-wizard-initialization.ts when edit mode is active.
 
 describe("edit wizard pre-selection via populateFromSkillIds", () => {
-  const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
-    "web-framework": { domain: "web" },
-    "web-client-state": { domain: "web" },
-    "api-api": { domain: "api" },
-    "web-testing": { domain: "shared" },
-  };
-
-  const skills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
-    "web-framework-react": { category: "web-framework" },
-    "web-state-zustand": { category: "web-client-state" },
-    "api-framework-hono": { category: "api-api" },
-    "web-testing-vitest": { category: "web-testing" },
-  } as Partial<Record<SkillId, { category: string; displayName?: string }>>;
-
   beforeEach(() => {
     useWizardStore.getState().reset();
   });
@@ -207,7 +208,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
       "api-framework-hono",
     ];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
 
     const { domainSelections } = useWizardStore.getState();
 
@@ -222,7 +223,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
   it("should not pre-select skills that are not in the installed list", () => {
     const installedSkills: SkillId[] = ["web-framework-react"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
 
     const { domainSelections } = useWizardStore.getState();
 
@@ -237,7 +238,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
   it("should set selectedDomains to only the domains found in the provided skill IDs", () => {
     const installedSkills: SkillId[] = ["web-framework-react"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
 
     const { selectedDomains } = useWizardStore.getState();
 
@@ -250,7 +251,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
   it("should place shared-domain skills under the shared domain key", () => {
     const installedSkills: SkillId[] = ["web-testing-vitest"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
 
     const { domainSelections } = useWizardStore.getState();
 
@@ -265,7 +266,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
   it("should produce empty domainSelections when installed list is empty", () => {
     const installedSkills: SkillId[] = [];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
 
     const { domainSelections } = useWizardStore.getState();
 
@@ -280,7 +281,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
 
     const installedSkills: SkillId[] = ["web-framework-react", "web-framework-unknown"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, sparseSkills, categories);
+    useWizardStore.getState().populateFromSkillIds(installedSkills, sparseSkills, EDIT_CATEGORIES);
 
     const { domainSelections } = useWizardStore.getState();
 
@@ -297,7 +298,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
 
     const installedSkills: SkillId[] = ["web-framework-react", "infra-tooling-linter"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, extraSkills, categories);
+    useWizardStore.getState().populateFromSkillIds(installedSkills, extraSkills, EDIT_CATEGORIES);
 
     const { domainSelections } = useWizardStore.getState();
 
@@ -311,7 +312,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
   it("should not duplicate skills when the same skill ID appears twice in installed list", () => {
     const installedSkills: SkillId[] = ["web-framework-react", "web-framework-react"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
 
     const { domainSelections } = useWizardStore.getState();
 
@@ -323,13 +324,13 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
   it("should populate multiple skills within the same subcategory (non-exclusive)", () => {
     // testing category is non-exclusive, so multiple selections are valid
     const multiSkills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
-      ...skills,
+      ...EDIT_SKILLS,
       "web-testing-playwright": { category: "web-testing" },
     } as Partial<Record<SkillId, { category: string; displayName?: string }>>;
 
     const installedSkills: SkillId[] = ["web-testing-vitest", "web-testing-playwright"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, multiSkills, categories);
+    useWizardStore.getState().populateFromSkillIds(installedSkills, multiSkills, EDIT_CATEGORIES);
 
     const { domainSelections } = useWizardStore.getState();
 
@@ -345,20 +346,6 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
 // omits domains with zero selections.
 
 describe("edit wizard domain filtering", () => {
-  const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
-    "web-framework": { domain: "web" },
-    "web-client-state": { domain: "web" },
-    "api-api": { domain: "api" },
-    "web-testing": { domain: "shared" },
-  };
-
-  const skills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
-    "web-framework-react": { category: "web-framework" },
-    "web-state-zustand": { category: "web-client-state" },
-    "api-framework-hono": { category: "api-api" },
-    "web-testing-vitest": { category: "web-testing" },
-  } as Partial<Record<SkillId, { category: string; displayName?: string }>>;
-
   beforeEach(() => {
     useWizardStore.getState().reset();
   });
@@ -366,7 +353,7 @@ describe("edit wizard domain filtering", () => {
   it("should report only web domain when only web skills are installed", () => {
     const installedSkills: SkillId[] = ["web-framework-react", "web-state-zustand"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
 
     const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
 
@@ -383,7 +370,7 @@ describe("edit wizard domain filtering", () => {
   it("should report both web and api domains when both have selections", () => {
     const installedSkills: SkillId[] = ["web-framework-react", "api-framework-hono"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
 
     const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
 
@@ -395,7 +382,7 @@ describe("edit wizard domain filtering", () => {
   it("should report only shared domain when only shared skills are installed", () => {
     const installedSkills: SkillId[] = ["web-testing-vitest"];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
 
     const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
 
@@ -413,7 +400,7 @@ describe("edit wizard domain filtering", () => {
   it("should return empty result when no skills are installed", () => {
     const installedSkills: SkillId[] = [];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
 
     const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
 
@@ -429,7 +416,7 @@ describe("edit wizard domain filtering", () => {
       "web-testing-vitest",
     ];
 
-    useWizardStore.getState().populateFromSkillIds(installedSkills, skills, categories);
+    useWizardStore.getState().populateFromSkillIds(installedSkills, EDIT_SKILLS, EDIT_CATEGORIES);
 
     const perDomain = useWizardStore.getState().getSelectedTechnologiesPerDomain();
 
@@ -484,6 +471,7 @@ describe("edit command local-mode skill fallback", () => {
 
     mockDetectInstallation.mockResolvedValue({
       mode: "local",
+      scope: "project",
       configPath: path.join(projectDir, ".claude-src/config.yaml"),
       agentsDir: path.join(projectDir, ".claude/agents"),
       skillsDir: path.join(projectDir, ".claude/skills"),

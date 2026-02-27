@@ -66,30 +66,28 @@ describe("edit wizard", () => {
   });
 
   describe("wizard launch", () => {
-    it("should display loading messages for an existing installation", async () => {
+    it("should display startup messages for an existing installation", async () => {
       tempDir = await createTempDir();
       const projectDir = await createEditableProject(tempDir);
 
       session = new TerminalSession(["edit"], projectDir);
 
-      // The edit command logs these status messages before launching the wizard
-      await session.waitForText("Edit Local Skills");
+      // Startup messages are buffered and rendered via Ink's <Static> component
+      await session.waitForText("Loaded", WIZARD_LOAD_TIMEOUT_MS);
 
-      // Pre-wizard log messages may be overwritten in xterm's buffer by Ink,
-      // but getRawOutput() captures all PTY data before xterm processing
       const raw = session.getRawOutput();
-      expect(raw).toContain("Edit Local Skills");
-      expect(raw).toContain("Loading marketplace source");
+      expect(raw).toContain("Loaded");
+      expect(raw).toContain("skills");
     });
 
-    it("should show marketplace loading status", async () => {
+    it("should show skills loaded status", async () => {
       tempDir = await createTempDir();
       const projectDir = await createEditableProject(tempDir);
 
       session = new TerminalSession(["edit"], projectDir);
 
-      // The edit command logs "Loading marketplace source..." during setup
-      await session.waitForText("Loading marketplace source...");
+      // The edit command buffers status messages and shows them via Ink's <Static>
+      await session.waitForText("Loaded", WIZARD_LOAD_TIMEOUT_MS);
     });
 
     it("should show pre-selected skills in the build step", async () => {
@@ -204,30 +202,6 @@ describe("edit wizard", () => {
   });
 
   describe("keyboard navigation", () => {
-    it("should toggle expert mode with E key", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir);
-
-      session = new TerminalSession(["edit"], projectDir, {
-        rows: 40,
-        cols: 120,
-      });
-
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
-
-      // The footer shows "E  Expert mode" hotkey indicator
-      const screenBefore = session.getScreen();
-      expect(screenBefore).toContain("Expert mode");
-
-      // Press E to toggle expert mode - this shows additional categories
-      session.write("e");
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // The screen should still show the build step (expert mode is a toggle)
-      const screenAfter = session.getScreen();
-      expect(screenAfter).toContain("Customize your Web stack");
-    });
-
     it("should navigate to confirm step with ENTER", async () => {
       tempDir = await createTempDir();
       const projectDir = await createEditableProject(tempDir, {
@@ -318,7 +292,6 @@ describe("edit wizard", () => {
 
       const screen = session.getScreen();
       // The build step footer shows these hotkey indicators
-      expect(screen).toContain("Expert mode");
       expect(screen).toContain("Labels");
       expect(screen).toContain("Plugin mode");
       expect(screen).toContain("Help");

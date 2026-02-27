@@ -82,7 +82,7 @@ describe("test helpers", () => {
       testDirs = await createTestDirs();
       const agentDir = await writeTestAgent(testDirs.agentsDir, "test-agent");
 
-      expect(await fileExists(`${agentDir}/agent.yaml`)).toBe(true);
+      expect(await fileExists(`${agentDir}/metadata.yaml`)).toBe(true);
     });
   });
 });

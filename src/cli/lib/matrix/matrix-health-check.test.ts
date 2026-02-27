@@ -328,7 +328,7 @@ describe("matrix-health-check", () => {
   });
 
   describe("logging", () => {
-    it("logs a warning for each issue found", () => {
+    it("warns for each issue found", () => {
       const issues = checkMatrixHealth(orphanSkillWithMissingDomainMatrix);
 
       expect(issues.length).toBeGreaterThan(0);

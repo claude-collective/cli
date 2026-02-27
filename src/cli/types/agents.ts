@@ -12,8 +12,6 @@ export type AgentName =
   | "agent-summoner"
   | "documentor"
   | "skill-summoner"
-  // Migration
-  | "cli-migrator"
   // Pattern
   | "pattern-scout"
   | "web-pattern-critique"
@@ -81,7 +79,7 @@ export type AgentConfig = AgentDefinition & {
   skills: Skill[];
 };
 
-/** Agent configuration from agent.yaml (co-located in each agent folder) */
+/** Agent configuration from metadata.yaml (co-located in each agent folder) */
 export type AgentYamlConfig = BaseAgentFields & {
   id: AgentName;
   /** Explicit domain for wizard grouping (takes precedence over inference from kebab prefix) */

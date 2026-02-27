@@ -12,7 +12,6 @@ type UseFrameworkFilteringOptions = {
   domain: Domain;
   allSelections: SkillId[];
   matrix: MergedSkillsMatrix;
-  expertMode: boolean;
   selections: SubcategorySelections;
   installedSkillIds?: SkillId[];
 };
@@ -21,20 +20,11 @@ export function useFrameworkFiltering({
   domain,
   allSelections,
   matrix,
-  expertMode,
   selections,
   installedSkillIds,
 }: UseFrameworkFilteringOptions): CategoryRow[] {
   return useMemo(
-    () =>
-      buildCategoriesForDomain(
-        domain,
-        allSelections,
-        matrix,
-        expertMode,
-        selections,
-        installedSkillIds,
-      ),
-    [domain, allSelections, matrix, expertMode, selections, installedSkillIds],
+    () => buildCategoriesForDomain(domain, allSelections, matrix, selections, installedSkillIds),
+    [domain, allSelections, matrix, selections, installedSkillIds],
   );
 }

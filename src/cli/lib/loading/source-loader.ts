@@ -1,3 +1,4 @@
+import os from "os";
 import path from "path";
 import { unique } from "remeda";
 import {
@@ -90,7 +91,16 @@ export async function loadSkillsMatrixFromSource(
   }
 
   const resolvedProjectDir = projectDir || process.cwd();
-  const localSkillsResult = await discoverLocalSkills(resolvedProjectDir);
+  let localSkillsResult = await discoverLocalSkills(resolvedProjectDir);
+
+  // If no local skills in project, try global (home directory)
+  const homeDir = os.homedir();
+  if (
+    (!localSkillsResult || localSkillsResult.skills.length === 0) &&
+    resolvedProjectDir !== homeDir
+  ) {
+    localSkillsResult = await discoverLocalSkills(homeDir);
+  }
 
   if (localSkillsResult && localSkillsResult.skills.length > 0) {
     verbose(
@@ -263,7 +273,7 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
     verbose(`Loaded ${stacks.length} stacks from ${stackSource}`);
   }
 
-  // Collect explicit domain definitions from agent.yaml files
+  // Collect explicit domain definitions from agent metadata.yaml files
   const agents = await loadAllAgents(basePath);
   const agentDefinedDomains: Partial<Record<AgentName, Domain>> = {};
   for (const [agentId, agentDef] of typedEntries(agents)) {
@@ -371,7 +381,7 @@ export function getMarketplaceLabel(sourceResult: SourceLoadResult): string | un
   return marketplace;
 }
 
-/** Extract custom values from a single agent.yaml if it declares `custom: true`. */
+/** Extract custom values from a single agent metadata.yaml if it declares `custom: true`. */
 async function discoverCustomAgentValues(
   agentsDir: string,
   file: string,
@@ -440,7 +450,7 @@ async function discoverCustomSkillValues(
  * and extends schemas before the full load.
  *
  * Discovers:
- * - Custom agent names from agents with `custom: true` in agent.yaml
+ * - Custom agent names from agents with `custom: true` in metadata.yaml
  * - Custom domains from `domain` field of agents/skills with `custom: true`
  * - Custom skill IDs from skills with `custom: true` in metadata.yaml
  * - Custom categories from `category` field of skills with `custom: true`
@@ -458,7 +468,7 @@ async function discoverAndExtendFromSource(basePath: string): Promise<void> {
   // Discover custom agent names and domains (only from agents that declare custom: true)
   const agentsDir = path.join(basePath, DIRS.agents);
   if (await directoryExists(agentsDir)) {
-    const agentFiles = await glob(`**/${STANDARD_FILES.AGENT_YAML}`, agentsDir);
+    const agentFiles = await glob(`**/${STANDARD_FILES.AGENT_METADATA_YAML}`, agentsDir);
     for (const file of agentFiles) {
       try {
         const result = await discoverCustomAgentValues(agentsDir, file, parseYaml, builtinDomains);

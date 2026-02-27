@@ -24,6 +24,7 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
       paddingX={2}
       paddingY={1}
       marginBottom={marginBottom}
+      width="100%"
     >
       <Box flexDirection="column" gap={1}>
         <Text color={isFocused ? CLI_COLORS.PRIMARY : undefined} bold={isFocused}>

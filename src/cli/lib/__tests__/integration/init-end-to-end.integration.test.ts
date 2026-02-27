@@ -458,7 +458,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       useWizardStore.getState().preselectAgentsFromDomains();
       const store = useWizardStore.getState();
 
-      // DOMAIN_AGENTS.cli = ["cli-developer", "cli-tester", "cli-reviewer", "cli-migrator"]
+      // DOMAIN_AGENTS.cli = ["cli-developer", "cli-tester", "cli-reviewer"]
       expect(store.selectedAgents).toContain("cli-developer");
       expect(store.selectedAgents).toContain("cli-tester");
       expect(store.selectedAgents).toContain("cli-reviewer");
@@ -601,25 +601,6 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
 
       const config = await readTestYaml<ProjectConfig>(result.configPath);
       expect(config.source).toBe("github:my-org/my-marketplace");
-    });
-
-    it("should set expertMode in config when wizard has it enabled", async () => {
-      const selectedSkillIds: SkillId[] = ["web-framework-react"];
-
-      simulateSkillSelections(selectedSkillIds, matrix, ["web"]);
-      useWizardStore.setState({ expertMode: true });
-
-      const wizardResult = buildWizardResultFromStore(matrix);
-      expect(wizardResult.expertMode).toBe(true);
-
-      const result = await installLocal({
-        wizardResult,
-        sourceResult,
-        projectDir: dirs.projectDir,
-      });
-
-      const config = await readTestYaml<ProjectConfig>(result.configPath);
-      expect(config.expertMode).toBe(true);
     });
   });
 });

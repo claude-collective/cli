@@ -177,7 +177,6 @@ export function buildWizardResult(
     domainSelections: {} as DomainSelections,
     selectedDomains: [],
     sourceSelections: {},
-    expertMode: false,
     installMode: "local",
     cancelled: false,
     validation: { valid: true, errors: [], warnings: [] },
@@ -524,7 +523,7 @@ export async function writeTestAgent(
   await mkdir(agentDir, { recursive: true });
 
   await writeFile(
-    path.join(agentDir, STANDARD_FILES.AGENT_YAML),
+    path.join(agentDir, STANDARD_FILES.AGENT_METADATA_YAML),
     createAgentYamlContent(agentName, options?.description),
   );
 
@@ -784,7 +783,6 @@ export function buildWizardResultFromStore(
     domainSelections: store.domainSelections,
     selectedDomains: store.selectedDomains,
     sourceSelections: store.sourceSelections,
-    expertMode: store.expertMode,
     installMode: store.installMode,
     cancelled: false,
     validation,

@@ -46,7 +46,7 @@ describe("stack-plugin-compiler", () => {
     await cleanupTestSource(dirs);
   });
 
-  /** Write agent files (agent.yaml, intro.md, workflow.md) into the agents directory */
+  /** Write agent files (metadata.yaml, intro.md, workflow.md) into the agents directory */
   async function createAgent(
     agentId: string,
     config: {
@@ -61,7 +61,7 @@ describe("stack-plugin-compiler", () => {
     await mkdir(agentDir, { recursive: true });
 
     await writeTestFile(
-      path.join(agentDir, "agent.yaml"),
+      path.join(agentDir, "metadata.yaml"),
       `id: ${agentId}\ntitle: ${config.title}\ndescription: ${config.description}\ntools:\n${config.tools.map((t) => `  - ${t}`).join("\n")}\n`,
     );
     await writeTestFile(
@@ -454,7 +454,7 @@ describe("stack-plugin-compiler", () => {
   });
 
   describe("compileStackPlugin - edge cases", () => {
-    it("should handle stack with no skills", async () => {
+    it("should handle stack with no skills (empty skillPlugins)", async () => {
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -475,14 +475,14 @@ describe("stack-plugin-compiler", () => {
       });
 
       expect(result.skillPlugins).toHaveLength(0);
-
-      // README should not have "Required Skill Plugins" section
-      const readmePath = path.join(result.pluginPath, "README.md");
-      const readmeContent = await readFile(readmePath, "utf-8");
-      expect(readmeContent).not.toContain("## Required Skill Plugins");
     });
 
-    it("should handle stack with no tags", async () => {
+    it.each([
+      ["skills", "## Required Skill Plugins"],
+      ["tags", "## Tags"],
+      ["philosophy", "## Philosophy"],
+      ["principles", "## Principles"],
+    ])("should omit %s section from README when stack has none", async (_field, readmeSection) => {
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -504,57 +504,7 @@ describe("stack-plugin-compiler", () => {
 
       const readmePath = path.join(result.pluginPath, "README.md");
       const readmeContent = await readFile(readmePath, "utf-8");
-      expect(readmeContent).not.toContain("## Tags");
-    });
-
-    it("should handle stack with no philosophy", async () => {
-      await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
-        tools: ["Read"],
-      });
-
-      const stackId = uniqueStackId();
-      const stack = createStack(stackId, {
-        name: "Test Stack",
-        agents: ["web-developer"],
-      });
-
-      const result = await compileStackPlugin({
-        stackId,
-        outputDir,
-        projectRoot,
-        stack,
-      });
-
-      const readmePath = path.join(result.pluginPath, "README.md");
-      const readmeContent = await readFile(readmePath, "utf-8");
-      expect(readmeContent).not.toContain("## Philosophy");
-    });
-
-    it("should handle stack with no principles", async () => {
-      await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
-        tools: ["Read"],
-      });
-
-      const stackId = uniqueStackId();
-      const stack = createStack(stackId, {
-        name: "Test Stack",
-        agents: ["web-developer"],
-      });
-
-      const result = await compileStackPlugin({
-        stackId,
-        outputDir,
-        projectRoot,
-        stack,
-      });
-
-      const readmePath = path.join(result.pluginPath, "README.md");
-      const readmeContent = await readFile(readmePath, "utf-8");
-      expect(readmeContent).not.toContain("## Principles");
+      expect(readmeContent).not.toContain(readmeSection);
     });
 
     it("should handle stack with no description", async () => {
@@ -901,7 +851,11 @@ describe("stack-plugin-compiler", () => {
       { title: "Frontend Developer", description: "A frontend developer agent" },
     );
 
-    it("should emit pluginRef format in frontmatter when installMode is plugin", async () => {
+    // Shared Liquid engine — created per test via beforeEach
+    // Boundary cast: dynamic import type not available at declaration
+    let engine: import("liquidjs").Liquid;
+
+    beforeEach(async () => {
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -911,13 +865,15 @@ describe("stack-plugin-compiler", () => {
       });
 
       const { Liquid } = await import("liquidjs");
-      const engine = new Liquid({
+      engine = new Liquid({
         root: [realTemplateDir],
         extname: ".liquid",
         strictVariables: false,
         strictFilters: true,
       });
+    });
 
+    it("should emit pluginRef format in frontmatter when installMode is plugin", async () => {
       const output = await compileAgentForPlugin(
         "web-developer",
         AGENT_WITH_BOTH_SKILLS,
@@ -933,22 +889,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should emit bare skill IDs when installMode is local", async () => {
-      await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
-        tools: ["Read", "Write"],
-        intro: "# Frontend Dev\n\nIntro.",
-        workflow: "## Workflow\n\n1. Build",
-      });
-
-      const { Liquid } = await import("liquidjs");
-      const engine = new Liquid({
-        root: [realTemplateDir],
-        extname: ".liquid",
-        strictVariables: false,
-        strictFilters: true,
-      });
-
       const output = await compileAgentForPlugin(
         "web-developer",
         AGENT_WITH_BOTH_SKILLS,
@@ -966,23 +906,6 @@ describe("stack-plugin-compiler", () => {
     });
 
     it("should emit bare skill IDs when installMode is undefined", async () => {
-      await createAgent("web-developer", {
-        title: "Frontend Developer",
-        description: "A frontend developer agent",
-        tools: ["Read", "Write"],
-        intro: "# Frontend Dev\n\nIntro.",
-        workflow: "## Workflow\n\n1. Build",
-      });
-
-      const { Liquid } = await import("liquidjs");
-      const engine = new Liquid({
-        root: [realTemplateDir],
-        extname: ".liquid",
-        strictVariables: false,
-        strictFilters: true,
-      });
-
-      // No installMode (default behavior)
       const output = await compileAgentForPlugin(
         "web-developer",
         AGENT_WITH_PRELOADED_ONLY,

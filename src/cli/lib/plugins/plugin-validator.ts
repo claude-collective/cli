@@ -13,6 +13,7 @@ import type { ValidationResult } from "../../types";
 import { countBy } from "remeda";
 import { extractFrontmatter } from "../../utils/frontmatter";
 import { log } from "../../utils/logger";
+import { formatZodErrors } from "../schema-validator";
 import {
   pluginAuthorSchema,
   hooksRecordSchema,
@@ -41,16 +42,6 @@ const pluginManifestValidationSchema = z
     hooks: z.union([z.string(), hooksRecordSchema]).optional(),
   })
   .strict();
-
-function formatZodErrors(error: z.ZodError): string[] {
-  return error.issues.map((issue) => {
-    const path = issue.path.join(".");
-    if (issue.code === "unrecognized_keys") {
-      return `Unrecognized key: "${issue.keys.join('", "')}"`;
-    }
-    return path ? `${path}: ${issue.message}` : issue.message;
-  });
-}
 
 function isKebabCase(str: string): boolean {
   return KEBAB_CASE_REGEX.test(str);

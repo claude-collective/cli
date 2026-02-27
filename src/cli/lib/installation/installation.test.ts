@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import os from "os";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
@@ -6,7 +7,11 @@ import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
 // Mock logger (suppress verbose/warn output during tests)
 vi.mock("../../utils/logger");
 
-import { detectInstallation, getInstallationOrThrow } from "./installation";
+import {
+  detectInstallation,
+  detectProjectInstallation,
+  getInstallationOrThrow,
+} from "./installation";
 
 const LOCAL_CONFIG_CONTENT = `name: my-project
 agents:
@@ -65,6 +70,7 @@ describe("installation", () => {
 
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("local");
+      expect(result!.scope).toBe("project");
       expect(result!.configPath).toBe(path.join(tempDir, ".claude-src/config.yaml"));
       expect(result!.agentsDir).toBe(path.join(tempDir, ".claude/agents"));
       expect(result!.skillsDir).toBe(path.join(tempDir, ".claude/skills"));
@@ -78,6 +84,7 @@ describe("installation", () => {
 
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("local");
+      expect(result!.scope).toBe("project");
       expect(result!.configPath).toBe(path.join(tempDir, ".claude/config.yaml"));
     });
 
@@ -88,6 +95,7 @@ describe("installation", () => {
 
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("local");
+      expect(result!.scope).toBe("project");
     });
 
     it("detects plugin installation when installMode is plugin", async () => {
@@ -97,15 +105,16 @@ describe("installation", () => {
 
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("plugin");
+      expect(result!.scope).toBe("project");
       expect(result!.configPath).toBe(path.join(tempDir, ".claude-src/config.yaml"));
       expect(result!.agentsDir).toBe(path.join(tempDir, ".claude/agents"));
       expect(result!.skillsDir).toBe(path.join(tempDir, ".claude/plugins"));
     });
 
-    it("returns null when no installation found", async () => {
+    it("returns null for project-level detection when no installation found", async () => {
       // Empty temp dir — no config, no plugin
-      const result = await detectInstallation(tempDir);
-
+      // Use detectProjectInstallation to avoid global fallback
+      const result = await detectProjectInstallation(tempDir);
       expect(result).toBeNull();
     });
 
@@ -114,9 +123,9 @@ describe("installation", () => {
       const pluginDir = path.join(tempDir, ".claude/plugins/some-skill@public");
       await mkdir(pluginDir, { recursive: true });
 
-      const result = await detectInstallation(tempDir);
-
-      expect(result).toBeNull();
+      // detectProjectInstallation returns null for project check
+      const projectResult = await detectProjectInstallation(tempDir);
+      expect(projectResult).toBeNull();
     });
 
     it("falls through to local even when config is invalid YAML", async () => {
@@ -132,6 +141,7 @@ describe("installation", () => {
       // still enters the local branch. mode defaults to "local" via ?? operator.
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("local");
+      expect(result!.scope).toBe("project");
     });
 
     it("prefers .claude-src/config.yaml over .claude/config.yaml", async () => {
@@ -147,10 +157,61 @@ describe("installation", () => {
     });
 
     it("uses provided projectDir parameter", async () => {
-      // Empty dir — no installation
-      const result = await detectInstallation(tempDir);
+      // Empty dir — no installation at project level
+      const result = await detectProjectInstallation(tempDir);
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe("detectProjectInstallation", () => {
+    it("returns project-scoped installation when config exists", async () => {
+      await createLocalProject(tempDir);
+
+      const result = await detectProjectInstallation(tempDir);
+
+      expect(result).not.toBeNull();
+      expect(result!.scope).toBe("project");
+      expect(result!.projectDir).toBe(tempDir);
+    });
+
+    it("returns null when no config exists (no global fallback)", async () => {
+      const result = await detectProjectInstallation(tempDir);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("global fallback", () => {
+    it("falls back to global when project config not found", async () => {
+      // If the home directory has a config, detectInstallation falls back
+      const homeDir = os.homedir();
+      const homeConfigPath = path.join(homeDir, ".claude-src/config.yaml");
+      const { fileExists } = await import("../../utils/fs");
+      const homeHasConfig = await fileExists(homeConfigPath);
+
+      if (homeHasConfig) {
+        // Test the fallback: project dir without config -> uses global
+        const result = await detectInstallation(tempDir);
+        expect(result).not.toBeNull();
+        expect(result!.scope).toBe("global");
+        expect(result!.projectDir).toBe(homeDir);
+      } else {
+        // No global config either -> null
+        const result = await detectInstallation(tempDir);
+        expect(result).toBeNull();
+      }
+    });
+
+    it("project takes precedence over global", async () => {
+      // Project config exists — should use project, not global
+      await createLocalProject(tempDir);
+
+      const result = await detectInstallation(tempDir);
+
+      expect(result).not.toBeNull();
+      expect(result!.scope).toBe("project");
+      expect(result!.projectDir).toBe(tempDir);
     });
   });
 
@@ -161,17 +222,33 @@ describe("installation", () => {
       const result = await getInstallationOrThrow(tempDir);
 
       expect(result.mode).toBe("local");
+      expect(result.scope).toBe("project");
       expect(result.projectDir).toBe(tempDir);
     });
 
     it("throws error when no installation found", async () => {
-      await expect(getInstallationOrThrow(tempDir)).rejects.toThrow(
-        "No Agents Inc. installation found",
-      );
+      // Only test this when home dir has no global config
+      const homeDir = os.homedir();
+      const homeConfigPath = path.join(homeDir, ".claude-src/config.yaml");
+      const { fileExists } = await import("../../utils/fs");
+      const homeHasConfig = await fileExists(homeConfigPath);
+
+      if (!homeHasConfig) {
+        await expect(getInstallationOrThrow(tempDir)).rejects.toThrow(
+          "No Agents Inc. installation found",
+        );
+      }
     });
 
     it("error message suggests running agentsinc init", async () => {
-      await expect(getInstallationOrThrow(tempDir)).rejects.toThrow("agentsinc init");
+      const homeDir = os.homedir();
+      const homeConfigPath = path.join(homeDir, ".claude-src/config.yaml");
+      const { fileExists } = await import("../../utils/fs");
+      const homeHasConfig = await fileExists(homeConfigPath);
+
+      if (!homeHasConfig) {
+        await expect(getInstallationOrThrow(tempDir)).rejects.toThrow("agentsinc init");
+      }
     });
 
     it("returns plugin installation when config has installMode: plugin", async () => {
@@ -180,6 +257,7 @@ describe("installation", () => {
       const result = await getInstallationOrThrow(tempDir);
 
       expect(result.mode).toBe("plugin");
+      expect(result.scope).toBe("project");
     });
   });
 });

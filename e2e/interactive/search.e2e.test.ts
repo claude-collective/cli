@@ -265,7 +265,7 @@ describe("search command", () => {
     // BUG: search interactive mode hardcodes sourceFlag: undefined instead of
     // passing the --source flag value to loadSkillsMatrixFromSource()
     // (src/cli/commands/search.tsx:174)
-    it.fails("should respect --source flag in interactive mode", async () => {
+    it("should respect --source flag in interactive mode", async () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 

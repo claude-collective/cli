@@ -19,6 +19,39 @@ export function log(msg: string): void {
   console.log(msg);
 }
 
+// --- Startup message buffering ---
+// When buffer mode is enabled (before Ink takes over the terminal), warn() pushes
+// messages into a buffer instead of writing to stderr. The buffer is drained and
+// passed to Ink's <Static> component so messages survive Ink's clearTerminal.
+
+export type StartupMessage = {
+  level: "info" | "warn" | "error";
+  text: string;
+};
+
+let bufferMode = false;
+let messageBuffer: StartupMessage[] = [];
+
+export function enableBuffering(): void {
+  bufferMode = true;
+  messageBuffer = [];
+}
+
+export function drainBuffer(): StartupMessage[] {
+  const messages = [...messageBuffer];
+  messageBuffer = [];
+  return messages;
+}
+
+export function disableBuffering(): void {
+  bufferMode = false;
+  messageBuffer = [];
+}
+
+export function pushBufferMessage(level: StartupMessage["level"], text: string): void {
+  messageBuffer.push({ level, text });
+}
+
 // Always visible (not gated by verbose mode).
 // Used for issues the user should know about, like unresolved references.
 //
@@ -31,5 +64,9 @@ export function log(msg: string): void {
 //   - After a colon, use lowercase (e.g., "Skipping 'foo': invalid frontmatter")
 //   - Use em dash for supplemental info (e.g., "Missing category — defaulting to 'local'")
 export function warn(msg: string): void {
+  if (bufferMode) {
+    messageBuffer.push({ level: "warn", text: msg });
+    return;
+  }
   console.warn(`  Warning: ${msg}`);
 }

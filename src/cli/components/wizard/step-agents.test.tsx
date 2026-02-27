@@ -59,7 +59,6 @@ describe("StepAgents component", () => {
       expect(output).toContain("Agent Summoner");
       expect(output).toContain("Skill Summoner");
       expect(output).toContain("Documentor");
-      expect(output).toContain("CLI Migrator");
     });
 
     it("should render agent descriptions", () => {
@@ -120,7 +119,7 @@ describe("StepAgents component", () => {
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
-      stdin.write(SPACE);
+      await stdin.write(SPACE);
       await delay(INPUT_DELAY_MS);
 
       const store = useWizardStore.getState();
@@ -132,9 +131,9 @@ describe("StepAgents component", () => {
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
-      stdin.write(ARROW_DOWN);
+      await stdin.write(ARROW_DOWN);
       await delay(INPUT_DELAY_MS);
-      stdin.write(SPACE);
+      await stdin.write(SPACE);
       await delay(INPUT_DELAY_MS);
 
       const store = useWizardStore.getState();
@@ -151,7 +150,7 @@ describe("StepAgents component", () => {
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
-      stdin.write(ENTER);
+      await stdin.write(ENTER);
       await delay(INPUT_DELAY_MS);
 
       const updatedStore = useWizardStore.getState();
@@ -166,7 +165,7 @@ describe("StepAgents component", () => {
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
-      stdin.write(ENTER);
+      await stdin.write(ENTER);
       await delay(INPUT_DELAY_MS);
 
       const updatedStore = useWizardStore.getState();
@@ -182,7 +181,7 @@ describe("StepAgents component", () => {
       cleanup = unmount;
 
       await delay(RENDER_DELAY_MS);
-      stdin.write(ESCAPE);
+      await stdin.write(ESCAPE);
       await delay(INPUT_DELAY_MS);
 
       const updatedStore = useWizardStore.getState();
@@ -198,7 +197,7 @@ describe("StepAgents component", () => {
 
       await delay(RENDER_DELAY_MS);
       // First item is web-developer, toggle it off
-      stdin.write(SPACE);
+      await stdin.write(SPACE);
       await delay(INPUT_DELAY_MS);
 
       const updatedStore = useWizardStore.getState();

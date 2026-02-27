@@ -11,6 +11,7 @@ export {
   type ResolvedAgentsSource,
   getProjectConfigPath,
   loadProjectSourceConfig,
+  loadGlobalSourceConfig,
   saveProjectConfig,
   resolveSource,
   resolveAgentsSource,
@@ -36,6 +37,7 @@ export { saveSourceToProjectConfig } from "./config-saver";
 export {
   type LoadedProjectConfig,
   loadProjectConfig,
+  loadProjectConfigFromDir,
   validateProjectConfig,
 } from "./project-config";
 

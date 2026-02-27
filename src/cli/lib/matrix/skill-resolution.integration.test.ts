@@ -13,8 +13,8 @@ import { installLocal } from "../installation/local-installer";
 import {
   validateSelection,
   getAvailableSkills,
-  isDisabled,
-  getDisableReason,
+  isDiscouraged,
+  getDiscourageReason,
   resolveAlias,
 } from ".";
 import {
@@ -24,7 +24,11 @@ import {
   buildWizardResult,
   buildSourceResult,
 } from "../__tests__/helpers";
-import { PUBLIC_SOURCE, ACME_SOURCE, INTERNAL_SOURCE } from "../__tests__/mock-data";
+import {
+  PUBLIC_SOURCE,
+  ACME_SOURCE,
+  INTERNAL_SOURCE,
+} from "../__tests__/mock-data/mock-sources.js";
 import type {
   CategoryDefinition,
   CategoryPath,
@@ -369,7 +373,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       expect(validation.errors[0].message).toContain("api-framework-hono");
     });
 
-    it("should disable dependent skill when requirement is not selected", () => {
+    it("should discourage dependent skill when requirement is not selected", () => {
       const matrix = buildMultiSourceMatrix();
 
       // auth-patterns requires hono
@@ -382,16 +386,16 @@ describe("Integration: Multi-Source Skill Resolution", () => {
         },
       ];
 
-      // Nothing selected, auth should be disabled
-      const disabled = isDisabled("api-security-auth-patterns", [], matrix);
-      expect(disabled).toBe(true);
+      // Nothing selected, auth should be discouraged
+      const discouraged = isDiscouraged("api-security-auth-patterns", [], matrix);
+      expect(discouraged).toBe(true);
 
-      const reason = getDisableReason("api-security-auth-patterns", [], matrix);
+      const reason = getDiscourageReason("api-security-auth-patterns", [], matrix);
       expect(reason).toContain("Auth patterns need a backend framework");
       expect(reason).toContain("api-framework-hono");
     });
 
-    it("should enable dependent skill when requirement is selected", () => {
+    it("should not discourage dependent skill when requirement is selected", () => {
       const matrix = buildMultiSourceMatrix();
 
       // auth-patterns requires hono
@@ -404,9 +408,13 @@ describe("Integration: Multi-Source Skill Resolution", () => {
         },
       ];
 
-      // hono selected, auth should be enabled
-      const disabled = isDisabled("api-security-auth-patterns", ["api-framework-hono"], matrix);
-      expect(disabled).toBe(false);
+      // hono selected, auth should not be discouraged
+      const discouraged = isDiscouraged(
+        "api-security-auth-patterns",
+        ["api-framework-hono"],
+        matrix,
+      );
+      expect(discouraged).toBe(false);
     });
 
     it("should handle OR dependency across sources", () => {
@@ -454,7 +462,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       expect(validation.errors[0].message).toContain("Choose one frontend framework");
     });
 
-    it("should disable conflicting skill from another source", () => {
+    it("should discourage conflicting skill from another source", () => {
       const matrix = buildMultiSourceMatrix();
 
       const reactSkill = matrix.skills["web-framework-react"]!;
@@ -465,9 +473,9 @@ describe("Integration: Multi-Source Skill Resolution", () => {
         },
       ];
 
-      // React selected, vue should be disabled
-      const disabled = isDisabled("web-framework-vue", ["web-framework-react"], matrix);
-      expect(disabled).toBe(true);
+      // React selected, vue should be discouraged
+      const discouraged = isDiscouraged("web-framework-vue", ["web-framework-react"], matrix);
+      expect(discouraged).toBe(true);
     });
 
     it("should enforce category exclusivity across multi-source skills", () => {
@@ -533,8 +541,8 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       expect(ids).toContain("web-framework-react");
       expect(ids).toContain("web-framework-vue");
 
-      // None should be disabled initially
-      expect(available.every((o) => !o.disabled)).toBe(true);
+      // None should be discouraged or selected initially
+      expect(available.every((o) => !o.discouraged)).toBe(true);
       expect(available.every((o) => !o.selected)).toBe(true);
     });
   });

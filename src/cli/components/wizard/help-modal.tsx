@@ -22,7 +22,6 @@ const GLOBAL_KEYS: HelpSection = {
 const GLOBAL_TOGGLES: HelpSection = {
   title: "Global Toggles",
   keys: [
-    { key: "E", description: "Toggle expert mode" },
     { key: "P", description: "Toggle plugin/local install mode" },
     { key: "?", description: "Toggle this help" },
   ],

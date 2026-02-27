@@ -6,6 +6,7 @@ model: opus
 tools:
   - Read
   - Write
+  - Edit
   - Glob
   - Grep
   - Bash
