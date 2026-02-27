@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.50.0] - 2026-02-27
+
+**Pre-1.0 cleanup — agent.yaml rename, expert mode removal, scroll hook extraction, DRY consolidation**
+
+- Rename `agent.yaml` to `metadata.yaml` across all 17 agents
+- Remove `cli-migrator` agent and expert mode toggle
+- Extract `useSectionScroll` and `useRowScroll` hooks from 6 wizard components
+- Unify scroll rendering, fix domain sort order stability (B-07)
+- Dashboard view when `init` is run on existing project
+
+See [changelogs/0.50.0.md](./changelogs/0.50.0.md) for full details.
+
+---
+
 ## [0.49.0] - 2026-02-27
 
 **Config file generation for new skill and new marketplace commands**
