@@ -1,13 +1,18 @@
 import { Args, Flags } from "@oclif/core";
 import path from "path";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { BaseCommand } from "../../base-command.js";
 import { resolveAuthor } from "../../lib/configuration/index.js";
-import { writeFile, directoryExists, fileExists } from "../../utils/fs.js";
+import { writeFile, readFile, directoryExists, fileExists, ensureDir } from "../../utils/fs.js";
+import { getErrorMessage } from "../../utils/errors.js";
+import { verbose } from "../../utils/logger.js";
 import {
   CLI_BIN_NAME,
   KEBAB_CASE_PATTERN,
   LOCAL_SKILLS_PATH,
   PLUGIN_MANIFEST_DIR,
+  SKILL_CATEGORIES_YAML_PATH,
+  SKILL_RULES_YAML_PATH,
   SKILLS_DIR_PATH,
   STANDARD_FILES,
 } from "../../consts.js";
@@ -109,6 +114,41 @@ contentHash: ${contentHash}
 tags:
   - local
   - custom
+`;
+}
+
+const KNOWN_DOMAINS = new Set(["web", "api", "mobile", "cli", "shared"]);
+const DEFAULT_CATEGORY_ORDER = 99;
+
+export function generateSkillCategoriesYaml(category: CategoryPath): string {
+  const prefix = category.split("-")[0];
+  const subcategoryPart = category.includes("-")
+    ? category.slice(category.indexOf("-") + 1)
+    : category;
+  const displayName = toTitleCase(subcategoryPart);
+  const domainLine = KNOWN_DOMAINS.has(prefix) ? `\n    domain: ${prefix}` : "";
+
+  return `version: "1.0.0"
+
+categories:
+  ${category}:
+    id: ${category}
+    displayName: ${displayName}
+    description: Skills for ${displayName}${domainLine}
+    exclusive: true
+    required: false
+    order: ${DEFAULT_CATEGORY_ORDER}
+    custom: true
+`;
+}
+
+export function generateSkillRulesYaml(skillName: string): string {
+  return `version: "1.0.0"
+
+# Short aliases mapping to canonical skill IDs
+# Example: react: "web-framework-react"
+aliases:
+  ${skillName}: "${skillName}"
 `;
 }
 
@@ -221,6 +261,19 @@ export default class NewSkill extends BaseCommand {
       this.log("");
       this.logSuccess(`Created ${STANDARD_FILES.SKILL_MD} at ${skillMdPath}`);
       this.logSuccess(`Created ${STANDARD_FILES.METADATA_YAML} at ${metadataPath}`);
+
+      // Update config files when in marketplace context
+      if (!flags.output) {
+        const marketplacePath = path.join(projectDir, PLUGIN_MANIFEST_DIR, "marketplace.json");
+        if (await fileExists(marketplacePath)) {
+          try {
+            await this.updateConfigFiles(projectDir, args.name, category);
+          } catch (error) {
+            this.warn(`Could not update config files: ${getErrorMessage(error)}`);
+          }
+        }
+      }
+
       this.log("");
       this.log(
         `Skill created successfully! Run '${CLI_BIN_NAME} compile' to include it in your agents.`,
@@ -228,6 +281,63 @@ export default class NewSkill extends BaseCommand {
       this.log("");
     } catch (error) {
       this.handleError(error);
+    }
+  }
+
+  private async updateConfigFiles(
+    projectRoot: string,
+    skillName: string,
+    category: CategoryPath,
+  ): Promise<void> {
+    const categoriesPath = path.join(projectRoot, SKILL_CATEGORIES_YAML_PATH);
+    const rulesPath = path.join(projectRoot, SKILL_RULES_YAML_PATH);
+
+    // Update skill-categories.yaml
+    if (await fileExists(categoriesPath)) {
+      const content = await readFile(categoriesPath);
+      const parsed = parseYaml(content) as Record<string, unknown>;
+      const categories = (parsed.categories ?? {}) as Record<string, unknown>;
+      if (!categories[category]) {
+        const prefix = category.split("-")[0];
+        const subcategoryPart = category.includes("-")
+          ? category.slice(category.indexOf("-") + 1)
+          : category;
+        const entry: Record<string, unknown> = {
+          id: category,
+          displayName: toTitleCase(subcategoryPart),
+          description: `Skills for ${toTitleCase(subcategoryPart)}`,
+          exclusive: true,
+          required: false,
+          order: DEFAULT_CATEGORY_ORDER,
+          custom: true,
+        };
+        if (KNOWN_DOMAINS.has(prefix)) entry.domain = prefix;
+        categories[category] = entry;
+        parsed.categories = categories;
+        await writeFile(categoriesPath, stringifyYaml(parsed));
+        verbose(`Added category '${category}' to ${SKILL_CATEGORIES_YAML_PATH}`);
+      }
+    } else {
+      await ensureDir(path.dirname(categoriesPath));
+      await writeFile(categoriesPath, generateSkillCategoriesYaml(category));
+      verbose(`Created ${SKILL_CATEGORIES_YAML_PATH}`);
+    }
+
+    // Update skill-rules.yaml
+    if (await fileExists(rulesPath)) {
+      const content = await readFile(rulesPath);
+      const parsed = parseYaml(content) as Record<string, unknown>;
+      const aliases = (parsed.aliases ?? {}) as Record<string, unknown>;
+      if (!aliases[skillName]) {
+        aliases[skillName] = skillName;
+        parsed.aliases = aliases;
+        await writeFile(rulesPath, stringifyYaml(parsed));
+        verbose(`Added alias '${skillName}' to ${SKILL_RULES_YAML_PATH}`);
+      }
+    } else {
+      await ensureDir(path.dirname(rulesPath));
+      await writeFile(rulesPath, generateSkillRulesYaml(skillName));
+      verbose(`Created ${SKILL_RULES_YAML_PATH}`);
     }
   }
 }

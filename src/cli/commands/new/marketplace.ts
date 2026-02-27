@@ -7,13 +7,18 @@ import {
   CLI_BIN_NAME,
   KEBAB_CASE_PATTERN,
   PLUGIN_MANIFEST_DIR,
+  SKILL_CATEGORIES_YAML_PATH,
+  SKILL_RULES_YAML_PATH,
   SKILLS_DIR_PATH,
   STACKS_FILE_PATH,
   STANDARD_FILES,
 } from "../../consts.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
+import { LOCAL_DEFAULTS } from "../../lib/metadata-keys.js";
 import { compileAllSkillPlugins } from "../../lib/skills/skill-plugin-compiler.js";
 import { generateMarketplace, writeMarketplace } from "../../lib/marketplace-generator.js";
+import { generateSkillCategoriesYaml, generateSkillRulesYaml } from "./skill.js";
+import type { CategoryPath } from "../../types/index.js";
 
 export function validateMarketplaceName(name: string): string | null {
   if (!name || name.trim() === "") {
@@ -174,6 +179,8 @@ export default class NewMarketplace extends BaseCommand {
     if (flags["dry-run"]) {
       this.log("[DRY RUN] Would create marketplace structure:");
       this.log(`  ${STACKS_FILE_PATH}`);
+      this.log(`  ${SKILL_CATEGORIES_YAML_PATH}`);
+      this.log(`  ${SKILL_RULES_YAML_PATH}`);
       this.log(`  ${skillPath}/${STANDARD_FILES.SKILL_MD}`);
       this.log(`  ${skillPath}/${STANDARD_FILES.METADATA_YAML}`);
       this.log("  README.md");
@@ -189,6 +196,18 @@ export default class NewMarketplace extends BaseCommand {
       await ensureDir(path.dirname(stacksPath));
       await writeFile(stacksPath, stacksContent);
 
+      // Create config/skill-categories.yaml
+      const categoriesContent = generateSkillCategoriesYaml(
+        LOCAL_DEFAULTS.CATEGORY as CategoryPath,
+      );
+      const categoriesPath = path.join(marketplaceDir, SKILL_CATEGORIES_YAML_PATH);
+      await writeFile(categoriesPath, categoriesContent);
+
+      // Create config/skill-rules.yaml
+      const rulesContent = generateSkillRulesYaml(skillName);
+      const rulesPath = path.join(marketplaceDir, SKILL_RULES_YAML_PATH);
+      await writeFile(rulesPath, rulesContent);
+
       // Delegate skill creation to the new:skill command
       const skillsDir = path.join(marketplaceDir, SKILLS_DIR_PATH);
 
@@ -203,6 +222,8 @@ export default class NewMarketplace extends BaseCommand {
 
       this.log("");
       this.logSuccess(`Created ${STACKS_FILE_PATH}`);
+      this.logSuccess(`Created ${SKILL_CATEGORIES_YAML_PATH}`);
+      this.logSuccess(`Created ${SKILL_RULES_YAML_PATH}`);
       this.logSuccess("Created README.md");
       this.log("");
 
