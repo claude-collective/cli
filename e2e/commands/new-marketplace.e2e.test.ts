@@ -11,6 +11,8 @@ import {
   EXIT_CODES,
 } from "../helpers/test-utils.js";
 import {
+  SKILL_CATEGORIES_YAML_PATH,
+  SKILL_RULES_YAML_PATH,
   SKILLS_DIR_PATH,
   STACKS_FILE_PATH,
   STANDARD_FILES,
@@ -188,5 +190,38 @@ describe("new marketplace command", () => {
     const marketplaceDir = path.join(outputDir, marketplaceName);
     expect(await directoryExists(marketplaceDir)).toBe(true);
     expect(await fileExists(path.join(marketplaceDir, STACKS_FILE_PATH))).toBe(true);
+  });
+
+  it("should produce a valid skill-categories.yaml with dummy category", async () => {
+    tempDir = await createTempDir();
+    const marketplaceName = "my-categories-test";
+
+    const { exitCode } = await runCLI(["new", "marketplace", marketplaceName], tempDir);
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+    const categoriesPath = path.join(tempDir, marketplaceName, SKILL_CATEGORIES_YAML_PATH);
+    expect(await fileExists(categoriesPath)).toBe(true);
+
+    const content = await readTestFile(categoriesPath);
+    expect(content).toContain('version: "1.0.0"');
+    expect(content).toContain("dummy-category:");
+    expect(content).toContain("id: dummy-category");
+    expect(content).toContain("custom: true");
+  });
+
+  it("should produce a valid skill-rules.yaml with dummy skill alias", async () => {
+    tempDir = await createTempDir();
+    const marketplaceName = "my-rules-test";
+
+    const { exitCode } = await runCLI(["new", "marketplace", marketplaceName], tempDir);
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+    const rulesPath = path.join(tempDir, marketplaceName, SKILL_RULES_YAML_PATH);
+    expect(await fileExists(rulesPath)).toBe(true);
+
+    const content = await readTestFile(rulesPath);
+    expect(content).toContain('version: "1.0.0"');
+    expect(content).toContain("aliases:");
+    expect(content).toContain('dummy-skill: "dummy-skill"');
   });
 });

@@ -10,7 +10,13 @@ import {
   runCLI,
   EXIT_CODES,
 } from "../helpers/test-utils.js";
-import { CLAUDE_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
+import {
+  CLAUDE_DIR,
+  SKILL_CATEGORIES_YAML_PATH,
+  SKILL_RULES_YAML_PATH,
+  STANDARD_FILES,
+  STANDARD_DIRS,
+} from "../../src/cli/consts.js";
 
 describe("new skill command", () => {
   let tempDir: string;
@@ -143,5 +149,51 @@ describe("new skill command", () => {
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Skill created successfully");
+  });
+
+  it("should update config files when creating a skill in marketplace context", async () => {
+    tempDir = await createTempDir();
+    const marketplaceName = "mp-skill-config";
+
+    // First scaffold a marketplace to establish the context
+    const { exitCode: mpExitCode } = await runCLI(
+      ["new", "marketplace", marketplaceName],
+      tempDir,
+    );
+    expect(mpExitCode).toBe(EXIT_CODES.SUCCESS);
+
+    const marketplaceDir = path.join(tempDir, marketplaceName);
+
+    // Create a new skill inside the marketplace directory
+    const { exitCode, stdout } = await runCLI(
+      ["new", "skill", "my-extra-skill", "--category", "api-database"],
+      marketplaceDir,
+    );
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(stdout).toContain("Skill created successfully");
+
+    // Verify skill-categories.yaml was updated with the new category
+    const categoriesPath = path.join(marketplaceDir, SKILL_CATEGORIES_YAML_PATH);
+    const categoriesContent = await readTestFile(categoriesPath);
+    expect(categoriesContent).toContain("api-database:");
+    expect(categoriesContent).toContain("domain: api");
+
+    // Verify skill-rules.yaml was updated with the new skill alias
+    const rulesPath = path.join(marketplaceDir, SKILL_RULES_YAML_PATH);
+    const rulesContent = await readTestFile(rulesPath);
+    expect(rulesContent).toContain("my-extra-skill:");
+  });
+
+  it("should not create config files when creating a local skill", async () => {
+    tempDir = await createTempDir();
+    const skillName = "local-only-skill";
+
+    const { exitCode } = await runCLI(["new", "skill", skillName], tempDir);
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+    // Config files should NOT exist for local skills
+    expect(await fileExists(path.join(tempDir, SKILL_CATEGORIES_YAML_PATH))).toBe(false);
+    expect(await fileExists(path.join(tempDir, SKILL_RULES_YAML_PATH))).toBe(false);
   });
 });

@@ -15,6 +15,8 @@ import {
   generateReadme,
 } from "../../../../commands/new/marketplace";
 import {
+  SKILL_CATEGORIES_YAML_PATH,
+  SKILL_RULES_YAML_PATH,
   STACKS_FILE_PATH,
   SKILLS_DIR_PATH,
   STANDARD_FILES,
@@ -207,6 +209,31 @@ describe("new:marketplace command", () => {
       const content = await readFile(readmePath, "utf-8");
       expect(content).toContain("# acme-skills");
     });
+
+    it("should create config/skill-categories.yaml with dummy-category entry", async () => {
+      await runCliCommand(["new:marketplace", "acme-skills"]);
+
+      const categoriesPath = path.join(projectDir, "acme-skills", SKILL_CATEGORIES_YAML_PATH);
+      expect(await fileExists(categoriesPath)).toBe(true);
+
+      const content = await readFile(categoriesPath, "utf-8");
+      expect(content).toContain('version: "1.0.0"');
+      expect(content).toContain("dummy-category:");
+      expect(content).toContain("id: dummy-category");
+      expect(content).toContain("custom: true");
+    });
+
+    it("should create config/skill-rules.yaml with dummy-skill alias", async () => {
+      await runCliCommand(["new:marketplace", "acme-skills"]);
+
+      const rulesPath = path.join(projectDir, "acme-skills", SKILL_RULES_YAML_PATH);
+      expect(await fileExists(rulesPath)).toBe(true);
+
+      const content = await readFile(rulesPath, "utf-8");
+      expect(content).toContain('version: "1.0.0"');
+      expect(content).toContain("aliases:");
+      expect(content).toContain('dummy-skill: "dummy-skill"');
+    });
   });
 
   describe("flags", () => {
@@ -222,6 +249,8 @@ describe("new:marketplace command", () => {
       const { stdout } = await runCliCommand(["new:marketplace", "dry-run-market", "--dry-run"]);
 
       expect(stdout).toContain(STACKS_FILE_PATH);
+      expect(stdout).toContain(SKILL_CATEGORIES_YAML_PATH);
+      expect(stdout).toContain(SKILL_RULES_YAML_PATH);
       expect(stdout).toContain(STANDARD_FILES.SKILL_MD);
       expect(stdout).toContain(STANDARD_FILES.METADATA_YAML);
       expect(stdout).toContain("dummy-skill");
