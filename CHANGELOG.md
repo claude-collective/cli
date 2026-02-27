@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.49.0] - 2026-02-27
+
+**Config file generation for new skill and new marketplace commands**
+
+- `new marketplace` scaffolds `config/skill-categories.yaml` and `config/skill-rules.yaml`
+- `new skill` creates or updates config files when running in marketplace context
+- Matrix decomposition (D-50) all 8 phases complete
+
+See [changelogs/0.49.0.md](./changelogs/0.49.0.md) for full details.
+
+---
+
 ## [0.48.0] - 2026-02-27
 
 **Matrix decomposition, displayName rename, E2E test infrastructure**
