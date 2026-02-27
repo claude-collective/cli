@@ -1,6 +1,7 @@
 import { Box, Text, useInput } from "ink";
 import React from "react";
 import { CLI_COLORS } from "../../consts.js";
+import type { InstallScope } from "../../lib/installation/index.js";
 import type { Domain, DomainSelections } from "../../types/index.js";
 import { getDomainDisplayName } from "./utils.js";
 import { ViewTitle } from "./view-title.js";
@@ -14,6 +15,7 @@ type StepConfirmProps = {
   skillCount?: number;
   agentCount?: number;
   installMode?: "plugin" | "local";
+  installScope?: InstallScope;
   onBack?: () => void;
 };
 
@@ -26,6 +28,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
   skillCount,
   agentCount,
   installMode,
+  installScope,
   onBack,
 }) => {
   useInput((_input, key) => {
@@ -83,6 +86,12 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
           <Text>
             <Text dimColor>Install mode:</Text>{" "}
             <Text bold>{installMode === "plugin" ? "Plugin" : "Local"}</Text>
+          </Text>
+        )}
+        {installScope && (
+          <Text>
+            <Text dimColor>Install scope:</Text>{" "}
+            <Text bold>{installScope === "global" ? "Global" : "Project"}</Text>
           </Text>
         )}
       </Box>

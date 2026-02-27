@@ -6,6 +6,7 @@ import {
   DEFAULT_PUBLIC_SOURCE_NAME,
   SOURCE_DISPLAY_NAMES,
 } from "../consts.js";
+import type { InstallScope } from "../lib/installation/index.js";
 import { resolveAlias } from "../lib/matrix/index.js";
 import { getSkillDisplayLabel } from "../lib/wizard/build-step-logic.js";
 import type {
@@ -181,6 +182,7 @@ export type WizardState = {
   showLabels: boolean;
 
   installMode: "plugin" | "local";
+  installScope: InstallScope;
 
   sourceSelections: Partial<Record<SkillId, string>>;
   customizeSources: boolean;
@@ -301,6 +303,8 @@ export type WizardState = {
   toggleShowLabels: () => void;
   /** Toggle between "plugin" and "local" install modes. */
   toggleInstallMode: () => void;
+  /** Toggle between "project" and "global" install scopes. */
+  toggleInstallScope: () => void;
   /**
    * Set which source provides a specific skill.
    * @param skillId - Skill to configure the source for
@@ -428,6 +432,7 @@ const createInitialState = () => ({
   _stackDomainSelections: null as DomainSelections | null,
   showLabels: false,
   installMode: "local" as "plugin" | "local",
+  installScope: "project" as InstallScope,
   sourceSelections: {} as Partial<Record<SkillId, string>>,
   customizeSources: false,
   showSettings: false,
@@ -606,6 +611,11 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   toggleInstallMode: () =>
     set((state) => ({
       installMode: state.installMode === "plugin" ? "local" : "plugin",
+    })),
+
+  toggleInstallScope: () =>
+    set((state) => ({
+      installScope: state.installScope === "project" ? "global" : "project",
     })),
 
   setSourceSelection: (skillId, sourceId) =>

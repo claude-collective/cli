@@ -135,6 +135,7 @@ export default class Edit extends BaseCommand {
         logo={ASCII_LOGO}
         initialStep="build"
         initialInstallMode={initialInstallMode}
+        initialInstallScope={installation.scope}
         initialDomains={projectConfig?.config?.domains}
         initialAgents={projectConfig?.config?.selectedAgents}
         installedSkillIds={currentSkillIds}

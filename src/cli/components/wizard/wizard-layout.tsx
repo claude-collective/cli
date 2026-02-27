@@ -147,8 +147,13 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
                 isActive={store.installMode === "plugin"}
               />
               <DefinitionItem
-                label="Settings"
+                label="Global"
                 values={["G"]}
+                isActive={store.installScope === "global"}
+              />
+              <DefinitionItem
+                label="Settings"
+                values={["S"]}
                 isVisible={store.step === "sources"}
                 isActive={store.showSettings}
               />

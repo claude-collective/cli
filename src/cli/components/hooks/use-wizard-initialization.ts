@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import type { InstallScope } from "../../lib/installation/index.js";
 import { useWizardStore, type WizardStep } from "../../stores/wizard-store.js";
 import type { AgentName, Domain, MergedSkillsMatrix, SkillId } from "../../types/index.js";
 
@@ -6,6 +7,7 @@ type UseWizardInitializationOptions = {
   matrix: MergedSkillsMatrix;
   initialStep?: WizardStep;
   initialInstallMode?: "plugin" | "local";
+  initialInstallScope?: InstallScope;
   initialDomains?: Domain[];
   initialAgents?: AgentName[];
   installedSkillIds?: SkillId[];
@@ -19,6 +21,7 @@ export function useWizardInitialization({
   matrix,
   initialStep,
   initialInstallMode,
+  initialInstallScope,
   initialDomains,
   initialAgents,
   installedSkillIds,
@@ -38,6 +41,9 @@ export function useWizardInitialization({
     }
     if (initialInstallMode) {
       useWizardStore.setState({ installMode: initialInstallMode });
+    }
+    if (initialInstallScope) {
+      useWizardStore.setState({ installScope: initialInstallScope });
     }
     // Restore saved domains from config, overriding the domains
     // derived by populateFromSkillIds

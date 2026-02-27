@@ -42,6 +42,11 @@ describe("WizardStore", () => {
       expect(installMode).toBe("local");
     });
 
+    it("should default to project install scope", () => {
+      const { installScope } = useWizardStore.getState();
+      expect(installScope).toBe("project");
+    });
+
     it("should have empty navigation history", () => {
       const { history } = useWizardStore.getState();
       expect(history).toEqual([]);
@@ -454,6 +459,25 @@ describe("WizardStore", () => {
       expect(installMode).toBe("local");
     });
 
+    it("should toggle install scope to global", () => {
+      const store = useWizardStore.getState();
+
+      store.toggleInstallScope();
+
+      const { installScope } = useWizardStore.getState();
+      expect(installScope).toBe("global");
+    });
+
+    it("should toggle install scope back to project", () => {
+      const store = useWizardStore.getState();
+
+      store.toggleInstallScope();
+      store.toggleInstallScope();
+
+      const { installScope } = useWizardStore.getState();
+      expect(installScope).toBe("project");
+    });
+
     it("should toggle show labels", () => {
       const store = useWizardStore.getState();
 
@@ -562,6 +586,38 @@ describe("WizardStore", () => {
 
       const { installMode } = useWizardStore.getState();
       expect(installMode).toBe("local");
+    });
+  });
+
+  describe("install scope auto-defaulting", () => {
+    it("should default installScope to global when set via setState", () => {
+      useWizardStore.setState({ installScope: "global" });
+
+      const { installScope } = useWizardStore.getState();
+      expect(installScope).toBe("global");
+    });
+
+    it("should keep installScope as project when set via setState", () => {
+      useWizardStore.setState({ installScope: "project" });
+
+      const { installScope } = useWizardStore.getState();
+      expect(installScope).toBe("project");
+    });
+
+    it("should allow toggling installScope after auto-defaulting to global", () => {
+      useWizardStore.setState({ installScope: "global" });
+      useWizardStore.getState().toggleInstallScope();
+
+      const { installScope } = useWizardStore.getState();
+      expect(installScope).toBe("project");
+    });
+
+    it("should reset installScope to project after reset even if previously set to global", () => {
+      useWizardStore.setState({ installScope: "global" });
+      useWizardStore.getState().reset();
+
+      const { installScope } = useWizardStore.getState();
+      expect(installScope).toBe("project");
     });
   });
 

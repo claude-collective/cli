@@ -12,6 +12,7 @@ import { StepSources } from "./step-sources.js";
 import { StepSettings } from "./step-settings.js";
 import { StepAgents } from "./step-agents.js";
 import { resolveAlias, validateSelection } from "../../lib/matrix/index.js";
+import type { InstallScope } from "../../lib/installation/index.js";
 import type {
   AgentName,
   Domain,
@@ -32,6 +33,7 @@ export type WizardResultV2 = {
   selectedDomains: Domain[];
   sourceSelections: Partial<Record<SkillId, string>>;
   installMode: "plugin" | "local";
+  installScope: InstallScope;
   cancelled: boolean;
   validation: {
     valid: boolean;
@@ -49,6 +51,7 @@ type WizardProps = {
   logo?: string;
   initialStep?: WizardStep;
   initialInstallMode?: "plugin" | "local";
+  initialInstallScope?: InstallScope;
   initialDomains?: Domain[];
   initialAgents?: AgentName[];
   installedSkillIds?: SkillId[];
@@ -68,6 +71,7 @@ export const Wizard: React.FC<WizardProps> = ({
   logo,
   initialStep,
   initialInstallMode,
+  initialInstallScope,
   initialDomains,
   initialAgents,
   installedSkillIds,
@@ -87,6 +91,7 @@ export const Wizard: React.FC<WizardProps> = ({
     matrix,
     initialStep,
     initialInstallMode,
+    initialInstallScope,
     initialDomains,
     initialAgents,
     installedSkillIds,
@@ -97,7 +102,7 @@ export const Wizard: React.FC<WizardProps> = ({
   useInput((input, key) => {
     // ESC is handled by step-settings.tsx's own useKeyboardNavigation hook
     if (store.showSettings) {
-      if (input === "g" || input === "G") {
+      if (input === "s" || input === "S") {
         store.toggleSettings();
       }
       return;
@@ -137,13 +142,17 @@ export const Wizard: React.FC<WizardProps> = ({
       return;
     }
 
-    if ((input === "g" || input === "G") && store.step === "sources") {
+    if ((input === "s" || input === "S") && store.step === "sources") {
       store.toggleSettings();
       return;
     }
 
     if (input === "p" || input === "P") {
       store.toggleInstallMode();
+    }
+
+    if (input === "g" || input === "G") {
+      store.toggleInstallScope();
     }
   });
 
@@ -186,6 +195,7 @@ export const Wizard: React.FC<WizardProps> = ({
       selectedDomains: store.selectedDomains,
       sourceSelections: store.sourceSelections,
       installMode: store.installMode,
+      installScope: store.installScope,
       cancelled: false,
       validation,
     };
@@ -247,6 +257,7 @@ export const Wizard: React.FC<WizardProps> = ({
             skillCount={technologyCount}
             agentCount={store.selectedAgents.length}
             installMode={store.installMode}
+            installScope={store.installScope}
             onBack={store.goBack}
           />
         );

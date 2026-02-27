@@ -297,6 +297,7 @@ export default class Init extends BaseCommand {
         logo={ASCII_LOGO}
         projectDir={projectDir}
         initialInstallMode={sourceResult.marketplace ? "plugin" : "local"}
+        initialInstallScope={flags.global ? "global" : "project"}
         startupMessages={startupMessages}
         onComplete={(result) => {
           // Boundary cast: Ink render callback returns unknown result type
@@ -328,8 +329,9 @@ export default class Init extends BaseCommand {
     sourceResult: SourceLoadResult,
     flags: { "dry-run": boolean; source?: string; refresh: boolean; global: boolean },
   ): Promise<void> {
-    const projectDir = flags.global ? os.homedir() : process.cwd();
-    const pluginScope = flags.global ? "user" : "project";
+    const isGlobal = result.installScope === "global";
+    const projectDir = isGlobal ? os.homedir() : process.cwd();
+    const pluginScope = isGlobal ? "user" : "project";
     const dryRun = flags["dry-run"];
 
     this.log("\n");

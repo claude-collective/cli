@@ -23,6 +23,7 @@ const GLOBAL_TOGGLES: HelpSection = {
   title: "Global Toggles",
   keys: [
     { key: "P", description: "Toggle plugin/local install mode" },
+    { key: "G", description: "Toggle project/global install scope" },
     { key: "?", description: "Toggle this help" },
   ],
 };
@@ -38,7 +39,7 @@ const BUILD_KEYS: HelpSection = {
 
 const SOURCES_KEYS: HelpSection = {
   title: "Sources Step",
-  keys: [{ key: "G", description: "Toggle source settings" }],
+  keys: [{ key: "S", description: "Toggle source settings" }],
 };
 
 const AGENTS_KEYS: HelpSection = {
