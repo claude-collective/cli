@@ -73,11 +73,11 @@ export default class Edit extends BaseCommand {
     const isPluginMode = installation.mode === "plugin";
     const pluginScope = installation.scope === "global" ? "user" : "project";
 
-    if (installation.scope === "global") {
-      this.log("No project installation found. Using global installation from ~/.claude-src/\n");
-    }
-
     enableBuffering();
+
+    if (installation.scope === "global") {
+      pushBufferMessage("info", "No project installation found. Using global installation from ~/.claude-src/");
+    }
     let sourceResult;
     let startupMessages: StartupMessage[] = [];
     try {

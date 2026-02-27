@@ -258,11 +258,11 @@ export default class Init extends BaseCommand {
       return;
     }
 
-    if (flags.global) {
-      this.log("Installing globally to home directory...");
-    }
-
     enableBuffering();
+
+    if (flags.global) {
+      pushBufferMessage("info", "Installing globally to home directory...");
+    }
 
     if (flags["dry-run"]) {
       pushBufferMessage("info", DRY_RUN_MESSAGES.PREVIEW_NO_FILES_CREATED);
