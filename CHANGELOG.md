@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.51.0] - 2026-02-28
+
+**Install scope tracking, global test isolation**
+
+- Add `installScope` to wizard store — track project vs global scope through wizard flow
+- Global `vitest.setup.ts` mocks `os.homedir()` to prevent real global config from leaking into tests
+- Fix 63 test failures across 16 files caused by global config fallback
+
+See [changelogs/0.51.0.md](./changelogs/0.51.0.md) for full details.
+
+---
+
 ## [0.50.0] - 2026-02-27
 
 **Pre-1.0 cleanup — agent.yaml rename, expert mode removal, scroll hook extraction, DRY consolidation**
