@@ -35,6 +35,7 @@ This file provides decision trees, behavioral rules, and conventions. For codeba
 - NEVER build intermediate data structures imperatively when the data is static or the rendering is straightforward. No `const arr = []; for (...) { arr.push(...) }` patterns. Use declarative const arrays, `.map()`, `.flatMap()`, or inline JSX. If data is known at write-time, write it as a literal. If it needs transforming, use functional array methods. Imperative accumulation into mutable arrays is never the answer.
 - NEVER put machine-specific absolute paths in any file tracked by git. If a file needs private paths, gitignore it first.
 - NEVER use inline regex to extract SKILL.md frontmatter fields. Use `parseFrontmatter()` from `lib/loading/loader.ts` — it handles YAML parsing and Zod validation.
+- NEVER use `git checkout`, `git restore`, or any command that discards working tree changes — these are irreversible. If working tree changes conflict with your task, ask the user how to proceed. This includes reverting sub-agent changes — the user owns all working tree state.
 
 ## ALWAYS do this
 
@@ -289,4 +290,5 @@ this.error(message, { exit: 2 });
 1. You do NOT write code. Delegate to sub-agents. Tell them to read CLAUDE.md.
 2. Trace ALL scenarios after any fix.
 3. NEVER stash changes while developing, only while performing sequential commits
+4. NEVER use `git checkout`, `git restore`, or any command that discards working tree changes — these are irreversible. The user owns all working tree state, including sub-agent changes. Ask the user before discarding anything.
 </critical-reminder>
