@@ -42,22 +42,18 @@ const buildTestMatrix = (categories: CategoryDefinition[], skills: ResolvedSkill
     },
   );
 
-const EXCLUSIVE = { categoryExclusive: true };
-
-const reactSkill = getTestSkill("react", { ...EXCLUSIVE, displayName: "react" });
-const vueSkill = getTestSkill("vue", { ...EXCLUSIVE, displayName: "vue" });
+const reactSkill = getTestSkill("react", { displayName: "react" });
+const vueSkill = getTestSkill("vue", { displayName: "vue" });
 const tailwindSkill = createMockSkill("web-styling-tailwind", "web-styling", {
-  ...EXCLUSIVE,
   displayName: "tailwind",
 });
-const scssSkill = getTestSkill("scss-modules", { ...EXCLUSIVE, displayName: "scss-modules" });
-const zustandSkill = getTestSkill("zustand", { ...EXCLUSIVE, displayName: "zustand" });
-const honoSkill = getTestSkill("hono", { ...EXCLUSIVE, displayName: "hono" });
+const scssSkill = getTestSkill("scss-modules", { displayName: "scss-modules" });
+const zustandSkill = getTestSkill("zustand", { displayName: "zustand" });
+const honoSkill = getTestSkill("hono", { displayName: "hono" });
 const expressSkill = createMockSkill("api-framework-express", "api-api", {
-  ...EXCLUSIVE,
   displayName: "express",
 });
-const postgresSkill = createMockSkill("api-database-postgres", "api-database", EXCLUSIVE);
+const postgresSkill = createMockSkill("api-database-postgres", "api-database");
 
 const defaultMatrix = buildTestMatrix(
   [
@@ -483,7 +479,6 @@ describe("StepBuild component", () => {
         order: 0,
       });
       const commanderSkill = createMockSkill("cli-cli-framework-commander", "cli-framework", {
-        ...EXCLUSIVE,
         displayName: "commander",
       });
 

@@ -274,7 +274,7 @@ aliases:
 category: web-framework
 author: "@vince"
 version: "1"
-cliName: react
+displayName: react
 cliDescription: React framework
 `;
         }
@@ -323,7 +323,7 @@ description: React framework
       expect(skills).toHaveLength(0);
     });
 
-    it("throws when cliName is missing from metadata", async () => {
+    it("throws when displayName is missing from metadata", async () => {
       mockGlob.mockResolvedValue(["no-cli/metadata.yaml"]);
       mockFileExists.mockResolvedValue(true);
       mockReadFile.mockImplementation(async (filePath: string) => {
@@ -334,15 +334,15 @@ author: "@test"
 version: "1"
 `;
         }
-        return `---\nname: web-no-cli\ndescription: test\n---\n# Test`;
+        return `---\nname: no-cli\ndescription: test\n---\n# Test`;
       });
       mockParseFrontmatter.mockReturnValue({
-        name: "web-no-cli",
+        name: "no-cli",
         description: "test",
       });
 
       await expect(extractAllSkills("/project/src/skills")).rejects.toThrow(
-        /missing required 'cliName' field/,
+        /missing required 'displayName' field/,
       );
     });
 
@@ -355,7 +355,7 @@ version: "1"
 category: web-framework
 author: "@test"
 version: "1"
-cliName: bad-fm
+displayName: bad-fm
 `;
         }
         return "no frontmatter here";
@@ -399,7 +399,7 @@ cliName: bad-fm
 category: 12345
 author: true
 version: "1"
-cliName: wrong
+displayName: wrong
 `;
         }
         return `---\nname: wrong-types\ndescription: test\n---\n# Test`;
@@ -423,7 +423,7 @@ cliName: wrong
       });
       mockReadFile.mockImplementation(async (filePath: string) => {
         if (filePath.includes("skill-valid") && filePath.includes("metadata.yaml")) {
-          return `category: web-framework\nauthor: "@test"\nversion: "1"\ncliName: valid`;
+          return `category: web-framework\nauthor: "@test"\nversion: "1"\ndisplayName: valid`;
         }
         if (filePath.includes("skill-bad-meta") && filePath.includes("metadata.yaml")) {
           return "invalid: true\n";

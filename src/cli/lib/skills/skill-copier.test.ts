@@ -43,7 +43,7 @@ async function writeLocalSkillOnDisk(
 async function writeRemoteSkillOnDisk(
   projectDir: string,
   relPath: string,
-  config: { name: string; description: string; cliName?: string; author?: string },
+  config: { name: string; description: string; displayName?: string; author?: string },
 ): Promise<string> {
   const skillDir = path.join(projectDir, "src", relPath);
   await writeTestSkill(
@@ -53,7 +53,7 @@ async function writeRemoteSkillOnDisk(
       description: config.description,
       skillContent: `---\nname: ${config.name}\ndescription: ${config.description}\n---\n${config.description}`,
       extraMetadata: {
-        cliName: config.cliName ?? config.name,
+        displayName: config.displayName ?? config.name,
         author: config.author ?? "@vince",
       },
     },
@@ -344,7 +344,7 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, remoteSkillRelPath, {
         name: "web-framework-react",
         description: "Remote React",
-        cliName: "React",
+        displayName: "React",
       });
 
       const matrix = createMockMatrix({
@@ -428,7 +428,7 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, remoteSkillRelPath, {
         name: "web-state-zustand",
         description: "Zustand state management",
-        cliName: "Zustand",
+        displayName: "Zustand",
       });
 
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
@@ -468,7 +468,7 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, remoteSkillRelPath, {
         name: "api-framework-hono",
         description: "Hono API",
-        cliName: "Hono",
+        displayName: "Hono",
       });
 
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
@@ -547,7 +547,7 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, remoteSkillRelPath, {
         name: "web-framework-react",
         description: "React",
-        cliName: "React",
+        displayName: "React",
       });
 
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
@@ -617,7 +617,7 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, deeplyNestedPath, {
         name: "web-framework-react",
         description: "React content from deeply nested dir",
-        cliName: "React",
+        displayName: "React",
       });
 
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
@@ -674,21 +674,21 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, reactPath, {
         name: "web-framework-react",
         description: "React",
-        cliName: "React",
+        displayName: "React",
       });
 
       const honoPath = "skills/api/api/api-framework-hono/";
       await writeRemoteSkillOnDisk(projectDir, honoPath, {
         name: "api-framework-hono",
         description: "Hono",
-        cliName: "Hono",
+        displayName: "Hono",
       });
 
       const vitestPath = "skills/testing/unit/web-testing-vitest/";
       await writeRemoteSkillOnDisk(projectDir, vitestPath, {
         name: "web-testing-vitest",
         description: "Vitest",
-        cliName: "Vitest",
+        displayName: "Vitest",
       });
 
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
@@ -744,7 +744,7 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, nestedPath, {
         name: "web-tooling-vite",
         description: "Vite bundler",
-        cliName: "Vite",
+        displayName: "Vite",
       });
 
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
@@ -783,7 +783,7 @@ describe("skill-copier", () => {
       await writeRemoteSkillOnDisk(projectDir, remoteSkillRelPath, {
         name: "web-framework-react",
         description: "Remote React",
-        cliName: "React",
+        displayName: "React",
       });
 
       const localSkillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);

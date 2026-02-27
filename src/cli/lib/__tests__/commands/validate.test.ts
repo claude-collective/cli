@@ -219,12 +219,11 @@ async function writeValidSourceSkill(
     id: string;
     description: string;
     category: string;
-    cliName: string;
+    displayName: string;
     cliDescription: string;
     usageGuidance: string;
     author?: string;
     tags?: string[];
-    categoryExclusive?: boolean;
   },
 ): Promise<void> {
   const skillDir = path.join(skillsDir, dirPath);
@@ -238,12 +237,11 @@ async function writeValidSourceSkill(
   const metadata: Record<string, unknown> = {
     category: config.category,
     author: config.author ?? "@test",
-    cliName: config.cliName,
+    displayName: config.displayName,
     cliDescription: config.cliDescription,
     usageGuidance: config.usageGuidance,
   };
   if (config.tags) metadata.tags = config.tags;
-  if (config.categoryExclusive !== undefined) metadata.categoryExclusive = config.categoryExclusive;
 
   await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));
 }
@@ -329,7 +327,7 @@ describe("source validation (validateSource)", () => {
       id: "web-framework-react",
       description: "React framework",
       category: "web-framework",
-      cliName: "react",
+      displayName: "react",
       cliDescription: "React JavaScript framework",
       usageGuidance: "Use React for building component-based UIs",
       tags: ["react", "web"],
@@ -357,7 +355,7 @@ describe("source validation (validateSource)", () => {
       stringifyYaml({
         category: "web-framework",
         author: "@test",
-        cliName: "react",
+        displayName: "react",
         cliDescription: "React framework",
         usageGuidance: "Use React for building UIs",
       }),
@@ -398,7 +396,7 @@ describe("source validation (validateSource)", () => {
       "---\nname: web-framework-react\ndescription: React\n---\n\n# React\n",
     );
 
-    // Missing required fields: cliName, cliDescription, usageGuidance
+    // Missing required fields: displayName, cliDescription, usageGuidance
     await writeFile(
       path.join(skillDir, STANDARD_FILES.METADATA_YAML),
       stringifyYaml({
@@ -441,18 +439,18 @@ describe("source validation (validateSource)", () => {
     expect(snakeCaseIssues.length).toBeGreaterThan(0);
   });
 
-  it("should report warning when cliName does not match directory name", async () => {
+  it("should report warning when displayName does not match directory name", async () => {
     const sourceDir = path.join(tempDir, "source");
     const skillsDir = path.join(sourceDir, "src", "skills");
     const configDir = path.join(sourceDir, "config");
     await mkdir(configDir, { recursive: true });
 
-    // Directory name is "react" but cliName is "react-v2"
+    // Directory name is "react" but displayName is "react-v2"
     await writeValidSourceSkill(skillsDir, "web/framework/react", {
       id: "web-framework-react",
       description: "React framework",
       category: "web-framework",
-      cliName: "react-v2",
+      displayName: "react-v2",
       cliDescription: "React JavaScript framework v2",
       usageGuidance: "Use React for building component-based UIs",
     });
@@ -490,7 +488,7 @@ describe("source validation (validateSource)", () => {
       stringifyYaml({
         category: "web-framework",
         author: "@test",
-        cliName: "react",
+        displayName: "react",
         cliDescription: "React JavaScript framework",
         usageGuidance: "Use React for building component-based UIs",
       }),
@@ -553,7 +551,7 @@ describe("source validation (validateSource)", () => {
       id: "web-framework-react",
       description: "React framework",
       category: "web-framework",
-      cliName: "react",
+      displayName: "react",
       cliDescription: "React JavaScript framework",
       usageGuidance: "Use React for building component-based UIs",
     });
@@ -562,7 +560,7 @@ describe("source validation (validateSource)", () => {
       id: "api-framework-hono",
       description: "Hono framework",
       category: "api-api",
-      cliName: "hono",
+      displayName: "hono",
       cliDescription: "Lightweight web framework for the edge",
       usageGuidance: "Use Hono for building edge-first APIs",
     });
@@ -603,7 +601,7 @@ describe("validate --source integration", () => {
       id: "web-framework-react",
       description: "React framework",
       category: "web-framework",
-      cliName: "react",
+      displayName: "react",
       cliDescription: "React JavaScript framework",
       usageGuidance: "Use React for building component-based UIs",
     });
@@ -661,7 +659,7 @@ describe("validate --source integration", () => {
       id: "web-framework-react",
       description: "React framework",
       category: "web-framework",
-      cliName: "react",
+      displayName: "react",
       cliDescription: "React JavaScript framework",
       usageGuidance: "Use React for building component-based UIs",
     });

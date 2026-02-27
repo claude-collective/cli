@@ -637,8 +637,8 @@ ${skill.description}
       author: skill.author,
       category: skill.category,
       tags: skill.tags ?? [],
-      // cliName is required by extractAllSkills for source-based matrix loading
-      cliName: skill.name,
+      // displayName is required by extractAllSkills for source-based matrix loading
+      displayName: skill.name,
       contentHash,
     };
     await writeFile(path.join(skillDir, "metadata.yaml"), stringifyYaml(metadata));
@@ -767,7 +767,7 @@ ${skill.description}
 
       if (!skill.skipMetadata) {
         const metadata: Record<string, unknown> = {
-          cliName: skill.name,
+          displayName: skill.name,
           author: skill.author,
         };
         if (skill.forkedFrom) {

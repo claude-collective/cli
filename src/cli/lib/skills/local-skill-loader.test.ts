@@ -59,7 +59,7 @@ describe("local-skill-loader", () => {
 
     it("discovers skills regardless of name prefix", async () => {
       await writeLocalSkill("my-normal-skill", {
-        metadata: `cliName: My Normal Skill\ncliDescription: A normal skill`,
+        metadata: `displayName: My Normal Skill\ncliDescription: A normal skill`,
         skillMd: `---\nname: my-normal-skill (@local)\ndescription: A normal skill\n---\nContent`,
       });
 
@@ -86,7 +86,7 @@ describe("local-skill-loader", () => {
 
     it("skips skill without SKILL.md", async () => {
       await writeLocalSkill("no-skillmd", {
-        metadata: `cliName: No Skill MD`,
+        metadata: `displayName: No Skill MD`,
         withSkillMd: false,
       });
 
@@ -95,20 +95,20 @@ describe("local-skill-loader", () => {
       expect(result?.skills).toEqual([]);
     });
 
-    it("skips skill with metadata.yaml missing cliName", async () => {
+    it("throws when metadata.yaml is missing displayName", async () => {
       await writeLocalSkill("no-cli-name", {
         metadata: `cliDescription: Just a description`,
-        skillMd: `---\nname: no-cli-name (@local)\ndescription: Missing cliName\n---\nContent`,
+        skillMd: `---\nname: no-cli-name (@local)\ndescription: Missing displayName\n---\nContent`,
       });
 
-      const result = await discoverLocalSkills(tempDir);
-
-      expect(result?.skills).toEqual([]);
+      await expect(discoverLocalSkills(tempDir)).rejects.toThrow(
+        /missing required 'displayName' field/,
+      );
     });
 
     it("skips skill with invalid SKILL.md frontmatter", async () => {
       await writeLocalSkill("bad-frontmatter", {
-        metadata: `cliName: Bad Frontmatter Skill`,
+        metadata: `displayName: Bad Frontmatter Skill`,
         // SKILL.md without proper frontmatter (missing name)
         skillMd: `---\ndescription: Only description, no name\n---\nContent`,
       });
@@ -120,7 +120,7 @@ describe("local-skill-loader", () => {
 
     it("uses cliDescription from metadata.yaml when provided", async () => {
       await writeLocalSkill("with-desc", {
-        metadata: `cliName: Desc Skill\ncliDescription: Custom CLI description`,
+        metadata: `displayName: Desc Skill\ncliDescription: Custom CLI description`,
         skillMd: `---\nname: desc-skill (@local)\ndescription: Frontmatter description\n---\nContent`,
       });
 
@@ -131,7 +131,7 @@ describe("local-skill-loader", () => {
 
     it("falls back to frontmatter description when cliDescription not provided", async () => {
       await writeLocalSkill("fallback-desc", {
-        metadata: `cliName: Fallback Skill`,
+        metadata: `displayName: Fallback Skill`,
         skillMd: `---\nname: fallback-skill (@local)\ndescription: Frontmatter description\n---\nContent`,
       });
 
@@ -142,11 +142,11 @@ describe("local-skill-loader", () => {
 
     it("discovers multiple valid skills", async () => {
       await writeLocalSkill("skill-one", {
-        metadata: `cliName: Skill One`,
+        metadata: `displayName: Skill One`,
         skillMd: `---\nname: skill-one (@local)\ndescription: First skill\n---\nContent`,
       });
       await writeLocalSkill("skill-two", {
-        metadata: `cliName: Skill Two`,
+        metadata: `displayName: Skill Two`,
         skillMd: `---\nname: skill-two (@local)\ndescription: Second skill\n---\nContent`,
       });
 
@@ -159,7 +159,7 @@ describe("local-skill-loader", () => {
 
     it("sets correct extracted metadata properties", async () => {
       await writeLocalSkill("full-skill", {
-        metadata: `cliName: Full Skill\ncliDescription: Complete skill for testing`,
+        metadata: `displayName: Full Skill\ncliDescription: Complete skill for testing`,
         skillMd: `---\nname: full-skill (@local)\ndescription: Complete skill\n---\nContent`,
       });
 
@@ -173,7 +173,6 @@ describe("local-skill-loader", () => {
 
       // Catalog data
       expect(skill?.category).toBe("dummy-category");
-      expect(skill?.categoryExclusive).toBe(false);
       expect(skill?.author).toBe("@dummy-author");
       expect(skill?.tags).toEqual([]);
 
@@ -185,7 +184,7 @@ describe("local-skill-loader", () => {
 
     it("uses category from metadata.yaml when provided", async () => {
       await writeLocalSkill("categorized-skill", {
-        metadata: `cliName: Categorized Skill\ncategory: web-framework`,
+        metadata: `displayName: Categorized Skill\ncategory: web-framework`,
         skillMd: `---\nname: categorized-skill (@local)\ndescription: A categorized skill\n---\nContent`,
       });
 
@@ -197,9 +196,8 @@ describe("local-skill-loader", () => {
     it("preserves metadata tags and optional fields from metadata.yaml", async () => {
       await writeLocalSkill("rich-skill", {
         metadata: [
-          "cliName: Rich Skill",
+          "displayName: Rich Skill",
           "category: web-framework",
-          "categoryExclusive: true",
           "usageGuidance: When building components",
           "tags:",
           "  - frontend",
@@ -211,21 +209,20 @@ describe("local-skill-loader", () => {
       const result = await discoverLocalSkills(tempDir);
       const skill = result?.skills[0];
 
-      expect(skill?.categoryExclusive).toBe(true);
       expect(skill?.usageGuidance).toBe("When building components");
       expect(skill?.tags).toEqual(["frontend", "react"]);
     });
 
     it("skips skill when metadata.yaml has wrong field types", async () => {
       await writeLocalSkill("wrong-types", {
-        // cliName must be a string, but providing a number via YAML
-        metadata: "cliName: 123\ncategoryExclusive: not-a-boolean",
+        // displayName must be a string, but providing a number via YAML
+        metadata: "displayName: 123\ntags: not-an-array",
         skillMd: `---\nname: wrong-types (@local)\ndescription: Wrong types in metadata\n---\nContent`,
       });
 
       const result = await discoverLocalSkills(tempDir);
 
-      // Schema validation should fail because categoryExclusive must be boolean
+      // Schema validation should fail because tags must be an array
       // The skill may still pass if the schema is lenient, but the function should not throw
       expect(result).not.toBeNull();
     });
@@ -233,13 +230,13 @@ describe("local-skill-loader", () => {
     it("skips valid skills alongside invalid ones", async () => {
       // Valid skill
       await writeLocalSkill("valid-skill", {
-        metadata: "cliName: Valid Skill",
+        metadata: "displayName: Valid Skill",
         skillMd: `---\nname: valid-skill (@local)\ndescription: A valid skill\n---\nContent`,
       });
 
       // Invalid skill (no SKILL.md)
       await writeLocalSkill("invalid-skill", {
-        metadata: "cliName: Invalid Skill",
+        metadata: "displayName: Invalid Skill",
         withSkillMd: false,
       });
 

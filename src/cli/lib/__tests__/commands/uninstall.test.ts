@@ -113,7 +113,7 @@ async function createCLISkill(
 ): Promise<string> {
   return writeTestSkill(skillsDir, skillName, {
     extraMetadata: {
-      cliName: skillName,
+      displayName: skillName,
       forkedFrom: {
         skillId: skillName,
         contentHash: "abc1234",
@@ -128,7 +128,7 @@ async function createCLISkill(
 async function createUserSkill(skillsDir: string, skillName: string): Promise<string> {
   return writeTestSkill(skillsDir, skillName, {
     description: "User skill",
-    extraMetadata: { cliName: skillName },
+    extraMetadata: { displayName: skillName },
   });
 }
 
@@ -380,7 +380,7 @@ describe("uninstall command", () => {
       // Create a legacy skill with forkedFrom but no source
       const legacySkillDir = await writeTestSkill(skillsDir, "web-framework-vue", {
         extraMetadata: {
-          cliName: "web-framework-vue",
+          displayName: "web-framework-vue",
           forkedFrom: {
             skillId: "web-framework-vue",
             contentHash: "def5678",

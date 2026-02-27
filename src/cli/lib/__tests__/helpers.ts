@@ -264,7 +264,6 @@ export function createMockSkill(
     id,
     description: `${id} skill`,
     category,
-    categoryExclusive: false,
     tags: [],
     author: "@test",
     conflictsWith: [],
@@ -317,7 +316,6 @@ export function createMockExtractedSkill(
     directoryPath,
     description: `${id} skill`,
     category: `${domain}-${subcategory}` as CategoryPath,
-    categoryExclusive: true,
     author: "@test",
     tags: [],
     path: `skills/${directoryPath}/`,
@@ -439,7 +437,7 @@ export async function writeTestSkill(
   options?: {
     author?: string;
     description?: string;
-    /** Extra fields to merge into metadata.yaml (e.g., forkedFrom, cliName) */
+    /** Extra fields to merge into metadata.yaml (e.g., forkedFrom, displayName) */
     extraMetadata?: Record<string, unknown>;
     /** Skip metadata.yaml creation entirely */
     skipMetadata?: boolean;
@@ -492,7 +490,6 @@ export async function writeSourceSkill(
     category: string;
     author?: string;
     tags?: string[];
-    categoryExclusive?: boolean;
     content?: string;
   },
 ): Promise<string> {
@@ -505,15 +502,12 @@ export async function writeSourceSkill(
   );
 
   const metadata: Record<string, unknown> = {
-    cliName: config.id,
+    displayName: config.id,
     category: config.category,
     author: config.author ?? "@test",
   };
   if (config.tags) {
     metadata.tags = config.tags;
-  }
-  if (config.categoryExclusive !== undefined) {
-    metadata.categoryExclusive = config.categoryExclusive;
   }
 
   await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));

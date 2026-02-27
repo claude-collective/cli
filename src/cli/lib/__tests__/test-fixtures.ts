@@ -112,32 +112,28 @@ export const TEST_SKILLS = {
   investigationRequirements: createMockSkill(
     "meta-methodology-investigation-requirements",
     "shared-methodology",
-    { description: "Never speculate - read actual code first", categoryExclusive: false },
+    { description: "Never speculate - read actual code first" },
   ),
   antiOverEngineering: createMockSkill(
     "meta-methodology-anti-over-engineering",
     "shared-methodology",
     {
       description: "Surgical implementation, not architectural innovation",
-      categoryExclusive: false,
     },
   ),
   successCriteria: createMockSkill("meta-methodology-success-criteria", "shared-methodology", {
     description: "Explicit, measurable criteria defining done",
-    categoryExclusive: false,
   }),
   writeVerification: createMockSkill("meta-methodology-write-verification", "shared-methodology", {
     description: "Verify work was actually saved",
-    categoryExclusive: false,
   }),
   improvementProtocol: createMockSkill(
     "meta-methodology-improvement-protocol",
     "shared-methodology",
-    { description: "Evidence-based self-improvement", categoryExclusive: false },
+    { description: "Evidence-based self-improvement" },
   ),
   contextManagement: createMockSkill("meta-methodology-context-management", "shared-methodology", {
     description: "Maintain project continuity across sessions",
-    categoryExclusive: false,
   }),
 };
 

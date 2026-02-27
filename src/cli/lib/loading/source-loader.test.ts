@@ -174,7 +174,7 @@ describe("source-loader local skills integration", () => {
 
     await writeFile(
       path.join(skillsDir, "metadata.yaml"),
-      `cliName: My Local Skill\ncliDescription: A local skill`,
+      `displayName: My Local Skill\ncliDescription: A local skill`,
     );
     await writeFile(
       path.join(skillsDir, "SKILL.md"),
@@ -204,7 +204,7 @@ describe("source-loader local skills integration", () => {
     const skillsDir = path.join(tempDir, ".claude", "skills", "test-cat-skill");
     await mkdir(skillsDir, { recursive: true });
 
-    await writeFile(path.join(skillsDir, "metadata.yaml"), `cliName: Category Test`);
+    await writeFile(path.join(skillsDir, "metadata.yaml"), `displayName: Category Test`);
     await writeFile(
       path.join(skillsDir, "SKILL.md"),
       `---\nname: cat-skill (@local)\ndescription: Category test\n---\nContent`,
@@ -246,7 +246,7 @@ describe("source-loader local skills integration", () => {
     const skillsDir = path.join(tempDir, ".claude", "skills", "test-override-category");
     await mkdir(skillsDir, { recursive: true });
 
-    await writeFile(path.join(skillsDir, "metadata.yaml"), `cliName: Override Test`);
+    await writeFile(path.join(skillsDir, "metadata.yaml"), `displayName: Override Test`);
     await writeFile(
       path.join(skillsDir, "SKILL.md"),
       `---\nname: ${targetSkillId}\ndescription: Local override\n---\nContent`,
@@ -271,7 +271,7 @@ describe("source-loader local skills integration", () => {
     const skillsDir = path.join(tempDir, ".claude", "skills", "test-preserve");
     await mkdir(skillsDir, { recursive: true });
 
-    await writeFile(path.join(skillsDir, "metadata.yaml"), `cliName: Preserve Test`);
+    await writeFile(path.join(skillsDir, "metadata.yaml"), `displayName: Preserve Test`);
     await writeFile(
       path.join(skillsDir, "SKILL.md"),
       `---\nname: preserve-skill\ndescription: Preserve test\n---\nContent`,
@@ -303,7 +303,7 @@ describe("source-loader local skills integration", () => {
     );
     await writeFile(
       path.join(skillDir, "metadata.yaml"),
-      'category: web-testing\nauthor: "@test"\ncliName: Vitest\ncliDescription: Marketplace vitest configuration\ncontentHash: abc1234\n',
+      'category: web-testing\nauthor: "@test"\ndisplayName: Vitest\ncliDescription: Marketplace vitest configuration\ncontentHash: abc1234\n',
     );
 
     // Load skills from source to verify marketplace skill is present
@@ -322,7 +322,7 @@ describe("source-loader local skills integration", () => {
     const localSkillsDir = path.join(tempDir, ".claude", "skills", "local-vitest");
     await mkdir(localSkillsDir, { recursive: true });
 
-    await writeFile(path.join(localSkillsDir, "metadata.yaml"), `cliName: My Custom Vitest`);
+    await writeFile(path.join(localSkillsDir, "metadata.yaml"), `displayName: My Custom Vitest`);
     await writeFile(
       path.join(localSkillsDir, "SKILL.md"),
       `---\nname: web-testing-vitest\ndescription: My custom vitest configuration\n---\nThis is my local override of the vitest skill.`,
@@ -376,7 +376,7 @@ describe("source-loader config-driven paths", () => {
     );
     await writeFile(
       path.join(skillsDir, "metadata.yaml"),
-      'category: web-framework\nauthor: "@test"\ncliName: React\ncliDescription: React framework\nusageGuidance: Use React for building UIs\ncontentHash: abc1234\n',
+      'category: web-framework\nauthor: "@test"\ndisplayName: React\ncliDescription: React framework\nusageGuidance: Use React for building UIs\ncontentHash: abc1234\n',
     );
 
     const result = await loadSkillsMatrixFromSource({

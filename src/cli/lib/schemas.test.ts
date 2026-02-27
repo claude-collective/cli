@@ -455,9 +455,8 @@ describe("custom: true in schemas", () => {
   it("should accept custom: true in metadataValidationSchema", () => {
     const result = metadataValidationSchema.safeParse({
       category: "web-framework",
-      categoryExclusive: true,
       author: "@acme",
-      cliName: "My Custom Skill",
+      displayName: "My Custom Skill",
       cliDescription: "A custom skill for deployment",
       usageGuidance: "Use when deploying services to staging or production.",
       custom: true,
@@ -585,7 +584,7 @@ describe("category validation with custom: true bypass", () => {
 
     it("should accept metadata without category field", () => {
       const result = localRawMetadataSchema.safeParse({
-        cliName: "my-skill",
+        displayName: "my-skill",
       });
       expect(result.success).toBe(true);
     });
@@ -735,7 +734,7 @@ describe("dynamic schema extension", () => {
       const result = metadataValidationSchema.safeParse({
         category: "acme-pipeline",
         author: "@acme",
-        cliName: "Deploy Pipeline",
+        displayName: "Deploy Pipeline",
         cliDescription: "Kubernetes deployment automation",
         usageGuidance: "Use when deploying services to staging or production.",
         custom: true,

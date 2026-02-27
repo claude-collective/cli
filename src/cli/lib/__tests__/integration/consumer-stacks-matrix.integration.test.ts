@@ -293,7 +293,6 @@ describe("Integration: Custom Skills Matrix Loading", () => {
         id: "infra-tooling-docker",
         description: "Docker containerization patterns",
         category: "infra-tooling",
-        categoryExclusive: false,
         tags: ["docker", "devops", "containers"],
       });
 
@@ -337,7 +336,6 @@ describe("Integration: Custom Skills Matrix Loading", () => {
           id: skillId,
           description: `${skillName} CI/CD pipeline`,
           category: "infra-ci-cd",
-          categoryExclusive: true,
           tags: ["ci-cd", skillName],
         });
       }
@@ -357,10 +355,6 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       // Verify both skills are loaded
       expect(merged.skills["infra-ci-cd-github-actions"]).toBeDefined();
       expect(merged.skills["infra-ci-cd-gitlab-ci"]).toBeDefined();
-
-      // Verify skills inherit categoryExclusive from their metadata
-      expect(merged.skills["infra-ci-cd-github-actions"]!.categoryExclusive).toBe(true);
-      expect(merged.skills["infra-ci-cd-gitlab-ci"]!.categoryExclusive).toBe(true);
     } finally {
       await cleanupTempDir(tempDir);
     }
@@ -575,38 +569,6 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
 });
 
 describe("Integration: Custom Matrix Skill Metadata Survival", () => {
-  it("should preserve categoryExclusive from skill metadata through loading", async () => {
-    const tempDir = await createTempDir("cat-exclusive-test-");
-
-    try {
-      const skillsDir = path.join(tempDir, "src", "skills");
-
-      // Create a skill with categoryExclusive: false in metadata
-      await writeSourceSkill(skillsDir, path.join("web", "tooling", "vite"), {
-        id: "web-tooling-vite",
-        description: "Vite build tool",
-        category: "web-tooling",
-        categoryExclusive: false,
-        tags: ["vite", "bundler"],
-      });
-
-      const skills = await extractAllSkills(skillsDir);
-      const merged = await mergeMatrixWithSkills(
-        TOOLING_CONFIG.categories,
-        TOOLING_CONFIG.relationships,
-        TOOLING_CONFIG.aliases,
-        skills,
-      );
-
-      // Verify the skill's categoryExclusive is false (from metadata)
-      const viteSkill = merged.skills["web-tooling-vite"];
-      expect(viteSkill).toBeDefined();
-      expect(viteSkill!.categoryExclusive).toBe(false);
-    } finally {
-      await cleanupTempDir(tempDir);
-    }
-  });
-
   it("should load skills with tags from custom source metadata", async () => {
     const tempDir = await createTempDir("tags-test-");
 

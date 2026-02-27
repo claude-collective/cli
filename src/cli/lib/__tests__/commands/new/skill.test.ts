@@ -135,9 +135,9 @@ describe("generateMetadataYaml", () => {
     expect(content).toContain('author: "@vince"');
   });
 
-  it("should contain title-cased cliName", () => {
+  it("should contain title-cased displayName", () => {
     const content = generateMetadataYaml("web-framework", "@local", "local", TEST_CONTENT_HASH);
-    expect(content).toContain("cliName: Web Framework");
+    expect(content).toContain("displayName: Web Framework");
   });
 
   it("should use provided category", () => {
@@ -245,7 +245,7 @@ describe("new:skill command", () => {
 
       expect(content).toContain("custom: true");
       expect(content).toContain("category: dummy-category");
-      expect(content).toContain("cliName: My Test Skill");
+      expect(content).toContain("displayName: My Test Skill");
       expect(content).toContain("contentHash:");
       expect(content).not.toContain("version:");
     });

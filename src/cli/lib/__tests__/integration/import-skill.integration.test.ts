@@ -507,7 +507,7 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
     const metadata = parseYaml(metadataContent) as Record<string, unknown>;
 
     // Minimal metadata should be created
-    expect(metadata.cliName).toBe("Api Security");
+    expect(metadata.displayName).toBe("Api Security");
     expect(metadata.cliDescription).toBe("Imported from third-party repository");
     expect(metadata.forkedFrom).toBeDefined();
 
