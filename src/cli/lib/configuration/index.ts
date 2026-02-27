@@ -27,6 +27,10 @@ export {
   generateProjectConfigFromSkills,
   buildStackProperty,
   compactStackForYaml,
+  compactSkillsForYaml,
+  compactDomainsForYaml,
+  normalizeSkillsList,
+  normalizeDomainsList,
 } from "./config-generator";
 
 export { type MergeContext, type MergeResult, mergeWithExistingConfig } from "./config-merger";

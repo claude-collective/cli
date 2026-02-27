@@ -10,10 +10,10 @@ import {
   skillCategoriesFileSchema,
   skillRulesFileSchema,
   formatZodErrors,
-  categoryPathSchema,
+  validateCategoryField,
+  validateDomainField,
   skillDisplayNameSchema,
   skillIdSchema,
-  extensibleDomainSchema,
   DOMAIN_VALUES,
 } from "../schemas";
 import type {
@@ -44,16 +44,20 @@ import type {
 /** Resolves a raw ID (which may be a display name or alias) to a canonical SkillId */
 type ResolveId = (id: SkillId, context?: string) => SkillId;
 
-const rawMetadataSchema = z.object({
-  category: categoryPathSchema,
-  author: z.string(),
-  displayName: z.string().optional(),
-  cliDescription: z.string().optional(),
-  usageGuidance: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  domain: extensibleDomainSchema.optional(),
-  custom: z.boolean().optional(),
-});
+const rawMetadataSchema = z
+  .object({
+    category: z.string() as z.ZodType<CategoryPath>,
+    author: z.string(),
+    displayName: z.string().optional(),
+    cliDescription: z.string().optional(),
+    usageGuidance: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+    domain: (z.string() as z.ZodType<Domain>).optional(),
+    custom: z.boolean().optional(),
+  })
+  .passthrough()
+  .superRefine(validateCategoryField)
+  .superRefine(validateDomainField);
 
 const KNOWN_DOMAINS = new Set<string>(DOMAIN_VALUES);
 const AUTO_SYNTH_ORDER = 999;
@@ -80,7 +84,7 @@ export function synthesizeCategory(
     displayName,
     description: `Auto-generated category for ${categoryPath}`,
     domain,
-    exclusive: true,
+    exclusive: false,
     required: false,
     order: AUTO_SYNTH_ORDER,
     custom: true,

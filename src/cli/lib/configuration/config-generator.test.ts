@@ -1,6 +1,22 @@
 import { describe, it, expect } from "vitest";
-import { generateProjectConfigFromSkills, buildStackProperty } from "./config-generator";
-import type { AgentName, SkillAssignment, SkillId } from "../../types";
+import {
+  generateProjectConfigFromSkills,
+  buildStackProperty,
+  normalizeSkillsList,
+  compactSkillsForYaml,
+  normalizeDomainsList,
+  compactDomainsForYaml,
+  compactStackForYaml,
+} from "./config-generator";
+import type {
+  AgentName,
+  Domain,
+  SkillAssignment,
+  SkillId,
+  StackAgentConfig,
+  Subcategory,
+} from "../../types";
+import type { ConfigDomainElement, ConfigSkillElement } from "../schemas";
 import { createMockSkillAssignment, TEST_MATRICES } from "../__tests__/helpers";
 import {
   FULLSTACK_STACK,
@@ -498,6 +514,187 @@ describe("config-generator", () => {
 
       expect(result["web-developer"]?.["web-framework"]?.[0]?.id).toBe("web-framework-react");
       expect(result["web-developer"]?.["web-framework"]?.[0]?.local).toBe(true);
+    });
+  });
+});
+
+describe("normalizeSkillsList", () => {
+  it("normalizes bare string skill IDs unchanged", () => {
+    const input: ConfigSkillElement[] = ["web-framework-react" as SkillId];
+
+    const result = normalizeSkillsList(input);
+
+    expect(result).toEqual(["web-framework-react"]);
+  });
+
+  it("extracts id from custom object entries", () => {
+    const input: ConfigSkillElement[] = [{ id: "engine-operations" as SkillId, custom: true }];
+
+    const result = normalizeSkillsList(input);
+
+    expect(result).toEqual(["engine-operations"]);
+  });
+
+  it("normalizes a mixed array of strings and objects", () => {
+    const input: ConfigSkillElement[] = [
+      "web-framework-react" as SkillId,
+      { id: "engine-operations" as SkillId, custom: true },
+      "api-framework-hono" as SkillId,
+    ];
+
+    const result = normalizeSkillsList(input);
+
+    expect(result).toEqual(["web-framework-react", "engine-operations", "api-framework-hono"]);
+  });
+});
+
+describe("compactSkillsForYaml", () => {
+  it("keeps standard skill IDs as bare strings", () => {
+    const input: SkillId[] = ["web-framework-react" as SkillId, "api-framework-hono" as SkillId];
+
+    const result = compactSkillsForYaml(input);
+
+    expect(result).toEqual(["web-framework-react", "api-framework-hono"]);
+  });
+
+  it("converts non-standard IDs to { id, custom: true } objects", () => {
+    const input: SkillId[] = ["engine-operations" as SkillId];
+
+    const result = compactSkillsForYaml(input);
+
+    expect(result).toEqual([{ id: "engine-operations", custom: true }]);
+  });
+
+  it("produces correct mixed output for standard and non-standard IDs", () => {
+    const input: SkillId[] = [
+      "web-framework-react" as SkillId,
+      "engine-operations" as SkillId,
+      "api-database-drizzle" as SkillId,
+      "deploy-staging" as SkillId,
+    ];
+
+    const result = compactSkillsForYaml(input);
+
+    expect(result).toEqual([
+      "web-framework-react",
+      { id: "engine-operations", custom: true },
+      "api-database-drizzle",
+      { id: "deploy-staging", custom: true },
+    ]);
+  });
+});
+
+describe("normalizeDomainsList", () => {
+  it("should pass through bare domain strings", () => {
+    const input: ConfigDomainElement[] = ["web" as Domain, "api" as Domain];
+
+    const result = normalizeDomainsList(input);
+
+    expect(result).toEqual(["web", "api"]);
+  });
+
+  it("should extract id from custom domain objects", () => {
+    const input: ConfigDomainElement[] = [{ id: "engine" as Domain, custom: true }];
+
+    const result = normalizeDomainsList(input);
+
+    expect(result).toEqual(["engine"]);
+  });
+
+  it("should handle mixed strings and objects", () => {
+    const input: ConfigDomainElement[] = [
+      "web" as Domain,
+      { id: "engine" as Domain, custom: true },
+    ];
+
+    const result = normalizeDomainsList(input);
+
+    expect(result).toEqual(["web", "engine"]);
+  });
+});
+
+describe("compactDomainsForYaml", () => {
+  it("should keep standard domains as bare strings", () => {
+    const input: Domain[] = ["web" as Domain, "api" as Domain];
+
+    const result = compactDomainsForYaml(input);
+
+    expect(result).toEqual(["web", "api"]);
+  });
+
+  it("should wrap custom domains in { id, custom: true }", () => {
+    const input: Domain[] = ["engine" as Domain];
+
+    const result = compactDomainsForYaml(input);
+
+    expect(result).toEqual([{ id: "engine", custom: true }]);
+  });
+
+  it("should handle mixed domains", () => {
+    const input: Domain[] = ["web" as Domain, "engine" as Domain];
+
+    const result = compactDomainsForYaml(input);
+
+    expect(result).toEqual(["web", { id: "engine", custom: true }]);
+  });
+});
+
+describe("compactStackForYaml custom entries", () => {
+  it("should add custom: true for non-standard skill IDs", () => {
+    const stack: Record<string, StackAgentConfig> = {
+      "agent-a": {
+        "web-framework": [{ id: "engine-operations" as SkillId, preloaded: false }],
+      } as StackAgentConfig,
+    };
+
+    const result = compactStackForYaml(stack);
+
+    expect(result["agent-a"]?.["web-framework"]).toEqual({
+      id: "engine-operations",
+      custom: true,
+    });
+  });
+
+  it("should add custom: true for custom subcategory keys", () => {
+    const stack: Record<string, StackAgentConfig> = {
+      "agent-a": {
+        ["engine" as Subcategory]: [{ id: "web-framework-react" as SkillId, preloaded: false }],
+      } as StackAgentConfig,
+    };
+
+    const result = compactStackForYaml(stack);
+
+    expect(result["agent-a"]?.["engine"]).toEqual({
+      id: "web-framework-react",
+      custom: true,
+    });
+  });
+
+  it("should not add custom: true for standard skills in standard subcategories", () => {
+    const stack: Record<string, StackAgentConfig> = {
+      "agent-a": {
+        "web-framework": [{ id: "web-framework-react" as SkillId, preloaded: false }],
+      } as StackAgentConfig,
+    };
+
+    const result = compactStackForYaml(stack);
+
+    expect(result["agent-a"]?.["web-framework"]).toBe("web-framework-react");
+  });
+
+  it("should handle preloaded + custom together", () => {
+    const stack: Record<string, StackAgentConfig> = {
+      "agent-a": {
+        "web-framework": [{ id: "engine-operations" as SkillId, preloaded: true }],
+      } as StackAgentConfig,
+    };
+
+    const result = compactStackForYaml(stack);
+
+    expect(result["agent-a"]?.["web-framework"]).toEqual({
+      id: "engine-operations",
+      preloaded: true,
+      custom: true,
     });
   });
 });

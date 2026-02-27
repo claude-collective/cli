@@ -2,7 +2,7 @@
 
 | ID   | Task                                                                                                                                       | Status        |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
-| D-50 | ~~Matrix decomposition~~ — all 8 phases complete (see [phased plan](./TODO-matrix-decomposition.md))                                         | Done          |
+| D-50 | ~~Matrix decomposition~~ — all 8 phases complete (see [phased plan](./TODO-matrix-decomposition.md))                                       | Done          |
 | D-46 | Custom extensibility (see [design doc](../docs/features/proposed/custom-extensibility-design.md))                                          | In Progress   |
 | D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                                            | Refined       |
 | D-33 | ~~README: frame Agents Inc. as an agent composition framework~~ — done                                                                     | Done          |
@@ -26,6 +26,8 @@
 | D-63 | Add E2E tests to pre-commit hook                                                                                                           | Ready for Dev |
 | D-64 | Create CLI E2E testing skill + update `cli-framework-oclif-ink` skill                                                                      | Ready for Dev |
 | B-07 | Fix skill sort order changing on select/deselect in build step                                                                             | Ready for Dev |
+| D-65 | Refresh stale marketplace before plugin installation                                                                                       | Ready for Dev |
+| D-66 | ~~Make config.yaml resilient to custom skill IDs without load-order dependency~~                                                           | Done          |
 
 ---
 
@@ -375,12 +377,14 @@ The pre-commit hook (`.husky/pre-commit`) currently runs `lint-staged` (prettier
 Add the E2E test suite to the pre-commit hook so that both unit and E2E tests must pass before a commit is accepted.
 
 **Current hook:**
+
 ```
 npx lint-staged
 bun run test
 ```
 
 **Key considerations:**
+
 - E2E tests take ~60s — acceptable for pre-commit but consider making it skippable for intermediate commits per the commit protocol (`--no-verify`)
 - E2E tests require the binary to be built (`npm run build`) — the hook may need to ensure the binary is up to date
 - The commit protocol already says to use `--no-verify` for intermediate sequential commits, so the longer runtime only applies to first/last commits
@@ -414,10 +418,75 @@ The current skill covers oclif command structure and Ink component patterns but 
 - Current conventions: `displayName` in metadata, `METADATA_KEYS` constants, `EXIT_CODES` usage
 
 **Reference files:**
+
 - `e2e/helpers/terminal-session.ts` — TerminalSession class
 - `e2e/helpers/test-utils.ts` — runCLI, createTempDir, etc.
 - `e2e/vitest.config.ts` — E2E test runner config
 - `src/cli/base-command.ts` — BaseCommand pattern
+
+---
+
+#### D-66: Make config.yaml resilient to custom skill IDs without load-order dependency
+
+**Priority:** Medium
+
+Currently, custom skill IDs (like `engine-operations`) pass config.yaml validation only because `extendSchemasWithCustomValues()` is called during source loading BEFORE the config is parsed. This creates a fragile load-order dependency: if config.yaml is read without first scanning the source (e.g., during `compile`, `edit`, or any command that loads config independently), custom skill IDs fail `extensibleSkillIdSchema` validation because they haven't been registered yet.
+
+**Problem:** The validation of config.yaml skill IDs depends on runtime state (`customExtensions.skillIds` Set) that must be populated first. If the ordering changes, or a new command reads config without loading the source, custom skills silently break.
+
+**Possible approaches:**
+
+1. **`custom: true` marker in config.yaml** — Add an explicit marker for custom skills in the config, e.g.:
+
+   ```yaml
+   skills:
+     - web-framework-react
+     - engine-operations # custom: true
+   ```
+
+   Or a separate `customSkills` array. This makes the config self-describing — no external state needed for validation.
+
+2. **Two-pass validation** — Parse config.yaml leniently first (accept any kebab-case skill ID), load the source to discover custom values, then validate strictly. This preserves the current schema but adds a validation pass after source loading.
+
+3. **Persisted custom extensions** — When `init`/`edit` writes config.yaml, also write a `customExtensions` section listing the custom skill IDs, categories, and domains. On read, populate `customExtensions` from the config itself before strict validation.
+
+4. **Lenient config schema** — Accept any kebab-case string as a skill ID in config.yaml (no prefix enforcement). Strict validation only at compile time when the full source context is available.
+
+**Affected files:**
+
+- `src/cli/lib/schemas.ts` — `extensibleSkillIdSchema`, `projectConfigLoaderSchema`
+- `src/cli/lib/loading/source-loader.ts` — `discoverAndExtendFromSource()` (current registration point)
+- `src/cli/lib/configuration/config.ts` — `loadProjectSourceConfig()`
+- `src/cli/lib/installation/local-installer.ts` — config writing
+
+---
+
+#### D-65: Refresh stale marketplace before plugin installation
+
+**Priority:** Medium
+
+When `init` or `edit` installs skill plugins, it shells out to `claude plugin install skillId@marketplace`. Claude CLI resolves the marketplace from its registered copy at `~/.claude/plugins/marketplaces/{name}/`. The `init` command (line 232-245) only checks whether the marketplace **exists** — if it does, it skips registration and never updates it. This means newly added skills (e.g., custom skills added after the marketplace was first registered) are invisible to `claude plugin install`.
+
+**Problem:** The registered marketplace is a git clone. When new skills are added to the source repo, compiled, and the marketplace.json is updated, the registered copy at `~/.claude/plugins/marketplaces/` remains on the old commit. `claude plugin install` reads the stale copy and reports "Plugin not found in marketplace".
+
+**Proposed fix:** Before installing plugins in `init` and `edit`, check if the registered marketplace is outdated and refresh it:
+
+1. If the registered marketplace is a git repo, run `git pull` (or `git fetch` + compare)
+2. If the registered marketplace was fetched from a remote source, re-fetch it
+3. If the marketplace source is a local directory, compare timestamps or hashes
+
+**Affected files:**
+
+- `src/cli/commands/init.tsx` — `installSelectedPlugins()` method (line 224-259)
+- `src/cli/commands/edit.tsx` — similar plugin installation flow
+- `src/cli/utils/exec.ts` — may need a `claudePluginMarketplaceUpdate()` helper
+
+**Acceptance criteria:**
+
+- [ ] `init` refreshes a stale marketplace before installing plugins
+- [ ] `edit` refreshes a stale marketplace before installing plugins
+- [ ] Works for git-cloned marketplaces (the common case)
+- [ ] Graceful fallback if refresh fails (warn and continue with stale copy)
 
 ---
 

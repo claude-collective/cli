@@ -423,6 +423,226 @@ describe("SKILL_ID_PATTERN", () => {
   });
 });
 
+describe("projectConfigLoaderSchema custom skill entries", () => {
+  it("should accept bare string skill IDs", () => {
+    const config = {
+      name: "test-project",
+      agents: ["web-developer"],
+      skills: ["web-framework-react"],
+    };
+
+    const result = projectConfigLoaderSchema.safeParse(config);
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept custom object skill entries", () => {
+    const config = {
+      name: "test-project",
+      agents: ["web-developer"],
+      skills: [{ id: "engine-operations", custom: true }],
+    };
+
+    const result = projectConfigLoaderSchema.safeParse(config);
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept mixed bare strings and custom objects", () => {
+    const config = {
+      name: "test-project",
+      agents: ["web-developer"],
+      skills: ["web-framework-react", { id: "engine-operations", custom: true }],
+    };
+
+    const result = projectConfigLoaderSchema.safeParse(config);
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject custom: false (must be literal true)", () => {
+    const config = {
+      name: "test-project",
+      agents: ["web-developer"],
+      skills: [{ id: "engine-operations", custom: false }],
+    };
+
+    const result = projectConfigLoaderSchema.safeParse(config);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject non-kebab-case id in custom entries", () => {
+    const config = {
+      name: "test-project",
+      agents: ["web-developer"],
+      skills: [{ id: "NOT_KEBAB", custom: true }],
+    };
+
+    const result = projectConfigLoaderSchema.safeParse(config);
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("projectConfigLoaderSchema custom domain entries", () => {
+  it("should accept bare standard domain strings", () => {
+    const config = {
+      name: "test-project",
+      agents: ["web-developer"],
+      domains: ["web", "api"],
+    };
+
+    const result = projectConfigLoaderSchema.safeParse(config);
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept custom domain objects with { id, custom: true }", () => {
+    const config = {
+      name: "test-project",
+      agents: ["web-developer"],
+      domains: [{ id: "engine", custom: true }],
+    };
+
+    const result = projectConfigLoaderSchema.safeParse(config);
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept mixed standard and custom domains", () => {
+    const config = {
+      name: "test-project",
+      agents: ["web-developer"],
+      domains: ["web", { id: "engine", custom: true }],
+    };
+
+    const result = projectConfigLoaderSchema.safeParse(config);
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject bare non-standard domain strings", () => {
+    const config = {
+      name: "test-project",
+      agents: ["web-developer"],
+      domains: ["engine"],
+    };
+
+    const result = projectConfigLoaderSchema.safeParse(config);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject custom: false for domains", () => {
+    const config = {
+      name: "test-project",
+      agents: ["web-developer"],
+      domains: [{ id: "engine", custom: false }],
+    };
+
+    const result = projectConfigLoaderSchema.safeParse(config);
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject non-kebab-case id in custom domain entries", () => {
+    const config = {
+      name: "test-project",
+      agents: ["web-developer"],
+      domains: [{ id: "NOT_KEBAB", custom: true }],
+    };
+
+    const result = projectConfigLoaderSchema.safeParse(config);
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("projectConfigLoaderSchema custom stack entries", () => {
+  it("should accept standard subcategory keys with standard skills", () => {
+    const config = {
+      name: "test-project",
+      agents: ["web-developer"],
+      stack: {
+        "agent-a": {
+          "web-framework": "web-framework-react",
+        },
+      },
+    };
+
+    const result = projectConfigLoaderSchema.safeParse(config);
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept standard subcategory with custom skill object", () => {
+    const config = {
+      name: "test-project",
+      agents: ["web-developer"],
+      stack: {
+        "agent-a": {
+          "web-framework": { id: "custom-fw", custom: true },
+        },
+      },
+    };
+
+    const result = projectConfigLoaderSchema.safeParse(config);
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept custom subcategory key when value has custom: true", () => {
+    const config = {
+      name: "test-project",
+      agents: ["web-developer"],
+      stack: {
+        "agent-a": {
+          engine: { id: "engine-integration", custom: true },
+        },
+      },
+    };
+
+    const result = projectConfigLoaderSchema.safeParse(config);
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject custom subcategory key when value lacks custom: true", () => {
+    const config = {
+      name: "test-project",
+      agents: ["web-developer"],
+      stack: {
+        "agent-a": {
+          engine: "engine-integration",
+        },
+      },
+    };
+
+    const result = projectConfigLoaderSchema.safeParse(config);
+    expect(result.success).toBe(false);
+  });
+
+  it("should accept custom subcategory with array of assignments, one having custom: true", () => {
+    const config = {
+      name: "test-project",
+      agents: ["web-developer"],
+      stack: {
+        "agent-a": {
+          engine: [
+            { id: "engine-ops", custom: true },
+            { id: "engine-state", custom: true },
+          ],
+        },
+      },
+    };
+
+    const result = projectConfigLoaderSchema.safeParse(config);
+    expect(result.success).toBe(true);
+  });
+
+  it("should reject unknown subcategory with standard skill assignment (no custom)", () => {
+    const config = {
+      name: "test-project",
+      agents: ["web-developer"],
+      stack: {
+        "agent-a": {
+          engine: { id: "web-framework-react", preloaded: true },
+        },
+      },
+    };
+
+    const result = projectConfigLoaderSchema.safeParse(config);
+    expect(result.success).toBe(false);
+  });
+});
+
 describe("custom: true in schemas", () => {
   it("should accept custom: true in skillMetadataLoaderSchema", () => {
     const result = skillMetadataLoaderSchema.safeParse({

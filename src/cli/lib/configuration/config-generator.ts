@@ -1,6 +1,7 @@
 import type {
   AgentName,
   CategoryPath,
+  Domain,
   MergedSkillsMatrix,
   ProjectConfig,
   SkillAssignment,
@@ -9,8 +10,20 @@ import type {
   StackAgentConfig,
   Subcategory,
 } from "../../types";
+import type { ConfigDomainElement, ConfigSkillElement } from "../schemas";
+import { DOMAIN_VALUES, SKILL_ID_PATTERN, SUBCATEGORY_VALUES } from "../schemas";
 import { verbose, warn } from "../../utils/logger";
 import { typedEntries } from "../../utils/typed-object";
+
+/** Normalizes a mixed skills array (strings + { id, custom } objects) to flat SkillId[] */
+export function normalizeSkillsList(skills: ConfigSkillElement[]): SkillId[] {
+  return skills.map((s) => (typeof s === "string" ? s : s.id));
+}
+
+/** Normalizes a mixed domains array (strings + { id, custom } objects) to flat Domain[] */
+export function normalizeDomainsList(domains: ConfigDomainElement[]): Domain[] {
+  return domains.map((d) => (typeof d === "string" ? d : d.id));
+}
 
 export type ProjectConfigOptions = {
   description?: string;
@@ -153,6 +166,7 @@ export function buildStackProperty(stack: Stack): Partial<Record<AgentName, Stac
 export function compactStackForYaml(
   stack: Record<string, StackAgentConfig>,
 ): Record<string, Record<string, unknown>> {
+  const KNOWN_SUBCATEGORIES = new Set<string>(SUBCATEGORY_VALUES);
   const result: Record<string, Record<string, unknown>> = {};
 
   for (const [agentId, agentConfig] of Object.entries(stack)) {
@@ -163,19 +177,36 @@ export function compactStackForYaml(
     )) {
       if (!assignments || assignments.length === 0) continue;
 
+      const isCustomSubcategory = !KNOWN_SUBCATEGORIES.has(subcategory);
+
       if (assignments.length === 1) {
         const assignment = assignments[0];
-        // Single skill, no preloaded -> bare string
-        if (!assignment.preloaded) {
+        const isCustomSkill = !SKILL_ID_PATTERN.test(assignment.id);
+        const needsCustomFlag = isCustomSkill || isCustomSubcategory;
+
+        if (!assignment.preloaded && !needsCustomFlag) {
           compacted[subcategory] = assignment.id;
         } else {
-          compacted[subcategory] = { id: assignment.id, preloaded: true };
+          compacted[subcategory] = {
+            id: assignment.id,
+            ...(assignment.preloaded && { preloaded: true }),
+            ...(needsCustomFlag && { custom: true as const }),
+          };
         }
       } else {
-        // Multiple skills -> array, compact each element
-        compacted[subcategory] = assignments.map((a) =>
-          !a.preloaded ? a.id : { id: a.id, preloaded: true },
-        );
+        let customFlagPlaced = false;
+        compacted[subcategory] = assignments.map((a) => {
+          const isCustomSkill = !SKILL_ID_PATTERN.test(a.id);
+          const needsCustom = isCustomSkill || (isCustomSubcategory && !customFlagPlaced);
+          if (needsCustom) customFlagPlaced = true;
+
+          if (!a.preloaded && !needsCustom) return a.id;
+          return {
+            id: a.id,
+            ...(a.preloaded && { preloaded: true }),
+            ...(needsCustom && { custom: true as const }),
+          };
+        });
       }
     }
 
@@ -185,4 +216,23 @@ export function compactStackForYaml(
   }
 
   return result;
+}
+
+/**
+ * Compacts a ProjectConfig.skills array for YAML serialization.
+ * Standard skill IDs (matching SKILL_ID_PATTERN) stay as bare strings;
+ * non-standard IDs (custom skills) become { id, custom: true } objects.
+ */
+export function compactSkillsForYaml(
+  skills: SkillId[],
+): (SkillId | { id: SkillId; custom: true })[] {
+  return skills.map((id) => (SKILL_ID_PATTERN.test(id) ? id : { id, custom: true }));
+}
+
+/** Compacts domains for YAML serialization. Known domains stay as strings; custom ones become { id, custom: true }. */
+export function compactDomainsForYaml(
+  domains: Domain[],
+): (Domain | { id: Domain; custom: true })[] {
+  const knownDomains = new Set<string>(DOMAIN_VALUES);
+  return domains.map((d) => (knownDomains.has(d) ? d : { id: d, custom: true }));
 }

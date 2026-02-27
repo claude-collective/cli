@@ -22,6 +22,8 @@ import { createLiquidEngine } from "../compiler";
 import {
   generateProjectConfigFromSkills,
   compactStackForYaml,
+  compactSkillsForYaml,
+  compactDomainsForYaml,
   buildStackProperty,
 } from "../configuration";
 import { ensureDir, writeFile } from "../../utils/fs";
@@ -331,10 +333,12 @@ const PATH_OVERRIDES_COMMENT = [
 
 async function writeConfigFile(config: ProjectConfig, configPath: string): Promise<void> {
   const schemaComment = `${yamlSchemaComment(SCHEMA_PATHS.projectConfig)}\n`;
-  // Compact stack for YAML output: bare strings for simple skills, objects for preloaded
-  const serializable = config.stack
-    ? { ...config, stack: compactStackForYaml(config.stack) }
-    : config;
+  const serializable = {
+    ...config,
+    ...(config.skills ? { skills: compactSkillsForYaml(config.skills) } : {}),
+    ...(config.domains ? { domains: compactDomainsForYaml(config.domains) } : {}),
+    ...(config.stack ? { stack: compactStackForYaml(config.stack) } : {}),
+  };
   const configYaml = stringifyYaml(serializable, {
     indent: YAML_FORMATTING.INDENT,
     lineWidth: YAML_FORMATTING.LINE_WIDTH,

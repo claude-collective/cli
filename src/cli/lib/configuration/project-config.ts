@@ -4,8 +4,10 @@ import { verbose, warn } from "../../utils/logger";
 import { safeLoadYamlFile } from "../../utils/yaml";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../../consts";
 import type { ProjectConfig, ValidationResult } from "../../types";
+import type { ConfigDomainElement, ConfigSkillElement } from "../schemas";
 import { projectConfigLoaderSchema } from "../schemas";
 import { normalizeStackRecord } from "../stacks/stacks-loader";
+import { normalizeDomainsList, normalizeSkillsList } from "./config-generator";
 
 const CONFIG_PATH = `${CLAUDE_SRC_DIR}/config.yaml`;
 const LEGACY_CONFIG_PATH = `${CLAUDE_DIR}/config.yaml`;
@@ -54,6 +56,14 @@ export async function loadProjectConfig(projectDir: string): Promise<LoadedProje
   if (!config.skills) {
     warn(`Project config at '${configPath}' is missing 'skills' array — defaulting to empty`);
     config.skills = [];
+  } else {
+    // Normalize mixed skill entries (string | { id, custom }) to flat SkillId[]
+    config.skills = normalizeSkillsList(config.skills as unknown as ConfigSkillElement[]);
+  }
+
+  if (config.domains) {
+    // Normalize mixed domain entries (string | { id, custom }) to flat Domain[]
+    config.domains = normalizeDomainsList(config.domains as unknown as ConfigDomainElement[]);
   }
 
   verbose(`Loaded project config from ${configPath}`);

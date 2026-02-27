@@ -441,6 +441,136 @@ displayName: wrong
       expect(skills).toHaveLength(1);
       expect(skills[0].id).toBe("skill-valid");
     });
+
+    it("extracts skill with custom: true and a non-standard category", async () => {
+      mockGlob.mockResolvedValue(["custom-engine-turbo/metadata.yaml"]);
+      mockFileExists.mockResolvedValue(true);
+      mockReadFile.mockImplementation(async (filePath: string) => {
+        if (filePath.includes("metadata.yaml")) {
+          return `
+category: engine
+author: "@test"
+version: "1"
+displayName: turbo
+custom: true
+`;
+        }
+        return `---\nname: custom-engine-turbo\ndescription: Turbo engine\n---\n# Turbo`;
+      });
+      mockParseFrontmatter.mockReturnValue({
+        name: "custom-engine-turbo",
+        description: "Turbo engine",
+      });
+
+      const skills = await extractAllSkills("/project/src/skills");
+
+      expect(skills).toHaveLength(1);
+      expect(skills[0].id).toBe("custom-engine-turbo");
+      expect(skills[0].category).toBe("engine");
+      expect(skills[0].custom).toBe(true);
+    });
+
+    it("skips skill without custom: true that has a non-standard category", async () => {
+      mockGlob.mockResolvedValue(["bad-engine-turbo/metadata.yaml"]);
+      mockFileExists.mockResolvedValue(true);
+      mockReadFile.mockImplementation(async (filePath: string) => {
+        if (filePath.includes("metadata.yaml")) {
+          return `
+category: engine
+author: "@test"
+version: "1"
+displayName: turbo
+`;
+        }
+        return `---\nname: bad-engine-turbo\ndescription: Turbo engine\n---\n# Turbo`;
+      });
+
+      const skills = await extractAllSkills("/project/src/skills");
+
+      expect(skills).toHaveLength(0);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("invalid metadata.yaml"));
+    });
+
+    it("extracts skill with custom: true and a non-standard domain", async () => {
+      mockGlob.mockResolvedValue(["custom-domain-turbo/metadata.yaml"]);
+      mockFileExists.mockResolvedValue(true);
+      mockReadFile.mockImplementation(async (filePath: string) => {
+        if (filePath.includes("metadata.yaml")) {
+          return `
+category: web-framework
+author: "@test"
+version: "1"
+displayName: turbo
+domain: engine
+custom: true
+`;
+        }
+        return `---\nname: custom-domain-turbo\ndescription: Turbo engine\n---\n# Turbo`;
+      });
+      mockParseFrontmatter.mockReturnValue({
+        name: "custom-domain-turbo",
+        description: "Turbo engine",
+      });
+
+      const skills = await extractAllSkills("/project/src/skills");
+
+      expect(skills).toHaveLength(1);
+      expect(skills[0].id).toBe("custom-domain-turbo");
+      expect(skills[0].domain).toBe("engine");
+      expect(skills[0].custom).toBe(true);
+    });
+
+    it("skips skill without custom: true that has a non-standard domain", async () => {
+      mockGlob.mockResolvedValue(["bad-domain-turbo/metadata.yaml"]);
+      mockFileExists.mockResolvedValue(true);
+      mockReadFile.mockImplementation(async (filePath: string) => {
+        if (filePath.includes("metadata.yaml")) {
+          return `
+category: web-framework
+author: "@test"
+version: "1"
+displayName: turbo
+domain: engine
+`;
+        }
+        return `---\nname: bad-domain-turbo\ndescription: Turbo engine\n---\n# Turbo`;
+      });
+
+      const skills = await extractAllSkills("/project/src/skills");
+
+      expect(skills).toHaveLength(0);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("invalid metadata.yaml"));
+    });
+
+    it("extracts skill with custom: true, a custom category, and a custom domain", async () => {
+      mockGlob.mockResolvedValue(["full-custom-turbo/metadata.yaml"]);
+      mockFileExists.mockResolvedValue(true);
+      mockReadFile.mockImplementation(async (filePath: string) => {
+        if (filePath.includes("metadata.yaml")) {
+          return `
+category: engine
+author: "@test"
+version: "1"
+displayName: turbo
+domain: engine
+custom: true
+`;
+        }
+        return `---\nname: full-custom-turbo\ndescription: Turbo engine\n---\n# Turbo`;
+      });
+      mockParseFrontmatter.mockReturnValue({
+        name: "full-custom-turbo",
+        description: "Turbo engine",
+      });
+
+      const skills = await extractAllSkills("/project/src/skills");
+
+      expect(skills).toHaveLength(1);
+      expect(skills[0].id).toBe("full-custom-turbo");
+      expect(skills[0].category).toBe("engine");
+      expect(skills[0].domain).toBe("engine");
+      expect(skills[0].custom).toBe(true);
+    });
   });
 
   describe("mergeMatrixWithSkills", () => {
@@ -639,7 +769,7 @@ displayName: wrong
       const synthesized = merged.categories["devops-iac" as Subcategory];
       expect(synthesized).toBeDefined();
       expect(synthesized!.displayName).toBe("Devops Iac");
-      expect(synthesized!.exclusive).toBe(true);
+      expect(synthesized!.exclusive).toBe(false);
       expect(synthesized!.required).toBe(false);
       expect(synthesized!.order).toBe(999);
       expect(synthesized!.custom).toBe(true);

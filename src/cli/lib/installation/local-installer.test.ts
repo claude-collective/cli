@@ -85,6 +85,8 @@ vi.mock("../configuration/config-generator", async (importOriginal) => {
     buildStackProperty: vi.fn().mockReturnValue({}),
     // Use real compactStackForYaml so configs with stack properties serialize correctly
     compactStackForYaml: original.compactStackForYaml,
+    // Use real compactSkillsForYaml so configs with custom skills serialize correctly
+    compactSkillsForYaml: original.compactSkillsForYaml,
   };
 });
 

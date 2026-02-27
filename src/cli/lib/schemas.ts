@@ -272,6 +272,28 @@ const extensibleSkillIdSchema = z
     { message: "Must be a valid skill ID" },
   ) as z.ZodType<SkillId>;
 
+/** Schema for custom skill entries in config.yaml: { id: kebab-case-string, custom: true } */
+const customSkillEntrySchema = z.object({
+  id: z.string().regex(KEBAB_CASE_PATTERN) as z.ZodType<SkillId>,
+  custom: z.literal(true),
+});
+
+/** Config skill element: either a strict SkillId string or a { id, custom: true } object */
+export const configSkillElementSchema = z.union([extensibleSkillIdSchema, customSkillEntrySchema]);
+
+export type ConfigSkillElement = SkillId | { id: SkillId; custom: true };
+
+/** Schema for custom domain entries in config.yaml: { id: kebab-case-string, custom: true } */
+const customDomainEntrySchema = z.object({
+  id: z.string().regex(KEBAB_CASE_PATTERN) as z.ZodType<Domain>,
+  custom: z.literal(true),
+});
+
+/** Config domain element: either a strict Domain string or a { id, custom: true } object */
+export const configDomainElementSchema = z.union([extensibleDomainSchema, customDomainEntrySchema]);
+
+export type ConfigDomainElement = Domain | { id: Domain; custom: true };
+
 const extensibleSubcategorySchema = z
   .string()
   .refine(
@@ -289,7 +311,7 @@ const extensibleAgentNameSchema = z
   ) as z.ZodType<AgentName>;
 
 /** Validates category: strict categoryPathSchema by default, any kebab-case string when custom: true */
-function validateCategoryField(
+export function validateCategoryField(
   val: { category?: string; custom?: boolean },
   ctx: z.RefinementCtx,
 ): void {
@@ -310,6 +332,32 @@ function validateCategoryField(
   if (!result.success) {
     for (const issue of result.error.issues) {
       ctx.addIssue({ ...issue, path: ["category"] });
+    }
+  }
+}
+
+/** Validates domain: strict extensibleDomainSchema by default, any kebab-case string when custom: true */
+export function validateDomainField(
+  val: { domain?: string; custom?: boolean },
+  ctx: z.RefinementCtx,
+): void {
+  if (!val.domain) return;
+
+  if (val.custom) {
+    if (!KEBAB_CASE_PATTERN.test(val.domain)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["domain"],
+        message: "Custom domain must be kebab-case",
+      });
+    }
+    return;
+  }
+
+  const result = extensibleDomainSchema.safeParse(val.domain);
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      ctx.addIssue({ ...issue, path: ["domain"] });
     }
   }
 }
@@ -375,6 +423,15 @@ export const strictHooksRecordSchema = z.record(
 
 export const skillAssignmentSchema: z.ZodType<SkillAssignment> = z.object({
   id: extensibleSkillIdSchema,
+  preloaded: z.boolean().optional(),
+  local: z.boolean().optional(),
+  path: z.string().optional(),
+});
+
+/** Custom skill assignment in stack: any kebab-case id + custom: true, with optional preloaded/local/path */
+const customSkillAssignmentSchema = z.object({
+  id: z.string().regex(KEBAB_CASE_PATTERN) as z.ZodType<SkillId>,
+  custom: z.literal(true),
   preloaded: z.boolean().optional(),
   local: z.boolean().optional(),
   path: z.string().optional(),
@@ -453,6 +510,13 @@ export const agentYamlConfigSchema: z.ZodType<AgentYamlConfig> = z.object({
 // Single skill assignment element: either a bare SkillId string or an object { id, preloaded? }
 const skillAssignmentElementSchema = z.union([extensibleSkillIdSchema, skillAssignmentSchema]);
 
+/** Config loader skill assignment: standard skill or custom skill with { custom: true } */
+const configStackSkillAssignmentElementSchema = z.union([
+  extensibleSkillIdSchema,
+  skillAssignmentSchema,
+  customSkillAssignmentSchema,
+]);
+
 /**
  * Agent config within a stack: maps subcategory to skill assignment(s).
  * Keys restricted to valid Subcategory values from skill-categories.yaml.
@@ -476,6 +540,40 @@ export const stackAgentConfigSchema = z
     ),
   );
 
+/** Config loader stack agent config: validates subcategory keys conditionally.
+ * Known subcategories pass strict validation.
+ * Unknown keys require the value to contain custom: true. */
+const configStackAgentConfigSchema = z
+  .record(
+    z.string(),
+    z.union([
+      configStackSkillAssignmentElementSchema,
+      z.array(configStackSkillAssignmentElementSchema),
+    ]),
+  )
+  .superRefine((val, ctx) => {
+    for (const key of Object.keys(val)) {
+      if (stackSubcategoryValues.has(key) || customExtensions.categories.has(key)) continue;
+
+      const rawValue = val[key];
+      const values = Array.isArray(rawValue) ? rawValue : [rawValue];
+      const hasCustom = values.some(
+        (v) =>
+          typeof v === "object" &&
+          v !== null &&
+          "custom" in v &&
+          (v as Record<string, unknown>).custom === true,
+      );
+      if (!hasCustom) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `Invalid subcategory '${key}'. Use { id: ..., custom: true } for custom subcategories.`,
+        });
+      }
+    }
+  });
+
 /**
  * Lenient loader for .claude/config.yaml (ProjectConfig).
  * name/agents optional since partial configs are valid at load time.
@@ -489,8 +587,8 @@ export const projectConfigLoaderSchema = z
     description: z.string().optional(),
     /** Agent IDs to compile (e.g., ["web-developer", "api-developer"]) */
     agents: z.array(z.string()).optional(),
-    /** Flat list of all skill IDs used by this project */
-    skills: z.array(extensibleSkillIdSchema).optional(),
+    /** Flat list of all skill IDs used by this project (strings or { id, custom: true } objects) */
+    skills: z.array(configSkillElementSchema).optional(),
 
     /** Author handle (e.g., "@vince") */
     author: z.string().optional(),
@@ -499,11 +597,11 @@ export const projectConfigLoaderSchema = z
     /** Whether expert mode (advanced/niche skills) was enabled in the wizard */
     expertMode: z.boolean().optional(),
     /** Selected domains from the wizard (persisted for edit mode restoration) */
-    domains: z.array(extensibleDomainSchema).optional(),
+    domains: z.array(configDomainElementSchema).optional(),
     /** Selected agents from the wizard (persisted for edit mode restoration) */
     selectedAgents: z.array(z.string()).optional(),
     /** Agent-to-subcategory-to-skill mappings from selected stack (accepts same formats as stacks.yaml) */
-    stack: z.record(z.string(), stackAgentConfigSchema).optional(),
+    stack: z.record(z.string(), configStackAgentConfigSchema).optional(),
     /** Skills source path or URL (e.g., "github:my-org/skills") */
     source: z.string().optional(),
     /** Marketplace identifier for plugin installation */
