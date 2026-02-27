@@ -57,18 +57,18 @@ Current capabilities of `createTestSource()`:
 
 ### Existing Test Infrastructure
 
-| Component | Status | Key Files |
-|-----------|--------|-----------|
-| `createTestSource()` | Complete | `fixtures/create-test-source.ts` — creates source + project dirs |
-| `installLocal()` | Tested | `init-flow.integration.test.ts`, `init-end-to-end.integration.test.ts` |
-| `compareLocalSkillsWithSource()` | Unit tested | `skill-metadata.test.ts` |
-| `compileAllSkillPlugins()` | Unit tested | `skill-plugin-compiler.test.ts` |
-| `generateMarketplace()` | Unit tested | `__tests__/commands/build/marketplace.test.ts` |
-| `recompileAgents()` | Unit tested | `agent-recompiler.test.ts` |
-| `loadSkillsMatrixFromSource()` | Integration tested | Used across integration tests |
-| `buildWizardResult()` | Helper | `helpers.ts` — builds wizard result without UI |
-| `buildSourceResult()` | Helper | `helpers.ts` — builds source result from matrix + path |
-| `runCliCommand()` | Helper | `helpers.ts` — invokes oclif commands in-process |
+| Component                        | Status             | Key Files                                                              |
+| -------------------------------- | ------------------ | ---------------------------------------------------------------------- |
+| `createTestSource()`             | Complete           | `fixtures/create-test-source.ts` — creates source + project dirs       |
+| `installLocal()`                 | Tested             | `init-flow.integration.test.ts`, `init-end-to-end.integration.test.ts` |
+| `compareLocalSkillsWithSource()` | Unit tested        | `skill-metadata.test.ts`                                               |
+| `compileAllSkillPlugins()`       | Unit tested        | `skill-plugin-compiler.test.ts`                                        |
+| `generateMarketplace()`          | Unit tested        | `__tests__/commands/build/marketplace.test.ts`                         |
+| `recompileAgents()`              | Unit tested        | `agent-recompiler.test.ts`                                             |
+| `loadSkillsMatrixFromSource()`   | Integration tested | Used across integration tests                                          |
+| `buildWizardResult()`            | Helper             | `helpers.ts` — builds wizard result without UI                         |
+| `buildSourceResult()`            | Helper             | `helpers.ts` — builds source result from matrix + path                 |
+| `runCliCommand()`                | Helper             | `helpers.ts` — invokes oclif commands in-process                       |
 
 ### What Is NOT Tested
 
@@ -88,11 +88,13 @@ The following cross-cutting workflow has no integration test coverage:
 **Goal:** Verify that `loadSkillsMatrixFromSource({ sourceFlag: localPath })` loads skills from a custom local source, and that `installLocal()` writes the correct config referencing that source.
 
 **Setup:**
+
 ```
 createTestSource() -> { sourceDir, projectDir, skillsDir }
 ```
 
 **Actions:**
+
 1. Call `loadSkillsMatrixFromSource({ sourceFlag: dirs.sourceDir, projectDir: dirs.projectDir })`.
 2. Verify the returned `SourceLoadResult` has `isLocal: true` and `sourcePath` pointing to the fixture.
 3. Verify `matrix.skills` contains the expected skills from `DEFAULT_TEST_SKILLS`.
@@ -100,6 +102,7 @@ createTestSource() -> { sourceDir, projectDir, skillsDir }
 5. Read the generated `.claude-src/config.yaml`.
 
 **Assertions:**
+
 - `sourceResult.isLocal === true`
 - `sourceResult.sourcePath === dirs.sourceDir` (or resolved equivalent)
 - `matrix.skills["web-framework-react"]` exists with correct path
@@ -116,11 +119,13 @@ createTestSource() -> { sourceDir, projectDir, skillsDir }
 **Goal:** After installing from a custom marketplace, modify a skill in the source, then verify `compareLocalSkillsWithSource()` reports it as outdated.
 
 **Setup:**
+
 ```
 createTestSource() -> install skills via installLocal() -> modify source skill
 ```
 
 **Actions:**
+
 1. Create test source with `createTestSource()`.
 2. Build matrix via `loadSkillsMatrixFromSource()` (or `createMockMatrix()` with matching paths).
 3. Install skills via `installLocal()` with selected skills.
@@ -129,6 +134,7 @@ createTestSource() -> install skills via installLocal() -> modify source skill
 6. Call `compareLocalSkillsWithSource(projectDir, sourcePath, sourceSkills)`.
 
 **Assertions:**
+
 - Before modification: all skills report `status: "current"`.
 - After modification: the modified skill reports `status: "outdated"` with different `localHash` and `sourceHash`.
 - Unmodified skills still report `status: "current"`.
@@ -142,11 +148,13 @@ createTestSource() -> install skills via installLocal() -> modify source skill
 **Goal:** Verify that `compileAllSkillPlugins()` produces plugin directories with `plugin.json` manifests, and that rebuilding after a change bumps the version.
 
 **Setup:**
+
 ```
 createTestSource() -> compile skills to dist/plugins/
 ```
 
 **Actions:**
+
 1. Create test source with `createTestSource()`.
 2. Call `compileAllSkillPlugins(dirs.skillsDir, outputDir)` to produce compiled plugins.
 3. Verify each plugin has `.claude-plugin/plugin.json` with `version: "1.0.0"`.
@@ -156,6 +164,7 @@ createTestSource() -> compile skills to dist/plugins/
 7. Verify unmodified skills remain at `version: "1.0.0"`.
 
 **Assertions:**
+
 - Initial compile produces N plugins matching N skills.
 - Each plugin has valid `plugin.json` with `name`, `version`, `description`.
 - After content change, version is bumped for the changed skill only.
@@ -170,17 +179,20 @@ createTestSource() -> compile skills to dist/plugins/
 **Goal:** Verify that `generateMarketplace()` produces a valid `marketplace.json` from compiled plugins.
 
 **Setup:**
+
 ```
 createTestSource() -> compileAllSkillPlugins() -> generateMarketplace()
 ```
 
 **Actions:**
+
 1. Create test source and compile plugins (from Scenario 3 setup).
 2. Call `generateMarketplace(outputDir, marketplaceOptions)`.
 3. Call `writeMarketplace(marketplacePath, marketplace)`.
 4. Read and parse the written `marketplace.json`.
 
 **Assertions:**
+
 - `marketplace.json` exists.
 - `marketplace.name` matches the provided name.
 - `marketplace.plugins` array has entries matching compiled skills.
@@ -196,11 +208,13 @@ createTestSource() -> compileAllSkillPlugins() -> generateMarketplace()
 **Goal:** Test the complete lifecycle: install from source, change source, rebuild, detect outdated, update, verify updated content.
 
 **Setup:**
+
 ```
 createTestSource() -> installLocal() -> modify source -> recompile -> outdated -> update
 ```
 
 **Actions:**
+
 1. Create test source with `createTestSource()`.
 2. Load matrix via `loadSkillsMatrixFromSource({ sourceFlag: dirs.sourceDir })`.
 3. Install skills via `installLocal()`.
@@ -216,6 +230,7 @@ createTestSource() -> installLocal() -> modify source -> recompile -> outdated -
 13. Verify all skills now report `status: "current"`.
 
 **Assertions:**
+
 - Step 4: `forkedFrom.contentHash` matches the source hash at install time.
 - Step 8: Modified skill is `"outdated"`, others are `"current"`.
 - Step 11: `recompileAgents()` succeeds, returns compiled agent names.
@@ -231,17 +246,20 @@ createTestSource() -> installLocal() -> modify source -> recompile -> outdated -
 **Goal:** Verify the `outdated` command produces correct JSON output through the CLI binary.
 
 **Setup:**
+
 ```
 createTestSource() -> installLocal() -> modify source -> runCliCommand(["outdated", "--json", "--source", sourcePath])
 ```
 
 **Actions:**
+
 1. Set up a project with installed skills (same as Scenario 5 steps 1-5).
 2. Change `process.cwd()` to the project directory.
 3. Call `runCliCommand(["outdated", "--json", "--source", dirs.sourceDir])`.
 4. Parse the JSON output.
 
 **Assertions:**
+
 - Command exits with `EXIT_CODES.ERROR` (because there are outdated skills).
 - JSON output has `skills` array with the outdated skill's `status: "outdated"`.
 - JSON output has `summary.outdated >= 1`.
@@ -330,15 +348,33 @@ Use `cleanupTestSource(dirs)` which delegates to `cleanupTempDir()` with retry l
 ### Imports
 
 ```typescript
-import { createTestSource, cleanupTestSource, DEFAULT_TEST_SKILLS, type TestDirs } from "../fixtures/create-test-source";
+import {
+  createTestSource,
+  cleanupTestSource,
+  DEFAULT_TEST_SKILLS,
+  type TestDirs,
+} from "../fixtures/create-test-source";
 import { installLocal } from "../../installation/local-installer";
 import { compileAllSkillPlugins } from "../../skills/skill-plugin-compiler";
-import { generateMarketplace, writeMarketplace, getMarketplaceStats } from "../../marketplace-generator";
+import {
+  generateMarketplace,
+  writeMarketplace,
+  getMarketplaceStats,
+} from "../../marketplace-generator";
 import { loadSkillsMatrixFromSource } from "../../loading/source-loader";
-import { compareLocalSkillsWithSource, injectForkedFromMetadata } from "../../skills/skill-metadata";
+import {
+  compareLocalSkillsWithSource,
+  injectForkedFromMetadata,
+} from "../../skills/skill-metadata";
 import { recompileAgents } from "../../agents/agent-recompiler";
 import { computeSkillFolderHash } from "../../versioning";
-import { buildWizardResult, buildSourceResult, createMockMatrix, readTestYaml, fileExists } from "../helpers";
+import {
+  buildWizardResult,
+  buildSourceResult,
+  createMockMatrix,
+  readTestYaml,
+  fileExists,
+} from "../helpers";
 ```
 
 ---
@@ -437,19 +473,19 @@ import { buildWizardResult, buildSourceResult, createMockMatrix, readTestYaml, f
 
 ### Straightforward (can implement immediately)
 
-| Scenario | Reason |
-|----------|--------|
-| 1: Source flag loading | Direct function calls, follows `init-flow.integration.test.ts` pattern exactly |
-| 2: Outdated detection | `compareLocalSkillsWithSource()` is well-tested; just need install + modify + compare |
+| Scenario                    | Reason                                                                                                     |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| 1: Source flag loading      | Direct function calls, follows `init-flow.integration.test.ts` pattern exactly                             |
+| 2: Outdated detection       | `compareLocalSkillsWithSource()` is well-tested; just need install + modify + compare                      |
 | 3: Build plugins versioning | `compileAllSkillPlugins()` is well-tested; version bumping via `determinePluginVersion()` is deterministic |
-| 4: Marketplace generation | `generateMarketplace()` is a pure function reading plugin directories |
+| 4: Marketplace generation   | `generateMarketplace()` is a pure function reading plugin directories                                      |
 
 ### Needs careful implementation
 
-| Scenario | Challenge |
-|----------|-----------|
-| 5: Full lifecycle | Longest setup chain, must coordinate install/modify/compare/update/recompile. Risk of test being fragile due to file system state dependencies. |
-| 6: CLI binary test | `process.cwd()` management, stdout capture, exit code checking. `runCliCommand()` helper exists but this specific flow is untested. |
+| Scenario           | Challenge                                                                                                                                       |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 5: Full lifecycle  | Longest setup chain, must coordinate install/modify/compare/update/recompile. Risk of test being fragile due to file system state dependencies. |
+| 6: CLI binary test | `process.cwd()` management, stdout capture, exit code checking. `runCliCommand()` helper exists but this specific flow is untested.             |
 
 ### Potential blockers
 
@@ -459,8 +495,8 @@ None identified. All required internal functions are exported and well-documente
 
 ## Files Changed/Created Summary
 
-| File | Action | Purpose |
-|------|--------|---------|
+| File                                                                                | Action     | Purpose                         |
+| ----------------------------------------------------------------------------------- | ---------- | ------------------------------- |
 | `src/cli/lib/__tests__/integration/custom-marketplace-workflow.integration.test.ts` | **Create** | All 5-6 test scenarios for T-12 |
 
 No changes to existing files are expected. The test file uses only existing exported functions and helpers.

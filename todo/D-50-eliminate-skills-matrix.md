@@ -40,31 +40,37 @@
 The full pipeline is orchestrated by `loadSkillsMatrixFromSource()` in `src/cli/lib/loading/source-loader.ts:67`.
 
 **Step 1: Load skills-matrix.yaml** (`matrix-loader.ts:64`)
+
 - `loadSkillsMatrix(configPath)` reads and Zod-validates the YAML
 - Returns `SkillsMatrixConfig { version, categories, relationships, skillAliases }`
 - Categories is a `Partial<Record<Subcategory, CategoryDefinition>>` with 36 entries
 
 **Step 2: Merge CLI + source matrices** (`source-loader.ts:186-218`)
+
 - If the source also has a skills-matrix.yaml, source categories overlay CLI categories
 - Relationships are concatenated, aliases are merged (source wins)
 
 **Step 3: Extract skill metadata** (`matrix-loader.ts:112`)
+
 - `extractAllSkills(skillsDir)` scans for `metadata.yaml` files
 - Each skill produces an `ExtractedSkillMetadata` with: `id`, `category`, `categoryExclusive`, `author`, `tags`, `compatibleWith`, `conflictsWith`, `requires`, `requiresSetup`, `providesSetupFor`, `domain?`, `custom?`
 - Returns `ExtractedSkillMetadata[]` (86 skills in the main marketplace)
 
 **Step 4: Merge matrix with skills** (`matrix-loader.ts:246`)
+
 - `mergeMatrixWithSkills(matrix, skills)` creates the `MergedSkillsMatrix`
 - **Line 270**: `categories: matrix.categories` -- categories come ONLY from the matrix config
 - Skills are indexed by ID, relationships resolved to canonical IDs
 - Display name maps built from `skillAliases`
 
 **Step 5: Local skill discovery** (`source-loader.ts:87-94`)
+
 - `discoverLocalSkills()` finds `.claude/skills/` in the project
 - `mergeLocalSkillsIntoMatrix()` adds them to the merged matrix
 - If a local skill's category isn't in `matrix.categories`, the health check warns
 
 **Step 6: Health check** (`matrix-health-check.ts:17`)
+
 - `checkMatrixHealth()` validates the final matrix
 - `checkSkillCategories()` (line 45): warns when a skill references a category not in `matrix.categories`
 - `checkSubcategoryDomains()` (line 32): warns when a category has no domain
@@ -81,17 +87,17 @@ The `discoverAndExtendFromSource()` function (`source-loader.ts:417`) does disco
 
 ### Fields in CategoryDefinition vs metadata.yaml
 
-| Field             | In CategoryDefinition | In metadata.yaml | Gap? |
-| ----------------- | --------------------- | ---------------- | ---- |
-| `id`              | Yes                   | No (implicit)    | --   |
-| `displayName`     | Yes                   | No               | YES  |
-| `description`     | Yes                   | No               | YES  |
-| `domain`          | Yes                   | Yes (optional)   | No   |
-| `exclusive`       | Yes                   | Yes (`categoryExclusive`) | No |
-| `required`        | Yes                   | No               | YES  |
-| `order`           | Yes                   | No               | YES  |
-| `icon`            | Yes                   | No               | YES  |
-| `custom`          | Yes                   | Yes              | No   |
+| Field         | In CategoryDefinition | In metadata.yaml          | Gap? |
+| ------------- | --------------------- | ------------------------- | ---- |
+| `id`          | Yes                   | No (implicit)             | --   |
+| `displayName` | Yes                   | No                        | YES  |
+| `description` | Yes                   | No                        | YES  |
+| `domain`      | Yes                   | Yes (optional)            | No   |
+| `exclusive`   | Yes                   | Yes (`categoryExclusive`) | No   |
+| `required`    | Yes                   | No                        | YES  |
+| `order`       | Yes                   | No                        | YES  |
+| `icon`        | Yes                   | No                        | YES  |
+| `custom`      | Yes                   | Yes                       | No   |
 
 **5 fields exist ONLY in skills-matrix.yaml category definitions**: `displayName`, `description`, `required`, `order`, `icon`.
 
@@ -99,21 +105,21 @@ The `discoverAndExtendFromSource()` function (`source-loader.ts:417`) does disco
 
 All consumers of `matrix.categories` that would be affected:
 
-| File | Line | Usage |
-| ---- | ---- | ----- |
-| `build-step-logic.ts` | 129 | Filters categories by domain for wizard grid |
-| `domain-selection.tsx` | 27 | Extracts unique domains from categories |
-| `stack-selection.tsx` | 55 | `populateFromSkillIds()` needs category -> domain |
-| `wizard-store.ts` | 25 | `getAllDomainsFromCategories()` derives domains |
-| `wizard-store.ts` | 82-103 | `resolveSkillForPopulation()` looks up domain by category |
-| `wizard-store.ts` | 456 | `populateFromStack()` resolves subcategory -> domain |
-| `matrix-resolver.ts` | 420 | `validateExclusivity()` checks `category.exclusive` |
-| `matrix-health-check.ts` | 33-57 | Validates categories have domains and skills reference valid categories |
-| `matrix-loader.ts` | 270 | Sets `categories: matrix.categories` on MergedSkillsMatrix |
-| `source-loader.ts` | 190 | Merges CLI + source categories |
-| `helpers.ts` | 865 | Test helper category lookup |
-| `utils.ts` | 37-47 | `getDomainsFromStack()` resolves subcategory -> domain |
-| `use-build-step-props.ts` | 29 | Resolves category from subcategoryId |
+| File                      | Line   | Usage                                                                   |
+| ------------------------- | ------ | ----------------------------------------------------------------------- |
+| `build-step-logic.ts`     | 129    | Filters categories by domain for wizard grid                            |
+| `domain-selection.tsx`    | 27     | Extracts unique domains from categories                                 |
+| `stack-selection.tsx`     | 55     | `populateFromSkillIds()` needs category -> domain                       |
+| `wizard-store.ts`         | 25     | `getAllDomainsFromCategories()` derives domains                         |
+| `wizard-store.ts`         | 82-103 | `resolveSkillForPopulation()` looks up domain by category               |
+| `wizard-store.ts`         | 456    | `populateFromStack()` resolves subcategory -> domain                    |
+| `matrix-resolver.ts`      | 420    | `validateExclusivity()` checks `category.exclusive`                     |
+| `matrix-health-check.ts`  | 33-57  | Validates categories have domains and skills reference valid categories |
+| `matrix-loader.ts`        | 270    | Sets `categories: matrix.categories` on MergedSkillsMatrix              |
+| `source-loader.ts`        | 190    | Merges CLI + source categories                                          |
+| `helpers.ts`              | 865    | Test helper category lookup                                             |
+| `utils.ts`                | 37-47  | `getDomainsFromStack()` resolves subcategory -> domain                  |
+| `use-build-step-props.ts` | 29     | Resolves category from subcategoryId                                    |
 
 ---
 
@@ -136,6 +142,7 @@ for (const skill of skills) {
 ```
 
 The synthesized category would use:
+
 - `id`: the subcategory key (from `skill.category`)
 - `displayName`: derive from subcategory key (e.g., `"devops-deployment"` -> `"Deployment"`)
 - `description`: empty string or generic
@@ -211,6 +218,7 @@ However, `checkSubcategoryDomains()` (line 32-43) should still warn if a synthes
 Currently this function only extends Zod schemas. It should be left as-is -- category synthesis happens downstream in `mergeMatrixWithSkills()`. However, consider if the timing needs adjustment: `discoverAndExtendFromSource()` runs BEFORE `extractAllSkills()` / `mergeMatrixWithSkills()`, and the schema extensions allow those functions to accept custom values. The category synthesis is a separate concern.
 
 **No change needed here.** The existing flow is:
+
 1. `discoverAndExtendFromSource()` -- extends Zod schemas so custom values pass validation
 2. `extractAllSkills()` -- reads metadata.yaml (now accepted by extended schemas)
 3. `mergeMatrixWithSkills()` -- synthesizes categories for any skill with unknown subcategory
@@ -264,8 +272,14 @@ Add a pure function that creates a `CategoryDefinition` from `ExtractedSkillMeta
 function inferDomainFromCategoryPrefix(category: string): Domain {
   const prefix = category.split("-")[0];
   const DOMAIN_PREFIX_MAP: Record<string, Domain> = {
-    web: "web", api: "api", cli: "cli", mobile: "mobile",
-    shared: "shared", infra: "shared", meta: "shared", security: "shared",
+    web: "web",
+    api: "api",
+    cli: "cli",
+    mobile: "mobile",
+    shared: "shared",
+    infra: "shared",
+    meta: "shared",
+    security: "shared",
   };
   return DOMAIN_PREFIX_MAP[prefix] ?? "shared";
 }
@@ -387,6 +401,7 @@ The synthesis logic would prefer metadata.yaml values over the derived defaults.
 **Only if Open Question 4 resolves to option (b).**
 
 Move all category metadata (displayName, description, order, required, icon) to either:
+
 - Individual metadata.yaml files (option 2a)
 - Per-category `category.yaml` files in the skills directory
 
@@ -509,13 +524,13 @@ This is a large migration (36 categories, 86 skills) and should only be done if 
 
 ## Files Changed Summary
 
-| File | Change Type | Description |
-| ---- | ----------- | ----------- |
-| `src/cli/lib/matrix/matrix-loader.ts` | Modified | Add `synthesizeCategoryFromSkill()`, `inferDomainFromCategoryPrefix()`, `deriveCategoryDisplayName()`. Modify `mergeMatrixWithSkills()` to auto-synthesize missing categories. |
-| `src/cli/lib/loading/source-loader.ts` | Modified | Update `mergeLocalSkillsIntoMatrix()` to synthesize categories for local skills with unknown categories. |
-| `src/cli/lib/matrix/matrix-health-check.ts` | No change (Phase 1) | After auto-synthesis, the "skill-unknown-category" warning naturally goes away. May add `custom` note to verbose output in future. |
-| `src/cli/lib/matrix/matrix-loader.test.ts` | Modified | Add tests for category synthesis, domain inference, display name derivation. |
-| `src/cli/lib/loading/source-loader.test.ts` | Modified | Add integration test for loading a source without skills-matrix.yaml. |
-| `src/cli/lib/__tests__/helpers.ts` | Modified | Add `createMockExtractedSkill()` factory if needed for test data. |
+| File                                        | Change Type         | Description                                                                                                                                                                    |
+| ------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/cli/lib/matrix/matrix-loader.ts`       | Modified            | Add `synthesizeCategoryFromSkill()`, `inferDomainFromCategoryPrefix()`, `deriveCategoryDisplayName()`. Modify `mergeMatrixWithSkills()` to auto-synthesize missing categories. |
+| `src/cli/lib/loading/source-loader.ts`      | Modified            | Update `mergeLocalSkillsIntoMatrix()` to synthesize categories for local skills with unknown categories.                                                                       |
+| `src/cli/lib/matrix/matrix-health-check.ts` | No change (Phase 1) | After auto-synthesis, the "skill-unknown-category" warning naturally goes away. May add `custom` note to verbose output in future.                                             |
+| `src/cli/lib/matrix/matrix-loader.test.ts`  | Modified            | Add tests for category synthesis, domain inference, display name derivation.                                                                                                   |
+| `src/cli/lib/loading/source-loader.test.ts` | Modified            | Add integration test for loading a source without skills-matrix.yaml.                                                                                                          |
+| `src/cli/lib/__tests__/helpers.ts`          | Modified            | Add `createMockExtractedSkill()` factory if needed for test data.                                                                                                              |
 
 **Estimated scope:** ~80-120 lines of new code + ~100 lines of tests. No new files. No type changes. No new dependencies.

@@ -43,9 +43,11 @@ The command flow is:
 4. **Resolve source**: Calls `resolveSource(flags.source, projectDir)` (precedence: flag > env > project > default).
 
 5. **Load meta-agent** (`loadMetaAgent`): This is the critical function:
+
    ```
    loadMetaAgent(projectDir, sourceConfig.source, flags.refresh)
    ```
+
    It tries two locations:
    - **Local compiled agent**: `{projectDir}/.claude/agents/agent-summoner.md`
    - **Remote source compiled agent**: Calls `getAgentDefinitions(source, { forceRefresh, projectDir })`, then checks `{sourcePath}/.claude/agents/agent-summoner.md`
@@ -63,6 +65,7 @@ The command flow is:
 **Directory:** `src/agents/meta/agent-summoner/`
 
 Files:
+
 - `agent.yaml` (12 lines) -- id, title, description, model: opus, tools: Read/Write/Edit/Grep/Glob/Bash
 - `intro.md` (835 bytes) -- Agent identity and modes
 - `workflow.md` (48,662 bytes) -- Comprehensive workflow for create/improve/compliance modes
@@ -78,6 +81,7 @@ These are _agent partials_ -- raw building blocks that the `compile` command ass
 **File:** `src/cli/commands/new/skill.ts`
 
 `new skill` does NOT use an AI meta-agent. It directly generates scaffold files:
+
 - `generateSkillMd(name)` -- creates a template SKILL.md
 - `generateMetadataYaml(name, author, category, contentHash)` -- creates metadata.yaml
 
@@ -100,10 +104,12 @@ This is purely template-based, no AI involvement. Skill-summoner should follow t
 ### Primary failure scenario
 
 When a user runs `agentsinc new agent my-agent` in a project that:
+
 1. Has NOT run `agentsinc compile` yet (no `.claude/agents/agent-summoner.md` locally)
 2. Uses the default source (`github:agents-inc/skills`)
 
 The `loadMetaAgent` function fails because:
+
 1. No local compiled agent exists
 2. The skills repo has no compiled agents
 3. Error: `"Agent 'agent-summoner' not found. Run 'compile' first to generate agents."`
@@ -181,6 +187,7 @@ agentsinc new agent my-agent
 Auto-detected based on context:
 
 **Consumer project** → `.claude-src/agents/{name}/`:
+
 ```
 .claude-src/agents/my-agent/
   agent.yaml          # Agent metadata (id, title, model, tools)
@@ -191,6 +198,7 @@ Auto-detected based on context:
 ```
 
 **Marketplace source directory** → `src/agents/{name}/`:
+
 ```
 {sourcePath}/src/agents/my-agent/
   agent.yaml
@@ -254,6 +262,7 @@ This is a separate task but should follow the same architecture.
    - Otherwise, output to `{projectDir}/.claude-src/agents/{name}/`
 
 2. **Ensure directory exists:**
+
    ```typescript
    await ensureDir(outputDir);
    ```
@@ -327,10 +336,10 @@ Separate task, but the architecture is:
 
 ### CLI Repo (`/home/vince/dev/cli`)
 
-| File | Action | Lines (est.) |
-|------|--------|-------------|
-| `src/cli/commands/new/agent.tsx` | Modify: replace `loadMetaAgent` with `resolveMetaAgent`, auto-detect output dir, remove `--purpose` flag | ~50 lines changed |
-| `src/cli/commands/new/agent.test.ts` (new/extend) | Test config lookup, compile fallback, output directory auto-detection | ~100 lines |
+| File                                              | Action                                                                                                   | Lines (est.)      |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------- |
+| `src/cli/commands/new/agent.tsx`                  | Modify: replace `loadMetaAgent` with `resolveMetaAgent`, auto-detect output dir, remove `--purpose` flag | ~50 lines changed |
+| `src/cli/commands/new/agent.test.ts` (new/extend) | Test config lookup, compile fallback, output directory auto-detection                                    | ~100 lines        |
 
 ### No Skills Repo Changes
 
@@ -343,12 +352,15 @@ Agent-summoner partials stay in the CLI repo at `src/agents/meta/agent-summoner/
 **Overall: Low-Medium**
 
 The core changes are:
+
 1. **Config lookup** -- read config.yaml, check for agent-summoner. Low complexity.
 2. **Compile fallback** -- use existing `compileAgentForPlugin()` with CLI's built-in partials. Moderate complexity from wiring.
 3. **Auto-detect output directory** -- check if working in marketplace vs project context. Low complexity.
 
 Risks:
+
 - `compileAgentForPlugin()` may have dependencies that expect full project context (Liquid engine, template resolution). Need to verify it works with minimal context.
 
 Mitigations:
+
 - Read `compileAgentForPlugin()` signature and test with empty skills list before full implementation.

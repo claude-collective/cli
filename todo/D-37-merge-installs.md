@@ -146,20 +146,20 @@ Merging is triggered when:
 
 ### What Gets Merged
 
-| Field | Merge behavior |
-|-------|---------------|
-| `skills` (flat SkillId[]) | Union. Project skills + global skills. Deduped. |
-| `agents` (AgentName[]) | Union. Project agents + global agents. Deduped. |
+| Field                           | Merge behavior                                                    |
+| ------------------------------- | ----------------------------------------------------------------- |
+| `skills` (flat SkillId[])       | Union. Project skills + global skills. Deduped.                   |
+| `agents` (AgentName[])          | Union. Project agents + global agents. Deduped.                   |
 | `stack` (agent->subcat->skills) | Deep merge. Per-agent, per-subcategory: project wins on conflict. |
-| `domains` | Union. All domains from both configs. |
-| `selectedAgents` | Union. All selected agents from both. |
-| `source` | Project wins if set. Falls back to global. |
-| `marketplace` | Project wins if set. Falls back to global. |
-| `author` | Project wins if set. Falls back to global. |
-| `installMode` | Project wins if set. Falls back to global. |
-| `expertMode` | Project wins if set. Falls back to global. |
-| `name` | Project wins. (Global name is just "global" or similar.) |
-| `description` | Project wins if set. |
+| `domains`                       | Union. All domains from both configs.                             |
+| `selectedAgents`                | Union. All selected agents from both.                             |
+| `source`                        | Project wins if set. Falls back to global.                        |
+| `marketplace`                   | Project wins if set. Falls back to global.                        |
+| `author`                        | Project wins if set. Falls back to global.                        |
+| `installMode`                   | Project wins if set. Falls back to global.                        |
+| `expertMode`                    | Project wins if set. Falls back to global.                        |
+| `name`                          | Project wins. (Global name is just "global" or similar.)          |
+| `description`                   | Project wins if set.                                              |
 
 ### What Does NOT Get Merged
 
@@ -321,7 +321,7 @@ This introduces a new concept: **project-level exclusions** for global skills. A
 ```yaml
 # Project-level config
 excludeGlobalSkills:
-  - web-testing-vitest   # Don't want the global testing choice for this project
+  - web-testing-vitest # Don't want the global testing choice for this project
 ```
 
 See Open Question Q3 for whether this complexity is warranted.
@@ -410,12 +410,12 @@ D-36 must be complete before D-37 can start. Specifically:
 
 **Files to create/modify:**
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/cli/lib/configuration/config-merger.ts` | Modify | Add `mergeInstallationConfigs()` function |
-| `src/cli/lib/configuration/index.ts` | Modify | Export new function |
-| `src/cli/types/config.ts` | Modify | Add `global`, `excludeGlobalSkills` fields |
-| `src/cli/lib/schemas.ts` | Modify | Add Zod fields for new config properties |
+| File                                         | Action | Purpose                                    |
+| -------------------------------------------- | ------ | ------------------------------------------ |
+| `src/cli/lib/configuration/config-merger.ts` | Modify | Add `mergeInstallationConfigs()` function  |
+| `src/cli/lib/configuration/index.ts`         | Modify | Export new function                        |
+| `src/cli/types/config.ts`                    | Modify | Add `global`, `excludeGlobalSkills` fields |
+| `src/cli/lib/schemas.ts`                     | Modify | Add Zod fields for new config properties   |
 
 **New function: `mergeInstallationConfigs()`**
 
@@ -460,11 +460,11 @@ function resolveSkillConflicts(
 
 **Files to modify:**
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/cli/lib/configuration/project-config.ts` | Modify | Add `loadMergedConfig()` that loads both levels |
-| `src/cli/lib/installation/installation.ts` | Modify | Make `detectInstallation()` aware of merge mode |
-| `src/cli/lib/loading/source-loader.ts` | Modify | Load local skills from both project and global directories |
+| File                                          | Action | Purpose                                                    |
+| --------------------------------------------- | ------ | ---------------------------------------------------------- |
+| `src/cli/lib/configuration/project-config.ts` | Modify | Add `loadMergedConfig()` that loads both levels            |
+| `src/cli/lib/installation/installation.ts`    | Modify | Make `detectInstallation()` aware of merge mode            |
+| `src/cli/lib/loading/source-loader.ts`        | Modify | Load local skills from both project and global directories |
 
 **New function: `loadMergedConfig()`**
 
@@ -507,11 +507,11 @@ if (globalDir !== resolvedProjectDir) {
 
 **Files to modify:**
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/cli/commands/edit.tsx` | Modify | Load merged config, annotate global skills |
-| `src/cli/components/hooks/use-wizard-initialization.ts` | Modify | Accept `globalSkillIds` for UI annotation |
-| `src/cli/stores/wizard-store.ts` | Modify | Track which skills are inherited from global |
+| File                                                    | Action | Purpose                                      |
+| ------------------------------------------------------- | ------ | -------------------------------------------- |
+| `src/cli/commands/edit.tsx`                             | Modify | Load merged config, annotate global skills   |
+| `src/cli/components/hooks/use-wizard-initialization.ts` | Modify | Accept `globalSkillIds` for UI annotation    |
+| `src/cli/stores/wizard-store.ts`                        | Modify | Track which skills are inherited from global |
 
 **Wizard store changes:**
 
@@ -547,13 +547,13 @@ const { effectiveConfig, globalSkillIds, editLevel } = mergedInstallation;
 
 ```typescript
 // Diff against merged state:
-const addedSkills = result.selectedSkills.filter(id => !effectiveConfig.skills.includes(id));
-const removedSkills = effectiveConfig.skills.filter(id => !result.selectedSkills.includes(id));
+const addedSkills = result.selectedSkills.filter((id) => !effectiveConfig.skills.includes(id));
+const removedSkills = effectiveConfig.skills.filter((id) => !result.selectedSkills.includes(id));
 
 // Separate removals into "project removals" (remove from project config)
 // and "global exclusions" (add to excludeGlobalSkills):
-const projectRemovals = removedSkills.filter(id => projectSkillIds.includes(id));
-const globalExclusions = removedSkills.filter(id => globalSkillIds.includes(id));
+const projectRemovals = removedSkills.filter((id) => projectSkillIds.includes(id));
+const globalExclusions = removedSkills.filter((id) => globalSkillIds.includes(id));
 
 // Persist to project config only:
 // - Add new skills to project skills
@@ -567,8 +567,8 @@ const globalExclusions = removedSkills.filter(id => globalSkillIds.includes(id))
 
 **Files to modify:**
 
-| File | Action | Purpose |
-|------|--------|---------|
+| File                          | Action | Purpose                            |
+| ----------------------------- | ------ | ---------------------------------- |
 | `src/cli/commands/compile.ts` | Modify | Load merged config for compilation |
 
 The compile command needs to resolve skills from both global and project installations to produce the correct agent markdown. This means:
@@ -635,6 +635,7 @@ B. **Default behavior** -- When both project and global exist, they are always m
 C. **Smart default** -- Merge by default, but if the project config has the same domains as global, treat as full override (the user re-selected everything).
 
 **Recommendation**: Option A (opt-in). Rationale:
+
 - Backward compatible with D-36's full-override behavior
 - Users explicitly opt into the complexity of merge resolution
 - Avoids surprising behavior when a user adds a global config to an existing project
@@ -652,6 +653,7 @@ When a project selects `web-framework-vue` and global has `web-framework-react` 
 The `excludeGlobalSkills` mechanism adds complexity. Alternative: the project simply doesn't use merge mode if it doesn't want global skills.
 
 **Recommendation**: Defer `excludeGlobalSkills` to a later phase. For Phase 1, merged skills from global are always included. If a user doesn't want a global skill in a specific project, they either:
+
 - Don't use merge mode for that project
 - Override the exclusive category with a different skill (which implicitly excludes the global one)
 

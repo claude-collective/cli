@@ -31,7 +31,7 @@
 
 **What:** Extract the `relationships` section and `skillAliases` section from `skills-matrix.yaml` into `config/skill-rules.yaml`. All relationship rules use aliases for readability. Add strict enums to the schema.
 
-**Constraint:** Aliases are internal to the loading/merge layer. No alias values are exposed to consumers. Outside the matrix loading code, `cliName` (later `displayName`) from skill metadata is the user-facing display name everywhere (UI, commands, search). The `displayNameToId` map on `MergedSkillsMatrix` is used only for resolving user input (e.g., in the `info` command) to canonical IDs.
+**Constraint:** Aliases are internal to the loading/merge layer. No alias values are exposed to consumers. Outside the matrix loading code, `displayName` (later `displayName`) from skill metadata is the user-facing display name everywhere (UI, commands, search). The `displayNameToId` map on `MergedSkillsMatrix` is used only for resolving user input (e.g., in the `info` command) to canonical IDs.
 
 **Steps:**
 
@@ -154,22 +154,22 @@
 
 ---
 
-## Phase 8: Rename `cliName` to `displayName` (deferred)
+## Phase 8: Rename `displayName` to `displayName` (deferred)
 
 **What:** Pure rename across all skill metadata files. Deferred until all structural changes are stable.
 
 **Steps:**
 
-1. Rename `cliName` to `displayName` in all skill `metadata.yaml` files (~90 files in skills repo).
+1. Rename `displayName` to `displayName` in all skill `metadata.yaml` files (~90 files in skills repo).
 2. Update `rawMetadataSchema` and `localRawMetadataSchema` in `schemas.ts`.
 3. Update `METADATA_KEYS.CLI_NAME` → `METADATA_KEYS.DISPLAY_NAME` in `metadata-keys.ts`.
-4. Update all code referencing `cliName` to use `displayName`.
+4. Update all code referencing `displayName` to use `displayName`.
 5. Update `metadata.schema.json`.
 6. Tests: verify display names render correctly.
 
 **Cross-repo:** This phase modifies the skills repo. Skills repo changes come FIRST, then CLI repo changes.
 
-**Verification:** All tests pass. No references to `cliName` remain.
+**Verification:** All tests pass. No references to `displayName` remain.
 
 ---
 
@@ -183,7 +183,7 @@ Phase 1 (skill-categories.yaml)
                     └─> Phase 5 (auto-synthesis)
                           └─> Phase 6 (command integration: new skill + new marketplace)
                                 └─> Phase 7 (deprecate categoryExclusive)
-                                      └─> Phase 8 (rename cliName → displayName)
+                                      └─> Phase 8 (rename displayName → displayName)
 ```
 
 Phases are sequential. Phase 4 requires both Phase 2 (aliases moved) and Phase 3 (per-skill rules moved) to be complete.

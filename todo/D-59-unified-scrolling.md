@@ -20,7 +20,7 @@ Extract a shared `useSectionScroll` hook (pixel-offset scroll) and `computeRowSc
 
 **Investigated, not feasible.** WizardLayout renders a `<Box flexDirection="column" flexGrow={1} flexBasis={0}>` wrapper around `{children}` (line 117), which fills the remaining vertical space. However, root-level scrolling cannot work because:
 
-- Different views have different fixed headers/footers *within* their content area (e.g., domain tabs in step-build, source choice header in step-sources, title + continue footer in checkbox-grid).
+- Different views have different fixed headers/footers _within_ their content area (e.g., domain tabs in step-build, source choice header in step-sources, title + continue footer in checkbox-grid).
 - Some views use pixel-offset scroll (variable-height sections), others use row-based scroll (uniform-height rows).
 - Some views scroll only a sub-region (step-settings scrolls only the source list, not the add input or keyboard hints).
 - Some views don't scroll at all (step-confirm).
@@ -46,6 +46,7 @@ The WizardLayout already provides the height constraint (`height={terminalHeight
 **Used by:** `step-build.tsx` (skill selection per domain)
 
 **How it works:**
+
 - Receives `availableHeight` as a prop (measured by parent `step-build.tsx` via `useMeasuredHeight`)
 - Stores refs to each `CategorySection` via `sectionRefs`
 - Measures each section height on every render via `measureElement()` into `sectionHeights[]`
@@ -62,6 +63,7 @@ The WizardLayout already provides the height constraint (`height={terminalHeight
 **Used by:** `step-sources.tsx` (customize skill sources view)
 
 **How it works:** Exact same pattern as `category-grid.tsx`:
+
 - `sectionRefs`, `sectionHeights[]`, `scrollTopPx` state
 - Same `measureElement()` on every render
 - Same scroll adjustment logic (identical code)
@@ -75,6 +77,7 @@ The WizardLayout already provides the height constraint (`height={terminalHeight
 **Used by:** wizard's agents step directly
 
 **How it works:**
+
 - Uses `useMeasuredHeight()` internally (not passed as prop)
 - Tracks `scrollTopRef` (ref, not state) for row-based offset
 - Each `flatRows` item is assumed to be exactly 1 terminal line
@@ -89,17 +92,17 @@ The WizardLayout already provides the height constraint (`height={terminalHeight
 
 ## Pattern Comparison
 
-| Aspect | category-grid | source-grid | step-agents |
-|--------|---------------|-------------|-------------|
-| Scroll unit | Pixels (Yoga) | Pixels (Yoga) | Rows (1 line each) |
-| Height source | `availableHeight` prop | `availableHeight` prop | `useMeasuredHeight()` internal |
-| Scroll state | `useState` (`scrollTopPx`) | `useState` (`scrollTopPx`) | `useRef` (`scrollTopRef`) |
-| Section measurement | Per-section `measureElement` | Per-section `measureElement` | None (assumes 1 line/row) |
-| Section refs | `sectionRefs.current[]` | `sectionRefs.current[]` | None |
-| Focus tracking | `focusedRow` index | `focusedRow` index | `focusedId` -> `flatRows.findIndex()` |
-| Gate condition | Same | Same | Same |
-| Render structure | `<Box height><Box marginTop>` | `<Box height><Box marginTop>` | `<Box ref flexGrow><Box overflow><Box marginTop>` |
-| Items in DOM | All | All | All |
+| Aspect              | category-grid                 | source-grid                   | step-agents                                       |
+| ------------------- | ----------------------------- | ----------------------------- | ------------------------------------------------- |
+| Scroll unit         | Pixels (Yoga)                 | Pixels (Yoga)                 | Rows (1 line each)                                |
+| Height source       | `availableHeight` prop        | `availableHeight` prop        | `useMeasuredHeight()` internal                    |
+| Scroll state        | `useState` (`scrollTopPx`)    | `useState` (`scrollTopPx`)    | `useRef` (`scrollTopRef`)                         |
+| Section measurement | Per-section `measureElement`  | Per-section `measureElement`  | None (assumes 1 line/row)                         |
+| Section refs        | `sectionRefs.current[]`       | `sectionRefs.current[]`       | None                                              |
+| Focus tracking      | `focusedRow` index            | `focusedRow` index            | `focusedId` -> `flatRows.findIndex()`             |
+| Gate condition      | Same                          | Same                          | Same                                              |
+| Render structure    | `<Box height><Box marginTop>` | `<Box height><Box marginTop>` | `<Box ref flexGrow><Box overflow><Box marginTop>` |
+| Items in DOM        | All                           | All                           | All                                               |
 
 ### Commonalities (shared across all 3)
 
@@ -178,14 +181,14 @@ This replaces the inline scroll math in step-agents and will be used by checkbox
 
 ### Consumers after refactor
 
-| View | Uses | Currently |
-|------|------|-----------|
-| `category-grid.tsx` | `useSectionScroll` | Inline pixel-offset (refactor) |
-| `source-grid.tsx` | `useSectionScroll` | Inline pixel-offset (refactor) |
-| `stack-selection.tsx` | `useSectionScroll` | No scroll (new) |
-| `step-agents.tsx` | `computeRowScrollTop` | Inline row-based (refactor) |
-| `checkbox-grid.tsx` | `computeRowScrollTop` | No scroll (new) |
-| `step-settings.tsx` | `computeRowScrollTop` | No scroll (new) |
+| View                  | Uses                  | Currently                      |
+| --------------------- | --------------------- | ------------------------------ |
+| `category-grid.tsx`   | `useSectionScroll`    | Inline pixel-offset (refactor) |
+| `source-grid.tsx`     | `useSectionScroll`    | Inline pixel-offset (refactor) |
+| `stack-selection.tsx` | `useSectionScroll`    | No scroll (new)                |
+| `step-agents.tsx`     | `computeRowScrollTop` | Inline row-based (refactor)    |
+| `checkbox-grid.tsx`   | `computeRowScrollTop` | No scroll (new)                |
+| `step-settings.tsx`   | `computeRowScrollTop` | No scroll (new)                |
 
 ---
 
@@ -196,6 +199,7 @@ This replaces the inline scroll math in step-agents and will be used by checkbox
 **Current state:** No scroll. Renders `SelectionCard` components (bordered boxes with padding) in a flat column. Each card is ~5-6 lines tall. With 4+ custom stacks, this can easily overflow.
 
 **Layout structure:**
+
 ```
 <Box flexDirection="column">
   <ViewTitle>Choose a stack</ViewTitle>
@@ -209,6 +213,7 @@ This replaces the inline scroll math in step-agents and will be used by checkbox
 **Recommended approach:** Pixel-offset scroll via `useSectionScroll` hook, because `SelectionCard` items have variable height (bordered boxes with padding, descriptions of varying length).
 
 **Implementation plan:**
+
 1. `stack-selection.tsx` accepts `availableHeight` as a prop.
 2. Calls `useSectionScroll({ sectionCount, focusedIndex, availableHeight })`.
 3. Wraps each `SelectionCard` in `<Box ref={(el) => setSectionRef(index, el)} flexShrink={0}>`.
@@ -216,6 +221,7 @@ This replaces the inline scroll math in step-agents and will be used by checkbox
 5. When `!scrollEnabled`, renders flat with `<Box flexGrow={1} overflow="hidden">`.
 
 **Changes required:**
+
 - `step-stack.tsx`: Add `useMeasuredHeight()`, pass `availableHeight` to both `StackSelection` and `DomainSelection`. Restructure JSX to introduce a measured container `<Box ref={ref} flexGrow={1} flexBasis={0}>` wrapping the children.
 - `stack-selection.tsx`: Accept `availableHeight` prop. Use `useSectionScroll` hook. Add scroll container render.
 - `selection-card.tsx`: No changes needed.
@@ -225,6 +231,7 @@ This replaces the inline scroll math in step-agents and will be used by checkbox
 **Current state:** No scroll. Renders a flat list of checkbox items + a continue option. Each item is exactly 1 line.
 
 **Layout structure:**
+
 ```
 <Box flexDirection="column">
   <ViewTitle>{title}</ViewTitle>
@@ -238,6 +245,7 @@ This replaces the inline scroll math in step-agents and will be used by checkbox
 **Recommended approach:** Row-based scroll via `computeRowScrollTop`, because each item is a single line.
 
 **Implementation plan:**
+
 1. Accept `availableHeight` as a prop (measured by parent `DomainSelection` -> `step-stack.tsx`).
 2. The items (excluding title, subtitle, continue, and summary) are the scrollable region.
 3. Track `scrollTop` using `computeRowScrollTop` based on `focusedIndex`.
@@ -246,6 +254,7 @@ This replaces the inline scroll math in step-agents and will be used by checkbox
 **Key consideration:** The title/subtitle and continue/summary must remain visible (outside the scroll region). Only the checkbox items scroll. This means the scroll container wraps only the items, not the full component.
 
 **Changes required:**
+
 - `checkbox-grid.tsx`: Accept `availableHeight` prop. Split render into header (title+subtitle), scrollable body (items), and footer (continue + summary). Use `computeRowScrollTop` for scroll logic.
 - `domain-selection.tsx`: Pass `availableHeight` from parent.
 - `step-stack.tsx`: Pass `availableHeight` to `DomainSelection` which passes it to `CheckboxGrid`.
@@ -255,6 +264,7 @@ This replaces the inline scroll math in step-agents and will be used by checkbox
 **Current state:** No scroll. Renders a bordered list of sources, an "Add source" input, status messages, local skill counts, and keyboard hints.
 
 **Layout structure:**
+
 ```
 <Box flexDirection="column" paddingX={2}>
   <ViewTitle>Skill Sources</ViewTitle>
@@ -272,11 +282,13 @@ This replaces the inline scroll math in step-agents and will be used by checkbox
 **Recommended approach:** Scroll only the source list (Option A). The bordered `<Box>` containing sources gets a height constraint and scrolls internally using `computeRowScrollTop`. The rest of the UI stays outside. Source list items are 1 line each, so row-based scroll works.
 
 **Implementation plan:**
+
 1. `step-settings.tsx` uses `useMeasuredHeight()` on the source list area (wrap in a `flexGrow={1}` Box).
 2. Use `computeRowScrollTop` for `focusedIndex` within the source list.
 3. Wrap the source list items in a scroll container with `overflow="hidden"` and negative `marginTop`.
 
 **Changes required:**
+
 - `step-settings.tsx`: Add `useMeasuredHeight()` on the source list container. Use `computeRowScrollTop`. Wrap source items in scroll container.
 
 ---
@@ -365,6 +377,7 @@ When content fits within `availableHeight`, `scrollEnabled` is false and the fla
 ### Unit tests for the shared hook
 
 Write unit tests for `useSectionScroll` similar to `use-virtual-scroll.test.ts`:
+
 - Section fully visible -> scrollTopPx = 0
 - Focus moves below viewport -> scrollTopPx adjusts to show focused section
 - Focus moves above viewport -> scrollTopPx adjusts to show focused section
@@ -372,6 +385,7 @@ Write unit tests for `useSectionScroll` similar to `use-virtual-scroll.test.ts`:
 - `availableHeight < MIN_VIEWPORT_ROWS` -> scrollEnabled = false
 
 Write unit tests for `computeRowScrollTop`:
+
 - Focused row within viewport -> no change
 - Focused row below viewport -> scroll down
 - Focused row above viewport -> scroll up
@@ -417,38 +431,38 @@ For new target components, `availableHeight` defaults to 0 (or undefined -> 0), 
 
 ### Phase 1: Shared Hook + Refactor Existing Views
 
-| File | Action | Description |
-|------|--------|-------------|
-| `src/cli/components/hooks/use-section-scroll.ts` | Create | Shared `useSectionScroll` hook + `computeRowScrollTop` pure function |
-| `src/cli/components/hooks/use-section-scroll.test.ts` | Create | Unit tests for hook and helper function |
-| `src/cli/components/wizard/category-grid.tsx` | Modify | Replace ~40 lines of inline scroll plumbing with `useSectionScroll` |
-| `src/cli/components/wizard/source-grid.tsx` | Modify | Replace ~40 lines of inline scroll plumbing with `useSectionScroll` |
-| `src/cli/components/wizard/step-agents.tsx` | Modify | Replace inline row-based scroll math with `computeRowScrollTop` |
+| File                                                  | Action | Description                                                          |
+| ----------------------------------------------------- | ------ | -------------------------------------------------------------------- |
+| `src/cli/components/hooks/use-section-scroll.ts`      | Create | Shared `useSectionScroll` hook + `computeRowScrollTop` pure function |
+| `src/cli/components/hooks/use-section-scroll.test.ts` | Create | Unit tests for hook and helper function                              |
+| `src/cli/components/wizard/category-grid.tsx`         | Modify | Replace ~40 lines of inline scroll plumbing with `useSectionScroll`  |
+| `src/cli/components/wizard/source-grid.tsx`           | Modify | Replace ~40 lines of inline scroll plumbing with `useSectionScroll`  |
+| `src/cli/components/wizard/step-agents.tsx`           | Modify | Replace inline row-based scroll math with `computeRowScrollTop`      |
 
 ### Phase 2: Stack Selection Scrolling
 
-| File | Action | Description |
-|------|--------|-------------|
-| `src/cli/components/wizard/step-stack.tsx` | Modify | Add `useMeasuredHeight()`, pass `availableHeight` to children, add flex layout |
-| `src/cli/components/wizard/stack-selection.tsx` | Modify | Add `availableHeight` prop, use `useSectionScroll` hook, add scroll container |
+| File                                            | Action | Description                                                                    |
+| ----------------------------------------------- | ------ | ------------------------------------------------------------------------------ |
+| `src/cli/components/wizard/step-stack.tsx`      | Modify | Add `useMeasuredHeight()`, pass `availableHeight` to children, add flex layout |
+| `src/cli/components/wizard/stack-selection.tsx` | Modify | Add `availableHeight` prop, use `useSectionScroll` hook, add scroll container  |
 
 ### Phase 3: Checkbox Grid Scrolling
 
-| File | Action | Description |
-|------|--------|-------------|
-| `src/cli/components/wizard/checkbox-grid.tsx` | Modify | Add optional `availableHeight` prop, split into header/body/footer, use `computeRowScrollTop` |
-| `src/cli/components/wizard/domain-selection.tsx` | Modify | Pass `availableHeight` through to `CheckboxGrid` |
+| File                                             | Action | Description                                                                                   |
+| ------------------------------------------------ | ------ | --------------------------------------------------------------------------------------------- |
+| `src/cli/components/wizard/checkbox-grid.tsx`    | Modify | Add optional `availableHeight` prop, split into header/body/footer, use `computeRowScrollTop` |
+| `src/cli/components/wizard/domain-selection.tsx` | Modify | Pass `availableHeight` through to `CheckboxGrid`                                              |
 
 ### Phase 4: Settings Scrolling
 
-| File | Action | Description |
-|------|--------|-------------|
+| File                                          | Action | Description                                                                              |
+| --------------------------------------------- | ------ | ---------------------------------------------------------------------------------------- |
 | `src/cli/components/wizard/step-settings.tsx` | Modify | Add `useMeasuredHeight()` on source list area, use `computeRowScrollTop` for source list |
 
 ### Tests
 
-| File | Action | Description |
-|------|--------|-------------|
-| `src/cli/components/hooks/use-section-scroll.test.ts` | Create (Phase 1) | Unit tests for `useSectionScroll` and `computeRowScrollTop` |
-| `src/cli/components/wizard/stack-selection.test.tsx` | Create or modify (Phase 2) | Tests for scroll behavior with many stacks |
-| `src/cli/components/wizard/checkbox-grid.test.tsx` | Create or modify (Phase 3) | Tests for scroll behavior with many items |
+| File                                                  | Action                     | Description                                                 |
+| ----------------------------------------------------- | -------------------------- | ----------------------------------------------------------- |
+| `src/cli/components/hooks/use-section-scroll.test.ts` | Create (Phase 1)           | Unit tests for `useSectionScroll` and `computeRowScrollTop` |
+| `src/cli/components/wizard/stack-selection.test.tsx`  | Create or modify (Phase 2) | Tests for scroll behavior with many stacks                  |
+| `src/cli/components/wizard/checkbox-grid.test.tsx`    | Create or modify (Phase 3) | Tests for scroll behavior with many items                   |

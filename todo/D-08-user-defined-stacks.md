@@ -39,6 +39,7 @@ if (stacks.length > 0) {
 **This is an either/or choice.** If the source (marketplace) has a `stacks.yaml`, those stacks replace the CLI's built-in stacks entirely. If the source has no stacks, the CLI's built-in `config/stacks.yaml` is used. There is no merging from multiple origins.
 
 The `stacksRelFile` comes from the **source's** `.claude-src/config.yaml` at line 176:
+
 ```typescript
 const stacksRelFile = sourceProjectConfig?.stacksFile;
 ```
@@ -49,23 +50,25 @@ Converts `Stack` to `ResolvedStack` (the wizard's read model from `types/matrix.
 
 ### Where Stacks Are Consumed
 
-| Consumer | File:Line | Usage |
-| --- | --- | --- |
-| Stack selection UI | `stack-selection.tsx:27` | `matrix.suggestedStacks` -- flat list, no grouping |
-| Stack skill lookup | `wizard.tsx:160` | `matrix.suggestedStacks.find(s => s.id === stackId)` |
-| Agent discovery | `step-agents.tsx:117` | Iterates `matrix.suggestedStacks` for agent names |
-| Stack name display | `utils.ts:25` | `matrix.suggestedStacks.find(s => s.id === stackId)?.name` |
+| Consumer           | File:Line                | Usage                                                      |
+| ------------------ | ------------------------ | ---------------------------------------------------------- |
+| Stack selection UI | `stack-selection.tsx:27` | `matrix.suggestedStacks` -- flat list, no grouping         |
+| Stack skill lookup | `wizard.tsx:160`         | `matrix.suggestedStacks.find(s => s.id === stackId)`       |
+| Agent discovery    | `step-agents.tsx:117`    | Iterates `matrix.suggestedStacks` for agent names          |
+| Stack name display | `utils.ts:25`            | `matrix.suggestedStacks.find(s => s.id === stackId)?.name` |
 
 ### Current Type Definitions
 
 **`Stack`** (`types/stacks.ts:9-16`) -- Raw YAML model:
+
 ```typescript
-type Stack = { id, name, description, agents, philosophy? }
+type Stack = { id; name; description; agents; philosophy? };
 ```
 
 **`ResolvedStack`** (`types/matrix.ts:267-276`) -- Wizard read model:
+
 ```typescript
-type ResolvedStack = { id, name, description, skills, allSkillIds, philosophy }
+type ResolvedStack = { id; name; description; skills; allSkillIds; philosophy };
 ```
 
 Neither type has origin tracking. No `StackOrigin` type exists.
@@ -86,11 +89,11 @@ The TODO spec calls for 4 tiers (project > global > marketplace > public). Howev
 
 ### Tier Hierarchy (top to bottom)
 
-| Priority | Origin | Source | Display Label |
-| --- | --- | --- | --- |
-| 1 (top) | `"project"` | Consumer's `stacks_file` from `.claude-src/config.yaml` | "Your Project" |
-| 2 | `"marketplace"` | Primary source's `config/stacks.yaml` or custom `stacksFile` | Marketplace name or source org |
-| 3 (bottom) | `"public"` | CLI's built-in `config/stacks.yaml` | "Agents Inc" |
+| Priority   | Origin          | Source                                                       | Display Label                  |
+| ---------- | --------------- | ------------------------------------------------------------ | ------------------------------ |
+| 1 (top)    | `"project"`     | Consumer's `stacks_file` from `.claude-src/config.yaml`      | "Your Project"                 |
+| 2          | `"marketplace"` | Primary source's `config/stacks.yaml` or custom `stacksFile` | Marketplace name or source org |
+| 3 (bottom) | `"public"`      | CLI's built-in `config/stacks.yaml`                          | "Agents Inc"                   |
 
 ### Visibility Rules
 
@@ -158,8 +161,8 @@ The function needs access to `marketplace` name for the origin label. Currently 
 ```typescript
 async function loadAndMergeFromBasePath(
   basePath: string,
-  marketplaceLabel?: string,  // NEW
-): Promise<MergedSkillsMatrix>
+  marketplaceLabel?: string, // NEW
+): Promise<MergedSkillsMatrix>;
 ```
 
 The callers (`loadFromLocal` at line 123, `loadFromRemote` at line 145) already have access to the marketplace name from `sourceConfig.marketplace`.
@@ -167,6 +170,7 @@ The callers (`loadFromLocal` at line 123, `loadFromRemote` at line 145) already 
 **Specific changes to lines 226-233:**
 
 Replace:
+
 ```typescript
 const sourceStacks = await loadStacks(basePath, stacksRelFile);
 const stacks = sourceStacks.length > 0 ? sourceStacks : await loadStacks(PROJECT_ROOT);
@@ -178,6 +182,7 @@ if (stacks.length > 0) {
 ```
 
 With:
+
 ```typescript
 const sourceStacks = await loadStacks(basePath, stacksRelFile);
 const cliStacks = await loadStacks(PROJECT_ROOT);
@@ -257,11 +262,13 @@ Import `DEFAULT_SOURCE` (already available from `../configuration`).
 ### 4. Thread `marketplace` Through to `loadAndMergeFromBasePath()`
 
 `loadFromLocal()` (`source-loader.ts:109-132`):
+
 ```typescript
 const mergedMatrix = await loadAndMergeFromBasePath(skillsPath, sourceConfig.marketplace);
 ```
 
 `loadFromRemote()` (`source-loader.ts:134-169`):
+
 ```typescript
 const mergedMatrix = await loadAndMergeFromBasePath(fetchResult.path, marketplace);
 ```
@@ -342,11 +349,13 @@ Use a `<Text dimColor bold>` for section labels, with `marginTop={1}` between se
 ### Phase 1: Types (2 files, ~10 lines)
 
 1. **`src/cli/types/stacks.ts`** -- Add `StackOrigin` type:
+
    ```typescript
    export type StackOrigin = "project" | "marketplace" | "public";
    ```
 
 2. **`src/cli/types/matrix.ts`** -- Add `origin?` and `originLabel?` to `ResolvedStack` (lines 267-276):
+
    ```typescript
    origin?: StackOrigin;
    originLabel?: string;
@@ -441,16 +450,17 @@ Use a `<Text dimColor bold>` for section labels, with `marginTop={1}` between se
 
 ## Files Summary
 
-| File | Action | Lines Changed (est.) |
-| --- | --- | --- |
-| `src/cli/types/stacks.ts` | Add `StackOrigin` type | +1 |
-| `src/cli/types/matrix.ts` | Add `origin?`, `originLabel?` to `ResolvedStack` | +2 |
-| `src/cli/lib/loading/source-loader.ts` | Multi-origin loading, project stacks, exclusion rule | ~60 modified |
-| `src/cli/components/wizard/stack-selection.tsx` | Section grouping, headers, navigation | ~50 modified |
-| `src/cli/lib/loading/source-loader.test.ts` | Origin tagging, exclusion, project stacks tests | ~80 new |
-| `src/cli/components/wizard/step-stack.test.tsx` | Section rendering, navigation tests | ~60 new |
+| File                                            | Action                                               | Lines Changed (est.) |
+| ----------------------------------------------- | ---------------------------------------------------- | -------------------- |
+| `src/cli/types/stacks.ts`                       | Add `StackOrigin` type                               | +1                   |
+| `src/cli/types/matrix.ts`                       | Add `origin?`, `originLabel?` to `ResolvedStack`     | +2                   |
+| `src/cli/lib/loading/source-loader.ts`          | Multi-origin loading, project stacks, exclusion rule | ~60 modified         |
+| `src/cli/components/wizard/stack-selection.tsx` | Section grouping, headers, navigation                | ~50 modified         |
+| `src/cli/lib/loading/source-loader.test.ts`     | Origin tagging, exclusion, project stacks tests      | ~80 new              |
+| `src/cli/components/wizard/step-stack.test.tsx` | Section rendering, navigation tests                  | ~60 new              |
 
 **Not changed:**
+
 - `src/cli/lib/stacks/stacks-loader.ts` -- origin is assigned by caller, not the loader
 - `src/cli/lib/schemas.ts` -- origin is not part of YAML schema
 - `src/cli/lib/configuration/config.ts` -- `stacksFile` already exists
@@ -473,27 +483,27 @@ When D-36 (global install support) introduces `~/.config/agents-inc/` or `~/.cla
 
 ### Unit Tests: Loader (`source-loader.test.ts`)
 
-| Test Case | Assertion |
-| --- | --- |
-| Source with stacks.yaml | Stacks tagged with `origin: "marketplace"`, correct `originLabel` |
-| CLI stacks always loaded | Stacks tagged with `origin: "public"`, `originLabel: "Agents Inc"` |
-| Source + CLI stacks combined | Both tiers present, marketplace before public |
-| Project `stacksFile` configured | Project stacks at top with `origin: "project"` |
-| Project `stacksFile` missing file | No project section, no error |
-| Project has no config | No project section |
-| Private source: public excluded | Only project + marketplace stacks remain |
-| Default source: public NOT excluded | Public stacks visible |
-| Ordering: project > marketplace > public | Verify array order |
-| Default source = no duplication | When source IS the default, only "public" tier exists (no "marketplace" duplication) |
+| Test Case                                | Assertion                                                                            |
+| ---------------------------------------- | ------------------------------------------------------------------------------------ |
+| Source with stacks.yaml                  | Stacks tagged with `origin: "marketplace"`, correct `originLabel`                    |
+| CLI stacks always loaded                 | Stacks tagged with `origin: "public"`, `originLabel: "Agents Inc"`                   |
+| Source + CLI stacks combined             | Both tiers present, marketplace before public                                        |
+| Project `stacksFile` configured          | Project stacks at top with `origin: "project"`                                       |
+| Project `stacksFile` missing file        | No project section, no error                                                         |
+| Project has no config                    | No project section                                                                   |
+| Private source: public excluded          | Only project + marketplace stacks remain                                             |
+| Default source: public NOT excluded      | Public stacks visible                                                                |
+| Ordering: project > marketplace > public | Verify array order                                                                   |
+| Default source = no duplication          | When source IS the default, only "public" tier exists (no "marketplace" duplication) |
 
 ### Component Tests: Stack Selection (`step-stack.test.tsx`)
 
-| Test Case | Assertion |
-| --- | --- |
-| Multi-origin stacks: section headers visible | "Your Project", marketplace name rendered |
-| Single-origin stacks: no section headers | Flat list like today |
-| Keyboard nav skips headers | Down arrow goes from last stack in section to first stack in next section |
-| "Start from scratch" reachable | Always last selectable item |
-| Empty stacks: only scratch shown | No headers, just "Start from scratch" |
-| Stack selection works in grouped mode | Selecting a stack sets correct `selectedStackId` |
-| Existing tests pass | No regressions in flat-list behavior |
+| Test Case                                    | Assertion                                                                 |
+| -------------------------------------------- | ------------------------------------------------------------------------- |
+| Multi-origin stacks: section headers visible | "Your Project", marketplace name rendered                                 |
+| Single-origin stacks: no section headers     | Flat list like today                                                      |
+| Keyboard nav skips headers                   | Down arrow goes from last stack in section to first stack in next section |
+| "Start from scratch" reachable               | Always last selectable item                                               |
+| Empty stacks: only scratch shown             | No headers, just "Start from scratch"                                     |
+| Stack selection works in grouped mode        | Selecting a stack sets correct `selectedStackId`                          |
+| Existing tests pass                          | No regressions in flat-list behavior                                      |

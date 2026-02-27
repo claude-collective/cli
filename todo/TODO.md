@@ -48,7 +48,7 @@ Phases 1-5 complete. `skills-matrix.yaml` deleted, replaced by `skill-categories
 
 - **Phase 6:** `new skill` / `new marketplace` commands should create/update `skill-categories.yaml` and `skill-rules.yaml` when scaffolding
 - **Phase 7:** Remove `categoryExclusive` from skill metadata — it's a category-level property (`exclusive` in `skill-categories.yaml`), not per-skill. Cross-repo change (~90 metadata.yaml files in skills repo)
-- **Phase 8:** Rename `cliName` → `displayName` in all skill metadata. Cross-repo change (~90 files). Deferred until structural changes are stable
+- **Phase 8:** Rename `displayName` → `displayName` in all skill metadata. COMPLETE
 
 ---
 
@@ -172,7 +172,7 @@ Create a specialized Claude Code sub-agent that understands the Agents Inc CLI's
 
 **What it does:**
 
-- Creates and updates `metadata.yaml` files for skills (with correct domain-prefixed `category` values, author, cliName, etc.)
+- Creates and updates `metadata.yaml` files for skills (with correct domain-prefixed `category` values, author, displayName, etc.)
 - Creates and updates `stacks.yaml` entries (agent definitions, skill assignments, preloaded flags)
 - Updates `skills-matrix.yaml` (adding/modifying categories, skill entries, dependency rules)
 - Updates `.claude-src/config.yaml` mappings (source paths, plugin settings, skill assignments)
@@ -186,7 +186,7 @@ Create a specialized Claude Code sub-agent that understands the Agents Inc CLI's
 - The 38 domain-prefixed subcategory values and their domains
 - Stack structure: agents → subcategories → skill assignments (with `preloaded`, `selected` flags)
 - Skills matrix: categories with `id`, `displayName`, `domain`, `categoryExclusive`, `skills` arrays with dependency rules (`needsAny`, `conflictsWith`)
-- Metadata schema: required fields (`category`, `author`, `cliName`, `cliDescription`, `usageGuidance`)
+- Metadata schema: required fields (`category`, `author`, `displayName`, `cliDescription`, `usageGuidance`)
 - The distinction between matrix categories (36) and stacks-only keys (+2: `web-base-framework`, `mobile-platform`)
 - How `extractSubcategoryFromPath` and `categoryPathSchema` resolve category paths
 

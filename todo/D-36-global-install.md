@@ -65,6 +65,7 @@ Add a `--global` flag to `agentsinc init` that installs to `~/.claude-src/config
 **File:** `src/cli/lib/installation/local-installer.ts`
 
 `resolveInstallPaths(projectDir)` (line 99-105) returns hardcoded paths under `projectDir`:
+
 - `skillsDir`: `{projectDir}/.claude/skills`
 - `agentsDir`: `{projectDir}/.claude/agents`
 - `configPath`: `{projectDir}/.claude-src/config.yaml`
@@ -181,9 +182,7 @@ Extract the existing project-level detection into `detectProjectInstallation()`.
 Key detail: For global installations, `projectDir` in the `Installation` should be `os.homedir()`, not `process.cwd()`. This ensures all path calculations are correct.
 
 ```typescript
-async function detectProjectInstallation(
-  projectDir: string,
-): Promise<Installation | null> {
+async function detectProjectInstallation(projectDir: string): Promise<Installation | null> {
   // Existing logic from current detectInstallation(), with scope: "project"
 }
 
@@ -269,6 +268,7 @@ Similarly update: `resolveAgentsSource()`, `resolveAuthor()`, `resolveBranding()
 **File:** `src/cli/lib/configuration/project-config.ts`
 
 Add the same fallback pattern. The full `loadProjectConfig()` is used by:
+
 - `edit.tsx` line 93: to read existing config for wizard pre-selection
 - `compile.ts`: to read config for plugin mode
 - `installation.ts` line 39: to read `installMode`
@@ -330,6 +330,7 @@ Currently reads `{projectDir}/.claude/settings.json`. For global installs, the s
 Same reasoning as Step 7. When the installation is global, `projectRoot` passed in will be `os.homedir()`, so it will check `~/.claude/settings.json` and `~/.claude/settings.local.json`. **No change needed here** if callers pass the right `projectRoot`.
 
 **However:** In `init.tsx` and `edit.tsx`, `checkPermissions(projectDir)` is called with `process.cwd()`. This needs to change:
+
 - In `init.tsx` line 295: pass the actual install target directory (either `process.cwd()` or `os.homedir()`)
 - In `edit.tsx`: pass `installation.projectDir` instead of `process.cwd()`
 
@@ -344,7 +345,9 @@ Same reasoning as Step 7. When the installation is global, `projectRoot` passed 
 **File:** `src/cli/commands/init.tsx`
 
 Changes:
+
 1. Add `--global` flag:
+
    ```typescript
    static flags = {
      ...BaseCommand.baseFlags,
@@ -358,11 +361,13 @@ Changes:
    ```
 
 2. Determine target directory based on flag:
+
    ```typescript
    const projectDir = flags.global ? os.homedir() : process.cwd();
    ```
 
 3. Update the existing installation check (line 82-91) to check the target directory:
+
    ```typescript
    const existingInstallation = await detectExistingInstallation(projectDir);
    ```
@@ -374,6 +379,7 @@ Changes:
    - Wizard's `projectDir` prop (line 117)
 
 5. When `--global` is used with plugin mode, use `--scope user` instead of `--scope project`:
+
    ```typescript
    const pluginScope = flags.global ? "user" : "project";
    await claudePluginInstall(pluginRef, pluginScope, projectDir);
@@ -391,12 +397,15 @@ Changes:
 **File:** `src/cli/commands/edit.tsx`
 
 Changes:
+
 1. Use `installation.projectDir` instead of `process.cwd()` for all installation-related operations (line 70):
+
    ```typescript
    const projectDir = installation.projectDir;
    ```
 
 2. When using plugin install/uninstall, derive scope from installation:
+
    ```typescript
    const pluginScope = installation.scope === "global" ? "user" : "project";
    await claudePluginInstall(pluginRef, pluginScope, projectDir);
@@ -409,11 +418,13 @@ Changes:
 **File:** `src/cli/commands/compile.ts`
 
 Changes:
+
 1. `detectInstallation()` already falls back to global (Step 3)
 2. The `installation.projectDir` and `installation.agentsDir` will point to the right directories
 3. `discoverAllSkills()` (line 177-210) currently uses `process.cwd()` -- this should use `installation.projectDir` for plugin skill discovery, but keep `process.cwd()` for local project skills when in global mode
 
 **Subtlety:** When compiling with a global installation from a project directory, the compile command should:
+
 - Read config from global (`~/.claude-src/config.yaml`)
 - Read plugins from global (`~/.claude/settings.json`)
 - Write agents to global (`~/.claude/agents/`)
@@ -426,6 +437,7 @@ This is correct because the user's `CLAUDE.md` or other setup mechanism will ref
 **File:** `src/cli/commands/outdated.ts`
 
 Changes:
+
 1. Add installation detection to determine the correct skills path:
    ```typescript
    const installation = await detectInstallation();
@@ -466,10 +478,10 @@ export {
 
 ## Type Changes Summary
 
-| Type | File | Change |
-|------|------|--------|
+| Type           | File              | Change                            |
+| -------------- | ----------------- | --------------------------------- |
 | `InstallScope` | `installation.ts` | New type: `"project" \| "global"` |
-| `Installation` | `installation.ts` | Add `scope: InstallScope` field |
+| `Installation` | `installation.ts` | Add `scope: InstallScope` field   |
 
 No changes to `ProjectConfig`, `ProjectSourceConfig`, or any other existing types.
 
@@ -483,8 +495,8 @@ No new config fields. The existing `config.yaml` format works for both project a
 
 ## New Constants/Paths
 
-| Constant | File | Value |
-|----------|------|-------|
+| Constant              | File        | Value          |
+| --------------------- | ----------- | -------------- |
 | `GLOBAL_INSTALL_ROOT` | `consts.ts` | `os.homedir()` |
 
 All other paths are composed from existing constants (`CLAUDE_SRC_DIR`, `CLAUDE_DIR`, `LOCAL_SKILLS_PATH`, etc.) joined with the appropriate root directory.
@@ -493,19 +505,19 @@ All other paths are composed from existing constants (`CLAUDE_SRC_DIR`, `CLAUDE_
 
 ## Files to Modify (Ordered)
 
-| # | File | Change Type | Complexity |
-|---|------|-------------|------------|
-| 1 | `src/cli/consts.ts` | Add `GLOBAL_INSTALL_ROOT` constant | Trivial |
-| 2 | `src/cli/lib/installation/installation.ts` | Add `InstallScope`, refactor `detectInstallation()` with global fallback | Medium |
-| 3 | `src/cli/lib/installation/index.ts` | Export `InstallScope` | Trivial |
-| 4 | `src/cli/lib/configuration/config.ts` | Add `loadGlobalSourceConfig()`, update `resolveSource()` and sibling functions | Medium |
-| 5 | `src/cli/lib/configuration/project-config.ts` | Add global fallback to `loadProjectConfig()` | Low |
-| 6 | `src/cli/lib/configuration/index.ts` | Export `loadGlobalSourceConfig` | Trivial |
-| 7 | `src/cli/lib/loading/source-loader.ts` | Add global fallback for local skill discovery in `loadSkillsMatrixFromSource()` | Low |
-| 8 | `src/cli/commands/init.tsx` | Add `--global` flag, parameterize `projectDir` throughout | Medium |
-| 9 | `src/cli/commands/edit.tsx` | Use `installation.projectDir` and `installation.scope` | Low |
-| 10 | `src/cli/commands/compile.ts` | Use `installation.projectDir` | Low |
-| 11 | `src/cli/commands/outdated.ts` | Use installation detection for path resolution | Low |
+| #   | File                                          | Change Type                                                                     | Complexity |
+| --- | --------------------------------------------- | ------------------------------------------------------------------------------- | ---------- |
+| 1   | `src/cli/consts.ts`                           | Add `GLOBAL_INSTALL_ROOT` constant                                              | Trivial    |
+| 2   | `src/cli/lib/installation/installation.ts`    | Add `InstallScope`, refactor `detectInstallation()` with global fallback        | Medium     |
+| 3   | `src/cli/lib/installation/index.ts`           | Export `InstallScope`                                                           | Trivial    |
+| 4   | `src/cli/lib/configuration/config.ts`         | Add `loadGlobalSourceConfig()`, update `resolveSource()` and sibling functions  | Medium     |
+| 5   | `src/cli/lib/configuration/project-config.ts` | Add global fallback to `loadProjectConfig()`                                    | Low        |
+| 6   | `src/cli/lib/configuration/index.ts`          | Export `loadGlobalSourceConfig`                                                 | Trivial    |
+| 7   | `src/cli/lib/loading/source-loader.ts`        | Add global fallback for local skill discovery in `loadSkillsMatrixFromSource()` | Low        |
+| 8   | `src/cli/commands/init.tsx`                   | Add `--global` flag, parameterize `projectDir` throughout                       | Medium     |
+| 9   | `src/cli/commands/edit.tsx`                   | Use `installation.projectDir` and `installation.scope`                          | Low        |
+| 10  | `src/cli/commands/compile.ts`                 | Use `installation.projectDir`                                                   | Low        |
+| 11  | `src/cli/commands/outdated.ts`                | Use installation detection for path resolution                                  | Low        |
 
 ---
 
@@ -556,44 +568,54 @@ All other paths are composed from existing constants (`CLAUDE_SRC_DIR`, `CLAUDE_
 ## Risks and Edge Cases
 
 ### Risk 1: Accidental Global Modification
+
 **Issue:** A user runs `agentsinc edit` intending to edit a project's config, but no project config exists. The command silently falls back to global and modifies the global config.
 **Mitigation:** Log a clear message when falling back to global: "No project installation found. Using global installation from ~/.claude-src/". Consider adding a confirmation prompt in edit mode when using global.
 
 ### Risk 2: `process.cwd()` Assumptions
+
 **Issue:** Many places hardcode `process.cwd()` as the project directory. When using a global installation, operations like "copy skills to .claude/skills/" should target the home directory, not the current working directory.
 **Mitigation:** Consistently use `installation.projectDir` instead of `process.cwd()` in all installation-related code paths. The plan above addresses each instance.
 
 ### Risk 3: Home Directory Permissions
+
 **Issue:** Writing to `~/.claude/` and `~/.claude-src/` may fail due to permissions or disk space.
 **Mitigation:** Existing `ensureDir()` calls will throw on permission errors. The error handler in each command (`handleError`) will catch and display these.
 
 ### Risk 4: Global Config Polluting Source Resolution
+
 **Issue:** `loadAndMergeFromBasePath()` in `source-loader.ts` calls `loadProjectSourceConfig(basePath)` where `basePath` is the source repository, not the consumer. If `loadProjectSourceConfig()` gains a global fallback, it could incorrectly load the user's global config when loading a marketplace's source config.
 **Mitigation:** Do NOT add global fallback to `loadProjectSourceConfig()` directly. Instead, add a separate `loadGlobalSourceConfig()` function and only use the fallback in the specific consumer functions (`resolveSource()`, etc.) that should have it. The `loadAndMergeFromBasePath()` call at source-loader.ts:172 should continue to use `loadProjectSourceConfig(basePath)` without fallback.
 
 ### Risk 5: Circular Dependency in Installation Detection
+
 **Issue:** `detectInstallation()` calls `loadProjectConfig()`, and if `loadProjectConfig()` gains a global fallback, there's a risk of recursive resolution.
 **Mitigation:** `detectGlobalInstallation()` should call `loadProjectConfigFromDir(homeDir)` (the non-fallback version) directly, avoiding any recursion.
 
 ### Risk 6: Edit Command Recompile Paths
+
 **Issue:** When editing a global installation, `recompileAgents()` in `edit.tsx` (line 255) passes `pluginDir: projectDir` and `outputDir: installation.agentsDir`. If `projectDir` is `process.cwd()` but the installation is global, skill discovery and agent output will point to different directories.
 **Mitigation:** Use `installation.projectDir` consistently for `pluginDir`, `projectDir`, and `outputDir` when operating on the installation.
 
 ### Risk 7: Outdated Command Path Assumptions
+
 **Issue:** `outdated.ts` uses `path.join(projectDir, LOCAL_SKILLS_PATH)` directly. For global installations, this should be `~/.claude/skills/`.
 **Mitigation:** Use installation detection to determine the correct base path (as described in Step 13).
 
 ### Edge Case: Both Global and Project Config During Init
+
 **Scenario:** User has a global installation and runs `agentsinc init` (without `--global`) in a project.
 **Expected:** Creates a project-level installation. The "already initialized" check should only look at the project directory, not fall back to global. This is correct because `detectExistingInstallation(projectDir)` in init.tsx should check only the target directory.
 **Resolution:** In `init.tsx`, the existing installation check should use a project-only check (no global fallback). Add a helper or pass a flag: `detectProjectInstallation(projectDir)` instead of `detectInstallation(projectDir)`.
 
 ### Edge Case: `--global` + `--source` Flag
+
 **Scenario:** `agentsinc init --global --source github:myorg/skills`
 **Expected:** Installs globally with the custom source persisted to `~/.claude-src/config.yaml`.
 **Resolution:** Works naturally -- `sourceFlag` is passed through to `installLocal()` / `installPluginConfig()` which writes it to config.
 
 ### Edge Case: Global Plugin Mode Scope
+
 **Scenario:** `agentsinc init --global` in plugin mode.
 **Expected:** `claude plugin install <skill>@<marketplace> --scope user` (not `--scope project`).
 **Resolution:** Handled in Step 10 -- derive scope from `flags.global`.

@@ -11,11 +11,11 @@
 
 ### Q1: Flag naming -- `--domain` and `--category`, or something else?
 
-| Option | Description | Pros | Cons |
-|--------|-------------|------|------|
-| **A: `--domain` and `--category`** | Two separate flags matching internal terminology | Mirrors the wizard's Domain/Subcategory model; clear mental model | "category" actually maps to `Subcategory` internally (e.g., `web-framework`), which could confuse contributors |
-| **B: `--domain` and `--subcategory`** | Use internal naming directly | Matches type names exactly (`Domain`, `Subcategory`) | "subcategory" is less intuitive for end users who have never seen the internal types |
-| **C: `--domain` only** | Single filter, derive category from domain prefix | Simpler CLI surface; covers the primary use case (eject all web skills) | Cannot eject a specific subcategory across domains (e.g., all "testing" skills) |
+| Option                                | Description                                       | Pros                                                                    | Cons                                                                                                           |
+| ------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **A: `--domain` and `--category`**    | Two separate flags matching internal terminology  | Mirrors the wizard's Domain/Subcategory model; clear mental model       | "category" actually maps to `Subcategory` internally (e.g., `web-framework`), which could confuse contributors |
+| **B: `--domain` and `--subcategory`** | Use internal naming directly                      | Matches type names exactly (`Domain`, `Subcategory`)                    | "subcategory" is less intuitive for end users who have never seen the internal types                           |
+| **C: `--domain` only**                | Single filter, derive category from domain prefix | Simpler CLI surface; covers the primary use case (eject all web skills) | Cannot eject a specific subcategory across domains (e.g., all "testing" skills)                                |
 
 **Recommendation:** Option A (`--domain` and `--category`). Users think in terms of "domain" (web, api, cli) and "category" (framework, testing, styling). The fact that `--category` maps to `Subcategory` internally is an implementation detail. Document the available values in `--help`.
 
@@ -24,14 +24,15 @@
 ### Q2: Should `--category` accept the Subcategory ID or the displayName?
 
 The YAML defines both:
+
 - ID: `web-framework` (kebab-case, used internally)
 - displayName: `Framework` (human-readable, shown in wizard)
 
-| Option | Description | Pros | Cons |
-|--------|-------------|------|------|
-| **A: Subcategory ID only** (`--category web-framework`) | Match the internal ID | Unambiguous; tab-completable; no collisions | Verbose; user must know the ID |
-| **B: displayName only** (`--category framework`) | Match the human-readable name | Short; matches what users see in the wizard | Ambiguous across domains (e.g., "Testing" exists in web and CLI); case-insensitive matching needed |
-| **C: Accept both** | Try ID first, fall back to displayName | Flexible; discoverable | More code; potential for confusing matches |
+| Option                                                  | Description                            | Pros                                        | Cons                                                                                               |
+| ------------------------------------------------------- | -------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **A: Subcategory ID only** (`--category web-framework`) | Match the internal ID                  | Unambiguous; tab-completable; no collisions | Verbose; user must know the ID                                                                     |
+| **B: displayName only** (`--category framework`)        | Match the human-readable name          | Short; matches what users see in the wizard | Ambiguous across domains (e.g., "Testing" exists in web and CLI); case-insensitive matching needed |
+| **C: Accept both**                                      | Try ID first, fall back to displayName | Flexible; discoverable                      | More code; potential for confusing matches                                                         |
 
 **Recommendation:** Option A (Subcategory ID only). The IDs are already kebab-case and predictable (e.g., `web-framework`, `api-database`). Since `--domain` and `--category` can be combined, there is no need for displayName matching. The `--help` output should list valid values.
 
@@ -47,11 +48,11 @@ Skills have a single `category` field (e.g., `web-framework`) that implicitly en
 
 ### Q4: Should `--domain` and `--category` be mutually exclusive or composable?
 
-| Option | Description | Example |
-|--------|-------------|---------|
-| **A: Composable (AND)** | Both must match | `--domain web --category web-testing` ejects only web testing skills |
-| **B: Mutually exclusive** | Only one flag at a time | `--domain web` OR `--category web-testing`, not both |
-| **C: Composable (OR)** | Either can match | `--domain api --category web-testing` ejects all API skills + all web testing skills |
+| Option                    | Description             | Example                                                                              |
+| ------------------------- | ----------------------- | ------------------------------------------------------------------------------------ |
+| **A: Composable (AND)**   | Both must match         | `--domain web --category web-testing` ejects only web testing skills                 |
+| **B: Mutually exclusive** | Only one flag at a time | `--domain web` OR `--category web-testing`, not both                                 |
+| **C: Composable (OR)**    | Either can match        | `--domain api --category web-testing` ejects all API skills + all web testing skills |
 
 **Recommendation:** Option A (composable AND). This matches intuition: `--domain web --category web-testing` narrows the filter. Using `--category web-testing` alone already implies `--domain web` (from the prefix), so the combination serves as validation. If the category does not belong to the specified domain, warn and exit.
 
@@ -60,6 +61,7 @@ Skills have a single `category` field (e.g., `web-framework`) that implicitly en
 ### Q5: How should cross-domain skill dependencies be handled?
 
 When ejecting only `--domain web`, a web skill might `require` a shared skill (e.g., `shared-tooling-turborepo`). Should the eject command:
+
 - **A: Only eject the filtered set** -- warn about unresolved dependencies
 - **B: Auto-include required skills** from other domains
 - **C: Ask the user** whether to include dependencies
@@ -104,6 +106,7 @@ Each `ResolvedSkill` has a `category` field of type `CategoryPath` (e.g., `"web-
 Each `CategoryDefinition` in the matrix has a `domain` field of type `Domain` (e.g., `"web"`, `"api"`, `"shared"`).
 
 The relationship is:
+
 ```
 Domain (5 values) -> Subcategory (38 values) -> SkillId (many)
      web          ->  web-framework           ->  web-framework-react
@@ -114,11 +117,13 @@ Domain (5 values) -> Subcategory (38 values) -> SkillId (many)
 ```
 
 To filter skills by domain:
+
 1. Get all `CategoryDefinition` entries where `domain === targetDomain`
 2. Collect their subcategory IDs
 3. Filter skills whose `category` matches one of those subcategory IDs
 
 To filter skills by subcategory:
+
 1. Filter skills whose `category === targetSubcategory`
 
 ### Existing utilities
@@ -297,30 +302,30 @@ Error: Category "web-framework" belongs to domain "web", not "api".
 
 **File:** `src/cli/lib/__tests__/commands/eject.test.ts`
 
-| Test | What it verifies |
-|------|-----------------|
-| `should accept --domain flag` | Flag is parsed without error |
-| `should accept --category flag` | Flag is parsed without error |
-| `should accept -d shorthand for domain` | Short flag works |
-| `should accept -c shorthand for category` | Short flag works |
-| `should reject invalid domain value` | Error message lists valid domains |
-| `should reject invalid category value` | Error message lists valid categories |
+| Test                                      | What it verifies                     |
+| ----------------------------------------- | ------------------------------------ |
+| `should accept --domain flag`             | Flag is parsed without error         |
+| `should accept --category flag`           | Flag is parsed without error         |
+| `should accept -d shorthand for domain`   | Short flag works                     |
+| `should accept -c shorthand for category` | Short flag works                     |
+| `should reject invalid domain value`      | Error message lists valid domains    |
+| `should reject invalid category value`    | Error message lists valid categories |
 
 ### Integration tests for filtered eject
 
 **File:** `src/cli/lib/__tests__/commands/eject.test.ts` (extend existing `eject skills from initialized project` suite)
 
-| Test | What it verifies |
-|------|-----------------|
-| `should eject only skills matching --domain web` | Output contains only web-* skills |
-| `should eject only skills matching --category api-database` | Output contains only api-database-* skills |
-| `should eject skills matching combined --domain and --category` | Intersection filter works |
-| `should eject no skills when domain has no matches` | Exits with appropriate message |
-| `should warn about cross-domain dependencies` | Warning printed for unresolved `requires` |
-| `should accept comma-separated --domain values` | `--domain web,api` ejects both |
-| `should accept comma-separated --category values` | `--category web-framework,web-testing` ejects both |
-| `should ignore --domain and --category for agent-partials` | Flags are silently ignored |
-| `should validate category belongs to specified domain` | Error for incompatible combo |
+| Test                                                            | What it verifies                                   |
+| --------------------------------------------------------------- | -------------------------------------------------- |
+| `should eject only skills matching --domain web`                | Output contains only web-\* skills                 |
+| `should eject only skills matching --category api-database`     | Output contains only api-database-\* skills        |
+| `should eject skills matching combined --domain and --category` | Intersection filter works                          |
+| `should eject no skills when domain has no matches`             | Exits with appropriate message                     |
+| `should warn about cross-domain dependencies`                   | Warning printed for unresolved `requires`          |
+| `should accept comma-separated --domain values`                 | `--domain web,api` ejects both                     |
+| `should accept comma-separated --category values`               | `--category web-framework,web-testing` ejects both |
+| `should ignore --domain and --category for agent-partials`      | Flags are silently ignored                         |
+| `should validate category belongs to specified domain`          | Error for incompatible combo                       |
 
 ### Existing tests must continue passing
 
@@ -332,10 +337,10 @@ All existing eject tests (argument validation, flag validation, eject agent-part
 
 ### Modified files
 
-| File | Change |
-|------|--------|
-| `src/cli/commands/eject.ts` | Add `domain` and `category` flags, filtering logic in `ejectSkills()`, dependency warning, validation helpers, updated examples |
-| `src/cli/lib/__tests__/commands/eject.test.ts` | Add test cases for filtered eject |
+| File                                           | Change                                                                                                                          |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `src/cli/commands/eject.ts`                    | Add `domain` and `category` flags, filtering logic in `ejectSkills()`, dependency warning, validation helpers, updated examples |
+| `src/cli/lib/__tests__/commands/eject.test.ts` | Add test cases for filtered eject                                                                                               |
 
 ### No new files
 

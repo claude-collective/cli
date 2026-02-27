@@ -198,10 +198,7 @@ Add a new example (line 181-186):
 Add a function near the existing `collectConfiguredSources()` (line 38):
 
 ```typescript
-function isConfiguredSource(
-  sourceUrl: string,
-  configuredSources: string[],
-): boolean;
+function isConfiguredSource(sourceUrl: string, configuredSources: string[]): boolean;
 ```
 
 Logic: Check if `sourceUrl` exists in the `configuredSources` array (same list returned by `collectConfiguredSources()`). Simple `includes()` check.
@@ -347,22 +344,22 @@ Plugins are not removed when `--source` is specified. Log: "Plugin removal skipp
 
 New `describe("--source flag")` block:
 
-| Test                                                                   | What it verifies                                          |
-| ---------------------------------------------------------------------- | --------------------------------------------------------- |
-| `should accept --source flag`                                          | Flag is parsed without error                              |
-| `should accept -s shorthand for source`                                | Short flag works                                          |
-| `should reject --source combined with --all`                           | Error: mutually exclusive                                 |
-| `should remove only skills from specified source URL`                  | Skills matched by URL removed, other sources preserved    |
-| `should reject unknown source URL`                                     | Error lists configured sources                            |
-| `should skip agent removal when --source is set`                       | Agents directory untouched                                |
-| `should skip plugin removal when --source is set`                      | Plugins untouched                                         |
-| `should not remove legacy skills without source field`                 | Legacy skills preserved during source-specific uninstall  |
-| `should show source-specific message on completion`                    | Output mentions source URL                                |
-| `should preview source-specific removal in dry-run`                    | `[dry-run]` output filtered by source                     |
-| `should show nothing to uninstall when no skills match source`         | Clean exit with informative message                       |
-| `should preserve user-created skills during source-specific uninstall` | User skills untouched                                     |
-| `should clean up empty .claude/skills/ after source-specific removal`  | Directory removed if empty                                |
-| `should keep .claude/skills/ if other source skills remain`            | Directory preserved when other skills exist               |
+| Test                                                                   | What it verifies                                         |
+| ---------------------------------------------------------------------- | -------------------------------------------------------- |
+| `should accept --source flag`                                          | Flag is parsed without error                             |
+| `should accept -s shorthand for source`                                | Short flag works                                         |
+| `should reject --source combined with --all`                           | Error: mutually exclusive                                |
+| `should remove only skills from specified source URL`                  | Skills matched by URL removed, other sources preserved   |
+| `should reject unknown source URL`                                     | Error lists configured sources                           |
+| `should skip agent removal when --source is set`                       | Agents directory untouched                               |
+| `should skip plugin removal when --source is set`                      | Plugins untouched                                        |
+| `should not remove legacy skills without source field`                 | Legacy skills preserved during source-specific uninstall |
+| `should show source-specific message on completion`                    | Output mentions source URL                               |
+| `should preview source-specific removal in dry-run`                    | `[dry-run]` output filtered by source                    |
+| `should show nothing to uninstall when no skills match source`         | Clean exit with informative message                      |
+| `should preserve user-created skills during source-specific uninstall` | User skills untouched                                    |
+| `should clean up empty .claude/skills/ after source-specific removal`  | Directory removed if empty                               |
+| `should keep .claude/skills/ if other source skills remain`            | Directory preserved when other skills exist              |
 
 ### Existing tests must continue passing
 

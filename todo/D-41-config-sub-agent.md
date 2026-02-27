@@ -19,15 +19,15 @@ Create the `config-manager` meta-agent at `src/agents/meta/config-manager/` — 
 
 ### Scope Boundaries
 
-| Question | Proposed Answer | Rationale |
-|----------|-----------------|-----------|
-| Does this agent CREATE new skill directories? | No. But it can REGISTER existing skills — read their SKILL.md to infer category/description, generate metadata.yaml, and wire into config.yaml. The skill-summoner creates actual skill content. | Separation of concerns -- config-manager handles YAML plumbing and registration, skill-summoner handles skill content creation. |
-| Does it handle compilation? | No. It tells the user to run `agentsinc compile` after making changes. | Compilation is a separate command. Config-manager is purely file manipulation. |
-| Does it handle agent-mappings.yaml? | No. `agent-mappings.yaml` was removed in D-43. All skills now assigned to all selected agents; stacks provide fine-grained mapping. | The TODO spec references this file but it no longer exists. |
-| Should it handle `.claude-src/config.yaml` (project config)? | Yes, both `ProjectSourceConfig` fields AND `ProjectConfig` fields since they share the same physical file. | The file serves dual purpose and the agent needs to update both sets of fields (source/branding AND stack/skills/agents). |
-| What model should it use? | **Sonnet** -- this is structured YAML manipulation, not creative reasoning. | Unlike agent-summoner/skill-summoner which need opus for creative prompt writing, config-manager does rule-following schema-validated file edits. |
-| Does it need Bash? | No. Read, Write, Edit, Glob, Grep only. | Purely config file manipulation. No need to run commands, install packages, or execute scripts. |
-| Where does it live? | `src/agents/meta/config-manager/` | Follows existing meta-agent pattern (agent-summoner, skill-summoner, documentor all in `src/agents/meta/`). |
+| Question                                                     | Proposed Answer                                                                                                                                                                                  | Rationale                                                                                                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Does this agent CREATE new skill directories?                | No. But it can REGISTER existing skills — read their SKILL.md to infer category/description, generate metadata.yaml, and wire into config.yaml. The skill-summoner creates actual skill content. | Separation of concerns -- config-manager handles YAML plumbing and registration, skill-summoner handles skill content creation.                   |
+| Does it handle compilation?                                  | No. It tells the user to run `agentsinc compile` after making changes.                                                                                                                           | Compilation is a separate command. Config-manager is purely file manipulation.                                                                    |
+| Does it handle agent-mappings.yaml?                          | No. `agent-mappings.yaml` was removed in D-43. All skills now assigned to all selected agents; stacks provide fine-grained mapping.                                                              | The TODO spec references this file but it no longer exists.                                                                                       |
+| Should it handle `.claude-src/config.yaml` (project config)? | Yes, both `ProjectSourceConfig` fields AND `ProjectConfig` fields since they share the same physical file.                                                                                       | The file serves dual purpose and the agent needs to update both sets of fields (source/branding AND stack/skills/agents).                         |
+| What model should it use?                                    | **Sonnet** -- this is structured YAML manipulation, not creative reasoning.                                                                                                                      | Unlike agent-summoner/skill-summoner which need opus for creative prompt writing, config-manager does rule-following schema-validated file edits. |
+| Does it need Bash?                                           | No. Read, Write, Edit, Glob, Grep only.                                                                                                                                                          | Purely config file manipulation. No need to run commands, install packages, or execute scripts.                                                   |
+| Where does it live?                                          | `src/agents/meta/config-manager/`                                                                                                                                                                | Follows existing meta-agent pattern (agent-summoner, skill-summoner, documentor all in `src/agents/meta/`).                                       |
 
 ### Out of Scope
 
@@ -60,17 +60,17 @@ src/agents/meta/{agent-name}/
 
 **Key observations from existing meta-agents:**
 
-| Agent | Model | Tools | Distinctive Feature |
-|-------|-------|-------|---------------------|
-| agent-summoner | opus | Read, Write, Edit, Grep, Glob, Bash | Three modes (Create/Improve/Compliance), references prompt-bible and architecture-bible |
-| skill-summoner | opus | Read, Write, Edit, Grep, Glob, WebSearch, WebFetch | External research via web tools, produces skill packages |
-| documentor | opus | Read, Write, Glob, Grep, Bash | Incremental work, validation mode, tracks documentation drift |
+| Agent          | Model | Tools                                              | Distinctive Feature                                                                     |
+| -------------- | ----- | -------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| agent-summoner | opus  | Read, Write, Edit, Grep, Glob, Bash                | Three modes (Create/Improve/Compliance), references prompt-bible and architecture-bible |
+| skill-summoner | opus  | Read, Write, Edit, Grep, Glob, WebSearch, WebFetch | External research via web tools, produces skill packages                                |
+| documentor     | opus  | Read, Write, Glob, Grep, Bash                      | Incremental work, validation mode, tracks documentation drift                           |
 
 ### What Config Operations Currently Require Manual Knowledge
 
 Today, when any agent (or user) needs to update config files, they must know:
 
-1. **metadata.yaml structure** -- required fields (`category`, `author`, `cliName`, `cliDescription`, `usageGuidance`), valid `category` values from the 38 Subcategory union, author format (`@handle`), length limits (cliName max 30, cliDescription max 60, usageGuidance min 10)
+1. **metadata.yaml structure** -- required fields (`category`, `author`, `displayName`, `cliDescription`, `usageGuidance`), valid `category` values from the 38 Subcategory union, author format (`@handle`), length limits (displayName max 30, cliDescription max 60, usageGuidance min 10)
 2. **stacks.yaml structure** -- stack object shape (`id`, `name`, `description`, `agents`), agent-to-subcategory-to-skill nesting, skill assignment formats (bare string, object with `id`/`preloaded`, or array)
 3. **skills-matrix.yaml structure** -- category definition fields, relationship rules (conflicts, discourages, recommends, requires, alternatives), skillAliases mapping
 4. **config.yaml structure** -- dual-purpose file (ProjectSourceConfig + ProjectConfig fields), source resolution precedence, stack mapping format
@@ -86,28 +86,28 @@ This knowledge is scattered across schemas, types, and documentation. A dedicate
 
 ### What the Config Manager Handles
 
-| Task | Config Files Touched | Example |
-|------|---------------------|---------|
-| Create metadata.yaml for a new skill | `metadata.yaml` | Given skill name "posthog-flags" in category "api-analytics", generate valid metadata |
-| Update metadata.yaml fields | `metadata.yaml` | Add `compatibleWith` entries, update tags |
-| Add a new stack to stacks.yaml | `config/stacks.yaml` | Add a "vue-fullstack" stack with Vue + Pinia + Vitest |
-| Update an existing stack | `config/stacks.yaml` | Add a new agent to an existing stack, change skill assignments |
-| Add a new category to skills-matrix.yaml | `config/skills-matrix.yaml` | Add "web-cms" category with proper fields |
-| Add/update relationship rules | `config/skills-matrix.yaml` | Add conflict between two skills, add recommendation |
-| Add/update skillAliases | `config/skills-matrix.yaml` | Map display name "tanstack-router" to full skill ID |
-| Update .claude-src/config.yaml | `.claude-src/config.yaml` | Add a new agent to the agents list, update stack mappings, add skills |
-| Validate config files | Any of the above | Check a metadata.yaml against the JSON schema, report issues |
+| Task                                     | Config Files Touched        | Example                                                                               |
+| ---------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------- |
+| Create metadata.yaml for a new skill     | `metadata.yaml`             | Given skill name "posthog-flags" in category "api-analytics", generate valid metadata |
+| Update metadata.yaml fields              | `metadata.yaml`             | Add `compatibleWith` entries, update tags                                             |
+| Add a new stack to stacks.yaml           | `config/stacks.yaml`        | Add a "vue-fullstack" stack with Vue + Pinia + Vitest                                 |
+| Update an existing stack                 | `config/stacks.yaml`        | Add a new agent to an existing stack, change skill assignments                        |
+| Add a new category to skills-matrix.yaml | `config/skills-matrix.yaml` | Add "web-cms" category with proper fields                                             |
+| Add/update relationship rules            | `config/skills-matrix.yaml` | Add conflict between two skills, add recommendation                                   |
+| Add/update skillAliases                  | `config/skills-matrix.yaml` | Map display name "tanstack-router" to full skill ID                                   |
+| Update .claude-src/config.yaml           | `.claude-src/config.yaml`   | Add a new agent to the agents list, update stack mappings, add skills                 |
+| Validate config files                    | Any of the above            | Check a metadata.yaml against the JSON schema, report issues                          |
 
 ### What It Does NOT Handle
 
-| Task | Who Handles It | Why |
-|------|---------------|-----|
-| Writing SKILL.md content | skill-summoner | Config-manager does YAML, not prompt content |
-| Writing agent prompt files | agent-summoner | Same -- config vs content separation |
-| Running `agentsinc compile` | User / CLI | Config-manager has no Bash tool |
-| Creating TypeScript types | cli-developer | Config-manager is not a code agent |
-| Updating JSON schemas | cli-developer | JSON schemas are generated from Zod via `scripts/generate-json-schemas.ts` |
-| Creating skill directories | skill-summoner | Config-manager writes into existing files, doesn't create skill packages |
+| Task                        | Who Handles It | Why                                                                        |
+| --------------------------- | -------------- | -------------------------------------------------------------------------- |
+| Writing SKILL.md content    | skill-summoner | Config-manager does YAML, not prompt content                               |
+| Writing agent prompt files  | agent-summoner | Same -- config vs content separation                                       |
+| Running `agentsinc compile` | User / CLI     | Config-manager has no Bash tool                                            |
+| Creating TypeScript types   | cli-developer  | Config-manager is not a code agent                                         |
+| Updating JSON schemas       | cli-developer  | JSON schemas are generated from Zod via `scripts/generate-json-schemas.ts` |
+| Creating skill directories  | skill-summoner | Config-manager writes into existing files, doesn't create skill packages   |
 
 ---
 
@@ -143,6 +143,7 @@ tools:
 ```
 
 **Design decisions:**
+
 - **Model: sonnet** -- Config manipulation is structured, rule-following work. Does not need opus-level reasoning.
 - **No Bash** -- Purely file manipulation. No commands to run.
 - **No WebSearch/WebFetch** -- All knowledge is embedded in the agent's prompt (schemas, enums, examples). No external research needed.
@@ -198,6 +199,7 @@ Plus `config-manager` itself after implementation.
 
 Pattern: `^(web|api|cli|mobile|infra|meta|security)-.+-.+$`
 Minimum 3 dash-separated segments. Examples:
+
 - `web-framework-react`
 - `api-database-drizzle`
 - `meta-methodology-anti-over-engineering`
@@ -206,24 +208,24 @@ Minimum 3 dash-separated segments. Examples:
 
 Source: `src/schemas/metadata.schema.json`
 
-| Field | Type | Constraints | Required |
-|-------|------|------------|----------|
-| `category` | string | Must be a valid Subcategory (domain-prefixed, e.g., `web-framework`) | Yes |
-| `author` | string | Pattern: `^@[a-z][a-z0-9-]*$` (e.g., `@vince`) | Yes |
-| `cliName` | string | 1-30 chars | Yes |
-| `cliDescription` | string | 1-60 chars | Yes |
-| `usageGuidance` | string | Min 10 chars | Yes |
-| `categoryExclusive` | boolean | Whether only one skill per category | No |
-| `tags` | string[] | Each tag: `^[a-z][a-z0-9-]*$` | No |
-| `requires` | string[] | Skill IDs this skill depends on | No |
-| `compatibleWith` | string[] | Framework skill IDs this works with | No |
-| `conflictsWith` | string[] | Skill IDs that cannot coexist | No |
-| `requiresSetup` | string[] | Setup skill IDs needed first | No |
-| `providesSetupFor` | string[] | Skills this setup skill configures | No |
-| `contentHash` | string | `^[a-f0-9]{7}$` (7-char hex) | No |
-| `updated` | string | ISO date | No |
-| `domain` | string | Override domain inference | No |
-| `custom` | boolean | True for non-built-in skills | No |
+| Field               | Type     | Constraints                                                          | Required |
+| ------------------- | -------- | -------------------------------------------------------------------- | -------- |
+| `category`          | string   | Must be a valid Subcategory (domain-prefixed, e.g., `web-framework`) | Yes      |
+| `author`            | string   | Pattern: `^@[a-z][a-z0-9-]*$` (e.g., `@vince`)                       | Yes      |
+| `displayName`       | string   | 1-30 chars                                                           | Yes      |
+| `cliDescription`    | string   | 1-60 chars                                                           | Yes      |
+| `usageGuidance`     | string   | Min 10 chars                                                         | Yes      |
+| `categoryExclusive` | boolean  | Whether only one skill per category                                  | No       |
+| `tags`              | string[] | Each tag: `^[a-z][a-z0-9-]*$`                                        | No       |
+| `requires`          | string[] | Skill IDs this skill depends on                                      | No       |
+| `compatibleWith`    | string[] | Framework skill IDs this works with                                  | No       |
+| `conflictsWith`     | string[] | Skill IDs that cannot coexist                                        | No       |
+| `requiresSetup`     | string[] | Setup skill IDs needed first                                         | No       |
+| `providesSetupFor`  | string[] | Skills this setup skill configures                                   | No       |
+| `contentHash`       | string   | `^[a-f0-9]{7}$` (7-char hex)                                         | No       |
+| `updated`           | string   | ISO date                                                             | No       |
+| `domain`            | string   | Override domain inference                                            | No       |
+| `custom`            | boolean  | True for non-built-in skills                                         | No       |
 
 ### 5.6 stacks.yaml Structure
 
@@ -248,6 +250,7 @@ stacks:
 ```
 
 **Three skill assignment formats** (all valid for the same subcategory key):
+
 1. Bare string: `web-framework: web-framework-react`
 2. Object: `web-framework: { id: web-framework-react, preloaded: true }`
 3. Array: `web-framework: [{ id: web-framework-react, preloaded: true }, { id: web-framework-nextjs-app-router }]`
@@ -258,16 +261,16 @@ Source: `src/schemas/skills-matrix.schema.json`
 
 ```yaml
 categories:
-  subcategory-key:       # Key must be a valid Subcategory
-    id: subcategory-key  # Must match the key
+  subcategory-key: # Key must be a valid Subcategory
+    id: subcategory-key # Must match the key
     displayName: Human Name
     description: Brief description
-    domain: web          # Optional, valid Domain value
-    exclusive: true      # Required boolean
-    required: false      # Required boolean
-    order: 1             # Required number (display order within domain)
-    icon: optional-icon  # Optional string
-    custom: false        # Optional boolean
+    domain: web # Optional, valid Domain value
+    exclusive: true # Required boolean
+    required: false # Required boolean
+    order: 1 # Required number (display order within domain)
+    icon: optional-icon # Optional string
+    custom: false # Optional boolean
 ```
 
 ### 5.8 skills-matrix.yaml Relationship Types
@@ -275,23 +278,23 @@ categories:
 ```yaml
 relationships:
   conflicts:
-    - skills: [alias1, alias2]    # Min 2. Uses display names (resolved to IDs at load time)
+    - skills: [alias1, alias2] # Min 2. Uses display names (resolved to IDs at load time)
       reason: "Why they conflict"
   discourages:
-    - skills: [alias1, alias2]    # Min 2
+    - skills: [alias1, alias2] # Min 2
       reason: "Why they're discouraged together"
   recommends:
-    - when: alias1                # Single trigger skill
-      suggest: [alias2, alias3]   # Min 1 suggestion
+    - when: alias1 # Single trigger skill
+      suggest: [alias2, alias3] # Min 1 suggestion
       reason: "Why recommended"
   requires:
-    - skill: alias1               # The skill that has the dependency
-      needs: [alias2]             # Min 1. Skills that must be selected first
-      needsAny: false             # Optional. true = OR logic, false/omitted = AND logic
+    - skill: alias1 # The skill that has the dependency
+      needs: [alias2] # Min 1. Skills that must be selected first
+      needsAny: false # Optional. true = OR logic, false/omitted = AND logic
       reason: "Why required"
   alternatives:
     - purpose: "Server state caching"
-      skills: [alias1, alias2]    # Min 1. Interchangeable skills
+      skills: [alias1, alias2] # Min 1. Interchangeable skills
 ```
 
 ### 5.9 .claude-src/config.yaml Structure
@@ -299,6 +302,7 @@ relationships:
 This file serves two purposes. The agent must understand both:
 
 **ProjectSourceConfig fields** (marketplace-level config):
+
 ```yaml
 source: github:agents-inc/skills
 author: "@vince"
@@ -324,22 +328,23 @@ matrixFile: config/skills-matrix.yaml
 ```
 
 **ProjectConfig fields** (project-level config, same physical file):
+
 ```yaml
-name: project-name           # kebab-case
-agents:                       # Agent IDs to compile
+name: project-name # kebab-case
+agents: # Agent IDs to compile
   - web-developer
   - api-developer
-skills:                       # Flat list of all skill IDs
+skills: # Flat list of all skill IDs
   - web-framework-react
   - web-state-zustand
-installMode: local            # "local" or "plugin"
-expertMode: true              # Optional boolean
-domains:                      # Selected domains
+installMode: local # "local" or "plugin"
+expertMode: true # Optional boolean
+domains: # Selected domains
   - web
   - api
-selectedAgents:               # From wizard
+selectedAgents: # From wizard
   - web-developer
-stack:                        # Per-agent skill assignments (same format as stacks.yaml agents)
+stack: # Per-agent skill assignments (same format as stacks.yaml agents)
   web-developer:
     web-framework: web-framework-react
     web-styling: web-styling-scss-modules
@@ -350,14 +355,14 @@ source: github:agents-inc/skills
 
 The agent should add `$schema` comments to generated YAML files:
 
-| File | Schema URL Constant |
-|------|-------------------|
-| metadata.yaml | `SCHEMA_PATHS.metadata` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/metadata.schema.json` |
-| stacks.yaml | `SCHEMA_PATHS.stacks` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/stacks.schema.json` |
-| skills-matrix.yaml | `SCHEMA_PATHS.skillsMatrix` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/skills-matrix.schema.json` |
-| config.yaml (project) | `SCHEMA_PATHS.projectConfig` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/project-config.schema.json` |
-| config.yaml (source) | `SCHEMA_PATHS.projectSourceConfig` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/project-source-config.schema.json` |
-| agent.yaml | `SCHEMA_PATHS.agent` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/agent.schema.json` |
+| File                  | Schema URL Constant                                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| metadata.yaml         | `SCHEMA_PATHS.metadata` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/metadata.schema.json`                         |
+| stacks.yaml           | `SCHEMA_PATHS.stacks` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/stacks.schema.json`                             |
+| skills-matrix.yaml    | `SCHEMA_PATHS.skillsMatrix` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/skills-matrix.schema.json`                |
+| config.yaml (project) | `SCHEMA_PATHS.projectConfig` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/project-config.schema.json`              |
+| config.yaml (source)  | `SCHEMA_PATHS.projectSourceConfig` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/project-source-config.schema.json` |
+| agent.yaml            | `SCHEMA_PATHS.agent` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/agent.schema.json`                               |
 
 Format: `# yaml-language-server: $schema={url}` as the first line.
 
@@ -365,16 +370,16 @@ Format: `# yaml-language-server: $schema={url}` as the first line.
 
 From `src/cli/consts.ts`:
 
-| Constant | Value |
-|----------|-------|
-| `STANDARD_FILES.SKILL_MD` | `SKILL.md` |
-| `STANDARD_FILES.METADATA_YAML` | `metadata.yaml` |
-| `STANDARD_FILES.CONFIG_YAML` | `config.yaml` |
-| `STANDARD_FILES.SKILLS_MATRIX_YAML` | `skills-matrix.yaml` |
-| `STANDARD_FILES.AGENT_YAML` | `agent.yaml` |
-| `SKILLS_MATRIX_PATH` | `config/skills-matrix.yaml` |
-| `STACKS_FILE_PATH` | `config/stacks.yaml` |
-| `CLAUDE_SRC_DIR` | `.claude-src` |
+| Constant                            | Value                       |
+| ----------------------------------- | --------------------------- |
+| `STANDARD_FILES.SKILL_MD`           | `SKILL.md`                  |
+| `STANDARD_FILES.METADATA_YAML`      | `metadata.yaml`             |
+| `STANDARD_FILES.CONFIG_YAML`        | `config.yaml`               |
+| `STANDARD_FILES.SKILLS_MATRIX_YAML` | `skills-matrix.yaml`        |
+| `STANDARD_FILES.AGENT_YAML`         | `agent.yaml`                |
+| `SKILLS_MATRIX_PATH`                | `config/skills-matrix.yaml` |
+| `STACKS_FILE_PATH`                  | `config/stacks.yaml`        |
+| `CLAUDE_SRC_DIR`                    | `.claude-src`               |
 
 ---
 
@@ -393,6 +398,7 @@ Create `src/agents/meta/config-manager/agent.yaml` with the definition from Sect
 ### Step 3: Write intro.md
 
 Define the agent's identity:
+
 - Expert in Agents Inc CLI configuration system
 - Handles YAML file creation and validation
 - Three modes: **Create** (generate new config files), **Update** (modify existing), **Validate** (check against schemas)
@@ -411,6 +417,7 @@ This is the largest file. It must contain:
 ### Step 5: Write critical-requirements.md
 
 Emphatic constraints placed at TOP of compiled prompt:
+
 - MUST use domain-prefixed subcategory values (never bare names like "framework")
 - MUST include yaml-language-server schema comment as first line
 - MUST validate all required fields before writing
@@ -425,6 +432,7 @@ Same constraints repeated at BOTTOM of compiled prompt (self-reminder loop closu
 ### Step 7: Write output-format.md
 
 Define structured response format:
+
 - **File:** which file was created/modified
 - **Changes:** what was added/modified
 - **Validation:** schema compliance check results
@@ -433,6 +441,7 @@ Define structured response format:
 ### Step 8: Write examples.md
 
 Concrete examples of:
+
 1. Creating a metadata.yaml for a new skill
 2. Adding a stack to stacks.yaml
 3. Adding a category to skills-matrix.yaml
@@ -458,6 +467,7 @@ agentsinc compile
 ```
 
 Verify:
+
 - Agent compiles without errors
 - Compiled output appears in `.claude/agents/config-manager.md`
 - All required XML tags present in compiled output
@@ -487,12 +497,12 @@ Task: config-manager
 
 ### Key Delegation Patterns
 
-| Caller | Delegates What | Example |
-|--------|---------------|---------|
-| agent-summoner | After creating an agent, delegate config registration | "Add config-manager to .claude-src/config.yaml agents list and create stack entries" |
-| skill-summoner | After creating skill content, delegate metadata creation | "Create metadata.yaml for this new skill with these properties" |
-| D-40 `register` command (future) | Automated config updates during skill registration | "Add this skill to skills-matrix.yaml and update stacks" |
-| User directly | Ad-hoc config tasks | "Add a new stack for Vue + Nuxt" |
+| Caller                           | Delegates What                                           | Example                                                                              |
+| -------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| agent-summoner                   | After creating an agent, delegate config registration    | "Add config-manager to .claude-src/config.yaml agents list and create stack entries" |
+| skill-summoner                   | After creating skill content, delegate metadata creation | "Create metadata.yaml for this new skill with these properties"                      |
+| D-40 `register` command (future) | Automated config updates during skill registration       | "Add this skill to skills-matrix.yaml and update stacks"                             |
+| User directly                    | Ad-hoc config tasks                                      | "Add a new stack for Vue + Nuxt"                                                     |
 
 ### How Users Invoke It
 
@@ -582,15 +592,15 @@ Since this is a meta-agent (markdown + YAML), testing is primarily manual:
 
 ## 10. Files Created Summary
 
-| File | Purpose | Estimated Size |
-|------|---------|---------------|
-| `src/agents/meta/config-manager/agent.yaml` | Agent definition | ~10 lines |
-| `src/agents/meta/config-manager/intro.md` | Identity and scope | ~20 lines |
-| `src/agents/meta/config-manager/workflow.md` | Full workflow with embedded knowledge base | ~400-500 lines |
-| `src/agents/meta/config-manager/critical-requirements.md` | Top-of-prompt constraints | ~15 lines |
-| `src/agents/meta/config-manager/critical-reminders.md` | Bottom-of-prompt reminders | ~20 lines |
-| `src/agents/meta/config-manager/output-format.md` | Response structure template | ~40 lines |
-| `src/agents/meta/config-manager/examples.md` | Concrete examples | ~150 lines |
+| File                                                      | Purpose                                    | Estimated Size |
+| --------------------------------------------------------- | ------------------------------------------ | -------------- |
+| `src/agents/meta/config-manager/agent.yaml`               | Agent definition                           | ~10 lines      |
+| `src/agents/meta/config-manager/intro.md`                 | Identity and scope                         | ~20 lines      |
+| `src/agents/meta/config-manager/workflow.md`              | Full workflow with embedded knowledge base | ~400-500 lines |
+| `src/agents/meta/config-manager/critical-requirements.md` | Top-of-prompt constraints                  | ~15 lines      |
+| `src/agents/meta/config-manager/critical-reminders.md`    | Bottom-of-prompt reminders                 | ~20 lines      |
+| `src/agents/meta/config-manager/output-format.md`         | Response structure template                | ~40 lines      |
+| `src/agents/meta/config-manager/examples.md`              | Concrete examples                          | ~150 lines     |
 
 **Code changes (minor):**
 | File | Change |
@@ -627,6 +637,7 @@ The `.claude-src/config.yaml` `stack` section uses the SAME format as `stacks.ya
 ### Schema Comment Convention
 
 Every generated YAML file must start with:
+
 ```yaml
 # yaml-language-server: $schema={schema-url}
 ```

@@ -55,13 +55,13 @@ Version flows through this prop chain:
 **Cache file format** (`~/.cache/agents-inc/version`):
 
 ```json
-{"current":"0.31.1"}
+{ "current": "0.31.1" }
 ```
 
 After a successful npm fetch, it becomes:
 
 ```json
-{"latest":"0.36.0","next":"0.37.0-beta.1","current":"0.35.0"}
+{ "latest": "0.36.0", "next": "0.37.0-beta.1", "current": "0.35.0" }
 ```
 
 The `dist-tags` object from npm is spread into the file, plus `current` from the running version.
@@ -170,16 +170,16 @@ Replace the current version display (line 108-110):
 
 ### Files Changed (Feature 1)
 
-| File | Change |
-|------|--------|
-| `package.json` | Add `warn-if-update-available.timeoutInDays: 1` to oclif config |
-| `src/cli/hooks/init.ts` | Read version cache, compare, attach `latestVersion` |
-| `src/cli/base-command.ts` | Add `latestVersion` getter (following `sourceConfig` pattern) |
-| `src/cli/commands/init.tsx` | Pass `latestVersion` prop to `<Wizard>` |
-| `src/cli/commands/edit.tsx` | Pass `latestVersion` prop to `<Wizard>` |
-| `src/cli/components/wizard/wizard.tsx` | Accept and forward `latestVersion` prop |
-| `src/cli/components/wizard/wizard-layout.tsx` | Accept and forward `latestVersion` prop |
-| `src/cli/components/wizard/wizard-tabs.tsx` | Accept `latestVersion`, render conditionally |
+| File                                          | Change                                                          |
+| --------------------------------------------- | --------------------------------------------------------------- |
+| `package.json`                                | Add `warn-if-update-available.timeoutInDays: 1` to oclif config |
+| `src/cli/hooks/init.ts`                       | Read version cache, compare, attach `latestVersion`             |
+| `src/cli/base-command.ts`                     | Add `latestVersion` getter (following `sourceConfig` pattern)   |
+| `src/cli/commands/init.tsx`                   | Pass `latestVersion` prop to `<Wizard>`                         |
+| `src/cli/commands/edit.tsx`                   | Pass `latestVersion` prop to `<Wizard>`                         |
+| `src/cli/components/wizard/wizard.tsx`        | Accept and forward `latestVersion` prop                         |
+| `src/cli/components/wizard/wizard-layout.tsx` | Accept and forward `latestVersion` prop                         |
+| `src/cli/components/wizard/wizard-tabs.tsx`   | Accept `latestVersion`, render conditionally                    |
 
 ---
 
@@ -297,9 +297,9 @@ This is safer because the cache directory is never removed before a successful d
 
 ### Files Changed (Feature 2)
 
-| File | Change |
-|------|--------|
-| `src/cli/consts.ts` | Add `SOURCE_CACHE_TTL_MS` constant |
+| File                                    | Change                                                                                  |
+| --------------------------------------- | --------------------------------------------------------------------------------------- |
+| `src/cli/consts.ts`                     | Add `SOURCE_CACHE_TTL_MS` constant                                                      |
 | `src/cli/lib/loading/source-fetcher.ts` | Add `isSourceStale()`, `writeLastFetched()`; modify `fetchFromRemoteSource()` TTL check |
 
 ---
@@ -331,29 +331,29 @@ This is safer because the cache directory is never removed before a successful d
 
 ### Feature 1: Version Check
 
-| Edge Case | Behavior |
-|-----------|----------|
-| **First-ever run (no cache file)** | `latestVersion` is undefined. WizardTabs shows only current version. Oclif plugin creates cache via background process; next run will have data. |
-| **Offline / air-gapped** | Background npm fetch fails silently. Cache remains stale (or never created). No update text shown. |
-| **Pre-release version** (e.g., `0.36.0-beta.1`) | Oclif plugin skips check for versions containing `-`. No `latestVersion` attached. |
-| **npm registry down** | Background child process catches error and exits. Cache retains last-known values. |
-| **Cache has only `current` key** (first write before npm fetch completes) | `distTags.latest` is undefined. No `latestVersion` attached. |
-| **Same version** (`latest === current`) | Comparison finds no newer version. No update text shown. |
-| **Fast startup requirement** | Reading a small local JSON file is sub-millisecond. No impact on startup time. |
+| Edge Case                                                                 | Behavior                                                                                                                                         |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **First-ever run (no cache file)**                                        | `latestVersion` is undefined. WizardTabs shows only current version. Oclif plugin creates cache via background process; next run will have data. |
+| **Offline / air-gapped**                                                  | Background npm fetch fails silently. Cache remains stale (or never created). No update text shown.                                               |
+| **Pre-release version** (e.g., `0.36.0-beta.1`)                           | Oclif plugin skips check for versions containing `-`. No `latestVersion` attached.                                                               |
+| **npm registry down**                                                     | Background child process catches error and exits. Cache retains last-known values.                                                               |
+| **Cache has only `current` key** (first write before npm fetch completes) | `distTags.latest` is undefined. No `latestVersion` attached.                                                                                     |
+| **Same version** (`latest === current`)                                   | Comparison finds no newer version. No update text shown.                                                                                         |
+| **Fast startup requirement**                                              | Reading a small local JSON file is sub-millisecond. No impact on startup time.                                                                   |
 
 ### Feature 2: Source Staleness
 
-| Edge Case | Behavior |
-|-----------|----------|
-| **First fetch (no cache)** | Cache directory doesn't exist. Falls through to normal download path. `.last-fetched` written after download. |
-| **Existing cache, no `.last-fetched` file** (migrated cache) | `isSourceStale()` returns `true` (file doesn't exist). Triggers refresh. After download, `.last-fetched` written. |
-| **Network failure during TTL refresh** | Falls back to stale cache with `verbose()` log. Does not propagate error. |
-| **`--refresh` flag** | Existing `forceRefresh` path is unchanged. Always re-downloads regardless of TTL. `.last-fetched` written after download. |
-| **Clock skew (system clock jumps backward)** | `Date.now() - fetchedTime` could be negative. Since negative < TTL, cache treated as fresh. Correct behavior. |
-| **Clock jumps forward** | `Date.now() - fetchedTime` is very large. Cache treated as stale. Triggers refresh. Correct behavior. |
-| **Local source** | `fetchFromLocalSource()` is called directly. No TTL check. No `.last-fetched`. Unchanged behavior. |
-| **Multiple sources** | Each source has its own cache directory. Each gets its own `.last-fetched`. No cross-contamination. |
-| **giget ETag optimization** | Even when TTL triggers a re-fetch, giget uses ETags internally. If content hasn't changed, download is fast (304 Not Modified). |
+| Edge Case                                                    | Behavior                                                                                                                        |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| **First fetch (no cache)**                                   | Cache directory doesn't exist. Falls through to normal download path. `.last-fetched` written after download.                   |
+| **Existing cache, no `.last-fetched` file** (migrated cache) | `isSourceStale()` returns `true` (file doesn't exist). Triggers refresh. After download, `.last-fetched` written.               |
+| **Network failure during TTL refresh**                       | Falls back to stale cache with `verbose()` log. Does not propagate error.                                                       |
+| **`--refresh` flag**                                         | Existing `forceRefresh` path is unchanged. Always re-downloads regardless of TTL. `.last-fetched` written after download.       |
+| **Clock skew (system clock jumps backward)**                 | `Date.now() - fetchedTime` could be negative. Since negative < TTL, cache treated as fresh. Correct behavior.                   |
+| **Clock jumps forward**                                      | `Date.now() - fetchedTime` is very large. Cache treated as stale. Triggers refresh. Correct behavior.                           |
+| **Local source**                                             | `fetchFromLocalSource()` is called directly. No TTL check. No `.last-fetched`. Unchanged behavior.                              |
+| **Multiple sources**                                         | Each source has its own cache directory. Each gets its own `.last-fetched`. No cross-contamination.                             |
+| **giget ETag optimization**                                  | Even when TTL triggers a re-fetch, giget uses ETags internally. If content hasn't changed, download is fast (304 Not Modified). |
 
 ---
 
@@ -362,6 +362,7 @@ This is safer because the cache directory is never removed before a successful d
 ### Feature 1: Version Check
 
 **wizard-tabs.test.tsx:**
+
 - Renders only current version when `latestVersion` is undefined.
 - Renders only current version when `latestVersion` is the same as `version`.
 - Renders update-available text when `latestVersion` is newer.
@@ -369,14 +370,17 @@ This is safer because the cache directory is never removed before a successful d
 - Update-available text uses warning color.
 
 **hooks/init.test.ts** (new or extended):
+
 - Reads version cache file and attaches `latestVersion` when newer version exists.
 - Does not attach `latestVersion` when cache file doesn't exist.
 - Does not attach `latestVersion` when cache file is invalid JSON.
 - Does not attach `latestVersion` when cached version equals running version.
 - Does not attach `latestVersion` when cached version is older.
+
 ### Feature 2: Source Staleness
 
 **source-fetcher.test.ts** or **source-fetcher-refresh.test.ts:**
+
 - Returns cached result when `.last-fetched` is within TTL.
 - Re-fetches when `.last-fetched` is older than TTL.
 - Re-fetches when `.last-fetched` file doesn't exist (migration case).
@@ -391,23 +395,23 @@ This is safer because the cache directory is never removed before a successful d
 
 ## Files Changed Summary
 
-| File | Feature | Change |
-|------|---------|--------|
-| `package.json` | F1 | Add `warn-if-update-available.timeoutInDays: 1` |
-| `src/cli/hooks/init.ts` | F1 | Read version cache, attach `latestVersion` |
-| `src/cli/base-command.ts` | F1 | Add `latestVersion` getter |
-| `src/cli/commands/init.tsx` | F1 | Pass `latestVersion` prop |
-| `src/cli/commands/edit.tsx` | F1 | Pass `latestVersion` prop |
-| `src/cli/components/wizard/wizard.tsx` | F1 | Accept/forward `latestVersion` prop |
-| `src/cli/components/wizard/wizard-layout.tsx` | F1 | Accept/forward `latestVersion` prop |
-| `src/cli/components/wizard/wizard-tabs.tsx` | F1 | Render update-available text |
-| `src/cli/consts.ts` | F2 | Add `SOURCE_CACHE_TTL_MS` constant |
-| `src/cli/lib/loading/source-fetcher.ts` | F2 | Add TTL check, `isSourceStale()`, `writeLastFetched()` |
+| File                                          | Feature | Change                                                 |
+| --------------------------------------------- | ------- | ------------------------------------------------------ |
+| `package.json`                                | F1      | Add `warn-if-update-available.timeoutInDays: 1`        |
+| `src/cli/hooks/init.ts`                       | F1      | Read version cache, attach `latestVersion`             |
+| `src/cli/base-command.ts`                     | F1      | Add `latestVersion` getter                             |
+| `src/cli/commands/init.tsx`                   | F1      | Pass `latestVersion` prop                              |
+| `src/cli/commands/edit.tsx`                   | F1      | Pass `latestVersion` prop                              |
+| `src/cli/components/wizard/wizard.tsx`        | F1      | Accept/forward `latestVersion` prop                    |
+| `src/cli/components/wizard/wizard-layout.tsx` | F1      | Accept/forward `latestVersion` prop                    |
+| `src/cli/components/wizard/wizard-tabs.tsx`   | F1      | Render update-available text                           |
+| `src/cli/consts.ts`                           | F2      | Add `SOURCE_CACHE_TTL_MS` constant                     |
+| `src/cli/lib/loading/source-fetcher.ts`       | F2      | Add TTL check, `isSourceStale()`, `writeLastFetched()` |
 
 **Test files:**
 
-| File | Feature | Tests |
-|------|---------|-------|
-| `src/cli/components/wizard/wizard-tabs.test.tsx` | F1 | Update-available rendering |
-| `src/cli/hooks/init.test.ts` (new or extended) | F1 | Version cache reading |
-| `src/cli/lib/loading/source-fetcher.test.ts` or `source-fetcher-refresh.test.ts` | F2 | TTL staleness behavior |
+| File                                                                             | Feature | Tests                      |
+| -------------------------------------------------------------------------------- | ------- | -------------------------- |
+| `src/cli/components/wizard/wizard-tabs.test.tsx`                                 | F1      | Update-available rendering |
+| `src/cli/hooks/init.test.ts` (new or extended)                                   | F1      | Version cache reading      |
+| `src/cli/lib/loading/source-fetcher.test.ts` or `source-fetcher-refresh.test.ts` | F2      | TTL staleness behavior     |

@@ -44,14 +44,17 @@ D-38 changes the framework category from exclusive to non-exclusive and adds gra
 The system already has a complete `requires` mechanism:
 
 **Matrix level** (`skills-matrix.yaml` `relationships.requires`):
+
 - Each rule has `skill`, `needs: [...]`, optional `needsAny: true`, and `reason`
 - Currently used for library-to-framework dependencies (zustand requires react/nextjs/remix via `needsAny`)
 - After D-38, will also express meta-framework-to-base-framework dependencies
 
 **Skill level** (`metadata.yaml` `requires` field):
+
 - Per-skill requires declarations, merged into the matrix during `mergeMatrixWithSkills()`
 
 **Resolution** (`matrix-resolver.ts`):
+
 - `isDisabled()` (line 114-161): Checks if a skill has unmet requirements. For `needsAny`, at least one of the required skills must be selected. For AND mode, all must be selected. Returns `true` if the skill cannot be selected.
 - `getDisableReason()` (line 175-224): Returns human-readable reason like "Next.js is built on React (requires React)"
 - `validateRequirements()` (line 368-403): Validation pass that checks all selected skills have their requirements met
@@ -60,6 +63,7 @@ The system already has a complete `requires` mechanism:
 ### Current Toggle Behavior
 
 `toggleTechnology()` in `wizard-store.ts` (line 531-554):
+
 - Takes `(domain, subcategory, technology, exclusive)`
 - If `exclusive=true`: radio behavior (replace previous selection or clear)
 - If `exclusive=false`: checkbox behavior (add/remove independently)
@@ -67,10 +71,12 @@ The system already has a complete `requires` mechanism:
 - **No auto-selection logic** -- just adds/removes from the array
 
 `use-build-step-props.ts` (line 26-33):
+
 - Wraps `toggleTechnology`, passing `cat?.exclusive ?? true` from the matrix category definition
 - Has access to `matrix` (passed as prop)
 
 `use-category-grid-input.ts` (line 138-145):
+
 - Handles spacebar press: checks `currentOption.state !== "disabled"` before calling `onToggle`
 - Does not check requires -- relies on `isDisabled()` having already computed the state
 
@@ -87,6 +93,7 @@ The system already has a complete `requires` mechanism:
    - If the user tries to select a skill that requires React (like zustand), it will be disabled because neither react nor nextjs-app-router alone satisfies `needsAny: [react, nextjs-app-router, ...]` -- WAIT, zustand already lists `nextjs-app-router` in its `needsAny` list, so it would be satisfied.
 
 **Key insight:** After D-38 with Option A (validation-only), the experience is:
+
 - Select Next.js -> works fine
 - Forget to select React -> validation error on confirm step
 - Other React-ecosystem libraries (zustand, react-query) are selectable because they use `needsAny: [react, nextjs-app-router, ...]`
@@ -100,13 +107,13 @@ This is a poor UX. D-39 exists to fix it.
 
 (Identical to D-38 Section "Framework Compatibility Map", reproduced for reference)
 
-| Meta-Framework | Base Framework | Requires Rule |
-|---|---|---|
-| Next.js (`nextjs-app-router`) | React (`react`) | `needs: [react]` |
-| Remix (`remix`) | React (`react`) | `needs: [react]` |
-| Nuxt (`nuxt`) | Vue (`vue`) | `needs: [vue]` |
-| React Native (`react-native`) | React (`react`) | `needs: [react]` |
-| Expo (`expo`) | React Native (`react-native`) | `needs: [react-native]` |
+| Meta-Framework                                   | Base Framework                | Requires Rule                |
+| ------------------------------------------------ | ----------------------------- | ---------------------------- |
+| Next.js (`nextjs-app-router`)                    | React (`react`)               | `needs: [react]`             |
+| Remix (`remix`)                                  | React (`react`)               | `needs: [react]`             |
+| Nuxt (`nuxt`)                                    | Vue (`vue`)                   | `needs: [vue]`               |
+| React Native (`react-native`)                    | React (`react`)               | `needs: [react]`             |
+| Expo (`expo`)                                    | React Native (`react-native`) | `needs: [react-native]`      |
 | Next.js Server Actions (`nextjs-server-actions`) | Next.js (`nextjs-app-router`) | `needs: [nextjs-app-router]` |
 
 Note: `nextjs-server-actions` has `categoryExclusive: false` (it's an add-on, not a standalone framework pick).
@@ -120,10 +127,12 @@ Note: `nextjs-server-actions` has `categoryExclusive: false` (it's an add-on, no
 **How it works:** Rely entirely on the existing `requires` validation. The user must manually select both Next.js and React. If they forget, `validateRequirements()` catches it on the confirm step.
 
 **Pros:**
+
 - Zero code changes beyond D-38
 - Simple, predictable behavior
 
 **Cons:**
+
 - Poor UX: user may not understand why they need to also select React
 - Validation error on confirm step feels like a gotcha
 - Non-obvious coupling: nothing in the UI hints that Next.js needs React
@@ -137,17 +146,20 @@ Note: `nextjs-server-actions` has `categoryExclusive: false` (it's an add-on, no
 **How it works:** When the user selects a meta-framework, automatically also select its required base framework. When the user tries to deselect a base framework that has dependents, block the deselection (treat it as disabled/locked).
 
 **UX flow:**
+
 1. User selects `nextjs-app-router` -> React is auto-selected alongside it
 2. React shows a visual indicator: "(required by Next.js)" label and/or locked border
 3. User tries to deselect React while Next.js is selected -> no-op (blocked)
 4. User deselects Next.js -> React becomes deselectable again (but stays selected; user can manually remove it)
 
 **Pros:**
+
 - Best UX: automatic and intuitive
 - No gotcha on the confirm step
 - Visual feedback explains why the base framework was added
 
 **Cons:**
+
 - Requires changes to `toggleTechnology()` or the hook layer
 - Need to handle the "auto-selected" visual state
 - Need to handle deselection blocking
@@ -161,13 +173,16 @@ Note: `nextjs-server-actions` has `categoryExclusive: false` (it's an add-on, no
 **How it works:** Same as Option B for selection. For deselection: when deselecting a base framework, also deselect all meta-frameworks that depend on it.
 
 **UX flow:**
+
 1. User selects `nextjs-app-router` -> React is auto-selected
 2. User deselects React -> Next.js is also deselected (cascade)
 
 **Pros:**
+
 - Clean deselection behavior
 
 **Cons:**
+
 - Surprising: user deselected one skill but another also disappeared
 - Harder to reason about
 - Edge case complexity: what if React was manually selected BEFORE Next.js?
@@ -301,6 +316,7 @@ export function getAutoSelectTargets(
 ```
 
 Key decisions:
+
 - Only AND-mode requirements (`!needsAny`): if a skill needs "react OR vue", we cannot auto-select one
 - Only same-subcategory: auto-selecting across categories would be confusing (e.g., we should NOT auto-select zustand just because it recommends react). The `requires` rules for meta-frameworks point to base frameworks in the same `web-framework` category, so this naturally scopes to framework coupling.
 - Recursive: Expo -> React Native -> React chains work correctly
@@ -310,11 +326,13 @@ Key decisions:
 Modify the toggle logic to check `getDependentSkills()` before allowing deselection:
 
 **In `use-build-step-props.ts`:**
+
 - Before deselecting a skill, call `getDependentSkills(skillId, allSelections, matrix)`
 - If the result is non-empty, block the deselection (return without calling store)
 - The skill already shows a disabled/required reason via `getDisableReason()` or a new "required by" label
 
 **In `use-category-grid-input.ts`:**
+
 - The space handler already checks `currentOption.state !== "disabled"` (line 141)
 - If we make auto-selected/required skills show `state: "disabled"` (or a new state), the grid input naturally blocks them
 - Alternative: add a new state `"required"` to `OptionState` -- but this adds complexity. Simpler to just handle it in the `onToggle` callback.
@@ -348,14 +366,17 @@ export type CategoryOption = {
 ```
 
 In `build-step-logic.ts` (computation), when building `CategoryOption[]`:
+
 - For each selected skill, check if any other selected skill in the same category requires it
 - If yes, populate `requiredBy` with the dependent skill's display name
 
 In `category-grid.tsx` `SkillTag` (rendering):
+
 - If `option.requiredBy` is set, show "(required by X)" label
 - Use a distinct visual style (e.g., selected color + lock icon or dimmed text)
 
 In `use-category-grid-input.ts`:
+
 - When space is pressed on a skill with `requiredBy` set, treat it as a no-op (same as disabled)
 
 ### Phase 5: Handle `populateFromStack` and `populateFromSkillIds`
@@ -418,6 +439,7 @@ This is intentional: auto-selecting a skill in a different category section that
 ### Unit Tests
 
 **`matrix-resolver.ts`:**
+
 1. `getAutoSelectTargets("nextjs-app-router", matrix, "web-framework")` returns `["web-framework-react"]`
 2. `getAutoSelectTargets("nuxt", matrix, "web-framework")` returns `["web-framework-vue-composition-api"]`
 3. `getAutoSelectTargets("expo", matrix, "mobile-framework")` returns `["mobile-framework-react-native"]` (assuming same category)
@@ -426,24 +448,13 @@ This is intentional: auto-selecting a skill in a different category section that
 6. `getAutoSelectTargets("zustand", matrix, "web-client-state")` returns `[]` (needsAny requirements are not auto-selected)
 7. Expert mode: verify auto-select is skipped
 
-**`getDependentSkills()` (existing function, new test cases):**
-8. `getDependentSkills("react", ["react", "nextjs-app-router"], matrix)` returns `["nextjs-app-router"]`
-9. `getDependentSkills("react", ["react"], matrix)` returns `[]` (no dependents)
-10. `getDependentSkills("react", ["react", "nextjs-app-router", "remix"], matrix)` returns `["nextjs-app-router", "remix"]`
+**`getDependentSkills()` (existing function, new test cases):** 8. `getDependentSkills("react", ["react", "nextjs-app-router"], matrix)` returns `["nextjs-app-router"]` 9. `getDependentSkills("react", ["react"], matrix)` returns `[]` (no dependents) 10. `getDependentSkills("react", ["react", "nextjs-app-router", "remix"], matrix)` returns `["nextjs-app-router", "remix"]`
 
 ### Component/Hook Tests
 
-**`use-build-step-props.ts`:**
-11. Selecting Next.js also selects React in the store
-12. Selecting React alone does not auto-select anything
-13. Deselecting React while Next.js is selected: store unchanged (blocked)
-14. Deselecting Next.js: works, React remains selected
-15. Deselecting React after Next.js is deselected: works
+**`use-build-step-props.ts`:** 11. Selecting Next.js also selects React in the store 12. Selecting React alone does not auto-select anything 13. Deselecting React while Next.js is selected: store unchanged (blocked) 14. Deselecting Next.js: works, React remains selected 15. Deselecting React after Next.js is deselected: works
 
-**`build-step-logic.ts`:**
-16. `CategoryOption` for React has `requiredBy: "Next.js"` when Next.js is selected
-17. `CategoryOption` for React has no `requiredBy` when only React is selected
-18. `CategoryOption` for Vue has `requiredBy: "Nuxt"` when Nuxt is selected
+**`build-step-logic.ts`:** 16. `CategoryOption` for React has `requiredBy: "Next.js"` when Next.js is selected 17. `CategoryOption` for React has no `requiredBy` when only React is selected 18. `CategoryOption` for Vue has `requiredBy: "Nuxt"` when Nuxt is selected
 
 ### Integration Tests
 
@@ -455,17 +466,17 @@ This is intentional: auto-selecting a skill in a different category section that
 
 ## Files Changed Summary
 
-| File | Action | Purpose |
-|---|---|---|
-| `src/cli/lib/matrix/matrix-resolver.ts` | Modified | Add `getAutoSelectTargets()` function |
-| `src/cli/components/hooks/use-build-step-props.ts` | Modified | Wrap `onToggle` with auto-select and deselect-blocking logic |
-| `src/cli/lib/wizard/build-step-logic.ts` | Modified | Compute `requiredBy` field on `CategoryOption` |
-| `src/cli/components/wizard/category-grid.tsx` | Modified | Add `requiredBy` to `CategoryOption` type, render "(required by X)" label, block space on required skills |
-| `src/cli/components/hooks/use-category-grid-input.ts` | Modified | Check `requiredBy` in space handler to block deselection |
-| `src/cli/lib/matrix/matrix-resolver.test.ts` | Modified | Add tests for `getAutoSelectTargets()` |
-| `src/cli/components/hooks/use-build-step-props.test.ts` | New or modified | Tests for auto-select and deselect-blocking |
-| `src/cli/lib/wizard/build-step-logic.test.ts` | Modified | Tests for `requiredBy` computation |
-| `src/cli/components/wizard/category-grid.test.tsx` | Modified | Tests for "required by" rendering |
+| File                                                    | Action          | Purpose                                                                                                   |
+| ------------------------------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------- |
+| `src/cli/lib/matrix/matrix-resolver.ts`                 | Modified        | Add `getAutoSelectTargets()` function                                                                     |
+| `src/cli/components/hooks/use-build-step-props.ts`      | Modified        | Wrap `onToggle` with auto-select and deselect-blocking logic                                              |
+| `src/cli/lib/wizard/build-step-logic.ts`                | Modified        | Compute `requiredBy` field on `CategoryOption`                                                            |
+| `src/cli/components/wizard/category-grid.tsx`           | Modified        | Add `requiredBy` to `CategoryOption` type, render "(required by X)" label, block space on required skills |
+| `src/cli/components/hooks/use-category-grid-input.ts`   | Modified        | Check `requiredBy` in space handler to block deselection                                                  |
+| `src/cli/lib/matrix/matrix-resolver.test.ts`            | Modified        | Add tests for `getAutoSelectTargets()`                                                                    |
+| `src/cli/components/hooks/use-build-step-props.test.ts` | New or modified | Tests for auto-select and deselect-blocking                                                               |
+| `src/cli/lib/wizard/build-step-logic.test.ts`           | Modified        | Tests for `requiredBy` computation                                                                        |
+| `src/cli/components/wizard/category-grid.test.tsx`      | Modified        | Tests for "required by" rendering                                                                         |
 
 **No config changes** -- D-38 handles all `skills-matrix.yaml` and `stacks.yaml` changes. D-39 is purely wizard behavior.
 

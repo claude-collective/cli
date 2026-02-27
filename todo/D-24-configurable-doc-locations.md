@@ -38,6 +38,7 @@ The approach is purely convention-based:
 ### What Already Works
 
 Agent source files already reference docs by filename:
+
 - `src/agents/meta/agent-summoner/critical-requirements.md:3` → `claude-architecture-bible.md`
 - `src/agents/meta/skill-summoner/workflow.md:63` → `prompt-bible.md`
 - `src/agents/meta/documentor/workflow.md:31` → `documentation-bible.md`

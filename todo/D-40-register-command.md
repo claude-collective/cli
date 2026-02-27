@@ -88,40 +88,40 @@ If metadata.yaml exists, show what's there and offer to update specific fields (
 3. For each directory, checks for both `metadata.yaml` AND `SKILL.md`.
 4. If EITHER is missing, the skill is **skipped with a warning**.
 5. Parses `metadata.yaml` with `localRawMetadataSchema.safeParse()`.
-6. If the `cliName` field is missing, the skill is **skipped**.
+6. If the `displayName` field is missing, the skill is **skipped**.
 7. Reads SKILL.md frontmatter via `parseFrontmatter()` -- the `name` field becomes the `skillId`.
 8. Falls back to `LOCAL_DEFAULTS.CATEGORY` ("dummy-category") if no category in metadata.
 
 **Required files for a local skill to be discovered:**
 
-| File | Required | Purpose |
-|------|----------|---------|
-| `SKILL.md` | Yes | Skill content. Frontmatter `name` becomes the skill ID. |
-| `metadata.yaml` | Yes | Category, cliName, description, tags, etc. |
+| File            | Required | Purpose                                                 |
+| --------------- | -------- | ------------------------------------------------------- |
+| `SKILL.md`      | Yes      | Skill content. Frontmatter `name` becomes the skill ID. |
+| `metadata.yaml` | Yes      | Category, displayName, description, tags, etc.          |
 
 **Required metadata.yaml fields** (for discovery to succeed):
 
-| Field | Required | Validation | Example |
-|-------|----------|------------|---------|
-| `cliName` | Yes (loader rejects without it) | Non-empty string | `"My Custom React"` |
-| `cliDescription` | No (falls back to SKILL.md frontmatter description) | String | `"Custom React patterns"` |
-| `category` | No (defaults to "dummy-category") | `CategoryPath` -- either a built-in subcategory, `"local"`, or custom kebab-case when `custom: true` | `"web-framework"` |
-| `categoryExclusive` | No (defaults to `false`) | Boolean | `false` |
-| `usageGuidance` | No | String, min 10 chars for strict validation | `"Use when building custom React components."` |
-| `author` | No (defaults to `"@dummy-author"`) | String, `@handle` format for strict validation | `"@vince"` |
-| `tags` | No | String array | `["react", "custom"]` |
-| `custom` | No | Boolean | `true` (if using custom category) |
-| `contentHash` | No | 7-char hex SHA | `"c48bfef"` |
-| `compatibleWith` | No | SkillId array | `["web-framework-react"]` |
-| `conflictsWith` | No | SkillId array | `[]` |
-| `requires` | No | SkillId array | `["web-framework-react"]` |
+| Field               | Required                                            | Validation                                                                                           | Example                                        |
+| ------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `displayName`       | Yes (loader rejects without it)                     | Non-empty string                                                                                     | `"My Custom React"`                            |
+| `cliDescription`    | No (falls back to SKILL.md frontmatter description) | String                                                                                               | `"Custom React patterns"`                      |
+| `category`          | No (defaults to "dummy-category")                   | `CategoryPath` -- either a built-in subcategory, `"local"`, or custom kebab-case when `custom: true` | `"web-framework"`                              |
+| `categoryExclusive` | No (defaults to `false`)                            | Boolean                                                                                              | `false`                                        |
+| `usageGuidance`     | No                                                  | String, min 10 chars for strict validation                                                           | `"Use when building custom React components."` |
+| `author`            | No (defaults to `"@dummy-author"`)                  | String, `@handle` format for strict validation                                                       | `"@vince"`                                     |
+| `tags`              | No                                                  | String array                                                                                         | `["react", "custom"]`                          |
+| `custom`            | No                                                  | Boolean                                                                                              | `true` (if using custom category)              |
+| `contentHash`       | No                                                  | 7-char hex SHA                                                                                       | `"c48bfef"`                                    |
+| `compatibleWith`    | No                                                  | SkillId array                                                                                        | `["web-framework-react"]`                      |
+| `conflictsWith`     | No                                                  | SkillId array                                                                                        | `[]`                                           |
+| `requires`          | No                                                  | SkillId array                                                                                        | `["web-framework-react"]`                      |
 
 **SKILL.md frontmatter requirements** (for `parseFrontmatter()` to succeed):
 
-| Field | Required | Example |
-|-------|----------|---------|
-| `name` | Yes | `my-custom-react-patterns` |
-| `description` | Yes | `"Custom React patterns for our team"` |
+| Field         | Required | Example                                |
+| ------------- | -------- | -------------------------------------- |
+| `name`        | Yes      | `my-custom-react-patterns`             |
+| `description` | Yes      | `"Custom React patterns for our team"` |
 
 ### The gap `register` fills
 
@@ -149,25 +149,25 @@ Where `<path>` is the path to a skill directory containing a `SKILL.md` (e.g., `
 
 ### Arguments
 
-| Arg | Required | Description |
-|-----|----------|-------------|
-| `path` | Yes | Path to skill directory (must contain SKILL.md) |
+| Arg    | Required | Description                                     |
+| ------ | -------- | ----------------------------------------------- |
+| `path` | Yes      | Path to skill directory (must contain SKILL.md) |
 
 ### Flags
 
-| Flag | Short | Type | Default | Description |
-|------|-------|------|---------|-------------|
-| `--category` | `-c` | string | (required) | Subcategory to assign (e.g., `web-framework`) |
-| `--name` | `-n` | string | (from frontmatter) | Display name for the wizard (cliName field) |
-| `--description` | `-d` | string | (from frontmatter) | One-line description (cliDescription field) |
-| `--author` | `-a` | string | (from project config or `@local`) | Author handle |
-| `--agents` | | string | (all agents) | Comma-separated agent IDs to wire this skill to |
-| `--exclusive` | | boolean | false | Whether this category should be exclusive (radio vs checkbox) |
-| `--custom-category` | | boolean | false | Allow category values not in the built-in enum |
-| `--force` | `-f` | boolean | false | Overwrite existing metadata.yaml |
-| `--skip-config` | | boolean | false | Only generate metadata, don't wire into config.yaml |
-| `--dry-run` | | boolean | false | Preview operations without writing files |
-| `--source` | `-s` | string | | Skills source (inherited from BaseCommand) |
+| Flag                | Short | Type    | Default                           | Description                                                   |
+| ------------------- | ----- | ------- | --------------------------------- | ------------------------------------------------------------- |
+| `--category`        | `-c`  | string  | (required)                        | Subcategory to assign (e.g., `web-framework`)                 |
+| `--name`            | `-n`  | string  | (from frontmatter)                | Display name for the wizard (displayName field)               |
+| `--description`     | `-d`  | string  | (from frontmatter)                | One-line description (cliDescription field)                   |
+| `--author`          | `-a`  | string  | (from project config or `@local`) | Author handle                                                 |
+| `--agents`          |       | string  | (all agents)                      | Comma-separated agent IDs to wire this skill to               |
+| `--exclusive`       |       | boolean | false                             | Whether this category should be exclusive (radio vs checkbox) |
+| `--custom-category` |       | boolean | false                             | Allow category values not in the built-in enum                |
+| `--force`           | `-f`  | boolean | false                             | Overwrite existing metadata.yaml                              |
+| `--skip-config`     |       | boolean | false                             | Only generate metadata, don't wire into config.yaml           |
+| `--dry-run`         |       | boolean | false                             | Preview operations without writing files                      |
+| `--source`          | `-s`  | string  |                                   | Skills source (inherited from BaseCommand)                    |
 
 ### Interactive prompts (future v2 enhancement)
 
@@ -188,12 +188,12 @@ Where `<path>` is the path to a skill directory containing a `SKILL.md` (e.g., `
 
 ### Exit codes
 
-| Code | Constant | When |
-|------|----------|------|
-| 0 | `EXIT_CODES.SUCCESS` | Registration successful |
-| 1 | `EXIT_CODES.ERROR` | General error (write failure, etc.) |
-| 2 | `EXIT_CODES.INVALID_ARGS` | Missing SKILL.md, invalid path, invalid category |
-| 4 | `EXIT_CODES.CANCELLED` | User cancelled interactive prompt |
+| Code | Constant                  | When                                             |
+| ---- | ------------------------- | ------------------------------------------------ |
+| 0    | `EXIT_CODES.SUCCESS`      | Registration successful                          |
+| 1    | `EXIT_CODES.ERROR`        | General error (write failure, etc.)              |
+| 2    | `EXIT_CODES.INVALID_ARGS` | Missing SKILL.md, invalid path, invalid category |
+| 4    | `EXIT_CODES.CANCELLED`    | User cancelled interactive prompt                |
 
 ---
 
@@ -216,7 +216,7 @@ Where `<path>` is the path to a skill directory containing a `SKILL.md` (e.g., `
 
 3. GATHER METADATA (from flags with defaults)
    - category: --category flag (required, validated against SUBCATEGORY_VALUES or custom kebab-case with --custom-category)
-   - cliName: --name flag OR toTitleCase(skillDirName)
+   - displayName: --name flag OR toTitleCase(skillDirName)
    - cliDescription: --description flag OR frontmatter.description
    - author: --author flag OR resolveAuthor(projectDir) OR "@local"
    - exclusive: --exclusive flag OR false
@@ -325,7 +325,7 @@ A dedicated function that builds the metadata.yaml content string, supporting al
 ```typescript
 type RegisterMetadataOptions = {
   category: CategoryPath;
-  cliName: string;
+  displayName: string;
   cliDescription: string;
   author: string;
   categoryExclusive: boolean;
@@ -354,10 +354,11 @@ function addSkillToConfig(
   skillId: SkillId,
   subcategory: Subcategory,
   agentIds: AgentName[],
-): ProjectConfig
+): ProjectConfig;
 ```
 
 This function:
+
 1. Adds `skillId` to `config.skills` (deduplicates).
 2. For each agent in `agentIds`: ensures `config.stack[agent][subcategory]` exists and adds a `{ id: skillId, preloaded: false }` entry.
 3. Returns the modified config.
@@ -435,7 +436,7 @@ After generating metadata.yaml:
 
 ### 10. SKILL.md name doesn't match SkillId pattern
 
-- If the frontmatter `name` doesn't match `SKILL_ID_PATTERN` (`/^(web|api|cli|mobile|infra|meta|security)-.+-.+$/`), and `--custom-category` is not set, warn: "Skill ID `my-patterns` doesn't follow the standard prefix pattern (web-*, api-*, etc.). This is fine for local skills but may cause validation warnings. Use `--custom-category` to suppress this warning."
+- If the frontmatter `name` doesn't match `SKILL_ID_PATTERN` (`/^(web|api|cli|mobile|infra|meta|security)-.+-.+$/`), and `--custom-category` is not set, warn: "Skill ID `my-patterns` doesn't follow the standard prefix pattern (web-_, api-_, etc.). This is fine for local skills but may cause validation warnings. Use `--custom-category` to suppress this warning."
 - With `--custom-category`, this is expected and no warning is needed.
 
 ---
@@ -446,44 +447,44 @@ After generating metadata.yaml:
 
 **File: `src/cli/commands/register/__tests__/skill.test.ts`**
 
-| Test | Description |
-|------|-------------|
-| Validates path argument is required | Missing path errors with INVALID_ARGS |
-| Rejects missing SKILL.md | Directory without SKILL.md errors |
-| Rejects invalid SKILL.md frontmatter | Missing `name` or `description` in frontmatter |
-| Generates valid metadata.yaml | Given valid inputs, produces correct YAML |
-| Respects --category flag | Category from flag used in metadata |
-| Respects --name flag | cliName from flag used in metadata |
-| Respects --author flag | Author from flag used in metadata |
-| Defaults author from project config | Uses `resolveAuthor()` when no flag |
-| Respects --force flag | Overwrites existing metadata.yaml |
-| Errors without --force when metadata exists | Existing metadata.yaml without --force errors |
-| Dry-run mode | No files written, summary shown |
-| Validates generated metadata | `localRawMetadataSchema` passes on output |
-| Custom category with --custom-category | Sets `custom: true` in metadata |
-| Custom category validates kebab-case | Non-kebab-case custom category rejected |
-| Computes content hash | contentHash field present and valid |
+| Test                                        | Description                                    |
+| ------------------------------------------- | ---------------------------------------------- |
+| Validates path argument is required         | Missing path errors with INVALID_ARGS          |
+| Rejects missing SKILL.md                    | Directory without SKILL.md errors              |
+| Rejects invalid SKILL.md frontmatter        | Missing `name` or `description` in frontmatter |
+| Generates valid metadata.yaml               | Given valid inputs, produces correct YAML      |
+| Respects --category flag                    | Category from flag used in metadata            |
+| Respects --name flag                        | displayName from flag used in metadata         |
+| Respects --author flag                      | Author from flag used in metadata              |
+| Defaults author from project config         | Uses `resolveAuthor()` when no flag            |
+| Respects --force flag                       | Overwrites existing metadata.yaml              |
+| Errors without --force when metadata exists | Existing metadata.yaml without --force errors  |
+| Dry-run mode                                | No files written, summary shown                |
+| Validates generated metadata                | `localRawMetadataSchema` passes on output      |
+| Custom category with --custom-category      | Sets `custom: true` in metadata                |
+| Custom category validates kebab-case        | Non-kebab-case custom category rejected        |
+| Computes content hash                       | contentHash field present and valid            |
 
 **File: `src/cli/lib/configuration/__tests__/register-config.test.ts`** (if config wiring is extracted)
 
-| Test | Description |
-|------|-------------|
-| Adds skill to config.skills | SkillId added, no duplicates |
-| Adds skill to stack mapping | stack[agent][subcategory] updated |
-| Handles missing stack | Creates stack property if absent |
-| Handles missing agent entry | Creates agent entry in stack |
-| Deduplicates skills | Adding existing skill is idempotent |
-| Preserves existing config fields | Other config fields untouched |
-| Skips wiring when no config | No error, metadata-only mode |
-| Skips wiring with --skip-config | Metadata generated, config untouched |
+| Test                             | Description                          |
+| -------------------------------- | ------------------------------------ |
+| Adds skill to config.skills      | SkillId added, no duplicates         |
+| Adds skill to stack mapping      | stack[agent][subcategory] updated    |
+| Handles missing stack            | Creates stack property if absent     |
+| Handles missing agent entry      | Creates agent entry in stack         |
+| Deduplicates skills              | Adding existing skill is idempotent  |
+| Preserves existing config fields | Other config fields untouched        |
+| Skips wiring when no config      | No error, metadata-only mode         |
+| Skips wiring with --skip-config  | Metadata generated, config untouched |
 
 ### Integration tests
 
-| Test | Description |
-|------|-------------|
-| Full register flow | Create skill dir, write SKILL.md, run register, verify metadata.yaml and config.yaml |
-| Register + compile | Register skill, then compile, verify skill appears in agent output |
-| Register outside .claude/skills/ | Warns about path, still generates metadata |
+| Test                             | Description                                                                          |
+| -------------------------------- | ------------------------------------------------------------------------------------ |
+| Full register flow               | Create skill dir, write SKILL.md, run register, verify metadata.yaml and config.yaml |
+| Register + compile               | Register skill, then compile, verify skill appears in agent output                   |
+| Register outside .claude/skills/ | Warns about path, still generates metadata                                           |
 
 ### Manual testing
 
@@ -502,24 +503,24 @@ After generating metadata.yaml:
 
 ### New files
 
-| File | Purpose |
-|------|---------|
-| `src/cli/commands/register/skill.ts` | Main command implementation |
-| `src/cli/commands/register/__tests__/skill.test.ts` | Command tests |
-| `src/cli/utils/skill-helpers.ts` | Shared utilities extracted from `new/skill.ts`: `toTitleCase()`, `validateSkillName()` |
+| File                                                | Purpose                                                                                |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `src/cli/commands/register/skill.ts`                | Main command implementation                                                            |
+| `src/cli/commands/register/__tests__/skill.test.ts` | Command tests                                                                          |
+| `src/cli/utils/skill-helpers.ts`                    | Shared utilities extracted from `new/skill.ts`: `toTitleCase()`, `validateSkillName()` |
 
 ### Modified files
 
-| File | Change |
-|------|--------|
+| File                            | Change                                                                                                                         |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `src/cli/commands/new/skill.ts` | Update imports: use `toTitleCase()` and `validateSkillName()` from `../../utils/skill-helpers.js` instead of local definitions |
 
 **Additionally, if extracting config wiring helper:**
 
-| File | Change |
-|------|--------|
+| File                                            | Change                                    |
+| ----------------------------------------------- | ----------------------------------------- |
 | `src/cli/lib/configuration/config-generator.ts` | Add `addSkillToExistingConfig()` function |
-| `src/cli/lib/configuration/index.ts` | Export new function |
+| `src/cli/lib/configuration/index.ts`            | Export new function                       |
 
 ### Dependencies
 
@@ -531,23 +532,23 @@ No new dependencies required. Uses existing:
 
 ### Reused utilities
 
-| Utility | From | Purpose |
-|---------|------|---------|
-| `toTitleCase()` | `utils/skill-helpers.ts` (extracted from `commands/new/skill.ts`) | Default cliName |
-| `validateSkillName()` | `utils/skill-helpers.ts` (extracted from `commands/new/skill.ts`) | Validate skill name format |
-| `computeSkillFolderHash()` | `lib/versioning.ts` | contentHash field |
-| `parseFrontmatter()` | `lib/loading/loader.ts` | Read SKILL.md frontmatter |
-| `localRawMetadataSchema` | `lib/schemas.ts` | Validate generated metadata |
-| `loadProjectConfig()` | `lib/configuration/project-config.ts` | Read existing config |
-| `resolveAuthor()` | `lib/configuration/index.ts` | Default author |
-| `compactStackForYaml()` | `lib/configuration/config-generator.ts` | Config serialization |
-| `SUBCATEGORY_VALUES` | `lib/schemas.ts` | Category enum values |
-| `STANDARD_FILES` | `consts.ts` | File name constants |
-| `LOCAL_SKILLS_PATH` | `consts.ts` | Default skill location |
-| `EXIT_CODES` | `lib/exit-codes.ts` | Exit code constants |
-| `KEBAB_CASE_PATTERN` | `consts.ts` | Category name validation |
-| `YAML_FORMATTING` | `consts.ts` | YAML output formatting |
-| `SCHEMA_PATHS` | `consts.ts` | yaml-language-server schema comments |
+| Utility                    | From                                                              | Purpose                              |
+| -------------------------- | ----------------------------------------------------------------- | ------------------------------------ |
+| `toTitleCase()`            | `utils/skill-helpers.ts` (extracted from `commands/new/skill.ts`) | Default displayName                  |
+| `validateSkillName()`      | `utils/skill-helpers.ts` (extracted from `commands/new/skill.ts`) | Validate skill name format           |
+| `computeSkillFolderHash()` | `lib/versioning.ts`                                               | contentHash field                    |
+| `parseFrontmatter()`       | `lib/loading/loader.ts`                                           | Read SKILL.md frontmatter            |
+| `localRawMetadataSchema`   | `lib/schemas.ts`                                                  | Validate generated metadata          |
+| `loadProjectConfig()`      | `lib/configuration/project-config.ts`                             | Read existing config                 |
+| `resolveAuthor()`          | `lib/configuration/index.ts`                                      | Default author                       |
+| `compactStackForYaml()`    | `lib/configuration/config-generator.ts`                           | Config serialization                 |
+| `SUBCATEGORY_VALUES`       | `lib/schemas.ts`                                                  | Category enum values                 |
+| `STANDARD_FILES`           | `consts.ts`                                                       | File name constants                  |
+| `LOCAL_SKILLS_PATH`        | `consts.ts`                                                       | Default skill location               |
+| `EXIT_CODES`               | `lib/exit-codes.ts`                                               | Exit code constants                  |
+| `KEBAB_CASE_PATTERN`       | `consts.ts`                                                       | Category name validation             |
+| `YAML_FORMATTING`          | `consts.ts`                                                       | YAML output formatting               |
+| `SCHEMA_PATHS`             | `consts.ts`                                                       | yaml-language-server schema comments |
 
 ### NOT changing (scope control)
 

@@ -57,16 +57,16 @@ The `exclusive` field on `CategoryDefinition` already enforces single-selection 
 
 The previous plan was to **delete `isDisabled()` entirely** and hardcode `disabled: false` for all skills. The updated plan is more nuanced:
 
-| Aspect | Previous Plan | Updated Plan |
-|--------|---------------|--------------|
-| `isDisabled()` function | DELETE entirely | **REPURPOSE**: rename to extend `isDiscouraged()` to also check conflicts/requirements |
-| `getDisableReason()` function | DELETE entirely | **REPURPOSE**: merge logic into `getDiscourageReason()` |
-| `disabled` field on `SkillOption` | Always `false` | **REMOVE**: delete from `SkillOption` type entirely |
-| `disabledReason` field on `SkillOption` | Always `undefined` | **REMOVE**: delete from `SkillOption` type entirely |
-| `OptionState` union | Keep `"disabled"` variant (unused) | **REMOVE `"disabled"` variant** from union |
-| `isCategoryAllDisabled()` | Always return `{ disabled: false }` | **DELETE**: no skills are ever disabled, so "all disabled" is impossible |
-| Selection counters | Hide (hardcode `null`) | **ALWAYS SHOW** (remove the conditional) |
-| `discouraged` state | Unchanged | **EXPANDED**: now also covers conflicts and unmet requirements |
+| Aspect                                  | Previous Plan                       | Updated Plan                                                                           |
+| --------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------- |
+| `isDisabled()` function                 | DELETE entirely                     | **REPURPOSE**: rename to extend `isDiscouraged()` to also check conflicts/requirements |
+| `getDisableReason()` function           | DELETE entirely                     | **REPURPOSE**: merge logic into `getDiscourageReason()`                                |
+| `disabled` field on `SkillOption`       | Always `false`                      | **REMOVE**: delete from `SkillOption` type entirely                                    |
+| `disabledReason` field on `SkillOption` | Always `undefined`                  | **REMOVE**: delete from `SkillOption` type entirely                                    |
+| `OptionState` union                     | Keep `"disabled"` variant (unused)  | **REMOVE `"disabled"` variant** from union                                             |
+| `isCategoryAllDisabled()`               | Always return `{ disabled: false }` | **DELETE**: no skills are ever disabled, so "all disabled" is impossible               |
+| Selection counters                      | Hide (hardcode `null`)              | **ALWAYS SHOW** (remove the conditional)                                               |
+| `discouraged` state                     | Unchanged                           | **EXPANDED**: now also covers conflicts and unmet requirements                         |
 
 ---
 
@@ -89,6 +89,7 @@ The function returns `true` (skill shows yellow warning) when:
 ### How these will be merged
 
 After the change, `isDiscouraged()` will check ALL of:
+
 1. Existing `discourages` relationships (unchanged)
 2. `conflictsWith` relationships (moved from `isDisabled()`)
 3. Unmet `requires` dependencies (moved from `isDisabled()`)
@@ -101,38 +102,38 @@ Similarly, `getDiscourageReason()` will be expanded to return reasons for confli
 
 #### Production Files (14 files)
 
-| File | Line(s) | What it does |
-|------|---------|--------------|
-| `src/cli/stores/wizard-store.ts` | 170, 291-292, 419, 580 | State field (`expertMode: boolean`), initial value (`false`), `toggleExpertMode` action |
-| `src/cli/types/config.ts` | 61-66 | `expertMode?: boolean` field on `ProjectConfig` type |
-| `src/cli/lib/schemas.ts` | 498-499, 534-535 | Zod schemas: `expertMode: z.boolean().optional()` in both `projectConfigSchema` and `projectConfigValidationSchema` |
-| `src/schemas/project-config.schema.json` | 38-40 | JSON Schema: `"expertMode": { "type": "boolean" }` |
-| `src/cli/commands/init.tsx` | 118 | `initialExpertMode={!!flags.source}` -- auto-enables when `--source` flag is used |
-| `src/cli/commands/edit.tsx` | 128 | `initialExpertMode={projectConfig?.config?.expertMode}` -- restores from saved config |
-| `src/cli/components/wizard/wizard.tsx` | 34, 53, 72, 91, 148, 194 | `WizardResultV2.expertMode`, `WizardProps.initialExpertMode`, key "e"/"E" handler calling `toggleExpertMode`, includes in result |
-| `src/cli/components/wizard/step-build.tsx` | 25, 58, 74, 127 | `StepBuildProps.expertMode`, passes to `useFrameworkFiltering` and `CategoryGrid` |
-| `src/cli/components/wizard/category-grid.tsx` | 35, 156, 167, 171, 213, 361 | `CategoryGridProps.expertMode`, `CategorySectionProps.expertMode`, hides selection counter |
-| `src/cli/components/wizard/wizard-layout.tsx` | 121 | Status bar: `<DefinitionItem label="Expert mode" values={["E"]} isActive={store.expertMode} />` |
-| `src/cli/components/wizard/help-modal.tsx` | 25 | Help text: `{ key: "E", description: "Toggle expert mode" }` |
-| `src/cli/components/hooks/use-build-step-props.ts` | 54 | Passes `store.expertMode` to `StepBuildProps` |
-| `src/cli/components/hooks/use-framework-filtering.ts` | 15, 24, 34, 38 | `expertMode` in options type, passed to `buildCategoriesForDomain()` |
-| `src/cli/components/hooks/use-wizard-initialization.ts` | 9, 23, 44-45 | `initialExpertMode` prop, sets `expertMode` in store on init |
-| `src/cli/lib/matrix/matrix-resolver.ts` | 93, 120, 545, 617, 626 | `SkillCheckOptions.expertMode`, bypasses constraints in `isDisabled()`, `getAvailableSkills()`, `isCategoryAllDisabled()` |
-| `src/cli/lib/wizard/build-step-logic.ts` | 117, 137 | `expertMode` param in `buildCategoriesForDomain()`, passes to `getAvailableSkills()` |
-| `src/cli/lib/installation/local-installer.ts` | 265-268 | Persists `expertMode: true` to project config YAML |
+| File                                                    | Line(s)                     | What it does                                                                                                                     |
+| ------------------------------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `src/cli/stores/wizard-store.ts`                        | 170, 291-292, 419, 580      | State field (`expertMode: boolean`), initial value (`false`), `toggleExpertMode` action                                          |
+| `src/cli/types/config.ts`                               | 61-66                       | `expertMode?: boolean` field on `ProjectConfig` type                                                                             |
+| `src/cli/lib/schemas.ts`                                | 498-499, 534-535            | Zod schemas: `expertMode: z.boolean().optional()` in both `projectConfigSchema` and `projectConfigValidationSchema`              |
+| `src/schemas/project-config.schema.json`                | 38-40                       | JSON Schema: `"expertMode": { "type": "boolean" }`                                                                               |
+| `src/cli/commands/init.tsx`                             | 118                         | `initialExpertMode={!!flags.source}` -- auto-enables when `--source` flag is used                                                |
+| `src/cli/commands/edit.tsx`                             | 128                         | `initialExpertMode={projectConfig?.config?.expertMode}` -- restores from saved config                                            |
+| `src/cli/components/wizard/wizard.tsx`                  | 34, 53, 72, 91, 148, 194    | `WizardResultV2.expertMode`, `WizardProps.initialExpertMode`, key "e"/"E" handler calling `toggleExpertMode`, includes in result |
+| `src/cli/components/wizard/step-build.tsx`              | 25, 58, 74, 127             | `StepBuildProps.expertMode`, passes to `useFrameworkFiltering` and `CategoryGrid`                                                |
+| `src/cli/components/wizard/category-grid.tsx`           | 35, 156, 167, 171, 213, 361 | `CategoryGridProps.expertMode`, `CategorySectionProps.expertMode`, hides selection counter                                       |
+| `src/cli/components/wizard/wizard-layout.tsx`           | 121                         | Status bar: `<DefinitionItem label="Expert mode" values={["E"]} isActive={store.expertMode} />`                                  |
+| `src/cli/components/wizard/help-modal.tsx`              | 25                          | Help text: `{ key: "E", description: "Toggle expert mode" }`                                                                     |
+| `src/cli/components/hooks/use-build-step-props.ts`      | 54                          | Passes `store.expertMode` to `StepBuildProps`                                                                                    |
+| `src/cli/components/hooks/use-framework-filtering.ts`   | 15, 24, 34, 38              | `expertMode` in options type, passed to `buildCategoriesForDomain()`                                                             |
+| `src/cli/components/hooks/use-wizard-initialization.ts` | 9, 23, 44-45                | `initialExpertMode` prop, sets `expertMode` in store on init                                                                     |
+| `src/cli/lib/matrix/matrix-resolver.ts`                 | 93, 120, 545, 617, 626      | `SkillCheckOptions.expertMode`, bypasses constraints in `isDisabled()`, `getAvailableSkills()`, `isCategoryAllDisabled()`        |
+| `src/cli/lib/wizard/build-step-logic.ts`                | 117, 137                    | `expertMode` param in `buildCategoriesForDomain()`, passes to `getAvailableSkills()`                                             |
+| `src/cli/lib/installation/local-installer.ts`           | 265-268                     | Persists `expertMode: true` to project config YAML                                                                               |
 
 #### Test Files (10 files)
 
-| File | What's tested |
-|------|---------------|
-| `src/cli/stores/wizard-store.test.ts` | Initial state, toggleExpertMode on/off, reset clears expertMode |
-| `src/cli/lib/matrix/matrix-resolver.test.ts` | Expert mode bypasses conflicts (P1-23), bypasses isDisabled, bypasses isCategoryAllDisabled, still validates |
-| `src/cli/components/wizard/category-grid.test.tsx` | expertMode prop in renderGrid, sort order preservation, counter hiding |
-| `src/cli/components/wizard/step-build.test.tsx` | expertMode prop passthrough to CategoryGrid |
-| `src/cli/lib/installation/local-installer.test.ts` | `expertMode: false` in mock wizard result |
-| `src/cli/lib/__tests__/helpers.ts` | `expertMode: false` in `buildWizardResult()` and `buildWizardResultFromStore()` factories |
-| `src/cli/lib/__tests__/integration/init-end-to-end.integration.test.ts` | Expert mode persistence to config |
-| `src/cli/lib/__tests__/integration/wizard-flow.integration.test.tsx` | "E" keyboard toggle, expertMode in result |
+| File                                                                    | What's tested                                                                                                |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `src/cli/stores/wizard-store.test.ts`                                   | Initial state, toggleExpertMode on/off, reset clears expertMode                                              |
+| `src/cli/lib/matrix/matrix-resolver.test.ts`                            | Expert mode bypasses conflicts (P1-23), bypasses isDisabled, bypasses isCategoryAllDisabled, still validates |
+| `src/cli/components/wizard/category-grid.test.tsx`                      | expertMode prop in renderGrid, sort order preservation, counter hiding                                       |
+| `src/cli/components/wizard/step-build.test.tsx`                         | expertMode prop passthrough to CategoryGrid                                                                  |
+| `src/cli/lib/installation/local-installer.test.ts`                      | `expertMode: false` in mock wizard result                                                                    |
+| `src/cli/lib/__tests__/helpers.ts`                                      | `expertMode: false` in `buildWizardResult()` and `buildWizardResultFromStore()` factories                    |
+| `src/cli/lib/__tests__/integration/init-end-to-end.integration.test.ts` | Expert mode persistence to config                                                                            |
+| `src/cli/lib/__tests__/integration/wizard-flow.integration.test.tsx`    | "E" keyboard toggle, expertMode in result                                                                    |
 
 ---
 
@@ -142,15 +143,15 @@ For each reference, the action is **REMOVE** (delete the code), **REPURPOSE** (c
 
 ### Matrix Resolver -- REPURPOSE (conflicts/requirements become discouraged)
 
-| Location | Action |
-|----------|--------|
-| `SkillCheckOptions` type (line 93) | **DELETE** the type entirely. It has only one field (`expertMode`). |
-| `isDisabled()` function (line 114) | **DELETE** the function. Its conflict/requirement logic is merged into `isDiscouraged()`. |
-| `getDisableReason()` function (line 175) | **DELETE** the function. Its logic is merged into `getDiscourageReason()`. |
-| `isDiscouraged()` function (line 226) | **EXPAND**: add conflict checks (from `isDisabled()`) and unmet-requirement checks (from `isDisabled()`). |
-| `getDiscourageReason()` function (line 254) | **EXPAND**: add conflict and requirement reason messages (from `getDisableReason()`). |
-| `isCategoryAllDisabled()` function (line 620) | **DELETE** entirely. No skills are ever disabled, so "all disabled" is impossible. |
-| `getAvailableSkills()` (line 548) | **SIMPLIFY**: Remove `options` parameter. Remove `isDisabled()` call. Remove `disabled`/`disabledReason` from the returned objects. The `discouraged` check now covers conflicts and requirements too. |
+| Location                                      | Action                                                                                                                                                                                                 |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `SkillCheckOptions` type (line 93)            | **DELETE** the type entirely. It has only one field (`expertMode`).                                                                                                                                    |
+| `isDisabled()` function (line 114)            | **DELETE** the function. Its conflict/requirement logic is merged into `isDiscouraged()`.                                                                                                              |
+| `getDisableReason()` function (line 175)      | **DELETE** the function. Its logic is merged into `getDiscourageReason()`.                                                                                                                             |
+| `isDiscouraged()` function (line 226)         | **EXPAND**: add conflict checks (from `isDisabled()`) and unmet-requirement checks (from `isDisabled()`).                                                                                              |
+| `getDiscourageReason()` function (line 254)   | **EXPAND**: add conflict and requirement reason messages (from `getDisableReason()`).                                                                                                                  |
+| `isCategoryAllDisabled()` function (line 620) | **DELETE** entirely. No skills are ever disabled, so "all disabled" is impossible.                                                                                                                     |
+| `getAvailableSkills()` (line 548)             | **SIMPLIFY**: Remove `options` parameter. Remove `isDisabled()` call. Remove `disabled`/`disabledReason` from the returned objects. The `discouraged` check now covers conflicts and requirements too. |
 
 **Detailed approach for matrix-resolver:**
 
@@ -172,134 +173,134 @@ For each reference, the action is **REMOVE** (delete the code), **REPURPOSE** (c
 
 ### Wizard Store -- REMOVE
 
-| Location | Action |
-|----------|--------|
-| `expertMode: boolean` state (line 170) | REMOVE field |
-| `expertMode: false` initial value (line 419) | REMOVE |
-| `toggleExpertMode` action declaration (lines 291-292) | REMOVE |
-| `toggleExpertMode` implementation (line 580) | REMOVE |
+| Location                                              | Action       |
+| ----------------------------------------------------- | ------------ |
+| `expertMode: boolean` state (line 170)                | REMOVE field |
+| `expertMode: false` initial value (line 419)          | REMOVE       |
+| `toggleExpertMode` action declaration (lines 291-292) | REMOVE       |
+| `toggleExpertMode` implementation (line 580)          | REMOVE       |
 
 ### Config Type -- REMOVE
 
-| Location | Action |
-|----------|--------|
+| Location                                                | Action                 |
+| ------------------------------------------------------- | ---------------------- |
 | `expertMode?: boolean` on `ProjectConfig` (lines 61-66) | REMOVE field and JSDoc |
 
 ### Zod Schemas -- REMOVE
 
-| Location | Action |
-|----------|--------|
-| `expertMode: z.boolean().optional()` in `projectConfigSchema` (line 499) | REMOVE |
+| Location                                                                           | Action |
+| ---------------------------------------------------------------------------------- | ------ |
+| `expertMode: z.boolean().optional()` in `projectConfigSchema` (line 499)           | REMOVE |
 | `expertMode: z.boolean().optional()` in `projectConfigValidationSchema` (line 535) | REMOVE |
 
 ### JSON Schema -- REMOVE
 
-| Location | Action |
-|----------|--------|
+| Location                                            | Action |
+| --------------------------------------------------- | ------ |
 | `"expertMode": { "type": "boolean" }` (lines 38-40) | REMOVE |
 
 ### Commands -- REMOVE
 
-| Location | Action |
-|----------|--------|
-| `init.tsx` -- `initialExpertMode={!!flags.source}` (line 118) | REMOVE prop |
+| Location                                                                         | Action      |
+| -------------------------------------------------------------------------------- | ----------- |
+| `init.tsx` -- `initialExpertMode={!!flags.source}` (line 118)                    | REMOVE prop |
 | `edit.tsx` -- `initialExpertMode={projectConfig?.config?.expertMode}` (line 128) | REMOVE prop |
 
 ### Wizard Component -- REMOVE
 
-| Location | Action |
-|----------|--------|
-| `WizardResultV2.expertMode` (line 34) | REMOVE field |
-| `WizardProps.initialExpertMode` (line 53) | REMOVE prop |
-| Destructuring `initialExpertMode` (line 72) | REMOVE |
-| Passing to `useWizardInitialization` (line 91) | REMOVE |
-| "e"/"E" key handler (lines 147-149) | REMOVE the handler |
-| `expertMode: store.expertMode` in result (line 194) | REMOVE |
+| Location                                            | Action             |
+| --------------------------------------------------- | ------------------ |
+| `WizardResultV2.expertMode` (line 34)               | REMOVE field       |
+| `WizardProps.initialExpertMode` (line 53)           | REMOVE prop        |
+| Destructuring `initialExpertMode` (line 72)         | REMOVE             |
+| Passing to `useWizardInitialization` (line 91)      | REMOVE             |
+| "e"/"E" key handler (lines 147-149)                 | REMOVE the handler |
+| `expertMode: store.expertMode` in result (line 194) | REMOVE             |
 
 ### StepBuild -- REMOVE
 
-| Location | Action |
-|----------|--------|
-| `StepBuildProps.expertMode` (line 25) | REMOVE prop |
-| Destructuring (line 58) | REMOVE |
-| Passing to `useFrameworkFiltering` (line 74) | REMOVE |
-| Passing to `CategoryGrid` (line 127) | REMOVE prop |
+| Location                                     | Action      |
+| -------------------------------------------- | ----------- |
+| `StepBuildProps.expertMode` (line 25)        | REMOVE prop |
+| Destructuring (line 58)                      | REMOVE      |
+| Passing to `useFrameworkFiltering` (line 74) | REMOVE      |
+| Passing to `CategoryGrid` (line 127)         | REMOVE prop |
 
 ### CategoryGrid -- REMOVE + SIMPLIFY
 
-| Location | Action |
-|----------|--------|
-| `CategoryGridProps.expertMode` (line 35) | REMOVE prop |
-| `CategorySectionProps.expertMode` (line 156) | REMOVE prop |
-| Destructuring in `CategorySection` (line 167) | REMOVE |
-| `"disabled"` variant from `OptionState` union (line 10) | **REMOVE** -- `"disabled"` is no longer a valid state |
-| `disabled: 3` from `STATE_PRIORITY` (line 56) | **REMOVE** |
-| `"disabled"` checks in `SkillTag` (lines 101, 109, 110, 119, 120, 138) | **REMOVE** all `disabled` branches |
-| Selection counter logic (line 171) | **SIMPLIFY**: remove the `expertMode` conditional, always show counters. The counter becomes: `category.exclusive ? \`(\${selectedCount} of 1)\` : \`(\${selectedCount} selected)\`` |
-| Passing `expertMode` in `CategoryGrid` render (line 213, 361) | REMOVE |
+| Location                                                               | Action                                                                                                                                                                               |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `CategoryGridProps.expertMode` (line 35)                               | REMOVE prop                                                                                                                                                                          |
+| `CategorySectionProps.expertMode` (line 156)                           | REMOVE prop                                                                                                                                                                          |
+| Destructuring in `CategorySection` (line 167)                          | REMOVE                                                                                                                                                                               |
+| `"disabled"` variant from `OptionState` union (line 10)                | **REMOVE** -- `"disabled"` is no longer a valid state                                                                                                                                |
+| `disabled: 3` from `STATE_PRIORITY` (line 56)                          | **REMOVE**                                                                                                                                                                           |
+| `"disabled"` checks in `SkillTag` (lines 101, 109, 110, 119, 120, 138) | **REMOVE** all `disabled` branches                                                                                                                                                   |
+| Selection counter logic (line 171)                                     | **SIMPLIFY**: remove the `expertMode` conditional, always show counters. The counter becomes: `category.exclusive ? \`(\${selectedCount} of 1)\` : \`(\${selectedCount} selected)\`` |
+| Passing `expertMode` in `CategoryGrid` render (line 213, 361)          | REMOVE                                                                                                                                                                               |
 
 ### Wizard Layout -- REMOVE
 
-| Location | Action |
-|----------|--------|
+| Location                                              | Action                                             |
+| ----------------------------------------------------- | -------------------------------------------------- |
 | `<DefinitionItem label="Expert mode" ...>` (line 121) | REMOVE the entire `DefinitionItem` for expert mode |
 
 ### Help Modal -- REMOVE
 
-| Location | Action |
-|----------|--------|
+| Location                                                    | Action       |
+| ----------------------------------------------------------- | ------------ |
 | `{ key: "E", description: "Toggle expert mode" }` (line 25) | REMOVE entry |
 
 ### Use Build Step Props -- REMOVE
 
-| Location | Action |
-|----------|--------|
+| Location                                 | Action |
+| ---------------------------------------- | ------ |
 | `expertMode: store.expertMode` (line 54) | REMOVE |
 
 ### Use Framework Filtering -- REMOVE
 
-| Location | Action |
-|----------|--------|
-| `expertMode: boolean` in type (line 15) | REMOVE |
-| Destructuring (line 24) | REMOVE |
-| Passing to `buildCategoriesForDomain` (line 34) | REMOVE |
-| Dependency array (line 38) | REMOVE from deps |
+| Location                                        | Action           |
+| ----------------------------------------------- | ---------------- |
+| `expertMode: boolean` in type (line 15)         | REMOVE           |
+| Destructuring (line 24)                         | REMOVE           |
+| Passing to `buildCategoriesForDomain` (line 34) | REMOVE           |
+| Dependency array (line 38)                      | REMOVE from deps |
 
 ### Use Wizard Initialization -- REMOVE
 
-| Location | Action |
-|----------|--------|
-| `initialExpertMode?: boolean` (line 9) | REMOVE |
-| Destructuring (line 23) | REMOVE |
+| Location                                     | Action |
+| -------------------------------------------- | ------ |
+| `initialExpertMode?: boolean` (line 9)       | REMOVE |
+| Destructuring (line 23)                      | REMOVE |
 | `if (initialExpertMode)` block (lines 44-46) | REMOVE |
 
 ### Build Step Logic -- REMOVE
 
-| Location | Action |
-|----------|--------|
-| `expertMode: boolean` param (line 117) | REMOVE parameter |
+| Location                                   | Action                                               |
+| ------------------------------------------ | ---------------------------------------------------- |
+| `expertMode: boolean` param (line 117)     | REMOVE parameter                                     |
 | Passing to `getAvailableSkills` (line 137) | REMOVE -- pass no options (options param is deleted) |
 
 ### Local Installer -- REMOVE
 
-| Location | Action |
-|----------|--------|
+| Location                                             | Action                                    |
+| ---------------------------------------------------- | ----------------------------------------- |
 | `if (wizardResult.expertMode)` block (lines 265-268) | REMOVE -- no longer persisting expertMode |
 
 ### Matrix Resolver Exports (index.ts) -- UPDATE
 
-| Location | Action |
-|----------|--------|
+| Location                        | Action |
+| ------------------------------- | ------ |
 | `type SkillCheckOptions` export | REMOVE |
-| `isDisabled` export | REMOVE |
-| `getDisableReason` export | REMOVE |
-| `isCategoryAllDisabled` export | REMOVE |
+| `isDisabled` export             | REMOVE |
+| `getDisableReason` export       | REMOVE |
+| `isCategoryAllDisabled` export  | REMOVE |
 
 ### SkillOption Type (types/matrix.ts) -- UPDATE
 
-| Location | Action |
-|----------|--------|
-| `disabled: boolean` field (line 336) | REMOVE |
+| Location                                   | Action |
+| ------------------------------------------ | ------ |
+| `disabled: boolean` field (line 336)       | REMOVE |
 | `disabledReason?: string` field (line 338) | REMOVE |
 
 ---
@@ -383,6 +384,7 @@ This is the only phase with behavioral changes (not just deletions).
 ## Type/Schema Changes
 
 ### Types removed
+
 - `expertMode: boolean` from `WizardState`
 - `toggleExpertMode: () => void` from `WizardState`
 - `expertMode?: boolean` from `ProjectConfig`
@@ -401,16 +403,19 @@ This is the only phase with behavioral changes (not just deletions).
 - `"disabled"` variant from `OptionState` union type
 
 ### Functions removed
+
 - `isDisabled()` (logic merged into `isDiscouraged()`)
 - `getDisableReason()` (logic merged into `getDiscourageReason()`)
 - `isCategoryAllDisabled()` (concept no longer exists)
 
 ### Functions modified
+
 - `isDiscouraged()` -- expanded to also check `conflictsWith` and `requires`
 - `getDiscourageReason()` -- expanded to return conflict and requirement reasons
 - `getAvailableSkills()` -- `options` param removed, `disabled`/`disabledReason` fields removed from output
 
 ### Schemas removed
+
 - `expertMode: z.boolean().optional()` from `projectConfigSchema`
 - `expertMode: z.boolean().optional()` from `projectConfigValidationSchema`
 - `"expertMode": { "type": "boolean" }` from `project-config.schema.json`
@@ -436,6 +441,7 @@ The `expertMode` field will be removed from the `ProjectConfig` type and both Zo
 ## Test Impact
 
 ### Tests to DELETE entirely
+
 - `wizard-store.test.ts`: "should have expert mode off" (initial state)
 - `wizard-store.test.ts`: "should toggle expert mode on"
 - `wizard-store.test.ts`: "should toggle expert mode off"
@@ -454,6 +460,7 @@ The `expertMode` field will be removed from the `ProjectConfig` type and both Zo
 - `wizard-flow.integration.test.tsx`: expertMode assertions in result tests
 
 ### Tests to MODIFY
+
 - `matrix-resolver.test.ts`: Remove `{ expertMode: true }` options argument from `getAvailableSkills()` tests. Remove `disabled`/`disabledReason` from assertions. Update tests to verify conflicting skills show as `discouraged: true` with appropriate reasons.
 - `category-grid.test.tsx`: Remove `expertMode` from `renderGrid()` defaults. Remove `"disabled"` from any state assertions. Update sort order tests (no disabled state means sort priority changes). Verify counters are always shown.
 - `step-build.test.tsx`: Default props -- remove `expertMode: false`
@@ -462,6 +469,7 @@ The `expertMode` field will be removed from the `ProjectConfig` type and both Zo
 - `helpers.ts`: `buildWizardResultFromStore()` -- remove `expertMode: store.expertMode`
 
 ### Tests to ADD
+
 - `isDiscouraged()` returns `true` when a conflicting skill is selected
 - `isDiscouraged()` returns `true` when required skills are not selected (AND mode)
 - `isDiscouraged()` returns `true` when no alternative required skills are selected (OR/needsAny mode)
@@ -477,48 +485,48 @@ The `expertMode` field will be removed from the `ProjectConfig` type and both Zo
 
 ### Production Files (~18 files)
 
-| File | Change |
-|------|--------|
-| `src/cli/lib/matrix/matrix-resolver.ts` | DELETE `SkillCheckOptions`, `isDisabled()`, `getDisableReason()`, `isCategoryAllDisabled()`. EXPAND `isDiscouraged()` and `getDiscourageReason()`. UPDATE `getAvailableSkills()` |
-| `src/cli/lib/matrix/index.ts` | Remove deleted exports, keep expanded exports |
-| `src/cli/types/matrix.ts` | Remove `disabled`/`disabledReason` from `SkillOption` |
-| `src/cli/lib/wizard/build-step-logic.ts` | Remove `expertMode` param from `buildCategoriesForDomain()` |
-| `src/cli/stores/wizard-store.ts` | Remove `expertMode` state, `toggleExpertMode` action |
-| `src/cli/types/config.ts` | Remove `expertMode` from `ProjectConfig` |
-| `src/cli/lib/schemas.ts` | Remove `expertMode` from both schemas |
-| `src/schemas/project-config.schema.json` | Remove `expertMode` property |
-| `src/cli/commands/init.tsx` | Remove `initialExpertMode` prop |
-| `src/cli/commands/edit.tsx` | Remove `initialExpertMode` prop |
-| `src/cli/components/wizard/wizard.tsx` | Remove from props, result, key handler |
-| `src/cli/components/wizard/step-build.tsx` | Remove `expertMode` prop |
-| `src/cli/components/wizard/category-grid.tsx` | Remove `expertMode` prop, remove `"disabled"` from `OptionState`, always show counters |
-| `src/cli/components/wizard/wizard-layout.tsx` | Remove expert mode status bar item |
-| `src/cli/components/wizard/help-modal.tsx` | Remove "E" toggle entry |
-| `src/cli/components/hooks/use-build-step-props.ts` | Remove `expertMode` from props |
-| `src/cli/components/hooks/use-framework-filtering.ts` | Remove `expertMode` from options |
-| `src/cli/components/hooks/use-wizard-initialization.ts` | Remove `initialExpertMode` |
-| `src/cli/lib/installation/local-installer.ts` | Remove expertMode persistence |
+| File                                                    | Change                                                                                                                                                                           |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/cli/lib/matrix/matrix-resolver.ts`                 | DELETE `SkillCheckOptions`, `isDisabled()`, `getDisableReason()`, `isCategoryAllDisabled()`. EXPAND `isDiscouraged()` and `getDiscourageReason()`. UPDATE `getAvailableSkills()` |
+| `src/cli/lib/matrix/index.ts`                           | Remove deleted exports, keep expanded exports                                                                                                                                    |
+| `src/cli/types/matrix.ts`                               | Remove `disabled`/`disabledReason` from `SkillOption`                                                                                                                            |
+| `src/cli/lib/wizard/build-step-logic.ts`                | Remove `expertMode` param from `buildCategoriesForDomain()`                                                                                                                      |
+| `src/cli/stores/wizard-store.ts`                        | Remove `expertMode` state, `toggleExpertMode` action                                                                                                                             |
+| `src/cli/types/config.ts`                               | Remove `expertMode` from `ProjectConfig`                                                                                                                                         |
+| `src/cli/lib/schemas.ts`                                | Remove `expertMode` from both schemas                                                                                                                                            |
+| `src/schemas/project-config.schema.json`                | Remove `expertMode` property                                                                                                                                                     |
+| `src/cli/commands/init.tsx`                             | Remove `initialExpertMode` prop                                                                                                                                                  |
+| `src/cli/commands/edit.tsx`                             | Remove `initialExpertMode` prop                                                                                                                                                  |
+| `src/cli/components/wizard/wizard.tsx`                  | Remove from props, result, key handler                                                                                                                                           |
+| `src/cli/components/wizard/step-build.tsx`              | Remove `expertMode` prop                                                                                                                                                         |
+| `src/cli/components/wizard/category-grid.tsx`           | Remove `expertMode` prop, remove `"disabled"` from `OptionState`, always show counters                                                                                           |
+| `src/cli/components/wizard/wizard-layout.tsx`           | Remove expert mode status bar item                                                                                                                                               |
+| `src/cli/components/wizard/help-modal.tsx`              | Remove "E" toggle entry                                                                                                                                                          |
+| `src/cli/components/hooks/use-build-step-props.ts`      | Remove `expertMode` from props                                                                                                                                                   |
+| `src/cli/components/hooks/use-framework-filtering.ts`   | Remove `expertMode` from options                                                                                                                                                 |
+| `src/cli/components/hooks/use-wizard-initialization.ts` | Remove `initialExpertMode`                                                                                                                                                       |
+| `src/cli/lib/installation/local-installer.ts`           | Remove expertMode persistence                                                                                                                                                    |
 
 ### Test Files (~10 files)
 
-| File | Change |
-|------|--------|
-| `src/cli/stores/wizard-store.test.ts` | Remove expertMode tests |
-| `src/cli/lib/matrix/matrix-resolver.test.ts` | DELETE `isDisabled`/`getDisableReason`/`isCategoryAllDisabled` tests, ADD expanded `isDiscouraged`/`getDiscourageReason` tests, update `getAvailableSkills` assertions |
-| `src/cli/components/wizard/category-grid.test.tsx` | Remove expertMode prop, remove disabled state tests, verify counters always shown |
-| `src/cli/components/wizard/step-build.test.tsx` | Remove expertMode prop and tests |
-| `src/cli/lib/installation/local-installer.test.ts` | Remove from mock data |
-| `src/cli/lib/__tests__/helpers.ts` | Remove from factory functions |
-| `src/cli/lib/__tests__/integration/init-end-to-end.integration.test.ts` | Remove expert mode test |
-| `src/cli/lib/__tests__/integration/wizard-flow.integration.test.tsx` | Remove expert mode tests |
+| File                                                                    | Change                                                                                                                                                                 |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/cli/stores/wizard-store.test.ts`                                   | Remove expertMode tests                                                                                                                                                |
+| `src/cli/lib/matrix/matrix-resolver.test.ts`                            | DELETE `isDisabled`/`getDisableReason`/`isCategoryAllDisabled` tests, ADD expanded `isDiscouraged`/`getDiscourageReason` tests, update `getAvailableSkills` assertions |
+| `src/cli/components/wizard/category-grid.test.tsx`                      | Remove expertMode prop, remove disabled state tests, verify counters always shown                                                                                      |
+| `src/cli/components/wizard/step-build.test.tsx`                         | Remove expertMode prop and tests                                                                                                                                       |
+| `src/cli/lib/installation/local-installer.test.ts`                      | Remove from mock data                                                                                                                                                  |
+| `src/cli/lib/__tests__/helpers.ts`                                      | Remove from factory functions                                                                                                                                          |
+| `src/cli/lib/__tests__/integration/init-end-to-end.integration.test.ts` | Remove expert mode test                                                                                                                                                |
+| `src/cli/lib/__tests__/integration/wizard-flow.integration.test.tsx`    | Remove expert mode tests                                                                                                                                               |
 
 ### Documentation Files (update if they reference expert mode)
 
-| File | Change |
-|------|--------|
-| `.ai-docs/store-map.md` | Remove `toggleExpertMode` from actions list |
-| `.ai-docs/features/wizard-flow.md` | Remove expert mode references |
-| `.ai-docs/component-patterns.md` | Remove expertMode from CategoryGridProps, remove `"disabled"` from OptionState |
+| File                               | Change                                                                         |
+| ---------------------------------- | ------------------------------------------------------------------------------ |
+| `.ai-docs/store-map.md`            | Remove `toggleExpertMode` from actions list                                    |
+| `.ai-docs/features/wizard-flow.md` | Remove expert mode references                                                  |
+| `.ai-docs/component-patterns.md`   | Remove expertMode from CategoryGridProps, remove `"disabled"` from OptionState |
 
 ---
 
@@ -534,6 +542,7 @@ The `expertMode` field will be removed from the `ProjectConfig` type and both Zo
 - Most changes are pure deletions
 
 Key safety nets:
+
 - `validateSelection()` catches conflicts at the confirm step (unchanged)
 - `exclusive` categories enforce single-selection (unchanged)
 - `discouraged` state shows visible warnings to the user (expanded to cover more cases)

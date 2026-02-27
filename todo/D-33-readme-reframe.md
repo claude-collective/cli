@@ -12,14 +12,14 @@ Rewrite `README.md` to position Agents Inc. as an agent composition framework ra
 
 ## 1. Open Questions (ALL RESOLVED)
 
-| # | Question | Resolution |
-|---|----------|------------|
-| 1 | Who is the primary audience? | **RESOLVED.** Developers using Claude Code -- specifically those who want to use skills and sub-agents but don't want to blindly install from skills.sh. Power users and companies that want to create scalable AI developer setups. Developers who take it upon themselves to introduce more structured setups to their workplace. Frame the README for this audience: technically competent, skeptical, wanting control and transparency. |
-| 2 | Should we show the full wizard GIF or screenshots? | **RESOLVED (unchanged).** A short GIF of the init wizard is the strongest possible hook. Prioritize making the GIF before or alongside the README rewrite. Screenshots are secondary. |
-| 3 | The README currently lists 8 stacks but `stacks.yaml` only has 6. Are `react-native-stack` and `meta-stack` planned or removed? | **RESOLVED.** Re-add `react-native-stack` to stacks.yaml. Do NOT add `meta-stack`. This brings the total to 7 stacks: nextjs-fullstack, angular-stack, nuxt-stack, remix-stack, vue-stack, solidjs-stack, react-native-stack. |
-| 4 | How many skills actually exist? | **RESOLVED.** Use "87+" -- confirmed acceptable by user. Don't worry about exact count. |
-| 5 | Should we mention the plugin system / marketplace in the README? | **RESOLVED.** YES, mention it prominently -- the marketplace (skills.sh) is the starting-off point for users. Don't just mention it as an extensibility footnote; position it as where users browse and discover skills before installing. |
-| 6 | Does "framework" need a qualifier? | **RESOLVED.** Use "agent composition framework" -- this is already in the existing README and is the correct descriptor. |
+| #   | Question                                                                                                                        | Resolution                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| --- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Who is the primary audience?                                                                                                    | **RESOLVED.** Developers using Claude Code -- specifically those who want to use skills and sub-agents but don't want to blindly install from skills.sh. Power users and companies that want to create scalable AI developer setups. Developers who take it upon themselves to introduce more structured setups to their workplace. Frame the README for this audience: technically competent, skeptical, wanting control and transparency. |
+| 2   | Should we show the full wizard GIF or screenshots?                                                                              | **RESOLVED (unchanged).** A short GIF of the init wizard is the strongest possible hook. Prioritize making the GIF before or alongside the README rewrite. Screenshots are secondary.                                                                                                                                                                                                                                                       |
+| 3   | The README currently lists 8 stacks but `stacks.yaml` only has 6. Are `react-native-stack` and `meta-stack` planned or removed? | **RESOLVED.** Re-add `react-native-stack` to stacks.yaml. Do NOT add `meta-stack`. This brings the total to 7 stacks: nextjs-fullstack, angular-stack, nuxt-stack, remix-stack, vue-stack, solidjs-stack, react-native-stack.                                                                                                                                                                                                               |
+| 4   | How many skills actually exist?                                                                                                 | **RESOLVED.** Use "87+" -- confirmed acceptable by user. Don't worry about exact count.                                                                                                                                                                                                                                                                                                                                                     |
+| 5   | Should we mention the plugin system / marketplace in the README?                                                                | **RESOLVED.** YES, mention it prominently -- the marketplace (skills.sh) is the starting-off point for users. Don't just mention it as an extensibility footnote; position it as where users browse and discover skills before installing.                                                                                                                                                                                                  |
+| 6   | Does "framework" need a qualifier?                                                                                              | **RESOLVED.** Use "agent composition framework" -- this is already in the existing README and is the correct descriptor.                                                                                                                                                                                                                                                                                                                    |
 
 ---
 
@@ -48,17 +48,17 @@ The current README (195 lines) has these sections:
 
 ### What's Missing or Weak
 
-| Issue | Detail |
-|-------|--------|
-| **No quick demonstration of value** | A reader can't see what a compiled agent looks like, or what changes after running `init`. There's no before/after. |
+| Issue                                         | Detail                                                                                                                                                                                                     |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **No quick demonstration of value**           | A reader can't see what a compiled agent looks like, or what changes after running `init`. There's no before/after.                                                                                        |
 | **The "framework" claim isn't substantiated** | The README says "framework" in the title but reads like CLI documentation. The framework aspects (compilation pipeline, ejectable templates, schema validation, plugin architecture) are buried or absent. |
-| **No "how it works" section** | The compilation pipeline is the most interesting architectural feature and is not explained at all. A reader who wants to understand the system has nothing. |
-| **Agent roles are unexplained** | The README mentions agents like `web-developer` and `web-reviewer` but never explains what these actually are or what makes them different from a generic Claude Code setup. |
-| **The skill structure isn't shown** | What does a skill look like? What's inside? The README talks about skills abstractly but never shows one. |
-| **Stacks list has inaccuracies** | Lists 8 stacks; only 6 exist in `stacks.yaml`. React Native stack to be re-added (7 total). Meta-stack will not be added. |
-| **Skill count confirmed** | "87+ skills" confirmed as acceptable. |
-| **No "why this over X"** | No comparison to alternatives (manual CLAUDE.md, .cursorrules, other approaches). The value proposition needs to be clearer. |
-| **Architecture section is a dead end** | Links to `docs/reference/architecture.md` but has no substance itself. Framework users care about this. |
+| **No "how it works" section**                 | The compilation pipeline is the most interesting architectural feature and is not explained at all. A reader who wants to understand the system has nothing.                                               |
+| **Agent roles are unexplained**               | The README mentions agents like `web-developer` and `web-reviewer` but never explains what these actually are or what makes them different from a generic Claude Code setup.                               |
+| **The skill structure isn't shown**           | What does a skill look like? What's inside? The README talks about skills abstractly but never shows one.                                                                                                  |
+| **Stacks list has inaccuracies**              | Lists 8 stacks; only 6 exist in `stacks.yaml`. React Native stack to be re-added (7 total). Meta-stack will not be added.                                                                                  |
+| **Skill count confirmed**                     | "87+ skills" confirmed as acceptable.                                                                                                                                                                      |
+| **No "why this over X"**                      | No comparison to alternatives (manual CLAUDE.md, .cursorrules, other approaches). The value proposition needs to be clearer.                                                                               |
+| **Architecture section is a dead end**        | Links to `docs/reference/architecture.md` but has no substance itself. Framework users care about this.                                                                                                    |
 
 ---
 
@@ -265,29 +265,29 @@ The README should communicate these 5 messages (in priority order):
 
 ### Words to AVOID
 
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| powerful | Meaningless filler | (describe the specific capability) |
-| revolutionary | Marketing hyperbole | (omit) |
-| game-changing | Marketing hyperbole | (omit) |
-| seamless | Almost never true | (describe the actual integration) |
-| leverage | Corporate jargon | use |
-| cutting-edge | Marketing | (omit) |
-| ecosystem | Overused, vague | marketplace, skill sources |
-| AI-powered | Agents Inc. is for AI, not powered by AI | (be specific about what it does) |
-| supercharge | Marketing fluff | (describe the improvement) |
+| Avoid         | Why                                      | Use Instead                        |
+| ------------- | ---------------------------------------- | ---------------------------------- |
+| powerful      | Meaningless filler                       | (describe the specific capability) |
+| revolutionary | Marketing hyperbole                      | (omit)                             |
+| game-changing | Marketing hyperbole                      | (omit)                             |
+| seamless      | Almost never true                        | (describe the actual integration)  |
+| leverage      | Corporate jargon                         | use                                |
+| cutting-edge  | Marketing                                | (omit)                             |
+| ecosystem     | Overused, vague                          | marketplace, skill sources         |
+| AI-powered    | Agents Inc. is for AI, not powered by AI | (be specific about what it does)   |
+| supercharge   | Marketing fluff                          | (describe the improvement)         |
 
 ### Words to USE
 
-| Word/Phrase | When |
-|-------------|------|
-| compile, compilation | Describing the build step |
-| structured | Describing skills (vs freeform markdown) |
-| validated, schema-validated | Describing the type safety |
-| eject, ejectable | Describing the escape hatches |
-| compose, composition | Describing how skills form agents |
-| specialize, specialized | Describing what agents become |
-| role-based | Describing agent organization |
+| Word/Phrase                 | When                                     |
+| --------------------------- | ---------------------------------------- |
+| compile, compilation        | Describing the build step                |
+| structured                  | Describing skills (vs freeform markdown) |
+| validated, schema-validated | Describing the type safety               |
+| eject, ejectable            | Describing the escape hatches            |
+| compose, composition        | Describing how skills form agents        |
+| specialize, specialized     | Describing what agents become            |
+| role-based                  | Describing agent organization            |
 
 ### Formatting Rules
 
@@ -396,6 +396,7 @@ web-developer:
 ### Step 1: Resolve Open Questions (DONE)
 
 All open questions resolved -- see Section 1. Summary:
+
 - Audience: power users/companies wanting scalable AI dev setups
 - Stacks: 7 (re-add react-native-stack, skip meta-stack)
 - Skill count: 87+ (confirmed)
@@ -435,18 +436,18 @@ All open questions resolved -- see Section 1. Summary:
 
 ## 9. Acceptance Criteria
 
-| # | Criterion | How to Verify |
-|---|-----------|---------------|
-| 1 | README positions Agents Inc. as a framework through concrete feature descriptions, not marketing language. | Read the "What this is" and "How it works" sections -- they should explain the compilation pipeline, schema validation, and ejectable architecture without using any words from the "avoid" list. |
-| 2 | A new reader can understand what Agents Inc. does within the first 2 sections. | Have someone unfamiliar with the project read the first 2 sections and explain it back. They should be able to say: "it compiles knowledge modules into specialized Claude Code agents." |
-| 3 | The "How it works" section shows the compilation pipeline concretely. | It should include a flow diagram and mention: skill resolution, Liquid template rendering, injection sanitization, and output validation. |
-| 4 | All numbers are accurate. | Skill count matches actual source. Stack list matches `config/stacks.yaml`. Agent roles match `src/agents/`. Command list matches `src/cli/commands/`. |
-| 5 | All code examples are runnable or accurately represent real files. | Every `agentsinc` command shown should work. Config YAML snippets should match actual schema. Skill frontmatter should match a real skill. |
-| 6 | The progressive customization story is clear. | A reader should understand there are multiple layers (config, wizard, partials, templates, skills, custom) ordered from simple to deep. |
-| 7 | No marketing language or buzzwords. | Grep for: powerful, revolutionary, game-changing, seamless, leverage, cutting-edge, supercharge. Zero results. |
-| 8 | Framework aspects are substantiated, not just claimed. | Every framework claim should have a concrete feature backing it (e.g., "ejectable templates" includes an actual eject command and example). |
-| 9 | README is under 300 lines. | Line count check. The current README is 195 lines. Adding "How it works" and "Skills"/"Agents" sections will add content, but verbose sections should be trimmed. Target: 250-300 lines. |
-| 10 | The README reads well from headers alone. | Read only the `##` headers in sequence -- they should tell a coherent story: what it is, how it works, getting started, skills, agents, commands, customization. |
+| #   | Criterion                                                                                                  | How to Verify                                                                                                                                                                                     |
+| --- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | README positions Agents Inc. as a framework through concrete feature descriptions, not marketing language. | Read the "What this is" and "How it works" sections -- they should explain the compilation pipeline, schema validation, and ejectable architecture without using any words from the "avoid" list. |
+| 2   | A new reader can understand what Agents Inc. does within the first 2 sections.                             | Have someone unfamiliar with the project read the first 2 sections and explain it back. They should be able to say: "it compiles knowledge modules into specialized Claude Code agents."          |
+| 3   | The "How it works" section shows the compilation pipeline concretely.                                      | It should include a flow diagram and mention: skill resolution, Liquid template rendering, injection sanitization, and output validation.                                                         |
+| 4   | All numbers are accurate.                                                                                  | Skill count matches actual source. Stack list matches `config/stacks.yaml`. Agent roles match `src/agents/`. Command list matches `src/cli/commands/`.                                            |
+| 5   | All code examples are runnable or accurately represent real files.                                         | Every `agentsinc` command shown should work. Config YAML snippets should match actual schema. Skill frontmatter should match a real skill.                                                        |
+| 6   | The progressive customization story is clear.                                                              | A reader should understand there are multiple layers (config, wizard, partials, templates, skills, custom) ordered from simple to deep.                                                           |
+| 7   | No marketing language or buzzwords.                                                                        | Grep for: powerful, revolutionary, game-changing, seamless, leverage, cutting-edge, supercharge. Zero results.                                                                                    |
+| 8   | Framework aspects are substantiated, not just claimed.                                                     | Every framework claim should have a concrete feature backing it (e.g., "ejectable templates" includes an actual eject command and example).                                                       |
+| 9   | README is under 300 lines.                                                                                 | Line count check. The current README is 195 lines. Adding "How it works" and "Skills"/"Agents" sections will add content, but verbose sections should be trimmed. Target: 250-300 lines.          |
+| 10  | The README reads well from headers alone.                                                                  | Read only the `##` headers in sequence -- they should tell a coherent story: what it is, how it works, getting started, skills, agents, commands, customization.                                  |
 
 ---
 
@@ -454,12 +455,12 @@ All open questions resolved -- see Section 1. Summary:
 
 These are inaccuracies discovered during research that must be fixed regardless of the reframe:
 
-| Issue | Current | Correct |
-|-------|---------|---------|
-| Stack count | Lists 8 stacks including react-native-stack and meta-stack | Re-add react-native-stack to stacks.yaml. Do NOT add meta-stack. Final count: 7 stacks (nextjs-fullstack, angular-stack, nuxt-stack, remix-stack, vue-stack, solidjs-stack, react-native-stack) |
-| Skill count | "87+ skills" | Confirmed: use "87+" -- exact count not needed |
-| Eject examples | Shows `agentsinc eject agent-partials --templates` in the eject section | The `--templates` flag was replaced by `agentsinc eject templates` as a separate type (per D-44) -- though the current README already shows this correctly, verify no stale references remain |
-| Package description | "CLI for managing Agents Inc. skills, stacks, and agents for Claude Code" in package.json | Should be updated to match the new framing -- this is the description that appears on npm |
+| Issue               | Current                                                                                   | Correct                                                                                                                                                                                         |
+| ------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stack count         | Lists 8 stacks including react-native-stack and meta-stack                                | Re-add react-native-stack to stacks.yaml. Do NOT add meta-stack. Final count: 7 stacks (nextjs-fullstack, angular-stack, nuxt-stack, remix-stack, vue-stack, solidjs-stack, react-native-stack) |
+| Skill count         | "87+ skills"                                                                              | Confirmed: use "87+" -- exact count not needed                                                                                                                                                  |
+| Eject examples      | Shows `agentsinc eject agent-partials --templates` in the eject section                   | The `--templates` flag was replaced by `agentsinc eject templates` as a separate type (per D-44) -- though the current README already shows this correctly, verify no stale references remain   |
+| Package description | "CLI for managing Agents Inc. skills, stacks, and agents for Claude Code" in package.json | Should be updated to match the new framing -- this is the description that appears on npm                                                                                                       |
 
 ---
 
@@ -467,18 +468,18 @@ These are inaccuracies discovered during research that must be fixed regardless 
 
 These numbers/facts were verified against the actual codebase on 2026-02-26:
 
-| Fact | Value | Source |
-|------|-------|--------|
-| TypeScript source files | 260 | `find src/cli -name "*.ts" -o -name "*.tsx"` |
-| Stacks | 7 (6 existing + react-native-stack to be re-added) | `config/stacks.yaml` |
-| Stack IDs | nextjs-fullstack, angular-stack, nuxt-stack, remix-stack, vue-stack, solidjs-stack, react-native-stack (pending) | `config/stacks.yaml` |
-| Agent roles (directories) | 18 | `src/agents/` subdirectories (verified via `find src/agents -name "agent.yaml" \| wc -l`) |
-| Agent role names | web-developer, api-developer, cli-developer, web-architecture, web-reviewer, api-reviewer, cli-reviewer, web-tester, cli-tester, web-researcher, api-researcher, web-pm, pattern-scout, web-pattern-critique, cli-migrator, documentor, skill-summoner, agent-summoner | `src/agents/` |
-| Commands | 26 | `.ai-docs/commands.md` |
-| Zod schemas | 30+ | `src/cli/lib/schemas.ts` |
-| Skills matrix categories | ~38 | `config/skills-matrix.yaml` |
-| Template engine | LiquidJS | `src/cli/lib/compiler.ts` |
-| State management | Zustand v5 | `src/cli/stores/wizard-store.ts` |
-| Terminal UI | Ink v5 + React | `src/cli/components/` |
-| CLI framework | oclif | `src/cli/commands/` |
-| Version | 0.47.0 | `package.json` |
+| Fact                      | Value                                                                                                                                                                                                                                                                  | Source                                                                                    |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| TypeScript source files   | 260                                                                                                                                                                                                                                                                    | `find src/cli -name "*.ts" -o -name "*.tsx"`                                              |
+| Stacks                    | 7 (6 existing + react-native-stack to be re-added)                                                                                                                                                                                                                     | `config/stacks.yaml`                                                                      |
+| Stack IDs                 | nextjs-fullstack, angular-stack, nuxt-stack, remix-stack, vue-stack, solidjs-stack, react-native-stack (pending)                                                                                                                                                       | `config/stacks.yaml`                                                                      |
+| Agent roles (directories) | 18                                                                                                                                                                                                                                                                     | `src/agents/` subdirectories (verified via `find src/agents -name "agent.yaml" \| wc -l`) |
+| Agent role names          | web-developer, api-developer, cli-developer, web-architecture, web-reviewer, api-reviewer, cli-reviewer, web-tester, cli-tester, web-researcher, api-researcher, web-pm, pattern-scout, web-pattern-critique, cli-migrator, documentor, skill-summoner, agent-summoner | `src/agents/`                                                                             |
+| Commands                  | 26                                                                                                                                                                                                                                                                     | `.ai-docs/commands.md`                                                                    |
+| Zod schemas               | 30+                                                                                                                                                                                                                                                                    | `src/cli/lib/schemas.ts`                                                                  |
+| Skills matrix categories  | ~38                                                                                                                                                                                                                                                                    | `config/skills-matrix.yaml`                                                               |
+| Template engine           | LiquidJS                                                                                                                                                                                                                                                               | `src/cli/lib/compiler.ts`                                                                 |
+| State management          | Zustand v5                                                                                                                                                                                                                                                             | `src/cli/stores/wizard-store.ts`                                                          |
+| Terminal UI               | Ink v5 + React                                                                                                                                                                                                                                                         | `src/cli/components/`                                                                     |
+| CLI framework             | oclif                                                                                                                                                                                                                                                                  | `src/cli/commands/`                                                                       |
+| Version                   | 0.47.0                                                                                                                                                                                                                                                                 | `package.json`                                                                            |

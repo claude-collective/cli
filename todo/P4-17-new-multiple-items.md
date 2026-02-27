@@ -45,6 +45,7 @@ For `new skill`, the existing flow already generates a scaffold with placeholder
 ### `new skill` command (src/cli/commands/new/skill.ts)
 
 **Argument handling:**
+
 ```typescript
 static args = {
   name: Args.string({
@@ -57,6 +58,7 @@ static args = {
 Single required `name` arg. The `run()` method uses `args.name` directly.
 
 **Creation flow:**
+
 1. Validate skill name (kebab-case check)
 2. Resolve author (flag > project config > default)
 3. Determine output path (--output > marketplace detection > local default)
@@ -70,6 +72,7 @@ Single required `name` arg. The `run()` method uses `args.name` directly.
 **Error handling:** Uses `this.error()` with `EXIT_CODES` for validation failures. Uses `this.handleError(error)` for filesystem errors. No per-item error collection since it's single-item.
 
 **Exported utilities:**
+
 - `validateSkillName(name)` -- returns error string or null
 - `toTitleCase(kebabCase)` -- converts kebab to title case
 - `generateSkillMd(name)` -- generates SKILL.md content
@@ -80,6 +83,7 @@ These are already pure functions, making them easy to call in a loop.
 ### `new agent` command (src/cli/commands/new/agent.tsx)
 
 **Argument handling:**
+
 ```typescript
 static args = {
   name: Args.string({
@@ -92,11 +96,13 @@ static args = {
 Single required `name` arg.
 
 **Flags (current):**
+
 - `--purpose` / `-p` -- Purpose/description of the agent (TO BE REMOVED)
 - `--non-interactive` / `-n` -- Run in non-interactive mode
 - `--refresh` / `-r` -- Force refresh remote source
 
 **Creation flow:**
+
 1. Check Claude CLI is available
 2. Get purpose (flag or interactive prompt via Ink `PurposeInput`)
 3. Load agent-summoner meta-agent from source
@@ -274,10 +280,11 @@ private async createSingleSkill(
 **File:** `src/cli/commands/new/skill.ts`
 
 After the loop, print a summary:
+
 ```typescript
-const created = results.filter(r => r === "created").length;
-const skipped = results.filter(r => r === "skipped").length;
-const failed = results.filter(r => r === "failed").length;
+const created = results.filter((r) => r === "created").length;
+const skipped = results.filter((r) => r === "skipped").length;
+const failed = results.filter((r) => r === "failed").length;
 
 this.log(`\nSummary: ${created} created, ${skipped} skipped, ${failed} failed`);
 ```
@@ -341,31 +348,31 @@ static examples = [
 
 ### Skill-specific edge cases
 
-| Edge Case | Behavior |
-|-----------|----------|
-| Duplicate names in args (`new skill foo foo`) | Deduplicate; warn "Duplicate name 'foo' ignored" |
+| Edge Case                                                        | Behavior                                                                  |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Duplicate names in args (`new skill foo foo`)                    | Deduplicate; warn "Duplicate name 'foo' ignored"                          |
 | Some names invalid, some valid (`new skill valid-name INVALID!`) | Validate all upfront; error listing all invalid names before creating any |
-| All directories exist without `--force` | All skipped; summary shows "0 created, N skipped" |
-| Mixed exist/new with `--force` | Existing overwritten, new created |
-| `--dry-run` with multiple items | Show "[DRY RUN]" per item; no files created |
-| `--output` with multiple items | All skills created in the same output directory |
-| Single name (backward compatibility) | Behaves identically to current single-item flow |
+| All directories exist without `--force`                          | All skipped; summary shows "0 created, N skipped"                         |
+| Mixed exist/new with `--force`                                   | Existing overwritten, new created                                         |
+| `--dry-run` with multiple items                                  | Show "[DRY RUN]" per item; no files created                               |
+| `--output` with multiple items                                   | All skills created in the same output directory                           |
+| Single name (backward compatibility)                             | Behaves identically to current single-item flow                           |
 
 ### Agent-specific edge cases
 
-| Edge Case | Behavior |
-|-----------|----------|
-| User cancels (Escape) during description prompt for 2nd agent | Report first agent as created, second as cancelled; exit with summary |
-| Claude CLI fails for one agent | Report that agent as failed; continue to next (continue-on-error) |
-| Single name (backward compatibility) | Behaves identically to current single-item flow (interactive description prompt, then invoke agent-summoner) |
-| `--force` with existing agent directory | Overwrite without confirmation |
-| `--non-interactive` with multiple names | Each agent still needs a description -- error unless a non-interactive description mechanism is added later |
+| Edge Case                                                     | Behavior                                                                                                     |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| User cancels (Escape) during description prompt for 2nd agent | Report first agent as created, second as cancelled; exit with summary                                        |
+| Claude CLI fails for one agent                                | Report that agent as failed; continue to next (continue-on-error)                                            |
+| Single name (backward compatibility)                          | Behaves identically to current single-item flow (interactive description prompt, then invoke agent-summoner) |
+| `--force` with existing agent directory                       | Overwrite without confirmation                                                                               |
+| `--non-interactive` with multiple names                       | Each agent still needs a description -- error unless a non-interactive description mechanism is added later  |
 
 ### General edge cases
 
-| Edge Case | Behavior |
-|-----------|----------|
-| Zero names provided | oclif's `required: true` on the first arg handles this; error before `run()` |
+| Edge Case                        | Behavior                                                                        |
+| -------------------------------- | ------------------------------------------------------------------------------- |
+| Zero names provided              | oclif's `required: true` on the first arg handles this; error before `run()`    |
 | Very large number of names (50+) | No artificial limit; process sequentially. Agent creation may take a long time. |
 
 ---
@@ -376,34 +383,34 @@ static examples = [
 
 **File:** `src/cli/lib/__tests__/commands/new-skill.test.ts` (or extend existing)
 
-| Test | What it verifies |
-|------|-----------------|
-| `should create single skill (backward compat)` | Existing single-name behavior unchanged |
-| `should create multiple skills` | All skill directories created with correct content |
-| `should validate all names before creating any` | Invalid name prevents all creation |
-| `should skip existing directories without --force` | Existing dirs skipped, new dirs created |
-| `should overwrite existing directories with --force` | All directories overwritten |
-| `should deduplicate names` | `new skill foo foo` creates only one skill |
-| `should apply shared flags to all items` | `--author` and `--category` used for each skill |
-| `should report summary with created/skipped/failed counts` | Output contains correct summary line |
-| `should handle --dry-run for all items` | No files created; each item shows dry-run message |
-| `should handle --output for all items` | All skills in the custom output directory |
-| `should continue on error and report summary` | Filesystem error on one skill does not stop others |
+| Test                                                       | What it verifies                                   |
+| ---------------------------------------------------------- | -------------------------------------------------- |
+| `should create single skill (backward compat)`             | Existing single-name behavior unchanged            |
+| `should create multiple skills`                            | All skill directories created with correct content |
+| `should validate all names before creating any`            | Invalid name prevents all creation                 |
+| `should skip existing directories without --force`         | Existing dirs skipped, new dirs created            |
+| `should overwrite existing directories with --force`       | All directories overwritten                        |
+| `should deduplicate names`                                 | `new skill foo foo` creates only one skill         |
+| `should apply shared flags to all items`                   | `--author` and `--category` used for each skill    |
+| `should report summary with created/skipped/failed counts` | Output contains correct summary line               |
+| `should handle --dry-run for all items`                    | No files created; each item shows dry-run message  |
+| `should handle --output for all items`                     | All skills in the custom output directory          |
+| `should continue on error and report summary`              | Filesystem error on one skill does not stop others |
 
 ### Agent tests
 
 **File:** `src/cli/lib/__tests__/commands/new-agent.test.ts` (or extend existing)
 
-| Test | What it verifies |
-|------|-----------------|
-| `should create single agent (backward compat)` | Existing single-name behavior unchanged |
-| `should not have --purpose flag` | Flag is removed; command does not accept `--purpose` |
-| `should prompt for description interactively per agent` | Each agent gets its own description prompt |
-| `should process multiple agents sequentially` | Each agent gets its own invocation |
-| `should report summary with created/failed counts` | Output contains correct summary |
-| `should handle cancellation during multi-agent flow` | Partial results reported |
-| `should overwrite existing agent with --force` | Existing agent directory overwritten |
-| `should continue on error when one agent fails` | Other agents still created |
+| Test                                                    | What it verifies                                     |
+| ------------------------------------------------------- | ---------------------------------------------------- |
+| `should create single agent (backward compat)`          | Existing single-name behavior unchanged              |
+| `should not have --purpose flag`                        | Flag is removed; command does not accept `--purpose` |
+| `should prompt for description interactively per agent` | Each agent gets its own description prompt           |
+| `should process multiple agents sequentially`           | Each agent gets its own invocation                   |
+| `should report summary with created/failed counts`      | Output contains correct summary                      |
+| `should handle cancellation during multi-agent flow`    | Partial results reported                             |
+| `should overwrite existing agent with --force`          | Existing agent directory overwritten                 |
+| `should continue on error when one agent fails`         | Other agents still created                           |
 
 ### Existing tests must continue passing
 
@@ -415,9 +422,9 @@ All existing `new skill` and `new agent` tests must pass unchanged. The single-n
 
 ### Modified files
 
-| File | Change |
-|------|--------|
-| `src/cli/commands/new/skill.ts` | Add `strict = false`, extract `createSingleSkill()`, loop over `argv`, add summary reporting, update help/examples |
+| File                             | Change                                                                                                                                                                             |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/cli/commands/new/skill.ts`  | Add `strict = false`, extract `createSingleSkill()`, loop over `argv`, add summary reporting, update help/examples                                                                 |
 | `src/cli/commands/new/agent.tsx` | Add `strict = false`, **remove `--purpose` flag**, add `--force` flag, loop over `argv` with interactive description prompt per agent, add summary reporting, update help/examples |
 
 ### No new files

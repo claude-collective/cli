@@ -27,7 +27,7 @@
    **RESOLVED:** Two triggers:
    - Running `agentsinc` with no command (when a project is already initialized)
    - Running `agentsinc init` on an already-initialized project
-   Both show the same dashboard.
+     Both show the same dashboard.
 
 ---
 
@@ -71,14 +71,14 @@ No changes made.
 
 ### Existing Utilities That Provide Summary Data
 
-| Utility | Location | What It Returns |
-|---------|----------|-----------------|
-| `getInstallationInfo()` | `lib/plugins/plugin-info.ts` | mode, name, skillCount, agentCount, configPath, agentsDir, skillsDir |
-| `formatInstallationDisplay()` | `lib/plugins/plugin-info.ts` | Formatted multi-line string of installation info |
-| `detectInstallation()` | `lib/installation/installation.ts` | mode, configPath, agentsDir, skillsDir, projectDir |
-| `loadProjectConfig()` | `lib/configuration/project-config.ts` | Full `ProjectConfig` with skills[], agents[], installMode, domains, source, etc. |
-| `discoverAllPluginSkills()` | `lib/plugins/plugin-discovery.ts` | Map of all discovered plugin skills |
-| `hasIndividualPlugins()` | `lib/plugins/plugin-discovery.ts` | Boolean: any plugins enabled in settings.json |
+| Utility                       | Location                              | What It Returns                                                                  |
+| ----------------------------- | ------------------------------------- | -------------------------------------------------------------------------------- |
+| `getInstallationInfo()`       | `lib/plugins/plugin-info.ts`          | mode, name, skillCount, agentCount, configPath, agentsDir, skillsDir             |
+| `formatInstallationDisplay()` | `lib/plugins/plugin-info.ts`          | Formatted multi-line string of installation info                                 |
+| `detectInstallation()`        | `lib/installation/installation.ts`    | mode, configPath, agentsDir, skillsDir, projectDir                               |
+| `loadProjectConfig()`         | `lib/configuration/project-config.ts` | Full `ProjectConfig` with skills[], agents[], installMode, domains, source, etc. |
+| `discoverAllPluginSkills()`   | `lib/plugins/plugin-discovery.ts`     | Map of all discovered plugin skills                                              |
+| `hasIndividualPlugins()`      | `lib/plugins/plugin-discovery.ts`     | Boolean: any plugins enabled in settings.json                                    |
 
 ### Commands That Already Display Summary Data
 
@@ -111,6 +111,7 @@ Agents Inc.
 ```
 
 The summary shows:
+
 - Number of agents installed
 - Number of skills installed
 - Whether there's a custom marketplace source
@@ -146,6 +147,7 @@ Replace the current 3-line warning block (lines 84-92) with a call to the dashbo
 When `agentsinc` is run with no arguments and a project is already initialized, show the same dashboard instead of the default oclif help text.
 
 **Approach options (for implementer to investigate):**
+
 - oclif doesn't natively support default commands in v4
 - Could use a custom oclif `init` hook to intercept zero-args
 - Could create a root command that oclif routes to
@@ -159,17 +161,17 @@ The options (Edit, Compile, Doctor, List) should be selectable. When the user pi
 
 ## 6. Edge Cases
 
-| Edge Case | Current Behavior | Proposed Behavior |
-|-----------|-----------------|-------------------|
-| Config exists but is invalid/corrupt | Shows warning + redirect to edit | Shows basic message + suggests `doctor` |
-| Plugin mode with no config.yaml (only settings.json) | Shows `.claude/settings.json` path | Shows summary with plugin mode, skill count from plugin discovery |
-| Config exists but skills array is empty | Shows warning + redirect | Shows summary with "0 installed" |
-| Config exists but agents array is empty | Shows warning + redirect | Shows summary with "0 compiled" |
-| `--dry-run` flag is set | Shows dry-run header, then warning | Shows dry-run header, then summary (dry-run doesn't affect read-only display) |
-| Project config at legacy location (.claude/config.yaml) | Shows path to legacy location | Summary shows relative path (works with either location) |
-| Both `hasIndividualPlugins` AND `detectInstallation` are true | Shows settings.json path | Shows summary from config (config is richer data source) |
-| `agentsinc` with no args, project NOT initialized | Shows oclif help | Shows oclif help (unchanged — dashboard only for initialized projects) |
-| User selects an option (Edit, Compile, etc.) | N/A | Launches the corresponding command |
+| Edge Case                                                     | Current Behavior                   | Proposed Behavior                                                             |
+| ------------------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------- |
+| Config exists but is invalid/corrupt                          | Shows warning + redirect to edit   | Shows basic message + suggests `doctor`                                       |
+| Plugin mode with no config.yaml (only settings.json)          | Shows `.claude/settings.json` path | Shows summary with plugin mode, skill count from plugin discovery             |
+| Config exists but skills array is empty                       | Shows warning + redirect           | Shows summary with "0 installed"                                              |
+| Config exists but agents array is empty                       | Shows warning + redirect           | Shows summary with "0 compiled"                                               |
+| `--dry-run` flag is set                                       | Shows dry-run header, then warning | Shows dry-run header, then summary (dry-run doesn't affect read-only display) |
+| Project config at legacy location (.claude/config.yaml)       | Shows path to legacy location      | Summary shows relative path (works with either location)                      |
+| Both `hasIndividualPlugins` AND `detectInstallation` are true | Shows settings.json path           | Shows summary from config (config is richer data source)                      |
+| `agentsinc` with no args, project NOT initialized             | Shows oclif help                   | Shows oclif help (unchanged — dashboard only for initialized projects)        |
+| User selects an option (Edit, Compile, etc.)                  | N/A                                | Launches the corresponding command                                            |
 
 ---
 
@@ -202,10 +204,10 @@ The options (Edit, Compile, Doctor, List) should be selectable. When the user pi
 
 ## 8. Files Changed Summary
 
-| File | Change | Complexity |
-|------|--------|------------|
-| `src/cli/commands/init.tsx` | Replace warn+redirect with dashboard display; add dashboard helper; add `loadProjectConfig` import | Low |
-| `src/cli/hooks/init.ts` or root command | Intercept zero-args when project is initialized; show dashboard | Medium |
+| File                                    | Change                                                                                             | Complexity |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------- | ---------- |
+| `src/cli/commands/init.tsx`             | Replace warn+redirect with dashboard display; add dashboard helper; add `loadProjectConfig` import | Low        |
+| `src/cli/hooks/init.ts` or root command | Intercept zero-args when project is initialized; show dashboard                                    | Medium     |
 
 **Total files changed:** 2
 **New files:** 0-1 (depends on approach for no-command handler)
