@@ -27,6 +27,10 @@ export type TerminalSessionOptions = {
  * PTY output is piped into a headless xterm terminal emulator, which processes
  * all ANSI escape sequences (cursor movement, clearing, etc.) and maintains a
  * proper screen buffer. getScreen() returns exactly what the user would see.
+ *
+ * HOME is set to cwd by default to isolate tests from the user's real global
+ * config (~/.claude-src/config.yaml). Tests that need a different HOME can
+ * override via options.env.
  */
 export class TerminalSession {
   private ptyProcess: pty.IPty;
@@ -48,6 +52,7 @@ export class TerminalSession {
       cwd,
       env: {
         ...process.env,
+        HOME: cwd,
         ...options?.env,
         NO_COLOR: "1",
         FORCE_COLOR: "0",

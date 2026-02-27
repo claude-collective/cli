@@ -366,10 +366,12 @@ Identified by cross-referencing CLI commands with existing test coverage and aud
 ### `init wizard` interactive gaps (currently 21 tests)
 
 - [ ] Init with `--source` flag → verify custom source is loaded
+- [ ] Init with `--global` flag → verify global install paths (see Phase 12 for full global coverage)
 - [ ] Init from "Start from scratch" with only one domain selected → verify single-domain flow
 - [ ] Init with all domains deselected → verify validation error or empty install behavior
 - [ ] Init with stack selection → customize instead of defaults → verify build step loads stack skills
 - [ ] Init in a directory with existing `.claude/` but no config → verify behavior (not "already initialized" if no config.yaml)
+- [ ] Init on existing project → dashboard menu (see Phase 12)
 
 ### `edit wizard` interactive gaps (currently 17 tests)
 
@@ -396,6 +398,68 @@ All commands have at least basic coverage. The following have the thinnest cover
 
 - [ ] `import skill` — 5 of 10 tests are `it.fails()` due to local source bug. Once BUG is fixed, convert to passing tests.
 - [ ] `build stack` interactive — no test verifies the actual compiled output content (only verifies compilation started/completed)
+
+---
+
+## Phase 12: Missing Journeys — Global Install, Dashboard, Wizard Toggles
+
+Cross-referenced all CLI commands, flags, wizard key handlers, and recent features against existing E2E coverage. These are user journeys that have no E2E test.
+
+### Global install scope (`--global` flag + `G` key toggle)
+
+- [ ] `init --global` creates config in `~/.claude-src/config.yaml` and skills in `~/.claude/skills/`
+- [ ] `init --global --dry-run` shows global install preview without writing files
+- [ ] `init --global` with existing global config shows dashboard (not re-init)
+- [ ] `G` key during init wizard toggles scope badge to "Global"
+- [ ] `edit` falls back to global installation when no project config exists
+- [ ] `list` shows global installation details when no project config exists
+- [ ] `doctor` validates global installation when no project config exists
+- [ ] `compile` uses global installation paths when no project config exists
+
+### Dashboard view (init on existing project)
+
+- [ ] `init` on already-initialized project shows dashboard menu
+- [ ] Dashboard renders installed skill count, agent names, config path
+- [ ] Dashboard arrow key navigation between options (Edit, Compile, Doctor, List)
+- [ ] Dashboard ESC or Ctrl+C exits cleanly
+
+### Wizard toggle badges
+
+- [ ] `P` key during init wizard toggles "Plugin mode" badge active/inactive
+- [ ] `G` key during init wizard toggles "Global" badge active/inactive
+- [ ] `D` key during build step toggles compatibility labels on skill tags
+- [ ] `?` key opens help modal, ESC closes it
+- [ ] `S` key during sources step opens settings overlay
+
+### Stack skill restoration on domain re-toggle
+
+- [ ] Stack-based init: deselect a domain, re-select it — skills from stack restore
+- [ ] Scratch flow: deselect a domain, re-select it — no automatic restoration
+
+### Startup message buffering (D-28)
+
+- [ ] `init --global` shows "Installing globally..." message above wizard (not cleared by Ink)
+- [ ] `edit` with global fallback shows "No project installation found..." message above wizard
+
+### Confirm step detail verification
+
+- [ ] Confirm step displays install mode (Plugin/Local)
+- [ ] Confirm step displays install scope (Global/Project)
+- [ ] Confirm step displays selected skills grouped by domain
+- [ ] Confirm step displays selected agents
+
+### Source management in wizard
+
+- [ ] `S` key in sources step opens settings overlay with source list
+- [ ] `A` key in settings adds a new source
+- [ ] DEL key in settings removes a non-default source
+- [ ] ESC in settings returns to sources step
+
+### Missing flag combinations
+
+- [ ] `init --global --source {url}` uses custom source for global install
+- [ ] `edit --source {url}` loads skills from custom source
+- [ ] `compile --agent-source {url}` compiles agents from custom remote source
 
 ---
 

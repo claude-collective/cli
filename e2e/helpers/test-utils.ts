@@ -130,6 +130,10 @@ export function stripAnsi(text: string): string {
  * Wraps the common `execa("node", [BIN_RUN, ...args], { cwd, reject: false })`
  * pattern used across all non-interactive E2E command tests. All output fields
  * are pre-stripped of ANSI escape sequences.
+ *
+ * HOME is set to cwd by default to isolate tests from the user's real global
+ * config (~/.claude-src/config.yaml). Tests that need a different HOME can
+ * override via options.env.
  */
 export async function runCLI(
   args: string[],
@@ -144,7 +148,7 @@ export async function runCLI(
   const result = await execa("node", [BIN_RUN, ...args], {
     cwd,
     reject: false,
-    env: options?.env,
+    env: { HOME: cwd, ...options?.env },
   });
   return {
     exitCode: result.exitCode ?? 1,

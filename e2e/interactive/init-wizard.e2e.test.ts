@@ -340,7 +340,7 @@ describe("init wizard", () => {
       expect(confirmOutput).toContain("API");
       expect(confirmOutput).toContain("Skills:");
       expect(confirmOutput).toContain("Agents:");
-      expect(confirmOutput).toContain("Local");
+      expect(confirmOutput).toContain("Project");
     });
 
     it("should complete a full scratch-based init flow through to install", async () => {
