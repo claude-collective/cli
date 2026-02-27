@@ -89,10 +89,7 @@ describe("validate command", () => {
       const { sourceDir, tempDir: sourceTempDir } = await createE2ESource();
       tempDir = sourceTempDir;
 
-      const { exitCode, combined } = await runCLI(
-        ["validate", "--source", sourceDir],
-        tempDir,
-      );
+      const { exitCode, combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
 
       // E2E source metadata is incomplete (missing cliDescription, usageGuidance),
       // so validate correctly reports errors and exits 1
@@ -105,10 +102,7 @@ describe("validate command", () => {
       const { sourceDir, tempDir: sourceTempDir } = await createE2ESource();
       tempDir = sourceTempDir;
 
-      const { exitCode, combined } = await runCLI(
-        ["validate", "--source", sourceDir],
-        tempDir,
-      );
+      const { exitCode, combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
 
       // E2E source has validation errors from incomplete metadata
       expect(exitCode).toBe(EXIT_CODES.ERROR);
@@ -131,17 +125,14 @@ describe("validate command", () => {
         [
           `author: "@test"`,
           `category: web-testing`,
-          `cliName: web-valid-skill`,
+          `displayName: web-valid-skill`,
           `cliDescription: A fully valid test skill`,
           `usageGuidance: Use for testing`,
           `contentHash: "abc1234"`,
         ].join("\n") + "\n",
       );
 
-      const { exitCode, combined } = await runCLI(
-        ["validate", "--source", sourceDir],
-        tempDir,
-      );
+      const { exitCode, combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
 
       expect(combined).toContain("Checked 1 skill(s)");
       expect(combined).toContain("0 error(s)");
@@ -165,10 +156,7 @@ describe("validate command", () => {
         `{{{invalid yaml content\n  broken: [unmatched`,
       );
 
-      const { exitCode, combined } = await runCLI(
-        ["validate", "--source", sourceDir],
-        tempDir,
-      );
+      const { exitCode, combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
 
       expect(exitCode).toBe(EXIT_CODES.ERROR);
       expect(combined).toContain("1 error(s)");
@@ -186,15 +174,9 @@ describe("validate command", () => {
       );
 
       // metadata.yaml with no required fields
-      await writeFile(
-        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-        `someRandomKey: value\n`,
-      );
+      await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), `someRandomKey: value\n`);
 
-      const { exitCode, combined } = await runCLI(
-        ["validate", "--source", sourceDir],
-        tempDir,
-      );
+      const { exitCode, combined } = await runCLI(["validate", "--source", sourceDir], tempDir);
 
       expect(exitCode).toBe(EXIT_CODES.ERROR);
       expect(combined).toContain("error");
@@ -213,10 +195,7 @@ describe("validate command", () => {
       expect(buildExitCode).toBe(EXIT_CODES.SUCCESS);
       expect(buildStdout).toContain("Plugin compilation complete!");
 
-      const { exitCode, combined } = await runCLI(
-        ["validate", "--plugins"],
-        sourceDir,
-      );
+      const { exitCode, combined } = await runCLI(["validate", "--plugins"], sourceDir);
 
       // E2E source metadata is incomplete, so built plugins have validation errors
       expect(exitCode).toBe(EXIT_CODES.ERROR);

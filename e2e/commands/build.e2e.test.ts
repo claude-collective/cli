@@ -71,10 +71,7 @@ describe("build commands", () => {
     it("should accept --verbose flag", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, stdout } = await runCLI(
-        ["build", "plugins", "--verbose"],
-        tempDir,
-      );
+      const { exitCode, stdout } = await runCLI(["build", "plugins", "--verbose"], tempDir);
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Compiling skill plugins");

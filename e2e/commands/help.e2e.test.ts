@@ -1,6 +1,12 @@
 import { execa } from "execa";
 import { describe, it, expect, beforeAll } from "vitest";
-import { BIN_RUN, ensureBinaryExists, stripAnsi, EXIT_CODES, OCLIF_EXIT_CODES } from "../helpers/test-utils.js";
+import {
+  BIN_RUN,
+  ensureBinaryExists,
+  stripAnsi,
+  EXIT_CODES,
+  OCLIF_EXIT_CODES,
+} from "../helpers/test-utils.js";
 
 describe("help and version", () => {
   beforeAll(ensureBinaryExists);

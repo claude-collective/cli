@@ -1,12 +1,7 @@
 import path from "path";
 import { writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import {
-  CLAUDE_DIR,
-  CLAUDE_SRC_DIR,
-  STANDARD_FILES,
-  STANDARD_DIRS,
-} from "../../src/cli/consts.js";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
 import { TerminalSession } from "../helpers/terminal-session.js";
 import {
   createTempDir,

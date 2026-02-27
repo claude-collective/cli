@@ -112,10 +112,7 @@ describe("import skill command", () => {
     e2eSourceDir = sourceDir;
     e2eSourceTempDir = srcTempDir;
 
-    const { exitCode, stdout } = await runCLI(
-      ["import", "skill", sourceDir, "--list"],
-      tempDir,
-    );
+    const { exitCode, stdout } = await runCLI(["import", "skill", sourceDir, "--list"], tempDir);
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Available skills");
@@ -132,7 +129,15 @@ describe("import skill command", () => {
     e2eSourceTempDir = srcTempDir;
 
     const { exitCode, stdout } = await runCLI(
-      ["import", "skill", sourceDir, "--skill", "web-framework-react", "--subdir", "src/skills/web-framework"],
+      [
+        "import",
+        "skill",
+        sourceDir,
+        "--skill",
+        "web-framework-react",
+        "--subdir",
+        "src/skills/web-framework",
+      ],
       tempDir,
     );
 
@@ -152,13 +157,29 @@ describe("import skill command", () => {
 
     // First import
     await runCLI(
-      ["import", "skill", sourceDir, "--skill", "web-framework-react", "--subdir", "src/skills/web-framework"],
+      [
+        "import",
+        "skill",
+        sourceDir,
+        "--skill",
+        "web-framework-react",
+        "--subdir",
+        "src/skills/web-framework",
+      ],
       tempDir,
     );
 
     // Second import should warn about skipping
     const { combined } = await runCLI(
-      ["import", "skill", sourceDir, "--skill", "web-framework-react", "--subdir", "src/skills/web-framework"],
+      [
+        "import",
+        "skill",
+        sourceDir,
+        "--skill",
+        "web-framework-react",
+        "--subdir",
+        "src/skills/web-framework",
+      ],
       tempDir,
     );
 
@@ -174,13 +195,30 @@ describe("import skill command", () => {
 
     // First import
     await runCLI(
-      ["import", "skill", sourceDir, "--skill", "web-framework-react", "--subdir", "src/skills/web-framework"],
+      [
+        "import",
+        "skill",
+        sourceDir,
+        "--skill",
+        "web-framework-react",
+        "--subdir",
+        "src/skills/web-framework",
+      ],
       tempDir,
     );
 
     // Second import with --force should succeed
     const { exitCode, stdout } = await runCLI(
-      ["import", "skill", sourceDir, "--skill", "web-framework-react", "--subdir", "src/skills/web-framework", "--force"],
+      [
+        "import",
+        "skill",
+        sourceDir,
+        "--skill",
+        "web-framework-react",
+        "--subdir",
+        "src/skills/web-framework",
+        "--force",
+      ],
       tempDir,
     );
 

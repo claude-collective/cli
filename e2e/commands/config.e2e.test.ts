@@ -196,10 +196,7 @@ describe("config commands", () => {
     it("should fail with invalid key", async () => {
       tempDir = await createTempDir();
 
-      const { exitCode, combined } = await runCLI(
-        ["config", "unset-project", "badkey"],
-        tempDir,
-      );
+      const { exitCode, combined } = await runCLI(["config", "unset-project", "badkey"], tempDir);
 
       expect(exitCode).toBe(EXIT_CODES.INVALID_ARGS);
       expect(combined).toContain("Unknown configuration key");

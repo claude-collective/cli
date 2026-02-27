@@ -122,10 +122,7 @@ export class TerminalSession {
   async waitForExit(timeoutMs?: number): Promise<number> {
     const timeout = timeoutMs ?? getDefaultTimeout();
     const timeoutError = new Promise<never>((_, reject) =>
-      setTimeout(
-        () => reject(new Error(`Process did not exit within ${timeout}ms`)),
-        timeout,
-      ),
+      setTimeout(() => reject(new Error(`Process did not exit within ${timeout}ms`)), timeout),
     );
     const { exitCode } = await Promise.race([this.exitPromise, timeoutError]);
     return exitCode;

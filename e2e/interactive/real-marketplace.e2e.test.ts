@@ -63,11 +63,9 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
     projectDir = await createTempDir();
     await createPermissionsFile(projectDir);
 
-    initSession = new TerminalSession(
-      ["init", "--source", SKILLS_SOURCE],
-      projectDir,
-      { env: { AGENTSINC_SOURCE: undefined } },
-    );
+    initSession = new TerminalSession(["init", "--source", SKILLS_SOURCE], projectDir, {
+      env: { AGENTSINC_SOURCE: undefined },
+    });
 
     // Step 1: Stack selection
     await initSession.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
@@ -159,11 +157,9 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
     it("should compile agents to a custom output directory", async () => {
       const outputDir = path.join(projectDir, "compile-output");
 
-      const { exitCode, stdout } = await runCLI(
-        ["compile", "--output", outputDir],
-        projectDir,
-        { env: { AGENTSINC_SOURCE: undefined } },
-      );
+      const { exitCode, stdout } = await runCLI(["compile", "--output", outputDir], projectDir, {
+        env: { AGENTSINC_SOURCE: undefined },
+      });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Custom output compile complete!");
@@ -176,11 +172,9 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
     it("should produce agents with real skill content", async () => {
       const outputDir = path.join(projectDir, "compile-verify");
 
-      const { exitCode } = await runCLI(
-        ["compile", "--output", outputDir],
-        projectDir,
-        { env: { AGENTSINC_SOURCE: undefined } },
-      );
+      const { exitCode } = await runCLI(["compile", "--output", outputDir], projectDir, {
+        env: { AGENTSINC_SOURCE: undefined },
+      });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 

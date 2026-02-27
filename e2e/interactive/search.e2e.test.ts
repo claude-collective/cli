@@ -269,14 +269,10 @@ describe("search command", () => {
       tempDir = await createTempDir();
       await createSourceFixture();
 
-      session = new TerminalSession(
-        ["search", "--source", sourceDir!],
-        tempDir,
-        {
-          rows: 40,
-          cols: 120,
-        },
-      );
+      session = new TerminalSession(["search", "--source", sourceDir!], tempDir, {
+        rows: 40,
+        cols: 120,
+      });
 
       await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
 

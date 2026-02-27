@@ -70,10 +70,7 @@ describe("build stack command", () => {
       sourceDir = source.sourceDir;
       sourceTempDir = source.tempDir;
 
-      session = new TerminalSession(
-        ["build", "stack", "--source", sourceDir],
-        sourceDir,
-      );
+      session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
 
       await session.waitForText("Select a stack", WIZARD_LOAD_TIMEOUT_MS);
     });
@@ -83,10 +80,7 @@ describe("build stack command", () => {
       sourceDir = source.sourceDir;
       sourceTempDir = source.tempDir;
 
-      session = new TerminalSession(
-        ["build", "stack", "--source", sourceDir],
-        sourceDir,
-      );
+      session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
 
       await session.waitForText("Select a stack", WIZARD_LOAD_TIMEOUT_MS);
 
@@ -99,10 +93,7 @@ describe("build stack command", () => {
       sourceDir = source.sourceDir;
       sourceTempDir = source.tempDir;
 
-      session = new TerminalSession(
-        ["build", "stack", "--source", sourceDir],
-        sourceDir,
-      );
+      session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
 
       await session.waitForText("Select a stack", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
@@ -182,10 +173,7 @@ describe("build stack command", () => {
       sourceDir = source.sourceDir;
       sourceTempDir = source.tempDir;
 
-      session = new TerminalSession(
-        ["build", "stack", "--source", sourceDir],
-        sourceDir,
-      );
+      session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
 
       await session.waitForText("Select a stack", WIZARD_LOAD_TIMEOUT_MS);
       await delay(STEP_TRANSITION_DELAY_MS);
@@ -201,10 +189,7 @@ describe("build stack command", () => {
       sourceDir = source.sourceDir;
       sourceTempDir = source.tempDir;
 
-      session = new TerminalSession(
-        ["build", "stack", "--source", sourceDir],
-        sourceDir,
-      );
+      session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
 
       await session.waitForText("Select a stack", WIZARD_LOAD_TIMEOUT_MS);
 

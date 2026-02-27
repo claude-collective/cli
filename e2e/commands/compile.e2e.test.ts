@@ -37,11 +37,9 @@ describe("compile command", () => {
     tempDir = await createTempDir();
     const { projectDir, outputDir } = await createMinimalProject(tempDir);
 
-    const { exitCode, stdout } = await runCLI(
-      ["compile", "--output", outputDir],
-      projectDir,
-      { env: COMPILE_ENV },
-    );
+    const { exitCode, stdout } = await runCLI(["compile", "--output", outputDir], projectDir, {
+      env: COMPILE_ENV,
+    });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Custom Output Compile");
@@ -67,11 +65,9 @@ describe("compile command", () => {
     tempDir = await createTempDir();
     const { projectDir, outputDir } = await createMinimalProject(tempDir);
 
-    const { exitCode } = await runCLI(
-      ["compile", "--output", outputDir],
-      projectDir,
-      { env: COMPILE_ENV },
-    );
+    const { exitCode } = await runCLI(["compile", "--output", outputDir], projectDir, {
+      env: COMPILE_ENV,
+    });
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -130,11 +126,9 @@ describe("compile command", () => {
     await mkdir(projectDir, { recursive: true });
     await mkdir(outputDir, { recursive: true });
 
-    const { exitCode, combined } = await runCLI(
-      ["compile", "--output", outputDir],
-      projectDir,
-      { env: COMPILE_ENV },
-    );
+    const { exitCode, combined } = await runCLI(["compile", "--output", outputDir], projectDir, {
+      env: COMPILE_ENV,
+    });
 
     expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
     expect(combined).toContain("No skills found");
@@ -160,11 +154,9 @@ describe("compile command", () => {
         metadata: `author: "@test"\ncontentHash: "hash-third"\n`,
       });
 
-      const { exitCode, stdout } = await runCLI(
-        ["compile", "--output", outputDir],
-        projectDir,
-        { env: COMPILE_ENV },
-      );
+      const { exitCode, stdout } = await runCLI(["compile", "--output", outputDir], projectDir, {
+        env: COMPILE_ENV,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Discovered 3 local skills");
@@ -185,11 +177,9 @@ describe("compile command", () => {
         metadata: `author: "@test"\ncontentHash: "hash-content"\n`,
       });
 
-      const { exitCode, stdout } = await runCLI(
-        ["compile", "--output", outputDir],
-        projectDir,
-        { env: COMPILE_ENV },
-      );
+      const { exitCode, stdout } = await runCLI(["compile", "--output", outputDir], projectDir, {
+        env: COMPILE_ENV,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Discovered 1 local skills");
@@ -244,11 +234,9 @@ describe("compile command", () => {
         `---\nname: web-testing-e2e-no-metadata\ndescription: Missing metadata\n---\n\n# No Metadata\n`,
       );
 
-      const { exitCode, combined } = await runCLI(
-        ["compile", "--output", outputDir],
-        projectDir,
-        { env: COMPILE_ENV },
-      );
+      const { exitCode, combined } = await runCLI(["compile", "--output", outputDir], projectDir, {
+        env: COMPILE_ENV,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(combined).toContain("missing metadata.yaml");
@@ -261,11 +249,9 @@ describe("compile command", () => {
       tempDir = await createTempDir();
       const { projectDir, outputDir } = await createMinimalProject(tempDir);
 
-      const { exitCode } = await runCLI(
-        ["compile", "--output", outputDir],
-        projectDir,
-        { env: COMPILE_ENV },
-      );
+      const { exitCode } = await runCLI(["compile", "--output", outputDir], projectDir, {
+        env: COMPILE_ENV,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
@@ -287,11 +273,9 @@ describe("compile command", () => {
       tempDir = await createTempDir();
       const { projectDir, outputDir } = await createMinimalProject(tempDir);
 
-      const { exitCode } = await runCLI(
-        ["compile", "--output", outputDir],
-        projectDir,
-        { env: COMPILE_ENV },
-      );
+      const { exitCode } = await runCLI(["compile", "--output", outputDir], projectDir, {
+        env: COMPILE_ENV,
+      });
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 

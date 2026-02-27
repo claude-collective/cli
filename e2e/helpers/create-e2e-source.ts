@@ -2,12 +2,7 @@ import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
 import { createTempDir } from "./test-utils.js";
-import {
-  DIRS,
-  SKILLS_DIR_PATH,
-  STACKS_FILE_PATH,
-  STANDARD_FILES,
-} from "../../src/cli/consts.js";
+import { DIRS, SKILLS_DIR_PATH, STACKS_FILE_PATH, STANDARD_FILES } from "../../src/cli/consts.js";
 import type {
   AgentName,
   CategoryPath,
@@ -162,7 +157,7 @@ async function writeSkills(sourceDir: string, skills: E2ESkill[]): Promise<void>
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-      `author: "@agents-inc"\ncategory: ${skill.category}\ntags: []\ncliName: ${skill.id}\ncontentHash: "e2e-hash"\n`,
+      `author: "@agents-inc"\ncategory: ${skill.category}\ntags: []\ndisplayName: ${skill.id}\ncontentHash: "e2e-hash"\n`,
     );
   }
 }

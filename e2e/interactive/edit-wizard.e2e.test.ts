@@ -281,24 +281,27 @@ describe("edit wizard", () => {
     // (src/cli/components/hooks/use-wizard-initialization.ts:39).
     // In edit mode, the build step IS the first step, so ESC should cancel the
     // wizard (exit), not navigate to the stack step which is nonsensical.
-    it.fails("should cancel wizard when pressing ESC on the initial build step in edit mode", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir);
+    it.fails(
+      "should cancel wizard when pressing ESC on the initial build step in edit mode",
+      async () => {
+        tempDir = await createTempDir();
+        const projectDir = await createEditableProject(tempDir);
 
-      session = new TerminalSession(["edit"], projectDir, {
-        rows: 40,
-        cols: 120,
-      });
+        session = new TerminalSession(["edit"], projectDir, {
+          rows: 40,
+          cols: 120,
+        });
 
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
 
-      session.escape();
-      await delay(STEP_TRANSITION_DELAY_MS);
+        session.escape();
+        await delay(STEP_TRANSITION_DELAY_MS);
 
-      const screen = session.getScreen();
-      // ESC on the first step in edit mode should cancel the wizard, not go to stack
-      expect(screen).toContain("Customize your");
-    });
+        const screen = session.getScreen();
+        // ESC on the first step in edit mode should cancel the wizard, not go to stack
+        expect(screen).toContain("Customize your");
+      },
+    );
   });
 
   describe("wizard hotkeys", () => {

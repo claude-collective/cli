@@ -77,10 +77,7 @@ describe("doctor command", () => {
   it("should accept --source flag", async () => {
     tempDir = await createTempDir();
 
-    const { exitCode, stdout } = await runCLI(
-      ["doctor", "--source", "/nonexistent"],
-      tempDir,
-    );
+    const { exitCode, stdout } = await runCLI(["doctor", "--source", "/nonexistent"], tempDir);
 
     expect(exitCode).toBe(EXIT_CODES.ERROR);
     expect(stdout).toContain("Doctor");

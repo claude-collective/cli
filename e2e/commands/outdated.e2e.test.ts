@@ -90,7 +90,7 @@ describe("outdated command", () => {
     await createLocalSkill(tempDir, localDirName, {
       metadata: [
         'author: "@agents-inc"',
-        `cliName: ${localDirName}`,
+        `displayName: ${localDirName}`,
         "forkedFrom:",
         `  skillId: ${sourceSkillId}`,
         `  contentHash: "${matchingHash}"`,
@@ -98,10 +98,7 @@ describe("outdated command", () => {
       ].join("\n"),
     });
 
-    const { exitCode, combined } = await runCLI(
-      ["outdated", "--source", sourceDir],
-      tempDir,
-    );
+    const { exitCode, combined } = await runCLI(["outdated", "--source", sourceDir], tempDir);
 
     // Should show "current" status for the skill
     expect(combined).toContain("current");
@@ -123,7 +120,7 @@ describe("outdated command", () => {
     await createLocalSkill(tempDir, localDirName, {
       metadata: [
         'author: "@agents-inc"',
-        `cliName: ${localDirName}`,
+        `displayName: ${localDirName}`,
         "forkedFrom:",
         `  skillId: ${sourceSkillId}`,
         '  contentHash: "0000000"',
@@ -131,10 +128,7 @@ describe("outdated command", () => {
       ].join("\n"),
     });
 
-    const { exitCode, combined } = await runCLI(
-      ["outdated", "--source", sourceDir],
-      tempDir,
-    );
+    const { exitCode, combined } = await runCLI(["outdated", "--source", sourceDir], tempDir);
 
     // Should show "outdated" status for the skill
     expect(combined).toContain("outdated");
@@ -156,7 +150,7 @@ describe("outdated command", () => {
     await createLocalSkill(tempDir, localDirName, {
       metadata: [
         'author: "@agents-inc"',
-        `cliName: ${localDirName}`,
+        `displayName: ${localDirName}`,
         "forkedFrom:",
         `  skillId: ${sourceSkillId}`,
         '  contentHash: "0000000"',
@@ -175,9 +169,7 @@ describe("outdated command", () => {
     expect(parsed.summary.outdated).toBe(1);
 
     // Find the outdated skill in the results
-    const outdatedSkill = parsed.skills.find(
-      (s: { id: string }) => s.id === sourceSkillId,
-    );
+    const outdatedSkill = parsed.skills.find((s: { id: string }) => s.id === sourceSkillId);
     expect(outdatedSkill).toBeDefined();
     expect(outdatedSkill.status).toBe("outdated");
     expect(outdatedSkill.localHash).toBe("0000000");
@@ -192,13 +184,10 @@ describe("outdated command", () => {
 
     // Create a local skill without forkedFrom metadata
     await createLocalSkill(tempDir, "web-custom-local-skill", {
-      metadata: 'author: "@test"\ncliName: web-custom-local-skill\n',
+      metadata: 'author: "@test"\ndisplayName: web-custom-local-skill\n',
     });
 
-    const { exitCode, combined } = await runCLI(
-      ["outdated", "--source", sourceDir],
-      tempDir,
-    );
+    const { exitCode, combined } = await runCLI(["outdated", "--source", sourceDir], tempDir);
 
     // Should show "local-only" status
     expect(combined).toContain("local-only");
@@ -216,7 +205,7 @@ describe("outdated command", () => {
     await createLocalSkill(tempDir, "web-framework-react-fork" as const, {
       metadata: [
         'author: "@agents-inc"',
-        "cliName: web-framework-react-fork",
+        "displayName: web-framework-react-fork",
         "forkedFrom:",
         "  skillId: web-framework-react",
         '  contentHash: "0000000"',
@@ -226,13 +215,10 @@ describe("outdated command", () => {
 
     // Create one local-only skill (no forkedFrom)
     await createLocalSkill(tempDir, "web-custom-local-skill", {
-      metadata: 'author: "@test"\ncliName: web-custom-local-skill\n',
+      metadata: 'author: "@test"\ndisplayName: web-custom-local-skill\n',
     });
 
-    const { exitCode, combined } = await runCLI(
-      ["outdated", "--source", sourceDir],
-      tempDir,
-    );
+    const { exitCode, combined } = await runCLI(["outdated", "--source", sourceDir], tempDir);
 
     expect(exitCode).toBe(EXIT_CODES.ERROR);
 

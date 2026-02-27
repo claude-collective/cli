@@ -9,7 +9,12 @@ import {
   runCLI,
   EXIT_CODES,
 } from "../helpers/test-utils.js";
-import { CLAUDE_DIR, STANDARD_DIRS, STANDARD_FILES, SKILLS_DIR_PATH } from "../../src/cli/consts.js";
+import {
+  CLAUDE_DIR,
+  STANDARD_DIRS,
+  STANDARD_FILES,
+  SKILLS_DIR_PATH,
+} from "../../src/cli/consts.js";
 import type { SkillId } from "../../src/cli/types/index.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
 
@@ -20,7 +25,7 @@ const SKILL_ID: SkillId = "web-testing-info-e2e";
  *
  * The source loader expects:
  *   <sourceDir>/src/skills/<skillId>/SKILL.md
- *   <sourceDir>/src/skills/<skillId>/metadata.yaml (with category, author, cliName, cliDescription)
+ *   <sourceDir>/src/skills/<skillId>/metadata.yaml (with category, author, displayName, cliDescription)
  */
 async function createSkillSource(
   tempDir: string,
@@ -50,7 +55,7 @@ This is test content for the info command E2E tests.
     path.join(skillDir, STANDARD_FILES.METADATA_YAML),
     `category: web-testing
 author: "@test"
-cliName: info-e2e
+displayName: info-e2e
 cliDescription: A test skill for info E2E
 contentHash: "e2e-info-test-hash"
 `,
@@ -137,7 +142,7 @@ describe("info command", () => {
         skills: [skillId],
       });
 
-      // createEditableProject metadata lacks cliName required by discoverLocalSkills.
+      // createEditableProject metadata lacks displayName required by discoverLocalSkills.
       // Overwrite with complete metadata so the local skill is discovered.
       const localSkillMetadataPath = path.join(
         projectDir,
@@ -148,7 +153,7 @@ describe("info command", () => {
       );
       await writeFile(
         localSkillMetadataPath,
-        `category: web-testing\nauthor: "@test"\ncliName: info-e2e\ncontentHash: "e2e-hash"\n`,
+        `category: web-testing\nauthor: "@test"\ndisplayName: info-e2e\ncontentHash: "e2e-hash"\n`,
       );
 
       const { exitCode, stdout } = await runCLI(
@@ -242,10 +247,7 @@ describe("info command", () => {
       tempDir = await createTempDir();
       const { sourceDir, skillId } = await createSkillSource(tempDir);
 
-      const { exitCode, stdout } = await runCLI(
-        ["info", skillId, "--source", sourceDir],
-        tempDir,
-      );
+      const { exitCode, stdout } = await runCLI(["info", skillId, "--source", sourceDir], tempDir);
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain(`Skill: ${skillId}`);

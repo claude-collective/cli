@@ -3,12 +3,7 @@ import { fileURLToPath } from "url";
 import { mkdir, writeFile, readdir, readFile } from "fs/promises";
 import { stripVTControlCharacters } from "node:util";
 import { execa } from "execa";
-import {
-  CLAUDE_DIR,
-  CLAUDE_SRC_DIR,
-  STANDARD_FILES,
-  STANDARD_DIRS,
-} from "../../src/cli/consts.js";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
 import {
   createTempDir as createTempDirBase,
   cleanupTempDir,
@@ -107,6 +102,7 @@ This skill exists solely for E2E testing of the compile command.
   await writeFile(
     path.join(skillDir, STANDARD_FILES.METADATA_YAML),
     `author: "@test"
+displayName: web-testing-e2e-compile
 contentHash: "e2e-test-hash"
 `,
   );
@@ -282,7 +278,7 @@ export async function createEditableProject(
 
     await writeFile(
       path.join(skillDir, STANDARD_FILES.METADATA_YAML),
-      `author: "@test"\ncontentHash: "e2e-hash-${skillId}"\n`,
+      `author: "@test"\ndisplayName: ${skillId}\ncontentHash: "e2e-hash-${skillId}"\n`,
     );
   }
 

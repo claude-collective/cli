@@ -66,10 +66,7 @@ describe("init wizard", () => {
    * Runs the full init wizard flow from stack selection through installation.
    * Creates permissions file, spawns wizard, navigates all steps with defaults.
    */
-  async function runFullInitFlow(
-    project: string,
-    source: string,
-  ): Promise<TerminalSession> {
+  async function runFullInitFlow(project: string, source: string): Promise<TerminalSession> {
     await createPermissionsFile(project);
 
     const wizardSession = spawnInitWizard(project, source);
@@ -600,10 +597,7 @@ describe("init wizard", () => {
 
       const configDir = path.join(projectDir!, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        "version: 1.0.0\n",
-      );
+      await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_YAML), "version: 1.0.0\n");
 
       session = spawnInitWizard(projectDir!, sourceDir!);
 

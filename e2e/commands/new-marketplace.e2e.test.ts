@@ -147,10 +147,7 @@ describe("new marketplace command", () => {
     );
     expect(setupExitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const { exitCode, combined } = await runCLI(
-      ["new", "marketplace", marketplaceName],
-      tempDir,
-    );
+    const { exitCode, combined } = await runCLI(["new", "marketplace", marketplaceName], tempDir);
 
     expect(exitCode).toBe(EXIT_CODES.ERROR);
     expect(combined).toContain("already exists");

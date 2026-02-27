@@ -110,10 +110,7 @@ describe("eject command", () => {
     const { sourceDir, tempDir: srcTempDir } = await createE2ESource();
     e2eSourceTempDir = srcTempDir;
 
-    const { exitCode, stdout } = await runCLI(
-      ["eject", "skills", "--source", sourceDir],
-      tempDir,
-    );
+    const { exitCode, stdout } = await runCLI(["eject", "skills", "--source", sourceDir], tempDir);
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("skills ejected");
@@ -129,10 +126,7 @@ describe("eject command", () => {
     const { sourceDir, tempDir: srcTempDir } = await createE2ESource();
     e2eSourceTempDir = srcTempDir;
 
-    const { exitCode, stdout } = await runCLI(
-      ["eject", "all", "--source", sourceDir],
-      tempDir,
-    );
+    const { exitCode, stdout } = await runCLI(["eject", "all", "--source", sourceDir], tempDir);
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("ejected");
@@ -144,10 +138,7 @@ describe("eject command", () => {
     const { sourceDir, tempDir: srcTempDir } = await createE2ESource();
     e2eSourceTempDir = srcTempDir;
 
-    const { exitCode, stdout } = await runCLI(
-      ["eject", "skills", "--source", sourceDir],
-      tempDir,
-    );
+    const { exitCode, stdout } = await runCLI(["eject", "skills", "--source", sourceDir], tempDir);
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Source saved to .claude-src/config.yaml");

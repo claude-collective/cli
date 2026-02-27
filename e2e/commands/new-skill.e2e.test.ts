@@ -10,11 +10,7 @@ import {
   runCLI,
   EXIT_CODES,
 } from "../helpers/test-utils.js";
-import {
-  CLAUDE_DIR,
-  STANDARD_FILES,
-  STANDARD_DIRS,
-} from "../../src/cli/consts.js";
+import { CLAUDE_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
 
 describe("new skill command", () => {
   let tempDir: string;
@@ -69,12 +65,7 @@ describe("new skill command", () => {
     expect(stdout).toContain(skillName);
     expect(stdout).toContain("Skill created successfully");
 
-    const skillDir = path.join(
-      tempDir,
-      CLAUDE_DIR,
-      STANDARD_DIRS.SKILLS,
-      skillName,
-    );
+    const skillDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, skillName);
 
     expect(await directoryExists(skillDir)).toBe(true);
 

@@ -10,21 +10,17 @@ import {
   runCLI,
   EXIT_CODES,
 } from "../helpers/test-utils.js";
-import {
-  CLAUDE_DIR,
-  CLAUDE_SRC_DIR,
-  STANDARD_FILES,
-  STANDARD_DIRS,
-} from "../../src/cli/consts.js";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
 
-const FORKED_FROM_METADATA = [
-  'author: "@test"',
-  'contentHash: "e2e-hash-web-framework-react"',
-  "forkedFrom:",
-  "  skillId: web-framework-react",
-  '  contentHash: "e2e-hash"',
-  "  date: 2026-01-01",
-].join("\n") + "\n";
+const FORKED_FROM_METADATA =
+  [
+    'author: "@test"',
+    'contentHash: "e2e-hash-web-framework-react"',
+    "forkedFrom:",
+    "  skillId: web-framework-react",
+    '  contentHash: "e2e-hash"',
+    "  date: 2026-01-01",
+  ].join("\n") + "\n";
 
 async function addForkedFromMetadata(projectDir: string): Promise<void> {
   const metadataPath = path.join(
@@ -169,12 +165,7 @@ describe("uninstall command", () => {
     const projectDir = await createEditableProject(tempDir);
 
     // Create a user-created skill with no forkedFrom metadata
-    const userSkillDir = path.join(
-      projectDir,
-      CLAUDE_DIR,
-      STANDARD_DIRS.SKILLS,
-      "my-custom-skill",
-    );
+    const userSkillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "my-custom-skill");
     await mkdir(userSkillDir, { recursive: true });
     await writeFile(
       path.join(userSkillDir, STANDARD_FILES.SKILL_MD),

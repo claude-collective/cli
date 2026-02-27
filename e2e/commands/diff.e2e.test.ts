@@ -50,7 +50,7 @@ describe("diff command", () => {
   it("should report no forkedFrom metadata for skills without it (message only)", async () => {
     tempDir = await createTempDir();
     await createLocalSkill(tempDir, "web-testing-e2e-skill", {
-      metadata: 'author: "@test"\ncontentHash: "abc123"\ncliName: my-test-skill\n',
+      metadata: 'author: "@test"\ncontentHash: "abc123"\ndisplayName: my-test-skill\n',
     });
 
     const { combined } = await runCLI(["diff"], tempDir);
@@ -64,7 +64,7 @@ describe("diff command", () => {
   it.fails("should exit code 0 when no forkedFrom metadata and no diffs", async () => {
     tempDir = await createTempDir();
     await createLocalSkill(tempDir, "web-testing-e2e-skill", {
-      metadata: 'author: "@test"\ncontentHash: "abc123"\ncliName: my-test-skill\n',
+      metadata: 'author: "@test"\ncontentHash: "abc123"\ndisplayName: my-test-skill\n',
     });
 
     const { exitCode } = await runCLI(["diff"], tempDir);
@@ -75,7 +75,7 @@ describe("diff command", () => {
   it("should report error when specifying a nonexistent skill name", async () => {
     tempDir = await createTempDir();
     await createLocalSkill(tempDir, "web-testing-e2e-skill", {
-      metadata: 'author: "@test"\ncliName: my-test-skill\n',
+      metadata: 'author: "@test"\ndisplayName: my-test-skill\n',
     });
 
     const { exitCode, combined } = await runCLI(["diff", "nonexistent-skill"], tempDir);
@@ -96,7 +96,7 @@ describe("diff command", () => {
       description: "Modified local version of the skill",
       metadata: [
         'author: "@agents-inc"',
-        `cliName: ${localDirName}`,
+        `displayName: ${localDirName}`,
         "forkedFrom:",
         `  skillId: ${sourceSkillId}`,
         '  contentHash: "stale-hash-that-wont-match"',
@@ -109,10 +109,7 @@ describe("diff command", () => {
       `---\nname: ${localDirName}\ndescription: Locally modified content\n---\n\n# ${localDirName}\n\nThis content has been locally modified.\n`,
     );
 
-    const { exitCode, combined } = await runCLI(
-      ["diff", "--source", e2e.sourceDir],
-      tempDir,
-    );
+    const { exitCode, combined } = await runCLI(["diff", "--source", e2e.sourceDir], tempDir);
 
     expect(combined).toContain(sourceSkillId);
     expect(combined).toContain("---");
@@ -133,7 +130,7 @@ describe("diff command", () => {
       description: "Modified react skill",
       metadata: [
         'author: "@agents-inc"',
-        `cliName: ${targetLocalDir}`,
+        `displayName: ${targetLocalDir}`,
         "forkedFrom:",
         "  skillId: web-framework-react",
         '  contentHash: "stale-hash"',
@@ -145,7 +142,7 @@ describe("diff command", () => {
       description: "Another skill",
       metadata: [
         'author: "@agents-inc"',
-        `cliName: ${otherLocalDir}`,
+        `displayName: ${otherLocalDir}`,
         "forkedFrom:",
         "  skillId: web-testing-vitest",
         '  contentHash: "stale-hash"',
@@ -153,10 +150,7 @@ describe("diff command", () => {
       ].join("\n"),
     });
 
-    const { combined } = await runCLI(
-      ["diff", targetLocalDir, "--source", e2e.sourceDir],
-      tempDir,
-    );
+    const { combined } = await runCLI(["diff", targetLocalDir, "--source", e2e.sourceDir], tempDir);
 
     expect(combined).toContain("web-framework-react");
     expect(combined).toContain(targetLocalDir);
@@ -174,7 +168,7 @@ describe("diff command", () => {
       description: "Modified skill",
       metadata: [
         'author: "@agents-inc"',
-        `cliName: ${localDirName}`,
+        `displayName: ${localDirName}`,
         "forkedFrom:",
         "  skillId: web-testing-vitest",
         '  contentHash: "stale-hash"',
@@ -217,7 +211,7 @@ describe("diff command", () => {
       description: "Next generation testing framework",
       metadata: [
         'author: "@agents-inc"',
-        `cliName: ${localDirName}`,
+        `displayName: ${localDirName}`,
         "forkedFrom:",
         `  skillId: ${sourceSkillId}`,
         '  contentHash: "placeholder"',
@@ -257,7 +251,7 @@ describe("diff command", () => {
       description: "Next generation testing framework",
       metadata: [
         'author: "@agents-inc"',
-        `cliName: ${localDirName}`,
+        `displayName: ${localDirName}`,
         "forkedFrom:",
         `  skillId: ${sourceSkillId}`,
         '  contentHash: "placeholder"',
@@ -267,10 +261,7 @@ describe("diff command", () => {
 
     await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), sourceContent);
 
-    const { exitCode, combined } = await runCLI(
-      ["diff", "--source", e2e.sourceDir],
-      tempDir,
-    );
+    const { exitCode, combined } = await runCLI(["diff", "--source", e2e.sourceDir], tempDir);
 
     expect(combined).toContain("up to date");
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
@@ -299,7 +290,7 @@ describe("diff command", () => {
       description: "Next generation testing framework",
       metadata: [
         'author: "@agents-inc"',
-        `cliName: ${localDirName}`,
+        `displayName: ${localDirName}`,
         "forkedFrom:",
         `  skillId: ${sourceSkillId}`,
         '  contentHash: "placeholder"',
@@ -309,10 +300,7 @@ describe("diff command", () => {
 
     await writeFile(path.join(skillDir, STANDARD_FILES.SKILL_MD), sourceContent);
 
-    const { exitCode } = await runCLI(
-      ["diff", "--quiet", "--source", e2e.sourceDir],
-      tempDir,
-    );
+    const { exitCode } = await runCLI(["diff", "--quiet", "--source", e2e.sourceDir], tempDir);
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
   });
