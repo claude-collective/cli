@@ -102,9 +102,7 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
           {(msg, index) => (
             <Box key={index}>
               <Text
-                color={
-                  msg.level === "warn" ? "yellow" : msg.level === "error" ? "red" : undefined
-                }
+                color={msg.level === "warn" ? "yellow" : msg.level === "error" ? "red" : undefined}
               >
                 {msg.level === "warn" ? `  Warning: ${msg.text}` : msg.text}
               </Text>

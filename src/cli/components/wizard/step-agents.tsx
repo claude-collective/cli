@@ -175,9 +175,10 @@ export const StepAgents: React.FC<StepAgentsProps> = ({ matrix }) => {
   const [focusedId, setFocusedId] = useState<FocusId>(focusableIds[0]!);
   const { ref: listRef, measuredHeight: listHeight } = useMeasuredHeight();
 
-  const focusedRowIndex = focusedId !== "continue"
-    ? flatRows.findIndex((row) => row.type === "agent" && row.agent.id === focusedId)
-    : -1;
+  const focusedRowIndex =
+    focusedId !== "continue"
+      ? flatRows.findIndex((row) => row.type === "agent" && row.agent.id === focusedId)
+      : -1;
   const { scrollEnabled, scrollTop } = useRowScroll({
     focusedIndex: Math.max(0, focusedRowIndex),
     itemCount: flatRows.length,

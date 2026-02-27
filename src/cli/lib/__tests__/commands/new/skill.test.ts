@@ -441,10 +441,7 @@ describe("new:skill command", () => {
       expect(categoriesContent).toContain("web-testing:");
       expect(categoriesContent).toContain("api-database:");
 
-      const rulesContent = await readFile(
-        path.join(projectDir, SKILL_RULES_YAML_PATH),
-        "utf-8",
-      );
+      const rulesContent = await readFile(path.join(projectDir, SKILL_RULES_YAML_PATH), "utf-8");
       expect(rulesContent).toContain("first-skill:");
       expect(rulesContent).toContain("second-skill:");
     });

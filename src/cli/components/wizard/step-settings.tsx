@@ -71,9 +71,8 @@ export const StepSettings: React.FC<StepSettingsProps> = ({
   );
 
   // Compute scroll offset for source list
-  const sourceViewportHeight = availableHeight > SOURCE_LIST_BORDER_LINES
-    ? availableHeight - SOURCE_LIST_BORDER_LINES
-    : 0;
+  const sourceViewportHeight =
+    availableHeight > SOURCE_LIST_BORDER_LINES ? availableHeight - SOURCE_LIST_BORDER_LINES : 0;
   const { scrollEnabled, scrollTop } = useRowScroll({
     focusedIndex,
     itemCount: sourceCount,

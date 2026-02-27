@@ -767,7 +767,7 @@ describe("CategoryGrid component", () => {
         categories,
         defaultFocusedRow: 0,
         defaultFocusedCol: 0, // react (selected)
-               onToggle,
+        onToggle,
       });
       cleanup = unmount;
 
@@ -791,7 +791,7 @@ describe("CategoryGrid component", () => {
         categories,
         defaultFocusedRow: 0,
         defaultFocusedCol: 0,
-               onToggle,
+        onToggle,
       });
       cleanup = unmount;
 
@@ -835,7 +835,7 @@ describe("CategoryGrid component", () => {
         categories,
         defaultFocusedRow: 0,
         defaultFocusedCol: 0,
-               onFocusChange,
+        onFocusChange,
       });
       cleanup = unmount;
 
@@ -862,7 +862,7 @@ describe("CategoryGrid component", () => {
         categories,
         defaultFocusedRow: 0,
         defaultFocusedCol: 2, // Start at opt3 (index 2)
-               onFocusChange,
+        onFocusChange,
       });
       cleanup = unmount;
 
@@ -887,7 +887,7 @@ describe("CategoryGrid component", () => {
         categories,
         defaultFocusedRow: 0,
         defaultFocusedCol: 0,
-               onFocusChange,
+        onFocusChange,
       });
       cleanup = unmount;
 

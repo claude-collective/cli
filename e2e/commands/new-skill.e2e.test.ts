@@ -156,10 +156,7 @@ describe("new skill command", () => {
     const marketplaceName = "mp-skill-config";
 
     // First scaffold a marketplace to establish the context
-    const { exitCode: mpExitCode } = await runCLI(
-      ["new", "marketplace", marketplaceName],
-      tempDir,
-    );
+    const { exitCode: mpExitCode } = await runCLI(["new", "marketplace", marketplaceName], tempDir);
     expect(mpExitCode).toBe(EXIT_CODES.SUCCESS);
 
     const marketplaceDir = path.join(tempDir, marketplaceName);

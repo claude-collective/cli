@@ -101,16 +101,17 @@ export const CheckboxGrid = <T extends string = string>({
     );
   });
 
-  const footerElement = selectedIds.length > 0 ? (
-    <Text>
-      {"\n"}Selected: <Text color={CLI_COLORS.WARNING}>{selectedIds.join(", ")}</Text>
-    </Text>
-  ) : emptyMessage ? (
-    <Text dimColor>
-      {"\n"}
-      {emptyMessage}
-    </Text>
-  ) : null;
+  const footerElement =
+    selectedIds.length > 0 ? (
+      <Text>
+        {"\n"}Selected: <Text color={CLI_COLORS.WARNING}>{selectedIds.join(", ")}</Text>
+      </Text>
+    ) : emptyMessage ? (
+      <Text dimColor>
+        {"\n"}
+        {emptyMessage}
+      </Text>
+    ) : null;
 
   return (
     <Box flexDirection="column">

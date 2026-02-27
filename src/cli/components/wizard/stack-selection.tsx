@@ -110,11 +110,7 @@ export const StackSelection: React.FC<StackSelectionProps> = ({
         ? { height: availableHeight, overflow: "hidden" as const }
         : { flexGrow: 1 })}
     >
-      <Box
-        flexDirection="column"
-        marginTop={scrollTopPx > 0 ? -scrollTopPx : 0}
-        {...noShrink}
-      >
+      <Box flexDirection="column" marginTop={scrollTopPx > 0 ? -scrollTopPx : 0} {...noShrink}>
         {sectionElements}
         {scratchElement}
       </Box>

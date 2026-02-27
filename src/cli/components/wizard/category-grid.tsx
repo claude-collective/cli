@@ -189,8 +189,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
   onFocusChange,
 }) => {
   const processedCategories = useMemo(
-    () =>
-      categories.map((category) => ({ ...category, sortedOptions: category.options })),
+    () => categories.map((category) => ({ ...category, sortedOptions: category.options })),
     [categories],
   );
 

@@ -375,7 +375,6 @@ describe("StepBuild component", () => {
 
       expect(onToggleLabels).toHaveBeenCalled();
     });
-
   });
 
   describe("edge cases", () => {

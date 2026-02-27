@@ -43,11 +43,7 @@ import {
   pushBufferMessage,
   type StartupMessage,
 } from "../utils/logger.js";
-import {
-  SUCCESS_MESSAGES,
-  STATUS_MESSAGES,
-  DRY_RUN_MESSAGES,
-} from "../utils/messages.js";
+import { SUCCESS_MESSAGES, STATUS_MESSAGES, DRY_RUN_MESSAGES } from "../utils/messages.js";
 
 type DashboardOption = {
   label: string;
@@ -104,13 +100,13 @@ const Dashboard: React.FC<DashboardProps> = ({
     <Box flexDirection="column">
       <Text bold>{DEFAULT_BRANDING.NAME}</Text>
       <Text> </Text>
-      <Text>  Skills:  {skillCount} installed</Text>
-      <Text>  Agents:  {agentCount} compiled</Text>
-      <Text>  Mode:    {mode === "plugin" ? "Plugin" : "Local"}</Text>
-      {source && <Text>  Source:  {source}</Text>}
+      <Text> Skills: {skillCount} installed</Text>
+      <Text> Agents: {agentCount} compiled</Text>
+      <Text> Mode: {mode === "plugin" ? "Plugin" : "Local"}</Text>
+      {source && <Text> Source: {source}</Text>}
       <Text> </Text>
       <Box>
-        <Text>  </Text>
+        <Text> </Text>
         {DASHBOARD_OPTIONS.map((option, index) => (
           <Box key={option.command} marginRight={1}>
             <Text
@@ -122,7 +118,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </Box>
         ))}
       </Box>
-      <Text dimColor>  Use arrow keys to select, Enter to confirm, Esc to exit</Text>
+      <Text dimColor> Use arrow keys to select, Enter to confirm, Esc to exit</Text>
     </Box>
   );
 };
@@ -136,10 +132,7 @@ export type DashboardData = {
 
 /** Gathers dashboard data from the installation and project config. */
 export async function getDashboardData(projectDir: string): Promise<DashboardData> {
-  const [info, loaded] = await Promise.all([
-    getInstallationInfo(),
-    loadProjectConfig(projectDir),
-  ]);
+  const [info, loaded] = await Promise.all([getInstallationInfo(), loadProjectConfig(projectDir)]);
 
   // Skill count from config (canonical source of truth for installed skills)
   const skillCount = loaded?.config?.skills?.length ?? 0;
@@ -418,7 +411,6 @@ export default class Init extends BaseCommand {
     projectDir: string,
     pluginScope: "project" | "user",
   ): Promise<void> {
-
     if (sourceResult.marketplace) {
       const marketplaceExists = await claudePluginMarketplaceExists(sourceResult.marketplace);
 
