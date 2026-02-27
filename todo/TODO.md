@@ -2,10 +2,10 @@
 
 | ID   | Task                                                                                                                                       | Status        |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
-| D-50 | Matrix decomposition — Phases 1-5 done, 6-8 remain (see [phased plan](./TODO-matrix-decomposition.md))                                     | In Progress   |
+| D-50 | ~~Matrix decomposition~~ — all 8 phases complete (see [phased plan](./TODO-matrix-decomposition.md))                                         | Done          |
 | D-46 | Custom extensibility (see [design doc](../docs/features/proposed/custom-extensibility-design.md))                                          | In Progress   |
 | D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                                            | Refined       |
-| D-33 | README: frame Agents Inc. as an AI coding framework (see [implementation plan](./D-33-readme-reframe.md))                                  | Ready for Dev |
+| D-33 | ~~README: frame Agents Inc. as an agent composition framework~~ — done                                                                     | Done          |
 | D-44 | Update README and Notion page for `eject templates` type (see [implementation plan](./D-44-docs-eject-templates.md))                       | Ready for Dev |
 | D-47 | ~~Eject a standalone compile function~~ — deferred, low priority (see [TODO-deferred.md](./TODO-deferred.md))                              | Deferred      |
 | T-12 | End-to-end tests for custom marketplace workflow (see [implementation plan](./T-12-e2e-marketplace-tests.md))                              | Has Open Qs   |
@@ -23,6 +23,9 @@
 | D-60 | Remove `cli-migrator` subagent                                                                                                             | Ready for Dev |
 | D-61 | Preserve stack skill selections when toggling domains                                                                                      | Ready for Dev |
 | D-62 | Review default stacks: include meta/methodology/reviewing skills                                                                           | Ready for Dev |
+| D-63 | Add E2E tests to pre-commit hook                                                                                                           | Ready for Dev |
+| D-64 | Create CLI E2E testing skill + update `cli-framework-oclif-ink` skill                                                                      | Ready for Dev |
+| B-07 | Fix skill sort order changing on select/deselect in build step                                                                             | Ready for Dev |
 
 ---
 
@@ -40,15 +43,9 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 
 ## Active Tasks
 
-### D-50: Matrix Decomposition — remaining phases
+### D-50: Matrix Decomposition — COMPLETE
 
-Phases 1-5 complete. `skills-matrix.yaml` deleted, replaced by `skill-categories.yaml` + `skill-rules.yaml`. Auto-synthesis active. See [phased plan](./TODO-matrix-decomposition.md) for full details.
-
-**Remaining phases:**
-
-- **Phase 6:** `new skill` / `new marketplace` commands should create/update `skill-categories.yaml` and `skill-rules.yaml` when scaffolding
-- **Phase 7:** Remove `categoryExclusive` from skill metadata — it's a category-level property (`exclusive` in `skill-categories.yaml`), not per-skill. Cross-repo change (~90 metadata.yaml files in skills repo)
-- **Phase 8:** Rename `displayName` → `displayName` in all skill metadata. COMPLETE
+All 8 phases complete. `skills-matrix.yaml` decomposed into `skill-categories.yaml` + `skill-rules.yaml` with directory-based skill discovery. Auto-synthesis for unknown categories. `categoryExclusive` removed from skill metadata. `cliName` renamed to `displayName`. `new skill` and `new marketplace` create/update config files. See [phased plan](./TODO-matrix-decomposition.md).
 
 ---
 
@@ -368,6 +365,59 @@ When a stack is selected and the user deselects a domain in the domain selection
 - `src/cli/components/wizard/step-stack.tsx` — domain toggle handler
 - `src/cli/components/wizard/wizard-store.ts` — domain/skill selection state
 - `src/cli/components/wizard/checkbox-grid.tsx` — domain checkbox rendering
+
+---
+
+#### D-63: Add E2E tests to pre-commit hook
+
+The pre-commit hook (`.husky/pre-commit`) currently runs `lint-staged` (prettier) and `bun run test` (unit tests only). E2E tests are not run, so broken E2E tests can be committed without detection.
+
+Add the E2E test suite to the pre-commit hook so that both unit and E2E tests must pass before a commit is accepted.
+
+**Current hook:**
+```
+npx lint-staged
+bun run test
+```
+
+**Key considerations:**
+- E2E tests take ~60s — acceptable for pre-commit but consider making it skippable for intermediate commits per the commit protocol (`--no-verify`)
+- E2E tests require the binary to be built (`npm run build`) — the hook may need to ensure the binary is up to date
+- The commit protocol already says to use `--no-verify` for intermediate sequential commits, so the longer runtime only applies to first/last commits
+
+**Files:** `.husky/pre-commit`, possibly `package.json` scripts
+
+---
+
+#### D-64: Create CLI E2E testing skill + update `cli-framework-oclif-ink` skill
+
+The project's E2E test infrastructure uses several CLI-specific testing libraries that have no corresponding skill. The existing `cli-framework-oclif-ink` skill also needs updating to reflect current patterns.
+
+**New skill: CLI E2E testing with node-pty + xterm**
+
+Consider creating a `cli-testing-node-pty` or `cli-testing-e2e` skill covering:
+
+- **`@lydell/node-pty`** — PTY process spawning for interactive CLI tests. Allocates a pseudo-terminal so the CLI under test behaves exactly as it would in a real terminal (ANSI escape sequences, cursor movement, line editing).
+- **`@xterm/headless`** — Headless terminal emulator used as a screen buffer. PTY output is piped into xterm, which processes all ANSI sequences and maintains proper screen state. `getScreen()` returns what the user would see.
+- **`tree-kill`** — Kills entire process trees (not just the parent PID). Essential for cleaning up PTY processes that spawn child processes.
+- **`TerminalSession` pattern** — The project's wrapper class (`e2e/helpers/terminal-session.ts`) that combines node-pty + xterm into an assertion-friendly API: `waitForText()`, `sendKey()`, `getScreen()`, `sendLine()`.
+- **Non-interactive E2E pattern** — Using `execa` with `runCLI()` helper for commands that don't need interactive input. Pattern: spawn process, capture stdout/stderr, strip ANSI, assert on exit code and output.
+- **E2E test structure** — `createTempDir()`/`cleanupTempDir()` lifecycle, `ensureBinaryExists()` guard, separate vitest config for E2E (`e2e/vitest.config.ts`).
+
+**Update existing skill: `cli-framework-oclif-ink`**
+
+The current skill covers oclif command structure and Ink component patterns but is missing:
+
+- Testing patterns for oclif commands (unit tests with `@oclif/test`, integration tests with `runCliCommand()`)
+- Ink component testing with `ink-testing-library` (render, lastFrame, stdin)
+- The project's `BaseCommand` pattern (custom error handling, logging helpers, `handleError()`)
+- Current conventions: `displayName` in metadata, `METADATA_KEYS` constants, `EXIT_CODES` usage
+
+**Reference files:**
+- `e2e/helpers/terminal-session.ts` — TerminalSession class
+- `e2e/helpers/test-utils.ts` — runCLI, createTempDir, etc.
+- `e2e/vitest.config.ts` — E2E test runner config
+- `src/cli/base-command.ts` — BaseCommand pattern
 
 ---
 

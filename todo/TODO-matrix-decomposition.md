@@ -114,76 +114,35 @@
 
 ---
 
-## Phase 6: Command integration — `new skill` updates config files
+## Phase 6: Command integration — `new skill` updates config files — COMPLETE
 
-**What:** Update the `new skill` command to create/update `skill-categories.yaml` and `skill-rules.yaml` when scaffolding a new skill. Since `new marketplace` delegates to `new skill`, marketplace scaffolding gets this for free.
-
-**Steps:**
-
-1. When `new skill` runs, check if `config/skill-categories.yaml` exists in the target directory.
-   - If missing, create it with `version: "1.0.0"` and the new skill's category entry.
-   - If present, check if the skill's category already exists. If not, append the category entry.
-2. When `new skill` runs, check if `config/skill-rules.yaml` exists in the target directory.
-   - If missing, create it with `version: "1.0.0"` and an `aliases` section containing the new skill's alias.
-   - If present, check if an alias for the new skill already exists. If not, append it.
-3. Update `new marketplace` — no direct changes needed since it delegates to `new skill`, but verify the scaffolded marketplace has both config files after creation.
-4. Tests: verify `new skill` creates/updates both config files, verify `new marketplace` produces a complete scaffold with both files.
-
-**Note:** Keeping these files in sync is preferred but not required — auto-synthesis (Phase 5) handles the gap when files are missing or incomplete. Proper config files give the best CLI experience (correct display names, ordering, domain assignment).
-
-**Verification:** All tests pass. `new skill` and `new marketplace` produce scaffolds with `skill-categories.yaml` and `skill-rules.yaml`.
+Added `generateSkillCategoriesYaml()` and `generateSkillRulesYaml()` generators to `new/skill.ts`, plus `updateConfigFiles()` method that creates or appends to config files in marketplace context. `new marketplace` scaffolds both config files during initial creation. 18 new tests across skill and marketplace test files.
 
 ---
 
-## Phase 7: Deprecate `categoryExclusive` on skill metadata
+## Phase 7: Deprecate `categoryExclusive` on skill metadata — COMPLETE
 
-**What:** Remove `categoryExclusive` from skill metadata. It's a category-level property (`exclusive` in `skill-categories.yaml`), not a skill property.
-
-**Steps:**
-
-1. Audit all skills — verify `categoryExclusive` matches `exclusive` in `skill-categories.yaml` for every skill.
-2. Remove `categoryExclusive` from all skill `metadata.yaml` files (~90 files in skills repo).
-3. Remove `categoryExclusive` from `rawMetadataSchema`, `localRawMetadataSchema`, `ExtractedSkillMetadata`, `ResolvedSkill`.
-4. Update `matrix-resolver.ts` and wizard logic that reads `skill.categoryExclusive` to read `category.exclusive` from merged categories instead.
-5. Update `ValidationError` type if it references `categoryExclusive`.
-6. Tests: verify exclusive/non-exclusive behavior unchanged.
-
-**Cross-repo:** This phase modifies the skills repo. Skills repo changes come FIRST, then CLI repo changes.
-
-**Verification:** All tests pass. Wizard radio/checkbox behavior unchanged.
+Removed `categoryExclusive` from `ResolvedSkill`, `ExtractedSkillMetadata`, `SkillMetadataConfig`, all schemas (`rawMetadataSchema`, `localRawMetadataSchema`, `metadataValidationSchema`, `metadata.schema.json`), all loaders (`matrix-loader.ts`, `local-skill-loader.ts`, `source-loader.ts`), commands (`import/skill.ts`, `new/skill.ts`, `search.tsx`), and all tests. Exclusivity is now driven entirely by the `exclusive` flag on category definitions in `skill-categories.yaml`.
 
 ---
 
-## Phase 8: Rename `displayName` to `displayName` (deferred)
+## Phase 8: Rename `cliName` to `displayName` — COMPLETE
 
-**What:** Pure rename across all skill metadata files. Deferred until all structural changes are stable.
-
-**Steps:**
-
-1. Rename `displayName` to `displayName` in all skill `metadata.yaml` files (~90 files in skills repo).
-2. Update `rawMetadataSchema` and `localRawMetadataSchema` in `schemas.ts`.
-3. Update `METADATA_KEYS.CLI_NAME` → `METADATA_KEYS.DISPLAY_NAME` in `metadata-keys.ts`.
-4. Update all code referencing `displayName` to use `displayName`.
-5. Update `metadata.schema.json`.
-6. Tests: verify display names render correctly.
-
-**Cross-repo:** This phase modifies the skills repo. Skills repo changes come FIRST, then CLI repo changes.
-
-**Verification:** All tests pass. No references to `displayName` remain.
+Renamed `cliName` to `displayName` across all skill metadata files (both CLI and skills repos), `METADATA_KEYS.CLI_NAME` → `METADATA_KEYS.DISPLAY_NAME`, all schemas, loaders, validators, commands, test helpers, and E2E fixtures. Both `extractAllSkills()` and `discoverLocalSkills()` now throw (hard error) when `displayName` is missing from `metadata.yaml`.
 
 ---
 
 ## Dependencies
 
 ```
-Phase 1 (skill-categories.yaml)
-  └─> Phase 2 (skill-rules.yaml + aliases)
-        └─> Phase 3 (per-skill rules migration)
-              └─> Phase 4 (delete skills-matrix.yaml)
-                    └─> Phase 5 (auto-synthesis)
-                          └─> Phase 6 (command integration: new skill + new marketplace)
-                                └─> Phase 7 (deprecate categoryExclusive)
-                                      └─> Phase 8 (rename displayName → displayName)
+Phase 1 (skill-categories.yaml)              ✅ COMPLETE
+  └─> Phase 2 (skill-rules.yaml + aliases)   ✅ COMPLETE
+        └─> Phase 3 (per-skill rules)        ✅ COMPLETE
+              └─> Phase 4 (delete matrix)     ✅ COMPLETE
+                    └─> Phase 5 (auto-synth)  ✅ COMPLETE
+                          └─> Phase 6 (new skill/marketplace)  ✅ COMPLETE
+                                └─> Phase 7 (remove categoryExclusive)  ✅ COMPLETE
+                                      └─> Phase 8 (rename cliName → displayName)  ✅ COMPLETE
 ```
 
-Phases are sequential. Phase 4 requires both Phase 2 (aliases moved) and Phase 3 (per-skill rules moved) to be complete.
+All 8 phases complete. Matrix decomposition is done.
