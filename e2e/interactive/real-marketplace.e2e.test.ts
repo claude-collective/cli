@@ -207,6 +207,7 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
 
       try {
         await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+        await session.waitForText("Framework");
 
         const screen = session.getScreen();
         // The build step should show pre-selected skill categories with asterisk indicator

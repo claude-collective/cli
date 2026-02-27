@@ -107,6 +107,7 @@ describe("edit wizard", () => {
       // "web-framework-react" should be pre-selected, shown as "1 of 1"
       // in the Framework category header.
       await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Framework");
 
       const screen = session.getScreen();
       // Framework category should show the pre-selected skill count
