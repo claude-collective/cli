@@ -1,31 +1,178 @@
-import type { AgentName, MergedSkillsMatrix } from "../../types";
+import path from "path";
+import { unique } from "remeda";
+import type { AgentName, MergedSkillsMatrix, SkillId, Subcategory } from "../../types";
+import { CLAUDE_SRC_DIR, CLI_BIN_NAME, PROJECT_ROOT, STANDARD_FILES } from "../../consts";
+import { directoryExists, writeFile } from "../../utils/fs";
+import { verbose } from "../../utils/logger";
 import { typedKeys } from "../../utils/typed-object";
 
 const MULTI_LINE_THRESHOLD = 6;
 
+export type ConfigTypesBackgroundData = {
+  matrix: MergedSkillsMatrix;
+  agentNames: AgentName[];
+  customAgentNames: AgentName[];
+};
+
+/**
+ * Kicks off background loading of the matrix and agents needed for config-types.ts regeneration.
+ * Returns a promise that resolves with the loaded data. Callers should NOT await this immediately;
+ * instead, pass the promise to `regenerateConfigTypes` after the main operation completes.
+ *
+ * @param sourceFlag Optional --source flag value
+ * @param projectDir The project root directory
+ */
+export function loadConfigTypesDataInBackground(
+  sourceFlag: string | undefined,
+  projectDir: string,
+): Promise<ConfigTypesBackgroundData> {
+  // Dynamic imports to avoid circular dependency issues at module load time
+  const promise = (async (): Promise<ConfigTypesBackgroundData> => {
+    const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
+    if (!(await directoryExists(claudeSrcDir))) {
+      throw new Error(`${CLAUDE_SRC_DIR}/ not found — run '${CLI_BIN_NAME} init' first`);
+    }
+
+    const { loadSkillsMatrixFromSource } = await import("../loading/source-loader");
+    const { loadAllAgents } = await import("../loading/loader");
+
+    const sourceResult = await loadSkillsMatrixFromSource({
+      sourceFlag,
+      projectDir,
+    });
+
+    const cliAgents = await loadAllAgents(PROJECT_ROOT);
+    const sourceAgents = await loadAllAgents(sourceResult.sourcePath);
+    const allAgents = { ...cliAgents, ...sourceAgents };
+    // Boundary cast: loadAllAgents returns Record<string, AgentDefinition>, agent dirs are AgentName by convention
+    const agentNames = Object.keys(allAgents) as AgentName[];
+    const customAgentNames = agentNames.filter((name) => allAgents[name]?.custom === true);
+
+    return { matrix: sourceResult.matrix, agentNames, customAgentNames };
+  })();
+
+  // Prevent unhandled rejection if the command exits before awaiting this promise
+  promise.catch(() => {});
+
+  return promise;
+}
+
+/**
+ * Regenerates config-types.ts with the latest matrix data, merging in any extra entities
+ * that were just created (e.g., a new skill or agent). Errors propagate to callers.
+ *
+ * @param projectDir The project root directory
+ * @param backgroundData Promise from loadConfigTypesDataInBackground
+ * @param extras Optional extra skill IDs or agent names to include (for just-created entities)
+ */
+export async function regenerateConfigTypes(
+  projectDir: string,
+  backgroundData: Promise<ConfigTypesBackgroundData>,
+  extras?: { extraSkillIds?: string[]; extraAgentNames?: string[] },
+): Promise<void> {
+  const data = await backgroundData;
+
+  const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
+
+  const source = generateConfigTypesSource(
+    data.matrix,
+    data.agentNames,
+    data.customAgentNames,
+    extras,
+  );
+  const configTypesPath = path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TYPES_TS);
+  await writeFile(configTypesPath, source);
+  verbose(`Regenerated ${STANDARD_FILES.CONFIG_TYPES_TS}`);
+}
+
 /**
  * Generates a config-types.ts source from marketplace data.
  * The generated file provides type safety for config.ts via `import type` + `satisfies`.
+ *
+ * @param customAgentNames Agent names that are custom (from sources with `custom: true`)
+ * @param extras Optional extra skill IDs or agent names to include (for just-created entities)
  */
 export function generateConfigTypesSource(
   matrix: MergedSkillsMatrix,
   agentNames: AgentName[],
+  customAgentNames: AgentName[] = [],
+  extras?: { extraSkillIds?: string[]; extraAgentNames?: string[] },
 ): string {
-  const skillIds = typedKeys(matrix.skills).sort();
-  const sortedAgents = [...agentNames].sort();
+  // Boundary cast: extra IDs from CLI args may not match strict union patterns
+  const extraSkillIds = (extras?.extraSkillIds ?? []) as SkillId[];
+  const extraAgentNamesArr = (extras?.extraAgentNames ?? []) as AgentName[];
+
+  const skillIds = unique([...typedKeys(matrix.skills), ...extraSkillIds]).sort();
+  const sortedAgents = unique([...agentNames, ...extraAgentNamesArr]).sort();
 
   const domains = extractDomains(matrix);
   const subcategories = typedKeys(matrix.categories).sort();
 
+  // Determine which skills are custom
+  const customSkillSet = new Set<SkillId>(extraSkillIds);
+  for (const id of typedKeys(matrix.skills)) {
+    const skill = matrix.skills[id];
+    if (skill?.custom === true) {
+      customSkillSet.add(id);
+    }
+  }
+
+  // Determine which agents are custom
+  const customAgentSet = new Set<AgentName>([...customAgentNames, ...extraAgentNamesArr]);
+
+  // Determine which categories are custom (referenced by custom skills)
+  const customCategorySet = new Set<Subcategory>();
+  for (const id of typedKeys(matrix.skills)) {
+    const skill = matrix.skills[id];
+    if (skill?.custom === true && skill.category) {
+      // Boundary cast: CategoryPath may not match Subcategory, but categories are keyed by Subcategory
+      customCategorySet.add(skill.category as Subcategory);
+    }
+  }
+
+  // Determine which domains are custom (only appear on custom categories)
+  const customDomainSet = new Set<string>();
+  const marketplaceDomainSet = new Set<string>();
+  for (const key of typedKeys(matrix.categories)) {
+    const cat = matrix.categories[key];
+    if (!cat?.domain) continue;
+    if (customCategorySet.has(key)) {
+      customDomainSet.add(cat.domain);
+    } else {
+      marketplaceDomainSet.add(cat.domain);
+    }
+  }
+  // A domain is only custom if it NEVER appears on a non-custom category
+  for (const domain of marketplaceDomainSet) {
+    customDomainSet.delete(domain);
+  }
+
+  const skillIdLine = formatMaybeSectionedUnion(
+    skillIds,
+    (id) => customSkillSet.has(id),
+  );
+  const agentNameLine = formatMaybeSectionedUnion(
+    sortedAgents,
+    (name) => customAgentSet.has(name),
+  );
+  const domainLine = formatMaybeSectionedUnion(
+    domains,
+    (d) => customDomainSet.has(d),
+  );
+  const subcategoryLine = formatMaybeSectionedUnion(
+    subcategories,
+    (s) => customCategorySet.has(s),
+  );
+
   return `// AUTO-GENERATED by agentsinc — DO NOT EDIT
 
-export type SkillId = ${formatUnion(skillIds)};
+export type SkillId = ${skillIdLine};
 
-export type AgentName = ${formatUnion(sortedAgents)};
+export type AgentName = ${agentNameLine};
 
-export type Domain = ${formatUnion(domains)};
+export type Domain = ${domainLine};
 
-export type Subcategory = ${formatUnion(subcategories)};
+export type Subcategory = ${subcategoryLine};
 
 export type InstallMode = "local" | "plugin";
 
@@ -84,6 +231,60 @@ function extractDomains(matrix: MergedSkillsMatrix): string[] {
     }
   }
   return [...domainSet].sort();
+}
+
+/**
+ * Renders a union type with optional // Custom and // Marketplace section comments.
+ * If all members are in one group, only that group's header is shown.
+ * If both groups exist, renders with section comments and always uses multi-line format.
+ */
+function formatSectionedUnion(custom: string[], marketplace: string[]): string {
+  if (custom.length === 0 && marketplace.length === 0) {
+    return "string";
+  }
+
+  // Only one group present: show single header
+  if (marketplace.length === 0) {
+    const lines = custom.map((m) => `  | "${m}"`);
+    return "\n  // Custom\n" + lines.join("\n");
+  }
+  if (custom.length === 0) {
+    const lines = marketplace.map((m) => `  | "${m}"`);
+    return "\n  // Marketplace\n" + lines.join("\n");
+  }
+
+  // Both groups: custom first, then marketplace
+  const customLines = custom.map((m) => `  | "${m}"`);
+  const marketplaceLines = marketplace.map((m) => `  | "${m}"`);
+  return (
+    "\n  // Custom\n" +
+    customLines.join("\n") +
+    "\n  // Marketplace\n" +
+    marketplaceLines.join("\n")
+  );
+}
+
+/**
+ * Formats a union, using section comments when custom members exist,
+ * or plain formatUnion when there are no custom members.
+ */
+function formatMaybeSectionedUnion<T extends string>(
+  members: T[],
+  isCustom: (member: T) => boolean,
+): string {
+  if (members.length === 0) {
+    return "string";
+  }
+
+  const custom = members.filter(isCustom);
+  const marketplace = members.filter((m) => !isCustom(m));
+
+  // No custom members: use standard formatting (preserves single-line for small unions)
+  if (custom.length === 0) {
+    return formatUnion(members);
+  }
+
+  return formatSectionedUnion(custom, marketplace);
 }
 
 function formatUnion(members: string[]): string {

@@ -404,7 +404,12 @@ export async function installPluginConfig(
 
   // Write config-types.ts for editor type safety
   const configTypesPath = path.join(path.dirname(paths.configPath), STANDARD_FILES.CONFIG_TYPES_TS);
-  const configTypesSource = generateConfigTypesSource(sourceResult.matrix, typedKeys(agents));
+  const customAgentNames = typedKeys(agents).filter((name) => agents[name]?.custom === true);
+  const configTypesSource = generateConfigTypesSource(
+    sourceResult.matrix,
+    typedKeys(agents),
+    customAgentNames,
+  );
   await writeFile(configTypesPath, configTypesSource);
 
   const compileAgentsConfig = buildCompileAgents(finalConfig, agents);
@@ -493,7 +498,12 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
     path.dirname(paths.configPath),
     STANDARD_FILES.CONFIG_TYPES_TS,
   );
-  const configTypesSourceLocal = generateConfigTypesSource(sourceResult.matrix, typedKeys(agents));
+  const customAgentNamesLocal = typedKeys(agents).filter((name) => agents[name]?.custom === true);
+  const configTypesSourceLocal = generateConfigTypesSource(
+    sourceResult.matrix,
+    typedKeys(agents),
+    customAgentNamesLocal,
+  );
   await writeFile(configTypesPathLocal, configTypesSourceLocal);
 
   const compileAgentsConfig = buildCompileAgents(finalConfig, agents);

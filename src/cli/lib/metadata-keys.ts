@@ -20,6 +20,7 @@ export const METADATA_KEYS = {
 export const IMPORT_DEFAULTS = {
   CATEGORY: "imported" as CategoryPath,
   AUTHOR: "@imported",
+  DOMAIN: "shared" as const,
 } as const;
 
 /**
@@ -28,6 +29,7 @@ export const IMPORT_DEFAULTS = {
 export const LOCAL_DEFAULTS = {
   CATEGORY: "dummy-category" as CategoryPath,
   AUTHOR: "@dummy-author",
+  DOMAIN: "dummy" as const,
 } as const;
 
 /**

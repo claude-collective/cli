@@ -4,7 +4,7 @@ import { directoryExists, listDirectories, fileExists, readFile } from "../../ut
 import { verbose, warn } from "../../utils/logger";
 import { LOCAL_SKILLS_PATH, STANDARD_FILES } from "../../consts";
 import { parseFrontmatter } from "../loading";
-import type { CategoryPath, ExtractedSkillMetadata, SkillId } from "../../types";
+import type { CategoryPath, Domain, ExtractedSkillMetadata, SkillId } from "../../types";
 import { formatZodErrors, localRawMetadataSchema } from "../schemas";
 import { LOCAL_DEFAULTS, METADATA_KEYS } from "../metadata-keys";
 
@@ -15,6 +15,8 @@ type LocalRawMetadata = {
   category?: CategoryPath;
   usageGuidance?: string;
   tags?: string[];
+  /** Domain this skill belongs to (e.g., "web", "api", "cli") */
+  domain: Domain;
 };
 
 export type LocalSkillDiscoveryResult = {
@@ -118,6 +120,7 @@ async function extractLocalSkill(
     path: relativePath,
     local: true,
     localPath: relativePath,
+    domain: metadata.domain,
   };
 
   verbose(`Extracted local skill: ${skillId}`);

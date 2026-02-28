@@ -89,8 +89,6 @@ export type CategoryDefinition = {
   /** Display order within domain (lower = earlier) */
   order: number;
   icon?: string;
-  /** True if this category was defined outside the CLI's built-in vocabulary */
-  custom?: boolean;
 };
 
 /** Relationship rules between skills from skill-rules.ts */
@@ -240,6 +238,8 @@ export type ResolvedSkill = {
   path: string;
   /** True if from .claude/skills/ (user-defined local skill) */
   local?: boolean;
+  /** True if this skill was created outside the CLI's built-in vocabulary */
+  custom?: boolean;
   /** Relative path from project root for local skills */
   localPath?: string;
   /** All known sources that provide this skill (populated by multi-source-loader) */
@@ -399,8 +399,8 @@ export type ExtractedSkillMetadata = {
   local?: boolean;
   /** Relative path from project root for local skills */
   localPath?: string;
-  /** Explicit domain assignment (overrides inference from category prefix) */
-  domain?: Domain;
+  /** Domain this skill belongs to (e.g., "web", "api", "cli") */
+  domain: Domain;
   /** True if this skill was created outside the CLI's built-in vocabulary */
   custom?: boolean;
 };

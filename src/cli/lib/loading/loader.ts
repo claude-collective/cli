@@ -47,6 +47,7 @@ export async function loadAllAgents(projectRoot: string): Promise<Record<string,
         path: agentPath,
         sourceRoot: projectRoot,
         ...(config.domain ? { domain: config.domain } : {}),
+        ...(config.custom === true ? { custom: true } : {}),
       };
 
       verbose(`Loaded agent: ${config.id} from ${file}`);

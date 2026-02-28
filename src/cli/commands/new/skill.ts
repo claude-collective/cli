@@ -2,6 +2,10 @@ import { Args, Flags } from "@oclif/core";
 import path from "path";
 import { BaseCommand } from "../../base-command.js";
 import { resolveAuthor } from "../../lib/configuration/index.js";
+import {
+  loadConfigTypesDataInBackground,
+  regenerateConfigTypes,
+} from "../../lib/configuration/ts-config-types-writer.js";
 import { loadTsConfig } from "../../lib/configuration/ts-config-loader.js";
 import { writeFile, directoryExists, fileExists, ensureDir } from "../../utils/fs.js";
 import { getErrorMessage } from "../../utils/errors.js";
@@ -102,10 +106,12 @@ export function generateMetadataYaml(
   author: string,
   category: CategoryPath,
   contentHash: string,
+  domain: string,
 ): string {
   const titleName = toTitleCase(name);
 
   return `custom: true
+domain: ${domain}
 category: ${category}
 author: "${author}"
 displayName: ${titleName}
@@ -118,7 +124,6 @@ tags:
 `;
 }
 
-const KNOWN_DOMAINS = new Set(["web", "api", "mobile", "cli", "shared"]);
 const DEFAULT_CATEGORY_ORDER = 99;
 
 const CATEGORIES_TS_COMMENT = "// Skill category definitions";
@@ -129,8 +134,7 @@ function formatTsExport(comment: string, data: unknown): string {
   return `${comment}\nexport default ${body};\n`;
 }
 
-function buildCategoryEntry(category: CategoryPath): Record<string, unknown> {
-  const prefix = category.split("-")[0];
+function buildCategoryEntry(category: CategoryPath, domain: string): Record<string, unknown> {
   const subcategoryPart = category.includes("-")
     ? category.slice(category.indexOf("-") + 1)
     : category;
@@ -143,12 +147,12 @@ function buildCategoryEntry(category: CategoryPath): Record<string, unknown> {
     order: DEFAULT_CATEGORY_ORDER,
     custom: true,
   };
-  if (KNOWN_DOMAINS.has(prefix)) entry.domain = prefix;
+  entry.domain = domain;
   return entry;
 }
 
-export function generateSkillCategoriesTs(category: CategoryPath): string {
-  const entry = buildCategoryEntry(category);
+export function generateSkillCategoriesTs(category: CategoryPath, domain: string): string {
+  const entry = buildCategoryEntry(category, domain);
   const data = {
     version: DEFAULT_VERSION,
     categories: {
@@ -191,6 +195,11 @@ export default class NewSkill extends BaseCommand {
       description: "Skill category",
       default: LOCAL_DEFAULTS.CATEGORY,
     }),
+    domain: Flags.string({
+      char: "d",
+      description: "Domain for the skill (e.g., web, api, cli)",
+      required: false,
+    }),
     force: Flags.boolean({
       char: "f",
       description: "Overwrite existing skill directory",
@@ -205,6 +214,9 @@ export default class NewSkill extends BaseCommand {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(NewSkill);
     const projectDir = process.cwd();
+
+    // Kick off background loading for config-types.ts regeneration (non-blocking)
+    const configTypesReady = loadConfigTypesDataInBackground(flags.source, projectDir);
 
     this.log("");
     this.log("Create New Skill");
@@ -223,6 +235,8 @@ export default class NewSkill extends BaseCommand {
 
     // CLI flag is an untyped string — cast at data boundary
     const category = flags.category as CategoryPath;
+
+    const domain = flags.domain ?? LOCAL_DEFAULTS.DOMAIN;
 
     // Determine skill output path: --output flag > marketplace detection > local default
     let skillsBasePath: string;
@@ -271,7 +285,7 @@ export default class NewSkill extends BaseCommand {
       await writeFile(skillMdPath, skillMdContent);
 
       const contentHash = await computeSkillFolderHash(skillDir);
-      const metadataContent = generateMetadataYaml(args.name, author, category, contentHash);
+      const metadataContent = generateMetadataYaml(args.name, author, category, contentHash, domain);
       await writeFile(metadataPath, metadataContent);
 
       this.log("");
@@ -283,11 +297,20 @@ export default class NewSkill extends BaseCommand {
         const marketplacePath = path.join(projectDir, PLUGIN_MANIFEST_DIR, "marketplace.json");
         if (await fileExists(marketplacePath)) {
           try {
-            await this.updateConfigFiles(projectDir, args.name, category);
+            await this.updateConfigFiles(projectDir, args.name, category, domain);
           } catch (error) {
             this.warn(`Could not update config files: ${getErrorMessage(error)}`);
           }
         }
+      }
+
+      // Regenerate config-types.ts to include the new skill
+      try {
+        await regenerateConfigTypes(projectDir, configTypesReady, {
+          extraSkillIds: [args.name],
+        });
+      } catch (error) {
+        this.warn(`Could not update ${STANDARD_FILES.CONFIG_TYPES_TS}: ${getErrorMessage(error)}`);
       }
 
       this.log("");
@@ -304,6 +327,7 @@ export default class NewSkill extends BaseCommand {
     projectRoot: string,
     skillName: string,
     category: CategoryPath,
+    domain: string,
   ): Promise<void> {
     const categoriesPath = path.join(projectRoot, SKILL_CATEGORIES_PATH);
     const rulesPath = path.join(projectRoot, SKILL_RULES_PATH);
@@ -314,14 +338,14 @@ export default class NewSkill extends BaseCommand {
       const parsed = (await loadTsConfig<Record<string, unknown>>(categoriesPath)) ?? {};
       const categories = (parsed.categories ?? {}) as Record<string, unknown>;
       if (!categories[category]) {
-        categories[category] = buildCategoryEntry(category);
+        categories[category] = buildCategoryEntry(category, domain);
         parsed.categories = categories;
         await writeFile(categoriesPath, formatTsExport(CATEGORIES_TS_COMMENT, parsed));
         verbose(`Added category '${category}' to ${SKILL_CATEGORIES_PATH}`);
       }
     } else {
       await ensureDir(path.dirname(categoriesPath));
-      await writeFile(categoriesPath, generateSkillCategoriesTs(category));
+      await writeFile(categoriesPath, generateSkillCategoriesTs(category, domain));
       verbose(`Created ${SKILL_CATEGORIES_PATH}`);
     }
 

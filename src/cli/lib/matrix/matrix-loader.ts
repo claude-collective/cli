@@ -52,7 +52,7 @@ const rawMetadataSchema = z.object({
   cliDescription: z.string().optional(),
   usageGuidance: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  domain: extensibleDomainSchema.optional(),
+  domain: extensibleDomainSchema,
   custom: z.boolean().optional(),
 });
 
@@ -66,10 +66,9 @@ const AUTO_SYNTH_ORDER = 999;
  */
 export function synthesizeCategory(
   categoryPath: CategoryPath,
-  skillDomain?: Domain,
+  skillDomain: Domain,
 ): CategoryDefinition {
-  const prefix = categoryPath.split("-")[0];
-  const domain = skillDomain ?? (KNOWN_DOMAINS.has(prefix) ? (prefix as Domain) : undefined);
+  const domain = skillDomain;
 
   const displayName = categoryPath
     .split("-")
@@ -84,7 +83,6 @@ export function synthesizeCategory(
     exclusive: true,
     required: false,
     order: AUTO_SYNTH_ORDER,
-    custom: true,
   };
 }
 
@@ -212,7 +210,7 @@ export async function extractAllSkills(skillsDir: string): Promise<ExtractedSkil
       author: metadata.author,
       tags: metadata.tags ?? [],
       path: `skills/${skillDir}/`,
-      ...(metadata.domain ? { domain: metadata.domain } : {}),
+      domain: metadata.domain,
       ...(metadata.custom === true ? { custom: true } : {}),
     };
 
@@ -522,6 +520,7 @@ function buildResolvedSkill(
       resolve(id, "providesSetupFor"),
     ),
     path: skill.path,
+    ...(skill.custom === true ? { custom: true } : {}),
   };
 }
 

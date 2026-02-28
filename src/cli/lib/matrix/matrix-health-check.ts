@@ -1,4 +1,4 @@
-import { verbose, warn } from "../../utils/logger";
+import { warn } from "../../utils/logger";
 import type {
   CategoryDefinition,
   MergedSkillsMatrix,
@@ -52,8 +52,6 @@ function checkSkillCategories(matrix: MergedSkillsMatrix, issues: MatrixHealthIs
         finding: "skill-unknown-category",
         details: `Skill '${skillId}' references category '${skill.category}' which does not exist in the matrix`,
       });
-    } else if (category.custom) {
-      verbose(`Skill '${skillId}' uses auto-synthesized category '${skill.category}'`);
     }
   }
 }

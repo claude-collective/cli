@@ -399,7 +399,7 @@ export const skillMetadataLoaderSchema = z
     requires: z.array(extensibleSkillIdSchema).optional(),
     compatibleWith: z.array(extensibleSkillIdSchema).optional(),
     conflictsWith: z.array(extensibleSkillIdSchema).optional(),
-    domain: extensibleDomainSchema.optional(),
+    domain: extensibleDomainSchema,
     custom: z.boolean().optional(),
   })
   .passthrough()
@@ -521,7 +521,6 @@ export const categoryDefinitionSchema: z.ZodType<CategoryDefinition> = z.object(
   required: z.boolean(),
   order: z.number(),
   icon: z.string().optional(),
-  custom: z.boolean().optional(),
 });
 
 // Lenient: accepts both SkillId and SkillDisplayName, resolved to canonical IDs by matrix-loader
@@ -620,8 +619,8 @@ export const localRawMetadataSchema = z
     /** When an AI agent should invoke this skill */
     usageGuidance: z.string().optional(),
     tags: z.array(z.string()).optional(),
-    /** Explicit domain assignment (overrides inference from category prefix) */
-    domain: extensibleDomainSchema.optional(),
+    /** Domain this skill belongs to (e.g., "web", "api", "cli") */
+    domain: extensibleDomainSchema,
     /** True if this skill was created outside the CLI's built-in vocabulary */
     custom: z.boolean().optional(),
   })

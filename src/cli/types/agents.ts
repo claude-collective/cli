@@ -70,6 +70,8 @@ export type AgentDefinition = BaseAgentFields & {
   agentBaseDir?: string;
   /** Explicit domain for wizard grouping (takes precedence over inference from kebab prefix) */
   domain?: Domain;
+  /** True if this agent was created outside the CLI's built-in vocabulary */
+  custom?: boolean;
 };
 
 /** Fully resolved agent config (agent definition + stack config) used by the compiler */

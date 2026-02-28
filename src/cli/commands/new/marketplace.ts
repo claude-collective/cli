@@ -203,7 +203,7 @@ export default class NewMarketplace extends BaseCommand {
       await writeFile(stacksPath, stacksContent);
 
       // Create config/skill-categories.ts
-      const categoriesContent = generateSkillCategoriesTs(LOCAL_DEFAULTS.CATEGORY as CategoryPath);
+      const categoriesContent = generateSkillCategoriesTs(LOCAL_DEFAULTS.CATEGORY as CategoryPath, LOCAL_DEFAULTS.DOMAIN);
       const categoriesPath = path.join(marketplaceDir, SKILL_CATEGORIES_PATH);
       await writeFile(categoriesPath, categoriesContent);
 
@@ -215,7 +215,7 @@ export default class NewMarketplace extends BaseCommand {
       // Delegate skill creation to the new:skill command
       const skillsDir = path.join(marketplaceDir, SKILLS_DIR_PATH);
 
-      const skillArgs = [skillName, "--output", skillsDir];
+      const skillArgs = [skillName, "--output", skillsDir, "--domain", "shared"];
       if (flags.force) skillArgs.push("--force");
       await this.config.runCommand("new:skill", skillArgs);
 

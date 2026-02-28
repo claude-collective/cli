@@ -8,10 +8,15 @@ import { render, Box, Text, useApp, useInput } from "ink";
 import path from "path";
 
 import { BaseCommand } from "../../base-command.js";
-import { CLAUDE_DIR, CLI_COLORS } from "../../consts.js";
+import { CLAUDE_DIR, CLI_COLORS, STANDARD_FILES } from "../../consts.js";
 import { getAgentDefinitions } from "../../lib/agents/index.js";
 import { resolveSource } from "../../lib/configuration/index.js";
+import {
+  loadConfigTypesDataInBackground,
+  regenerateConfigTypes,
+} from "../../lib/configuration/ts-config-types-writer.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
+import { getErrorMessage } from "../../utils/errors.js";
 import { isClaudeCLIAvailable } from "../../utils/exec.js";
 import { fileExists, readFile } from "../../utils/fs.js";
 
@@ -209,6 +214,9 @@ export default class NewAgent extends BaseCommand {
     const { args, flags } = await this.parse(NewAgent);
     const projectDir = process.cwd();
 
+    // Kick off background loading for config-types.ts regeneration (non-blocking)
+    const configTypesReady = loadConfigTypesDataInBackground(flags.source, projectDir);
+
     const cliAvailable = await isClaudeCLIAvailable();
     if (!cliAvailable) {
       this.error(
@@ -268,6 +276,15 @@ export default class NewAgent extends BaseCommand {
       this.log("");
 
       await invokeMetaAgent(agentDef, agentPrompt, flags["non-interactive"]);
+
+      // Regenerate config-types.ts to include the new agent
+      try {
+        await regenerateConfigTypes(projectDir, configTypesReady, {
+          extraAgentNames: [args.name],
+        });
+      } catch (error) {
+        this.warn(`Could not update ${STANDARD_FILES.CONFIG_TYPES_TS}: ${getErrorMessage(error)}`);
+      }
 
       this.log("");
       this.log("─".repeat(SEPARATOR_WIDTH));
