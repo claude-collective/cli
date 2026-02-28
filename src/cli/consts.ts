@@ -51,6 +51,7 @@ export const STANDARD_FILES = {
   AGENT_METADATA_YAML: "metadata.yaml",
   PLUGIN_JSON: "plugin.json",
   CONFIG_TS: "config.ts",
+  CONFIG_TYPES_TS: "config-types.ts",
   CLAUDE_MD: "CLAUDE.md",
   REFERENCE_MD: "reference.md",
   INTRO_MD: "intro.md",

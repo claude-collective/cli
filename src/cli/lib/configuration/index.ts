@@ -49,3 +49,4 @@ export { defaultRules } from "./default-rules";
 export { defaultStacks } from "./default-stacks";
 export { loadTsConfig } from "./ts-config-loader";
 export { generateTsConfigSource } from "./ts-config-writer";
+export { generateConfigTypesSource } from "./ts-config-types-writer";
