@@ -2,8 +2,9 @@
 
 | ID   | Task                                                                                                                                       | Status        |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
+| B-08 | Uninstall does not remove compiled agents — `loadProjectSourceConfig` returns null so `target.config` guard skips agent removal            | Bug           |
 | D-50 | ~~Matrix decomposition~~ — all 8 phases complete (see [phased plan](./TODO-matrix-decomposition.md))                                       | Done          |
-| D-46 | Custom extensibility — Phase 5: TS config migration (see [implementation plan](./D-46-ts-config-migration.md))                             | Ready for Dev |
+| D-46 | Custom extensibility — generated types for custom skills/agents/categories (see [implementation plan](./D-46-ts-config-migration.md))      | Ready for Dev |
 | D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                                            | Refined       |
 | D-33 | ~~README: frame Agents Inc. as an agent composition framework~~ — done                                                                     | Done          |
 | D-44 | Update README and Notion page for `eject templates` type (see [implementation plan](./D-44-docs-eject-templates.md))                       | Ready for Dev |
@@ -47,6 +48,26 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 ---
 
 ## Active Tasks
+
+### B-08: Uninstall does not remove compiled agents
+
+**Symptom:** Running `agentsinc uninstall` does not remove `.claude/agents/` even when agents were compiled by the CLI.
+
+**Root cause:** Agent removal is gated on `target.config !== null` (line 398 of `uninstall.tsx`). The `loadProjectSourceConfig` call uses jiti to load `.claude-src/config.ts`, which may fail silently and return `null` — causing the guard to skip agent removal entirely.
+
+**Likely failure modes:**
+
+1. jiti fails to resolve `@agents-inc/cli/config` (the `defineConfig` import) when the CLI binary path differs from what the alias expects
+2. The `projectSourceConfigSchema` Zod validation rejects the loaded config (e.g., missing required fields, or the `defineConfig` wrapper confuses the parser)
+3. Edge case: user has a `config.yaml` from before the TS migration — the code only checks for `config.ts`
+
+**Why unit tests pass:** The test helper `createProjectConfig` writes a bare `export default {...}` without the `defineConfig` import, so jiti always succeeds. Real configs use `import { defineConfig } from "@agents-inc/cli/config"` which requires the jiti alias to work.
+
+**Fix direction:** Debug why `loadProjectSourceConfig` returns null in production. The agent removal guard should probably also check for the agents directory being CLI-compiled via a different signal (e.g., presence of compiled agent frontmatter) rather than relying solely on config load success.
+
+**Location:** `src/cli/commands/uninstall.tsx:396-411`, `src/cli/lib/configuration/config.ts:55-70`
+
+---
 
 ### D-50: Matrix Decomposition — COMPLETE
 
