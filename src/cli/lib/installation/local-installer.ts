@@ -21,6 +21,7 @@ import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
 import { createLiquidEngine } from "../compiler";
 import { generateProjectConfigFromSkills, buildStackProperty } from "../configuration";
 import { generateTsConfigSource } from "../configuration/ts-config-writer";
+import { generateConfigTypesSource } from "../configuration/ts-config-types-writer";
 import { ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
@@ -401,6 +402,11 @@ export async function installPluginConfig(
 
   await writeConfigFile(finalConfig, paths.configPath);
 
+  // Write config-types.ts for editor type safety
+  const configTypesPath = path.join(path.dirname(paths.configPath), STANDARD_FILES.CONFIG_TYPES_TS);
+  const configTypesSource = generateConfigTypesSource(sourceResult.matrix, typedKeys(agents));
+  await writeFile(configTypesPath, configTypesSource);
+
   const compileAgentsConfig = buildCompileAgents(finalConfig, agents);
   const compileConfig: CompileConfig = {
     name: DEFAULT_PLUGIN_NAME,
@@ -481,6 +487,14 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   const finalConfig = mergeResult.config;
 
   await writeConfigFile(finalConfig, paths.configPath);
+
+  // Write config-types.ts for editor type safety
+  const configTypesPathLocal = path.join(
+    path.dirname(paths.configPath),
+    STANDARD_FILES.CONFIG_TYPES_TS,
+  );
+  const configTypesSourceLocal = generateConfigTypesSource(sourceResult.matrix, typedKeys(agents));
+  await writeFile(configTypesPathLocal, configTypesSourceLocal);
 
   const compileAgentsConfig = buildCompileAgents(finalConfig, agents);
   const compileConfig: CompileConfig = {
