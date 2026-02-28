@@ -1,162 +1,231 @@
-# D-41: Create Agents Inc Config Sub-Agent
+# D-41: Create `agents-inc` Configuration Skill
 
 ## Refinement Document
 
 **Status:** Ready for implementation
 **Priority:** Medium
-**Type:** Meta-agent creation (markdown + YAML files, no TypeScript)
+**Type:** Skill creation (SKILL.md + metadata.yaml, no TypeScript)
 **Estimated effort:** Medium (single session)
 
 ## Implementation Overview
 
-Create the `config-manager` meta-agent at `src/agents/meta/config-manager/` — 7 markdown/YAML files, no TypeScript. The agent is a Sonnet-powered specialist that creates and validates `metadata.yaml`, `stacks.yaml`, `skills-matrix.yaml`, and `config.yaml` files. Its `workflow.md` embeds the full knowledge base (38 subcategory values, 18 agent names, SkillId format, all YAML schemas and field constraints). Uses Read, Write, Edit, Grep, Glob tools only (no Bash). Other agents delegate config tasks to it via the Task tool. Requires adding `"config-manager"` to the `agentNameSchema` enum in `schemas.ts` and the `AgentName` type, plus registering in `.claude-src/config.yaml`.
+Create the `agents-inc` skill — a configuration knowledge skill that gives Claude deep expertise in the Agents Inc CLI's YAML config system. Unlike the original sub-agent design, this is a **skill** (SKILL.md + metadata.yaml), not an agent. This means:
 
-**Absorbs D-40 (skill registration):** Instead of a flags-only `agentsinc register` CLI command, the config-manager handles skill registration conversationally — read the skill's SKILL.md, infer category and description, generate `metadata.yaml`, and wire the skill into `config.yaml`. This is a better UX than asking users to specify `--category`, `--name`, `--description`, `--agents` etc. as flags.
+- **Full interactivity** — the skill loads into the main Claude conversation, enabling natural back-and-forth with the user ("Which category should this be?" / "Want me to add it to the stack too?")
+- **No orchestration needed** — no Task tool delegation, no fire-and-forget. Claude just _knows_ config.
+- **Natural invocation** — the user says "use Agents Inc to register my skill" and Claude uses the knowledge directly
+- **Zero context cost when not in use** — loaded on demand via Skill tool, not always embedded
+
+The skill contains the full knowledge base: 38 subcategory values, 18 agent names, SkillId format, all YAML schemas and field constraints, validation rules, and concrete examples.
+
+**Absorbs D-40 (skill registration):** Instead of a flags-only `agentsinc register` CLI command, the user tells Claude to register a skill conversationally — Claude reads the SKILL.md, asks clarifying questions if the category is ambiguous, generates `metadata.yaml`, and wires the skill into `config.yaml`.
 
 ---
 
-## 1. Open Questions
+## 1. Why a Skill, Not an Agent
+
+The original D-41 spec proposed a `config-manager` sub-agent. During refinement, we identified a fundamental UX problem: **sub-agents launched via the Task tool are not interactive**. They receive a prompt, run autonomously, and return a single result. No back-and-forth.
+
+Config tasks frequently need clarification:
+
+- "This skill could be `api-analytics` or `api-observability` — which fits?"
+- "The stack already has a framework skill. Replace it or add alongside?"
+- "This metadata is missing `usageGuidance`. What does this skill help with?"
+
+A skill solves this naturally. It loads into the main Claude conversation, giving Claude the config expertise while preserving full interactivity with the user.
+
+|                           | Sub-Agent (old design)       | Skill (new design)                |
+| ------------------------- | ---------------------------- | --------------------------------- |
+| User interactivity        | None                         | Full                              |
+| Context cost when idle    | Zero                         | Zero (loaded on demand)           |
+| Invocation                | `Task: config-manager "..."` | User: "Use Agents Inc to..."      |
+| Clarification flow        | Impossible                   | Natural conversation              |
+| Agent-to-agent delegation | Task tool                    | Parent loads skill via Skill tool |
+| Knowledge base size limit | Unlimited (own context)      | Shares main context (~600 lines)  |
+
+---
+
+## 2. Open Questions
+
+### SkillId Naming
+
+| Question             | Proposed Answer          | Rationale                                                                                                                                                                 |
+| -------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| What SkillId to use? | `meta-config-agents-inc` | Must follow the `${prefix}-${string}-${string}` format (3+ segments). `meta` prefix for shared/tooling skills, `config` as subcategory segment, `agents-inc` as the name. |
+| What subcategory?    | `shared-tooling`         | Configuration management is tooling. Fits alongside other shared infrastructure concerns.                                                                                 |
+| What display name?   | `Agents Inc`             | Clean, matches how users naturally refer to it: "use Agents Inc to..."                                                                                                    |
+| What model?          | Not specified (inherit)  | The skill provides knowledge, not a persona. The agent using it already has a model.                                                                                      |
 
 ### Scope Boundaries
 
-| Question                                                     | Proposed Answer                                                                                                                                                                                  | Rationale                                                                                                                                         |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Does this agent CREATE new skill directories?                | No. But it can REGISTER existing skills — read their SKILL.md to infer category/description, generate metadata.yaml, and wire into config.yaml. The skill-summoner creates actual skill content. | Separation of concerns -- config-manager handles YAML plumbing and registration, skill-summoner handles skill content creation.                   |
-| Does it handle compilation?                                  | No. It tells the user to run `agentsinc compile` after making changes.                                                                                                                           | Compilation is a separate command. Config-manager is purely file manipulation.                                                                    |
-| Does it handle agent-mappings.yaml?                          | No. `agent-mappings.yaml` was removed in D-43. All skills now assigned to all selected agents; stacks provide fine-grained mapping.                                                              | The TODO spec references this file but it no longer exists.                                                                                       |
-| Should it handle `.claude-src/config.yaml` (project config)? | Yes, both `ProjectSourceConfig` fields AND `ProjectConfig` fields since they share the same physical file.                                                                                       | The file serves dual purpose and the agent needs to update both sets of fields (source/branding AND stack/skills/agents).                         |
-| What model should it use?                                    | **Sonnet** -- this is structured YAML manipulation, not creative reasoning.                                                                                                                      | Unlike agent-summoner/skill-summoner which need opus for creative prompt writing, config-manager does rule-following schema-validated file edits. |
-| Does it need Bash?                                           | No. Read, Write, Edit, Glob, Grep only.                                                                                                                                                          | Purely config file manipulation. No need to run commands, install packages, or execute scripts.                                                   |
-| Where does it live?                                          | `src/agents/meta/config-manager/`                                                                                                                                                                | Follows existing meta-agent pattern (agent-summoner, skill-summoner, documentor all in `src/agents/meta/`).                                       |
+| Question                                               | Answer                                                                                                                                                               | Rationale                                                                                           |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Does this skill teach how to CREATE skill directories? | No. It can REGISTER existing skills — read SKILL.md, infer category, generate metadata.yaml, wire into config.yaml. The skill-summoner creates actual skill content. | Separation of concerns — this skill handles YAML plumbing, skill-summoner handles content creation. |
+| Does it teach compilation?                             | No. It advises to run `agentsinc compile` after changes.                                                                                                             | Compilation is a separate command. This skill is purely about config file structure.                |
+| Does it handle agent-mappings.yaml?                    | No. `agent-mappings.yaml` was removed in D-43.                                                                                                                       | Stacks provide fine-grained skill-to-agent mapping now.                                             |
+| Does it cover `.claude-src/config.yaml`?               | Yes, both `ProjectSourceConfig` and `ProjectConfig` fields.                                                                                                          | Same physical file serves dual purpose.                                                             |
+| Where does the skill live?                             | `/home/vince/dev/skills/src/skills/meta-config-agents-inc/`                                                                                                          | Skills repo, following the standard skill directory pattern.                                        |
 
 ### Out of Scope
 
-These are explicitly NOT handled by this agent:
+These are explicitly NOT covered by this skill:
 
 - Writing SKILL.md content (skill-summoner handles this)
 - Writing agent prompt files (agent-summoner handles this)
 - Running CLI commands like `agentsinc compile`
 - Creating TypeScript code
-- Modifying JSON schemas (those are generated from Zod schemas via a script)
+- Modifying JSON schemas (generated from Zod via `scripts/generate-json-schemas.ts`)
 
 ---
 
-## 2. Current State Analysis
+## 3. Skill Scope
 
-### Existing Meta-Agent Patterns
+### What the Skill Teaches Claude to Do
 
-All three existing meta-agents follow the same file structure:
+| Task                                     | Config Files Touched                       | Example                                                                               |
+| ---------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Create metadata.yaml for a new skill     | `metadata.yaml`                            | Given skill name "posthog-flags" in category "api-analytics", generate valid metadata |
+| Register an existing skill               | `metadata.yaml`, `.claude-src/config.yaml` | Read SKILL.md, infer category/description, generate metadata, wire into config        |
+| Update metadata.yaml fields              | `metadata.yaml`                            | Add `compatibleWith` entries, update tags                                             |
+| Add a new stack to stacks.yaml           | `config/stacks.yaml`                       | Add a "vue-fullstack" stack with Vue + Pinia + Vitest                                 |
+| Update an existing stack                 | `config/stacks.yaml`                       | Add a new agent to an existing stack, change skill assignments                        |
+| Add a new category to skills-matrix.yaml | `config/skills-matrix.yaml`                | Add "web-cms" category with proper fields                                             |
+| Add/update relationship rules            | `config/skills-matrix.yaml`                | Add conflict between two skills, add recommendation                                   |
+| Add/update skillAliases                  | `config/skills-matrix.yaml`                | Map display name "tanstack-router" to full skill ID                                   |
+| Update .claude-src/config.yaml           | `.claude-src/config.yaml`                  | Add a new agent to the agents list, update stack mappings, add skills                 |
+| Validate config files                    | Any of the above                           | Check a metadata.yaml against the JSON schema, report issues                          |
 
-```
-src/agents/meta/{agent-name}/
-  agent.yaml          # Agent definition (id, title, description, model, tools)
-  intro.md            # Identity, expertise, modes of operation
-  workflow.md          # Step-by-step process, investigation requirements, self-correction
-  critical-requirements.md  # Non-negotiable constraints (top of compiled prompt)
-  critical-reminders.md     # Emphatic reminders (bottom of compiled prompt)
-  output-format.md    # Response structure template
-  examples.md         # Concrete examples of good agent behavior
-```
+### What It Does NOT Cover
 
-**Key observations from existing meta-agents:**
-
-| Agent          | Model | Tools                                              | Distinctive Feature                                                                     |
-| -------------- | ----- | -------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| agent-summoner | opus  | Read, Write, Edit, Grep, Glob, Bash                | Three modes (Create/Improve/Compliance), references prompt-bible and architecture-bible |
-| skill-summoner | opus  | Read, Write, Edit, Grep, Glob, WebSearch, WebFetch | External research via web tools, produces skill packages                                |
-| documentor     | opus  | Read, Write, Glob, Grep, Bash                      | Incremental work, validation mode, tracks documentation drift                           |
-
-### What Config Operations Currently Require Manual Knowledge
-
-Today, when any agent (or user) needs to update config files, they must know:
-
-1. **metadata.yaml structure** -- required fields (`category`, `author`, `displayName`, `cliDescription`, `usageGuidance`), valid `category` values from the 38 Subcategory union, author format (`@handle`), length limits (displayName max 30, cliDescription max 60, usageGuidance min 10)
-2. **stacks.yaml structure** -- stack object shape (`id`, `name`, `description`, `agents`), agent-to-subcategory-to-skill nesting, skill assignment formats (bare string, object with `id`/`preloaded`, or array)
-3. **skills-matrix.yaml structure** -- category definition fields, relationship rules (conflicts, discourages, recommends, requires, alternatives), skillAliases mapping
-4. **config.yaml structure** -- dual-purpose file (ProjectSourceConfig + ProjectConfig fields), source resolution precedence, stack mapping format
-5. **SkillId format** -- `${prefix}-${subcategory-part}-${name}` with 3+ dash-separated segments, valid prefixes (`web|api|cli|mobile|infra|meta|security`)
-6. **CategoryPath format** -- domain-prefixed subcategory (e.g., `web-framework`), bare subcategory, or `"local"`
-7. **Skill relationships** -- `requires`, `compatibleWith`, `conflictsWith`, `requiresSetup`, `providesSetupFor` and how they interrelate
-
-This knowledge is scattered across schemas, types, and documentation. A dedicated agent centralizes it.
+| Task                        | Who Handles It | Why                                        |
+| --------------------------- | -------------- | ------------------------------------------ |
+| Writing SKILL.md content    | skill-summoner | Config skill does YAML, not prompt content |
+| Writing agent prompt files  | agent-summoner | Config vs content separation               |
+| Running `agentsinc compile` | User / CLI     | Skill advises the user to run it           |
+| Creating TypeScript types   | cli-developer  | Not a code skill                           |
+| Updating JSON schemas       | cli-developer  | Generated from Zod via script              |
+| Creating skill directories  | skill-summoner | Config skill writes into existing files    |
 
 ---
 
-## 3. Agent Scope Definition
-
-### What the Config Manager Handles
-
-| Task                                     | Config Files Touched        | Example                                                                               |
-| ---------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------- |
-| Create metadata.yaml for a new skill     | `metadata.yaml`             | Given skill name "posthog-flags" in category "api-analytics", generate valid metadata |
-| Update metadata.yaml fields              | `metadata.yaml`             | Add `compatibleWith` entries, update tags                                             |
-| Add a new stack to stacks.yaml           | `config/stacks.yaml`        | Add a "vue-fullstack" stack with Vue + Pinia + Vitest                                 |
-| Update an existing stack                 | `config/stacks.yaml`        | Add a new agent to an existing stack, change skill assignments                        |
-| Add a new category to skills-matrix.yaml | `config/skills-matrix.yaml` | Add "web-cms" category with proper fields                                             |
-| Add/update relationship rules            | `config/skills-matrix.yaml` | Add conflict between two skills, add recommendation                                   |
-| Add/update skillAliases                  | `config/skills-matrix.yaml` | Map display name "tanstack-router" to full skill ID                                   |
-| Update .claude-src/config.yaml           | `.claude-src/config.yaml`   | Add a new agent to the agents list, update stack mappings, add skills                 |
-| Validate config files                    | Any of the above            | Check a metadata.yaml against the JSON schema, report issues                          |
-
-### What It Does NOT Handle
-
-| Task                        | Who Handles It | Why                                                                        |
-| --------------------------- | -------------- | -------------------------------------------------------------------------- |
-| Writing SKILL.md content    | skill-summoner | Config-manager does YAML, not prompt content                               |
-| Writing agent prompt files  | agent-summoner | Same -- config vs content separation                                       |
-| Running `agentsinc compile` | User / CLI     | Config-manager has no Bash tool                                            |
-| Creating TypeScript types   | cli-developer  | Config-manager is not a code agent                                         |
-| Updating JSON schemas       | cli-developer  | JSON schemas are generated from Zod via `scripts/generate-json-schemas.ts` |
-| Creating skill directories  | skill-summoner | Config-manager writes into existing files, doesn't create skill packages   |
-
----
-
-## 4. Agent File Structure
+## 4. Skill File Structure
 
 ### Directory Layout
 
 ```
-src/agents/meta/config-manager/
-  agent.yaml
-  intro.md
-  workflow.md
-  critical-requirements.md
-  critical-reminders.md
-  output-format.md
-  examples.md
+/home/vince/dev/skills/src/skills/meta-config-agents-inc/
+  SKILL.md          # Full config knowledge base + workflow guidance
+  metadata.yaml     # Skill catalog metadata
 ```
 
-### agent.yaml
+### SKILL.md
+
+The SKILL.md contains everything that was split across 7 files in the agent design. Structure:
+
+```markdown
+---
+name: meta-config-agents-inc
+description: Agents Inc CLI configuration expertise — creates and validates metadata.yaml, stacks.yaml, skills-matrix.yaml, and config.yaml with correct schemas and enum values
+---
+
+# Agents Inc Configuration
+
+> **Quick Guide:** Use this skill when creating, updating, or validating Agents Inc CLI configuration files.
+
+**Auto-detection:** metadata.yaml, stacks.yaml, skills-matrix.yaml, config.yaml, skill registration, stack creation
+**When to use:** Creating/updating any Agents Inc YAML config file, registering skills, adding stacks, validating config
+**When NOT to use:** Writing SKILL.md content (use skill-summoner), writing agent prompts (use agent-summoner), TypeScript code changes
+
+## Critical Requirements
+
+[Non-negotiable constraints — equivalent to critical-requirements.md]
+
+## Configuration Reference
+
+### Valid Subcategory Values (38)
+
+[Full list from Section 5.1]
+
+### Valid Domain Values (5)
+
+[From Section 5.2]
+
+### Valid Agent Names (18)
+
+[From Section 5.3]
+
+### SkillId Format
+
+[From Section 5.4]
+
+### metadata.yaml Schema
+
+[From Section 5.5]
+
+### stacks.yaml Schema
+
+[From Section 5.6]
+
+### skills-matrix.yaml Schema
+
+[From Section 5.7 + 5.8]
+
+### config.yaml Schema
+
+[From Section 5.9]
+
+### Schema Comment URLs
+
+[From Section 5.10]
+
+## Workflow
+
+### Investigation First
+
+[Read existing files before changes — equivalent to workflow.md investigation section]
+
+### File-Specific Workflows
+
+[Per-file creation/update procedures]
+
+### Validation Checklist
+
+[Post-write verification steps]
+
+## Examples
+
+[Concrete examples — equivalent to examples.md]
+
+## Reminders
+
+[Self-correction triggers and emphatic constraints — equivalent to critical-reminders.md]
+```
+
+### metadata.yaml
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/agent.schema.json
-id: config-manager
-title: Config Manager Agent
-description: Understands the Agents Inc CLI config system in depth - creates and validates metadata.yaml, stacks.yaml, skills-matrix.yaml, and config.yaml files with correct schemas and enum values
-model: sonnet
-tools:
-  - Read
-  - Write
-  - Edit
-  - Grep
-  - Glob
+# yaml-language-server: $schema=https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/metadata.schema.json
+category: shared-tooling
+author: "@vince"
+displayName: Agents Inc
+cliDescription: CLI configuration expertise
+usageGuidance: Use when creating, updating, or validating Agents Inc CLI config files (metadata.yaml, stacks.yaml, skills-matrix.yaml, config.yaml). Also use for skill registration and stack creation.
+tags:
+  - configuration
+  - yaml
+  - schema
+  - validation
+  - tooling
+  - registration
 ```
-
-**Design decisions:**
-
-- **Model: sonnet** -- Config manipulation is structured, rule-following work. Does not need opus-level reasoning.
-- **No Bash** -- Purely file manipulation. No commands to run.
-- **No WebSearch/WebFetch** -- All knowledge is embedded in the agent's prompt (schemas, enums, examples). No external research needed.
 
 ---
 
 ## 5. Knowledge Base
 
-The agent's workflow.md must embed (or reference) the following knowledge so it can generate valid configs without hallucinating values.
+The SKILL.md must embed the following knowledge so Claude can generate valid configs without hallucinating values.
 
 ### 5.1 Valid Subcategory Values (38 values)
-
-The agent MUST know all valid `Subcategory` values. These are the keys used in `skills-matrix.yaml categories`, `stacks.yaml` agent configs, and `config.yaml` stack mappings.
 
 Source: `src/cli/lib/schemas.ts` lines 70-109 (`SUBCATEGORY_VALUES`)
 
@@ -192,8 +261,6 @@ pattern-scout, web-pattern-critique, web-pm, api-researcher,
 web-researcher, api-reviewer, cli-reviewer, web-reviewer,
 cli-tester, web-tester
 ```
-
-Plus `config-manager` itself after implementation.
 
 ### 5.4 SkillId Format
 
@@ -299,7 +366,7 @@ relationships:
 
 ### 5.9 .claude-src/config.yaml Structure
 
-This file serves two purposes. The agent must understand both:
+This file serves two purposes:
 
 **ProjectSourceConfig fields** (marketplace-level config):
 
@@ -353,16 +420,16 @@ source: github:agents-inc/skills
 
 ### 5.10 JSON Schema References
 
-The agent should add `$schema` comments to generated YAML files:
+Generated YAML files should include `$schema` comments:
 
-| File                  | Schema URL Constant                                                                                                                        |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| metadata.yaml         | `SCHEMA_PATHS.metadata` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/metadata.schema.json`                         |
-| stacks.yaml           | `SCHEMA_PATHS.stacks` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/stacks.schema.json`                             |
-| skills-matrix.yaml    | `SCHEMA_PATHS.skillsMatrix` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/skills-matrix.schema.json`                |
-| config.yaml (project) | `SCHEMA_PATHS.projectConfig` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/project-config.schema.json`              |
-| config.yaml (source)  | `SCHEMA_PATHS.projectSourceConfig` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/project-source-config.schema.json` |
-| agent.yaml            | `SCHEMA_PATHS.agent` = `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/agent.schema.json`                               |
+| File                  | Schema URL                                                                                            |
+| --------------------- | ----------------------------------------------------------------------------------------------------- |
+| metadata.yaml         | `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/metadata.schema.json`              |
+| stacks.yaml           | `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/stacks.schema.json`                |
+| skills-matrix.yaml    | `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/skills-matrix.schema.json`         |
+| config.yaml (project) | `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/project-config.schema.json`        |
+| config.yaml (source)  | `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/project-source-config.schema.json` |
+| agent.yaml            | `https://raw.githubusercontent.com/agents-inc/cli/main/src/schemas/agent.schema.json`                 |
 
 Format: `# yaml-language-server: $schema={url}` as the first line.
 
@@ -385,82 +452,46 @@ From `src/cli/consts.ts`:
 
 ## 6. Step-by-Step Implementation Plan
 
-### Step 1: Create Agent Directory
+### Step 1: Create Skill Directory
 
 ```bash
-mkdir -p src/agents/meta/config-manager/
+mkdir -p /home/vince/dev/skills/src/skills/meta-config-agents-inc/
 ```
 
-### Step 2: Write agent.yaml
+### Step 2: Write SKILL.md
 
-Create `src/agents/meta/config-manager/agent.yaml` with the definition from Section 4 above.
+Create the SKILL.md with:
 
-### Step 3: Write intro.md
+1. **Frontmatter** — `name: meta-config-agents-inc`, description
+2. **Quick Guide** — when to use, auto-detection triggers, when NOT to use
+3. **Critical Requirements** — non-negotiable constraints (domain-prefixed subcategories, schema comments, required fields, read-before-write, SkillId format, verify-after-write)
+4. **Configuration Reference** — the full knowledge base from Section 5 (subcategories, domains, agents, SkillId format, metadata schema, stacks schema, matrix schema, config schema, schema URLs)
+5. **Workflow** — investigation-first process, file-specific creation/update procedures, validation checklist
+6. **Examples** — creating metadata.yaml, adding a stack, adding a category, updating config.yaml, validating files, registering a skill (the absorbed D-40 flow)
+7. **Reminders** — self-correction triggers (emphatic repetition of critical constraints)
 
-Define the agent's identity:
+**Note on knowledge drift:** The SKILL.md should instruct Claude to **always Grep for `SUBCATEGORY_VALUES` and `agentNameSchema` in the actual source code** before generating config, rather than relying solely on the embedded lists. The embedded lists serve as a fast reference; the source code is the ground truth.
 
-- Expert in Agents Inc CLI configuration system
-- Handles YAML file creation and validation
-- Three modes: **Create** (generate new config files), **Update** (modify existing), **Validate** (check against schemas)
-- Does NOT write skill content, agent prompts, or TypeScript code
+### Step 3: Write metadata.yaml
 
-### Step 4: Write workflow.md
+Create metadata.yaml with the definition from Section 4 above.
 
-This is the largest file. It must contain:
+### Step 4: Register in Skills Marketplace
 
-1. **Investigation process** -- Read existing config files before making changes
-2. **The full knowledge base** from Section 5 (subcategory values, domains, agent names, SkillId format, metadata schema, stacks structure, matrix structure, config structure, schema URLs)
-3. **Self-correction triggers** -- Stop if using bare subcategory names without domain prefix, stop if using unknown subcategory values, stop if metadata.yaml missing required fields
-4. **Validation checklist** -- After every file write, verify against the known schema structure
-5. **File-specific workflows** for each config file type (metadata.yaml, stacks.yaml, skills-matrix.yaml, config.yaml)
+Add `meta-config-agents-inc` to the appropriate places:
 
-### Step 5: Write critical-requirements.md
+1. Add the skill to `config/skills-matrix.yaml` in the `shared-tooling` category (if not auto-discovered)
+2. Add the skill's `displayName` alias to `skillAliases` if needed
+3. Add the skill to relevant stacks in `config/stacks.yaml` — this skill should be available to all developer agents that might do config work
 
-Emphatic constraints placed at TOP of compiled prompt:
+### Step 5: Register in CLI Project
 
-- MUST use domain-prefixed subcategory values (never bare names like "framework")
-- MUST include yaml-language-server schema comment as first line
-- MUST validate all required fields before writing
-- MUST read existing file before updating (never overwrite blindly)
-- MUST use SkillId format with 3+ segments (never display names in metadata)
-- MUST verify writes by re-reading files after editing
+In `/home/vince/dev/cli/.claude-src/config.yaml`:
 
-### Step 6: Write critical-reminders.md
+1. Add `meta-config-agents-inc` to the `skills` list
+2. Add it to the `stack` section for relevant agents (e.g., `agent-summoner`, `skill-summoner`, `cli-developer`)
 
-Same constraints repeated at BOTTOM of compiled prompt (self-reminder loop closure).
-
-### Step 7: Write output-format.md
-
-Define structured response format:
-
-- **File:** which file was created/modified
-- **Changes:** what was added/modified
-- **Validation:** schema compliance check results
-- **Next steps:** what the user should do (e.g., run `agentsinc compile`)
-
-### Step 8: Write examples.md
-
-Concrete examples of:
-
-1. Creating a metadata.yaml for a new skill
-2. Adding a stack to stacks.yaml
-3. Adding a category to skills-matrix.yaml
-4. Updating config.yaml stack mappings
-5. Validating a metadata.yaml and reporting errors
-
-### Step 9: Register in .claude-src/config.yaml
-
-Add `config-manager` to the `agents` list in `.claude-src/config.yaml`.
-
-Add `config-manager` to the `selectedAgents` list.
-
-### Step 10: Update schemas.ts AgentName
-
-Add `"config-manager"` to the `agentNameSchema` enum in `src/cli/lib/schemas.ts` (line 114).
-
-Add `"config-manager"` to the `AgentName` union type in the appropriate types file.
-
-### Step 11: Compile and Verify
+### Step 6: Compile and Verify
 
 ```bash
 agentsinc compile
@@ -468,51 +499,55 @@ agentsinc compile
 
 Verify:
 
-- Agent compiles without errors
-- Compiled output appears in `.claude/agents/config-manager.md`
-- All required XML tags present in compiled output
+- Skill is listed in compiled output
+- Agents that have it assigned can load it via the Skill tool
+- The SKILL.md content is accessible when invoked
 
 ---
 
 ## 7. Integration Points
 
-### How Other Agents Delegate to It
-
-Other agents use the Task tool to invoke config-manager:
-
-```
-Task: config-manager
-"Create a metadata.yaml for a new skill called 'tanstack-router' in category 'web-framework' by author @vince"
-```
-
-```
-Task: config-manager
-"Add the skill 'web-framework-tanstack-router' to the nextjs-fullstack stack under web-developer agent, subcategory web-framework"
-```
-
-```
-Task: config-manager
-"Validate the metadata.yaml at src/skills/web-framework-tanstack-router/metadata.yaml"
-```
-
-### Key Delegation Patterns
-
-| Caller                           | Delegates What                                           | Example                                                                              |
-| -------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| agent-summoner                   | After creating an agent, delegate config registration    | "Add config-manager to .claude-src/config.yaml agents list and create stack entries" |
-| skill-summoner                   | After creating skill content, delegate metadata creation | "Create metadata.yaml for this new skill with these properties"                      |
-| D-40 `register` command (future) | Automated config updates during skill registration       | "Add this skill to skills-matrix.yaml and update stacks"                             |
-| User directly                    | Ad-hoc config tasks                                      | "Add a new stack for Vue + Nuxt"                                                     |
-
 ### How Users Invoke It
 
-Users invoke via Claude Code's Task tool or slash command:
+Users invoke naturally in conversation with Claude:
 
 ```
-/task config-manager "Create metadata.yaml for skill xyz..."
+User: "Use Agents Inc to register my posthog skill"
+Claude: [loads the skill] "I'll read your SKILL.md to understand what it does..."
+Claude: "This looks like an analytics skill. I'd categorize it as `api-analytics`. Sound right?"
+User: "yeah"
+Claude: [creates metadata.yaml, updates config.yaml]
+Claude: "Done. Run `agentsinc compile` to pick up the changes."
 ```
 
-Or via delegation from another agent task.
+```
+User: "Use Agents Inc to add a vue-fullstack stack"
+Claude: [loads the skill] "What agents should this stack include? Here's what I'd suggest..."
+```
+
+```
+User: "Use Agents Inc to validate my metadata.yaml"
+Claude: [loads the skill, reads the file] "Found 2 issues: category 'framework' should be 'web-framework', and usageGuidance is only 8 chars (minimum 10)."
+```
+
+### How Other Agents Use It
+
+Agents that have this skill assigned can load it via the Skill tool when they need config knowledge:
+
+```
+Skill: "meta-config-agents-inc"
+```
+
+This loads the config knowledge into the agent's context, giving it the same expertise. The key difference from the sub-agent design: the **parent agent** (in the main conversation) can also load this skill and do config work interactively.
+
+### Delegation Patterns
+
+| Caller                     | How They Use It                           | Example                                             |
+| -------------------------- | ----------------------------------------- | --------------------------------------------------- |
+| User directly              | Natural language: "Use Agents Inc to..."  | "Use Agents Inc to register my posthog skill"       |
+| agent-summoner             | Loads skill, then creates config files    | After creating agent files, generates metadata.yaml |
+| skill-summoner             | Loads skill, then creates metadata        | After creating SKILL.md, generates metadata.yaml    |
+| Claude (main conversation) | Loads on demand when config task detected | User asks about config — Claude loads skill         |
 
 ---
 
@@ -520,7 +555,7 @@ Or via delegation from another agent task.
 
 ### Schema Validation Approach
 
-Since the agent cannot run TypeScript/Zod, it validates by **knowledge of the schema rules embedded in its prompt**. The workflow.md must contain:
+The skill embeds schema knowledge directly in its SKILL.md content. When Claude loads it, Claude gains:
 
 1. **Required field checklists** for each file type
 2. **Valid enum value lists** (subcategories, domains, agent names)
@@ -529,7 +564,7 @@ Since the agent cannot run TypeScript/Zod, it validates by **knowledge of the sc
 
 ### Post-Write Verification
 
-After every file write/edit, the agent MUST:
+The skill instructs Claude to verify after every write:
 
 1. Re-read the file using the Read tool
 2. Check that all required fields are present
@@ -537,102 +572,113 @@ After every file write/edit, the agent MUST:
 4. Check that the yaml-language-server schema comment is present
 5. Report any validation issues found
 
+### Interactive Advantage Over Sub-Agent
+
+Unlike the sub-agent design, if validation finds an issue, Claude can immediately ask the user how to fix it rather than just reporting the error in a returned message.
+
 ### Limitation
 
-The agent cannot run `agentsinc validate` or execute Zod schema validation directly. It relies on embedded knowledge. For critical operations, the agent should instruct the user to run validation:
+Claude cannot run `agentsinc validate` or execute Zod schema validation directly unless it has Bash access. The skill instructs Claude to advise the user:
 
-> "I've created the metadata.yaml. To verify it against the full JSON schema, run: `agentsinc validate`"
+> "I've created the metadata.yaml. To verify against the full JSON schema, run: `agentsinc validate`"
 
 ---
 
 ## 9. Test Plan
 
-### Manual Testing (Meta-Agent)
+### Manual Testing
 
-Since this is a meta-agent (markdown + YAML), testing is primarily manual:
+Since this is a skill (SKILL.md + metadata.yaml), testing is manual:
 
-1. **Compile test**: Run `agentsinc compile` and verify the agent appears in `.claude/agents/`
-2. **Metadata creation test**: Ask the agent to create a metadata.yaml for a hypothetical skill. Verify:
+1. **Load test**: Invoke `Skill: "meta-config-agents-inc"` and verify the content loads
+2. **Metadata creation test**: Ask Claude to create a metadata.yaml for a hypothetical skill. Verify:
    - yaml-language-server schema comment present
    - All 5 required fields present and valid
    - Category is domain-prefixed
    - Author format is `@handle`
-3. **Stacks update test**: Ask the agent to add a stack entry. Verify:
+3. **Stacks update test**: Ask Claude to add a stack entry. Verify:
    - Valid structure with id, name, description, agents
    - Subcategory keys are valid Subcategory values
    - Skill IDs follow the 3-segment format
-4. **Matrix category test**: Ask the agent to add a category. Verify:
+4. **Matrix category test**: Ask Claude to add a category. Verify:
    - All required fields present (id, displayName, description, exclusive, required, order)
    - Domain is valid
    - Key matches id field
-5. **Validation test**: Give the agent an invalid metadata.yaml and ask it to validate. Verify:
+5. **Validation test**: Give Claude an invalid metadata.yaml and ask it to validate. Verify:
    - It catches missing required fields
    - It catches invalid category values
    - It catches invalid author format
-6. **Refusal test**: Ask the agent to write SKILL.md content or TypeScript code. Verify it refuses and defers to the appropriate agent.
+6. **Interactive test**: Ask Claude to register a skill with an ambiguous category. Verify:
+   - Claude asks for clarification rather than guessing
+   - Claude incorporates the user's answer into the generated config
+7. **Refusal test**: Ask Claude to write SKILL.md content while using this skill. Verify it defers to skill-summoner.
 
-### Acceptance Criteria (from TODO spec)
+### Acceptance Criteria
 
 - [ ] Can create a valid `metadata.yaml` from a skill name and category
-- [ ] Can register an existing skill: read its SKILL.md, infer category/description, generate metadata.yaml, wire into config.yaml (replaces D-40)
+- [ ] Can register an existing skill interactively: read SKILL.md, ask clarifying questions, generate metadata.yaml, wire into config.yaml (replaces D-40)
 - [ ] Can add a new stack to `stacks.yaml` with correct agent/subcategory/skill structure
 - [ ] Can add a new category to `skills-matrix.yaml` with proper schema
 - [ ] Validates all output against schema rules (embedded knowledge)
 - [ ] Refuses to use bare subcategory names (enforces domain-prefix)
-- [ ] Other agents can delegate config tasks to it via the Task tool
+- [ ] Advises the user to verify with `agentsinc compile` after changes
+- [ ] Loads correctly via Skill tool for both users and other agents
 
-### Additional Quality Checks
+### Removed Acceptance Criteria (from agent design)
 
-- [ ] Agent compiles without errors
-- [ ] Compiled output has all required sections
-- [ ] No hardcoded paths that would break in other environments
-- [ ] All enum values in the agent's knowledge base match current source of truth
+- ~~"Other agents can delegate config tasks to it via the Task tool"~~ — replaced by Skill tool loading
 
 ---
 
-## 10. Files Created Summary
+## 10. Files Created/Modified Summary
 
-| File                                                      | Purpose                                    | Estimated Size |
-| --------------------------------------------------------- | ------------------------------------------ | -------------- |
-| `src/agents/meta/config-manager/agent.yaml`               | Agent definition                           | ~10 lines      |
-| `src/agents/meta/config-manager/intro.md`                 | Identity and scope                         | ~20 lines      |
-| `src/agents/meta/config-manager/workflow.md`              | Full workflow with embedded knowledge base | ~400-500 lines |
-| `src/agents/meta/config-manager/critical-requirements.md` | Top-of-prompt constraints                  | ~15 lines      |
-| `src/agents/meta/config-manager/critical-reminders.md`    | Bottom-of-prompt reminders                 | ~20 lines      |
-| `src/agents/meta/config-manager/output-format.md`         | Response structure template                | ~40 lines      |
-| `src/agents/meta/config-manager/examples.md`              | Concrete examples                          | ~150 lines     |
+**New files (skills repo):**
 
-**Code changes (minor):**
-| File | Change |
-|------|--------|
-| `.claude-src/config.yaml` | Add `config-manager` to `agents` and `selectedAgents` lists |
-| `src/cli/lib/schemas.ts` | Add `"config-manager"` to `agentNameSchema` enum |
-| `src/cli/types/agents.ts` (line 5-31) | Add `"config-manager"` to `AgentName` union type (Meta section, after `"skill-summoner"`) |
+| File                                                     | Purpose                                          | Estimated Size |
+| -------------------------------------------------------- | ------------------------------------------------ | -------------- |
+| `skills/src/skills/meta-config-agents-inc/SKILL.md`      | Full config knowledge base + workflow + examples | ~500-600 lines |
+| `skills/src/skills/meta-config-agents-inc/metadata.yaml` | Skill catalog metadata                           | ~15 lines      |
+
+**Modified files (skills repo):**
+
+| File                        | Change                                                                        |
+| --------------------------- | ----------------------------------------------------------------------------- |
+| `config/skills-matrix.yaml` | Ensure `shared-tooling` category includes this skill (if not auto-discovered) |
+| `config/stacks.yaml`        | Add skill to relevant stacks                                                  |
+
+**Modified files (CLI repo):**
+
+| File                      | Change                                                                     |
+| ------------------------- | -------------------------------------------------------------------------- |
+| `.claude-src/config.yaml` | Add `meta-config-agents-inc` to `skills` list and relevant `stack` entries |
+
+**No TypeScript changes needed.** Unlike the agent design, a skill requires no schema changes, no new `AgentName` enum value, no type updates.
 
 ---
 
 ## 11. Notes for Implementer
 
-### Key Difference from Other Meta-Agents
+### Key Difference from Agent Design
 
-- **agent-summoner** and **skill-summoner** use opus because they do creative prompt engineering work.
-- **config-manager** uses **sonnet** because it does structured, rule-following YAML manipulation. The "creativity" is already encoded in the schema rules.
+The agent design required 7 files (metadata.yaml, intro.md, workflow.md, critical-requirements.md, critical-reminders.md, output-format.md, examples.md) plus TypeScript schema changes. The skill design requires 2 files (SKILL.md, metadata.yaml) and zero TypeScript changes.
+
+All content that was split across those 7 agent files is consolidated into a single SKILL.md. The structure within SKILL.md mirrors the agent file separation (critical requirements section, workflow section, examples section, reminders section).
 
 ### The Biggest Risk
 
-The embedded knowledge (subcategory values, agent names, etc.) will drift as the codebase evolves. To mitigate:
+Same as the agent design: **knowledge drift**. The embedded subcategory values, agent names, etc. will change as the codebase evolves. Mitigation:
 
-1. The workflow.md should include instructions to **always read the actual `schemas.ts` file** before generating config, rather than relying solely on embedded lists.
-2. The agent should Grep for `SUBCATEGORY_VALUES` and `agentNameSchema` as part of its investigation step.
-3. The embedded lists serve as a **fast reference** but the agent should verify against source when precision matters.
+1. The SKILL.md should instruct Claude to **Grep for `SUBCATEGORY_VALUES` and `agentNameSchema` in source code** before generating config
+2. The embedded lists serve as a **fast reference** but source code is ground truth
+3. When the skill is updated, the `contentHash` in metadata.yaml tracks staleness
 
 ### agent-mappings.yaml Is Gone
 
-The D-41 TODO spec mentions `agent-mappings.yaml`. This file was removed in D-43. The config-manager agent does NOT need to handle it. All skills are now assigned to all selected agents; stacks provide fine-grained mapping. The implementer should not add any agent-mappings references.
+The original D-41 TODO spec mentions `agent-mappings.yaml`. This file was removed in D-43. All skills are now assigned to all selected agents; stacks provide fine-grained mapping.
 
 ### Stack Entries in config.yaml
 
-The `.claude-src/config.yaml` `stack` section uses the SAME format as `stacks.yaml` agent entries. The config-manager should understand that these are the same schema and can generate both.
+The `.claude-src/config.yaml` `stack` section uses the SAME format as `stacks.yaml` agent entries. The skill should document that these are the same schema.
 
 ### Schema Comment Convention
 
@@ -642,4 +688,26 @@ Every generated YAML file must start with:
 # yaml-language-server: $schema={schema-url}
 ```
 
-This enables IDE validation via yaml-language-server.
+### Content Size Consideration
+
+At ~500-600 lines, the SKILL.md is large for a skill. This is acceptable because:
+
+1. It's loaded on demand (not preloaded), so it only uses context when needed
+2. Config tasks are infrequent — load once, do the work, move on
+3. The alternative (a sub-agent) couldn't do interactive config work at all
+4. The knowledge base IS the value — trimming it would reduce accuracy
+
+---
+
+## 12. Comparison with Original Design
+
+| Aspect             | Original (agent)                                   | Updated (skill)                                          |
+| ------------------ | -------------------------------------------------- | -------------------------------------------------------- |
+| Files to create    | 7 (metadata.yaml + 6 markdown)                     | 2 (SKILL.md + metadata.yaml)                             |
+| TypeScript changes | 3 files (schemas.ts, types/agents.ts, config.yaml) | 0 files                                                  |
+| Location           | `src/agents/meta/config-manager/`                  | `skills/src/skills/meta-config-agents-inc/`              |
+| Interactivity      | None (sub-agent)                                   | Full (main conversation)                                 |
+| User invocation    | `/task config-manager "..."`                       | "Use Agents Inc to..."                                   |
+| Agent-to-agent use | Task tool delegation                               | Skill tool loading                                       |
+| Knowledge delivery | Own context window                                 | Shared context (on demand)                               |
+| Compilation        | Compiled to `.claude/agents/`                      | Compiled to `.claude/plugins/skills/` or loaded directly |

@@ -2,8 +2,8 @@
 
 | ID   | Task                                                                                                                                       | Status        |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
-| D-50 | ~~Matrix decomposition~~ — all 8 phases complete (see [phased plan](./TODO-matrix-decomposition.md))                                         | Done          |
-| D-46 | Custom extensibility (see [design doc](../docs/features/proposed/custom-extensibility-design.md))                                          | In Progress   |
+| D-50 | ~~Matrix decomposition~~ — all 8 phases complete (see [phased plan](./TODO-matrix-decomposition.md))                                       | Done          |
+| D-46 | Custom extensibility — Phase 5: TS config migration (see [implementation plan](./D-46-ts-config-migration.md))                             | Ready for Dev |
 | D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                                            | Refined       |
 | D-33 | ~~README: frame Agents Inc. as an agent composition framework~~ — done                                                                     | Done          |
 | D-44 | Update README and Notion page for `eject templates` type (see [implementation plan](./D-44-docs-eject-templates.md))                       | Ready for Dev |
@@ -19,12 +19,17 @@
 | D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))                              | Has Open Qs   |
 | D-39 | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))                                  | Ready for Dev |
 | D-40 | ~~`agentsinc register` command~~ — absorbed into D-41 (config sub-agent handles registration) (see [TODO-deferred.md](./TODO-deferred.md)) | Deferred      |
-| D-41 | Create Agents Inc config sub-agent (see [implementation plan](./D-41-config-sub-agent.md))                                                 | Ready for Dev |
+| D-41 | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md))                                            | Ready for Dev |
 | D-60 | Remove `cli-migrator` subagent                                                                                                             | Ready for Dev |
 | D-61 | Preserve stack skill selections when toggling domains                                                                                      | Ready for Dev |
 | D-62 | Review default stacks: include meta/methodology/reviewing skills                                                                           | Ready for Dev |
 | D-63 | Add E2E tests to pre-commit hook                                                                                                           | Ready for Dev |
 | D-64 | Create CLI E2E testing skill + update `cli-framework-oclif-ink` skill                                                                      | Ready for Dev |
+| D-65 | Init/edit scope: global config detection + prompt (see [implementation plan](./D-65-init-edit-scope.md))                                   | Ready for Dev |
+| D-66 | AI-assisted PR review: categorize diffs by type (mechanical vs logic vs test) for easier review                                            | Investigate   |
+| D-67 | Remove `aliases` from skill-rules.ts — derive display name mappings from a typed `Record<SkillId, SkillDisplayName>` map                   | Investigate   |
+| D-68 | Remove `--dry-run` flag entirely — wizard confirm step already previews, operations are local/reversible                                   | Ready for Dev |
+| D-69 | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                                           | Investigate   |
 | B-07 | Fix skill sort order changing on select/deselect in build step                                                                             | Ready for Dev |
 
 ---
@@ -161,55 +166,43 @@ When a user selects a meta-framework (e.g., Next.js), automatically select the c
 
 ---
 
-#### D-41: Create Agents Inc config sub-agent
+#### D-41: Create `agents-inc` configuration skill
 
 **Priority:** Medium
 
-Create a specialized Claude Code sub-agent that understands the Agents Inc CLI's configuration system in depth. This is NOT a developer agent — it handles all configuration-related tasks that currently require manual knowledge of the CLI's YAML structures, schemas, and type system.
+Create a configuration **skill** (not a sub-agent) that gives Claude deep expertise in the Agents Inc CLI's YAML config system. The skill loads into the main conversation on demand, enabling interactive config work — Claude can ask clarifying questions, propose changes, and iterate with the user.
 
-**What it does:**
+**Why a skill instead of an agent:** Sub-agents (Task tool) are not interactive — they run autonomously and return a single result. Config tasks frequently need clarification ("Which category?", "Replace or add alongside?"). A skill in the main conversation preserves full interactivity.
+
+**What it teaches Claude:**
 
 - Creates and updates `metadata.yaml` files for skills (with correct domain-prefixed `category` values, author, displayName, etc.)
 - Creates and updates `stacks.yaml` entries (agent definitions, skill assignments, preloaded flags)
 - Updates `skills-matrix.yaml` (adding/modifying categories, skill entries, dependency rules)
 - Updates `.claude-src/config.yaml` mappings (source paths, plugin settings, skill assignments)
-- Updates `agent-mappings.yaml` skill-to-agent routing
-- Knows the valid `Subcategory` enum values and enforces them
+- Knows the valid `Subcategory` enum values (38) and enforces them
 - Understands skill relationships (`requires`, `compatibleWith`, `conflictsWith`, `requiresSetup`, `providesSetupFor`)
-- Can validate configs against JSON schemas before writing
+- Validates configs against embedded schema knowledge
 
-**Key knowledge areas:**
-
-- The 38 domain-prefixed subcategory values and their domains
-- Stack structure: agents → subcategories → skill assignments (with `preloaded`, `selected` flags)
-- Skills matrix: categories with `id`, `displayName`, `domain`, `categoryExclusive`, `skills` arrays with dependency rules (`needsAny`, `conflictsWith`)
-- Metadata schema: required fields (`category`, `author`, `displayName`, `cliDescription`, `usageGuidance`)
-- The distinction between matrix categories (36) and stacks-only keys (+2: `web-base-framework`, `mobile-platform`)
-- How `extractSubcategoryFromPath` and `categoryPathSchema` resolve category paths
-
-**Why this is needed:**
-
-- Configuration tasks (creating metadata, adding stacks, updating the matrix) are error-prone and require deep familiarity with the schema
-- The D-31 migration showed how many files need coordinated updates when config values change
-- A dedicated config agent prevents developer agents from making config mistakes (wrong category values, invalid schema, missing required fields)
-- Replaces D-40 (`agentsinc register`) entirely — the config agent handles skill registration conversationally (read SKILL.md, infer category, generate metadata.yaml, wire config.yaml) instead of requiring users to memorize flags
+**User invocation:** "Use Agents Inc to register my skill" / "Use Agents Inc to add a stack" / "Use Agents Inc to validate my config"
 
 **Implementation:**
 
-- Create `src/agents/meta/config-manager/` with the standard agent structure
-- Pre-load the JSON schemas, `SUBCATEGORY_VALUES`, and example configs into the agent's context
-- Give it Read, Write, Edit, Glob, Grep tools (no Bash needed — it's purely config manipulation)
-- Add it to `agent-mappings.yaml` so it's available as a sub-agent for other agents
+- Create `meta-config-agents-inc` skill in the skills repo (SKILL.md + metadata.yaml)
+- Category: `shared-tooling`, display name: "Agents Inc"
+- SKILL.md embeds the full config knowledge base (~500-600 lines)
+- No TypeScript changes required (unlike the agent design which needed schema/type updates)
+- Register in `.claude-src/config.yaml` and assign to relevant agents via stacks
 
 **Acceptance criteria:**
 
 - [ ] Can create a valid `metadata.yaml` from a skill name and category
-- [ ] Can register an existing skill: read its SKILL.md, infer category/description, generate metadata.yaml, wire into config.yaml (replaces D-40)
+- [ ] Can register an existing skill interactively: read SKILL.md, ask clarifying questions, generate metadata.yaml, wire into config.yaml (replaces D-40)
 - [ ] Can add a new stack to `stacks.yaml` with correct agent/subcategory/skill structure
 - [ ] Can add a new category to `skills-matrix.yaml` with proper schema
-- [ ] Validates all output against schema rules
+- [ ] Validates all output against schema rules (embedded knowledge)
 - [ ] Refuses to use bare subcategory names (enforces domain-prefix)
-- [ ] Other agents can delegate config tasks to it via the Task tool
+- [ ] Loads correctly via Skill tool for both users and other agents
 
 ---
 
@@ -375,12 +368,14 @@ The pre-commit hook (`.husky/pre-commit`) currently runs `lint-staged` (prettier
 Add the E2E test suite to the pre-commit hook so that both unit and E2E tests must pass before a commit is accepted.
 
 **Current hook:**
+
 ```
 npx lint-staged
 bun run test
 ```
 
 **Key considerations:**
+
 - E2E tests take ~60s — acceptable for pre-commit but consider making it skippable for intermediate commits per the commit protocol (`--no-verify`)
 - E2E tests require the binary to be built (`npm run build`) — the hook may need to ensure the binary is up to date
 - The commit protocol already says to use `--no-verify` for intermediate sequential commits, so the longer runtime only applies to first/last commits
@@ -414,10 +409,101 @@ The current skill covers oclif command structure and Ink component patterns but 
 - Current conventions: `displayName` in metadata, `METADATA_KEYS` constants, `EXIT_CODES` usage
 
 **Reference files:**
+
 - `e2e/helpers/terminal-session.ts` — TerminalSession class
 - `e2e/helpers/test-utils.ts` — runCLI, createTempDir, etc.
 - `e2e/vitest.config.ts` — E2E test runner config
 - `src/cli/base-command.ts` — BaseCommand pattern
+
+---
+
+#### D-67: Remove `aliases` from skill-rules.ts
+
+**Priority:** Low
+**Status:** Investigate
+
+Now that configs are TypeScript (D-46), the `aliases` object in `skill-rules.ts` (mapping display names like `"react"` to full skill IDs like `"web-framework-react"`) may be redundant. The same mapping could be derived from a typed `Record<SkillId, SkillDisplayName>` map, with both directions (ID→name, name→ID) generated at build time or load time.
+
+**Current flow:**
+
+- `skill-rules.ts` has `aliases: { react: "web-framework-react", vue: "web-framework-vue-composition-api", ... }`
+- `loadSkillRules()` parses this into `SkillRulesConfig.aliases`
+- `mergeMatrixWithSkills()` uses aliases to build `displayNameToId` / `displayNames` on the merged matrix
+- `resolveAlias()` resolves display names to canonical IDs throughout the wizard and validation
+
+**Investigation needed:**
+
+- Can `displayName` from `metadata.yaml` (already extracted per-skill) replace the aliases map entirely?
+- If so, skill-rules.ts only needs `relationships` and `perSkillRules` — no `aliases` section
+- The `SkillRulesConfig` type, `loadSkillRules()`, and `mergeMatrixWithSkills()` would simplify
+- `displayNameToId` / `displayNames` on `MergedSkillsMatrix` would be built from extracted metadata instead of a hand-maintained aliases map
+- Check if any aliases differ from the `displayName` in metadata (i.e., are there aliases that aren't just the display name?)
+
+**Key files:**
+
+- `src/cli/types/matrix.ts` — `SkillRulesConfig.aliases`, `MergedSkillsMatrix.displayNameToId`
+- `src/cli/lib/matrix/matrix-loader.ts` — `loadSkillRules()`, `mergeMatrixWithSkills()`
+- `src/cli/lib/matrix/matrix-resolver.ts` — `resolveAlias()`
+- Skills repo: `config/skill-rules.ts` — the aliases object itself
+
+---
+
+#### D-68: Remove `--dry-run` flag entirely
+
+**Priority:** Low
+
+The `--dry-run` flag adds ~143 lines of conditional preview logic across 3 commands, plus 13 unit tests and 1 e2e test. The wizard's confirm step already previews what will be installed, and all operations are local/reversible. 19 of 22 commands inherit the flag but don't implement it.
+
+**What to remove:**
+
+- `base-command.ts`: `dry-run` from `baseFlags`
+- `compile.ts`: 3 `if (flags["dry-run"])` branches (~28 lines)
+- `init.tsx`: dry-run preview block (~55 lines)
+- `uninstall.tsx`: dry-run branches + `dryRunLocalRemoval()` method (~60 lines)
+- `utils/messages.ts`: `DRY_RUN_MESSAGES` constants
+- Unit tests: 13 dry-run test cases across compile, init, uninstall test files
+- E2E tests: dry-run assertions in compile e2e
+
+---
+
+#### D-69: Config migration strategy
+
+**Priority:** Medium
+**Status:** Investigate
+
+When the CLI's `ProjectConfig` shape changes between versions (new required fields, renamed properties, restructured objects), users with older configs will hit failures on `edit` or `compile`. Need a strategy for detecting and handling outdated config shapes.
+
+**Scenarios to handle:**
+
+- New optional field added → no breakage (Zod `.passthrough()` handles this)
+- New required field added → old configs fail Zod validation
+- Field renamed → old field ignored, new field missing
+- Field type changed → Zod validation fails
+- Structural change (e.g., YAML → TS migration) → config unreadable
+
+**Possible approaches:**
+
+1. **Config version field** — add `version: "1"` to ProjectConfig. CLI checks version on load and runs migration functions for older versions
+2. **Lenient loading + migration on write** — load with a permissive schema, detect missing/changed fields, fix them, write the updated config
+3. **`agentsinc migrate` command** — explicit migration command that updates config shape (like `prisma migrate` or `next codemod`)
+4. **Silent auto-migration** — CLI detects old format, migrates in-place, warns the user
+5. **Re-init prompt** — if config is too old, prompt the user to re-run `init` with their existing selections preserved
+
+**Investigation needed:**
+
+- How do Prisma, Next.js, ESLint handle config schema evolution?
+- What's the right granularity for version numbers? Per-field? Per-schema? Semver-tied?
+- Should migration be automatic or explicit?
+- How to preserve user customizations during migration (e.g., hand-edited fields)?
+- Should the CLI refuse to run with an outdated config, or best-effort load it?
+
+**Related:** D-46 (TS config migration) was the first instance of this problem. The approach there was a breaking change with no migration path (pre-1.0). Post-1.0 will need a real strategy.
+
+**Key files:**
+
+- `src/cli/lib/configuration/ts-config-loader.ts` — config loading
+- `src/cli/lib/schemas.ts` — Zod validation schemas
+- `src/cli/types/config.ts` — ProjectConfig type definition
 
 ---
 
