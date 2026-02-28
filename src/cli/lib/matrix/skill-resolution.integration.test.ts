@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { readFile } from "fs/promises";
 import { groupBy, mapToObj, mapValues } from "remeda";
 
 import {
@@ -23,7 +22,7 @@ import {
   createMockCategory,
   buildWizardResult,
   buildSourceResult,
-  parseTsConfigContent,
+  readTestTsConfig,
 } from "../__tests__/helpers";
 import {
   PUBLIC_SOURCE,
@@ -634,9 +633,8 @@ describe("Integration: Multi-Source Install Pipeline", () => {
     expect(installResult.copiedSkills).toHaveLength(PIPELINE_SKILL_COUNT);
 
     // Verify config contains all selected skills
-    const configContent = await readFile(installResult.configPath, "utf-8");
     // Boundary cast: TS config parse returns `unknown`
-    const config = parseTsConfigContent<ProjectConfig>(configContent);
+    const config = await readTestTsConfig<ProjectConfig>(installResult.configPath);
 
     for (const skillId of selectedSkills) {
       expect(config.skills).toContain(skillId);
@@ -669,9 +667,8 @@ describe("Integration: Multi-Source Install Pipeline", () => {
       sourceFlag: "github:test-org/skills",
     });
 
-    const configContent = await readFile(installResult.configPath, "utf-8");
     // Boundary cast: TS config parse returns `unknown`
-    const config = parseTsConfigContent<ProjectConfig>(configContent);
+    const config = await readTestTsConfig<ProjectConfig>(installResult.configPath);
 
     // Source metadata should be preserved
     expect(config.source).toBe("github:test-org/skills");

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createTempDir,
   cleanupTempDir,
-  parseTsConfigContent,
+  readTestTsConfig,
   writeTestTsConfig,
 } from "../__tests__/helpers";
 import {
@@ -438,8 +438,7 @@ describe("config", () => {
       await saveProjectConfig(tempDir, { source: "github:test/repo" });
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const content = await readFile(configPath, "utf-8");
-      const parsed = parseTsConfigContent<Record<string, unknown>>(content);
+      const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
       expect(parsed.source).toBe("github:test/repo");
     });
 
@@ -459,9 +458,7 @@ describe("config", () => {
       });
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const parsed = parseTsConfigContent<Record<string, unknown>>(
-        await readFile(configPath, "utf-8"),
-      );
+      const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
       expect(parsed.marketplace).toBe("https://my-marketplace.com/plugins");
     });
 
@@ -472,9 +469,7 @@ describe("config", () => {
       });
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const parsed = parseTsConfigContent<Record<string, unknown>>(
-        await readFile(configPath, "utf-8"),
-      );
+      const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
       expect(parsed.source).toBe("github:myorg/skills");
       expect(parsed.marketplace).toBe("https://enterprise.example.com");
     });
@@ -838,9 +833,7 @@ describe("config", () => {
       });
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const parsed = parseTsConfigContent<Record<string, unknown>>(
-        await readFile(configPath, "utf-8"),
-      );
+      const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
       expect(parsed.agentsSource).toBe("https://my-agents.example.com");
     });
 
@@ -852,9 +845,7 @@ describe("config", () => {
       });
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const parsed = parseTsConfigContent<Record<string, unknown>>(
-        await readFile(configPath, "utf-8"),
-      );
+      const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
       expect(parsed.source).toBe("github:myorg/skills");
       expect(parsed.marketplace).toBe("https://enterprise.example.com");
       expect(parsed.agentsSource).toBe("https://agents.enterprise.example.com");
@@ -903,9 +894,7 @@ describe("config", () => {
       });
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const parsed = parseTsConfigContent<Record<string, unknown>>(
-        await readFile(configPath, "utf-8"),
-      );
+      const parsed = await readTestTsConfig<Record<string, unknown>>(configPath);
       const branding = parsed.branding as Record<string, unknown>;
       expect(branding.name).toBe("Acme Dev Tools");
       expect(branding.tagline).toBe("Build faster");

@@ -561,7 +561,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       }
     });
 
-    it("should write config.ts with defineConfig wrapper", async () => {
+    it("should write config.ts with satisfies ProjectConfig", async () => {
       const selectedSkillIds: SkillId[] = ["web-framework-react"];
 
       simulateSkillSelections(selectedSkillIds, matrix, ["web"]);
@@ -575,9 +575,10 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
 
       const configContent = await readFile(result.configPath, "utf-8");
 
-      // Should use defineConfig wrapper
-      expect(configContent).toContain("import { defineConfig }");
-      expect(configContent).toContain("export default defineConfig(");
+      // Should use plain object export with satisfies
+      expect(configContent).not.toContain("defineConfig");
+      expect(configContent).toContain("export default {");
+      expect(configContent).toContain("satisfies ProjectConfig");
 
       // Should parse back to valid config
       const config = await readTestTsConfig<ProjectConfig>(result.configPath);

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import path from "path";
 import { readFile, readdir } from "fs/promises";
-import { parseTsConfigContent } from "../helpers";
+import { readTestTsConfig } from "../helpers";
 
 import { installLocal } from "../../installation/local-installer";
 import { recompileAgents } from "../../agents/agent-recompiler";
@@ -256,9 +256,8 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       expect(await fileExists(configPath)).toBe(true);
       expect(installResult.configPath).toBe(configPath);
 
-      const configContent = await readFile(configPath, "utf-8");
       // Boundary cast: TS config parse returns `unknown`
-      const config = parseTsConfigContent<ProjectConfig>(configContent);
+      const config = await readTestTsConfig<ProjectConfig>(configPath);
 
       expect(config.name).toBe(DEFAULT_PLUGIN_NAME);
       expect(config.skills).toBeDefined();
@@ -385,9 +384,8 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         projectDir: dirs.projectDir,
       });
 
-      const configContent = await readFile(installResult.configPath, "utf-8");
       // Boundary cast: TS config parse returns `unknown`
-      const config = parseTsConfigContent<ProjectConfig>(configContent);
+      const config = await readTestTsConfig<ProjectConfig>(installResult.configPath);
 
       for (const skillId of selectedSkills) {
         expect(config.skills).toContain(skillId);
@@ -422,12 +420,10 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         sourceFlag: "github:my-org/skills",
       });
 
-      const configContent = await readFile(
-        path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
-        "utf-8",
-      );
       // Boundary cast: TS config parse returns `unknown`
-      const config = parseTsConfigContent<ProjectConfig>(configContent);
+      const config = await readTestTsConfig<ProjectConfig>(
+        path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
+      );
 
       expect(config.source).toBe("github:my-org/skills");
       expect(config.marketplace).toBe("test-marketplace");

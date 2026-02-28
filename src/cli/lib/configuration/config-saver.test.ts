@@ -2,7 +2,7 @@ import { mkdir, writeFile, readFile } from "fs/promises";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { saveSourceToProjectConfig } from "./config-saver";
-import { createTempDir, cleanupTempDir, parseTsConfigContent } from "../__tests__/helpers";
+import { createTempDir, cleanupTempDir, readTestTsConfig } from "../__tests__/helpers";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 
 describe("config-saver", () => {
@@ -21,8 +21,7 @@ describe("config-saver", () => {
       await saveSourceToProjectConfig(tempDir, "github:my-org/skills");
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const content = await readFile(configPath, "utf-8");
-      const config = parseTsConfigContent<Record<string, unknown>>(content);
+      const config = await readTestTsConfig<Record<string, unknown>>(configPath);
 
       expect(config.source).toBe("github:my-org/skills");
     });
@@ -52,8 +51,7 @@ describe("config-saver", () => {
       await saveSourceToProjectConfig(tempDir, "github:new/source");
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const content = await readFile(configPath, "utf-8");
-      const config = parseTsConfigContent<Record<string, unknown>>(content);
+      const config = await readTestTsConfig<Record<string, unknown>>(configPath);
 
       expect(config.source).toBe("github:new/source");
       expect(config.name).toBe("my-project");
@@ -73,8 +71,7 @@ describe("config-saver", () => {
       await saveSourceToProjectConfig(tempDir, "github:new/source");
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const content = await readFile(configPath, "utf-8");
-      const config = parseTsConfigContent<Record<string, unknown>>(content);
+      const config = await readTestTsConfig<Record<string, unknown>>(configPath);
 
       expect(config.source).toBe("github:new/source");
       expect(config.name).toBe("project");
@@ -91,8 +88,7 @@ describe("config-saver", () => {
       await saveSourceToProjectConfig(tempDir, "github:my-org/skills");
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const content = await readFile(configPath, "utf-8");
-      const config = parseTsConfigContent<Record<string, unknown>>(content);
+      const config = await readTestTsConfig<Record<string, unknown>>(configPath);
 
       expect(config.source).toBe("github:my-org/skills");
     });
@@ -105,8 +101,7 @@ describe("config-saver", () => {
       await saveSourceToProjectConfig(tempDir, "github:my-org/skills");
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
-      const content = await readFile(configPath, "utf-8");
-      const config = parseTsConfigContent<Record<string, unknown>>(content);
+      const config = await readTestTsConfig<Record<string, unknown>>(configPath);
 
       expect(config.source).toBe("github:my-org/skills");
     });
@@ -119,7 +114,7 @@ describe("config-saver", () => {
 
       // Should be valid TS config format
       expect(content).toContain("export default");
-      const config = parseTsConfigContent<Record<string, unknown>>(content);
+      const config = await readTestTsConfig<Record<string, unknown>>(configPath);
       expect(config).toBeDefined();
       expect(typeof config).toBe("object");
     });

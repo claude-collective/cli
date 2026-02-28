@@ -3,15 +3,17 @@ import { generateTsConfigSource } from "../ts-config-writer";
 import type { ProjectConfig } from "../../../types";
 
 describe("generateTsConfigSource", () => {
-  it("produces valid TypeScript with import and export default defineConfig", () => {
+  it("produces valid TypeScript with import type and export default object literal", () => {
     const config: ProjectConfig = {
       name: "test-project",
       agents: ["web-developer"],
       skills: ["web-framework-react"],
     };
     const source = generateTsConfigSource(config);
-    expect(source).toContain('import { defineConfig } from "@agents-inc/cli/config"');
-    expect(source).toContain("export default defineConfig(");
+    expect(source).not.toContain("defineConfig");
+    expect(source).toContain('import type { ProjectConfig } from "./config-types"');
+    expect(source).toContain("export default {");
+    expect(source).toContain("satisfies ProjectConfig;");
     expect(source).toContain('"name": "test-project"');
   });
 
@@ -71,14 +73,16 @@ describe("generateTsConfigSource", () => {
     expect(source).not.toContain('"stack"');
   });
 
-  it("uses @agents-inc/cli/config import path", () => {
+  it("uses import type for config-types and no defineConfig import", () => {
     const config: ProjectConfig = {
       name: "import-check",
       agents: [],
       skills: [],
     };
     const source = generateTsConfigSource(config);
-    const importLine = source.split("\n")[0];
-    expect(importLine).toBe('import { defineConfig } from "@agents-inc/cli/config";');
+    const lines = source.split("\n");
+    expect(lines[0]).toBe('import type { ProjectConfig } from "./config-types";');
+    expect(source).not.toContain("defineConfig");
+    expect(source).not.toContain("@agents-inc/cli/config");
   });
 });

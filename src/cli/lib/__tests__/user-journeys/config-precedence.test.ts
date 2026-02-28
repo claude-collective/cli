@@ -1,6 +1,6 @@
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { readFile, mkdir, writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import {
   resolveSource,
   resolveAgentsSource,
@@ -17,7 +17,7 @@ import {
   fileExists,
   type TestDirs,
 } from "../fixtures/create-test-source";
-import { createTempDir, cleanupTempDir, parseTsConfigContent } from "../helpers";
+import { createTempDir, cleanupTempDir, readTestTsConfig } from "../helpers";
 
 const PROJECT_CONFIG_DIR = ".claude-src";
 
@@ -326,9 +326,8 @@ describe("User Journey: Project Config Save and Load", () => {
       const configPath = getProjectConfigPath(projectDir);
       expect(await fileExists(configPath)).toBe(true);
 
-      const content = await readFile(configPath, "utf-8");
       // Boundary cast: TS config parse returns `unknown`
-      const config = parseTsConfigContent<ProjectSourceConfig>(content);
+      const config = await readTestTsConfig<ProjectSourceConfig>(configPath);
       expect(config.source).toBe("github:test/repo");
     });
 
@@ -337,9 +336,8 @@ describe("User Journey: Project Config Save and Load", () => {
       await saveProjectConfig(projectDir, { source: "github:second/repo" });
 
       const configPath = getProjectConfigPath(projectDir);
-      const content = await readFile(configPath, "utf-8");
       // Boundary cast: TS config parse returns `unknown`
-      const config = parseTsConfigContent<ProjectSourceConfig>(content);
+      const config = await readTestTsConfig<ProjectSourceConfig>(configPath);
 
       expect(config.source).toBe("github:second/repo");
     });
@@ -352,9 +350,8 @@ describe("User Journey: Project Config Save and Load", () => {
       });
 
       const configPath = getProjectConfigPath(projectDir);
-      const content = await readFile(configPath, "utf-8");
       // Boundary cast: TS config parse returns `unknown`
-      const config = parseTsConfigContent<ProjectSourceConfig>(content);
+      const config = await readTestTsConfig<ProjectSourceConfig>(configPath);
 
       expect(config.source).toBe("github:myorg/skills");
       expect(config.marketplace).toBe("https://marketplace.example.com");

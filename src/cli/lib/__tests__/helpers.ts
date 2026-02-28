@@ -4,6 +4,7 @@ import { mkdir, writeFile, readFile } from "fs/promises";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { run, Errors } from "@oclif/core";
 import ansis from "ansis";
+import { createJiti } from "jiti";
 import {
   CLAUDE_SRC_DIR,
   DEFAULT_BRANDING,
@@ -17,6 +18,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const CLI_ROOT = path.resolve(__dirname, "../../../..");
+
+/** Resolve @agents-inc/cli/config to the source config-exports.ts so jiti can load it in dev. */
+const CONFIG_EXPORTS_PATH = path.resolve(__dirname, "../../config-exports.ts");
 
 export const OUTPUT_STRINGS = {
   CONFIG_HEADER: `${DEFAULT_BRANDING.NAME} Configuration`,
@@ -176,34 +180,17 @@ export async function readTestYaml<T>(filePath: string): Promise<T> {
 }
 
 /**
- * Parse a TS config file (export default {...}; or export default defineConfig({...})).
- * Extracts the JSON object from the default export and parses it.
+ * Load a TS config file using jiti. Handles defineConfig(), satisfies, and plain exports.
  */
 export async function readTestTsConfig<T>(filePath: string): Promise<T> {
-  const content = await readFile(filePath, "utf-8");
-  return parseTsConfigContent<T>(content);
-}
-
-/**
- * Parse TS config content string (export default {...}; or export default defineConfig({...})).
- * Extracts the JSON object from the default export and parses it.
- */
-export function parseTsConfigContent<T>(content: string): T {
-  // Handle defineConfig() wrapper: export default defineConfig({...});
-  const defineConfigMatch = content.match(/export\s+default\s+defineConfig\(([\s\S]*)\)\s*;?\s*$/);
-  if (defineConfigMatch) {
-    // Boundary cast: JSON.parse returns unknown, caller provides expected type
-    return JSON.parse(defineConfigMatch[1].trim()) as T;
-  }
-  // Handle plain export: export default {...};
-  const plainMatch = content.match(/export\s+default\s+([\s\S]*)/);
-  if (plainMatch) {
-    // Strip trailing semicolons and whitespace before parsing
-    const jsonStr = plainMatch[1].replace(/;\s*$/, "").trim();
-    // Boundary cast: JSON.parse returns unknown, caller provides expected type
-    return JSON.parse(jsonStr) as T;
-  }
-  throw new Error(`Cannot parse TS config content: ${content.slice(0, 100)}...`);
+  const jiti = createJiti(import.meta.url, {
+    moduleCache: false,
+    interopDefault: true,
+    alias: { "@agents-inc/cli/config": CONFIG_EXPORTS_PATH },
+  });
+  // Boundary cast: jiti returns unknown, caller provides expected type
+  const result = await jiti.import(filePath, { default: true });
+  return result as T;
 }
 
 /** Writes a TS config file with the given object into the given subdirectory (defaults to CLAUDE_SRC_DIR) */

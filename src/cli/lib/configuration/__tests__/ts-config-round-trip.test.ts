@@ -1,9 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile } from "fs/promises";
 import { generateTsConfigSource } from "../ts-config-writer";
 import { loadTsConfig } from "../ts-config-loader";
-import { defineConfig } from "../define-config";
 import { createTempDir, cleanupTempDir } from "../../__tests__/helpers";
 import type { ProjectConfig } from "../../../types";
 
@@ -18,24 +17,14 @@ afterEach(async () => {
 });
 
 /**
- * Helper: write the config's defineConfig import to a local file so jiti can resolve it.
- * The generated source imports from "@agents-inc/cli/config" which jiti can't resolve
- * in tests. We patch the import to a local helper file instead.
+ * Helper: write generated config source and load it back via jiti.
+ * Strips the type-only import and `satisfies` (not needed at runtime).
  */
 async function writeAndLoad(config: ProjectConfig): Promise<unknown> {
-  // Write defineConfig helper
-  const helperPath = path.join(tempDir, "config-helper.ts");
-  await writeFile(
-    helperPath,
-    `export function defineConfig<const T>(config: T): T { return config; }`,
-  );
-
-  // Generate source and patch the import path
   let source = generateTsConfigSource(config);
-  source = source.replace(
-    'import { defineConfig } from "@agents-inc/cli/config";',
-    'import { defineConfig } from "./config-helper";',
-  );
+  // Remove type-only import and satisfies (not needed at runtime, jiti may not resolve the path)
+  source = source.replace(/import type \{ ProjectConfig \} from "\.\/config-types";\n/, "");
+  source = source.replace(/ satisfies ProjectConfig/, "");
 
   const configPath = path.join(tempDir, "config.ts");
   await writeFile(configPath, source);
@@ -52,45 +41,6 @@ async function writeAndLoad(config: ProjectConfig): Promise<unknown> {
 function normalizeForComparison(config: ProjectConfig): Record<string, unknown> {
   // Remove undefined values (same as JSON.parse(JSON.stringify(x)))
   return JSON.parse(JSON.stringify(config));
-}
-
-/**
- * Normalize the loaded config's stack to match the compacted format.
- * The writer outputs compacted stack (bare strings for non-preloaded),
- * and jiti loads them back as-is (no normalization to SkillAssignment[]).
- */
-function normalizeStack(
-  stack: Record<string, Record<string, unknown>> | undefined,
-): Record<string, Record<string, unknown>> | undefined {
-  if (!stack) return undefined;
-
-  const result: Record<string, Record<string, unknown>> = {};
-  for (const [agent, agentConfig] of Object.entries(stack)) {
-    const compacted: Record<string, unknown> = {};
-    for (const [sub, value] of Object.entries(agentConfig as Record<string, unknown>)) {
-      if (Array.isArray(value) && value.length === 1) {
-        const assignment = value[0];
-        if (typeof assignment === "object" && assignment !== null && "id" in assignment) {
-          const a = assignment as { id: string; preloaded?: boolean };
-          compacted[sub] = a.preloaded ? { id: a.id, preloaded: true } : a.id;
-        } else {
-          compacted[sub] = value;
-        }
-      } else if (Array.isArray(value)) {
-        compacted[sub] = value.map((item: unknown) => {
-          if (typeof item === "object" && item !== null && "id" in item) {
-            const a = item as { id: string; preloaded?: boolean };
-            return a.preloaded ? { id: a.id, preloaded: true } : a.id;
-          }
-          return item;
-        });
-      } else {
-        compacted[sub] = value;
-      }
-    }
-    result[agent] = compacted;
-  }
-  return result;
 }
 
 describe("TS config round-trip", () => {

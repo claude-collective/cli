@@ -3,7 +3,7 @@ import { compactStackForYaml } from "./config-generator";
 
 /**
  * Generates a TypeScript config file source from a ProjectConfig object.
- * Output is a valid `defineConfig()` call that can be loaded back by ts-config-loader.
+ * Output is a plain object literal with `satisfies ProjectConfig` for type safety.
  */
 export function generateTsConfigSource(config: ProjectConfig): string {
   const serializable = config.stack
@@ -16,9 +16,9 @@ export function generateTsConfigSource(config: ProjectConfig): string {
   const body = JSON.stringify(cleaned, null, 2);
 
   return [
-    `import { defineConfig } from "@agents-inc/cli/config";`,
+    `import type { ProjectConfig } from "./config-types";`,
     ``,
-    `export default defineConfig(${body});`,
+    `export default ${body} satisfies ProjectConfig;`,
     ``,
   ].join("\n");
 }

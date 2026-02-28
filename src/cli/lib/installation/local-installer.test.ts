@@ -330,7 +330,7 @@ describe("local-installer", () => {
       );
     });
 
-    it("should write valid TS config with defineConfig wrapper", async () => {
+    it("should write valid TS config with satisfies ProjectConfig", async () => {
       const matrix = TEST_MATRICES.empty;
       const wizardResult = buildWizardResult(["meta-test-skill"]);
       const sourceResult = buildSourceResult(matrix, tempDir);
@@ -344,9 +344,10 @@ describe("local-installer", () => {
       const configPath = path.join(tempDir, ".claude-src", "config.ts");
       const configContent = await readFile(configPath, "utf-8");
 
-      // Should use defineConfig wrapper
-      expect(configContent).toContain("import { defineConfig }");
-      expect(configContent).toContain("export default defineConfig(");
+      // Should use plain object export with satisfies
+      expect(configContent).not.toContain("defineConfig");
+      expect(configContent).toContain("export default {");
+      expect(configContent).toContain("satisfies ProjectConfig");
 
       // Should parse back to a valid config
       const config = await readTestTsConfig<ProjectConfig>(configPath);

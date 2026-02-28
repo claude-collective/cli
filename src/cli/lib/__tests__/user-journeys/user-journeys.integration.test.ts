@@ -866,7 +866,7 @@ describe("Config Roundtrip (Write -> Load -> Verify)", () => {
     }
   });
 
-  it("should produce valid TS config with defineConfig wrapper", async () => {
+  it("should produce valid TS config with satisfies ProjectConfig", async () => {
     const selectedSkills: SkillId[] = ["web-framework-react"];
     simulateSkillSelections(selectedSkills, matrix, ["web"]);
 
@@ -879,9 +879,10 @@ describe("Config Roundtrip (Write -> Load -> Verify)", () => {
 
     const configContent = await readFile(installResult.configPath, "utf-8");
 
-    // Should contain defineConfig wrapper
-    expect(configContent).toContain("defineConfig");
-    expect(configContent).toContain("export default");
+    // Should use plain object export with satisfies
+    expect(configContent).not.toContain("defineConfig");
+    expect(configContent).toContain("export default {");
+    expect(configContent).toContain("satisfies ProjectConfig");
   });
 });
 
