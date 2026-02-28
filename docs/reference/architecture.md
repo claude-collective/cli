@@ -50,7 +50,7 @@ and installs them as Claude plugins or local files.
 +-- bin/                          # Executable scripts (dev.js, run.js)
 +-- config/                       # Data configuration files
 |   +-- skills-matrix.yaml        #   All skill definitions, categories, relationships (~35KB)
-|   +-- stacks.yaml               #   Pre-built stack definitions
+|   +-- stacks.ts                  #   Pre-built stack definitions
 +-- dist/                         # Build output (tsup)
 +-- docs/                         # Documentation (you are here)
 +-- src/

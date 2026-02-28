@@ -205,15 +205,15 @@ Archive directory: `.claude/skills/_archived/` (`ARCHIVED_SKILLS_DIR_NAME` from 
 
 | File                       | Path                                          | Purpose                        |
 | -------------------------- | --------------------------------------------- | ------------------------------ |
-| `stacks-loader.ts`         | `src/cli/lib/stacks/stacks-loader.ts`         | Load stacks from stacks.yaml   |
+| `stacks-loader.ts`         | `src/cli/lib/stacks/stacks-loader.ts`         | Load stacks from stacks.ts     |
 | `stack-installer.ts`       | `src/cli/lib/stacks/stack-installer.ts`       | Install stack as plugin        |
 | `stack-plugin-compiler.ts` | `src/cli/lib/stacks/stack-plugin-compiler.ts` | Compile stack as plugin bundle |
 
-Stacks are pre-configured bundles of skills mapped to agents. Defined in `config/stacks.yaml`.
+Stacks are pre-configured bundles of skills mapped to agents. Defined in `config/stacks.ts`.
 
 **Key functions:**
 
-- `loadStacks()` - Load all stacks from YAML
+- `loadStacks()` - Load all stacks from TS config
 - `loadStackById()` - Load specific stack
 - `resolveAgentConfigToSkills()` - Resolve stack agent config to skill assignments
 - `getStackSkillIds()` - Extract flat skill ID list from stack

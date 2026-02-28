@@ -165,7 +165,7 @@ All user-facing strings centralized in constant objects:
 | `DEFAULT_PLUGIN_NAME`  | `agents-inc`                | Default plugin name          |
 | `CACHE_DIR`            | `~/.cache/agents-inc`       | Source cache directory       |
 | `SKILLS_MATRIX_PATH`   | `config/skills-matrix.yaml` | Matrix config file           |
-| `STACKS_FILE_PATH`     | `config/stacks.yaml`        | Stacks config file           |
+| `STACKS_FILE_PATH`     | `config/stacks.ts`          | Stacks config file           |
 | `SKILLS_DIR_PATH`      | `src/skills`                | Skills source directory      |
 | `LOCAL_SKILLS_PATH`    | `.claude/skills`            | Local skills directory       |
 

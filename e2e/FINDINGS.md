@@ -57,9 +57,9 @@
 
 ### Finding 8: Source Fixture Needs Matching Skills for Full Flow
 
-- **What happened:** Using the CLI's built-in stacks.yaml (which references 30+ skills) with a test source that only has 4 skills caused the install to fail with exit code 13. The `installLocal` function tries to copy skills from the source, and missing skills cause errors.
-- **Why:** The stacks defined in the CLI's `config/stacks.yaml` reference specific skill IDs that must exist in the source's `src/skills/` directory. If they don't exist, the copy fails.
-- **Workaround/Pattern:** The `createE2ESource()` helper creates both skills AND a matching `config/stacks.yaml` with a single "E2E Test Stack" that references only the 10 skills present in the source (4 domain skills + 6 methodology skills).
+- **What happened:** Using the CLI's built-in stacks.ts (which references 30+ skills) with a test source that only has 4 skills caused the install to fail with exit code 13. The `installLocal` function tries to copy skills from the source, and missing skills cause errors.
+- **Why:** The stacks defined in the CLI's `config/stacks.ts` reference specific skill IDs that must exist in the source's `src/skills/` directory. If they don't exist, the copy fails.
+- **Workaround/Pattern:** The `createE2ESource()` helper creates both skills AND a matching `config/stacks.ts` with a single "E2E Test Stack" that references only the 10 skills present in the source (4 domain skills + 6 methodology skills).
 - **Should this become a standard?** YES. E2E source fixtures for full init flows must ensure stack definitions only reference skills that exist in the source.
 
 ### Finding 9: Viewport Clipping Hides Content Below the Fold
@@ -85,9 +85,9 @@
 
 ### Finding 12: Custom Stack in Source Overrides CLI Stacks
 
-- **What happened:** When the E2E source includes `config/stacks.yaml`, it completely replaces the CLI's built-in stacks (Next.js, Angular, etc.). The wizard shows only the source's stacks.
+- **What happened:** When the E2E source includes `config/stacks.ts`, it completely replaces the CLI's built-in stacks (Next.js, Angular, etc.). The wizard shows only the source's stacks.
 - **Why:** In `source-loader.ts`, `loadStacks()` is called on the source first. If the source has stacks, those are used; otherwise the CLI's stacks are used. This is an either/or, not a merge.
-- **Workaround/Pattern:** The E2E source deliberately provides its own stacks.yaml with a single "E2E Test Stack" to control the wizard content. This makes tests faster (1 stack to navigate instead of 6) and deterministic (no dependency on CLI's stacks content).
+- **Workaround/Pattern:** The E2E source deliberately provides its own stacks.ts with a single "E2E Test Stack" to control the wizard content. This makes tests faster (1 stack to navigate instead of 6) and deterministic (no dependency on CLI's stacks content).
 - **Should this become a standard?** YES. E2E test sources should control their own stacks for test isolation.
 
 ---
@@ -151,9 +151,9 @@
 
 ### Finding 18: `new marketplace` automatically runs `build marketplace` during scaffold
 
-- **What happened:** After creating the directory structure (skills, stacks.yaml, README), the `new marketplace` command automatically runs `build plugins` followed by `build marketplace`, producing a `marketplace.json` file in the `.claude-plugin/` output directory.
+- **What happened:** After creating the directory structure (skills, stacks.ts, README), the `new marketplace` command automatically runs `build plugins` followed by `build marketplace`, producing a `marketplace.json` file in the `.claude-plugin/` output directory.
 - **Why:** The scaffold is designed to be immediately usable. By building on creation, the marketplace is ready to be used as a `--source` without requiring a separate build step.
-- **Workaround/Pattern:** Tests can verify both the scaffold output (stacks.yaml, skills, README) and the build output (marketplace.json in `PLUGIN_MANIFEST_DIR`) from a single `new marketplace` invocation.
+- **Workaround/Pattern:** Tests can verify both the scaffold output (stacks.ts, skills, README) and the build output (marketplace.json in `PLUGIN_MANIFEST_DIR`) from a single `new marketplace` invocation.
 - **Should this become a standard?** YES. Scaffold commands that include automatic build steps should be tested for both the created structure and the build artifacts.
 
 ### Finding 19: `new marketplace` supports `--output` to specify the parent directory
@@ -328,7 +328,7 @@
 
 - **File(s):** `e2e/helpers/create-e2e-source.ts`, `src/cli/lib/__tests__/fixtures/create-test-source.ts`
 - **Issue:** `createE2ESource()` creates a full source directory with skills, stacks, and agents for E2E testing. The unit test fixture `createTestSource()` does similar work but with different data and structure. Key differences:
-  - `createE2ESource` writes real SKILL.md files, metadata.yaml, stacks.yaml, metadata.yaml (agents), and liquid templates — it builds a genuine source directory that the CLI can consume end-to-end.
+  - `createE2ESource` writes real SKILL.md files, metadata.yaml, stacks.ts, metadata.yaml (agents), and liquid templates — it builds a genuine source directory that the CLI can consume end-to-end.
   - `createTestSource` creates mock source structures optimized for unit/integration tests with in-process CLI calls.
   - `createE2ESource` imports `createMockSkillAssignment` from the unit helpers, showing that cross-referencing already exists.
 - **Recommendation:** Do NOT merge these two. They serve different purposes: `createE2ESource` builds a real filesystem source for subprocess-based tests; `createTestSource` builds lightweight mock structures for in-process tests. The cross-import of `createMockSkillAssignment` is fine and shows appropriate reuse. However, the duplicated `createTempDir`/`cleanupTempDir`/`fileExists`/`directoryExists` utilities (Finding 30) should be shared.

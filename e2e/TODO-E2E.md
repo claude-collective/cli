@@ -60,8 +60,8 @@
   - new marketplace --help
   - new marketplace missing name error
   - new marketplace invalid name error (kebab-case)
-  - new marketplace creates directory structure (stacks.yaml, skills, README)
-  - new marketplace stacks.yaml content verification
+  - new marketplace creates directory structure (stacks.ts, skills, README)
+  - new marketplace stacks.ts content verification
   - new marketplace README content verification
   - new marketplace builds marketplace.json during scaffold
   - new marketplace duplicate error without --force

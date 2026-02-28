@@ -39,7 +39,7 @@ Neither `Stack` nor `ResolvedStack` currently has an `origin` or `source` field 
 `loadStacks(configDir, stacksFile?)` is the core loader:
 
 - Takes a `configDir` (base path) and optional `stacksFile` (relative path to stacks YAML)
-- Defaults `stacksFile` to `STACKS_FILE_PATH` ("config/stacks.yaml") from `consts.ts:25`
+- Defaults `stacksFile` to `STACKS_FILE_PATH` ("config/stacks.ts") from `consts.ts:25`
 - Parses the YAML against `stacksConfigSchema` (Zod)
 - Normalizes agent configs via `normalizeAgentConfig()`
 - Caches results by `${configDir}:${resolvedStacksFile}`
@@ -125,7 +125,7 @@ The consumer's `.claude-src/config.yaml` already supports `stacks_file`. Current
 ```yaml
 # .claude-src/config.yaml (consumer project)
 source: github:acme-corp/skills
-stacks_file: stacks/my-stacks.yaml # project-level stacks
+stacks_file: stacks/my-stacks.ts # project-level stacks
 ```
 
 This would mean `stacks_file` has dual meaning depending on context (source vs consumer), which could be confusing.
@@ -137,7 +137,7 @@ Add a distinct field that specifically points to project-level stacks:
 ```yaml
 # .claude-src/config.yaml (consumer project)
 source: github:acme-corp/skills
-project_stacks: stacks/my-stacks.yaml # project-level stacks
+project_stacks: stacks/my-stacks.ts # project-level stacks
 ```
 
 **Option C: Use `stacks_file` but load from project root**
@@ -383,7 +383,7 @@ export const stackSchema = z.object({
 });
 ```
 
-The `origin` and `originLabel` fields should NOT be in the YAML schema. They are assigned programmatically by the loader based on where the stacks were loaded from. The YAML file format (`stacks.yaml`) stays unchanged.
+The `origin` and `originLabel` fields should NOT be in the YAML schema. They are assigned programmatically by the loader based on where the stacks were loaded from. The YAML file format (`stacks.ts`) stays unchanged.
 
 ### Type Changes
 
@@ -529,7 +529,7 @@ Total estimated scope: ~250-300 lines of new/modified code plus tests.
 
 ## 10. Open Questions
 
-1. **Should project stacks use the same `stacks.yaml` schema as marketplace stacks?** The current schema requires `agents` with full agent-to-skill mappings. For consumer projects, a simpler format (just a list of skill IDs or a stack name reference) might be more user-friendly. However, using the same schema keeps things consistent.
+1. **Should project stacks use the same `stacks.ts` schema as marketplace stacks?** The current schema requires `agents` with full agent-to-skill mappings. For consumer projects, a simpler format (just a list of skill IDs or a stack name reference) might be more user-friendly. However, using the same schema keeps things consistent.
 
 2. **Should the exclusion rule be configurable?** The spec says "hide public when private source exists." But some users might want both. Could add a `show_public_stacks: true` config option. For v1, strict exclusion per the spec.
 

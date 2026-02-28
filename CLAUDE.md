@@ -7,7 +7,7 @@
 
 4. ALWAYS read [.ai-docs/DOCUMENTATION_MAP.md](./.ai-docs/DOCUMENTATION_MAP.md) before working on any area of the codebase. It indexes verified documentation for every major system.
 
-5. NEVER stash changes while developing, only while performing sequential commits
+5. NEVER run ANY git commands that modify the staging area or working tree — no `git add`, `git reset`, `git stash`, `git checkout`, `git restore`, `git clean`. The user curates their staging area intentionally. This applies to sub-agents too — explicitly forbid git commands when delegating.
 </critical-requirement>
 
 # Project Memory for Claude
@@ -24,7 +24,7 @@ This file provides decision trees, behavioral rules, and conventions. For codeba
 
 ## NEVER do this
 
-- NEVER use `git stash` — not in the main context, not in sub-agents, never
+- NEVER run ANY git command that modifies the staging area or working tree (`git add`, `git reset`, `git stash`, `git checkout`, `git restore`, `git clean`) — the user curates their staging area intentionally
 - NEVER use git worktrees (`isolation: "worktree"`) — always work directly on the main branch
 - NEVER introduce new workflow patterns (tools, flags, strategies) that the user hasn't explicitly requested
 - NEVER construct test data inline — no inline configs, matrices, skills, stacks. Use factories from `helpers.ts` and fixtures from `create-test-source.ts`. If a factory doesn't exist, create one.
@@ -35,11 +35,11 @@ This file provides decision trees, behavioral rules, and conventions. For codeba
 - NEVER build intermediate data structures imperatively when the data is static or the rendering is straightforward. No `const arr = []; for (...) { arr.push(...) }` patterns. Use declarative const arrays, `.map()`, `.flatMap()`, or inline JSX. If data is known at write-time, write it as a literal. If it needs transforming, use functional array methods. Imperative accumulation into mutable arrays is never the answer.
 - NEVER put machine-specific absolute paths in any file tracked by git. If a file needs private paths, gitignore it first.
 - NEVER use inline regex to extract SKILL.md frontmatter fields. Use `parseFrontmatter()` from `lib/loading/loader.ts` — it handles YAML parsing and Zod validation.
-- NEVER use `git checkout`, `git restore`, or any command that discards working tree changes — these are irreversible. If working tree changes conflict with your task, ask the user how to proceed. This includes reverting sub-agent changes — the user owns all working tree state.
+- NEVER use `git checkout`, `git restore`, or any command that discards working tree changes — these are irreversible. If working tree changes conflict with your task, ask the user how to proceed.
 
 ## ALWAYS do this
 
-- ALWAYS delegate implementation and test code to sub-agents. Tell them to read CLAUDE.md before starting.
+- ALWAYS delegate implementation and test code to sub-agents. Tell them to read CLAUDE.md before starting. Tell them: "Do NOT run any git commands."
 - ALWAYS trace ALL scenarios through the code after any fix — not just the one that prompted the fix.
 - ALWAYS grep for the old value when changing test data or renaming anything — find all references repo-wide.
 - ALWAYS search for all call sites when removing a workaround.
@@ -289,6 +289,5 @@ this.error(message, { exit: 2 });
 <critical-reminder>
 1. You do NOT write code. Delegate to sub-agents. Tell them to read CLAUDE.md.
 2. Trace ALL scenarios after any fix.
-3. NEVER stash changes while developing, only while performing sequential commits
-4. NEVER use `git checkout`, `git restore`, or any command that discards working tree changes — these are irreversible. The user owns all working tree state, including sub-agent changes. Ask the user before discarding anything.
+3. NEVER run ANY git commands that modify the staging area or working tree. The user curates their staging area intentionally.
 </critical-reminder>

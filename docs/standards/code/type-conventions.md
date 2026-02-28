@@ -158,7 +158,7 @@ export function resolveAlias(aliasOrId: SkillId, matrix: MergedSkillsMatrix): Sk
 **Use `resolveAlias()` when** the input might be an alias:
 
 - User selections from the wizard (may be display names or IDs)
-- Values read from `stacks.yaml` (may use short names)
+- Values read from `stacks.ts` (may use short names)
 - Values from YAML relationship rules (`conflicts`, `requires`, etc.)
 - Any `SkillId` that hasn't been through matrix resolution yet
 

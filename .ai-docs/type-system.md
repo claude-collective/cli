@@ -234,7 +234,7 @@ All schemas in `src/cli/lib/schemas.ts`. Key schemas:
 | `projectConfigLoaderSchema`    | .claude-src/config.yaml    | `.passthrough()` |
 | `projectSourceConfigSchema`    | Source config              | `.passthrough()` |
 | `skillsMatrixConfigSchema`     | skills-matrix.yaml         | `.passthrough()` |
-| `stacksConfigSchema`           | stacks.yaml                | `.passthrough()` |
+| `stacksConfigSchema`           | stacks.ts                  | `.passthrough()` |
 | `marketplaceSchema`            | marketplace.json           | `.passthrough()` |
 | `pluginManifestSchema`         | plugin.json                | `.passthrough()` |
 | `agentYamlConfigSchema`        | agent metadata.yaml        | `.passthrough()` |

@@ -41,7 +41,7 @@ type SkillEntry = string | SkillAssignment;
 type AgentSkillConfig = SkillEntry[] | Record<string, SkillEntry[]>;
 ```
 
-> **Note**: The `stack:` field stores **resolved** stack configuration (agent -> subcategory -> skill ID mappings) generated during `agentsinc init`. It is NOT a reference to a stack ID. Stack definitions themselves are loaded from `config/stacks.yaml` via `stacks-loader.ts`. See [Stack Types](#stack-types-configstacksyaml) for the source format.
+> **Note**: The `stack:` field stores **resolved** stack configuration (agent -> subcategory -> skill ID mappings) generated during `agentsinc init`. It is NOT a reference to a stack ID. Stack definitions themselves are loaded from `config/stacks.ts` via `stacks-loader.ts`. See [Stack Types](#stack-types-configstacksyaml) for the source format.
 
 ### CustomAgentConfig
 
@@ -181,9 +181,9 @@ interface MarketplacePlugin {
 }
 ```
 
-## Stack Types (`config/stacks.yaml`)
+## Stack Types (`config/stacks.ts`)
 
-Stack definitions loaded from `config/stacks.yaml` via `src/cli/lib/stacks-loader.ts`.
+Stack definitions loaded from `config/stacks.ts` via `src/cli/lib/stacks-loader.ts`.
 
 ```typescript
 // From src/cli/types-stacks.ts
