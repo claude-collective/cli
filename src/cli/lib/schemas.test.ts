@@ -427,6 +427,7 @@ describe("custom: true in schemas", () => {
   it("should accept custom: true in skillMetadataLoaderSchema", () => {
     const result = skillMetadataLoaderSchema.safeParse({
       category: "web-framework",
+      domain: "web",
       custom: true,
     });
     expect(result.success).toBe(true);
@@ -436,6 +437,7 @@ describe("custom: true in schemas", () => {
   it("should accept metadata without custom field", () => {
     const result = skillMetadataLoaderSchema.safeParse({
       category: "web-framework",
+      domain: "web",
     });
     expect(result.success).toBe(true);
     expect(result.data?.custom).toBeUndefined();
@@ -464,7 +466,7 @@ describe("custom: true in schemas", () => {
     expect(result.success).toBe(true);
   });
 
-  it("should accept custom: true in categoryDefinitionSchema", () => {
+  it("should accept valid categoryDefinitionSchema", () => {
     const result = categoryDefinitionSchema.safeParse({
       id: "web-framework",
       displayName: "Framework",
@@ -473,7 +475,6 @@ describe("custom: true in schemas", () => {
       exclusive: true,
       required: false,
       order: 1,
-      custom: true,
     });
     expect(result.success).toBe(true);
   });
@@ -484,6 +485,7 @@ describe("category validation with custom: true bypass", () => {
     it("should reject non-custom skill with invalid category", () => {
       const result = skillMetadataLoaderSchema.safeParse({
         category: "foo-bar",
+        domain: "web",
       });
       expect(result.success).toBe(false);
     });
@@ -492,6 +494,7 @@ describe("category validation with custom: true bypass", () => {
       const result = skillMetadataLoaderSchema.safeParse({
         category: "acme-core",
         custom: false,
+        domain: "web",
       });
       expect(result.success).toBe(false);
     });
@@ -500,6 +503,7 @@ describe("category validation with custom: true bypass", () => {
       const result = skillMetadataLoaderSchema.safeParse({
         category: "acme-core",
         custom: true,
+        domain: "web",
       });
       expect(result.success).toBe(true);
     });
@@ -508,6 +512,7 @@ describe("category validation with custom: true bypass", () => {
       const result = skillMetadataLoaderSchema.safeParse({
         category: "NOT KEBAB",
         custom: true,
+        domain: "web",
       });
       expect(result.success).toBe(false);
     });
@@ -516,6 +521,7 @@ describe("category validation with custom: true bypass", () => {
       const result = skillMetadataLoaderSchema.safeParse({
         category: "Acme-Core",
         custom: true,
+        domain: "web",
       });
       expect(result.success).toBe(false);
     });
@@ -523,6 +529,7 @@ describe("category validation with custom: true bypass", () => {
     it("should accept non-custom skill with valid built-in category", () => {
       const result = skillMetadataLoaderSchema.safeParse({
         category: "web-framework",
+        domain: "web",
       });
       expect(result.success).toBe(true);
     });
@@ -530,8 +537,16 @@ describe("category validation with custom: true bypass", () => {
     it("should accept metadata without category field", () => {
       const result = skillMetadataLoaderSchema.safeParse({
         author: "@test",
+        domain: "web",
       });
       expect(result.success).toBe(true);
+    });
+
+    it("should reject metadata without domain field", () => {
+      const result = skillMetadataLoaderSchema.safeParse({
+        author: "@test",
+      });
+      expect(result.success).toBe(false);
     });
   });
 
@@ -539,6 +554,7 @@ describe("category validation with custom: true bypass", () => {
     it("should reject non-custom skill with invalid category", () => {
       const result = localRawMetadataSchema.safeParse({
         category: "foo-bar",
+        domain: "web",
       });
       expect(result.success).toBe(false);
     });
@@ -547,6 +563,7 @@ describe("category validation with custom: true bypass", () => {
       const result = localRawMetadataSchema.safeParse({
         category: "acme-core",
         custom: false,
+        domain: "web",
       });
       expect(result.success).toBe(false);
     });
@@ -555,6 +572,7 @@ describe("category validation with custom: true bypass", () => {
       const result = localRawMetadataSchema.safeParse({
         category: "acme-core",
         custom: true,
+        domain: "web",
       });
       expect(result.success).toBe(true);
     });
@@ -563,6 +581,7 @@ describe("category validation with custom: true bypass", () => {
       const result = localRawMetadataSchema.safeParse({
         category: "NOT KEBAB",
         custom: true,
+        domain: "web",
       });
       expect(result.success).toBe(false);
     });
@@ -571,6 +590,7 @@ describe("category validation with custom: true bypass", () => {
       const result = localRawMetadataSchema.safeParse({
         category: "Acme-Core",
         custom: true,
+        domain: "web",
       });
       expect(result.success).toBe(false);
     });
@@ -578,6 +598,7 @@ describe("category validation with custom: true bypass", () => {
     it("should accept non-custom skill with valid built-in category", () => {
       const result = localRawMetadataSchema.safeParse({
         category: "web-framework",
+        domain: "web",
       });
       expect(result.success).toBe(true);
     });
@@ -585,8 +606,16 @@ describe("category validation with custom: true bypass", () => {
     it("should accept metadata without category field", () => {
       const result = localRawMetadataSchema.safeParse({
         displayName: "my-skill",
+        domain: "web",
       });
       expect(result.success).toBe(true);
+    });
+
+    it("should reject metadata without domain field", () => {
+      const result = localRawMetadataSchema.safeParse({
+        displayName: "my-skill",
+      });
+      expect(result.success).toBe(false);
     });
   });
 });
@@ -653,7 +682,7 @@ describe("skillCategoriesFileSchema with pre-scan + extend + strict-load", () =>
     expect(result.success).toBe(true);
   });
 
-  it("should accept custom: true on category definitions", () => {
+  it("should accept extended category definitions", () => {
     extendSchemasWithCustomValues({ categories: ["acme-pipeline"], domains: ["acme"] });
 
     const result = skillCategoriesFileSchema.safeParse({
@@ -667,7 +696,6 @@ describe("skillCategoriesFileSchema with pre-scan + extend + strict-load", () =>
           exclusive: false,
           required: false,
           order: 1,
-          custom: true,
         },
       },
     });

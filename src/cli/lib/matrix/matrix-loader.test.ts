@@ -267,6 +267,7 @@ describe("matrix-loader", () => {
         if (filePath.includes("metadata.yaml")) {
           return `
 category: web-framework
+domain: web
 author: "@vince"
 version: "1"
 displayName: react
@@ -325,6 +326,7 @@ description: React framework
         if (filePath.includes("metadata.yaml")) {
           return `
 category: web-framework
+domain: web
 author: "@test"
 version: "1"
 `;
@@ -348,6 +350,7 @@ version: "1"
         if (filePath.includes("metadata.yaml")) {
           return `
 category: web-framework
+domain: web
 author: "@test"
 version: "1"
 displayName: bad-fm
@@ -418,7 +421,7 @@ displayName: wrong
       });
       mockReadFile.mockImplementation(async (filePath: string) => {
         if (filePath.includes("skill-valid") && filePath.includes("metadata.yaml")) {
-          return `category: web-framework\nauthor: "@test"\nversion: "1"\ndisplayName: valid`;
+          return `category: web-framework\ndomain: web\nauthor: "@test"\nversion: "1"\ndisplayName: valid`;
         }
         if (filePath.includes("skill-bad-meta") && filePath.includes("metadata.yaml")) {
           return "invalid: true\n";
@@ -626,6 +629,7 @@ displayName: wrong
       // Boundary cast: intentionally custom category not in built-in union
       const skill = createMockExtractedSkill("web-custom-tool", {
         category: "devops-iac" as CategoryPath,
+        domain: "web",
       });
 
       const merged = await mergeMatrixWithSkills({}, EMPTY_MATRIX.relationships, {}, [skill]);
@@ -637,7 +641,6 @@ displayName: wrong
       expect(synthesized!.exclusive).toBe(true);
       expect(synthesized!.required).toBe(false);
       expect(synthesized!.order).toBe(999);
-      expect(synthesized!.custom).toBe(true);
     });
 
     it("uses skill domain field for synthesized category domain", async () => {
@@ -652,25 +655,27 @@ displayName: wrong
       expect(merged.categories["devops-iac" as Subcategory]!.domain).toBe("api");
     });
 
-    it("infers domain from category prefix when skill has no domain", async () => {
+    it("passes skill domain to synthesized category regardless of prefix", async () => {
       const skill = createMockExtractedSkill("web-custom-tool", {
         category: "web-custom" as CategoryPath,
+        domain: "cli",
       });
 
       const merged = await mergeMatrixWithSkills({}, EMPTY_MATRIX.relationships, {}, [skill]);
 
-      expect(merged.categories["web-custom" as Subcategory]!.domain).toBe("web");
+      expect(merged.categories["web-custom" as Subcategory]!.domain).toBe("cli");
     });
 
-    it("synthesized category has no domain when prefix is unknown", async () => {
+    it("synthesized category uses skill domain even for unknown prefixes", async () => {
       // Boundary cast: intentionally custom category not in built-in union
       const skill = createMockExtractedSkill("web-custom-tool", {
         category: "devops-iac" as CategoryPath,
+        domain: "shared",
       });
 
       const merged = await mergeMatrixWithSkills({}, EMPTY_MATRIX.relationships, {}, [skill]);
 
-      expect(merged.categories["devops-iac" as Subcategory]!.domain).toBeUndefined();
+      expect(merged.categories["devops-iac" as Subcategory]!.domain).toBe("shared");
     });
 
     it("does not synthesize categories that already exist", async () => {
@@ -690,12 +695,11 @@ displayName: wrong
   });
 
   describe("synthesizeCategory", () => {
-    it("creates category with known domain prefix", () => {
+    it("creates category with provided domain", () => {
       // Boundary cast: custom category not in built-in union
-      const cat = synthesizeCategory("web-custom" as CategoryPath);
+      const cat = synthesizeCategory("web-custom" as CategoryPath, "web");
       expect(cat.domain).toBe("web");
       expect(cat.displayName).toBe("Web Custom");
-      expect(cat.custom).toBe(true);
     });
 
     it("creates category with explicit domain override", () => {
@@ -704,10 +708,10 @@ displayName: wrong
       expect(cat.domain).toBe("api");
     });
 
-    it("creates category with undefined domain for unknown prefix", () => {
+    it("uses the provided domain regardless of category prefix", () => {
       // Boundary cast: custom category not in built-in union
-      const cat = synthesizeCategory("devops-iac" as CategoryPath);
-      expect(cat.domain).toBeUndefined();
+      const cat = synthesizeCategory("devops-iac" as CategoryPath, "cli");
+      expect(cat.domain).toBe("cli");
     });
   });
 });

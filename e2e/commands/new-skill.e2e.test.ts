@@ -64,7 +64,10 @@ describe("new skill command", () => {
     tempDir = await createTempDir();
     const skillName = "my-test-skill";
 
-    const { exitCode, stdout } = await runCLI(["new", "skill", skillName], tempDir);
+    const { exitCode, stdout } = await runCLI(
+      ["new", "skill", skillName, "--domain", "shared"],
+      tempDir,
+    );
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Create New Skill");
@@ -86,7 +89,7 @@ describe("new skill command", () => {
     tempDir = await createTempDir();
     const skillName = "my-frontmatter-skill";
 
-    const { exitCode } = await runCLI(["new", "skill", skillName], tempDir);
+    const { exitCode } = await runCLI(["new", "skill", skillName, "--domain", "shared"], tempDir);
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
     const skillMdPath = path.join(
@@ -108,7 +111,7 @@ describe("new skill command", () => {
     tempDir = await createTempDir();
     const skillName = "my-metadata-skill";
 
-    const { exitCode } = await runCLI(["new", "skill", skillName], tempDir);
+    const { exitCode } = await runCLI(["new", "skill", skillName, "--domain", "shared"], tempDir);
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
     const metadataPath = path.join(
@@ -130,10 +133,16 @@ describe("new skill command", () => {
     tempDir = await createTempDir();
     const skillName = "duplicate-skill";
 
-    const { exitCode: setupExitCode } = await runCLI(["new", "skill", skillName], tempDir);
+    const { exitCode: setupExitCode } = await runCLI(
+      ["new", "skill", skillName, "--domain", "shared"],
+      tempDir,
+    );
     expect(setupExitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const { exitCode, combined } = await runCLI(["new", "skill", skillName], tempDir);
+    const { exitCode, combined } = await runCLI(
+      ["new", "skill", skillName, "--domain", "shared"],
+      tempDir,
+    );
 
     expect(exitCode).toBe(EXIT_CODES.ERROR);
     expect(combined).toContain("already exists");
@@ -143,9 +152,12 @@ describe("new skill command", () => {
     tempDir = await createTempDir();
     const skillName = "force-skill";
 
-    await runCLI(["new", "skill", skillName], tempDir);
+    await runCLI(["new", "skill", skillName, "--domain", "shared"], tempDir);
 
-    const { exitCode, stdout } = await runCLI(["new", "skill", skillName, "--force"], tempDir);
+    const { exitCode, stdout } = await runCLI(
+      ["new", "skill", skillName, "--force", "--domain", "shared"],
+      tempDir,
+    );
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Skill created successfully");
@@ -163,7 +175,7 @@ describe("new skill command", () => {
 
     // Create a new skill inside the marketplace directory
     const { exitCode, stdout } = await runCLI(
-      ["new", "skill", "my-extra-skill", "--category", "api-database"],
+      ["new", "skill", "my-extra-skill", "--category", "api-database", "--domain", "api"],
       marketplaceDir,
     );
 
@@ -186,7 +198,7 @@ describe("new skill command", () => {
     tempDir = await createTempDir();
     const skillName = "local-only-skill";
 
-    const { exitCode } = await runCLI(["new", "skill", skillName], tempDir);
+    const { exitCode } = await runCLI(["new", "skill", skillName, "--domain", "shared"], tempDir);
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
     // Config files should NOT exist for local skills

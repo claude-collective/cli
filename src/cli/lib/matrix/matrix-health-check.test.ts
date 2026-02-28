@@ -303,7 +303,7 @@ describe("matrix-health-check", () => {
       const autoSynthesizedCategory = createMockCategory(
         "web-custom" as Subcategory,
         "Web Custom",
-        { custom: true, order: 999 },
+        { order: 999 },
       );
       const skillInSynthesizedCategory = createMockSkill(
         "web-custom-tool",

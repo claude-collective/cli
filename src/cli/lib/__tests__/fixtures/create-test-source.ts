@@ -2,7 +2,7 @@ import path from "path";
 import { mkdir, writeFile, readFile } from "fs/promises";
 import { stringify as stringifyYaml } from "yaml";
 import { DEFAULT_PLUGIN_NAME } from "../../../consts";
-import type { CategoryPath, SkillId } from "../../../types";
+import type { CategoryPath, Domain, SkillId } from "../../../types";
 import { computeSkillFolderHash } from "../../versioning";
 import {
   fileExists,
@@ -21,6 +21,7 @@ export type TestSkill = {
   author: string;
   tags?: string[];
   content?: string;
+  domain: Domain;
   /** Skip metadata.yaml creation for this local skill (for testing missing-metadata warnings) */
   skipMetadata?: boolean;
   forkedFrom?: {
@@ -109,6 +110,7 @@ export const VALID_LOCAL_SKILL: TestSkill = {
   description: "A valid skill",
   category: "web-tooling",
   author: TEST_AUTHOR,
+  domain: "web",
 };
 
 /** Skill created WITHOUT metadata.yaml (for testing missing-metadata warnings) */
@@ -118,6 +120,7 @@ export const SKILL_WITHOUT_METADATA: TestSkill = {
   description: "Missing metadata",
   category: "web-tooling",
   author: TEST_AUTHOR,
+  domain: "web",
   skipMetadata: true,
 };
 
@@ -128,6 +131,7 @@ export const SKILL_WITHOUT_METADATA_CUSTOM: TestSkill = {
   description: "No metadata",
   category: "web-tooling",
   author: TEST_AUTHOR,
+  domain: "web",
   skipMetadata: true,
 };
 
@@ -138,6 +142,7 @@ export const DRY_RUN_SKILL: TestSkill = {
   description: "Test",
   category: "web-tooling",
   author: TEST_AUTHOR,
+  domain: "web",
 };
 
 /** A basic local-only skill (no forkedFrom) with SKILL.md and metadata.yaml */
@@ -147,6 +152,7 @@ export const LOCAL_SKILL_BASIC: TestSkill = {
   description: "A test skill",
   category: "web-tooling",
   author: TEST_AUTHOR,
+  domain: "web",
   content: `---
 name: my-skill
 description: A test skill
@@ -166,6 +172,7 @@ export const LOCAL_SKILL_FORKED: TestSkill = {
   description: "A forked skill",
   category: "web-tooling",
   author: TEST_AUTHOR,
+  domain: "web",
   content: `---
 name: forked-skill
 description: A forked skill
@@ -190,6 +197,7 @@ export const LOCAL_SKILL_FORKED_MINIMAL: TestSkill = {
   description: "Test skill",
   category: "web-tooling",
   author: TEST_AUTHOR,
+  domain: "web",
   content: `---
 name: test
 ---
@@ -291,6 +299,7 @@ export const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
     description: "Never speculate - read actual code first",
     category: "shared-methodology",
     author: TEST_AUTHOR,
+    domain: "shared",
     tags: ["methodology", "foundational"],
   },
   {
@@ -299,6 +308,7 @@ export const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
     description: "Surgical implementation, not architectural innovation",
     category: "shared-methodology",
     author: TEST_AUTHOR,
+    domain: "shared",
     tags: ["methodology", "foundational"],
   },
   {
@@ -307,6 +317,7 @@ export const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
     description: "Explicit, measurable criteria defining done",
     category: "shared-methodology",
     author: TEST_AUTHOR,
+    domain: "shared",
     tags: ["methodology", "foundational"],
   },
   {
@@ -315,6 +326,7 @@ export const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
     description: "Verify work was actually saved",
     category: "shared-methodology",
     author: TEST_AUTHOR,
+    domain: "shared",
     tags: ["methodology", "foundational"],
   },
   {
@@ -323,6 +335,7 @@ export const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
     description: "Evidence-based self-improvement",
     category: "shared-methodology",
     author: TEST_AUTHOR,
+    domain: "shared",
     tags: ["methodology", "foundational"],
   },
   {
@@ -331,6 +344,7 @@ export const METHODOLOGY_TEST_SKILLS: TestSkill[] = [
     description: "Maintain project continuity across sessions",
     category: "shared-methodology",
     author: TEST_AUTHOR,
+    domain: "shared",
     tags: ["methodology", "foundational"],
   },
 ];
@@ -342,6 +356,7 @@ export const EXTRA_DOMAIN_TEST_SKILLS: TestSkill[] = [
     description: "Progressive JavaScript framework",
     category: "web-framework",
     author: TEST_AUTHOR,
+    domain: "web",
     tags: ["vue", "web"],
   },
   {
@@ -350,6 +365,7 @@ export const EXTRA_DOMAIN_TEST_SKILLS: TestSkill[] = [
     description: "CSS Modules with SCSS",
     category: "web-styling",
     author: TEST_AUTHOR,
+    domain: "web",
     tags: ["css", "scss"],
   },
   {
@@ -358,6 +374,7 @@ export const EXTRA_DOMAIN_TEST_SKILLS: TestSkill[] = [
     description: "TypeScript ORM for SQL databases",
     category: "api-database",
     author: TEST_AUTHOR,
+    domain: "api",
     tags: ["database", "orm"],
   },
 ];
@@ -368,6 +385,7 @@ export const COMPILE_LOCAL_SKILL: TestSkill = {
   description: "A local project skill",
   category: "web-tooling",
   author: TEST_AUTHOR,
+  domain: "web",
   tags: ["local", "custom"],
   content: `---
 name: web-tooling-local-skill
@@ -392,6 +410,7 @@ export const DEFAULT_TEST_SKILLS: TestSkill[] = [
     description: "React framework for building user interfaces",
     category: "web-framework",
     author: TEST_AUTHOR,
+    domain: "web",
     tags: ["react", "web", "ui"],
     content: `---
 name: web-framework-react
@@ -416,6 +435,7 @@ React is a JavaScript library for building user interfaces with components.
     description: "Bear necessities state management",
     category: "web-client-state",
     author: TEST_AUTHOR,
+    domain: "web",
     tags: ["state", "react", "zustand"],
     content: `---
 name: web-state-zustand
@@ -440,6 +460,7 @@ Zustand is a small, fast state management solution for React.
     description: "Next generation testing framework",
     category: "web-testing",
     author: TEST_AUTHOR,
+    domain: "web",
     tags: ["testing", "vitest", "unit"],
     content: `---
 name: web-testing-vitest
@@ -458,6 +479,7 @@ Vitest is a fast unit test framework powered by Vite.
     description: "Lightweight web framework for the edge",
     category: "api-api",
     author: TEST_AUTHOR,
+    domain: "api",
     tags: ["api", "hono", "edge"],
     content: `---
 name: api-framework-hono
@@ -636,9 +658,11 @@ ${skill.description}
     await writeFile(path.join(skillDir, "SKILL.md"), content);
 
     const contentHash = await computeSkillFolderHash(skillDir);
+    const domain = skill.domain;
     const metadata = {
       author: skill.author,
       category: skill.category,
+      domain,
       tags: skill.tags ?? [],
       // displayName is required by extractAllSkills for source-based matrix loading
       displayName: skill.name,
@@ -768,9 +792,11 @@ ${skill.description}
       await writeFile(path.join(skillDir, "SKILL.md"), content);
 
       if (!skill.skipMetadata) {
+        const localDomain = skill.domain;
         const metadata: Record<string, unknown> = {
           displayName: skill.name,
           author: skill.author,
+          domain: localDomain,
         };
         if (skill.forkedFrom) {
           metadata.forkedFrom = skill.forkedFrom;

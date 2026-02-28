@@ -234,8 +234,11 @@ async function writeValidSourceSkill(
     `---\nname: ${config.id}\ndescription: ${config.description}\n---\n\n# ${config.id}\n\n${config.description}\n`,
   );
 
+  // Derive domain from category prefix (e.g., "web-framework" -> "web")
+  const domain = config.category.split("-")[0];
   const metadata: Record<string, unknown> = {
     category: config.category,
+    domain,
     author: config.author ?? "@test",
     displayName: config.displayName,
     cliDescription: config.cliDescription,
@@ -353,6 +356,7 @@ describe("source validation (validateSource)", () => {
       path.join(skillDir, STANDARD_FILES.METADATA_YAML),
       stringifyYaml({
         category: "web-framework",
+        domain: "web",
         author: "@test",
         displayName: "react",
         cliDescription: "React framework",
@@ -486,6 +490,7 @@ describe("source validation (validateSource)", () => {
       path.join(skillDir, STANDARD_FILES.METADATA_YAML),
       stringifyYaml({
         category: "web-framework",
+        domain: "web",
         author: "@test",
         displayName: "react",
         cliDescription: "React JavaScript framework",

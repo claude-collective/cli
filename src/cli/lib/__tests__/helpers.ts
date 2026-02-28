@@ -17,6 +17,8 @@ import { computeSkillFolderHash } from "../versioning";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const VALID_DOMAINS = new Set(["web", "api", "cli", "mobile", "shared"]);
+
 export const CLI_ROOT = path.resolve(__dirname, "../../../..");
 
 /** Resolve @agents-inc/cli/config to the source config-exports.ts so jiti can load it in dev. */
@@ -358,6 +360,7 @@ export function createMockExtractedSkill(
     author: "@test",
     tags: [],
     path: `skills/${directoryPath}/`,
+    domain: domain as Domain,
     ...overrides,
   };
 }
@@ -494,19 +497,27 @@ export async function writeTestSkill(
 
   if (!options?.skipMetadata) {
     const contentHash = await computeSkillFolderHash(skillDir);
+    const parts = skillName.split("-");
+    const rawPrefix = parts[0] ?? "web";
+    const domainPrefix = VALID_DOMAINS.has(rawPrefix) ? rawPrefix : "web";
+    const category = parts.length >= 2 ? `${domainPrefix}-${parts[1]}` : `${domainPrefix}-general`;
+    const baseMetadata = {
+      author: options?.author ?? "@test",
+      category,
+      domain: domainPrefix,
+      contentHash,
+    };
     if (options?.extraMetadata) {
       const metadata = {
-        author: options?.author ?? "@test",
-        contentHash,
+        ...baseMetadata,
         ...options?.extraMetadata,
       };
       await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));
     } else {
-      const metadata = {
-        author: options?.author ?? "@test",
-        contentHash,
-      };
-      await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
+        stringifyYaml(baseMetadata),
+      );
     }
   }
 
@@ -530,6 +541,7 @@ export async function writeSourceSkill(
     author?: string;
     tags?: string[];
     content?: string;
+    domain?: string;
   },
 ): Promise<string> {
   const skillDir = path.join(skillsDir, directoryPath);
@@ -540,9 +552,13 @@ export async function writeSourceSkill(
     createSkillContent(config.id, config.description),
   );
 
+  // Derive domain from category prefix if not explicitly provided; fall back to "shared" for unknown prefixes
+  const rawDomain = config.domain ?? config.category.split("-")[0];
+  const domain = VALID_DOMAINS.has(rawDomain) ? rawDomain : "shared";
   const metadata: Record<string, unknown> = {
     displayName: config.id,
     category: config.category,
+    domain,
     author: config.author ?? "@test",
   };
   if (config.tags) {

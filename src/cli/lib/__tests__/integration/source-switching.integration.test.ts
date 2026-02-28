@@ -67,6 +67,7 @@ const SWITCHABLE_SKILLS: TestSkill[] = [
     description: "React framework for building user interfaces",
     category: "web-framework",
     author: "@test",
+    domain: "web",
     tags: ["react", "web"],
     content: `---
 name: web-framework-react
@@ -85,6 +86,7 @@ Use component-based architecture with JSX.
     description: "Bear necessities state management",
     category: "web-client-state",
     author: "@test",
+    domain: "web",
     tags: ["state", "zustand"],
     content: `---
 name: web-state-zustand
@@ -102,6 +104,7 @@ Zustand is a minimal state management library for React.
     description: "Lightweight web framework for the edge",
     category: "api-api",
     author: "@test",
+    domain: "api",
     tags: ["api", "hono"],
     content: `---
 name: api-framework-hono
@@ -119,6 +122,7 @@ Hono is a fast web framework for the edge.
     description: "Next generation testing framework",
     category: "web-testing",
     author: "@test",
+    domain: "web",
     tags: ["testing", "vitest"],
     content: `---
 name: web-testing-vitest
@@ -140,6 +144,7 @@ const LOCAL_SKILL_VARIANTS: TestSkill[] = [
     description: "React framework (local customized version)",
     category: "web-framework",
     author: "@local-user",
+    domain: "web",
     tags: ["react", "web"],
     content: `---
 name: web-framework-react
@@ -157,6 +162,7 @@ This is my customized React skill with project-specific patterns.
     description: "Zustand state management (local customized version)",
     category: "web-client-state",
     author: "@local-user",
+    domain: "web",
     tags: ["state", "zustand"],
     content: `---
 name: web-state-zustand

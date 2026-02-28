@@ -54,6 +54,7 @@ This is test content for the info command E2E tests.
   await writeFile(
     path.join(skillDir, STANDARD_FILES.METADATA_YAML),
     `category: web-testing
+domain: web
 author: "@test"
 displayName: info-e2e
 cliDescription: A test skill for info E2E
@@ -153,7 +154,7 @@ describe("info command", () => {
       );
       await writeFile(
         localSkillMetadataPath,
-        `category: web-testing\nauthor: "@test"\ndisplayName: info-e2e\ncontentHash: "e2e-hash"\n`,
+        `category: web-testing\nauthor: "@test"\ndomain: web\ndisplayName: info-e2e\ncontentHash: "e2e-hash"\n`,
       );
 
       const { exitCode, stdout } = await runCLI(

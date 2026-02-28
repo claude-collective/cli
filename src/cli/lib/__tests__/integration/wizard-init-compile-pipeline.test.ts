@@ -29,6 +29,7 @@ const PIPELINE_TEST_SKILLS: TestSkill[] = [
     description: "React framework for building user interfaces",
     category: "web-framework",
     author: "@test",
+    domain: "web",
     tags: ["react", "web"],
     content: `---
 name: web-framework-react
@@ -47,6 +48,7 @@ Use component-based architecture with JSX.
     description: "Bear necessities state management",
     category: "web-client-state",
     author: "@test",
+    domain: "web",
     tags: ["state", "zustand"],
     content: `---
 name: web-state-zustand
@@ -64,6 +66,7 @@ Zustand is a minimal state management library for React.
     description: "CSS Modules with SCSS",
     category: "web-styling",
     author: "@test",
+    domain: "web",
     tags: ["css", "scss"],
     content: `---
 name: web-styling-scss-modules
@@ -81,6 +84,7 @@ Use CSS Modules with SCSS for scoped styling.
     description: "Next generation testing framework",
     category: "web-testing",
     author: "@test",
+    domain: "web",
     tags: ["testing", "vitest"],
     content: `---
 name: web-testing-vitest
@@ -98,6 +102,7 @@ Vitest is a fast unit test framework powered by Vite.
     description: "Lightweight web framework for the edge",
     category: "api-api",
     author: "@test",
+    domain: "api",
     tags: ["api", "hono"],
     content: `---
 name: api-framework-hono
@@ -115,6 +120,7 @@ Hono is a fast web framework for the edge.
     description: "TypeScript ORM for SQL databases",
     category: "api-database",
     author: "@test",
+    domain: "api",
     tags: ["database", "orm"],
     content: `---
 name: api-database-drizzle
@@ -132,6 +138,7 @@ Drizzle is a lightweight TypeScript ORM.
     description: "Authentication and authorization patterns",
     category: "api-security",
     author: "@test",
+    domain: "api",
     tags: ["auth", "security"],
     content: `---
 name: api-security-auth-patterns
@@ -149,6 +156,7 @@ JWT-based authentication and role-based authorization.
     description: "Web accessibility best practices",
     category: "web-accessibility",
     author: "@test",
+    domain: "web",
     tags: ["a11y", "accessibility"],
     content: `---
 name: web-accessibility-a11y
@@ -166,6 +174,7 @@ Follow WCAG 2.1 guidelines for accessible web applications.
     description: "Investigation before implementation",
     category: "shared-methodology",
     author: "@test",
+    domain: "shared",
     tags: ["methodology"],
     content: `---
 name: meta-methodology-investigation
@@ -183,6 +192,7 @@ Always investigate before implementing. Read the code first.
     description: "Framer Motion animation library",
     category: "web-animation",
     author: "@test",
+    domain: "web",
     tags: ["animation", "framer"],
     content: `---
 name: web-animation-framer

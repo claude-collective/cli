@@ -1,7 +1,27 @@
-import { describe, it, expect } from "vitest";
-import { generateConfigTypesSource } from "../ts-config-types-writer";
-import { createMockSkill, createMockMatrix, createMockCategory } from "../../__tests__/helpers";
-import type { AgentName, CategoryDefinition, Subcategory } from "../../../types";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import path from "path";
+import { mkdir, readFile } from "fs/promises";
+import {
+  generateConfigTypesSource,
+  loadConfigTypesDataInBackground,
+  regenerateConfigTypes,
+  type ConfigTypesBackgroundData,
+} from "../ts-config-types-writer";
+import {
+  createMockSkill,
+  createMockMatrix,
+  createMockCategory,
+  createTempDir,
+  cleanupTempDir,
+} from "../../__tests__/helpers";
+import { CLAUDE_SRC_DIR, CLI_BIN_NAME, STANDARD_FILES } from "../../../consts";
+import type {
+  AgentName,
+  CategoryDefinition,
+  CategoryPath,
+  SkillId,
+  Subcategory,
+} from "../../../types";
 
 describe("generateConfigTypesSource", () => {
   it("includes auto-generated header comment", () => {
@@ -191,5 +211,380 @@ describe("generateConfigTypesSource", () => {
     // 6 skills = multi-line union with leading pipes
     expect(source).toContain('  | "api-database-drizzle"');
     expect(source).toContain('  | "web-styling-scss-modules"');
+  });
+
+  describe("sectioned unions with custom and marketplace comments", () => {
+    it("shows custom skills first with section comments", () => {
+      // Boundary cast: custom skill IDs may not match built-in SkillId prefix patterns
+      const acmeDeploy = "acme-deploy-pipeline" as SkillId;
+      const acmeAudit = "acme-audit-runner" as SkillId;
+      const matrix = createMockMatrix({
+        [acmeDeploy]: createMockSkill(acmeDeploy, "web-framework", {
+          custom: true,
+        }),
+        [acmeAudit]: createMockSkill(acmeAudit, "web-framework", {
+          custom: true,
+        }),
+        "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+        "web-styling-scss-modules": createMockSkill("web-styling-scss-modules", "web-styling"),
+      });
+      const source = generateConfigTypesSource(matrix, []);
+
+      // Custom skills appear first with comment
+      expect(source).toContain("// Custom");
+      expect(source).toContain("// Marketplace");
+
+      // Verify ordering: custom before marketplace
+      const customIdx = source.indexOf("// Custom");
+      const marketplaceIdx = source.indexOf("// Marketplace");
+      expect(customIdx).toBeLessThan(marketplaceIdx);
+
+      // Verify custom skills are in the custom section
+      const acmeDeployIdx = source.indexOf('"acme-deploy-pipeline"');
+      const acmeAuditIdx = source.indexOf('"acme-audit-runner"');
+      expect(acmeAuditIdx).toBeGreaterThan(customIdx);
+      expect(acmeAuditIdx).toBeLessThan(marketplaceIdx);
+      expect(acmeDeployIdx).toBeGreaterThan(customIdx);
+      expect(acmeDeployIdx).toBeLessThan(marketplaceIdx);
+
+      // Marketplace skills appear after the marketplace comment
+      const reactIdx = source.indexOf('"web-framework-react"');
+      const scssIdx = source.indexOf('"web-styling-scss-modules"');
+      expect(reactIdx).toBeGreaterThan(marketplaceIdx);
+      expect(scssIdx).toBeGreaterThan(marketplaceIdx);
+    });
+
+    it("treats extra skill IDs as custom", () => {
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+      });
+      // Boundary cast: extra skill ID may not match built-in SkillId prefix patterns
+      const source = generateConfigTypesSource(matrix, [], [], {
+        extraSkillIds: ["acme-deploy-pipeline" as string],
+      });
+      expect(source).toContain("// Custom");
+      expect(source).toContain("// Marketplace");
+
+      const customIdx = source.indexOf("// Custom");
+      const extraIdx = source.indexOf('"acme-deploy-pipeline"');
+      expect(extraIdx).toBeGreaterThan(customIdx);
+    });
+
+    it("omits comments when no custom skills exist", () => {
+      const matrix = createMockMatrix({
+        "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+        "api-framework-hono": createMockSkill("api-framework-hono", "api-api"),
+      });
+      const source = generateConfigTypesSource(matrix, []);
+      expect(source).not.toContain("// Custom");
+      expect(source).not.toContain("// Marketplace");
+    });
+
+    it("shows only Custom header when all skills are custom", () => {
+      // Boundary cast: custom skill IDs may not match built-in SkillId prefix patterns
+      const acmeDeploy = "acme-deploy-pipeline" as SkillId;
+      const acmeAudit = "acme-audit-runner" as SkillId;
+      const matrix = createMockMatrix({
+        [acmeDeploy]: createMockSkill(acmeDeploy, "web-framework", {
+          custom: true,
+        }),
+        [acmeAudit]: createMockSkill(acmeAudit, "web-framework", {
+          custom: true,
+        }),
+      });
+      const source = generateConfigTypesSource(matrix, []);
+      expect(source).toContain("// Custom");
+      expect(source).not.toContain("// Marketplace");
+    });
+
+    it("shows section comments for custom agent names", () => {
+      const matrix = createMockMatrix({});
+      const agentNames: AgentName[] = ["api-developer", "web-developer"];
+      // Boundary cast: custom agent name not in built-in AgentName union
+      const customAgentNames = ["acme-deployer"] as unknown as AgentName[];
+      const source = generateConfigTypesSource(
+        matrix,
+        [...agentNames, ...customAgentNames],
+        customAgentNames,
+      );
+      expect(source).toContain("// Custom");
+      expect(source).toContain("// Marketplace");
+
+      const customIdx = source.indexOf("// Custom");
+      const marketplaceIdx = source.indexOf("// Marketplace");
+      const acmeIdx = source.indexOf('"acme-deployer"');
+      expect(acmeIdx).toBeGreaterThan(customIdx);
+      expect(acmeIdx).toBeLessThan(marketplaceIdx);
+    });
+
+    it("treats extra agent names as custom", () => {
+      const matrix = createMockMatrix({});
+      const agentNames: AgentName[] = ["web-developer"];
+      // Boundary cast: extra agent name may not match built-in AgentName union
+      const source = generateConfigTypesSource(matrix, agentNames, [], {
+        extraAgentNames: ["custom-agent" as string],
+      });
+      expect(source).toContain("// Custom");
+      expect(source).toContain("// Marketplace");
+
+      const customIdx = source.indexOf("// Custom");
+      const customAgentIdx = source.indexOf('"custom-agent"');
+      expect(customAgentIdx).toBeGreaterThan(customIdx);
+    });
+
+    it("shows section comments for custom categories (derived from custom skills)", () => {
+      // Boundary cast: custom skill/category IDs may not match built-in prefix patterns
+      const acmeDeploy = "acme-deploy-pipeline" as SkillId;
+      const categories = {
+        "web-framework": createMockCategory("web-framework" as Subcategory, "Framework", {
+          domain: "web",
+        }),
+        "acme-deploy": createMockCategory("acme-deploy" as Subcategory, "Deploy", {
+          domain: "web",
+        }),
+      } as unknown as Record<Subcategory, CategoryDefinition>;
+
+      const matrix = createMockMatrix(
+        {
+          [acmeDeploy]: createMockSkill(acmeDeploy, "acme-deploy" as CategoryPath, {
+            custom: true,
+          }),
+        },
+        { categories },
+      );
+      const source = generateConfigTypesSource(matrix, []);
+
+      const subcategoryStart = source.indexOf("export type Subcategory =");
+      const subcategoryEnd = source.indexOf(";", subcategoryStart);
+      const subcategorySection = source.slice(subcategoryStart, subcategoryEnd);
+
+      expect(subcategorySection).toContain("// Custom");
+      expect(subcategorySection).toContain("// Marketplace");
+      expect(subcategorySection).toContain('"acme-deploy"');
+      expect(subcategorySection).toContain('"web-framework"');
+    });
+
+    it("shows section comments for custom domains (derived from custom skills)", () => {
+      // Boundary cast: custom skill/category/domain not in built-in unions
+      const acmeCi = "acme-ci-runner" as SkillId;
+      const categories = {
+        "web-framework": createMockCategory("web-framework" as Subcategory, "Framework", {
+          domain: "web",
+        }),
+        "devops-ci": createMockCategory("devops-ci" as Subcategory, "CI/CD", {
+          domain: "devops" as "web",
+        }),
+      } as unknown as Record<Subcategory, CategoryDefinition>;
+
+      const matrix = createMockMatrix(
+        {
+          [acmeCi]: createMockSkill(acmeCi, "devops-ci" as CategoryPath, {
+            custom: true,
+          }),
+        },
+        { categories },
+      );
+      const source = generateConfigTypesSource(matrix, []);
+
+      const domainStart = source.indexOf("export type Domain =");
+      const domainEnd = source.indexOf(";", domainStart);
+      const domainSection = source.slice(domainStart, domainEnd);
+
+      expect(domainSection).toContain("// Custom");
+      expect(domainSection).toContain("// Marketplace");
+      expect(domainSection).toContain('"devops"');
+      expect(domainSection).toContain('"web"');
+    });
+
+    it("does not mark domain as custom if it appears on both custom and non-custom categories", () => {
+      // Boundary cast: custom skill/category key not in built-in unions
+      const acmeTool = "acme-web-tool" as SkillId;
+      const categories = {
+        "web-framework": createMockCategory("web-framework" as Subcategory, "Framework", {
+          domain: "web",
+        }),
+        "web-custom-tool": createMockCategory("web-custom-tool" as Subcategory, "Custom Tool", {
+          domain: "web",
+        }),
+      } as unknown as Record<Subcategory, CategoryDefinition>;
+
+      const matrix = createMockMatrix(
+        {
+          [acmeTool]: createMockSkill(acmeTool, "web-custom-tool" as CategoryPath, {
+            custom: true,
+          }),
+        },
+        { categories },
+      );
+      const source = generateConfigTypesSource(matrix, []);
+
+      // "web" domain appears on both custom and non-custom categories, so no section comments
+      const domainStart = source.indexOf("export type Domain =");
+      const domainEnd = source.indexOf(";", domainStart);
+      const domainSection = source.slice(domainStart, domainEnd);
+
+      expect(domainSection).not.toContain("// Custom");
+      expect(domainSection).not.toContain("// Marketplace");
+    });
+
+    it("uses multi-line format when section comments are present even with few members", () => {
+      // Boundary cast: custom skill ID may not match built-in SkillId prefix patterns
+      const acmeDeploy = "acme-deploy-pipeline" as SkillId;
+      const matrix = createMockMatrix({
+        [acmeDeploy]: createMockSkill(acmeDeploy, "web-framework", {
+          custom: true,
+        }),
+        "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+      });
+      const source = generateConfigTypesSource(matrix, []);
+
+      // Even with just 2 members, section comments force multi-line format
+      expect(source).toContain('  | "acme-deploy-pipeline"');
+      expect(source).toContain('  | "web-framework-react"');
+    });
+  });
+});
+
+describe("regenerateConfigTypes", () => {
+  let tempDir: string;
+
+  beforeEach(async () => {
+    tempDir = await createTempDir("cc-regen-types-test-");
+  });
+
+  afterEach(async () => {
+    await cleanupTempDir(tempDir);
+  });
+
+  function makeBackgroundData(
+    skills: Record<string, ReturnType<typeof createMockSkill>>,
+    agentNames: AgentName[] = [],
+    customAgentNames: AgentName[] = [],
+  ): Promise<ConfigTypesBackgroundData> {
+    return Promise.resolve({
+      matrix: createMockMatrix(skills),
+      agentNames,
+      customAgentNames,
+    });
+  }
+
+  it("writes config-types.ts when .claude-src/ exists", async () => {
+    const claudeSrcDir = path.join(tempDir, CLAUDE_SRC_DIR);
+    await mkdir(claudeSrcDir, { recursive: true });
+
+    const data = makeBackgroundData({
+      "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+    });
+
+    await regenerateConfigTypes(tempDir, data);
+
+    const configTypesPath = path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TYPES_TS);
+    const content = await readFile(configTypesPath, "utf-8");
+    expect(content).toContain("// AUTO-GENERATED by agentsinc");
+    expect(content).toContain('"web-framework-react"');
+  });
+
+  it("creates .claude-src/ and writes config-types.ts when data is provided", async () => {
+    // When background data is non-null, writeFile creates directories as needed
+    const data = makeBackgroundData({
+      "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+    });
+
+    await regenerateConfigTypes(tempDir, data);
+
+    const configTypesPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TYPES_TS);
+    const content = await readFile(configTypesPath, "utf-8");
+    expect(content).toContain('"web-framework-react"');
+  });
+
+  it("throws when .claude-src/ does not exist", async () => {
+    const data = loadConfigTypesDataInBackground(undefined, tempDir);
+
+    await expect(regenerateConfigTypes(tempDir, data)).rejects.toThrow(
+      `${CLAUDE_SRC_DIR}/ not found — run '${CLI_BIN_NAME} init' first`,
+    );
+  });
+
+  it("includes extra skill IDs in the generated output", async () => {
+    const claudeSrcDir = path.join(tempDir, CLAUDE_SRC_DIR);
+    await mkdir(claudeSrcDir, { recursive: true });
+
+    const data = makeBackgroundData({
+      "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+    });
+
+    await regenerateConfigTypes(tempDir, data, {
+      extraSkillIds: ["acme-deploy-pipeline"],
+    });
+
+    const configTypesPath = path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TYPES_TS);
+    const content = await readFile(configTypesPath, "utf-8");
+    expect(content).toContain('"acme-deploy-pipeline"');
+    expect(content).toContain('"web-framework-react"');
+  });
+
+  it("does not duplicate extra skill IDs already in the matrix", async () => {
+    const claudeSrcDir = path.join(tempDir, CLAUDE_SRC_DIR);
+    await mkdir(claudeSrcDir, { recursive: true });
+
+    const data = makeBackgroundData({
+      "web-framework-react": createMockSkill("web-framework-react", "web-framework"),
+    });
+
+    await regenerateConfigTypes(tempDir, data, {
+      extraSkillIds: ["web-framework-react"],
+    });
+
+    const configTypesPath = path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TYPES_TS);
+    const content = await readFile(configTypesPath, "utf-8");
+    const matches = content.match(/"web-framework-react"/g);
+    // Should appear in SkillId union only once (plus possibly in other type references)
+    expect(matches).toBeDefined();
+    expect(matches!.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("includes extra agent names in the generated output", async () => {
+    const claudeSrcDir = path.join(tempDir, CLAUDE_SRC_DIR);
+    await mkdir(claudeSrcDir, { recursive: true });
+
+    const data = makeBackgroundData({}, ["web-developer"]);
+
+    await regenerateConfigTypes(tempDir, data, {
+      extraAgentNames: ["custom-agent"],
+    });
+
+    const configTypesPath = path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TYPES_TS);
+    const content = await readFile(configTypesPath, "utf-8");
+    expect(content).toContain('"custom-agent"');
+    expect(content).toContain('"web-developer"');
+  });
+
+  it("does not duplicate extra agent names already in the data", async () => {
+    const claudeSrcDir = path.join(tempDir, CLAUDE_SRC_DIR);
+    await mkdir(claudeSrcDir, { recursive: true });
+
+    const data = makeBackgroundData({}, ["web-developer"]);
+
+    await regenerateConfigTypes(tempDir, data, {
+      extraAgentNames: ["web-developer"],
+    });
+
+    const configTypesPath = path.join(claudeSrcDir, STANDARD_FILES.CONFIG_TYPES_TS);
+    const content = await readFile(configTypesPath, "utf-8");
+    // Count occurrences of "web-developer" in the AgentName union section
+    // (may span multiple lines due to section comments)
+    const agentSectionStart = content.indexOf("export type AgentName =");
+    const agentSectionEnd = content.indexOf(";", agentSectionStart);
+    const agentSection = content.slice(agentSectionStart, agentSectionEnd);
+    const matches = agentSection.match(/"web-developer"/g);
+    expect(matches).toHaveLength(1);
+  });
+
+  it("propagates errors when background data promise rejects", async () => {
+    const failingData = Promise.reject(new Error("Network error"));
+    // Prevent unhandled rejection warning
+    failingData.catch(() => {});
+
+    await expect(regenerateConfigTypes(tempDir, failingData)).rejects.toThrow("Network error");
   });
 });

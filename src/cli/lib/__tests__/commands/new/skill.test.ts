@@ -131,40 +131,74 @@ describe("generateSkillMd", () => {
 
 describe("generateMetadataYaml", () => {
   it("should contain category field", () => {
-    const content = generateMetadataYaml("my-skill", "@local", "local", TEST_CONTENT_HASH);
+    const content = generateMetadataYaml("my-skill", "@local", "local", TEST_CONTENT_HASH, "web");
     expect(content).toContain("category: local");
   });
 
   it("should contain author field", () => {
-    const content = generateMetadataYaml("my-skill", "@vince", "local", TEST_CONTENT_HASH);
+    const content = generateMetadataYaml("my-skill", "@vince", "local", TEST_CONTENT_HASH, "web");
     expect(content).toContain('author: "@vince"');
   });
 
   it("should contain title-cased displayName", () => {
-    const content = generateMetadataYaml("web-framework", "@local", "local", TEST_CONTENT_HASH);
+    const content = generateMetadataYaml(
+      "web-framework",
+      "@local",
+      "local",
+      TEST_CONTENT_HASH,
+      "web",
+    );
     expect(content).toContain("displayName: Web Framework");
   });
 
   it("should use provided category", () => {
-    const content = generateMetadataYaml("my-skill", "@local", "web-framework", TEST_CONTENT_HASH);
+    const content = generateMetadataYaml(
+      "my-skill",
+      "@local",
+      "web-framework",
+      TEST_CONTENT_HASH,
+      "web",
+    );
     expect(content).toContain("category: web-framework");
   });
 
   it("should always include custom: true", () => {
-    const content = generateMetadataYaml("my-skill", "@local", "local", TEST_CONTENT_HASH);
+    const content = generateMetadataYaml("my-skill", "@local", "local", TEST_CONTENT_HASH, "web");
     expect(content).toContain("custom: true");
   });
 
   it("should place custom: true before category", () => {
-    const content = generateMetadataYaml("my-skill", "@local", "local", TEST_CONTENT_HASH);
+    const content = generateMetadataYaml("my-skill", "@local", "local", TEST_CONTENT_HASH, "web");
     const customIndex = content.indexOf("custom: true");
     const categoryIndex = content.indexOf("category: local");
     expect(customIndex).toBeLessThan(categoryIndex);
   });
 
   it("should contain contentHash field", () => {
-    const content = generateMetadataYaml("my-skill", "@local", "local", TEST_CONTENT_HASH);
+    const content = generateMetadataYaml("my-skill", "@local", "local", TEST_CONTENT_HASH, "web");
     expect(content).toContain(`contentHash: ${TEST_CONTENT_HASH}`);
+  });
+
+  it("should contain domain field", () => {
+    const content = generateMetadataYaml(
+      "my-skill",
+      "@local",
+      "web-framework",
+      TEST_CONTENT_HASH,
+      "web",
+    );
+    expect(content).toContain("domain: web");
+  });
+
+  it("should use provided domain regardless of category prefix", () => {
+    const content = generateMetadataYaml(
+      "my-skill",
+      "@local",
+      "devops-iac" as CategoryPath,
+      TEST_CONTENT_HASH,
+      "api",
+    );
+    expect(content).toContain("domain: api");
   });
 });
 
@@ -210,7 +244,7 @@ describe("new:skill command", () => {
 
   describe("file creation", () => {
     it("should create SKILL.md and metadata.yaml in .claude/skills/{name}/", async () => {
-      await runCliCommand(["new:skill", "my-test-skill"]);
+      await runCliCommand(["new:skill", "my-test-skill", "--domain", "web"]);
 
       const skillDir = path.join(projectDir, LOCAL_SKILLS_PATH, "my-test-skill");
       const skillMdPath = path.join(skillDir, STANDARD_FILES.SKILL_MD);
@@ -222,7 +256,7 @@ describe("new:skill command", () => {
     });
 
     it("should write correct SKILL.md content", async () => {
-      await runCliCommand(["new:skill", "my-test-skill"]);
+      await runCliCommand(["new:skill", "my-test-skill", "--domain", "web"]);
 
       const skillMdPath = path.join(
         projectDir,
@@ -238,7 +272,7 @@ describe("new:skill command", () => {
     });
 
     it("should write correct metadata.yaml content", async () => {
-      await runCliCommand(["new:skill", "my-test-skill"]);
+      await runCliCommand(["new:skill", "my-test-skill", "--domain", "web"]);
 
       const metadataPath = path.join(
         projectDir,
@@ -249,6 +283,7 @@ describe("new:skill command", () => {
       const content = await readFile(metadataPath, "utf-8");
 
       expect(content).toContain("custom: true");
+      expect(content).toContain("domain: web");
       expect(content).toContain("category: dummy-category");
       expect(content).toContain("displayName: My Test Skill");
       expect(content).toContain("contentHash:");
@@ -258,7 +293,7 @@ describe("new:skill command", () => {
 
   describe("flags", () => {
     it("should accept --author flag and use it in metadata", async () => {
-      await runCliCommand(["new:skill", "custom-skill", "--author", "@vince"]);
+      await runCliCommand(["new:skill", "custom-skill", "--author", "@vince", "--domain", "web"]);
 
       const metadataPath = path.join(
         projectDir,
@@ -285,15 +320,49 @@ describe("new:skill command", () => {
       expect(content).toContain("category: web-framework");
     });
 
+    it("should accept --domain flag and use it in metadata", async () => {
+      await runCliCommand(["new:skill", "custom-skill", "--domain", "api"]);
+
+      const metadataPath = path.join(
+        projectDir,
+        LOCAL_SKILLS_PATH,
+        "custom-skill",
+        STANDARD_FILES.METADATA_YAML,
+      );
+      const content = await readFile(metadataPath, "utf-8");
+
+      expect(content).toContain("domain: api");
+    });
+
+    it("should default domain to dummy when --domain not provided", async () => {
+      await runCliCommand(["new:skill", "custom-skill", "--category", "devops-iac"]);
+
+      const metadataPath = path.join(
+        projectDir,
+        LOCAL_SKILLS_PATH,
+        "custom-skill",
+        STANDARD_FILES.METADATA_YAML,
+      );
+      const content = await readFile(metadataPath, "utf-8");
+
+      expect(content).toContain("domain: dummy");
+    });
+
     it("should not create files with --dry-run flag", async () => {
-      await runCliCommand(["new:skill", "dry-run-skill", "--dry-run"]);
+      await runCliCommand(["new:skill", "dry-run-skill", "--dry-run", "--domain", "web"]);
 
       const skillDir = path.join(projectDir, LOCAL_SKILLS_PATH, "dry-run-skill");
       expect(await directoryExists(skillDir)).toBe(false);
     });
 
     it("should contain [DRY RUN] marker in --dry-run output", async () => {
-      const { stdout } = await runCliCommand(["new:skill", "dry-run-skill", "--dry-run"]);
+      const { stdout } = await runCliCommand([
+        "new:skill",
+        "dry-run-skill",
+        "--dry-run",
+        "--domain",
+        "web",
+      ]);
 
       expect(stdout).toContain("[DRY RUN]");
     });
@@ -305,7 +374,7 @@ describe("new:skill command", () => {
       const skillDir = path.join(projectDir, LOCAL_SKILLS_PATH, "existing-skill");
       await mkdir(skillDir, { recursive: true });
 
-      const { error } = await runCliCommand(["new:skill", "existing-skill"]);
+      const { error } = await runCliCommand(["new:skill", "existing-skill", "--domain", "web"]);
 
       expect(error?.oclif?.exit).toBe(EXIT_CODES.ERROR);
     });
@@ -315,7 +384,13 @@ describe("new:skill command", () => {
       const skillDir = path.join(projectDir, LOCAL_SKILLS_PATH, "existing-skill");
       await mkdir(skillDir, { recursive: true });
 
-      const { error } = await runCliCommand(["new:skill", "existing-skill", "--force"]);
+      const { error } = await runCliCommand([
+        "new:skill",
+        "existing-skill",
+        "--force",
+        "--domain",
+        "web",
+      ]);
 
       // Should not exit with error
       expect(error?.oclif?.exit).toBeUndefined();
@@ -332,7 +407,7 @@ describe("new:skill command", () => {
       await mkdir(marketplaceJsonDir, { recursive: true });
       await writeFile(path.join(marketplaceJsonDir, "marketplace.json"), '{"name":"test"}');
 
-      const { stdout } = await runCliCommand(["new:skill", "my-market-skill"]);
+      const { stdout } = await runCliCommand(["new:skill", "my-market-skill", "--domain", "web"]);
 
       expect(stdout).toContain("Detected marketplace context");
 
@@ -343,7 +418,7 @@ describe("new:skill command", () => {
     });
 
     it("should create skill in .claude/skills/ when marketplace.json does not exist", async () => {
-      await runCliCommand(["new:skill", "my-local-skill"]);
+      await runCliCommand(["new:skill", "my-local-skill", "--domain", "web"]);
 
       const skillDir = path.join(projectDir, LOCAL_SKILLS_PATH, "my-local-skill");
       expect(await directoryExists(skillDir)).toBe(true);
@@ -362,7 +437,14 @@ describe("new:skill command", () => {
       const customOutput = path.join(tempDir, "custom-skills");
       await mkdir(customOutput, { recursive: true });
 
-      await runCliCommand(["new:skill", "my-custom-skill", "--output", customOutput]);
+      await runCliCommand([
+        "new:skill",
+        "my-custom-skill",
+        "--output",
+        customOutput,
+        "--domain",
+        "web",
+      ]);
 
       const skillDir = path.join(customOutput, "my-custom-skill");
       expect(await directoryExists(skillDir)).toBe(true);
@@ -380,7 +462,14 @@ describe("new:skill command", () => {
       await mkdir(marketplaceJsonDir, { recursive: true });
       await writeFile(path.join(marketplaceJsonDir, "marketplace.json"), '{"name":"test"}');
 
-      await runCliCommand(["new:skill", "my-market-skill", "--category", "web-testing"]);
+      await runCliCommand([
+        "new:skill",
+        "my-market-skill",
+        "--category",
+        "web-testing",
+        "--domain",
+        "web",
+      ]);
 
       const categoriesPath = path.join(projectDir, SKILL_CATEGORIES_PATH);
       const rulesPath = path.join(projectDir, SKILL_RULES_PATH);
@@ -397,7 +486,7 @@ describe("new:skill command", () => {
     });
 
     it("should NOT create config files for local skills", async () => {
-      await runCliCommand(["new:skill", "my-local-skill"]);
+      await runCliCommand(["new:skill", "my-local-skill", "--domain", "web"]);
 
       const categoriesPath = path.join(projectDir, SKILL_CATEGORIES_PATH);
       const rulesPath = path.join(projectDir, SKILL_RULES_PATH);
@@ -414,7 +503,7 @@ describe("new:skill command", () => {
       const customOutput = path.join(tempDir, "custom-skills");
       await mkdir(customOutput, { recursive: true });
 
-      await runCliCommand(["new:skill", "my-skill", "--output", customOutput]);
+      await runCliCommand(["new:skill", "my-skill", "--output", customOutput, "--domain", "web"]);
 
       const categoriesPath = path.join(projectDir, SKILL_CATEGORIES_PATH);
       const rulesPath = path.join(projectDir, SKILL_RULES_PATH);
@@ -429,10 +518,24 @@ describe("new:skill command", () => {
       await writeFile(path.join(marketplaceJsonDir, "marketplace.json"), '{"name":"test"}');
 
       // Create first skill to generate config files
-      await runCliCommand(["new:skill", "first-skill", "--category", "web-testing"]);
+      await runCliCommand([
+        "new:skill",
+        "first-skill",
+        "--category",
+        "web-testing",
+        "--domain",
+        "web",
+      ]);
 
       // Create second skill with a different category
-      await runCliCommand(["new:skill", "second-skill", "--category", "api-database"]);
+      await runCliCommand([
+        "new:skill",
+        "second-skill",
+        "--category",
+        "api-database",
+        "--domain",
+        "api",
+      ]);
 
       const categoriesContent = await readFile(
         path.join(projectDir, SKILL_CATEGORIES_PATH),
@@ -452,8 +555,23 @@ describe("new:skill command", () => {
       await writeFile(path.join(marketplaceJsonDir, "marketplace.json"), '{"name":"test"}');
 
       // Create two skills with the same category
-      await runCliCommand(["new:skill", "skill-one", "--category", "web-framework"]);
-      await runCliCommand(["new:skill", "skill-one", "--category", "web-framework", "--force"]);
+      await runCliCommand([
+        "new:skill",
+        "skill-one",
+        "--category",
+        "web-framework",
+        "--domain",
+        "web",
+      ]);
+      await runCliCommand([
+        "new:skill",
+        "skill-one",
+        "--category",
+        "web-framework",
+        "--domain",
+        "web",
+        "--force",
+      ]);
 
       const categoriesContent = await readFile(
         path.join(projectDir, SKILL_CATEGORIES_PATH),
@@ -468,53 +586,52 @@ describe("new:skill command", () => {
 
 describe("generateSkillCategoriesTs", () => {
   it("should contain version field", () => {
-    const content = generateSkillCategoriesTs("web-framework");
+    const content = generateSkillCategoriesTs("web-framework", "web");
     expect(content).toContain('"version": "1.0.0"');
   });
 
   it("should contain category entry with correct id", () => {
-    const content = generateSkillCategoriesTs("web-framework");
+    const content = generateSkillCategoriesTs("web-framework", "web");
     expect(content).toContain('"web-framework"');
     expect(content).toContain('"id": "web-framework"');
   });
 
   it("should derive displayName from subcategory part", () => {
-    const content = generateSkillCategoriesTs("web-framework");
+    const content = generateSkillCategoriesTs("web-framework", "web");
     expect(content).toContain('"displayName": "Framework"');
   });
 
-  it("should include domain when prefix is a known domain", () => {
-    const content = generateSkillCategoriesTs("api-database");
+  it("should include the explicitly provided domain", () => {
+    const content = generateSkillCategoriesTs("api-database", "api");
     expect(content).toContain('"domain": "api"');
   });
 
-  it("should omit domain when prefix is not a known domain", () => {
-    const content = generateSkillCategoriesTs("dummy-category" as CategoryPath);
-    expect(content).not.toContain('"domain"');
+  it("should include domain even for non-standard prefixes", () => {
+    const content = generateSkillCategoriesTs("dummy-category" as CategoryPath, "dummy");
+    expect(content).toContain('"domain": "dummy"');
   });
 
-  it("should set default values for exclusive, required, order, custom", () => {
-    const content = generateSkillCategoriesTs("web-framework");
+  it("should set default values for exclusive, required, order", () => {
+    const content = generateSkillCategoriesTs("web-framework", "web");
     expect(content).toContain('"exclusive": true');
     expect(content).toContain('"required": false');
     expect(content).toContain('"order": 99');
-    expect(content).toContain('"custom": true');
   });
 
   it("should derive displayName for multi-segment subcategory", () => {
-    const content = generateSkillCategoriesTs("web-error-handling");
+    const content = generateSkillCategoriesTs("web-error-handling", "web");
     expect(content).toContain('"displayName": "Error Handling"');
   });
 
   it("should handle all known domain prefixes", () => {
     for (const domain of ["web", "api", "mobile", "cli", "shared"]) {
-      const content = generateSkillCategoriesTs(`${domain}-testing` as CategoryPath);
+      const content = generateSkillCategoriesTs(`${domain}-testing` as CategoryPath, domain);
       expect(content).toContain(`"domain": "${domain}"`);
     }
   });
 
   it("should be valid TypeScript with export default", () => {
-    const content = generateSkillCategoriesTs("web-framework");
+    const content = generateSkillCategoriesTs("web-framework", "web");
     expect(content).toContain("export default");
   });
 });
