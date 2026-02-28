@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.53.0] - 2026-02-28
+
+**Config-types regeneration, sectioned unions, required domain**
+
+- Auto-regenerate `config-types.ts` on `new skill` and `new agent` creation
+- Sectioned `// Custom` / `// Marketplace` comments in generated union types
+- Domain now required on all skill metadata — never inferred from category prefix
+
+See [changelogs/0.53.0.md](./changelogs/0.53.0.md) for full details.
+
+---
+
 ## [0.52.0] - 2026-02-28
 
 **Generated config types, remove defineConfig() runtime dependency**
