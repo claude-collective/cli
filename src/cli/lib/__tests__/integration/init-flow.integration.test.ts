@@ -16,6 +16,7 @@ import {
   fileExists,
   directoryExists,
   readTestYaml,
+  readTestTsConfig,
   buildWizardResult,
   buildSourceResult,
   getTestSkill,
@@ -76,7 +77,7 @@ describe("Init Flow Integration: Local Mode", () => {
     await cleanupTestSource(dirs);
   });
 
-  it("should create .claude-src/config.yaml with correct structure", async () => {
+  it("should create .claude-src/config.ts with correct structure", async () => {
     const result = await installLocal({
       wizardResult: buildWizardResult(SELECTED_SKILLS_REACT_HONO, {
         selectedAgents: SELECTED_AGENTS_WEB_API,
@@ -86,13 +87,13 @@ describe("Init Flow Integration: Local Mode", () => {
       sourceFlag: dirs.sourceDir,
     });
 
-    // config.yaml should exist in .claude-src/
-    const configPath = path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
+    // config.ts should exist in .claude-src/
+    const configPath = path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
     expect(result.configPath).toBe(configPath);
     expect(await fileExists(configPath)).toBe(true);
 
     // Parse and verify structure
-    const config = await readTestYaml<ProjectConfig>(configPath);
+    const config = await readTestTsConfig<ProjectConfig>(configPath);
     expect(config.name).toBeDefined();
     expect(config.agents).toBeDefined();
     expect(Array.isArray(config.agents)).toBe(true);
@@ -157,14 +158,14 @@ describe("Init Flow Integration: Local Mode", () => {
     }
   });
 
-  it("should include selected skills in config.yaml skills array", async () => {
+  it("should include selected skills in config.ts skills array", async () => {
     const result = await installLocal({
       wizardResult: buildWizardResult(SELECTED_SKILLS_ALL),
       sourceResult,
       projectDir: dirs.projectDir,
     });
 
-    const config = await readTestYaml<ProjectConfig>(result.configPath);
+    const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
     // All selected skill IDs should appear in config.skills
     for (const skillId of SELECTED_SKILLS_ALL) {
@@ -181,7 +182,7 @@ describe("Init Flow Integration: Local Mode", () => {
       projectDir: dirs.projectDir,
     });
 
-    const config = await readTestYaml<ProjectConfig>(result.configPath);
+    const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
     // Stack property should exist and map agents to skills
     expect(config.stack).toBeDefined();
@@ -227,7 +228,7 @@ describe("Init Flow Integration: Single Skill Selection", () => {
     expect(result.copiedSkills[0].skillId).toBe("web-testing-vitest");
 
     // Config should reflect single skill
-    const config = await readTestYaml<ProjectConfig>(result.configPath);
+    const config = await readTestTsConfig<ProjectConfig>(result.configPath);
     expect(config.skills).toHaveLength(1);
     expect(config.skills).toContain("web-testing-vitest");
   });
@@ -263,7 +264,7 @@ describe("Init Flow Integration: All Skills Selection", () => {
     expect(result.copiedSkills).toHaveLength(3);
 
     // Config should include all skills
-    const config = await readTestYaml<ProjectConfig>(result.configPath);
+    const config = await readTestTsConfig<ProjectConfig>(result.configPath);
     expect(config.skills).toHaveLength(3);
 
     // Agents should be exactly the selected agents
@@ -288,7 +289,7 @@ describe("Init Flow Integration: Source Configuration", () => {
     await cleanupTestSource(dirs);
   });
 
-  it("should save source flag to config.yaml when provided", async () => {
+  it("should save source flag to config.ts when provided", async () => {
     const result = await installLocal({
       wizardResult: buildWizardResult(["web-framework-react"]),
       sourceResult,
@@ -296,7 +297,7 @@ describe("Init Flow Integration: Source Configuration", () => {
       sourceFlag: dirs.sourceDir,
     });
 
-    const config = await readTestYaml<ProjectConfig>(result.configPath);
+    const config = await readTestTsConfig<ProjectConfig>(result.configPath);
     expect(config.source).toBe(dirs.sourceDir);
   });
 
@@ -308,8 +309,8 @@ describe("Init Flow Integration: Source Configuration", () => {
       // No sourceFlag — falls back to sourceResult.sourceConfig.source
     });
 
-    const configPath = path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
-    const config = await readTestYaml<ProjectConfig>(configPath);
+    const configPath = path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+    const config = await readTestTsConfig<ProjectConfig>(configPath);
 
     // Source comes from sourceResult.sourceConfig.source
     expect(config.source).toBe(dirs.sourceDir);
@@ -343,9 +344,9 @@ describe("Init Flow Integration: Directory Structure Verification", () => {
     // .claude-src/ should exist
     expect(await directoryExists(path.join(dirs.projectDir, CLAUDE_SRC_DIR))).toBe(true);
 
-    // .claude-src/config.yaml should exist
+    // .claude-src/config.ts should exist
     expect(
-      await fileExists(path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML)),
+      await fileExists(path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS)),
     ).toBe(true);
 
     // .claude/skills/ should exist
@@ -442,7 +443,7 @@ describe("Init Flow Integration: Idempotency and Merge", () => {
     expect(secondResult.wasMerged).toBe(true);
 
     // Config should have both skills
-    const config = await readTestYaml<ProjectConfig>(secondResult.configPath);
+    const config = await readTestTsConfig<ProjectConfig>(secondResult.configPath);
     expect(config.skills).toContain("web-framework-react");
     expect(config.skills).toContain("api-framework-hono");
   });
@@ -474,7 +475,7 @@ describe("Init Flow Integration: Install Mode in Config", () => {
       projectDir: dirs.projectDir,
     });
 
-    const config = await readTestYaml<ProjectConfig>(result.configPath);
+    const config = await readTestTsConfig<ProjectConfig>(result.configPath);
     expect(config.installMode).toBe("local");
   });
 
@@ -487,7 +488,7 @@ describe("Init Flow Integration: Install Mode in Config", () => {
       projectDir: dirs.projectDir,
     });
 
-    const config = await readTestYaml<ProjectConfig>(result.configPath);
+    const config = await readTestTsConfig<ProjectConfig>(result.configPath);
     expect(config.installMode).toBe("plugin");
   });
 });
@@ -586,7 +587,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
       projectDir: dirs.projectDir,
     });
 
-    const config = await readTestYaml<ProjectConfig>(result.configPath);
+    const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
     // config.agents should contain exactly the selected agents (sorted)
     expect(config.agents).toEqual([...SELECTED_AGENTS_WITH_REVIEWER].sort());
@@ -601,7 +602,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
       projectDir: dirs.projectDir,
     });
 
-    const config = await readTestYaml<ProjectConfig>(result.configPath);
+    const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
     expect(config.stack).toBeDefined();
 
@@ -626,7 +627,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
       projectDir: dirs.projectDir,
     });
 
-    const config = await readTestYaml<ProjectConfig>(result.configPath);
+    const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
     expect(config.stack).toBeDefined();
 

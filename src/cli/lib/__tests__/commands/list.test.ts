@@ -52,12 +52,14 @@ describe("list command", () => {
       await mkdir(skillsDir, { recursive: true });
 
       // Write minimal config
-      const configContent = `name: test-project
-installMode: local
-agents:
-  - web-developer
-`;
-      await writeFile(path.join(claudeDir, "config.yaml"), configContent);
+      const claudeSrcDir = path.join(projectDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
+      const configContent = `export default ${JSON.stringify({
+        name: "test-project",
+        installMode: "local",
+        agents: ["web-developer"],
+      })};`;
+      await writeFile(path.join(claudeSrcDir, "config.ts"), configContent);
 
       // Write a test agent
       await writeFile(

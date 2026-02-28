@@ -669,15 +669,28 @@ describe("stack-plugin-compiler", () => {
   });
 
   describe("compileStackPlugin - remote source (projectRoot differs from CLI)", () => {
-    async function createStacksYaml(dir: string, stackId: string, agentIds: string[]) {
-      const agentsYaml = agentIds.map((a) => `      ${a}: {}`).join("\n");
+    async function createStacksTs(dir: string, stackId: string, agentIds: string[]) {
+      const agents: Record<string, Record<string, never>> = {};
+      for (const a of agentIds) {
+        agents[a] = {};
+      }
+      const stacksContent = {
+        stacks: [
+          {
+            id: stackId,
+            name: "Remote Source Stack",
+            description: "A stack from a remote source",
+            agents,
+          },
+        ],
+      };
       await writeTestFile(
-        path.join(dir, "config", "stacks.yaml"),
-        `stacks:\n  - id: ${stackId}\n    name: Remote Source Stack\n    description: A stack from a remote source\n    agents:\n${agentsYaml}\n`,
+        path.join(dir, "config", "stacks.ts"),
+        `export default ${JSON.stringify(stacksContent, null, 2)};\n`,
       );
     }
 
-    it("should load stack from projectRoot when not in CLI stacks.yaml", async () => {
+    it("should load stack from projectRoot when not in CLI stacks.ts", async () => {
       await createAgent("web-developer", {
         title: "Frontend Developer",
         description: "A frontend developer agent",
@@ -686,11 +699,11 @@ describe("stack-plugin-compiler", () => {
 
       const stackId = uniqueStackId("remote-stack");
 
-      // Create stacks.yaml in projectRoot (simulates a remote/private source)
+      // Create stacks.ts in projectRoot (simulates a remote/private source)
       // No skills matrix in projectRoot — falls back to CLI matrix
-      await createStacksYaml(projectRoot, stackId, ["web-developer"]);
+      await createStacksTs(projectRoot, stackId, ["web-developer"]);
 
-      // No stack option passed — must load from projectRoot's stacks.yaml
+      // No stack option passed — must load from projectRoot's stacks.ts
       const result = await compileStackPlugin({
         stackId,
         outputDir,
@@ -710,8 +723,8 @@ describe("stack-plugin-compiler", () => {
 
       const stackId = uniqueStackId("matrix-fallback-stack");
 
-      // Create stacks.yaml in projectRoot but no skill-categories.yaml
-      await createStacksYaml(projectRoot, stackId, ["web-developer"]);
+      // Create stacks.ts in projectRoot but no skill-categories.ts
+      await createStacksTs(projectRoot, stackId, ["web-developer"]);
 
       // Should succeed using CLI's skills matrix as fallback
       const result = await compileStackPlugin({

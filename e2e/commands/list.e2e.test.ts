@@ -118,7 +118,7 @@ describe("list command", () => {
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Config:");
-      expect(stdout).toContain(STANDARD_FILES.CONFIG_YAML);
+      expect(stdout).toContain(STANDARD_FILES.CONFIG_TS);
     });
 
     it("should show agent count when agents exist", async () => {
@@ -144,7 +144,7 @@ describe("list command", () => {
     it("should handle project with skills directory but no config", async () => {
       tempDir = await createTempDir();
 
-      // Create .claude/skills/ with a skill but no config.yaml
+      // Create .claude/skills/ with a skill but no config.ts
       const skillsDir = path.join(tempDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
       await mkdir(skillsDir, { recursive: true });
       await createLocalSkill(tempDir, "web-testing-orphan-skill");
@@ -152,7 +152,7 @@ describe("list command", () => {
       const { exitCode, stdout } = await runCLI(["list"], tempDir);
 
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-      // Without config.yaml, detectInstallation returns null
+      // Without config.ts, detectInstallation returns null
       expect(stdout).toContain("No installation found");
     });
 

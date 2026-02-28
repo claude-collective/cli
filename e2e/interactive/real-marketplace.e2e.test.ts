@@ -117,12 +117,12 @@ describe.skipIf(!hasSkillsSource)("real marketplace", () => {
       expect(fullOutput).toContain("Marketplace:");
     });
 
-    it("should have created config.yaml", async () => {
-      const configPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
+    it("should have created config.ts", async () => {
+      const configPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       expect(await fileExists(configPath)).toBe(true);
 
       const content = await readTestFile(configPath);
-      expect(content).toContain("installMode:");
+      expect(content).toContain("installMode");
     });
 
     it("should have compiled agents with real content", async () => {

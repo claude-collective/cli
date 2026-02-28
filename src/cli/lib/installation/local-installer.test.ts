@@ -1,7 +1,6 @@
 import { mkdir, writeFile, readFile } from "fs/promises";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { installLocal } from "./local-installer";
 import type { AgentConfig, AgentName, ProjectConfig } from "../../types";
 import {
@@ -10,8 +9,10 @@ import {
   buildSourceResult,
   createTempDir,
   cleanupTempDir,
+  readTestTsConfig,
 } from "../__tests__/helpers";
 import { DEFAULT_PLUGIN_NAME } from "../../consts";
+import { generateTsConfigSource } from "../configuration/ts-config-writer";
 
 // Mock heavy dependencies that involve file system operations outside our temp dir
 vi.mock("../skills/skill-copier", () => ({
@@ -93,7 +94,7 @@ describe("local-installer", () => {
       expect(await fileExists(path.join(tempDir, ".claude-src"))).toBe(true);
     });
 
-    it("should write config to .claude-src/config.yaml", async () => {
+    it("should write config to .claude-src/config.ts", async () => {
       const matrix = TEST_MATRICES.empty;
       const wizardResult = buildWizardResult(["meta-test-skill"]);
       const sourceResult = buildSourceResult(matrix, tempDir);
@@ -105,9 +106,8 @@ describe("local-installer", () => {
       });
 
       // Verify config was written
-      const configPath = path.join(tempDir, ".claude-src", "config.yaml");
-      const configContent = await readFile(configPath, "utf-8");
-      const config = parseYaml(configContent) as ProjectConfig;
+      const configPath = path.join(tempDir, ".claude-src", "config.ts");
+      const config = await readTestTsConfig<ProjectConfig>(configPath);
 
       expect(config.name).toBe(DEFAULT_PLUGIN_NAME);
       expect(result.configPath).toBe(configPath);
@@ -125,9 +125,8 @@ describe("local-installer", () => {
         sourceFlag: "github:my-org/skills",
       });
 
-      const configPath = path.join(tempDir, ".claude-src", "config.yaml");
-      const configContent = await readFile(configPath, "utf-8");
-      const config = parseYaml(configContent) as ProjectConfig;
+      const configPath = path.join(tempDir, ".claude-src", "config.ts");
+      const config = await readTestTsConfig<ProjectConfig>(configPath);
 
       expect(config.source).toBe("github:my-org/skills");
     });
@@ -148,9 +147,8 @@ describe("local-installer", () => {
         projectDir: tempDir,
       });
 
-      const configPath = path.join(tempDir, ".claude-src", "config.yaml");
-      const configContent = await readFile(configPath, "utf-8");
-      const config = parseYaml(configContent) as ProjectConfig;
+      const configPath = path.join(tempDir, ".claude-src", "config.ts");
+      const config = await readTestTsConfig<ProjectConfig>(configPath);
 
       expect(config.source).toBe("github:default/source");
     });
@@ -168,9 +166,8 @@ describe("local-installer", () => {
         projectDir: tempDir,
       });
 
-      const configPath = path.join(tempDir, ".claude-src", "config.yaml");
-      const configContent = await readFile(configPath, "utf-8");
-      const config = parseYaml(configContent) as ProjectConfig;
+      const configPath = path.join(tempDir, ".claude-src", "config.ts");
+      const config = await readTestTsConfig<ProjectConfig>(configPath);
 
       expect(config.marketplace).toBe("my-marketplace");
     });
@@ -188,7 +185,7 @@ describe("local-installer", () => {
 
       expect(result.copiedSkills).toBeDefined();
       expect(result.config).toBeDefined();
-      expect(result.configPath).toContain(".claude-src/config.yaml");
+      expect(result.configPath).toContain(".claude-src/config.ts");
       expect(result.compiledAgents).toBeDefined();
       expect(typeof result.wasMerged).toBe("boolean");
       expect(result.skillsDir).toContain(".claude/skills");
@@ -196,14 +193,16 @@ describe("local-installer", () => {
     });
 
     it("should merge with existing config when present", async () => {
-      // Write an existing config
+      // Write an existing config in TS format
       const configDir = path.join(tempDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
+      // Boundary cast: test provides a synthetic agent name not in the AgentName union
       await writeFile(
-        path.join(configDir, "config.yaml"),
-        stringifyYaml({
+        path.join(configDir, "config.ts"),
+        generateTsConfigSource({
           name: "existing-project",
-          agents: ["existing-agent"],
+          agents: ["existing-agent" as AgentName],
+          skills: [],
           author: "@existing",
         }),
       );
@@ -331,7 +330,7 @@ describe("local-installer", () => {
       );
     });
 
-    it("should include commented path overrides in config.yaml", async () => {
+    it("should write valid TS config with defineConfig wrapper", async () => {
       const matrix = TEST_MATRICES.empty;
       const wizardResult = buildWizardResult(["meta-test-skill"]);
       const sourceResult = buildSourceResult(matrix, tempDir);
@@ -342,41 +341,16 @@ describe("local-installer", () => {
         projectDir: tempDir,
       });
 
-      const configPath = path.join(tempDir, ".claude-src", "config.yaml");
+      const configPath = path.join(tempDir, ".claude-src", "config.ts");
       const configContent = await readFile(configPath, "utf-8");
 
-      expect(configContent).toContain(
-        "# Custom paths (for marketplace repos with non-standard layouts):",
-      );
-      expect(configContent).toContain("# skillsDir: src/skills");
-      expect(configContent).toContain("# agentsDir: src/agents");
-      expect(configContent).toContain("# stacksFile: config/stacks.yaml");
-      expect(configContent).toContain("# categoriesFile:");
-      expect(configContent).toContain("# rulesFile:");
-    });
+      // Should use defineConfig wrapper
+      expect(configContent).toContain("import { defineConfig }");
+      expect(configContent).toContain("export default defineConfig(");
 
-    it("should not interfere with YAML parsing when path overrides are commented", async () => {
-      const matrix = TEST_MATRICES.empty;
-      const wizardResult = buildWizardResult(["meta-test-skill"]);
-      const sourceResult = buildSourceResult(matrix, tempDir);
-
-      await installLocal({
-        wizardResult,
-        sourceResult,
-        projectDir: tempDir,
-      });
-
-      const configPath = path.join(tempDir, ".claude-src", "config.yaml");
-      const configContent = await readFile(configPath, "utf-8");
-      const config = parseYaml(configContent) as ProjectConfig;
-
-      // Comments should be ignored by YAML parser — no path override fields in parsed config
+      // Should parse back to a valid config
+      const config = await readTestTsConfig<ProjectConfig>(configPath);
       expect(config.name).toBe(DEFAULT_PLUGIN_NAME);
-      expect((config as Record<string, unknown>)["skillsDir"]).toBeUndefined();
-      expect((config as Record<string, unknown>)["agentsDir"]).toBeUndefined();
-      expect((config as Record<string, unknown>)["stacksFile"]).toBeUndefined();
-      expect((config as Record<string, unknown>)["categoriesFile"]).toBeUndefined();
-      expect((config as Record<string, unknown>)["rulesFile"]).toBeUndefined();
     });
 
     it("should preserve preloaded flags from stack skill assignments", async () => {
@@ -440,10 +414,9 @@ describe("local-installer", () => {
       expect(frameworkAssignments![0].id).toBe("web-framework-react");
       expect(frameworkAssignments![0].preloaded).toBe(true);
 
-      // Also verify it's written correctly to the YAML file
-      const configPath = path.join(tempDir, ".claude-src", "config.yaml");
-      const configContent = await readFile(configPath, "utf-8");
-      const parsedConfig = parseYaml(configContent) as ProjectConfig;
+      // Also verify it's written correctly to the config file
+      const configPath = path.join(tempDir, ".claude-src", "config.ts");
+      const parsedConfig = await readTestTsConfig<ProjectConfig>(configPath);
       // compactStackForYaml converts preloaded: true to { id, preloaded: true } object form
       const parsedWebDev = parsedConfig.stack?.["web-developer"] as Record<string, unknown>;
       expect(parsedWebDev?.["web-framework"]).toEqual({

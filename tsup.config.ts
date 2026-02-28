@@ -5,6 +5,7 @@ import path from "path";
 export default defineConfig({
   entry: [
     "src/cli/index.ts", // oclif entry point
+    "src/cli/config-exports.ts", // library export for @agents-inc/cli/config
     "src/cli/commands/**/*.{ts,tsx}", // oclif commands (some use JSX)
     "src/cli/hooks/**/*.ts", // oclif hooks
     "src/cli/components/**/*.tsx", // Ink components
@@ -23,7 +24,7 @@ export default defineConfig({
   // Note: We need to handle multiple entry points - outDir will create structure
   outDir: "dist",
   onSuccess: async () => {
-    // Copy config/ (skills-matrix.yaml, stacks.yaml) to dist/config/
+    // Copy config/ (stacks.ts etc.) to dist/config/
     // so it's available regardless of how PROJECT_ROOT resolves at runtime
     const srcConfig = "config";
     const destConfig = path.join("dist", "config");

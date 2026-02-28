@@ -6,6 +6,7 @@ import {
   fileExists,
   directoryExists,
   readTestYaml,
+  readTestTsConfig,
   buildWizardResult,
   buildSourceResult,
   createMockSkill,
@@ -150,19 +151,19 @@ describe("eject command", () => {
       expect(await directoryExists(partialsDir)).toBe(true);
     });
 
-    it("should create config.yaml if it does not exist", async () => {
+    it("should create config.ts if it does not exist", async () => {
       await runCliCommand(["eject", "agent-partials"]);
 
-      const configPath = path.join(projectDir, ".claude-src", "config.yaml");
+      const configPath = path.join(projectDir, ".claude-src", "config.ts");
       expect(await fileExists(configPath)).toBe(true);
 
       const content = await readFile(configPath, "utf-8");
-      expect(content).toContain("name:");
-      expect(content).toContain("installMode: local");
+      expect(content).toContain("export default");
+      expect(content).toContain('"installMode": "local"');
     });
 
     it("should not overwrite existing config.yaml", async () => {
-      // Create existing config with custom content
+      // Create existing config with custom YAML content (eject checks both .ts and .yaml)
       const configDir = path.join(projectDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
       const configPath = path.join(configDir, "config.yaml");
@@ -171,16 +172,17 @@ describe("eject command", () => {
 
       await runCliCommand(["eject", "agent-partials"]);
 
+      // YAML config should still exist unchanged
       const content = await readFile(configPath, "utf-8");
       expect(content).toBe(customContent);
     });
 
-    it("should still create config.yaml when using --output flag", async () => {
+    it("should still create config.ts when using --output flag", async () => {
       const outputDir = path.join(tempDir, "custom-output");
 
       await runCliCommand(["eject", "agent-partials", "--output", outputDir]);
 
-      const configPath = path.join(projectDir, ".claude-src", "config.yaml");
+      const configPath = path.join(projectDir, ".claude-src", "config.ts");
       expect(await fileExists(configPath)).toBe(true);
     });
 
@@ -608,10 +610,10 @@ describe("eject in plugin mode", () => {
   });
 
   it("should have installMode plugin in config after init", async () => {
-    const configPath = path.join(dirs.projectDir, ".claude-src", "config.yaml");
+    const configPath = path.join(dirs.projectDir, ".claude-src", "config.ts");
     expect(await fileExists(configPath)).toBe(true);
 
-    const config = await readTestYaml<ProjectConfig>(configPath);
+    const config = await readTestTsConfig<ProjectConfig>(configPath);
     expect(config.installMode).toBe("plugin");
   });
 

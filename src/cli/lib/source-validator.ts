@@ -2,7 +2,12 @@ import path from "path";
 import { parse as parseYaml } from "yaml";
 import { glob, readFile, fileExists, directoryExists } from "../utils/fs";
 import { verbose } from "../utils/logger";
-import { SKILL_CATEGORIES_YAML_PATH, SKILL_RULES_YAML_PATH, STANDARD_FILES } from "../consts";
+import {
+  SKILL_CATEGORIES_PATH,
+  SKILL_RULES_PATH,
+  SKILLS_DIR_PATH,
+  STANDARD_FILES,
+} from "../consts";
 import { metadataValidationSchema, formatZodErrors, SKILL_ID_PATTERN } from "./schemas";
 import { parseFrontmatter } from "./loading/loader";
 import { loadProjectSourceConfig } from "./configuration";
@@ -58,7 +63,7 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
   }
 
   const sourceProjectConfig = await loadProjectSourceConfig(resolvedPath);
-  const skillsDirRelPath = sourceProjectConfig?.skillsDir ?? "src/skills";
+  const skillsDirRelPath = sourceProjectConfig?.skillsDir ?? SKILLS_DIR_PATH;
   const skillsDir = path.join(resolvedPath, skillsDirRelPath);
 
   if (!(await directoryExists(skillsDir))) {
@@ -195,8 +200,8 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
 
   // Phase 3: Cross-reference validation via matrix health check
   try {
-    const categoriesPath = path.join(resolvedPath, SKILL_CATEGORIES_YAML_PATH);
-    const rulesPath = path.join(resolvedPath, SKILL_RULES_YAML_PATH);
+    const categoriesPath = path.join(resolvedPath, SKILL_CATEGORIES_PATH);
+    const rulesPath = path.join(resolvedPath, SKILL_RULES_PATH);
 
     const hasCats = await fileExists(categoriesPath);
     const hasRules = await fileExists(rulesPath);
@@ -231,7 +236,7 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
       for (const healthIssue of healthIssues) {
         issues.push({
           severity: healthIssue.severity,
-          file: SKILL_CATEGORIES_YAML_PATH,
+          file: SKILL_CATEGORIES_PATH,
           message: healthIssue.details,
         });
       }
@@ -243,7 +248,7 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
   } catch (error) {
     issues.push({
       severity: "warning",
-      file: SKILL_CATEGORIES_YAML_PATH,
+      file: SKILL_CATEGORIES_PATH,
       message: `Cross-reference validation skipped: failed to load categories/rules`,
     });
   }

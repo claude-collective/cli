@@ -63,16 +63,15 @@ describe("agent-recompiler", () => {
       );
     });
 
-    it("uses config.yaml agent list when present", async () => {
-      const configContent = `
-name: test-plugin
-description: Test plugin
-agents:
-  - web-pm
-`;
+    it("uses config.ts agent list when present", async () => {
+      const configContent = `export default ${JSON.stringify({
+        name: "test-plugin",
+        description: "Test plugin",
+        agents: ["web-pm"],
+      })};`;
       const configDir = path.join(testDirs.projectDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
-      await writeFile(path.join(configDir, "config.yaml"), configContent);
+      await writeFile(path.join(configDir, "config.ts"), configContent);
 
       const result = await recompileAgents({
         pluginDir: testDirs.pluginDir,

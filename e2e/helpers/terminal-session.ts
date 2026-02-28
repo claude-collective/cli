@@ -29,7 +29,7 @@ export type TerminalSessionOptions = {
  * proper screen buffer. getScreen() returns exactly what the user would see.
  *
  * HOME is set to cwd by default to isolate tests from the user's real global
- * config (~/.claude-src/config.yaml). Tests that need a different HOME can
+ * config (~/.claude-src/config.ts). Tests that need a different HOME can
  * override via options.env.
  */
 export class TerminalSession {
@@ -121,6 +121,19 @@ export class TerminalSession {
       }
       await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
     }
+  }
+
+  /**
+   * Waits for the wizard layout to complete rendering, then returns the full output.
+   *
+   * The wizard footer ("navigate") renders last in the Ink component tree. Waiting
+   * for it guarantees all content above (categories, skill tags, counters) is stable.
+   * Returns getFullOutput() which includes scrollback, avoiding viewport garbling
+   * from overlapping box-drawing characters.
+   */
+  async waitForStableRender(timeoutMs?: number): Promise<string> {
+    await this.waitForText("navigate", timeoutMs);
+    return this.getFullOutput();
   }
 
   /** Waits for the PTY process to exit. Returns the exit code. */

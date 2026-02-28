@@ -38,7 +38,7 @@ describe("doctor command", () => {
     expect(stdout).toContain("Doctor");
     expect(stdout).toContain("Checking configuration health");
     expect(stdout).toContain("Config Valid");
-    expect(stdout).toContain("config.yaml not found");
+    expect(stdout).toContain("config.ts not found");
     expect(stdout).toContain("Summary:");
     expect(stdout).toContain("error");
   });
@@ -89,8 +89,8 @@ describe("doctor command", () => {
     const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
     await mkdir(configDir, { recursive: true });
     await writeFile(
-      path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-      "name: test-project\ninstallMode: local\nagents:\n  - web-developer\n",
+      path.join(configDir, STANDARD_FILES.CONFIG_TS),
+      `export default ${JSON.stringify({ name: "test-project", installMode: "local", agents: ["web-developer"] }, null, 2)};\n`,
     );
 
     const { exitCode, stdout } = await runCLI(["doctor"], tempDir);

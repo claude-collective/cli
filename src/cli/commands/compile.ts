@@ -1,11 +1,10 @@
 import { Flags } from "@oclif/core";
 import path from "path";
-import { parse as parseYaml } from "yaml";
 import { BaseCommand } from "../base-command";
 import { setVerbose, verbose, warn } from "../utils/logger";
 import { discoverAllPluginSkills } from "../lib/plugins";
 import { getAgentDefinitions } from "../lib/agents";
-import { resolveSource } from "../lib/configuration";
+import { resolveSource, loadProjectConfigFromDir } from "../lib/configuration";
 import { directoryExists, ensureDir, glob, readFile, fileExists } from "../utils/fs";
 import { recompileAgents } from "../lib/agents";
 import { parseFrontmatter } from "../lib/loading";
@@ -19,9 +18,8 @@ import {
   INFO_MESSAGES,
 } from "../utils/messages";
 import { detectInstallation, type Installation } from "../lib/installation";
-import type { AgentSourcePaths, ProjectConfig, SkillDefinition, SkillId } from "../types";
-import { projectConfigLoaderSchema } from "../lib/schemas";
-import { normalizeStackRecord, getStackSkillIds } from "../lib/stacks/stacks-loader";
+import type { AgentSourcePaths, SkillDefinition, SkillId } from "../types";
+import { getStackSkillIds } from "../lib/stacks/stacks-loader";
 import { typedEntries, typedKeys } from "../utils/typed-object";
 
 async function loadSkillsFromDir(
@@ -261,34 +259,15 @@ export default class Compile extends BaseCommand {
     verbose(`  Project: ${projectDir}`);
     verbose(`  Agents: ${agentsDir}`);
 
-    const configPath = installation.configPath;
-    const hasConfig = await fileExists(configPath);
-    if (hasConfig) {
-      try {
-        const configContent = await readFile(configPath);
-        const parsed = parseYaml(configContent);
-        const configResult = projectConfigLoaderSchema.safeParse(parsed);
-        if (configResult.success) {
-          // Boundary cast: Zod loader schema validates structure; cast narrows passthrough output
-          const config = configResult.data as ProjectConfig;
-          // Normalize stack values to SkillAssignment[] (same as loadProjectConfig)
-          if (config.stack) {
-            config.stack = normalizeStackRecord(
-              config.stack as unknown as Record<string, Record<string, unknown>>,
-            );
-          }
-          const agentCount = config.agents?.length ?? 0;
-          const stackSkillCount = config.stack ? getStackSkillIds(config.stack).length : 0;
-          this.log(`Using config.yaml (${agentCount} agents, ${stackSkillCount} skills)`);
-          verbose(`  Config: ${configPath}`);
-        } else {
-          this.warn("config.yaml found but has invalid structure - using defaults");
-        }
-      } catch {
-        this.warn("config.yaml found but could not be parsed - using defaults");
-      }
+    const loaded = await loadProjectConfigFromDir(projectDir);
+    if (loaded) {
+      const config = loaded.config;
+      const agentCount = config.agents?.length ?? 0;
+      const stackSkillCount = config.stack ? getStackSkillIds(config.stack).length : 0;
+      this.log(`Using config (${agentCount} agents, ${stackSkillCount} skills)`);
+      verbose(`  Config: ${loaded.configPath}`);
     } else {
-      verbose(`  No config.yaml found - using defaults`);
+      verbose(`  No config found - using defaults`);
     }
 
     const { allSkills, totalSkillCount } = await this.discoverAllSkills(projectDir);

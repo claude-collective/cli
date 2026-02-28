@@ -1,18 +1,19 @@
 import { Args, Flags } from "@oclif/core";
 import path from "path";
-import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { BaseCommand } from "../../base-command.js";
 import { resolveAuthor } from "../../lib/configuration/index.js";
-import { writeFile, readFile, directoryExists, fileExists, ensureDir } from "../../utils/fs.js";
+import { loadTsConfig } from "../../lib/configuration/ts-config-loader.js";
+import { writeFile, directoryExists, fileExists, ensureDir } from "../../utils/fs.js";
 import { getErrorMessage } from "../../utils/errors.js";
 import { verbose } from "../../utils/logger.js";
 import {
   CLI_BIN_NAME,
+  DEFAULT_VERSION,
   KEBAB_CASE_PATTERN,
   LOCAL_SKILLS_PATH,
   PLUGIN_MANIFEST_DIR,
-  SKILL_CATEGORIES_YAML_PATH,
-  SKILL_RULES_YAML_PATH,
+  SKILL_CATEGORIES_PATH,
+  SKILL_RULES_PATH,
   SKILLS_DIR_PATH,
   STANDARD_FILES,
 } from "../../consts.js";
@@ -120,36 +121,51 @@ tags:
 const KNOWN_DOMAINS = new Set(["web", "api", "mobile", "cli", "shared"]);
 const DEFAULT_CATEGORY_ORDER = 99;
 
-export function generateSkillCategoriesYaml(category: CategoryPath): string {
+const CATEGORIES_TS_COMMENT = "// Skill category definitions";
+const RULES_TS_COMMENT = "// Short aliases mapping to canonical skill IDs";
+
+function formatTsExport(comment: string, data: unknown): string {
+  const body = JSON.stringify(data, null, 2);
+  return `${comment}\nexport default ${body};\n`;
+}
+
+function buildCategoryEntry(category: CategoryPath): Record<string, unknown> {
   const prefix = category.split("-")[0];
   const subcategoryPart = category.includes("-")
     ? category.slice(category.indexOf("-") + 1)
     : category;
-  const displayName = toTitleCase(subcategoryPart);
-  const domainLine = KNOWN_DOMAINS.has(prefix) ? `\n    domain: ${prefix}` : "";
-
-  return `version: "1.0.0"
-
-categories:
-  ${category}:
-    id: ${category}
-    displayName: ${displayName}
-    description: Skills for ${displayName}${domainLine}
-    exclusive: true
-    required: false
-    order: ${DEFAULT_CATEGORY_ORDER}
-    custom: true
-`;
+  const entry: Record<string, unknown> = {
+    id: category,
+    displayName: toTitleCase(subcategoryPart),
+    description: `Skills for ${toTitleCase(subcategoryPart)}`,
+    exclusive: true,
+    required: false,
+    order: DEFAULT_CATEGORY_ORDER,
+    custom: true,
+  };
+  if (KNOWN_DOMAINS.has(prefix)) entry.domain = prefix;
+  return entry;
 }
 
-export function generateSkillRulesYaml(skillName: string): string {
-  return `version: "1.0.0"
+export function generateSkillCategoriesTs(category: CategoryPath): string {
+  const entry = buildCategoryEntry(category);
+  const data = {
+    version: DEFAULT_VERSION,
+    categories: {
+      [category]: entry,
+    },
+  };
+  return formatTsExport(CATEGORIES_TS_COMMENT, data);
+}
 
-# Short aliases mapping to canonical skill IDs
-# Example: react: "web-framework-react"
-aliases:
-  ${skillName}: "${skillName}"
-`;
+export function generateSkillRulesTs(skillName: string): string {
+  const data = {
+    version: DEFAULT_VERSION,
+    aliases: {
+      [skillName]: skillName,
+    },
+  };
+  return formatTsExport(RULES_TS_COMMENT, data);
 }
 
 export default class NewSkill extends BaseCommand {
@@ -289,55 +305,41 @@ export default class NewSkill extends BaseCommand {
     skillName: string,
     category: CategoryPath,
   ): Promise<void> {
-    const categoriesPath = path.join(projectRoot, SKILL_CATEGORIES_YAML_PATH);
-    const rulesPath = path.join(projectRoot, SKILL_RULES_YAML_PATH);
+    const categoriesPath = path.join(projectRoot, SKILL_CATEGORIES_PATH);
+    const rulesPath = path.join(projectRoot, SKILL_RULES_PATH);
 
-    // Update skill-categories.yaml
+    // Update skill-categories.ts
     if (await fileExists(categoriesPath)) {
-      const content = await readFile(categoriesPath);
-      const parsed = parseYaml(content) as Record<string, unknown>;
+      // Boundary cast: loadTsConfig returns unknown structure from TS file
+      const parsed = (await loadTsConfig<Record<string, unknown>>(categoriesPath)) ?? {};
       const categories = (parsed.categories ?? {}) as Record<string, unknown>;
       if (!categories[category]) {
-        const prefix = category.split("-")[0];
-        const subcategoryPart = category.includes("-")
-          ? category.slice(category.indexOf("-") + 1)
-          : category;
-        const entry: Record<string, unknown> = {
-          id: category,
-          displayName: toTitleCase(subcategoryPart),
-          description: `Skills for ${toTitleCase(subcategoryPart)}`,
-          exclusive: true,
-          required: false,
-          order: DEFAULT_CATEGORY_ORDER,
-          custom: true,
-        };
-        if (KNOWN_DOMAINS.has(prefix)) entry.domain = prefix;
-        categories[category] = entry;
+        categories[category] = buildCategoryEntry(category);
         parsed.categories = categories;
-        await writeFile(categoriesPath, stringifyYaml(parsed));
-        verbose(`Added category '${category}' to ${SKILL_CATEGORIES_YAML_PATH}`);
+        await writeFile(categoriesPath, formatTsExport(CATEGORIES_TS_COMMENT, parsed));
+        verbose(`Added category '${category}' to ${SKILL_CATEGORIES_PATH}`);
       }
     } else {
       await ensureDir(path.dirname(categoriesPath));
-      await writeFile(categoriesPath, generateSkillCategoriesYaml(category));
-      verbose(`Created ${SKILL_CATEGORIES_YAML_PATH}`);
+      await writeFile(categoriesPath, generateSkillCategoriesTs(category));
+      verbose(`Created ${SKILL_CATEGORIES_PATH}`);
     }
 
-    // Update skill-rules.yaml
+    // Update skill-rules.ts
     if (await fileExists(rulesPath)) {
-      const content = await readFile(rulesPath);
-      const parsed = parseYaml(content) as Record<string, unknown>;
+      // Boundary cast: loadTsConfig returns unknown structure from TS file
+      const parsed = (await loadTsConfig<Record<string, unknown>>(rulesPath)) ?? {};
       const aliases = (parsed.aliases ?? {}) as Record<string, unknown>;
       if (!aliases[skillName]) {
         aliases[skillName] = skillName;
         parsed.aliases = aliases;
-        await writeFile(rulesPath, stringifyYaml(parsed));
-        verbose(`Added alias '${skillName}' to ${SKILL_RULES_YAML_PATH}`);
+        await writeFile(rulesPath, formatTsExport(RULES_TS_COMMENT, parsed));
+        verbose(`Added alias '${skillName}' to ${SKILL_RULES_PATH}`);
       }
     } else {
       await ensureDir(path.dirname(rulesPath));
-      await writeFile(rulesPath, generateSkillRulesYaml(skillName));
-      verbose(`Created ${SKILL_RULES_YAML_PATH}`);
+      await writeFile(rulesPath, generateSkillRulesTs(skillName));
+      verbose(`Created ${SKILL_RULES_PATH}`);
     }
   }
 }

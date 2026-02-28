@@ -12,8 +12,8 @@ import {
 } from "../helpers/test-utils.js";
 import {
   CLAUDE_DIR,
-  SKILL_CATEGORIES_YAML_PATH,
-  SKILL_RULES_YAML_PATH,
+  SKILL_CATEGORIES_PATH,
+  SKILL_RULES_PATH,
   STANDARD_FILES,
   STANDARD_DIRS,
 } from "../../src/cli/consts.js";
@@ -170,16 +170,16 @@ describe("new skill command", () => {
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Skill created successfully");
 
-    // Verify skill-categories.yaml was updated with the new category
-    const categoriesPath = path.join(marketplaceDir, SKILL_CATEGORIES_YAML_PATH);
+    // Verify skill-categories.ts was updated with the new category
+    const categoriesPath = path.join(marketplaceDir, SKILL_CATEGORIES_PATH);
     const categoriesContent = await readTestFile(categoriesPath);
-    expect(categoriesContent).toContain("api-database:");
-    expect(categoriesContent).toContain("domain: api");
+    expect(categoriesContent).toContain('"api-database"');
+    expect(categoriesContent).toContain('"domain": "api"');
 
-    // Verify skill-rules.yaml was updated with the new skill alias
-    const rulesPath = path.join(marketplaceDir, SKILL_RULES_YAML_PATH);
+    // Verify skill-rules.ts was updated with the new skill alias
+    const rulesPath = path.join(marketplaceDir, SKILL_RULES_PATH);
     const rulesContent = await readTestFile(rulesPath);
-    expect(rulesContent).toContain("my-extra-skill:");
+    expect(rulesContent).toContain('"my-extra-skill"');
   });
 
   it("should not create config files when creating a local skill", async () => {
@@ -190,7 +190,7 @@ describe("new skill command", () => {
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
     // Config files should NOT exist for local skills
-    expect(await fileExists(path.join(tempDir, SKILL_CATEGORIES_YAML_PATH))).toBe(false);
-    expect(await fileExists(path.join(tempDir, SKILL_RULES_YAML_PATH))).toBe(false);
+    expect(await fileExists(path.join(tempDir, SKILL_CATEGORIES_PATH))).toBe(false);
+    expect(await fileExists(path.join(tempDir, SKILL_RULES_PATH))).toBe(false);
   });
 });

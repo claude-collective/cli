@@ -1,7 +1,6 @@
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readFile, mkdir, writeFile } from "fs/promises";
-import { stringify as stringifyYaml } from "yaml";
 import {
   resolveSource,
   resolveAgentsSource,
@@ -18,7 +17,7 @@ import {
   fileExists,
   type TestDirs,
 } from "../fixtures/create-test-source";
-import { createTempDir, cleanupTempDir } from "../helpers";
+import { createTempDir, cleanupTempDir, parseTsConfigContent } from "../helpers";
 
 const PROJECT_CONFIG_DIR = ".claude-src";
 
@@ -28,8 +27,9 @@ async function createProjectConfig(
 ): Promise<string> {
   const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
   await mkdir(configDir, { recursive: true });
-  const configPath = path.join(configDir, "config.yaml");
-  await writeFile(configPath, stringifyYaml(config));
+  const configPath = path.join(configDir, "config.ts");
+  const content = `export default ${JSON.stringify(config, null, 2)};`;
+  await writeFile(configPath, content);
   return configPath;
 }
 
@@ -148,7 +148,7 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
       expect(result.sourceOrigin).toBe("project");
     });
 
-    it("should load project config from .claude-src/config.yaml", async () => {
+    it("should load project config from .claude-src/config.ts", async () => {
       const configPath = await createProjectConfig(projectDir, {
         source: "github:my-company/internal-skills",
       });
@@ -180,10 +180,10 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
       expect(config).toBeNull();
     });
 
-    it("should return null for invalid YAML in project config", async () => {
+    it("should return null for invalid TS in project config", async () => {
       const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
       await mkdir(configDir, { recursive: true });
-      await writeFile(path.join(configDir, "config.yaml"), "invalid: yaml: content: :");
+      await writeFile(path.join(configDir, "config.ts"), "invalid typescript content {{");
 
       const config = await loadProjectSourceConfig(projectDir);
       expect(config).toBeNull();
@@ -327,7 +327,9 @@ describe("User Journey: Project Config Save and Load", () => {
       expect(await fileExists(configPath)).toBe(true);
 
       const content = await readFile(configPath, "utf-8");
-      expect(content).toContain("source: github:test/repo");
+      // Boundary cast: TS config parse returns `unknown`
+      const config = parseTsConfigContent<ProjectSourceConfig>(content);
+      expect(config.source).toBe("github:test/repo");
     });
 
     it("should overwrite existing config", async () => {
@@ -336,9 +338,10 @@ describe("User Journey: Project Config Save and Load", () => {
 
       const configPath = getProjectConfigPath(projectDir);
       const content = await readFile(configPath, "utf-8");
+      // Boundary cast: TS config parse returns `unknown`
+      const config = parseTsConfigContent<ProjectSourceConfig>(content);
 
-      expect(content).toContain("github:second/repo");
-      expect(content).not.toContain("github:first/repo");
+      expect(config.source).toBe("github:second/repo");
     });
 
     it("should save all config fields", async () => {
@@ -350,10 +353,12 @@ describe("User Journey: Project Config Save and Load", () => {
 
       const configPath = getProjectConfigPath(projectDir);
       const content = await readFile(configPath, "utf-8");
+      // Boundary cast: TS config parse returns `unknown`
+      const config = parseTsConfigContent<ProjectSourceConfig>(content);
 
-      expect(content).toContain("source: github:myorg/skills");
-      expect(content).toContain("marketplace: https://marketplace.example.com");
-      expect(content).toContain("agentsSource: https://agents.example.com");
+      expect(config.source).toBe("github:myorg/skills");
+      expect(config.marketplace).toBe("https://marketplace.example.com");
+      expect(config.agentsSource).toBe("https://agents.example.com");
     });
   });
 
@@ -372,7 +377,7 @@ describe("User Journey: Project Config Save and Load", () => {
 
     it("should return config path from getProjectConfigPath", () => {
       const configPath = getProjectConfigPath(projectDir);
-      expect(configPath).toBe(path.join(projectDir, PROJECT_CONFIG_DIR, "config.yaml"));
+      expect(configPath).toBe(path.join(projectDir, PROJECT_CONFIG_DIR, "config.ts"));
     });
   });
 });
@@ -399,7 +404,7 @@ describe("User Journey: Config Precedence with CLI", () => {
     dirs = await createTestSource({
       projectConfig: {
         name: "test-project",
-        // Note: source is in .claude/config.yaml, not plugin config
+        // Note: source is in project config, not plugin config
       },
     });
 
@@ -476,25 +481,23 @@ describe("User Journey: Config Edge Cases", () => {
     const projectDir = path.join(tempDir, "project");
     const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.yaml"), "");
+    await writeFile(path.join(configDir, "config.ts"), "export default {};");
 
     const config = await loadProjectSourceConfig(projectDir);
-    // Empty file should result in null or empty config
-    // Implementation returns null for empty file
-    expect(config).toBeNull();
+    // Empty config object is valid — all fields are optional
+    expect(config).toEqual({});
   });
 
   it("should handle config with extra unknown fields", async () => {
     const projectDir = path.join(tempDir, "project");
     const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
     await mkdir(configDir, { recursive: true });
-    await writeFile(
-      path.join(configDir, "config.yaml"),
-      `source: github:valid/source
-unknown_field: should_be_ignored
-another_unknown: also_ignored
-`,
-    );
+    const content = `export default ${JSON.stringify({
+      source: "github:valid/source",
+      unknown_field: "should_be_ignored",
+      another_unknown: "also_ignored",
+    })};`;
+    await writeFile(path.join(configDir, "config.ts"), content);
 
     const config = await loadProjectSourceConfig(projectDir);
     expect(config?.source).toBe("github:valid/source");

@@ -6,6 +6,10 @@ import { DEFAULT_BRANDING, DEFAULT_PLUGIN_NAME } from "../../../consts";
 import { createTempDir, cleanupTempDir } from "../helpers";
 import { detectInstallation, getInstallationOrThrow } from "../../installation";
 
+function tsConfigContent(config: Record<string, unknown>): string {
+  return `export default ${JSON.stringify(config)};`;
+}
+
 describe("installation", () => {
   let tempDir: string;
 
@@ -18,43 +22,23 @@ describe("installation", () => {
   });
 
   describe("detectInstallation - local mode", () => {
-    it("should return local installation when .claude-src/config.yaml exists", async () => {
+    it("should return local installation when .claude-src/config.ts exists", async () => {
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeSrcDir, "config.yaml"),
-        `name: test-project
-agents:
-  - web-developer
-installMode: local
-`,
+        path.join(claudeSrcDir, "config.ts"),
+        tsConfigContent({
+          name: "test-project",
+          agents: ["web-developer"],
+          installMode: "local",
+        }),
       );
 
       const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
       expect(result?.mode).toBe("local");
-      expect(result?.configPath).toBe(path.join(claudeSrcDir, "config.yaml"));
-      expect(result?.projectDir).toBe(tempDir);
-    });
-
-    it("should fall back to .claude/config.yaml for legacy projects", async () => {
-      const claudeDir = path.join(tempDir, ".claude");
-      await mkdir(claudeDir, { recursive: true });
-      await writeFile(
-        path.join(claudeDir, "config.yaml"),
-        `name: test-project
-agents:
-  - web-developer
-installMode: local
-`,
-      );
-
-      const result = await detectInstallation(tempDir);
-
-      expect(result).not.toBeNull();
-      expect(result?.mode).toBe("local");
-      expect(result?.configPath).toBe(path.join(claudeDir, "config.yaml"));
+      expect(result?.configPath).toBe(path.join(claudeSrcDir, "config.ts"));
       expect(result?.projectDir).toBe(tempDir);
     });
 
@@ -62,11 +46,11 @@ installMode: local
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeSrcDir, "config.yaml"),
-        `name: test-project
-agents:
-  - web-developer
-`,
+        path.join(claudeSrcDir, "config.ts"),
+        tsConfigContent({
+          name: "test-project",
+          agents: ["web-developer"],
+        }),
       );
 
       const result = await detectInstallation(tempDir);
@@ -80,11 +64,11 @@ agents:
       const claudeDir = path.join(tempDir, ".claude");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeSrcDir, "config.yaml"),
-        `name: test-project
-agents:
-  - web-developer
-`,
+        path.join(claudeSrcDir, "config.ts"),
+        tsConfigContent({
+          name: "test-project",
+          agents: ["web-developer"],
+        }),
       );
 
       const result = await detectInstallation(tempDir);
@@ -100,19 +84,19 @@ agents:
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeSrcDir, "config.yaml"),
-        `name: test-project
-agents:
-  - web-developer
-installMode: plugin
-`,
+        path.join(claudeSrcDir, "config.ts"),
+        tsConfigContent({
+          name: "test-project",
+          agents: ["web-developer"],
+          installMode: "plugin",
+        }),
       );
 
       const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
       expect(result?.mode).toBe("plugin");
-      expect(result?.configPath).toBe(path.join(claudeSrcDir, "config.yaml"));
+      expect(result?.configPath).toBe(path.join(claudeSrcDir, "config.ts"));
       expect(result?.projectDir).toBe(tempDir);
     });
 
@@ -121,12 +105,12 @@ installMode: plugin
       const claudeDir = path.join(tempDir, ".claude");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeSrcDir, "config.yaml"),
-        `name: test-project
-agents:
-  - web-developer
-installMode: plugin
-`,
+        path.join(claudeSrcDir, "config.ts"),
+        tsConfigContent({
+          name: "test-project",
+          agents: ["web-developer"],
+          installMode: "plugin",
+        }),
       );
 
       const result = await detectInstallation(tempDir);
@@ -153,7 +137,7 @@ installMode: plugin
       expect(result).toBeNull();
     });
 
-    it("should return null when .claude exists but no config.yaml or plugin", async () => {
+    it("should return null when .claude exists but no config.ts or plugin", async () => {
       const claudeDir = path.join(tempDir, ".claude");
       await mkdir(claudeDir, { recursive: true });
 
@@ -164,16 +148,16 @@ installMode: plugin
   });
 
   describe("detectInstallation - priority", () => {
-    it("should prioritize local installation over plugin when both exist", async () => {
+    it("should detect local installation from config.ts", async () => {
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       const claudeDir = path.join(tempDir, ".claude");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeSrcDir, "config.yaml"),
-        `name: test-project
-agents:
-  - web-developer
-`,
+        path.join(claudeSrcDir, "config.ts"),
+        tsConfigContent({
+          name: "test-project",
+          agents: ["web-developer"],
+        }),
       );
 
       const pluginDir = path.join(claudeDir, "plugins", DEFAULT_PLUGIN_NAME);
@@ -201,11 +185,11 @@ agents:
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeSrcDir, "config.yaml"),
-        `name: test-project
-agents:
-  - web-developer
-`,
+        path.join(claudeSrcDir, "config.ts"),
+        tsConfigContent({
+          name: "test-project",
+          agents: ["web-developer"],
+        }),
       );
 
       const result = await getInstallationOrThrow(tempDir);
@@ -219,12 +203,12 @@ agents:
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeSrcDir, "config.yaml"),
-        `name: test-project
-agents:
-  - web-developer
-installMode: plugin
-`,
+        path.join(claudeSrcDir, "config.ts"),
+        tsConfigContent({
+          name: "test-project",
+          agents: ["web-developer"],
+          installMode: "plugin",
+        }),
       );
 
       const result = await getInstallationOrThrow(tempDir);
@@ -240,25 +224,25 @@ installMode: plugin
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeSrcDir, "config.yaml"),
-        `name: test-project
-agents:
-  - web-developer
-installMode: plugin
-`,
+        path.join(claudeSrcDir, "config.ts"),
+        tsConfigContent({
+          name: "test-project",
+          agents: ["web-developer"],
+          installMode: "plugin",
+        }),
       );
 
       const result = await detectInstallation(tempDir);
 
       expect(result).not.toBeNull();
       expect(result?.mode).toBe("plugin");
-      expect(result?.configPath).toBe(path.join(claudeSrcDir, "config.yaml"));
+      expect(result?.configPath).toBe(path.join(claudeSrcDir, "config.ts"));
     });
 
-    it("should treat invalid YAML config file as local mode (file exists)", async () => {
+    it("should treat invalid TS config file as local mode (file exists)", async () => {
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
-      await writeFile(path.join(claudeSrcDir, "config.yaml"), "invalid: yaml: content: :");
+      await writeFile(path.join(claudeSrcDir, "config.ts"), "invalid typescript content {{");
 
       // When config file exists but is invalid, loadProjectConfig returns null
       // The detection logic sees file exists, loaded?.config?.installMode is undefined,
@@ -278,11 +262,11 @@ installMode: plugin
         const claudeSrcDir = path.join(tempDir, ".claude-src");
         await mkdir(claudeSrcDir, { recursive: true });
         await writeFile(
-          path.join(claudeSrcDir, "config.yaml"),
-          `name: test-project
-agents:
-  - web-developer
-`,
+          path.join(claudeSrcDir, "config.ts"),
+          tsConfigContent({
+            name: "test-project",
+            agents: ["web-developer"],
+          }),
         );
 
         const result = await detectInstallation();

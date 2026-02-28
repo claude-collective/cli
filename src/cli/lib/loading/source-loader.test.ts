@@ -365,7 +365,10 @@ describe("source-loader config-driven paths", () => {
     // Create source config with custom skillsDir
     const configDir = path.join(sourceDir, ".claude-src");
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.yaml"), "skillsDir: lib/skills\n");
+    await writeFile(
+      path.join(configDir, "config.ts"),
+      'export default { skillsDir: "lib/skills" };',
+    );
 
     // Create skills in the custom directory
     const skillsDir = path.join(sourceDir, "lib", "skills", "web", "framework", "react");
@@ -394,7 +397,10 @@ describe("source-loader config-driven paths", () => {
     // Create source config with custom categoriesFile pointing to a non-existent path
     const configDir = path.join(sourceDir, ".claude-src");
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.yaml"), "categoriesFile: data/categories.yaml\n");
+    await writeFile(
+      path.join(configDir, "config.ts"),
+      'export default { categoriesFile: "data/categories.yaml" };',
+    );
 
     // Do NOT create categories at data/categories.yaml — loader should fall back to CLI categories
     await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
@@ -416,7 +422,10 @@ describe("source-loader config-driven paths", () => {
     // Create source config with custom rulesFile pointing to a non-existent path
     const configDir = path.join(sourceDir, ".claude-src");
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.yaml"), "rulesFile: data/rules.yaml\n");
+    await writeFile(
+      path.join(configDir, "config.ts"),
+      'export default { rulesFile: "data/rules.yaml" };',
+    );
 
     await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
 
@@ -435,15 +444,29 @@ describe("source-loader config-driven paths", () => {
     // Create source config with custom stacksFile
     const configDir = path.join(sourceDir, ".claude-src");
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.yaml"), "stacksFile: data/stacks.yaml\n");
+    await writeFile(
+      path.join(configDir, "config.ts"),
+      'export default { stacksFile: "data/stacks.ts" };',
+    );
 
     // Create stacks at the custom path
     const dataDir = path.join(sourceDir, "data");
     await mkdir(dataDir, { recursive: true });
-    await writeFile(
-      path.join(dataDir, "stacks.yaml"),
-      `stacks:\n  - id: custom-path-stack\n    name: Custom Path Stack\n    description: Stack from custom path\n    agents:\n      web-developer:\n        web-framework: web-framework-react\n`,
-    );
+    const stacksTsContent = `export default ${JSON.stringify(
+      {
+        stacks: [
+          {
+            id: "custom-path-stack",
+            name: "Custom Path Stack",
+            description: "Stack from custom path",
+            agents: { "web-developer": { "web-framework": "web-framework-react" } },
+          },
+        ],
+      },
+      null,
+      2,
+    )};\n`;
+    await writeFile(path.join(dataDir, "stacks.ts"), stacksTsContent);
 
     // Create empty skills dir
     await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
@@ -461,7 +484,7 @@ describe("source-loader config-driven paths", () => {
   it("should fall back to convention defaults when source has no config", async () => {
     const sourceDir = path.join(tempDir, "no-config-source");
 
-    // No .claude-src/config.yaml — just create conventional paths
+    // No .claude-src/config.ts — just create conventional paths
     await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
 
     const result = await loadSkillsMatrixFromSource({
@@ -480,7 +503,10 @@ describe("source-loader config-driven paths", () => {
     // Create source config WITHOUT path fields
     const configDir = path.join(sourceDir, ".claude-src");
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.yaml"), "source: github:myorg/skills\n");
+    await writeFile(
+      path.join(configDir, "config.ts"),
+      'export default { source: "github:myorg/skills" };',
+    );
 
     await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
 
@@ -541,24 +567,28 @@ describe("source-loader integration", () => {
     expect(firstStack.allSkillIds).toBeDefined();
   });
 
-  it("should load stacks from source when source has config/stacks.yaml", async () => {
-    // Create a source directory with its own stacks.yaml
+  it("should load stacks from source when source has config/stacks.ts", async () => {
+    // Create a source directory with its own stacks.ts
     const sourceDir = path.join(tempDir, "custom-source");
     const configDir = path.join(sourceDir, "config");
     await mkdir(configDir, { recursive: true });
 
-    // Write a minimal custom stacks.yaml with a unique stack ID
-    await writeFile(
-      path.join(configDir, "stacks.yaml"),
-      `stacks:
-  - id: custom-test-stack
-    name: Custom Test Stack
-    description: A test stack from the source
-    agents:
-      web-developer:
-        web-framework: web-framework-react
-`,
-    );
+    // Write a minimal custom stacks.ts with a unique stack ID
+    const stacksTsContent = `export default ${JSON.stringify(
+      {
+        stacks: [
+          {
+            id: "custom-test-stack",
+            name: "Custom Test Stack",
+            description: "A test stack from the source",
+            agents: { "web-developer": { "web-framework": "web-framework-react" } },
+          },
+        ],
+      },
+      null,
+      2,
+    )};\n`;
+    await writeFile(path.join(configDir, "stacks.ts"), stacksTsContent);
 
     // Create an empty src/skills dir so extractAllSkills doesn't fail
     await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
@@ -575,8 +605,8 @@ describe("source-loader integration", () => {
     expect(result.matrix.suggestedStacks[0].name).toBe("Custom Test Stack");
   });
 
-  it("should fall back to CLI stacks when source has no config/stacks.yaml", async () => {
-    // Create a source directory without stacks.yaml
+  it("should fall back to CLI stacks when source has no config/stacks.ts", async () => {
+    // Create a source directory without stacks.ts
     const sourceDir = path.join(tempDir, "no-stacks-source");
     await mkdir(path.join(sourceDir, "src", "skills"), { recursive: true });
 

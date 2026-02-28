@@ -11,12 +11,12 @@ import {
 import { EXIT_CODES } from "../../../exit-codes";
 import {
   validateMarketplaceName,
-  generateStacksYaml,
+  generateStacksTs,
   generateReadme,
 } from "../../../../commands/new/marketplace";
 import {
-  SKILL_CATEGORIES_YAML_PATH,
-  SKILL_RULES_YAML_PATH,
+  SKILL_CATEGORIES_PATH,
+  SKILL_RULES_PATH,
   STACKS_FILE_PATH,
   SKILLS_DIR_PATH,
   STANDARD_FILES,
@@ -85,28 +85,33 @@ describe("validateMarketplaceName", () => {
   });
 });
 
-describe("generateStacksYaml", () => {
+describe("generateStacksTs", () => {
   it("should contain a dummy stack", () => {
-    const content = generateStacksYaml("acme");
-    expect(content).toContain("id: dummy-stack");
-    expect(content).toContain("name: Dummy Stack");
-    expect(content).toContain("description: Default stack for acme");
+    const content = generateStacksTs("acme");
+    expect(content).toContain('"id": "dummy-stack"');
+    expect(content).toContain('"name": "Dummy Stack"');
+    expect(content).toContain('"description": "Default stack for acme"');
   });
 
   it("should reference dummy-skill under the dummy category", () => {
-    const content = generateStacksYaml("acme");
-    expect(content).toContain("dummy-category: dummy-skill");
+    const content = generateStacksTs("acme");
+    expect(content).toContain('"dummy-category": "dummy-skill"');
   });
 
   it("should contain a philosophy field", () => {
-    const content = generateStacksYaml("acme");
-    expect(content).toContain("philosophy:");
+    const content = generateStacksTs("acme");
+    expect(content).toContain('"philosophy":');
   });
 
   it("should use dummy-stack id regardless of marketplace name", () => {
-    const content = generateStacksYaml("my-org");
-    expect(content).toContain("id: dummy-stack");
-    expect(content).toContain("dummy-category: dummy-skill");
+    const content = generateStacksTs("my-org");
+    expect(content).toContain('"id": "dummy-stack"');
+    expect(content).toContain('"dummy-category": "dummy-skill"');
+  });
+
+  it("should be valid TypeScript with export default", () => {
+    const content = generateStacksTs("acme");
+    expect(content).toContain("export default");
   });
 });
 
@@ -177,15 +182,15 @@ describe("new:marketplace command", () => {
       expect(await directoryExists(skillDir)).toBe(true);
     });
 
-    it("should create config/stacks.yaml with valid content", async () => {
+    it("should create config/stacks.ts with valid content", async () => {
       await runCliCommand(["new:marketplace", "acme-skills"]);
 
       const stacksPath = path.join(projectDir, "acme-skills", STACKS_FILE_PATH);
       expect(await fileExists(stacksPath)).toBe(true);
 
       const content = await readFile(stacksPath, "utf-8");
-      expect(content).toContain("id: dummy-stack");
-      expect(content).toContain("dummy-category: dummy-skill");
+      expect(content).toContain('"id": "dummy-stack"');
+      expect(content).toContain('"dummy-category": "dummy-skill"');
     });
 
     it("should create SKILL.md and metadata.yaml for dummy-skill with default category", async () => {
@@ -210,29 +215,29 @@ describe("new:marketplace command", () => {
       expect(content).toContain("# acme-skills");
     });
 
-    it("should create config/skill-categories.yaml with dummy-category entry", async () => {
+    it("should create config/skill-categories.ts with dummy-category entry", async () => {
       await runCliCommand(["new:marketplace", "acme-skills"]);
 
-      const categoriesPath = path.join(projectDir, "acme-skills", SKILL_CATEGORIES_YAML_PATH);
+      const categoriesPath = path.join(projectDir, "acme-skills", SKILL_CATEGORIES_PATH);
       expect(await fileExists(categoriesPath)).toBe(true);
 
       const content = await readFile(categoriesPath, "utf-8");
-      expect(content).toContain('version: "1.0.0"');
-      expect(content).toContain("dummy-category:");
-      expect(content).toContain("id: dummy-category");
-      expect(content).toContain("custom: true");
+      expect(content).toContain('"version": "1.0.0"');
+      expect(content).toContain('"dummy-category"');
+      expect(content).toContain('"id": "dummy-category"');
+      expect(content).toContain('"custom": true');
     });
 
-    it("should create config/skill-rules.yaml with dummy-skill alias", async () => {
+    it("should create config/skill-rules.ts with dummy-skill alias", async () => {
       await runCliCommand(["new:marketplace", "acme-skills"]);
 
-      const rulesPath = path.join(projectDir, "acme-skills", SKILL_RULES_YAML_PATH);
+      const rulesPath = path.join(projectDir, "acme-skills", SKILL_RULES_PATH);
       expect(await fileExists(rulesPath)).toBe(true);
 
       const content = await readFile(rulesPath, "utf-8");
-      expect(content).toContain('version: "1.0.0"');
-      expect(content).toContain("aliases:");
-      expect(content).toContain('dummy-skill: "dummy-skill"');
+      expect(content).toContain('"version": "1.0.0"');
+      expect(content).toContain('"aliases"');
+      expect(content).toContain('"dummy-skill": "dummy-skill"');
     });
   });
 
@@ -249,8 +254,8 @@ describe("new:marketplace command", () => {
       const { stdout } = await runCliCommand(["new:marketplace", "dry-run-market", "--dry-run"]);
 
       expect(stdout).toContain(STACKS_FILE_PATH);
-      expect(stdout).toContain(SKILL_CATEGORIES_YAML_PATH);
-      expect(stdout).toContain(SKILL_RULES_YAML_PATH);
+      expect(stdout).toContain(SKILL_CATEGORIES_PATH);
+      expect(stdout).toContain(SKILL_RULES_PATH);
       expect(stdout).toContain(STANDARD_FILES.SKILL_MD);
       expect(stdout).toContain(STANDARD_FILES.METADATA_YAML);
       expect(stdout).toContain("dummy-skill");
@@ -302,7 +307,7 @@ describe("new:marketplace command", () => {
       expect(error?.oclif?.exit).toBeUndefined();
 
       const content = await readFile(path.join(marketplaceDir, STACKS_FILE_PATH), "utf-8");
-      expect(content).toContain("id: dummy-stack");
+      expect(content).toContain('"id": "dummy-stack"');
       expect(content).not.toContain("old: content");
     });
   });
@@ -375,8 +380,8 @@ describe("new:marketplace command", () => {
 
       const stacksPath = path.join(dotDir, STACKS_FILE_PATH);
       const content = await readFile(stacksPath, "utf-8");
-      expect(content).toContain("id: dummy-stack");
-      expect(content).toContain("dummy-category: dummy-skill");
+      expect(content).toContain('"id": "dummy-stack"');
+      expect(content).toContain('"dummy-category": "dummy-skill"');
 
       const readmePath = path.join(dotDir, "README.md");
       const readmeContent = await readFile(readmePath, "utf-8");
@@ -425,8 +430,8 @@ describe("new:marketplace command", () => {
       expect(await fileExists(stacksPath)).toBe(true);
 
       const content = await readFile(stacksPath, "utf-8");
-      expect(content).toContain("id: dummy-stack");
-      expect(content).toContain("dummy-category: dummy-skill");
+      expect(content).toContain('"id": "dummy-stack"');
+      expect(content).toContain('"dummy-category": "dummy-skill"');
     });
 
     it("should show dry-run output with derived name when using '.'", async () => {

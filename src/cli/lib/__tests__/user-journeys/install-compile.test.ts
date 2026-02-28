@@ -756,10 +756,10 @@ describe("User Journey: Install -> Compile Error Handling", () => {
     ).rejects.toThrow();
   });
 
-  it("should throw when no stack is provided and stacks.yaml missing", async () => {
+  it("should throw when no stack is provided and stacks.ts missing", async () => {
     await createProjectStructure(projectRoot);
 
-    // compileStackPlugin without a stack option will try to load from stacks.yaml
+    // compileStackPlugin without a stack option will try to load from stacks.ts
     // which doesn't exist in our test project root
     await expect(
       compileStackPlugin({

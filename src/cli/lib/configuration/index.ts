@@ -42,3 +42,10 @@ export {
 } from "./project-config";
 
 export { type SourceSummary, addSource, removeSource, getSourceSummary } from "./source-manager";
+
+export { defineConfig } from "./define-config";
+export { defaultCategories } from "./default-categories";
+export { defaultRules } from "./default-rules";
+export { defaultStacks } from "./default-stacks";
+export { loadTsConfig } from "./ts-config-loader";
+export { generateTsConfigSource } from "./ts-config-writer";

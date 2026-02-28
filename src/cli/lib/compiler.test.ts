@@ -7,6 +7,7 @@ import { DEFAULT_PLUGIN_NAME } from "../consts";
 import {
   createCompileContext,
   createMockAgentConfig,
+  createMockCompiledAgentData,
   createMockSkillEntry,
   createTempDir,
   cleanupTempDir,
@@ -191,32 +192,6 @@ const WEB_DEV_LIQUID_INJECTION: Record<string, AgentConfig> = {
     title: "{% assign x = 1 %}Injected",
   }),
 };
-
-// ---------------------------------------------------------------------------
-// CompiledAgentData factory (specific to sanitization tests)
-// ---------------------------------------------------------------------------
-
-function createTestAgentData(overrides?: Partial<AgentConfig>): CompiledAgentData {
-  const agent = createMockAgentConfig("test-agent", [], {
-    title: "Test Agent",
-    description: "A test agent",
-    ...overrides,
-  });
-
-  return {
-    agent,
-    intro: "Test intro",
-    workflow: "Test workflow",
-    examples: "Test examples",
-    criticalRequirementsTop: "",
-    criticalReminders: "",
-    outputFormat: "",
-    skills: agent.skills,
-    preloadedSkills: [],
-    dynamicSkills: [],
-    preloadedSkillIds: [],
-  };
-}
 
 // ---------------------------------------------------------------------------
 // Engine mock values
@@ -527,7 +502,7 @@ describe("compiler", () => {
 
   describe("sanitizeCompiledAgentData", () => {
     it("passes through clean data unchanged", () => {
-      const data = createTestAgentData();
+      const data = createMockCompiledAgentData();
       const result = sanitizeCompiledAgentData(data);
 
       expect(result.agent.name).toBe("test-agent");
@@ -537,7 +512,7 @@ describe("compiler", () => {
     });
 
     it("sanitizes Liquid syntax in agent.name", () => {
-      const data = createTestAgentData({ name: '{{ forked_from.source | join: "|" }}' });
+      const data = createMockCompiledAgentData({ name: '{{ forked_from.source | join: "|" }}' });
       const result = sanitizeCompiledAgentData(data);
 
       expect(result.agent.name).not.toContain("{{");
@@ -545,7 +520,7 @@ describe("compiler", () => {
     });
 
     it("sanitizes Liquid syntax in agent.title", () => {
-      const data = createTestAgentData({ title: "{% include 'malicious' %}" });
+      const data = createMockCompiledAgentData({ title: "{% include 'malicious' %}" });
       const result = sanitizeCompiledAgentData(data);
 
       expect(result.agent.title).not.toContain("{%");
@@ -553,14 +528,14 @@ describe("compiler", () => {
     });
 
     it("sanitizes Liquid syntax in agent.description", () => {
-      const data = createTestAgentData({ description: "{{ evil }}" });
+      const data = createMockCompiledAgentData({ description: "{{ evil }}" });
       const result = sanitizeCompiledAgentData(data);
 
       expect(result.agent.description).not.toContain("{{");
     });
 
     it("sanitizes Liquid syntax in agent.tools array", () => {
-      const data = createTestAgentData({ tools: ["Read", "{{ malicious }}"] });
+      const data = createMockCompiledAgentData({ tools: ["Read", "{{ malicious }}"] });
       const result = sanitizeCompiledAgentData(data);
 
       expect(result.agent.tools[0]).toBe("Read");
@@ -568,7 +543,7 @@ describe("compiler", () => {
     });
 
     it("sanitizes Liquid syntax in file content fields", () => {
-      const data = createTestAgentData();
+      const data = createMockCompiledAgentData();
       data.intro = "Normal text {{ inject }} more text";
       data.workflow = "{% assign x = 1 %} workflow";
       data.examples = "{{ forked_from }} examples";
@@ -586,7 +561,7 @@ describe("compiler", () => {
         usage: "{% evil %} usage",
       });
 
-      const data = createTestAgentData();
+      const data = createMockCompiledAgentData();
       data.skills = [skill];
       data.preloadedSkills = [skill];
       data.preloadedSkillIds = [skill.id];
@@ -598,7 +573,7 @@ describe("compiler", () => {
     });
 
     it("preserves undefined optional fields", () => {
-      const data = createTestAgentData({ model: undefined, permissionMode: undefined });
+      const data = createMockCompiledAgentData({ model: undefined, permissionMode: undefined });
       const result = sanitizeCompiledAgentData(data);
 
       expect(result.agent.model).toBeUndefined();
@@ -606,7 +581,7 @@ describe("compiler", () => {
     });
 
     it("sanitizes optional string fields when present", () => {
-      const data = createTestAgentData({
+      const data = createMockCompiledAgentData({
         model: "{{ inject }}" as AgentConfig["model"],
         permissionMode: "{% evil %}" as AgentConfig["permissionMode"],
       });

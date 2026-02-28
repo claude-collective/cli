@@ -102,7 +102,7 @@ describe("stack-installer", () => {
 
     it("should propagate compilation errors", async () => {
       vi.mocked(compileStackPlugin).mockRejectedValue(
-        new Error("Stack 'nonexistent' not found in config/stacks.yaml"),
+        new Error("Stack 'nonexistent' not found in config/stacks.ts"),
       );
 
       await expect(
@@ -110,7 +110,7 @@ describe("stack-installer", () => {
           stackId: "nonexistent",
           projectRoot: "/project",
         }),
-      ).rejects.toThrow("Stack 'nonexistent' not found in config/stacks.yaml");
+      ).rejects.toThrow("Stack 'nonexistent' not found in config/stacks.ts");
     });
   });
 

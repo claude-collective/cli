@@ -1,8 +1,6 @@
-import { parse as parseYaml } from "yaml";
 import path from "path";
 import { mapValues, pipe, flatMap, unique } from "remeda";
 import { getErrorMessage } from "../../utils/errors";
-import { readFile, fileExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
 import type {
   AgentName,
@@ -11,20 +9,22 @@ import type {
   SkillReference,
   Stack,
   StackAgentConfig,
+  StacksConfig,
   Subcategory,
 } from "../../types";
-import { isValidSkillId, formatZodErrors, stacksConfigSchema } from "../schemas";
+import { isValidSkillId, stacksConfigSchema } from "../schemas";
 import { typedEntries } from "../../utils/typed-object";
 import { STACKS_FILE_PATH } from "../../consts";
+import { loadTsConfig } from "../configuration/ts-config-loader";
 
 const stacksCache = new Map<string, Stack[]>();
 
 /**
- * Normalizes a raw agent config (from Zod-parsed YAML) to StackAgentConfig.
+ * Normalizes a raw agent config (from Zod-parsed config) to StackAgentConfig.
  * Converts bare strings to `{ id, preloaded: false }` and wraps single values in arrays.
- * Used by both loadStacks() and loadProjectConfig() to handle all 3 YAML formats:
- *   1. bare string: `framework: web-framework-react`
- *   2. single object: `framework: { id: web-framework-react, preloaded: true }`
+ * Used by both loadStacks() and loadProjectConfig() to handle all 3 config formats:
+ *   1. bare string: `framework: "web-framework-react"`
+ *   2. single object: `framework: { id: "web-framework-react", preloaded: true }`
  *   3. array: `methodology: [{ id: ..., preloaded: true }, { id: ... }]`
  */
 export function normalizeAgentConfig(agentConfig: Record<string, unknown>): StackAgentConfig {
@@ -57,23 +57,18 @@ export async function loadStacks(configDir: string, stacksFile?: string): Promis
 
   const stacksPath = path.join(configDir, resolvedStacksFile);
 
-  if (!(await fileExists(stacksPath))) {
-    verbose(`No stacks file found at ${stacksPath}`);
-    return [];
-  }
-
   try {
-    const content = await readFile(stacksPath);
-    const result = stacksConfigSchema.safeParse(parseYaml(content));
+    const raw = await loadTsConfig<StacksConfig>(stacksPath, stacksConfigSchema);
 
-    if (!result.success) {
-      throw new Error(
-        `Invalid stacks.yaml at '${stacksPath}': ${formatZodErrors(result.error.issues)}`,
-      );
+    if (raw == null) {
+      verbose(`No stacks file found at ${stacksPath}`);
+      return [];
     }
 
     // Normalize: all values to SkillAssignment[] so StackAgentConfig is always SkillAssignment[]
-    const stacks: Stack[] = result.data.stacks.map((stack) => ({
+    // Boundary casts: Zod stacksConfigSchema outputs loose Record types;
+    // narrowing to Stack["agents"] after normalization guarantees SkillAssignment[] values
+    const stacks: Stack[] = raw.stacks.map((stack) => ({
       ...stack,
       agents: mapValues(
         stack.agents as Partial<Record<AgentName, Record<string, unknown>>>,

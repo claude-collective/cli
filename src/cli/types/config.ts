@@ -33,7 +33,7 @@ export type ValidationResult = {
   warnings: string[];
 };
 
-/** Unified project configuration stored at .claude/config.yaml */
+/** Unified project configuration stored at .claude-src/config.ts */
 export type ProjectConfig = {
   /** @default "1" */
   version?: "1";
@@ -60,7 +60,7 @@ export type ProjectConfig = {
   /**
    * Resolved stack configuration with agent->skill mappings.
    * Keys are agent IDs, values are subcategory->SkillAssignment[] mappings.
-   * Values are normalized to SkillAssignment[] at load time (same as stacks.yaml).
+   * Values are normalized to SkillAssignment[] at load time (same as stacks.ts).
    * Generated during `agentsinc init` when a stack is selected.
    */
   stack?: Record<string, StackAgentConfig>;

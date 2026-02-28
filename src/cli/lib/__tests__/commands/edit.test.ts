@@ -472,7 +472,7 @@ describe("edit command local-mode skill fallback", () => {
     mockDetectInstallation.mockResolvedValue({
       mode: "local",
       scope: "project",
-      configPath: path.join(projectDir, ".claude-src/config.yaml"),
+      configPath: path.join(projectDir, ".claude-src/config.ts"),
       agentsDir: path.join(projectDir, ".claude/agents"),
       skillsDir: path.join(projectDir, ".claude/skills"),
       projectDir,
@@ -495,7 +495,7 @@ describe("edit command local-mode skill fallback", () => {
         agents: [],
         skills: CONFIG_SKILLS,
       },
-      configPath: path.join(projectDir, ".claude-src/config.yaml"),
+      configPath: path.join(projectDir, ".claude-src/config.ts"),
     });
 
     try {
@@ -520,7 +520,7 @@ describe("edit command local-mode skill fallback", () => {
         agents: [],
         skills: CONFIG_SKILLS,
       },
-      configPath: path.join(projectDir, ".claude-src/config.yaml"),
+      configPath: path.join(projectDir, ".claude-src/config.ts"),
     });
 
     try {

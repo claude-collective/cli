@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "schemas/stacks.schema.json",
   "title": "Stacks Configuration",
-  "description": "Schema for config/stacks.yaml defining agent groupings.",
+  "description": "Schema for config/stacks.ts defining agent groupings.",
   "type": "object",
   "properties": {
     "stacks": {

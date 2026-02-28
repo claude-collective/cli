@@ -2,8 +2,11 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import os from "os";
 import { mkdtemp, rm, mkdir, writeFile } from "fs/promises";
-import { stringify as stringifyYaml } from "yaml";
 import { runCliCommand } from "../helpers";
+
+function tsConfigContent(config: Record<string, unknown>): string {
+  return `export default ${JSON.stringify(config, null, 2)};`;
+}
 
 describe("doctor command", () => {
   let tempDir: string;
@@ -34,7 +37,7 @@ describe("doctor command", () => {
     });
 
     it("should fail when no config exists", async () => {
-      // projectDir has no .claude/config.yaml
+      // projectDir has no .claude-src/config.ts
       const { error } = await runCliCommand(["doctor"]);
 
       // Should exit with error because Config Valid check fails
@@ -43,11 +46,11 @@ describe("doctor command", () => {
 
     it("should pass when valid config exists", async () => {
       // Create valid project config
-      const claudeDir = path.join(projectDir, ".claude");
-      await mkdir(claudeDir, { recursive: true });
+      const claudeSrcDir = path.join(projectDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeDir, "config.yaml"),
-        stringifyYaml({
+        path.join(claudeSrcDir, "config.ts"),
+        tsConfigContent({
           name: "test-project",
           agents: [],
         }),
@@ -58,7 +61,7 @@ describe("doctor command", () => {
       // Should complete without critical errors when config is valid
       // (may fail on Source Reachable if no source is available)
       const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("config.yaml has errors");
+      expect(output.toLowerCase()).not.toContain("config.ts has errors");
     });
   });
 
@@ -97,23 +100,23 @@ describe("doctor command", () => {
   });
 
   describe("config validation", () => {
-    it("should fail when config.yaml has syntax errors", async () => {
-      const claudeDir = path.join(projectDir, ".claude");
-      await mkdir(claudeDir, { recursive: true });
-      await writeFile(path.join(claudeDir, "config.yaml"), "invalid: yaml: content: ::::");
+    it("should fail when config.ts has syntax errors", async () => {
+      const claudeSrcDir = path.join(projectDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
+      await writeFile(path.join(claudeSrcDir, "config.ts"), "invalid typescript content {{");
 
       const { error } = await runCliCommand(["doctor"]);
 
-      // Should exit with error due to invalid YAML
+      // Should exit with error due to invalid TS config
       expect(error?.oclif?.exit).toBeDefined();
     });
 
     it("should pass with minimal valid config", async () => {
-      const claudeDir = path.join(projectDir, ".claude");
-      await mkdir(claudeDir, { recursive: true });
+      const claudeSrcDir = path.join(projectDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(
-        path.join(claudeDir, "config.yaml"),
-        stringifyYaml({
+        path.join(claudeSrcDir, "config.ts"),
+        tsConfigContent({
           name: "test-project",
         }),
       );
@@ -123,20 +126,22 @@ describe("doctor command", () => {
       // May still exit with error if source is unreachable,
       // but should not fail on config parsing
       const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("config.yaml has errors");
+      expect(output.toLowerCase()).not.toContain("config.ts has errors");
     });
   });
 
   describe("agents check", () => {
     it("should pass when agents are compiled", async () => {
+      const claudeSrcDir = path.join(projectDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
       const claudeDir = path.join(projectDir, ".claude");
       const agentsDir = path.join(claudeDir, "agents");
       await mkdir(agentsDir, { recursive: true });
 
       // Create config with one agent
       await writeFile(
-        path.join(claudeDir, "config.yaml"),
-        stringifyYaml({
+        path.join(claudeSrcDir, "config.ts"),
+        tsConfigContent({
           name: "test-project",
           agents: ["web-developer"],
         }),
@@ -156,13 +161,13 @@ describe("doctor command", () => {
     });
 
     it("should warn when agents need recompilation", async () => {
-      const claudeDir = path.join(projectDir, ".claude");
-      await mkdir(claudeDir, { recursive: true });
+      const claudeSrcDir = path.join(projectDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
 
       // Create config with agent but no compiled .md file
       await writeFile(
-        path.join(claudeDir, "config.yaml"),
-        stringifyYaml({
+        path.join(claudeSrcDir, "config.ts"),
+        tsConfigContent({
           name: "test-project",
           agents: ["web-developer"],
         }),
@@ -179,14 +184,16 @@ describe("doctor command", () => {
 
   describe("orphans check", () => {
     it("should detect orphaned agent files", async () => {
+      const claudeSrcDir = path.join(projectDir, ".claude-src");
+      await mkdir(claudeSrcDir, { recursive: true });
       const claudeDir = path.join(projectDir, ".claude");
       const agentsDir = path.join(claudeDir, "agents");
       await mkdir(agentsDir, { recursive: true });
 
       // Create config with no agents
       await writeFile(
-        path.join(claudeDir, "config.yaml"),
-        stringifyYaml({
+        path.join(claudeSrcDir, "config.ts"),
+        tsConfigContent({
           name: "test-project",
           agents: [],
         }),

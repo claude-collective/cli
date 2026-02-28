@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import path from "path";
 import { mkdir, readFile, writeFile } from "fs/promises";
-import { stringify as stringifyYaml } from "yaml";
 import { writeSourceSkill } from "../helpers";
 
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
@@ -10,7 +9,7 @@ import type { ProjectConfig } from "../../../types";
 import {
   fileExists,
   directoryExists,
-  readTestYaml,
+  readTestTsConfig,
   buildWizardResult,
   buildSourceResult,
   createMockMatrix,
@@ -55,7 +54,7 @@ describe("Integration: Consumer-Defined Stacks", () => {
     await cleanupTestSource(dirs);
   });
 
-  it("should load custom stacks from source config/stacks.yaml", async () => {
+  it("should load custom stacks from source config/stacks.ts", async () => {
     const stacks = await loadStacks(dirs.sourceDir);
 
     expect(stacks.length).toBe(2);
@@ -64,7 +63,7 @@ describe("Integration: Consumer-Defined Stacks", () => {
     expect(stacks[1].id).toBe("custom-testing");
   });
 
-  it("should return empty array when source has no stacks.yaml", async () => {
+  it("should return empty array when source has no stacks.ts", async () => {
     const noDirs = await createTestSource();
 
     try {
@@ -75,7 +74,7 @@ describe("Integration: Consumer-Defined Stacks", () => {
     }
   });
 
-  it("should install with custom stack skills reflected in config.yaml", async () => {
+  it("should install with custom stack skills reflected in config.ts", async () => {
     const sourceResult = buildSourceResult(buildConsumerMatrix(), dirs.sourceDir);
 
     const result = await installLocal({
@@ -84,7 +83,7 @@ describe("Integration: Consumer-Defined Stacks", () => {
       projectDir: dirs.projectDir,
     });
 
-    const config = await readTestYaml<ProjectConfig>(result.configPath);
+    const config = await readTestTsConfig<ProjectConfig>(result.configPath);
     expect(config.skills).toContain("web-framework-react");
     expect(config.skills).toContain("api-framework-hono");
     expect(config.installMode).toBe("local");
@@ -150,7 +149,7 @@ describe("Integration: Stacks Precedence", () => {
     }
   });
 
-  it("should use source stacks when source has stacks.yaml (source overrides CLI)", async () => {
+  it("should use source stacks when source has stacks.ts (source overrides CLI)", async () => {
     // In loadAndMergeFromBasePath, if sourceStacks.length > 0, CLI stacks are NOT loaded.
     // This test verifies source stacks are self-contained.
     const dirs = await createTestSource({ stacks: CUSTOM_TEST_STACKS });
@@ -192,7 +191,7 @@ describe("Integration: Stacks Precedence", () => {
 
 describe("Integration: Marketplace Source Stacks", () => {
   it("should load stacks from a marketplace-like source directory", async () => {
-    // A marketplace source has its own config/stacks.yaml alongside skills
+    // A marketplace source has its own config/stacks.ts alongside skills
     const dirs = await createTestSource({ stacks: MARKETPLACE_TEST_STACKS });
 
     try {
@@ -213,7 +212,7 @@ describe("Integration: Marketplace Source Stacks", () => {
     const dirs = await createTestSource({ stacks: MARKETPLACE_FULLSTACK_TEST_STACKS });
 
     try {
-      // Stacks load from source config/stacks.yaml
+      // Stacks load from source config/stacks.ts
       const stacks = await loadStacks(dirs.sourceDir);
       expect(stacks).toHaveLength(1);
 
@@ -227,7 +226,7 @@ describe("Integration: Marketplace Source Stacks", () => {
       expect(await fileExists(reactSkillPath)).toBe(true);
 
       // Categories and rules files also exist alongside stacks
-      const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.yaml");
+      const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.ts");
       expect(await fileExists(categoriesPath)).toBe(true);
     } finally {
       await cleanupTestSource(dirs);
@@ -248,9 +247,9 @@ describe("Integration: Consumer-Defined Skills Matrix", () => {
     await cleanupTestSource(dirs);
   });
 
-  it("should use source skill-categories.yaml and skill-rules.yaml when present", async () => {
-    const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.yaml");
-    const rulesPath = path.join(dirs.sourceDir, "config", "skill-rules.yaml");
+  it("should use source skill-categories.ts and skill-rules.ts when present", async () => {
+    const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.ts");
+    const rulesPath = path.join(dirs.sourceDir, "config", "skill-rules.ts");
     expect(await fileExists(categoriesPath)).toBe(true);
     expect(await fileExists(rulesPath)).toBe(true);
 
@@ -259,7 +258,7 @@ describe("Integration: Consumer-Defined Skills Matrix", () => {
     const categoriesContent = await readFile(categoriesPath, "utf-8");
     expect(categoriesContent).toContain("framework");
     expect(categoriesContent).toContain("testing");
-    expect(categoriesContent).toContain("version:");
+    expect(categoriesContent).toContain('"version"');
   });
 
   it("should install all skills from source and compile agents", async () => {
@@ -420,7 +419,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
       const configDir = path.join(tempDir, "config");
       await mkdir(configDir, { recursive: true });
 
-      // Create a stacks.yaml with preloaded: true on some skills
+      // Create a stacks.ts with preloaded: true on some skills
       const stacksContent = {
         stacks: [
           {
@@ -441,7 +440,8 @@ describe("Integration: Custom Skills Matrix Loading", () => {
         ],
       };
 
-      await writeFile(path.join(configDir, "stacks.yaml"), stringifyYaml(stacksContent));
+      const stacksTsContent = `export default ${JSON.stringify(stacksContent, null, 2)};\n`;
+      await writeFile(path.join(configDir, "stacks.ts"), stacksTsContent);
 
       const stacks = await loadStacks(tempDir);
 
@@ -493,7 +493,7 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
       expect(await fileExists(reactSkillPath)).toBe(true);
 
       // 3. Verify categories/rules are loadable
-      const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.yaml");
+      const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.ts");
       expect(await fileExists(categoriesPath)).toBe(true);
 
       // 4. Install with the custom stack skills
@@ -511,8 +511,8 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
       expect(result.copiedSkills).toHaveLength(3);
       expect(result.compiledAgents.length).toBeGreaterThan(0);
 
-      // 6. Verify config.yaml contains all selected skills
-      const config = await readTestYaml<ProjectConfig>(result.configPath);
+      // 6. Verify config.ts contains all selected skills
+      const config = await readTestTsConfig<ProjectConfig>(result.configPath);
       expect(config.skills).toContain("web-framework-react");
       expect(config.skills).toContain("web-testing-vitest");
       expect(config.skills).toContain("api-framework-hono");
@@ -525,8 +525,8 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
     const dirs = await createTestSource();
 
     try {
-      // Verify the source's skill-categories.yaml can be loaded and parsed
-      const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.yaml");
+      // Verify the source's skill-categories.ts can be loaded and parsed
+      const categoriesPath = path.join(dirs.sourceDir, "config", "skill-categories.ts");
       expect(await fileExists(categoriesPath)).toBe(true);
 
       const categoriesContent = await readFile(categoriesPath, "utf-8");
@@ -536,8 +536,8 @@ describe("Integration: Custom Matrix + Stacks Full Pipeline", () => {
       // in the skills directory (src/skills/).
       expect(categoriesContent).toContain("framework");
       expect(categoriesContent).toContain("testing");
-      expect(categoriesContent).toContain("version:");
-      expect(categoriesContent).toContain("categories:");
+      expect(categoriesContent).toContain('"version"');
+      expect(categoriesContent).toContain('"categories"');
 
       // Verify source also has skill directories
       const reactDir = path.join(dirs.skillsDir, "web-framework", "web-framework-react");

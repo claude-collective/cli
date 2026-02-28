@@ -132,7 +132,7 @@ export function stripAnsi(text: string): string {
  * are pre-stripped of ANSI escape sequences.
  *
  * HOME is set to cwd by default to isolate tests from the user's real global
- * config (~/.claude-src/config.yaml). Tests that need a different HOME can
+ * config (~/.claude-src/config.ts). Tests that need a different HOME can
  * override via options.env.
  */
 export async function runCLI(
@@ -217,7 +217,7 @@ export async function createPermissionsFile(projectDir: string): Promise<void> {
  * Minimum viable project structure for the `edit` command.
  *
  * The edit command calls detectInstallation() which looks for
- * .claude-src/config.yaml (or .claude/config.yaml). It then
+ * .claude-src/config.ts (or .claude/config.ts). It then
  * loads the project config for domains, agents, skills, etc.
  * and discovers installed plugin skills via discoverAllPluginSkills().
  *
@@ -227,7 +227,7 @@ export async function createPermissionsFile(projectDir: string): Promise<void> {
  * This helper creates the minimal file structure:
  *   <projectDir>/
  *     .claude-src/
- *       config.yaml   (with name, skills, agents, installMode)
+ *       config.ts   (with name, skills, agents, installMode)
  *     .claude/
  *       skills/
  *         <skillId>/
@@ -258,18 +258,19 @@ export async function createEditableProject(
   await mkdir(skillsDir, { recursive: true });
   await mkdir(agentsDir, { recursive: true });
 
-  const configYaml = [
-    `name: test-edit-project`,
-    `installMode: ${installMode}`,
-    `skills:`,
-    ...skills.map((s) => `  - ${s}`),
-    `agents:`,
-    ...agents.map((a) => `  - ${a}`),
-    `domains:`,
-    ...domains.map((d) => `  - ${d}`),
-  ].join("\n");
+  const configContent = `export default ${JSON.stringify(
+    {
+      name: "test-edit-project",
+      installMode,
+      skills,
+      agents,
+      domains,
+    },
+    null,
+    2,
+  )};\n`;
 
-  await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_YAML), configYaml + "\n");
+  await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), configContent);
 
   for (const skillId of skills) {
     const skillDir = path.join(skillsDir, skillId);

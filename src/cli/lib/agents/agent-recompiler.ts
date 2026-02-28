@@ -61,7 +61,7 @@ async function resolveAgentNames(params: ResolveAgentNamesParams): Promise<Agent
   }
 
   if (projectConfig?.agents) {
-    verbose(`Using agents from config.yaml: ${projectConfig.agents.join(", ")}`);
+    verbose(`Using agents from config: ${projectConfig.agents.join(", ")}`);
     return projectConfig.agents;
   }
 

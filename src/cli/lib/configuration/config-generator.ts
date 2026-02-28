@@ -34,7 +34,7 @@ function extractSubcategoryFromPath(categoryPath: CategoryPath): Subcategory | u
  * @param selectedSkillIds - Skill IDs selected by the user in the wizard
  * @param matrix - Merged skills matrix (used to look up skill metadata)
  * @param options - Optional description, author, and selectedAgents fields
- * @returns Complete ProjectConfig ready to be saved to config.yaml
+ * @returns Complete ProjectConfig ready to be saved to config.ts
  */
 export function generateProjectConfigFromSkills(
   name: string,

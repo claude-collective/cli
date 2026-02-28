@@ -74,20 +74,21 @@ describe("uninstall command", () => {
 
     await addForkedFromMetadata(projectDir);
 
-    // Add a config.yaml source field so skills match
-    const configPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
+    // Add a config.ts source field so skills match
+    const configPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
     await writeFile(
       configPath,
-      [
-        "name: test-edit-project",
-        "installMode: local",
-        "skills:",
-        "  - web-framework-react",
-        "agents:",
-        "  - web-developer",
-        "domains:",
-        "  - web",
-      ].join("\n") + "\n",
+      `export default ${JSON.stringify(
+        {
+          name: "test-edit-project",
+          installMode: "local",
+          skills: ["web-framework-react"],
+          agents: ["web-developer"],
+          domains: ["web"],
+        },
+        null,
+        2,
+      )};\n`,
     );
 
     // Verify files exist before uninstall
@@ -156,7 +157,7 @@ describe("uninstall command", () => {
     const { exitCode, stdout } = await runCLI(["uninstall", "--yes"], projectDir);
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Removed compiled agents");
+    expect(stdout).toContain("CLI-compiled");
     expect(await directoryExists(agentsDir)).toBe(false);
   });
 

@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "path";
 import fs from "fs";
 import { mkdir, writeFile, readFile } from "fs/promises";
-import { stringify as stringifyYaml } from "yaml";
 import {
   runCliCommand,
   directoryExists,
@@ -23,7 +22,7 @@ const TEST_SOURCE = "github:agents-inc/skills";
 const TEST_EXTRA_SOURCE = "github:acme-corp/skills";
 
 /**
- * Creates a .claude-src/config.yaml with source configuration.
+ * Creates a .claude-src/config.ts with source configuration.
  */
 async function createProjectConfig(
   projectDir: string,
@@ -48,8 +47,9 @@ async function createProjectConfig(
     config.agents = options.agents;
   }
 
-  const configPath = path.join(configDir, STANDARD_FILES.CONFIG_YAML);
-  await writeFile(configPath, stringifyYaml(config));
+  const configPath = path.join(configDir, STANDARD_FILES.CONFIG_TS);
+  const content = `export default ${JSON.stringify(config, null, 2)};`;
+  await writeFile(configPath, content);
   return configPath;
 }
 

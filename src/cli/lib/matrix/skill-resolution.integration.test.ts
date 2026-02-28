@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readFile } from "fs/promises";
-import { parse as parseYaml } from "yaml";
 import { groupBy, mapToObj, mapValues } from "remeda";
 
 import {
@@ -19,10 +18,12 @@ import {
 } from ".";
 import {
   createMockSkill,
+  createMockMultiSourceSkill,
   createMockMatrix,
   createMockCategory,
   buildWizardResult,
   buildSourceResult,
+  parseTsConfigContent,
 } from "../__tests__/helpers";
 import {
   PUBLIC_SOURCE,
@@ -44,26 +45,6 @@ import type {
 
 const TOTAL_SOURCE_COUNT = 3;
 const SELECTED_SKILL_COUNT = 10;
-
-// ── Local Helpers ────────────────────────────────────────────────────────────
-
-/**
- * Creates a ResolvedSkill with availableSources annotation for multi-source testing.
- * Simulates what multi-source-loader.ts does after tagging.
- */
-function createMultiSourceSkill(
-  id: SkillId,
-  category: CategoryPath,
-  sources: SkillSource[],
-  overrides?: Partial<ResolvedSkill>,
-): ResolvedSkill {
-  const activeSource = sources.find((s) => s.installed) ?? sources[0];
-  return createMockSkill(id, category, {
-    availableSources: sources,
-    activeSource,
-    ...overrides,
-  });
-}
 
 // ── Test Data: 15 skills across 3 sources ──────────────────────────────────────
 
@@ -141,7 +122,7 @@ function buildMultiSourceMatrix(overrides?: Partial<MergedSkillsMatrix>): Merged
   const skills = mapValues(grouped, (entries) => {
     const first = entries[0]!;
     const sources = entries.map((e) => e.source);
-    return createMultiSourceSkill(first.id, first.category, sources, {
+    return createMockMultiSourceSkill(first.id, first.category, sources, {
       description: first.description,
     });
   });
@@ -654,7 +635,8 @@ describe("Integration: Multi-Source Install Pipeline", () => {
 
     // Verify config contains all selected skills
     const configContent = await readFile(installResult.configPath, "utf-8");
-    const config = parseYaml(configContent) as ProjectConfig;
+    // Boundary cast: TS config parse returns `unknown`
+    const config = parseTsConfigContent<ProjectConfig>(configContent);
 
     for (const skillId of selectedSkills) {
       expect(config.skills).toContain(skillId);
@@ -688,7 +670,8 @@ describe("Integration: Multi-Source Install Pipeline", () => {
     });
 
     const configContent = await readFile(installResult.configPath, "utf-8");
-    const config = parseYaml(configContent) as ProjectConfig;
+    // Boundary cast: TS config parse returns `unknown`
+    const config = parseTsConfigContent<ProjectConfig>(configContent);
 
     // Source metadata should be preserved
     expect(config.source).toBe("github:test-org/skills");

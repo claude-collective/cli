@@ -22,7 +22,7 @@ import {
   createMockMatrix,
   fileExists,
   directoryExists,
-  readTestYaml,
+  readTestTsConfig,
   buildWizardResult,
   buildSourceResult,
 } from "../helpers";
@@ -368,7 +368,7 @@ describe("Integration: Multi-Source Source Switching E2E", () => {
 
       // Step 4: Verify config was generated
       expect(await fileExists(installResult.configPath)).toBe(true);
-      const config = await readTestYaml<ProjectConfig>(installResult.configPath);
+      const config = await readTestTsConfig<ProjectConfig>(installResult.configPath);
       expect(config.skills).toBeDefined();
       expect(config.skills?.length).toBe(SWITCHABLE_SKILLS.length);
 

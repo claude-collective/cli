@@ -24,7 +24,7 @@ import {
   extractSkillIdsFromAssignment,
   fileExists,
   directoryExists,
-  readTestYaml,
+  readTestTsConfig,
 } from "../helpers";
 // ── Setup ───────────────────────────────────────────────────────────────────────
 
@@ -76,7 +76,7 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
     });
 
     // Verify initial state: config has react + zustand + methodology
-    const initialConfig = await readTestYaml<ProjectConfig>(initialResult.configPath);
+    const initialConfig = await readTestTsConfig<ProjectConfig>(initialResult.configPath);
     expect(initialConfig.skills).toContain("web-framework-react");
     expect(initialConfig.skills).toContain("web-state-zustand");
     expect(initialResult.compiledAgents.length).toBeGreaterThan(0);
@@ -100,7 +100,7 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
     });
 
     // Step 3: Assert
-    const updatedConfig = await readTestYaml<ProjectConfig>(editResult.configPath);
+    const updatedConfig = await readTestTsConfig<ProjectConfig>(editResult.configPath);
 
     // Config now includes all three skills
     expect(updatedConfig.skills).toContain("web-framework-react");
@@ -155,7 +155,7 @@ describe("Init -> Edit -> Recompile (Add Skills)", () => {
       projectDir: dirs.projectDir,
     });
 
-    const updatedConfig = await readTestYaml<ProjectConfig>(editResult.configPath);
+    const updatedConfig = await readTestTsConfig<ProjectConfig>(editResult.configPath);
 
     // All initial agents should still be present (merge unions agents)
     for (const agentName of initialAgents) {
@@ -222,7 +222,7 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
     });
 
     // Step 3: Assert
-    const updatedConfig = await readTestYaml<ProjectConfig>(editResult.configPath);
+    const updatedConfig = await readTestTsConfig<ProjectConfig>(editResult.configPath);
 
     // Config should have react and hono
     expect(updatedConfig.skills).toContain("web-framework-react");
@@ -267,7 +267,7 @@ describe("Init -> Edit -> Recompile (Remove Skills)", () => {
       projectDir: dirs.projectDir,
     });
 
-    const updatedConfig = await readTestYaml<ProjectConfig>(editResult.configPath);
+    const updatedConfig = await readTestTsConfig<ProjectConfig>(editResult.configPath);
 
     // Web skill should remain
     expect(updatedConfig.skills).toContain("web-framework-react");
@@ -419,7 +419,7 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
       projectDir: dirs.projectDir,
     });
 
-    const firstConfig = await readTestYaml<ProjectConfig>(firstResult.configPath);
+    const firstConfig = await readTestTsConfig<ProjectConfig>(firstResult.configPath);
     const firstAgents = [...firstConfig.agents];
 
     // Second init: hono + drizzle, api agents
@@ -435,7 +435,7 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
       projectDir: dirs.projectDir,
     });
 
-    const mergedConfig = await readTestYaml<ProjectConfig>(secondResult.configPath);
+    const mergedConfig = await readTestTsConfig<ProjectConfig>(secondResult.configPath);
 
     // Merged config should contain agents from BOTH inits (union)
     for (const agent of firstAgents) {
@@ -482,7 +482,7 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
       projectDir: dirs.projectDir,
     });
 
-    const mergedConfig = await readTestYaml<ProjectConfig>(secondResult.configPath);
+    const mergedConfig = await readTestTsConfig<ProjectConfig>(secondResult.configPath);
 
     // No duplicate agents
     const uniqueAgents = [...new Set(mergedConfig.agents)];
@@ -501,7 +501,7 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
       projectDir: dirs.projectDir,
     });
 
-    const firstConfig = await readTestYaml<ProjectConfig>(firstResult.configPath);
+    const firstConfig = await readTestTsConfig<ProjectConfig>(firstResult.configPath);
     const originalDescription = firstConfig.description;
 
     // Second init with different skills
@@ -516,7 +516,7 @@ describe("Init Local -> Re-init Local (Config Merge)", () => {
       projectDir: dirs.projectDir,
     });
 
-    const mergedConfig = await readTestYaml<ProjectConfig>(secondResult.configPath);
+    const mergedConfig = await readTestTsConfig<ProjectConfig>(secondResult.configPath);
 
     // Description from first init should be preserved
     if (originalDescription) {
@@ -567,7 +567,7 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
       projectDir: dirs.projectDir,
     });
 
-    const config = await readTestYaml<ProjectConfig>(result.configPath);
+    const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
     // Config should contain all selected skills + methodology
     for (const skillId of selectedSkills) {
@@ -638,7 +638,7 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
       projectDir: dirs.projectDir,
     });
 
-    const config = await readTestYaml<ProjectConfig>(result.configPath);
+    const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
     // Methodology skills should be in config.skills
     for (const methodSkill of DEFAULT_PRESELECTED_SKILLS) {
@@ -703,7 +703,7 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
       projectDir: dirs.projectDir,
     });
 
-    const config = await readTestYaml<ProjectConfig>(result.configPath);
+    const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
     expect(config.stack).toBeDefined();
 
@@ -866,7 +866,7 @@ describe("Config Roundtrip (Write -> Load -> Verify)", () => {
     }
   });
 
-  it("should produce valid YAML with schema comment", async () => {
+  it("should produce valid TS config with defineConfig wrapper", async () => {
     const selectedSkills: SkillId[] = ["web-framework-react"];
     simulateSkillSelections(selectedSkills, matrix, ["web"]);
 
@@ -879,12 +879,9 @@ describe("Config Roundtrip (Write -> Load -> Verify)", () => {
 
     const configContent = await readFile(installResult.configPath, "utf-8");
 
-    // Should start with YAML schema comment
-    expect(configContent.startsWith("# yaml-language-server")).toBe(true);
-
-    // Should contain config options comment hints
-    expect(configContent).toContain("# Additional config options:");
-    expect(configContent).toContain("# Custom paths");
+    // Should contain defineConfig wrapper
+    expect(configContent).toContain("defineConfig");
+    expect(configContent).toContain("export default");
   });
 });
 

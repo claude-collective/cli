@@ -86,7 +86,7 @@ export type TestSourceOptions = {
   asPlugin?: boolean;
   /** Create local skills in .claude/skills/ */
   localSkills?: TestSkill[];
-  /** Create config/stacks.yaml with these stack definitions */
+  /** Create config/stacks.ts with these stack definitions */
   stacks?: TestStack[];
 };
 
@@ -499,8 +499,8 @@ export { fileExists, directoryExists };
 /**
  * Generates matrix representations from skill definitions:
  * 1. `testMatrix` — the internal TestMatrix used by test assertions
- * 2. `diskCategories` — a skill-categories.yaml-compatible structure
- * 3. `diskRules` — a skill-rules.yaml-compatible structure (empty relationships/aliases)
+ * 2. `diskCategories` — a skill-categories.ts-compatible structure
+ * 3. `diskRules` — a skill-rules.ts-compatible structure (empty relationships/aliases)
  *
  * The disk format requires `categories` as CategoryDefinition objects
  * keyed by valid subcategorySchema values. Skill data is loaded separately
@@ -545,7 +545,7 @@ function generateMatrix(
     ...overrides,
   };
 
-  // Build skill-categories.yaml-compatible structure for disk serialization.
+  // Build skill-categories.ts-compatible structure for disk serialization.
   // Categories need full CategoryDefinition fields keyed by valid subcategory enum values.
   // Skills carry their own category via metadata.yaml — these are only for UI grouping.
   const diskCategoriesMap: Record<string, Record<string, unknown>> = {};
@@ -608,11 +608,14 @@ export async function createTestSource(options: TestSourceOptions = {}): Promise
   await mkdir(agentsDir, { recursive: true });
   await mkdir(configDir, { recursive: true });
 
-  await writeFile(path.join(configDir, "skill-categories.yaml"), stringifyYaml(diskCategories));
-  await writeFile(path.join(configDir, "skill-rules.yaml"), stringifyYaml(diskRules));
+  const categoriesTsContent = `export default ${JSON.stringify(diskCategories, null, 2)};\n`;
+  await writeFile(path.join(configDir, "skill-categories.ts"), categoriesTsContent);
+  const rulesTsContent = `export default ${JSON.stringify(diskRules, null, 2)};\n`;
+  await writeFile(path.join(configDir, "skill-rules.ts"), rulesTsContent);
 
   if (options.stacks && options.stacks.length > 0) {
-    await writeFile(path.join(configDir, "stacks.yaml"), stringifyYaml({ stacks: options.stacks }));
+    const stacksTsContent = `export default ${JSON.stringify({ stacks: options.stacks }, null, 2)};\n`;
+    await writeFile(path.join(configDir, "stacks.ts"), stacksTsContent);
   }
 
   for (const skill of skills) {
@@ -729,19 +732,18 @@ permissionMode: {{ agent.permissionMode }}
     }
 
     if (options.projectConfig) {
-      await writeFile(path.join(pluginDir, "config.yaml"), stringifyYaml(options.projectConfig));
+      const content = `export default ${JSON.stringify(options.projectConfig, null, 2)};`;
+      await writeFile(path.join(pluginDir, "config.ts"), content);
     }
 
     dirs.pluginDir = pluginDir;
   }
 
   if (options.projectConfig) {
-    const projectClaudeDir = path.join(projectDir, ".claude");
-    await mkdir(projectClaudeDir, { recursive: true });
-    await writeFile(
-      path.join(projectClaudeDir, "config.yaml"),
-      stringifyYaml(options.projectConfig),
-    );
+    const projectClaudeSrcDir = path.join(projectDir, ".claude-src");
+    await mkdir(projectClaudeSrcDir, { recursive: true });
+    const content = `export default ${JSON.stringify(options.projectConfig, null, 2)};`;
+    await writeFile(path.join(projectClaudeSrcDir, "config.ts"), content);
   }
 
   if (options.localSkills && options.localSkills.length > 0) {

@@ -141,17 +141,17 @@ describe("eject command", () => {
     const { exitCode, stdout } = await runCLI(["eject", "skills", "--source", sourceDir], tempDir);
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("Source saved to .claude-src/config.yaml");
+    expect(stdout).toContain("Source saved to .claude-src/config.ts");
   });
 
-  it("should create config.yaml in a fresh directory after eject", async () => {
+  it("should create config.ts in a fresh directory after eject", async () => {
     tempDir = await createTempDir();
 
     const { exitCode } = await runCLI(["eject", "agent-partials"], tempDir);
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
-    const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
+    const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
     expect(await fileExists(configPath)).toBe(true);
   });
 });

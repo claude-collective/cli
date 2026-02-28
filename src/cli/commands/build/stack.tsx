@@ -7,7 +7,7 @@ import path from "path";
 
 import { BaseCommand } from "../../base-command";
 import { setVerbose } from "../../utils/logger";
-import { PROJECT_ROOT } from "../../consts";
+import { PROJECT_ROOT, STACKS_FILE_PATH } from "../../consts";
 import { compileStackPlugin, printStackCompilationSummary, loadStacks } from "../../lib/stacks";
 import { getAgentDefinitions } from "../../lib/agents";
 import { EXIT_CODES } from "../../lib/exit-codes";
@@ -88,7 +88,7 @@ export default class BuildStack extends BaseCommand {
       const availableStacks = stacks.map((s) => s.id).sort();
 
       if (availableStacks.length === 0) {
-        this.error(`No stacks found in config/stacks.yaml`, {
+        this.error(`No stacks found in ${STACKS_FILE_PATH}`, {
           exit: EXIT_CODES.ERROR,
         });
       }

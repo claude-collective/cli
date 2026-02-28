@@ -26,9 +26,9 @@ export const CACHE_DIR = path.join(os.homedir(), ".cache", DEFAULT_PLUGIN_NAME);
 
 export const CLI_BIN_NAME = "agentsinc";
 
-export const SKILL_CATEGORIES_YAML_PATH = "config/skill-categories.yaml";
-export const SKILL_RULES_YAML_PATH = "config/skill-rules.yaml";
-export const STACKS_FILE_PATH = "config/stacks.yaml";
+export const SKILL_CATEGORIES_PATH = "config/skill-categories.ts";
+export const SKILL_RULES_PATH = "config/skill-rules.ts";
+export const STACKS_FILE_PATH = "config/stacks.ts";
 export const SKILLS_DIR_PATH = "src/skills";
 export const LOCAL_SKILLS_PATH = ".claude/skills";
 export const ARCHIVED_SKILLS_DIR_NAME = "_archived";
@@ -46,10 +46,11 @@ export const STANDARD_FILES = {
   METADATA_YAML: "metadata.yaml",
   METADATA_JSON: "metadata.json",
   CONFIG_YAML: "config.yaml",
-  SKILL_CATEGORIES_YAML: "skill-categories.yaml",
-  SKILL_RULES_YAML: "skill-rules.yaml",
+  SKILL_CATEGORIES_TS: "skill-categories.ts",
+  SKILL_RULES_TS: "skill-rules.ts",
   AGENT_METADATA_YAML: "metadata.yaml",
   PLUGIN_JSON: "plugin.json",
+  CONFIG_TS: "config.ts",
   CLAUDE_MD: "CLAUDE.md",
   REFERENCE_MD: "reference.md",
   INTRO_MD: "intro.md",

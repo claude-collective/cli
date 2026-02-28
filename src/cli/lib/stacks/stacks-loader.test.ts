@@ -1,90 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { StackAgentConfig } from "../../types";
-import { createMockSkillAssignment, createMockStack } from "../__tests__/helpers";
+import {
+  createMockRawStacksConfig,
+  createMockRawStacksConfigWithArrays,
+  createMockRawStacksConfigWithObjects,
+  createMockSkillAssignment,
+  createMockStack,
+} from "../__tests__/helpers";
 
-// Mock file system — inline factory required because vi.resetModules() is used
-// (__mocks__ directory mocks create fresh vi.fn() instances on module reset)
-vi.mock("../../utils/fs", () => ({
-  readFile: vi.fn(),
-  fileExists: vi.fn(),
+vi.mock("../configuration/ts-config-loader", () => ({
+  loadTsConfig: vi.fn(),
 }));
 
 vi.mock("../../utils/logger");
 
 import { resolveAgentConfigToSkills, resolveStackSkills } from "./stacks-loader";
-import { readFile, fileExists } from "../../utils/fs";
+import { loadTsConfig } from "../configuration/ts-config-loader";
 import { warn } from "../../utils/logger";
 import { extendSchemasWithCustomValues, resetSchemaExtensions } from "../schemas";
-
-function createValidStacksYaml(): string {
-  return `
-stacks:
-  - id: nextjs-fullstack
-    name: Next.js Fullstack
-    description: Full-stack Next.js with Hono API
-    agents:
-      web-developer:
-        web-framework: web-framework-react
-        web-styling: web-styling-scss-modules
-      api-developer:
-        api-api: api-framework-hono
-        api-database: api-database-drizzle
-  - id: vue-spa
-    name: Vue SPA
-    description: Vue single-page application
-    agents:
-      web-developer:
-        web-framework: web-framework-vue-composition-api
-        web-styling: web-styling-tailwind
-`;
-}
-
-function createStacksYamlWithArrays(): string {
-  return `
-stacks:
-  - id: multi-select-stack
-    name: Multi-Select Stack
-    description: Stack with array-valued subcategories
-    agents:
-      web-developer:
-        web-framework: web-framework-react
-        shared-methodology:
-          - meta-methodology-investigation-requirements
-          - meta-methodology-anti-over-engineering
-          - meta-methodology-success-criteria
-      pattern-scout:
-        shared-methodology:
-          - meta-methodology-investigation-requirements
-          - meta-methodology-anti-over-engineering
-        shared-research: meta-research-research-methodology
-`;
-}
-
-function createStacksYamlWithObjects(): string {
-  return `
-stacks:
-  - id: object-stack
-    name: Object Stack
-    description: Stack with object-form skill assignments
-    agents:
-      web-developer:
-        web-framework:
-          - id: web-framework-react
-            preloaded: true
-        web-styling: web-styling-scss-modules
-        shared-methodology:
-          - id: meta-methodology-investigation-requirements
-            preloaded: true
-          - meta-methodology-anti-over-engineering
-`;
-}
-
-function createInvalidStacksYaml(): string {
-  // Missing required 'stacks' array
-  return `
-name: invalid
-`;
-}
 
 describe("stacks-loader", () => {
   beforeEach(() => {
@@ -94,9 +27,8 @@ describe("stacks-loader", () => {
   });
 
   describe("loadStacks", () => {
-    it("loads and parses stacks from config/stacks.yaml", async () => {
-      vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createValidStacksYaml());
+    it("loads and parses stacks from config/stacks.ts", async () => {
+      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfig());
 
       // Re-import after resetModules to clear cache
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
@@ -109,27 +41,16 @@ describe("stacks-loader", () => {
     });
 
     it("returns empty array when stacks file does not exist", async () => {
-      vi.mocked(fileExists).mockResolvedValue(false);
+      vi.mocked(loadTsConfig).mockResolvedValue(null);
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
       const stacks = await freshLoadStacks("/project");
 
       expect(stacks).toEqual([]);
-      expect(readFile).not.toHaveBeenCalled();
     });
 
-    it("throws on invalid stacks.yaml structure", async () => {
-      vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createInvalidStacksYaml());
-
-      const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
-
-      await expect(freshLoadStacks("/project")).rejects.toThrow(/Failed to load stacks/);
-    });
-
-    it("throws descriptive error for malformed YAML", async () => {
-      vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockRejectedValue(new Error("ENOENT"));
+    it("throws descriptive error for load failure", async () => {
+      vi.mocked(loadTsConfig).mockRejectedValue(new Error("ENOENT"));
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
 
@@ -137,62 +58,57 @@ describe("stacks-loader", () => {
     });
 
     it("caches loaded stacks for the same configDir", async () => {
-      vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createValidStacksYaml());
+      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfig());
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
 
       const first = await freshLoadStacks("/project");
       const second = await freshLoadStacks("/project");
 
-      // readFile should only be called once due to caching
-      expect(readFile).toHaveBeenCalledTimes(1);
+      // loadTsConfig should only be called once due to caching
+      expect(loadTsConfig).toHaveBeenCalledTimes(1);
       expect(first).toBe(second);
     });
 
     it("loads stacks from custom stacksFile path", async () => {
-      vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createValidStacksYaml());
+      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfig());
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
-      const stacks = await freshLoadStacks("/project", "data/my-stacks.yaml");
+      const stacks = await freshLoadStacks("/project", "data/my-stacks.ts");
 
       expect(stacks).toHaveLength(2);
-      expect(fileExists).toHaveBeenCalledWith("/project/data/my-stacks.yaml");
+      expect(loadTsConfig).toHaveBeenCalledWith("/project/data/my-stacks.ts", expect.anything());
     });
 
     it("uses default STACKS_FILE when stacksFile is undefined", async () => {
-      vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createValidStacksYaml());
+      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfig());
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
       await freshLoadStacks("/project");
 
-      expect(fileExists).toHaveBeenCalledWith("/project/config/stacks.yaml");
+      expect(loadTsConfig).toHaveBeenCalledWith("/project/config/stacks.ts", expect.anything());
     });
 
     it("caches separately for different stacksFile values", async () => {
-      vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createValidStacksYaml());
+      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfig());
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
 
       await freshLoadStacks("/project");
-      await freshLoadStacks("/project", "custom/stacks.yaml");
+      await freshLoadStacks("/project", "custom/stacks.ts");
 
-      // readFile should be called twice — different cache keys
-      expect(readFile).toHaveBeenCalledTimes(2);
+      // loadTsConfig should be called twice — different cache keys
+      expect(loadTsConfig).toHaveBeenCalledTimes(2);
     });
 
     it("normalizes bare string values to SkillAssignment[] with preloaded: false", async () => {
-      vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createValidStacksYaml());
+      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfig());
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
       const stacks = await freshLoadStacks("/project");
 
       const nextjsStack = stacks[0];
-      // Bare YAML strings are normalized to SkillAssignment[] with preloaded: false
+      // Bare strings are normalized to SkillAssignment[] with preloaded: false
       expect(nextjsStack.agents["web-developer"]).toEqual({
         "web-framework": [createMockSkillAssignment("web-framework-react")],
         "web-styling": [createMockSkillAssignment("web-styling-scss-modules")],
@@ -204,8 +120,7 @@ describe("stacks-loader", () => {
     });
 
     it("normalizes bare string arrays to SkillAssignment[] with preloaded: false", async () => {
-      vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createStacksYamlWithArrays());
+      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfigWithArrays());
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
       const stacks = await freshLoadStacks("/project");
@@ -221,7 +136,7 @@ describe("stacks-loader", () => {
         createMockSkillAssignment("meta-methodology-success-criteria"),
       ]);
 
-      // Single YAML values normalized to SkillAssignment[]
+      // Single values normalized to SkillAssignment[]
       expect(stack.agents["web-developer"]!["web-framework"]).toEqual([
         createMockSkillAssignment("web-framework-react"),
       ]);
@@ -231,8 +146,7 @@ describe("stacks-loader", () => {
     });
 
     it("preserves object-form assignments with preloaded: true", async () => {
-      vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createStacksYamlWithObjects());
+      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfigWithObjects());
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
       const stacks = await freshLoadStacks("/project");
@@ -260,8 +174,7 @@ describe("stacks-loader", () => {
 
   describe("loadStackById", () => {
     it("returns stack matching the given ID", async () => {
-      vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createValidStacksYaml());
+      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfig());
 
       const { loadStackById: freshLoadStackById } = await import("./stacks-loader");
       const stack = await freshLoadStackById("vue-spa", "/project");
@@ -272,8 +185,7 @@ describe("stacks-loader", () => {
     });
 
     it("returns null when stack ID not found", async () => {
-      vi.mocked(fileExists).mockResolvedValue(true);
-      vi.mocked(readFile).mockResolvedValue(createValidStacksYaml());
+      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfig());
 
       const { loadStackById: freshLoadStackById } = await import("./stacks-loader");
       const stack = await freshLoadStackById("nonexistent-stack", "/project");
@@ -282,7 +194,7 @@ describe("stacks-loader", () => {
     });
 
     it("returns null when no stacks file exists", async () => {
-      vi.mocked(fileExists).mockResolvedValue(false);
+      vi.mocked(loadTsConfig).mockResolvedValue(null);
 
       const { loadStackById: freshLoadStackById } = await import("./stacks-loader");
       const stack = await freshLoadStackById("nextjs-fullstack", "/project");

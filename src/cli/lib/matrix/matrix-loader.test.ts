@@ -1,6 +1,4 @@
-import path from "path";
 import { describe, it, expect, vi } from "vitest";
-import { readFile as realReadFile } from "fs/promises";
 
 import {
   createMockMatrixConfig,
@@ -23,11 +21,12 @@ import {
 } from "../__tests__/mock-data/mock-matrices.js";
 
 // For extractAllSkills tests, we mock fs/loader. For loadSkillCategories/loadSkillRules,
-// we use the real fs to load the actual config file for the happy path.
+// we mock loadTsConfig from the configuration module.
 const mockReadFile = vi.fn();
 const mockFileExists = vi.fn().mockResolvedValue(true);
 const mockGlob = vi.fn().mockResolvedValue([]);
 const mockParseFrontmatter = vi.fn();
+const mockLoadTsConfig = vi.fn();
 
 vi.mock("../../utils/fs", () => ({
   readFile: (...args: unknown[]) => mockReadFile(...args),
@@ -41,6 +40,10 @@ vi.mock("../loading", () => ({
   parseFrontmatter: (...args: unknown[]) => mockParseFrontmatter(...args),
 }));
 
+vi.mock("../configuration/ts-config-loader", () => ({
+  loadTsConfig: (...args: unknown[]) => mockLoadTsConfig(...args),
+}));
+
 import {
   loadSkillCategories,
   loadSkillRules,
@@ -50,11 +53,6 @@ import {
 } from "./matrix-loader";
 import { warn } from "../../utils/logger";
 import type { CategoryPath, Subcategory } from "../../types";
-
-// Fixture root: __tests__/fixtures/ colocated with test helpers
-const FIXTURES_ROOT = path.resolve(__dirname, "../__tests__/fixtures");
-const VALID_CATEGORIES_PATH = path.join(FIXTURES_ROOT, "matrix/valid-categories.yaml");
-const VALID_RULES_PATH = path.join(FIXTURES_ROOT, "matrix/valid-rules.yaml");
 
 // ---------------------------------------------------------------------------
 // Top-level test data for mergeMatrixWithSkills tests
@@ -91,17 +89,40 @@ const UNRESOLVED_CONFLICT_MATRIX = createMockMatrixConfig(
   },
 );
 
-async function loadFixture(fixturePath: string): Promise<string> {
-  return realReadFile(fixturePath, "utf-8");
-}
-
 describe("matrix-loader", () => {
   describe("loadSkillCategories", () => {
-    it("loads and validates a valid skill-categories fixture", async () => {
-      const fixtureContent = await loadFixture(VALID_CATEGORIES_PATH);
-      mockReadFile.mockResolvedValue(fixtureContent);
+    it("loads and validates a valid skill-categories config", async () => {
+      mockLoadTsConfig.mockResolvedValue({
+        version: "1.0.0",
+        categories: {
+          "web-framework": {
+            id: "web-framework",
+            displayName: "Framework",
+            description: "Core UI framework",
+            exclusive: true,
+            required: true,
+            order: 1,
+          },
+          "web-styling": {
+            id: "web-styling",
+            displayName: "Styling",
+            description: "CSS approach",
+            exclusive: true,
+            required: true,
+            order: 3,
+          },
+          "api-api": {
+            id: "api-api",
+            displayName: "API",
+            description: "Backend framework",
+            exclusive: true,
+            required: true,
+            order: 1,
+          },
+        },
+      });
 
-      const categories = await loadSkillCategories("/project/config/skill-categories.yaml");
+      const categories = await loadSkillCategories("/project/config/skill-categories.ts");
 
       expect(categories["web-framework"]).toBeDefined();
       expect(categories["web-framework"]!.displayName).toBe("Framework");
@@ -111,74 +132,57 @@ describe("matrix-loader", () => {
       expect(categories["api-api"]).toBeDefined();
     });
 
-    it("throws on missing file", async () => {
-      mockReadFile.mockRejectedValue(new Error("ENOENT: file not found"));
+    it("throws when loadTsConfig returns null", async () => {
+      mockLoadTsConfig.mockResolvedValue(null);
 
-      await expect(loadSkillCategories("/nonexistent/skill-categories.yaml")).rejects.toThrow();
-    });
-
-    it("throws on invalid schema (missing version)", async () => {
-      mockReadFile.mockResolvedValue(`
-categories:
-  web-framework:
-    id: web-framework
-    displayName: Framework
-    description: Core UI framework
-    exclusive: true
-    required: true
-    order: 1
-`);
-
-      await expect(loadSkillCategories("/project/skill-categories.yaml")).rejects.toThrow(
+      await expect(loadSkillCategories("/nonexistent/skill-categories.ts")).rejects.toThrow(
         /Invalid skill categories/,
       );
     });
 
-    it("throws on invalid category definition", async () => {
-      mockReadFile.mockResolvedValue(`
-version: "1.0.0"
-categories:
-  web-framework:
-    id: web-framework
-    displayName: Framework
-`);
+    it("throws when loadTsConfig rejects", async () => {
+      mockLoadTsConfig.mockRejectedValue(new Error("ENOENT: file not found"));
 
-      await expect(loadSkillCategories("/project/skill-categories.yaml")).rejects.toThrow(
-        /Invalid skill categories/,
-      );
+      await expect(loadSkillCategories("/nonexistent/skill-categories.ts")).rejects.toThrow();
     });
 
     it("includes path in error message", async () => {
-      mockReadFile.mockResolvedValue(`
-version: "1.0.0"
-categories:
-  not-a-valid-subcategory:
-    id: not-a-valid-subcategory
-    displayName: Invalid
-    description: Invalid category
-    exclusive: true
-    required: false
-    order: 0
-`);
+      mockLoadTsConfig.mockResolvedValue(null);
 
-      await expect(loadSkillCategories("/custom/path/categories.yaml")).rejects.toThrow(
-        /\/custom\/path\/categories\.yaml/,
+      await expect(loadSkillCategories("/custom/path/categories.ts")).rejects.toThrow(
+        /\/custom\/path\/categories\.ts/,
       );
-    });
-
-    it("throws when YAML content is empty", async () => {
-      mockReadFile.mockResolvedValue("");
-
-      await expect(loadSkillCategories("/project/categories.yaml")).rejects.toThrow();
     });
   });
 
   describe("loadSkillRules", () => {
-    it("loads and validates a valid skill-rules fixture", async () => {
-      const fixtureContent = await loadFixture(VALID_RULES_PATH);
-      mockReadFile.mockResolvedValue(fixtureContent);
+    it("loads and validates a valid skill-rules config", async () => {
+      mockLoadTsConfig.mockResolvedValue({
+        version: "1.0.0",
+        aliases: {
+          react: "web-framework-react",
+          vue: "web-framework-vue-composition-api",
+          zustand: "web-state-zustand",
+        },
+        relationships: {
+          conflicts: [{ skills: ["react", "vue"], reason: "Frameworks are mutually exclusive" }],
+          discourages: [{ skills: ["zustand", "react"], reason: "Test discourage rule" }],
+          recommends: [{ when: "react", suggest: ["zustand"], reason: "Best React libraries" }],
+          requires: [{ skill: "zustand", needs: ["react"], reason: "Zustand requires React" }],
+          alternatives: [{ purpose: "Frontend Framework", skills: ["react", "vue"] }],
+        },
+        "per-skill": {
+          react: {
+            compatibleWith: ["web-state-zustand"],
+            conflictsWith: ["web-framework-vue-composition-api"],
+          },
+          zustand: {
+            compatibleWith: ["web-framework-react", "web-server-state-react-query"],
+          },
+        },
+      });
 
-      const result = await loadSkillRules("/project/config/skill-rules.yaml");
+      const result = await loadSkillRules("/project/config/skill-rules.ts");
 
       expect(result.version).toBe("1.0.0");
       expect(result.aliases).toBeDefined();
@@ -201,49 +205,41 @@ categories:
       });
     });
 
-    it("throws on missing file", async () => {
-      mockReadFile.mockRejectedValue(new Error("ENOENT: file not found"));
+    it("throws when loadTsConfig returns null", async () => {
+      mockLoadTsConfig.mockResolvedValue(null);
 
-      await expect(loadSkillRules("/nonexistent/skill-rules.yaml")).rejects.toThrow();
-    });
-
-    it("throws on invalid schema (missing version)", async () => {
-      mockReadFile.mockResolvedValue(`
-aliases:
-  react: "web-framework-react"
-relationships:
-  conflicts: []
-  discourages: []
-  recommends: []
-  requires: []
-  alternatives: []
-`);
-
-      await expect(loadSkillRules("/project/skill-rules.yaml")).rejects.toThrow(
+      await expect(loadSkillRules("/nonexistent/skill-rules.ts")).rejects.toThrow(
         /Invalid skill rules/,
       );
     });
 
-    it("parses valid aliases without error", async () => {
-      mockReadFile.mockResolvedValue(`
-version: "1.0.0"
-aliases:
-  react: "web-framework-react"
-  vue: "web-framework-vue-composition-api"
-`);
+    it("throws when loadTsConfig rejects", async () => {
+      mockLoadTsConfig.mockRejectedValue(new Error("ENOENT: file not found"));
 
-      const result = await loadSkillRules("/project/skill-rules.yaml");
+      await expect(loadSkillRules("/nonexistent/skill-rules.ts")).rejects.toThrow();
+    });
+
+    it("parses valid aliases without error", async () => {
+      mockLoadTsConfig.mockResolvedValue({
+        version: "1.0.0",
+        aliases: {
+          react: "web-framework-react",
+          vue: "web-framework-vue-composition-api",
+        },
+      });
+
+      const result = await loadSkillRules("/project/skill-rules.ts");
 
       expect(result.aliases.react).toBe("web-framework-react");
       expect(result.aliases.vue).toBe("web-framework-vue-composition-api");
     });
 
     it("returns default empty arrays when relationships, aliases, and per-skill are missing", async () => {
-      mockReadFile.mockResolvedValue(`
-version: "1.0.0"
-`);
+      mockLoadTsConfig.mockResolvedValue({
+        version: "1.0.0",
+      });
 
-      const result = await loadSkillRules("/project/skill-rules.yaml");
+      const result = await loadSkillRules("/project/skill-rules.ts");
 
       expect(result.aliases).toEqual({});
       expect(result.relationships.conflicts).toEqual([]);
@@ -255,13 +251,10 @@ version: "1.0.0"
     });
 
     it("includes path in error message", async () => {
-      mockReadFile.mockResolvedValue(`
-aliases:
-  react: "web-framework-react"
-`);
+      mockLoadTsConfig.mockResolvedValue(null);
 
-      await expect(loadSkillRules("/custom/path/rules.yaml")).rejects.toThrow(
-        /\/custom\/path\/rules\.yaml/,
+      await expect(loadSkillRules("/custom/path/rules.ts")).rejects.toThrow(
+        /\/custom\/path\/rules\.ts/,
       );
     });
   });

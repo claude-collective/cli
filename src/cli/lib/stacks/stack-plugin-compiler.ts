@@ -21,6 +21,7 @@ import { loadSkillsByIds, loadAllAgents } from "../loading";
 import { loadStackById, resolveAgentConfigToSkills, getStackSkillIds } from "./stacks-loader";
 import { resolveAgents, convertStackToCompileConfig } from "../resolver";
 import { buildStackProperty } from "../configuration";
+import { defaultStacks } from "../configuration/default-stacks";
 import type {
   AgentConfig,
   AgentDefinition,
@@ -53,7 +54,7 @@ export type StackPluginOptions = {
   outputDir: string;
   projectRoot: string;
   agentSourcePath?: string;
-  /** Optional stack configuration - if provided, bypasses loading from config/stacks.yaml */
+  /** Optional stack configuration - if provided, bypasses loading from config/stacks.ts */
   stack?: Stack;
 };
 
@@ -218,7 +219,8 @@ export async function compileStackPlugin(
 
   let newStack = options.stack || (await loadStackById(stackId, projectRoot));
   if (!newStack) {
-    newStack = await loadStackById(stackId, PROJECT_ROOT);
+    // Fall back to CLI's built-in default stacks
+    newStack = defaultStacks.find((s) => s.id === stackId) ?? null;
   }
 
   let stack: ProjectConfig;
@@ -243,7 +245,7 @@ export async function compileStackPlugin(
       stack: buildStackProperty(newStack) as ProjectConfig["stack"],
     };
   } else {
-    throw new Error(`Stack '${stackId}' not found in config/stacks.yaml`);
+    throw new Error(`Stack '${stackId}' not found in config/stacks.ts`);
   }
 
   const stackSkillIds = stack.stack ? getStackSkillIds(stack.stack) : [];

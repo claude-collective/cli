@@ -1,11 +1,17 @@
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { stringify as stringifyYaml } from "yaml";
 import { loadProjectConfig, validateProjectConfig } from "./project-config";
 import { generateProjectConfigFromSkills } from "./config-generator";
+import { generateTsConfigSource } from "./ts-config-writer";
 import type { AgentName } from "../../types";
-import { createTempDir, cleanupTempDir, TEST_MATRICES } from "../__tests__/helpers";
+import {
+  createTempDir,
+  cleanupTempDir,
+  writeTestTsConfig,
+  TEST_MATRICES,
+} from "../__tests__/helpers";
+import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 
 describe("project-config", () => {
   let tempDir: string;
@@ -25,16 +31,10 @@ describe("project-config", () => {
     });
 
     it("should load minimal config (just name and agents)", async () => {
-      const configDir = path.join(tempDir, ".claude");
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, "config.yaml"),
-        `name: my-project
-agents:
-  - web-developer
-  - api-developer
-`,
-      );
+      await writeTestTsConfig(tempDir, {
+        name: "my-project",
+        agents: ["web-developer", "api-developer"],
+      });
 
       const result = await loadProjectConfig(tempDir);
 
@@ -45,19 +45,16 @@ agents:
     });
 
     it("should load config with stack (bare strings normalized to SkillAssignment[])", async () => {
-      const configDir = path.join(tempDir, ".claude");
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, "config.yaml"),
-        `name: my-project
-agents:
-  - web-developer
-stack:
-  web-developer:
-    web-framework: web-framework-react
-    web-styling: web-styling-scss-modules
-`,
-      );
+      await writeTestTsConfig(tempDir, {
+        name: "my-project",
+        agents: ["web-developer"],
+        stack: {
+          "web-developer": {
+            "web-framework": "web-framework-react",
+            "web-styling": "web-styling-scss-modules",
+          },
+        },
+      });
 
       const result = await loadProjectConfig(tempDir);
 
@@ -72,26 +69,23 @@ stack:
     });
 
     it("should load config with mixed stack formats (array, object, string)", async () => {
-      const configDir = path.join(tempDir, ".claude");
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, "config.yaml"),
-        `name: my-project
-agents:
-  - web-developer
-stack:
-  web-developer:
-    web-framework: web-framework-react
-    shared-methodology:
-      - id: meta-methodology-investigation-requirements
-        preloaded: true
-      - id: meta-methodology-anti-over-engineering
-        preloaded: true
-    web-styling:
-      id: web-styling-scss-modules
-      preloaded: true
-`,
-      );
+      await writeTestTsConfig(tempDir, {
+        name: "my-project",
+        agents: ["web-developer"],
+        stack: {
+          "web-developer": {
+            "web-framework": "web-framework-react",
+            "shared-methodology": [
+              { id: "meta-methodology-investigation-requirements", preloaded: true },
+              { id: "meta-methodology-anti-over-engineering", preloaded: true },
+            ],
+            "web-styling": {
+              id: "web-styling-scss-modules",
+              preloaded: true,
+            },
+          },
+        },
+      });
 
       const result = await loadProjectConfig(tempDir);
 
@@ -111,18 +105,13 @@ stack:
       });
     });
 
-    it("should load config with extra fields (backward compatibility)", async () => {
-      const configDir = path.join(tempDir, ".claude");
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, "config.yaml"),
-        `name: my-stack
-author: "@vince"
-description: A config with extra fields
-agents:
-  - web-developer
-`,
-      );
+    it("should load config with extra fields (passthrough)", async () => {
+      await writeTestTsConfig(tempDir, {
+        name: "my-stack",
+        author: "@vince",
+        description: "A config with extra fields",
+        agents: ["web-developer"],
+      });
 
       const result = await loadProjectConfig(tempDir);
 
@@ -132,19 +121,25 @@ agents:
       expect(result!.config.author).toBe("@vince");
     });
 
-    it("should return null for invalid YAML", async () => {
-      const configDir = path.join(tempDir, ".claude");
+    it("should return null for invalid TS config", async () => {
+      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
-      await writeFile(path.join(configDir, "config.yaml"), "invalid: yaml: content: :");
+      await writeFile(
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
+        "invalid typescript content {{",
+      );
 
       const result = await loadProjectConfig(tempDir);
       expect(result).toBeNull();
     });
 
     it("should return null for non-object config", async () => {
-      const configDir = path.join(tempDir, ".claude");
+      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
-      await writeFile(path.join(configDir, "config.yaml"), "just a string");
+      await writeFile(
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
+        'export default "just a string";',
+      );
 
       const result = await loadProjectConfig(tempDir);
       expect(result).toBeNull();
@@ -239,10 +234,13 @@ describe("round-trip tests", () => {
       { selectedAgents },
     );
 
-    // Write to temp dir
-    const configDir = path.join(tempDir, ".claude");
+    // Write to temp dir as TS config
+    const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.yaml"), stringifyYaml(generated));
+    await writeFile(
+      path.join(configDir, STANDARD_FILES.CONFIG_TS),
+      generateTsConfigSource(generated),
+    );
 
     // Load it back
     const loaded = await loadProjectConfig(tempDir);
@@ -269,10 +267,13 @@ describe("round-trip tests", () => {
       },
     );
 
-    // Write to temp dir
-    const configDir = path.join(tempDir, ".claude");
+    // Write to temp dir as TS config
+    const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.yaml"), stringifyYaml(generated));
+    await writeFile(
+      path.join(configDir, STANDARD_FILES.CONFIG_TS),
+      generateTsConfigSource(generated),
+    );
 
     // Load it back
     const loaded = await loadProjectConfig(tempDir);

@@ -14,13 +14,13 @@ import {
   toTitleCase,
   generateSkillMd,
   generateMetadataYaml,
-  generateSkillCategoriesYaml,
-  generateSkillRulesYaml,
+  generateSkillCategoriesTs,
+  generateSkillRulesTs,
 } from "../../../../commands/new/skill";
 import {
   LOCAL_SKILLS_PATH,
-  SKILL_CATEGORIES_YAML_PATH,
-  SKILL_RULES_YAML_PATH,
+  SKILL_CATEGORIES_PATH,
+  SKILL_RULES_PATH,
   SKILLS_DIR_PATH,
   PLUGIN_MANIFEST_DIR,
   STANDARD_FILES,
@@ -382,25 +382,25 @@ describe("new:skill command", () => {
 
       await runCliCommand(["new:skill", "my-market-skill", "--category", "web-testing"]);
 
-      const categoriesPath = path.join(projectDir, SKILL_CATEGORIES_YAML_PATH);
-      const rulesPath = path.join(projectDir, SKILL_RULES_YAML_PATH);
+      const categoriesPath = path.join(projectDir, SKILL_CATEGORIES_PATH);
+      const rulesPath = path.join(projectDir, SKILL_RULES_PATH);
 
       expect(await fileExists(categoriesPath)).toBe(true);
       expect(await fileExists(rulesPath)).toBe(true);
 
       const categoriesContent = await readFile(categoriesPath, "utf-8");
-      expect(categoriesContent).toContain("web-testing:");
-      expect(categoriesContent).toContain("domain: web");
+      expect(categoriesContent).toContain('"web-testing"');
+      expect(categoriesContent).toContain('"domain": "web"');
 
       const rulesContent = await readFile(rulesPath, "utf-8");
-      expect(rulesContent).toContain("my-market-skill:");
+      expect(rulesContent).toContain('"my-market-skill"');
     });
 
     it("should NOT create config files for local skills", async () => {
       await runCliCommand(["new:skill", "my-local-skill"]);
 
-      const categoriesPath = path.join(projectDir, SKILL_CATEGORIES_YAML_PATH);
-      const rulesPath = path.join(projectDir, SKILL_RULES_YAML_PATH);
+      const categoriesPath = path.join(projectDir, SKILL_CATEGORIES_PATH);
+      const rulesPath = path.join(projectDir, SKILL_RULES_PATH);
 
       expect(await fileExists(categoriesPath)).toBe(false);
       expect(await fileExists(rulesPath)).toBe(false);
@@ -416,8 +416,8 @@ describe("new:skill command", () => {
 
       await runCliCommand(["new:skill", "my-skill", "--output", customOutput]);
 
-      const categoriesPath = path.join(projectDir, SKILL_CATEGORIES_YAML_PATH);
-      const rulesPath = path.join(projectDir, SKILL_RULES_YAML_PATH);
+      const categoriesPath = path.join(projectDir, SKILL_CATEGORIES_PATH);
+      const rulesPath = path.join(projectDir, SKILL_RULES_PATH);
 
       expect(await fileExists(categoriesPath)).toBe(false);
       expect(await fileExists(rulesPath)).toBe(false);
@@ -435,15 +435,15 @@ describe("new:skill command", () => {
       await runCliCommand(["new:skill", "second-skill", "--category", "api-database"]);
 
       const categoriesContent = await readFile(
-        path.join(projectDir, SKILL_CATEGORIES_YAML_PATH),
+        path.join(projectDir, SKILL_CATEGORIES_PATH),
         "utf-8",
       );
-      expect(categoriesContent).toContain("web-testing:");
-      expect(categoriesContent).toContain("api-database:");
+      expect(categoriesContent).toContain('"web-testing"');
+      expect(categoriesContent).toContain('"api-database"');
 
-      const rulesContent = await readFile(path.join(projectDir, SKILL_RULES_YAML_PATH), "utf-8");
-      expect(rulesContent).toContain("first-skill:");
-      expect(rulesContent).toContain("second-skill:");
+      const rulesContent = await readFile(path.join(projectDir, SKILL_RULES_PATH), "utf-8");
+      expect(rulesContent).toContain('"first-skill"');
+      expect(rulesContent).toContain('"second-skill"');
     });
 
     it("should not duplicate existing category or alias entries", async () => {
@@ -456,78 +456,88 @@ describe("new:skill command", () => {
       await runCliCommand(["new:skill", "skill-one", "--category", "web-framework", "--force"]);
 
       const categoriesContent = await readFile(
-        path.join(projectDir, SKILL_CATEGORIES_YAML_PATH),
+        path.join(projectDir, SKILL_CATEGORIES_PATH),
         "utf-8",
       );
-      // Should only appear once as a category key
-      const matches = categoriesContent.match(/web-framework:/g);
+      // Should only appear once as a category key in JSON
+      const matches = categoriesContent.match(/"web-framework":/g);
       expect(matches).toHaveLength(1);
     });
   });
 });
 
-describe("generateSkillCategoriesYaml", () => {
+describe("generateSkillCategoriesTs", () => {
   it("should contain version field", () => {
-    const content = generateSkillCategoriesYaml("web-framework" as CategoryPath);
-    expect(content).toContain('version: "1.0.0"');
+    const content = generateSkillCategoriesTs("web-framework");
+    expect(content).toContain('"version": "1.0.0"');
   });
 
   it("should contain category entry with correct id", () => {
-    const content = generateSkillCategoriesYaml("web-framework" as CategoryPath);
-    expect(content).toContain("web-framework:");
-    expect(content).toContain("id: web-framework");
+    const content = generateSkillCategoriesTs("web-framework");
+    expect(content).toContain('"web-framework"');
+    expect(content).toContain('"id": "web-framework"');
   });
 
   it("should derive displayName from subcategory part", () => {
-    const content = generateSkillCategoriesYaml("web-framework" as CategoryPath);
-    expect(content).toContain("displayName: Framework");
+    const content = generateSkillCategoriesTs("web-framework");
+    expect(content).toContain('"displayName": "Framework"');
   });
 
   it("should include domain when prefix is a known domain", () => {
-    const content = generateSkillCategoriesYaml("api-database" as CategoryPath);
-    expect(content).toContain("domain: api");
+    const content = generateSkillCategoriesTs("api-database");
+    expect(content).toContain('"domain": "api"');
   });
 
   it("should omit domain when prefix is not a known domain", () => {
-    const content = generateSkillCategoriesYaml("dummy-category" as CategoryPath);
-    expect(content).not.toContain("domain:");
+    const content = generateSkillCategoriesTs("dummy-category" as CategoryPath);
+    expect(content).not.toContain('"domain"');
   });
 
   it("should set default values for exclusive, required, order, custom", () => {
-    const content = generateSkillCategoriesYaml("web-framework" as CategoryPath);
-    expect(content).toContain("exclusive: true");
-    expect(content).toContain("required: false");
-    expect(content).toContain("order: 99");
-    expect(content).toContain("custom: true");
+    const content = generateSkillCategoriesTs("web-framework");
+    expect(content).toContain('"exclusive": true');
+    expect(content).toContain('"required": false');
+    expect(content).toContain('"order": 99');
+    expect(content).toContain('"custom": true');
   });
 
   it("should derive displayName for multi-segment subcategory", () => {
-    const content = generateSkillCategoriesYaml("web-error-handling" as CategoryPath);
-    expect(content).toContain("displayName: Error Handling");
+    const content = generateSkillCategoriesTs("web-error-handling");
+    expect(content).toContain('"displayName": "Error Handling"');
   });
 
   it("should handle all known domain prefixes", () => {
     for (const domain of ["web", "api", "mobile", "cli", "shared"]) {
-      const content = generateSkillCategoriesYaml(`${domain}-testing` as CategoryPath);
-      expect(content).toContain(`domain: ${domain}`);
+      const content = generateSkillCategoriesTs(`${domain}-testing` as CategoryPath);
+      expect(content).toContain(`"domain": "${domain}"`);
     }
+  });
+
+  it("should be valid TypeScript with export default", () => {
+    const content = generateSkillCategoriesTs("web-framework");
+    expect(content).toContain("export default");
   });
 });
 
-describe("generateSkillRulesYaml", () => {
+describe("generateSkillRulesTs", () => {
   it("should contain version field", () => {
-    const content = generateSkillRulesYaml("my-skill");
-    expect(content).toContain('version: "1.0.0"');
+    const content = generateSkillRulesTs("my-skill");
+    expect(content).toContain('"version": "1.0.0"');
   });
 
   it("should contain aliases section with skill entry", () => {
-    const content = generateSkillRulesYaml("my-skill");
-    expect(content).toContain("aliases:");
-    expect(content).toContain('my-skill: "my-skill"');
+    const content = generateSkillRulesTs("my-skill");
+    expect(content).toContain('"aliases"');
+    expect(content).toContain('"my-skill": "my-skill"');
   });
 
   it("should include comment explaining alias format", () => {
-    const content = generateSkillRulesYaml("my-skill");
-    expect(content).toContain("# Short aliases mapping to canonical skill IDs");
+    const content = generateSkillRulesTs("my-skill");
+    expect(content).toContain("// Short aliases mapping to canonical skill IDs");
+  });
+
+  it("should be valid TypeScript with export default", () => {
+    const content = generateSkillRulesTs("my-skill");
+    expect(content).toContain("export default");
   });
 });

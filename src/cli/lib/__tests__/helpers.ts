@@ -4,7 +4,12 @@ import { mkdir, writeFile, readFile } from "fs/promises";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { run, Errors } from "@oclif/core";
 import ansis from "ansis";
-import { DEFAULT_BRANDING, DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../../consts";
+import {
+  CLAUDE_SRC_DIR,
+  DEFAULT_BRANDING,
+  DEFAULT_PLUGIN_NAME,
+  STANDARD_FILES,
+} from "../../consts";
 import { typedEntries } from "../../utils/typed-object";
 import { computeSkillFolderHash } from "../versioning";
 
@@ -128,12 +133,15 @@ import type {
   AgentName,
   CategoryDefinition,
   CategoryPath,
+  CompiledAgentData,
   CompileAgentConfig,
   CompileConfig,
   CompileContext,
   Domain,
   DomainSelections,
   ExtractedSkillMetadata,
+  Marketplace,
+  MarketplacePlugin,
   MergedSkillsMatrix,
   ResolvedSkill,
   ResolvedStack,
@@ -145,6 +153,7 @@ import type {
   SkillSource,
   SkillSourceType,
   RelationshipDefinitions,
+  RawStacksConfig,
   Stack,
   StackAgentConfig,
   Subcategory,
@@ -164,6 +173,49 @@ export async function readTestYaml<T>(filePath: string): Promise<T> {
   const content = await readFile(filePath, "utf-8");
   // Boundary cast: YAML parse returns `unknown`, caller provides expected type
   return parseYaml(content) as T;
+}
+
+/**
+ * Parse a TS config file (export default {...}; or export default defineConfig({...})).
+ * Extracts the JSON object from the default export and parses it.
+ */
+export async function readTestTsConfig<T>(filePath: string): Promise<T> {
+  const content = await readFile(filePath, "utf-8");
+  return parseTsConfigContent<T>(content);
+}
+
+/**
+ * Parse TS config content string (export default {...}; or export default defineConfig({...})).
+ * Extracts the JSON object from the default export and parses it.
+ */
+export function parseTsConfigContent<T>(content: string): T {
+  // Handle defineConfig() wrapper: export default defineConfig({...});
+  const defineConfigMatch = content.match(/export\s+default\s+defineConfig\(([\s\S]*)\)\s*;?\s*$/);
+  if (defineConfigMatch) {
+    // Boundary cast: JSON.parse returns unknown, caller provides expected type
+    return JSON.parse(defineConfigMatch[1].trim()) as T;
+  }
+  // Handle plain export: export default {...};
+  const plainMatch = content.match(/export\s+default\s+([\s\S]*)/);
+  if (plainMatch) {
+    // Strip trailing semicolons and whitespace before parsing
+    const jsonStr = plainMatch[1].replace(/;\s*$/, "").trim();
+    // Boundary cast: JSON.parse returns unknown, caller provides expected type
+    return JSON.parse(jsonStr) as T;
+  }
+  throw new Error(`Cannot parse TS config content: ${content.slice(0, 100)}...`);
+}
+
+/** Writes a TS config file with the given object into the given subdirectory (defaults to CLAUDE_SRC_DIR) */
+export async function writeTestTsConfig(
+  projectDir: string,
+  config: Record<string, unknown>,
+  configSubdir: string = CLAUDE_SRC_DIR,
+): Promise<void> {
+  const configDir = path.join(projectDir, configSubdir);
+  await mkdir(configDir, { recursive: true });
+  const content = `export default ${JSON.stringify(config, null, 2)};`;
+  await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), content);
 }
 
 export function buildWizardResult(
@@ -953,6 +1005,149 @@ export function createMockCompiledStackPlugin(
 
 export function createMockSkillAssignment(id: SkillId, preloaded = false): SkillAssignment {
   return { id, preloaded };
+}
+
+export function createMockRawStacksConfig(): RawStacksConfig {
+  return {
+    stacks: [
+      {
+        id: "nextjs-fullstack",
+        name: "Next.js Fullstack",
+        description: "Full-stack Next.js with Hono API",
+        agents: {
+          "web-developer": {
+            "web-framework": "web-framework-react",
+            "web-styling": "web-styling-scss-modules",
+          },
+          "api-developer": {
+            "api-api": "api-framework-hono",
+            "api-database": "api-database-drizzle",
+          },
+        },
+      },
+      {
+        id: "vue-spa",
+        name: "Vue SPA",
+        description: "Vue single-page application",
+        agents: {
+          "web-developer": {
+            "web-framework": "web-framework-vue-composition-api",
+            "web-styling": "web-styling-tailwind",
+          },
+        },
+      },
+    ],
+  };
+}
+
+export function createMockRawStacksConfigWithArrays(): RawStacksConfig {
+  return {
+    stacks: [
+      {
+        id: "multi-select-stack",
+        name: "Multi-Select Stack",
+        description: "Stack with array-valued subcategories",
+        agents: {
+          "web-developer": {
+            "web-framework": "web-framework-react",
+            "shared-methodology": [
+              "meta-methodology-investigation-requirements",
+              "meta-methodology-anti-over-engineering",
+              "meta-methodology-success-criteria",
+            ],
+          },
+          "pattern-scout": {
+            "shared-methodology": [
+              "meta-methodology-investigation-requirements",
+              "meta-methodology-anti-over-engineering",
+            ],
+            "shared-research": "meta-research-research-methodology",
+          },
+        },
+      },
+    ],
+  };
+}
+
+export function createMockRawStacksConfigWithObjects(): RawStacksConfig {
+  return {
+    stacks: [
+      {
+        id: "object-stack",
+        name: "Object Stack",
+        description: "Stack with object-form skill assignments",
+        agents: {
+          "web-developer": {
+            "web-framework": [{ id: "web-framework-react", preloaded: true }],
+            "web-styling": "web-styling-scss-modules",
+            "shared-methodology": [
+              { id: "meta-methodology-investigation-requirements", preloaded: true },
+              "meta-methodology-anti-over-engineering",
+            ],
+          },
+        },
+      },
+    ],
+  };
+}
+
+export function createMockMarketplace(plugins: MarketplacePlugin[] = []): Marketplace {
+  return {
+    name: "test-marketplace",
+    version: "1.0.0",
+    owner: { name: "Test Owner" },
+    plugins,
+  };
+}
+
+export function createMockMarketplacePlugin(
+  name: string,
+  source: MarketplacePlugin["source"] = "local",
+): MarketplacePlugin {
+  return {
+    name,
+    source,
+  };
+}
+
+/**
+ * Creates a ResolvedSkill with availableSources annotation for multi-source testing.
+ * Simulates what multi-source-loader.ts does after tagging.
+ */
+export function createMockMultiSourceSkill(
+  id: SkillId,
+  category: CategoryPath,
+  sources: SkillSource[],
+  overrides?: Partial<ResolvedSkill>,
+): ResolvedSkill {
+  const activeSource = sources.find((s) => s.installed) ?? sources[0];
+  return createMockSkill(id, category, {
+    availableSources: sources,
+    activeSource,
+    ...overrides,
+  });
+}
+
+export function createMockCompiledAgentData(overrides?: Partial<AgentConfig>): CompiledAgentData {
+  const agent = createMockAgentConfig("test-agent", [], {
+    title: "Test Agent",
+    description: "A test agent",
+    ...overrides,
+  });
+
+  return {
+    agent,
+    intro: "Test intro",
+    workflow: "Test workflow",
+    examples: "Test examples",
+    criticalRequirementsTop: "",
+    criticalReminders: "",
+    outputFormat: "",
+    skills: agent.skills,
+    preloadedSkills: [],
+    dynamicSkills: [],
+    preloadedSkillIds: [],
+  };
 }
 
 export { getTestSkill, TEST_SKILLS, TEST_CATEGORIES, TEST_MATRICES } from "./test-fixtures";

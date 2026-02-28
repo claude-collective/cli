@@ -345,7 +345,7 @@ describe("schema-validator", () => {
       expect(pluginResult!.invalidFiles[0].errors[0]).toContain("Failed to parse");
     });
 
-    it("should validate project source config (config.yaml in .claude-src)", async () => {
+    it("should validate project source config (config in .claude-src)", async () => {
       const srcDir = path.join(tempDir, ".claude-src");
       await mkdir(srcDir, { recursive: true });
       await writeFile(

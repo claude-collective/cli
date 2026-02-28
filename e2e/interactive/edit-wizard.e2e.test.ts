@@ -26,7 +26,7 @@ import {
  *
  * The edit command re-enters the wizard at the build step with
  * pre-selected skills from the existing installation. It requires
- * a valid project with .claude-src/config.yaml already present.
+ * a valid project with .claude-src/config.ts already present.
  *
  * These tests spawn the actual CLI binary via PTY (zero mocks).
  */
@@ -54,7 +54,7 @@ describe("edit wizard", () => {
       session = new TerminalSession(["edit"], emptyDir);
 
       // The edit command calls detectInstallation() which returns null
-      // when no config.yaml is found, then exits with an error
+      // when no config.ts is found, then exits with an error
       await session.waitForText("No installation found");
 
       const exitCode = await session.waitForExit();
@@ -108,12 +108,12 @@ describe("edit wizard", () => {
       // in the Framework category header.
       await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
       await session.waitForText("Framework");
-
-      const screen = session.getScreen();
       // Framework category should show the pre-selected skill count
-      expect(screen).toMatch(/Framework.*\(1 of 1\)/);
+      await session.waitForText("(1 of 1)", WIZARD_LOAD_TIMEOUT_MS);
+      const fullOutput = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+      expect(fullOutput).toMatch(/Framework.*\(1 of 1\)/);
       // The react skill tag should be visible
-      expect(screen).toContain("react");
+      expect(fullOutput).toContain("react");
     });
 
     it("should reach the build step wizard view", async () => {
@@ -128,17 +128,16 @@ describe("edit wizard", () => {
       // Wait for the wizard to render the build step.
       // The build step shows "Customize your X stack" title and domain tabs.
       await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
-
-      const screen = session.getScreen();
+      const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
       // Should show the domain tab bar with Web selected
-      expect(screen).toContain("Web");
+      expect(output).toContain("Web");
       // Should show the build step navigation instructions
-      expect(screen).toContain("SPACE");
-      expect(screen).toContain("ENTER");
-      expect(screen).toContain("ESC");
+      expect(output).toContain("SPACE");
+      expect(output).toContain("ENTER");
+      expect(output).toContain("ESC");
       // Should show the wizard step indicators
-      expect(screen).toContain("Build");
-      expect(screen).toContain("Confirm");
+      expect(output).toContain("Build");
+      expect(output).toContain("Confirm");
     });
   });
 
@@ -171,7 +170,7 @@ describe("edit wizard", () => {
       });
 
       // Read the original config before editing
-      const configPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
+      const configPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const originalConfig = await readTestFile(configPath);
 
       session = new TerminalSession(["edit"], projectDir, {
@@ -290,12 +289,11 @@ describe("edit wizard", () => {
       });
 
       await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
-
-      const screen = session.getScreen();
+      const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
       // The build step footer shows these hotkey indicators
-      expect(screen).toContain("Labels");
-      expect(screen).toContain("Plugin mode");
-      expect(screen).toContain("Help");
+      expect(output).toContain("Labels");
+      expect(output).toContain("Plugin mode");
+      expect(output).toContain("Help");
     });
 
     it("should toggle install mode with P key", async () => {
@@ -310,10 +308,9 @@ describe("edit wizard", () => {
       });
 
       await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
-
       // The footer should initially show "Plugin mode" (toggle indicator)
-      const screenBefore = session.getScreen();
-      expect(screenBefore).toContain("Plugin mode");
+      const outputBefore = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+      expect(outputBefore).toContain("Plugin mode");
 
       // Press P to toggle install mode from local to plugin
       session.write("p");
@@ -429,10 +426,10 @@ describe("edit wizard", () => {
       });
 
       await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
-
       // Verify pre-selected skill is shown
-      const screenBefore = session.getScreen();
-      expect(screenBefore).toMatch(/Framework.*\(1 of 1\)/);
+      await session.waitForText("(1 of 1)", WIZARD_LOAD_TIMEOUT_MS);
+      const outputBefore = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+      expect(outputBefore).toMatch(/Framework.*\(1 of 1\)/);
 
       // Build step -> Sources step
       session.enter();
@@ -460,11 +457,11 @@ describe("edit wizard", () => {
 
       session.escape();
       await session.waitForText("Customize your Web stack", EXIT_TIMEOUT_MS);
-
       // The pre-selected skill should still be shown after navigating back
-      const screenAfter = session.getScreen();
-      expect(screenAfter).toMatch(/Framework.*\(1 of 1\)/);
-      expect(screenAfter).toContain("react");
+      await session.waitForText("(1 of 1)", WIZARD_LOAD_TIMEOUT_MS);
+      const outputAfter = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+      expect(outputAfter).toMatch(/Framework.*\(1 of 1\)/);
+      expect(outputAfter).toContain("react");
     });
   });
 
@@ -483,8 +480,9 @@ describe("edit wizard", () => {
       });
 
       await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("(1 selected)", WIZARD_LOAD_TIMEOUT_MS);
 
-      const output = session.getFullOutput();
+      const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
       // Framework category should show the pre-selected react skill
       expect(output).toMatch(/Framework.*\(1 of 1\)/);
       // Testing category should show the pre-selected vitest skill

@@ -4,11 +4,14 @@ import { unique } from "remeda";
 import {
   DIRS,
   PROJECT_ROOT,
-  SKILL_CATEGORIES_YAML_PATH,
-  SKILL_RULES_YAML_PATH,
+  SKILL_CATEGORIES_PATH,
+  SKILL_RULES_PATH,
   SKILLS_DIR_PATH,
   STANDARD_FILES,
 } from "../../consts";
+import { defaultCategories } from "../configuration/default-categories";
+import { defaultRules } from "../configuration/default-rules";
+import { defaultStacks } from "../configuration/default-stacks";
 import { LOCAL_DEFAULTS } from "../metadata-keys";
 import type {
   AgentName,
@@ -190,12 +193,9 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
   const skillsDirRelPath = sourceProjectConfig?.skillsDir ?? SKILLS_DIR_PATH;
   const stacksRelFile = sourceProjectConfig?.stacksFile;
 
-  // Load CLI categories and rules from standalone files
-  const cliCategoriesPath = path.join(PROJECT_ROOT, SKILL_CATEGORIES_YAML_PATH);
-  const cliRulesPath = path.join(PROJECT_ROOT, SKILL_RULES_YAML_PATH);
-
-  const cliCategories = await loadSkillCategories(cliCategoriesPath);
-  const cliRules = await loadSkillRules(cliRulesPath);
+  // CLI defaults are imported directly as TS modules
+  const cliCategories = defaultCategories;
+  const cliRules = defaultRules;
 
   let categories: CategoryMap = cliCategories;
   let relationships: RelationshipDefinitions = cliRules.relationships;
@@ -206,8 +206,8 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
   await discoverAndExtendFromSource(basePath);
 
   // Load source categories and rules (if they exist)
-  const sourceCategoriesPath = path.join(basePath, SKILL_CATEGORIES_YAML_PATH);
-  const sourceRulesPath = path.join(basePath, SKILL_RULES_YAML_PATH);
+  const sourceCategoriesPath = path.join(basePath, SKILL_CATEGORIES_PATH);
+  const sourceRulesPath = path.join(basePath, SKILL_RULES_PATH);
   const hasSourceCategories = await fileExists(sourceCategoriesPath);
   const hasSourceRules = await fileExists(sourceRulesPath);
 
@@ -264,9 +264,9 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
     perSkillRules,
   );
 
-  // Load stacks from source first, fall back to CLI's config/stacks.yaml
+  // Load stacks from source first, fall back to CLI's built-in defaults
   const sourceStacks = await loadStacks(basePath, stacksRelFile);
-  const stacks = sourceStacks.length > 0 ? sourceStacks : await loadStacks(PROJECT_ROOT);
+  const stacks = sourceStacks.length > 0 ? sourceStacks : defaultStacks;
   if (stacks.length > 0) {
     mergedMatrix.suggestedStacks = stacks.map((stack) => convertStackToResolvedStack(stack));
     const stackSource = sourceStacks.length > 0 ? "source" : "CLI";

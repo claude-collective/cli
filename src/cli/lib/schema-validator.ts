@@ -20,6 +20,7 @@ import {
   pluginManifestSchema,
 } from "./schemas";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../consts";
+import { loadTsConfig } from "./configuration/ts-config-loader";
 
 type FileValidationError = {
   file: string;
@@ -53,20 +54,24 @@ type ValidationTarget = {
   pattern: string;
   baseDir: string;
   extractor?: ContentExtractor;
+  /** When true, load via loadTsConfig instead of YAML parsing */
+  tsConfig?: boolean;
 };
 
 const VALIDATION_TARGETS: ValidationTarget[] = [
   {
     name: "Skill Categories",
     schema: skillCategoriesFileSchema,
-    pattern: STANDARD_FILES.SKILL_CATEGORIES_YAML,
+    pattern: STANDARD_FILES.SKILL_CATEGORIES_TS,
     baseDir: "config",
+    tsConfig: true,
   },
   {
     name: "Skill Rules",
     schema: skillRulesFileSchema,
-    pattern: STANDARD_FILES.SKILL_RULES_YAML,
+    pattern: STANDARD_FILES.SKILL_RULES_TS,
     baseDir: "config",
+    tsConfig: true,
   },
   {
     name: "Skill Metadata",
@@ -109,8 +114,9 @@ const VALIDATION_TARGETS: ValidationTarget[] = [
   {
     name: "Stacks Config",
     schema: stacksConfigSchema,
-    pattern: "stacks.yaml",
+    pattern: "stacks.ts",
     baseDir: "config",
+    tsConfig: true,
   },
   {
     name: "Project Source Config",
@@ -161,10 +167,19 @@ async function validateFile(
   filePath: string,
   schema: z.ZodType<unknown>,
   extractor?: ContentExtractor,
+  tsConfig?: boolean,
 ): Promise<{ valid: boolean; errors: string[] }> {
   try {
     if (!(await fileExists(filePath))) {
       return { valid: false, errors: [`File not found: ${filePath}`] };
+    }
+
+    if (tsConfig) {
+      const data = await loadTsConfig(filePath, schema);
+      if (data === null) {
+        return { valid: false, errors: ["Failed to load or validate TS config"] };
+      }
+      return { valid: true, errors: [] };
     }
 
     const content = await readFile(filePath);
@@ -216,7 +231,7 @@ async function validateTarget(
   }
 
   for (const file of files) {
-    const validation = await validateFile(file, target.schema, target.extractor);
+    const validation = await validateFile(file, target.schema, target.extractor, target.tsConfig);
     const relativePath = path.relative(rootDir, file);
 
     if (validation.valid) {

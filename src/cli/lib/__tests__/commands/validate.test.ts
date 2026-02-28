@@ -246,7 +246,7 @@ async function writeValidSourceSkill(
   await writeFile(path.join(skillDir, STANDARD_FILES.METADATA_YAML), stringifyYaml(metadata));
 }
 
-/** Creates minimal skill-categories.yaml and skill-rules.yaml with the given categories */
+/** Creates minimal skill-categories.ts and skill-rules.ts with the given categories */
 async function writeTestMatrix(
   configDir: string,
   categories: Record<string, { domain: string; displayName: string }>,
@@ -265,27 +265,26 @@ async function writeTestMatrix(
     };
   }
 
+  const categoriesData = { version: "1.0.0", categories: matrixCategories };
   await writeFile(
-    path.join(configDir, "skill-categories.yaml"),
-    stringifyYaml({
-      version: "1.0.0",
-      categories: matrixCategories,
-    }),
+    path.join(configDir, "skill-categories.ts"),
+    `export default ${JSON.stringify(categoriesData, null, 2)};\n`,
   );
 
+  const rulesData = {
+    version: "1.0.0",
+    aliases: {},
+    relationships: {
+      conflicts: [],
+      discourages: [],
+      recommends: [],
+      requires: [],
+      alternatives: [],
+    },
+  };
   await writeFile(
-    path.join(configDir, "skill-rules.yaml"),
-    stringifyYaml({
-      version: "1.0.0",
-      aliases: {},
-      relationships: {
-        conflicts: [],
-        discourages: [],
-        recommends: [],
-        requires: [],
-        alternatives: [],
-      },
-    }),
+    path.join(configDir, "skill-rules.ts"),
+    `export default ${JSON.stringify(rulesData, null, 2)};\n`,
   );
 }
 
@@ -507,32 +506,31 @@ describe("source validation (validateSource)", () => {
       },
     };
 
+    const categoriesData = { version: "1.0.0", categories: matrixCategories };
     await writeFile(
-      path.join(configDir, "skill-categories.yaml"),
-      stringifyYaml({
-        version: "1.0.0",
-        categories: matrixCategories,
-      }),
+      path.join(configDir, "skill-categories.ts"),
+      `export default ${JSON.stringify(categoriesData, null, 2)};\n`,
     );
 
+    const rulesData = {
+      version: "1.0.0",
+      aliases: {},
+      relationships: {
+        conflicts: [
+          {
+            skills: ["web-framework-react", "web-state-nonexistent"],
+            reason: "Test conflict with nonexistent skill",
+          },
+        ],
+        discourages: [],
+        recommends: [],
+        requires: [],
+        alternatives: [],
+      },
+    };
     await writeFile(
-      path.join(configDir, "skill-rules.yaml"),
-      stringifyYaml({
-        version: "1.0.0",
-        aliases: {},
-        relationships: {
-          conflicts: [
-            {
-              skills: ["web-framework-react", "web-state-nonexistent"],
-              reason: "Test conflict with nonexistent skill",
-            },
-          ],
-          discourages: [],
-          recommends: [],
-          requires: [],
-          alternatives: [],
-        },
-      }),
+      path.join(configDir, "skill-rules.ts"),
+      `export default ${JSON.stringify(rulesData, null, 2)};\n`,
     );
 
     const result = await validateSource(sourceDir);

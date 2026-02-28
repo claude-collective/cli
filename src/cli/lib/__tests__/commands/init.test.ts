@@ -30,7 +30,7 @@ describe("init command", () => {
   async function seedConfigForEarlyExit(): Promise<void> {
     const configDir = path.join(projectDir, ".claude-src");
     await mkdir(configDir, { recursive: true });
-    await writeFile(path.join(configDir, "config.yaml"), "name: test-project\n");
+    await writeFile(path.join(configDir, "config.ts"), 'export default { name: "test-project" };');
   }
 
   describe("flag validation", () => {
@@ -104,7 +104,10 @@ describe("init command", () => {
     it("should show dashboard when project is already initialized", async () => {
       const configDir = path.join(projectDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
-      await writeFile(path.join(configDir, "config.yaml"), "name: test-project\n");
+      await writeFile(
+        path.join(configDir, "config.ts"),
+        'export default { name: "test-project" };',
+      );
 
       const { stdout, stderr, error } = await runCliCommand(["init"]);
 
@@ -125,8 +128,11 @@ describe("init command", () => {
       const configDir = path.join(projectDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
       await writeFile(
-        path.join(configDir, "config.yaml"),
-        "name: test-project\nskills:\n  - web-framework-react\n  - web-state-zustand\n",
+        path.join(configDir, "config.ts"),
+        `export default ${JSON.stringify({
+          name: "test-project",
+          skills: ["web-framework-react", "web-state-zustand"],
+        })};`,
       );
 
       // Create compiled agents
@@ -149,8 +155,12 @@ describe("init command", () => {
       const configDir = path.join(projectDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
       await writeFile(
-        path.join(configDir, "config.yaml"),
-        "name: test-project\nskills: []\nsource: github:agents-inc/skills\n",
+        path.join(configDir, "config.ts"),
+        `export default ${JSON.stringify({
+          name: "test-project",
+          skills: [],
+          source: "github:agents-inc/skills",
+        })};`,
       );
 
       const data = await getDashboardData(projectDir);
@@ -163,8 +173,8 @@ describe("init command", () => {
     it("should not modify existing config when already initialized", async () => {
       const configDir = path.join(projectDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
-      const configPath = path.join(configDir, "config.yaml");
-      await writeFile(configPath, "name: test-project\n");
+      const configPath = path.join(configDir, "config.ts");
+      await writeFile(configPath, 'export default { name: "test-project" };');
 
       await runCliCommand(["init"]);
 
@@ -176,7 +186,10 @@ describe("init command", () => {
     it("should exit with SUCCESS when already initialized", async () => {
       const configDir = path.join(projectDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
-      await writeFile(path.join(configDir, "config.yaml"), "name: test-project\n");
+      await writeFile(
+        path.join(configDir, "config.ts"),
+        'export default { name: "test-project" };',
+      );
 
       const { error } = await runCliCommand(["init"]);
 
@@ -187,7 +200,10 @@ describe("init command", () => {
     it("should show 0 counts when skills and agents are empty", async () => {
       const configDir = path.join(projectDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
-      await writeFile(path.join(configDir, "config.yaml"), "name: test-project\nskills: []\n");
+      await writeFile(
+        path.join(configDir, "config.ts"),
+        `export default ${JSON.stringify({ name: "test-project", skills: [] })};`,
+      );
 
       const data = await getDashboardData(projectDir);
       expect(data.skillCount).toBe(0);

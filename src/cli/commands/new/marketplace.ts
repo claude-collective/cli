@@ -7,8 +7,8 @@ import {
   CLI_BIN_NAME,
   KEBAB_CASE_PATTERN,
   PLUGIN_MANIFEST_DIR,
-  SKILL_CATEGORIES_YAML_PATH,
-  SKILL_RULES_YAML_PATH,
+  SKILL_CATEGORIES_PATH,
+  SKILL_RULES_PATH,
   SKILLS_DIR_PATH,
   STACKS_FILE_PATH,
   STANDARD_FILES,
@@ -17,7 +17,7 @@ import { EXIT_CODES } from "../../lib/exit-codes.js";
 import { LOCAL_DEFAULTS } from "../../lib/metadata-keys.js";
 import { compileAllSkillPlugins } from "../../lib/skills/skill-plugin-compiler.js";
 import { generateMarketplace, writeMarketplace } from "../../lib/marketplace-generator.js";
-import { generateSkillCategoriesYaml, generateSkillRulesYaml } from "./skill.js";
+import { generateSkillCategoriesTs, generateSkillRulesTs } from "./skill.js";
 import type { CategoryPath } from "../../types/index.js";
 
 export function validateMarketplaceName(name: string): string | null {
@@ -32,18 +32,24 @@ export function validateMarketplaceName(name: string): string | null {
   return null;
 }
 
-export function generateStacksYaml(name: string): string {
-  return `# Stack definitions for ${name}
-
-stacks:
-  - id: dummy-stack
-    name: Dummy Stack
-    description: Default stack for ${name}
-    agents:
-      web-developer:
-        dummy-category: dummy-skill
-    philosophy: Ship fast, iterate faster
-`;
+export function generateStacksTs(name: string): string {
+  const data = {
+    stacks: [
+      {
+        id: "dummy-stack",
+        name: "Dummy Stack",
+        description: `Default stack for ${name}`,
+        agents: {
+          "web-developer": {
+            "dummy-category": "dummy-skill",
+          },
+        },
+        philosophy: "Ship fast, iterate faster",
+      },
+    ],
+  };
+  const body = JSON.stringify(data, null, 2);
+  return `// Stack definitions for ${name}\nexport default ${body};\n`;
 }
 
 export function generateReadme(name: string): string {
@@ -179,8 +185,8 @@ export default class NewMarketplace extends BaseCommand {
     if (flags["dry-run"]) {
       this.log("[DRY RUN] Would create marketplace structure:");
       this.log(`  ${STACKS_FILE_PATH}`);
-      this.log(`  ${SKILL_CATEGORIES_YAML_PATH}`);
-      this.log(`  ${SKILL_RULES_YAML_PATH}`);
+      this.log(`  ${SKILL_CATEGORIES_PATH}`);
+      this.log(`  ${SKILL_RULES_PATH}`);
       this.log(`  ${skillPath}/${STANDARD_FILES.SKILL_MD}`);
       this.log(`  ${skillPath}/${STANDARD_FILES.METADATA_YAML}`);
       this.log("  README.md");
@@ -190,22 +196,20 @@ export default class NewMarketplace extends BaseCommand {
     this.log("Creating marketplace structure...");
 
     try {
-      // Create config/stacks.yaml
-      const stacksContent = generateStacksYaml(marketplaceName);
+      // Create config/stacks.ts
+      const stacksContent = generateStacksTs(marketplaceName);
       const stacksPath = path.join(marketplaceDir, STACKS_FILE_PATH);
       await ensureDir(path.dirname(stacksPath));
       await writeFile(stacksPath, stacksContent);
 
-      // Create config/skill-categories.yaml
-      const categoriesContent = generateSkillCategoriesYaml(
-        LOCAL_DEFAULTS.CATEGORY as CategoryPath,
-      );
-      const categoriesPath = path.join(marketplaceDir, SKILL_CATEGORIES_YAML_PATH);
+      // Create config/skill-categories.ts
+      const categoriesContent = generateSkillCategoriesTs(LOCAL_DEFAULTS.CATEGORY as CategoryPath);
+      const categoriesPath = path.join(marketplaceDir, SKILL_CATEGORIES_PATH);
       await writeFile(categoriesPath, categoriesContent);
 
-      // Create config/skill-rules.yaml
-      const rulesContent = generateSkillRulesYaml(skillName);
-      const rulesPath = path.join(marketplaceDir, SKILL_RULES_YAML_PATH);
+      // Create config/skill-rules.ts
+      const rulesContent = generateSkillRulesTs(skillName);
+      const rulesPath = path.join(marketplaceDir, SKILL_RULES_PATH);
       await writeFile(rulesPath, rulesContent);
 
       // Delegate skill creation to the new:skill command
@@ -222,8 +226,8 @@ export default class NewMarketplace extends BaseCommand {
 
       this.log("");
       this.logSuccess(`Created ${STACKS_FILE_PATH}`);
-      this.logSuccess(`Created ${SKILL_CATEGORIES_YAML_PATH}`);
-      this.logSuccess(`Created ${SKILL_RULES_YAML_PATH}`);
+      this.logSuccess(`Created ${SKILL_CATEGORIES_PATH}`);
+      this.logSuccess(`Created ${SKILL_RULES_PATH}`);
       this.logSuccess("Created README.md");
       this.log("");
 

@@ -12,7 +12,6 @@ import {
   marketplaceSchema,
   metadataValidationSchema,
   pluginManifestValidationSchema,
-  projectConfigValidationSchema,
   projectSourceConfigValidationSchema,
   skillFrontmatterValidationSchema,
   stackConfigValidationSchema,
@@ -139,19 +138,6 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
     },
   },
   {
-    filename: "project-config.schema.json",
-    schema: projectConfigValidationSchema,
-    metadata: {
-      $id: "schemas/project-config.schema.json",
-      title: "Project Configuration",
-      description:
-        "Schema for .claude-src/config.yaml consumer project files (name, agents, stack, skills).",
-    },
-    // stackAgentConfigSchema uses superRefine for runtime key validation (not representable
-    // in JSON schema), so inject propertyNames enum for IDE validation
-    postProcess: injectSubcategoryPropertyNames,
-  },
-  {
     filename: "project-source-config.schema.json",
     schema: projectSourceConfigValidationSchema,
     metadata: {
@@ -175,7 +161,7 @@ const SCHEMA_ENTRIES: SchemaEntry[] = [
     metadata: {
       $id: "schemas/stacks.schema.json",
       title: "Stacks Configuration",
-      description: "Schema for config/stacks.yaml defining agent groupings.",
+      description: "Schema for config/stacks.ts defining agent groupings.",
     },
     // stackAgentConfigSchema uses superRefine for runtime key validation (not representable
     // in JSON schema), so inject propertyNames enum for IDE validation

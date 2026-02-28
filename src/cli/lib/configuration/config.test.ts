@@ -1,7 +1,12 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
+import {
+  createTempDir,
+  cleanupTempDir,
+  parseTsConfigContent,
+  writeTestTsConfig,
+} from "../__tests__/helpers";
 import {
   DEFAULT_SOURCE,
   formatOrigin,
@@ -15,18 +20,7 @@ import {
   SOURCE_ENV_VAR,
   validateSourceFormat,
 } from "./config";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_BRANDING, STANDARD_FILES } from "../../consts";
-
-/** Writes a config YAML string into the given subdirectory (defaults to CLAUDE_SRC_DIR) */
-async function writeConfigYaml(
-  projectDir: string,
-  content: string,
-  configSubdir: string = CLAUDE_SRC_DIR,
-): Promise<void> {
-  const configDir = path.join(projectDir, configSubdir);
-  await mkdir(configDir, { recursive: true });
-  await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_YAML), content);
-}
+import { CLAUDE_SRC_DIR, DEFAULT_BRANDING, STANDARD_FILES } from "../../consts";
 
 describe("config", () => {
   let tempDir: string;
@@ -56,7 +50,7 @@ describe("config", () => {
   describe("getProjectConfigPath", () => {
     it("should return path in project .claude-src directory", () => {
       const configPath = getProjectConfigPath("/my/project");
-      expect(configPath).toBe(`/my/project/${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_YAML}`);
+      expect(configPath).toBe(`/my/project/${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS}`);
     });
   });
 
@@ -412,29 +406,27 @@ describe("config", () => {
       expect(config).toBeNull();
     });
 
-    it("should load config from .claude-src/config.yaml", async () => {
-      await writeConfigYaml(tempDir, "source: github:mycompany/skills\n");
+    it("should load config from .claude-src/config.ts", async () => {
+      await writeTestTsConfig(tempDir, { source: "github:mycompany/skills" });
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config).toEqual({ source: "github:mycompany/skills" });
     });
 
-    it("should fall back to .claude/config.yaml for legacy projects", async () => {
-      await writeConfigYaml(tempDir, "source: github:legacy/skills\n", CLAUDE_DIR);
-
-      const config = await loadProjectSourceConfig(tempDir);
-      expect(config).toEqual({ source: "github:legacy/skills" });
-    });
-
-    it("when config.yaml contains malformed YAML syntax, should return null", async () => {
-      await writeConfigYaml(tempDir, "invalid: yaml: content: :");
+    it("when config.ts contains invalid syntax, should return null", async () => {
+      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
+      await mkdir(configDir, { recursive: true });
+      await writeFile(
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
+        "invalid typescript content {{",
+      );
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config).toBeNull();
     });
 
     it("should load marketplace from project config", async () => {
-      await writeConfigYaml(tempDir, "marketplace: https://custom-marketplace.io\n");
+      await writeTestTsConfig(tempDir, { marketplace: "https://custom-marketplace.io" });
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.marketplace).toBe("https://custom-marketplace.io");
@@ -445,16 +437,17 @@ describe("config", () => {
     it("should create config directory if it does not exist", async () => {
       await saveProjectConfig(tempDir, { source: "github:test/repo" });
 
-      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
+      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const content = await readFile(configPath, "utf-8");
-      expect(content).toContain("source: github:test/repo");
+      const parsed = parseTsConfigContent<Record<string, unknown>>(content);
+      expect(parsed.source).toBe("github:test/repo");
     });
 
     it("should overwrite existing config", async () => {
       await saveProjectConfig(tempDir, { source: "github:first/repo" });
       await saveProjectConfig(tempDir, { source: "github:second/repo" });
 
-      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
+      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const content = await readFile(configPath, "utf-8");
       expect(content).toContain("github:second/repo");
       expect(content).not.toContain("github:first/repo");
@@ -465,9 +458,11 @@ describe("config", () => {
         marketplace: "https://my-marketplace.com/plugins",
       });
 
-      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
-      const content = await readFile(configPath, "utf-8");
-      expect(content).toContain("marketplace: https://my-marketplace.com/plugins");
+      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      const parsed = parseTsConfigContent<Record<string, unknown>>(
+        await readFile(configPath, "utf-8"),
+      );
+      expect(parsed.marketplace).toBe("https://my-marketplace.com/plugins");
     });
 
     it("should save both source and marketplace", async () => {
@@ -476,10 +471,12 @@ describe("config", () => {
         marketplace: "https://enterprise.example.com",
       });
 
-      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
-      const content = await readFile(configPath, "utf-8");
-      expect(content).toContain("source: github:myorg/skills");
-      expect(content).toContain("marketplace: https://enterprise.example.com");
+      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      const parsed = parseTsConfigContent<Record<string, unknown>>(
+        await readFile(configPath, "utf-8"),
+      );
+      expect(parsed.source).toBe("github:myorg/skills");
+      expect(parsed.marketplace).toBe("https://enterprise.example.com");
     });
   });
 
@@ -503,7 +500,7 @@ describe("config", () => {
     });
 
     it("should return project config when no flag or env", async () => {
-      await writeConfigYaml(tempDir, "source: github:project/repo\n");
+      await writeTestTsConfig(tempDir, { source: "github:project/repo" });
 
       const result = await resolveSource(undefined, tempDir);
 
@@ -527,7 +524,7 @@ describe("config", () => {
 
     it("should prioritize flag over all other sources", async () => {
       process.env[SOURCE_ENV_VAR] = "github:env/repo";
-      await writeConfigYaml(tempDir, "source: github:project/repo\n");
+      await writeTestTsConfig(tempDir, { source: "github:project/repo" });
 
       const result = await resolveSource("github:flag/repo", tempDir);
 
@@ -537,7 +534,7 @@ describe("config", () => {
 
     it("should prioritize env over project config", async () => {
       process.env[SOURCE_ENV_VAR] = "github:env/repo";
-      await writeConfigYaml(tempDir, "source: github:project/repo\n");
+      await writeTestTsConfig(tempDir, { source: "github:project/repo" });
 
       const result = await resolveSource(undefined, tempDir);
 
@@ -593,7 +590,7 @@ describe("config", () => {
         const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
         process.env[SOURCE_ENV_VAR] = "github:just-a-name";
 
-        await writeConfigYaml(tempDir, "source: github:project/repo\n");
+        await writeTestTsConfig(tempDir, { source: "github:project/repo" });
 
         const result = await resolveSource(undefined, tempDir);
 
@@ -651,7 +648,7 @@ describe("config", () => {
 
     describe("marketplace resolution", () => {
       it("should return marketplace from project config", async () => {
-        await writeConfigYaml(tempDir, "marketplace: https://my-company.com/plugins\n");
+        await writeTestTsConfig(tempDir, { marketplace: "https://my-company.com/plugins" });
 
         const result = await resolveSource(undefined, tempDir);
 
@@ -659,10 +656,10 @@ describe("config", () => {
       });
 
       it("should return marketplace alongside source from project config", async () => {
-        await writeConfigYaml(
-          tempDir,
-          "source: github:mycompany/skills\nmarketplace: https://enterprise.example.com/plugins\n",
-        );
+        await writeTestTsConfig(tempDir, {
+          source: "github:mycompany/skills",
+          marketplace: "https://enterprise.example.com/plugins",
+        });
 
         const result = await resolveSource(undefined, tempDir);
 
@@ -681,7 +678,7 @@ describe("config", () => {
 
   describe("resolveAgentsSource", () => {
     it("should return flag value with highest priority", async () => {
-      await writeConfigYaml(tempDir, "agentsSource: https://project.example.com/agents\n");
+      await writeTestTsConfig(tempDir, { agentsSource: "https://project.example.com/agents" });
 
       const result = await resolveAgentsSource("https://flag.example.com/agents", tempDir);
 
@@ -690,7 +687,7 @@ describe("config", () => {
     });
 
     it("should return project config when no flag is provided", async () => {
-      await writeConfigYaml(tempDir, "agentsSource: https://project.example.com/agents\n");
+      await writeTestTsConfig(tempDir, { agentsSource: "https://project.example.com/agents" });
 
       const result = await resolveAgentsSource(undefined, tempDir);
 
@@ -747,42 +744,42 @@ describe("config", () => {
 
   describe("loadProjectSourceConfig with path overrides", () => {
     it("should load skillsDir from project config", async () => {
-      await writeConfigYaml(tempDir, "skillsDir: lib/skills\n");
+      await writeTestTsConfig(tempDir, { skillsDir: "lib/skills" });
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.skillsDir).toBe("lib/skills");
     });
 
     it("should load agentsDir from project config", async () => {
-      await writeConfigYaml(tempDir, "agentsDir: lib/agents\n");
+      await writeTestTsConfig(tempDir, { agentsDir: "lib/agents" });
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.agentsDir).toBe("lib/agents");
     });
 
     it("should load stacksFile from project config", async () => {
-      await writeConfigYaml(tempDir, "stacksFile: data/stacks.yaml\n");
+      await writeTestTsConfig(tempDir, { stacksFile: "data/stacks.ts" });
 
       const config = await loadProjectSourceConfig(tempDir);
-      expect(config?.stacksFile).toBe("data/stacks.yaml");
+      expect(config?.stacksFile).toBe("data/stacks.ts");
     });
 
     it("should load categoriesFile from project config", async () => {
-      await writeConfigYaml(tempDir, "categoriesFile: data/categories.yaml\n");
+      await writeTestTsConfig(tempDir, { categoriesFile: "data/categories.yaml" });
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.categoriesFile).toBe("data/categories.yaml");
     });
 
     it("should load rulesFile from project config", async () => {
-      await writeConfigYaml(tempDir, "rulesFile: data/rules.yaml\n");
+      await writeTestTsConfig(tempDir, { rulesFile: "data/rules.yaml" });
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.rulesFile).toBe("data/rules.yaml");
     });
 
     it("should return undefined for missing path fields (defaults applied by consumer)", async () => {
-      await writeConfigYaml(tempDir, "source: github:myorg/skills\n");
+      await writeTestTsConfig(tempDir, { source: "github:myorg/skills" });
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.skillsDir).toBeUndefined();
@@ -793,23 +790,20 @@ describe("config", () => {
     });
 
     it("should load all path fields together", async () => {
-      await writeConfigYaml(
-        tempDir,
-        [
-          "source: github:myorg/skills",
-          "skillsDir: lib/skills",
-          "agentsDir: lib/agents",
-          "stacksFile: data/stacks.yaml",
-          "categoriesFile: data/categories.yaml",
-          "rulesFile: data/rules.yaml",
-        ].join("\n") + "\n",
-      );
+      await writeTestTsConfig(tempDir, {
+        source: "github:myorg/skills",
+        skillsDir: "lib/skills",
+        agentsDir: "lib/agents",
+        stacksFile: "data/stacks.ts",
+        categoriesFile: "data/categories.yaml",
+        rulesFile: "data/rules.yaml",
+      });
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.source).toBe("github:myorg/skills");
       expect(config?.skillsDir).toBe("lib/skills");
       expect(config?.agentsDir).toBe("lib/agents");
-      expect(config?.stacksFile).toBe("data/stacks.yaml");
+      expect(config?.stacksFile).toBe("data/stacks.ts");
       expect(config?.categoriesFile).toBe("data/categories.yaml");
       expect(config?.rulesFile).toBe("data/rules.yaml");
     });
@@ -817,17 +811,18 @@ describe("config", () => {
 
   describe("loadProjectSourceConfig with agentsSource", () => {
     it("should load agentsSource from project config", async () => {
-      await writeConfigYaml(tempDir, "agentsSource: https://my-company.com/agents\n");
+      await writeTestTsConfig(tempDir, { agentsSource: "https://my-company.com/agents" });
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.agentsSource).toBe("https://my-company.com/agents");
     });
 
     it("should load all config fields together", async () => {
-      await writeConfigYaml(
-        tempDir,
-        "source: github:myorg/skills\nmarketplace: https://market.example.com\nagentsSource: https://agents.example.com\n",
-      );
+      await writeTestTsConfig(tempDir, {
+        source: "github:myorg/skills",
+        marketplace: "https://market.example.com",
+        agentsSource: "https://agents.example.com",
+      });
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.source).toBe("github:myorg/skills");
@@ -842,9 +837,11 @@ describe("config", () => {
         agentsSource: "https://my-agents.example.com",
       });
 
-      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
-      const content = await readFile(configPath, "utf-8");
-      expect(content).toContain("agentsSource: https://my-agents.example.com");
+      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      const parsed = parseTsConfigContent<Record<string, unknown>>(
+        await readFile(configPath, "utf-8"),
+      );
+      expect(parsed.agentsSource).toBe("https://my-agents.example.com");
     });
 
     it("should save all config fields together", async () => {
@@ -854,20 +851,21 @@ describe("config", () => {
         agentsSource: "https://agents.enterprise.example.com",
       });
 
-      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
-      const content = await readFile(configPath, "utf-8");
-      expect(content).toContain("source: github:myorg/skills");
-      expect(content).toContain("marketplace: https://enterprise.example.com");
-      expect(content).toContain("agentsSource: https://agents.enterprise.example.com");
+      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      const parsed = parseTsConfigContent<Record<string, unknown>>(
+        await readFile(configPath, "utf-8"),
+      );
+      expect(parsed.source).toBe("github:myorg/skills");
+      expect(parsed.marketplace).toBe("https://enterprise.example.com");
+      expect(parsed.agentsSource).toBe("https://agents.enterprise.example.com");
     });
   });
 
   describe("loadProjectSourceConfig with branding", () => {
     it("should load branding name from project config", async () => {
-      await writeConfigYaml(
-        tempDir,
-        "branding:\n  name: Acme Dev Tools\n  tagline: Build faster with Acme\n",
-      );
+      await writeTestTsConfig(tempDir, {
+        branding: { name: "Acme Dev Tools", tagline: "Build faster with Acme" },
+      });
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.branding?.name).toBe("Acme Dev Tools");
@@ -875,14 +873,14 @@ describe("config", () => {
     });
 
     it("should return undefined branding when not configured", async () => {
-      await writeConfigYaml(tempDir, "source: github:myorg/skills\n");
+      await writeTestTsConfig(tempDir, { source: "github:myorg/skills" });
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.branding).toBeUndefined();
     });
 
     it("should load partial branding (name only)", async () => {
-      await writeConfigYaml(tempDir, "branding:\n  name: My Company\n");
+      await writeTestTsConfig(tempDir, { branding: { name: "My Company" } });
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.branding?.name).toBe("My Company");
@@ -890,7 +888,7 @@ describe("config", () => {
     });
 
     it("should load partial branding (tagline only)", async () => {
-      await writeConfigYaml(tempDir, "branding:\n  tagline: Custom tagline\n");
+      await writeTestTsConfig(tempDir, { branding: { tagline: "Custom tagline" } });
 
       const config = await loadProjectSourceConfig(tempDir);
       expect(config?.branding?.name).toBeUndefined();
@@ -904,10 +902,13 @@ describe("config", () => {
         branding: { name: "Acme Dev Tools", tagline: "Build faster" },
       });
 
-      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
-      const content = await readFile(configPath, "utf-8");
-      expect(content).toContain("name: Acme Dev Tools");
-      expect(content).toContain("tagline: Build faster");
+      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      const parsed = parseTsConfigContent<Record<string, unknown>>(
+        await readFile(configPath, "utf-8"),
+      );
+      const branding = parsed.branding as Record<string, unknown>;
+      expect(branding.name).toBe("Acme Dev Tools");
+      expect(branding.tagline).toBe("Build faster");
     });
   });
 
@@ -925,10 +926,9 @@ describe("config", () => {
     });
 
     it("should return custom branding when configured", async () => {
-      await writeConfigYaml(
-        tempDir,
-        "branding:\n  name: Acme Dev Tools\n  tagline: Build faster with Acme\n",
-      );
+      await writeTestTsConfig(tempDir, {
+        branding: { name: "Acme Dev Tools", tagline: "Build faster with Acme" },
+      });
 
       const branding = await resolveBranding(tempDir);
       expect(branding.name).toBe("Acme Dev Tools");
@@ -936,7 +936,7 @@ describe("config", () => {
     });
 
     it("should merge custom branding with defaults for missing fields", async () => {
-      await writeConfigYaml(tempDir, "branding:\n  name: Acme Dev Tools\n");
+      await writeTestTsConfig(tempDir, { branding: { name: "Acme Dev Tools" } });
 
       const branding = await resolveBranding(tempDir);
       expect(branding.name).toBe("Acme Dev Tools");
@@ -944,7 +944,7 @@ describe("config", () => {
     });
 
     it("should use default name when only tagline is configured", async () => {
-      await writeConfigYaml(tempDir, "branding:\n  tagline: Custom tagline\n");
+      await writeTestTsConfig(tempDir, { branding: { tagline: "Custom tagline" } });
 
       const branding = await resolveBranding(tempDir);
       expect(branding.name).toBe(DEFAULT_BRANDING.NAME);
@@ -952,7 +952,7 @@ describe("config", () => {
     });
 
     it("should return default branding when config has no branding section", async () => {
-      await writeConfigYaml(tempDir, "source: github:myorg/skills\n");
+      await writeTestTsConfig(tempDir, { source: "github:myorg/skills" });
 
       const branding = await resolveBranding(tempDir);
       expect(branding.name).toBe(DEFAULT_BRANDING.NAME);

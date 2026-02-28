@@ -1,7 +1,6 @@
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readFile } from "fs/promises";
-import { parse as parseYaml } from "yaml";
 import { createTestSource, cleanupTestSource, type TestDirs } from "../fixtures/create-test-source";
 import { installLocal, installPluginConfig } from "../../installation/local-installer";
 import { useWizardStore } from "../../../stores/wizard-store";
@@ -16,7 +15,7 @@ import {
   extractSkillIdsFromAssignment,
   fileExists,
   directoryExists,
-  readTestYaml,
+  readTestTsConfig,
 } from "../helpers";
 import {
   DEFAULT_TEST_SKILLS,
@@ -94,7 +93,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       });
 
       // Read config and verify agents list
-      const config = await readTestYaml<ProjectConfig>(result.configPath);
+      const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       // config.agents should match the preselected agents (sorted)
       expect(config.agents).toEqual([...wizardResult.selectedAgents].sort());
@@ -118,7 +117,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
         projectDir: dirs.projectDir,
       });
 
-      const config = await readTestYaml<ProjectConfig>(result.configPath);
+      const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       expect(config.stack).toBeDefined();
 
@@ -184,7 +183,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
         projectDir: dirs.projectDir,
       });
 
-      const config = await readTestYaml<ProjectConfig>(result.configPath);
+      const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       // When selectedAgents is empty, no agents are assigned
       expect(config.agents).toEqual([]);
@@ -210,7 +209,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
         projectDir: dirs.projectDir,
       });
 
-      const config = await readTestYaml<ProjectConfig>(result.configPath);
+      const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       // When no agents are selected, agents list is empty and no stack is built
       expect(config.agents).toEqual([]);
@@ -242,7 +241,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       // Config should exist
       expect(await fileExists(result.configPath)).toBe(true);
 
-      const config = await readTestYaml<ProjectConfig>(result.configPath);
+      const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       // config.agents should match preselected agents (sorted)
       expect(config.agents).toEqual([...wizardResult.selectedAgents].sort());
@@ -309,7 +308,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
         projectDir: dirs.projectDir,
       });
 
-      const config = await readTestYaml<ProjectConfig>(result.configPath);
+      const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       expect(config.stack).toBeDefined();
       for (const agentId of Object.keys(config.stack!)) {
@@ -335,7 +334,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
         projectDir: dirs.projectDir,
       });
 
-      const config = await readTestYaml<ProjectConfig>(result.configPath);
+      const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       expect(config.stack).toBeDefined();
       for (const [, agentConfig] of Object.entries(config.stack!)) {
@@ -368,7 +367,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
         projectDir: dirs.projectDir,
       });
 
-      const config = await readTestYaml<ProjectConfig>(result.configPath);
+      const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       // Stack should not contain default agents
       expect(config.stack).toBeDefined();
@@ -522,7 +521,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
         projectDir: dirs.projectDir,
       });
 
-      const config = await readTestYaml<ProjectConfig>(result.configPath);
+      const config = await readTestTsConfig<ProjectConfig>(result.configPath);
 
       // Config should include all stack skills and methodology skills
       for (const skillId of stack!.allSkillIds) {
@@ -545,7 +544,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
         projectDir: dirs.projectDir,
       });
 
-      // .claude-src/config.yaml
+      // .claude-src/config.ts
       expect(await fileExists(result.configPath)).toBe(true);
 
       // .claude/skills/
@@ -562,7 +561,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
       }
     });
 
-    it("should write config.yaml with YAML schema comment", async () => {
+    it("should write config.ts with defineConfig wrapper", async () => {
       const selectedSkillIds: SkillId[] = ["web-framework-react"];
 
       simulateSkillSelections(selectedSkillIds, matrix, ["web"]);
@@ -576,11 +575,12 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
 
       const configContent = await readFile(result.configPath, "utf-8");
 
-      // Should start with YAML schema comment
-      expect(configContent.startsWith("# yaml-language-server")).toBe(true);
+      // Should use defineConfig wrapper
+      expect(configContent).toContain("import { defineConfig }");
+      expect(configContent).toContain("export default defineConfig(");
 
-      // Should parse as valid YAML
-      const config = parseYaml(configContent) as ProjectConfig;
+      // Should parse back to valid config
+      const config = await readTestTsConfig<ProjectConfig>(result.configPath);
       expect(config.name).toBeDefined();
       expect(config.agents).toBeDefined();
       expect(config.skills).toBeDefined();
@@ -599,7 +599,7 @@ describe("end-to-end: wizard store -> handleComplete -> installLocal", () => {
         sourceFlag: "github:my-org/my-marketplace",
       });
 
-      const config = await readTestYaml<ProjectConfig>(result.configPath);
+      const config = await readTestTsConfig<ProjectConfig>(result.configPath);
       expect(config.source).toBe("github:my-org/my-marketplace");
     });
   });

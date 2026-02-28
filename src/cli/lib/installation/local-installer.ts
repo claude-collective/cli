@@ -1,5 +1,4 @@
 import path from "path";
-import { stringify as stringifyYaml } from "yaml";
 import type {
   AgentConfig,
   AgentDefinition,
@@ -14,16 +13,14 @@ import type {
 } from "../../types";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import { type CopiedSkill, copySkillsToLocalFlattened, archiveLocalSkill } from "../skills";
-import { type MergeResult, mergeWithExistingConfig, DEFAULT_SOURCE } from "../configuration";
+import { type MergeResult, mergeWithExistingConfig } from "../configuration";
 import { loadAllAgents, loadSkillsByIds, type SourceLoadResult } from "../loading";
 import { loadStackById, compileAgentForPlugin, getStackSkillIds } from "../stacks";
+import { defaultStacks } from "../configuration/default-stacks";
 import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
 import { createLiquidEngine } from "../compiler";
-import {
-  generateProjectConfigFromSkills,
-  compactStackForYaml,
-  buildStackProperty,
-} from "../configuration";
+import { generateProjectConfigFromSkills, buildStackProperty } from "../configuration";
+import { generateTsConfigSource } from "../configuration/ts-config-writer";
 import { ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
@@ -31,17 +28,9 @@ import {
   CLAUDE_DIR,
   CLAUDE_SRC_DIR,
   DEFAULT_PLUGIN_NAME,
-  DIRS,
   LOCAL_SKILLS_PATH,
   PROJECT_ROOT,
-  SCHEMA_PATHS,
-  SKILL_CATEGORIES_YAML_PATH,
-  SKILL_RULES_YAML_PATH,
-  SKILLS_DIR_PATH,
-  STACKS_FILE_PATH,
   STANDARD_FILES,
-  YAML_FORMATTING,
-  yamlSchemaComment,
 } from "../../consts";
 
 type LocalResolvedSkill = SkillDefinition & {
@@ -62,7 +51,7 @@ export type LocalInstallOptions = {
   /** Absolute path to the project root where `.claude/` artifacts will be written */
   projectDir: string;
   /** Optional `--source` flag override (e.g., "github:org/repo"). Takes precedence over
-   *  source from config when writing the `source` field in config.yaml */
+   *  source from config when writing the `source` field in config.ts */
   sourceFlag?: string;
 };
 
@@ -75,15 +64,15 @@ export type LocalInstallOptions = {
 export type LocalInstallResult = {
   /** Skills that were copied to `.claude/skills/`, with source and destination paths */
   copiedSkills: CopiedSkill[];
-  /** Final project configuration (may be merged with existing config.yaml) */
+  /** Final project configuration (may be merged with existing config.ts) */
   config: ProjectConfig;
-  /** Absolute path to the written config.yaml file */
+  /** Absolute path to the written config.ts file */
   configPath: string;
   /** Agent names that were compiled and written to `.claude/agents/` */
   compiledAgents: AgentName[];
-  /** Whether the config was merged with an existing config.yaml (true) or freshly created (false) */
+  /** Whether the config was merged with an existing config.ts (true) or freshly created (false) */
   wasMerged: boolean;
-  /** Absolute path to the pre-existing config.yaml that was merged, if any */
+  /** Absolute path to the pre-existing config.ts that was merged, if any */
   mergedConfigPath?: string;
   /** Absolute path to the `.claude/skills/` directory */
   skillsDir: string;
@@ -101,7 +90,7 @@ function resolveInstallPaths(projectDir: string): InstallPaths {
   return {
     skillsDir: path.join(projectDir, LOCAL_SKILLS_PATH),
     agentsDir: path.join(projectDir, CLAUDE_DIR, "agents"),
-    configPath: path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML),
+    configPath: path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
   };
 }
 
@@ -174,7 +163,8 @@ async function buildLocalConfig(
   if (wizardResult.selectedStackId) {
     loadedStack = await loadStackById(wizardResult.selectedStackId, sourceResult.sourcePath);
     if (!loadedStack) {
-      loadedStack = await loadStackById(wizardResult.selectedStackId, PROJECT_ROOT);
+      // Fall back to CLI's built-in default stacks
+      loadedStack = defaultStacks.find((s) => s.id === wizardResult.selectedStackId) ?? null;
     }
     verbose(
       `buildLocalConfig: loadedStack=${loadedStack ? `found (id='${loadedStack.id}')` : "NOT FOUND"}`,
@@ -234,8 +224,8 @@ async function buildLocalConfig(
       localConfig.agents.sort();
     } else {
       throw new Error(
-        `Stack '${wizardResult.selectedStackId}' not found in config/stacks.yaml. ` +
-          `Available stacks are defined in the CLI's config/stacks.yaml file.`,
+        `Stack '${wizardResult.selectedStackId}' not found in config/stacks.ts. ` +
+          `Available stacks are defined in the CLI's config/stacks.ts file.`,
       );
     }
   } else {
@@ -263,12 +253,12 @@ function setConfigMetadata(
 ): void {
   config.installMode = wizardResult.installMode;
 
-  // Only persist domains when non-empty (sparse YAML output)
+  // Only persist domains when non-empty (sparse output)
   if (wizardResult.selectedDomains && wizardResult.selectedDomains.length > 0) {
     config.domains = wizardResult.selectedDomains;
   }
 
-  // Only persist selectedAgents when non-empty (sparse YAML output)
+  // Only persist selectedAgents when non-empty (sparse output)
   if (wizardResult.selectedAgents && wizardResult.selectedAgents.length > 0) {
     config.selectedAgents = wizardResult.selectedAgents;
   }
@@ -302,42 +292,9 @@ async function buildAndMergeConfig(
   return result;
 }
 
-/** Commented-out config option hints appended to generated config.yaml for discoverability. */
-const CONFIG_OPTIONS_COMMENT = [
-  "",
-  "# Additional config options:",
-  `# source: ${DEFAULT_SOURCE}`,
-  "# marketplace: my-company",
-  "# agentsSource: github:my-org/agents",
-  "",
-].join("\n");
-
-/** Commented-out path override hints appended to generated config.yaml for discoverability. */
-const PATH_OVERRIDES_COMMENT = [
-  "",
-  "# Custom paths (for marketplace repos with non-standard layouts):",
-  `# skillsDir: ${SKILLS_DIR_PATH}`,
-  `# agentsDir: ${DIRS.agents}`,
-  `# stacksFile: ${STACKS_FILE_PATH}`,
-  `# categoriesFile: ${SKILL_CATEGORIES_YAML_PATH}`,
-  `# rulesFile: ${SKILL_RULES_YAML_PATH}`,
-  "",
-].join("\n");
-
 async function writeConfigFile(config: ProjectConfig, configPath: string): Promise<void> {
-  const schemaComment = `${yamlSchemaComment(SCHEMA_PATHS.projectConfig)}\n`;
-  // Compact stack for YAML output: bare strings for simple skills, objects for preloaded
-  const serializable = config.stack
-    ? { ...config, stack: compactStackForYaml(config.stack) }
-    : config;
-  const configYaml = stringifyYaml(serializable, {
-    indent: YAML_FORMATTING.INDENT,
-    lineWidth: YAML_FORMATTING.LINE_WIDTH,
-  });
-  await writeFile(
-    configPath,
-    `${schemaComment}${configYaml}${CONFIG_OPTIONS_COMMENT}${PATH_OVERRIDES_COMMENT}`,
-  );
+  const source = generateTsConfigSource(config);
+  await writeFile(configPath, source);
 }
 
 function buildCompileAgents(
@@ -397,15 +354,15 @@ async function compileAndWriteAgents(
  * enabling the caller to display a summary to the user.
  */
 export type PluginConfigResult = {
-  /** Final project configuration (may be merged with existing config.yaml) */
+  /** Final project configuration (may be merged with existing config.ts) */
   config: ProjectConfig;
-  /** Absolute path to the written config.yaml file */
+  /** Absolute path to the written config.ts file */
   configPath: string;
   /** Agent names that were compiled and written to `.claude/agents/` */
   compiledAgents: AgentName[];
-  /** Whether the config was merged with an existing config.yaml (true) or freshly created (false) */
+  /** Whether the config was merged with an existing config.ts (true) or freshly created (false) */
   wasMerged: boolean;
-  /** Absolute path to the pre-existing config.yaml that was merged, if any */
+  /** Absolute path to the pre-existing config.ts that was merged, if any */
   mergedConfigPath?: string;
   /** Absolute path to the `.claude/agents/` directory */
   agentsDir: string;
@@ -418,16 +375,16 @@ export type PluginConfigResult = {
  * to `.claude/skills/`. This function performs only:
  * 1. Creates `.claude/agents/` and `.claude-src/` directories
  * 2. Loads agent definitions from both the CLI and source repository
- * 3. Generates project config.yaml from the wizard selections, merging with any
+ * 3. Generates project config.ts from the wizard selections, merging with any
  *    existing config
- * 4. Writes config.yaml with YAML schema comment
+ * 4. Writes config.ts
  * 5. Compiles agent markdown files using Liquid templates and writes them to
  *    `.claude/agents/`
  *
  * @param options - Installation options containing wizard result, source data,
  *                  project directory, and optional source flag override
  * @returns Result containing config and agent artifacts (no skills)
- * @throws {Error} If the selected stack ID is not found in config/stacks.yaml
+ * @throws {Error} If the selected stack ID is not found in config/stacks.ts
  */
 export async function installPluginConfig(
   options: LocalInstallOptions,
@@ -488,9 +445,9 @@ export async function installPluginConfig(
  * 2. Archives local skills switching to alternate sources, then copies selected
  *    skills from the source repository into `.claude/skills/` (flattened layout)
  * 3. Loads agent definitions from both the CLI and source repository
- * 4. Generates project config.yaml from the wizard selections, merging with any
+ * 4. Generates project config.ts from the wizard selections, merging with any
  *    existing config
- * 5. Writes config.yaml with YAML schema comment
+ * 5. Writes config.ts
  * 6. Compiles agent markdown files using Liquid templates and writes them to
  *    `.claude/agents/`
  *
@@ -498,7 +455,7 @@ export async function installPluginConfig(
  *                  project directory, and optional source flag override
  * @returns Result containing all written artifacts (skills, config, agents) and
  *          metadata about the installation (merge status, paths)
- * @throws {Error} If the selected stack ID is not found in config/stacks.yaml
+ * @throws {Error} If the selected stack ID is not found in config/stacks.ts
  *
  * @remarks
  * **Side effects:** Creates directories and writes files under `{projectDir}/.claude/`.

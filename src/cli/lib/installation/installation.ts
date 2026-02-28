@@ -26,16 +26,9 @@ export type Installation = {
 
 /** Detect installation in a specific directory only (no global fallback). */
 export async function detectProjectInstallation(projectDir: string): Promise<Installation | null> {
-  const srcConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
-  const legacyConfigPath = path.join(projectDir, CLAUDE_DIR, STANDARD_FILES.CONFIG_YAML);
+  const configPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
 
-  const localConfigPath = (await fileExists(srcConfigPath))
-    ? srcConfigPath
-    : (await fileExists(legacyConfigPath))
-      ? legacyConfigPath
-      : null;
-
-  if (!localConfigPath) {
+  if (!(await fileExists(configPath))) {
     return null;
   }
 
@@ -48,7 +41,7 @@ export async function detectProjectInstallation(projectDir: string): Promise<Ins
     return {
       mode: "local",
       scope: "project",
-      configPath: localConfigPath,
+      configPath,
       agentsDir: path.join(projectDir, CLAUDE_DIR, "agents"),
       skillsDir: path.join(projectDir, CLAUDE_DIR, "skills"),
       projectDir,
@@ -59,7 +52,7 @@ export async function detectProjectInstallation(projectDir: string): Promise<Ins
   return {
     mode: "plugin",
     scope: "project",
-    configPath: localConfigPath,
+    configPath,
     agentsDir: path.join(projectDir, CLAUDE_DIR, "agents"),
     skillsDir: path.join(projectDir, CLAUDE_DIR, PLUGINS_SUBDIR),
     projectDir,
@@ -69,9 +62,9 @@ export async function detectProjectInstallation(projectDir: string): Promise<Ins
 /** Detect installation in the home directory (global scope). */
 async function detectGlobalInstallation(): Promise<Installation | null> {
   const homeDir = os.homedir();
-  const srcConfigPath = path.join(homeDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
+  const configPath = path.join(homeDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
 
-  if (!(await fileExists(srcConfigPath))) {
+  if (!(await fileExists(configPath))) {
     return null;
   }
 
@@ -83,7 +76,7 @@ async function detectGlobalInstallation(): Promise<Installation | null> {
     return {
       mode: "local",
       scope: "global",
-      configPath: srcConfigPath,
+      configPath,
       agentsDir: path.join(homeDir, CLAUDE_DIR, "agents"),
       skillsDir: path.join(homeDir, CLAUDE_DIR, "skills"),
       projectDir: homeDir,
@@ -93,7 +86,7 @@ async function detectGlobalInstallation(): Promise<Installation | null> {
   return {
     mode: "plugin",
     scope: "global",
-    configPath: srcConfigPath,
+    configPath,
     agentsDir: path.join(homeDir, CLAUDE_DIR, "agents"),
     skillsDir: path.join(homeDir, CLAUDE_DIR, PLUGINS_SUBDIR),
     projectDir: homeDir,

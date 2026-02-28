@@ -9,7 +9,13 @@ import { discoverLocalSkills } from "../lib/skills";
 import { getStackSkillIds } from "../lib/stacks";
 import type { AgentName, MergedSkillsMatrix, ProjectConfig, SkillId } from "../types";
 import { fileExists, glob, directoryExists } from "../utils/fs";
-import { CLAUDE_DIR, CLI_BIN_NAME, DEFAULT_BRANDING } from "../consts";
+import {
+  CLAUDE_DIR,
+  CLAUDE_SRC_DIR,
+  CLI_BIN_NAME,
+  DEFAULT_BRANDING,
+  STANDARD_FILES,
+} from "../consts";
 import { setVerbose } from "../utils/logger";
 
 type CheckResult = {
@@ -24,7 +30,7 @@ async function checkConfigValid(projectDir: string): Promise<CheckResult> {
   if (!loaded) {
     return {
       status: "fail",
-      message: ".claude/config.yaml not found",
+      message: `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS} not found`,
       details: [`Run '${CLI_BIN_NAME} init' to create a configuration`],
     };
   }
@@ -34,7 +40,7 @@ async function checkConfigValid(projectDir: string): Promise<CheckResult> {
   if (!validation.valid) {
     return {
       status: "fail",
-      message: ".claude/config.yaml has errors",
+      message: `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS} has errors`,
       details: validation.errors,
     };
   }
@@ -42,14 +48,14 @@ async function checkConfigValid(projectDir: string): Promise<CheckResult> {
   if (validation.warnings.length > 0) {
     return {
       status: "warn",
-      message: ".claude/config.yaml has warnings",
+      message: `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS} has warnings`,
       details: validation.warnings,
     };
   }
 
   return {
     status: "pass",
-    message: ".claude/config.yaml is valid",
+    message: `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS} is valid`,
   };
 }
 

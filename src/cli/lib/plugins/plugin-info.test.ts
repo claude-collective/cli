@@ -139,7 +139,7 @@ describe("plugin-info", () => {
       const installation: Installation = {
         mode: "local",
         scope: "project",
-        configPath: "/project/.claude-src/config.yaml",
+        configPath: "/project/.claude-src/config.ts",
         agentsDir: "/project/.claude/agents",
         skillsDir: "/project/.claude/skills",
         projectDir: "/project",
@@ -170,7 +170,7 @@ describe("plugin-info", () => {
           agents: ["web-developer"],
           skills: [],
         },
-        configPath: "/project/.claude-src/config.yaml",
+        configPath: "/project/.claude-src/config.ts",
       });
 
       const result = await getInstallationInfo();
@@ -181,7 +181,7 @@ describe("plugin-info", () => {
       expect(result!.version).toBe("local");
       expect(result!.skillCount).toBe(2);
       expect(result!.agentCount).toBe(1);
-      expect(result!.configPath).toBe("/project/.claude-src/config.yaml");
+      expect(result!.configPath).toBe("/project/.claude-src/config.ts");
       expect(result!.agentsDir).toBe("/project/.claude/agents");
       expect(result!.skillsDir).toBe("/project/.claude/skills");
     });
@@ -190,7 +190,7 @@ describe("plugin-info", () => {
       const installation: Installation = {
         mode: "plugin",
         scope: "project",
-        configPath: "/project/.claude-src/config.yaml",
+        configPath: "/project/.claude-src/config.ts",
         agentsDir: "/project/.claude/agents",
         skillsDir: "/project/.claude/plugins",
         projectDir: "/project",
@@ -206,7 +206,7 @@ describe("plugin-info", () => {
           skills: [],
           installMode: "plugin",
         },
-        configPath: "/project/.claude-src/config.yaml",
+        configPath: "/project/.claude-src/config.ts",
       });
 
       // Plugin mode uses discoverAllPluginSkills instead of readdir
@@ -243,7 +243,7 @@ describe("plugin-info", () => {
       const installation: Installation = {
         mode: "local",
         scope: "project",
-        configPath: "/project/.claude-src/config.yaml",
+        configPath: "/project/.claude-src/config.ts",
         agentsDir: "/project/.claude/agents",
         skillsDir: "/project/.claude/skills",
         projectDir: "/project",
@@ -257,7 +257,7 @@ describe("plugin-info", () => {
           agents: [],
           skills: [],
         },
-        configPath: "/project/.claude-src/config.yaml",
+        configPath: "/project/.claude-src/config.ts",
       });
 
       const result = await getInstallationInfo();
@@ -270,7 +270,7 @@ describe("plugin-info", () => {
       const installation: Installation = {
         mode: "local",
         scope: "project",
-        configPath: "/project/.claude-src/config.yaml",
+        configPath: "/project/.claude-src/config.ts",
         agentsDir: "/project/.claude/agents",
         skillsDir: "/project/.claude/skills",
         projectDir: "/project",
@@ -291,7 +291,7 @@ describe("plugin-info", () => {
       const installation: Installation = {
         mode: "local",
         scope: "project",
-        configPath: "/project/.claude-src/config.yaml",
+        configPath: "/project/.claude-src/config.ts",
         agentsDir: "/project/.claude/agents",
         skillsDir: "/project/.claude/skills",
         projectDir: "/project",
@@ -301,7 +301,7 @@ describe("plugin-info", () => {
       mockedDirectoryExists.mockResolvedValue(true);
       mockedLoadProjectConfig.mockResolvedValue({
         config: { name: "test", agents: [], skills: [] },
-        configPath: "/project/.claude-src/config.yaml",
+        configPath: "/project/.claude-src/config.ts",
       });
 
       mockedReaddir.mockRejectedValue(new Error("EACCES permission denied"));
@@ -322,7 +322,7 @@ describe("plugin-info", () => {
         version: "local",
         skillCount: 5,
         agentCount: 3,
-        configPath: "/project/.claude-src/config.yaml",
+        configPath: "/project/.claude-src/config.ts",
         agentsDir: "/project/.claude/agents",
         skillsDir: "/project/.claude/skills",
       };
@@ -333,7 +333,7 @@ describe("plugin-info", () => {
       expect(result).toContain("Mode:    Local");
       expect(result).toContain("Skills:  5");
       expect(result).toContain("Agents:  3");
-      expect(result).toContain("Config:  /project/.claude-src/config.yaml");
+      expect(result).toContain("Config:  /project/.claude-src/config.ts");
       expect(result).toContain("Agents:  /project/.claude/agents");
     });
 
@@ -344,7 +344,7 @@ describe("plugin-info", () => {
         version: "1.2.3",
         skillCount: 10,
         agentCount: 5,
-        configPath: "/project/.claude-src/config.yaml",
+        configPath: "/project/.claude-src/config.ts",
         agentsDir: "/project/.claude/agents",
         skillsDir: "/project/.claude/plugins",
       };
@@ -364,7 +364,7 @@ describe("plugin-info", () => {
         version: "local",
         skillCount: 0,
         agentCount: 0,
-        configPath: "/project/.claude-src/config.yaml",
+        configPath: "/project/.claude-src/config.ts",
         agentsDir: "/project/.claude/agents",
         skillsDir: "/project/.claude/skills",
       };

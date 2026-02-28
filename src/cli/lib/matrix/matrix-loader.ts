@@ -4,6 +4,7 @@ import { z } from "zod";
 import { glob, readFile, fileExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
 import { DIRS, STANDARD_FILES } from "../../consts";
+import { loadTsConfig } from "../configuration/ts-config-loader";
 import { METADATA_KEYS } from "../metadata-keys";
 import { parseFrontmatter } from "../loading";
 import {
@@ -60,8 +61,8 @@ const AUTO_SYNTH_ORDER = 999;
 
 /**
  * Synthesizes a basic CategoryDefinition for a category not defined in any
- * skill-categories.yaml. This is a safety net — the preferred path is for
- * skill authors to maintain proper skill-categories.yaml entries.
+ * skill-categories.ts. This is a safety net — the preferred path is for
+ * skill authors to maintain proper skill-categories.ts entries.
  */
 export function synthesizeCategory(
   categoryPath: CategoryPath,
@@ -88,46 +89,45 @@ export function synthesizeCategory(
 }
 
 /**
- * Loads and validates a skill-categories.yaml configuration file.
+ * Loads and validates a skill-categories.ts configuration file.
  *
- * @param configPath - Absolute path to the skill-categories.yaml file
+ * @param configPath - Absolute path to the skill-categories.ts file
  * @returns Parsed and validated categories map
  * @throws When the file cannot be read or fails Zod schema validation
  */
 export async function loadSkillCategories(configPath: string): Promise<CategoryMap> {
-  const content = await readFile(configPath);
-  const raw = parseYaml(content);
-  const result = skillCategoriesFileSchema.safeParse(raw);
+  const data = await loadTsConfig<{ version: string; categories: CategoryMap }>(
+    configPath,
+    skillCategoriesFileSchema,
+  );
 
-  if (!result.success) {
-    throw new Error(
-      `Invalid skill categories at '${configPath}': ${formatZodErrors(result.error.issues)}`,
-    );
+  if (!data) {
+    throw new Error(`Invalid skill categories at '${configPath}': failed to load or validate`);
   }
 
   verbose(`Loaded skill categories: ${configPath}`);
-  return result.data.categories;
+  return data.categories;
 }
 
 /**
- * Loads and validates a skill-rules.yaml configuration file.
+ * Loads and validates a skill-rules.ts configuration file.
  *
- * @param configPath - Absolute path to the skill-rules.yaml file
+ * @param configPath - Absolute path to the skill-rules.ts file
  * @returns Parsed and validated skill rules config
  * @throws When the file cannot be read or fails Zod schema validation
  */
 export async function loadSkillRules(configPath: string): Promise<SkillRulesConfig> {
-  const content = await readFile(configPath);
-  const raw = parseYaml(content);
-  const result = skillRulesFileSchema.safeParse(raw);
+  const data = await loadTsConfig<{
+    version: string;
+    aliases?: Record<string, string>;
+    relationships?: SkillRulesConfig["relationships"];
+    "per-skill"?: Record<string, unknown>;
+  }>(configPath, skillRulesFileSchema);
 
-  if (!result.success) {
-    throw new Error(
-      `Invalid skill rules at '${configPath}': ${formatZodErrors(result.error.issues)}`,
-    );
+  if (!data) {
+    throw new Error(`Invalid skill rules at '${configPath}': failed to load or validate`);
   }
 
-  const data = result.data;
   const config: SkillRulesConfig = {
     version: data.version,
     aliases: data.aliases ?? {},
@@ -277,10 +277,10 @@ function resolveToCanonicalId(
  * into a fully resolved MergedSkillsMatrix.
  *
  * This is the core resolution step that combines:
- * - Category definitions from skill-categories.yaml
- * - Display name aliases and relationship rules from skill-rules.yaml
+ * - Category definitions from skill-categories.ts
+ * - Display name aliases and relationship rules from skill-rules.ts
  * - Extracted skill metadata (from scanning skill directories)
- * - Per-skill relationship rules from skill-rules.yaml
+ * - Per-skill relationship rules from skill-rules.ts
  *
  * Each skill's raw relationship references (which may use display names, directory paths,
  * or short aliases) are resolved to canonical SkillIds. The result is the complete
@@ -534,8 +534,8 @@ function resolveSuggestedStacks(): ResolvedStack[] {
  * extracts all skills from the project's skills directory, and merges them
  * into a MergedSkillsMatrix.
  *
- * @param categoriesPath - Path to the skill-categories.yaml config file
- * @param rulesPath - Path to the skill-rules.yaml config file
+ * @param categoriesPath - Path to the skill-categories.ts config file
+ * @param rulesPath - Path to the skill-rules.ts config file
  * @param projectRoot - Project root directory (skills are scanned from `{root}/src/skills`)
  * @returns Fully resolved and merged skills matrix
  */

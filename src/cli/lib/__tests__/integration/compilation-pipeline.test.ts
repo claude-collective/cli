@@ -150,7 +150,7 @@ describe("Integration: Full Stack Pipeline", () => {
   });
 
   it("should list available stacks from fixture", async () => {
-    // Create a source with stacks defined in config/stacks.yaml
+    // Create a source with stacks defined in config/stacks.ts
     const stackDirs = await createTestSource({
       stacks: [
         {

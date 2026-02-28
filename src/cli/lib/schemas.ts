@@ -457,7 +457,7 @@ const skillAssignmentElementSchema = z.union([extensibleSkillIdSchema, skillAssi
 
 /**
  * Agent config within a stack: maps subcategory to skill assignment(s).
- * Keys restricted to valid Subcategory values from skill-categories.yaml.
+ * Keys restricted to valid Subcategory values from skill-categories.ts.
  * Lenient: accepts bare string, object, or array from YAML.
  * Consumers normalize all values to SkillAssignment[] after parsing.
  *
@@ -478,7 +478,7 @@ export const stackAgentConfigSchema = z
   );
 
 /**
- * Lenient loader for .claude/config.yaml (ProjectConfig).
+ * Lenient loader for .claude-src/config.ts (ProjectConfig).
  * name/agents optional since partial configs are valid at load time.
  * Full validation happens in validateProjectConfig().
  */
@@ -501,7 +501,7 @@ export const projectConfigLoaderSchema = z
     domains: z.array(extensibleDomainSchema).optional(),
     /** Selected agents from the wizard (persisted for edit mode restoration) */
     selectedAgents: z.array(z.string()).optional(),
-    /** Agent-to-subcategory-to-skill mappings from selected stack (accepts same formats as stacks.yaml) */
+    /** Agent-to-subcategory-to-skill mappings from selected stack (accepts same formats as stacks.ts) */
     stack: z.record(z.string(), stackAgentConfigSchema).optional(),
     /** Skills source path or URL (e.g., "github:my-org/skills") */
     source: z.string().optional(),
@@ -511,39 +511,6 @@ export const projectConfigLoaderSchema = z
     agentsSource: z.string().optional(),
   })
   .passthrough();
-
-/**
- * Strict schema for IDE validation of .claude-src/config.yaml (ProjectConfig).
- * Used to generate project-config.schema.json for yaml-language-server.
- * Requires name/agents (the fields validateProjectConfig checks) and
- * does NOT use .passthrough() so the IDE flags unknown properties.
- */
-export const projectConfigValidationSchema = z.object({
-  version: z.literal("1").optional(),
-  /** Project/plugin name in kebab-case */
-  name: z.string(),
-  description: z.string().optional(),
-  /** Agent IDs to compile (e.g., ["web-developer", "api-developer"]) */
-  agents: z.array(z.string()),
-  /** Flat list of all skill IDs used by this project */
-  skills: z.array(skillIdSchema),
-  /** Author handle (e.g., "@vince") */
-  author: z.string().optional(),
-  /** "local" = .claude/agents, "plugin" = .claude/plugins/ (DEFAULT_PLUGIN_NAME) */
-  installMode: z.enum(["local", "plugin"]),
-  /** Selected domains from the wizard (persisted for edit mode restoration) */
-  domains: z.array(domainSchema).optional(),
-  /** Selected agents from the wizard (persisted for edit mode restoration) */
-  selectedAgents: z.array(z.string()).optional(),
-  /** Agent-to-subcategory-to-skill mappings from selected stack */
-  stack: z.record(z.string(), stackAgentConfigSchema),
-  /** Skills source path or URL (e.g., "github:my-org/skills") */
-  source: z.string(),
-  /** Marketplace identifier for plugin installation */
-  marketplace: z.string().optional(),
-  /** Separate source for agents when different from skills source */
-  agentsSource: z.string().optional(),
-});
 
 export const categoryDefinitionSchema: z.ZodType<CategoryDefinition> = z.object({
   id: extensibleSubcategorySchema,
@@ -597,7 +564,7 @@ export const relationshipDefinitionsSchema: z.ZodType<RelationshipDefinitions> =
 });
 
 /**
- * Standalone skill-categories.yaml file schema.
+ * Standalone skill-categories.ts file schema.
  * Top-level object with version string and categories map using existing categoryDefinitionSchema.
  */
 export const skillCategoriesFileSchema = z.object({
@@ -614,7 +581,7 @@ export const skillCategoriesFileSchema = z.object({
 });
 
 /**
- * Per-skill relationship rules from skill-rules.yaml.
+ * Per-skill relationship rules from skill-rules.ts.
  * All 5 fields use canonical skill IDs (aliases resolved at load time).
  */
 export const perSkillRulesSchema = z.object({
@@ -626,7 +593,7 @@ export const perSkillRulesSchema = z.object({
 });
 
 /**
- * Standalone skill-rules.yaml file schema.
+ * Standalone skill-rules.ts file schema.
  * Contains aliases (short name -> canonical skill ID), aggregate relationship rules,
  * and per-skill relationship rules previously stored in individual metadata.yaml files.
  */
@@ -776,7 +743,7 @@ export const brandingConfigSchema = z.object({
 });
 
 /**
- * Project source configuration from .claude/config.yaml.
+ * Project source configuration from .claude-src/config.ts.
  * Stores multi-source settings, custom directory overrides, and bound skills.
  */
 export const projectSourceConfigSchema = z
@@ -811,18 +778,18 @@ export const projectSourceConfigSchema = z
     skillsDir: z.string().optional(),
     /** Custom agents directory override (default: "src/agents") */
     agentsDir: z.string().optional(),
-    /** Custom stacks file path override (default: "config/stacks.yaml") */
+    /** Custom stacks file path override (default: "config/stacks.ts") */
     stacksFile: z.string().optional(),
-    /** Custom categories file path override (default: "config/skill-categories.yaml") */
+    /** Custom categories file path override (default: "config/skill-categories.ts") */
     categoriesFile: z.string().optional(),
-    /** Custom rules file path override (default: "config/skill-rules.yaml") */
+    /** Custom rules file path override (default: "config/skill-rules.ts") */
     rulesFile: z.string().optional(),
   })
   .passthrough();
 
 /**
- * Strict schema for IDE validation of .claude-src/config.yaml (ProjectSourceConfig).
- * Used to generate project-source-config.schema.json for yaml-language-server.
+ * Strict schema for IDE validation of .claude-src/config.ts (ProjectSourceConfig).
+ * Used to generate project-source-config.schema.json for IDE validation.
  * All fields optional (source configs may have any subset) but no unknown properties.
  */
 export const projectSourceConfigValidationSchema = z.object({

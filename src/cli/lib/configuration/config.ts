@@ -1,25 +1,15 @@
 import os from "os";
 import path from "path";
-import { stringify as stringifyYaml } from "yaml";
 import { writeFile, fileExists, ensureDir } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
-import { safeLoadYamlFile } from "../../utils/yaml";
-import {
-  CLAUDE_DIR,
-  CLAUDE_SRC_DIR,
-  DEFAULT_BRANDING,
-  GITHUB_SOURCE,
-  SCHEMA_PATHS,
-  STANDARD_FILES,
-  YAML_FORMATTING,
-  yamlSchemaComment,
-} from "../../consts";
+import { CLAUDE_SRC_DIR, DEFAULT_BRANDING, GITHUB_SOURCE, STANDARD_FILES } from "../../consts";
 import { projectSourceConfigSchema } from "../schemas";
 import type { BoundSkill } from "../../types";
+import { loadTsConfig } from "./ts-config-loader";
 
 export const DEFAULT_SOURCE = `${GITHUB_SOURCE.GITHUB_PREFIX}agents-inc/skills`;
 export const SOURCE_ENV_VAR = "CC_SOURCE";
-export const PROJECT_CONFIG_FILE = STANDARD_FILES.CONFIG_YAML;
+export const PROJECT_CONFIG_FILE = STANDARD_FILES.CONFIG_TS;
 
 export type SourceEntry = {
   name: string;
@@ -47,9 +37,9 @@ export type ProjectSourceConfig = {
   branding?: BrandingConfig;
   skillsDir?: string; // default: src/skills (SKILLS_DIR_PATH)
   agentsDir?: string; // default: src/agents (DIRS.agents)
-  stacksFile?: string; // default: config/stacks.yaml (STACKS_FILE)
-  categoriesFile?: string; // default: config/skill-categories.yaml (SKILL_CATEGORIES_YAML_PATH)
-  rulesFile?: string; // default: config/skill-rules.yaml (SKILL_RULES_YAML_PATH)
+  stacksFile?: string; // default: config/stacks.ts (STACKS_FILE)
+  categoriesFile?: string; // default: config/skill-categories.ts (SKILL_CATEGORIES_PATH)
+  rulesFile?: string; // default: config/skill-rules.ts (SKILL_RULES_PATH)
 };
 
 export type ResolvedConfig = {
@@ -65,53 +55,52 @@ export function getProjectConfigPath(projectDir: string): string {
 export async function loadProjectSourceConfig(
   projectDir: string,
 ): Promise<ProjectSourceConfig | null> {
-  const srcConfigPath = getProjectConfigPath(projectDir);
-  const legacyConfigPath = path.join(projectDir, CLAUDE_DIR, STANDARD_FILES.CONFIG_YAML);
+  const configPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
 
-  let configPath = srcConfigPath;
-  if (!(await fileExists(srcConfigPath))) {
-    if (await fileExists(legacyConfigPath)) {
-      configPath = legacyConfigPath;
-      verbose(`Using legacy config location: ${legacyConfigPath}`);
-    } else {
-      verbose(`Project config not found at ${srcConfigPath} or ${legacyConfigPath}`);
-      return null;
-    }
+  if (!(await fileExists(configPath))) {
+    verbose(`Project config not found at ${configPath}`);
+    return null;
   }
 
-  const data = await safeLoadYamlFile(configPath, projectSourceConfigSchema);
+  const data = await loadTsConfig<ProjectSourceConfig>(configPath, projectSourceConfigSchema);
   if (!data) return null;
 
-  verbose(`Loaded project config from ${configPath}`);
-  return data as ProjectSourceConfig;
+  verbose(`Loaded project config from ${projectDir}`);
+  return data;
 }
 
-/** Load source config from the global home directory (~/.claude-src/config.yaml). */
+/** Load source config from the global home directory (~/.claude-src/config.ts). */
 export async function loadGlobalSourceConfig(): Promise<ProjectSourceConfig | null> {
   const homeDir = os.homedir();
-  const globalConfigPath = path.join(homeDir, CLAUDE_SRC_DIR, PROJECT_CONFIG_FILE);
+  const globalConfigPath = path.join(homeDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
 
   if (!(await fileExists(globalConfigPath))) {
     verbose(`Global config not found at ${globalConfigPath}`);
     return null;
   }
 
-  const data = await safeLoadYamlFile(globalConfigPath, projectSourceConfigSchema);
+  const data = await loadTsConfig<ProjectSourceConfig>(globalConfigPath, projectSourceConfigSchema);
   if (!data) return null;
 
-  verbose(`Loaded global config from ${globalConfigPath}`);
-  return data as ProjectSourceConfig;
+  verbose(`Loaded global config from ${homeDir}`);
+  return data;
 }
 
+// ProjectSourceConfig is a simple source configuration file (source URL, marketplace, overrides).
+// It intentionally uses bare `export default` — defineConfig() is for full ProjectConfig only.
 export async function saveProjectConfig(
   projectDir: string,
   config: ProjectSourceConfig,
 ): Promise<void> {
   const configPath = getProjectConfigPath(projectDir);
   await ensureDir(path.join(projectDir, CLAUDE_SRC_DIR));
-  const schemaComment = `${yamlSchemaComment(SCHEMA_PATHS.projectSourceConfig)}\n`;
-  const content = stringifyYaml(config, { lineWidth: YAML_FORMATTING.LINE_WIDTH_NONE });
-  await writeFile(configPath, `${schemaComment}${content}`);
+
+  // JSON.parse(JSON.stringify(x)) removes undefined values
+  const cleaned = JSON.parse(JSON.stringify(config));
+  const body = JSON.stringify(cleaned, null, 2);
+  const content = `export default ${body};\n`;
+
+  await writeFile(configPath, content);
   verbose(`Saved project config to ${configPath}`);
 }
 
@@ -207,7 +196,7 @@ export async function resolveAgentsSource(
   return { agentsSource: undefined, agentsSourceOrigin: "default" };
 }
 
-const PROJECT_ORIGIN_LABEL = "project config (.claude-src/config.yaml)";
+const PROJECT_ORIGIN_LABEL = "project config (.claude-src/config.ts)";
 
 export function formatOrigin(
   type: "source" | "agents",

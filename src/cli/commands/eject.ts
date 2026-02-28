@@ -1,7 +1,6 @@
 import { Args, Flags } from "@oclif/core";
 import path from "path";
 import os from "os";
-import { stringify as stringifyYaml } from "yaml";
 import { BaseCommand } from "../base-command.js";
 import {
   copy,
@@ -18,7 +17,6 @@ import {
   LOCAL_SKILLS_PATH,
   PROJECT_ROOT,
   STANDARD_FILES,
-  YAML_FORMATTING,
 } from "../consts.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import { loadSkillsMatrixFromSource, type SourceLoadResult } from "../lib/loading/index.js";
@@ -174,7 +172,7 @@ export default class Eject extends BaseCommand {
 
     if (flags.source) {
       await saveSourceToProjectConfig(projectDir, flags.source);
-      this.log(`Source saved to .claude-src/config.yaml`);
+      this.log(`Source saved to .claude-src/config.ts`);
     }
 
     await this.ensureMinimalConfig(projectDir, flags.source, sourceResult);
@@ -184,15 +182,15 @@ export default class Eject extends BaseCommand {
     this.log("");
   }
 
-  // Ensures a minimal config.yaml exists so `agentsinc compile` works after eject
+  // Ensures a minimal config exists so `agentsinc compile` works after eject
   private async ensureMinimalConfig(
     projectDir: string,
     sourceFlag?: string,
     sourceResult?: SourceLoadResult,
   ): Promise<void> {
-    const configPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
+    const tsConfigPath = path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
 
-    if (await fileExists(configPath)) {
+    if (await fileExists(tsConfigPath)) {
       return;
     }
 
@@ -226,35 +224,14 @@ export default class Eject extends BaseCommand {
 
     await ensureDir(path.join(projectDir, CLAUDE_SRC_DIR));
 
-    let configContent = stringifyYaml(config, { indent: YAML_FORMATTING.INDENT });
+    // JSON.parse(JSON.stringify(x)) removes undefined values
+    const cleaned = JSON.parse(JSON.stringify(config));
+    const body = JSON.stringify(cleaned, null, 2);
+    const content = `export default ${body};\n`;
 
-    const exampleStackComment = `
-# Example stack configuration (uncomment and customize):
-#
-# skills:
-#   - web-framework-react
-#   - web-styling-scss-modules
-#   - api-framework-hono
-#   - api-database-drizzle
-#
-# agents:
-#   - web-developer
-#   - api-developer
-#   - web-reviewer
-#
-# stack:
-#   web-developer:
-#     framework: web-framework-react
-#     styling: web-styling-scss-modules
-#   api-developer:
-#     api: api-framework-hono
-#     database: api-database-drizzle
-`;
+    await writeFile(tsConfigPath, content);
 
-    configContent += exampleStackComment;
-    await writeFile(configPath, configContent);
-
-    this.logSuccess(`Created ${CLAUDE_SRC_DIR}/config.yaml`);
+    this.logSuccess(`Created ${CLAUDE_SRC_DIR}/config.ts`);
   }
 
   private async ejectAgentPartials(

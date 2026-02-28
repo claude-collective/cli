@@ -1,21 +1,19 @@
-import { mkdir, mkdtemp, rm, writeFile } from "fs/promises";
-import os from "os";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { stringify as stringifyYaml } from "yaml";
 import { mergeWithExistingConfig } from "./config-merger";
 import type { ProjectConfig, SkillAssignment, SkillId } from "../../types";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
+import { createTempDir, cleanupTempDir, writeTestTsConfig } from "../__tests__/helpers";
 
 describe("config-merger", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "cc-config-merger-test-"));
+    tempDir = await createTempDir("cc-config-merger-test-");
   });
 
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    await cleanupTempDir(tempDir);
   });
 
   describe("mergeWithExistingConfig", () => {
@@ -39,12 +37,10 @@ describe("config-merger", () => {
     });
 
     it("should inherit author from simple project config when no full config exists", async () => {
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        stringifyYaml({ source: "github:my-org/skills", author: "@vince" }),
-      );
+      await writeTestTsConfig(tempDir, {
+        source: "github:my-org/skills",
+        author: "@vince",
+      });
 
       const newConfig: ProjectConfig = {
         name: "new-project",
@@ -63,15 +59,10 @@ describe("config-merger", () => {
     });
 
     it("should inherit agentsSource from existing config", async () => {
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        stringifyYaml({
-          source: "github:my-org/skills",
-          agentsSource: "github:my-org/agents",
-        }),
-      );
+      await writeTestTsConfig(tempDir, {
+        source: "github:my-org/skills",
+        agentsSource: "github:my-org/agents",
+      });
 
       const newConfig: ProjectConfig = {
         name: "new-project",
@@ -89,10 +80,7 @@ describe("config-merger", () => {
 
     describe("merge precedence rules", () => {
       async function writeFullConfig(config: ProjectConfig): Promise<void> {
-        // Full config is at .claude-src/config.yaml with name and agents (required fields)
-        const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-        await mkdir(configDir, { recursive: true });
-        await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_YAML), stringifyYaml(config));
+        await writeTestTsConfig(tempDir, config as unknown as Record<string, unknown>);
       }
 
       it.each([
@@ -142,9 +130,7 @@ describe("config-merger", () => {
 
     describe("union of agents arrays", () => {
       async function writeFullConfig(config: ProjectConfig): Promise<void> {
-        const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-        await mkdir(configDir, { recursive: true });
-        await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_YAML), stringifyYaml(config));
+        await writeTestTsConfig(tempDir, config as unknown as Record<string, unknown>);
       }
 
       it("should union agents (existing + new, deduplicated)", async () => {
@@ -193,9 +179,7 @@ describe("config-merger", () => {
 
     describe("deep merge of stack", () => {
       async function writeFullConfig(config: ProjectConfig): Promise<void> {
-        const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-        await mkdir(configDir, { recursive: true });
-        await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_YAML), stringifyYaml(config));
+        await writeTestTsConfig(tempDir, config as unknown as Record<string, unknown>);
       }
 
       /** Shorthand: creates a SkillAssignment[] from an id */
@@ -204,7 +188,6 @@ describe("config-merger", () => {
       }
 
       it("should deep merge stack with existing agent configs taking precedence", async () => {
-        // Write YAML with bare strings (format 1) - normalization converts to SkillAssignment[]
         await writeFullConfig({
           name: "project",
           agents: ["web-developer"],
@@ -318,17 +301,12 @@ describe("config-merger", () => {
     });
 
     it("should not mutate the input config", async () => {
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        stringifyYaml({
-          name: "existing",
-          agents: ["web-developer"],
-          skills: [],
-          author: "@existing",
-        }),
-      );
+      await writeTestTsConfig(tempDir, {
+        name: "existing",
+        agents: ["web-developer"],
+        skills: [],
+        author: "@existing",
+      });
 
       const newConfig: ProjectConfig = {
         name: "new-project",
@@ -345,15 +323,10 @@ describe("config-merger", () => {
     });
 
     it("should return existingConfigPath when merged", async () => {
-      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
-      await mkdir(configDir, { recursive: true });
-      await writeFile(
-        path.join(configDir, STANDARD_FILES.CONFIG_YAML),
-        stringifyYaml({
-          name: "existing",
-          agents: ["web-developer"],
-        }),
-      );
+      await writeTestTsConfig(tempDir, {
+        name: "existing",
+        agents: ["web-developer"],
+      });
 
       const newConfig: ProjectConfig = {
         name: "new-project",
@@ -367,9 +340,7 @@ describe("config-merger", () => {
 
       expect(result.merged).toBe(true);
       expect(result.existingConfigPath).toBeDefined();
-      expect(result.existingConfigPath).toContain(
-        `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_YAML}`,
-      );
+      expect(result.existingConfigPath).toContain(`${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS}`);
     });
   });
 });

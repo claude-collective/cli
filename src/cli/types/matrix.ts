@@ -4,7 +4,7 @@ import type { AgentName } from "./agents";
 /** Wizard domain grouping for skill categories */
 export type Domain = "web" | "api" | "cli" | "mobile" | "shared";
 
-/** Keys in skill-categories.yaml `categories` section */
+/** Keys in skill-categories.ts `categories` section */
 export type Subcategory =
   | "web-framework"
   | "web-styling"
@@ -75,7 +75,7 @@ export type CategoryMap = Partial<Record<Subcategory, CategoryDefinition>>;
  */
 export type DomainSelections = Partial<Record<Domain, Partial<Record<Subcategory, SkillId[]>>>>;
 
-/** Single category definition from skill-categories.yaml */
+/** Single category definition from skill-categories.ts */
 export type CategoryDefinition = {
   id: Subcategory;
   displayName: string;
@@ -93,7 +93,7 @@ export type CategoryDefinition = {
   custom?: boolean;
 };
 
-/** Relationship rules between skills from skill-rules.yaml */
+/** Relationship rules between skills from skill-rules.ts */
 export type RelationshipDefinitions = {
   /** Selecting one disables the others */
   conflicts: ConflictRule[];
@@ -149,7 +149,7 @@ export type AlternativeGroup = {
   skills: SkillId[];
 };
 
-/** Per-skill relationship rules from skill-rules.yaml per-skill section */
+/** Per-skill relationship rules from skill-rules.ts per-skill section */
 export type PerSkillRules = {
   compatibleWith?: SkillId[];
   conflictsWith?: SkillId[];
@@ -158,7 +158,7 @@ export type PerSkillRules = {
   providesSetupFor?: SkillId[];
 };
 
-/** Parsed configuration from skill-rules.yaml */
+/** Parsed configuration from skill-rules.ts */
 export type SkillRulesConfig = {
   version: string;
   /** Short name aliases mapping to canonical skill IDs */
@@ -180,7 +180,7 @@ export type SuggestedStack = {
 };
 
 /**
- * Output of mergeMatrixWithSkills() combining skill-categories.yaml + skill-rules.yaml with extracted metadata.
+ * Output of mergeMatrixWithSkills() combining skill-categories.ts + skill-rules.ts with extracted metadata.
  * This is the primary read model consumed by the wizard and CLI commands.
  */
 export type MergedSkillsMatrix = {
@@ -380,7 +380,7 @@ export type ValidationWarning = {
  * Skill metadata extracted from SKILL.md frontmatter + metadata.yaml before matrix merge.
  *
  * Relationship fields (compatibleWith, conflictsWith, requires, etc.) are loaded from
- * skill-rules.yaml via perSkillRules — not from individual skill metadata.
+ * skill-rules.ts via perSkillRules — not from individual skill metadata.
  */
 export type ExtractedSkillMetadata = {
   /** Normalized from frontmatter name, e.g. "web-framework-react" */

@@ -2,14 +2,11 @@ import os from "os";
 import path from "path";
 import { fileExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
-import { safeLoadYamlFile } from "../../utils/yaml";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR } from "../../consts";
+import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 import type { ProjectConfig, ValidationResult } from "../../types";
 import { projectConfigLoaderSchema } from "../schemas";
 import { normalizeStackRecord } from "../stacks/stacks-loader";
-
-const CONFIG_PATH = `${CLAUDE_SRC_DIR}/config.yaml`;
-const LEGACY_CONFIG_PATH = `${CLAUDE_DIR}/config.yaml`;
+import { loadTsConfig } from "./ts-config-loader";
 
 export type LoadedProjectConfig = {
   config: ProjectConfig;
@@ -20,29 +17,17 @@ export type LoadedProjectConfig = {
 export async function loadProjectConfigFromDir(
   projectDir: string,
 ): Promise<LoadedProjectConfig | null> {
-  // Check .claude-src/config.yaml first (new location)
-  const srcConfigPath = path.join(projectDir, CONFIG_PATH);
-  // Fall back to .claude/config.yaml (legacy location)
-  const legacyConfigPath = path.join(projectDir, LEGACY_CONFIG_PATH);
+  const configPath = path.join(projectDir, `${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS}`);
 
-  let configPath = srcConfigPath;
-  if (!(await fileExists(srcConfigPath))) {
-    if (await fileExists(legacyConfigPath)) {
-      configPath = legacyConfigPath;
-      verbose(`Using legacy config location: ${legacyConfigPath}`);
-    } else {
-      verbose(`Project config not found at ${srcConfigPath} or ${legacyConfigPath}`);
-      return null;
-    }
+  if (!(await fileExists(configPath))) {
+    verbose(`Project config not found at ${configPath}`);
+    return null;
   }
 
-  const data = await safeLoadYamlFile(configPath, projectConfigLoaderSchema);
-  if (!data) return null;
+  const config = await loadTsConfig<ProjectConfig>(configPath, projectConfigLoaderSchema);
+  if (!config) return null;
 
-  // Boundary cast: Zod loader schema validates structure; cast narrows passthrough output
-  const config = data as ProjectConfig;
-
-  // Normalize stack values to SkillAssignment[] (same as loadStacks does for stacks.yaml)
+  // Normalize stack values to SkillAssignment[] (same as loadStacks does for stacks.ts)
   if (config.stack) {
     config.stack = normalizeStackRecord(
       config.stack as unknown as Record<string, Record<string, unknown>>,

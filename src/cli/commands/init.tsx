@@ -372,7 +372,7 @@ export default class Init extends BaseCommand {
         }
         const localAgentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
         this.log(`[dry-run] Would compile agents to ${localAgentsDir}`);
-        this.log(`[dry-run] Would save config to .claude-src/config.yaml`);
+        this.log(`[dry-run] Would save config to .claude-src/config.ts`);
       } else {
         if (result.installMode === "plugin") {
           this.log(
@@ -385,7 +385,7 @@ export default class Init extends BaseCommand {
           `[dry-run] Would copy ${result.selectedSkills.length} skills to ${localSkillsDir}`,
         );
         this.log(`[dry-run] Would compile agents to ${localAgentsDir}`);
-        this.log(`[dry-run] Would save config to .claude-src/config.yaml`);
+        this.log(`[dry-run] Would save config to .claude-src/config.ts`);
       }
       this.log(`\n${DRY_RUN_MESSAGES.COMPLETE_NO_FILES_CREATED}`);
       return;
@@ -473,7 +473,7 @@ export default class Init extends BaseCommand {
       this.log(`  ${configResult.configPath}`);
       this.log("");
       this.log("To customize agent-skill assignments:");
-      this.log(`  1. Edit .claude-src/config.yaml`);
+      this.log(`  1. Edit .claude-src/config.ts`);
       this.log(`  2. Run '${CLI_BIN_NAME} compile' to regenerate agents`);
       this.log("");
 
@@ -534,7 +534,7 @@ export default class Init extends BaseCommand {
       this.log(`  ${installResult.configPath}`);
       this.log("");
       this.log("To customize agent-skill assignments:");
-      this.log(`  1. Edit .claude-src/config.yaml`);
+      this.log(`  1. Edit .claude-src/config.ts`);
       this.log(`  2. Run '${CLI_BIN_NAME} compile' to regenerate agents`);
       this.log("");
 

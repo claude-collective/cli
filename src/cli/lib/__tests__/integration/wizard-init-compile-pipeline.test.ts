@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import path from "path";
 import { readFile, readdir } from "fs/promises";
-import { parse as parseYaml } from "yaml";
+import { parseTsConfigContent } from "../helpers";
 
 import { installLocal } from "../../installation/local-installer";
 import { recompileAgents } from "../../agents/agent-recompiler";
@@ -252,13 +252,13 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         projectDir: dirs.projectDir,
       });
 
-      const configPath = path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
+      const configPath = path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       expect(await fileExists(configPath)).toBe(true);
       expect(installResult.configPath).toBe(configPath);
 
       const configContent = await readFile(configPath, "utf-8");
-      // Boundary cast: YAML parse returns `unknown`
-      const config = parseYaml(configContent) as ProjectConfig;
+      // Boundary cast: TS config parse returns `unknown`
+      const config = parseTsConfigContent<ProjectConfig>(configContent);
 
       expect(config.name).toBe(DEFAULT_PLUGIN_NAME);
       expect(config.skills).toBeDefined();
@@ -386,8 +386,8 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       });
 
       const configContent = await readFile(installResult.configPath, "utf-8");
-      // Boundary cast: YAML parse returns `unknown`
-      const config = parseYaml(configContent) as ProjectConfig;
+      // Boundary cast: TS config parse returns `unknown`
+      const config = parseTsConfigContent<ProjectConfig>(configContent);
 
       for (const skillId of selectedSkills) {
         expect(config.skills).toContain(skillId);
@@ -423,11 +423,11 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       });
 
       const configContent = await readFile(
-        path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML),
+        path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
         "utf-8",
       );
-      // Boundary cast: YAML parse returns `unknown`
-      const config = parseYaml(configContent) as ProjectConfig;
+      // Boundary cast: TS config parse returns `unknown`
+      const config = parseTsConfigContent<ProjectConfig>(configContent);
 
       expect(config.source).toBe("github:my-org/skills");
       expect(config.marketplace).toBe("test-marketplace");
@@ -452,7 +452,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       // Verify the exact directory structure init is expected to create:
       // project/
       //   .claude-src/
-      //     config.yaml
+      //     config.ts
       //   .claude/
       //     skills/
       //       <skill-name>/  (flattened, using skill ID as folder name)
@@ -462,7 +462,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       //       <agent-name>.md
 
       expect(
-        await fileExists(path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML)),
+        await fileExists(path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS)),
       ).toBe(true);
 
       const skillsDir = path.join(dirs.projectDir, CLAUDE_DIR, "skills");

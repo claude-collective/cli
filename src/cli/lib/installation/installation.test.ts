@@ -13,42 +13,44 @@ import {
   getInstallationOrThrow,
 } from "./installation";
 
-const LOCAL_CONFIG_CONTENT = `name: my-project
-agents:
-  - web-developer
-skills: []
-installMode: local
-`;
+function tsConfigContent(config: Record<string, unknown>): string {
+  return `export default ${JSON.stringify(config)};`;
+}
 
-const LOCAL_CONFIG_NO_MODE = `name: my-project
-agents:
-  - web-developer
-skills: []
-`;
+const LOCAL_CONFIG = {
+  name: "my-project",
+  agents: ["web-developer"],
+  skills: [],
+  installMode: "local",
+};
+
+const LOCAL_CONFIG_NO_MODE = {
+  name: "my-project",
+  agents: ["web-developer"],
+  skills: [],
+};
 
 async function createLocalProject(
   projectDir: string,
-  options: { useSrcDir?: boolean; configContent?: string } = {},
+  options: { configContent?: Record<string, unknown> } = {},
 ): Promise<void> {
-  const { useSrcDir = true, configContent = LOCAL_CONFIG_CONTENT } = options;
-  const configDir = useSrcDir
-    ? path.join(projectDir, ".claude-src")
-    : path.join(projectDir, ".claude");
+  const { configContent = LOCAL_CONFIG } = options;
+  const configDir = path.join(projectDir, ".claude-src");
   await mkdir(configDir, { recursive: true });
-  await writeFile(path.join(configDir, "config.yaml"), configContent);
+  await writeFile(path.join(configDir, "config.ts"), tsConfigContent(configContent));
 }
 
-const PLUGIN_CONFIG_CONTENT = `name: my-project
-agents:
-  - web-developer
-skills: []
-installMode: plugin
-`;
+const PLUGIN_CONFIG = {
+  name: "my-project",
+  agents: ["web-developer"],
+  skills: [],
+  installMode: "plugin",
+};
 
 async function createPluginProject(projectDir: string): Promise<void> {
   const configDir = path.join(projectDir, ".claude-src");
   await mkdir(configDir, { recursive: true });
-  await writeFile(path.join(configDir, "config.yaml"), PLUGIN_CONFIG_CONTENT);
+  await writeFile(path.join(configDir, "config.ts"), tsConfigContent(PLUGIN_CONFIG));
 }
 
 describe("installation", () => {
@@ -63,7 +65,7 @@ describe("installation", () => {
   });
 
   describe("detectInstallation", () => {
-    it("detects local installation with .claude-src/config.yaml", async () => {
+    it("detects local installation with .claude-src/config.ts", async () => {
       await createLocalProject(tempDir);
 
       const result = await detectInstallation(tempDir);
@@ -71,21 +73,10 @@ describe("installation", () => {
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("local");
       expect(result!.scope).toBe("project");
-      expect(result!.configPath).toBe(path.join(tempDir, ".claude-src/config.yaml"));
+      expect(result!.configPath).toBe(path.join(tempDir, ".claude-src/config.ts"));
       expect(result!.agentsDir).toBe(path.join(tempDir, ".claude/agents"));
       expect(result!.skillsDir).toBe(path.join(tempDir, ".claude/skills"));
       expect(result!.projectDir).toBe(tempDir);
-    });
-
-    it("detects local installation with legacy .claude/config.yaml", async () => {
-      await createLocalProject(tempDir, { useSrcDir: false });
-
-      const result = await detectInstallation(tempDir);
-
-      expect(result).not.toBeNull();
-      expect(result!.mode).toBe("local");
-      expect(result!.scope).toBe("project");
-      expect(result!.configPath).toBe(path.join(tempDir, ".claude/config.yaml"));
     });
 
     it("defaults to local mode when installMode is not set", async () => {
@@ -106,7 +97,7 @@ describe("installation", () => {
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("plugin");
       expect(result!.scope).toBe("project");
-      expect(result!.configPath).toBe(path.join(tempDir, ".claude-src/config.yaml"));
+      expect(result!.configPath).toBe(path.join(tempDir, ".claude-src/config.ts"));
       expect(result!.agentsDir).toBe(path.join(tempDir, ".claude/agents"));
       expect(result!.skillsDir).toBe(path.join(tempDir, ".claude/plugins"));
     });
@@ -128,12 +119,12 @@ describe("installation", () => {
       expect(projectResult).toBeNull();
     });
 
-    it("falls through to local even when config is invalid YAML", async () => {
+    it("falls through to local even when config is invalid TS", async () => {
       // Create a config file that exists but has invalid content
       // loadProjectConfig returns null for unparseable configs
       const configDir = path.join(tempDir, ".claude-src");
       await mkdir(configDir, { recursive: true });
-      await writeFile(path.join(configDir, "config.yaml"), "not: [valid: yaml: {{");
+      await writeFile(path.join(configDir, "config.ts"), "invalid typescript content {{");
 
       const result = await detectInstallation(tempDir);
 
@@ -142,18 +133,6 @@ describe("installation", () => {
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("local");
       expect(result!.scope).toBe("project");
-    });
-
-    it("prefers .claude-src/config.yaml over .claude/config.yaml", async () => {
-      // Both config files exist
-      await createLocalProject(tempDir, { useSrcDir: true });
-      await createLocalProject(tempDir, { useSrcDir: false });
-
-      const result = await detectInstallation(tempDir);
-
-      expect(result).not.toBeNull();
-      // Should use .claude-src/config.yaml (checked first)
-      expect(result!.configPath).toBe(path.join(tempDir, ".claude-src/config.yaml"));
     });
 
     it("uses provided projectDir parameter", async () => {
@@ -186,7 +165,7 @@ describe("installation", () => {
     it("falls back to global when project config not found", async () => {
       // If the home directory has a config, detectInstallation falls back
       const homeDir = os.homedir();
-      const homeConfigPath = path.join(homeDir, ".claude-src/config.yaml");
+      const homeConfigPath = path.join(homeDir, ".claude-src/config.ts");
       const { fileExists } = await import("../../utils/fs");
       const homeHasConfig = await fileExists(homeConfigPath);
 
@@ -229,7 +208,7 @@ describe("installation", () => {
     it("throws error when no installation found", async () => {
       // Only test this when home dir has no global config
       const homeDir = os.homedir();
-      const homeConfigPath = path.join(homeDir, ".claude-src/config.yaml");
+      const homeConfigPath = path.join(homeDir, ".claude-src/config.ts");
       const { fileExists } = await import("../../utils/fs");
       const homeHasConfig = await fileExists(homeConfigPath);
 
@@ -242,7 +221,7 @@ describe("installation", () => {
 
     it("error message suggests running agentsinc init", async () => {
       const homeDir = os.homedir();
-      const homeConfigPath = path.join(homeDir, ".claude-src/config.yaml");
+      const homeConfigPath = path.join(homeDir, ".claude-src/config.ts");
       const { fileExists } = await import("../../utils/fs");
       const homeHasConfig = await fileExists(homeConfigPath);
 

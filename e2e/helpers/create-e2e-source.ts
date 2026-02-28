@@ -1,6 +1,5 @@
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
-import { stringify as stringifyYaml } from "yaml";
 import { createTempDir } from "./test-utils.js";
 import { DIRS, SKILLS_DIR_PATH, STACKS_FILE_PATH, STANDARD_FILES } from "../../src/cli/consts.js";
 import type {
@@ -126,7 +125,7 @@ permissionMode: {{ agent.permissionMode }}
  * Includes skills, agents, stacks, and the minimal matrix/template structure
  * needed for the full init -> compile pipeline to succeed.
  *
- * The source provides its own config/stacks.yaml with a single test stack
+ * The source provides its own config/stacks.ts with a single test stack
  * that references only skills present in the source. This ensures the full
  * init flow (select stack -> accept defaults -> install) can complete without
  * missing skill errors.
@@ -165,7 +164,8 @@ async function writeSkills(sourceDir: string, skills: E2ESkill[]): Promise<void>
 async function writeStacks(sourceDir: string): Promise<void> {
   const stacksFilePath = path.join(sourceDir, STACKS_FILE_PATH);
   await mkdir(path.dirname(stacksFilePath), { recursive: true });
-  await writeFile(stacksFilePath, stringifyYaml({ stacks: [E2E_STACK] }));
+  const stacksTsContent = `export default ${JSON.stringify({ stacks: [E2E_STACK] }, null, 2)};\n`;
+  await writeFile(stacksFilePath, stacksTsContent);
 }
 
 async function writeAgents(sourceDir: string): Promise<void> {

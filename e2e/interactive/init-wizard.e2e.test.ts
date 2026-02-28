@@ -214,11 +214,11 @@ describe("init wizard", () => {
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // Verify config was created
-      const configPath = path.join(projectDir!, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
+      const configPath = path.join(projectDir!, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       expect(await fileExists(configPath)).toBe(true);
 
       const configContent = await readTestFile(configPath);
-      expect(configContent).toContain("installMode:");
+      expect(configContent).toContain("installMode");
 
       // Verify agents directory was created with agent files
       const agentsDir = path.join(projectDir!, CLAUDE_DIR, "agents");
@@ -247,7 +247,7 @@ describe("init wizard", () => {
       const fullOutput = session.getFullOutput();
       expect(fullOutput).toContain("Agents compiled to:");
       expect(fullOutput).toContain("Configuration:");
-      expect(fullOutput).toContain(`${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_YAML}`);
+      expect(fullOutput).toContain(`${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS}`);
     });
   });
 
@@ -361,7 +361,7 @@ describe("init wizard", () => {
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
 
       // Verify config was created
-      const configPath = path.join(projectDir!, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_YAML);
+      const configPath = path.join(projectDir!, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       expect(await fileExists(configPath)).toBe(true);
 
       // Verify agents directory was created with agent files
@@ -583,7 +583,10 @@ describe("init wizard", () => {
 
       const configDir = path.join(projectDir!, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
-      await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_YAML), "version: 1.0.0\n");
+      await writeFile(
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
+        `export default ${JSON.stringify({ version: "1.0.0" })};\n`,
+      );
 
       session = spawnInitWizard(projectDir!, sourceDir!);
 
