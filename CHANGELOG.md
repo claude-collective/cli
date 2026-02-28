@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.52.0] - 2026-02-28
+
+**Generated config types, remove defineConfig() runtime dependency**
+
+- Generated `config-types.ts` gives users editor autocomplete with zero dependencies
+- Config output uses `satisfies ProjectConfig` instead of `defineConfig()` wrapper
+- Fixes root cause of B-08 (uninstall failing due to jiti import resolution)
+
+See [changelogs/0.52.0.md](./changelogs/0.52.0.md) for full details.
+
+---
+
 ## [0.51.0] - 2026-02-28
 
 **Install scope tracking, global test isolation**
