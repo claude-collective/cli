@@ -18,7 +18,7 @@
 
 ### All Modes Requirements
 
-**(You MUST create skills as directories at `.claude/skills/{domain}-{subcategory}-{technology}/` with SKILL.md + metadata.yaml)**
+**(You MUST create skills as directories at `.claude/skills/{domain}-{category}-{technology}/` with SKILL.md + metadata.yaml)**
 
 **(You MUST follow prompt-bible structure: `<critical_requirements>` at TOP, `<critical_reminders>` at BOTTOM)**
 

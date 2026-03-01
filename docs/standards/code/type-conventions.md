@@ -29,7 +29,7 @@ type SkillIdPrefix = "web" | "api" | "cli" | "mobile" | "infra" | "meta" | "secu
 type SkillId = `${SkillIdPrefix}-${string}-${string}`;
 ```
 
-A `SkillId` has **3 or more** kebab-case segments: `prefix-subcategory-name`. The prefix
+A `SkillId` has **3 or more** kebab-case segments: `prefix-category-name`. The prefix
 is constrained to one of 7 values; everything after the first dash is open `string`.
 
 ### Rules
@@ -88,7 +88,7 @@ export const skillIdSchema = z
 type CategoryPath =
   | `${SkillIdPrefix}/${string}` // "web/framework"
   | `${SkillIdPrefix}-${string}` // "web-framework"
-  | Subcategory // "framework", "testing"
+  | Category // "framework", "testing"
   | "local"; // user-defined local skills
 ```
 
@@ -97,12 +97,12 @@ because category references appear in different contexts.
 
 ### When to Use Each Format
 
-| Format               | Example           | Used In                                           |
-| -------------------- | ----------------- | ------------------------------------------------- |
-| `prefix/subcategory` | `"web/framework"` | `metadata.yaml` category field (slash convention) |
-| `prefix-subcategory` | `"web-framework"` | Normalized IDs in code, skill ID prefixes         |
-| Bare `Subcategory`   | `"framework"`     | When the domain is already known from context     |
-| `"local"`            | `"local"`         | User-defined skills from `.claude/skills/`        |
+| Format            | Example           | Used In                                           |
+| ----------------- | ----------------- | ------------------------------------------------- |
+| `prefix/category` | `"web/framework"` | `metadata.yaml` category field (slash convention) |
+| `prefix-category` | `"web-framework"` | Normalized IDs in code, skill ID prefixes         |
+| Bare `Category`   | `"framework"`     | When the domain is already known from context     |
+| `"local"`         | `"local"`         | User-defined skills from `.claude/skills/`        |
 
 ### Runtime Validation
 
@@ -122,14 +122,14 @@ export const categoryPathSchema = z.string().refine(
 );
 ```
 
-### Extracting Subcategory from CategoryPath
+### Extracting Category from CategoryPath
 
-When you need the bare `Subcategory` from a `CategoryPath`, take the last segment:
+When you need the bare `Category` from a `CategoryPath`, take the last segment:
 
 ```typescript
 // src/cli/lib/configuration/config-generator.ts
-// Boundary cast: the last segment of a CategoryPath is always a valid Subcategory
-const subcategory = skill.category.split(/[/-]/).pop() as Subcategory;
+// Boundary cast: the last segment of a CategoryPath is always a valid Category
+const category = skill.category.split(/[/-]/).pop() as Category;
 ```
 
 ---
@@ -251,16 +251,16 @@ Real examples: `agent-recompiler.ts:45`, `skill-metadata.ts:207`,
 runtime checks have established. The cast narrows to the validated subset.
 
 ```typescript
-// Boundary cast: category is a Subcategory at the data boundary (domain checked below)
-const subcat = skill.category as Subcategory;
+// Boundary cast: category is a Category at the data boundary (domain checked below)
+const subcat = skill.category as Category;
 const domain = categories[subcat]?.domain;
 if (!domain) {
   warn(`...`);
   continue;
 }
 
-// Boundary cast: the last segment of a CategoryPath is always a valid Subcategory
-const subcategory = categoryPath.split("/").pop() as Subcategory;
+// Boundary cast: the last segment of a CategoryPath is always a valid Category
+const category = categoryPath.split("/").pop() as Category;
 ```
 
 Real examples: `wizard-store.ts:422`, `config-generator.ts:24`
@@ -431,12 +431,12 @@ The cast is encapsulated once in the utility instead of scattered across every c
 
 ```typescript
 // BEFORE: boundary cast at every call site
-const entries = Object.entries(stack.skills) as [AgentName, Partial<Record<Subcategory, SkillId>>][];
+const entries = Object.entries(stack.skills) as [AgentName, Partial<Record<Category, SkillId>>][];
 for (const [agent, skills] of entries) { ... }
 
 // AFTER: single import, no casts
 import { typedEntries } from "../utils/typed-object";
-for (const [agent, skills] of typedEntries<AgentName, Partial<Record<Subcategory, SkillId>>>(stack.skills)) { ... }
+for (const [agent, skills] of typedEntries<AgentName, Partial<Record<Category, SkillId>>>(stack.skills)) { ... }
 ```
 
 ---
@@ -504,28 +504,28 @@ const agents = { "web-developer": mockAgent } as Record<AgentName, AgentDefiniti
 
 ### Type Locations
 
-| Type                    | File                      | Purpose                                            |
-| ----------------------- | ------------------------- | -------------------------------------------------- |
-| `SkillId`               | `src/cli/types/skills.ts` | Canonical skill identifier                         |
-| `SkillIdPrefix`         | `src/cli/types/skills.ts` | 7 valid prefixes                                   |
-| `SkillDisplayName`      | `src/cli/types/skills.ts` | Human-readable labels (118 values)                 |
-| `CategoryPath`          | `src/cli/types/skills.ts` | Category identifier (multiple formats)             |
-| `SubcategorySelections` | `src/cli/types/skills.ts` | `Partial<Record<Subcategory, SkillId[]>>`          |
-| `Domain`                | `src/cli/types/matrix.ts` | Wizard domain grouping (6 values)                  |
-| `Subcategory`           | `src/cli/types/matrix.ts` | Category key (37 values)                           |
-| `AgentName`             | `src/cli/types/agents.ts` | Built-in agent identifiers (18 values)             |
-| `DomainSelections`      | `src/cli/types/matrix.ts` | Full wizard selection state                        |
-| `CategoryMap`           | `src/cli/types/matrix.ts` | `Partial<Record<Subcategory, CategoryDefinition>>` |
+| Type                    | File                      | Purpose                                         |
+| ----------------------- | ------------------------- | ----------------------------------------------- |
+| `SkillId`               | `src/cli/types/skills.ts` | Canonical skill identifier                      |
+| `SkillIdPrefix`         | `src/cli/types/skills.ts` | 7 valid prefixes                                |
+| `SkillDisplayName`      | `src/cli/types/skills.ts` | Human-readable labels (118 values)              |
+| `CategoryPath`          | `src/cli/types/skills.ts` | Category identifier (multiple formats)          |
+| `SubcategorySelections` | `src/cli/types/skills.ts` | `Partial<Record<Category, SkillId[]>>`          |
+| `Domain`                | `src/cli/types/matrix.ts` | Wizard domain grouping (6 values)               |
+| `Category`              | `src/cli/types/matrix.ts` | Category key (37 values)                        |
+| `AgentName`             | `src/cli/types/agents.ts` | Built-in agent identifiers (18 values)          |
+| `DomainSelections`      | `src/cli/types/matrix.ts` | Full wizard selection state                     |
+| `CategoryMap`           | `src/cli/types/matrix.ts` | `Partial<Record<Category, CategoryDefinition>>` |
 
 ### Validation Locations
 
-| Schema               | File                     | Validates                     |
-| -------------------- | ------------------------ | ----------------------------- |
-| `skillIdSchema`      | `src/cli/lib/schemas.ts` | `SkillId` at runtime          |
-| `SKILL_ID_PATTERN`   | `src/cli/lib/schemas.ts` | Raw regex for `SkillId`       |
-| `categoryPathSchema` | `src/cli/lib/schemas.ts` | `CategoryPath` at runtime     |
-| `subcategorySchema`  | `src/cli/lib/schemas.ts` | `Subcategory` enum at runtime |
-| `agentNameSchema`    | `src/cli/lib/schemas.ts` | `AgentName` enum at runtime   |
+| Schema               | File                     | Validates                   |
+| -------------------- | ------------------------ | --------------------------- |
+| `skillIdSchema`      | `src/cli/lib/schemas.ts` | `SkillId` at runtime        |
+| `SKILL_ID_PATTERN`   | `src/cli/lib/schemas.ts` | Raw regex for `SkillId`     |
+| `categoryPathSchema` | `src/cli/lib/schemas.ts` | `CategoryPath` at runtime   |
+| `subcategorySchema`  | `src/cli/lib/schemas.ts` | `Category` enum at runtime  |
+| `agentNameSchema`    | `src/cli/lib/schemas.ts` | `AgentName` enum at runtime |
 
 ### Key Functions
 

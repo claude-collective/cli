@@ -21,7 +21,7 @@ import {
 
 const SCHEMAS_DIR = path.resolve(import.meta.dirname, "../src/schemas");
 
-/** All valid subcategory values for stack configs */
+/** All valid category values for stack configs */
 const STACK_SUBCATEGORY_ENUM = [...SUBCATEGORY_VALUES];
 
 type SchemaEntry = {

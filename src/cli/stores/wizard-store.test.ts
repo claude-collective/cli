@@ -3,14 +3,7 @@ import { useWizardStore } from "./wizard-store";
 import { DEFAULT_PRESELECTED_SKILLS } from "../consts";
 import { createMockMatrix, getTestSkill } from "../lib/__tests__/helpers";
 import { typedKeys } from "../utils/typed-object";
-import type {
-  AgentName,
-  Domain,
-  SkillAssignment,
-  SkillId,
-  SkillSource,
-  Subcategory,
-} from "../types";
+import type { AgentName, Domain, SkillAssignment, SkillId, SkillSource, Category } from "../types";
 
 function sa(id: SkillId, preloaded = false): SkillAssignment {
   return { id, preloaded };
@@ -237,7 +230,7 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
+      const categories: Partial<Record<Category, { domain?: Domain }>> = {
         "web-framework": { domain: "web" },
         "web-client-state": { domain: "web" },
         "api-api": { domain: "api" },
@@ -263,7 +256,7 @@ describe("WizardStore", () => {
         "web-framework-react": { category: "web-framework", displayName: "React" },
         "api-framework-hono": { category: "api-api", displayName: "Hono" },
       };
-      const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
+      const categories: Partial<Record<Category, { domain?: Domain }>> = {
         "web-framework": { domain: "web" },
         "api-api": { domain: "api" },
       };
@@ -306,7 +299,7 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
+      const categories: Partial<Record<Category, { domain?: Domain }>> = {
         "web-framework": { domain: "web" },
         "api-api": { domain: "api" },
       };
@@ -662,7 +655,7 @@ describe("WizardStore", () => {
       expect(perDomain).toEqual({});
     });
 
-    it("should omit domains with empty subcategory arrays from getSelectedTechnologiesPerDomain", () => {
+    it("should omit domains with empty category arrays from getSelectedTechnologiesPerDomain", () => {
       const store = useWizardStore.getState();
       store.toggleTechnology("web", "web-framework", "web-framework-react", true);
       store.toggleTechnology("web", "web-framework", "web-framework-react", true); // toggle off
@@ -760,7 +753,7 @@ describe("WizardStore", () => {
           web: { "web-framework": [sa("web-framework-react", true)] },
         },
       };
-      const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
+      const categories: Partial<Record<Category, { domain?: Domain }>> = {
         "web-framework": { domain: "web" },
       };
 
@@ -787,7 +780,7 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
+      const categories: Partial<Record<Category, { domain?: Domain }>> = {
         "web-framework": { domain: "web" },
         "web-client-state": { domain: "web" },
         "api-api": { domain: "api" },
@@ -810,7 +803,7 @@ describe("WizardStore", () => {
           misc: { "shared-methodology": [sa("meta-methodology-vitest" as SkillId)] },
         },
       };
-      const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
+      const categories: Partial<Record<Category, { domain?: Domain }>> = {
         "shared-methodology": {},
       };
 
@@ -821,7 +814,7 @@ describe("WizardStore", () => {
       expect(typedKeys(domainSelections)).toHaveLength(0);
     });
 
-    it("should populate multiple skills from array-valued subcategories", () => {
+    it("should populate multiple skills from array-valued categories", () => {
       const store = useWizardStore.getState();
 
       const stack: Parameters<typeof store.populateFromStack>[0] = {
@@ -835,7 +828,7 @@ describe("WizardStore", () => {
           },
         },
       };
-      const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
+      const categories: Partial<Record<Category, { domain?: Domain }>> = {
         "shared-methodology": { domain: "shared" },
       };
 
@@ -865,7 +858,7 @@ describe("WizardStore", () => {
           api: { "api-api": [sa("api-framework-hono", true)] },
         },
       };
-      const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
+      const categories: Partial<Record<Category, { domain?: Domain }>> = {
         "web-framework": { domain: "web" },
         "shared-methodology": { domain: "shared" },
         "api-api": { domain: "api" },
@@ -902,7 +895,7 @@ describe("WizardStore", () => {
           },
         },
       };
-      const categories: Partial<Record<Subcategory, { domain?: Domain }>> = {
+      const categories: Partial<Record<Category, { domain?: Domain }>> = {
         "shared-methodology": { domain: "shared" },
       };
 

@@ -9,8 +9,8 @@ import type {
   CategoryDefinition,
   Domain,
   ResolvedSkill,
-  Subcategory,
-  SubcategorySelections,
+  Category,
+  CategorySelections,
 } from "../../types";
 import {
   ENTER,
@@ -38,7 +38,7 @@ const buildTestMatrix = (categories: CategoryDefinition[], skills: ResolvedSkill
   createMockMatrix(
     indexBy(skills, (s) => s.id),
     {
-      categories: indexBy(categories, (c) => c.id) as Record<Subcategory, CategoryDefinition>,
+      categories: indexBy(categories, (c) => c.id) as Record<Category, CategoryDefinition>,
     },
   );
 
@@ -538,7 +538,7 @@ describe("StepBuild component", () => {
           options: [{ id: "web-framework-react", label: "React", state: "normal", selected: true }],
         },
       ];
-      const selections: SubcategorySelections = { "web-framework": ["web-framework-react"] };
+      const selections: CategorySelections = { "web-framework": ["web-framework-react"] };
 
       const result = validateBuildStep(categories, selections);
       expect(result.valid).toBe(true);
@@ -557,7 +557,7 @@ describe("StepBuild component", () => {
           ],
         },
       ];
-      const selections: SubcategorySelections = {};
+      const selections: CategorySelections = {};
 
       const result = validateBuildStep(categories, selections);
       expect(result.valid).toBe(false);
@@ -581,7 +581,7 @@ describe("StepBuild component", () => {
           ],
         },
       ];
-      const selections: SubcategorySelections = {};
+      const selections: CategorySelections = {};
 
       const result = validateBuildStep(categories, selections);
       expect(result.valid).toBe(true);
@@ -604,7 +604,7 @@ describe("StepBuild component", () => {
           options: [],
         },
       ];
-      const selections: SubcategorySelections = {};
+      const selections: CategorySelections = {};
 
       const result = validateBuildStep(categories, selections);
       expect(result.valid).toBe(false);

@@ -1,9 +1,9 @@
-import type { Domain, ModelName, Subcategory } from "./matrix";
+import type { Category, Domain, ModelName } from "./matrix";
 
 /** Prefix segments used in skill IDs, including non-domain prefixes (infra, meta, security) */
 export type SkillIdPrefix = "web" | "api" | "cli" | "mobile" | "infra" | "meta" | "security";
 
-/** Skill ID format: prefix-subcategory-name segments in kebab-case (at least 3 segments) */
+/** Skill ID format: prefix-category-name segments in kebab-case (at least 3 segments) */
 export type SkillId = `${SkillIdPrefix}-${string}-${string}`;
 
 /** Fully-qualified plugin skill reference: "plugin-name:skill-name" for Claude Code plugin resolution */
@@ -120,24 +120,24 @@ export type SkillDisplayName =
   | "context-management";
 
 /**
- * Either "prefix-subcategory" (e.g., "web-framework"), a standalone subcategory,
+ * Either "prefix-category" (e.g., "web-framework"), a standalone category,
  * or "local" for user-defined local skills.
  */
-export type CategoryPath = `${SkillIdPrefix}-${string}` | Subcategory | "local";
+export type CategoryPath = `${SkillIdPrefix}-${string}` | Category | "local";
 
 /**
- * Subcategory-keyed selections mapping to arrays of canonical skill IDs.
+ * Category-keyed selections mapping to arrays of canonical skill IDs.
  * Used in the wizard Build step for single-domain selections.
- * Partial because only subcategories the user has interacted with will have entries.
+ * Partial because only categories the user has interacted with will have entries.
  */
-export type SubcategorySelections = Partial<Record<Subcategory, SkillId[]>>;
+export type CategorySelections = Partial<Record<Category, SkillId[]>>;
 
 /**
- * Resolved subcategory-to-skill mappings after alias resolution.
- * Maps each subcategory to a single canonical skill ID (used in stack configs
- * where each subcategory has exactly one skill per agent).
+ * Resolved category-to-skill mappings after alias resolution.
+ * Maps each category to a single canonical skill ID (used in stack configs
+ * where each category has exactly one skill per agent).
  */
-export type ResolvedSubcategorySkills = Partial<Record<Subcategory, SkillId>>;
+export type ResolvedCategorySkills = Partial<Record<Category, SkillId>>;
 
 /** Skill definition from registry.yaml (static metadata that doesn't change per-agent) */
 export type SkillDefinition = {
@@ -195,7 +195,7 @@ export type SkillFrontmatter = {
  * All fields optional because metadata.yaml is supplementary; SKILL.md is the primary source.
  */
 export type SkillMetadataConfig = {
-  /** Which subcategory this skill belongs to (e.g., "web-framework" or "web-testing") */
+  /** Which category this skill belongs to (e.g., "web-framework" or "web-testing") */
   category?: CategoryPath;
   /** Author handle (e.g., "@vince") */
   author?: string;

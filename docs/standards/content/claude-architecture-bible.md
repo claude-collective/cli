@@ -1039,7 +1039,7 @@ Skills are loaded from the marketplace or created locally. They follow a flat di
 
 ### Step 1: Create Skill Directory
 
-Create in `.claude/skills/` with the naming pattern `{domain}-{subcategory}-{technology}`:
+Create in `.claude/skills/` with the naming pattern `{domain}-{category}-{technology}`:
 
 ```
 .claude/skills/web-framework-react/
@@ -1047,7 +1047,7 @@ Create in `.claude/skills/` with the naming pattern `{domain}-{subcategory}-{tec
 └── metadata.yaml      # Skill metadata (required)
 ```
 
-**Naming pattern:** `{domain}-{subcategory}-{technology}`
+**Naming pattern:** `{domain}-{category}-{technology}`
 
 - Domains: `web`, `api`, `cli`, `meta`
 - Examples: `web-framework-react`, `api-database-drizzle`, `cli-framework-cli-commander`

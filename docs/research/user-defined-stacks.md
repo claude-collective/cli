@@ -24,7 +24,7 @@ export type ResolvedStack = {
   name: string;
   description: string;
   audience: string[];
-  skills: Partial<Record<AgentName, Partial<Record<Subcategory, SkillId>>>>;
+  skills: Partial<Record<AgentName, Partial<Record<Category, SkillId>>>>;
   allSkillIds: SkillId[];
   philosophy: string;
 };
@@ -180,7 +180,7 @@ export type ResolvedStack = {
   name: string;
   description: string;
   audience: string[];
-  skills: Partial<Record<AgentName, Partial<Record<Subcategory, SkillId>>>>;
+  skills: Partial<Record<AgentName, Partial<Record<Category, SkillId>>>>;
   allSkillIds: SkillId[];
   philosophy: string;
   origin?: StackOrigin; // NEW

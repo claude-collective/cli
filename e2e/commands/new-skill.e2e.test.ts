@@ -295,7 +295,7 @@ describe("new skill command", () => {
     // Custom domain appears in Domain union
     expect(configTypesContent).toContain('"custom-e2e-domain"');
 
-    // Custom category appears in Subcategory union
+    // Custom category appears in Category union
     expect(configTypesContent).toContain('"custom-e2e-category"');
   });
 });

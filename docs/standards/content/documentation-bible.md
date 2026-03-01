@@ -600,7 +600,7 @@ export type WizardState = {
 
   // Actions
   setStep: (step: WizardStep) => void;
-  toggleSkill: (domain: Domain, subcat: Subcategory, skillId: SkillId) => void;
+  toggleSkill: (domain: Domain, subcat: Category, skillId: SkillId) => void;
   // ... more actions
 };
 
@@ -711,7 +711,7 @@ afterEach(async () => {
 
 | File                            | Purpose                                                                          |
 | ------------------------------- | -------------------------------------------------------------------------------- |
-| `src/cli/types/matrix.ts`       | `Domain`, `Subcategory`, `ModelName`, `PermissionMode` union types, `SkillAlias` |
+| `src/cli/types/matrix.ts`       | `Domain`, `Category`, `ModelName`, `PermissionMode` union types, `SkillAlias`    |
 | `src/cli/types/skills.ts`       | `SkillId` (template literal), `CategoryPath`, `SkillDisplayName`                 |
 | `src/cli/types/agents.ts`       | `AgentName` type                                                                 |
 | `src/cli/types/config.ts`       | `CompileConfig`, `ProjectConfig`, `ValidationResult`                             |
@@ -822,7 +822,7 @@ import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
 
 export type CategoryGridProps = {
   categories: CategoryRow[];
-  onToggle: (categoryId: Subcategory, technologyId: SkillId) => void;
+  onToggle: (categoryId: Category, technologyId: SkillId) => void;
   availableHeight?: number;
 };
 
@@ -2275,11 +2275,11 @@ src/cli/components/wizard/
 import React from "react";
 import { Box, Text } from "ink";
 import { CLI_COLORS, UI_SYMBOLS } from "../../consts.js";
-import type { SkillId, Subcategory } from "../../types/index.js";
+import type { SkillId, Category } from "../../types/index.js";
 
 export type CategoryGridProps = {
   categories: CategoryRow[];
-  onToggle: (categoryId: Subcategory, technologyId: SkillId) => void;
+  onToggle: (categoryId: Category, technologyId: SkillId) => void;
   availableHeight?: number;
 };
 
@@ -2343,7 +2343,7 @@ useInput((input, key) => {
 
 3. **User selects technologies**
    - Step: `"build"` -- `src/cli/components/wizard/step-build.tsx`
-   - Component: `CategoryGrid` renders skills by domain/subcategory
+   - Component: `CategoryGrid` renders skills by domain/category
    - Store action: `store.toggleSkill(domain, subcat, skillId)`
 
 4. **User customizes sources**

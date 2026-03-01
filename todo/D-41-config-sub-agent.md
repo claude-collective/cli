@@ -16,7 +16,7 @@ Create the `agents-inc` skill — a configuration knowledge skill that gives Cla
 - **Natural invocation** — the user says "use Agents Inc to register my skill" and Claude uses the knowledge directly
 - **Zero context cost when not in use** — loaded on demand via Skill tool, not always embedded
 
-The skill contains the full knowledge base: 38 subcategory values, 18 agent names, SkillId format, all YAML schemas and field constraints, validation rules, and concrete examples.
+The skill contains the full knowledge base: 38 category values, 18 agent names, SkillId format, all YAML schemas and field constraints, validation rules, and concrete examples.
 
 **Absorbs D-40 (skill registration):** Instead of a flags-only `agentsinc register` CLI command, the user tells Claude to register a skill conversationally — Claude reads the SKILL.md, asks clarifying questions if the category is ambiguous, generates `metadata.yaml`, and wires the skill into `config.yaml`.
 
@@ -49,12 +49,12 @@ A skill solves this naturally. It loads into the main Claude conversation, givin
 
 ### SkillId Naming
 
-| Question             | Proposed Answer          | Rationale                                                                                                                                                                 |
-| -------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| What SkillId to use? | `meta-config-agents-inc` | Must follow the `${prefix}-${string}-${string}` format (3+ segments). `meta` prefix for shared/tooling skills, `config` as subcategory segment, `agents-inc` as the name. |
-| What subcategory?    | `shared-tooling`         | Configuration management is tooling. Fits alongside other shared infrastructure concerns.                                                                                 |
-| What display name?   | `Agents Inc`             | Clean, matches how users naturally refer to it: "use Agents Inc to..."                                                                                                    |
-| What model?          | Not specified (inherit)  | The skill provides knowledge, not a persona. The agent using it already has a model.                                                                                      |
+| Question             | Proposed Answer          | Rationale                                                                                                                                                              |
+| -------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| What SkillId to use? | `meta-config-agents-inc` | Must follow the `${prefix}-${string}-${string}` format (3+ segments). `meta` prefix for shared/tooling skills, `config` as category segment, `agents-inc` as the name. |
+| What category?       | `shared-tooling`         | Configuration management is tooling. Fits alongside other shared infrastructure concerns.                                                                              |
+| What display name?   | `Agents Inc`             | Clean, matches how users naturally refer to it: "use Agents Inc to..."                                                                                                 |
+| What model?          | Not specified (inherit)  | The skill provides knowledge, not a persona. The agent using it already has a model.                                                                                   |
 
 ### Scope Boundaries
 
@@ -142,7 +142,7 @@ description: Agents Inc CLI configuration expertise — creates and validates me
 
 ## Configuration Reference
 
-### Valid Subcategory Values (38)
+### Valid Category Values (38)
 
 [Full list from Section 5.1]
 
@@ -225,7 +225,7 @@ tags:
 
 The SKILL.md must embed the following knowledge so Claude can generate valid configs without hallucinating values.
 
-### 5.1 Valid Subcategory Values (38 values)
+### 5.1 Valid Category Values (38 values)
 
 Source: `src/cli/lib/schemas.ts` lines 70-109 (`SUBCATEGORY_VALUES`)
 
@@ -275,24 +275,24 @@ Minimum 3 dash-separated segments. Examples:
 
 Source: `src/schemas/metadata.schema.json`
 
-| Field               | Type     | Constraints                                                          | Required |
-| ------------------- | -------- | -------------------------------------------------------------------- | -------- |
-| `category`          | string   | Must be a valid Subcategory (domain-prefixed, e.g., `web-framework`) | Yes      |
-| `author`            | string   | Pattern: `^@[a-z][a-z0-9-]*$` (e.g., `@vince`)                       | Yes      |
-| `displayName`       | string   | 1-30 chars                                                           | Yes      |
-| `cliDescription`    | string   | 1-60 chars                                                           | Yes      |
-| `usageGuidance`     | string   | Min 10 chars                                                         | Yes      |
-| `categoryExclusive` | boolean  | Whether only one skill per category                                  | No       |
-| `tags`              | string[] | Each tag: `^[a-z][a-z0-9-]*$`                                        | No       |
-| `requires`          | string[] | Skill IDs this skill depends on                                      | No       |
-| `compatibleWith`    | string[] | Framework skill IDs this works with                                  | No       |
-| `conflictsWith`     | string[] | Skill IDs that cannot coexist                                        | No       |
-| `requiresSetup`     | string[] | Setup skill IDs needed first                                         | No       |
-| `providesSetupFor`  | string[] | Skills this setup skill configures                                   | No       |
-| `contentHash`       | string   | `^[a-f0-9]{7}$` (7-char hex)                                         | No       |
-| `updated`           | string   | ISO date                                                             | No       |
-| `domain`            | string   | Override domain inference                                            | No       |
-| `custom`            | boolean  | True for non-built-in skills                                         | No       |
+| Field               | Type     | Constraints                                                       | Required |
+| ------------------- | -------- | ----------------------------------------------------------------- | -------- |
+| `category`          | string   | Must be a valid Category (domain-prefixed, e.g., `web-framework`) | Yes      |
+| `author`            | string   | Pattern: `^@[a-z][a-z0-9-]*$` (e.g., `@vince`)                    | Yes      |
+| `displayName`       | string   | 1-30 chars                                                        | Yes      |
+| `cliDescription`    | string   | 1-60 chars                                                        | Yes      |
+| `usageGuidance`     | string   | Min 10 chars                                                      | Yes      |
+| `categoryExclusive` | boolean  | Whether only one skill per category                               | No       |
+| `tags`              | string[] | Each tag: `^[a-z][a-z0-9-]*$`                                     | No       |
+| `requires`          | string[] | Skill IDs this skill depends on                                   | No       |
+| `compatibleWith`    | string[] | Framework skill IDs this works with                               | No       |
+| `conflictsWith`     | string[] | Skill IDs that cannot coexist                                     | No       |
+| `requiresSetup`     | string[] | Setup skill IDs needed first                                      | No       |
+| `providesSetupFor`  | string[] | Skills this setup skill configures                                | No       |
+| `contentHash`       | string   | `^[a-f0-9]{7}$` (7-char hex)                                      | No       |
+| `updated`           | string   | ISO date                                                          | No       |
+| `domain`            | string   | Override domain inference                                         | No       |
+| `custom`            | boolean  | True for non-built-in skills                                      | No       |
 
 ### 5.6 stacks.yaml Structure
 
@@ -303,20 +303,20 @@ stacks:
   - id: kebab-case-stack-id      # Required
     name: Human-Readable Name     # Required
     description: Brief description # Required
-    agents:                        # Required - maps agent names to subcategory skill assignments
+    agents:                        # Required - maps agent names to category skill assignments
       agent-name:
-        subcategory-key: skill-id-string           # Bare string format
-        subcategory-key:                            # Object format
+        category-key: skill-id-string           # Bare string format
+        category-key:                            # Object format
           id: skill-id-string
           preloaded: true
-        subcategory-key:                            # Array format (multiple skills)
+        category-key:                            # Array format (multiple skills)
           - id: skill-id-string
             preloaded: true
           - id: another-skill-id
     philosophy: Optional guiding philosophy text
 ```
 
-**Three skill assignment formats** (all valid for the same subcategory key):
+**Three skill assignment formats** (all valid for the same category key):
 
 1. Bare string: `web-framework: web-framework-react`
 2. Object: `web-framework: { id: web-framework-react, preloaded: true }`
@@ -328,8 +328,8 @@ Source: `src/schemas/skills-matrix.schema.json`
 
 ```yaml
 categories:
-  subcategory-key: # Key must be a valid Subcategory
-    id: subcategory-key # Must match the key
+  category-key: # Key must be a valid Category
+    id: category-key # Must match the key
     displayName: Human Name
     description: Brief description
     domain: web # Optional, valid Domain value
@@ -464,8 +464,8 @@ Create the SKILL.md with:
 
 1. **Frontmatter** — `name: meta-config-agents-inc`, description
 2. **Quick Guide** — when to use, auto-detection triggers, when NOT to use
-3. **Critical Requirements** — non-negotiable constraints (domain-prefixed subcategories, schema comments, required fields, read-before-write, SkillId format, verify-after-write)
-4. **Configuration Reference** — the full knowledge base from Section 5 (subcategories, domains, agents, SkillId format, metadata schema, stacks schema, matrix schema, config schema, schema URLs)
+3. **Critical Requirements** — non-negotiable constraints (domain-prefixed categories, schema comments, required fields, read-before-write, SkillId format, verify-after-write)
+4. **Configuration Reference** — the full knowledge base from Section 5 (categories, domains, agents, SkillId format, metadata schema, stacks schema, matrix schema, config schema, schema URLs)
 5. **Workflow** — investigation-first process, file-specific creation/update procedures, validation checklist
 6. **Examples** — creating metadata.yaml, adding a stack, adding a category, updating config.yaml, validating files, registering a skill (the absorbed D-40 flow)
 7. **Reminders** — self-correction triggers (emphatic repetition of critical constraints)
@@ -558,7 +558,7 @@ This loads the config knowledge into the agent's context, giving it the same exp
 The skill embeds schema knowledge directly in its SKILL.md content. When Claude loads it, Claude gains:
 
 1. **Required field checklists** for each file type
-2. **Valid enum value lists** (subcategories, domains, agent names)
+2. **Valid enum value lists** (categories, domains, agent names)
 3. **Format patterns** (SkillId regex, author format, tag format)
 4. **Structural rules** (stacks need at least one agent, categories need id matching key, etc.)
 
@@ -598,7 +598,7 @@ Since this is a skill (SKILL.md + metadata.yaml), testing is manual:
    - Author format is `@handle`
 3. **Stacks update test**: Ask Claude to add a stack entry. Verify:
    - Valid structure with id, name, description, agents
-   - Subcategory keys are valid Subcategory values
+   - Category keys are valid Category values
    - Skill IDs follow the 3-segment format
 4. **Matrix category test**: Ask Claude to add a category. Verify:
    - All required fields present (id, displayName, description, exclusive, required, order)
@@ -617,10 +617,10 @@ Since this is a skill (SKILL.md + metadata.yaml), testing is manual:
 
 - [ ] Can create a valid `metadata.yaml` from a skill name and category
 - [ ] Can register an existing skill interactively: read SKILL.md, ask clarifying questions, generate metadata.yaml, wire into config.yaml (replaces D-40)
-- [ ] Can add a new stack to `stacks.yaml` with correct agent/subcategory/skill structure
+- [ ] Can add a new stack to `stacks.yaml` with correct agent/category/skill structure
 - [ ] Can add a new category to `skills-matrix.yaml` with proper schema
 - [ ] Validates all output against schema rules (embedded knowledge)
-- [ ] Refuses to use bare subcategory names (enforces domain-prefix)
+- [ ] Refuses to use bare category names (enforces domain-prefix)
 - [ ] Advises the user to verify with `agentsinc compile` after changes
 - [ ] Loads correctly via Skill tool for both users and other agents
 
@@ -666,7 +666,7 @@ All content that was split across those 7 agent files is consolidated into a sin
 
 ### The Biggest Risk
 
-Same as the agent design: **knowledge drift**. The embedded subcategory values, agent names, etc. will change as the codebase evolves. Mitigation:
+Same as the agent design: **knowledge drift**. The embedded category values, agent names, etc. will change as the codebase evolves. Mitigation:
 
 1. The SKILL.md should instruct Claude to **Grep for `SUBCATEGORY_VALUES` and `agentNameSchema` in source code** before generating config
 2. The embedded lists serve as a **fast reference** but source code is ground truth

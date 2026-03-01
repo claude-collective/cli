@@ -17,7 +17,7 @@ stack -> build -> sources -> agents -> confirm
 ```
 
 - `stack`: Select a pre-built stack OR choose "Start from scratch" + domain selection
-- `build`: Per-domain skill selection (CategoryGrid with subcategory sections)
+- `build`: Per-domain skill selection (CategoryGrid with category sections)
 - `sources`: Choose which source provides each skill (recommended vs custom)
 - `agents`: Select which agents to compile
 - `confirm`: Review selections and confirm
@@ -35,7 +35,7 @@ Wizard (src/cli/components/wizard/wizard.tsx)
   |-> Step Components (conditional render based on store.step):
   |     |-> StepStack (step-stack.tsx) - Stack selection
   |     |-> StepBuild (step-build.tsx) - Technology selection
-  |     |     |-> CategoryGrid (category-grid.tsx) - Subcategory sections
+  |     |     |-> CategoryGrid (category-grid.tsx) - Category sections
   |     |     |     |-> CheckboxGrid (checkbox-grid.tsx) - Skill toggles
   |     |     |-> DomainSelection (domain-selection.tsx) - Domain tabs
   |     |     |-> SectionProgress (section-progress.tsx) - Category progress

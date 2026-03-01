@@ -141,7 +141,7 @@ describe("User Journey: Compile Flow", () => {
             expect(Array.isArray(frontmatter.skills)).toBe(true);
             const skills = frontmatter.skills as string[];
 
-            // Skills should be valid SkillId format (prefix-subcategory-name)
+            // Skills should be valid SkillId format (prefix-category-name)
             for (const skill of skills) {
               expect(skill).toMatch(/^(web|api|cli|mobile|infra|meta|security)-\w+-\w+/);
             }

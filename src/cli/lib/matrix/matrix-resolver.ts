@@ -7,7 +7,7 @@ import type {
   SkillDisplayName,
   SkillId,
   SkillOption,
-  Subcategory,
+  Category,
   ValidationError,
   ValidationWarning,
 } from "../../types";
@@ -374,8 +374,8 @@ function validateExclusivity(
   for (const [categoryId, entries] of typedEntries(categorySelections)) {
     if (entries.length > 1) {
       const skillIds = entries.map((e) => e.skillId);
-      // CategoryPath -> Subcategory: categories lookup uses bare subcategory names
-      const category = matrix.categories[categoryId as Subcategory];
+      // CategoryPath -> Category: categories lookup uses bare category names
+      const category = matrix.categories[categoryId as Category];
       if (category?.exclusive) {
         errors.push({
           type: "categoryExclusive",

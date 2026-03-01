@@ -6,14 +6,14 @@
 
 All types are defined in `src/cli/types/` and re-exported through `src/cli/types/index.ts`.
 
-| Module  | File                       | Purpose                                                |
-| ------- | -------------------------- | ------------------------------------------------------ |
-| Skills  | `src/cli/types/skills.ts`  | SkillId, SkillFrontmatter, SkillAssignment             |
-| Agents  | `src/cli/types/agents.ts`  | AgentName, AgentConfig, CompiledAgentData              |
-| Matrix  | `src/cli/types/matrix.ts`  | Domain, Subcategory, ResolvedSkill, MergedSkillsMatrix |
-| Config  | `src/cli/types/config.ts`  | ProjectConfig, CompileConfig, ValidationResult         |
-| Stacks  | `src/cli/types/stacks.ts`  | Stack, StackAgentConfig, StacksConfig                  |
-| Plugins | `src/cli/types/plugins.ts` | PluginManifest, Marketplace, MarketplacePlugin         |
+| Module  | File                       | Purpose                                             |
+| ------- | -------------------------- | --------------------------------------------------- |
+| Skills  | `src/cli/types/skills.ts`  | SkillId, SkillFrontmatter, SkillAssignment          |
+| Agents  | `src/cli/types/agents.ts`  | AgentName, AgentConfig, CompiledAgentData           |
+| Matrix  | `src/cli/types/matrix.ts`  | Domain, Category, ResolvedSkill, MergedSkillsMatrix |
+| Config  | `src/cli/types/config.ts`  | ProjectConfig, CompileConfig, ValidationResult      |
+| Stacks  | `src/cli/types/stacks.ts`  | Stack, StackAgentConfig, StacksConfig               |
+| Plugins | `src/cli/types/plugins.ts` | PluginManifest, Marketplace, MarketplacePlugin      |
 
 ## Union Types (Single Source of Truth: `src/cli/types/`)
 
@@ -25,7 +25,7 @@ type SkillId = `${SkillIdPrefix}-${string}-${string}`;
 ```
 
 - Template literal type: always dashes, never `(@author)` suffix
-- Minimum 3 segments enforced (prefix-subcategory-name)
+- Minimum 3 segments enforced (prefix-category-name)
 - Examples: `"web-framework-react"`, `"meta-methodology-anti-over-engineering"`, `"api-database-drizzle"`
 
 ### AgentName (`src/cli/types/agents.ts:5-31`)
@@ -59,7 +59,7 @@ type AgentName =
 type Domain = "web" | "api" | "cli" | "mobile" | "shared";
 ```
 
-### Subcategory (`src/cli/types/matrix.ts:8-46`)
+### Category (`src/cli/types/matrix.ts:8-46`)
 
 38 values covering all skill categories across domains:
 
@@ -72,7 +72,7 @@ type Domain = "web" | "api" | "cli" | "mobile" | "shared";
 ### CategoryPath (`src/cli/types/skills.ts:124`)
 
 ```typescript
-type CategoryPath = `${SkillIdPrefix}-${string}` | Subcategory | "local";
+type CategoryPath = `${SkillIdPrefix}-${string}` | Category | "local";
 ```
 
 ### SkillDisplayName (`src/cli/types/skills.ts:13-118`)
@@ -99,14 +99,14 @@ type PermissionMode =
 
 ## Named Aliases (Composite Types)
 
-| Alias                       | Definition                                                         | File:Line       |
-| --------------------------- | ------------------------------------------------------------------ | --------------- |
-| `SubcategorySelections`     | `Partial<Record<Subcategory, SkillId[]>>`                          | `skills.ts:131` |
-| `DomainSelections`          | `Partial<Record<Domain, Partial<Record<Subcategory, SkillId[]>>>>` | `matrix.ts:76`  |
-| `CategoryMap`               | `Partial<Record<Subcategory, CategoryDefinition>>`                 | `matrix.ts:65`  |
-| `ResolvedSubcategorySkills` | `Partial<Record<Subcategory, SkillId>>`                            | `skills.ts:138` |
-| `StackAgentConfig`          | `Partial<Record<Subcategory, SkillAssignment[]>>`                  | `stacks.ts:6`   |
-| `PluginSkillRef`            | `` `${SkillId}:${SkillId}` ``                                      | `skills.ts:10`  |
+| Alias                       | Definition                                                      | File:Line       |
+| --------------------------- | --------------------------------------------------------------- | --------------- |
+| `SubcategorySelections`     | `Partial<Record<Category, SkillId[]>>`                          | `skills.ts:131` |
+| `DomainSelections`          | `Partial<Record<Domain, Partial<Record<Category, SkillId[]>>>>` | `matrix.ts:76`  |
+| `CategoryMap`               | `Partial<Record<Category, CategoryDefinition>>`                 | `matrix.ts:65`  |
+| `ResolvedSubcategorySkills` | `Partial<Record<Category, SkillId>>`                            | `skills.ts:138` |
+| `StackAgentConfig`          | `Partial<Record<Category, SkillAssignment[]>>`                  | `stacks.ts:6`   |
+| `PluginSkillRef`            | `` `${SkillId}:${SkillId}` ``                                   | `skills.ts:10`  |
 
 Note: There is no `SkillRef` type alias. The type at `skills.ts:163` is `SkillReference` (an object type, not an alias).
 
@@ -205,7 +205,7 @@ Skill metadata extracted from SKILL.md frontmatter + metadata.yaml before matrix
 | `ValidationWarning`   | 368-372 | Non-blocking validation warning                                       |
 | `SkillSource`         | 285-297 | Source from which a skill can be obtained                             |
 | `SkillSourceType`     | 282     | `"public"                                                             | "private" | "local"` |
-| `BoundSkill`          | 300-311 | Foreign skill bound to subcategory via search                         |
+| `BoundSkill`          | 300-311 | Foreign skill bound to category via search                            |
 | `BoundSkillCandidate` | 314-325 | Search result candidate before binding                                |
 | `ResolvedStack`       | 267-276 | Stack with resolved skill IDs                                         |
 
@@ -226,7 +226,7 @@ All schemas in `src/cli/lib/schemas.ts`. Key schemas:
 | Schema                         | Validates                  | Pattern          |
 | ------------------------------ | -------------------------- | ---------------- |
 | `domainSchema`                 | Domain union               | `z.enum()`       |
-| `subcategorySchema`            | Subcategory union          | `z.enum()`       |
+| `subcategorySchema`            | Category union             | `z.enum()`       |
 | `skillIdSchema`                | SkillId format             | `z.string()`     |
 | `categoryPathSchema`           | CategoryPath               | Custom + enum    |
 | `skillFrontmatterLoaderSchema` | SKILL.md frontmatter       | `.passthrough()` |

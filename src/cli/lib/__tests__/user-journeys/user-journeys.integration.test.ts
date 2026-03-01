@@ -586,7 +586,7 @@ describe("Multi-Domain Init (Web + API + Shared Skills)", () => {
     // Stack should have domain-appropriate assignments
     expect(config.stack).toBeDefined();
     if (config.stack) {
-      // Verify stack structure: each agent has subcategory-keyed entries
+      // Verify stack structure: each agent has category-keyed entries
       // with skill assignments that are valid skill IDs from config.skills
       for (const [agentId, agentConfig] of Object.entries(config.stack)) {
         expect(config.agents).toContain(agentId);

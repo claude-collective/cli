@@ -15,7 +15,7 @@ import type {
   SkillReference,
   Stack,
   StackAgentConfig,
-  Subcategory,
+  Category,
 } from "../types";
 import { typedKeys } from "../utils/typed-object";
 import { resolveAgentConfigToSkills } from "./stacks/stacks-loader";
@@ -55,13 +55,13 @@ export function resolveSkillReferences(
 }
 
 /**
- * Builds skill references from a ProjectConfig stack mapping (agent -> subcategory -> SkillAssignment[]).
+ * Builds skill references from a ProjectConfig stack mapping (agent -> category -> SkillAssignment[]).
  *
  * Values are normalized to SkillAssignment[] at load time (by normalizeStackRecord in project-config.ts).
  * Preserves preloaded flags from skill assignments.
  *
- * @param agentStack - Subcategory-to-SkillAssignment[] mapping from ProjectConfig.stack for one agent
- * @returns Skill references with usage hints derived from subcategory names
+ * @param agentStack - Category-to-SkillAssignment[] mapping from ProjectConfig.stack for one agent
+ * @returns Skill references with usage hints derived from category names
  */
 export function buildSkillRefsFromConfig(agentStack: StackAgentConfig): SkillReference[] {
   return resolveAgentConfigToSkills(agentStack);
@@ -87,7 +87,7 @@ export function resolveAgentSkillsFromStack(agentName: AgentName, stack: Stack):
   }
 
   // Empty config {} means agent has no technology-specific skills
-  if (typedKeys<Subcategory>(agentConfig).length === 0) {
+  if (typedKeys<Category>(agentConfig).length === 0) {
     verbose(`Agent '${agentName}' has no technology config in stack '${stack.id}'`);
     return [];
   }

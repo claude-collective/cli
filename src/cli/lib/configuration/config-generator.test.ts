@@ -6,12 +6,12 @@ import {
   FULLSTACK_STACK,
   EMPTY_AGENTS_STACK,
   PRELOADED_FLAG_STACK,
-  SHARED_SUBCATEGORY_STACK,
+  SHARED_CATEGORY_STACK,
   STACK_WITH_EMPTY_AGENTS,
   SINGLE_AGENT_STACK,
   MULTI_METHODOLOGY_STACK,
-  STACK_WITH_EMPTY_SUBCATEGORY,
-  MANY_SUBCATEGORIES_STACK,
+  STACK_WITH_EMPTY_CATEGORY,
+  MANY_CATEGORIES_STACK,
   LOCAL_SKILL_STACK,
 } from "../__tests__/mock-data/mock-stacks.js";
 import {
@@ -50,7 +50,7 @@ describe("config-generator", () => {
       expect(config.description).toBeUndefined();
     });
 
-    it("builds stack with subcategory->SkillAssignment[] mappings for multiple skills", () => {
+    it("builds stack with category->SkillAssignment[] mappings for multiple skills", () => {
       const selectedAgents: AgentName[] = ["web-developer", "web-reviewer"];
 
       const config = generateProjectConfigFromSkills(
@@ -92,7 +92,7 @@ describe("config-generator", () => {
       expect(config.stack).toBeUndefined();
     });
 
-    it("skips local skills in stack (no subcategory)", () => {
+    it("skips local skills in stack (no category)", () => {
       const selectedAgents: AgentName[] = ["web-developer"];
 
       const config = generateProjectConfigFromSkills(
@@ -102,10 +102,10 @@ describe("config-generator", () => {
         { selectedAgents },
       );
 
-      // Local skills have category "local" which has no subcategory
+      // Local skills have category "local" which has no category
       // Agents are still set from selectedAgents
       expect(config.agents).toEqual(["web-developer"]);
-      // Stack entries should not contain any "local" subcategory
+      // Stack entries should not contain any "local" category
       if (config.stack) {
         for (const agentConfig of Object.values(config.stack)) {
           expect(agentConfig).not.toHaveProperty("local");
@@ -215,7 +215,7 @@ describe("config-generator", () => {
       expect(config.agents).toEqual(sortedAgents);
     });
 
-    it("builds stack entries for every agent with every skill subcategory", () => {
+    it("builds stack entries for every agent with every skill category", () => {
       const selectedAgents: AgentName[] = ["api-developer", "web-developer"];
 
       const config = generateProjectConfigFromSkills(
@@ -226,7 +226,7 @@ describe("config-generator", () => {
       );
 
       expect(config.stack).toBeDefined();
-      // Every agent gets every skill's subcategory
+      // Every agent gets every skill's category
       expect(config.stack!["web-developer"]?.["web-framework"]?.[0]?.id).toBe(
         "web-framework-react",
       );
@@ -237,7 +237,7 @@ describe("config-generator", () => {
       expect(config.stack!["api-developer"]?.["api-api"]?.[0]?.id).toBe("api-framework-hono");
     });
 
-    it("handles bare subcategory category paths", () => {
+    it("handles bare category paths", () => {
       const selectedAgents: AgentName[] = ["web-tester"];
 
       const config = generateProjectConfigFromSkills(
@@ -457,8 +457,8 @@ describe("config-generator", () => {
       });
     });
 
-    it("skips empty array subcategories", () => {
-      const result = buildStackProperty(STACK_WITH_EMPTY_SUBCATEGORY);
+    it("skips empty array categories", () => {
+      const result = buildStackProperty(STACK_WITH_EMPTY_CATEGORY);
 
       expect(result).toEqual({
         "web-developer": {
@@ -477,15 +477,15 @@ describe("config-generator", () => {
       ]);
     });
 
-    it("handles multiple agents with identical subcategories", () => {
-      const result = buildStackProperty(SHARED_SUBCATEGORY_STACK);
+    it("handles multiple agents with identical categories", () => {
+      const result = buildStackProperty(SHARED_CATEGORY_STACK);
 
       expect(result["web-developer"]?.["web-framework"]).toEqual([sa("web-framework-react")]);
       expect(result["web-reviewer"]?.["web-framework"]).toEqual([sa("web-framework-react")]);
     });
 
-    it("handles single agent with many subcategories", () => {
-      const result = buildStackProperty(MANY_SUBCATEGORIES_STACK);
+    it("handles single agent with many categories", () => {
+      const result = buildStackProperty(MANY_CATEGORIES_STACK);
 
       expect(result["web-developer"]).toEqual({
         "web-framework": [sa("web-framework-react")],

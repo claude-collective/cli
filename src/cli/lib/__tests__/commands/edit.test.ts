@@ -12,7 +12,7 @@ import {
 } from "../helpers";
 import { EXIT_CODES } from "../../exit-codes";
 import { useWizardStore } from "../../../stores/wizard-store";
-import type { Domain, SkillId, Subcategory } from "../../../types";
+import type { Domain, SkillId, Category } from "../../../types";
 import Edit from "../../../commands/edit.js";
 
 // --- Module mocks (hoisted by vitest) ---
@@ -169,7 +169,7 @@ describe("edit command", () => {
 });
 
 // Shared test data for populateFromSkillIds and domain filtering tests
-const EDIT_CATEGORIES: Partial<Record<Subcategory, { domain?: Domain }>> = {
+const EDIT_CATEGORIES: Partial<Record<Category, { domain?: Domain }>> = {
   "web-framework": { domain: "web" },
   "web-client-state": { domain: "web" },
   "api-api": { domain: "api" },
@@ -223,7 +223,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     // Only web/framework should be populated
     expect(domainSelections.web?.["web-framework"]).toEqual(["web-framework-react"]);
 
-    // Other subcategories should not exist
+    // Other categories should not exist
     expect(domainSelections.web?.["web-client-state"]).toBeUndefined();
     expect(domainSelections.api).toBeUndefined();
   });
@@ -314,7 +314,7 @@ describe("edit wizard pre-selection via populateFromSkillIds", () => {
     expect(domainSelections.web?.["web-framework"]).toHaveLength(1);
   });
 
-  it("should populate multiple skills within the same subcategory (non-exclusive)", () => {
+  it("should populate multiple skills within the same category (non-exclusive)", () => {
     // testing category is non-exclusive, so multiple selections are valid
     const multiSkills: Partial<Record<SkillId, { category: string; displayName?: string }>> = {
       ...EDIT_SKILLS,

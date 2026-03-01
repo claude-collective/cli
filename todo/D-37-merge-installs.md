@@ -71,7 +71,7 @@ Loads full `ProjectConfig` (the installed config with skills, agents, stack mapp
 
 **`config-generator.ts:39-109` (`generateProjectConfigFromSkills`)**
 
-Takes selected skill IDs, the matrix, and options (agents, author, description). Builds a `ProjectConfig` with a `stack` property mapping each agent to each skill by subcategory. All selected skills are assigned to all selected agents.
+Takes selected skill IDs, the matrix, and options (agents, author, description). Builds a `ProjectConfig` with a `stack` property mapping each agent to each skill by category. All selected skills are assigned to all selected agents.
 
 **`config-merger.ts:18-82` (`mergeWithExistingConfig`)**
 
@@ -99,7 +99,7 @@ Checks for config at `{projectDir}/.claude-src/config.yaml` or `{projectDir}/.cl
 
 **`use-wizard-initialization.ts:19-57`**
 
-1. If `installedSkillIds` provided, calls `populateFromSkillIds()` which resolves each skill ID to its domain/subcategory and builds `domainSelections` (lines 34-37)
+1. If `installedSkillIds` provided, calls `populateFromSkillIds()` which resolves each skill ID to its domain/category and builds `domainSelections` (lines 34-37)
 2. Sets `step` to `initialStep` and `approach` to `"scratch"` (line 39)
 3. Restores `installMode`, `expertMode`, `selectedDomains`, `selectedAgents` from saved config (lines 41-55)
 
@@ -146,20 +146,20 @@ Merging is triggered when:
 
 ### What Gets Merged
 
-| Field                           | Merge behavior                                                    |
-| ------------------------------- | ----------------------------------------------------------------- |
-| `skills` (flat SkillId[])       | Union. Project skills + global skills. Deduped.                   |
-| `agents` (AgentName[])          | Union. Project agents + global agents. Deduped.                   |
-| `stack` (agent->subcat->skills) | Deep merge. Per-agent, per-subcategory: project wins on conflict. |
-| `domains`                       | Union. All domains from both configs.                             |
-| `selectedAgents`                | Union. All selected agents from both.                             |
-| `source`                        | Project wins if set. Falls back to global.                        |
-| `marketplace`                   | Project wins if set. Falls back to global.                        |
-| `author`                        | Project wins if set. Falls back to global.                        |
-| `installMode`                   | Project wins if set. Falls back to global.                        |
-| `expertMode`                    | Project wins if set. Falls back to global.                        |
-| `name`                          | Project wins. (Global name is just "global" or similar.)          |
-| `description`                   | Project wins if set.                                              |
+| Field                           | Merge behavior                                                 |
+| ------------------------------- | -------------------------------------------------------------- |
+| `skills` (flat SkillId[])       | Union. Project skills + global skills. Deduped.                |
+| `agents` (AgentName[])          | Union. Project agents + global agents. Deduped.                |
+| `stack` (agent->subcat->skills) | Deep merge. Per-agent, per-category: project wins on conflict. |
+| `domains`                       | Union. All domains from both configs.                          |
+| `selectedAgents`                | Union. All selected agents from both.                          |
+| `source`                        | Project wins if set. Falls back to global.                     |
+| `marketplace`                   | Project wins if set. Falls back to global.                     |
+| `author`                        | Project wins if set. Falls back to global.                     |
+| `installMode`                   | Project wins if set. Falls back to global.                     |
+| `expertMode`                    | Project wins if set. Falls back to global.                     |
+| `name`                          | Project wins. (Global name is just "global" or similar.)       |
+| `description`                   | Project wins if set.                                           |
 
 ### What Does NOT Get Merged
 
@@ -191,7 +191,7 @@ The new `mergeInstallationConfigs()` function produces a unified `ProjectConfig`
 
 ### Same Category, Different Skill
 
-When both global and project select skills in the same subcategory:
+When both global and project select skills in the same category:
 
 **Rule: Project wins for exclusive categories. Both active for non-exclusive categories.**
 
@@ -205,7 +205,7 @@ Project: web-testing -> [web-testing-playwright]       (non-exclusive)
 Merged: web-testing -> [web-testing-vitest, web-testing-playwright]   (both)
 ```
 
-The exclusivity check uses `matrix.categories[subcategory].categoryExclusive`. Exclusive categories (like `web-framework`) can only have one skill active -- project wins. Non-exclusive categories (like `web-testing`) allow multiple skills -- both are kept.
+The exclusivity check uses `matrix.categories[category].categoryExclusive`. Exclusive categories (like `web-framework`) can only have one skill active -- project wins. Non-exclusive categories (like `web-testing`) allow multiple skills -- both are kept.
 
 ### Same Skill in Both
 
@@ -221,11 +221,11 @@ Merged: web-testing-vitest (preloaded: true)  -- project's value wins
 
 ### Stack (Agent-Level) Merge
 
-The `stack` property maps agents to subcategory-skill assignments. Merge strategy:
+The `stack` property maps agents to category-skill assignments. Merge strategy:
 
 1. Start with global stack as base
 2. Overlay project stack on top
-3. Per-agent, per-subcategory: project wins if present
+3. Per-agent, per-category: project wins if present
 4. Agents only in global: preserved
 5. Agents only in project: added
 
@@ -247,7 +247,7 @@ api-developer:
   api-framework: [{ id: api-framework-hono, preloaded: false }]
 ```
 
-When the same agent exists in both and has the same subcategory:
+When the same agent exists in both and has the same category:
 
 ```yaml
 # Global:
@@ -279,7 +279,7 @@ Agents are merged, not fully overridden:
 
 This means a global installation that configures `web-developer` and `web-reviewer`, combined with a project that configures `api-developer`, results in all three agents being active. The project does NOT need to re-declare the global agents.
 
-If both global and project declare the same agent with different skill mappings, the project's mapping wins per-subcategory (deep merge).
+If both global and project declare the same agent with different skill mappings, the project's mapping wins per-category (deep merge).
 
 ---
 
@@ -429,7 +429,7 @@ export function mergeInstallationConfigs(
   // 2. If both exist, merge:
   //    a. Union skills (deduped)
   //    b. Union agents (deduped)
-  //    c. Deep merge stack (project wins per-agent per-subcategory)
+  //    c. Deep merge stack (project wins per-agent per-category)
   //    d. Union domains
   //    e. Project wins for scalar fields (source, author, installMode, etc.)
   //    f. Apply excludeGlobalSkills filter
@@ -447,8 +447,8 @@ function resolveSkillConflicts(
   projectSkills: SkillId[],
   matrix: MergedSkillsMatrix,
 ): SkillId[] {
-  // Group skills by subcategory
-  // For exclusive subcategories: if project has a selection, drop global's
+  // Group skills by category
+  // For exclusive categories: if project has a selection, drop global's
   // For non-exclusive: keep both
   // Return merged, deduped list
 }
@@ -683,7 +683,7 @@ The other D-37 (install mode UX redesign, `docs/features/proposed/install-mode-r
 
 If global was initialized with Stack A (which pre-configures agent-skill mappings) and the project was initialized with Stack B, what happens to the stack property?
 
-**Recommendation**: Deep merge as described in the Stack Merge section. The project's stack mappings override global's per-agent per-subcategory. This means the merged stack may be a hybrid that doesn't match either Stack A or Stack B exactly. The `selectedStackId` field in the merged config should be `null` (no single stack selected) to reflect this.
+**Recommendation**: Deep merge as described in the Stack Merge section. The project's stack mappings override global's per-agent per-category. This means the merged stack may be a hybrid that doesn't match either Stack A or Stack B exactly. The `selectedStackId` field in the merged config should be `null` (no single stack selected) to reflect this.
 
 ### Q8: Performance impact of loading two configs?
 

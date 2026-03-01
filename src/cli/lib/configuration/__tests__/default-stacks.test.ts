@@ -42,7 +42,7 @@ describe("defaultStacks", () => {
     (stack) => {
       for (const [agentName, agentConfig] of typedEntries(stack.agents)) {
         if (agentConfig == null) continue;
-        for (const [subcategory, assignments] of typedEntries(agentConfig)) {
+        for (const [category, assignments] of typedEntries(agentConfig)) {
           expect(assignments).toEqual(
             expect.arrayContaining([
               expect.objectContaining({
@@ -53,7 +53,7 @@ describe("defaultStacks", () => {
           );
           expect(
             Array.isArray(assignments),
-            `${stack.id} > ${agentName} > ${subcategory} should be an array`,
+            `${stack.id} > ${agentName} > ${category} should be an array`,
           ).toBe(true);
         }
       }

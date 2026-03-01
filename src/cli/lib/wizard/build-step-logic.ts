@@ -4,7 +4,7 @@ import type {
   Domain,
   MergedSkillsMatrix,
   SkillId,
-  SubcategorySelections,
+  CategorySelections,
 } from "../../types/index.js";
 import { getAvailableSkills, resolveAlias } from "../matrix/index.js";
 import type {
@@ -13,7 +13,7 @@ import type {
   OptionState,
 } from "../../components/wizard/category-grid.js";
 
-const FRAMEWORK_SUBCATEGORY_ID = "web-framework";
+const FRAMEWORK_CATEGORY_ID = "web-framework";
 const WEB_DOMAIN_ID = "web";
 
 export type BuildStepValidation = {
@@ -23,7 +23,7 @@ export type BuildStepValidation = {
 
 export function validateBuildStep(
   categories: CategoryRow[],
-  selections: SubcategorySelections,
+  selections: CategorySelections,
 ): BuildStepValidation {
   for (const category of categories) {
     if (category.required) {
@@ -71,16 +71,16 @@ function getStateReason(skill: {
   return undefined;
 }
 
-function isFrameworkSelected(selections: SubcategorySelections): boolean {
-  const frameworkSelections = selections[FRAMEWORK_SUBCATEGORY_ID] ?? [];
+function isFrameworkSelected(selections: CategorySelections): boolean {
+  const frameworkSelections = selections[FRAMEWORK_CATEGORY_ID] ?? [];
   return frameworkSelections.length > 0;
 }
 
 function getSelectedFrameworks(
-  selections: SubcategorySelections,
+  selections: CategorySelections,
   matrix: MergedSkillsMatrix,
 ): SkillId[] {
-  const frameworkSelections = selections[FRAMEWORK_SUBCATEGORY_ID] ?? [];
+  const frameworkSelections = selections[FRAMEWORK_CATEGORY_ID] ?? [];
   return frameworkSelections.map((alias) => resolveAlias(alias, matrix));
 }
 
@@ -105,7 +105,7 @@ export function buildCategoriesForDomain(
   domain: Domain,
   allSelections: SkillId[],
   matrix: MergedSkillsMatrix,
-  selections: SubcategorySelections,
+  selections: CategorySelections,
   installedSkillIds?: SkillId[],
 ): CategoryRow[] {
   const frameworkSource = selections;
@@ -115,18 +115,18 @@ export function buildCategoriesForDomain(
     : [];
 
   // Object.values() on a Partial record only yields values that exist — all are CategoryDefinition
-  const subcategories = sortBy(
+  const categories = sortBy(
     (Object.values(matrix.categories) as CategoryDefinition[]).filter(
       (cat) => cat.domain === domain,
     ),
     (cat) => cat.order ?? 0,
   );
 
-  const categoryRows: CategoryRow[] = subcategories.map((cat) => {
+  const categoryRows: CategoryRow[] = categories.map((cat) => {
     const skillOptions = getAvailableSkills(cat.id, allSelections, matrix);
 
     const useFrameworkFilter =
-      domain === WEB_DOMAIN_ID && cat.id !== FRAMEWORK_SUBCATEGORY_ID && frameworkSelected;
+      domain === WEB_DOMAIN_ID && cat.id !== FRAMEWORK_CATEGORY_ID && frameworkSelected;
     const filteredSkillOptions = useFrameworkFilter
       ? skillOptions.filter((skill) =>
           isCompatibleWithSelectedFrameworks(skill.id, selectedFrameworkIds, matrix),

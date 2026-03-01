@@ -2,14 +2,14 @@
 
 ## Goal
 
-Remove the `web-base-framework` and `mobile-platform` stacks-only subcategory keys by merging their skills into the `web-framework` / `mobile-framework` arrays. Change the `web-framework` category from fully exclusive (one framework only) to supporting compatible multi-selection (e.g., React + Remix together, since Remix is built on React).
+Remove the `web-base-framework` and `mobile-platform` stacks-only category keys by merging their skills into the `web-framework` / `mobile-framework` arrays. Change the `web-framework` category from fully exclusive (one framework only) to supporting compatible multi-selection (e.g., React + Remix together, since Remix is built on React).
 
 ## Current State
 
 ### web-base-framework
 
 - **Not a real category** -- it has no entry in `skills-matrix.yaml` `categories` section
-- **Listed in the `Subcategory` type** (`src/cli/types/matrix.ts` line 27) and `SUBCATEGORY_VALUES` (`src/cli/lib/schemas.ts` line 72)
+- **Listed in the `Category` type** (`src/cli/types/matrix.ts` line 27) and `SUBCATEGORY_VALUES` (`src/cli/lib/schemas.ts` line 72)
 - **Has a separate Zod schema** -- `stackSubcategorySchema` extends `SUBCATEGORY_VALUES` with `"web-base-framework"` and `"mobile-platform"` (schemas.ts line 102)
 - **Used in stacks.yaml** to provide a second framework slot: the "base" framework that a meta-framework is built on
   - `nuxt-stack`: `web-framework: nuxt`, `web-base-framework: vue`
@@ -20,7 +20,7 @@ Remove the `web-base-framework` and `mobile-platform` stacks-only subcategory ke
 ### mobile-platform
 
 - **Not a real category** -- same pattern as `web-base-framework`
-- **Listed in `Subcategory` type** (matrix.ts line 36) and `SUBCATEGORY_VALUES` (schemas.ts line 81)
+- **Listed in `Category` type** (matrix.ts line 36) and `SUBCATEGORY_VALUES` (schemas.ts line 81)
 - **Used only in stacks.yaml** for the React Native stack: `mobile-platform: mobile-framework-expo`
 - **Also referenced in** JSON schemas (`stacks.schema.json` line 60, `project-config.schema.json` line 76)
 
@@ -315,10 +315,10 @@ Total: ~24 merge operations in stacks.yaml, plus removing all `web-base-framewor
 
 ### Phase 3: Remove from Type/Schema System
 
-#### 3a. Remove from Subcategory type (src/cli/types/matrix.ts)
+#### 3a. Remove from Category type (src/cli/types/matrix.ts)
 
 ```typescript
-// REMOVE these two lines from Subcategory union:
+// REMOVE these two lines from Category union:
 | "web-base-framework"   // line 27
 | "mobile-platform"      // line 36
 ```
@@ -350,13 +350,13 @@ export const stackSubcategorySchema = subcategorySchema;
 
 **src/schemas/stacks.schema.json:**
 
-- Remove `"web-base-framework"` (line 72) from subcategory enum
-- Remove `"mobile-platform"` (line 60) from subcategory enum
+- Remove `"web-base-framework"` (line 72) from category enum
+- Remove `"mobile-platform"` (line 60) from category enum
 
 **src/schemas/project-config.schema.json:**
 
-- Remove `"web-base-framework"` (line 88) from subcategory enum
-- Remove `"mobile-platform"` (line 76) from subcategory enum
+- Remove `"web-base-framework"` (line 88) from category enum
+- Remove `"mobile-platform"` (line 76) from category enum
 
 ### Phase 4: Update Wizard/Exclusivity Logic
 
@@ -448,16 +448,16 @@ Add requires rule:
 
 Search for these strings in test files and update:
 
-| File                                                   | What to update                                              |
-| ------------------------------------------------------ | ----------------------------------------------------------- |
-| `src/cli/lib/__tests__/helpers.ts`                     | If `createMockMatrix()` or similar uses these subcategories |
-| `src/cli/lib/__tests__/fixtures/create-test-source.ts` | If test stacks use `web-base-framework`                     |
-| `src/cli/lib/stacks/stacks-loader.test.ts`             | If stack loading tests reference these keys                 |
-| `src/cli/lib/matrix/matrix-resolver.test.ts`           | If exclusivity tests use `web-framework` as exclusive       |
-| `src/cli/components/wizard/category-grid.test.tsx`     | If grid tests assume exclusive framework category           |
-| `src/cli/stores/wizard-store.test.ts`                  | If toggle tests assume exclusive framework behavior         |
-| `src/cli/lib/wizard/build-step-logic.test.ts`          | If build step tests reference these subcategories           |
-| `src/cli/lib/matrix/matrix-health-check.test.ts`       | If health checks validate these subcategories               |
+| File                                                   | What to update                                           |
+| ------------------------------------------------------ | -------------------------------------------------------- |
+| `src/cli/lib/__tests__/helpers.ts`                     | If `createMockMatrix()` or similar uses these categories |
+| `src/cli/lib/__tests__/fixtures/create-test-source.ts` | If test stacks use `web-base-framework`                  |
+| `src/cli/lib/stacks/stacks-loader.test.ts`             | If stack loading tests reference these keys              |
+| `src/cli/lib/matrix/matrix-resolver.test.ts`           | If exclusivity tests use `web-framework` as exclusive    |
+| `src/cli/components/wizard/category-grid.test.tsx`     | If grid tests assume exclusive framework category        |
+| `src/cli/stores/wizard-store.test.ts`                  | If toggle tests assume exclusive framework behavior      |
+| `src/cli/lib/wizard/build-step-logic.test.ts`          | If build step tests reference these categories           |
+| `src/cli/lib/matrix/matrix-health-check.test.ts`       | If health checks validate these categories               |
 
 #### 6b. Test for new multi-select behavior
 
@@ -483,10 +483,10 @@ Add tests for:
 
 ### Type system
 
-| File                      | Lines          | Changes                                                                        |
-| ------------------------- | -------------- | ------------------------------------------------------------------------------ |
-| `src/cli/types/matrix.ts` | 27, 36         | Remove `"web-base-framework"` and `"mobile-platform"` from `Subcategory` union |
-| `src/cli/lib/schemas.ts`  | 72, 81, 99-102 | Remove from `SUBCATEGORY_VALUES`; simplify `stackSubcategorySchema`            |
+| File                      | Lines          | Changes                                                                     |
+| ------------------------- | -------------- | --------------------------------------------------------------------------- |
+| `src/cli/types/matrix.ts` | 27, 36         | Remove `"web-base-framework"` and `"mobile-platform"` from `Category` union |
+| `src/cli/lib/schemas.ts`  | 72, 81, 99-102 | Remove from `SUBCATEGORY_VALUES`; simplify `stackSubcategorySchema`         |
 
 ### JSON schemas
 
@@ -521,7 +521,7 @@ Add tests for:
 
 1. **Phase 1** -- Update `skills-matrix.yaml`: change exclusivity, rewrite conflicts, add requires
 2. **Phase 2** -- Update `stacks.yaml`: merge all `web-base-framework` and `mobile-platform` entries
-3. **Phase 3** -- Remove from types and schemas: `Subcategory`, `SUBCATEGORY_VALUES`, `stackSubcategorySchema`, JSON schemas
+3. **Phase 3** -- Remove from types and schemas: `Category`, `SUBCATEGORY_VALUES`, `stackSubcategorySchema`, JSON schemas
 4. **Phase 4** -- No wizard code changes needed (existing system handles it)
 5. **Phase 5** -- Update `mobile-framework` exclusivity
 6. **Phase 6** -- Update tests
@@ -542,4 +542,4 @@ Add tests for:
 
 5. **Conflict rule complexity.** The current single conflict rule is simple. The replacement is multiple granular rules. Should we instead use a different mechanism (e.g., `ecosystems` grouping) to simplify? (Recommendation: granular conflict rules are fine for the current 9 framework skills. Add a new mechanism only if the number of frameworks grows significantly.)
 
-6. **Stacks that put `mobile-framework-react-native` under `web-framework`.** The react-native-stack puts `mobile-framework-react-native` under the `web-framework` subcategory key. After this change, should it remain there (since the agent needs it as a "framework" skill), or should it go under `mobile-framework`? This affects whether the web-developer agent gets the skill via the web-framework or mobile-framework key. (Recommendation: keep it under web-framework for now, since the web-developer agent's framework-first filtering needs it there.)
+6. **Stacks that put `mobile-framework-react-native` under `web-framework`.** The react-native-stack puts `mobile-framework-react-native` under the `web-framework` category key. After this change, should it remain there (since the agent needs it as a "framework" skill), or should it go under `mobile-framework`? This affects whether the web-developer agent gets the skill via the web-framework or mobile-framework key. (Recommendation: keep it under web-framework for now, since the web-developer agent's framework-first filtering needs it there.)

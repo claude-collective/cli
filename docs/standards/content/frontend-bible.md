@@ -1,4 +1,4 @@
-# Standards Extraction Categories & Subcategories - CUSTOMIZED
+# Standards Extraction Categories & Categories - CUSTOMIZED
 
 ## What Changed
 

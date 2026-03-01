@@ -19,7 +19,7 @@
 ### Finding 3: Pre-selection verification via category count display
 
 - **What happened:** When the edit wizard opens with `installedSkillIds` containing `web-framework-react`, the build step shows `Framework * (1 of 1)` in the category header. This provides a reliable assertion for verifying skill pre-selection.
-- **Why:** The `useWizardInitialization` hook calls `populateFromSkillIds()` which maps skill IDs to domain/subcategory selections. The Framework category then renders with the selection count, e.g., "(1 of 1)" meaning 1 selected out of 1 exclusive slot.
+- **Why:** The `useWizardInitialization` hook calls `populateFromSkillIds()` which maps skill IDs to domain/category selections. The Framework category then renders with the selection count, e.g., "(1 of 1)" meaning 1 selected out of 1 exclusive slot.
 - **Workaround/Pattern:** Assert `screen.toMatch(/Framework.*\(1 of 1\)/)` to verify pre-selection. This is more robust than looking for specific skill tag borders which depend on terminal width.
 - **Should this become a standard?** YES. Category count patterns are the most reliable way to verify skill selection state in the wizard UI.
 

@@ -59,7 +59,7 @@ Full validation of all 12 documentation files against actual source code. Errors
 
 **type-system.md:**
 
-- Fixed Subcategory count: 38 (was 46)
+- Fixed Category count: 38 (was 46)
 - Fixed SkillDisplayName count: 82 (was 118)
 - Removed phantom "SkillRef" alias (does not exist; actual type is PluginSkillRef)
 - Added missing types: CompileConfig, CompileContext, ValidationResult, ExtractedSkillMetadata

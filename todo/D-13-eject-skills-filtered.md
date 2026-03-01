@@ -11,32 +11,32 @@
 
 ### Q1: Flag naming -- `--domain` and `--category`, or something else?
 
-| Option                                | Description                                       | Pros                                                                    | Cons                                                                                                           |
-| ------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| **A: `--domain` and `--category`**    | Two separate flags matching internal terminology  | Mirrors the wizard's Domain/Subcategory model; clear mental model       | "category" actually maps to `Subcategory` internally (e.g., `web-framework`), which could confuse contributors |
-| **B: `--domain` and `--subcategory`** | Use internal naming directly                      | Matches type names exactly (`Domain`, `Subcategory`)                    | "subcategory" is less intuitive for end users who have never seen the internal types                           |
-| **C: `--domain` only**                | Single filter, derive category from domain prefix | Simpler CLI surface; covers the primary use case (eject all web skills) | Cannot eject a specific subcategory across domains (e.g., all "testing" skills)                                |
+| Option                             | Description                                       | Pros                                                                    | Cons                                                                                                        |
+| ---------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **A: `--domain` and `--category`** | Two separate flags matching internal terminology  | Mirrors the wizard's Domain/Category model; clear mental model          | "category" actually maps to `Category` internally (e.g., `web-framework`), which could confuse contributors |
+| **B: `--domain` and `--category`** | Use internal naming directly                      | Matches type names exactly (`Domain`, `Category`)                       | "category" is less intuitive for end users who have never seen the internal types                           |
+| **C: `--domain` only**             | Single filter, derive category from domain prefix | Simpler CLI surface; covers the primary use case (eject all web skills) | Cannot eject a specific category across domains (e.g., all "testing" skills)                                |
 
-**Recommendation:** Option A (`--domain` and `--category`). Users think in terms of "domain" (web, api, cli) and "category" (framework, testing, styling). The fact that `--category` maps to `Subcategory` internally is an implementation detail. Document the available values in `--help`.
+**Recommendation:** Option A (`--domain` and `--category`). Users think in terms of "domain" (web, api, cli) and "category" (framework, testing, styling). The fact that `--category` maps to `Category` internally is an implementation detail. Document the available values in `--help`.
 
 **RESOLVED: Option A accepted.** Use `--domain` and `--category` as flag names.
 
-### Q2: Should `--category` accept the Subcategory ID or the displayName?
+### Q2: Should `--category` accept the Category ID or the displayName?
 
 The YAML defines both:
 
 - ID: `web-framework` (kebab-case, used internally)
 - displayName: `Framework` (human-readable, shown in wizard)
 
-| Option                                                  | Description                            | Pros                                        | Cons                                                                                               |
-| ------------------------------------------------------- | -------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **A: Subcategory ID only** (`--category web-framework`) | Match the internal ID                  | Unambiguous; tab-completable; no collisions | Verbose; user must know the ID                                                                     |
-| **B: displayName only** (`--category framework`)        | Match the human-readable name          | Short; matches what users see in the wizard | Ambiguous across domains (e.g., "Testing" exists in web and CLI); case-insensitive matching needed |
-| **C: Accept both**                                      | Try ID first, fall back to displayName | Flexible; discoverable                      | More code; potential for confusing matches                                                         |
+| Option                                               | Description                            | Pros                                        | Cons                                                                                               |
+| ---------------------------------------------------- | -------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **A: Category ID only** (`--category web-framework`) | Match the internal ID                  | Unambiguous; tab-completable; no collisions | Verbose; user must know the ID                                                                     |
+| **B: displayName only** (`--category framework`)     | Match the human-readable name          | Short; matches what users see in the wizard | Ambiguous across domains (e.g., "Testing" exists in web and CLI); case-insensitive matching needed |
+| **C: Accept both**                                   | Try ID first, fall back to displayName | Flexible; discoverable                      | More code; potential for confusing matches                                                         |
 
-**Recommendation:** Option A (Subcategory ID only). The IDs are already kebab-case and predictable (e.g., `web-framework`, `api-database`). Since `--domain` and `--category` can be combined, there is no need for displayName matching. The `--help` output should list valid values.
+**Recommendation:** Option A (Category ID only). The IDs are already kebab-case and predictable (e.g., `web-framework`, `api-database`). Since `--domain` and `--category` can be combined, there is no need for displayName matching. The `--help` output should list valid values.
 
-**RESOLVED: Option A accepted.** Accept Subcategory ID only (e.g., `--category web-framework`).
+**RESOLVED: Option A accepted.** Accept Category ID only (e.g., `--category web-framework`).
 
 ### Q3: What happens when a skill's category spans domains?
 
@@ -108,7 +108,7 @@ Each `CategoryDefinition` in the matrix has a `domain` field of type `Domain` (e
 The relationship is:
 
 ```
-Domain (5 values) -> Subcategory (38 values) -> SkillId (many)
+Domain (5 values) -> Category (38 values) -> SkillId (many)
      web          ->  web-framework           ->  web-framework-react
                   ->  web-styling             ->  web-styling-scss-modules
                   ->  web-testing             ->  web-testing-vitest
@@ -119,10 +119,10 @@ Domain (5 values) -> Subcategory (38 values) -> SkillId (many)
 To filter skills by domain:
 
 1. Get all `CategoryDefinition` entries where `domain === targetDomain`
-2. Collect their subcategory IDs
-3. Filter skills whose `category` matches one of those subcategory IDs
+2. Collect their category IDs
+3. Filter skills whose `category` matches one of those category IDs
 
-To filter skills by subcategory:
+To filter skills by category:
 
 1. Filter skills whose `category === targetSubcategory`
 
@@ -132,7 +132,7 @@ To filter skills by subcategory:
 - `typedKeys<SkillId>(matrix.skills)` -- already used in `ejectSkills()` for the full list.
 - `typedEntries(matrix.categories)` -- iterates category definitions with typed keys.
 - `DOMAIN_VALUES` from `schemas.ts` -- array of all valid Domain strings.
-- `SUBCATEGORY_VALUES` from `schemas.ts` -- array of all valid Subcategory strings.
+- `SUBCATEGORY_VALUES` from `schemas.ts` -- array of all valid Category strings.
 
 ---
 
@@ -154,7 +154,7 @@ static flags = {
   }),
   category: Flags.string({
     char: "c",
-    description: "Filter skills by subcategory (e.g., web-framework, api-database). Comma-separated for multiple.",
+    description: "Filter skills by category (e.g., web-framework, api-database). Comma-separated for multiple.",
   }),
 };
 ```
@@ -168,8 +168,8 @@ The filtering is inserted between step 3 (get all non-local skill IDs) and step 
 2. If --domain is set:
    a. Parse comma-separated values
    b. Validate each against DOMAIN_VALUES
-   c. Collect all subcategory IDs whose CategoryDefinition.domain matches
-   d. Filter skill IDs to those whose category matches collected subcategories
+   c. Collect all category IDs whose CategoryDefinition.domain matches
+   d. Filter skill IDs to those whose category matches collected categories
 3. If --category is set:
    a. Parse comma-separated values
    b. Validate each against SUBCATEGORY_VALUES
@@ -226,8 +226,8 @@ The `--domain` and `--category` flags only apply when `type` is `skills` or `all
 **File:** `src/cli/commands/eject.ts` (private methods on the class)
 
 - `parseDomainFilter(raw: string): Domain[]` -- split by comma, validate each against `DOMAIN_VALUES`
-- `parseCategoryFilter(raw: string): Subcategory[]` -- split by comma, validate each against `SUBCATEGORY_VALUES`
-- `validateDomainCategoryCompatibility(domains: Domain[], categories: Subcategory[], matrix: MergedSkillsMatrix)` -- warn if a category does not belong to any specified domain
+- `parseCategoryFilter(raw: string): Category[]` -- split by comma, validate each against `SUBCATEGORY_VALUES`
+- `validateDomainCategoryCompatibility(domains: Domain[], categories: Category[], matrix: MergedSkillsMatrix)` -- warn if a category does not belong to any specified domain
 
 These are small private methods, not new utility modules.
 
@@ -236,9 +236,9 @@ These are small private methods, not new utility modules.
 **File:** `src/cli/commands/eject.ts`, `ejectSkills()` method
 
 - After the existing `typedKeys(...).filter(...)` line, add domain/category filtering
-- Build a `Set<Subcategory>` of allowed categories:
-  - From `--domain`: collect all subcategories where `matrix.categories[subcat]?.domain` is in the domain list
-  - From `--category`: directly use the provided subcategory IDs
+- Build a `Set<Category>` of allowed categories:
+  - From `--domain`: collect all categories where `matrix.categories[subcat]?.domain` is in the domain list
+  - From `--category`: directly use the provided category IDs
   - Intersection if both are specified
 - Filter `skillIds` to those whose `matrix.skills[skillId]?.category` is in the allowed set
 - Log the effective filter in the summary

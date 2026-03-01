@@ -10,7 +10,7 @@ import type {
   Stack,
   StackAgentConfig,
   StacksConfig,
-  Subcategory,
+  Category,
 } from "../../types";
 import { isValidSkillId, stacksConfigSchema } from "../schemas";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
@@ -40,7 +40,7 @@ export function normalizeAgentConfig(agentConfig: Record<string, unknown>): Stac
 }
 
 /**
- * Normalizes a raw stack record (agent -> raw subcategory config) to the typed form.
+ * Normalizes a raw stack record (agent -> raw category config) to the typed form.
  * Applies normalizeAgentConfig to each agent entry.
  */
 export function normalizeStackRecord(
@@ -99,32 +99,31 @@ export async function loadStackById(stackId: string, configDir: string): Promise
   return stack;
 }
 
-// Converts a StackAgentConfig (subcategory -> SkillAssignment[]) to an array of SkillReferences.
+// Converts a StackAgentConfig (category -> SkillAssignment[]) to an array of SkillReferences.
 // Values are already normalized to SkillAssignment[] by loadStacks().
 export function resolveAgentConfigToSkills(agentConfig: StackAgentConfig): SkillReference[] {
-  return typedEntries<Subcategory, SkillAssignment[]>(agentConfig).flatMap(
-    ([subcategory, assignments]) =>
-      (assignments ?? [])
-        .filter((assignment) => {
-          if (!isValidSkillId(assignment.id)) {
-            warn(
-              `Invalid skill ID '${assignment.id}' for subcategory '${subcategory}' in stack config. Skipping.`,
-            );
-            return false;
-          }
-          return true;
-        })
-        .map(
-          (assignment): SkillReference => ({
-            id: assignment.id,
-            usage: `when working with ${subcategory}`,
-            preloaded: assignment.preloaded ?? false,
-          }),
-        ),
+  return typedEntries<Category, SkillAssignment[]>(agentConfig).flatMap(([category, assignments]) =>
+    (assignments ?? [])
+      .filter((assignment) => {
+        if (!isValidSkillId(assignment.id)) {
+          warn(
+            `Invalid skill ID '${assignment.id}' for category '${category}' in stack config. Skipping.`,
+          );
+          return false;
+        }
+        return true;
+      })
+      .map(
+        (assignment): SkillReference => ({
+          id: assignment.id,
+          usage: `when working with ${category}`,
+          preloaded: assignment.preloaded ?? false,
+        }),
+      ),
   );
 }
 
-/** Extracts all unique skill IDs from a stack config (agent -> subcategory -> SkillAssignment[]). */
+/** Extracts all unique skill IDs from a stack config (agent -> category -> SkillAssignment[]). */
 export function getStackSkillIds(stack: Record<string, StackAgentConfig>): SkillId[] {
   return pipe(
     Object.values(stack),

@@ -71,11 +71,11 @@ This gives partial validation — the prefix is constrained, the suffix is open.
 **Never use `Record<UnionType, V>` when runtime won't have all keys.**
 
 ```typescript
-// BAD — implies every Subcategory key exists at runtime
-categories: Record<Subcategory, CategoryDefinition>;
+// BAD — implies every Category key exists at runtime
+categories: Record<Category, CategoryDefinition>;
 
 // GOOD — correctly models sparse runtime data
-categories: Partial<Record<Subcategory, CategoryDefinition>>;
+categories: Partial<Record<Category, CategoryDefinition>>;
 ```
 
 This applies universally:
@@ -116,7 +116,7 @@ Not all casts are bad. Classify them:
 
 | Cast Type                        | Legitimate? | Example                                                                                                     |
 | -------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------- |
-| **Object.keys/entries boundary** | Yes         | `Object.keys(record) as Subcategory[]` — TS always returns `string[]`                                       |
+| **Object.keys/entries boundary** | Yes         | `Object.keys(record) as Category[]` — TS always returns `string[]`                                          |
 | **CLI arg boundary**             | Yes         | `flags.category as CategoryPath` — user input enters as `string`                                            |
 | **YAML/JSON parse boundary**     | Yes         | `parseYaml(content) as Record<string, unknown>`                                                             |
 | **Test data construction**       | Yes         | `{ id: "test" } as SkillId` — intentionally invalid test values                                             |
@@ -188,10 +188,10 @@ Give names to recurring composite types:
 
 ```typescript
 // Instead of repeating this everywhere:
-Record<Domain, Record<Subcategory, SkillAlias[]>>;
+Record<Domain, Record<Category, SkillAlias[]>>;
 
 // Extract a named alias:
-type SubcategorySelections = Record<Subcategory, (SkillAlias | SkillId)[]>;
+type SubcategorySelections = Record<Category, (SkillAlias | SkillId)[]>;
 type DomainSelections = Partial<Record<Domain, Partial<SubcategorySelections>>>;
 ```
 
@@ -208,7 +208,7 @@ For nested key-value structures, type each level:
 stack: Record<string, Record<string, string>>;
 
 // GOOD — every level documented
-stack: Record<AgentName, Partial<Record<Subcategory, SkillId>>>;
+stack: Record<AgentName, Partial<Record<Category, SkillId>>>;
 //       ^ outer key      ^ not all subcats   ^ inner value
 ```
 
@@ -247,7 +247,7 @@ type StackAgentConfig = {
 };
 
 // PREFER — explicit key type
-type StackAgentConfig = Partial<Record<Subcategory, SkillAlias>>;
+type StackAgentConfig = Partial<Record<Category, SkillAlias>>;
 ```
 
 Index signatures always widen to `string` keys. `Record` with union keys preserves type information.

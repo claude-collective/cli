@@ -292,7 +292,7 @@ function setActiveSources(matrix: MergedSkillsMatrix): void {
  * For each configured source, fetches the repository (using cached data when available),
  * extracts all skill metadata, and matches by the last segment of the skill's directory
  * path against the provided alias (case-insensitive). Used by the wizard's skill search
- * modal to find foreign skills that can be bound to a subcategory.
+ * modal to find foreign skills that can be bound to a category.
  *
  * @param alias - Skill alias to search for (e.g., "react", "zustand"). Matched
  *                case-insensitively against the last path segment of each skill's

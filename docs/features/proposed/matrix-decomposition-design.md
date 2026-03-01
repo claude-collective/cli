@@ -426,7 +426,7 @@ function synthesizeCategory(
   const domain = skillDomain ?? (isKnownDomain(prefix) ? prefix : undefined);
 
   return {
-    id: categoryPath as Subcategory,
+    id: categoryPath as Category,
     displayName: formatDisplayName(categoryPath), // "devops-iac" -> "Devops Iac"
     description: `Auto-generated category for ${categoryPath}`,
     domain,

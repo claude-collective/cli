@@ -20,7 +20,7 @@ import type {
   CategoryDefinition,
   CategoryPath,
   SkillId,
-  Subcategory,
+  Category,
 } from "../../../types";
 
 describe("generateConfigTypesSource", () => {
@@ -78,46 +78,41 @@ describe("generateConfigTypesSource", () => {
 
   it("generates Domain type from matrix categories", () => {
     const categories = {
-      "web-framework": createMockCategory("web-framework" as Subcategory, "Framework", {
+      "web-framework": createMockCategory("web-framework" as Category, "Framework", {
         domain: "web",
       }),
-      "api-api": createMockCategory("api-api" as Subcategory, "API", {
+      "api-api": createMockCategory("api-api" as Category, "API", {
         domain: "api",
       }),
-    } as Record<Subcategory, CategoryDefinition>;
+    } as Record<Category, CategoryDefinition>;
 
     const matrix = createMockMatrix({}, { categories });
     const source = generateConfigTypesSource(matrix, []);
     expect(source).toContain('export type Domain = "api" | "web";');
   });
 
-  it("generates Subcategory union from matrix category keys", () => {
+  it("generates Category union from matrix category keys", () => {
     const categories = {
-      "web-framework": createMockCategory("web-framework" as Subcategory, "Framework", {
+      "web-framework": createMockCategory("web-framework" as Category, "Framework", {
         domain: "web",
       }),
-      "api-api": createMockCategory("api-api" as Subcategory, "API", {
+      "api-api": createMockCategory("api-api" as Category, "API", {
         domain: "api",
       }),
-      "web-styling": createMockCategory("web-styling" as Subcategory, "Styling", {
+      "web-styling": createMockCategory("web-styling" as Category, "Styling", {
         domain: "web",
       }),
-    } as Record<Subcategory, CategoryDefinition>;
+    } as Record<Category, CategoryDefinition>;
 
     const matrix = createMockMatrix({}, { categories });
     const source = generateConfigTypesSource(matrix, []);
-    expect(source).toContain(
-      'export type Subcategory = "api-api" | "web-framework" | "web-styling";',
-    );
+    expect(source).toContain('export type Category = "api-api" | "web-framework" | "web-styling";');
   });
 
-  it("falls back to string for empty subcategories", () => {
-    const matrix = createMockMatrix(
-      {},
-      { categories: {} as Record<Subcategory, CategoryDefinition> },
-    );
+  it("falls back to string for empty categories", () => {
+    const matrix = createMockMatrix({}, { categories: {} as Record<Category, CategoryDefinition> });
     const source = generateConfigTypesSource(matrix, []);
-    expect(source).toContain("export type Subcategory = string;");
+    expect(source).toContain("export type Category = string;");
   });
 
   it("generates InstallMode type", () => {
@@ -134,11 +129,11 @@ describe("generateConfigTypesSource", () => {
     );
   });
 
-  it("generates StackAgentConfig type with Subcategory keys", () => {
+  it("generates StackAgentConfig type with Category keys", () => {
     const matrix = createMockMatrix({});
     const source = generateConfigTypesSource(matrix, []);
     expect(source).toContain(
-      "export type StackAgentConfig = Partial<Record<Subcategory, SkillAssignment>>;",
+      "export type StackAgentConfig = Partial<Record<Category, SkillAssignment>>;",
     );
   });
 
@@ -177,7 +172,7 @@ describe("generateConfigTypesSource", () => {
   it("falls back to string for empty domains", () => {
     const matrix = createMockMatrix(
       { "web-framework-react": createMockSkill("web-framework-react", "web-framework") },
-      { categories: {} as Record<Subcategory, CategoryDefinition> },
+      { categories: {} as Record<Category, CategoryDefinition> },
     );
     const source = generateConfigTypesSource(matrix, []);
     expect(source).toContain("export type Domain = string;");
@@ -336,13 +331,13 @@ describe("generateConfigTypesSource", () => {
       // Boundary cast: custom skill/category IDs may not match built-in prefix patterns
       const acmeDeploy = "acme-deploy-pipeline" as SkillId;
       const categories = {
-        "web-framework": createMockCategory("web-framework" as Subcategory, "Framework", {
+        "web-framework": createMockCategory("web-framework" as Category, "Framework", {
           domain: "web",
         }),
-        "acme-deploy": createMockCategory("acme-deploy" as Subcategory, "Deploy", {
+        "acme-deploy": createMockCategory("acme-deploy" as Category, "Deploy", {
           domain: "web",
         }),
-      } as unknown as Record<Subcategory, CategoryDefinition>;
+      } as unknown as Record<Category, CategoryDefinition>;
 
       const matrix = createMockMatrix(
         {
@@ -354,27 +349,27 @@ describe("generateConfigTypesSource", () => {
       );
       const source = generateConfigTypesSource(matrix, []);
 
-      const subcategoryStart = source.indexOf("export type Subcategory =");
-      const subcategoryEnd = source.indexOf(";", subcategoryStart);
-      const subcategorySection = source.slice(subcategoryStart, subcategoryEnd);
+      const categoryStart = source.indexOf("export type Category =");
+      const categoryEnd = source.indexOf(";", categoryStart);
+      const categorySection = source.slice(categoryStart, categoryEnd);
 
-      expect(subcategorySection).toContain("// Custom");
-      expect(subcategorySection).toContain("// Marketplace");
-      expect(subcategorySection).toContain('"acme-deploy"');
-      expect(subcategorySection).toContain('"web-framework"');
+      expect(categorySection).toContain("// Custom");
+      expect(categorySection).toContain("// Marketplace");
+      expect(categorySection).toContain('"acme-deploy"');
+      expect(categorySection).toContain('"web-framework"');
     });
 
     it("shows section comments for custom domains (derived from custom skills)", () => {
       // Boundary cast: custom skill/category/domain not in built-in unions
       const acmeCi = "acme-ci-runner" as SkillId;
       const categories = {
-        "web-framework": createMockCategory("web-framework" as Subcategory, "Framework", {
+        "web-framework": createMockCategory("web-framework" as Category, "Framework", {
           domain: "web",
         }),
-        "devops-ci": createMockCategory("devops-ci" as Subcategory, "CI/CD", {
+        "devops-ci": createMockCategory("devops-ci" as Category, "CI/CD", {
           domain: "devops" as "web",
         }),
-      } as unknown as Record<Subcategory, CategoryDefinition>;
+      } as unknown as Record<Category, CategoryDefinition>;
 
       const matrix = createMockMatrix(
         {
@@ -400,13 +395,13 @@ describe("generateConfigTypesSource", () => {
       // Boundary cast: custom skill/category key not in built-in unions
       const acmeTool = "acme-web-tool" as SkillId;
       const categories = {
-        "web-framework": createMockCategory("web-framework" as Subcategory, "Framework", {
+        "web-framework": createMockCategory("web-framework" as Category, "Framework", {
           domain: "web",
         }),
-        "web-custom-tool": createMockCategory("web-custom-tool" as Subcategory, "Custom Tool", {
+        "web-custom-tool": createMockCategory("web-custom-tool" as Category, "Custom Tool", {
           domain: "web",
         }),
-      } as unknown as Record<Subcategory, CategoryDefinition>;
+      } as unknown as Record<Category, CategoryDefinition>;
 
       const matrix = createMockMatrix(
         {

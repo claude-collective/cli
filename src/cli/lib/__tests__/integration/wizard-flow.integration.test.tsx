@@ -956,7 +956,7 @@ describe("Wizard integration", () => {
       expect(state.step).toBe("build");
       expect(state.approach).toBe("scratch");
 
-      // domainSelections should contain the installed skills grouped by domain/subcategory
+      // domainSelections should contain the installed skills grouped by domain/category
       expect(state.domainSelections.web?.["web-framework"]).toContain("web-framework-react");
       expect(state.domainSelections.api?.["api-api"]).toContain("api-framework-hono");
 

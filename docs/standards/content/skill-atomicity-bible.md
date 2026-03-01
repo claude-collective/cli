@@ -42,7 +42,7 @@ A React skill shouldn't mention SCSS, Zustand, or MSW. A styling skill shouldn't
 Skills follow a directory-based structure with modular files:
 
 ```
-.claude/skills/{domain}-{subcategory}-{technology}/
+.claude/skills/{domain}-{category}-{technology}/
 ├── SKILL.md              # Main skill file with TOC
 ├── metadata.yaml         # Skill metadata (category, tags, version)
 ├── reference.md          # Quick reference and decision frameworks

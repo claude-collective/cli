@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from "react";
 import { Box, Text } from "ink";
 
 import { CLI_COLORS } from "../../consts.js";
-import type { SkillId, Subcategory } from "../../types/index.js";
+import type { SkillId, Category } from "../../types/index.js";
 import { isSectionLocked, useCategoryGridInput } from "../hooks/use-category-grid-input.js";
 import { useFocusedListItem } from "../hooks/use-focused-list-item.js";
 import { useSectionScroll } from "../hooks/use-section-scroll.js";
@@ -21,7 +21,7 @@ export type CategoryOption = {
 };
 
 export type CategoryRow = {
-  id: Subcategory;
+  id: Category;
   displayName: string;
   required: boolean;
   exclusive: boolean;
@@ -33,7 +33,7 @@ export type CategoryGridProps = {
   /** Available height in terminal lines for the scrollable viewport. 0 = no constraint. */
   availableHeight?: number;
   showLabels: boolean;
-  onToggle: (categoryId: Subcategory, technologyId: SkillId) => void;
+  onToggle: (categoryId: Category, technologyId: SkillId) => void;
   onToggleLabels: () => void;
   /** Optional initial focus row (default: 0). Use with React `key` to reset. */
   defaultFocusedRow?: number;

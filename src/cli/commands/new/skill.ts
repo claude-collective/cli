@@ -135,13 +135,13 @@ function formatTsExport(comment: string, data: unknown): string {
 }
 
 function buildCategoryEntry(category: CategoryPath, domain: string): Record<string, unknown> {
-  const subcategoryPart = category.includes("-")
+  const categoryPart = category.includes("-")
     ? category.slice(category.indexOf("-") + 1)
     : category;
   const entry: Record<string, unknown> = {
     id: category,
-    displayName: toTitleCase(subcategoryPart),
-    description: `Skills for ${toTitleCase(subcategoryPart)}`,
+    displayName: toTitleCase(categoryPart),
+    description: `Skills for ${toTitleCase(categoryPart)}`,
     exclusive: true,
     required: false,
     order: DEFAULT_CATEGORY_ORDER,

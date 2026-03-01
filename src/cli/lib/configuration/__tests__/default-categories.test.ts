@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { defaultCategories } from "../default-categories";
-import type { Subcategory } from "../../../types";
+import type { Category } from "../../../types";
 import { typedKeys } from "../../../utils/typed-object";
 
 const EXPECTED_CATEGORY_COUNT = 38;
@@ -49,7 +49,7 @@ describe("defaultCategories", () => {
 
   it("all categories have required fields", () => {
     for (const [key, cat] of Object.entries(defaultCategories)) {
-      expect(cat!.id, `${key} missing id`).toBe(key as Subcategory);
+      expect(cat!.id, `${key} missing id`).toBe(key as Category);
       expect(cat!.displayName, `${key} missing displayName`).toBeTruthy();
       expect(cat!.description, `${key} missing description`).toBeTruthy();
       expect(cat!.domain, `${key} missing domain`).toBeTruthy();

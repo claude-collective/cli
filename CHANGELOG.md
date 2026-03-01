@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.55.1] - 2026-03-01
+
+**B-08 selective agent removal, D-70 rename Subcategory → Category**
+
+- Fixed `uninstall` to selectively remove only config-listed agents instead of wiping the entire agents directory
+- Renamed `Subcategory` type to `Category` across ~64 files — aligns with `category` field in `metadata.yaml`
+
+See [changelogs/0.55.1.md](./changelogs/0.55.1.md) for full details.
+
+---
+
 ## [0.55.0] - 2026-03-01
 
 **Remove `--dry-run` flag**
@@ -221,9 +232,9 @@ See [changelogs/0.41.0.md](./changelogs/0.41.0.md) for full details.
 
 ## [0.40.0] - 2026-02-19
 
-**Domain-prefix all subcategory keys (D-31), add category enum to metadata schema (D-32)**
+**Domain-prefix all category keys (D-31), add category enum to metadata schema (D-32)**
 
-- Rename all 33 bare subcategory keys to domain-prefixed form (e.g., `framework` → `web-framework`, `methodology` → `shared-methodology`)
+- Rename all 33 bare category keys to domain-prefixed form (e.g., `framework` → `web-framework`, `methodology` → `shared-methodology`)
 - Add strict category enum validation to metadata schema
 - Simplify `extractSubcategoryFromPath` and `categoryPathSchema` (remove slash-separated paths)
 - Update all YAML configs, JSON schemas, types, source code, and 30+ test files
@@ -236,7 +247,7 @@ See [changelogs/0.40.0.md](./changelogs/0.40.0.md) for full details.
 
 **Merge meta-framework into framework, remove web-extras domain, grouped agents step**
 
-- Merge `meta-framework` subcategory into `framework` — meta-frameworks now conflict with base frameworks directly
+- Merge `meta-framework` category into `framework` — meta-frameworks now conflict with base frameworks directly
 - Remove `web-extras` domain and `parentDomain` field — all web categories under single `web` domain
 - Rewrite agents step with domain-grouped layout (Web, API, CLI, Meta) and scroll support
 - Simplify agent preselection from skill-based to domain-based lookup
@@ -252,7 +263,7 @@ See [changelogs/0.39.0.md](./changelogs/0.39.0.md) for full details.
 
 - New "Agents" wizard step — users can toggle which agents to compile
 - Agents preselected from actually selected skills (not just domains)
-- Stacks schema enforces valid subcategory keys via enum
+- Stacks schema enforces valid category keys via enum
 - Reusable CheckboxGrid component extracted from domain selection
 
 See [changelogs/0.38.0.md](./changelogs/0.38.0.md) for full details.
@@ -385,7 +396,7 @@ Fixed `cc init` embedding wrong schema reference in generated config.yaml.
 
 **Multi-skill stack assignments in project config**
 
-Stack config now stores multiple skills per subcategory with preloaded flags preserved through the full pipeline.
+Stack config now stores multiple skills per category with preloaded flags preserved through the full pipeline.
 
 [-> Full release notes](./changelogs/0.29.2.md)
 

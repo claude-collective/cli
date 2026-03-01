@@ -234,7 +234,7 @@ describe("stacks-loader", () => {
       expect(stylingSkill!.preloaded).toBe(false);
     });
 
-    it("includes usage description with subcategory context", () => {
+    it("includes usage description with category context", () => {
       const agentConfig: StackAgentConfig = {
         "api-database": [createMockSkillAssignment("api-database-drizzle", true)],
       };
@@ -432,7 +432,7 @@ describe("stacks-loader", () => {
       expect(Object.keys(result)).toHaveLength(0);
     });
 
-    it("resolves agents with array-valued subcategories", () => {
+    it("resolves agents with array-valued categories", () => {
       const stack = createMockStack("test-stack", {
         name: "Test Stack",
         description: "Test",

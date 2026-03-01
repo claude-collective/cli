@@ -59,7 +59,7 @@ export type ProjectConfig = {
 
   /**
    * Resolved stack configuration with agent->skill mappings.
-   * Keys are agent IDs, values are subcategory->SkillAssignment[] mappings.
+   * Keys are agent IDs, values are category->SkillAssignment[] mappings.
    * Values are normalized to SkillAssignment[] at load time (same as stacks.ts).
    * Generated during `agentsinc init` when a stack is selected.
    */

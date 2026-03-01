@@ -5,7 +5,7 @@ import type { AgentName } from "./agents";
 export type Domain = "web" | "api" | "cli" | "mobile" | "shared";
 
 /** Keys in skill-categories.ts `categories` section */
-export type Subcategory =
+export type Category =
   | "web-framework"
   | "web-styling"
   | "web-client-state"
@@ -58,26 +58,26 @@ export type PermissionMode =
   | "delegate";
 
 /**
- * Category definitions indexed by subcategory ID.
- * Partial because not every Subcategory has a category definition (e.g., a marketplace
- * may only define a subset of all possible subcategories).
+ * Category definitions indexed by category ID.
+ * Partial because not every Category has a category definition (e.g., a marketplace
+ * may only define a subset of all possible categories).
  */
-export type CategoryMap = Partial<Record<Subcategory, CategoryDefinition>>;
+export type CategoryMap = Partial<Record<Category, CategoryDefinition>>;
 
 /**
  * Full domain selections used throughout the wizard pipeline (store, components, result).
  *
- * Structure: `{ domain: { subcategory: [skillId, ...] } }`
+ * Structure: `{ domain: { category: [skillId, ...] } }`
  *
  * - Outer Partial: not all domains need selections (user may skip "mobile" entirely)
- * - Inner Partial: within a domain, only some subcategories may have selections
- * - SkillId[]: a subcategory can have multiple skills unless `CategoryDefinition.exclusive` is true
+ * - Inner Partial: within a domain, only some categories may have selections
+ * - SkillId[]: a category can have multiple skills unless `CategoryDefinition.exclusive` is true
  */
-export type DomainSelections = Partial<Record<Domain, Partial<Record<Subcategory, SkillId[]>>>>;
+export type DomainSelections = Partial<Record<Domain, Partial<Record<Category, SkillId[]>>>>;
 
 /** Single category definition from skill-categories.ts */
 export type CategoryDefinition = {
-  id: Subcategory;
+  id: Category;
   displayName: string;
   description: string;
   /** Domain for wizard domain filtering */
@@ -172,8 +172,8 @@ export type SuggestedStack = {
   id: string;
   name: string;
   description: string;
-  /** Structure: { agentName: { subcategory: skillId } } */
-  skills: Record<string, Partial<Record<Subcategory, SkillId>>>;
+  /** Structure: { agentName: { category: skillId } } */
+  skills: Record<string, Partial<Record<Category, SkillId>>>;
   philosophy: string;
 };
 
@@ -209,7 +209,7 @@ export type ResolvedSkill = {
   description: string;
   /** When an AI agent should invoke this skill (decision criteria) */
   usageGuidance?: string;
-  /** Matches key in matrix.categories; determines which wizard subcategory grid this skill appears in */
+  /** Matches key in matrix.categories; determines which wizard category grid this skill appears in */
   category: CategoryPath;
   tags: string[];
   /** Author handle (e.g., "@vince") from metadata.yaml */
@@ -278,13 +278,13 @@ export type ResolvedStack = {
   name: string;
   description: string;
   /** Skill selections with resolved full skill IDs by category */
-  skills: Partial<Record<AgentName, Partial<Record<Subcategory, SkillId[]>>>>;
+  skills: Partial<Record<AgentName, Partial<Record<Category, SkillId[]>>>>;
   /** Flat list of all skill IDs in this stack */
   allSkillIds: SkillId[];
   philosophy: string;
 };
 
-/** Short alias used for subcategory-level search (e.g., "react", "zustand") */
+/** Short alias used for category-level search (e.g., "react", "zustand") */
 export type SkillAlias = string;
 
 /** Source type classification for skill provenance (where the skill comes from) */
@@ -305,7 +305,7 @@ export type SkillSource = {
   primary?: boolean;
 };
 
-/** A foreign skill explicitly bound to a subcategory via search */
+/** A foreign skill explicitly bound to a category via search */
 export type BoundSkill = {
   /** The foreign skill's actual ID */
   id: SkillId;
@@ -313,13 +313,13 @@ export type BoundSkill = {
   sourceUrl: string;
   /** Display name of the source (e.g., "awesome-dev") */
   sourceName: string;
-  /** Subcategory alias this skill is bound to (e.g., "react") */
+  /** Category alias this skill is bound to (e.g., "react") */
   boundTo: SkillAlias;
   /** Skill description from the source */
   description?: string;
 };
 
-/** Search result candidate before being bound to a subcategory */
+/** Search result candidate before being bound to a category */
 export type BoundSkillCandidate = {
   /** The foreign skill's actual ID */
   id: SkillId;

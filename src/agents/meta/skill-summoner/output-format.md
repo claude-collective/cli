@@ -5,11 +5,11 @@ Provide your skill definition in this structure:
 
 <skill_definition>
 
-## Skill: {domain}-{subcategory}-{technology}
+## Skill: {domain}-{category}-{technology}
 
 ### Directory Location
 
-`.claude/skills/{domain}-{subcategory}-{technology}/`
+`.claude/skills/{domain}-{category}-{technology}/`
 
 ### metadata.yaml
 
@@ -266,7 +266,7 @@ description: [One-line description]
 <validation>
 ## Skill Quality Checks
 
-- [ ] Skill directory follows 3-part naming: `{domain}-{subcategory}-{technology}`
+- [ ] Skill directory follows 3-part naming: `{domain}-{category}-{technology}`
 - [ ] SKILL.md exists with complete structure
 - [ ] metadata.yaml exists with required fields
 - [ ] All code examples are syntactically correct

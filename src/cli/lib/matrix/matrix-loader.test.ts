@@ -52,7 +52,7 @@ import {
   synthesizeCategory,
 } from "./matrix-loader";
 import { warn } from "../../utils/logger";
-import type { CategoryPath, Subcategory } from "../../types";
+import type { CategoryPath, Category } from "../../types";
 
 // ---------------------------------------------------------------------------
 // Top-level test data for mergeMatrixWithSkills tests
@@ -635,7 +635,7 @@ displayName: wrong
       const merged = await mergeMatrixWithSkills({}, EMPTY_MATRIX.relationships, {}, [skill]);
 
       // Boundary cast: accessing synthesized custom category key
-      const synthesized = merged.categories["devops-iac" as Subcategory];
+      const synthesized = merged.categories["devops-iac" as Category];
       expect(synthesized).toBeDefined();
       expect(synthesized!.displayName).toBe("Devops Iac");
       expect(synthesized!.exclusive).toBe(true);
@@ -652,7 +652,7 @@ displayName: wrong
 
       const merged = await mergeMatrixWithSkills({}, EMPTY_MATRIX.relationships, {}, [skill]);
 
-      expect(merged.categories["devops-iac" as Subcategory]!.domain).toBe("api");
+      expect(merged.categories["devops-iac" as Category]!.domain).toBe("api");
     });
 
     it("passes skill domain to synthesized category regardless of prefix", async () => {
@@ -663,7 +663,7 @@ displayName: wrong
 
       const merged = await mergeMatrixWithSkills({}, EMPTY_MATRIX.relationships, {}, [skill]);
 
-      expect(merged.categories["web-custom" as Subcategory]!.domain).toBe("cli");
+      expect(merged.categories["web-custom" as Category]!.domain).toBe("cli");
     });
 
     it("synthesized category uses skill domain even for unknown prefixes", async () => {
@@ -675,7 +675,7 @@ displayName: wrong
 
       const merged = await mergeMatrixWithSkills({}, EMPTY_MATRIX.relationships, {}, [skill]);
 
-      expect(merged.categories["devops-iac" as Subcategory]!.domain).toBe("shared");
+      expect(merged.categories["devops-iac" as Category]!.domain).toBe("shared");
     });
 
     it("does not synthesize categories that already exist", async () => {

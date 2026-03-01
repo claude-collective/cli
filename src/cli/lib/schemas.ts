@@ -30,7 +30,7 @@ import type {
   SkillDisplayName,
   SkillId,
   SkillSourceType,
-  Subcategory,
+  Category,
 } from "../types";
 
 /**
@@ -66,8 +66,8 @@ export const boundSkillSchema: z.ZodType<BoundSkill> = z.object({
   description: z.string().optional(),
 });
 
-/** Raw subcategory values (before cast) — single source of truth for built-in subcategories */
-export const SUBCATEGORY_VALUES = [
+/** Raw category values (before cast) — single source of truth for built-in categories */
+export const CATEGORY_VALUES = [
   "web-framework",
   "web-styling",
   "web-client-state",
@@ -109,10 +109,10 @@ export const SUBCATEGORY_VALUES = [
 ] as const;
 
 // Bridge pattern: z.ZodType<ExistingType> ensures Zod output matches our union types
-export const subcategorySchema = z.enum(SUBCATEGORY_VALUES) as z.ZodType<Subcategory>;
+export const categorySchema = z.enum(CATEGORY_VALUES) as z.ZodType<Category>;
 
-/** Built-in subcategory values as a Set — used for record key validation in stack and category schemas */
-const SUBCATEGORY_VALUES_SET = new Set<Subcategory>(SUBCATEGORY_VALUES);
+/** Built-in category values as a Set — used for record key validation in stack and category schemas */
+const CATEGORY_VALUES_SET = new Set<Category>(CATEGORY_VALUES);
 
 export const agentNameSchema = z.enum([
   "web-developer",
@@ -237,7 +237,7 @@ export const skillDisplayNameSchema = z.enum([
   "context-management",
 ]) as z.ZodType<SkillDisplayName>;
 
-/** Matches SkillId format: prefix-subcategory-name (at least 3 dash-separated segments) */
+/** Matches SkillId format: prefix-category-name (at least 3 dash-separated segments) */
 export const SKILL_ID_PATTERN = /^(web|api|cli|mobile|infra|meta|security)-.+-.+$/;
 
 /**
@@ -274,13 +274,13 @@ const extensibleSkillIdSchema = z
     { message: "Must be a valid skill ID" },
   ) as z.ZodType<SkillId>;
 
-const extensibleSubcategorySchema = z
+const extensibleCategorySchema = z
   .string()
   .refine(
-    (val): val is Subcategory =>
-      subcategorySchema.safeParse(val).success || customExtensions.categories.has(val),
-    { message: "Must be a valid subcategory" },
-  ) as z.ZodType<Subcategory>;
+    (val): val is Category =>
+      categorySchema.safeParse(val).success || customExtensions.categories.has(val),
+    { message: "Must be a valid category" },
+  ) as z.ZodType<Category>;
 
 const extensibleAgentNameSchema = z
   .string()
@@ -335,12 +335,12 @@ function validateExtensibleRecordKeys(
   };
 }
 
-// Accepts: "prefix-subcategory", bare subcategory, "local", or custom category from extended schema
+// Accepts: "prefix-category", bare category, "local", or custom category from extended schema
 export const categoryPathSchema = z.string().refine(
   (val): val is CategoryPath => {
     if (val === "local") return true;
     if (/^(web|api|cli|mobile|infra|meta|security|shared)-.+$/.test(val)) return true;
-    if (subcategorySchema.safeParse(val).success) return true;
+    if (categorySchema.safeParse(val).success) return true;
     // Accept custom categories registered via extendSchemasWithCustomValues()
     return customExtensions.categories.has(val);
   },
@@ -456,8 +456,8 @@ export const agentYamlConfigSchema: z.ZodType<AgentYamlConfig> = z.object({
 const skillAssignmentElementSchema = z.union([extensibleSkillIdSchema, skillAssignmentSchema]);
 
 /**
- * Agent config within a stack: maps subcategory to skill assignment(s).
- * Keys restricted to valid Subcategory values from skill-categories.ts.
+ * Agent config within a stack: maps category to skill assignment(s).
+ * Keys restricted to valid Category values from skill-categories.ts.
  * Lenient: accepts bare string, object, or array from YAML.
  * Consumers normalize all values to SkillAssignment[] after parsing.
  *
@@ -470,11 +470,7 @@ export const stackAgentConfigSchema = z
     z.union([skillAssignmentElementSchema, z.array(skillAssignmentElementSchema)]),
   )
   .superRefine(
-    validateExtensibleRecordKeys(
-      SUBCATEGORY_VALUES_SET,
-      customExtensions.categories,
-      "subcategory",
-    ),
+    validateExtensibleRecordKeys(CATEGORY_VALUES_SET, customExtensions.categories, "category"),
   );
 
 /**
@@ -501,7 +497,7 @@ export const projectConfigLoaderSchema = z
     domains: z.array(extensibleDomainSchema).optional(),
     /** Selected agents from the wizard (persisted for edit mode restoration) */
     selectedAgents: z.array(z.string()).optional(),
-    /** Agent-to-subcategory-to-skill mappings from selected stack (accepts same formats as stacks.ts) */
+    /** Agent-to-category-to-skill mappings from selected stack (accepts same formats as stacks.ts) */
     stack: z.record(z.string(), stackAgentConfigSchema).optional(),
     /** Skills source path or URL (e.g., "github:my-org/skills") */
     source: z.string().optional(),
@@ -513,7 +509,7 @@ export const projectConfigLoaderSchema = z
   .passthrough();
 
 export const categoryDefinitionSchema: z.ZodType<CategoryDefinition> = z.object({
-  id: extensibleSubcategorySchema,
+  id: extensibleCategorySchema,
   displayName: z.string(),
   description: z.string(),
   domain: extensibleDomainSchema.optional() as z.ZodType<Domain | undefined>,
@@ -572,7 +568,7 @@ export const skillCategoriesFileSchema = z.object({
     .record(z.string(), categoryDefinitionSchema)
     .superRefine(
       validateExtensibleRecordKeys(
-        SUBCATEGORY_VALUES_SET,
+        CATEGORY_VALUES_SET,
         customExtensions.categories,
         "category key",
       ),
@@ -613,7 +609,7 @@ export const localRawMetadataSchema = z
     displayName: z.string().optional(),
     /** One-line description for the wizard */
     cliDescription: z.string().optional(),
-    /** Subcategory to place this skill in (e.g., "web-framework") */
+    /** Category to place this skill in (e.g., "web-framework") */
     // Field accepts any string; cross-field validation in superRefine enforces strict/custom rules
     category: (z.string() as z.ZodType<CategoryPath>).optional(),
     /** When an AI agent should invoke this skill */
@@ -649,7 +645,7 @@ export const stackSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   description: z.string(),
-  /** Maps agent IDs to their subcategory-to-skill assignments */
+  /** Maps agent IDs to their category-to-skill assignments */
   agents: z.record(z.string(), stackAgentConfigSchema),
   /** High-level philosophy guiding this stack's technology choices */
   philosophy: z.string().optional(),
@@ -769,7 +765,7 @@ export const projectSourceConfigSchema = z
         }),
       )
       .optional(),
-    /** Skills explicitly bound to subcategories via search (from Step Sources) */
+    /** Skills explicitly bound to categories via search (from Step Sources) */
     boundSkills: z.array(boundSkillSchema).optional(),
     /** Branding overrides for white-labeling the CLI */
     branding: brandingConfigSchema.optional(),
@@ -878,8 +874,8 @@ export const skillFrontmatterValidationSchema = z
 /** Strict validation for metadata.yaml in published skills (enforces author format, length limits) */
 export const metadataValidationSchema = z
   .object({
-    /** Domain-prefixed subcategory (e.g., "web-framework") */
-    category: extensibleSubcategorySchema,
+    /** Domain-prefixed category (e.g., "web-framework") */
+    category: extensibleCategorySchema,
     /** Author handle — must start with @ (e.g., "@vince") */
     author: z.string().regex(/^@[a-z][a-z0-9-]*$/),
     /** Short display name for the wizard grid (max 30 chars) */
@@ -951,7 +947,7 @@ export const stackConfigValidationSchema = z
     skills: z.array(stackSkillAssignmentSchema).min(1),
     /** Agent IDs this stack compiles (at least one required) */
     agents: z.array(z.string().regex(KEBAB_CASE_PATTERN)).min(1),
-    /** Per-agent skill assignments: { agentId: { subcategory: [skillAssignment] } } */
+    /** Per-agent skill assignments: { agentId: { category: [skillAssignment] } } */
     agentSkills: z
       .record(z.string(), z.record(z.string(), z.array(stackSkillAssignmentSchema)))
       .optional(),

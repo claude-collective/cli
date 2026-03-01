@@ -35,11 +35,11 @@ export function orderDomains(domains: Domain[]): Domain[] {
 
 /** Extract unique domains from a stack's agent-to-skill mappings. */
 export function getDomainsFromStack(stack: ResolvedStack, categories: CategoryMap): Domain[] {
-  const subcategories = Object.values(stack.skills).flatMap((config) =>
+  const categoryKeys = Object.values(stack.skills).flatMap((config) =>
     config ? typedKeys(config) : [],
   );
   return unique(
-    subcategories.flatMap((sub) => {
+    categoryKeys.flatMap((sub) => {
       const d = categories[sub]?.domain;
       return d ? [d] : [];
     }),

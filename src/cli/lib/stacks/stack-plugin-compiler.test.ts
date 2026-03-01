@@ -18,7 +18,7 @@ import {
   createMockCompiledStackPlugin,
 } from "../__tests__/helpers";
 
-import type { SkillAssignment, SkillId, Stack, StackAgentConfig, Subcategory } from "../../types";
+import type { SkillAssignment, SkillId, Stack, StackAgentConfig, Category } from "../../types";
 
 describe("stack-plugin-compiler", () => {
   let dirs: TestDirs;
@@ -81,8 +81,8 @@ describe("stack-plugin-compiler", () => {
       description?: string;
       agents: string[];
       philosophy?: string;
-      /** Skill assignments per agent, keyed by subcategory */
-      agentSkills?: Record<string, Partial<Record<Subcategory, SkillAssignment[]>>>;
+      /** Skill assignments per agent, keyed by category */
+      agentSkills?: Record<string, Partial<Record<Category, SkillAssignment[]>>>;
     },
   ): Stack {
     // Convert agents array to Record<string, StackAgentConfig>
@@ -352,8 +352,8 @@ describe("stack-plugin-compiler", () => {
           "web-developer": {
             "web-framework": [{ id: reactCanonicalId, preloaded: true }],
             language: [{ id: tsCanonicalId }],
-            // Boundary cast: string keys to branded Subcategory
-          } as Partial<Record<Subcategory, SkillAssignment[]>>,
+            // Boundary cast: string keys to branded Category
+          } as Partial<Record<Category, SkillAssignment[]>>,
         },
       });
 

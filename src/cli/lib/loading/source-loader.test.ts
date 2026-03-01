@@ -220,7 +220,7 @@ describe("source-loader local skills integration", () => {
 
     // Local skills should NOT cause fake "local" or "local/custom" categories to be injected
     // The skill uses whatever category it declared (or "local" default from local-skill-loader)
-    // Boundary cast: categories keys are branded Subcategory, widened to string for test indexing
+    // Boundary cast: categories keys are branded Category, widened to string for test indexing
     expect(
       (result.matrix.categories as Record<string, CategoryDefinition>)["local/custom"],
     ).toBeUndefined();
@@ -639,7 +639,7 @@ describe("source-loader integration", () => {
 
     expect(result.matrix.categories).toBeDefined();
     const categoryCount = Object.keys(result.matrix.categories).length;
-    // Categories come from the CLI's built-in matrix (all defined subcategories)
+    // Categories come from the CLI's built-in matrix (all defined categories)
     expect(categoryCount).toBeGreaterThan(10);
   });
 });

@@ -39,13 +39,13 @@ Step progression: `stack -> build -> sources -> agents -> confirm`
 
 ### Selection State
 
-| Field                | Type               | Purpose                                     |
-| -------------------- | ------------------ | ------------------------------------------- |
-| `selectedDomains`    | `Domain[]`         | Active domains                              |
-| `currentDomainIndex` | `number`           | Currently visible domain in build step      |
-| `domainSelections`   | `DomainSelections` | Full skill selections by domain/subcategory |
-| `selectedAgents`     | `AgentName[]`      | Selected agents for compilation             |
-| `boundSkills`        | `BoundSkill[]`     | Foreign skills bound via search             |
+| Field                | Type               | Purpose                                  |
+| -------------------- | ------------------ | ---------------------------------------- |
+| `selectedDomains`    | `Domain[]`         | Active domains                           |
+| `currentDomainIndex` | `number`           | Currently visible domain in build step   |
+| `domainSelections`   | `DomainSelections` | Full skill selections by domain/category |
+| `selectedAgents`     | `AgentName[]`      | Selected agents for compilation          |
+| `boundSkills`        | `BoundSkill[]`     | Foreign skills bound via search          |
 
 ### UI State
 
@@ -83,14 +83,14 @@ Step progression: `stack -> build -> sources -> agents -> confirm`
 
 ### Selection
 
-| Action             | Signature                                              | Effect                                  |
-| ------------------ | ------------------------------------------------------ | --------------------------------------- |
-| `toggleDomain`     | `(domain: Domain) => void`                             | Add/remove domain, clears selections    |
-| `toggleTechnology` | `(domain, subcategory, technology, exclusive) => void` | Radio (exclusive) or checkbox toggle    |
-| `toggleAgent`      | `(agent: AgentName) => void`                           | Add/remove agent                        |
-| `bindSkill`        | `(skill: BoundSkill) => void`                          | Add foreign skill from search           |
-| `nextDomain`       | `() => boolean`                                        | Advance to next domain, returns success |
-| `prevDomain`       | `() => boolean`                                        | Go to previous domain, returns success  |
+| Action             | Signature                                           | Effect                                  |
+| ------------------ | --------------------------------------------------- | --------------------------------------- |
+| `toggleDomain`     | `(domain: Domain) => void`                          | Add/remove domain, clears selections    |
+| `toggleTechnology` | `(domain, category, technology, exclusive) => void` | Radio (exclusive) or checkbox toggle    |
+| `toggleAgent`      | `(agent: AgentName) => void`                        | Add/remove agent                        |
+| `bindSkill`        | `(skill: BoundSkill) => void`                       | Add foreign skill from search           |
+| `nextDomain`       | `() => boolean`                                     | Advance to next domain, returns success |
+| `prevDomain`       | `() => boolean`                                     | Go to previous domain, returns success  |
 
 ### UI Toggles
 

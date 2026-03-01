@@ -19,8 +19,7 @@ import type {
   SkillAssignment,
   SkillId,
   SkillSource,
-  Subcategory,
-  SubcategorySelections,
+  Category,
 } from "../types/index.js";
 import { warn } from "../utils/logger.js";
 import { typedEntries, typedKeys } from "../utils/typed-object.js";
@@ -29,7 +28,7 @@ const BUILT_IN_DOMAINS: Domain[] = ["web", "api", "cli", "mobile", "shared"];
 
 /** Derive all unique domains from a categories map, preserving built-in order then appending custom. */
 function getAllDomainsFromCategories(
-  categories: Partial<Record<Subcategory, { domain?: Domain }>>,
+  categories: Partial<Record<Category, { domain?: Domain }>>,
 ): Domain[] {
   const allDomains = unique(
     Object.values(categories)
@@ -92,8 +91,8 @@ type SkillLookupEntry = { category: string; displayName?: string };
 function resolveSkillForPopulation(
   skillId: SkillId,
   skills: Partial<Record<SkillId, SkillLookupEntry>>,
-  categories: Partial<Record<Subcategory, { domain?: Domain }>>,
-): { domain: Domain; subcat: Subcategory; techId: SkillId } | null {
+  categories: Partial<Record<Category, { domain?: Domain }>>,
+): { domain: Domain; subcat: Category; techId: SkillId } | null {
   const skill = skills[skillId];
   if (!skill?.category) {
     warn(
@@ -102,8 +101,8 @@ function resolveSkillForPopulation(
     return null;
   }
 
-  // Boundary cast: category is a Subcategory at the data boundary
-  const subcat = skill.category as Subcategory;
+  // Boundary cast: category is a Category at the data boundary
+  const subcat = skill.category as Category;
   const domain = categories[subcat]?.domain;
   if (!domain) {
     warn(`Installed skill '${skillId}' has unknown category '${skill.category}' — skipping`);
@@ -160,7 +159,7 @@ export type WizardStep =
  *
  * The store uses a composition pattern: small, focused actions that each mutate
  * one or two state fields. Wizard step components compose these actions to build
- * up the full selection state incrementally (domains -> subcategories -> skills -> sources).
+ * up the full selection state incrementally (domains -> categories -> skills -> sources).
  *
  * State flow: unified stack/scratch selection -> domain selection -> per-domain skill
  * selection (build step) -> source customization -> confirmation.
@@ -228,18 +227,18 @@ export type WizardState = {
   /**
    * Pre-populate domainSelections from a stack's agent-to-skill mappings.
    *
-   * Iterates all agents in the stack, resolving each subcategory's skill assignments
+   * Iterates all agents in the stack, resolving each category's skill assignments
    * to the appropriate domain. Enables all domains and deduplicates skill IDs.
    *
    * @param stack - Stack definition with agent-level skill assignments
-   * @param stack.agents - Record of agent name to `{ subcategory: SkillAssignment[] }` mappings
-   * @param categories - Category definitions used to resolve subcategory -> domain mapping
+   * @param stack.agents - Record of agent name to `{ category: SkillAssignment[] }` mappings
+   * @param categories - Category definitions used to resolve category -> domain mapping
    *
    * Side effects: sets `domainSelections`, sets `selectedDomains` to ALL_DOMAINS
    */
   populateFromStack: (
-    stack: { agents: Record<string, Partial<Record<Subcategory, SkillAssignment[]>>> },
-    categories: Partial<Record<Subcategory, { domain?: Domain }>>,
+    stack: { agents: Record<string, Partial<Record<Category, SkillAssignment[]>>> },
+    categories: Partial<Record<Category, { domain?: Domain }>>,
   ) => void;
   /**
    * Pre-populate domainSelections from a flat list of installed skill IDs.
@@ -249,14 +248,14 @@ export type WizardState = {
    *
    * @param skillIds - Flat array of currently installed skill IDs
    * @param skills - Skill lookup providing category and displayName per skill ID
-   * @param categories - Category definitions used to resolve subcategory -> domain mapping
+   * @param categories - Category definitions used to resolve category -> domain mapping
    *
    * Side effects: sets `domainSelections`, sets `selectedDomains` to domains found in the provided skill IDs
    */
   populateFromSkillIds: (
     skillIds: SkillId[],
     skills: Partial<Record<SkillId, { category: string; displayName?: string }>>,
-    categories: Partial<Record<Subcategory, { domain?: Domain }>>,
+    categories: Partial<Record<Category, { domain?: Domain }>>,
   ) => void;
   /**
    * Toggle a domain on or off in the selectedDomains list.
@@ -266,22 +265,22 @@ export type WizardState = {
    */
   toggleDomain: (domain: Domain) => void;
   /**
-   * Toggle a skill selection within a domain's subcategory.
+   * Toggle a skill selection within a domain's category.
    *
    * When exclusive is true (radio behavior), selecting a new skill replaces any
-   * existing selection in that subcategory. When false (checkbox behavior),
+   * existing selection in that category. When false (checkbox behavior),
    * the skill is added to or removed from the selection array.
    *
-   * @param domain - Domain containing the subcategory
-   * @param subcategory - Subcategory within the domain
+   * @param domain - Domain containing the category
+   * @param category - Category within the domain
    * @param technology - Skill ID to toggle
-   * @param exclusive - If true, only one skill can be selected per subcategory (radio)
+   * @param exclusive - If true, only one skill can be selected per category (radio)
    *
-   * Side effects: updates `domainSelections[domain][subcategory]`
+   * Side effects: updates `domainSelections[domain][category]`
    */
   toggleTechnology: (
     domain: Domain,
-    subcategory: Subcategory,
+    category: Category,
     technology: SkillId,
     exclusive: boolean,
   ) => void;
@@ -335,7 +334,7 @@ export type WizardState = {
    * Add a bound skill from search to the wizard's bound skills list.
    * Duplicates (same id + sourceUrl) are silently skipped with a warning.
    *
-   * @param skill - Bound skill to add (foreign skill tied to a subcategory alias)
+   * @param skill - Bound skill to add (foreign skill tied to a category alias)
    *
    * Side effects: appends to `boundSkills`
    */
@@ -366,7 +365,7 @@ export type WizardState = {
   reset: () => void;
 
   /**
-   * Collect all selected skill IDs across all domains and subcategories.
+   * Collect all selected skill IDs across all domains and categories.
    * @returns Flat array of every selected SkillId (may contain duplicates if shared across domains)
    */
   getAllSelectedTechnologies: () => SkillId[];
@@ -464,7 +463,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const domains = new Set<Domain>();
 
       for (const agentConfig of Object.values(stack.agents)) {
-        for (const [subcat, assignments] of typedEntries<Subcategory, SkillAssignment[]>(
+        for (const [subcat, assignments] of typedEntries<Category, SkillAssignment[]>(
           agentConfig,
         )) {
           const category = categories[subcat];
@@ -559,9 +558,9 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       };
     }),
 
-  toggleTechnology: (domain, subcategory, technology, exclusive) =>
+  toggleTechnology: (domain, category, technology, exclusive) =>
     set((state) => {
-      const currentSelections = state.domainSelections[domain]?.[subcategory] || [];
+      const currentSelections = state.domainSelections[domain]?.[category] || [];
       const isSelected = currentSelections.includes(technology);
 
       let newSelections: SkillId[];
@@ -578,7 +577,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
           ...state.domainSelections,
           [domain]: {
             ...state.domainSelections[domain],
-            [subcategory]: newSelections,
+            [category]: newSelections,
           },
         },
       };
@@ -700,8 +699,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     for (const domain of typedKeys<Domain>(state.domainSelections)) {
       const domainSel = state.domainSelections[domain];
       if (!domainSel) continue;
-      for (const subcategory of typedKeys<Subcategory>(domainSel)) {
-        const techs = domainSel[subcategory];
+      for (const category of typedKeys<Category>(domainSel)) {
+        const techs = domainSel[category];
         if (techs) technologies.push(...techs);
       }
     }
@@ -715,8 +714,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       const domainSel = state.domainSelections[domain];
       if (!domainSel) continue;
       const techs: SkillId[] = [];
-      for (const subcategory of typedKeys<Subcategory>(domainSel)) {
-        const subTechs = domainSel[subcategory];
+      for (const category of typedKeys<Category>(domainSel)) {
+        const subTechs = domainSel[category];
         if (subTechs) techs.push(...subTechs);
       }
       if (techs.length > 0) {

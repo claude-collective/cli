@@ -150,8 +150,8 @@ agentsinc eject skills --domain backend --category api
 
 - Use `matrix.categories` to filter skills by their category paths
 - Domain = top-level category (e.g., `frontend`, `backend`, `tooling`)
-- Category = subcategory (e.g., `framework`, `state-management`, `testing`)
-- Skills have `category` field with format `domain/subcategory`
+- Category = category (e.g., `framework`, `state-management`, `testing`)
+- Skills have `category` field with format `domain/category`
 
 ---
 

@@ -97,7 +97,7 @@ and installs them as Claude plugins or local files.
 |   |   |   +-- skills.ts         #     SkillId, SkillDefinition, ExtractedSkillMetadata
 |   |   |   +-- agents.ts         #     AgentName, AgentConfig, CompiledAgentData
 |   |   |   +-- config.ts         #     ProjectConfig, CompileConfig, ValidationResult
-|   |   |   +-- matrix.ts         #     Domain, Subcategory, CategoryDefinition, MergedSkillsMatrix
+|   |   |   +-- matrix.ts         #     Domain, Category, CategoryDefinition, MergedSkillsMatrix
 |   |   |   +-- stacks.ts         #     Stack, StackAgentConfig, StacksConfig
 |   |   |   +-- plugins.ts        #     PluginManifest, Marketplace, MarketplacePlugin
 |   |   +-- utils/                #   Shared utilities
@@ -344,7 +344,7 @@ BoundSkill { id, sourceUrl, sourceName, boundTo: "react" }
   -- persisted in WizardResultV2 for downstream compilation
 ```
 
-`BoundSkill` represents a foreign skill explicitly bound to a subcategory via search.
+`BoundSkill` represents a foreign skill explicitly bound to a category via search.
 `BoundSkillCandidate` is the search result before binding. Both types live in
 `src/cli/types/matrix.ts`.
 
@@ -486,11 +486,11 @@ All foundational union types are defined in the type files as the **single sourc
 type SkillIdPrefix = "web" | "api" | "cli" | "mobile" | "infra" | "meta" | "security";
 type SkillId = `${SkillIdPrefix}-${string}-${string}`;  // e.g., "web-framework-react" (3+ segments)
 type SkillDisplayName = "react" | "vue" | ...;       // 137 values - human-readable labels
-type CategoryPath = `${SkillIdPrefix}/${string}` | `${SkillIdPrefix}-${string}` | Subcategory | "local";
+type CategoryPath = `${SkillIdPrefix}/${string}` | `${SkillIdPrefix}-${string}` | Category | "local";
 
 // src/cli/types/matrix.ts
 type Domain = "web" | "api" | "cli" | "mobile" | "shared";
-type Subcategory = "framework" | "styling" | ...;  // 36 values
+type Category = "framework" | "styling" | ...;  // 36 values
 type ModelName = "sonnet" | "opus" | "haiku" | "inherit";
 type SkillSourceType = "public" | "private" | "local";  // skill provenance (install mode is separate)
 
@@ -503,10 +503,10 @@ type AgentName = "web-developer" | "api-developer" | "cli-developer" | ...;  // 
 Complex nested types have named aliases for readability:
 
 ```typescript
-type SubcategorySelections = Partial<Record<Subcategory, SkillId[]>>;
-type ResolvedSubcategorySkills = Partial<Record<Subcategory, SkillId>>;
-type CategoryMap = Partial<Record<Subcategory, CategoryDefinition>>;
-type DomainSelections = Partial<Record<Domain, Partial<Record<Subcategory, SkillId[]>>>>;
+type SubcategorySelections = Partial<Record<Category, SkillId[]>>;
+type ResolvedSubcategorySkills = Partial<Record<Category, SkillId>>;
+type CategoryMap = Partial<Record<Category, CategoryDefinition>>;
+type DomainSelections = Partial<Record<Domain, Partial<Record<Category, SkillId[]>>>>;
 ```
 
 ### Type-Safe Object Helpers
@@ -530,10 +530,10 @@ Use these **instead of** boundary casts on `Object.entries/keys`.
 | `AgentConfig`         | `agents.ts`  | Agent definition merged with compile config             |
 | `CompiledAgentData`   | `agents.ts`  | Fully compiled agent with content sections              |
 | `ProjectConfig`       | `config.ts`  | User's project configuration                            |
-| `Stack`               | `stacks.ts`  | Stack with agent-subcategory-skill mappings             |
+| `Stack`               | `stacks.ts`  | Stack with agent-category-skill mappings                |
 | `PluginManifest`      | `plugins.ts` | Plugin metadata for .claude-plugin/plugin.json          |
 | `SkillSource`         | `matrix.ts`  | Source provenance (name, type, url, version, installed) |
-| `BoundSkill`          | `matrix.ts`  | Foreign skill bound to a subcategory via search         |
+| `BoundSkill`          | `matrix.ts`  | Foreign skill bound to a category via search            |
 | `BoundSkillCandidate` | `matrix.ts`  | Search result candidate before binding                  |
 
 ### Type Convention Rules

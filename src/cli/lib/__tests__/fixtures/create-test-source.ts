@@ -515,7 +515,7 @@ export { fileExists, directoryExists };
  * 3. `diskRules` — a skill-rules.ts-compatible structure (empty relationships/aliases)
  *
  * The disk format requires `categories` as CategoryDefinition objects
- * keyed by valid subcategorySchema values. Skill data is loaded separately
+ * keyed by valid categorySchema values. Skill data is loaded separately
  * via `extractAllSkills`.
  */
 function generateMatrix(
@@ -538,12 +538,12 @@ function generateMatrix(
     // Category is hyphen-separated (e.g., "web-framework", "api-api")
     const category = skill.category;
     if (!categories[category]) {
-      // Extract display-friendly name from the subcategory part after the domain prefix
+      // Extract display-friendly name from the category part after the domain prefix
       const dashIndex = category.indexOf("-");
-      const subcategoryPart = dashIndex >= 0 ? category.slice(dashIndex + 1) : category;
+      const categoryPart = dashIndex >= 0 ? category.slice(dashIndex + 1) : category;
       categories[category] = {
-        name: subcategoryPart.charAt(0).toUpperCase() + subcategoryPart.slice(1),
-        description: `${subcategoryPart} skills`,
+        name: categoryPart.charAt(0).toUpperCase() + categoryPart.slice(1),
+        description: `${categoryPart} skills`,
       };
     }
   }
@@ -558,16 +558,16 @@ function generateMatrix(
   };
 
   // Build skill-categories.ts-compatible structure for disk serialization.
-  // Categories need full CategoryDefinition fields keyed by valid subcategory enum values.
+  // Categories need full CategoryDefinition fields keyed by valid category enum values.
   // Skills carry their own category via metadata.yaml — these are only for UI grouping.
   const diskCategoriesMap: Record<string, Record<string, unknown>> = {};
   let order = 0;
-  for (const [subcategory, cat] of Object.entries(categories)) {
+  for (const [category, cat] of Object.entries(categories)) {
     // Category keys are already domain-prefixed (e.g., "web-framework", "api-api")
-    const dashIndex = subcategory.indexOf("-");
-    const domain = dashIndex >= 0 ? subcategory.slice(0, dashIndex) : subcategory;
-    diskCategoriesMap[subcategory] = {
-      id: subcategory,
+    const dashIndex = category.indexOf("-");
+    const domain = dashIndex >= 0 ? category.slice(0, dashIndex) : category;
+    diskCategoriesMap[category] = {
+      id: category,
       displayName: cat.name,
       description: cat.description,
       domain,

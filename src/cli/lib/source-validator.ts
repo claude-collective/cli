@@ -180,7 +180,7 @@ export async function validateSource(sourcePath: string): Promise<SourceValidati
         issues.push({
           severity: "warning",
           file: path.join(skillsDirRelPath, skillDir, STANDARD_FILES.SKILL_MD),
-          message: `SKILL.md name '${frontmatter.name}' does not match expected skill ID pattern (domain-subcategory-name)`,
+          message: `SKILL.md name '${frontmatter.name}' does not match expected skill ID pattern (domain-category-name)`,
         });
       }
     }

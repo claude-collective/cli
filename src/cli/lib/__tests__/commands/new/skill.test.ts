@@ -577,7 +577,7 @@ describe("generateSkillCategoriesTs", () => {
     expect(content).toContain('"id": "web-framework"');
   });
 
-  it("should derive displayName from subcategory part", () => {
+  it("should derive displayName from category part", () => {
     const content = generateSkillCategoriesTs("web-framework", "web");
     expect(content).toContain('"displayName": "Framework"');
   });
@@ -599,7 +599,7 @@ describe("generateSkillCategoriesTs", () => {
     expect(content).toContain('"order": 99');
   });
 
-  it("should derive displayName for multi-segment subcategory", () => {
+  it("should derive displayName for multi-segment category", () => {
     const content = generateSkillCategoriesTs("web-error-handling", "web");
     expect(content).toContain('"displayName": "Error Handling"');
   });

@@ -7,7 +7,7 @@ import {
 } from "./build-step-logic";
 import { createMockMatrix, TEST_SKILLS, TEST_CATEGORIES } from "../__tests__/helpers";
 import type { CategoryRow } from "../../components/wizard/category-grid";
-import type { SkillId, Subcategory } from "../../types";
+import type { SkillId, Category } from "../../types";
 
 describe("validateBuildStep", () => {
   const requiredCategory: CategoryRow = {
@@ -98,8 +98,8 @@ describe("getSkillDisplayLabel", () => {
 });
 
 describe("buildCategoriesForDomain", () => {
-  const frameworkCategory: Subcategory = "web-framework";
-  const stateCategory: Subcategory = "web-client-state";
+  const frameworkCategory: Category = "web-framework";
+  const stateCategory: Category = "web-client-state";
 
   function createMatrix() {
     return createMockMatrix(
@@ -117,7 +117,7 @@ describe("buildCategoriesForDomain", () => {
             displayName: "State Management",
             order: 1,
           },
-        } as Record<Subcategory, import("../../types").CategoryDefinition>,
+        } as Record<Category, import("../../types").CategoryDefinition>,
       },
     );
   }
@@ -137,7 +137,7 @@ describe("buildCategoriesForDomain", () => {
       {
         categories: {
           [frameworkCategory]: { ...TEST_CATEGORIES.framework, required: true },
-        } as Record<Subcategory, import("../../types").CategoryDefinition>,
+        } as Record<Category, import("../../types").CategoryDefinition>,
       },
     );
 

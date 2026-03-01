@@ -196,11 +196,11 @@ async function buildLocalConfig(
         const stackProperty = buildStackProperty(loadedStack);
         for (const [agentId, agentConfig] of typedEntries(stackProperty)) {
           if (!agentConfig) continue;
-          for (const [subcategory, assignments] of typedEntries(agentConfig)) {
+          for (const [category, assignments] of typedEntries(agentConfig)) {
             if (!assignments) continue;
             const localAgentConfig = localConfig.stack[agentId];
-            if (!localAgentConfig?.[subcategory]) continue;
-            for (const assignment of localAgentConfig[subcategory]) {
+            if (!localAgentConfig?.[category]) continue;
+            for (const assignment of localAgentConfig[category]) {
               const stackAssignment = assignments.find((a) => a.id === assignment.id);
               if (stackAssignment?.preloaded) {
                 assignment.preloaded = true;

@@ -7,7 +7,7 @@ import {
   TEST_SKILLS,
   TEST_CATEGORIES,
 } from "../__tests__/helpers";
-import type { SkillId, Subcategory } from "../../types";
+import type { SkillId, Category } from "../../types";
 
 vi.mock("../../utils/logger");
 
@@ -32,7 +32,7 @@ const zustandSkill = createMockSkill("web-state-zustand", "web-client-state", {
   recommends: [{ skillId: "web-framework-react", reason: "Works well with React" }],
 });
 
-const orphanSkill = createMockSkill("web-framework-react", "nonexistent-category" as Subcategory);
+const orphanSkill = createMockSkill("web-framework-react", "nonexistent-category" as Category);
 
 const unresolvedCompatibleWithSkill = createMockSkill("web-state-zustand", "web-client-state", {
   compatibleWith: ["web-framework-nonexistent" as SkillId],
@@ -299,15 +299,13 @@ describe("matrix-health-check", () => {
     });
 
     it("does not produce warning for auto-synthesized categories", () => {
-      // Boundary cast: custom category not in built-in Subcategory union
-      const autoSynthesizedCategory = createMockCategory(
-        "web-custom" as Subcategory,
-        "Web Custom",
-        { order: 999 },
-      );
+      // Boundary cast: custom category not in built-in Category union
+      const autoSynthesizedCategory = createMockCategory("web-custom" as Category, "Web Custom", {
+        order: 999,
+      });
       const skillInSynthesizedCategory = createMockSkill(
         "web-custom-tool",
-        "web-custom" as Subcategory,
+        "web-custom" as Category,
         {},
       );
       const matrixWithSynthesized = createMockMatrix(
@@ -315,8 +313,8 @@ describe("matrix-health-check", () => {
         {
           categories: {
             // Boundary cast: custom category key
-            ["web-custom" as Subcategory]: autoSynthesizedCategory,
-          } as Record<Subcategory, import("../../types").CategoryDefinition>,
+            ["web-custom" as Category]: autoSynthesizedCategory,
+          } as Record<Category, import("../../types").CategoryDefinition>,
         },
       );
 

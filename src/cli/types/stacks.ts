@@ -1,9 +1,9 @@
 import type { AgentName } from "./agents";
 import type { SkillAssignment } from "./skills";
-import type { Subcategory } from "./matrix";
+import type { Category } from "./matrix";
 
-/** Maps subcategory IDs to skill assignments — always arrays (normalized at parse boundary in loadStacks) */
-export type StackAgentConfig = Partial<Record<Subcategory, SkillAssignment[]>>;
+/** Maps category IDs to skill assignments — always arrays (normalized at parse boundary in loadStacks) */
+export type StackAgentConfig = Partial<Record<Category, SkillAssignment[]>>;
 
 /** Stack definition from config/stacks.ts */
 export type Stack = {

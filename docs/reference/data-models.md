@@ -41,7 +41,7 @@ type SkillEntry = string | SkillAssignment;
 type AgentSkillConfig = SkillEntry[] | Record<string, SkillEntry[]>;
 ```
 
-> **Note**: The `stack:` field stores **resolved** stack configuration (agent -> subcategory -> skill ID mappings) generated during `agentsinc init`. It is NOT a reference to a stack ID. Stack definitions themselves are loaded from `config/stacks.ts` via `stacks-loader.ts`. See [Stack Types](#stack-types-configstacksyaml) for the source format.
+> **Note**: The `stack:` field stores **resolved** stack configuration (agent -> category -> skill ID mappings) generated during `agentsinc init`. It is NOT a reference to a stack ID. Stack definitions themselves are loaded from `config/stacks.ts` via `stacks-loader.ts`. See [Stack Types](#stack-types-configstacksyaml) for the source format.
 
 ### CustomAgentConfig
 
@@ -196,7 +196,7 @@ interface Stack {
 }
 
 interface StackAgentConfig {
-  [subcategoryId: string]: string; // Maps subcategory to technology alias
+  [subcategoryId: string]: string; // Maps category to technology alias
 }
 
 interface StacksConfig {
@@ -257,7 +257,7 @@ skill_aliases:
 
 ### Categories
 
-Categories define the hierarchical organization of skills. Top-level categories contain subcategories.
+Categories define the hierarchical organization of skills. Top-level categories contain categories.
 
 ```yaml
 categories:
@@ -271,7 +271,7 @@ categories:
     order: 1
     icon: "..."
 
-  # Subcategory (has parent)
+  # Category (has parent)
   framework:
     id: framework
     name: Framework
@@ -290,7 +290,7 @@ categories:
 | `id`          | string  | Unique identifier (kebab-case)                   |
 | `name`        | string  | Human-readable display name                      |
 | `description` | string  | Brief description                                |
-| `parent`      | string  | Parent category ID (subcategories only)          |
+| `parent`      | string  | Parent category ID (categories only)             |
 | `domain`      | string  | Domain for agent mapping (web, api, cli, shared) |
 | `exclusive`   | boolean | If true, only one skill from category allowed    |
 | `required`    | boolean | If true, must select a skill from category       |

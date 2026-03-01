@@ -39,7 +39,7 @@ import type {
   SkillRelation,
   SkillRequirement,
   SkillRulesConfig,
-  Subcategory,
+  Category,
 } from "../../types";
 
 /** Resolves a raw ID (which may be a display name or alias) to a canonical SkillId */
@@ -76,7 +76,7 @@ export function synthesizeCategory(
     .join(" ");
 
   return {
-    id: categoryPath as Subcategory,
+    id: categoryPath as Category,
     displayName,
     description: `Auto-generated category for ${categoryPath}`,
     domain,
@@ -312,10 +312,10 @@ export async function mergeMatrixWithSkills(
   // Auto-synthesize missing categories for skills that reference undefined categories
   const synthesizedCategories = { ...categories };
   for (const skill of skills) {
-    const subcategory = skill.category as Subcategory;
-    if (!synthesizedCategories[subcategory]) {
+    const category = skill.category as Category;
+    if (!synthesizedCategories[category]) {
       const synthesized = synthesizeCategory(skill.category, skill.domain);
-      synthesizedCategories[subcategory] = synthesized;
+      synthesizedCategories[category] = synthesized;
       verbose(`Auto-synthesized category '${skill.category}' for skill '${skill.id}'`);
     }
   }

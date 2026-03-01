@@ -7,7 +7,7 @@ import type {
   SkillId,
   Stack,
   StackAgentConfig,
-  Subcategory,
+  Category,
 } from "../../types";
 import { verbose, warn } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
@@ -17,14 +17,14 @@ export type ProjectConfigOptions = {
   author?: string;
 };
 
-function extractSubcategoryFromPath(categoryPath: CategoryPath): Subcategory | undefined {
+function extractCategoryFromPath(categoryPath: CategoryPath): Category | undefined {
   if (categoryPath === "local") return undefined;
-  return categoryPath as Subcategory;
+  return categoryPath as Category;
 }
 
 /**
  * Generates a ProjectConfig from a list of selected skill IDs by building the
- * stack property (agent -> subcategory -> SkillAssignment[]).
+ * stack property (agent -> category -> SkillAssignment[]).
  *
  * Every selected skill is assigned to every selected agent. When no agents are
  * provided, the agents list is empty (the wizard always provides selectedAgents
@@ -65,11 +65,9 @@ export function generateProjectConfigFromSkills(
   const validSkills = found
     .map(({ skillId, skill }) => ({
       skillId,
-      subcategory: extractSubcategoryFromPath(skill.category),
+      category: extractCategoryFromPath(skill.category),
     }))
-    .filter(
-      (entry): entry is typeof entry & { subcategory: Subcategory } => entry.subcategory != null,
-    );
+    .filter((entry): entry is typeof entry & { category: Category } => entry.category != null);
 
   verbose(
     `generateProjectConfigFromSkills: ${found.length} found, ${skippedCount} not found, ` +
@@ -90,8 +88,8 @@ export function generateProjectConfigFromSkills(
           agentList.map((agentId) => [
             agentId,
             Object.fromEntries(
-              validSkills.map(({ skillId, subcategory }) => [
-                subcategory,
+              validSkills.map(({ skillId, category }) => [
+                category,
                 [{ id: skillId, preloaded: false }],
               ]),
             ) as StackAgentConfig,
@@ -110,27 +108,27 @@ export function generateProjectConfigFromSkills(
 }
 
 /**
- * Extracts the stack property (agent -> subcategory -> SkillAssignment[]) from a Stack definition.
+ * Extracts the stack property (agent -> category -> SkillAssignment[]) from a Stack definition.
  *
  * Stack values are already normalized to SkillAssignment[] by loadStacks().
  * Preserves all assignments and preloaded flags for round-trip fidelity.
  *
  * @param stack - Loaded Stack definition with normalized agent configs
- * @returns Partial mapping of agent names to subcategory-skill assignment mappings
+ * @returns Partial mapping of agent names to category-skill assignment mappings
  */
 export function buildStackProperty(stack: Stack): Partial<Record<AgentName, StackAgentConfig>> {
   return Object.fromEntries(
     typedEntries<AgentName, StackAgentConfig>(stack.agents)
-      .filter(([, agentConfig]) => agentConfig && typedKeys<Subcategory>(agentConfig).length > 0)
+      .filter(([, agentConfig]) => agentConfig && typedKeys<Category>(agentConfig).length > 0)
       .map(([agentId, agentConfig]) => {
         const resolvedMappings = Object.fromEntries(
-          typedEntries<Subcategory, SkillAssignment[]>(agentConfig).filter(
+          typedEntries<Category, SkillAssignment[]>(agentConfig).filter(
             ([, assignments]) => assignments && assignments.length > 0,
           ),
         ) as StackAgentConfig;
         return [agentId, resolvedMappings] as const;
       })
-      .filter(([, mappings]) => typedKeys<Subcategory>(mappings).length > 0),
+      .filter(([, mappings]) => typedKeys<Category>(mappings).length > 0),
   ) as Partial<Record<AgentName, StackAgentConfig>>;
 }
 
@@ -153,10 +151,10 @@ export function compactStackForYaml(
     typedEntries<AgentName, StackAgentConfig>(stack)
       .map(([agentId, agentConfig]) => {
         const compacted = Object.fromEntries(
-          typedEntries<Subcategory, SkillAssignment[]>(agentConfig)
+          typedEntries<Category, SkillAssignment[]>(agentConfig)
             .filter(([, assignments]) => assignments && assignments.length > 0)
-            .map(([subcategory, assignments]) => [
-              subcategory,
+            .map(([category, assignments]) => [
+              category,
               assignments.length === 1
                 ? compactAssignment(assignments[0])
                 : assignments.map(compactAssignment),

@@ -68,7 +68,7 @@ export type Domain = "web" | "api" | "mobile" | "cli" | "shared";
 export type InstallMode = "local" | "plugin";
 
 export interface StackAgentConfig {
-  [subcategory: string]: SkillId | SkillId[];
+  [category: string]: SkillId | SkillId[];
 }
 
 export interface ProjectConfig {
@@ -82,7 +82,7 @@ export interface ProjectConfig {
   agents?: AgentName[];
   /** Active domains */
   domains?: Domain[];
-  /** Stack configuration: agent -> subcategory -> skill assignments */
+  /** Stack configuration: agent -> category -> skill assignments */
   stack?: Record<string, Record<string, StackAgentConfig>>;
 }
 ```
@@ -150,7 +150,7 @@ After `agentsinc init`, `.claude-src/` contains:
 | `AgentName`   | All agent names from agent definitions                  |
 | `Domain`      | Built-in domains + custom domains from categories       |
 | `InstallMode` | Static: `"local" \| "plugin"`                           |
-| `Subcategory` | All subcategory IDs from skill-categories config        |
+| `Category`    | All category IDs from skill-categories config           |
 
 ### Regeneration triggers
 

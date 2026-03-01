@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useInput } from "ink";
 
-import type { Subcategory, SkillId } from "../../types/index.js";
+import type { Category, SkillId } from "../../types/index.js";
 import type { CategoryOption, CategoryRow } from "../wizard/category-grid.js";
 
 const FRAMEWORK_CATEGORY_ID = "web-framework";
 
 // Locked = non-framework section when no framework is selected
-export const isSectionLocked = (categoryId: Subcategory, categories: CategoryRow[]): boolean => {
+export const isSectionLocked = (categoryId: Category, categories: CategoryRow[]): boolean => {
   if (categoryId === FRAMEWORK_CATEGORY_ID) {
     return false;
   }
@@ -24,7 +24,7 @@ export const findValidStartColumn = (_options: CategoryOption[]): number => {
 
 /** Find next unlocked section index (wrapping, direction: forward) */
 export const findNextUnlockedIndex = (
-  processed: { id: Subcategory; sortedOptions: CategoryOption[] }[],
+  processed: { id: Category; sortedOptions: CategoryOption[] }[],
   currentIndex: number,
   allCategories: CategoryRow[],
 ): number => {
@@ -58,7 +58,7 @@ type UseCategoryGridInputOptions = {
   focusedCol: number;
   setFocused: (row: number, col: number) => void;
   moveFocus: (direction: "up" | "down" | "left" | "right") => void;
-  onToggle: (categoryId: Subcategory, technologyId: SkillId) => void;
+  onToggle: (categoryId: Category, technologyId: SkillId) => void;
   onToggleLabels: () => void;
 };
 

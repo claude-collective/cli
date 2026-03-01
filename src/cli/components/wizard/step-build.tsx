@@ -6,8 +6,8 @@ import type {
   Domain,
   MergedSkillsMatrix,
   SkillId,
-  Subcategory,
-  SubcategorySelections,
+  Category,
+  CategorySelections,
 } from "../../types/index.js";
 import { useFrameworkFiltering } from "../hooks/use-framework-filtering.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
@@ -19,12 +19,12 @@ export type StepBuildProps = {
   matrix: MergedSkillsMatrix;
   domain: Domain;
   selectedDomains: Domain[];
-  selections: SubcategorySelections;
+  selections: CategorySelections;
   allSelections: SkillId[];
   showLabels: boolean;
   /** Skill IDs already installed on disk, shown with a dimmed checkmark */
   installedSkillIds?: SkillId[];
-  onToggle: (subcategoryId: Subcategory, technologyId: SkillId) => void;
+  onToggle: (categoryId: Category, technologyId: SkillId) => void;
   onToggleLabels: () => void;
   onContinue: () => void;
   onBack: () => void;

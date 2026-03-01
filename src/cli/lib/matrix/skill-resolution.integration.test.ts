@@ -37,7 +37,7 @@ import type {
   ResolvedSkill,
   SkillId,
   SkillSource,
-  Subcategory,
+  Category,
 } from "../../types";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -103,7 +103,7 @@ const MULTI_SOURCE_CATEGORIES = {
   "shared-methodology": createMockCategory("shared-methodology", "Methodology", { order: 8 }),
   "web-accessibility": createMockCategory("web-accessibility", "Accessibility", { order: 9 }),
   "api-observability": createMockCategory("api-observability", "Observability", { order: 10 }),
-} as Partial<Record<Subcategory, CategoryDefinition>> as Record<Subcategory, CategoryDefinition>;
+} as Partial<Record<Category, CategoryDefinition>> as Record<Category, CategoryDefinition>;
 
 // ── Matrix Builder ─────────────────────────────────────────────────────────────
 
@@ -280,7 +280,7 @@ describe("Integration: Multi-Source Skill Resolution", () => {
       const matrix = buildMultiSourceMatrix();
 
       // Check all categories -- missing skill should not appear
-      const allCategories = Object.keys(matrix.categories) as Subcategory[];
+      const allCategories = Object.keys(matrix.categories) as Category[];
       for (const category of allCategories) {
         const available = getAvailableSkills(category, [], matrix);
         const ids = available.map((o) => o.id);

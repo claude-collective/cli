@@ -4,7 +4,7 @@ import type {
   MergedSkillsMatrix,
   ResolvedSkill,
   SkillId,
-  Subcategory,
+  Category,
 } from "../../types";
 import { typedEntries } from "../../utils/typed-object";
 
@@ -17,7 +17,7 @@ export type MatrixHealthIssue = {
 export function checkMatrixHealth(matrix: MergedSkillsMatrix): MatrixHealthIssue[] {
   const issues: MatrixHealthIssue[] = [];
 
-  checkSubcategoryDomains(matrix, issues);
+  checkCategoryDomains(matrix, issues);
   checkSkillCategories(matrix, issues);
   checkSkillRelationRefs(matrix, issues);
 
@@ -29,8 +29,8 @@ export function checkMatrixHealth(matrix: MergedSkillsMatrix): MatrixHealthIssue
 }
 
 // Categories without a domain won't appear in any wizard domain view
-function checkSubcategoryDomains(matrix: MergedSkillsMatrix, issues: MatrixHealthIssue[]): void {
-  for (const [catId, cat] of typedEntries<Subcategory, CategoryDefinition>(matrix.categories)) {
+function checkCategoryDomains(matrix: MergedSkillsMatrix, issues: MatrixHealthIssue[]): void {
+  for (const [catId, cat] of typedEntries<Category, CategoryDefinition>(matrix.categories)) {
     if (!cat) continue;
     if (!cat.domain) {
       issues.push({
@@ -45,7 +45,7 @@ function checkSubcategoryDomains(matrix: MergedSkillsMatrix, issues: MatrixHealt
 function checkSkillCategories(matrix: MergedSkillsMatrix, issues: MatrixHealthIssue[]): void {
   for (const [skillId, skill] of typedEntries<SkillId, ResolvedSkill>(matrix.skills)) {
     if (!skill) continue;
-    const category = matrix.categories[skill.category as Subcategory];
+    const category = matrix.categories[skill.category as Category];
     if (!category) {
       issues.push({
         severity: "warning",

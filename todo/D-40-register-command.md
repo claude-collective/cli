@@ -6,7 +6,7 @@
 
 ## Implementation Overview
 
-Create `src/cli/commands/register/skill.ts` — a flags-only command that takes a path to an existing skill directory (with `SKILL.md`) and generates `metadata.yaml` + wires the skill into `config.yaml`. Required flag: `--category`. Optional: `--name`, `--description`, `--author`, `--agents`, `--custom-category`, `--force`, `--skip-config`, `--dry-run`. Extract shared utilities (`toTitleCase`, `validateSkillName`) from `new/skill.ts` into `src/cli/utils/skill-helpers.ts`. Config wiring adds the skill to `config.skills` and `config.stack[agent][subcategory]` for selected agents. Validates generated metadata with `localRawMetadataSchema`. Custom categories use the existing `custom: true` mechanism — no schema changes needed. About 3 new files + 1 modified.
+Create `src/cli/commands/register/skill.ts` — a flags-only command that takes a path to an existing skill directory (with `SKILL.md`) and generates `metadata.yaml` + wires the skill into `config.yaml`. Required flag: `--category`. Optional: `--name`, `--description`, `--author`, `--agents`, `--custom-category`, `--force`, `--skip-config`, `--dry-run`. Extract shared utilities (`toTitleCase`, `validateSkillName`) from `new/skill.ts` into `src/cli/utils/skill-helpers.ts`. Config wiring adds the skill to `config.skills` and `config.stack[agent][category]` for selected agents. Validates generated metadata with `localRawMetadataSchema`. Custom categories use the existing `custom: true` mechanism — no schema changes needed. About 3 new files + 1 modified.
 
 ---
 
@@ -34,7 +34,7 @@ The `discoverAndExtendFromSource()` infrastructure (source-loader.ts:417-481) al
 
 However, these custom categories only get schema-level acceptance. They do NOT get a `CategoryDefinition` entry in the matrix, which means they won't appear in the wizard's domain views (D-50 addresses this separately). For `register`, the pragmatic approach is:
 
-- **Known subcategories (38 built-in):** Use as-is, no `custom: true` needed.
+- **Known categories (38 built-in):** Use as-is, no `custom: true` needed.
 - **New custom categories:** Set `custom: true`, validate as kebab-case, warn the user that the skill won't appear in wizard domain views until D-50 is implemented (but will still work in `compile`, `validate`, and config).
 
 ### 2. How to handle agents wiring?
@@ -46,7 +46,7 @@ When a ProjectConfig exists (`.claude-src/config.yaml`), it has an `agents` arra
 1. Read existing config.
 2. If agents exist, prompt: "Add this skill to which agents?" with the existing agents as options (default: all).
 3. Add the skill's `SkillId` to the `skills` array.
-4. Add the skill to `stack[agent][subcategory]` for each selected agent.
+4. Add the skill to `stack[agent][category]` for each selected agent.
 5. If no config exists, skip wiring (just generate metadata) and advise the user to run `agentsinc init` first or wire manually.
 
 ### 3. Interactive vs flags?
@@ -101,20 +101,20 @@ If metadata.yaml exists, show what's there and offer to update specific fields (
 
 **Required metadata.yaml fields** (for discovery to succeed):
 
-| Field               | Required                                            | Validation                                                                                           | Example                                        |
-| ------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `displayName`       | Yes (loader rejects without it)                     | Non-empty string                                                                                     | `"My Custom React"`                            |
-| `cliDescription`    | No (falls back to SKILL.md frontmatter description) | String                                                                                               | `"Custom React patterns"`                      |
-| `category`          | No (defaults to "dummy-category")                   | `CategoryPath` -- either a built-in subcategory, `"local"`, or custom kebab-case when `custom: true` | `"web-framework"`                              |
-| `categoryExclusive` | No (defaults to `false`)                            | Boolean                                                                                              | `false`                                        |
-| `usageGuidance`     | No                                                  | String, min 10 chars for strict validation                                                           | `"Use when building custom React components."` |
-| `author`            | No (defaults to `"@dummy-author"`)                  | String, `@handle` format for strict validation                                                       | `"@vince"`                                     |
-| `tags`              | No                                                  | String array                                                                                         | `["react", "custom"]`                          |
-| `custom`            | No                                                  | Boolean                                                                                              | `true` (if using custom category)              |
-| `contentHash`       | No                                                  | 7-char hex SHA                                                                                       | `"c48bfef"`                                    |
-| `compatibleWith`    | No                                                  | SkillId array                                                                                        | `["web-framework-react"]`                      |
-| `conflictsWith`     | No                                                  | SkillId array                                                                                        | `[]`                                           |
-| `requires`          | No                                                  | SkillId array                                                                                        | `["web-framework-react"]`                      |
+| Field               | Required                                            | Validation                                                                                        | Example                                        |
+| ------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `displayName`       | Yes (loader rejects without it)                     | Non-empty string                                                                                  | `"My Custom React"`                            |
+| `cliDescription`    | No (falls back to SKILL.md frontmatter description) | String                                                                                            | `"Custom React patterns"`                      |
+| `category`          | No (defaults to "dummy-category")                   | `CategoryPath` -- either a built-in category, `"local"`, or custom kebab-case when `custom: true` | `"web-framework"`                              |
+| `categoryExclusive` | No (defaults to `false`)                            | Boolean                                                                                           | `false`                                        |
+| `usageGuidance`     | No                                                  | String, min 10 chars for strict validation                                                        | `"Use when building custom React components."` |
+| `author`            | No (defaults to `"@dummy-author"`)                  | String, `@handle` format for strict validation                                                    | `"@vince"`                                     |
+| `tags`              | No                                                  | String array                                                                                      | `["react", "custom"]`                          |
+| `custom`            | No                                                  | Boolean                                                                                           | `true` (if using custom category)              |
+| `contentHash`       | No                                                  | 7-char hex SHA                                                                                    | `"c48bfef"`                                    |
+| `compatibleWith`    | No                                                  | SkillId array                                                                                     | `["web-framework-react"]`                      |
+| `conflictsWith`     | No                                                  | SkillId array                                                                                     | `[]`                                           |
+| `requires`          | No                                                  | SkillId array                                                                                     | `["web-framework-react"]`                      |
 
 **SKILL.md frontmatter requirements** (for `parseFrontmatter()` to succeed):
 
@@ -128,9 +128,9 @@ If metadata.yaml exists, show what's there and offer to update specific fields (
 Today, if a user creates `.claude/skills/my-patterns/SKILL.md` manually, they must:
 
 1. Manually create `metadata.yaml` with exact field names, valid enum values, correct format.
-2. Know the 38 valid subcategory values (or know to use `custom: true` + kebab-case).
+2. Know the 38 valid category values (or know to use `custom: true` + kebab-case).
 3. Manually edit `.claude-src/config.yaml` to add the skill to the `skills` array.
-4. Manually edit the `stack` mapping to wire the skill to agents/subcategories.
+4. Manually edit the `stack` mapping to wire the skill to agents/categories.
 5. Run `agentsinc compile` and hope everything lines up.
 
 `register` automates steps 1-4.
@@ -157,7 +157,7 @@ Where `<path>` is the path to a skill directory containing a `SKILL.md` (e.g., `
 
 | Flag                | Short | Type    | Default                           | Description                                                   |
 | ------------------- | ----- | ------- | --------------------------------- | ------------------------------------------------------------- |
-| `--category`        | `-c`  | string  | (required)                        | Subcategory to assign (e.g., `web-framework`)                 |
+| `--category`        | `-c`  | string  | (required)                        | Category to assign (e.g., `web-framework`)                    |
 | `--name`            | `-n`  | string  | (from frontmatter)                | Display name for the wizard (displayName field)               |
 | `--description`     | `-d`  | string  | (from frontmatter)                | One-line description (cliDescription field)                   |
 | `--author`          | `-a`  | string  | (from project config or `@local`) | Author handle                                                 |
@@ -173,7 +173,7 @@ Where `<path>` is the path to a skill directory containing a `SKILL.md` (e.g., `
 
 > **Not included in v1.** All parameters are provided via flags for v1. The interactive flow below is documented for potential future enhancement if user feedback requests it.
 
-1. **Category selection** -- `select` prompt listing all 38 built-in subcategories grouped by domain, plus "Create custom category..." option.
+1. **Category selection** -- `select` prompt listing all 38 built-in categories grouped by domain, plus "Create custom category..." option.
 2. **Display name** -- `text` prompt, defaulting to title-cased frontmatter `name`.
 3. **Description** -- `text` prompt, defaulting to frontmatter `description`.
 4. **Agent selection** -- `multiselect` showing agents from existing config (if any). Skipped if no config exists.
@@ -237,9 +237,9 @@ Where `<path>` is the path to a skill directory containing a `SKILL.md` (e.g., `
    - If no config exists: skip wiring, advise user
    - If config exists:
      a. Add skillId to config.skills (if not already present)
-     b. Determine subcategory from category
+     b. Determine category from category
      c. Use --agents flag (defaults to all agents in config)
-     d. For each selected agent: add to config.stack[agent][subcategory]
+     d. For each selected agent: add to config.stack[agent][category]
      e. Save config via writeConfigFile() pattern
 
 7. OUTPUT SUMMARY
@@ -275,9 +275,9 @@ When the user selects "Create custom category..." in the interactive flow or use
 4. Optionally prompt for domain (web/api/cli/mobile/shared or a custom domain).
 5. Warn: "Custom categories work for compilation and validation, but won't appear in wizard domain views until the category is added to skills-matrix.yaml."
 
-**No changes to `SUBCATEGORY_VALUES`, `Subcategory` type, or JSON schemas needed** for custom categories. The existing `custom: true` + `extendSchemasWithCustomValues()` infrastructure handles this at runtime. The skill will be discovered by `discoverLocalSkills()` and accepted by `localRawMetadataSchema` (which uses `validateCategoryField` with relaxed rules for `custom: true`).
+**No changes to `SUBCATEGORY_VALUES`, `Category` type, or JSON schemas needed** for custom categories. The existing `custom: true` + `extendSchemasWithCustomValues()` infrastructure handles this at runtime. The skill will be discovered by `discoverLocalSkills()` and accepted by `localRawMetadataSchema` (which uses `validateCategoryField` with relaxed rules for `custom: true`).
 
-**Why not modify the enum:** Modifying `SUBCATEGORY_VALUES` and the `Subcategory` union type for every user's custom category is not viable -- these are compile-time constants in the CLI's source code. The `custom: true` mechanism was specifically designed for this (D-46). Modifying the enum should only happen when adding official built-in categories to the CLI.
+**Why not modify the enum:** Modifying `SUBCATEGORY_VALUES` and the `Category` union type for every user's custom category is not viable -- these are compile-time constants in the CLI's source code. The `custom: true` mechanism was specifically designed for this (D-46). Modifying the enum should only happen when adding official built-in categories to the CLI.
 
 ### Future: D-50 integration
 
@@ -352,7 +352,7 @@ A function to add a skill to an existing ProjectConfig:
 function addSkillToConfig(
   config: ProjectConfig,
   skillId: SkillId,
-  subcategory: Subcategory,
+  category: Category,
   agentIds: AgentName[],
 ): ProjectConfig;
 ```
@@ -360,7 +360,7 @@ function addSkillToConfig(
 This function:
 
 1. Adds `skillId` to `config.skills` (deduplicates).
-2. For each agent in `agentIds`: ensures `config.stack[agent][subcategory]` exists and adds a `{ id: skillId, preloaded: false }` entry.
+2. For each agent in `agentIds`: ensures `config.stack[agent][category]` exists and adds a `{ id: skillId, preloaded: false }` entry.
 3. Returns the modified config.
 
 **Saving:** Use the same `writeConfigFile()` pattern from `local-installer.ts` (YAML stringify with schema comment, compact stack).
@@ -470,7 +470,7 @@ After generating metadata.yaml:
 | Test                             | Description                          |
 | -------------------------------- | ------------------------------------ |
 | Adds skill to config.skills      | SkillId added, no duplicates         |
-| Adds skill to stack mapping      | stack[agent][subcategory] updated    |
+| Adds skill to stack mapping      | stack[agent][category] updated       |
 | Handles missing stack            | Creates stack property if absent     |
 | Handles missing agent entry      | Creates agent entry in stack         |
 | Deduplicates skills              | Adding existing skill is idempotent  |
@@ -553,6 +553,6 @@ No new dependencies required. Uses existing:
 ### NOT changing (scope control)
 
 - `src/cli/lib/schemas.ts` -- No changes to `SUBCATEGORY_VALUES` or any schema. Custom categories are handled by the existing `custom: true` mechanism.
-- `src/cli/types/matrix.ts` -- No changes to `Subcategory` union type.
+- `src/cli/types/matrix.ts` -- No changes to `Category` union type.
 - `scripts/generate-json-schemas.ts` -- No need to regenerate schemas.
 - `src/cli/lib/loading/source-loader.ts` -- No changes needed. `discoverAndExtendFromSource()` already handles custom values at runtime.

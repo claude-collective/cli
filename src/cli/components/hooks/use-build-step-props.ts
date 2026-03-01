@@ -24,10 +24,10 @@ export function useBuildStepProps({
   const activeDomain: Domain = currentDomain || effectiveDomains[0] || "web";
 
   const onToggle = useCallback(
-    (subcategoryId: Parameters<StepBuildProps["onToggle"]>[0], techId: SkillId) => {
+    (categoryId: Parameters<StepBuildProps["onToggle"]>[0], techId: SkillId) => {
       const domain: Domain = store.getCurrentDomain() || "web";
-      const cat = matrix.categories[subcategoryId];
-      store.toggleTechnology(domain, subcategoryId, techId, cat?.exclusive ?? true);
+      const cat = matrix.categories[categoryId];
+      store.toggleTechnology(domain, categoryId, techId, cat?.exclusive ?? true);
     },
     [store, matrix],
   );

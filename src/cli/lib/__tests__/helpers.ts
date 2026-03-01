@@ -163,7 +163,7 @@ import type {
   RawStacksConfig,
   Stack,
   StackAgentConfig,
-  Subcategory,
+  Category,
 } from "../../types";
 import type { CompiledStackPlugin } from "../stacks/stack-plugin-compiler";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
@@ -355,18 +355,18 @@ export function createMockExtractedSkill(
   id: SkillId,
   overrides?: Partial<ExtractedSkillMetadata>,
 ): ExtractedSkillMetadata {
-  // Derive directory path and category from the skill ID convention: "domain-subcategory-name"
+  // Derive directory path and category from the skill ID convention: "domain-category-name"
   const segments = id.split("-");
   const domain = segments[0] ?? "web";
-  const subcategory = segments[1] ?? "framework";
+  const category = segments[1] ?? "framework";
   const name = segments.slice(2).join("-") || "skill";
-  const directoryPath = `${domain}/${subcategory}/${name}`;
+  const directoryPath = `${domain}/${category}/${name}`;
 
   return {
     id,
     directoryPath,
     description: `${id} skill`,
-    category: `${domain}-${subcategory}` as CategoryPath,
+    category: `${domain}-${category}` as CategoryPath,
     author: "@test",
     tags: [],
     path: `skills/${directoryPath}/`,
@@ -392,7 +392,7 @@ export function createMockMatrix(
 
   return {
     version: "1.0.0",
-    categories: {} as Record<Subcategory, import("../../types").CategoryDefinition>,
+    categories: {} as Record<Category, import("../../types").CategoryDefinition>,
     skills,
     suggestedStacks: [],
     displayNameToId: autoDisplayNameToId,
@@ -540,7 +540,7 @@ export async function writeTestSkill(
  * Use this when testing `extractAllSkills()` and `mergeMatrixWithSkills()`.
  *
  * Unlike `writeTestSkill()` which creates installed skills, this writes skills
- * in the source directory layout (under `src/skills/<domain>/<subcategory>/<name>/`).
+ * in the source directory layout (under `src/skills/<domain>/<category>/<name>/`).
  */
 export async function writeSourceSkill(
   skillsDir: string,
@@ -598,7 +598,7 @@ export async function writeTestAgent(
 }
 
 export function createMockCategory(
-  id: Subcategory,
+  id: Category,
   displayName: string,
   overrides?: Partial<CategoryDefinition>,
 ): CategoryDefinition {
@@ -640,7 +640,7 @@ export function createMockResolvedStack(
 export function createComprehensiveMatrix(
   overrides?: Partial<MergedSkillsMatrix>,
 ): MergedSkillsMatrix {
-  // Skill categories use domain-prefixed Subcategory IDs (matching production
+  // Skill categories use domain-prefixed Category IDs (matching production
   // metadata.yaml and the categories map keys, e.g., "web-framework", "api-api").
   const skills = {
     "web-framework-react": getTestSkill("react", { category: "web-framework" }),
@@ -689,7 +689,7 @@ export function createComprehensiveMatrix(
       required: false,
       order: 11,
     },
-  } as Record<Subcategory, CategoryDefinition>;
+  } as Record<Category, CategoryDefinition>;
 
   const suggestedStacks: ResolvedStack[] = [
     createMockResolvedStack("nextjs-fullstack", "Next.js Fullstack", {
@@ -763,7 +763,7 @@ export function createComprehensiveMatrix(
  * @returns A minimal MergedSkillsMatrix for basic integration tests
  */
 export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): MergedSkillsMatrix {
-  // Domain-prefixed Subcategory IDs — see createComprehensiveMatrix comment
+  // Domain-prefixed Category IDs — see createComprehensiveMatrix comment
   const skills = {
     "web-framework-react": getTestSkill("react", { category: "web-framework" }),
     "web-state-zustand": getTestSkill("zustand", { category: "web-client-state" }),
@@ -802,7 +802,7 @@ export function createBasicMatrix(overrides?: Partial<MergedSkillsMatrix>): Merg
         domain: "shared" as Domain,
         exclusive: false,
       },
-    } as Record<Subcategory, CategoryDefinition>,
+    } as Record<Category, CategoryDefinition>,
     ...overrides,
   });
 }
@@ -857,7 +857,7 @@ export function buildWizardResultFromStore(
  * Simulates a user selecting specific skills via the wizard store.
  *
  * Sets up domainSelections as if the user toggled each skill in the build step,
- * using the matrix to look up the correct domain and subcategory per skill.
+ * using the matrix to look up the correct domain and category per skill.
  */
 export function simulateSkillSelections(
   skillIds: SkillId[],
@@ -867,16 +867,16 @@ export function simulateSkillSelections(
   const domainSelections = skillIds.reduce<DomainSelections>((acc, skillId) => {
     const skill = matrix.skills[skillId];
     if (!skill) return acc;
-    // Boundary cast: skill.category is a Subcategory at runtime
-    const subcategory = skill.category as Subcategory;
-    const domain = matrix.categories[subcategory]?.domain;
+    // Boundary cast: skill.category is a Category at runtime
+    const category = skill.category as Category;
+    const domain = matrix.categories[category]?.domain;
     if (!domain) return acc;
     const domainObj = acc[domain] ?? {};
-    const subcatList = domainObj[subcategory] ?? [];
+    const subcatList = domainObj[category] ?? [];
     if (subcatList.includes(skillId)) return acc;
     return {
       ...acc,
-      [domain]: { ...domainObj, [subcategory]: [...subcatList, skillId] },
+      [domain]: { ...domainObj, [category]: [...subcatList, skillId] },
     };
   }, {});
 
@@ -1048,7 +1048,7 @@ export function createMockRawStacksConfigWithArrays(): RawStacksConfig {
       {
         id: "multi-select-stack",
         name: "Multi-Select Stack",
-        description: "Stack with array-valued subcategories",
+        description: "Stack with array-valued categories",
         agents: {
           "web-developer": {
             "web-framework": "web-framework-react",

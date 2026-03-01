@@ -2,7 +2,7 @@
 
 ## Implementation Overview
 
-**Blocked by D-38.** When a user selects a meta-framework (Next.js), auto-select the required base framework (React) and block deselection while dependents exist. Add `getAutoSelectTargets()` to `matrix-resolver.ts` — a pure function that follows AND-mode `requires` rules recursively within the same subcategory. The auto-select and deselect-blocking logic lives in `use-build-step-props.ts` (where the matrix is already available), wrapping the existing `onToggle` callback. Add a `requiredBy?: string` field to `CategoryOption` for visual feedback ("required by Next.js") in `SkillTag`. About 9 files changed. No config/schema changes — D-38 handles all `skills-matrix.yaml` changes.
+**Blocked by D-38.** When a user selects a meta-framework (Next.js), auto-select the required base framework (React) and block deselection while dependents exist. Add `getAutoSelectTargets()` to `matrix-resolver.ts` — a pure function that follows AND-mode `requires` rules recursively within the same category. The auto-select and deselect-blocking logic lives in `use-build-step-props.ts` (where the matrix is already available), wrapping the existing `onToggle` callback. Add a `requiredBy?: string` field to `CategoryOption` for visual feedback ("required by Next.js") in `SkillTag`. About 9 files changed. No config/schema changes — D-38 handles all `skills-matrix.yaml` changes.
 
 ## Open Questions (All Resolved)
 
@@ -15,7 +15,7 @@
 3. **What about deselecting the base framework?** If the user selected Next.js (which auto-selected React), and then tries to deselect React: should it (a) block deselection, (b) also deselect Next.js, or (c) show a warning?
    **RESOLVED:** Block deselection. The base framework should NOT be deselectable when a meta-framework depends on it.
 
-4. **Does `toggleTechnology` need access to the matrix?** Currently `toggleTechnology()` takes `(domain, subcategory, technology, exclusive)` -- it has no access to `MergedSkillsMatrix`. Auto-selection requires knowing the skill's `requires` rules. Either the store must receive the matrix, or the auto-select logic lives in the hook/component layer.
+4. **Does `toggleTechnology` need access to the matrix?** Currently `toggleTechnology()` takes `(domain, category, technology, exclusive)` -- it has no access to `MergedSkillsMatrix`. Auto-selection requires knowing the skill's `requires` rules. Either the store must receive the matrix, or the auto-select logic lives in the hook/component layer.
    **RESOLVED:** Yes, give the hook/logic access to the matrix if needed. The recommended approach (Phase 1) puts the auto-select logic in `use-build-step-props.ts` where the matrix is already available.
 
 5. **Cross-category auto-selection?** When selecting Next.js (web-framework), should we also auto-select skills in other categories?
@@ -34,7 +34,7 @@ D-38 changes the framework category from exclusive to non-exclusive and adds gra
 
 - `web-framework` has `exclusive: false` (checkbox behavior instead of radio)
 - `mobile-framework` has `exclusive: false`
-- `web-base-framework` and `mobile-platform` subcategory keys are removed
+- `web-base-framework` and `mobile-platform` category keys are removed
 - All framework skills live in `web-framework` or `mobile-framework`
 - Conflict rules prevent incompatible selections (e.g., React + Vue)
 - `requires` rules exist: `nextjs-app-router` requires `[react]`, `remix` requires `[react]`, `nuxt` requires `[vue]`, etc.
@@ -64,7 +64,7 @@ The system already has a complete `requires` mechanism:
 
 `toggleTechnology()` in `wizard-store.ts` (line 531-554):
 
-- Takes `(domain, subcategory, technology, exclusive)`
+- Takes `(domain, category, technology, exclusive)`
 - If `exclusive=true`: radio behavior (replace previous selection or clear)
 - If `exclusive=false`: checkbox behavior (add/remove independently)
 - **No access to the matrix** -- purely mechanical toggle
@@ -256,7 +256,7 @@ const onToggle = useCallback(
     const isDeselecting = currentSelections.includes(techId);
 
     if (!isDeselecting && skill && !exclusive) {
-      // Selecting: auto-select required skills in same subcategory
+      // Selecting: auto-select required skills in same category
       const autoSelectIds = getAutoSelectTargets(skillId, matrix, subcategoryId);
       store.toggleTechnology(domain, subcategoryId, techId, exclusive);
       for (const autoId of autoSelectIds) {
@@ -296,7 +296,7 @@ Create a pure function that computes which skills should be auto-selected. This 
 export function getAutoSelectTargets(
   skillId: SkillId,
   matrix: MergedSkillsMatrix,
-  subcategory: Subcategory,
+  category: Category,
 ): SkillId[] {
   const skill = matrix.skills[skillId];
   if (!skill) return [];
@@ -304,11 +304,11 @@ export function getAutoSelectTargets(
   const directTargets = skill.requires
     .filter((req) => !req.needsAny)
     .flatMap((req) => req.skillIds)
-    .filter((reqId) => matrix.skills[reqId]?.category === subcategory);
+    .filter((reqId) => matrix.skills[reqId]?.category === category);
 
   // Recursively collect requirements of the direct targets
   const recursiveTargets = directTargets.flatMap((reqId) =>
-    getAutoSelectTargets(reqId, matrix, subcategory),
+    getAutoSelectTargets(reqId, matrix, category),
   );
 
   return unique([...directTargets, ...recursiveTargets]);
@@ -318,7 +318,7 @@ export function getAutoSelectTargets(
 Key decisions:
 
 - Only AND-mode requirements (`!needsAny`): if a skill needs "react OR vue", we cannot auto-select one
-- Only same-subcategory: auto-selecting across categories would be confusing (e.g., we should NOT auto-select zustand just because it recommends react). The `requires` rules for meta-frameworks point to base frameworks in the same `web-framework` category, so this naturally scopes to framework coupling.
+- Only same-category: auto-selecting across categories would be confusing (e.g., we should NOT auto-select zustand just because it recommends react). The `requires` rules for meta-frameworks point to base frameworks in the same `web-framework` category, so this naturally scopes to framework coupling.
 - Recursive: Expo -> React Native -> React chains work correctly
 
 ### Phase 3: Block deselection of required skills
@@ -387,7 +387,7 @@ These functions pre-populate wizard state from existing data. After D-38, stacks
 
 ### Phase 6: Cross-category auto-selection (OUT OF SCOPE)
 
-**Explicitly out of scope for D-39.** Some `requires` rules cross categories (e.g., `shadcn-ui` in `web-ui-components` requires `tailwind` in `web-styling`). D-39 does NOT auto-select across categories -- only within the same subcategory. Cross-category requirements continue to use validation-only (confirm step error).
+**Explicitly out of scope for D-39.** Some `requires` rules cross categories (e.g., `shadcn-ui` in `web-ui-components` requires `tailwind` in `web-styling`). D-39 does NOT auto-select across categories -- only within the same category. Cross-category requirements continue to use validation-only (confirm step error).
 
 This is intentional: auto-selecting a skill in a different category section that the user hasn't even looked at yet would be confusing. This may be revisited in a future task if the UX warrants it.
 

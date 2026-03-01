@@ -6,7 +6,7 @@ import {
   type CategoryRow,
   type CategoryOption,
 } from "./category-grid";
-import type { SkillId, Subcategory } from "../../types";
+import type { SkillId, Category } from "../../types";
 import {
   ARROW_UP,
   ARROW_DOWN,
@@ -31,7 +31,7 @@ const createOption = (
 });
 
 const createCategory = (
-  id: Subcategory,
+  id: Category,
   displayName: string,
   options: CategoryOption[],
   overrides: Partial<CategoryRow> = {},

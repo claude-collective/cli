@@ -20,7 +20,7 @@ No backward compatibility -- this is pre-1.0.
 
 - **`ts-config-writer.ts`** -- writes `config.ts` with `satisfies ProjectConfig` and `import type` from generated types
 - **`ts-config-loader.ts`** -- jiti-based loader that imports TS config modules at runtime
-- **`ts-config-types-writer.ts`** -- generates `config-types.ts` containing string unions (SkillId, AgentName, Domain, Subcategory, InstallMode) and a `ProjectConfig` type that uses them
+- **`ts-config-types-writer.ts`** -- generates `config-types.ts` containing string unions (SkillId, AgentName, Domain, Category, InstallMode) and a `ProjectConfig` type that uses them
 - **`config-exports.ts`** / **`define-config.ts`** -- public API surface for config authoring
 - **`default-categories.ts`**, **`default-rules.ts`**, **`default-stacks.ts`** -- TS module replacements for the old YAML config files
 

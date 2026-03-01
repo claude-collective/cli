@@ -165,7 +165,7 @@ describe("buildSkillRefsFromConfig", () => {
     expect(result[0].preloaded).toBe(false);
   });
 
-  it("should include usage guidance with subcategory name", () => {
+  it("should include usage guidance with category name", () => {
     const agentStack: StackAgentConfig = {
       "web-framework": [sa("web-framework-react")],
     };
@@ -192,7 +192,7 @@ describe("buildSkillRefsFromConfig", () => {
     expect(result[0].id).toBe("web-framework-react");
   });
 
-  it("should handle multiple skills per subcategory", () => {
+  it("should handle multiple skills per category", () => {
     const agentStack: StackAgentConfig = {
       "shared-methodology": [
         sa("meta-methodology-investigation-requirements", true),

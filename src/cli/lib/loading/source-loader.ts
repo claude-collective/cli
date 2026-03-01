@@ -27,7 +27,7 @@ import type {
   SkillDisplayName,
   SkillId,
   Stack,
-  Subcategory,
+  Category,
 } from "../../types";
 import { directoryExists, fileExists, glob, listDirectories, readFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
@@ -53,7 +53,7 @@ import {
   DOMAIN_VALUES,
   extendSchemasWithCustomValues,
   isValidSkillId,
-  SUBCATEGORY_VALUES,
+  CATEGORY_VALUES,
 } from "../schemas";
 import { fetchFromSource, fetchMarketplace } from "./source-fetcher";
 import { loadSkillsFromAllSources } from "./multi-source-loader";
@@ -302,22 +302,20 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
 function convertStackToResolvedStack(stack: Stack): ResolvedStack {
   const allSkillIds: SkillId[] = [];
   const seenSkillIds = new Set<SkillId>();
-  const skills: Partial<Record<AgentName, Partial<Record<Subcategory, SkillId[]>>>> = {};
+  const skills: Partial<Record<AgentName, Partial<Record<Category, SkillId[]>>>> = {};
 
   for (const agentId of typedKeys<AgentName>(stack.agents)) {
     const agentConfig = stack.agents[agentId];
     if (!agentConfig) continue;
 
     const skillRefs = resolveAgentConfigToSkills(agentConfig);
-    const agentSkills: Partial<Record<Subcategory, SkillId[]>> = {};
+    const agentSkills: Partial<Record<Category, SkillId[]>> = {};
 
-    for (const [subcategory, assignments] of typedEntries<Subcategory, SkillAssignment[]>(
-      agentConfig,
-    )) {
+    for (const [category, assignments] of typedEntries<Category, SkillAssignment[]>(agentConfig)) {
       if (!assignments || assignments.length === 0) continue;
       const validIds = assignments.filter((a) => isValidSkillId(a.id)).map((a) => a.id);
       if (validIds.length > 0) {
-        agentSkills[subcategory] = validIds;
+        agentSkills[category] = validIds;
       }
     }
 
@@ -419,7 +417,7 @@ async function discoverCustomSkillValues(
   skillsDir: string,
   file: string,
   parseYaml: (content: string) => unknown,
-  builtinSubcategories: Set<string>,
+  builtinCategories: Set<string>,
   builtinDomains: Set<string>,
 ): Promise<{ skillId?: string; category?: string; domain?: string }> {
   const content = await readFile(path.join(skillsDir, file));
@@ -441,7 +439,7 @@ async function discoverCustomSkillValues(
   result.skillId = skillId;
 
   const category = metadataRaw.category;
-  if (typeof category === "string" && !builtinSubcategories.has(category)) {
+  if (typeof category === "string" && !builtinCategories.has(category)) {
     result.category = category;
   }
 
@@ -463,7 +461,7 @@ async function discoverAndExtendFromLocalSkills(projectDir: string): Promise<voi
 
   const { parse: parseYaml } = await import("yaml");
 
-  const builtinSubcategories = new Set<string>(SUBCATEGORY_VALUES);
+  const builtinCategories = new Set<string>(CATEGORY_VALUES);
   const builtinDomains = new Set<string>(DOMAIN_VALUES);
   const customCategories: string[] = [];
   const customDomains: string[] = [];
@@ -488,7 +486,7 @@ async function discoverAndExtendFromLocalSkills(projectDir: string): Promise<voi
       }
 
       const category = metadataRaw.category;
-      if (typeof category === "string" && !builtinSubcategories.has(category)) {
+      if (typeof category === "string" && !builtinCategories.has(category)) {
         customCategories.push(category);
       }
 
@@ -534,7 +532,7 @@ async function discoverAndExtendFromLocalSkills(projectDir: string): Promise<voi
 async function discoverAndExtendFromSource(basePath: string): Promise<void> {
   const { parse: parseYaml } = await import("yaml");
 
-  const builtinSubcategories = new Set<string>(SUBCATEGORY_VALUES);
+  const builtinCategories = new Set<string>(CATEGORY_VALUES);
   const builtinDomains = new Set<string>(DOMAIN_VALUES);
   const customCategories: string[] = [];
   const customDomains: string[] = [];
@@ -566,7 +564,7 @@ async function discoverAndExtendFromSource(basePath: string): Promise<void> {
           skillsDir,
           file,
           parseYaml,
-          builtinSubcategories,
+          builtinCategories,
           builtinDomains,
         );
         if (result.skillId) customSkillIds.push(result.skillId);
@@ -640,13 +638,13 @@ function mergeLocalSkillsIntoMatrix(
     matrix.skills[metadata.id] = resolvedSkill;
 
     // Ensure the skill's category exists in matrix.categories so that
-    // config-types generation can discover its domain and subcategory.
-    // Boundary cast: CategoryPath may not match Subcategory for custom categories
-    const subcategory = category as Subcategory;
-    if (!matrix.categories[subcategory] && metadata.domain) {
+    // config-types generation can discover its domain and category.
+    // Boundary cast: CategoryPath may not match Category for custom categories
+    const categoryKey = category as Category;
+    if (!matrix.categories[categoryKey] && metadata.domain) {
       // Boundary cast: metadata.domain may be a custom domain not in the Domain union
-      matrix.categories[subcategory] = {
-        id: subcategory,
+      matrix.categories[categoryKey] = {
+        id: categoryKey,
         displayName: category,
         description: `Local skill category`,
         domain: metadata.domain,

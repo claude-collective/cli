@@ -354,7 +354,7 @@ Skills are single comprehensive files—focused knowledge modules that agents in
 
 Skills use a three-file structure in domain-based directories:
 
-- **Location:** `.claude/skills/{domain}-{subcategory}-{technology}/`
+- **Location:** `.claude/skills/{domain}-{category}-{technology}/`
 - **Files:** `SKILL.md`, `metadata.yaml`, `reference.md` (optional)
 - **Domains:** `web-`, `api-`, `cli-`, `meta-`
 - **Examples:** `web-framework-react/`, `api-database-drizzle/`, `meta-methodology-investigation-requirements/`
@@ -668,7 +668,7 @@ Skill Name: [name]
 Purpose: [what knowledge does this provide?]
 Auto-detection: [keywords that trigger it]
 Use Cases: [when to invoke]
-Directory: .claude/skills/{domain}-{subcategory}-{technology}/
+Directory: .claude/skills/{domain}-{category}-{technology}/
 ```
 
 **Step 2: Create Three-File Structure with prompt-bible Compliance**
@@ -1107,7 +1107,7 @@ stack:
 **Domain:** [What knowledge this provides]
 **Auto-Detection Keywords:** [list]
 **Use Cases:** [when to invoke]
-**Directory:** `.claude/skills/{domain}-{subcategory}-{technology}/`
+**Directory:** `.claude/skills/{domain}-{category}-{technology}/`
 </skill_analysis>
 
 <skill_content>

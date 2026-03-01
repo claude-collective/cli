@@ -187,7 +187,7 @@ describe("Init Flow Integration: Local Mode", () => {
     // Stack property should exist and map agents to skills
     expect(config.stack).toBeDefined();
 
-    // Every selected agent should have every skill's subcategory
+    // Every selected agent should have every skill's category
     for (const agentId of SELECTED_AGENTS_WEB_API) {
       const agentStack = config.stack![agentId] as Record<string, unknown> | undefined;
       expect(agentStack).toBeDefined();
@@ -631,7 +631,7 @@ describe("Init Flow Integration: Selected Agents Filtering", () => {
 
     expect(config.stack).toBeDefined();
 
-    // Every agent should have every skill's subcategory
+    // Every agent should have every skill's category
     for (const agentId of SELECTED_AGENTS_WITH_REVIEWER) {
       const agentStack = config.stack![agentId] as Record<string, unknown> | undefined;
       expect(agentStack).toBeDefined();

@@ -114,7 +114,7 @@ describe("config round-trip", () => {
     expect(loaded).toEqual(normalizeForComparison(config));
   });
 
-  it("round-trips a config with multiple skills per subcategory", async () => {
+  it("round-trips a config with multiple skills per category", async () => {
     const config = buildProjectConfig({
       name: "multi-skill-project",
       skills: ["web-testing-vitest", "web-testing-playwright-e2e"],

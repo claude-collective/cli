@@ -118,7 +118,7 @@ describe("SectionProgress component", () => {
     it("should handle long label and current value", () => {
       const { lastFrame, unmount } = render(
         <SectionProgress
-          label="Subcategory"
+          label="Category"
           current="styled-components"
           index={1}
           total={5}
@@ -128,7 +128,7 @@ describe("SectionProgress component", () => {
       cleanup = unmount;
 
       const output = lastFrame();
-      expect(output).toContain("Subcategory:");
+      expect(output).toContain("Category:");
       expect(output).toContain("styled-components");
     });
 

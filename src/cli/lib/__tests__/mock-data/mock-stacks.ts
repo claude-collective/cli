@@ -101,7 +101,7 @@ export const PRELOADED_FLAG_STACK = createMockStack("test-stack", {
   },
 });
 
-export const SHARED_SUBCATEGORY_STACK = createMockStack("test-stack", {
+export const SHARED_CATEGORY_STACK = createMockStack("test-stack", {
   name: "Test Stack",
   description: "Test stack",
   agents: {
@@ -152,7 +152,7 @@ export const MULTI_METHODOLOGY_STACK = createMockStack("test-stack", {
   },
 });
 
-export const STACK_WITH_EMPTY_SUBCATEGORY = createMockStack("test-stack", {
+export const STACK_WITH_EMPTY_CATEGORY = createMockStack("test-stack", {
   name: "Test Stack",
   description: "Test stack",
   agents: {
@@ -163,7 +163,7 @@ export const STACK_WITH_EMPTY_SUBCATEGORY = createMockStack("test-stack", {
   },
 });
 
-export const MANY_SUBCATEGORIES_STACK = createMockStack("fullstack", {
+export const MANY_CATEGORIES_STACK = createMockStack("fullstack", {
   name: "Fullstack",
   description: "Fullstack stack",
   agents: {

@@ -18,7 +18,7 @@
 
 ### All Modes Reminders
 
-**(You MUST create skills as directories at `.claude/skills/{domain}-{subcategory}-{technology}/` with SKILL.md + metadata.yaml)**
+**(You MUST create skills as directories at `.claude/skills/{domain}-{category}-{technology}/` with SKILL.md + metadata.yaml)**
 
 **(You MUST follow prompt-bible structure: `<critical_requirements>` at TOP, `<critical_reminders>` at BOTTOM)**
 
@@ -52,7 +52,7 @@
 
 - **Creating skills without reading existing skills first** → STOP. Read 3+ existing skills in `.claude/skills/`.
 - **Creating skills as single files instead of directories** → STOP. Skills are directories with SKILL.md + metadata.yaml.
-- **Using wrong path like `src/skills/`** → STOP. Correct path is `.claude/skills/{domain}-{subcategory}-{technology}/`.
+- **Using wrong path like `src/skills/`** → STOP. Correct path is `.claude/skills/{domain}-{category}-{technology}/`.
 - **Producing generic advice like "follow best practices"** → STOP. Replace with specific, actionable patterns with code examples.
 - **Removing content that isn't redundant or convention-violating** → STOP. Restore it and ADD structural elements around it instead.
 - **Reporting success without re-reading the file** → STOP. Verify edits were actually written.

@@ -1,34 +1,33 @@
 # Agents Inc. CLI - Task Tracking
 
-| ID   | Task                                                                                                                                       | Status        |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
-| D-46 | Custom extensibility — generated types for custom skills/agents/categories (see [implementation plan](./D-46-ts-config-migration.md))      | Ready for Dev |
-| D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                                            | Refined       |
-| D-44 | Update README and Notion page for `eject templates` type (see [implementation plan](./D-44-docs-eject-templates.md))                       | Ready for Dev |
-| T-12 | End-to-end tests for custom marketplace workflow (see [implementation plan](./T-12-e2e-marketplace-tests.md))                              | Has Open Qs   |
-| D-52 | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md))                      | Ready for Dev |
-| D-54 | Remove expert mode: make expert mode behavior the default (see [implementation plan](./D-54-remove-expert-mode.md))                        | Ready for Dev |
-| D-59 | Unified scrolling across all wizard views (see [implementation plan](./D-59-unified-scrolling.md))                                         | Ready for Dev |
-| D-36 | Global install support with project-level override (see [implementation plan](./D-36-global-install.md))                                   | Ready for Dev |
-| D-37 | Merge global + project installations in resolution (see [implementation plan](./D-37-merge-installs.md))                                   | Has Open Qs   |
-| D-53 | Rename `agent.yaml` to `metadata.yaml` (see [implementation plan](./D-53-rename-agent-yaml.md))                                            | Ready for Dev |
-| D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))                              | Has Open Qs   |
-| D-39 | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))                                  | Ready for Dev |
-| D-41 | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md))                                            | Ready for Dev |
-| D-61 | Preserve stack skill selections when toggling domains                                                                                      | Ready for Dev |
-| D-62 | Review default stacks: include meta/methodology/reviewing skills                                                                           | Ready for Dev |
-| D-63 | Add E2E tests to pre-commit hook                                                                                                           | Ready for Dev |
-| D-64 | Create CLI E2E testing skill + update `cli-framework-oclif-ink` skill                                                                      | Ready for Dev |
-| D-65 | Init/edit scope: global config detection + prompt (see [implementation plan](./D-65-init-edit-scope.md))                                   | Ready for Dev |
-| D-66 | AI-assisted PR review: categorize diffs by type (mechanical vs logic vs test) for easier review                                            | Investigate   |
-| D-67 | Remove `aliases` from skill-rules.ts — derive display name mappings from a typed `Record<SkillId, SkillDisplayName>` map                   | Investigate   |
-| D-69 | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                                           | Investigate   |
-| D-70 | `new skill` / `new agent` should update config.ts + rename Subcategory → Category                                                          | Ready for Dev |
-| B-07 | Fix skill sort order changing on select/deselect in build step                                                                             | Ready for Dev |
-| B-09 | `new skill` + `edit` installs custom skill as plugin source instead of local                                                               | Bug           |
-| R-01 | `loadStackById` should check default stacks internally — callers shouldn't need to know about both sources                                 | Refactor      |
-| R-02 | Flatten nested for-loops in `default-stacks.test.ts` — parameterize per (stack, agent, subcategory) instead of nesting inside `it.each`    | Refactor      |
-| R-03 | Simplify `config-generator.ts` — reduce nested loops, intermediate maps, and function complexity                                           | Refactor      |
+| ID   | Task                                                                                                                                  | Status        |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| D-46 | Custom extensibility — generated types for custom skills/agents/categories (see [implementation plan](./D-46-ts-config-migration.md)) | Ready for Dev |
+| D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                                       | Refined       |
+| D-44 | Update README and Notion page for `eject templates` type (see [implementation plan](./D-44-docs-eject-templates.md))                  | Ready for Dev |
+| T-12 | End-to-end tests for custom marketplace workflow (see [implementation plan](./T-12-e2e-marketplace-tests.md))                         | Has Open Qs   |
+| D-52 | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md))                 | Ready for Dev |
+| D-54 | Remove expert mode: make expert mode behavior the default (see [implementation plan](./D-54-remove-expert-mode.md))                   | Ready for Dev |
+| D-59 | Unified scrolling across all wizard views (see [implementation plan](./D-59-unified-scrolling.md))                                    | Ready for Dev |
+| D-36 | Global install support with project-level override (see [implementation plan](./D-36-global-install.md))                              | Ready for Dev |
+| D-37 | Merge global + project installations in resolution (see [implementation plan](./D-37-merge-installs.md))                              | Has Open Qs   |
+| D-53 | Rename `agent.yaml` to `metadata.yaml` (see [implementation plan](./D-53-rename-agent-yaml.md))                                       | Ready for Dev |
+| D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))                         | Has Open Qs   |
+| D-39 | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))                             | Ready for Dev |
+| D-41 | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md))                                       | Ready for Dev |
+| D-61 | Preserve stack skill selections when toggling domains                                                                                 | Ready for Dev |
+| D-62 | Review default stacks: include meta/methodology/reviewing skills                                                                      | Ready for Dev |
+| D-63 | Add E2E tests to pre-commit hook                                                                                                      | Ready for Dev |
+| D-64 | Create CLI E2E testing skill + update `cli-framework-oclif-ink` skill                                                                 | Ready for Dev |
+| D-65 | Init/edit scope: global config detection + prompt (see [implementation plan](./D-65-init-edit-scope.md))                              | Ready for Dev |
+| D-66 | AI-assisted PR review: categorize diffs by type (mechanical vs logic vs test) for easier review                                       | Investigate   |
+| D-67 | Remove `aliases` from skill-rules.ts — derive display name mappings from a typed `Record<SkillId, SkillDisplayName>` map              | Investigate   |
+| D-69 | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                                      | Investigate   |
+| D-70 | `new skill` / `new agent` should update config.ts (Parts 1, 3 remaining; Parts 2, 4 done)                                             | Ready for Dev |
+| B-09 | `new skill` + `edit` installs custom skill as plugin source instead of local                                                          | Bug           |
+| R-01 | `loadStackById` should check default stacks internally — callers shouldn't need to know about both sources                            | Refactor      |
+| R-02 | Flatten nested for-loops in `default-stacks.test.ts` — parameterize per (stack, agent, category) instead of nesting inside `it.each`  | Refactor      |
+| R-03 | Simplify `config-generator.ts` — reduce nested loops, intermediate maps, and function complexity                                      | Refactor      |
 
 ---
 
@@ -96,7 +95,7 @@ Extend D-36's full-override behavior to support merging global and project-level
 
 - Merge is opt-in via `merge: true` in project config (preserves D-36 full-override default)
 - Exclusive category conflicts: project wins. Non-exclusive categories: union.
-- Agents are merged (union), with project overriding per-agent per-subcategory stack mappings
+- Agents are merged (union), with project overriding per-agent per-category stack mappings
 - `edit` always modifies the project-level config; global skills shown as inherited
 - `excludeGlobalSkills` deferred to a later phase for simplicity
 - Merge operates at the config level, not the matrix loading level
@@ -118,7 +117,7 @@ Rename the agent definition file from `agent.yaml` to `metadata.yaml` for consis
 **Priority:** Medium
 **See plan:** [D-38-remove-base-framework.md](./D-38-remove-base-framework.md)
 
-Remove the `web-base-framework` and `mobile-platform` stacks-only subcategory keys. Merge their skills into the `web-framework` / `mobile-framework` arrays. Change `web-framework` from fully exclusive to supporting compatible multi-selection (React + Remix, Vue + Nuxt, etc.).
+Remove the `web-base-framework` and `mobile-platform` stacks-only category keys. Merge their skills into the `web-framework` / `mobile-framework` arrays. Change `web-framework` from fully exclusive to supporting compatible multi-selection (React + Remix, Vue + Nuxt, etc.).
 
 When a user selects a meta-framework (Next.js, Remix, Nuxt), the corresponding base framework (React, Vue) should be recommended or auto-included. However, some base framework patterns conflict with meta-framework patterns (e.g., React Router vs Next.js App Router). A "slimmed down" version of the base framework skill may be needed for meta-framework contexts.
 
@@ -153,7 +152,7 @@ When a user selects a meta-framework (e.g., Next.js), automatically select the c
 - Block deselection of base framework while dependents exist
 - Add `requiredBy` visual indicator ("required by Next.js") to locked skills
 - Auto-select logic lives in `use-build-step-props.ts` hook (not the store)
-- Only same-subcategory auto-selection (no cross-category)
+- Only same-category auto-selection (no cross-category)
 - Expert mode bypasses auto-select and deselect blocking
 
 ---
@@ -172,7 +171,7 @@ Create a configuration **skill** (not a sub-agent) that gives Claude deep expert
 - Creates and updates `stacks.yaml` entries (agent definitions, skill assignments, preloaded flags)
 - Updates `skills-matrix.yaml` (adding/modifying categories, skill entries, dependency rules)
 - Updates `.claude-src/config.yaml` mappings (source paths, plugin settings, skill assignments)
-- Knows the valid `Subcategory` enum values (38) and enforces them
+- Knows the valid `Category` enum values (38) and enforces them
 - Understands skill relationships (`requires`, `compatibleWith`, `conflictsWith`, `requiresSetup`, `providesSetupFor`)
 - Validates configs against embedded schema knowledge
 
@@ -190,10 +189,10 @@ Create a configuration **skill** (not a sub-agent) that gives Claude deep expert
 
 - [ ] Can create a valid `metadata.yaml` from a skill name and category
 - [ ] Can register an existing skill interactively: read SKILL.md, ask clarifying questions, generate metadata.yaml, wire into config.yaml (replaces D-40)
-- [ ] Can add a new stack to `stacks.yaml` with correct agent/subcategory/skill structure
+- [ ] Can add a new stack to `stacks.yaml` with correct agent/category/skill structure
 - [ ] Can add a new category to `skills-matrix.yaml` with proper schema
 - [ ] Validates all output against schema rules (embedded knowledge)
-- [ ] Refuses to use bare subcategory names (enforces domain-prefix)
+- [ ] Refuses to use bare category names (enforces domain-prefix)
 - [ ] Loads correctly via Skill tool for both users and other agents
 
 ---
@@ -444,7 +443,7 @@ When the CLI's `ProjectConfig` shape changes between versions (new required fiel
 
 ---
 
-#### D-70: `new skill` / `new agent` should update config.ts + rename Subcategory → Category
+#### D-70: `new skill` / `new agent` should update config.ts (Parts 1, 3 remaining; Parts 2, 4 done)
 
 **Priority:** Medium
 
@@ -490,37 +489,37 @@ Test that `new skill` with custom domain/category produces correct config-types.
 
 - Custom skill ID appears in `SkillId` union under `// Custom`
 - Custom domain appears in `Domain` union under `// Custom`
-- Custom category appears in `Subcategory` union under `// Custom`
+- Custom category appears in `Category` union under `// Custom`
 - Marketplace values remain under `// Marketplace`
 
-**Part 4: Rename Subcategory → Category**
+**Part 4: Rename Category → Category** — DONE
 
-The type `Subcategory` in `config-types.ts` and `types-matrix.ts` is confusing — it represents the same concept as `category` in `metadata.yaml`. Rename throughout:
+The type `Category` in `config-types.ts` and `types-matrix.ts` is confusing — it represents the same concept as `category` in `metadata.yaml`. Rename throughout:
 
-- `Subcategory` type → `Category`
+- `Category` type → `Category`
 - `subcategorySchema` → `categorySchema`
 - `SUBCATEGORY_VALUES` → `CATEGORY_VALUES`
 - `SUBCATEGORY_VALUES_SET` → `CATEGORY_VALUES_SET`
 - `extensibleSubcategorySchema` → `extensibleCategorySchema`
 - `SubcategorySelections` → `CategorySelections`
 - `ResolvedSubcategorySkills` → `ResolvedCategorySkills`
-- `StackAgentConfig` key type: `Partial<Record<Subcategory, ...>>` → `Partial<Record<Category, ...>>`
-- All `typedEntries<Subcategory, ...>` / `typedKeys<Subcategory>` call sites
-- All test data using `Subcategory` type annotations
-- Update `config-types-writer.ts` to emit `export type Category = ...` instead of `export type Subcategory = ...`
+- `StackAgentConfig` key type: `Partial<Record<Category, ...>>` → `Partial<Record<Category, ...>>`
+- All `typedEntries<Category, ...>` / `typedKeys<Category>` call sites
+- All test data using `Category` type annotations
+- Update `config-types-writer.ts` to emit `export type Category = ...` instead of `export type Category = ...`
 
-This is a mechanical rename — grep for `Subcategory` (case-sensitive) across the entire codebase. The `CategoryPath` type alias can stay (it adds `"local"` and bare forms on top of `Category`).
+This is a mechanical rename — grep for `Category` (case-sensitive) across the entire codebase. The `CategoryPath` type alias can stay (it adds `"local"` and bare forms on top of `Category`).
 
 **Key files:**
 
-- `src/cli/types-matrix.ts` — `Subcategory` union definition, `SubcategorySelections`, `ResolvedSubcategorySkills`
+- `src/cli/types-matrix.ts` — `Category` union definition, `SubcategorySelections`, `ResolvedSubcategorySkills`
 - `src/cli/lib/schemas.ts` — `SUBCATEGORY_VALUES`, `subcategorySchema`, `extensibleSubcategorySchema`, `SUBCATEGORY_VALUES_SET`
-- `src/cli/lib/configuration/config-types-writer.ts` — generates `Subcategory` type, `extraCategories`/`extraDomains` support
+- `src/cli/lib/configuration/config-types-writer.ts` — generates `Category` type, `extraCategories`/`extraDomains` support
 - `src/cli/lib/configuration/config-writer.ts` — `generateConfigSource()` needs sectioned array serializer
 - `src/cli/commands/new/skill.ts` — `new skill` command
 - `src/cli/commands/new/agent.tsx` — `new agent` command
 - `src/cli/lib/configuration/config-loader.ts` — `loadConfig()` for reading existing config
-- ~50+ files referencing `Subcategory` type
+- ~50+ files referencing `Category` type
 
 ---
 

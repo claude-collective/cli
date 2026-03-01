@@ -14,7 +14,7 @@ import type {
   ResolvedSkill,
   SkillDisplayName,
   SkillId,
-  Subcategory,
+  Category,
 } from "../../types";
 import { createMockSkill, createMockMatrix } from "../__tests__/helpers";
 
@@ -330,7 +330,7 @@ describe("validateSelection", () => {
             required: false,
             order: 1,
           },
-        } as Record<Subcategory, CategoryDefinition>,
+        } as Record<Category, CategoryDefinition>,
       },
     );
 
@@ -423,7 +423,7 @@ describe("Empty skill selection (P1-21)", () => {
               required: true,
               order: 1,
             },
-          } as Record<Subcategory, CategoryDefinition>,
+          } as Record<Category, CategoryDefinition>,
         },
       );
 
@@ -1218,7 +1218,7 @@ describe("getAvailableSkills edge cases", () => {
             required: false,
             order: 1,
           },
-        } as Record<Subcategory, CategoryDefinition>,
+        } as Record<Category, CategoryDefinition>,
       },
     );
 
@@ -1245,7 +1245,7 @@ describe("getAvailableSkills edge cases", () => {
           required: false,
           order: 1,
         },
-      } as Record<Subcategory, CategoryDefinition>,
+      } as Record<Category, CategoryDefinition>,
     });
 
     const result = getAvailableSkills("api-performance", [], matrix);
@@ -1279,7 +1279,7 @@ describe("getAvailableSkills edge cases", () => {
             required: false,
             order: 1,
           },
-        } as Record<Subcategory, CategoryDefinition>,
+        } as Record<Category, CategoryDefinition>,
       },
     );
 
@@ -1308,7 +1308,7 @@ describe("getAvailableSkills edge cases", () => {
             required: false,
             order: 1,
           },
-        } as Record<Subcategory, CategoryDefinition>,
+        } as Record<Category, CategoryDefinition>,
       },
     );
 
@@ -1339,7 +1339,7 @@ describe("getAvailableSkills edge cases", () => {
             required: false,
             order: 1,
           },
-        } as Record<Subcategory, CategoryDefinition>,
+        } as Record<Category, CategoryDefinition>,
       },
     );
 
@@ -1369,7 +1369,7 @@ describe("getAvailableSkills edge cases", () => {
             required: false,
             order: 1,
           },
-        } as Record<Subcategory, CategoryDefinition>,
+        } as Record<Category, CategoryDefinition>,
       },
     );
 
@@ -1400,7 +1400,7 @@ describe("getAvailableSkills edge cases", () => {
             required: false,
             order: 1,
           },
-        } as Record<Subcategory, CategoryDefinition>,
+        } as Record<Category, CategoryDefinition>,
       },
     );
 
@@ -1431,7 +1431,7 @@ describe("getAvailableSkills edge cases", () => {
             required: false,
             order: 1,
           },
-        } as Record<Subcategory, CategoryDefinition>,
+        } as Record<Category, CategoryDefinition>,
       },
     );
 
@@ -1475,7 +1475,7 @@ describe("validateSelection edge cases", () => {
             required: false,
             order: 1,
           },
-        } as Record<Subcategory, CategoryDefinition>,
+        } as Record<Category, CategoryDefinition>,
       },
     );
 

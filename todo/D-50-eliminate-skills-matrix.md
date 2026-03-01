@@ -11,7 +11,7 @@
 1. **Should `displayName`, `icon`, `order`, `required`, and `description` be added to individual `metadata.yaml` files?**
    These fields currently ONLY exist in `skills-matrix.yaml` category definitions. Options:
    - **(a)** Add them to metadata.yaml (per-skill). Derive from the first skill encountered in each category, or require consistency across skills in the same category. Adds 5 fields to every metadata.yaml.
-   - **(b)** Provide sensible defaults when synthesized from metadata alone. E.g., `displayName` = title-cased subcategory suffix, `order` = 99 (end), `required` = false, `description` = empty. Custom marketplaces get functional-but-generic category entries.
+   - **(b)** Provide sensible defaults when synthesized from metadata alone. E.g., `displayName` = title-cased category suffix, `order` = 99 (end), `required` = false, `description` = empty. Custom marketplaces get functional-but-generic category entries.
    - **(c)** Move category-level metadata to a lightweight `category.yaml` file per category directory (not per skill), separate from skills-matrix.yaml.
    - **Recommendation:** Option (b) for Phase 1 (unblock custom marketplaces), option (a) or (c) later as refinement.
 
@@ -43,7 +43,7 @@ The full pipeline is orchestrated by `loadSkillsMatrixFromSource()` in `src/cli/
 
 - `loadSkillsMatrix(configPath)` reads and Zod-validates the YAML
 - Returns `SkillsMatrixConfig { version, categories, relationships, skillAliases }`
-- Categories is a `Partial<Record<Subcategory, CategoryDefinition>>` with 36 entries
+- Categories is a `Partial<Record<Category, CategoryDefinition>>` with 36 entries
 
 **Step 2: Merge CLI + source matrices** (`source-loader.ts:186-218`)
 
@@ -77,7 +77,7 @@ The full pipeline is orchestrated by `loadSkillsMatrixFromSource()` in `src/cli/
 
 ### The Core Problem
 
-When a custom marketplace provides skills without a `skills-matrix.yaml`, the pipeline falls back to CLI-only categories (`source-loader.ts:216-218`). Any skill whose `category` doesn't match a built-in subcategory will:
+When a custom marketplace provides skills without a `skills-matrix.yaml`, the pipeline falls back to CLI-only categories (`source-loader.ts:216-218`). Any skill whose `category` doesn't match a built-in category will:
 
 1. Fail the health check ("Skill X references category Y which does not exist in the matrix")
 2. Be invisible in the wizard because `buildCategoriesForDomain()` (`build-step-logic.ts:128-133`) only iterates `matrix.categories`
@@ -112,13 +112,13 @@ All consumers of `matrix.categories` that would be affected:
 | `stack-selection.tsx`     | 55     | `populateFromSkillIds()` needs category -> domain                       |
 | `wizard-store.ts`         | 25     | `getAllDomainsFromCategories()` derives domains                         |
 | `wizard-store.ts`         | 82-103 | `resolveSkillForPopulation()` looks up domain by category               |
-| `wizard-store.ts`         | 456    | `populateFromStack()` resolves subcategory -> domain                    |
+| `wizard-store.ts`         | 456    | `populateFromStack()` resolves category -> domain                       |
 | `matrix-resolver.ts`      | 420    | `validateExclusivity()` checks `category.exclusive`                     |
 | `matrix-health-check.ts`  | 33-57  | Validates categories have domains and skills reference valid categories |
 | `matrix-loader.ts`        | 270    | Sets `categories: matrix.categories` on MergedSkillsMatrix              |
 | `source-loader.ts`        | 190    | Merges CLI + source categories                                          |
 | `helpers.ts`              | 865    | Test helper category lookup                                             |
-| `utils.ts`                | 37-47  | `getDomainsFromStack()` resolves subcategory -> domain                  |
+| `utils.ts`                | 37-47  | `getDomainsFromStack()` resolves category -> domain                     |
 | `use-build-step-props.ts` | 29     | Resolves category from subcategoryId                                    |
 
 ---
@@ -134,17 +134,17 @@ After building resolved skills, scan for categories referenced by skills that DO
 ```typescript
 // After resolving all skills, synthesize missing categories
 for (const skill of skills) {
-  const subcategory = skill.category as Subcategory;
-  if (!matrix.categories[subcategory]) {
-    synthesizedCategories[subcategory] = synthesizeCategoryFromSkill(skill);
+  const category = skill.category as Category;
+  if (!matrix.categories[category]) {
+    synthesizedCategories[category] = synthesizeCategoryFromSkill(skill);
   }
 }
 ```
 
 The synthesized category would use:
 
-- `id`: the subcategory key (from `skill.category`)
-- `displayName`: derive from subcategory key (e.g., `"devops-deployment"` -> `"Deployment"`)
+- `id`: the category key (from `skill.category`)
+- `displayName`: derive from category key (e.g., `"devops-deployment"` -> `"Deployment"`)
 - `description`: empty string or generic
 - `domain`: from `skill.domain` if present, otherwise infer from category prefix (e.g., `"web-*"` -> `"web"`, `"api-*"` -> `"api"`). Fall back to `"shared"` if no match.
 - `exclusive`: from `skill.categoryExclusive` (first skill in category sets it, or majority vote)
@@ -171,9 +171,9 @@ When a skill has no explicit `domain` in metadata.yaml and the category is not i
 anything else -> "shared" (safe fallback)
 ```
 
-This mirrors the existing pattern where subcategory keys are `{domain}-{name}` (e.g., `web-framework`, `api-database`).
+This mirrors the existing pattern where category keys are `{domain}-{name}` (e.g., `web-framework`, `api-database`).
 
-### 3. DisplayName derivation from subcategory key
+### 3. DisplayName derivation from category key
 
 When synthesizing a category without a `displayName`:
 
@@ -221,7 +221,7 @@ Currently this function only extends Zod schemas. It should be left as-is -- cat
 
 1. `discoverAndExtendFromSource()` -- extends Zod schemas so custom values pass validation
 2. `extractAllSkills()` -- reads metadata.yaml (now accepted by extended schemas)
-3. `mergeMatrixWithSkills()` -- synthesizes categories for any skill with unknown subcategory
+3. `mergeMatrixWithSkills()` -- synthesizes categories for any skill with unknown category
 
 ### 7. Handle `exclusive` conflict for multiple skills in same synthesized category
 
@@ -293,15 +293,15 @@ function deriveCategoryDisplayName(category: string): string {
 }
 
 function synthesizeCategoryFromSkill(
-  subcategory: Subcategory,
+  category: Category,
   skill: ExtractedSkillMetadata,
 ): CategoryDefinition {
   const SYNTHESIZED_ORDER = 99;
   return {
-    id: subcategory,
-    displayName: deriveCategoryDisplayName(subcategory),
+    id: category,
+    displayName: deriveCategoryDisplayName(category),
     description: "",
-    domain: skill.domain ?? inferDomainFromCategoryPrefix(subcategory),
+    domain: skill.domain ?? inferDomainFromCategoryPrefix(category),
     exclusive: skill.categoryExclusive,
     required: false,
     order: SYNTHESIZED_ORDER,
@@ -326,10 +326,10 @@ export async function mergeMatrixWithSkills(
   // Auto-synthesize categories for skills whose category isn't in the matrix
   const synthesizedCategories: CategoryMap = {};
   for (const skill of skills) {
-    const subcategory = skill.category as Subcategory;
-    if (!matrix.categories[subcategory] && !synthesizedCategories[subcategory]) {
-      synthesizedCategories[subcategory] = synthesizeCategoryFromSkill(subcategory, skill);
-      verbose(`Synthesized category '${subcategory}' from skill '${skill.id}'`);
+    const category = skill.category as Category;
+    if (!matrix.categories[category] && !synthesizedCategories[category]) {
+      synthesizedCategories[category] = synthesizeCategoryFromSkill(category, skill);
+      verbose(`Synthesized category '${category}' from skill '${skill.id}'`);
     }
   }
 
@@ -368,9 +368,9 @@ function mergeLocalSkillsIntoMatrix(
     // ... existing skill merge logic ...
 
     // Synthesize category if missing
-    const subcategory = category as Subcategory;
-    if (!matrix.categories[subcategory]) {
-      matrix.categories[subcategory] = synthesizeCategoryFromMetadata(subcategory, metadata);
+    const category = category as Category;
+    if (!matrix.categories[category]) {
+      matrix.categories[category] = synthesizeCategoryFromMetadata(category, metadata);
     }
   }
   return matrix;

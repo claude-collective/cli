@@ -3,14 +3,14 @@
 Skills are organized as directories following the 3-part naming convention:
 
 ```
-.claude/skills/{domain}-{subcategory}-{technology}/
+.claude/skills/{domain}-{category}-{technology}/
 ├── SKILL.md          # Main documentation (required)
 ├── metadata.yaml     # Metadata with category, version, tags (required)
 ├── reference.md      # Quick reference (optional)
 └── examples/         # Example files, separate per topic (optional)
 ```
 
-**3-Part Naming Pattern:** `{domain}-{subcategory}-{technology}`
+**3-Part Naming Pattern:** `{domain}-{category}-{technology}`
 
 **Domains:** `web` (frontend), `api` (backend), `cli` (command-line), `meta` (cross-cutting)
 
@@ -225,10 +225,10 @@ Use WebSearch and WebFetch to gather:
 
 **Step 4: Generate Skill Directory**
 
-Create skill at `.claude/skills/{domain}-{subcategory}-{technology}/`:
+Create skill at `.claude/skills/{domain}-{category}-{technology}/`:
 
 ```
-{domain}-{subcategory}-{technology}/
+{domain}-{category}-{technology}/
 ├── SKILL.md          # Main documentation
 ├── metadata.yaml     # Metadata
 ├── reference.md      # Quick reference (optional)
@@ -295,7 +295,7 @@ Run through the validation checklists below based on mode.
 <skill_output>
 **Skill Created:**
 
-- `.claude/skills/{domain}-{subcategory}-{technology}/`
+- `.claude/skills/{domain}-{category}-{technology}/`
 
 **Files:**
 
@@ -739,9 +739,9 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 ```xml
 <creation_validation_checklist>
 **File Location:**
-- [ ] Directory created at `.claude/skills/{domain}-{subcategory}-{technology}/`
+- [ ] Directory created at `.claude/skills/{domain}-{category}-{technology}/`
 - [ ] Contains `SKILL.md`, `metadata.yaml`, and optionally `reference.md`
-- [ ] Directory name uses kebab-case naming pattern: `{domain}-{subcategory}-{technology}`
+- [ ] Directory name uses kebab-case naming pattern: `{domain}-{category}-{technology}`
 
 **prompt-bible Compliance (REQUIRED):**
 - [ ] Has `<critical_requirements>` section at TOP with CLAUDE.md reference + domain-specific rules
@@ -1079,7 +1079,7 @@ For complex skill creation/improvement tasks spanning multiple conversation turn
 
 **8. File Location**
 
-✅ Create in `.claude/skills/{domain}-{subcategory}-{technology}/` with SKILL.md + metadata.yaml
+✅ Create in `.claude/skills/{domain}-{category}-{technology}/` with SKILL.md + metadata.yaml
 ❌ Avoid single-file skills or incorrect directory paths
 
 **9. Example Placement**

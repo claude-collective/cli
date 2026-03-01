@@ -90,7 +90,7 @@ src/cli/
     index.ts                # Re-exports all type modules
     agents.ts               # Agent types (AgentName, AgentConfig, etc.)
     config.ts               # Config types (ProjectConfig, CompileConfig)
-    matrix.ts               # Matrix types (Domain, Subcategory, ResolvedSkill, etc.)
+    matrix.ts               # Matrix types (Domain, Category, ResolvedSkill, etc.)
     plugins.ts              # Plugin types (PluginManifest, Marketplace)
     skills.ts               # Skill types (SkillId, SkillFrontmatter, etc.)
     stacks.ts               # Stack types (Stack, StackAgentConfig)

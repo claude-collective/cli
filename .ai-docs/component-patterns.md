@@ -51,7 +51,7 @@ src/cli/components/
     step-confirm.tsx         # Confirmation step
     step-settings.tsx        # Settings overlay
     step-refine.tsx          # Refine sub-step component
-    category-grid.tsx        # Subcategory grid layout
+    category-grid.tsx        # Category grid layout
     checkbox-grid.tsx        # Skill toggle grid
     domain-selection.tsx     # Domain tab selector
     section-progress.tsx     # Category completion progress
@@ -147,7 +147,7 @@ type CategoryOption = {
 };
 
 type CategoryRow = {
-  id: Subcategory;
+  id: Category;
   displayName: string;
   required: boolean;
   exclusive: boolean;
