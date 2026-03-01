@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.55.0] - 2026-03-01
+
+**Remove `--dry-run` flag**
+
+- Removed `--dry-run` from all commands — wizard confirm step already previews, all operations are local/reversible
+
+See [changelogs/0.55.0.md](./changelogs/0.55.0.md) for full details.
+
+---
+
 ## [0.54.0] - 2026-03-01
 
 **Config file renames, domain ordering fix**
