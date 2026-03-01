@@ -2,6 +2,7 @@ export {
   type InstallMode,
   type InstallScope,
   type Installation,
+  detectGlobalInstallation,
   detectInstallation,
   detectProjectInstallation,
   getInstallationOrThrow,

@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Flags } from "@oclif/core";
 import { render, Box, Text, useApp, useInput } from "ink";
 import os from "os";
+import path from "path";
 
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
@@ -14,6 +15,7 @@ import {
 import {
   installLocal,
   installPluginConfig,
+  detectGlobalInstallation,
   detectProjectInstallation,
 } from "../lib/installation/index.js";
 import { checkPermissions } from "../lib/permission-checker.js";
@@ -26,6 +28,7 @@ import {
 } from "../utils/exec.js";
 import {
   ASCII_LOGO,
+  CLAUDE_SRC_DIR,
   CLI_BIN_NAME,
   CLI_COLORS,
   DEFAULT_BRANDING,
@@ -106,6 +109,69 @@ const Dashboard: React.FC<DashboardProps> = ({
         <Text> </Text>
         {DASHBOARD_OPTIONS.map((option, index) => (
           <Box key={option.command} marginRight={1}>
+            <Text
+              color={index === focusIndex ? CLI_COLORS.FOCUS : undefined}
+              bold={index === focusIndex}
+            >
+              [{option.label}]
+            </Text>
+          </Box>
+        ))}
+      </Box>
+      <Text dimColor> Use arrow keys to select, Enter to confirm, Esc to exit</Text>
+    </Box>
+  );
+};
+
+type GlobalConfigChoice = "edit-global" | "create-project";
+
+const GLOBAL_CONFIG_OPTIONS: { label: string; choice: GlobalConfigChoice }[] = [
+  { label: "Edit global installation", choice: "edit-global" },
+  { label: "Create new project installation", choice: "create-project" },
+];
+
+type GlobalConfigPromptProps = {
+  globalConfigDir: string;
+  onSelect: (choice: GlobalConfigChoice) => void;
+  onCancel: () => void;
+};
+
+const GlobalConfigPrompt: React.FC<GlobalConfigPromptProps> = ({
+  globalConfigDir,
+  onSelect,
+  onCancel,
+}) => {
+  const { exit } = useApp();
+  const [focusIndex, setFocusIndex] = useState(0);
+
+  useInput((_input, key) => {
+    if (key.escape) {
+      onCancel();
+      exit();
+      return;
+    }
+    if (key.return) {
+      onSelect(GLOBAL_CONFIG_OPTIONS[focusIndex].choice);
+      exit();
+      return;
+    }
+    if (key.leftArrow) {
+      setFocusIndex((i) => (i > 0 ? i - 1 : GLOBAL_CONFIG_OPTIONS.length - 1));
+    }
+    if (key.rightArrow) {
+      setFocusIndex((i) => (i < GLOBAL_CONFIG_OPTIONS.length - 1 ? i + 1 : 0));
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      <Text>A global installation was found at {globalConfigDir}</Text>
+      <Text>What would you like to do?</Text>
+      <Text> </Text>
+      <Box>
+        <Text> </Text>
+        {GLOBAL_CONFIG_OPTIONS.map((option, index) => (
+          <Box key={option.choice} marginRight={1}>
             <Text
               color={index === focusIndex ? CLI_COLORS.FOCUS : undefined}
               bold={index === focusIndex}
@@ -249,6 +315,48 @@ export default class Init extends BaseCommand {
         await this.config.runCommand(selectedCommand);
       }
       return;
+    }
+
+    // No project config exists and not --global: check if a global installation exists
+    if (!individualPluginsExist && !existingInstallation && !flags.global) {
+      const globalInstallation = await detectGlobalInstallation();
+      if (globalInstallation) {
+        const globalConfigDir = path.join(os.homedir(), CLAUDE_SRC_DIR);
+
+        // Non-interactive: skip prompt and fall through to wizard
+        if (process.stdin.isTTY) {
+          let globalChoice: GlobalConfigChoice | null = null;
+
+          const { waitUntilExit: waitForPrompt } = render(
+            <GlobalConfigPrompt
+              globalConfigDir={globalConfigDir}
+              onSelect={(choice) => {
+                globalChoice = choice;
+              }}
+              onCancel={() => {
+                globalChoice = null;
+              }}
+            />,
+          );
+
+          await waitForPrompt();
+
+          if (globalChoice === "edit-global") {
+            const selectedCommand = await showDashboard(os.homedir(), (msg) => this.log(msg));
+            if (selectedCommand) {
+              await this.config.runCommand(selectedCommand);
+            }
+            return;
+          }
+
+          // User cancelled (Esc)
+          if (globalChoice === null) {
+            return;
+          }
+
+          // "create-project" falls through to wizard below
+        }
+      }
     }
 
     enableBuffering();

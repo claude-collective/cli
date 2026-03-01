@@ -60,7 +60,7 @@ export async function detectProjectInstallation(projectDir: string): Promise<Ins
 }
 
 /** Detect installation in the home directory (global scope). */
-async function detectGlobalInstallation(): Promise<Installation | null> {
+export async function detectGlobalInstallation(): Promise<Installation | null> {
   const homeDir = os.homedir();
   const configPath = path.join(homeDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
 
