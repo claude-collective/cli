@@ -11,8 +11,8 @@ import {
   cleanupTempDir,
   readTestTsConfig,
 } from "../__tests__/helpers";
-import { DEFAULT_PLUGIN_NAME } from "../../consts";
-import { generateTsConfigSource } from "../configuration/ts-config-writer";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, DEFAULT_PLUGIN_NAME, STANDARD_FILES } from "../../consts";
+import { generateConfigSource } from "../configuration/config-writer";
 
 // Mock heavy dependencies that involve file system operations outside our temp dir
 vi.mock("../skills/skill-copier", () => ({
@@ -89,9 +89,9 @@ describe("local-installer", () => {
 
       // Verify directories were created
       const { fileExists } = await import("../../utils/fs");
-      expect(await fileExists(path.join(tempDir, ".claude", "skills"))).toBe(true);
-      expect(await fileExists(path.join(tempDir, ".claude", "agents"))).toBe(true);
-      expect(await fileExists(path.join(tempDir, ".claude-src"))).toBe(true);
+      expect(await fileExists(path.join(tempDir, CLAUDE_DIR, "skills"))).toBe(true);
+      expect(await fileExists(path.join(tempDir, CLAUDE_DIR, "agents"))).toBe(true);
+      expect(await fileExists(path.join(tempDir, CLAUDE_SRC_DIR))).toBe(true);
     });
 
     it("should write config to .claude-src/config.ts", async () => {
@@ -106,7 +106,7 @@ describe("local-installer", () => {
       });
 
       // Verify config was written
-      const configPath = path.join(tempDir, ".claude-src", "config.ts");
+      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<ProjectConfig>(configPath);
 
       expect(config.name).toBe(DEFAULT_PLUGIN_NAME);
@@ -125,7 +125,7 @@ describe("local-installer", () => {
         sourceFlag: "github:my-org/skills",
       });
 
-      const configPath = path.join(tempDir, ".claude-src", "config.ts");
+      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<ProjectConfig>(configPath);
 
       expect(config.source).toBe("github:my-org/skills");
@@ -147,7 +147,7 @@ describe("local-installer", () => {
         projectDir: tempDir,
       });
 
-      const configPath = path.join(tempDir, ".claude-src", "config.ts");
+      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<ProjectConfig>(configPath);
 
       expect(config.source).toBe("github:default/source");
@@ -166,7 +166,7 @@ describe("local-installer", () => {
         projectDir: tempDir,
       });
 
-      const configPath = path.join(tempDir, ".claude-src", "config.ts");
+      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const config = await readTestTsConfig<ProjectConfig>(configPath);
 
       expect(config.marketplace).toBe("my-marketplace");
@@ -185,21 +185,21 @@ describe("local-installer", () => {
 
       expect(result.copiedSkills).toBeDefined();
       expect(result.config).toBeDefined();
-      expect(result.configPath).toContain(".claude-src/config.ts");
+      expect(result.configPath).toContain(path.join(CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS));
       expect(result.compiledAgents).toBeDefined();
       expect(typeof result.wasMerged).toBe("boolean");
-      expect(result.skillsDir).toContain(".claude/skills");
-      expect(result.agentsDir).toContain(".claude/agents");
+      expect(result.skillsDir).toContain(path.join(CLAUDE_DIR, "skills"));
+      expect(result.agentsDir).toContain(path.join(CLAUDE_DIR, "agents"));
     });
 
     it("should merge with existing config when present", async () => {
       // Write an existing config in TS format
-      const configDir = path.join(tempDir, ".claude-src");
+      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       // Boundary cast: test provides a synthetic agent name not in the AgentName union
       await writeFile(
-        path.join(configDir, "config.ts"),
-        generateTsConfigSource({
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
+        generateConfigSource({
           name: "existing-project",
           agents: ["existing-agent" as AgentName],
           skills: [],
@@ -330,7 +330,7 @@ describe("local-installer", () => {
       );
     });
 
-    it("should write valid TS config with satisfies ProjectConfig", async () => {
+    it("should write valid config with satisfies ProjectConfig", async () => {
       const matrix = TEST_MATRICES.empty;
       const wizardResult = buildWizardResult(["meta-test-skill"]);
       const sourceResult = buildSourceResult(matrix, tempDir);
@@ -341,7 +341,7 @@ describe("local-installer", () => {
         projectDir: tempDir,
       });
 
-      const configPath = path.join(tempDir, ".claude-src", "config.ts");
+      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const configContent = await readFile(configPath, "utf-8");
 
       // Should use plain object export with satisfies
@@ -416,7 +416,7 @@ describe("local-installer", () => {
       expect(frameworkAssignments![0].preloaded).toBe(true);
 
       // Also verify it's written correctly to the config file
-      const configPath = path.join(tempDir, ".claude-src", "config.ts");
+      const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const parsedConfig = await readTestTsConfig<ProjectConfig>(configPath);
       // compactStackForYaml converts preloaded: true to { id, preloaded: true } object form
       const parsedWebDev = parsedConfig.stack?.["web-developer"] as Record<string, unknown>;

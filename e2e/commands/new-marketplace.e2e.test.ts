@@ -210,6 +210,24 @@ describe("new marketplace command", () => {
     expect(content).toContain('"custom": true');
   });
 
+  it("should error with a numbers-only marketplace name", async () => {
+    tempDir = await createTempDir();
+
+    const { exitCode, combined } = await runCLI(["new", "marketplace", "12345"], tempDir);
+
+    expect(exitCode).toBe(EXIT_CODES.INVALID_ARGS);
+    expect(combined).toContain("kebab-case");
+  });
+
+  it("should accept a single character marketplace name", async () => {
+    tempDir = await createTempDir();
+
+    const { exitCode, stdout } = await runCLI(["new", "marketplace", "a"], tempDir);
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(stdout).toContain("Marketplace created successfully");
+  });
+
   it("should produce a valid skill-rules.ts with dummy skill alias", async () => {
     tempDir = await createTempDir();
     const marketplaceName = "my-rules-test";

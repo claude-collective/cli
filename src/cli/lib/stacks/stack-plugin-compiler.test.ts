@@ -669,7 +669,7 @@ describe("stack-plugin-compiler", () => {
   });
 
   describe("compileStackPlugin - remote source (projectRoot differs from CLI)", () => {
-    async function createStacksTs(dir: string, stackId: string, agentIds: string[]) {
+    async function createStacks(dir: string, stackId: string, agentIds: string[]) {
       const agents: Record<string, Record<string, never>> = {};
       for (const a of agentIds) {
         agents[a] = {};
@@ -701,7 +701,7 @@ describe("stack-plugin-compiler", () => {
 
       // Create stacks.ts in projectRoot (simulates a remote/private source)
       // No skills matrix in projectRoot — falls back to CLI matrix
-      await createStacksTs(projectRoot, stackId, ["web-developer"]);
+      await createStacks(projectRoot, stackId, ["web-developer"]);
 
       // No stack option passed — must load from projectRoot's stacks.ts
       const result = await compileStackPlugin({
@@ -724,7 +724,7 @@ describe("stack-plugin-compiler", () => {
       const stackId = uniqueStackId("matrix-fallback-stack");
 
       // Create stacks.ts in projectRoot but no skill-categories.ts
-      await createStacksTs(projectRoot, stackId, ["web-developer"]);
+      await createStacks(projectRoot, stackId, ["web-developer"]);
 
       // Should succeed using CLI's skills matrix as fallback
       const result = await compileStackPlugin({

@@ -1,3 +1,4 @@
+import path from "path";
 import { describe, it, expect, vi } from "vitest";
 import {
   getPluginInfo,
@@ -8,7 +9,13 @@ import {
   type InstallationInfo,
 } from "./plugin-info";
 import type { Installation } from "../installation";
-import { DEFAULT_PLUGIN_NAME } from "../../consts";
+import {
+  CLAUDE_DIR,
+  CLAUDE_SRC_DIR,
+  DEFAULT_PLUGIN_NAME,
+  PLUGINS_SUBDIR,
+  STANDARD_FILES,
+} from "../../consts";
 
 vi.mock("fs/promises", () => ({
   readdir: vi.fn(),
@@ -60,7 +67,8 @@ describe("plugin-info", () => {
 
     it("should return plugin info with skill count from plugin names", async () => {
       mockedListPluginNames.mockResolvedValue(["react@my-marketplace", "zustand@my-marketplace"]);
-      mockedGetProjectPluginsDir.mockReturnValue("/project/.claude/plugins");
+      const pluginsDir = path.join("/project", CLAUDE_DIR, PLUGINS_SUBDIR);
+      mockedGetProjectPluginsDir.mockReturnValue(pluginsDir);
 
       const result = await getPluginInfo();
 
@@ -69,7 +77,7 @@ describe("plugin-info", () => {
       expect(result!.version).toBe("0.0.0");
       expect(result!.skillCount).toBe(2);
       expect(result!.agentCount).toBe(0);
-      expect(result!.path).toBe("/project/.claude/plugins");
+      expect(result!.path).toBe(pluginsDir);
     });
 
     it("should return null when listPluginNames throws", async () => {
@@ -82,24 +90,26 @@ describe("plugin-info", () => {
 
     it("should accept custom projectDir", async () => {
       mockedListPluginNames.mockResolvedValue(["react@marketplace"]);
-      mockedGetProjectPluginsDir.mockReturnValue("/custom/.claude/plugins");
+      const customPluginsDir = path.join("/custom", CLAUDE_DIR, PLUGINS_SUBDIR);
+      mockedGetProjectPluginsDir.mockReturnValue(customPluginsDir);
 
       const result = await getPluginInfo("/custom");
 
       expect(mockedListPluginNames).toHaveBeenCalledWith("/custom");
       expect(result).not.toBeNull();
-      expect(result!.path).toBe("/custom/.claude/plugins");
+      expect(result!.path).toBe(customPluginsDir);
     });
   });
 
   describe("formatPluginDisplay", () => {
     it("should format plugin info correctly", () => {
+      const pluginsDir = path.join("/project", CLAUDE_DIR, PLUGINS_SUBDIR);
       const info: PluginInfo = {
         name: "my-plugin",
         version: "1.2.3",
         skillCount: 5,
         agentCount: 3,
-        path: "/project/.claude/plugins",
+        path: pluginsDir,
       };
 
       const result = formatPluginDisplay(info);
@@ -107,7 +117,7 @@ describe("plugin-info", () => {
       expect(result).toContain("Plugin: my-plugin v1.2.3");
       expect(result).toContain("Skills: 5");
       expect(result).toContain("Agents: 3");
-      expect(result).toContain("Path:   /project/.claude/plugins");
+      expect(result).toContain(`Path:   ${pluginsDir}`);
     });
 
     it("should format info with zero counts", () => {
@@ -116,7 +126,7 @@ describe("plugin-info", () => {
         version: "0.0.0",
         skillCount: 0,
         agentCount: 0,
-        path: "/project/.claude/plugins",
+        path: path.join("/project", CLAUDE_DIR, PLUGINS_SUBDIR),
       };
 
       const result = formatPluginDisplay(info);
@@ -136,12 +146,15 @@ describe("plugin-info", () => {
     });
 
     it("should return local installation info", async () => {
+      const configPath = path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      const agentsDir = path.join("/project", CLAUDE_DIR, "agents");
+      const skillsDir = path.join("/project", CLAUDE_DIR, "skills");
       const installation: Installation = {
         mode: "local",
         scope: "project",
-        configPath: "/project/.claude-src/config.ts",
-        agentsDir: "/project/.claude/agents",
-        skillsDir: "/project/.claude/skills",
+        configPath,
+        agentsDir,
+        skillsDir,
         projectDir: "/project",
       };
 
@@ -170,7 +183,7 @@ describe("plugin-info", () => {
           agents: ["web-developer"],
           skills: [],
         },
-        configPath: "/project/.claude-src/config.ts",
+        configPath,
       });
 
       const result = await getInstallationInfo();
@@ -181,18 +194,18 @@ describe("plugin-info", () => {
       expect(result!.version).toBe("local");
       expect(result!.skillCount).toBe(2);
       expect(result!.agentCount).toBe(1);
-      expect(result!.configPath).toBe("/project/.claude-src/config.ts");
-      expect(result!.agentsDir).toBe("/project/.claude/agents");
-      expect(result!.skillsDir).toBe("/project/.claude/skills");
+      expect(result!.configPath).toBe(configPath);
+      expect(result!.agentsDir).toBe(agentsDir);
+      expect(result!.skillsDir).toBe(skillsDir);
     });
 
     it("should return plugin installation info", async () => {
       const installation: Installation = {
         mode: "plugin",
         scope: "project",
-        configPath: "/project/.claude-src/config.ts",
-        agentsDir: "/project/.claude/agents",
-        skillsDir: "/project/.claude/plugins",
+        configPath: path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
+        agentsDir: path.join("/project", CLAUDE_DIR, "agents"),
+        skillsDir: path.join("/project", CLAUDE_DIR, PLUGINS_SUBDIR),
         projectDir: "/project",
       };
 
@@ -206,7 +219,7 @@ describe("plugin-info", () => {
           skills: [],
           installMode: "plugin",
         },
-        configPath: "/project/.claude-src/config.ts",
+        configPath: path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
       });
 
       // Plugin mode uses discoverAllPluginSkills instead of readdir
@@ -240,12 +253,13 @@ describe("plugin-info", () => {
     });
 
     it("should use default name when local config has no name", async () => {
+      const mockConfigPath = path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const installation: Installation = {
         mode: "local",
         scope: "project",
-        configPath: "/project/.claude-src/config.ts",
-        agentsDir: "/project/.claude/agents",
-        skillsDir: "/project/.claude/skills",
+        configPath: mockConfigPath,
+        agentsDir: path.join("/project", CLAUDE_DIR, "agents"),
+        skillsDir: path.join("/project", CLAUDE_DIR, "skills"),
         projectDir: "/project",
       };
 
@@ -257,7 +271,7 @@ describe("plugin-info", () => {
           agents: [],
           skills: [],
         },
-        configPath: "/project/.claude-src/config.ts",
+        configPath: mockConfigPath,
       });
 
       const result = await getInstallationInfo();
@@ -270,9 +284,9 @@ describe("plugin-info", () => {
       const installation: Installation = {
         mode: "local",
         scope: "project",
-        configPath: "/project/.claude-src/config.ts",
-        agentsDir: "/project/.claude/agents",
-        skillsDir: "/project/.claude/skills",
+        configPath: path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
+        agentsDir: path.join("/project", CLAUDE_DIR, "agents"),
+        skillsDir: path.join("/project", CLAUDE_DIR, "skills"),
         projectDir: "/project",
       };
 
@@ -288,12 +302,13 @@ describe("plugin-info", () => {
     });
 
     it("should handle readdir errors gracefully for skills", async () => {
+      const mockConfigPath = path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const installation: Installation = {
         mode: "local",
         scope: "project",
-        configPath: "/project/.claude-src/config.ts",
-        agentsDir: "/project/.claude/agents",
-        skillsDir: "/project/.claude/skills",
+        configPath: mockConfigPath,
+        agentsDir: path.join("/project", CLAUDE_DIR, "agents"),
+        skillsDir: path.join("/project", CLAUDE_DIR, "skills"),
         projectDir: "/project",
       };
 
@@ -301,7 +316,7 @@ describe("plugin-info", () => {
       mockedDirectoryExists.mockResolvedValue(true);
       mockedLoadProjectConfig.mockResolvedValue({
         config: { name: "test", agents: [], skills: [] },
-        configPath: "/project/.claude-src/config.ts",
+        configPath: mockConfigPath,
       });
 
       mockedReaddir.mockRejectedValue(new Error("EACCES permission denied"));
@@ -316,15 +331,17 @@ describe("plugin-info", () => {
 
   describe("formatInstallationDisplay", () => {
     it("should format local installation info", () => {
+      const configPath = path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      const agentsDir = path.join("/project", CLAUDE_DIR, "agents");
       const info: InstallationInfo = {
         mode: "local",
         name: "my-project",
         version: "local",
         skillCount: 5,
         agentCount: 3,
-        configPath: "/project/.claude-src/config.ts",
-        agentsDir: "/project/.claude/agents",
-        skillsDir: "/project/.claude/skills",
+        configPath,
+        agentsDir,
+        skillsDir: path.join("/project", CLAUDE_DIR, "skills"),
       };
 
       const result = formatInstallationDisplay(info);
@@ -333,8 +350,8 @@ describe("plugin-info", () => {
       expect(result).toContain("Mode:    Local");
       expect(result).toContain("Skills:  5");
       expect(result).toContain("Agents:  3");
-      expect(result).toContain("Config:  /project/.claude-src/config.ts");
-      expect(result).toContain("Agents:  /project/.claude/agents");
+      expect(result).toContain(`Config:  ${configPath}`);
+      expect(result).toContain(`Agents:  ${agentsDir}`);
     });
 
     it("should format plugin installation info", () => {
@@ -344,9 +361,9 @@ describe("plugin-info", () => {
         version: "1.2.3",
         skillCount: 10,
         agentCount: 5,
-        configPath: "/project/.claude-src/config.ts",
-        agentsDir: "/project/.claude/agents",
-        skillsDir: "/project/.claude/plugins",
+        configPath: path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
+        agentsDir: path.join("/project", CLAUDE_DIR, "agents"),
+        skillsDir: path.join("/project", CLAUDE_DIR, PLUGINS_SUBDIR),
       };
 
       const result = formatInstallationDisplay(info);
@@ -364,9 +381,9 @@ describe("plugin-info", () => {
         version: "local",
         skillCount: 0,
         agentCount: 0,
-        configPath: "/project/.claude-src/config.ts",
-        agentsDir: "/project/.claude/agents",
-        skillsDir: "/project/.claude/skills",
+        configPath: path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
+        agentsDir: path.join("/project", CLAUDE_DIR, "agents"),
+        skillsDir: path.join("/project", CLAUDE_DIR, "skills"),
       };
 
       const result = formatInstallationDisplay(info);

@@ -2,7 +2,7 @@ import type { CategoryMap } from "../../types";
 
 /**
  * Built-in category definitions, equivalent to config/skill-categories.ts.
- * Source repos may override or extend these via their own TS config files.
+ * Source repos may override or extend these via their own config files.
  */
 export const defaultCategories: CategoryMap = {
   "web-framework": {

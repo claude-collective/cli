@@ -217,11 +217,11 @@ export async function compileStackPlugin(
     `  Loaded ${Object.keys(localAgents).length} local agents, ${Object.keys(cliAgents).length} CLI agents`,
   );
 
-  let newStack = options.stack || (await loadStackById(stackId, projectRoot));
-  if (!newStack) {
-    // Fall back to CLI's built-in default stacks
-    newStack = defaultStacks.find((s) => s.id === stackId) ?? null;
-  }
+  const newStack =
+    options.stack ||
+    (await loadStackById(stackId, projectRoot)) ||
+    defaultStacks.find((s) => s.id === stackId) ||
+    null;
 
   let stack: ProjectConfig;
   if (newStack) {

@@ -2,10 +2,11 @@ import os from "os";
 import path from "path";
 import { writeFile, fileExists, ensureDir } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
+import { getErrorMessage } from "../../utils/errors";
 import { CLAUDE_SRC_DIR, DEFAULT_BRANDING, GITHUB_SOURCE, STANDARD_FILES } from "../../consts";
 import { projectSourceConfigSchema } from "../schemas";
 import type { BoundSkill } from "../../types";
-import { loadTsConfig } from "./ts-config-loader";
+import { loadConfig } from "./config-loader";
 
 export const DEFAULT_SOURCE = `${GITHUB_SOURCE.GITHUB_PREFIX}agents-inc/skills`;
 export const SOURCE_ENV_VAR = "CC_SOURCE";
@@ -62,7 +63,13 @@ export async function loadProjectSourceConfig(
     return null;
   }
 
-  const data = await loadTsConfig<ProjectSourceConfig>(configPath, projectSourceConfigSchema);
+  let data: ProjectSourceConfig | null;
+  try {
+    data = await loadConfig<ProjectSourceConfig>(configPath, projectSourceConfigSchema);
+  } catch (error) {
+    verbose(`Failed to load project source config at ${configPath}: ${getErrorMessage(error)}`);
+    return null;
+  }
   if (!data) return null;
 
   verbose(`Loaded project config from ${projectDir}`);
@@ -79,7 +86,15 @@ export async function loadGlobalSourceConfig(): Promise<ProjectSourceConfig | nu
     return null;
   }
 
-  const data = await loadTsConfig<ProjectSourceConfig>(globalConfigPath, projectSourceConfigSchema);
+  let data: ProjectSourceConfig | null;
+  try {
+    data = await loadConfig<ProjectSourceConfig>(globalConfigPath, projectSourceConfigSchema);
+  } catch (error) {
+    verbose(
+      `Failed to load global source config at ${globalConfigPath}: ${getErrorMessage(error)}`,
+    );
+    return null;
+  }
   if (!data) return null;
 
   verbose(`Loaded global config from ${homeDir}`);

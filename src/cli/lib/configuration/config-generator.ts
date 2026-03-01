@@ -10,7 +10,7 @@ import type {
   Subcategory,
 } from "../../types";
 import { verbose, warn } from "../../utils/logger";
-import { typedEntries } from "../../utils/typed-object";
+import { typedEntries, typedKeys } from "../../utils/typed-object";
 
 export type ProjectConfigOptions = {
   description?: string;
@@ -43,69 +43,70 @@ export function generateProjectConfigFromSkills(
   options?: ProjectConfigOptions & { selectedAgents?: AgentName[] },
 ): ProjectConfig {
   const agentList = options?.selectedAgents ? [...options.selectedAgents].sort() : [];
-  const stackProperty: Record<string, StackAgentConfig> = {};
 
   verbose(
     `generateProjectConfigFromSkills: ${selectedSkillIds.length} skills, ` +
-      `matrix has ${Object.keys(matrix.skills).length} entries, ` +
+      `matrix has ${typedKeys<SkillId>(matrix.skills).length} entries, ` +
       `agents=[${agentList.join(", ")}]`,
   );
 
-  let foundCount = 0;
-  let skippedCount = 0;
-
-  for (const skillId of selectedSkillIds) {
+  const looked = selectedSkillIds.map((skillId) => {
     const skill = matrix.skills[skillId];
-    if (!skill) {
-      skippedCount++;
-      warn(`Skill '${skillId}' NOT FOUND in matrix`);
-      continue;
-    }
-    foundCount++;
+    if (!skill) warn(`Skill '${skillId}' NOT FOUND in matrix`);
+    return { skillId, skill };
+  });
 
-    const subcategory = extractSubcategoryFromPath(skill.category);
-    if (!subcategory) continue;
+  const found = looked.filter(
+    (entry): entry is typeof entry & { skill: NonNullable<typeof entry.skill> } =>
+      entry.skill != null,
+  );
+  const skippedCount = looked.length - found.length;
 
-    for (const agentId of agentList) {
-      if (!stackProperty[agentId]) {
-        stackProperty[agentId] = {};
-      }
-      stackProperty[agentId][subcategory] = [{ id: skillId, preloaded: false }];
-    }
-  }
+  const validSkills = found
+    .map(({ skillId, skill }) => ({
+      skillId,
+      subcategory: extractSubcategoryFromPath(skill.category),
+    }))
+    .filter(
+      (entry): entry is typeof entry & { subcategory: Subcategory } => entry.subcategory != null,
+    );
 
   verbose(
-    `generateProjectConfigFromSkills: ${foundCount} found, ${skippedCount} not found, ` +
-      `${Object.keys(stackProperty).length} agents in stack`,
+    `generateProjectConfigFromSkills: ${found.length} found, ${skippedCount} not found, ` +
+      `${agentList.length} agents in stack`,
   );
 
   if (skippedCount > 0) {
-    const matrixSample = Object.keys(matrix.skills).slice(0, 5).join(", ");
+    const matrixSample = typedKeys<SkillId>(matrix.skills).slice(0, 5).join(", ");
     warn(
       `${skippedCount}/${selectedSkillIds.length} skills not found in matrix. ` +
         `Matrix keys sample: [${matrixSample}]`,
     );
   }
 
-  const config: ProjectConfig = {
+  const stackProperty =
+    agentList.length > 0 && validSkills.length > 0
+      ? Object.fromEntries(
+          agentList.map((agentId) => [
+            agentId,
+            Object.fromEntries(
+              validSkills.map(({ skillId, subcategory }) => [
+                subcategory,
+                [{ id: skillId, preloaded: false }],
+              ]),
+            ) as StackAgentConfig,
+          ]),
+        )
+      : undefined;
+
+  return {
     name,
     agents: agentList,
     skills: [...selectedSkillIds],
+    ...(stackProperty && { stack: stackProperty }),
+    ...(options?.description && { description: options.description }),
+    ...(options?.author && { author: options.author }),
   };
-
-  if (Object.keys(stackProperty).length > 0) {
-    config.stack = stackProperty;
-  }
-
-  if (options?.description) {
-    config.description = options.description;
-  }
-
-  if (options?.author) {
-    config.author = options.author;
-  }
-
-  return config;
 }
 
 /**
@@ -118,28 +119,19 @@ export function generateProjectConfigFromSkills(
  * @returns Partial mapping of agent names to subcategory-skill assignment mappings
  */
 export function buildStackProperty(stack: Stack): Partial<Record<AgentName, StackAgentConfig>> {
-  const result: Partial<Record<AgentName, StackAgentConfig>> = {};
-
-  for (const [agentId, agentConfig] of typedEntries<AgentName, StackAgentConfig>(stack.agents)) {
-    if (!agentConfig || Object.keys(agentConfig).length === 0) {
-      continue;
-    }
-
-    const resolvedMappings: StackAgentConfig = {};
-
-    for (const [subcategoryId, assignments] of typedEntries<Subcategory, SkillAssignment[]>(
-      agentConfig,
-    )) {
-      if (!assignments || assignments.length === 0) continue;
-      resolvedMappings[subcategoryId] = assignments;
-    }
-
-    if (Object.keys(resolvedMappings).length > 0) {
-      result[agentId] = resolvedMappings;
-    }
-  }
-
-  return result;
+  return Object.fromEntries(
+    typedEntries<AgentName, StackAgentConfig>(stack.agents)
+      .filter(([, agentConfig]) => agentConfig && typedKeys<Subcategory>(agentConfig).length > 0)
+      .map(([agentId, agentConfig]) => {
+        const resolvedMappings = Object.fromEntries(
+          typedEntries<Subcategory, SkillAssignment[]>(agentConfig).filter(
+            ([, assignments]) => assignments && assignments.length > 0,
+          ),
+        ) as StackAgentConfig;
+        return [agentId, resolvedMappings] as const;
+      })
+      .filter(([, mappings]) => typedKeys<Subcategory>(mappings).length > 0),
+  ) as Partial<Record<AgentName, StackAgentConfig>>;
 }
 
 /**
@@ -150,39 +142,28 @@ export function buildStackProperty(stack: Stack): Partial<Record<AgentName, Stac
  *   - Multiple skills -> array of objects/strings
  * This ensures round-trip fidelity: bare strings stay bare, rich format stays rich.
  */
+function compactAssignment(assignment: SkillAssignment): unknown {
+  return assignment.preloaded ? { id: assignment.id, preloaded: true } : assignment.id;
+}
+
 export function compactStackForYaml(
-  stack: Record<string, StackAgentConfig>,
+  stack: Partial<Record<AgentName, StackAgentConfig>>,
 ): Record<string, Record<string, unknown>> {
-  const result: Record<string, Record<string, unknown>> = {};
-
-  for (const [agentId, agentConfig] of Object.entries(stack)) {
-    const compacted: Record<string, unknown> = {};
-
-    for (const [subcategory, assignments] of typedEntries<Subcategory, SkillAssignment[]>(
-      agentConfig,
-    )) {
-      if (!assignments || assignments.length === 0) continue;
-
-      if (assignments.length === 1) {
-        const assignment = assignments[0];
-        // Single skill, no preloaded -> bare string
-        if (!assignment.preloaded) {
-          compacted[subcategory] = assignment.id;
-        } else {
-          compacted[subcategory] = { id: assignment.id, preloaded: true };
-        }
-      } else {
-        // Multiple skills -> array, compact each element
-        compacted[subcategory] = assignments.map((a) =>
-          !a.preloaded ? a.id : { id: a.id, preloaded: true },
+  return Object.fromEntries(
+    typedEntries<AgentName, StackAgentConfig>(stack)
+      .map(([agentId, agentConfig]) => {
+        const compacted = Object.fromEntries(
+          typedEntries<Subcategory, SkillAssignment[]>(agentConfig)
+            .filter(([, assignments]) => assignments && assignments.length > 0)
+            .map(([subcategory, assignments]) => [
+              subcategory,
+              assignments.length === 1
+                ? compactAssignment(assignments[0])
+                : assignments.map(compactAssignment),
+            ]),
         );
-      }
-    }
-
-    if (Object.keys(compacted).length > 0) {
-      result[agentId] = compacted;
-    }
-  }
-
-  return result;
+        return [agentId, compacted] as const;
+      })
+      .filter(([, compacted]) => Object.keys(compacted).length > 0),
+  );
 }

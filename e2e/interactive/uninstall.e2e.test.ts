@@ -212,6 +212,21 @@ describe("uninstall interactive", () => {
     });
   });
 
+  describe("--all flag", () => {
+    it("should show config removal in confirmation prompt with --all", async () => {
+      tempDir = await createTempDir();
+      const projectDir = await createUninstallableProject(tempDir);
+
+      session = new TerminalSession(["uninstall", "--all"], projectDir);
+
+      await session.waitForText("The following will be removed", WIZARD_LOAD_TIMEOUT_MS);
+
+      const output = session.getFullOutput();
+      expect(output).toContain("Config:");
+      expect(output).toContain(CLAUDE_SRC_DIR);
+    });
+  });
+
   describe("Ctrl+C during confirmation", () => {
     it("should exit cleanly when Ctrl+C is pressed", async () => {
       tempDir = await createTempDir();

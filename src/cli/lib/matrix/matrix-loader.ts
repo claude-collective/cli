@@ -4,7 +4,7 @@ import { z } from "zod";
 import { glob, readFile, fileExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
 import { DIRS, STANDARD_FILES } from "../../consts";
-import { loadTsConfig } from "../configuration/ts-config-loader";
+import { loadConfig } from "../configuration/config-loader";
 import { METADATA_KEYS } from "../metadata-keys";
 import { parseFrontmatter } from "../loading";
 import {
@@ -94,7 +94,7 @@ export function synthesizeCategory(
  * @throws When the file cannot be read or fails Zod schema validation
  */
 export async function loadSkillCategories(configPath: string): Promise<CategoryMap> {
-  const data = await loadTsConfig<{ version: string; categories: CategoryMap }>(
+  const data = await loadConfig<{ version: string; categories: CategoryMap }>(
     configPath,
     skillCategoriesFileSchema,
   );
@@ -115,7 +115,7 @@ export async function loadSkillCategories(configPath: string): Promise<CategoryM
  * @throws When the file cannot be read or fails Zod schema validation
  */
 export async function loadSkillRules(configPath: string): Promise<SkillRulesConfig> {
-  const data = await loadTsConfig<{
+  const data = await loadConfig<{
     version: string;
     aliases?: Record<string, string>;
     relationships?: SkillRulesConfig["relationships"];

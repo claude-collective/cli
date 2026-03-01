@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { typedEntries } from "../../../utils/typed-object";
 import { defaultStacks } from "../default-stacks";
 
 const EXPECTED_STACK_COUNT = 6;
@@ -29,38 +30,35 @@ describe("defaultStacks", () => {
     expect(stack!.name).toBe("SolidJS Stack");
   });
 
-  it("all stacks have required fields", () => {
-    for (const stack of defaultStacks) {
-      expect(stack.id, `stack missing id`).toBeTruthy();
-      expect(stack.name, `${stack.id} missing name`).toBeTruthy();
-      expect(stack.description, `${stack.id} missing description`).toBeTruthy();
-      expect(stack.agents, `${stack.id} missing agents`).toBeDefined();
-    }
+  it.each(defaultStacks)("stack $id has required fields", (stack) => {
+    expect(stack.id).toBeTruthy();
+    expect(stack.name).toBeTruthy();
+    expect(stack.description).toBeTruthy();
+    expect(stack.agents).toBeDefined();
   });
 
-  it("all stack agent configs have normalized SkillAssignment[] values", () => {
-    for (const stack of defaultStacks) {
-      for (const [agentName, agentConfig] of Object.entries(stack.agents)) {
+  it.each(defaultStacks)(
+    "stack $id has normalized SkillAssignment[] values in all agent configs",
+    (stack) => {
+      for (const [agentName, agentConfig] of typedEntries(stack.agents)) {
         if (agentConfig == null) continue;
-        for (const [subcategory, assignments] of Object.entries(agentConfig)) {
+        for (const [subcategory, assignments] of typedEntries(agentConfig)) {
+          expect(assignments).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                id: expect.any(String),
+                preloaded: expect.any(Boolean),
+              }),
+            ]),
+          );
           expect(
             Array.isArray(assignments),
             `${stack.id} > ${agentName} > ${subcategory} should be an array`,
           ).toBe(true);
-          for (const assignment of assignments) {
-            expect(
-              typeof assignment.id,
-              `${stack.id} > ${agentName} > ${subcategory} assignment should have string id`,
-            ).toBe("string");
-            expect(
-              typeof assignment.preloaded,
-              `${stack.id} > ${agentName} > ${subcategory} assignment should have boolean preloaded`,
-            ).toBe("boolean");
-          }
         }
       }
-    }
-  });
+    },
+  );
 
   it("nextjs-fullstack has web-developer with preloaded react framework", () => {
     const stack = defaultStacks.find((s) => s.id === "nextjs-fullstack");
@@ -77,8 +75,6 @@ describe("defaultStacks", () => {
     const methodology = webDev!["shared-methodology"];
     expect(methodology).toBeDefined();
     expect(methodology!.length).toBeGreaterThan(0);
-    for (const assignment of methodology!) {
-      expect(assignment.preloaded).toBe(true);
-    }
+    expect(methodology!.every((a) => a.preloaded === true)).toBe(true);
   });
 });

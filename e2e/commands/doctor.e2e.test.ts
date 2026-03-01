@@ -218,4 +218,79 @@ describe("doctor command", () => {
       expect(stdout).toContain("not in config");
     });
   });
+
+  describe("--help flag", () => {
+    it("should display help output with expected flags", async () => {
+      tempDir = await createTempDir();
+
+      const { exitCode, stdout } = await runCLI(["doctor", "--help"], tempDir);
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(stdout).toContain("Diagnose");
+      expect(stdout).toContain("--verbose");
+      expect(stdout).toContain("--source");
+    });
+  });
+
+  describe("missing skills directory with valid config", () => {
+    it("should report missing skills when skills directory does not exist", async () => {
+      tempDir = await createTempDir();
+      const source = await createE2ESource();
+      sourceTempDir = source.tempDir;
+
+      // Create valid config referencing a skill NOT in the E2E source matrix
+      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
+      await mkdir(configDir, { recursive: true });
+      await writeFile(
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
+        `export default ${JSON.stringify(
+          {
+            name: "test-project",
+            installMode: "local",
+            agents: ["web-developer"],
+            stack: {
+              "web-developer": {
+                "web-framework": [{ skillId: "web-framework-nonexistent", required: true }],
+              },
+            },
+          },
+          null,
+          2,
+        )};\n`,
+      );
+
+      // Do NOT create .claude/skills/ directory -- it is missing
+
+      const { exitCode, stdout } = await runCLI(["doctor", "--source", source.sourceDir], tempDir);
+
+      // Config is valid, but the nonexistent skill is not in the source matrix
+      // and not found locally, so Skills Resolved should fail
+      expect(exitCode).toBe(EXIT_CODES.ERROR);
+      expect(stdout).toContain("Config Valid");
+      expect(stdout).toContain("Skills Resolved");
+      expect(stdout).toContain("not found");
+    });
+  });
+
+  describe("corrupt config file", () => {
+    it("should not crash and should report config error with corrupt config.ts", async () => {
+      tempDir = await createTempDir();
+
+      // Create a corrupt config.ts file with invalid JavaScript syntax
+      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
+      await mkdir(configDir, { recursive: true });
+      await writeFile(
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
+        "export default {{{CORRUPT SYNTAX!!!",
+      );
+
+      const { exitCode, stdout } = await runCLI(["doctor"], tempDir);
+
+      // Doctor should not crash -- it should report a config error
+      expect(exitCode).toBe(EXIT_CODES.ERROR);
+      expect(stdout).toContain("Config Valid");
+      expect(stdout).toContain("config.ts");
+      expect(stdout).toContain("Summary:");
+    });
+  });
 });

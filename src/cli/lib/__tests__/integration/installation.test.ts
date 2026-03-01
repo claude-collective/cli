@@ -239,7 +239,7 @@ describe("installation", () => {
       expect(result?.configPath).toBe(path.join(claudeSrcDir, "config.ts"));
     });
 
-    it("should treat invalid TS config file as local mode (file exists)", async () => {
+    it("should treat invalid config file as local mode (file exists)", async () => {
       const claudeSrcDir = path.join(tempDir, ".claude-src");
       await mkdir(claudeSrcDir, { recursive: true });
       await writeFile(path.join(claudeSrcDir, "config.ts"), "invalid typescript content {{");

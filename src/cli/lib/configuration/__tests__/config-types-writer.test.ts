@@ -6,7 +6,7 @@ import {
   loadConfigTypesDataInBackground,
   regenerateConfigTypes,
   type ConfigTypesBackgroundData,
-} from "../ts-config-types-writer";
+} from "../config-types-writer";
 import {
   createMockSkill,
   createMockMatrix,

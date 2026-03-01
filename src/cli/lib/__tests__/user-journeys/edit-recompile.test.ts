@@ -50,7 +50,7 @@ describe("User Journey: Edit -> Recompile -> Verify", () => {
       agents: DEFAULT_TEST_AGENTS,
       projectConfig: buildTestProjectConfig(
         ["web-developer", "api-developer"],
-        DEFAULT_TEST_SKILLS.map((s) => ({ id: s.id })),
+        DEFAULT_TEST_SKILLS.map((s) => s.id),
         { name: "test-recompile-project", description: "Test project for edit-recompile flow" },
       ),
       asPlugin: true,

@@ -3,6 +3,7 @@ import path from "path";
 import { unique } from "remeda";
 import {
   DIRS,
+  LOCAL_SKILLS_PATH,
   PROJECT_ROOT,
   SKILL_CATEGORIES_PATH,
   SKILL_RULES_PATH,
@@ -28,7 +29,7 @@ import type {
   Stack,
   Subcategory,
 } from "../../types";
-import { directoryExists, fileExists, glob, readFile } from "../../utils/fs";
+import { directoryExists, fileExists, glob, listDirectories, readFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
 import {
@@ -94,6 +95,10 @@ export async function loadSkillsMatrixFromSource(
   }
 
   const resolvedProjectDir = projectDir || process.cwd();
+
+  // Pre-scan local skills for custom values before schema validation
+  await discoverAndExtendFromLocalSkills(resolvedProjectDir);
+
   let localSkillsResult = await discoverLocalSkills(resolvedProjectDir);
 
   // If no local skills in project, try global (home directory)
@@ -102,6 +107,7 @@ export async function loadSkillsMatrixFromSource(
     (!localSkillsResult || localSkillsResult.skills.length === 0) &&
     resolvedProjectDir !== homeDir
   ) {
+    await discoverAndExtendFromLocalSkills(homeDir);
     localSkillsResult = await discoverLocalSkills(homeDir);
   }
 
@@ -193,14 +199,10 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
   const skillsDirRelPath = sourceProjectConfig?.skillsDir ?? SKILLS_DIR_PATH;
   const stacksRelFile = sourceProjectConfig?.stacksFile;
 
-  // CLI defaults are imported directly as TS modules
-  const cliCategories = defaultCategories;
-  const cliRules = defaultRules;
-
-  let categories: CategoryMap = cliCategories;
-  let relationships: RelationshipDefinitions = cliRules.relationships;
-  let aliases: Partial<Record<SkillDisplayName, SkillId>> = cliRules.aliases;
-  let perSkillRules: Partial<Record<SkillDisplayName, PerSkillRules>> = cliRules.perSkill;
+  let categories: CategoryMap = defaultCategories;
+  let relationships: RelationshipDefinitions = defaultRules.relationships;
+  let aliases: Partial<Record<SkillDisplayName, SkillId>> = defaultRules.aliases;
+  let perSkillRules: Partial<Record<SkillDisplayName, PerSkillRules>> = defaultRules.perSkill;
 
   // Discover custom values from source entities BEFORE strict schema validation
   await discoverAndExtendFromSource(basePath);
@@ -214,7 +216,7 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
   if (hasSourceCategories || hasSourceRules) {
     if (hasSourceCategories) {
       const sourceCategories = await loadSkillCategories(sourceCategoriesPath);
-      categories = { ...cliCategories, ...sourceCategories };
+      categories = { ...defaultCategories, ...sourceCategories };
       verbose(
         `Loaded source categories: ${sourceCategoriesPath} (${typedKeys(sourceCategories).length} categories)`,
       );
@@ -225,29 +227,35 @@ async function loadAndMergeFromBasePath(basePath: string): Promise<MergedSkillsM
 
       // Merge relationships: concatenate arrays
       relationships = {
-        conflicts: [...cliRules.relationships.conflicts, ...sourceRules.relationships.conflicts],
+        conflicts: [
+          ...defaultRules.relationships.conflicts,
+          ...sourceRules.relationships.conflicts,
+        ],
         discourages: [
-          ...cliRules.relationships.discourages,
+          ...defaultRules.relationships.discourages,
           ...sourceRules.relationships.discourages,
         ],
-        recommends: [...cliRules.relationships.recommends, ...sourceRules.relationships.recommends],
-        requires: [...cliRules.relationships.requires, ...sourceRules.relationships.requires],
+        recommends: [
+          ...defaultRules.relationships.recommends,
+          ...sourceRules.relationships.recommends,
+        ],
+        requires: [...defaultRules.relationships.requires, ...sourceRules.relationships.requires],
         alternatives: [
-          ...cliRules.relationships.alternatives,
+          ...defaultRules.relationships.alternatives,
           ...sourceRules.relationships.alternatives,
         ],
       };
 
       // Merge aliases: source wins on same key
-      aliases = { ...cliRules.aliases, ...sourceRules.aliases };
+      aliases = { ...defaultRules.aliases, ...sourceRules.aliases };
 
       // Merge per-skill rules: source wins on same key
-      perSkillRules = { ...cliRules.perSkill, ...sourceRules.perSkill };
+      perSkillRules = { ...defaultRules.perSkill, ...sourceRules.perSkill };
 
       verbose(`Loaded source rules: ${sourceRulesPath}`);
     }
 
-    verbose(`Matrix merged: CLI (${typedKeys(cliCategories).length} categories) + source`);
+    verbose(`Matrix merged: CLI (${typedKeys(defaultCategories).length} categories) + source`);
   } else {
     verbose(`Matrix from CLI only (source has no categories/rules files)`);
   }
@@ -446,6 +454,74 @@ async function discoverCustomSkillValues(
 }
 
 /**
+ * Pre-scans .claude/skills/ for custom values (domains, categories, skill IDs)
+ * and extends schemas before discoverLocalSkills() runs schema validation.
+ */
+async function discoverAndExtendFromLocalSkills(projectDir: string): Promise<void> {
+  const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
+  if (!(await directoryExists(localSkillsDir))) return;
+
+  const { parse: parseYaml } = await import("yaml");
+
+  const builtinSubcategories = new Set<string>(SUBCATEGORY_VALUES);
+  const builtinDomains = new Set<string>(DOMAIN_VALUES);
+  const customCategories: string[] = [];
+  const customDomains: string[] = [];
+  const customSkillIds: string[] = [];
+
+  const skillDirs = await listDirectories(localSkillsDir);
+
+  for (const skillDirName of skillDirs) {
+    try {
+      const skillDir = path.join(localSkillsDir, skillDirName);
+      const metadataPath = path.join(skillDir, STANDARD_FILES.METADATA_YAML);
+      if (!(await fileExists(metadataPath))) continue;
+
+      const metadataContent = await readFile(metadataPath);
+      // Boundary cast: raw YAML parse for lightweight pre-scan
+      const metadataRaw = parseYaml(metadataContent) as Record<string, unknown>;
+      if (metadataRaw?.custom !== true) continue;
+
+      const domain = metadataRaw.domain;
+      if (typeof domain === "string" && !builtinDomains.has(domain)) {
+        customDomains.push(domain);
+      }
+
+      const category = metadataRaw.category;
+      if (typeof category === "string" && !builtinSubcategories.has(category)) {
+        customCategories.push(category);
+      }
+
+      // Read SKILL.md to extract the skill ID from frontmatter
+      const skillMdPath = path.join(skillDir, STANDARD_FILES.SKILL_MD);
+      if (await fileExists(skillMdPath)) {
+        const skillMdContent = await readFile(skillMdPath);
+        const frontmatter = parseFrontmatter(skillMdContent);
+        if (frontmatter?.name) {
+          customSkillIds.push(frontmatter.name);
+        }
+      }
+    } catch {
+      // Skip unreadable files — discoverLocalSkills() will handle errors
+    }
+  }
+
+  const hasCustomValues =
+    customCategories.length > 0 || customDomains.length > 0 || customSkillIds.length > 0;
+
+  if (hasCustomValues) {
+    extendSchemasWithCustomValues({
+      categories: unique(customCategories),
+      domains: unique(customDomains),
+      skillIds: customSkillIds,
+    });
+    verbose(
+      `Extended schemas from local skills: ${unique(customCategories).length} custom categories, ${unique(customDomains).length} custom domains, ${customSkillIds.length} custom skill IDs`,
+    );
+  }
+}
+
+/**
  * Pre-scans the source's agents/ and skills/ directories for custom values
  * and extends schemas before the full load.
  *
@@ -558,9 +634,29 @@ function mergeLocalSkillsIntoMatrix(
 
       local: true,
       localPath: metadata.localPath,
+      custom: metadata.custom,
     };
 
     matrix.skills[metadata.id] = resolvedSkill;
+
+    // Ensure the skill's category exists in matrix.categories so that
+    // config-types generation can discover its domain and subcategory.
+    // Boundary cast: CategoryPath may not match Subcategory for custom categories
+    const subcategory = category as Subcategory;
+    if (!matrix.categories[subcategory] && metadata.domain) {
+      // Boundary cast: metadata.domain may be a custom domain not in the Domain union
+      matrix.categories[subcategory] = {
+        id: subcategory,
+        displayName: category,
+        description: `Local skill category`,
+        domain: metadata.domain,
+        exclusive: false,
+        required: false,
+        order: 0,
+      };
+      verbose(`Added local category: ${category} (domain: ${metadata.domain})`);
+    }
+
     verbose(`Added local skill: ${metadata.id} (category: ${category})`);
   }
 

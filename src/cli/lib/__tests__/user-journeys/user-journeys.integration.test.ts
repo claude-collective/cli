@@ -866,7 +866,7 @@ describe("Config Roundtrip (Write -> Load -> Verify)", () => {
     }
   });
 
-  it("should produce valid TS config with satisfies ProjectConfig", async () => {
+  it("should produce valid config with satisfies ProjectConfig", async () => {
     const selectedSkills: SkillId[] = ["web-framework-react"];
     simulateSkillSelections(selectedSkills, matrix, ["web"]);
 

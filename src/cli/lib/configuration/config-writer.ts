@@ -5,7 +5,7 @@ import { compactStackForYaml } from "./config-generator";
  * Generates a TypeScript config file source from a ProjectConfig object.
  * Output is a plain object literal with `satisfies ProjectConfig` for type safety.
  */
-export function generateTsConfigSource(config: ProjectConfig): string {
+export function generateConfigSource(config: ProjectConfig): string {
   const serializable = config.stack
     ? { ...config, stack: compactStackForYaml(config.stack) }
     : { ...config };

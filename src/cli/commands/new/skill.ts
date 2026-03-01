@@ -5,8 +5,8 @@ import { resolveAuthor } from "../../lib/configuration/index.js";
 import {
   loadConfigTypesDataInBackground,
   regenerateConfigTypes,
-} from "../../lib/configuration/ts-config-types-writer.js";
-import { loadTsConfig } from "../../lib/configuration/ts-config-loader.js";
+} from "../../lib/configuration/config-types-writer.js";
+import { loadConfig } from "../../lib/configuration/config-loader.js";
 import { writeFile, directoryExists, fileExists, ensureDir } from "../../utils/fs.js";
 import { getErrorMessage } from "../../utils/errors.js";
 import { verbose } from "../../utils/logger.js";
@@ -285,7 +285,13 @@ export default class NewSkill extends BaseCommand {
       await writeFile(skillMdPath, skillMdContent);
 
       const contentHash = await computeSkillFolderHash(skillDir);
-      const metadataContent = generateMetadataYaml(args.name, author, category, contentHash, domain);
+      const metadataContent = generateMetadataYaml(
+        args.name,
+        author,
+        category,
+        contentHash,
+        domain,
+      );
       await writeFile(metadataPath, metadataContent);
 
       this.log("");
@@ -308,6 +314,8 @@ export default class NewSkill extends BaseCommand {
       try {
         await regenerateConfigTypes(projectDir, configTypesReady, {
           extraSkillIds: [args.name],
+          extraDomains: [domain],
+          extraCategories: [category],
         });
       } catch (error) {
         this.warn(`Could not update ${STANDARD_FILES.CONFIG_TYPES_TS}: ${getErrorMessage(error)}`);
@@ -334,8 +342,8 @@ export default class NewSkill extends BaseCommand {
 
     // Update skill-categories.ts
     if (await fileExists(categoriesPath)) {
-      // Boundary cast: loadTsConfig returns unknown structure from TS file
-      const parsed = (await loadTsConfig<Record<string, unknown>>(categoriesPath)) ?? {};
+      // Boundary cast: loadConfig returns unknown structure from TS file
+      const parsed = (await loadConfig<Record<string, unknown>>(categoriesPath)) ?? {};
       const categories = (parsed.categories ?? {}) as Record<string, unknown>;
       if (!categories[category]) {
         categories[category] = buildCategoryEntry(category, domain);
@@ -351,8 +359,8 @@ export default class NewSkill extends BaseCommand {
 
     // Update skill-rules.ts
     if (await fileExists(rulesPath)) {
-      // Boundary cast: loadTsConfig returns unknown structure from TS file
-      const parsed = (await loadTsConfig<Record<string, unknown>>(rulesPath)) ?? {};
+      // Boundary cast: loadConfig returns unknown structure from TS file
+      const parsed = (await loadConfig<Record<string, unknown>>(rulesPath)) ?? {};
       const aliases = (parsed.aliases ?? {}) as Record<string, unknown>;
       if (!aliases[skillName]) {
         aliases[skillName] = skillName;

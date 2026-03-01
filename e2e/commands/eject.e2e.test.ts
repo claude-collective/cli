@@ -1,4 +1,5 @@
 import path from "path";
+import { chmod, mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import {
   createTempDir,
@@ -153,5 +154,46 @@ describe("eject command", () => {
 
     const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
     expect(await fileExists(configPath)).toBe(true);
+  });
+
+  it("should display help text with --help flag", async () => {
+    tempDir = await createTempDir();
+
+    const { exitCode, stdout } = await runCLI(["eject", "--help"], tempDir);
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(stdout).toContain("USAGE");
+    expect(stdout).toContain("agent-partials");
+    expect(stdout).toContain("templates");
+    expect(stdout).toContain("skills");
+    expect(stdout).toContain("all");
+  });
+
+  // BUG: CLI exits 0 with corrupt source — it falls back to default source
+  // instead of reporting an error for the invalid --source directory.
+  it.fails("should handle corrupt source without crashing", async () => {
+    tempDir = await createTempDir();
+    const corruptSourceDir = path.join(tempDir, "corrupt-source");
+    await mkdir(corruptSourceDir, { recursive: true });
+    await writeFile(path.join(corruptSourceDir, "garbage.txt"), "not a valid source");
+
+    const { exitCode } = await runCLI(["eject", "skills", "--source", corruptSourceDir], tempDir);
+
+    expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
+  });
+
+  it("should error when ejecting to a read-only directory", async () => {
+    tempDir = await createTempDir();
+    const readOnlyDir = path.join(tempDir, "read-only");
+    await mkdir(readOnlyDir, { recursive: true });
+    await chmod(readOnlyDir, 0o444);
+
+    try {
+      const { exitCode } = await runCLI(["eject", "agent-partials", "-o", readOnlyDir], tempDir);
+
+      expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
+    } finally {
+      await chmod(readOnlyDir, 0o755);
+    }
   });
 });

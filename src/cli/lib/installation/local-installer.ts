@@ -20,8 +20,8 @@ import { defaultStacks } from "../configuration/default-stacks";
 import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
 import { createLiquidEngine } from "../compiler";
 import { generateProjectConfigFromSkills, buildStackProperty } from "../configuration";
-import { generateTsConfigSource } from "../configuration/ts-config-writer";
-import { generateConfigTypesSource } from "../configuration/ts-config-types-writer";
+import { generateConfigSource } from "../configuration/config-writer";
+import { generateConfigTypesSource } from "../configuration/config-types-writer";
 import { ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
@@ -294,7 +294,7 @@ async function buildAndMergeConfig(
 }
 
 async function writeConfigFile(config: ProjectConfig, configPath: string): Promise<void> {
-  const source = generateTsConfigSource(config);
+  const source = generateConfigSource(config);
   await writeFile(configPath, source);
 }
 

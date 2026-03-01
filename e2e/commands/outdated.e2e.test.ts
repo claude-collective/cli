@@ -195,6 +195,73 @@ describe("outdated command", () => {
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
   });
 
+  describe("help", () => {
+    it("should display outdated help", async () => {
+      tempDir = await createTempDir();
+
+      const { exitCode, stdout } = await runCLI(["outdated", "--help"], tempDir);
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(stdout).toContain("Check which local skills are out of date");
+      expect(stdout).toContain("--json");
+      expect(stdout).toContain("--source");
+    });
+  });
+
+  it("should output JSON with current skill info when content hash matches", async () => {
+    const e2e = await createE2ESource();
+    sourceTempDir = e2e.tempDir;
+    tempDir = await createTempDir();
+    const sourceDir = e2e.sourceDir;
+
+    const sourceSkillId = "web-testing-vitest";
+    const localDirName = "web-testing-vitest-fork" as const;
+    const sourceSkillMdPath = path.join(
+      sourceDir,
+      SKILLS_DIR_PATH,
+      "web-testing",
+      sourceSkillId,
+      STANDARD_FILES.SKILL_MD,
+    );
+
+    const sourceContent = await readFile(sourceSkillMdPath, "utf-8");
+    const matchingHash = createHash("sha256")
+      .update(sourceContent)
+      .digest("hex")
+      .slice(0, HASH_PREFIX_LENGTH);
+
+    await createLocalSkill(tempDir, localDirName, {
+      metadata: [
+        'author: "@agents-inc"',
+        `displayName: ${localDirName}`,
+        "forkedFrom:",
+        `  skillId: ${sourceSkillId}`,
+        `  contentHash: "${matchingHash}"`,
+        "  date: 2026-01-01",
+      ].join("\n"),
+    });
+
+    const { exitCode, stdout } = await runCLI(
+      ["outdated", "--json", "--source", sourceDir],
+      tempDir,
+    );
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+    const parsed = JSON.parse(stdout);
+    expect(parsed).toHaveProperty("skills");
+    expect(parsed).toHaveProperty("summary");
+    expect(parsed.summary.current).toBeGreaterThanOrEqual(1);
+    expect(parsed.summary.outdated).toBe(0);
+
+    const currentSkill = parsed.skills.find(
+      (s: { id: string; status: string }) => s.id === sourceSkillId && s.status === "current",
+    );
+    expect(currentSkill).toBeDefined();
+    expect(currentSkill.localHash).toBe(matchingHash);
+    expect(currentSkill.sourceHash).toBe(matchingHash);
+  });
+
   it("should show summary with counts of each status", async () => {
     const e2e = await createE2ESource();
     sourceTempDir = e2e.tempDir;

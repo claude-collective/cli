@@ -20,7 +20,7 @@ import {
   pluginManifestSchema,
 } from "./schemas";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../consts";
-import { loadTsConfig } from "./configuration/ts-config-loader";
+import { loadConfig } from "./configuration/config-loader";
 
 type FileValidationError = {
   file: string;
@@ -54,8 +54,8 @@ type ValidationTarget = {
   pattern: string;
   baseDir: string;
   extractor?: ContentExtractor;
-  /** When true, load via loadTsConfig instead of YAML parsing */
-  tsConfig?: boolean;
+  /** When true, load via loadConfig instead of YAML parsing */
+  isConfigFile?: boolean;
 };
 
 const VALIDATION_TARGETS: ValidationTarget[] = [
@@ -64,14 +64,14 @@ const VALIDATION_TARGETS: ValidationTarget[] = [
     schema: skillCategoriesFileSchema,
     pattern: STANDARD_FILES.SKILL_CATEGORIES_TS,
     baseDir: "config",
-    tsConfig: true,
+    isConfigFile: true,
   },
   {
     name: "Skill Rules",
     schema: skillRulesFileSchema,
     pattern: STANDARD_FILES.SKILL_RULES_TS,
     baseDir: "config",
-    tsConfig: true,
+    isConfigFile: true,
   },
   {
     name: "Skill Metadata",
@@ -116,7 +116,7 @@ const VALIDATION_TARGETS: ValidationTarget[] = [
     schema: stacksConfigSchema,
     pattern: "stacks.ts",
     baseDir: "config",
-    tsConfig: true,
+    isConfigFile: true,
   },
   {
     name: "Project Source Config",
@@ -167,17 +167,17 @@ async function validateFile(
   filePath: string,
   schema: z.ZodType<unknown>,
   extractor?: ContentExtractor,
-  tsConfig?: boolean,
+  isConfigFile?: boolean,
 ): Promise<{ valid: boolean; errors: string[] }> {
   try {
     if (!(await fileExists(filePath))) {
       return { valid: false, errors: [`File not found: ${filePath}`] };
     }
 
-    if (tsConfig) {
-      const data = await loadTsConfig(filePath, schema);
+    if (isConfigFile) {
+      const data = await loadConfig(filePath, schema);
       if (data === null) {
-        return { valid: false, errors: ["Failed to load or validate TS config"] };
+        return { valid: false, errors: ["Failed to load or validate config"] };
       }
       return { valid: true, errors: [] };
     }
@@ -231,7 +231,12 @@ async function validateTarget(
   }
 
   for (const file of files) {
-    const validation = await validateFile(file, target.schema, target.extractor, target.tsConfig);
+    const validation = await validateFile(
+      file,
+      target.schema,
+      target.extractor,
+      target.isConfigFile,
+    );
     const relativePath = path.relative(rootDir, file);
 
     if (validation.valid) {

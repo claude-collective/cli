@@ -21,7 +21,7 @@ export type StacksConfig = {
 };
 
 /**
- * Raw stacks config as returned by loadTsConfig (before normalizeAgentConfig).
+ * Raw stacks config as returned by loadConfig (before normalizeAgentConfig).
  * Agent config values may be bare strings, arrays, or objects — not yet normalized to SkillAssignment[].
  */
 export type RawStacksConfig = {

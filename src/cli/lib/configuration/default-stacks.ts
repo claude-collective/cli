@@ -1,4 +1,4 @@
-import type { SkillAssignment, SkillId, Stack } from "../../types";
+import type { SkillAssignment, Stack } from "../../types";
 
 /**
  * Built-in stack definitions, equivalent to config/stacks.ts.
@@ -8,12 +8,12 @@ import type { SkillAssignment, SkillId, Stack } from "../../types";
  */
 
 const SHARED_METHODOLOGY: SkillAssignment[] = [
-  { id: "meta-methodology-investigation-requirements" as SkillId, preloaded: true },
-  { id: "meta-methodology-anti-over-engineering" as SkillId, preloaded: true },
-  { id: "meta-methodology-success-criteria" as SkillId, preloaded: true },
-  { id: "meta-methodology-write-verification" as SkillId, preloaded: true },
-  { id: "meta-methodology-improvement-protocol" as SkillId, preloaded: true },
-  { id: "meta-methodology-context-management" as SkillId, preloaded: true },
+  { id: "meta-methodology-investigation-requirements", preloaded: true },
+  { id: "meta-methodology-anti-over-engineering", preloaded: true },
+  { id: "meta-methodology-success-criteria", preloaded: true },
+  { id: "meta-methodology-write-verification", preloaded: true },
+  { id: "meta-methodology-improvement-protocol", preloaded: true },
+  { id: "meta-methodology-context-management", preloaded: true },
 ];
 
 export const defaultStacks: Stack[] = [

@@ -3,7 +3,7 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { loadProjectConfig, validateProjectConfig } from "./project-config";
 import { generateProjectConfigFromSkills } from "./config-generator";
-import { generateTsConfigSource } from "./ts-config-writer";
+import { generateConfigSource } from "./config-writer";
 import type { AgentName } from "../../types";
 import {
   createTempDir,
@@ -121,7 +121,7 @@ describe("project-config", () => {
       expect(result!.config.author).toBe("@vince");
     });
 
-    it("should return null for invalid TS config", async () => {
+    it("should return null for invalid config", async () => {
       const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(
@@ -234,12 +234,12 @@ describe("round-trip tests", () => {
       { selectedAgents },
     );
 
-    // Write to temp dir as TS config
+    // Write to temp dir as config
     const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
     await mkdir(configDir, { recursive: true });
     await writeFile(
       path.join(configDir, STANDARD_FILES.CONFIG_TS),
-      generateTsConfigSource(generated),
+      generateConfigSource(generated),
     );
 
     // Load it back
@@ -267,12 +267,12 @@ describe("round-trip tests", () => {
       },
     );
 
-    // Write to temp dir as TS config
+    // Write to temp dir as config
     const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
     await mkdir(configDir, { recursive: true });
     await writeFile(
       path.join(configDir, STANDARD_FILES.CONFIG_TS),
-      generateTsConfigSource(generated),
+      generateConfigSource(generated),
     );
 
     // Load it back

@@ -1,6 +1,8 @@
 import path from "path";
+import { writeFile } from "fs/promises";
 import { execa } from "execa";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { STACKS_FILE_PATH } from "../../src/cli/consts.js";
 import { TerminalSession } from "../helpers/terminal-session.js";
 import {
   BIN_RUN,
@@ -13,6 +15,7 @@ import {
   runCLI,
   WIZARD_LOAD_TIMEOUT_MS,
   STEP_TRANSITION_DELAY_MS,
+  KEYSTROKE_DELAY_MS,
   EXIT_TIMEOUT_MS,
   EXIT_CODES,
 } from "../helpers/test-utils.js";
@@ -102,6 +105,55 @@ describe("build stack command", () => {
 
       // After selecting, the command should begin compilation
       await session.waitForText("Compiling stack", COMPILE_TIMEOUT_MS);
+    });
+
+    it("should navigate between stacks with arrow keys", async () => {
+      const source = await createE2ESource();
+      sourceDir = source.sourceDir;
+      sourceTempDir = source.tempDir;
+
+      // Overwrite stacks file with two stacks so arrow keys can move between them.
+      // The second stack re-uses the same agents as the first (skills exist in source).
+      const twoStacksContent = `export default ${JSON.stringify(
+        {
+          stacks: [
+            {
+              id: "alpha-stack",
+              name: "Alpha Stack",
+              description: "First test stack",
+              agents: {},
+            },
+            {
+              id: "beta-stack",
+              name: "Beta Stack",
+              description: "Second test stack",
+              agents: {},
+            },
+          ],
+        },
+        null,
+        2,
+      )};\n`;
+      await writeFile(path.join(sourceDir, STACKS_FILE_PATH), twoStacksContent);
+
+      session = new TerminalSession(["build", "stack", "--source", sourceDir], sourceDir);
+
+      await session.waitForText("Select a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Both stacks should be listed in the selector
+      const screenBefore = session.getScreen();
+      expect(screenBefore).toContain("alpha-stack");
+      expect(screenBefore).toContain("beta-stack");
+
+      // Press arrow down to move focus to the second stack
+      session.arrowDown();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // The screen should still show both stacks (navigation does not remove items)
+      const screenAfter = session.getScreen();
+      expect(screenAfter).toContain("alpha-stack");
+      expect(screenAfter).toContain("beta-stack");
     });
   });
 

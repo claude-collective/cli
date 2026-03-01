@@ -2,50 +2,48 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { writeFile, mkdir } from "fs/promises";
 import { z } from "zod";
-import { loadTsConfig } from "../ts-config-loader";
+import { loadConfig } from "../config-loader";
 import { createTempDir, cleanupTempDir } from "../../__tests__/helpers";
 
 let tempDir: string;
 
 beforeEach(async () => {
-  tempDir = await createTempDir("ts-config-loader-");
+  tempDir = await createTempDir("config-loader-");
 });
 
 afterEach(async () => {
   await cleanupTempDir(tempDir);
 });
 
-describe("loadTsConfig", () => {
+describe("loadConfig", () => {
   it("returns null for nonexistent file", async () => {
-    const result = await loadTsConfig(path.join(tempDir, "nonexistent.ts"));
+    const result = await loadConfig(path.join(tempDir, "nonexistent.ts"));
     expect(result).toBeNull();
   });
 
-  it("loads a valid TS config file with default export", async () => {
+  it("loads a valid config file with default export", async () => {
     const configPath = path.join(tempDir, "config.ts");
     await writeFile(
       configPath,
       `export default { name: "my-project", agents: ["web-developer"], skills: [] };`,
     );
-    const result = await loadTsConfig<{ name: string }>(configPath);
+    const result = await loadConfig<{ name: string }>(configPath);
     expect(result).not.toBeNull();
     expect(result!.name).toBe("my-project");
   });
 
-  it("returns null for malformed TS file with syntax error", async () => {
+  it("throws for malformed file with syntax error", async () => {
     const configPath = path.join(tempDir, "bad-syntax.ts");
     await writeFile(configPath, `export default {{{{{ broken syntax`);
-    const result = await loadTsConfig(configPath);
-    expect(result).toBeNull();
+    await expect(loadConfig(configPath)).rejects.toThrow("Failed to load config from");
   });
 
-  it("returns null when Zod schema rejects the data", async () => {
+  it("throws when Zod schema rejects the data", async () => {
     const configPath = path.join(tempDir, "invalid-schema.ts");
     await writeFile(configPath, `export default { count: 42 };`);
 
     const schema = z.object({ name: z.string() });
-    const result = await loadTsConfig(configPath, schema);
-    expect(result).toBeNull();
+    await expect(loadConfig(configPath, schema)).rejects.toThrow("Config validation failed at");
   });
 
   it("returns validated data when Zod schema accepts", async () => {
@@ -60,7 +58,7 @@ describe("loadTsConfig", () => {
       agents: z.array(z.string()),
       skills: z.array(z.string()),
     });
-    const result = await loadTsConfig<{ name: string; agents: string[]; skills: string[] }>(
+    const result = await loadConfig<{ name: string; agents: string[]; skills: string[] }>(
       configPath,
       schema,
     );
@@ -68,7 +66,7 @@ describe("loadTsConfig", () => {
     expect(result!.name).toBe("validated");
   });
 
-  it("handles TS config that uses defineConfig identity function", async () => {
+  it("handles config that uses defineConfig identity function", async () => {
     // Write a helper module that the config imports
     const helperPath = path.join(tempDir, "helper.ts");
     await writeFile(
@@ -84,7 +82,7 @@ describe("loadTsConfig", () => {
         `export default defineConfig({ name: "defined", agents: [], skills: [] });`,
       ].join("\n"),
     );
-    const result = await loadTsConfig<{ name: string }>(configPath);
+    const result = await loadConfig<{ name: string }>(configPath);
     expect(result).not.toBeNull();
     expect(result!.name).toBe("defined");
   });

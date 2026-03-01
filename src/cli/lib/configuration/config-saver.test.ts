@@ -77,7 +77,7 @@ describe("config-saver", () => {
       expect(config.name).toBe("project");
     });
 
-    it("handles invalid TS config gracefully by starting with empty config", async () => {
+    it("handles invalid config gracefully by starting with empty config", async () => {
       const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(
@@ -106,13 +106,13 @@ describe("config-saver", () => {
       expect(config.source).toBe("github:my-org/skills");
     });
 
-    it("writes valid TS config output", async () => {
+    it("writes valid config output", async () => {
       await saveSourceToProjectConfig(tempDir, "github:my-org/skills");
 
       const configPath = path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const content = await readFile(configPath, "utf-8");
 
-      // Should be valid TS config format
+      // Should be valid config format
       expect(content).toContain("export default");
       const config = await readTestTsConfig<Record<string, unknown>>(configPath);
       expect(config).toBeDefined();

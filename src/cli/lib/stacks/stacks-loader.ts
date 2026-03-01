@@ -13,9 +13,9 @@ import type {
   Subcategory,
 } from "../../types";
 import { isValidSkillId, stacksConfigSchema } from "../schemas";
-import { typedEntries } from "../../utils/typed-object";
+import { typedEntries, typedKeys } from "../../utils/typed-object";
 import { STACKS_FILE_PATH } from "../../consts";
-import { loadTsConfig } from "../configuration/ts-config-loader";
+import { loadConfig } from "../configuration/config-loader";
 
 const stacksCache = new Map<string, Stack[]>();
 
@@ -58,7 +58,7 @@ export async function loadStacks(configDir: string, stacksFile?: string): Promis
   const stacksPath = path.join(configDir, resolvedStacksFile);
 
   try {
-    const raw = await loadTsConfig<StacksConfig>(stacksPath, stacksConfigSchema);
+    const raw = await loadConfig<StacksConfig>(stacksPath, stacksConfigSchema);
 
     if (raw == null) {
       verbose(`No stacks file found at ${stacksPath}`);
@@ -102,31 +102,26 @@ export async function loadStackById(stackId: string, configDir: string): Promise
 // Converts a StackAgentConfig (subcategory -> SkillAssignment[]) to an array of SkillReferences.
 // Values are already normalized to SkillAssignment[] by loadStacks().
 export function resolveAgentConfigToSkills(agentConfig: StackAgentConfig): SkillReference[] {
-  const skillRefs: SkillReference[] = [];
-
-  for (const [subcategory, assignments] of typedEntries<Subcategory, SkillAssignment[]>(
-    agentConfig,
-  )) {
-    if (!assignments) continue;
-
-    for (const assignment of assignments) {
-      // Accept built-in skill ID patterns and custom IDs registered via extendSchemasWithCustomValues()
-      if (!isValidSkillId(assignment.id)) {
-        warn(
-          `Invalid skill ID '${assignment.id}' for subcategory '${subcategory}' in stack config. Skipping.`,
-        );
-        continue;
-      }
-
-      skillRefs.push({
-        id: assignment.id,
-        usage: `when working with ${subcategory}`,
-        preloaded: assignment.preloaded ?? false,
-      });
-    }
-  }
-
-  return skillRefs;
+  return typedEntries<Subcategory, SkillAssignment[]>(agentConfig).flatMap(
+    ([subcategory, assignments]) =>
+      (assignments ?? [])
+        .filter((assignment) => {
+          if (!isValidSkillId(assignment.id)) {
+            warn(
+              `Invalid skill ID '${assignment.id}' for subcategory '${subcategory}' in stack config. Skipping.`,
+            );
+            return false;
+          }
+          return true;
+        })
+        .map(
+          (assignment): SkillReference => ({
+            id: assignment.id,
+            usage: `when working with ${subcategory}`,
+            preloaded: assignment.preloaded ?? false,
+          }),
+        ),
+  );
 }
 
 /** Extracts all unique skill IDs from a stack config (agent -> subcategory -> SkillAssignment[]). */
@@ -144,7 +139,9 @@ export function resolveStackSkills(stack: Stack): Record<string, SkillReference[
     agentConfig ? resolveAgentConfigToSkills(agentConfig) : [],
   );
 
-  verbose(`Resolved skills for ${Object.keys(result).length} agents in stack '${stack.id}'`);
+  verbose(
+    `Resolved skills for ${typedKeys<AgentName>(result).length} agents in stack '${stack.id}'`,
+  );
 
   return result;
 }

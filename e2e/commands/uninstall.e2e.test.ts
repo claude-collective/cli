@@ -200,6 +200,39 @@ describe("uninstall command", () => {
     expect(await directoryExists(cliSkillDir)).toBe(false);
   });
 
+  it("should display --dry-run flag description in help output", async () => {
+    tempDir = await createTempDir();
+
+    const { exitCode, stdout } = await runCLI(["uninstall", "--help"], tempDir);
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(stdout).toContain("--dry-run");
+    expect(stdout).toContain("Preview operations without executing");
+  });
+
+  it("should skip all skills when only user-created skills exist", async () => {
+    tempDir = await createTempDir();
+    const projectDir = path.join(tempDir, "project");
+    const userSkillDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS, "my-custom-skill");
+    await mkdir(userSkillDir, { recursive: true });
+
+    await writeFile(
+      path.join(userSkillDir, STANDARD_FILES.SKILL_MD),
+      "---\nname: my-custom-skill\ndescription: User created\n---\n\n# My Custom Skill\n",
+    );
+    await writeFile(
+      path.join(userSkillDir, STANDARD_FILES.METADATA_YAML),
+      'author: "@user"\ncontentHash: "user-hash"\n',
+    );
+
+    const { exitCode, combined } = await runCLI(["uninstall", "--yes"], projectDir);
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(combined).toContain("Skipping");
+    expect(combined).toContain("my-custom-skill");
+    expect(await directoryExists(userSkillDir)).toBe(true);
+  });
+
   it("should support --dry-run flag without removing files", async () => {
     tempDir = await createTempDir();
     const projectDir = await createEditableProject(tempDir);

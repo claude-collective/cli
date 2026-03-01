@@ -1,15 +1,15 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import path from "path";
 import { writeFile } from "fs/promises";
-import { generateTsConfigSource } from "../ts-config-writer";
-import { loadTsConfig } from "../ts-config-loader";
-import { createTempDir, cleanupTempDir } from "../../__tests__/helpers";
+import { generateConfigSource } from "../config-writer";
+import { loadConfig } from "../config-loader";
+import { createTempDir, cleanupTempDir, buildProjectConfig } from "../../__tests__/helpers";
 import type { ProjectConfig } from "../../../types";
 
 let tempDir: string;
 
 beforeEach(async () => {
-  tempDir = await createTempDir("ts-config-roundtrip-");
+  tempDir = await createTempDir("config-roundtrip-");
 });
 
 afterEach(async () => {
@@ -21,7 +21,7 @@ afterEach(async () => {
  * Strips the type-only import and `satisfies` (not needed at runtime).
  */
 async function writeAndLoad(config: ProjectConfig): Promise<unknown> {
-  let source = generateTsConfigSource(config);
+  let source = generateConfigSource(config);
   // Remove type-only import and satisfies (not needed at runtime, jiti may not resolve the path)
   source = source.replace(/import type \{ ProjectConfig \} from "\.\/config-types";\n/, "");
   source = source.replace(/ satisfies ProjectConfig/, "");
@@ -29,7 +29,7 @@ async function writeAndLoad(config: ProjectConfig): Promise<unknown> {
   const configPath = path.join(tempDir, "config.ts");
   await writeFile(configPath, source);
 
-  return loadTsConfig(configPath);
+  return loadConfig(configPath);
 }
 
 /**
@@ -43,20 +43,16 @@ function normalizeForComparison(config: ProjectConfig): Record<string, unknown> 
   return JSON.parse(JSON.stringify(config));
 }
 
-describe("TS config round-trip", () => {
+describe("config round-trip", () => {
   it("round-trips a minimal config", async () => {
-    const config: ProjectConfig = {
-      name: "minimal-project",
-      agents: ["web-developer"],
-      skills: ["web-framework-react"],
-    };
+    const config = buildProjectConfig({ name: "minimal-project" });
 
     const loaded = await writeAndLoad(config);
     expect(loaded).toEqual(normalizeForComparison(config));
   });
 
   it("round-trips a config with stack (non-preloaded)", async () => {
-    const config: ProjectConfig = {
+    const config = buildProjectConfig({
       name: "stack-project",
       agents: ["web-developer", "api-developer"],
       skills: ["web-framework-react", "api-framework-hono"],
@@ -68,7 +64,7 @@ describe("TS config round-trip", () => {
           "api-api": [{ id: "api-framework-hono", preloaded: false }],
         },
       },
-    };
+    });
 
     const loaded = (await writeAndLoad(config)) as ProjectConfig;
     // Stack gets compacted: non-preloaded single skills become bare strings
@@ -82,7 +78,7 @@ describe("TS config round-trip", () => {
   });
 
   it("round-trips a config with preloaded stack skills", async () => {
-    const config: ProjectConfig = {
+    const config = buildProjectConfig({
       name: "preloaded-project",
       agents: ["api-developer"],
       skills: ["api-framework-hono"],
@@ -91,7 +87,7 @@ describe("TS config round-trip", () => {
           "api-api": [{ id: "api-framework-hono", preloaded: true }],
         },
       },
-    };
+    });
 
     const loaded = (await writeAndLoad(config)) as ProjectConfig;
     const apiDev = loaded.stack?.["api-developer"] as Record<string, unknown>;
@@ -100,7 +96,7 @@ describe("TS config round-trip", () => {
   });
 
   it("round-trips a full config with all optional fields", async () => {
-    const config: ProjectConfig = {
+    const config = buildProjectConfig({
       name: "full-project",
       description: "A complete project configuration",
       version: "1",
@@ -112,16 +108,15 @@ describe("TS config round-trip", () => {
       selectedAgents: ["web-developer", "api-developer"],
       source: "github:agents-inc/skills",
       marketplace: "agents-inc",
-    };
+    });
 
     const loaded = await writeAndLoad(config);
     expect(loaded).toEqual(normalizeForComparison(config));
   });
 
   it("round-trips a config with multiple skills per subcategory", async () => {
-    const config: ProjectConfig = {
+    const config = buildProjectConfig({
       name: "multi-skill-project",
-      agents: ["web-developer"],
       skills: ["web-testing-vitest", "web-testing-playwright-e2e"],
       stack: {
         "web-developer": {
@@ -131,7 +126,7 @@ describe("TS config round-trip", () => {
           ],
         },
       },
-    };
+    });
 
     const loaded = (await writeAndLoad(config)) as ProjectConfig;
     const webDev = loaded.stack?.["web-developer"] as Record<string, unknown>;
@@ -143,14 +138,14 @@ describe("TS config round-trip", () => {
   });
 
   it("omits undefined fields in round-trip", async () => {
-    const config: ProjectConfig = {
+    const config = buildProjectConfig({
       name: "sparse-project",
       agents: [],
       skills: [],
       description: undefined,
       author: undefined,
       stack: undefined,
-    };
+    });
 
     const loaded = (await writeAndLoad(config)) as Record<string, unknown>;
     expect(loaded).toEqual({ name: "sparse-project", agents: [], skills: [] });

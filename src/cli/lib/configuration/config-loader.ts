@@ -17,20 +17,19 @@ type ZodLikeSchema = {
 
 /**
  * Loads a TypeScript config file using jiti.
- * Returns null on failure (mirrors safeLoadYamlFile pattern).
+ * Returns null when the file does not exist.
+ * Throws on validation failure or malformed/broken files.
  *
  * @param configPath - Absolute path to the .ts config file
- * @param schema - Optional Zod schema for validation (same pattern as safeLoadYamlFile)
+ * @param schema - Optional Zod schema for validation
  */
-export async function loadTsConfig<T>(
-  configPath: string,
-  schema?: ZodLikeSchema,
-): Promise<T | null> {
+export async function loadConfig<T>(configPath: string, schema?: ZodLikeSchema): Promise<T | null> {
   if (!(await fileExists(configPath))) {
-    verbose(`TS config not found at ${configPath}`);
+    verbose(`Config not found at ${configPath}`);
     return null;
   }
 
+  let raw: unknown;
   try {
     const jiti = createJiti(import.meta.url, {
       moduleCache: false,
@@ -38,22 +37,22 @@ export async function loadTsConfig<T>(
       alias: { "@agents-inc/cli/config": CONFIG_EXPORTS_PATH },
     });
 
-    const raw = await jiti.import(configPath, { default: true });
-
-    if (schema) {
-      const result = schema.safeParse(raw);
-      if (!result.success) {
-        verbose(`TS config validation failed at ${configPath}: ${JSON.stringify(result.error)}`);
-        return null;
-      }
-      // Post-safeParse cast: schema.safeParse widened by passthrough, narrow to actual type
-      return result.data as T;
-    }
-
-    // Boundary cast: jiti returns unknown, caller provides expected type
-    return raw as T;
+    raw = await jiti.import(configPath, { default: true });
   } catch (error) {
-    verbose(`Failed to load TS config from ${configPath}: ${getErrorMessage(error)}`);
-    return null;
+    throw new Error(`Failed to load config from '${configPath}': ${getErrorMessage(error)}`);
   }
+
+  if (schema) {
+    const result = schema.safeParse(raw);
+    if (!result.success) {
+      throw new Error(
+        `Config validation failed at '${configPath}': ${JSON.stringify(result.error)}`,
+      );
+    }
+    // Post-safeParse cast: schema.safeParse widened by passthrough, narrow to actual type
+    return result.data as T;
+  }
+
+  // Boundary cast: jiti returns unknown, caller provides expected type
+  return raw as T;
 }

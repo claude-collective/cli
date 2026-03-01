@@ -577,6 +577,28 @@ describe("init wizard", () => {
     });
   });
 
+  describe("existing .claude directory without config", () => {
+    it("should start fresh wizard when .claude/ exists but no config", async () => {
+      await createProjectAndSource();
+
+      // Create .claude/ directory with a settings file but no .claude-src/config.ts
+      const claudeDir = path.join(projectDir!, CLAUDE_DIR);
+      await mkdir(claudeDir, { recursive: true });
+      await writeFile(
+        path.join(claudeDir, "settings.json"),
+        JSON.stringify({ permissions: { allow: [] } }),
+      );
+
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      // The wizard should start fresh since there is no .claude-src/config.ts
+      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+
+      const fullOutput = session.getFullOutput();
+      expect(fullOutput).toContain("E2E Test Stack");
+    });
+  });
+
   describe("already initialized project", () => {
     it("should show dashboard when project already has a config", async () => {
       await createProjectAndSource();

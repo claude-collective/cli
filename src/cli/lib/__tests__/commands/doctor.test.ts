@@ -107,7 +107,7 @@ describe("doctor command", () => {
 
       const { error } = await runCliCommand(["doctor"]);
 
-      // Should exit with error due to invalid TS config
+      // Should exit with error due to invalid config
       expect(error?.oclif?.exit).toBeDefined();
     });
 

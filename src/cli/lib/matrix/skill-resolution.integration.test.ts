@@ -638,7 +638,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
     expect(installResult.copiedSkills).toHaveLength(PIPELINE_SKILL_COUNT);
 
     // Verify config contains all selected skills
-    // Boundary cast: TS config parse returns `unknown`
+    // Boundary cast: config parse returns `unknown`
     const config = await readTestTsConfig<ProjectConfig>(installResult.configPath);
 
     for (const skillId of selectedSkills) {
@@ -672,7 +672,7 @@ describe("Integration: Multi-Source Install Pipeline", () => {
       sourceFlag: "github:test-org/skills",
     });
 
-    // Boundary cast: TS config parse returns `unknown`
+    // Boundary cast: config parse returns `unknown`
     const config = await readTestTsConfig<ProjectConfig>(installResult.configPath);
 
     // Source metadata should be preserved

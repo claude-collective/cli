@@ -14,7 +14,7 @@ import { resolveSource } from "../../lib/configuration/index.js";
 import {
   loadConfigTypesDataInBackground,
   regenerateConfigTypes,
-} from "../../lib/configuration/ts-config-types-writer.js";
+} from "../../lib/configuration/config-types-writer.js";
 import { EXIT_CODES } from "../../lib/exit-codes.js";
 import { getErrorMessage } from "../../utils/errors.js";
 import { isClaudeCLIAvailable } from "../../utils/exec.js";

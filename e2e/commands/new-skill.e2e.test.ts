@@ -1,4 +1,5 @@
 import path from "path";
+import { mkdir, rm } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import {
   createTempDir,
@@ -12,6 +13,7 @@ import {
 } from "../helpers/test-utils.js";
 import {
   CLAUDE_DIR,
+  CLAUDE_SRC_DIR,
   SKILL_CATEGORIES_PATH,
   SKILL_RULES_PATH,
   STANDARD_FILES,
@@ -194,6 +196,32 @@ describe("new skill command", () => {
     expect(rulesContent).toContain('"my-extra-skill"');
   });
 
+  it("should accept a skill name containing numbers", async () => {
+    tempDir = await createTempDir();
+    const skillName = "skill123";
+
+    const { exitCode, stdout } = await runCLI(
+      ["new", "skill", skillName, "--domain", "shared"],
+      tempDir,
+    );
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(stdout).toContain("Skill created successfully");
+  });
+
+  it("should accept a long skill name", async () => {
+    tempDir = await createTempDir();
+    const skillName = "my-very-long-skill-name-that-has-many-segments";
+
+    const { exitCode, stdout } = await runCLI(
+      ["new", "skill", skillName, "--domain", "shared"],
+      tempDir,
+    );
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(stdout).toContain("Skill created successfully");
+  });
+
   it("should not create config files when creating a local skill", async () => {
     tempDir = await createTempDir();
     const skillName = "local-only-skill";
@@ -204,5 +232,70 @@ describe("new skill command", () => {
     // Config files should NOT exist for local skills
     expect(await fileExists(path.join(tempDir, SKILL_CATEGORIES_PATH))).toBe(false);
     expect(await fileExists(path.join(tempDir, SKILL_RULES_PATH))).toBe(false);
+  });
+
+  it("should regenerate config-types.ts with custom skill in marketplace context", async () => {
+    tempDir = await createTempDir();
+    const marketplaceName = "mp-types-test";
+
+    // Scaffold a marketplace to establish the source context (src/skills/, config/, etc.)
+    const { exitCode: mpExitCode } = await runCLI(["new", "marketplace", marketplaceName], tempDir);
+    expect(mpExitCode).toBe(EXIT_CODES.SUCCESS);
+
+    const marketplaceDir = path.join(tempDir, marketplaceName);
+
+    // Create .claude-src/ directory — required for loadConfigTypesDataInBackground
+    await mkdir(path.join(marketplaceDir, CLAUDE_SRC_DIR), { recursive: true });
+
+    // Remove scaffolded config files that contain invalid dummy domain values.
+    // loadSkillsMatrixFromSource validates these with Zod, and "dummy" is not
+    // a valid domain. Removing them lets the source loader fall back to CLI defaults.
+    await rm(path.join(marketplaceDir, SKILL_CATEGORIES_PATH), { force: true });
+    await rm(path.join(marketplaceDir, SKILL_RULES_PATH), { force: true });
+
+    // Create a new skill with custom domain/category, using --source . to point at the marketplace
+    const { exitCode, stdout } = await runCLI(
+      [
+        "new",
+        "skill",
+        "custom-types-skill",
+        "--domain",
+        "custom-e2e-domain",
+        "--category",
+        "custom-e2e-category",
+        "--source",
+        ".",
+      ],
+      marketplaceDir,
+    );
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(stdout).toContain("Skill created successfully");
+
+    // Verify config-types.ts was regenerated with custom values
+    const configTypesPath = path.join(
+      marketplaceDir,
+      CLAUDE_SRC_DIR,
+      STANDARD_FILES.CONFIG_TYPES_TS,
+    );
+    expect(await fileExists(configTypesPath)).toBe(true);
+
+    const configTypesContent = await readTestFile(configTypesPath);
+
+    // Header comment
+    expect(configTypesContent).toContain("AUTO-GENERATED");
+
+    // Section comments for custom vs marketplace values
+    expect(configTypesContent).toContain("// Custom");
+    expect(configTypesContent).toContain("// Marketplace");
+
+    // Custom skill ID appears in SkillId union
+    expect(configTypesContent).toContain('"custom-types-skill"');
+
+    // Custom domain appears in Domain union
+    expect(configTypesContent).toContain('"custom-e2e-domain"');
+
+    // Custom category appears in Subcategory union
+    expect(configTypesContent).toContain('"custom-e2e-category"');
   });
 });

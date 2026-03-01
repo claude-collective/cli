@@ -47,11 +47,11 @@ export { defineConfig } from "./define-config";
 export { defaultCategories } from "./default-categories";
 export { defaultRules } from "./default-rules";
 export { defaultStacks } from "./default-stacks";
-export { loadTsConfig } from "./ts-config-loader";
-export { generateTsConfigSource } from "./ts-config-writer";
+export { loadConfig } from "./config-loader";
+export { generateConfigSource } from "./config-writer";
 export {
   generateConfigTypesSource,
   type ConfigTypesBackgroundData,
   loadConfigTypesDataInBackground,
   regenerateConfigTypes,
-} from "./ts-config-types-writer";
+} from "./config-types-writer";

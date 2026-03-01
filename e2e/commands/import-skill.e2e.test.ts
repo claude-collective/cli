@@ -39,6 +39,24 @@ describe("import skill command", () => {
     expect(stdout).toContain("--list");
   });
 
+  it("should document --subdir flag in help output", async () => {
+    tempDir = await createTempDir();
+
+    const { exitCode, stdout } = await runCLI(["import", "skill", "--help"], tempDir);
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(stdout).toContain("--subdir");
+  });
+
+  it("should document --force flag in help output", async () => {
+    tempDir = await createTempDir();
+
+    const { exitCode, stdout } = await runCLI(["import", "skill", "--help"], tempDir);
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(stdout).toContain("--force");
+  });
+
   it("should error when no source argument is provided", async () => {
     tempDir = await createTempDir();
 

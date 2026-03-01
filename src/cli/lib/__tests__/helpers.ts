@@ -149,6 +149,7 @@ import type {
   Marketplace,
   MarketplacePlugin,
   MergedSkillsMatrix,
+  ProjectConfig,
   ResolvedSkill,
   ResolvedStack,
   Skill,
@@ -182,7 +183,7 @@ export async function readTestYaml<T>(filePath: string): Promise<T> {
 }
 
 /**
- * Load a TS config file using jiti. Handles defineConfig(), satisfies, and plain exports.
+ * Load a config file using jiti. Handles defineConfig(), satisfies, and plain exports.
  */
 export async function readTestTsConfig<T>(filePath: string): Promise<T> {
   const jiti = createJiti(import.meta.url, {
@@ -195,7 +196,7 @@ export async function readTestTsConfig<T>(filePath: string): Promise<T> {
   return result as T;
 }
 
-/** Writes a TS config file with the given object into the given subdirectory (defaults to CLAUDE_SRC_DIR) */
+/** Writes a config file with the given object into the given subdirectory (defaults to CLAUDE_SRC_DIR) */
 export async function writeTestTsConfig(
   projectDir: string,
   config: Record<string, unknown>,
@@ -205,6 +206,15 @@ export async function writeTestTsConfig(
   await mkdir(configDir, { recursive: true });
   const content = `export default ${JSON.stringify(config, null, 2)};`;
   await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), content);
+}
+
+export function buildProjectConfig(overrides?: Partial<ProjectConfig>): ProjectConfig {
+  return {
+    name: "test-project",
+    agents: ["web-developer"] as AgentName[],
+    skills: ["web-framework-react"] as SkillId[],
+    ...overrides,
+  };
 }
 
 export function buildWizardResult(
@@ -370,14 +380,15 @@ export function createMockMatrix(
   overrides?: Partial<MergedSkillsMatrix>,
 ): MergedSkillsMatrix {
   // Auto-generate displayNames and displayNameToId from skills
-  const autoDisplayNames = {} as Record<SkillId, SkillDisplayName>;
-  const autoDisplayNameToId = {} as Record<SkillDisplayName, SkillId>;
-  for (const [id, skill] of typedEntries(skills)) {
-    if (skill.displayName) {
-      autoDisplayNames[id as SkillId] = skill.displayName;
-      autoDisplayNameToId[skill.displayName] = id as SkillId;
-    }
-  }
+  const skillsWithDisplayName = typedEntries(skills).filter(
+    ([, skill]) => skill.displayName != null,
+  );
+  const autoDisplayNames = Object.fromEntries(
+    skillsWithDisplayName.map(([id, skill]) => [id, skill.displayName!]),
+  ) as Record<SkillId, SkillDisplayName>;
+  const autoDisplayNameToId = Object.fromEntries(
+    skillsWithDisplayName.map(([id, skill]) => [skill.displayName!, id]),
+  ) as Record<SkillDisplayName, SkillId>;
 
   return {
     version: "1.0.0",
@@ -733,10 +744,9 @@ export function createComprehensiveMatrix(
     // SkillDisplayName/SkillId types without going through `unknown` first (boundary cast)
   } as unknown as Record<SkillDisplayName, SkillId>;
 
-  const displayNames = {} as Record<SkillId, SkillDisplayName>;
-  for (const [displayName, fullId] of typedEntries(displayNameToId)) {
-    (displayNames as Record<string, string>)[fullId] = displayName;
-  }
+  const displayNames = Object.fromEntries(
+    typedEntries(displayNameToId).map(([displayName, fullId]) => [fullId, displayName]),
+  ) as Record<SkillId, SkillDisplayName>;
 
   return createMockMatrix(skills, {
     categories,
@@ -824,11 +834,7 @@ export function buildWizardResultFromStore(
   }
 
   const methodologySkills = store.getDefaultMethodologySkills();
-  for (const skill of methodologySkills) {
-    if (!allSkills.includes(skill)) {
-      allSkills.push(skill);
-    }
-  }
+  allSkills = [...allSkills, ...methodologySkills.filter((s) => !allSkills.includes(s))];
 
   const validation = validateSelection(allSkills, matrix);
 
@@ -858,28 +864,21 @@ export function simulateSkillSelections(
   matrix: MergedSkillsMatrix,
   selectedDomains: string[],
 ): void {
-  const domainSelections: DomainSelections = {};
-
-  for (const skillId of skillIds) {
+  const domainSelections = skillIds.reduce<DomainSelections>((acc, skillId) => {
     const skill = matrix.skills[skillId];
-    if (!skill) continue;
-
+    if (!skill) return acc;
     // Boundary cast: skill.category is a Subcategory at runtime
     const subcategory = skill.category as Subcategory;
-    const categoryDef = matrix.categories[subcategory];
-    const domain = categoryDef?.domain;
-    if (!domain) continue;
-
-    if (!domainSelections[domain]) {
-      domainSelections[domain] = {};
-    }
-    if (!domainSelections[domain][subcategory]) {
-      domainSelections[domain][subcategory] = [];
-    }
-    if (!domainSelections[domain][subcategory].includes(skillId)) {
-      domainSelections[domain][subcategory].push(skillId);
-    }
-  }
+    const domain = matrix.categories[subcategory]?.domain;
+    if (!domain) return acc;
+    const domainObj = acc[domain] ?? {};
+    const subcatList = domainObj[subcategory] ?? [];
+    if (subcatList.includes(skillId)) return acc;
+    return {
+      ...acc,
+      [domain]: { ...domainObj, [subcategory]: [...subcatList, skillId] },
+    };
+  }, {});
 
   useWizardStore.setState({
     domainSelections,

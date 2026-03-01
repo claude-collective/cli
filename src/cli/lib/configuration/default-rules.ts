@@ -2,7 +2,7 @@ import type { SkillRulesConfig } from "../../types";
 
 /**
  * Built-in skill rules, equivalent to config/skill-rules.ts.
- * Source repos may override or extend these via their own TS config files.
+ * Source repos may override or extend these via their own config files.
  */
 export const defaultRules: SkillRulesConfig = {
   version: "1.0.0",

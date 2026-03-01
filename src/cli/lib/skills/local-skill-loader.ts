@@ -17,6 +17,8 @@ type LocalRawMetadata = {
   tags?: string[];
   /** Domain this skill belongs to (e.g., "web", "api", "cli") */
   domain: Domain;
+  /** True if this skill was created outside the CLI's built-in vocabulary */
+  custom?: boolean;
 };
 
 export type LocalSkillDiscoveryResult = {
@@ -121,6 +123,7 @@ async function extractLocalSkill(
     local: true,
     localPath: relativePath,
     domain: metadata.domain,
+    custom: metadata.custom,
   };
 
   verbose(`Extracted local skill: ${skillId}`);

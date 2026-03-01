@@ -140,6 +140,24 @@ describe("list command", () => {
     });
   });
 
+  describe("with multiple skills installed", () => {
+    // The list command currently only shows skill counts, not individual skill IDs.
+    // This test asserts the user should see which skills are installed.
+    it.fails("should show all skill IDs in output", async () => {
+      tempDir = await createTempDir();
+      const projectDir = await createEditableProject(tempDir, {
+        skills: ["web-framework-react", "web-testing-vitest", "web-state-zustand"],
+      });
+
+      const { exitCode, stdout } = await runCLI(["list"], projectDir);
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(stdout).toContain("web-framework-react");
+      expect(stdout).toContain("web-testing-vitest");
+      expect(stdout).toContain("web-state-zustand");
+    });
+  });
+
   describe("edge cases", () => {
     it("should handle project with skills directory but no config", async () => {
       tempDir = await createTempDir();

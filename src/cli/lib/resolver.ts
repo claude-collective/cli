@@ -158,57 +158,54 @@ export async function resolveAgents(
   _projectRoot: string,
   stack?: Stack,
 ): Promise<Record<AgentName, AgentConfig>> {
-  // Store initialization: accumulator filled below for each agent in compileConfig
-  const resolved: Record<AgentName, AgentConfig> = {} as Record<AgentName, AgentConfig>;
   const agentNames = typedKeys<AgentName>(compileConfig.agents);
 
-  for (const agentName of agentNames) {
-    const definition = agents[agentName];
-    if (!definition) {
-      const availableAgents = typedKeys<AgentName>(agents);
-      const agentList =
-        availableAgents.length > 0
-          ? `Available agents: ${availableAgents.slice(0, 5).join(", ")}${availableAgents.length > 5 ? ` (and ${availableAgents.length - 5} more)` : ""}`
-          : "No agents found in scanned directories";
-      throw new Error(
-        `Agent '${agentName}' referenced in compile config but not found in scanned agents. ${agentList}. Check that src/agents/${agentName}/metadata.yaml exists.`,
-      );
-    }
+  const entries = await Promise.all(
+    agentNames.map(async (agentName) => {
+      const definition = agents[agentName];
+      if (!definition) {
+        const availableAgents = typedKeys<AgentName>(agents);
+        const agentList =
+          availableAgents.length > 0
+            ? `Available agents: ${availableAgents.slice(0, 5).join(", ")}${availableAgents.length > 5 ? ` (and ${availableAgents.length - 5} more)` : ""}`
+            : "No agents found in scanned directories";
+        throw new Error(
+          `Agent '${agentName}' referenced in compile config but not found in scanned agents. ${agentList}. Check that src/agents/${agentName}/metadata.yaml exists.`,
+        );
+      }
 
-    const agentConfig = compileConfig.agents[agentName];
+      const agentConfig = compileConfig.agents[agentName];
+      const skillRefs = await resolveAgentSkillRefs(agentName, agentConfig, stack);
+      const resolvedSkills = resolveSkillReferences(skillRefs, skills);
 
-    const skillRefs = await resolveAgentSkillRefs(agentName, agentConfig, stack);
+      return [
+        agentName,
+        {
+          name: agentName,
+          title: definition.title,
+          description: definition.description,
+          model: definition.model,
+          tools: definition.tools,
+          skills: resolvedSkills,
+          path: definition.path,
+          sourceRoot: definition.sourceRoot,
+          agentBaseDir: definition.agentBaseDir,
+        },
+      ] as const;
+    }),
+  );
 
-    const resolvedSkills = resolveSkillReferences(skillRefs, skills);
-
-    resolved[agentName] = {
-      name: agentName,
-      title: definition.title,
-      description: definition.description,
-      model: definition.model,
-      tools: definition.tools,
-      skills: resolvedSkills,
-      path: definition.path,
-      sourceRoot: definition.sourceRoot,
-      agentBaseDir: definition.agentBaseDir,
-    };
-  }
-
-  return resolved;
+  return Object.fromEntries(entries) as Record<AgentName, AgentConfig>;
 }
 
 export function convertStackToCompileConfig(stackId: string, stack: ProjectConfig): CompileConfig {
-  // Store initialization: accumulator filled below for each agent in stack
-  const agents: Record<AgentName, CompileAgentConfig> = {} as Record<AgentName, CompileAgentConfig>;
-
-  for (const agentId of stack.agents) {
-    agents[agentId] = {};
-  }
-
   return {
     name: stack.name,
     description: stack.description || "",
     stack: stackId,
-    agents,
+    agents: Object.fromEntries(stack.agents.map((id) => [id, {}])) as Record<
+      AgentName,
+      CompileAgentConfig
+    >,
   };
 }

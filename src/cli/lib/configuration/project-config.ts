@@ -2,11 +2,12 @@ import os from "os";
 import path from "path";
 import { fileExists } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
+import { getErrorMessage } from "../../utils/errors";
 import { CLAUDE_SRC_DIR, STANDARD_FILES } from "../../consts";
 import type { ProjectConfig, ValidationResult } from "../../types";
-import { projectConfigLoaderSchema } from "../schemas";
 import { normalizeStackRecord } from "../stacks/stacks-loader";
-import { loadTsConfig } from "./ts-config-loader";
+import { extendSchemasWithCustomValues, projectConfigLoaderSchema } from "../schemas";
+import { loadConfig } from "./config-loader";
 
 export type LoadedProjectConfig = {
   config: ProjectConfig;
@@ -24,8 +25,31 @@ export async function loadProjectConfigFromDir(
     return null;
   }
 
-  const config = await loadTsConfig<ProjectConfig>(configPath, projectConfigLoaderSchema);
-  if (!config) return null;
+  let config: ProjectConfig | null;
+  try {
+    // Step 1: Load raw object (no schema) — values come from config-types.ts via satisfies
+    const raw = await loadConfig<ProjectConfig>(configPath);
+    if (!raw || typeof raw !== "object") return null;
+
+    // Step 2: Extend Zod schemas with values from the config itself
+    extendSchemasWithCustomValues({
+      skillIds: raw.skills ?? [],
+      agentNames: raw.agents ?? [],
+      domains: raw.domains ?? [],
+      categories: Object.values(raw.stack ?? {}).flatMap(Object.keys),
+    });
+
+    // Step 3: Validate with Zod (now accepts all values from config-types.ts)
+    const result = projectConfigLoaderSchema.safeParse(raw);
+    if (!result.success) {
+      verbose(`Config validation failed at ${configPath}: ${JSON.stringify(result.error)}`);
+      return null;
+    }
+    config = result.data as ProjectConfig;
+  } catch (error) {
+    verbose(`Failed to load project config at ${configPath}: ${getErrorMessage(error)}`);
+    return null;
+  }
 
   // Normalize stack values to SkillAssignment[] (same as loadStacks does for stacks.ts)
   if (config.stack) {

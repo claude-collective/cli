@@ -5,6 +5,7 @@ import {
   createTempDir,
   cleanupTempDir,
   createMinimalProject,
+  createProjectWithCustomSkill,
   createLocalSkill,
   ensureBinaryExists,
   fileExists,
@@ -244,6 +245,68 @@ describe("compile command", () => {
     });
   });
 
+  describe("help output", () => {
+    it("should display help with expected flags and description", async () => {
+      tempDir = await createTempDir();
+      const projectDir = path.join(tempDir, "project");
+      await mkdir(projectDir, { recursive: true });
+
+      const { exitCode, stdout } = await runCLI(["compile", "--help"], projectDir);
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(stdout).toContain("USAGE");
+      expect(stdout).toContain("Compile agents");
+      expect(stdout).toContain("--output");
+      expect(stdout).toContain("--verbose");
+      expect(stdout).toContain("--dry-run");
+      expect(stdout).toContain("--source");
+    });
+  });
+
+  describe("missing skills directory", () => {
+    it("should exit with error when .claude/skills/ directory does not exist", async () => {
+      tempDir = await createTempDir();
+      const projectDir = path.join(tempDir, "project");
+      const outputDir = path.join(tempDir, "output");
+      // Create project with .claude/ but no skills/ subdirectory
+      await mkdir(path.join(projectDir, CLAUDE_DIR), { recursive: true });
+      await mkdir(outputDir, { recursive: true });
+
+      const { exitCode, combined } = await runCLI(["compile", "--output", outputDir], projectDir, {
+        env: COMPILE_ENV,
+      });
+
+      expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
+      expect(combined).toContain("No skills found");
+    });
+  });
+
+  describe("output directory with existing files", () => {
+    it("should write compiled agents alongside pre-existing files", async () => {
+      tempDir = await createTempDir();
+      const { projectDir, outputDir } = await createMinimalProject(tempDir);
+
+      // Place a pre-existing file in the output directory
+      const preExistingFile = "existing-notes.txt";
+      await writeFile(path.join(outputDir, preExistingFile), "pre-existing content");
+
+      const { exitCode } = await runCLI(["compile", "--output", outputDir], projectDir, {
+        env: COMPILE_ENV,
+      });
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+      const outputFiles = await listFiles(outputDir);
+
+      // Pre-existing file should still be present
+      expect(outputFiles).toContain(preExistingFile);
+
+      // Compiled agent files should also be present
+      expect(outputFiles).toContain("web-developer.md");
+      expect(outputFiles).toContain("api-developer.md");
+    });
+  });
+
   describe("agent YAML content verification", () => {
     it("should produce agents with valid YAML frontmatter fields", async () => {
       tempDir = await createTempDir();
@@ -291,6 +354,45 @@ describe("compile command", () => {
 
         expect(body).toContain("#");
       }
+    });
+  });
+
+  describe("custom skills in project config", () => {
+    it("should compile agents with custom skills in config", async () => {
+      tempDir = await createTempDir();
+      const { projectDir, outputDir } = await createProjectWithCustomSkill(tempDir);
+
+      const { exitCode, stdout } = await runCLI(["compile", "--output", outputDir], projectDir, {
+        env: COMPILE_ENV,
+      });
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(stdout).toMatch(/Compiled \d+ agents/);
+
+      const outputFiles = await listFiles(outputDir);
+      expect(outputFiles.length).toBeGreaterThan(0);
+      expect(outputFiles).toContain("web-developer.md");
+    });
+
+    it("should include custom skill in compiled agent frontmatter", async () => {
+      tempDir = await createTempDir();
+      const { projectDir, outputDir } = await createProjectWithCustomSkill(tempDir);
+
+      const { exitCode } = await runCLI(["compile", "--output", outputDir], projectDir, {
+        env: COMPILE_ENV,
+      });
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+      const webDevPath = path.join(outputDir, "web-developer.md");
+      expect(await fileExists(webDevPath)).toBe(true);
+
+      const content = await readTestFile(webDevPath);
+
+      // The custom skill is assigned as preloaded in the stack config,
+      // so it should appear in the YAML frontmatter skills list
+      expect(content).toMatch(/^---\n/);
+      expect(content).toContain("web-custom-e2e-widget");
     });
   });
 });

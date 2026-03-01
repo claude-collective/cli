@@ -21,12 +21,12 @@ import {
 } from "../__tests__/mock-data/mock-matrices.js";
 
 // For extractAllSkills tests, we mock fs/loader. For loadSkillCategories/loadSkillRules,
-// we mock loadTsConfig from the configuration module.
+// we mock loadConfig from the configuration module.
 const mockReadFile = vi.fn();
 const mockFileExists = vi.fn().mockResolvedValue(true);
 const mockGlob = vi.fn().mockResolvedValue([]);
 const mockParseFrontmatter = vi.fn();
-const mockLoadTsConfig = vi.fn();
+const mockLoadConfig = vi.fn();
 
 vi.mock("../../utils/fs", () => ({
   readFile: (...args: unknown[]) => mockReadFile(...args),
@@ -40,8 +40,8 @@ vi.mock("../loading", () => ({
   parseFrontmatter: (...args: unknown[]) => mockParseFrontmatter(...args),
 }));
 
-vi.mock("../configuration/ts-config-loader", () => ({
-  loadTsConfig: (...args: unknown[]) => mockLoadTsConfig(...args),
+vi.mock("../configuration/config-loader", () => ({
+  loadConfig: (...args: unknown[]) => mockLoadConfig(...args),
 }));
 
 import {
@@ -92,7 +92,7 @@ const UNRESOLVED_CONFLICT_MATRIX = createMockMatrixConfig(
 describe("matrix-loader", () => {
   describe("loadSkillCategories", () => {
     it("loads and validates a valid skill-categories config", async () => {
-      mockLoadTsConfig.mockResolvedValue({
+      mockLoadConfig.mockResolvedValue({
         version: "1.0.0",
         categories: {
           "web-framework": {
@@ -132,22 +132,22 @@ describe("matrix-loader", () => {
       expect(categories["api-api"]).toBeDefined();
     });
 
-    it("throws when loadTsConfig returns null", async () => {
-      mockLoadTsConfig.mockResolvedValue(null);
+    it("throws when loadConfig returns null", async () => {
+      mockLoadConfig.mockResolvedValue(null);
 
       await expect(loadSkillCategories("/nonexistent/skill-categories.ts")).rejects.toThrow(
         /Invalid skill categories/,
       );
     });
 
-    it("throws when loadTsConfig rejects", async () => {
-      mockLoadTsConfig.mockRejectedValue(new Error("ENOENT: file not found"));
+    it("throws when loadConfig rejects", async () => {
+      mockLoadConfig.mockRejectedValue(new Error("ENOENT: file not found"));
 
       await expect(loadSkillCategories("/nonexistent/skill-categories.ts")).rejects.toThrow();
     });
 
     it("includes path in error message", async () => {
-      mockLoadTsConfig.mockResolvedValue(null);
+      mockLoadConfig.mockResolvedValue(null);
 
       await expect(loadSkillCategories("/custom/path/categories.ts")).rejects.toThrow(
         /\/custom\/path\/categories\.ts/,
@@ -157,7 +157,7 @@ describe("matrix-loader", () => {
 
   describe("loadSkillRules", () => {
     it("loads and validates a valid skill-rules config", async () => {
-      mockLoadTsConfig.mockResolvedValue({
+      mockLoadConfig.mockResolvedValue({
         version: "1.0.0",
         aliases: {
           react: "web-framework-react",
@@ -205,22 +205,22 @@ describe("matrix-loader", () => {
       });
     });
 
-    it("throws when loadTsConfig returns null", async () => {
-      mockLoadTsConfig.mockResolvedValue(null);
+    it("throws when loadConfig returns null", async () => {
+      mockLoadConfig.mockResolvedValue(null);
 
       await expect(loadSkillRules("/nonexistent/skill-rules.ts")).rejects.toThrow(
         /Invalid skill rules/,
       );
     });
 
-    it("throws when loadTsConfig rejects", async () => {
-      mockLoadTsConfig.mockRejectedValue(new Error("ENOENT: file not found"));
+    it("throws when loadConfig rejects", async () => {
+      mockLoadConfig.mockRejectedValue(new Error("ENOENT: file not found"));
 
       await expect(loadSkillRules("/nonexistent/skill-rules.ts")).rejects.toThrow();
     });
 
     it("parses valid aliases without error", async () => {
-      mockLoadTsConfig.mockResolvedValue({
+      mockLoadConfig.mockResolvedValue({
         version: "1.0.0",
         aliases: {
           react: "web-framework-react",
@@ -235,7 +235,7 @@ describe("matrix-loader", () => {
     });
 
     it("returns default empty arrays when relationships, aliases, and per-skill are missing", async () => {
-      mockLoadTsConfig.mockResolvedValue({
+      mockLoadConfig.mockResolvedValue({
         version: "1.0.0",
       });
 
@@ -251,7 +251,7 @@ describe("matrix-loader", () => {
     });
 
     it("includes path in error message", async () => {
-      mockLoadTsConfig.mockResolvedValue(null);
+      mockLoadConfig.mockResolvedValue(null);
 
       await expect(loadSkillRules("/custom/path/rules.ts")).rejects.toThrow(
         /\/custom\/path\/rules\.ts/,

@@ -266,7 +266,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
       expect(await fileExists(configPath)).toBe(true);
       expect(installResult.configPath).toBe(configPath);
 
-      // Boundary cast: TS config parse returns `unknown`
+      // Boundary cast: config parse returns `unknown`
       const config = await readTestTsConfig<ProjectConfig>(configPath);
 
       expect(config.name).toBe(DEFAULT_PLUGIN_NAME);
@@ -394,7 +394,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         projectDir: dirs.projectDir,
       });
 
-      // Boundary cast: TS config parse returns `unknown`
+      // Boundary cast: config parse returns `unknown`
       const config = await readTestTsConfig<ProjectConfig>(installResult.configPath);
 
       for (const skillId of selectedSkills) {
@@ -430,7 +430,7 @@ describe("Integration: Wizard -> Init -> Compile Pipeline", () => {
         sourceFlag: "github:my-org/skills",
       });
 
-      // Boundary cast: TS config parse returns `unknown`
+      // Boundary cast: config parse returns `unknown`
       const config = await readTestTsConfig<ProjectConfig>(
         path.join(dirs.projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
       );

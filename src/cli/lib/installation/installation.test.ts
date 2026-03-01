@@ -3,6 +3,7 @@ import os from "os";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, PLUGINS_SUBDIR, STANDARD_FILES } from "../../consts";
 
 // Mock logger (suppress verbose/warn output during tests)
 vi.mock("../../utils/logger");
@@ -35,9 +36,9 @@ async function createLocalProject(
   options: { configContent?: Record<string, unknown> } = {},
 ): Promise<void> {
   const { configContent = LOCAL_CONFIG } = options;
-  const configDir = path.join(projectDir, ".claude-src");
+  const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
   await mkdir(configDir, { recursive: true });
-  await writeFile(path.join(configDir, "config.ts"), tsConfigContent(configContent));
+  await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), tsConfigContent(configContent));
 }
 
 const PLUGIN_CONFIG = {
@@ -48,9 +49,9 @@ const PLUGIN_CONFIG = {
 };
 
 async function createPluginProject(projectDir: string): Promise<void> {
-  const configDir = path.join(projectDir, ".claude-src");
+  const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
   await mkdir(configDir, { recursive: true });
-  await writeFile(path.join(configDir, "config.ts"), tsConfigContent(PLUGIN_CONFIG));
+  await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), tsConfigContent(PLUGIN_CONFIG));
 }
 
 describe("installation", () => {
@@ -73,9 +74,9 @@ describe("installation", () => {
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("local");
       expect(result!.scope).toBe("project");
-      expect(result!.configPath).toBe(path.join(tempDir, ".claude-src/config.ts"));
-      expect(result!.agentsDir).toBe(path.join(tempDir, ".claude/agents"));
-      expect(result!.skillsDir).toBe(path.join(tempDir, ".claude/skills"));
+      expect(result!.configPath).toBe(path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS));
+      expect(result!.agentsDir).toBe(path.join(tempDir, CLAUDE_DIR, "agents"));
+      expect(result!.skillsDir).toBe(path.join(tempDir, CLAUDE_DIR, "skills"));
       expect(result!.projectDir).toBe(tempDir);
     });
 
@@ -97,9 +98,9 @@ describe("installation", () => {
       expect(result).not.toBeNull();
       expect(result!.mode).toBe("plugin");
       expect(result!.scope).toBe("project");
-      expect(result!.configPath).toBe(path.join(tempDir, ".claude-src/config.ts"));
-      expect(result!.agentsDir).toBe(path.join(tempDir, ".claude/agents"));
-      expect(result!.skillsDir).toBe(path.join(tempDir, ".claude/plugins"));
+      expect(result!.configPath).toBe(path.join(tempDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS));
+      expect(result!.agentsDir).toBe(path.join(tempDir, CLAUDE_DIR, "agents"));
+      expect(result!.skillsDir).toBe(path.join(tempDir, CLAUDE_DIR, PLUGINS_SUBDIR));
     });
 
     it("returns null for project-level detection when no installation found", async () => {
@@ -111,7 +112,7 @@ describe("installation", () => {
 
     it("returns null when no config file exists even if plugin dirs exist", async () => {
       // Just having plugin directories without a config file is not sufficient
-      const pluginDir = path.join(tempDir, ".claude/plugins/some-skill@public");
+      const pluginDir = path.join(tempDir, CLAUDE_DIR, PLUGINS_SUBDIR, "some-skill@public");
       await mkdir(pluginDir, { recursive: true });
 
       // detectProjectInstallation returns null for project check
@@ -122,9 +123,12 @@ describe("installation", () => {
     it("falls through to local even when config is invalid TS", async () => {
       // Create a config file that exists but has invalid content
       // loadProjectConfig returns null for unparseable configs
-      const configDir = path.join(tempDir, ".claude-src");
+      const configDir = path.join(tempDir, CLAUDE_SRC_DIR);
       await mkdir(configDir, { recursive: true });
-      await writeFile(path.join(configDir, "config.ts"), "invalid typescript content {{");
+      await writeFile(
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
+        "invalid typescript content {{",
+      );
 
       const result = await detectInstallation(tempDir);
 
@@ -165,7 +169,7 @@ describe("installation", () => {
     it("falls back to global when project config not found", async () => {
       // If the home directory has a config, detectInstallation falls back
       const homeDir = os.homedir();
-      const homeConfigPath = path.join(homeDir, ".claude-src/config.ts");
+      const homeConfigPath = path.join(homeDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const { fileExists } = await import("../../utils/fs");
       const homeHasConfig = await fileExists(homeConfigPath);
 
@@ -208,7 +212,7 @@ describe("installation", () => {
     it("throws error when no installation found", async () => {
       // Only test this when home dir has no global config
       const homeDir = os.homedir();
-      const homeConfigPath = path.join(homeDir, ".claude-src/config.ts");
+      const homeConfigPath = path.join(homeDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const { fileExists } = await import("../../utils/fs");
       const homeHasConfig = await fileExists(homeConfigPath);
 
@@ -221,7 +225,7 @@ describe("installation", () => {
 
     it("error message suggests running agentsinc init", async () => {
       const homeDir = os.homedir();
-      const homeConfigPath = path.join(homeDir, ".claude-src/config.ts");
+      const homeConfigPath = path.join(homeDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
       const { fileExists } = await import("../../utils/fs");
       const homeHasConfig = await fileExists(homeConfigPath);
 

@@ -8,14 +8,14 @@ import {
   createMockStack,
 } from "../__tests__/helpers";
 
-vi.mock("../configuration/ts-config-loader", () => ({
-  loadTsConfig: vi.fn(),
+vi.mock("../configuration/config-loader", () => ({
+  loadConfig: vi.fn(),
 }));
 
 vi.mock("../../utils/logger");
 
 import { resolveAgentConfigToSkills, resolveStackSkills } from "./stacks-loader";
-import { loadTsConfig } from "../configuration/ts-config-loader";
+import { loadConfig } from "../configuration/config-loader";
 import { warn } from "../../utils/logger";
 import { extendSchemasWithCustomValues, resetSchemaExtensions } from "../schemas";
 
@@ -28,7 +28,7 @@ describe("stacks-loader", () => {
 
   describe("loadStacks", () => {
     it("loads and parses stacks from config/stacks.ts", async () => {
-      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfig());
+      vi.mocked(loadConfig).mockResolvedValue(createMockRawStacksConfig());
 
       // Re-import after resetModules to clear cache
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
@@ -41,7 +41,7 @@ describe("stacks-loader", () => {
     });
 
     it("returns empty array when stacks file does not exist", async () => {
-      vi.mocked(loadTsConfig).mockResolvedValue(null);
+      vi.mocked(loadConfig).mockResolvedValue(null);
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
       const stacks = await freshLoadStacks("/project");
@@ -50,7 +50,7 @@ describe("stacks-loader", () => {
     });
 
     it("throws descriptive error for load failure", async () => {
-      vi.mocked(loadTsConfig).mockRejectedValue(new Error("ENOENT"));
+      vi.mocked(loadConfig).mockRejectedValue(new Error("ENOENT"));
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
 
@@ -58,51 +58,51 @@ describe("stacks-loader", () => {
     });
 
     it("caches loaded stacks for the same configDir", async () => {
-      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfig());
+      vi.mocked(loadConfig).mockResolvedValue(createMockRawStacksConfig());
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
 
       const first = await freshLoadStacks("/project");
       const second = await freshLoadStacks("/project");
 
-      // loadTsConfig should only be called once due to caching
-      expect(loadTsConfig).toHaveBeenCalledTimes(1);
+      // loadConfig should only be called once due to caching
+      expect(loadConfig).toHaveBeenCalledTimes(1);
       expect(first).toBe(second);
     });
 
     it("loads stacks from custom stacksFile path", async () => {
-      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfig());
+      vi.mocked(loadConfig).mockResolvedValue(createMockRawStacksConfig());
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
       const stacks = await freshLoadStacks("/project", "data/my-stacks.ts");
 
       expect(stacks).toHaveLength(2);
-      expect(loadTsConfig).toHaveBeenCalledWith("/project/data/my-stacks.ts", expect.anything());
+      expect(loadConfig).toHaveBeenCalledWith("/project/data/my-stacks.ts", expect.anything());
     });
 
     it("uses default STACKS_FILE when stacksFile is undefined", async () => {
-      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfig());
+      vi.mocked(loadConfig).mockResolvedValue(createMockRawStacksConfig());
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
       await freshLoadStacks("/project");
 
-      expect(loadTsConfig).toHaveBeenCalledWith("/project/config/stacks.ts", expect.anything());
+      expect(loadConfig).toHaveBeenCalledWith("/project/config/stacks.ts", expect.anything());
     });
 
     it("caches separately for different stacksFile values", async () => {
-      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfig());
+      vi.mocked(loadConfig).mockResolvedValue(createMockRawStacksConfig());
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
 
       await freshLoadStacks("/project");
       await freshLoadStacks("/project", "custom/stacks.ts");
 
-      // loadTsConfig should be called twice — different cache keys
-      expect(loadTsConfig).toHaveBeenCalledTimes(2);
+      // loadConfig should be called twice — different cache keys
+      expect(loadConfig).toHaveBeenCalledTimes(2);
     });
 
     it("normalizes bare string values to SkillAssignment[] with preloaded: false", async () => {
-      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfig());
+      vi.mocked(loadConfig).mockResolvedValue(createMockRawStacksConfig());
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
       const stacks = await freshLoadStacks("/project");
@@ -120,7 +120,7 @@ describe("stacks-loader", () => {
     });
 
     it("normalizes bare string arrays to SkillAssignment[] with preloaded: false", async () => {
-      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfigWithArrays());
+      vi.mocked(loadConfig).mockResolvedValue(createMockRawStacksConfigWithArrays());
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
       const stacks = await freshLoadStacks("/project");
@@ -146,7 +146,7 @@ describe("stacks-loader", () => {
     });
 
     it("preserves object-form assignments with preloaded: true", async () => {
-      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfigWithObjects());
+      vi.mocked(loadConfig).mockResolvedValue(createMockRawStacksConfigWithObjects());
 
       const { loadStacks: freshLoadStacks } = await import("./stacks-loader");
       const stacks = await freshLoadStacks("/project");
@@ -174,7 +174,7 @@ describe("stacks-loader", () => {
 
   describe("loadStackById", () => {
     it("returns stack matching the given ID", async () => {
-      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfig());
+      vi.mocked(loadConfig).mockResolvedValue(createMockRawStacksConfig());
 
       const { loadStackById: freshLoadStackById } = await import("./stacks-loader");
       const stack = await freshLoadStackById("vue-spa", "/project");
@@ -185,7 +185,7 @@ describe("stacks-loader", () => {
     });
 
     it("returns null when stack ID not found", async () => {
-      vi.mocked(loadTsConfig).mockResolvedValue(createMockRawStacksConfig());
+      vi.mocked(loadConfig).mockResolvedValue(createMockRawStacksConfig());
 
       const { loadStackById: freshLoadStackById } = await import("./stacks-loader");
       const stack = await freshLoadStackById("nonexistent-stack", "/project");
@@ -194,7 +194,7 @@ describe("stacks-loader", () => {
     });
 
     it("returns null when no stacks file exists", async () => {
-      vi.mocked(loadTsConfig).mockResolvedValue(null);
+      vi.mocked(loadConfig).mockResolvedValue(null);
 
       const { loadStackById: freshLoadStackById } = await import("./stacks-loader");
       const stack = await freshLoadStackById("nextjs-fullstack", "/project");

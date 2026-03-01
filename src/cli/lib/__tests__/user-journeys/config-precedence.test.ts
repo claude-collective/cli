@@ -180,7 +180,7 @@ describe("User Journey: Config Precedence - Source Resolution", () => {
       expect(config).toBeNull();
     });
 
-    it("should return null for invalid TS in project config", async () => {
+    it("should return null for invalid TypeScript in project config", async () => {
       const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
       await mkdir(configDir, { recursive: true });
       await writeFile(path.join(configDir, "config.ts"), "invalid typescript content {{");
@@ -326,7 +326,7 @@ describe("User Journey: Project Config Save and Load", () => {
       const configPath = getProjectConfigPath(projectDir);
       expect(await fileExists(configPath)).toBe(true);
 
-      // Boundary cast: TS config parse returns `unknown`
+      // Boundary cast: config parse returns `unknown`
       const config = await readTestTsConfig<ProjectSourceConfig>(configPath);
       expect(config.source).toBe("github:test/repo");
     });
@@ -336,7 +336,7 @@ describe("User Journey: Project Config Save and Load", () => {
       await saveProjectConfig(projectDir, { source: "github:second/repo" });
 
       const configPath = getProjectConfigPath(projectDir);
-      // Boundary cast: TS config parse returns `unknown`
+      // Boundary cast: config parse returns `unknown`
       const config = await readTestTsConfig<ProjectSourceConfig>(configPath);
 
       expect(config.source).toBe("github:second/repo");
@@ -350,7 +350,7 @@ describe("User Journey: Project Config Save and Load", () => {
       });
 
       const configPath = getProjectConfigPath(projectDir);
-      // Boundary cast: TS config parse returns `unknown`
+      // Boundary cast: config parse returns `unknown`
       const config = await readTestTsConfig<ProjectSourceConfig>(configPath);
 
       expect(config.source).toBe("github:myorg/skills");
@@ -485,7 +485,10 @@ describe("User Journey: Config Edge Cases", () => {
     expect(config).toEqual({});
   });
 
-  it("should handle config with extra unknown fields", async () => {
+  it("should allow extra unknown fields (passthrough schema)", async () => {
+    // projectSourceConfigSchema uses .passthrough() so unknown fields are preserved
+    // rather than rejected. This enables forward compatibility — older CLI versions
+    // can load configs written by newer versions without breaking.
     const projectDir = path.join(tempDir, "project");
     const configDir = path.join(projectDir, PROJECT_CONFIG_DIR);
     await mkdir(configDir, { recursive: true });
@@ -498,7 +501,6 @@ describe("User Journey: Config Edge Cases", () => {
 
     const config = await loadProjectSourceConfig(projectDir);
     expect(config?.source).toBe("github:valid/source");
-    // Unknown fields should not cause errors
   });
 
   it("should support local file paths as source", async () => {
