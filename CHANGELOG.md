@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.54.0] - 2026-03-01
+
+**Config file renames, domain ordering fix**
+
+- Renamed `ts-config-*` files to `config-*` — drop prefix now that all configs are TypeScript
+- Fixed domain ordering mismatch — custom domains now appear first in all wizard views
+
+See [changelogs/0.54.0.md](./changelogs/0.54.0.md) for full details.
+
+---
+
 ## [0.53.0] - 2026-02-28
 
 **Config-types regeneration, sectioned unions, required domain**
