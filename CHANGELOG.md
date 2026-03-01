@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.56.0] - 2026-03-02
+
+**E2E test coverage, global config detection, pre-commit E2E hook**
+
+- 350+ E2E tests covering all commands and wizard flows
+- `agentsinc init` prompts when global config exists but no project config (D-65)
+- E2E tests added to pre-commit hook (D-63)
+
+See [changelogs/0.56.0.md](./changelogs/0.56.0.md) for full details.
+
+---
+
 ## [0.55.1] - 2026-03-01
 
 **B-08 selective agent removal, D-70 rename Subcategory → Category**
