@@ -31,7 +31,12 @@
 | D-67 | Remove `aliases` from skill-rules.ts — derive display name mappings from a typed `Record<SkillId, SkillDisplayName>` map                   | Investigate   |
 | D-68 | Remove `--dry-run` flag entirely — wizard confirm step already previews, operations are local/reversible                                   | Ready for Dev |
 | D-69 | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                                           | Investigate   |
+| D-70 | `new skill` / `new agent` should update config.ts + rename Subcategory → Category                                                          | Ready for Dev |
 | B-07 | Fix skill sort order changing on select/deselect in build step                                                                             | Ready for Dev |
+| B-09 | `new skill` + `edit` installs custom skill as plugin source instead of local                                                               | Bug           |
+| R-01 | `loadStackById` should check default stacks internally — callers shouldn't need to know about both sources                                 | Refactor      |
+| R-02 | Flatten nested for-loops in `default-stacks.test.ts` — parameterize per (stack, agent, subcategory) instead of nesting inside `it.each`    | Refactor      |
+| R-03 | Simplify `config-generator.ts` — reduce nested loops, intermediate maps, and function complexity                                           | Refactor      |
 
 ---
 
@@ -525,6 +530,108 @@ When the CLI's `ProjectConfig` shape changes between versions (new required fiel
 - `src/cli/lib/configuration/ts-config-loader.ts` — config loading
 - `src/cli/lib/schemas.ts` — Zod validation schemas
 - `src/cli/types/config.ts` — ProjectConfig type definition
+
+---
+
+#### D-70: `new skill` / `new agent` should update config.ts + rename Subcategory → Category
+
+**Priority:** Medium
+
+Four related changes:
+
+**Part 1: Add to config.ts arrays with sectioned comments** — Ready for Dev
+
+When running `agentsinc new skill` or `agentsinc new agent`, add the entity to the project's `.claude-src/config.ts`. Arrays should use `// Custom` / `// Marketplace` section comments:
+
+```typescript
+skills: [
+  // Custom
+  "my-custom-skill",
+  // Marketplace
+  "web-framework-react",
+  "api-framework-hono",
+],
+domains: [
+  // Custom
+  "dummy",
+  // Marketplace
+  "web",
+  "api",
+],
+```
+
+Expected behavior:
+
+- `agentsinc new skill my-custom-skill --domain dummy` → adds skill to `skills[]`, domain to `domains[]`
+- `agentsinc new agent my-custom-agent` → adds agent to `agents[]`
+- If the entity is already in the array, skip (no duplicates)
+- If no `config.ts` exists yet, warn the user to run `init` first
+- Requires a custom serializer for config.ts (current `generateConfigSource` uses `JSON.stringify` — no comments)
+- Classification data (custom vs marketplace) needed at write time — use the matrix from background load
+
+**Part 2: Add custom domain/category to config-types.ts unions** — DONE
+
+`regenerateConfigTypes` now accepts `extras.extraSkillIds`, `extras.extraAgentNames`, `extras.extraDomains`, and `extras.extraCategories`. All four are merged into their respective union types and custom sets. `new/skill.ts` passes domain and category alongside skill ID.
+
+**Part 3: E2e tests for config-types.ts regeneration** — Ready for Dev
+
+Test that `new skill` with custom domain/category produces correct config-types.ts output:
+
+- Custom skill ID appears in `SkillId` union under `// Custom`
+- Custom domain appears in `Domain` union under `// Custom`
+- Custom category appears in `Subcategory` union under `// Custom`
+- Marketplace values remain under `// Marketplace`
+
+**Part 4: Rename Subcategory → Category**
+
+The type `Subcategory` in `config-types.ts` and `types-matrix.ts` is confusing — it represents the same concept as `category` in `metadata.yaml`. Rename throughout:
+
+- `Subcategory` type → `Category`
+- `subcategorySchema` → `categorySchema`
+- `SUBCATEGORY_VALUES` → `CATEGORY_VALUES`
+- `SUBCATEGORY_VALUES_SET` → `CATEGORY_VALUES_SET`
+- `extensibleSubcategorySchema` → `extensibleCategorySchema`
+- `SubcategorySelections` → `CategorySelections`
+- `ResolvedSubcategorySkills` → `ResolvedCategorySkills`
+- `StackAgentConfig` key type: `Partial<Record<Subcategory, ...>>` → `Partial<Record<Category, ...>>`
+- All `typedEntries<Subcategory, ...>` / `typedKeys<Subcategory>` call sites
+- All test data using `Subcategory` type annotations
+- Update `config-types-writer.ts` to emit `export type Category = ...` instead of `export type Subcategory = ...`
+
+This is a mechanical rename — grep for `Subcategory` (case-sensitive) across the entire codebase. The `CategoryPath` type alias can stay (it adds `"local"` and bare forms on top of `Category`).
+
+**Key files:**
+
+- `src/cli/types-matrix.ts` — `Subcategory` union definition, `SubcategorySelections`, `ResolvedSubcategorySkills`
+- `src/cli/lib/schemas.ts` — `SUBCATEGORY_VALUES`, `subcategorySchema`, `extensibleSubcategorySchema`, `SUBCATEGORY_VALUES_SET`
+- `src/cli/lib/configuration/config-types-writer.ts` — generates `Subcategory` type, `extraCategories`/`extraDomains` support
+- `src/cli/lib/configuration/config-writer.ts` — `generateConfigSource()` needs sectioned array serializer
+- `src/cli/commands/new/skill.ts` — `new skill` command
+- `src/cli/commands/new/agent.tsx` — `new agent` command
+- `src/cli/lib/configuration/config-loader.ts` — `loadConfig()` for reading existing config
+- ~50+ files referencing `Subcategory` type
+
+---
+
+### B-09: `new skill` + `edit` installs custom skill as plugin source instead of local
+
+**Symptom:** After `agentsinc new skill dummy-react`, running `agentsinc edit` and selecting the new skill shows it being installed as `dummy-react@agents-inc` (plugin source), which fails because the skill doesn't exist in the marketplace. The source should be `local` since the skill was just created locally.
+
+**Reproduction:**
+
+1. `agentsinc new skill dummy-react --domain dummy`
+2. `agentsinc edit` → select the new `dummy-react` skill → confirm
+3. Error: `Plugin "dummy-react" not found in marketplace "agents-inc"`
+
+**Likely root cause:** When the edit wizard resolves skill sources, locally-created skills are not being detected as local-source skills. The source resolution logic may default to plugin/marketplace when it can't find source metadata, or the `new skill` command may not be writing enough metadata for the resolver to classify it as local.
+
+**Investigation areas:**
+
+- `src/cli/lib/loading/source-loader.ts` — how skill sources are resolved
+- `src/cli/lib/resolver.ts` — skill resolution logic
+- `src/cli/commands/new/skill.ts` — what metadata/config `new skill` writes
+- `src/cli/lib/installation/local-installer.ts` — local install path
+- How `availableSources` / `activeSource` on `ResolvedSkill` are populated for locally-created skills
 
 ---
 

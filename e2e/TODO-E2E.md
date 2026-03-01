@@ -261,12 +261,12 @@ Identified by cross-referencing CLI commands with existing test coverage and aud
 
 ### `compile` command gaps (currently 12 tests)
 
-- [ ] `--help` flag → verify help output (basic coverage missing)
+- [x] `--help` flag → verify help output (basic coverage missing)
 - [ ] `--agents` flag → compile only specific agents
 - [ ] Multiple agents compiled → verify each agent file has distinct content
 - [ ] Compile with `--source` flag → verify source override works
-- [ ] Compile with missing `.claude/skills/` directory → verify graceful error
-- [ ] Compile output to existing directory with files → verify overwrite behavior
+- [x] Compile with missing `.claude/skills/` directory → verify graceful error
+- [x] Compile output to existing directory with files → verify overwrite behavior
 
 ### `diff` command gaps (currently 9 tests, 3 `it.fails()`)
 
@@ -277,21 +277,21 @@ Identified by cross-referencing CLI commands with existing test coverage and aud
 
 ### `doctor` command gaps (currently 11 tests)
 
-- [ ] `doctor --help` → verify help output
-- [ ] `doctor` with missing skills directory but valid config → verify warning
+- [x] `doctor --help` → verify help output
+- [x] `doctor` with missing skills directory but valid config → verify warning
 - [ ] `doctor` with remote/GitHub source → verify source reachability check
-- [ ] `doctor` with corrupt config.yaml → verify error handling
+- [x] `doctor` with corrupt config.yaml → verify error handling
 
 ### `eject` command gaps (currently 11 tests)
 
-- [ ] `eject --help` → verify help output
+- [x] `eject --help` → verify help output
 - [ ] `eject skills --filter` → verify filtered ejection (if flag exists)
-- [ ] `eject` with corrupt source → verify error handling
-- [ ] `eject` to read-only directory → verify permission error
+- [x] `eject` with corrupt source → verify error handling (`it.fails()` — CLI falls back to default source instead of erroring)
+- [x] `eject` to read-only directory → verify permission error
 
 ### `import skill` command gaps (currently 10 tests, 5 `it.fails()`)
 
-- [ ] `import skill --help` → verify `--subdir` and `--force` flags documented
+- [x] `import skill --help` → verify `--subdir` and `--force` flags documented
 - [ ] `import skill` with `--all` flag from GitHub source → verify all skills imported (requires network, use `describe.skipIf`)
 - [ ] `import skill` with `--list --subdir` → verify subdirectory listing
 
@@ -304,7 +304,7 @@ Identified by cross-referencing CLI commands with existing test coverage and aud
 ### `list` command gaps (currently 10 tests)
 
 - [ ] `list` with `--json` flag → verify JSON output (if flag exists)
-- [ ] `list` with multiple skills installed → verify all listed
+- [x] `list` with multiple skills installed → verify all listed (`it.fails()` — CLI shows counts only, not individual IDs)
 - [ ] `list` with both CLI-managed and user-created skills → verify distinction in output
 
 ### `new agent` command gaps (currently 5 tests)
@@ -316,26 +316,26 @@ Identified by cross-referencing CLI commands with existing test coverage and aud
 ### `new marketplace` command gaps (currently 10 tests)
 
 - [ ] `new marketplace` with `--verbose` flag → verify additional output
-- [ ] `new marketplace` name validation edge cases (numbers only, single char, very long name)
+- [x] `new marketplace` name validation edge cases (numbers only, single char, very long name)
 
 ### `new skill` command gaps (currently 8 tests)
 
 - [ ] `new skill` with `--description` flag → verify description in generated files
 - [ ] `new skill` with `--category` flag → verify category in metadata
-- [ ] `new skill` name edge cases (very long name, name with numbers)
+- [x] `new skill` name edge cases (very long name, name with numbers)
 
 ### `outdated` command gaps (currently 8 tests)
 
-- [ ] `outdated --help` → verify help output
+- [x] `outdated --help` → verify help output
 - [ ] `outdated` with `--source` flag → verify source override
 - [ ] `outdated` with multiple skills at different states → verify mixed output (current + outdated + local-only)
-- [ ] `outdated --json` with current skills → verify JSON structure
+- [x] `outdated --json` with current skills → verify JSON structure
 
 ### `uninstall` command gaps (currently 8 non-interactive tests)
 
-- [ ] `uninstall --help` output includes `--dry-run` flag documentation
+- [x] `uninstall --help` output includes `--dry-run` flag documentation
 - [ ] `uninstall --dry-run --all` → verify dry-run with --all flag
-- [ ] `uninstall` in directory with only user-created skills (no CLI-managed) → verify "nothing to uninstall" message
+- [x] `uninstall` in directory with only user-created skills (no CLI-managed) → verify skip message
 
 ### `update` command gaps (currently 9 tests)
 
@@ -359,7 +359,7 @@ Identified by cross-referencing CLI commands with existing test coverage and aud
 
 ### `build stack` interactive gaps (currently 9 tests)
 
-- [ ] Stack selection with arrow keys → verify navigation between stacks
+- [x] Stack selection with arrow keys → verify navigation between stacks
 - [ ] Stack with `--source` flag → verify source override
 - [ ] Stack compilation with verbose output → verify skill loading details
 
@@ -370,7 +370,7 @@ Identified by cross-referencing CLI commands with existing test coverage and aud
 - [ ] Init from "Start from scratch" with only one domain selected → verify single-domain flow
 - [ ] Init with all domains deselected → verify validation error or empty install behavior
 - [ ] Init with stack selection → customize instead of defaults → verify build step loads stack skills
-- [ ] Init in a directory with existing `.claude/` but no config → verify behavior (not "already initialized" if no config.yaml)
+- [x] Init in a directory with existing `.claude/` but no config → verify behavior (starts fresh wizard)
 - [ ] Init on existing project → dashboard menu (see Phase 12)
 
 ### `edit wizard` interactive gaps (currently 17 tests)
@@ -383,7 +383,7 @@ Identified by cross-referencing CLI commands with existing test coverage and aud
 
 ### `uninstall` interactive gaps (currently 10 tests)
 
-- [ ] Interactive uninstall with `--all` flag → verify confirmation includes config removal warning
+- [x] Interactive uninstall with `--all` flag → verify confirmation includes config removal warning
 - [ ] Interactive uninstall with `--dry-run` → verify dry-run output with confirmation prompt
 
 ### `update` interactive gaps (currently no dedicated interactive tests beyond launch)
