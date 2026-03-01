@@ -12,7 +12,7 @@
 | D-13  | Eject skills by domain/category (see [plan](./D-13-eject-skills-filtered.md))                                                      | Refined                        |
 | D-18  | ~~Template system documentation improvements~~ — deleted, not useful                                                               | Deleted                        |
 | D-19  | Improve template error messages (see [plan](./D-19-template-error-messages.md))                                                    | Deferred — nice to have        |
-| D-20  | Add Edit tool to documentor agent                                                                                                  | Trivial (no refinement needed) |
+| D-20  | Add Edit tool to documentor agent                                                                                                  | DONE |
 | D-22  | ~~Automated agent-tester~~ — scrapped; existing validation should be made stricter over time instead                               | Deleted                        |
 | D-24  | ~~Configurable documentation file locations~~ — convention-only, no code needed (see [plan](./D-24-configurable-doc-locations.md)) | Closed                         |
 | D-14  | Import skills from third-party marketplaces                                                                                        | Needs Assistance               |
