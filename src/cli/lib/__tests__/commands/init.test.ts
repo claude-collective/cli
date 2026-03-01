@@ -59,32 +59,11 @@ describe("init command", () => {
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
-
-    it("should accept --dry-run flag", async () => {
-      // Seed config so init exits early (avoids Wizard render hang with --dry-run)
-      await seedConfigForEarlyExit();
-
-      const { error } = await runCliCommand(["init", "--dry-run"]);
-
-      // Should not error on --dry-run flag parsing
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-      expect(output.toLowerCase()).not.toContain("unexpected argument");
-    });
   });
 
   describe("combined flags", () => {
     it("should accept multiple flags together", async () => {
-      // Seed config so init exits early (avoids Wizard render hang with --dry-run)
-      await seedConfigForEarlyExit();
-
-      const { error } = await runCliCommand([
-        "init",
-        "--refresh",
-        "--dry-run",
-        "--source",
-        "/custom/source",
-      ]);
+      const { error } = await runCliCommand(["init", "--refresh", "--source", "/custom/source"]);
 
       // Should accept all flags
       const output = error?.message || "";

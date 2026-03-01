@@ -40,7 +40,6 @@ describe("TerminalSession smoke tests", () => {
 
     expect(screen).toContain("compile");
     expect(screen).toContain("--output");
-    expect(screen).toContain("--dry-run");
     expect(screen).toContain("--verbose");
   });
 

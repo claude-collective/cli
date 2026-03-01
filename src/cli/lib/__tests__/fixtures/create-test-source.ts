@@ -135,16 +135,6 @@ export const SKILL_WITHOUT_METADATA_CUSTOM: TestSkill = {
   skipMetadata: true,
 };
 
-/** Skill used for dry-run tests */
-export const DRY_RUN_SKILL: TestSkill = {
-  id: "web-tooling-test",
-  name: "web-tooling-test",
-  description: "Test",
-  category: "web-tooling",
-  author: TEST_AUTHOR,
-  domain: "web",
-};
-
 /** A basic local-only skill (no forkedFrom) with SKILL.md and metadata.yaml */
 export const LOCAL_SKILL_BASIC: TestSkill = {
   id: "web-tooling-my-skill",

@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { Flags } from "@oclif/core";
 import { render, Box, Text, useApp, useInput } from "ink";
 import os from "os";
-import path from "path";
 
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
@@ -27,11 +26,9 @@ import {
 } from "../utils/exec.js";
 import {
   ASCII_LOGO,
-  CLAUDE_DIR,
   CLI_BIN_NAME,
   CLI_COLORS,
   DEFAULT_BRANDING,
-  LOCAL_SKILLS_PATH,
 } from "../consts.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
@@ -43,7 +40,7 @@ import {
   pushBufferMessage,
   type StartupMessage,
 } from "../utils/logger.js";
-import { SUCCESS_MESSAGES, STATUS_MESSAGES, DRY_RUN_MESSAGES } from "../utils/messages.js";
+import { SUCCESS_MESSAGES, STATUS_MESSAGES } from "../utils/messages.js";
 
 type DashboardOption = {
   label: string;
@@ -77,7 +74,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const { exit } = useApp();
   const [focusIndex, setFocusIndex] = useState(0);
 
-  useInput((input, key) => {
+  useInput((_input, key) => {
     if (key.escape) {
       onCancel();
       exit();
@@ -220,10 +217,6 @@ export default class Init extends BaseCommand {
       command: "<%= config.bin %> <%= command.id %> --source github:org/marketplace",
     },
     {
-      description: "Preview without creating files",
-      command: "<%= config.bin %> <%= command.id %> --dry-run",
-    },
-    {
       description: "Force refresh skills from remote",
       command: "<%= config.bin %> <%= command.id %> --refresh",
     },
@@ -262,10 +255,6 @@ export default class Init extends BaseCommand {
 
     if (flags.global) {
       pushBufferMessage("info", "Installing globally to home directory...");
-    }
-
-    if (flags["dry-run"]) {
-      pushBufferMessage("info", DRY_RUN_MESSAGES.PREVIEW_NO_FILES_CREATED);
     }
 
     let sourceResult: SourceLoadResult;
@@ -327,69 +316,17 @@ export default class Init extends BaseCommand {
   private async handleInstallation(
     result: WizardResultV2,
     sourceResult: SourceLoadResult,
-    flags: { "dry-run": boolean; source?: string; refresh: boolean; global: boolean },
+    flags: { source?: string; refresh: boolean; global: boolean },
   ): Promise<void> {
     const isGlobal = result.installScope === "global";
     const projectDir = isGlobal ? os.homedir() : process.cwd();
     const pluginScope = isGlobal ? "user" : "project";
-    const dryRun = flags["dry-run"];
 
     this.log("\n");
     this.log(`Selected ${result.selectedSkills.length} skills`);
     this.log(
       `Install mode: ${result.installMode === "plugin" ? "Plugin (native install)" : "Local (copy to .claude/skills/)"}`,
     );
-
-    if (dryRun) {
-      if (result.installMode === "plugin" && result.selectedStackId) {
-        const useMarketplace = !!sourceResult.marketplace;
-        if (useMarketplace) {
-          this.log(
-            `[dry-run] Would install stack "${result.selectedStackId}" from marketplace "${sourceResult.marketplace}"`,
-          );
-          this.log(
-            `[dry-run]   claude plugin install ${result.selectedStackId}@${sourceResult.marketplace} --scope ${pluginScope}`,
-          );
-        } else {
-          this.log(
-            `[dry-run] Would compile and install stack "${result.selectedStackId}" as a native plugin`,
-          );
-          this.log(
-            `[dry-run]   claude plugin install ./compiled-stack/${result.selectedStackId} --scope ${pluginScope}`,
-          );
-          this.log(
-            `[dry-run] Stack includes ${result.selectedSkills.length} skills and agents bundled together`,
-          );
-        }
-      } else if (result.installMode === "plugin" && sourceResult.marketplace) {
-        this.log(
-          `[dry-run] Would install ${result.selectedSkills.length} skills as individual plugins from "${sourceResult.marketplace}"`,
-        );
-        for (const skillId of result.selectedSkills) {
-          this.log(
-            `[dry-run]   claude plugin install ${skillId}@${sourceResult.marketplace} --scope ${pluginScope}`,
-          );
-        }
-        const localAgentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-        this.log(`[dry-run] Would compile agents to ${localAgentsDir}`);
-        this.log(`[dry-run] Would save config to .claude-src/config.ts`);
-      } else {
-        if (result.installMode === "plugin") {
-          this.log(
-            `[dry-run] Plugin Mode requires a marketplace for individual skills — would fall back to Local Mode`,
-          );
-        }
-        const localSkillsDir = path.join(projectDir, LOCAL_SKILLS_PATH);
-        const localAgentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-        this.log(
-          `[dry-run] Would copy ${result.selectedSkills.length} skills to ${localSkillsDir}`,
-        );
-        this.log(`[dry-run] Would compile agents to ${localAgentsDir}`);
-        this.log(`[dry-run] Would save config to .claude-src/config.ts`);
-      }
-      this.log(`\n${DRY_RUN_MESSAGES.COMPLETE_NO_FILES_CREATED}`);
-      return;
-    }
 
     if (result.installMode === "plugin") {
       if (sourceResult.marketplace) {

@@ -15,7 +15,7 @@ import { loadProjectSourceConfig } from "../lib/configuration/config";
 import type { ProjectSourceConfig } from "../lib/configuration/config";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, CLI_COLORS, DEFAULT_BRANDING } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
-import { SUCCESS_MESSAGES, INFO_MESSAGES, DRY_RUN_MESSAGES } from "../utils/messages";
+import { SUCCESS_MESSAGES, INFO_MESSAGES } from "../utils/messages";
 
 type UninstallTarget = {
   hasPlugins: boolean;
@@ -194,7 +194,6 @@ export default class Uninstall extends BaseCommand {
     "<%= config.bin %> <%= command.id %>",
     "<%= config.bin %> <%= command.id %> --yes",
     "<%= config.bin %> <%= command.id %> --all",
-    "<%= config.bin %> <%= command.id %> --dry-run",
   ];
 
   static flags = {
@@ -218,11 +217,6 @@ export default class Uninstall extends BaseCommand {
     this.log(`${DEFAULT_BRANDING.NAME} Uninstall`);
     this.log("");
 
-    if (flags["dry-run"]) {
-      this.log(DRY_RUN_MESSAGES.PREVIEW_NO_FILES_REMOVED);
-      this.log("");
-    }
-
     const target = await detectUninstallTarget(projectDir);
 
     const hasAnythingToRemove =
@@ -240,7 +234,7 @@ export default class Uninstall extends BaseCommand {
       return;
     }
 
-    if (!flags.yes && !flags["dry-run"]) {
+    if (!flags.yes) {
       const confirmed = await new Promise<boolean>((resolve) => {
         const { waitUntilExit } = render(
           <UninstallConfirm
@@ -284,22 +278,6 @@ export default class Uninstall extends BaseCommand {
       }
 
       this.log("");
-    }
-
-    if (flags["dry-run"]) {
-      if (target.hasPlugins) {
-        this.log(`[dry-run] Would uninstall ${target.pluginNames.length} plugins:`);
-        for (const pluginName of target.pluginNames) {
-          this.log(`[dry-run]   ${pluginName}`);
-        }
-      }
-
-      await this.dryRunLocalRemoval(target, flags.all);
-
-      this.log("");
-      this.log(DRY_RUN_MESSAGES.COMPLETE_NO_FILES_REMOVED);
-      this.log("");
-      return;
     }
 
     if (target.hasPlugins) {
@@ -425,34 +403,4 @@ export default class Uninstall extends BaseCommand {
     }
   }
 
-  private async dryRunLocalRemoval(target: UninstallTarget, removeAll: boolean): Promise<void> {
-    if (target.hasLocalSkills) {
-      const skillDirNames = await listDirectories(target.skillsDir);
-
-      for (const skillDirName of skillDirNames) {
-        const skillDir = path.join(target.skillsDir, skillDirName);
-        const forkedFrom = await readForkedFromMetadata(skillDir);
-
-        if (shouldRemoveSkill(forkedFrom, target.configuredSources, target.config !== null)) {
-          this.log(`[dry-run] Would remove skill '${skillDirName}'`);
-        } else {
-          this.log(
-            `[dry-run] Would skip '${skillDirName}': not created by ${DEFAULT_BRANDING.NAME} CLI`,
-          );
-        }
-      }
-    }
-
-    if (target.hasLocalAgents && target.config !== null) {
-      this.log(`[dry-run] Would remove ${target.agentsDir}/`);
-    }
-
-    if (removeAll && target.hasClaudeSrcDir) {
-      this.log(`[dry-run] Would remove ${target.claudeSrcDir}/`);
-    }
-
-    if (target.hasClaudeDir) {
-      this.log(`[dry-run] Would remove ${target.claudeDir}/ only if empty after cleanup`);
-    }
-  }
 }

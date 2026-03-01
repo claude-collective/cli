@@ -1,11 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  ERROR_MESSAGES,
-  SUCCESS_MESSAGES,
-  STATUS_MESSAGES,
-  INFO_MESSAGES,
-  DRY_RUN_MESSAGES,
-} from "./messages";
+import { ERROR_MESSAGES, SUCCESS_MESSAGES, STATUS_MESSAGES, INFO_MESSAGES } from "./messages";
 
 describe("ERROR_MESSAGES", () => {
   it("should have all expected keys", () => {
@@ -101,38 +95,5 @@ describe("INFO_MESSAGES", () => {
       expect(value, `${key} should be a non-empty string`).toBeTruthy();
       expect(typeof value).toBe("string");
     }
-  });
-});
-
-describe("DRY_RUN_MESSAGES", () => {
-  it("should have all expected keys", () => {
-    expect(Object.keys(DRY_RUN_MESSAGES)).toEqual([
-      "PREVIEW_NO_FILES_REMOVED",
-      "PREVIEW_NO_FILES_CREATED",
-      "COMPLETE_NO_FILES_REMOVED",
-      "COMPLETE_NO_FILES_WRITTEN",
-      "COMPLETE_NO_FILES_CREATED",
-    ]);
-  });
-
-  it("should have non-empty string values for every key", () => {
-    for (const [key, value] of Object.entries(DRY_RUN_MESSAGES)) {
-      expect(value, `${key} should be a non-empty string`).toBeTruthy();
-      expect(typeof value).toBe("string");
-    }
-  });
-
-  it("should all start with [dry-run] prefix", () => {
-    for (const [key, value] of Object.entries(DRY_RUN_MESSAGES)) {
-      expect(value, `${key} should start with '[dry-run]'`).toMatch(/^\[dry-run\]/);
-    }
-  });
-
-  it("should distinguish preview from complete messages", () => {
-    expect(DRY_RUN_MESSAGES.PREVIEW_NO_FILES_REMOVED).toContain("Preview mode");
-    expect(DRY_RUN_MESSAGES.PREVIEW_NO_FILES_CREATED).toContain("Preview mode");
-    expect(DRY_RUN_MESSAGES.COMPLETE_NO_FILES_REMOVED).toContain("Preview complete");
-    expect(DRY_RUN_MESSAGES.COMPLETE_NO_FILES_WRITTEN).toContain("Preview complete");
-    expect(DRY_RUN_MESSAGES.COMPLETE_NO_FILES_CREATED).toContain("Preview complete");
   });
 });

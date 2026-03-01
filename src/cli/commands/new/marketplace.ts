@@ -182,17 +182,6 @@ export default class NewMarketplace extends BaseCommand {
     const skillName = "dummy-skill";
     const skillPath = path.join(SKILLS_DIR_PATH, skillName);
 
-    if (flags["dry-run"]) {
-      this.log("[DRY RUN] Would create marketplace structure:");
-      this.log(`  ${STACKS_FILE_PATH}`);
-      this.log(`  ${SKILL_CATEGORIES_PATH}`);
-      this.log(`  ${SKILL_RULES_PATH}`);
-      this.log(`  ${skillPath}/${STANDARD_FILES.SKILL_MD}`);
-      this.log(`  ${skillPath}/${STANDARD_FILES.METADATA_YAML}`);
-      this.log("  README.md");
-      return;
-    }
-
     this.log("Creating marketplace structure...");
 
     try {
@@ -203,7 +192,10 @@ export default class NewMarketplace extends BaseCommand {
       await writeFile(stacksPath, stacksContent);
 
       // Create config/skill-categories.ts
-      const categoriesContent = generateSkillCategoriesTs(LOCAL_DEFAULTS.CATEGORY as CategoryPath, LOCAL_DEFAULTS.DOMAIN);
+      const categoriesContent = generateSkillCategoriesTs(
+        LOCAL_DEFAULTS.CATEGORY as CategoryPath,
+        LOCAL_DEFAULTS.DOMAIN,
+      );
       const categoriesPath = path.join(marketplaceDir, SKILL_CATEGORIES_PATH);
       await writeFile(categoriesPath, categoriesContent);
 

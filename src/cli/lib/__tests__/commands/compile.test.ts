@@ -8,7 +8,6 @@ import {
   VALID_LOCAL_SKILL,
   SKILL_WITHOUT_METADATA,
   SKILL_WITHOUT_METADATA_CUSTOM,
-  DRY_RUN_SKILL,
   type TestDirs,
 } from "../fixtures/create-test-source";
 
@@ -57,13 +56,6 @@ describe("compile command", () => {
 
     it("should accept -v shorthand for verbose", async () => {
       const { error } = await runCliCommand(["compile", "-v"]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
-    it("should accept --dry-run flag", async () => {
-      const { error } = await runCliCommand(["compile", "--dry-run"]);
 
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
@@ -121,44 +113,11 @@ describe("compile command", () => {
     });
   });
 
-  describe("dry-run mode", () => {
-    it("should accept --dry-run flag and process without errors", async () => {
-      const { error } = await runCliCommand(["compile", "--dry-run"]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
-    it("should accept --dry-run with --output flag", async () => {
-      const outputPath = path.join(tempDir, "dry-run-output");
-
-      // Use fixture to create local skill with metadata
-      const dirs = await createTestSource({
-        skills: [],
-        agents: [],
-        localSkills: [DRY_RUN_SKILL],
-      });
-      process.chdir(dirs.projectDir);
-
-      const { error } = await runCliCommand(["compile", "--dry-run", "--output", outputPath]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-
-      await cleanupTestSource(dirs);
-    });
-  });
-
   describe("output mode", () => {
     it("should show custom output directory in message", async () => {
       const outputPath = path.join(tempDir, "custom-output");
 
-      const { stdout, error } = await runCliCommand([
-        "compile",
-        "--output",
-        outputPath,
-        "--dry-run",
-      ]);
+      const { stdout, error } = await runCliCommand(["compile", "--output", outputPath]);
 
       const output = stdout + (error?.message || "");
       expect(output).toBeTruthy();
@@ -166,8 +125,8 @@ describe("compile command", () => {
   });
 
   describe("verbose mode", () => {
-    it("should accept --verbose with --dry-run", async () => {
-      const { error } = await runCliCommand(["compile", "--verbose", "--dry-run"]);
+    it("should accept --verbose flag", async () => {
+      const { error } = await runCliCommand(["compile", "--verbose"]);
 
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
@@ -190,7 +149,6 @@ describe("compile command", () => {
       const { error } = await runCliCommand([
         "compile",
         "--verbose",
-        "--dry-run",
         "--output",
         outputPath,
         "--source",
@@ -223,18 +181,6 @@ describe("compile command", () => {
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
-
-    it("should accept --dry-run with --agent-source", async () => {
-      const { error } = await runCliCommand([
-        "compile",
-        "--dry-run",
-        "--agent-source",
-        "https://example.com/agents",
-      ]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
   });
 
   describe("metadata.yaml requirement for local skills", () => {
@@ -256,12 +202,7 @@ describe("compile command", () => {
       });
       process.chdir(localDirs.projectDir);
 
-      const { stdout, error } = await runCliCommand([
-        "compile",
-        "--dry-run",
-        "--output",
-        outputPath,
-      ]);
+      const { stdout, error } = await runCliCommand(["compile", "--output", outputPath]);
 
       const output = stdout + (error?.message || "");
       // Skill should be discovered (not skipped)
@@ -332,7 +273,7 @@ describe("compile command", () => {
 
   describe("plugin mode vs custom output mode", () => {
     it("should use plugin mode when no output flag provided", async () => {
-      const { error } = await runCliCommand(["compile", "--dry-run"]);
+      const { error } = await runCliCommand(["compile"]);
 
       // Command should complete without flag parsing errors
       const output = error?.message || "";
@@ -342,7 +283,7 @@ describe("compile command", () => {
     it("should use custom output mode when output flag provided", async () => {
       const outputPath = path.join(tempDir, "custom-output");
 
-      const { error } = await runCliCommand(["compile", "--output", outputPath, "--dry-run"]);
+      const { error } = await runCliCommand(["compile", "--output", outputPath]);
 
       // Command should complete without flag parsing errors
       const output = error?.message || "";

@@ -54,7 +54,6 @@ describe("uninstall command", () => {
     expect(stdout).toContain("Remove");
     expect(stdout).toContain("--yes");
     expect(stdout).toContain("--all");
-    expect(stdout).toContain("--dry-run");
   });
 
   it("should warn when no installation is found", async () => {
@@ -200,16 +199,6 @@ describe("uninstall command", () => {
     expect(await directoryExists(cliSkillDir)).toBe(false);
   });
 
-  it("should display --dry-run flag description in help output", async () => {
-    tempDir = await createTempDir();
-
-    const { exitCode, stdout } = await runCLI(["uninstall", "--help"], tempDir);
-
-    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("--dry-run");
-    expect(stdout).toContain("Preview operations without executing");
-  });
-
   it("should skip all skills when only user-created skills exist", async () => {
     tempDir = await createTempDir();
     const projectDir = path.join(tempDir, "project");
@@ -231,25 +220,5 @@ describe("uninstall command", () => {
     expect(combined).toContain("Skipping");
     expect(combined).toContain("my-custom-skill");
     expect(await directoryExists(userSkillDir)).toBe(true);
-  });
-
-  it("should support --dry-run flag without removing files", async () => {
-    tempDir = await createTempDir();
-    const projectDir = await createEditableProject(tempDir);
-
-    await addForkedFromMetadata(projectDir);
-
-    const skillsDir = path.join(projectDir, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
-    const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
-
-    const { exitCode, stdout } = await runCLI(["uninstall", "--dry-run"], projectDir);
-
-    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("[dry-run]");
-    expect(stdout).toContain("no files were removed");
-
-    // Files should NOT be removed in dry-run mode
-    expect(await directoryExists(skillsDir)).toBe(true);
-    expect(await directoryExists(agentsDir)).toBe(true);
   });
 });

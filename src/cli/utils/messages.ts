@@ -46,11 +46,3 @@ export const INFO_MESSAGES = {
   NO_LOCAL_INSTALLATION: "No local installation found.",
   NOT_INSTALLED: `${DEFAULT_BRANDING.NAME} is not installed in this project.`,
 } as const;
-
-export const DRY_RUN_MESSAGES = {
-  PREVIEW_NO_FILES_REMOVED: "[dry-run] Preview mode - no files will be removed",
-  PREVIEW_NO_FILES_CREATED: "[dry-run] Preview mode - no files will be created",
-  COMPLETE_NO_FILES_REMOVED: "[dry-run] Preview complete - no files were removed",
-  COMPLETE_NO_FILES_WRITTEN: "[dry-run] Preview complete - no files were written",
-  COMPLETE_NO_FILES_CREATED: "[dry-run] Preview complete - no files were created",
-} as const;

@@ -271,17 +271,6 @@ export default class ImportSkill extends BaseCommand {
 
     const destDir = path.join(projectDir, LOCAL_SKILLS_PATH);
 
-    if (flags["dry-run"]) {
-      this.log("");
-      this.log("[DRY RUN] Would import the following skills:");
-      for (const skill of skillsToImport) {
-        const destPath = path.join(destDir, skill);
-        const exists = await directoryExists(destPath);
-        this.log(`  - ${skill} -> ${destPath}${exists ? " (exists)" : ""}`);
-      }
-      return;
-    }
-
     this.log("");
     this.log(`Importing ${skillsToImport.length} skill(s)...`);
 

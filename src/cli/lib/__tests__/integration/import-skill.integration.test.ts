@@ -546,46 +546,6 @@ describe("Integration: Import Metadata Preservation Through Compilation", () => 
   });
 });
 
-describe("Integration: Import --dry-run Does Not Affect Compilation", () => {
-  let tempDir: string;
-  let projectDir: string;
-  let originalCwd: string;
-
-  beforeEach(async () => {
-    originalCwd = process.cwd();
-    tempDir = await createTempDir("cc-import-dryrun-");
-    projectDir = path.join(tempDir, "project");
-    await mkdir(projectDir, { recursive: true });
-    process.chdir(projectDir);
-  });
-
-  afterEach(async () => {
-    process.chdir(originalCwd);
-    await cleanupTempDir(tempDir);
-  });
-
-  it("should not create importable skills in dry-run mode", async () => {
-    await createLocalSource(projectDir, [IMPORT_REACT_PATTERNS_SKILL]);
-
-    const { error } = await runCliCommand([
-      "import:skill",
-      LOCAL_SOURCE_NAME,
-      "--skill",
-      "react-patterns",
-      "--dry-run",
-    ]);
-    expect(error?.oclif?.exit).toBeUndefined();
-
-    // Skills should not have been created
-    const importedDir = path.join(projectDir, LOCAL_SKILLS_DIR, "react-patterns");
-    expect(await directoryExists(importedDir)).toBe(false);
-
-    // No skills to compile
-    const skillsDir = path.join(projectDir, LOCAL_SKILLS_DIR);
-    expect(await directoryExists(skillsDir)).toBe(false);
-  });
-});
-
 describe("Integration: Import Error Recovery", () => {
   let tempDir: string;
   let projectDir: string;

@@ -185,40 +185,6 @@ describe("User Journey: Compile Flow", () => {
     });
   });
 
-  describe("dry-run mode", () => {
-    it("should not create files in dry-run mode", async () => {
-      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
-      try {
-        const dryRunOutput = path.join(dirs.tempDir, "dry-run-output");
-
-        await runCliCommand(["compile", "--output", dryRunOutput, "--dry-run"]);
-
-        // In dry-run mode, the output directory should either:
-        // 1. Not exist, or
-        // 2. Exist but be empty (no agent files)
-        if (await directoryExists(dryRunOutput)) {
-          const webDevPath = path.join(dryRunOutput, "web-developer.md");
-          const apiDevPath = path.join(dryRunOutput, "api-developer.md");
-
-          expect(await fileExists(webDevPath)).toBe(false);
-          expect(await fileExists(apiDevPath)).toBe(false);
-        }
-      } finally {
-        consoleSpy.mockRestore();
-        warnSpy.mockRestore();
-      }
-    });
-
-    it("should show preview message in dry-run mode", async () => {
-      const { stdout } = await runCliCommand(["compile", "--output", outputDir, "--dry-run"]);
-
-      // Dry-run output should contain preview indicator
-      expect(stdout).toContain("dry-run");
-    });
-  });
-
   describe("verbose mode", () => {
     it("should provide detailed output with --verbose flag", async () => {
       const { stdout, error } = await runCliCommand([
@@ -226,7 +192,6 @@ describe("User Journey: Compile Flow", () => {
         "--output",
         outputDir,
         "--verbose",
-        "--dry-run",
       ]);
 
       const output = stdout + (error?.message || "");

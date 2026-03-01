@@ -14,7 +14,6 @@ import {
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,
   STATUS_MESSAGES,
-  DRY_RUN_MESSAGES,
   INFO_MESSAGES,
 } from "../utils/messages";
 import { detectInstallation, type Installation } from "../lib/installation";
@@ -101,7 +100,6 @@ type CompileFlags = {
   source?: string;
   "agent-source"?: string;
   verbose: boolean;
-  "dry-run": boolean;
 };
 
 type DiscoveredSkills = {
@@ -119,7 +117,6 @@ export default class Compile extends BaseCommand {
     "<%= config.bin %> <%= command.id %>",
     "<%= config.bin %> <%= command.id %> --verbose",
     "<%= config.bin %> <%= command.id %> --output ./agents",
-    "<%= config.bin %> <%= command.id %> --dry-run",
   ];
 
   static flags = {
@@ -274,16 +271,6 @@ export default class Compile extends BaseCommand {
     await this.resolveSourceForCompile(flags);
     const agentDefs = await this.loadAgentDefsForCompile(flags);
 
-    if (flags["dry-run"]) {
-      this.log("");
-      this.log(`[dry-run] Would compile ${totalSkillCount} skills`);
-      this.log(`[dry-run] Would use agent partials from: ${agentDefs.sourcePath}`);
-      this.log(`[dry-run] Would output to: ${agentsDir}`);
-      this.log(DRY_RUN_MESSAGES.COMPLETE_NO_FILES_WRITTEN);
-      this.log("");
-      return;
-    }
-
     this.log(STATUS_MESSAGES.RECOMPILING_AGENTS);
     try {
       const recompileResult = await recompileAgents({
@@ -328,25 +315,11 @@ export default class Compile extends BaseCommand {
     this.log(`Output directory: ${outputDir}`);
     this.log("");
 
-    if (flags["dry-run"]) {
-      this.log(`[dry-run] Preview mode - no files will be written`);
-    }
-
     await ensureDir(outputDir);
 
     const { allSkills, totalSkillCount } = await this.discoverAllSkills();
     await this.resolveSourceForCompile(flags);
     const agentDefs = await this.loadAgentDefsForCompile(flags);
-
-    if (flags["dry-run"]) {
-      this.log("");
-      this.log(`[dry-run] Would compile agents with ${totalSkillCount} skills`);
-      this.log(`[dry-run] Would use agent definitions from: ${agentDefs.sourcePath}`);
-      this.log(`[dry-run] Would output to: ${outputDir}`);
-      this.log(DRY_RUN_MESSAGES.COMPLETE_NO_FILES_WRITTEN);
-      this.log("");
-      return;
-    }
 
     const projectDir = process.cwd();
 

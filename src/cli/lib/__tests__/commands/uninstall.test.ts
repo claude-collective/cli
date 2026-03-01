@@ -230,13 +230,6 @@ describe("uninstall command", () => {
       const output = error?.message || "";
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
-
-    it("should accept --dry-run flag", async () => {
-      const { error } = await runCliCommand(["uninstall", "--dry-run"]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
   });
 
   describe("nothing to uninstall", () => {
@@ -482,79 +475,6 @@ describe("uninstall command", () => {
     });
   });
 
-  describe("dry-run mode", () => {
-    it("should show preview header in dry-run", async () => {
-      await createPluginDir(projectDir, fakeHome);
-
-      const { stdout } = await runCliCommand(["uninstall", "--dry-run"]);
-
-      expect(stdout).toContain("[dry-run]");
-      expect(stdout).toContain("Preview mode");
-    });
-
-    it("should preview plugin removal in dry-run", async () => {
-      await createPluginDir(projectDir, fakeHome);
-
-      const { stdout } = await runCliCommand(["uninstall", "--dry-run"]);
-
-      expect(stdout).toContain("[dry-run] Would uninstall");
-      expect(stdout).toContain("Preview complete");
-    });
-
-    it("should preview skill removal in dry-run", async () => {
-      await createProjectConfig(projectDir);
-      const claudeDir = path.join(projectDir, CLAUDE_DIR);
-      await mkdir(claudeDir, { recursive: true });
-      const skillsDir = path.join(claudeDir, "skills");
-      await mkdir(skillsDir, { recursive: true });
-
-      await createCLISkill(skillsDir, "web-framework-react");
-      await createUserSkill(skillsDir, "web-tooling-custom");
-
-      const { stdout } = await runCliCommand(["uninstall", "--dry-run"]);
-
-      expect(stdout).toContain("[dry-run] Would remove skill 'web-framework-react'");
-      expect(stdout).toContain("[dry-run] Would skip 'web-tooling-custom'");
-    });
-
-    it("should not remove files in dry-run", async () => {
-      await createProjectConfig(projectDir);
-      const pluginDir = await createPluginDir(projectDir, fakeHome);
-      const claudeDir = path.join(projectDir, CLAUDE_DIR);
-      const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
-
-      const skillsDir = path.join(claudeDir, "skills");
-      await mkdir(skillsDir, { recursive: true });
-      await createCLISkill(skillsDir, "web-framework-react");
-
-      await runCliCommand(["uninstall", "--dry-run", "--all"]);
-
-      expect(await directoryExists(pluginDir)).toBe(true);
-      expect(await directoryExists(claudeDir)).toBe(true);
-      expect(await directoryExists(claudeSrcDir)).toBe(true);
-    });
-
-    it("should show nothing to uninstall in dry-run when empty", async () => {
-      const { stdout, stderr } = await runCliCommand(["uninstall", "--dry-run"]);
-
-      const output = stdout + stderr;
-      expect(output).toContain("Nothing to uninstall");
-    });
-
-    it("should preview .claude-src/ removal only with --all in dry-run", async () => {
-      await createProjectConfig(projectDir);
-
-      // Without --all
-      const { stdout: stdout1 } = await runCliCommand(["uninstall", "--dry-run"]);
-      expect(stdout1).not.toContain(`Would remove`);
-
-      // With --all
-      const { stdout: stdout2 } = await runCliCommand(["uninstall", "--dry-run", "--all"]);
-      expect(stdout2).toContain(`Would remove`);
-      expect(stdout2).toContain(CLAUDE_SRC_DIR);
-    });
-  });
-
   describe("plugin removal", () => {
     it("should remove plugin directory", async () => {
       const pluginDir = await createPluginDir(projectDir, fakeHome);
@@ -656,50 +576,6 @@ describe("uninstall command", () => {
 
       // .claude/ preserved because user content remains
       expect(await directoryExists(claudeDir)).toBe(true);
-    });
-
-    it("should show what would be removed in dry-run without removing anything", async () => {
-      await createProjectConfig(projectDir);
-      const claudeDir = path.join(projectDir, CLAUDE_DIR);
-      await mkdir(claudeDir, { recursive: true });
-
-      const skillsDir = path.join(claudeDir, "skills");
-      await mkdir(skillsDir, { recursive: true });
-      const cliSkillDir = await createCLISkill(skillsDir, "web-framework-react");
-      const userSkillDir = await createUserSkill(skillsDir, "web-tooling-custom");
-      const mcpPath = await createUserMcpConfig(claudeDir);
-      const claudeMdPath = await createUserClaudeMd(claudeDir);
-
-      const { stdout } = await runCliCommand(["uninstall", "--dry-run"]);
-
-      // Dry-run should list CLI artifacts
-      expect(stdout).toContain("[dry-run] Would remove skill 'web-framework-react'");
-      expect(stdout).toContain("[dry-run] Would skip 'web-tooling-custom'");
-      expect(stdout).toContain("Preview complete");
-
-      // Nothing should be removed
-      expect(await directoryExists(cliSkillDir)).toBe(true);
-      expect(await directoryExists(userSkillDir)).toBe(true);
-      expect(await fileExists(mcpPath)).toBe(true);
-      expect(await fileExists(claudeMdPath)).toBe(true);
-    });
-
-    it("should not list user content in dry-run output as items to remove", async () => {
-      await createProjectConfig(projectDir);
-      const claudeDir = path.join(projectDir, CLAUDE_DIR);
-      await mkdir(claudeDir, { recursive: true });
-
-      const skillsDir = path.join(claudeDir, "skills");
-      await mkdir(skillsDir, { recursive: true });
-      await createCLISkill(skillsDir, "web-framework-react");
-      await createUserSkill(skillsDir, "web-tooling-custom");
-
-      const { stdout } = await runCliCommand(["uninstall", "--dry-run"]);
-
-      // Should NOT say "Would remove" for user content
-      expect(stdout).not.toContain("Would remove skill 'web-tooling-custom'");
-      // Should say "Would skip" for user content
-      expect(stdout).toContain("[dry-run] Would skip 'web-tooling-custom'");
     });
   });
 

@@ -242,26 +242,6 @@ describe("new:marketplace command", () => {
   });
 
   describe("flags", () => {
-    it("should not create files with --dry-run flag", async () => {
-      const { stdout } = await runCliCommand(["new:marketplace", "dry-run-market", "--dry-run"]);
-
-      const marketplaceDir = path.join(projectDir, "dry-run-market");
-      expect(await directoryExists(marketplaceDir)).toBe(false);
-      expect(stdout).toContain("[DRY RUN]");
-    });
-
-    it("should list specific file paths in --dry-run output", async () => {
-      const { stdout } = await runCliCommand(["new:marketplace", "dry-run-market", "--dry-run"]);
-
-      expect(stdout).toContain(STACKS_FILE_PATH);
-      expect(stdout).toContain(SKILL_CATEGORIES_PATH);
-      expect(stdout).toContain(SKILL_RULES_PATH);
-      expect(stdout).toContain(STANDARD_FILES.SKILL_MD);
-      expect(stdout).toContain(STANDARD_FILES.METADATA_YAML);
-      expect(stdout).toContain("dummy-skill");
-      expect(stdout).toContain("README.md");
-    });
-
     it("should accept --output flag to create in a different directory", async () => {
       const outputDir = path.join(tempDir, "custom-output");
       await mkdir(outputDir, { recursive: true });
@@ -432,17 +412,6 @@ describe("new:marketplace command", () => {
       const content = await readFile(stacksPath, "utf-8");
       expect(content).toContain('"id": "dummy-stack"');
       expect(content).toContain('"dummy-category": "dummy-skill"');
-    });
-
-    it("should show dry-run output with derived name when using '.'", async () => {
-      const dotDir = path.join(tempDir, "acme-market");
-      await mkdir(dotDir, { recursive: true });
-      process.chdir(dotDir);
-
-      const { stdout } = await runCliCommand(["new:marketplace", ".", "--dry-run"]);
-
-      expect(stdout).toContain("[DRY RUN]");
-      expect(stdout).toContain("Marketplace: acme-market");
     });
 
     it("should omit cd step in next steps when using '.'", async () => {

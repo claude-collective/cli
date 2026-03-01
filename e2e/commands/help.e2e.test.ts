@@ -34,7 +34,6 @@ describe("help and version", () => {
 
     expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("Compile agents");
-    expect(stdout).toContain("--dry-run");
     expect(stdout).toContain("--output");
     expect(stdout).toContain("--verbose");
     expect(stdout).toContain("--source");

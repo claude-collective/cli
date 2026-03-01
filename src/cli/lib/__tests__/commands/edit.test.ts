@@ -141,13 +141,6 @@ describe("edit command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
       expect(output.toLowerCase()).not.toContain("unexpected argument");
     });
-
-    it("should accept --dry-run flag (inherited from BaseCommand)", async () => {
-      const { error } = await runCliCommand(["edit", "--dry-run"]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
   });
 
   describe("combined flags", () => {

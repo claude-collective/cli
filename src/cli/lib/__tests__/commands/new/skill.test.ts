@@ -347,25 +347,6 @@ describe("new:skill command", () => {
 
       expect(content).toContain("domain: dummy");
     });
-
-    it("should not create files with --dry-run flag", async () => {
-      await runCliCommand(["new:skill", "dry-run-skill", "--dry-run", "--domain", "web"]);
-
-      const skillDir = path.join(projectDir, LOCAL_SKILLS_PATH, "dry-run-skill");
-      expect(await directoryExists(skillDir)).toBe(false);
-    });
-
-    it("should contain [DRY RUN] marker in --dry-run output", async () => {
-      const { stdout } = await runCliCommand([
-        "new:skill",
-        "dry-run-skill",
-        "--dry-run",
-        "--domain",
-        "web",
-      ]);
-
-      expect(stdout).toContain("[DRY RUN]");
-    });
   });
 
   describe("existing skill handling", () => {

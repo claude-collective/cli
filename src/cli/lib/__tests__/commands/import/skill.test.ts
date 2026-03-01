@@ -117,18 +117,6 @@ describe("import:skill command", () => {
       expect(output.toLowerCase()).not.toContain("unknown flag");
     });
 
-    it("should accept --dry-run flag", async () => {
-      const { error } = await runCliCommand([
-        "import:skill",
-        LOCAL_SOURCE_NAME,
-        "--all",
-        "--dry-run",
-      ]);
-
-      const output = error?.message || "";
-      expect(output.toLowerCase()).not.toContain("unknown flag");
-    });
-
     it("should accept -n shorthand for --skill", async () => {
       const { error } = await runCliCommand(["import:skill", LOCAL_SOURCE_NAME, "-n", "my-skill"]);
 
@@ -478,25 +466,6 @@ describe("import:skill command", () => {
 
       // Should succeed (no exit code error), listing skills from nested subdir
       expect(error?.oclif?.exit).toBeUndefined();
-    });
-  });
-
-  describe("--dry-run mode", () => {
-    it("should not create files in dry-run mode", async () => {
-      await createLocalSource(projectDir, ["dry-run-skill"]);
-
-      const { error } = await runCliCommand([
-        "import:skill",
-        LOCAL_SOURCE_NAME,
-        "--all",
-        "--dry-run",
-      ]);
-
-      expect(error?.oclif?.exit).toBeUndefined();
-
-      // Verify no skills were actually created
-      const destDir = path.join(projectDir, LOCAL_SKILLS_DIR, "dry-run-skill");
-      expect(await directoryExists(destDir)).toBe(false);
     });
   });
 

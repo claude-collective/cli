@@ -269,11 +269,6 @@ export default class NewSkill extends BaseCommand {
     this.log(`Directory: ${skillDir}`);
     this.log("");
 
-    if (flags["dry-run"]) {
-      this.log("[DRY RUN] Would create skill files");
-      return;
-    }
-
     this.log("Creating skill files...");
 
     try {

@@ -88,24 +88,6 @@ describe("compile command", () => {
     expect(content).toContain("#");
   });
 
-  it("should support --dry-run flag", async () => {
-    tempDir = await createTempDir();
-    const { projectDir, outputDir } = await createMinimalProject(tempDir);
-
-    const { exitCode, stdout } = await runCLI(
-      ["compile", "--output", outputDir, "--dry-run"],
-      projectDir,
-      { env: COMPILE_ENV },
-    );
-
-    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
-    expect(stdout).toContain("[dry-run]");
-    expect(stdout).toContain("Preview complete - no files were written");
-
-    const outputFiles = await listFiles(outputDir);
-    expect(outputFiles.length).toBe(0);
-  });
-
   it("should support --verbose flag", async () => {
     tempDir = await createTempDir();
     const { projectDir, outputDir } = await createMinimalProject(tempDir);
@@ -258,7 +240,6 @@ describe("compile command", () => {
       expect(stdout).toContain("Compile agents");
       expect(stdout).toContain("--output");
       expect(stdout).toContain("--verbose");
-      expect(stdout).toContain("--dry-run");
       expect(stdout).toContain("--source");
     });
   });

@@ -1,4 +1,5 @@
 import { Command, Flags } from "@oclif/core";
+
 import { getErrorMessage } from "./utils/errors.js";
 import { EXIT_CODES } from "./lib/exit-codes.js";
 import type { ResolvedConfig } from "./lib/configuration/index.js";
@@ -10,10 +11,6 @@ export interface ConfigWithSource {
 
 export abstract class BaseCommand extends Command {
   static baseFlags = {
-    "dry-run": Flags.boolean({
-      description: "Preview operations without executing",
-      default: false,
-    }),
     source: Flags.string({
       char: "s",
       description: "Skills source path or URL",
