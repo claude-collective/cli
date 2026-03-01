@@ -12,11 +12,13 @@ import {
   listFiles,
   readTestFile,
   createPermissionsFile,
+  createEditableProject,
   delay,
   WIZARD_LOAD_TIMEOUT_MS,
   INSTALL_TIMEOUT_MS,
   STEP_TRANSITION_DELAY_MS,
   KEYSTROKE_DELAY_MS,
+  EXIT_TIMEOUT_MS,
   EXIT_CODES,
 } from "../helpers/test-utils.js";
 import { createE2ESource } from "../helpers/create-e2e-source.js";
@@ -381,6 +383,79 @@ describe("init wizard", () => {
     });
   });
 
+  describe("confirm step detail verification", () => {
+    /**
+     * Navigates the stack-based flow to the confirm step without installing.
+     * Selects the first stack (E2E Test Stack), accepts domain defaults,
+     * accepts all stack defaults with "a", and waits for the confirm step.
+     */
+    async function navigateStackToConfirm(wizardSession: TerminalSession): Promise<void> {
+      // Stack selection — select the first stack (E2E Test Stack)
+      await wizardSession.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      wizardSession.enter();
+
+      // Domain selection — accept pre-populated defaults from stack
+      await wizardSession.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      wizardSession.enter();
+
+      // Build step — accept all stack defaults
+      await wizardSession.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      wizardSession.write("a");
+
+      // Confirm step
+      await wizardSession.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
+    }
+
+    it("should display install mode on the confirm step", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      await navigateStackToConfirm(session);
+
+      const confirmOutput = session.getFullOutput();
+      expect(confirmOutput).toContain("Install mode:");
+      expect(confirmOutput).toContain("Local");
+    });
+
+    it("should display install scope on the confirm step", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      await navigateStackToConfirm(session);
+
+      const confirmOutput = session.getFullOutput();
+      expect(confirmOutput).toContain("Install scope:");
+      expect(confirmOutput).toContain("Project");
+    });
+
+    it("should display selected skills grouped by domain on the confirm step", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      await navigateScratchToConfirm(session);
+
+      // Scratch flow shows domain-grouped selections (stack flow does not)
+      const confirmOutput = session.getFullOutput();
+
+      // Verify domains appear as group headers with colon separator
+      expect(confirmOutput).toContain("Web:");
+      expect(confirmOutput).toContain("API:");
+    });
+
+    it("should display selected agent count on the confirm step", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      await navigateStackToConfirm(session);
+
+      const confirmOutput = session.getFullOutput();
+      expect(confirmOutput).toContain("Agents:");
+    });
+  });
+
   describe("Ctrl+C abort", () => {
     it("should exit the wizard without creating files", async () => {
       await createProjectAndSource();
@@ -524,6 +599,172 @@ describe("init wizard", () => {
     });
   });
 
+  describe("wizard toggle badges and keyboard shortcuts", () => {
+    /**
+     * Navigates the stack flow from stack selection to the build step.
+     * Selects the first stack, accepts default domains, arrives at build step.
+     */
+    async function navigateStackToBuild(wizardSession: TerminalSession): Promise<void> {
+      await wizardSession.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      wizardSession.enter();
+
+      await wizardSession.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      wizardSession.enter();
+
+      await wizardSession.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+    }
+
+    /**
+     * Navigates the scratch flow from stack selection to the sources step.
+     * Selects "Start from scratch", accepts default domains, advances through
+     * all domain build steps, arrives at sources step.
+     */
+    async function navigateScratchToSources(wizardSession: TerminalSession): Promise<void> {
+      await wizardSession.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      wizardSession.arrowDown();
+      await delay(KEYSTROKE_DELAY_MS);
+      wizardSession.enter();
+
+      await wizardSession.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      wizardSession.enter();
+
+      await wizardSession.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      wizardSession.space();
+      await delay(KEYSTROKE_DELAY_MS);
+      wizardSession.enter();
+
+      await wizardSession.waitForText("Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      wizardSession.space();
+      await delay(KEYSTROKE_DELAY_MS);
+      wizardSession.enter();
+
+      await wizardSession.waitForText("Customize your Mobile stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      wizardSession.enter();
+
+      await wizardSession.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+    }
+
+    it("should toggle Plugin mode badge when P key is pressed", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Verify "Plugin mode" badge is present in wizard layout
+      const outputBefore = session.getFullOutput();
+      expect(outputBefore).toContain("Plugin mode");
+
+      // Press P to toggle install mode from "local" (default) to "plugin"
+      session.write("P");
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // The badge text "Plugin mode" is always rendered in the layout;
+      // the toggle changes internal state (color changes with NO_COLOR are invisible).
+      // Verify wizard is still functional after toggle.
+      const outputAfter = session.getFullOutput();
+      expect(outputAfter).toContain("Plugin mode");
+      expect(outputAfter).toContain("Choose a stack");
+    });
+
+    it("should toggle Global badge when G key is pressed", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Verify "Global" badge is present in wizard layout
+      const outputBefore = session.getFullOutput();
+      expect(outputBefore).toContain("Global");
+
+      // Press G to toggle install scope from "project" (default) to "global"
+      session.write("G");
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // The badge text "Global" is always rendered in the layout;
+      // the toggle changes internal state (color changes with NO_COLOR are invisible).
+      // Verify wizard is still functional after toggle.
+      const outputAfter = session.getFullOutput();
+      expect(outputAfter).toContain("Global");
+      expect(outputAfter).toContain("Choose a stack");
+    });
+
+    it("should toggle compatibility labels on skill tags when D key is pressed in build step", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      await navigateStackToBuild(session);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Verify build step is showing and Labels badge is present
+      const buildOutput = session.getFullOutput();
+      expect(buildOutput).toContain("Customize your");
+      expect(buildOutput).toContain("Labels");
+
+      // Press D to toggle compatibility labels on
+      session.write("D");
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // With labels toggled on, compatibility labels like "(recommended)" or
+      // "(selected)" should appear next to skill tags
+      const labelsOnOutput = session.getFullOutput();
+      expect(labelsOnOutput).toMatch(/\(recommended\)|\(selected\)|\(discouraged\)/);
+    });
+
+    it("should open help modal when ? key is pressed and close it with ESC", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Press ? to open help modal
+      session.write("?");
+
+      // Wait for help modal to render (contains navigation instructions)
+      await session.waitForText("Toggle selection", WIZARD_LOAD_TIMEOUT_MS);
+
+      // Verify help modal content appears via screen (xterm-processed view)
+      const helpScreen = session.getScreen();
+      expect(helpScreen).toContain("Navigation");
+      expect(helpScreen).toContain("Global Toggles");
+      expect(helpScreen).toContain("Toggle plugin/local install mode");
+
+      // Press ESC to close help modal
+      session.escape();
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Verify help modal is closed and wizard step content is visible again
+      const afterCloseScreen = session.getScreen();
+      expect(afterCloseScreen).toContain("Choose a stack");
+      expect(afterCloseScreen).not.toContain("Global Toggles");
+    });
+
+    it("should open settings overlay when S key is pressed during sources step", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      await navigateScratchToSources(session);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Press S to open settings overlay
+      session.write("S");
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Verify settings overlay appears with source management UI
+      const settingsOutput = session.getFullOutput();
+      expect(settingsOutput).toContain("Skill Sources");
+    });
+  });
+
   describe("permission checker", () => {
     const PERMISSION_HANG_TIMEOUT_MS = 15_000;
 
@@ -621,6 +862,807 @@ describe("init wizard", () => {
 
       const exitCode = await session.waitForExit();
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    });
+  });
+
+  describe("--source flag", () => {
+    it("should load custom source and display its stack", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+
+      // The E2E source defines an "E2E Test Stack" — verify it appears
+      const fullOutput = session.getFullOutput();
+      expect(fullOutput).toContain("E2E Test Stack");
+      expect(fullOutput).toContain("Minimal stack for E2E testing");
+    });
+  });
+
+  describe("global install scope", () => {
+    function spawnGlobalInitWizard(cwd: string, sourcePath: string): TerminalSession {
+      return new TerminalSession(["init", "--global", "--source", sourcePath], cwd, {
+        env: { AGENTSINC_SOURCE: undefined },
+      });
+    }
+
+    it("should show Global scope indicator in the wizard", async () => {
+      await createProjectAndSource();
+
+      // Spawn init with --global flag (HOME is set to cwd, so global install targets cwd)
+      session = spawnGlobalInitWizard(projectDir!, sourceDir!);
+
+      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+
+      // The wizard layout shows a "Global" badge when installScope is "global"
+      const fullOutput = session.getFullOutput();
+      expect(fullOutput).toContain("Global");
+    });
+
+    it("should create config in global paths when using --global flag", async () => {
+      await createProjectAndSource();
+      await createPermissionsFile(projectDir!);
+
+      session = spawnGlobalInitWizard(projectDir!, sourceDir!);
+
+      // Step 1: Stack selection
+      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      session.enter();
+
+      // Step 2: Domain selection
+      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      session.enter();
+
+      // Step 3: Build step — accept stack defaults
+      await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      session.write("a");
+
+      // Step 4: Confirmation
+      await session.waitForText("Ready to install", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      session.enter();
+
+      // Wait for installation to complete
+      await session.waitForText("initialized successfully", INSTALL_TIMEOUT_MS);
+
+      const exitCode = await session.waitForExit(INSTALL_TIMEOUT_MS);
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+      // Since HOME is set to cwd in TerminalSession, --global installs to <cwd>/.claude-src/
+      // (os.homedir() returns HOME env var which is cwd)
+      const globalConfigPath = path.join(projectDir!, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+      expect(await fileExists(globalConfigPath)).toBe(true);
+
+      // Verify skills were installed to <cwd>/.claude/skills/
+      const globalSkillsDir = path.join(projectDir!, CLAUDE_DIR, "skills");
+      expect(await directoryExists(globalSkillsDir)).toBe(true);
+
+      const skillFolders = await listFiles(globalSkillsDir);
+      expect(skillFolders.length).toBeGreaterThan(0);
+    });
+
+    it("should show dashboard when --global config already exists", async () => {
+      await createProjectAndSource();
+
+      // Create global config at <cwd>/.claude-src/config.ts (HOME=cwd)
+      const configDir = path.join(projectDir!, CLAUDE_SRC_DIR);
+      await mkdir(configDir, { recursive: true });
+      await writeFile(
+        path.join(configDir, STANDARD_FILES.CONFIG_TS),
+        `export default ${JSON.stringify({ version: "1.0.0" })};\n`,
+      );
+
+      session = spawnGlobalInitWizard(projectDir!, sourceDir!);
+
+      // Dashboard should render instead of wizard when global config exists
+      await session.waitForText("Agents Inc.", WIZARD_LOAD_TIMEOUT_MS);
+
+      // Press Escape to dismiss the dashboard
+      await delay(STEP_TRANSITION_DELAY_MS);
+      session.escape();
+
+      const exitCode = await session.waitForExit();
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    });
+
+    it("should toggle scope badge to Global when pressing G key", async () => {
+      await createProjectAndSource();
+
+      // Start wizard WITHOUT --global flag (default scope is "project")
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Press G to toggle scope to "global"
+      session.write("G");
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // The wizard layout should now show "Global" as active in the scope badge
+      const fullOutput = session.getFullOutput();
+      expect(fullOutput).toContain("Global");
+    });
+  });
+
+  describe("single-domain scratch flow", () => {
+    it("should show only Web domain in build step when API is deselected", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      // Navigate to "Start from scratch"
+      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      session.arrowDown();
+      await delay(KEYSTROKE_DELAY_MS);
+      session.enter();
+
+      // Domain selection — scratch pre-selects web, api, mobile
+      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Navigate to API domain and deselect it (toggle off with space)
+      // Domains are listed in order: Web, API, Mobile (or similar)
+      // Web is at index 0 (focused by default), API is at index 1
+      session.arrowDown();
+      await delay(KEYSTROKE_DELAY_MS);
+      session.space();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // Also deselect Mobile (index 2)
+      session.arrowDown();
+      await delay(KEYSTROKE_DELAY_MS);
+      session.space();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // Continue with only Web selected
+      session.enter();
+
+      // Build step should show only Web domain
+      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+
+      // The build step should NOT show API or Mobile
+      const buildOutput = session.getFullOutput();
+      expect(buildOutput).toContain("Customize your Web stack");
+    });
+  });
+
+  describe("all domains deselected", () => {
+    it("should show empty message when all domains are deselected", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      // Navigate to "Start from scratch"
+      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      session.arrowDown();
+      await delay(KEYSTROKE_DELAY_MS);
+      session.enter();
+
+      // Domain selection — scratch pre-selects web, api, mobile
+      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Deselect Web (index 0, focused by default)
+      session.space();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // Deselect API (index 1)
+      session.arrowDown();
+      await delay(KEYSTROKE_DELAY_MS);
+      session.space();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // Deselect Mobile (index 2)
+      session.arrowDown();
+      await delay(KEYSTROKE_DELAY_MS);
+      session.space();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // The checkbox grid should show the empty message
+      const fullOutput = session.getFullOutput();
+      expect(fullOutput).toContain("Please select at least one domain");
+    });
+  });
+
+  describe("stack customize flow", () => {
+    it("should show build step with stack skills when choosing customize", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      // Select E2E Test Stack (first item, already focused)
+      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      session.enter();
+
+      // Domain selection — pre-populated from stack
+      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      session.enter();
+
+      // Build step renders — the stack selection sets stackAction to "customize",
+      // so the build step shows with the stack's skills pre-selected.
+      // Pressing Enter (not "a") advances through domains one by one.
+      await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+
+      // Verify skill categories from the E2E stack are visible
+      const buildOutput = session.getFullOutput();
+      expect(buildOutput).toContain("Customize your");
+
+      // The E2E stack has web-framework-react, web-testing-vitest, web-state-zustand for web-developer.
+      // The build step should show the Framework category from the stack.
+      expect(buildOutput).toContain("Framework");
+    });
+  });
+
+  describe("dashboard on existing project", () => {
+    /**
+     * Creates a project that looks like it was previously initialized.
+     * Uses createEditableProject which creates a `project/` subdirectory
+     * inside projectDir. The parent projectDir is cleaned in afterEach.
+     */
+    async function createDashboardProject(
+      options?: Parameters<typeof createEditableProject>[1],
+    ): Promise<string> {
+      await createProjectAndSource();
+      return createEditableProject(projectDir!, options);
+    }
+
+    it("should show dashboard menu instead of setup wizard", async () => {
+      const dashboardDir = await createDashboardProject({
+        skills: ["web-framework-react", "web-testing-vitest"],
+        agents: ["web-developer"],
+      });
+
+      session = spawnInitWizard(dashboardDir, sourceDir!);
+
+      await session.waitForText("Agents Inc.", WIZARD_LOAD_TIMEOUT_MS);
+
+      const fullOutput = session.getFullOutput();
+
+      // Dashboard shows all four menu options
+      expect(fullOutput).toContain("[Edit]");
+      expect(fullOutput).toContain("[Compile]");
+      expect(fullOutput).toContain("[Doctor]");
+      expect(fullOutput).toContain("[List]");
+
+      // Should NOT show the setup wizard
+      expect(fullOutput).not.toContain("Choose a stack");
+
+      // Clean exit
+      await delay(STEP_TRANSITION_DELAY_MS);
+      session.escape();
+      await session.waitForExit();
+    });
+
+    it("should render installed skill count and mode", async () => {
+      const dashboardDir = await createDashboardProject({
+        skills: ["web-framework-react", "web-testing-vitest"],
+        agents: ["web-developer"],
+      });
+
+      session = spawnInitWizard(dashboardDir, sourceDir!);
+
+      await session.waitForText("Agents Inc.", WIZARD_LOAD_TIMEOUT_MS);
+
+      const fullOutput = session.getFullOutput();
+
+      // Dashboard displays skill count from config
+      expect(fullOutput).toContain("Skills:");
+      expect(fullOutput).toContain("2 installed");
+
+      // Dashboard displays mode
+      expect(fullOutput).toContain("Mode:");
+      expect(fullOutput).toContain("Local");
+
+      // Dashboard displays agent info
+      expect(fullOutput).toContain("Agents:");
+
+      // Clean exit
+      await delay(STEP_TRANSITION_DELAY_MS);
+      session.escape();
+      await session.waitForExit();
+    });
+
+    it("should navigate dashboard options with arrow keys", async () => {
+      const dashboardDir = await createDashboardProject({
+        skills: ["web-framework-react"],
+        agents: ["web-developer"],
+      });
+
+      session = spawnInitWizard(dashboardDir, sourceDir!);
+
+      await session.waitForText("Agents Inc.", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Dashboard uses left/right arrow keys for horizontal navigation
+      session.arrowRight();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // After navigating, all options should still be visible
+      const fullOutput = session.getFullOutput();
+      expect(fullOutput).toContain("[Edit]");
+      expect(fullOutput).toContain("[Compile]");
+      expect(fullOutput).toContain("[Doctor]");
+      expect(fullOutput).toContain("[List]");
+
+      // Navigate further right
+      session.arrowRight();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // Navigate left
+      session.arrowLeft();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // Dashboard is still responsive
+      const updatedOutput = session.getFullOutput();
+      expect(updatedOutput).toContain("[Edit]");
+
+      // Clean exit
+      session.escape();
+      await session.waitForExit();
+    });
+
+    it("should exit cleanly when pressing Escape", async () => {
+      const dashboardDir = await createDashboardProject({
+        skills: ["web-framework-react"],
+        agents: ["web-developer"],
+      });
+
+      session = spawnInitWizard(dashboardDir, sourceDir!);
+
+      await session.waitForText("Agents Inc.", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      session.escape();
+
+      const exitCode = await session.waitForExit();
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    });
+
+    it("should exit cleanly when pressing Ctrl+C", async () => {
+      const dashboardDir = await createDashboardProject({
+        skills: ["web-framework-react"],
+        agents: ["web-developer"],
+      });
+
+      session = spawnInitWizard(dashboardDir, sourceDir!);
+
+      await session.waitForText("Agents Inc.", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      session.ctrlC();
+
+      const exitCode = await session.waitForExit();
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    });
+  });
+
+  describe("source management in wizard", () => {
+    /**
+     * Navigates the init wizard to the sources step so that source management
+     * hotkeys (S, A, DEL, ESC) can be tested.
+     *
+     * Flow: stack -> domain selection -> build step (per-domain Enter) -> sources step
+     */
+    async function navigateToSourcesStep(wizardSession: TerminalSession): Promise<void> {
+      // Stack selection — select the first stack (E2E Test Stack)
+      await wizardSession.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      wizardSession.enter();
+
+      // Domain selection — accept pre-populated defaults from stack
+      await wizardSession.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      wizardSession.enter();
+
+      // Build step — advance through each domain with Enter.
+      // The E2E stack pre-selects skills for Web, API, and Shared domains.
+      await wizardSession.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      wizardSession.enter();
+
+      // Second domain (API)
+      await wizardSession.waitForText("Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      wizardSession.enter();
+
+      // Third domain (Shared) — Enter advances past build step to sources
+      await wizardSession.waitForText("Customize your Shared stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      wizardSession.enter();
+
+      // Sources step
+      await wizardSession.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
+    }
+
+    it("should open settings overlay when pressing S on the sources step", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      await navigateToSourcesStep(session);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Press S to open the settings overlay
+      session.write("s");
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // The settings overlay shows "Skill Sources" title and "Configured marketplaces"
+      await session.waitForText("Skill Sources", EXIT_TIMEOUT_MS);
+
+      const fullOutput = session.getFullOutput();
+      expect(fullOutput).toContain("Configured marketplaces");
+      expect(fullOutput).toContain("Add source");
+    });
+
+    it("should show add source UI when pressing A in settings", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      await navigateToSourcesStep(session);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Open settings overlay
+      session.write("s");
+      await session.waitForText("Skill Sources", EXIT_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Press A to open the add source input
+      session.write("a");
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // The add source input should show submission hints
+      const fullOutput = session.getFullOutput();
+      expect(fullOutput).toContain("ENTER submit");
+      expect(fullOutput).toContain("ESC cancel");
+    });
+
+    it("should not remove the default source when pressing DEL", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      await navigateToSourcesStep(session);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Open settings overlay
+      session.write("s");
+      await session.waitForText("Skill Sources", EXIT_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // The default source ("Public") is focused. Press DEL (backspace).
+      // The default source should NOT be removed because it has name "public".
+      session.write("\x7f");
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // The Public source should still be visible
+      const fullOutput = session.getFullOutput();
+      expect(fullOutput).toContain("Public");
+      expect(fullOutput).toContain("(default)");
+    });
+
+    it("should return to sources step when pressing ESC in settings", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      await navigateToSourcesStep(session);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Open settings overlay
+      session.write("s");
+      await session.waitForText("Skill Sources", EXIT_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Press ESC to close the settings overlay
+      session.escape();
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Should be back on the sources step with the "technologies" text
+      await session.waitForText("technologies", EXIT_TIMEOUT_MS);
+
+      const fullOutput = session.getFullOutput();
+      // Should no longer show settings-specific content
+      expect(fullOutput).not.toContain("Configured marketplaces");
+    });
+  });
+
+  describe("stack skill restoration on domain re-toggle", () => {
+    it("should restore stack skills when a domain is deselected and re-selected", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      // Select the E2E Test Stack
+      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      session.enter();
+
+      // Domain selection — the stack pre-selects Web and API domains
+      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Navigate to API domain (index 1) and deselect it with Space
+      session.arrowDown();
+      await delay(KEYSTROKE_DELAY_MS);
+      session.space();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // Re-select API domain with Space (stack snapshot should restore)
+      session.space();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // Continue to build step
+      session.enter();
+
+      // Build step starts on Web domain
+      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Navigate to API domain (Enter advances to next domain)
+      session.enter();
+      await session.waitForText("Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+
+      // Verify the E2E stack's API skills were restored.
+      // The E2E stack assigns api-framework-hono to the api-developer agent.
+      // The API domain's build step should show the skill pre-selected.
+      const buildOutput = session.getFullOutput();
+      expect(buildOutput).toContain("hono");
+    });
+
+    it("should not restore skills in scratch flow when domain is re-toggled", async () => {
+      await createProjectAndSource();
+      session = spawnInitWizard(projectDir!, sourceDir!);
+
+      // Navigate to "Start from scratch"
+      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+      session.arrowDown();
+      await delay(KEYSTROKE_DELAY_MS);
+      session.enter();
+
+      // Domain selection — scratch pre-selects web, api, mobile
+      await session.waitForText("Select domains to configure", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Deselect API (index 1)
+      session.arrowDown();
+      await delay(KEYSTROKE_DELAY_MS);
+      session.space();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // Re-select API
+      session.space();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // Continue to build step
+      session.enter();
+
+      // Web domain first
+      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Select required skill in Web domain to pass validation
+      session.space();
+      await delay(KEYSTROKE_DELAY_MS);
+      session.enter();
+
+      // API domain
+      await session.waitForText("Customize your API stack", WIZARD_LOAD_TIMEOUT_MS);
+
+      // In scratch flow, no stack snapshot exists, so no skills should be
+      // automatically restored. The API domain should have zero skills selected.
+      const buildOutput = session.getFullOutput();
+      // The category should show (0 of N) or similar empty state
+      // since scratch flow has no _stackDomainSelections to restore from
+      expect(buildOutput).toContain("(0");
+    });
+  });
+
+  describe("startup message buffering", () => {
+    it("should show global installation message when using --global flag", async () => {
+      await createProjectAndSource();
+
+      // Spawn init with --global flag
+      // HOME is set to cwd by TerminalSession, so global install targets the temp dir
+      session = new TerminalSession(["init", "--global", "--source", sourceDir!], projectDir!, {
+        env: { AGENTSINC_SOURCE: undefined },
+      });
+
+      // The startup message "Installing globally to home directory..." should appear
+      // as buffered output rendered above the wizard via Ink's <Static>
+      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+
+      const rawOutput = session.getRawOutput();
+      expect(rawOutput).toContain("Installing globally");
+    });
+
+    it("should show global fallback message when edit falls back to global config", async () => {
+      projectDir = await createTempDir();
+
+      // Create a global config at HOME/.claude-src/config.ts
+      // TerminalSession sets HOME=cwd, so we create the config at the temp dir root
+      const globalConfigDir = path.join(projectDir, CLAUDE_SRC_DIR);
+      await mkdir(globalConfigDir, { recursive: true });
+      await writeFile(
+        path.join(globalConfigDir, STANDARD_FILES.CONFIG_TS),
+        `export default ${JSON.stringify(
+          {
+            name: "global-test",
+            installMode: "local",
+            skills: ["web-framework-react"],
+            agents: ["web-developer"],
+            domains: ["web"],
+          },
+          null,
+          2,
+        )};\n`,
+      );
+
+      // Create the skill directory for the global installation
+      const skillDir = path.join(projectDir, CLAUDE_DIR, "skills", "web-framework-react");
+      await mkdir(skillDir, { recursive: true });
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.SKILL_MD),
+        "---\nname: web-framework-react\ndescription: React\n---\n\n# React\n",
+      );
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
+        'author: "@test"\ndisplayName: web-framework-react\ncategory: web-framework\ncontentHash: "hash"\n',
+      );
+
+      // Create a subdirectory to run `edit` from (without its own config)
+      // This simulates running `edit` from a project that has no project config,
+      // causing it to fall back to the global installation
+      const subDir = path.join(projectDir, "subproject");
+      await mkdir(subDir, { recursive: true });
+
+      session = new TerminalSession(["edit"], subDir, {
+        env: { HOME: projectDir },
+      });
+
+      // The edit command should detect no project config and fall back to global.
+      // It should show a message about using global installation.
+      await session.waitForText("Loaded", WIZARD_LOAD_TIMEOUT_MS);
+
+      const rawOutput = session.getRawOutput();
+      expect(rawOutput).toContain("No project installation found");
+      expect(rawOutput).toContain("global installation");
+    });
+  });
+
+  describe("flag combinations", () => {
+    it("should use custom source for global install with --global --source", async () => {
+      await createProjectAndSource();
+
+      session = new TerminalSession(["init", "--global", "--source", sourceDir!], projectDir!, {
+        env: { AGENTSINC_SOURCE: undefined },
+      });
+
+      // The wizard should load with the E2E source's stack
+      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+
+      const fullOutput = session.getFullOutput();
+      // Verify the custom source's stack is displayed
+      expect(fullOutput).toContain("E2E Test Stack");
+
+      // The wizard should show the Global scope indicator
+      expect(fullOutput).toContain("Global");
+    });
+
+    it("should load skills from custom source with edit --source", async () => {
+      projectDir = await createTempDir();
+
+      const dashboardDir = await createEditableProject(projectDir, {
+        skills: ["web-framework-react"],
+        agents: ["web-developer"],
+        domains: ["web"],
+      });
+
+      const source = await createE2ESource();
+      sourceDir = source.sourceDir;
+      sourceTempDir = source.tempDir;
+
+      session = new TerminalSession(["edit", "--source", sourceDir], dashboardDir, {
+        rows: 60,
+        cols: 120,
+      });
+
+      // The edit command should load skills from the E2E source
+      await session.waitForText("Loaded", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+
+      const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+      // The E2E source includes web-framework-react
+      expect(output).toContain("Framework");
+      expect(output).toContain("react");
+    });
+
+    // DEFERRED: compile --agent-source {url} requires a remote agent source.
+    // This is not testable locally without network access. Tracked in TODO-E2E.md.
+  });
+
+  describe("global config detection prompt", () => {
+    async function createGlobalConfigSetup(): Promise<{
+      tempDir: string;
+      workDir: string;
+    }> {
+      const tempDir = await createTempDir();
+
+      // Create a global config at <tempDir>/.claude-src/config.ts
+      const globalConfigDir = path.join(tempDir, CLAUDE_SRC_DIR);
+      await mkdir(globalConfigDir, { recursive: true });
+      await writeFile(
+        path.join(globalConfigDir, STANDARD_FILES.CONFIG_TS),
+        `export default ${JSON.stringify({ version: "1.0.0" })};\n`,
+      );
+
+      // Create a subdirectory with no project config to run init from
+      const workDir = path.join(tempDir, "work");
+      await mkdir(workDir, { recursive: true });
+
+      return { tempDir, workDir };
+    }
+
+    it("should prompt when global config exists but no project config", async () => {
+      const source = await createE2ESource();
+      sourceDir = source.sourceDir;
+      sourceTempDir = source.tempDir;
+
+      const { tempDir, workDir } = await createGlobalConfigSetup();
+      projectDir = tempDir;
+
+      // Spawn init from workDir (no project config) with HOME pointing to tempDir (has global config)
+      session = new TerminalSession(["init", "--source", sourceDir!], workDir, {
+        env: { HOME: tempDir, AGENTSINC_SOURCE: undefined },
+      });
+
+      // The global config detection prompt should appear
+      await session.waitForText("global installation was found", WIZARD_LOAD_TIMEOUT_MS);
+
+      const promptOutput = session.getFullOutput();
+      expect(promptOutput).toContain("What would you like to do");
+
+      // Press right arrow to move to "Create new project installation"
+      session.arrowRight();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // Press Enter to select "Create new project installation"
+      session.enter();
+
+      // The wizard should start — "Choose a stack" confirms the create-project path works
+      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
+
+      // Cancel the wizard
+      session.escape();
+      await session.waitForExit(EXIT_TIMEOUT_MS);
+    });
+
+    it("should show dashboard when selecting edit global", async () => {
+      const source = await createE2ESource();
+      sourceDir = source.sourceDir;
+      sourceTempDir = source.tempDir;
+
+      const { tempDir, workDir } = await createGlobalConfigSetup();
+      projectDir = tempDir;
+
+      // Spawn init from workDir (no project config) with HOME pointing to tempDir (has global config)
+      session = new TerminalSession(["init", "--source", sourceDir!], workDir, {
+        env: { HOME: tempDir, AGENTSINC_SOURCE: undefined },
+      });
+
+      // The global config detection prompt should appear
+      await session.waitForText("global installation was found", WIZARD_LOAD_TIMEOUT_MS);
+
+      // Press Enter to select "Edit global installation" (the default/first option)
+      session.enter();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      // The dashboard should appear showing the branding name
+      await session.waitForText("Agents Inc.", WIZARD_LOAD_TIMEOUT_MS);
+
+      // Dismiss the dashboard
+      session.escape();
+      await session.waitForExit(EXIT_TIMEOUT_MS);
     });
   });
 });

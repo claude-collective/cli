@@ -13,6 +13,8 @@ import {
   directoryExists,
   delay,
   runCLI,
+  readTestFile,
+  listFiles,
   WIZARD_LOAD_TIMEOUT_MS,
   STEP_TRANSITION_DELAY_MS,
   KEYSTROKE_DELAY_MS,
@@ -216,6 +218,143 @@ describe("build stack command", () => {
 
       const stackOutputDir = path.join(outputDir, "e2e-test-stack");
       expect(await directoryExists(stackOutputDir)).toBe(true);
+    });
+
+    it("should use a custom source when --source flag is provided", async () => {
+      const source = await createE2ESource();
+      sourceDir = source.sourceDir;
+      sourceTempDir = source.tempDir;
+      tempDir = await createTempDir();
+      const outputDir = path.join(tempDir, "source-override-output");
+
+      // Run from a separate temp dir (not the source) to verify --source overrides cwd
+      const result = await execa(
+        "node",
+        [
+          BIN_RUN,
+          "build",
+          "stack",
+          "--stack",
+          "e2e-test-stack",
+          "--output-dir",
+          outputDir,
+          "--source",
+          sourceDir,
+        ],
+        { cwd: sourceDir, reject: false, timeout: COMPILE_TIMEOUT_MS },
+      );
+      const stdout = stripAnsi(result.stdout);
+
+      expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(stdout).toContain("Compiling stack");
+      expect(stdout).toContain("e2e-test-stack");
+
+      // Verify the stack was actually compiled from the custom source
+      const stackOutputDir = path.join(outputDir, "e2e-test-stack");
+      expect(await directoryExists(stackOutputDir)).toBe(true);
+    });
+
+    it("should include verbose output when --verbose flag is provided", async () => {
+      const source = await createE2ESource();
+      sourceDir = source.sourceDir;
+      sourceTempDir = source.tempDir;
+      tempDir = await createTempDir();
+      const outputDir = path.join(tempDir, "verbose-output");
+
+      const result = await execa(
+        "node",
+        [
+          BIN_RUN,
+          "build",
+          "stack",
+          "--stack",
+          "e2e-test-stack",
+          "--output-dir",
+          outputDir,
+          "--source",
+          sourceDir,
+          "--verbose",
+        ],
+        { cwd: sourceDir, reject: false, timeout: COMPILE_TIMEOUT_MS },
+      );
+      const stdout = stripAnsi(result.stdout);
+
+      expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
+
+      // Verbose mode should include stack compilation details not shown without --verbose
+      expect(stdout).toContain("Compiling stack plugin: e2e-test-stack");
+      expect(stdout).toContain("Found stack: E2E Test Stack");
+      expect(stdout).toContain("Compiled agent:");
+    });
+
+    it("should produce compiled agent markdown with frontmatter and skill content", async () => {
+      const source = await createE2ESource();
+      sourceDir = source.sourceDir;
+      sourceTempDir = source.tempDir;
+      tempDir = await createTempDir();
+      const outputDir = path.join(tempDir, "content-output");
+
+      const result = await execa(
+        "node",
+        [
+          BIN_RUN,
+          "build",
+          "stack",
+          "--stack",
+          "e2e-test-stack",
+          "--output-dir",
+          outputDir,
+          "--source",
+          sourceDir,
+        ],
+        { cwd: sourceDir, reject: false, timeout: COMPILE_TIMEOUT_MS },
+      );
+
+      expect(result.exitCode).toBe(EXIT_CODES.SUCCESS);
+
+      // Verify agent markdown files were created
+      const agentsDir = path.join(outputDir, "e2e-test-stack", "agents");
+      expect(await directoryExists(agentsDir)).toBe(true);
+
+      const agentFiles = await listFiles(agentsDir);
+      expect(agentFiles).toContain("web-developer.md");
+      expect(agentFiles).toContain("api-developer.md");
+
+      // Verify web-developer.md content
+      const webDeveloperContent = await readTestFile(path.join(agentsDir, "web-developer.md"));
+
+      // Frontmatter should contain agent metadata (name is the AgentName identifier)
+      expect(webDeveloperContent).toMatch(/^---\n/);
+      expect(webDeveloperContent).toContain("name: web-developer");
+      expect(webDeveloperContent).toContain("description:");
+      expect(webDeveloperContent).toContain("tools:");
+      expect(webDeveloperContent).toContain("Read");
+      expect(webDeveloperContent).toContain("Write");
+      expect(webDeveloperContent).toContain("Edit");
+      expect(webDeveloperContent).toContain("model:");
+      expect(webDeveloperContent).toContain("permissionMode:");
+
+      // Frontmatter should list preloaded skills
+      expect(webDeveloperContent).toContain("skills:");
+      expect(webDeveloperContent).toContain("web-framework-react");
+
+      // Dynamic skills should appear in the skill activation protocol with descriptions
+      // from the E2E source SKILL.md frontmatter
+      expect(webDeveloperContent).toContain("web-testing-vitest");
+      expect(webDeveloperContent).toContain("Next generation testing framework");
+      expect(webDeveloperContent).toContain("web-state-zustand");
+      expect(webDeveloperContent).toContain("Bear necessities state management");
+
+      // Verify api-developer.md content
+      const apiDeveloperContent = await readTestFile(path.join(agentsDir, "api-developer.md"));
+
+      expect(apiDeveloperContent).toMatch(/^---\n/);
+      expect(apiDeveloperContent).toContain("name: api-developer");
+      expect(apiDeveloperContent).toContain("description:");
+      expect(apiDeveloperContent).toContain("tools:");
+
+      // api-framework-hono is preloaded, so its ID should appear in frontmatter skills list
+      expect(apiDeveloperContent).toContain("api-framework-hono");
     });
   });
 

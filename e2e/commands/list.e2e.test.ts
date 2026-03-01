@@ -10,7 +10,7 @@ import {
   runCLI,
   EXIT_CODES,
 } from "../helpers/test-utils.js";
-import { CLAUDE_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES, STANDARD_DIRS } from "../../src/cli/consts.js";
 
 describe("list command", () => {
   let tempDir: string;
@@ -158,6 +158,35 @@ describe("list command", () => {
     });
   });
 
+  describe("skill type distinction", () => {
+    // BUG: The list command only shows skill counts (e.g., "Skills: 3"), not individual
+    // skill names or types. There is no distinction between CLI-managed skills (installed
+    // from a source with forkedFrom metadata) and user-created skills (custom: true,
+    // no forkedFrom). Users should be able to see which skills are custom vs managed.
+    it.fails("should distinguish CLI-managed and user-created skills in output", async () => {
+      tempDir = await createTempDir();
+      const projectDir = await createEditableProject(tempDir, {
+        skills: ["web-framework-react", "web-testing-vitest"],
+      });
+
+      // Add a user-created skill (custom: true, no forkedFrom)
+      await createLocalSkill(projectDir, "web-my-custom-helper", {
+        description: "A user-created custom skill",
+        metadata: `custom: true\nauthor: "@local"\ndisplayName: My Custom Helper\ncategory: web-utilities\ncontentHash: "custom-hash"\n`,
+      });
+
+      const { exitCode, stdout } = await runCLI(["list"], projectDir);
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      // The output should show individual skills with some kind of type indicator
+      expect(stdout).toContain("web-framework-react");
+      expect(stdout).toContain("web-testing-vitest");
+      expect(stdout).toContain("web-my-custom-helper");
+      // There should be a visible distinction between managed and custom skills
+      expect(stdout).toMatch(/custom|user|local/i);
+    });
+  });
+
   describe("edge cases", () => {
     it("should handle project with skills directory but no config", async () => {
       tempDir = await createTempDir();
@@ -183,6 +212,49 @@ describe("list command", () => {
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(stdout).toContain("Installation:");
       expect(stdout).toContain("Local");
+    });
+  });
+
+  describe("global installation fallback", () => {
+    it("should show global installation details when no project config exists", async () => {
+      tempDir = await createTempDir();
+
+      // Create a "global home" directory with .claude-src/config.ts
+      const globalHome = path.join(tempDir, "global-home");
+      const globalConfigDir = path.join(globalHome, CLAUDE_SRC_DIR);
+      await mkdir(globalConfigDir, { recursive: true });
+      await writeFile(
+        path.join(globalConfigDir, STANDARD_FILES.CONFIG_TS),
+        `export default ${JSON.stringify(
+          {
+            name: "global-test",
+            installMode: "local",
+            skills: ["web-framework-react"],
+            agents: ["web-developer"],
+          },
+          null,
+          2,
+        )};\n`,
+      );
+
+      // Create skills directory with a skill folder so skill count > 0
+      const globalSkillsDir = path.join(globalHome, CLAUDE_DIR, "skills", "web-framework-react");
+      await mkdir(globalSkillsDir, { recursive: true });
+
+      // Create a project directory WITHOUT config (so detectInstallation falls back to global)
+      const projectDir = path.join(tempDir, "project");
+      await mkdir(projectDir, { recursive: true });
+
+      // Run list with HOME pointing to globalHome so detectGlobalInstallation finds the config
+      const { exitCode, stdout } = await runCLI(["list"], projectDir, {
+        env: { HOME: globalHome },
+      });
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      // detectInstallation should fall back to the global config and show installation info
+      expect(stdout).toContain("Installation:");
+      expect(stdout).toContain("Local");
+      expect(stdout).toContain("Skills:");
     });
   });
 });

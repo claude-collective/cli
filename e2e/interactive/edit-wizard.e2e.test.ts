@@ -12,6 +12,7 @@ import {
   listFiles,
   readTestFile,
   createEditableProject,
+  createLocalSkill,
   createPermissionsFile,
   delay,
   WIZARD_LOAD_TIMEOUT_MS,
@@ -20,6 +21,7 @@ import {
   EXIT_TIMEOUT_MS,
   EXIT_CODES,
 } from "../helpers/test-utils.js";
+import { createE2ESource } from "../helpers/create-e2e-source.js";
 
 /**
  * E2E tests for the `edit` command wizard.
@@ -493,6 +495,154 @@ describe("edit wizard", () => {
     });
   });
 
+  describe("--source flag", () => {
+    let sourceTempDir: string | undefined;
+
+    afterEach(async () => {
+      if (sourceTempDir) {
+        await cleanupTempDir(sourceTempDir);
+        sourceTempDir = undefined;
+      }
+    });
+
+    it("should load skills from custom source directory", async () => {
+      tempDir = await createTempDir();
+      const projectDir = await createEditableProject(tempDir, {
+        skills: ["web-framework-react"],
+        agents: ["web-developer"],
+        domains: ["web"],
+      });
+
+      const source = await createE2ESource();
+      sourceTempDir = source.tempDir;
+
+      session = new TerminalSession(["edit", "--source", source.sourceDir], projectDir, {
+        rows: 60,
+        cols: 120,
+      });
+
+      // The edit command should load skills from the E2E source.
+      // The startup message includes the skill count from the custom source.
+      await session.waitForText("Loaded", WIZARD_LOAD_TIMEOUT_MS);
+      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+
+      const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+      // The E2E source includes web-framework-react, web-testing-vitest, and
+      // web-state-zustand — the build step should show skills from the custom source
+      expect(output).toContain("Framework");
+      expect(output).toContain("react");
+    });
+  });
+
+  describe("newly added skill", () => {
+    it("should show a new local skill alongside original skills in build step", async () => {
+      tempDir = await createTempDir();
+      const projectDir = await createEditableProject(tempDir, {
+        skills: ["web-framework-react"],
+        agents: ["web-developer"],
+        domains: ["web"],
+      });
+
+      // Create an additional local skill that was NOT in the original config.
+      // Since the edit command loads the full matrix from the default source,
+      // web-testing-vitest already exists in the marketplace. Adding it on
+      // disk makes discoverAllPluginSkills() find it, but the build step
+      // shows all marketplace skills regardless.
+      await createLocalSkill(projectDir, "web-testing-vitest", {
+        description: "Next generation testing framework",
+        metadata: `author: "@test"\ndisplayName: web-testing-vitest\ncategory: web-testing\ncontentHash: "e2e-hash-vitest"\n`,
+      });
+
+      session = new TerminalSession(["edit"], projectDir, {
+        rows: 60,
+        cols: 120,
+      });
+
+      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+
+      const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
+      // The original pre-selected skill should still be visible
+      expect(output).toContain("react");
+      // The newly added skill tag should be visible in the build step.
+      // The marketplace matrix includes vitest as a selectable option.
+      expect(output).toContain("vitest");
+    });
+  });
+
+  describe("build step validation", () => {
+    it("should prevent advancing when all skills in a required category are deselected", async () => {
+      tempDir = await createTempDir();
+      const projectDir = await createEditableProject(tempDir, {
+        skills: ["web-framework-react"],
+        agents: ["web-developer"],
+        domains: ["web"],
+      });
+
+      session = new TerminalSession(["edit"], projectDir, {
+        rows: 40,
+        cols: 120,
+      });
+
+      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+      // Framework category should show pre-selected react skill
+      await session.waitForText("(1 of 1)", WIZARD_LOAD_TIMEOUT_MS);
+
+      // Deselect the react skill with SPACE (it is already focused as the first item)
+      session.space();
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Try to proceed with ENTER — validation should prevent advancing
+      session.enter();
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      const screen = session.getScreen();
+      // The wizard should show a validation error about requiring at least one skill
+      // in the Framework category (which is a required category)
+      expect(screen).toContain("Select at least one skill");
+    });
+  });
+
+  describe("confirm step navigation", () => {
+    it("should return to agents step when pressing ESC on confirm step", async () => {
+      tempDir = await createTempDir();
+      const projectDir = await createEditableProject(tempDir, {
+        skills: ["web-framework-react", "web-styling-tailwind"],
+        agents: ["web-developer"],
+        domains: ["web"],
+      });
+
+      session = new TerminalSession(["edit"], projectDir, {
+        rows: 40,
+        cols: 120,
+      });
+
+      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
+
+      // Build step -> Sources step
+      session.enter();
+      await session.waitForText("technologies", EXIT_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Sources step -> Agents step
+      session.enter();
+      await session.waitForText("Select agents to compile", EXIT_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Agents step -> Confirm step
+      session.enter();
+      await session.waitForText("Ready to install", EXIT_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Press ESC on confirm step — should go back to agents step
+      session.escape();
+      await session.waitForText("Select agents to compile", EXIT_TIMEOUT_MS);
+
+      const screen = session.getScreen();
+      // Should be back on the agents step, not exited
+      expect(screen).toContain("Select agents to compile");
+    });
+  });
+
   describe("edit --help", () => {
     it("should display help text with command description", async () => {
       tempDir = await createTempDir();
@@ -509,6 +659,39 @@ describe("edit wizard", () => {
 
       const exitCode = await session.waitForExit();
       expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    });
+  });
+
+  describe("global installation fallback", () => {
+    it("should fall back to global installation when no project config exists", async () => {
+      tempDir = await createTempDir();
+
+      // Create a "global home" directory with a valid installation
+      const globalHome = path.join(tempDir, "global-home");
+      const projectDir = await createEditableProject(globalHome, {
+        skills: ["web-framework-react"],
+        agents: ["web-developer"],
+        domains: ["web"],
+      });
+
+      // Create a working directory WITHOUT config (forces global fallback)
+      const workDir = path.join(tempDir, "work");
+      await mkdir(workDir, { recursive: true });
+
+      // Launch edit with HOME pointing to the global project directory
+      // detectInstallation checks cwd first (no config), then falls back to HOME
+      session = new TerminalSession(["edit"], workDir, {
+        env: { HOME: projectDir },
+      });
+
+      // The edit command should detect the global installation and show
+      // the "No project installation found. Using global installation..." message
+      // in the startup buffer, then launch the wizard.
+      await session.waitForText("Customize your", WIZARD_LOAD_TIMEOUT_MS);
+
+      // The raw output should contain the global fallback message
+      const raw = session.getRawOutput();
+      expect(raw).toContain("global installation");
     });
   });
 });

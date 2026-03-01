@@ -293,4 +293,41 @@ describe("doctor command", () => {
       expect(stdout).toContain("Summary:");
     });
   });
+
+  describe("global installation fallback", () => {
+    it("should validate global installation when no project config exists", async () => {
+      tempDir = await createTempDir();
+
+      // Create a "global home" directory with valid .claude-src/config.ts
+      const globalHome = path.join(tempDir, "global-home");
+      const globalConfigDir = path.join(globalHome, CLAUDE_SRC_DIR);
+      await mkdir(globalConfigDir, { recursive: true });
+      await writeFile(
+        path.join(globalConfigDir, STANDARD_FILES.CONFIG_TS),
+        `export default ${JSON.stringify(
+          {
+            name: "global-test",
+            installMode: "local",
+            agents: ["web-developer"],
+          },
+          null,
+          2,
+        )};\n`,
+      );
+
+      // Create a project directory WITHOUT config
+      const projectDir = path.join(tempDir, "project");
+      await mkdir(projectDir, { recursive: true });
+
+      // Run doctor with HOME pointing to globalHome
+      const { exitCode, stdout } = await runCLI(["doctor"], projectDir, {
+        env: { HOME: globalHome },
+      });
+
+      // Doctor should detect the global config and validate it
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(stdout).toContain("Config Valid");
+      expect(stdout).toContain("is valid");
+    });
+  });
 });

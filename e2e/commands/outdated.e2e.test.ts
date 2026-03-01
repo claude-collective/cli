@@ -1,6 +1,6 @@
 import path from "path";
 import { createHash } from "crypto";
-import { readFile } from "fs/promises";
+import { mkdir, readFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import {
   createTempDir,
@@ -293,5 +293,112 @@ describe("outdated command", () => {
     expect(combined).toContain("Summary:");
     expect(combined).toContain("outdated");
     expect(combined).toContain("local-only");
+  });
+
+  it("should handle --source with an empty source directory gracefully", async () => {
+    tempDir = await createTempDir();
+    const emptySourceDir = path.join(tempDir, "empty-source");
+    await mkdir(emptySourceDir, { recursive: true });
+
+    // Create a local skill so we get past the "no local skills" guard
+    await createLocalSkill(tempDir, "web-custom-local-skill", {
+      metadata: 'author: "@test"\ndisplayName: web-custom-local-skill\n',
+    });
+
+    const { exitCode, combined } = await runCLI(["outdated", "--source", emptySourceDir], tempDir);
+
+    // With an empty source (no skills at all), local skills should show as local-only
+    // and the command should exit successfully (no outdated skills)
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(combined).toContain("local-only");
+  });
+
+  it("should show mixed statuses for current, outdated, and local-only skills", async () => {
+    const e2e = await createE2ESource();
+    sourceTempDir = e2e.tempDir;
+    tempDir = await createTempDir();
+    const sourceDir = e2e.sourceDir;
+
+    // 1. Create a CURRENT skill (matching contentHash)
+    const currentSourceId = "web-testing-vitest";
+    const currentLocalDir = "web-testing-vitest-fork" as const;
+    const currentSourceMdPath = path.join(
+      sourceDir,
+      SKILLS_DIR_PATH,
+      "web-testing",
+      currentSourceId,
+      STANDARD_FILES.SKILL_MD,
+    );
+    const sourceContent = await readFile(currentSourceMdPath, "utf-8");
+    const matchingHash = createHash("sha256")
+      .update(sourceContent)
+      .digest("hex")
+      .slice(0, HASH_PREFIX_LENGTH);
+
+    await createLocalSkill(tempDir, currentLocalDir, {
+      metadata: [
+        'author: "@agents-inc"',
+        `displayName: ${currentLocalDir}`,
+        "forkedFrom:",
+        `  skillId: ${currentSourceId}`,
+        `  contentHash: "${matchingHash}"`,
+        "  date: 2026-01-01",
+      ].join("\n"),
+    });
+
+    // 2. Create an OUTDATED skill (stale contentHash)
+    const outdatedSourceId = "web-framework-react";
+    const outdatedLocalDir = "web-framework-react-fork" as const;
+
+    await createLocalSkill(tempDir, outdatedLocalDir, {
+      metadata: [
+        'author: "@agents-inc"',
+        `displayName: ${outdatedLocalDir}`,
+        "forkedFrom:",
+        `  skillId: ${outdatedSourceId}`,
+        '  contentHash: "0000000"',
+        "  date: 2025-01-01",
+      ].join("\n"),
+    });
+
+    // 3. Create a LOCAL-ONLY skill (no forkedFrom)
+    await createLocalSkill(tempDir, "web-custom-local-skill", {
+      metadata: 'author: "@test"\ndisplayName: web-custom-local-skill\n',
+    });
+
+    // Verify human-readable output contains all three statuses
+    const { exitCode, combined } = await runCLI(["outdated", "--source", sourceDir], tempDir);
+
+    expect(exitCode).toBe(EXIT_CODES.ERROR);
+    expect(combined).toContain("current");
+    expect(combined).toContain("outdated");
+    expect(combined).toContain("local-only");
+    expect(combined).toContain("Summary:");
+
+    // Verify JSON output has correct per-skill status
+    const { stdout: jsonStdout } = await runCLI(
+      ["outdated", "--json", "--source", sourceDir],
+      tempDir,
+    );
+
+    const parsed = JSON.parse(jsonStdout);
+    expect(parsed.summary.current).toBeGreaterThanOrEqual(1);
+    expect(parsed.summary.outdated).toBe(1);
+    expect(parsed.summary.localOnly).toBeGreaterThanOrEqual(1);
+
+    const currentSkill = parsed.skills.find(
+      (s: { id: string; status: string }) => s.id === currentSourceId && s.status === "current",
+    );
+    expect(currentSkill).toBeDefined();
+    expect(currentSkill.localHash).toBe(matchingHash);
+
+    const outdatedSkill = parsed.skills.find(
+      (s: { id: string; status: string }) => s.id === outdatedSourceId && s.status === "outdated",
+    );
+    expect(outdatedSkill).toBeDefined();
+    expect(outdatedSkill.localHash).toBe("0000000");
+
+    const localOnlySkill = parsed.skills.find((s: { status: string }) => s.status === "local-only");
+    expect(localOnlySkill).toBeDefined();
   });
 });

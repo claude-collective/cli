@@ -222,6 +222,30 @@ describe("new skill command", () => {
     expect(stdout).toContain("Skill created successfully");
   });
 
+  it("should set category in metadata.yaml when --category flag is provided", async () => {
+    tempDir = await createTempDir();
+    const skillName = "my-cat-skill";
+
+    const { exitCode, stdout } = await runCLI(
+      ["new", "skill", skillName, "--category", "api-database", "--domain", "api"],
+      tempDir,
+    );
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(stdout).toContain("Skill created successfully");
+
+    const metadataPath = path.join(
+      tempDir,
+      CLAUDE_DIR,
+      STANDARD_DIRS.SKILLS,
+      skillName,
+      STANDARD_FILES.METADATA_YAML,
+    );
+    const content = await readTestFile(metadataPath);
+
+    expect(content).toContain("category: api-database");
+  });
+
   it("should not create config files when creating a local skill", async () => {
     tempDir = await createTempDir();
     const skillName = "local-only-skill";

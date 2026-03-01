@@ -261,6 +261,153 @@ describe("search command", () => {
     });
   });
 
+  describe("arrow key navigation", () => {
+    it("should navigate to a different skill and allow selecting it", async () => {
+      tempDir = await createTempDir();
+      await createSourceFixture();
+
+      session = new TerminalSession(["search"], tempDir, {
+        rows: 40,
+        cols: 120,
+        env: { CC_SOURCE: sourceDir },
+      });
+
+      await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Select the first (focused) skill
+      session.space();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      const screenAfterFirstSelect = session.getScreen();
+      expect(screenAfterFirstSelect).toContain("1 selected");
+
+      // Navigate down to a different skill and select it too
+      session.arrowDown();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      session.space();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      const screenAfterSecondSelect = session.getScreen();
+
+      // Having "2 selected" proves arrow down moved focus to a different skill
+      expect(screenAfterSecondSelect).toContain("2 selected");
+    });
+  });
+
+  describe("selection and import", () => {
+    it("should show selected count and import hint after pressing SPACE", async () => {
+      tempDir = await createTempDir();
+      await createSourceFixture();
+
+      session = new TerminalSession(["search"], tempDir, {
+        rows: 40,
+        cols: 120,
+        env: { CC_SOURCE: sourceDir },
+      });
+
+      await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // SPACE toggles selection on the focused skill
+      session.space();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      const screenAfterSelect = session.getScreen();
+
+      // StatusBar should show "1 selected" after selecting one skill
+      expect(screenAfterSelect).toContain("1 selected");
+
+      // Footer should now show the ENTER/import hint (only visible when hasSelection)
+      expect(screenAfterSelect).toContain("import");
+    });
+
+    // BUG: Enter triggers import but copy() receives a relative skill.path from
+    // the matrix instead of an absolute path, causing the import to fail with
+    // exit code 1 (src/cli/commands/search.tsx:232-236)
+    it.fails("should import selected skill when pressing Enter", async () => {
+      tempDir = await createTempDir();
+      await createSourceFixture();
+
+      session = new TerminalSession(["search"], tempDir, {
+        rows: 40,
+        cols: 120,
+        env: { CC_SOURCE: sourceDir },
+      });
+
+      await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Select and import
+      session.space();
+      await delay(KEYSTROKE_DELAY_MS);
+      session.enter();
+
+      const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+      const rawOutput = session.getRawOutput();
+      expect(rawOutput).toContain("Importing 1 skill");
+    });
+  });
+
+  describe("scrolling with many results", () => {
+    it("should allow navigating through all results with arrow keys", async () => {
+      tempDir = await createTempDir();
+      await createSourceFixture();
+
+      session = new TerminalSession(["search"], tempDir, {
+        rows: 40,
+        cols: 120,
+        env: { CC_SOURCE: sourceDir },
+      });
+
+      await session.waitForText("Search Skills", WIZARD_LOAD_TIMEOUT_MS);
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      // Navigate down through multiple results (the E2E source has 10 skills)
+      // and select skills along the way to prove navigation works
+      for (let i = 0; i < 5; i++) {
+        session.arrowDown();
+        await delay(KEYSTROKE_DELAY_MS);
+      }
+
+      // Select the skill at the 6th position to prove we navigated there
+      session.space();
+      await delay(KEYSTROKE_DELAY_MS);
+
+      const afterScrollScreen = session.getScreen();
+
+      // The results list should still be visible with status bar
+      expect(afterScrollScreen).toMatch(/\d+ results?/);
+
+      // The selection should be registered
+      expect(afterScrollScreen).toContain("1 selected");
+    });
+  });
+
+  describe("--source flag in non-interactive mode", () => {
+    it("should load skills from the custom source path", async () => {
+      tempDir = await createTempDir();
+      await createSourceFixture();
+
+      const { exitCode, stdout, combined } = await runCLI(
+        ["search", "methodology", "--source", sourceDir!],
+        tempDir,
+      );
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+      // Verify the source was loaded from the local path
+      expect(combined).toContain("Loaded from local:");
+      expect(combined).toContain(sourceDir!);
+
+      // The E2E source contains methodology skills — verify they appear in results
+      expect(stdout).toContain("methodology");
+    });
+  });
+
   describe("--source flag in interactive mode", () => {
     // BUG: search interactive mode hardcodes sourceFlag: undefined instead of
     // passing the --source flag value to loadSkillsMatrixFromSource()

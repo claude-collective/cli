@@ -286,6 +286,75 @@ describe("info command", () => {
     });
   });
 
+  describe("invalid source", () => {
+    it("should error when --source points to nonexistent path", async () => {
+      tempDir = await createTempDir();
+
+      const { exitCode, combined } = await runCLI(
+        ["info", SKILL_ID, "--source", "/nonexistent/path/to/source"],
+        tempDir,
+      );
+
+      expect(exitCode).not.toBe(EXIT_CODES.SUCCESS);
+      expect(combined.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("long description", () => {
+    it("should handle skill with very long description without crashing", async () => {
+      tempDir = await createTempDir();
+
+      const longDescription =
+        "This is a very long description that exceeds five hundred characters to verify that the info command handles long descriptions properly without crashing. " +
+        "It contains multiple sentences to simulate a realistic skill description that might be found in a production marketplace. " +
+        "The description covers various aspects of the skill including its purpose, usage patterns, and integration points. " +
+        "Additional content is included to push the total length well beyond the five hundred character threshold that was specified in the test plan. " +
+        "This final sentence ensures we are comfortably over the limit.";
+
+      const sourceDir = path.join(tempDir, "source");
+      const longSkillId: SkillId = "web-testing-long-desc";
+      const skillDir = path.join(sourceDir, SKILLS_DIR_PATH, longSkillId);
+      await mkdir(skillDir, { recursive: true });
+
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.SKILL_MD),
+        `---
+name: ${longSkillId}
+description: ${longDescription}
+tags:
+  - test
+author: "@test"
+---
+
+# Long Description Skill
+
+${longDescription}
+`,
+      );
+
+      await writeFile(
+        path.join(skillDir, STANDARD_FILES.METADATA_YAML),
+        `category: web-testing
+domain: web
+author: "@test"
+displayName: long-desc-test
+cliDescription: ${longDescription}
+contentHash: "e2e-long-desc-hash"
+`,
+      );
+
+      const { exitCode, stdout } = await runCLI(
+        ["info", longSkillId, "--source", sourceDir, "--no-preview"],
+        tempDir,
+      );
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(stdout).toContain(`Skill: ${longSkillId}`);
+      expect(stdout).toContain("Description:");
+      expect(stdout).toContain(longDescription.slice(0, 50));
+    });
+  });
+
   describe("partial match suggestions", () => {
     it("should suggest similar skills when partial ID matches", async () => {
       const { sourceDir, tempDir: sourceTempDir } = await createE2ESource();

@@ -14,7 +14,8 @@ import {
   runCLI,
   EXIT_CODES,
 } from "../helpers/test-utils.js";
-import { CLAUDE_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../src/cli/consts.js";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../src/cli/consts.js";
+import { createE2ESource } from "../helpers/create-e2e-source.js";
 
 const COMPILE_ENV = {
   ...process.env,
@@ -336,6 +337,27 @@ describe("compile command", () => {
         expect(body).toContain("#");
       }
     });
+
+    it("should produce distinct content for each compiled agent", async () => {
+      tempDir = await createTempDir();
+      const { projectDir, outputDir } = await createMinimalProject(tempDir);
+
+      const { exitCode } = await runCLI(["compile", "--output", outputDir], projectDir, {
+        env: COMPILE_ENV,
+      });
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+      const webDevContent = await readTestFile(path.join(outputDir, "web-developer.md"));
+      const apiDevContent = await readTestFile(path.join(outputDir, "api-developer.md"));
+
+      // Each agent file should have its own name: field in frontmatter
+      expect(webDevContent).toContain("name: web-developer");
+      expect(apiDevContent).toContain("name: api-developer");
+
+      // The two files should not be identical — different agents have different content
+      expect(webDevContent).not.toBe(apiDevContent);
+    });
   });
 
   describe("custom skills in project config", () => {
@@ -374,6 +396,141 @@ describe("compile command", () => {
       // so it should appear in the YAML frontmatter skills list
       expect(content).toMatch(/^---\n/);
       expect(content).toContain("web-custom-e2e-widget");
+    });
+  });
+
+  describe("source flag override", () => {
+    let sourceTempDir: string;
+
+    afterEach(async () => {
+      if (sourceTempDir) {
+        await cleanupTempDir(sourceTempDir);
+        sourceTempDir = undefined!;
+      }
+    });
+
+    it("should compile using --source flag to override source resolution", async () => {
+      tempDir = await createTempDir();
+      const projectDir = path.join(tempDir, "project");
+      const outputDir = path.join(tempDir, "output");
+      await mkdir(outputDir, { recursive: true });
+
+      // Create a local skill in the project
+      await createLocalSkill(projectDir, "web-testing-e2e-source-flag", {
+        description: "Skill for --source flag verification",
+        metadata: `author: "@test"\ncontentHash: "hash-source-flag"\n`,
+      });
+
+      // Create an E2E source directory (provides agent definitions + templates)
+      const { sourceDir, tempDir: srcTempDir } = await createE2ESource();
+      sourceTempDir = srcTempDir;
+
+      const { exitCode, stdout } = await runCLI(
+        ["compile", "--output", outputDir, "--source", sourceDir],
+        projectDir,
+        { env: COMPILE_ENV },
+      );
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(stdout).toContain("Discovered 1 local skills");
+      expect(stdout).toContain("Source: flag");
+      expect(stdout).toMatch(/Compiled \d+ agents/);
+
+      const outputFiles = await listFiles(outputDir);
+      expect(outputFiles.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("--agent-source flag", () => {
+    let sourceTempDir: string;
+
+    afterEach(async () => {
+      if (sourceTempDir) {
+        await cleanupTempDir(sourceTempDir);
+        sourceTempDir = undefined!;
+      }
+    });
+
+    it("should compile using --agent-source flag to load agent definitions from custom path", async () => {
+      tempDir = await createTempDir();
+      const projectDir = path.join(tempDir, "project");
+      const outputDir = path.join(tempDir, "output");
+      await mkdir(outputDir, { recursive: true });
+
+      // Create a local skill in the project
+      await createLocalSkill(projectDir, "web-testing-e2e-agent-source", {
+        description: "Skill for --agent-source flag verification",
+        metadata: `author: "@test"\ncontentHash: "hash-agent-source"\n`,
+      });
+
+      // Create an E2E source directory (provides agent definitions + templates)
+      const { sourceDir, tempDir: srcTempDir } = await createE2ESource();
+      sourceTempDir = srcTempDir;
+
+      const { exitCode, stdout } = await runCLI(
+        ["compile", "--output", outputDir, "--agent-source", sourceDir],
+        projectDir,
+        { env: COMPILE_ENV },
+      );
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      expect(stdout).toContain("Discovered 1 local skills");
+      expect(stdout).toContain("Fetching agent partials...");
+      expect(stdout).toContain("Agent partials fetched");
+      expect(stdout).toMatch(/Compiled \d+ agents/);
+
+      const outputFiles = await listFiles(outputDir);
+      expect(outputFiles.length).toBeGreaterThan(0);
+
+      const mdFiles = outputFiles.filter((f) => f.endsWith(".md"));
+      expect(mdFiles.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("global installation fallback", () => {
+    // BUG: compile detects global installation via detectInstallation() but then calls
+    // discoverAllSkills() with process.cwd() (the project dir) instead of installation.projectDir
+    // (the global home). Skills are at globalHome/.claude/skills/ but compile looks at cwd/.claude/skills/.
+    it.fails("should use global installation paths when no project config exists", async () => {
+      tempDir = await createTempDir();
+
+      // Create a "global home" directory with .claude-src/config.ts and .claude/skills/
+      const globalHome = path.join(tempDir, "global-home");
+      const globalConfigDir = path.join(globalHome, CLAUDE_SRC_DIR);
+      await mkdir(globalConfigDir, { recursive: true });
+      await writeFile(
+        path.join(globalConfigDir, STANDARD_FILES.CONFIG_TS),
+        `export default ${JSON.stringify(
+          {
+            name: "global-test",
+            installMode: "local",
+            skills: ["web-testing-e2e-global"],
+            agents: ["web-developer"],
+          },
+          null,
+          2,
+        )};\n`,
+      );
+
+      // Create a local skill in the global home directory
+      await createLocalSkill(globalHome, "web-testing-e2e-global", {
+        description: "Global skill for compile fallback",
+        metadata: `author: "@test"\ncontentHash: "hash-global"\n`,
+      });
+
+      // Create a project directory WITHOUT config
+      const projectDir = path.join(tempDir, "project");
+      await mkdir(projectDir, { recursive: true });
+
+      // Run compile with HOME pointing to globalHome so detectInstallation falls back to global
+      // compile without --output uses detectInstallation() which falls back to global
+      const { exitCode, combined } = await runCLI(["compile"], projectDir, {
+        env: { HOME: globalHome, AGENTSINC_SOURCE: undefined },
+      });
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      // When using global installation, compile logs this message
+      expect(combined).toContain("Using global installation from ~/.claude-src/");
     });
   });
 });

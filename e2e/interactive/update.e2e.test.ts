@@ -190,6 +190,220 @@ describe("update command", () => {
     });
   });
 
+  describe("update with --source flag", () => {
+    it("should use custom source directory and complete without error", async () => {
+      tempDir = await createTempDir();
+      const source = await createE2ESource();
+      sourceTempDir = source.tempDir;
+      const projectDir = await createEditableProject(tempDir, {
+        skills: ["web-framework-react"],
+      });
+
+      const { exitCode, combined } = await runCLI(
+        ["update", "--yes", "--source", source.sourceDir],
+        projectDir,
+      );
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      // The source is local, so the command should report loading from it
+      expect(combined).toContain("Loaded from local:");
+    });
+  });
+
+  describe("update with multiple outdated skills", () => {
+    it("should update all outdated skills when multiple exist", async () => {
+      tempDir = await createTempDir();
+      const source = await createE2ESource();
+      sourceTempDir = source.tempDir;
+
+      // Create a project directory with .claude/skills/ containing multiple
+      // skills with forkedFrom metadata pointing to source skills but with
+      // stale hashes that won't match the actual source SKILL.md hashes.
+      const projectDir = await createEditableProject(tempDir, {
+        skills: [],
+      });
+
+      // Add two skills with stale forkedFrom hashes
+      await createLocalSkill(projectDir, "web-framework-react-fork", {
+        metadata: [
+          'author: "@agents-inc"',
+          "displayName: web-framework-react-fork",
+          "forkedFrom:",
+          "  skillId: web-framework-react",
+          '  contentHash: "0000000"',
+          "  date: 2025-01-01",
+        ].join("\n"),
+      });
+
+      await createLocalSkill(projectDir, "web-testing-vitest-fork", {
+        metadata: [
+          'author: "@agents-inc"',
+          "displayName: web-testing-vitest-fork",
+          "forkedFrom:",
+          "  skillId: web-testing-vitest",
+          '  contentHash: "0000000"',
+          "  date: 2025-01-01",
+        ].join("\n"),
+      });
+
+      const { exitCode, combined } = await runCLI(
+        ["update", "--yes", "--source", source.sourceDir],
+        projectDir,
+      );
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      // The update command prints "Updating <skillId>..." for each outdated skill
+      expect(combined).toContain("Updating web-framework-react");
+      expect(combined).toContain("Updating web-testing-vitest");
+      // Summary should mention 2 skills updated
+      expect(combined).toContain("2 skill(s) updated");
+    });
+  });
+
+  describe("update with exact skill name", () => {
+    it("should update only the specified skill", async () => {
+      tempDir = await createTempDir();
+      const source = await createE2ESource();
+      sourceTempDir = source.tempDir;
+      const projectDir = await createEditableProject(tempDir, {
+        skills: [],
+      });
+
+      // Create a local skill forked from web-framework-react with a stale hash
+      await createLocalSkill(projectDir, "web-framework-react-fork", {
+        metadata: [
+          'author: "@agents-inc"',
+          "displayName: web-framework-react-fork",
+          "forkedFrom:",
+          "  skillId: web-framework-react",
+          '  contentHash: "0000000"',
+          "  date: 2025-01-01",
+        ].join("\n"),
+      });
+
+      const { exitCode, combined } = await runCLI(
+        ["update", "web-framework-react", "--source", source.sourceDir, "--yes"],
+        projectDir,
+      );
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      // The update command prints "Updating <skillId>..." for the specified skill
+      expect(combined).toContain("Updating web-framework-react");
+      expect(combined).toContain("1 skill(s) updated");
+    });
+  });
+
+  describe("interactive update with outdated skills", () => {
+    it("should show outdated skill table and confirmation prompt", async () => {
+      tempDir = await createTempDir();
+      const source = await createE2ESource();
+      sourceTempDir = source.tempDir;
+      const projectDir = await createEditableProject(tempDir, {
+        skills: [],
+      });
+
+      // Create a skill with stale forkedFrom hash so it's detected as outdated
+      await createLocalSkill(projectDir, "web-framework-react-fork", {
+        metadata: [
+          'author: "@agents-inc"',
+          "displayName: web-framework-react-fork",
+          "forkedFrom:",
+          "  skillId: web-framework-react",
+          '  contentHash: "0000000"',
+          "  date: 2025-01-01",
+        ].join("\n"),
+      });
+
+      // Launch interactively (no --yes) so the confirmation prompt appears
+      session = new TerminalSession(["update", "--source", source.sourceDir], projectDir);
+
+      // Wait for the full confirmation UI to render (table + prompt)
+      await session.waitForText("Proceed with update?", WIZARD_LOAD_TIMEOUT_MS);
+
+      const output = session.getFullOutput();
+
+      // Verify the outdated skill appears in the table
+      expect(output).toContain("web-framework-react");
+      // Verify the confirmation prompt renders
+      expect(output).toContain("Proceed with update?");
+    });
+
+    // BUG: The update command's interactive confirm hangs after pressing 'y'.
+    // The UpdateConfirm callback sets `confirmed = true` but nothing unmounts
+    // the Ink instance, so `await waitUntilExit()` never resolves.
+    // Compare with uninstall.tsx which wraps render in a Promise that
+    // resolves on callback, avoiding the waitUntilExit hang.
+    it.fails("should confirm and update all outdated skills interactively", async () => {
+      tempDir = await createTempDir();
+      const source = await createE2ESource();
+      sourceTempDir = source.tempDir;
+      const projectDir = await createEditableProject(tempDir, {
+        skills: [],
+      });
+
+      // Create two skills with stale forkedFrom hashes
+      await createLocalSkill(projectDir, "web-framework-react-fork", {
+        metadata: [
+          'author: "@agents-inc"',
+          "displayName: web-framework-react-fork",
+          "forkedFrom:",
+          "  skillId: web-framework-react",
+          '  contentHash: "0000000"',
+          "  date: 2025-01-01",
+        ].join("\n"),
+      });
+
+      await createLocalSkill(projectDir, "web-testing-vitest-fork", {
+        metadata: [
+          'author: "@agents-inc"',
+          "displayName: web-testing-vitest-fork",
+          "forkedFrom:",
+          "  skillId: web-testing-vitest",
+          '  contentHash: "0000000"',
+          "  date: 2025-01-01",
+        ].join("\n"),
+      });
+
+      session = new TerminalSession(["update", "--source", source.sourceDir], projectDir);
+
+      // Wait for the confirmation prompt to appear
+      await session.waitForText("Proceed with update?", WIZARD_LOAD_TIMEOUT_MS);
+
+      // Confirm the update by pressing 'y'
+      session.write("y");
+      await delay(STEP_TRANSITION_DELAY_MS);
+
+      const exitCode = await session.waitForExit(EXIT_TIMEOUT_MS);
+      const output = session.getFullOutput();
+
+      expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+      // Both outdated skills should be updated
+      expect(output).toContain("Updating web-framework-react");
+      expect(output).toContain("Updating web-testing-vitest");
+      expect(output).toContain("2 skill(s) updated");
+    });
+
+    it("should use custom source via --source flag in interactive mode", async () => {
+      tempDir = await createTempDir();
+      const source = await createE2ESource();
+      sourceTempDir = source.tempDir;
+      const projectDir = await createEditableProject(tempDir, {
+        skills: ["web-framework-react"],
+      });
+
+      // Launch interactively with --source pointing to the E2E source
+      session = new TerminalSession(["update", "--source", source.sourceDir], projectDir);
+
+      // The update command logs "Loaded from local: <path>" when using a local source
+      await session.waitForText("Loaded from local:", WIZARD_LOAD_TIMEOUT_MS);
+
+      const output = session.getFullOutput();
+
+      // Verify the source path appears in the output
+      expect(output).toContain(source.sourceDir);
+    });
+  });
+
   describe("cancellation", () => {
     it("should exit when Ctrl+C is pressed during source resolution", async () => {
       tempDir = await createTempDir();

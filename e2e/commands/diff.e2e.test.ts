@@ -304,4 +304,124 @@ describe("diff command", () => {
 
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
   });
+
+  it("should display help text with --help flag", async () => {
+    tempDir = await createTempDir();
+
+    const { exitCode, stdout } = await runCLI(["diff", "--help"], tempDir);
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    expect(stdout).toContain("USAGE");
+    expect(stdout).toContain("--quiet");
+    expect(stdout).toContain("--source");
+  });
+
+  it("should compare all forked skills when multiple exist", async () => {
+    const e2e = await createE2ESource();
+    sourceTempDir = e2e.tempDir;
+    tempDir = await createTempDir();
+
+    const reactFork = "web-framework-react-fork" as const;
+    const vitestFork = "web-testing-vitest-fork" as const;
+
+    const reactDir = await createLocalSkill(tempDir, reactFork, {
+      description: "Modified react skill",
+      metadata: [
+        'author: "@agents-inc"',
+        `displayName: ${reactFork}`,
+        "forkedFrom:",
+        "  skillId: web-framework-react",
+        '  contentHash: "stale-hash"',
+        "  date: 2026-01-01",
+      ].join("\n"),
+    });
+
+    await writeFile(
+      path.join(reactDir, STANDARD_FILES.SKILL_MD),
+      `---\nname: ${reactFork}\ndescription: Locally modified react\n---\n\n# Modified React\n`,
+    );
+
+    const vitestDir = await createLocalSkill(tempDir, vitestFork, {
+      description: "Modified vitest skill",
+      metadata: [
+        'author: "@agents-inc"',
+        `displayName: ${vitestFork}`,
+        "forkedFrom:",
+        "  skillId: web-testing-vitest",
+        '  contentHash: "stale-hash"',
+        "  date: 2026-01-01",
+      ].join("\n"),
+    });
+
+    await writeFile(
+      path.join(vitestDir, STANDARD_FILES.SKILL_MD),
+      `---\nname: ${vitestFork}\ndescription: Locally modified vitest\n---\n\n# Modified Vitest\n`,
+    );
+
+    const { combined } = await runCLI(["diff", "--source", e2e.sourceDir], tempDir);
+
+    expect(combined).toContain("web-framework-react");
+    expect(combined).toContain("web-testing-vitest");
+    expect(combined).toMatch(/Found differences in 2 skill/);
+  });
+
+  it("should use --source flag to override default source", async () => {
+    const e2e = await createE2ESource();
+    sourceTempDir = e2e.tempDir;
+    tempDir = await createTempDir();
+
+    const localDirName = "web-testing-vitest-fork" as const;
+
+    const skillDir = await createLocalSkill(tempDir, localDirName, {
+      description: "Modified skill",
+      metadata: [
+        'author: "@agents-inc"',
+        `displayName: ${localDirName}`,
+        "forkedFrom:",
+        "  skillId: web-testing-vitest",
+        '  contentHash: "stale-hash"',
+        "  date: 2026-01-01",
+      ].join("\n"),
+    });
+
+    await writeFile(
+      path.join(skillDir, STANDARD_FILES.SKILL_MD),
+      `---\nname: ${localDirName}\ndescription: Locally modified\n---\n\n# Changed\n`,
+    );
+
+    const { combined } = await runCLI(["diff", "--source", e2e.sourceDir], tempDir);
+
+    expect(combined).toContain(`Loaded from local: ${e2e.sourceDir}`);
+    expect(combined).toContain("web-testing-vitest");
+    expect(combined).toMatch(/Found differences in \d+ skill/);
+  });
+
+  // BUG: When a forked skill references a source skill that no longer exists,
+  // the diff command sets diffOutput to "Source skill 'X' no longer exists" but
+  // hasDiff is false, so the message is never displayed to the user. The output
+  // incorrectly says "up to date" instead of warning about the missing source skill.
+  // (src/cli/commands/diff.ts:59-67 — diffOutput is set but hasDiff remains false)
+  it.fails("should warn when forked skill references a deleted source skill", async () => {
+    const e2e = await createE2ESource();
+    sourceTempDir = e2e.tempDir;
+    tempDir = await createTempDir();
+
+    const localDirName = "web-deleted-skill-fork" as const;
+
+    await createLocalSkill(tempDir, localDirName, {
+      description: "Fork of a skill that was removed from source",
+      metadata: [
+        'author: "@agents-inc"',
+        `displayName: ${localDirName}`,
+        "forkedFrom:",
+        "  skillId: web-nonexistent-deleted-skill",
+        '  contentHash: "old-hash"',
+        "  date: 2026-01-01",
+      ].join("\n"),
+    });
+
+    const { combined } = await runCLI(["diff", "--source", e2e.sourceDir], tempDir);
+
+    expect(combined).toContain("no longer exists");
+  });
 });
