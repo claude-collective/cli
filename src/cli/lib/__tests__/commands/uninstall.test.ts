@@ -392,8 +392,8 @@ describe("uninstall command", () => {
   });
 
   describe("agent removal", () => {
-    it("should remove compiled agents directory when config exists", async () => {
-      await createProjectConfig(projectDir);
+    it("should remove compiled agents listed in config", async () => {
+      await createProjectConfig(projectDir, { agents: ["web-developer"] });
       const claudeDir = path.join(projectDir, CLAUDE_DIR);
 
       const agentsDir = path.join(claudeDir, "agents");
@@ -403,7 +403,7 @@ describe("uninstall command", () => {
       const { stdout } = await runCliCommand(["uninstall", "--yes"]);
 
       expect(await directoryExists(agentsDir)).toBe(false);
-      expect(stdout).toContain("Removed compiled agents");
+      expect(stdout).toContain("Removed 1 compiled agent");
     });
 
     it("should not remove agents directory when no config exists", async () => {
@@ -415,8 +415,28 @@ describe("uninstall command", () => {
 
       await runCliCommand(["uninstall", "--yes"]);
 
-      // No config means CLI wasn't used to compile agents -- preserve
       expect(await directoryExists(agentsDir)).toBe(true);
+    });
+
+    it("should only remove agents listed in config and preserve others", async () => {
+      await createProjectConfig(projectDir, { agents: ["web-developer"] });
+      const claudeDir = path.join(projectDir, CLAUDE_DIR);
+
+      const agentsDir = path.join(claudeDir, "agents");
+      await mkdir(agentsDir, { recursive: true });
+      await writeFile(path.join(agentsDir, "web-developer.md"), "# Web Developer Agent");
+      await writeFile(path.join(agentsDir, "my-custom-agent.md"), "# Custom Agent");
+
+      const { stdout } = await runCliCommand(["uninstall", "--yes"]);
+
+      expect(stdout).toContain("Removed 1 compiled agent");
+      expect(await directoryExists(agentsDir)).toBe(true);
+      expect(
+        await fileExists(path.join(agentsDir, "web-developer.md")),
+      ).toBe(false);
+      expect(
+        await fileExists(path.join(agentsDir, "my-custom-agent.md")),
+      ).toBe(true);
     });
   });
 
@@ -598,7 +618,7 @@ describe("uninstall command", () => {
     });
 
     it("should remove everything with --all flag", async () => {
-      await createProjectConfig(projectDir);
+      await createProjectConfig(projectDir, { agents: ["web-developer"] });
       const claudeDir = path.join(projectDir, CLAUDE_DIR);
       const claudeSrcDir = path.join(projectDir, CLAUDE_SRC_DIR);
 
@@ -615,7 +635,7 @@ describe("uninstall command", () => {
       expect(await directoryExists(claudeDir)).toBe(false);
       expect(await directoryExists(claudeSrcDir)).toBe(false);
       expect(stdout).toContain("Removed 1 CLI-installed skill");
-      expect(stdout).toContain("Removed compiled agents");
+      expect(stdout).toContain("Removed 1 compiled agent");
       expect(stdout).toContain(`Removed ${CLAUDE_SRC_DIR}/`);
       expect(stdout).toContain(`Removed ${CLAUDE_DIR}/`);
     });

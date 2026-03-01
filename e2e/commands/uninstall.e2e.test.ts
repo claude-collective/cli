@@ -7,6 +7,7 @@ import {
   createEditableProject,
   ensureBinaryExists,
   directoryExists,
+  fileExists,
   runCLI,
   EXIT_CODES,
 } from "../helpers/test-utils.js";
@@ -158,6 +159,22 @@ describe("uninstall command", () => {
     expect(exitCode).toBe(EXIT_CODES.SUCCESS);
     expect(stdout).toContain("CLI-compiled");
     expect(await directoryExists(agentsDir)).toBe(false);
+  });
+
+  it("should preserve agents not listed in config", async () => {
+    tempDir = await createTempDir();
+    const projectDir = await createEditableProject(tempDir);
+
+    // createEditableProject generates config with agents: ["web-developer"]
+    // Add an extra agent file NOT in the config
+    const agentsDir = path.join(projectDir, CLAUDE_DIR, "agents");
+    await writeFile(path.join(agentsDir, "my-custom-agent.md"), "# Custom Agent");
+
+    const { exitCode } = await runCLI(["uninstall", "--yes"], projectDir);
+
+    expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+    // Custom agent should be preserved (not in config.agents)
+    expect(await fileExists(path.join(agentsDir, "my-custom-agent.md"))).toBe(true);
   });
 
   it("should skip user-created skills without forkedFrom metadata", async () => {

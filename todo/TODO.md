@@ -2,26 +2,19 @@
 
 | ID   | Task                                                                                                                                       | Status        |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
-| B-08 | Uninstall does not remove compiled agents — `loadProjectSourceConfig` returns null so `target.config` guard skips agent removal            | Bug           |
-| D-50 | ~~Matrix decomposition~~ — all 8 phases complete (see [phased plan](./TODO-matrix-decomposition.md))                                       | Done          |
 | D-46 | Custom extensibility — generated types for custom skills/agents/categories (see [implementation plan](./D-46-ts-config-migration.md))      | Ready for Dev |
 | D-37 | Install mode UX redesign (see [design doc](../docs/features/proposed/install-mode-redesign.md))                                            | Refined       |
-| D-33 | ~~README: frame Agents Inc. as an agent composition framework~~ — done                                                                     | Done          |
 | D-44 | Update README and Notion page for `eject templates` type (see [implementation plan](./D-44-docs-eject-templates.md))                       | Ready for Dev |
-| D-47 | ~~Eject a standalone compile function~~ — deferred, low priority (see [TODO-deferred.md](./TODO-deferred.md))                              | Deferred      |
 | T-12 | End-to-end tests for custom marketplace workflow (see [implementation plan](./T-12-e2e-marketplace-tests.md))                              | Has Open Qs   |
 | D-52 | Expand `new agent` command: config lookup + compile-on-demand (see [implementation plan](./D-52-expand-new-agent.md))                      | Ready for Dev |
 | D-54 | Remove expert mode: make expert mode behavior the default (see [implementation plan](./D-54-remove-expert-mode.md))                        | Ready for Dev |
 | D-59 | Unified scrolling across all wizard views (see [implementation plan](./D-59-unified-scrolling.md))                                         | Ready for Dev |
 | D-36 | Global install support with project-level override (see [implementation plan](./D-36-global-install.md))                                   | Ready for Dev |
 | D-37 | Merge global + project installations in resolution (see [implementation plan](./D-37-merge-installs.md))                                   | Has Open Qs   |
-| D-08 | ~~User-defined stacks~~ — deferred, not important (see [TODO-deferred.md](./TODO-deferred.md))                                             | Deferred      |
 | D-53 | Rename `agent.yaml` to `metadata.yaml` (see [implementation plan](./D-53-rename-agent-yaml.md))                                            | Ready for Dev |
 | D-38 | Remove web-base-framework, allow multi-framework (see [implementation plan](./D-38-remove-base-framework.md))                              | Has Open Qs   |
 | D-39 | Couple meta-frameworks with base frameworks (see [implementation plan](./D-39-couple-meta-frameworks.md))                                  | Ready for Dev |
-| D-40 | ~~`agentsinc register` command~~ — absorbed into D-41 (config sub-agent handles registration) (see [TODO-deferred.md](./TODO-deferred.md)) | Deferred      |
 | D-41 | Create `agents-inc` configuration skill (see [implementation plan](./D-41-config-sub-agent.md))                                            | Ready for Dev |
-| D-60 | Remove `cli-migrator` subagent                                                                                                             | Ready for Dev |
 | D-61 | Preserve stack skill selections when toggling domains                                                                                      | Ready for Dev |
 | D-62 | Review default stacks: include meta/methodology/reviewing skills                                                                           | Ready for Dev |
 | D-63 | Add E2E tests to pre-commit hook                                                                                                           | Ready for Dev |
@@ -29,7 +22,6 @@
 | D-65 | Init/edit scope: global config detection + prompt (see [implementation plan](./D-65-init-edit-scope.md))                                   | Ready for Dev |
 | D-66 | AI-assisted PR review: categorize diffs by type (mechanical vs logic vs test) for easier review                                            | Investigate   |
 | D-67 | Remove `aliases` from skill-rules.ts — derive display name mappings from a typed `Record<SkillId, SkillDisplayName>` map                   | Investigate   |
-| D-68 | Remove `--dry-run` flag entirely — wizard confirm step already previews, operations are local/reversible                                   | Ready for Dev |
 | D-69 | Config migration strategy — detect and handle outdated config shapes across CLI version upgrades                                           | Investigate   |
 | D-70 | `new skill` / `new agent` should update config.ts + rename Subcategory → Category                                                          | Ready for Dev |
 | B-07 | Fix skill sort order changing on select/deselect in build step                                                                             | Ready for Dev |
@@ -53,32 +45,6 @@ See [docs/guides/agent-reminders.md](../docs/guides/agent-reminders.md) for the 
 ---
 
 ## Active Tasks
-
-### B-08: Uninstall does not remove compiled agents
-
-**Symptom:** Running `agentsinc uninstall` does not remove `.claude/agents/` even when agents were compiled by the CLI.
-
-**Root cause:** Agent removal is gated on `target.config !== null` (line 398 of `uninstall.tsx`). The `loadProjectSourceConfig` call uses jiti to load `.claude-src/config.ts`, which may fail silently and return `null` — causing the guard to skip agent removal entirely.
-
-**Likely failure modes:**
-
-1. jiti fails to resolve `@agents-inc/cli/config` (the `defineConfig` import) when the CLI binary path differs from what the alias expects
-2. The `projectSourceConfigSchema` Zod validation rejects the loaded config (e.g., missing required fields, or the `defineConfig` wrapper confuses the parser)
-3. Edge case: user has a `config.yaml` from before the TS migration — the code only checks for `config.ts`
-
-**Why unit tests pass:** The test helper `createProjectConfig` writes a bare `export default {...}` without the `defineConfig` import, so jiti always succeeds. Real configs use `import { defineConfig } from "@agents-inc/cli/config"` which requires the jiti alias to work.
-
-**Fix direction:** Debug why `loadProjectSourceConfig` returns null in production. The agent removal guard should probably also check for the agents directory being CLI-compiled via a different signal (e.g., presence of compiled agent frontmatter) rather than relying solely on config load success.
-
-**Location:** `src/cli/commands/uninstall.tsx:396-411`, `src/cli/lib/configuration/config.ts:55-70`
-
----
-
-### D-50: Matrix Decomposition — COMPLETE
-
-All 8 phases complete. `skills-matrix.yaml` decomposed into `skill-categories.yaml` + `skill-rules.yaml` with directory-based skill discovery. Auto-synthesis for unknown categories. `categoryExclusive` removed from skill metadata. `cliName` renamed to `displayName`. `new skill` and `new marketplace` create/update config files. See [phased plan](./TODO-matrix-decomposition.md).
-
----
 
 ### CLI Improvements
 
@@ -233,43 +199,6 @@ Create a configuration **skill** (not a sub-agent) that gives Claude deep expert
 ---
 
 ### Positioning & README
-
-#### D-33: README: frame Agents Inc. as an AI coding framework
-
-Rewrite the README to position Agents Inc. as an AI coding framework, not just a CLI tool. The key differentiator is the composability model and the level of extensibility — this needs to be worded carefully to be credible, not buzzwordy.
-
-**What makes it genuinely a framework:**
-
-- **Composable knowledge primitives** — skills are atomic, typed, categorized knowledge modules with a defined schema (markdown + YAML metadata + categories + tags + conflict rules)
-- **Agent compilation pipeline** — skills are compiled into role-based agents via Liquid templates, YAML definitions, and markdown partials. This is a real build step, not just config
-- **Ejectable internals** — users can eject agent templates, the skills matrix, and compilation artifacts to fully customize the pipeline. This is framework-level extensibility
-- **Interactive agent composition** — the wizard lets you interactively build specialized sub-agents from modular skills, which is genuinely unique
-- **Marketplace/plugin architecture** — custom skill sources, multi-source resolution, publishable stack plugins
-- **Stack architecture** — pre-configured agent bundles with philosophy, agent roles, and skill assignments
-
-**Wording constraints:**
-
-- Must feel honest and specific, not like marketing fluff
-- Lead with what it does concretely, then explain the framework aspect
-- Avoid "revolutionary" / "powerful" / "game-changing" language
-- The framework angle should emerge naturally from describing the features
-- Don't overstate — it's a framework for composing Claude Code agents, not a general AI framework
-
-**Possible framing angles to explore:**
-
-- "A build system for AI coding agents" (emphasizes the compilation pipeline)
-- "Composable skills for Claude Code" (emphasizes the modularity)
-- "An agent composition framework" (emphasizes what makes it unique)
-- The eject model mirrors how frameworks like Next.js/CRA work — sane defaults but full escape hatches
-
-**Key sections to rework:**
-
-- Opening paragraph — currently "the CLI for working with Agents Inc. skills" is underselling it
-- "what this does" — should explain the framework concept
-- "how skills work" — could emphasize the schema/type system aspect
-- "architecture" — already describes framework internals, could be elevated
-
----
 
 #### D-44: Update README and Notion page for `eject templates` type
 
@@ -471,24 +400,6 @@ Now that configs are TypeScript (D-46), the `aliases` object in `skill-rules.ts`
 - `src/cli/lib/matrix/matrix-loader.ts` — `loadSkillRules()`, `mergeMatrixWithSkills()`
 - `src/cli/lib/matrix/matrix-resolver.ts` — `resolveAlias()`
 - Skills repo: `config/skill-rules.ts` — the aliases object itself
-
----
-
-#### D-68: Remove `--dry-run` flag entirely
-
-**Priority:** Low
-
-The `--dry-run` flag adds ~143 lines of conditional preview logic across 3 commands, plus 13 unit tests and 1 e2e test. The wizard's confirm step already previews what will be installed, and all operations are local/reversible. 19 of 22 commands inherit the flag but don't implement it.
-
-**What to remove:**
-
-- `base-command.ts`: `dry-run` from `baseFlags`
-- `compile.ts`: 3 `if (flags["dry-run"])` branches (~28 lines)
-- `init.tsx`: dry-run preview block (~55 lines)
-- `uninstall.tsx`: dry-run branches + `dryRunLocalRemoval()` method (~60 lines)
-- `utils/messages.ts`: `DRY_RUN_MESSAGES` constants
-- Unit tests: 13 dry-run test cases across compile, init, uninstall test files
-- E2E tests: dry-run assertions in compile e2e
 
 ---
 

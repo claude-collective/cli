@@ -33,24 +33,23 @@ type UninstallTarget = {
   config: ProjectSourceConfig | null;
   /** All configured source URLs (primary + extras) */
   configuredSources: string[];
+  /** Agent names from the generated config (e.g., ["web-developer"]) */
+  configuredAgents: string[];
 };
 
 function collectConfiguredSources(config: ProjectSourceConfig | null): string[] {
   if (!config) return [];
+  return [
+    ...(config.source ? [config.source] : []),
+    ...(config.sources?.map((entry) => entry.url) ?? []),
+  ];
+}
 
-  const sources: string[] = [];
-
-  if (config.source) {
-    sources.push(config.source);
-  }
-
-  if (config.sources) {
-    for (const entry of config.sources) {
-      sources.push(entry.url);
-    }
-  }
-
-  return sources;
+function collectConfiguredAgents(config: ProjectSourceConfig | null): string[] {
+  if (!config) return [];
+  // Generated config.ts includes agents[] (preserved by schema .passthrough())
+  const agents = (config as Record<string, unknown>).agents;
+  return Array.isArray(agents) ? agents : [];
 }
 
 async function detectUninstallTarget(projectDir: string): Promise<UninstallTarget> {
@@ -78,6 +77,7 @@ async function detectUninstallTarget(projectDir: string): Promise<UninstallTarge
   }
 
   const configuredSources = collectConfiguredSources(config);
+  const configuredAgents = collectConfiguredAgents(config);
 
   return {
     hasPlugins: pluginNames.length > 0,
@@ -93,6 +93,7 @@ async function detectUninstallTarget(projectDir: string): Promise<UninstallTarge
     claudeSrcDir,
     config,
     configuredSources,
+    configuredAgents,
   };
 }
 
@@ -327,79 +328,98 @@ export default class Uninstall extends BaseCommand {
     this.log("");
   }
 
-  /**
-   * Selectively removes local files installed by the CLI using config-based matching.
-   *
-   * - Skills: removes skill dirs whose forked_from.source matches a configured source
-   * - Agents: removes agents whose frontmatter name matches a configured agent, or
-   *           all agents if config.ts exists (CLI was used to compile them)
-   * - Plugins: removed separately (always)
-   * - .claude-src/: only removed with --all flag
-   * - .claude/: only removed if empty after selective cleanup
-   */
   private async removeLocalFiles(target: UninstallTarget, removeAll: boolean): Promise<void> {
-    let removedSkillCount = 0;
-    let skippedSkillCount = 0;
-
-    if (target.hasLocalSkills) {
-      const skillDirNames = await listDirectories(target.skillsDir);
-
-      for (const skillDirName of skillDirNames) {
-        const skillDir = path.join(target.skillsDir, skillDirName);
-        const forkedFrom = await readForkedFromMetadata(skillDir);
-
-        if (shouldRemoveSkill(forkedFrom, target.configuredSources, target.config !== null)) {
-          await remove(skillDir);
-          removedSkillCount++;
-          this.log(`  Uninstalled skill '${skillDirName}'`);
-        } else {
-          this.warn(`Skipping '${skillDirName}': not created by ${DEFAULT_BRANDING.NAME} CLI`);
-          skippedSkillCount++;
-        }
-      }
-
-      if (removedSkillCount > 0) {
-        this.logSuccess(
-          `Removed ${removedSkillCount} CLI-installed ${removedSkillCount === 1 ? "skill" : "skills"}`,
-        );
-      }
-
-      if (skippedSkillCount === 0 && (await directoryExists(target.skillsDir))) {
-        if (await isDirectoryEmpty(target.skillsDir)) {
-          await remove(target.skillsDir);
-        }
-      }
-    }
-
-    if (target.hasLocalAgents) {
-      // config.ts presence indicates the CLI compiled these agents
-      if (target.config !== null) {
-        const { readdir } = await import("fs/promises");
-        try {
-          const agentFiles = (await readdir(target.agentsDir)).filter((f) => f.endsWith(".md"));
-          for (const agentFile of agentFiles) {
-            this.log(`  Uninstalled agent '${agentFile.replace(/\.md$/, "")}'`);
-          }
-        } catch {
-          // Best-effort: directory listing may fail
-        }
-        await remove(target.agentsDir);
-        this.logSuccess("Removed compiled agents");
-      }
-    }
+    await this.removeMatchingSkills(target);
+    await this.removeMatchingAgents(target);
 
     if (removeAll && target.hasClaudeSrcDir) {
       await remove(target.claudeSrcDir);
       this.logSuccess(`Removed ${CLAUDE_SRC_DIR}/`);
     }
 
-    if (target.hasClaudeDir && (await directoryExists(target.claudeDir))) {
-      if (await isDirectoryEmpty(target.claudeDir)) {
-        await remove(target.claudeDir);
-        this.logSuccess(`Removed ${CLAUDE_DIR}/`);
+    await this.removeEmptyClaudeDir(target);
+  }
+
+  private async removeMatchingSkills(target: UninstallTarget): Promise<void> {
+    if (!target.hasLocalSkills) return;
+
+    const skillDirNames = await listDirectories(target.skillsDir);
+    let removedCount = 0;
+    let skippedCount = 0;
+
+    for (const skillDirName of skillDirNames) {
+      const skillDir = path.join(target.skillsDir, skillDirName);
+      const forkedFrom = await readForkedFromMetadata(skillDir);
+
+      if (shouldRemoveSkill(forkedFrom, target.configuredSources, target.config !== null)) {
+        await remove(skillDir);
+        removedCount++;
+        this.log(`  Uninstalled skill '${skillDirName}'`);
       } else {
-        this.log(`Kept ${CLAUDE_DIR}/ (contains user content)`);
+        this.warn(`Skipping '${skillDirName}': not created by ${DEFAULT_BRANDING.NAME} CLI`);
+        skippedCount++;
       }
+    }
+
+    if (removedCount > 0) {
+      this.logSuccess(
+        `Removed ${removedCount} CLI-installed ${removedCount === 1 ? "skill" : "skills"}`,
+      );
+    }
+
+    if (skippedCount > 0) return;
+    if (!(await directoryExists(target.skillsDir))) return;
+    if (await isDirectoryEmpty(target.skillsDir)) {
+      await remove(target.skillsDir);
+    }
+  }
+
+  private async removeMatchingAgents(target: UninstallTarget): Promise<void> {
+    if (!target.hasLocalAgents) return;
+    if (target.configuredAgents.length === 0) return;
+
+    const agentFiles = await this.listAgentFiles(target.agentsDir);
+    let removedCount = 0;
+
+    for (const agentFile of agentFiles) {
+      const agentName = agentFile.replace(/\.md$/, "");
+      if (!target.configuredAgents.includes(agentName)) continue;
+
+      await remove(path.join(target.agentsDir, agentFile));
+      this.log(`  Uninstalled agent '${agentName}'`);
+      removedCount++;
+    }
+
+    if (removedCount > 0) {
+      this.logSuccess(
+        `Removed ${removedCount} compiled ${removedCount === 1 ? "agent" : "agents"}`,
+      );
+    }
+
+    if (!(await directoryExists(target.agentsDir))) return;
+    if (await isDirectoryEmpty(target.agentsDir)) {
+      await remove(target.agentsDir);
+    }
+  }
+
+  private async listAgentFiles(agentsDir: string): Promise<string[]> {
+    try {
+      const { readdir } = await import("fs/promises");
+      return (await readdir(agentsDir)).filter((f) => f.endsWith(".md"));
+    } catch {
+      return [];
+    }
+  }
+
+  private async removeEmptyClaudeDir(target: UninstallTarget): Promise<void> {
+    if (!target.hasClaudeDir) return;
+    if (!(await directoryExists(target.claudeDir))) return;
+
+    if (await isDirectoryEmpty(target.claudeDir)) {
+      await remove(target.claudeDir);
+      this.logSuccess(`Removed ${CLAUDE_DIR}/`);
+    } else {
+      this.log(`Kept ${CLAUDE_DIR}/ (contains user content)`);
     }
   }
 
