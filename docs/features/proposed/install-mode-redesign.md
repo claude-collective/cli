@@ -83,7 +83,7 @@ This means:
 - **No separate mode toggle or screen** -- source selection already exists, we just add "Local" to the options
 - **Per-skill granularity by default** -- each skill can independently be local or plugin
 - **Bulk actions via hotkeys** -- `L` sets all skills to local, `P` sets all to their default marketplace source
-- **The `installMode` config value is derived** from the aggregate of per-skill source selections: all marketplace = `"plugin"`, all local = `"local"`, mixed = `"custom"`
+- **The `installMode` config value is derived** from the aggregate of per-skill source selections: all marketplace = `"plugin"`, all local = `"local"`, mixed = `"mixed"`
 
 ### How Sources Are Rendered (Existing Pattern)
 
@@ -265,12 +265,12 @@ After the user confirms, the wizard result's `installMode` is derived from the a
 | --------------------------------------------------------------- | --------------------- | ------------------------------------------------ |
 | All marketplace (any combination of public/private/third-party) | `"plugin"`            | All skills installed as plugins                  |
 | All "Local"                                                     | `"local"`             | All skills copied to `.claude/skills/`           |
-| Mix of marketplace and "Local"                                  | `"custom"`            | Per-skill `sourceSelections` persisted to config |
+| Mix of marketplace and "Local"                                  | `"mixed"`             | Per-skill `sourceSelections` persisted to config |
 
-For `"custom"` mode, the config stores which skills are local:
+For `"mixed"` mode, the config stores which skills are local:
 
 ```yaml
-installMode: custom
+installMode: mixed
 skillOverrides:
   web-framework-react: local
   web-styling-tailwind: local
@@ -342,18 +342,18 @@ Ready to install your custom stack (Web + API)
   Technologies: 12
   Skills:       24 (22 plugin, 2 local)
   Agents:       4
-  Install mode: Custom (2 local, 22 plugin)
+  Install mode: Mixed (2 local, 22 plugin)
 
   ENTER install  ESC go back
 ```
 
 After confirm:
 
-1. Derives `installMode: "custom"` from source selections (mixed local and marketplace)
+1. Derives `installMode: "mixed"` from source selections (mixed local and marketplace)
 2. Splits selected skills into two groups based on source selections
 3. Installs plugin-mode skills via `claudePluginInstall()` for each
 4. Copies local-mode skills via `copySkillsToLocalFlattened()`
-5. Writes `config.yaml` with `installMode: "custom"` and `skillOverrides` map
+5. Writes `config.yaml` with `installMode: "mixed"` and `skillOverrides` map
 6. Compiles agents (which need per-skill install mode for skill references in agent markdown)
 
 ---
@@ -533,9 +533,9 @@ The edit flow has no concept of "this change is destructive and needs user confi
 
 > **Note:** The edit flow is an oclif command, not an Ink interactive wizard. Confirmation prompts would need to use oclif's `this.confirm()` or a standalone prompt library (e.g., `@clack/prompts`), not Ink components, since the wizard has already exited by the time migration needs to happen.
 
-### 5. No `installMode: "custom"` support
+### 5. No `installMode: "mixed"` support
 
-The `ProjectConfig` type (at `types/config.ts:58`) defines `installMode` as `"local" | "plugin"`. The Zod schema (at `lib/schemas.ts:396`) also validates against `z.enum(["local", "plugin"])`. The wizard store (at `stores/wizard-store.ts:164`) types it as `"plugin" | "local"`. The "customize" option requires adding `"custom"` to all three locations and adding a `skillOverrides` field.
+The `ProjectConfig` type (at `types/config.ts:58`) defines `installMode` as `"local" | "plugin"`. The Zod schema (at `lib/schemas.ts:396`) also validates against `z.enum(["local", "plugin"])`. The wizard store (at `stores/wizard-store.ts:164`) types it as `"plugin" | "local"`. The "customize" option requires adding `"mixed"` to all three locations and adding a `skillOverrides` field.
 
 <!-- CORRECTED: added the Zod schema and wizard store as additional locations that need updating -->
 
@@ -545,7 +545,7 @@ The `ProjectConfig` type (at `types/config.ts:58`) defines `installMode` as `"lo
 
 <!-- ADDED: additional detail about current StepConfirm structure -->
 
-> **Detail:** `StepConfirm` currently uses `useInput` (line 31) to handle only ENTER (confirm) and ESC (go back). The install mode is displayed as `<Text bold>{installMode === "plugin" ? "Plugin" : "Local"}</Text>`. This needs to be updated to show the derived mode from source selections, including a count for custom mode.
+> **Detail:** `StepConfirm` currently uses `useInput` (line 31) to handle only ENTER (confirm) and ESC (go back). The install mode is displayed as `<Text bold>{installMode === "plugin" ? "Plugin" : "Local"}</Text>`. This needs to be updated to show the derived mode from source selections, including a count for mixed mode.
 
 ### 7. `setConfigMetadata()` and `writeConfigFile()` are module-private
 
@@ -557,17 +557,17 @@ The doc's "Existing Infrastructure" section lists `setConfigMetadata()` as a fun
 - Extracting config persistence into a separate shared module (e.g., `lib/configuration/config-writer.ts`)
 - Duplicating the logic in `edit.tsx` (not recommended)
 
-### 8. `WizardResultV2.installMode` type needs to include `"custom"`
+### 8. `WizardResultV2.installMode` type needs to include `"mixed"`
 
 <!-- ADDED: this gap was not in the original doc -->
 
-The `WizardResultV2` type (at `wizard.tsx:27-42`) defines `installMode: "plugin" | "local"`. This needs to include `"custom"` to match the new design. The wizard store's `installMode` state field (`wizard-store.ts:164`) also needs the same change.
+The `WizardResultV2` type (at `wizard.tsx:27-42`) defines `installMode: "plugin" | "local"`. This needs to include `"mixed"` to match the new design. The wizard store's `installMode` state field (`wizard-store.ts:164`) also needs the same change.
 
-### 9. `Installation` type and `detectInstallation()` need `"custom"` awareness
+### 9. `Installation` type and `detectInstallation()` need `"mixed"` awareness
 
 <!-- ADDED: this gap was not in the original doc -->
 
-The `Installation` type (at `installation.ts:13-21`) uses `InstallMode = "local" | "plugin"`. The `detectInstallation()` function (line 23-61) reads `installMode` from config and branches on `"local"` vs anything else. Adding `"custom"` requires updating:
+The `Installation` type (at `installation.ts:13-21`) uses `InstallMode = "local" | "plugin"`. The `detectInstallation()` function (line 23-61) reads `installMode` from config and branches on `"local"` vs anything else. Adding `"mixed"` requires updating:
 
 - `InstallMode` type at `installation.ts:13`
 - The branching logic in `detectInstallation()` at line 43
@@ -589,7 +589,7 @@ The `Installation` type (at `installation.ts:13-21`) uses `InstallMode = "local"
    - `L` = set all skills' selected source to "local"
    - `P` = set all skills' selected source to their default marketplace source
 6. Update `StepConfirm` to derive and display the install mode from source selections (read-only label, not a selector)
-7. Add `"custom"` to the `installMode` type in:
+7. Add `"mixed"` to the `installMode` type in:
    - `ProjectConfig` (`types/config.ts:58`)
    - `WizardResultV2` (`wizard.tsx:35`)
    - `wizard-store.ts:164` (state type) and `wizard-store.ts:412` (initial state)
@@ -611,9 +611,9 @@ The `Installation` type (at `installation.ts:13-21`) uses `InstallMode = "local"
 | `components/wizard/wizard-layout.tsx`                     | Remove `P` indicator `DefinitionItem` at lines 128-132                                                                                           |
 | `components/wizard/help-modal.tsx`                        | Remove `P` entry from `GLOBAL_TOGGLES` at line 26                                                                                                |
 | `components/wizard/step-confirm.tsx`                      | Derive install mode from source selections, display as label                                                                                     |
-| `types/config.ts`                                         | Add `"custom"` to installMode union at line 58, add `skillOverrides` field                                                                       |
-| `lib/schemas.ts`                                          | Add `"custom"` to both installMode schemas (lines 396, 432), add `skillOverrides` schema                                                         |
-| `lib/installation/installation.ts`                        | Add `"custom"` to `InstallMode` type at line 13                                                                                                  |
+| `types/config.ts`                                         | Add `"mixed"` to installMode union at line 58, add `skillOverrides` field                                                                        |
+| `lib/schemas.ts`                                          | Add `"mixed"` to both installMode schemas (lines 396, 432), add `skillOverrides` schema                                                          |
+| `lib/installation/installation.ts`                        | Add `"mixed"` to `InstallMode` type at line 13                                                                                                   |
 
 ### Phase 2: Wire source selections into edit flow (and fix config persistence gap)
 
@@ -638,7 +638,7 @@ The `Installation` type (at `installation.ts:13-21`) uses `InstallMode = "local"
 
 <!-- ADDED: dependency note -->
 
-> **Dependency:** Phase 2 depends on Phase 1 for the `"custom"` type to exist, but the config persistence fix (steps 1-2) could be done independently as a prerequisite since it fixes an existing bug regardless of the install mode redesign.
+> **Dependency:** Phase 2 depends on Phase 1 for the `"mixed"` type to exist, but the config persistence fix (steps 1-2) could be done independently as a prerequisite since it fixes an existing bug regardless of the install mode redesign.
 
 ### Phase 3: Per-skill migration with confirmation
 
@@ -699,9 +699,9 @@ Currently it reads from `projectConfig?.installMode`. For edit mode to work corr
 
 > **Code answer:** The change is straightforward. In `agent-recompiler.ts`:
 >
-> 1. Add `installMode?: "local" | "plugin" | "custom"` to `RecompileAgentsOptions` (line 26-33)
+> 1. Add `installMode?: "local" | "plugin" | "mixed"` to `RecompileAgentsOptions` (line 26-33)
 > 2. At line 208, change `installMode: projectConfig?.installMode` to `installMode: options.installMode ?? projectConfig?.installMode`
-> 3. For "custom" mode, the caller must resolve per-skill overrides before calling recompile (the recompiler doesn't need to know about per-skill granularity)
+> 3. For "mixed" mode, the caller must resolve per-skill overrides before calling recompile (the recompiler doesn't need to know about per-skill granularity)
 
 ### Q5: Config schema for per-skill overrides in "customize" mode
 
@@ -710,7 +710,7 @@ Two approaches for storing per-skill mode choices:
 **Option A: Flat overrides map**
 
 ```yaml
-installMode: custom
+installMode: mixed
 skillOverrides:
   web-framework-react: local
   web-styling-tailwind: local
@@ -719,7 +719,7 @@ skillOverrides:
 **Option B: Grouped by mode**
 
 ```yaml
-installMode: custom
+installMode: mixed
 localSkills:
   - web-framework-react
   - web-styling-tailwind
@@ -745,19 +745,19 @@ The audit revealed that `edit.tsx` never persists ANY config changes, not just i
 
 **Lean:** Yes, fix it in Phase 2. The config persistence machinery (`setConfigMetadata()` + `writeConfigFile()`) already exists in `local-installer.ts` and just needs to be exported and called from `edit.tsx`. This is a prerequisite for install mode migration anyway, and fixing it simultaneously avoids leaving the config in an inconsistent state.
 
-### Q8: How does "custom" (mixed) install mode interact with `init.tsx`'s branching?
+### Q8: How does "mixed" install mode interact with `init.tsx`'s branching?
 
 <!-- ADDED: new question discovered during audit -->
 
 The current `init.tsx` handles install after the wizard with a simple binary branch: `result.installMode === "plugin"` goes to `installIndividualPlugins()`, everything else goes to `installLocalMode()` (lines 203-215). With the source-selection approach, when some skills are "Local" and others are marketplace, init needs to:
 
-1. Derive `installMode: "custom"` from mixed source selections
+1. Derive `installMode: "mixed"` from mixed source selections
 2. Split selected skills into two groups based on which source is selected (local vs marketplace)
 3. Install plugin-mode skills via `claudePluginInstall()`
 4. Copy local-mode skills via `copySkillsToLocalFlattened()`
-5. Write config with `installMode: "custom"` and `skillOverrides`
+5. Write config with `installMode: "mixed"` and `skillOverrides`
 6. Compile agents (which need to know per-skill install mode for skill references)
 
 This is a non-trivial change to `init.tsx`'s `handleInstallation()` method that the current phases don't explicitly address.
 
-**Lean:** Add a dedicated init handler for mixed/custom mode in Phase 3, or defer mixed mode entirely to a separate phase after the pure local/plugin paths work correctly.
+**Lean:** Add a dedicated init handler for mixed mode in Phase 3, or defer mixed mode entirely to a separate phase after the pure local/plugin paths work correctly.
