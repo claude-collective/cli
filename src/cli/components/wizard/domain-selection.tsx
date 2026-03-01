@@ -1,11 +1,10 @@
 import React, { useMemo } from "react";
 import { unique } from "remeda";
-import { BUILT_IN_DOMAIN_ORDER } from "../../consts.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import type { Domain, MergedSkillsMatrix } from "../../types/index.js";
 import { typedEntries } from "../../utils/typed-object.js";
 import { CheckboxGrid, type CheckboxItem } from "./checkbox-grid.js";
-import { getDomainDisplayName } from "./utils.js";
+import { getDomainDisplayName, orderDomains } from "./utils.js";
 
 const BUILT_IN_DOMAIN_DESCRIPTIONS: Record<Domain, string> = {
   web: "Frontend web applications",
@@ -29,10 +28,7 @@ export const DomainSelection: React.FC<DomainSelectionProps> = ({ matrix }) => {
         .filter((d): d is Domain => d != null && d !== "shared"),
     );
 
-    const ordered: Domain[] = [
-      ...BUILT_IN_DOMAIN_ORDER.filter((d) => matrixDomains.includes(d)),
-      ...matrixDomains.filter((d) => !BUILT_IN_DOMAIN_ORDER.includes(d)),
-    ];
+    const ordered = orderDomains(matrixDomains);
 
     return ordered.map((domain) => ({
       id: domain,

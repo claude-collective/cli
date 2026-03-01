@@ -39,12 +39,12 @@ function getAllDomainsFromCategories(
   return [...BUILT_IN_DOMAINS, ...allDomains.filter((d) => !BUILT_IN_DOMAINS.includes(d))];
 }
 
-/** Sort domains into canonical order: built-in domains per BUILT_IN_DOMAIN_ORDER, then custom domains alphabetically. */
+/** Sort domains into canonical order: custom domains first (alphabetically), then built-in domains per BUILT_IN_DOMAIN_ORDER. */
 function sortDomainsCanonically(domains: Domain[]): Domain[] {
   const builtInSet = new Set<Domain>(BUILT_IN_DOMAIN_ORDER);
   return [
-    ...BUILT_IN_DOMAIN_ORDER.filter((d) => domains.includes(d)),
     ...domains.filter((d) => !builtInSet.has(d)).sort(),
+    ...BUILT_IN_DOMAIN_ORDER.filter((d) => domains.includes(d)),
   ];
 }
 
