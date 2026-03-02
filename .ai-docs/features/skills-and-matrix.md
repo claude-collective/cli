@@ -36,7 +36,7 @@
 | `skill-copier.ts`          | `src/cli/lib/skills/skill-copier.ts`          | Copy skills to local/plugin dirs            |
 | `skill-plugin-compiler.ts` | `src/cli/lib/skills/skill-plugin-compiler.ts` | Compile skill as Claude plugin              |
 | `local-skill-loader.ts`    | `src/cli/lib/skills/local-skill-loader.ts`    | Discover local skills in project            |
-| `source-switcher.ts`       | `src/cli/lib/skills/source-switcher.ts`       | Archive/restore skills for source switching |
+| `source-switcher.ts`       | `src/cli/lib/skills/source-switcher.ts`       | Delete local skills for source switching    |
 | `index.ts`                 | `src/cli/lib/skills/index.ts`                 | Barrel exports                              |
 
 ### Loading System (`src/cli/lib/loading/`)
@@ -188,11 +188,7 @@ Validates matrix integrity: orphaned skills, missing categories, broken referenc
 
 When changing a skill's source:
 
-- `archiveLocalSkill(projectDir, skillId)` - Moves to `_archived/` directory
-- `restoreArchivedSkill(projectDir, skillId)` - Restores from `_archived/`
-- `hasArchivedSkill(projectDir, skillId)` - Checks if archived version exists
-
-Archive directory: `.claude/skills/_archived/` (`ARCHIVED_SKILLS_DIR_NAME` from `src/cli/consts.ts:30`)
+- `deleteLocalSkill(projectDir, skillId)` - Permanently removes local skill directory
 
 ## Skill Versioning
 

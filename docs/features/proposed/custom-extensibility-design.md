@@ -149,7 +149,7 @@ I searched the codebase for all code that extracts or relies on the skill ID pre
 | File                               | Usage                                        | Impact                                       |
 | ---------------------------------- | -------------------------------------------- | -------------------------------------------- |
 | `lib/schemas.ts:227-235`           | `SKILL_ID_PATTERN` regex and `skillIdSchema` | Rejects IDs with unknown prefixes            |
-| `lib/skills/source-switcher.ts:16` | `SKILL_ID_PATTERN.test(skillId)`             | Rejects IDs for archive/restore operations   |
+| `lib/skills/source-switcher.ts:16` | `SKILL_ID_PATTERN.test(skillId)`             | Rejects IDs for delete operations            |
 | `lib/stacks/stacks-loader.ts:118`  | `SKILL_ID_PATTERN.test(assignment.id)`       | Warns and skips invalid IDs in stack configs |
 
 #### 2. Agent-Skill Assignment (post D-43)
@@ -221,7 +221,7 @@ const CUSTOM_SKILL_ID_PATTERN = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 **Line references verified:**
 
 - `SKILL_ID_PATTERN` at `schemas.ts:227` -- **confirmed**
-- `source-switcher.ts:16` uses `SKILL_ID_PATTERN.test(skillId)` -- **confirmed** (in `validateSkillId()` function, called by `archiveLocalSkill`, `restoreArchivedSkill`, and `hasArchivedSkill`)
+- `source-switcher.ts:16` uses `SKILL_ID_PATTERN.test(skillId)` -- **confirmed** (in `validateSkillId()` function, called by `deleteLocalSkill`)
 - `stacks-loader.ts:118` uses `SKILL_ID_PATTERN.test(assignment.id)` -- **confirmed** (in `resolveAgentConfigToSkills()`)
 - `preselectAgentsFromDomains()` at `wizard-store.ts:631-641` -- **confirmed** it uses only `DOMAIN_AGENTS` constant
 - `defaults/agent-mappings.yaml`, `defaults-loader.ts`, `agentSkillPrefixes`, `defaultMappingsSchema`, `getAgentsForSkill()`, and `DEFAULT_AGENTS` have all been removed by D-43

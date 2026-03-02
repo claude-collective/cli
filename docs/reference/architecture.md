@@ -187,7 +187,7 @@ Source Resolution -> Skill Loading -> Matrix Merging -> Multi-Source Annotation 
 7. INSTALLATION
    Plugin mode: .claude/plugins/agents-inc/
    Local mode:  .claude/agents/ + .claude/skills/
-   Source switching: archiveLocalSkill() / restoreArchivedSkill() for local skills
+   Source switching: deleteLocalSkill() for removing local skill copies
 ```
 
 ### Skill Metadata Flow
@@ -302,22 +302,18 @@ For each skill: check sourceSelections[skillId]
   - undefined -> use activeSource or public default
 ```
 
-#### Source Switching (Archive/Restore)
+#### Source Switching (Delete/Recopy)
 
-When a user switches a local skill to a remote source, `source-switcher.ts` preserves
+When a user switches a local skill to a remote source, `source-switcher.ts` removes
 the local version:
 
 ```
-archiveLocalSkill(projectDir, skillId)
-  .claude/skills/{skillId}/  -->  .claude/skills/_archived/{skillId}/
-
-restoreArchivedSkill(projectDir, skillId)
-  .claude/skills/_archived/{skillId}/  -->  .claude/skills/{skillId}/
+deleteLocalSkill(projectDir, skillId)
+  removes .claude/skills/{skillId}/ permanently
 ```
 
-Both operations validate skill IDs against `SKILL_ID_PATTERN` and enforce path boundary
-checks to prevent traversal attacks. The archive directory (`_archived/`) is a sibling
-of active skill directories.
+Includes `validateSkillId()` and `validatePathBoundary()`
+checks to prevent traversal attacks.
 
 #### Bound Skill Search
 
@@ -443,7 +439,7 @@ Skill fetching, copying, metadata, compilation, and agent mappings.
 | `skill-agent-mappings.ts`  | `SKILL_TO_AGENTS`, `getAgentsForSkill()`                                                 |
 | `skill-plugin-compiler.ts` | `compileSkillPlugin()`, `compileAllSkillPlugins()`                                       |
 | `local-skill-loader.ts`    | `discoverLocalSkills()`                                                                  |
-| `source-switcher.ts`       | `archiveLocalSkill()`, `restoreArchivedSkill()`, `hasArchivedSkill()`                    |
+| `source-switcher.ts`       | `deleteLocalSkill()`                                                                     |
 
 ### Domain: `stacks/`
 
@@ -1061,4 +1057,4 @@ output-format.md          # Optional: output format section
 | D5    | Type simplification (types over interfaces, shared base, display names)                                                                  |
 | D6    | Type narrowing (union types, named aliases, Zod schemas, Remeda, typed helpers)                                                          |
 | D7    | Domain restructuring (8 lib subdirectories, barrel exports, ~140 import paths)                                                           |
-| MS    | Multi-source UX (6 phases: source grid, multi-source loader, archive/restore, installed indicators, source settings, bound skill search) |
+| MS    | Multi-source UX (6 phases: source grid, multi-source loader, delete/recopy, installed indicators, source settings, bound skill search)   |

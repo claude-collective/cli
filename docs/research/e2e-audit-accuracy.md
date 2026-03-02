@@ -81,8 +81,8 @@
 
 ### Claim: `.claude/_archived/` for archived skills during source switch
 
-- **Reality:** `ARCHIVED_SKILLS_DIR_NAME = "_archived"` in consts.ts. The archive path is `.claude/skills/_archived/{skill-id}/` (from source-switcher.ts and its tests: `"/project/.claude/skills/_archived/web-framework-react"`).
-- **Verdict:** INACCURATE. The doc shows `.claude/_archived/` but the actual path is `.claude/skills/_archived/`. The `_archived` directory is inside the `skills` directory, not directly under `.claude/`.
+- **Reality:** The archive mechanism has been replaced with permanent deletion. `deleteLocalSkill()` in `source-switcher.ts` removes local skill directories permanently instead of archiving them. There is no `_archived/` directory.
+- **Verdict:** INACCURATE. The doc references an archive path that no longer exists. Local skills are deleted, not archived.
 
 ### Claim (example test code): `.claude/config.yaml`
 
@@ -246,8 +246,8 @@ project/
   .claude/agents/
 ```
 
-- **Reality:** The archive path is `.claude/skills/_archived/{skill-id}/`, NOT `.claude/_archived/{skill-id}/`. The `_archived` directory lives inside the `skills` directory.
-- **Verdict:** INACCURATE. The archive path is wrong.
+- **Reality:** The archive mechanism has been replaced with permanent deletion. `deleteLocalSkill()` removes local skills permanently -- there is no `_archived/` directory. After a source switch, old local skills are simply deleted and new versions are installed from the new source.
+- **Verdict:** INACCURATE. Skills are deleted, not archived.
 
 ### After `uninstall --all` -- Claim
 
@@ -295,7 +295,7 @@ project/
 | 4   | Zero tests spawn the CLI binary                                                              | ACCURATE           | --                                                                        |
 | 5   | `cc new` as wizard command                                                                   | INACCURATE         | High -- wizard is `cc init`, `new` is subcommands only                    |
 | 6   | `.claude/plugins/manifest.json`                                                              | INACCURATE         | High -- actual is `.claude/plugins/agents-inc/.claude-plugin/plugin.json` |
-| 7   | `.claude/_archived/`                                                                         | INACCURATE         | Medium -- actual is `.claude/skills/_archived/`                           |
+| 7   | `.claude/_archived/`                                                                         | INACCURATE         | Medium -- archive replaced with permanent deletion via `deleteLocalSkill()` |
 | 8   | "Loading marketplace skills..."                                                              | INACCURATE         | Low -- actual messages are different                                      |
 | 9   | "Installation complete"                                                                      | CANNOT VERIFY      | Medium -- string not found in codebase                                    |
 | 10  | `.claude/config.yaml` in example code                                                        | INACCURATE         | Medium -- should be `.claude-src/config.yaml`                             |
@@ -324,13 +324,13 @@ project/
 
 The document is **architecturally sound** in its analysis of the TTY problem, tool evaluation, and testing strategy recommendations. The technical analysis of Ink's raw mode requirement, node-pty's capabilities, and the testing layer architecture is well-researched and accurate.
 
-However, the document has **significant factual errors in codebase-specific details**: inflated statistics (280+ callbacks when there are 11, 248 files when there are 104), wrong file paths (`.claude/plugins/manifest.json`, `.claude/_archived/`), wrong command names (`cc new` instead of `cc init`), and incorrect file system assertion trees. These errors would cause any E2E tests built from this document to fail at the assertion level.
+However, the document has **significant factual errors in codebase-specific details**: inflated statistics (280+ callbacks when there are 11, 248 files when there are 104), wrong file paths (`.claude/plugins/manifest.json`, `.claude/_archived/` which has since been replaced with deletion), wrong command names (`cc new` instead of `cc init`), and incorrect file system assertion trees. These errors would cause any E2E tests built from this document to fail at the assertion level.
 
 ### Recommended Fixes (Priority Order)
 
 1. **Fix `cc new` to `cc init`** throughout (example code lines 93, 342, and implementation plan references)
 2. **Fix `.claude/plugins/manifest.json`** to the actual plugin structure (`.claude/plugins/{name}/.claude-plugin/plugin.json`)
-3. **Fix `.claude/_archived/`** to `.claude/skills/_archived/`
+3. **Fix `.claude/_archived/`** -- archive mechanism replaced with permanent deletion via `deleteLocalSkill()`
 4. **Fix `.claude/agents/_templates/`** in eject section to `.claude-src/agents/_templates/`
 5. **Fix `.claude/config.yaml`** in example code to `.claude-src/config.yaml`
 6. **Fix plugin mode agents path** from `.claude/agents/` to inside plugin directory

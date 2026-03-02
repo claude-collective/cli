@@ -621,7 +621,7 @@ All 8 proposed journeys were traced through the actual codebase to verify testab
 | ---------------- | ------------------------------------------------------------------------------ |
 | **Text signals** | "Customize skill sources", source grid labels, G hotkey settings modal         |
 | **Keyboard**     | Escape (back), arrow keys (grid nav), Enter (select source), G (settings)      |
-| **File output**  | `sourceSelections` map in config, archive/restore for local↔public transitions |
+| **File output**  | `sourceSelections` map in config, delete/recopy for local↔public transitions   |
 | **Testable?**    | YES — forward/back navigation, source grid, settings modal all text-based      |
 
 ### Journey 6: Plugin vs Local Install Mode
@@ -718,9 +718,7 @@ project/
 project/
 ├── .claude/
 │   ├── skills/
-│   │   ├── _archived/
-│   │   │   └── web-framework-react/   # Old version archived
-│   │   └── web-framework-react/       # New version from new source
+│   │   └── web-framework-react/       # New version from new source (old version deleted)
 │   └── agents/                        # Recompiled with new skills
 ```
 
