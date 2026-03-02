@@ -491,8 +491,10 @@ export const projectConfigLoaderSchema = z
 
     /** Author handle (e.g., "@vince") */
     author: z.string().optional(),
-    /** "local" = .claude/agents, "plugin" = .claude/plugins/ (DEFAULT_PLUGIN_NAME) */
-    installMode: z.enum(["local", "plugin"]).optional(),
+    /** "local" = .claude/agents, "plugin" = .claude/plugins/ (DEFAULT_PLUGIN_NAME), "mixed" = per-skill source */
+    installMode: z.enum(["local", "plugin", "mixed"]).optional(),
+    /** Per-skill source selections — maps skill IDs to source names */
+    sourceSelections: z.record(z.string(), z.string()).optional(),
     /** Selected domains from the wizard (persisted for edit mode restoration) */
     domains: z.array(extensibleDomainSchema).optional(),
     /** Selected agents from the wizard (persisted for edit mode restoration) */

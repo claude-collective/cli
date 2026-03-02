@@ -328,6 +328,90 @@ describe("StepConfirm component", () => {
     });
   });
 
+  describe("install mode display", () => {
+    it('should show "Plugin" when installMode is "plugin"', () => {
+      const onComplete = vi.fn();
+
+      const { lastFrame, unmount } = render(
+        <StepConfirm
+          onComplete={onComplete}
+          installMode="plugin"
+          selectedSkills={["web-framework-react", "web-styling-scss-modules"]}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Install mode:");
+      expect(output).toContain("Plugin");
+    });
+
+    it('should show "Local (editable copies)" when installMode is "local" and all skills are local', () => {
+      const onComplete = vi.fn();
+
+      const { lastFrame, unmount } = render(
+        <StepConfirm
+          onComplete={onComplete}
+          installMode="local"
+          selectedSkills={["web-framework-react", "web-styling-scss-modules"]}
+          sourceSelections={{
+            "web-framework-react": "local",
+            "web-styling-scss-modules": "local",
+          }}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Install mode:");
+      expect(output).toContain("Local (editable copies)");
+    });
+
+    it('should show "Mixed" with counts when installMode is "mixed"', () => {
+      const onComplete = vi.fn();
+
+      const { lastFrame, unmount } = render(
+        <StepConfirm
+          onComplete={onComplete}
+          installMode="mixed"
+          selectedSkills={[
+            "web-framework-react",
+            "web-styling-scss-modules",
+            "web-state-zustand",
+          ]}
+          sourceSelections={{
+            "web-framework-react": "local",
+            "web-styling-scss-modules": "plugin",
+            "web-state-zustand": "local",
+          }}
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Install mode:");
+      expect(output).toContain("Mixed");
+      expect(output).toContain("2 local");
+      expect(output).toContain("1 plugin");
+    });
+
+    it("should handle missing sourceSelections gracefully", () => {
+      const onComplete = vi.fn();
+
+      const { lastFrame, unmount } = render(
+        <StepConfirm
+          onComplete={onComplete}
+          installMode="local"
+        />,
+      );
+      cleanup = unmount;
+
+      const output = lastFrame();
+      expect(output).toContain("Install mode:");
+      expect(output).toContain("Local (editable copies)");
+    });
+  });
+
   describe("default props", () => {
     it("should render custom stack title when no stack name provided", () => {
       const onComplete = vi.fn();

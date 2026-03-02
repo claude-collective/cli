@@ -14,4 +14,14 @@ export {
   type PluginConfigResult,
   installLocal,
   installPluginConfig,
+  buildAndMergeConfig,
+  writeConfigFile,
+  setConfigMetadata,
 } from "./local-installer";
+
+export {
+  type MigrationPlan,
+  type MigrationResult,
+  detectMigrations,
+  executeMigration,
+} from "./mode-migrator";

@@ -118,7 +118,7 @@ describe("generateConfigTypesSource", () => {
   it("generates InstallMode type", () => {
     const matrix = createMockMatrix({});
     const source = generateConfigTypesSource(matrix, []);
-    expect(source).toContain('export type InstallMode = "local" | "plugin";');
+    expect(source).toContain('export type InstallMode = "local" | "plugin" | "mixed";');
   });
 
   it("generates SkillAssignment type with string and object forms", () => {

@@ -7,10 +7,16 @@ import { ASCII_LOGO, CLI_BIN_NAME, SOURCE_DISPLAY_NAMES } from "../consts.js";
 import { getAgentDefinitions, recompileAgents } from "../lib/agents/index.js";
 import { loadProjectConfig } from "../lib/configuration/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
-import { detectInstallation } from "../lib/installation/index.js";
+import {
+  detectInstallation,
+  buildAndMergeConfig,
+  writeConfigFile,
+  detectMigrations,
+  executeMigration,
+} from "../lib/installation/index.js";
 import { getMarketplaceLabel, loadSkillsMatrixFromSource } from "../lib/loading/index.js";
 import { discoverAllPluginSkills } from "../lib/plugins/index.js";
-import { archiveLocalSkill, restoreArchivedSkill } from "../lib/skills/index.js";
+import { deleteLocalSkill } from "../lib/skills/index.js";
 import type { SkillId } from "../types/index.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { claudePluginInstall, claudePluginUninstall } from "../utils/exec.js";
@@ -19,6 +25,7 @@ import {
   drainBuffer,
   disableBuffering,
   pushBufferMessage,
+  verbose,
   type StartupMessage,
 } from "../utils/logger.js";
 import { ERROR_MESSAGES, INFO_MESSAGES, STATUS_MESSAGES } from "../utils/messages.js";
@@ -184,14 +191,6 @@ export default class Edit extends BaseCommand {
     const hasSourceChanges = sourceChanges.size > 0;
     const hasSkillChanges = addedSkills.length > 0 || removedSkills.length > 0;
 
-    if (result.validation.warnings.length > 0) {
-      this.log("\nWarnings:");
-      for (const warning of result.validation.warnings) {
-        this.warn(`  ! ${warning.message}`);
-      }
-      this.log("");
-    }
-
     if (!hasSkillChanges && !hasSourceChanges) {
       this.log(INFO_MESSAGES.NO_CHANGES_MADE);
       this.log("Plugin unchanged\n");
@@ -214,12 +213,45 @@ export default class Edit extends BaseCommand {
     }
     this.log("");
 
-    for (const [skillId, change] of sourceChanges) {
-      if (change.from === "local") {
-        await archiveLocalSkill(projectDir, skillId);
+    // Handle per-skill mode migrations (local <-> plugin)
+    const oldSelections = projectConfig?.config?.sourceSelections ?? {};
+    const migrationPlan = detectMigrations(oldSelections, result.sourceSelections, result.selectedSkills);
+    const hasMigrations = migrationPlan.toLocal.length > 0 || migrationPlan.toPlugin.length > 0;
+
+    if (hasMigrations) {
+      if (migrationPlan.toLocal.length > 0) {
+        this.log(`Switching ${migrationPlan.toLocal.length} skill(s) to local:`);
+        for (const id of migrationPlan.toLocal) {
+          this.log(`  - ${id}`);
+        }
       }
-      if (change.to === "local") {
-        await restoreArchivedSkill(projectDir, skillId);
+      if (migrationPlan.toPlugin.length > 0) {
+        this.log(`Switching ${migrationPlan.toPlugin.length} skill(s) to plugin:`);
+        for (const id of migrationPlan.toPlugin) {
+          this.log(`  - ${id}`);
+        }
+      }
+
+      const migrationResult = await executeMigration(
+        migrationPlan,
+        projectDir,
+        sourceResult,
+        pluginScope,
+      );
+
+      for (const warning of migrationResult.warnings) {
+        this.warn(warning);
+      }
+    }
+
+    // Handle remaining non-migration source changes (e.g., marketplace A -> marketplace B)
+    for (const [skillId, change] of sourceChanges) {
+      // Skip skills already handled by mode migration
+      if (migrationPlan.toLocal.includes(skillId) || migrationPlan.toPlugin.includes(skillId)) {
+        continue;
+      }
+      if (change.from === "local") {
+        await deleteLocalSkill(projectDir, skillId);
       }
     }
 
@@ -241,6 +273,21 @@ export default class Edit extends BaseCommand {
           this.warn(`Failed to uninstall plugin ${skillId}: ${getErrorMessage(error)}`);
         }
       }
+    }
+
+    // Persist wizard result to config.ts
+    try {
+      const mergeResult = await buildAndMergeConfig(
+        result,
+        sourceResult,
+        projectDir,
+        flags.source,
+      );
+
+      await writeConfigFile(mergeResult.config, installation.configPath);
+      verbose(`Updated config at ${installation.configPath}`);
+    } catch (error) {
+      this.warn(`Could not update config: ${getErrorMessage(error)}`);
     }
 
     let sourcePath: string;
@@ -269,6 +316,7 @@ export default class Edit extends BaseCommand {
         skills: recompileSkills,
         projectDir,
         outputDir: installation.agentsDir,
+        installMode: result.installMode,
       });
 
       if (recompileResult.failed.length > 0) {

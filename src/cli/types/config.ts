@@ -55,7 +55,10 @@ export type ProjectConfig = {
    * - 'plugin': Agents compiled to .claude/plugins/<plugin-name>
    * @default 'local'
    */
-  installMode?: "local" | "plugin";
+  installMode?: "local" | "plugin" | "mixed";
+
+  /** Per-skill source selections — maps skill IDs to source names. Install mode is derived from this. */
+  sourceSelections?: Partial<Record<SkillId, string>>;
 
   /**
    * Resolved stack configuration with agent->skill mappings.

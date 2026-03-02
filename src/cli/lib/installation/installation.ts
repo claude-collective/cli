@@ -11,7 +11,7 @@ import {
   STANDARD_FILES,
 } from "../../consts";
 
-export type InstallMode = "local" | "plugin";
+export type InstallMode = "local" | "plugin" | "mixed";
 
 export type InstallScope = "project" | "global";
 

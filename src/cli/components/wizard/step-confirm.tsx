@@ -1,8 +1,8 @@
 import { Box, Text, useInput } from "ink";
 import React from "react";
 import { CLI_COLORS } from "../../consts.js";
-import type { InstallScope } from "../../lib/installation/index.js";
-import type { Domain, DomainSelections } from "../../types/index.js";
+import type { InstallMode, InstallScope } from "../../lib/installation/index.js";
+import type { Domain, DomainSelections, SkillId } from "../../types/index.js";
 import { getDomainDisplayName } from "./utils.js";
 import { ViewTitle } from "./view-title.js";
 
@@ -14,9 +14,28 @@ type StepConfirmProps = {
   technologyCount?: number;
   skillCount?: number;
   agentCount?: number;
-  installMode?: "plugin" | "local";
+  installMode?: InstallMode;
   installScope?: InstallScope;
+  sourceSelections?: Partial<Record<SkillId, string>>;
+  selectedSkills?: SkillId[];
   onBack?: () => void;
+};
+
+const getInstallModeLabel = (
+  installMode: InstallMode,
+  selectedSkills?: SkillId[],
+  sourceSelections?: Partial<Record<SkillId, string>>,
+): string => {
+  if (!selectedSkills?.length || !sourceSelections) {
+    return installMode === "plugin" ? "Plugin" : "Local (editable copies)";
+  }
+
+  const localCount = selectedSkills.filter((id) => sourceSelections[id] === "local").length;
+  const pluginCount = selectedSkills.length - localCount;
+
+  if (localCount === 0) return "Plugin";
+  if (pluginCount === 0) return "Local (editable copies)";
+  return `Mixed (${localCount} local, ${pluginCount} plugin)`;
 };
 
 export const StepConfirm: React.FC<StepConfirmProps> = ({
@@ -29,6 +48,8 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
   agentCount,
   installMode,
   installScope,
+  sourceSelections,
+  selectedSkills,
   onBack,
 }) => {
   useInput((_input, key) => {
@@ -85,7 +106,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
         {installMode && (
           <Text>
             <Text dimColor>Install mode:</Text>{" "}
-            <Text bold>{installMode === "plugin" ? "Plugin" : "Local"}</Text>
+            <Text bold>{getInstallModeLabel(installMode, selectedSkills, sourceSelections)}</Text>
           </Text>
         )}
         {installScope && (

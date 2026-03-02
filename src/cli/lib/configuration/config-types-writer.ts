@@ -178,7 +178,7 @@ export type Domain = ${domainLine};
 
 export type Category = ${categoryLine};
 
-export type InstallMode = "local" | "plugin";
+export type InstallMode = "local" | "plugin" | "mixed";
 
 export type SkillAssignment = SkillId | { id: SkillId; preloaded: boolean };
 

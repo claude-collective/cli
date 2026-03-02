@@ -2,6 +2,7 @@ import { Box, Text, useInput } from "ink";
 import React, { useCallback, useState } from "react";
 import { CLI_COLORS, DEFAULT_BRANDING } from "../../consts.js";
 import { resolveAllSources } from "../../lib/configuration/index.js";
+import { FEATURE_FLAGS } from "../../lib/feature-flags.js";
 import { searchExtraSources } from "../../lib/loading/multi-source-loader.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import type {
@@ -73,7 +74,7 @@ export const StepSources: React.FC<StepSourcesProps> = ({
     setIsGridSearching(active);
   }, []);
 
-  useInput((_input, key) => {
+  useInput((input, key) => {
     if (view === "choice") {
       if (key.return) {
         if (choiceIndex === 0) {
@@ -92,6 +93,12 @@ export const StepSources: React.FC<StepSourcesProps> = ({
     } else if (view === "customize") {
       if (isGridSearching) return;
 
+      if (input === "l" || input === "L") {
+        store.setAllSourcesLocal();
+      }
+      if (input === "p" || input === "P") {
+        store.setAllSourcesPlugin(matrix);
+      }
       if (key.return) {
         onContinue();
       }
@@ -112,10 +119,13 @@ export const StepSources: React.FC<StepSourcesProps> = ({
             rows={rows}
             availableHeight={gridHeight}
             onSelect={handleGridSelect}
-            onSearch={handleSearch}
-            onBind={handleBind}
-            onSearchStateChange={handleSearchStateChange}
+            onSearch={FEATURE_FLAGS.SOURCE_SEARCH ? handleSearch : undefined}
+            onBind={FEATURE_FLAGS.SOURCE_SEARCH ? handleBind : undefined}
+            onSearchStateChange={FEATURE_FLAGS.SOURCE_SEARCH ? handleSearchStateChange : undefined}
           />
+        </Box>
+        <Box marginTop={1}>
+          <Text dimColor>L set all local  P set all plugin  ENTER continue  ESC back</Text>
         </Box>
       </Box>
     );

@@ -12,6 +12,7 @@ import type {
   SkillDefinition,
   SkillId,
 } from "../../types";
+import type { InstallMode } from "../installation/installation";
 import { glob, writeFile, ensureDir } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
@@ -30,6 +31,7 @@ export type RecompileAgentsOptions = {
   skills?: Partial<Record<SkillId, SkillDefinition>>;
   projectDir?: string;
   outputDir?: string;
+  installMode?: InstallMode;
 };
 
 export type RecompileAgentsResult = {
@@ -205,7 +207,7 @@ export async function recompileAgents(
       agentsDir,
       sourcePath,
       engine,
-      installMode: projectConfig?.installMode,
+      installMode: options.installMode ?? projectConfig?.installMode,
     },
     result,
   );

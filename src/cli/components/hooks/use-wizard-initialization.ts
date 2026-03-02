@@ -1,12 +1,12 @@
 import { useRef } from "react";
-import type { InstallScope } from "../../lib/installation/index.js";
+import type { InstallMode, InstallScope } from "../../lib/installation/index.js";
 import { useWizardStore, type WizardStep } from "../../stores/wizard-store.js";
 import type { AgentName, Domain, MergedSkillsMatrix, SkillId } from "../../types/index.js";
 
 type UseWizardInitializationOptions = {
   matrix: MergedSkillsMatrix;
   initialStep?: WizardStep;
-  initialInstallMode?: "plugin" | "local";
+  initialInstallMode?: InstallMode;
   initialInstallScope?: InstallScope;
   initialDomains?: Domain[];
   initialAgents?: AgentName[];

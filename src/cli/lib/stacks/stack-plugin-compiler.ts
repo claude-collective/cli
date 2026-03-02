@@ -34,6 +34,7 @@ import type {
   SkillId,
   Stack,
 } from "../../types";
+import type { InstallMode } from "../installation/installation";
 import { computeStringHash, determinePluginVersion, writeContentHash } from "../versioning";
 import { unique } from "remeda";
 import { typedEntries, typedKeys } from "../../utils/typed-object";
@@ -72,7 +73,7 @@ export async function compileAgentForPlugin(
   agent: AgentConfig,
   fallbackRoot: string,
   engine: Liquid,
-  installMode?: "plugin" | "local",
+  installMode?: InstallMode,
 ): Promise<string> {
   verbose(`Compiling agent: ${name}`);
 

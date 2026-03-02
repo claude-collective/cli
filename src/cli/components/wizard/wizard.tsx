@@ -12,7 +12,7 @@ import { StepSources } from "./step-sources.js";
 import { StepSettings } from "./step-settings.js";
 import { StepAgents } from "./step-agents.js";
 import { resolveAlias, validateSelection } from "../../lib/matrix/index.js";
-import type { InstallScope } from "../../lib/installation/index.js";
+import type { InstallMode, InstallScope } from "../../lib/installation/index.js";
 import type {
   AgentName,
   Domain,
@@ -32,7 +32,7 @@ export type WizardResultV2 = {
   domainSelections: DomainSelections;
   selectedDomains: Domain[];
   sourceSelections: Partial<Record<SkillId, string>>;
-  installMode: "plugin" | "local";
+  installMode: InstallMode;
   installScope: InstallScope;
   cancelled: boolean;
   validation: {
@@ -50,7 +50,7 @@ type WizardProps = {
   marketplaceLabel?: string;
   logo?: string;
   initialStep?: WizardStep;
-  initialInstallMode?: "plugin" | "local";
+  initialInstallMode?: InstallMode;
   initialInstallScope?: InstallScope;
   initialDomains?: Domain[];
   initialAgents?: AgentName[];
@@ -147,10 +147,6 @@ export const Wizard: React.FC<WizardProps> = ({
       return;
     }
 
-    if (input === "p" || input === "P") {
-      store.toggleInstallMode();
-    }
-
     if (input === "g" || input === "G") {
       store.toggleInstallScope();
     }
@@ -194,7 +190,7 @@ export const Wizard: React.FC<WizardProps> = ({
       domainSelections: store.domainSelections,
       selectedDomains: store.selectedDomains,
       sourceSelections: store.sourceSelections,
-      installMode: store.installMode,
+      installMode: store.deriveInstallMode(),
       installScope: store.installScope,
       cancelled: false,
       validation,
@@ -246,18 +242,20 @@ export const Wizard: React.FC<WizardProps> = ({
 
       case "confirm": {
         const stackName = getStackName(store.selectedStackId, matrix);
-        const technologyCount = store.getTechnologyCount();
+        const selectedSkills = store.getAllSelectedTechnologies();
         return (
           <StepConfirm
             onComplete={handleComplete}
             stackName={stackName}
             selectedDomains={store.selectedDomains}
             domainSelections={store.domainSelections}
-            technologyCount={technologyCount}
-            skillCount={technologyCount}
+            technologyCount={selectedSkills.length}
+            skillCount={selectedSkills.length}
             agentCount={store.selectedAgents.length}
-            installMode={store.installMode}
+            installMode={store.deriveInstallMode()}
             installScope={store.installScope}
+            sourceSelections={store.sourceSelections}
+            selectedSkills={selectedSkills}
             onBack={store.goBack}
           />
         );

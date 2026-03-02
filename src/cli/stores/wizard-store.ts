@@ -6,7 +6,7 @@ import {
   DEFAULT_PUBLIC_SOURCE_NAME,
   SOURCE_DISPLAY_NAMES,
 } from "../consts.js";
-import type { InstallScope } from "../lib/installation/index.js";
+import type { InstallMode, InstallScope } from "../lib/installation/index.js";
 import { resolveAlias } from "../lib/matrix/index.js";
 import { getSkillDisplayLabel } from "../lib/wizard/build-step-logic.js";
 import type {
@@ -180,7 +180,7 @@ export type WizardState = {
 
   showLabels: boolean;
 
-  installMode: "plugin" | "local";
+  installMode: InstallMode;
   installScope: InstallScope;
 
   sourceSelections: Partial<Record<SkillId, string>>;
@@ -302,6 +302,12 @@ export type WizardState = {
   toggleShowLabels: () => void;
   /** Toggle between "plugin" and "local" install modes. */
   toggleInstallMode: () => void;
+  /**
+   * Derive the install mode from per-skill source selections.
+   * If all skills use "local" source, returns "local". If all use non-local, returns "plugin".
+   * If mixed, returns "mixed". Falls back to current installMode when no skills are selected.
+   */
+  deriveInstallMode: () => InstallMode;
   /** Toggle between "project" and "global" install scopes. */
   toggleInstallScope: () => void;
   /**
@@ -396,6 +402,11 @@ export type WizardState = {
   canGoToNextDomain: () => boolean;
   /** @returns true if there is a previous domain before the current one */
   canGoToPreviousDomain: () => boolean;
+  /** Set all selected skills to "local" source. */
+  setAllSourcesLocal: () => void;
+  /** Set all selected skills to their first non-local (marketplace) source. */
+  setAllSourcesPlugin: (matrix: MergedSkillsMatrix) => void;
+
   /**
    * Build the source selection rows for the sources step UI.
    *
@@ -430,7 +441,7 @@ const createInitialState = () => ({
   /** Snapshot of domainSelections from populateFromStack/populateFromSkillIds, used to restore on domain re-toggle */
   _stackDomainSelections: null as DomainSelections | null,
   showLabels: false,
-  installMode: "local" as "plugin" | "local",
+  installMode: "local" as InstallMode,
   installScope: "project" as InstallScope,
   sourceSelections: {} as Partial<Record<SkillId, string>>,
   customizeSources: false,
@@ -612,6 +623,27 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       installMode: state.installMode === "plugin" ? "local" : "plugin",
     })),
 
+  deriveInstallMode: (): InstallMode => {
+    const state = get();
+    const allSkills = state.getAllSelectedTechnologies();
+    if (allSkills.length === 0) return state.installMode;
+
+    const selections = state.sourceSelections;
+    let hasLocal = false;
+    let hasPlugin = false;
+
+    for (const skillId of allSkills) {
+      if (selections[skillId] === "local") {
+        hasLocal = true;
+      } else {
+        hasPlugin = true;
+      }
+      if (hasLocal && hasPlugin) return "mixed";
+    }
+
+    return hasLocal ? "local" : "plugin";
+  },
+
   toggleInstallScope: () =>
     set((state) => ({
       installScope: state.installScope === "project" ? "global" : "project",
@@ -775,6 +807,32 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     return state.currentDomainIndex > 0;
   },
 
+  setAllSourcesLocal: () => {
+    const state = get();
+    const allSkills = state.getAllSelectedTechnologies();
+    const newSelections: Partial<Record<SkillId, string>> = {};
+    for (const skillId of allSkills) {
+      newSelections[skillId] = "local";
+    }
+    set({ sourceSelections: newSelections });
+  },
+
+  setAllSourcesPlugin: (matrix) => {
+    const state = get();
+    const allSkills = state.getAllSelectedTechnologies();
+    const newSelections: Partial<Record<SkillId, string>> = {};
+    for (const skillId of allSkills) {
+      const skill = matrix.skills[skillId];
+      if (skill?.availableSources) {
+        const marketplaceSource = skill.availableSources.find((s) => s.type !== "local");
+        if (marketplaceSource) {
+          newSelections[skillId] = marketplaceSource.name;
+        }
+      }
+    }
+    set({ sourceSelections: newSelections });
+  },
+
   buildSourceRows: (matrix) => {
     const state = get();
     const selectedTechnologies = get().getAllSelectedTechnologies();
@@ -811,6 +869,15 @@ export const useWizardStore = create<WizardState>((set, get) => ({
                 installed: false,
               },
             ];
+
+      if (!options.some((o) => o.id === "local")) {
+        options.unshift({
+          id: "local",
+          label: formatSourceLabel({ name: "local", installed: false }),
+          selected: selectedSource === "local",
+          installed: false,
+        });
+      }
 
       options.push(...buildBoundSkillOptions(boundSkills, alias, selectedSource));
 

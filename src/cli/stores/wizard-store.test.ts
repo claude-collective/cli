@@ -1016,8 +1016,9 @@ describe("WizardStore", () => {
 
       const rows = store.buildSourceRows(matrix);
       expect(rows).toHaveLength(1);
-      expect(rows[0].options[0].id).toBe("Acme Corp");
-      expect(rows[0].options[1].id).toBe("Agents Inc");
+      expect(rows[0].options[0].id).toBe("local");
+      expect(rows[0].options[1].id).toBe("Acme Corp");
+      expect(rows[0].options[2].id).toBe("Agents Inc");
     });
 
     it("should sort default public marketplace before third-party sources", () => {
@@ -1037,8 +1038,9 @@ describe("WizardStore", () => {
 
       const rows = store.buildSourceRows(matrix);
       expect(rows).toHaveLength(1);
-      expect(rows[0].options[0].id).toBe("Agents Inc");
-      expect(rows[0].options[1].id).toBe("Extra Corp");
+      expect(rows[0].options[0].id).toBe("local");
+      expect(rows[0].options[1].id).toBe("Agents Inc");
+      expect(rows[0].options[2].id).toBe("Extra Corp");
     });
 
     it("should sort all four tiers in correct order", () => {
@@ -1256,6 +1258,63 @@ describe("WizardStore", () => {
       expect(skippedSteps).toContain("agents");
       expect(skippedSteps).toContain("build");
       expect(skippedSteps).toContain("sources");
+    });
+  });
+
+  describe("deriveInstallMode", () => {
+    it("should return 'plugin' when no source selections are set", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("web", "web-styling", "web-styling-scss-modules", true);
+
+      const result = store.deriveInstallMode();
+      expect(result).toBe("plugin");
+    });
+
+    it("should return 'local' when all skills are set to local", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("api", "api-api", "api-framework-hono", true);
+      store.setSourceSelection("web-framework-react", "local");
+      store.setSourceSelection("api-framework-hono", "local");
+
+      const result = store.deriveInstallMode();
+      expect(result).toBe("local");
+    });
+
+    it("should return 'mixed' when some skills are local and some are not", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.toggleTechnology("api", "api-api", "api-framework-hono", true);
+      store.setSourceSelection("web-framework-react", "local");
+      store.setSourceSelection("api-framework-hono", "Agents Inc");
+
+      const result = store.deriveInstallMode();
+      expect(result).toBe("mixed");
+    });
+
+    it("should return store installMode when no skills are selected", () => {
+      const store = useWizardStore.getState();
+
+      const result = store.deriveInstallMode();
+      expect(result).toBe("local");
+    });
+
+    it("should handle single skill as local", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+      store.setSourceSelection("web-framework-react", "local");
+
+      const result = store.deriveInstallMode();
+      expect(result).toBe("local");
+    });
+
+    it("should handle single skill as plugin", () => {
+      const store = useWizardStore.getState();
+      store.toggleTechnology("web", "web-framework", "web-framework-react", true);
+
+      const result = store.deriveInstallMode();
+      expect(result).toBe("plugin");
     });
   });
 });

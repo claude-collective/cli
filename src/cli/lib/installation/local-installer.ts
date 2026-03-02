@@ -11,8 +11,9 @@ import type {
   SkillId,
   Stack,
 } from "../../types";
+import type { InstallMode } from "./installation";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
-import { type CopiedSkill, copySkillsToLocalFlattened, archiveLocalSkill } from "../skills";
+import { type CopiedSkill, copySkillsToLocalFlattened, deleteLocalSkill } from "../skills";
 import { type MergeResult, mergeWithExistingConfig } from "../configuration";
 import { loadAllAgents, loadSkillsByIds, type SourceLoadResult } from "../loading";
 import { loadStackById, compileAgentForPlugin, getStackSkillIds } from "../stacks";
@@ -101,7 +102,7 @@ async function prepareDirectories(paths: InstallPaths): Promise<void> {
   await ensureDir(path.dirname(paths.configPath));
 }
 
-async function archiveAndCopySkills(
+async function deleteAndCopySkills(
   wizardResult: WizardResultV2,
   sourceResult: SourceLoadResult,
   projectDir: string,
@@ -109,9 +110,9 @@ async function archiveAndCopySkills(
 ): Promise<CopiedSkill[]> {
   for (const skillId of wizardResult.selectedSkills) {
     const selectedSource = wizardResult.sourceSelections?.[skillId];
-    if (selectedSource && selectedSource !== "public") {
+    if (selectedSource && selectedSource !== "local") {
       verbose(`Using alternate source '${selectedSource}' for ${skillId}`);
-      await archiveLocalSkill(projectDir, skillId);
+      await deleteLocalSkill(projectDir, skillId);
     }
   }
 
@@ -246,7 +247,7 @@ async function buildLocalConfig(
   return { config: localConfig, loadedStack };
 }
 
-function setConfigMetadata(
+export function setConfigMetadata(
   config: ProjectConfig,
   wizardResult: WizardResultV2,
   sourceResult: SourceLoadResult,
@@ -264,6 +265,11 @@ function setConfigMetadata(
     config.selectedAgents = wizardResult.selectedAgents;
   }
 
+  // Only persist sourceSelections when non-empty (sparse output)
+  if (wizardResult.sourceSelections && Object.keys(wizardResult.sourceSelections).length > 0) {
+    config.sourceSelections = wizardResult.sourceSelections;
+  }
+
   if (sourceFlag) {
     config.source = sourceFlag;
   } else if (sourceResult.sourceConfig.source) {
@@ -275,7 +281,7 @@ function setConfigMetadata(
   }
 }
 
-async function buildAndMergeConfig(
+export async function buildAndMergeConfig(
   wizardResult: WizardResultV2,
   sourceResult: SourceLoadResult,
   projectDir: string,
@@ -293,7 +299,7 @@ async function buildAndMergeConfig(
   return result;
 }
 
-async function writeConfigFile(config: ProjectConfig, configPath: string): Promise<void> {
+export async function writeConfigFile(config: ProjectConfig, configPath: string): Promise<void> {
   const source = generateConfigSource(config);
   await writeFile(configPath, source);
 }
@@ -322,7 +328,7 @@ async function compileAndWriteAgents(
   sourceResult: SourceLoadResult,
   projectDir: string,
   agentsDir: string,
-  installMode?: "plugin" | "local",
+  installMode?: InstallMode,
 ): Promise<AgentName[]> {
   const engine = await createLiquidEngine(projectDir);
   const resolvedAgents = await resolveAgents(
@@ -453,7 +459,7 @@ export async function installPluginConfig(
  * This is the main entry point for the "local" install mode (as opposed to plugin mode).
  * It performs the following steps in order:
  * 1. Creates `.claude/skills/` and `.claude/agents/` directories
- * 2. Archives local skills switching to alternate sources, then copies selected
+ * 2. Deletes local skills switching to alternate sources, then copies selected
  *    skills from the source repository into `.claude/skills/` (flattened layout)
  * 3. Loads agent definitions from both the CLI and source repository
  * 4. Generates project config.ts from the wizard selections, merging with any
@@ -470,8 +476,6 @@ export async function installPluginConfig(
  *
  * @remarks
  * **Side effects:** Creates directories and writes files under `{projectDir}/.claude/`.
- * May archive existing local skills to `.claude/.archived-skills/` when source
- * selections differ from the current installation.
  */
 export async function installLocal(options: LocalInstallOptions): Promise<LocalInstallResult> {
   const { wizardResult, sourceResult, projectDir, sourceFlag } = options;
@@ -479,7 +483,7 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
   const paths = resolveInstallPaths(projectDir);
   await prepareDirectories(paths);
 
-  const copiedSkills = await archiveAndCopySkills(
+  const copiedSkills = await deleteAndCopySkills(
     wizardResult,
     sourceResult,
     projectDir,
