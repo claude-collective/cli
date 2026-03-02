@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.57.0] - 2026-03-02
+
+**Per-skill install mode, archive removal, mode migration**
+
+- Install mode derived from per-skill source selections (`"local"`, `"plugin"`, `"mixed"`)
+- Archive mechanism replaced with permanent delete — `deleteLocalSkill()` replaces archive/restore
+- Mode migrator handles per-skill local↔plugin transitions in `cc edit`
+
+See [changelogs/0.57.0.md](./changelogs/0.57.0.md) for full details.
+
+---
+
 ## [0.56.1] - 2026-03-02
 
 **Domain metadata cleanup, D-37 design doc update**
