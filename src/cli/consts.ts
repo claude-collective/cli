@@ -31,7 +31,6 @@ export const SKILL_RULES_PATH = "config/skill-rules.ts";
 export const STACKS_FILE_PATH = "config/stacks.ts";
 export const SKILLS_DIR_PATH = "src/skills";
 export const LOCAL_SKILLS_PATH = ".claude/skills";
-export const ARCHIVED_SKILLS_DIR_NAME = "_archived";
 
 export const DIRS = {
   agents: "src/agents",

@@ -31,4 +31,4 @@ export {
 
 export { type LocalSkillDiscoveryResult, discoverLocalSkills } from "./local-skill-loader";
 
-export { archiveLocalSkill, restoreArchivedSkill, hasArchivedSkill } from "./source-switcher";
+export { deleteLocalSkill } from "./source-switcher";
