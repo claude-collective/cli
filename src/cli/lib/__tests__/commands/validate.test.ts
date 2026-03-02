@@ -219,6 +219,7 @@ async function writeValidSourceSkill(
     id: string;
     description: string;
     category: string;
+    domain: string;
     displayName: string;
     cliDescription: string;
     usageGuidance: string;
@@ -234,8 +235,7 @@ async function writeValidSourceSkill(
     `---\nname: ${config.id}\ndescription: ${config.description}\n---\n\n# ${config.id}\n\n${config.description}\n`,
   );
 
-  // Derive domain from category prefix (e.g., "web-framework" -> "web")
-  const domain = config.category.split("-")[0];
+  const domain = config.domain;
   const metadata: Record<string, unknown> = {
     category: config.category,
     domain,
@@ -329,6 +329,7 @@ describe("source validation (validateSource)", () => {
       id: "web-framework-react",
       description: "React framework",
       category: "web-framework",
+      domain: "web",
       displayName: "react",
       cliDescription: "React JavaScript framework",
       usageGuidance: "Use React for building component-based UIs",
@@ -453,6 +454,7 @@ describe("source validation (validateSource)", () => {
       id: "web-framework-react",
       description: "React framework",
       category: "web-framework",
+      domain: "web",
       displayName: "react-v2",
       cliDescription: "React JavaScript framework v2",
       usageGuidance: "Use React for building component-based UIs",
@@ -554,6 +556,7 @@ describe("source validation (validateSource)", () => {
       id: "web-framework-react",
       description: "React framework",
       category: "web-framework",
+      domain: "web",
       displayName: "react",
       cliDescription: "React JavaScript framework",
       usageGuidance: "Use React for building component-based UIs",
@@ -563,6 +566,7 @@ describe("source validation (validateSource)", () => {
       id: "api-framework-hono",
       description: "Hono framework",
       category: "api-api",
+      domain: "api",
       displayName: "hono",
       cliDescription: "Lightweight web framework for the edge",
       usageGuidance: "Use Hono for building edge-first APIs",
@@ -604,6 +608,7 @@ describe("validate --source integration", () => {
       id: "web-framework-react",
       description: "React framework",
       category: "web-framework",
+      domain: "web",
       displayName: "react",
       cliDescription: "React JavaScript framework",
       usageGuidance: "Use React for building component-based UIs",
@@ -662,6 +667,7 @@ describe("validate --source integration", () => {
       id: "web-framework-react",
       description: "React framework",
       category: "web-framework",
+      domain: "web",
       displayName: "react",
       cliDescription: "React JavaScript framework",
       usageGuidance: "Use React for building component-based UIs",

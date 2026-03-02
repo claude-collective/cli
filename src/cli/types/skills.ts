@@ -207,7 +207,7 @@ export type SkillMetadataConfig = {
   compatibleWith?: SkillId[];
   /** Skill IDs that cannot be selected alongside this skill (mutual exclusion) */
   conflictsWith?: SkillId[];
-  /** Explicit domain assignment (overrides inference from category prefix) */
+  /** Domain assignment from metadata */
   domain?: Domain;
   /** True if this skill was created outside the CLI's built-in vocabulary */
   custom?: boolean;

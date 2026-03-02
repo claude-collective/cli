@@ -292,6 +292,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
         id: "infra-tooling-docker",
         description: "Docker containerization patterns",
         category: "infra-tooling",
+        domain: "shared",
         tags: ["docker", "devops", "containers"],
       });
 
@@ -335,6 +336,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
           id: skillId,
           description: `${skillName} CI/CD pipeline`,
           category: "infra-ci-cd",
+          domain: "shared",
           tags: ["ci-cd", skillName],
         });
       }
@@ -367,9 +369,14 @@ describe("Integration: Custom Skills Matrix Loading", () => {
 
       // Create the skills referenced in relationships
       const skillDefs = [
-        { name: "custom-a", id: "web-framework-custom-a", category: "web-framework" },
-        { name: "custom-b", id: "web-styling-custom-b", category: "web-styling" },
-        { name: "custom-c", id: "web-styling-custom-c", category: "web-styling" },
+        {
+          name: "custom-a",
+          id: "web-framework-custom-a",
+          category: "web-framework",
+          domain: "web",
+        },
+        { name: "custom-b", id: "web-styling-custom-b", category: "web-styling", domain: "web" },
+        { name: "custom-c", id: "web-styling-custom-c", category: "web-styling", domain: "web" },
       ];
 
       for (const def of skillDefs) {
@@ -378,6 +385,7 @@ describe("Integration: Custom Skills Matrix Loading", () => {
           id: def.id,
           description: `${def.name} skill`,
           category: def.category,
+          domain: def.domain,
         });
       }
 
@@ -580,6 +588,7 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
         id: "api-observability-datadog",
         description: "Datadog APM integration",
         category: "api-observability",
+        domain: "api",
         tags: customTags,
       });
 
@@ -607,14 +616,20 @@ describe("Integration: Custom Matrix Skill Metadata Survival", () => {
 
       // Create the skills (use valid categoryPath prefixes — "shared" is not valid)
       for (const def of [
-        { name: "custom-react", id: "web-framework-custom-react", cat: "web-framework" },
-        { name: "custom-rtl", id: "web-testing-custom-rtl", cat: "web-testing" },
+        {
+          name: "custom-react",
+          id: "web-framework-custom-react",
+          cat: "web-framework",
+          domain: "web",
+        },
+        { name: "custom-rtl", id: "web-testing-custom-rtl", cat: "web-testing", domain: "web" },
       ]) {
         const catPath = def.cat.replace(/\//g, path.sep);
         await writeSourceSkill(skillsDir, path.join(catPath, def.name), {
           id: def.id,
           description: def.name,
           category: def.cat,
+          domain: def.domain,
         });
       }
 

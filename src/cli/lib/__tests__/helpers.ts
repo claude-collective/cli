@@ -552,7 +552,7 @@ export async function writeSourceSkill(
     author?: string;
     tags?: string[];
     content?: string;
-    domain?: string;
+    domain: string;
   },
 ): Promise<string> {
   const skillDir = path.join(skillsDir, directoryPath);
@@ -563,9 +563,7 @@ export async function writeSourceSkill(
     createSkillContent(config.id, config.description),
   );
 
-  // Derive domain from category prefix if not explicitly provided; fall back to "shared" for unknown prefixes
-  const rawDomain = config.domain ?? config.category.split("-")[0];
-  const domain = VALID_DOMAINS.has(rawDomain) ? rawDomain : "shared";
+  const domain = config.domain;
   const metadata: Record<string, unknown> = {
     displayName: config.id,
     category: config.category,

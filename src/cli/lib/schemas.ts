@@ -913,7 +913,7 @@ export const metadataValidationSchema = z
         date: z.string(),
       })
       .optional(),
-    /** Explicit domain assignment (overrides inference from category prefix) */
+    /** Domain assignment from metadata */
     domain: extensibleDomainSchema.optional(),
     /** True if this skill was created outside the CLI's built-in vocabulary */
     custom: z.boolean().optional(),
