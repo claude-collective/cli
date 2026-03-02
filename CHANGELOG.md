@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.56.1] - 2026-03-02
+
+**Domain metadata cleanup, D-37 design doc update**
+
+- `domain` now explicit in skill/agent metadata (no more category prefix inference)
+- D-37 install mode redesign doc updated for config.ts, dropped `skillOverrides`
+
+See [changelogs/0.56.1.md](./changelogs/0.56.1.md) for full details.
+
+---
+
 ## [0.56.0] - 2026-03-02
 
 **E2E test coverage, global config detection, pre-commit E2E hook**
