@@ -1,7 +1,7 @@
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_FILES } from "../../src/cli/consts.js";
+import { CLAUDE_DIR, CLAUDE_SRC_DIR, STANDARD_DIRS, STANDARD_FILES } from "../../src/cli/consts.js";
 import { TerminalSession } from "../helpers/terminal-session.js";
 import {
   createTempDir,
@@ -251,6 +251,72 @@ describe("init wizard", () => {
       expect(fullOutput).toContain("Configuration:");
       expect(fullOutput).toContain(`${CLAUDE_SRC_DIR}/${STANDARD_FILES.CONFIG_TS}`);
     });
+
+    describe("local install verification", () => {
+      it("should copy skills to .claude/skills/ directory", async () => {
+        await createProjectAndSource();
+
+        session = await runFullInitFlow(projectDir!, sourceDir!);
+
+        const exitCode = await session.waitForExit(INSTALL_TIMEOUT_MS);
+        expect(exitCode).toBe(EXIT_CODES.SUCCESS);
+
+        // Verify .claude/skills/ directory exists
+        const skillsDir = path.join(projectDir!, CLAUDE_DIR, STANDARD_DIRS.SKILLS);
+        expect(await directoryExists(skillsDir)).toBe(true);
+
+        // Verify skill subdirectories were created
+        const skillFolders = await listFiles(skillsDir);
+        expect(skillFolders.length).toBeGreaterThan(0);
+
+        // Verify at least one skill contains SKILL.md
+        const firstSkillDir = path.join(skillsDir, skillFolders[0]!);
+        expect(await fileExists(path.join(firstSkillDir, STANDARD_FILES.SKILL_MD))).toBe(true);
+      });
+
+      it("should not produce archive warnings during first install", async () => {
+        await createProjectAndSource();
+
+        session = await runFullInitFlow(projectDir!, sourceDir!);
+
+        await session.waitForExit(INSTALL_TIMEOUT_MS);
+
+        const fullOutput = session.getFullOutput();
+
+        // These assertions would have caught the archive bug where
+        // archiveAndCopySkills checked `!== "public"` instead of `!== "local"`,
+        // causing "Failed to archive skill" warnings on every first install
+        // because no existing skills exist to archive.
+        expect(fullOutput).not.toContain("Failed to archive");
+        expect(fullOutput).not.toContain("ENOENT");
+      });
+
+      it("should include installMode in generated config", async () => {
+        await createProjectAndSource();
+
+        session = await runFullInitFlow(projectDir!, sourceDir!);
+
+        await session.waitForExit(INSTALL_TIMEOUT_MS);
+
+        const configPath = path.join(projectDir!, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS);
+        const configContent = await readTestFile(configPath);
+        expect(configContent).toContain("installMode");
+      });
+
+      it("should list copied skills in output", async () => {
+        await createProjectAndSource();
+
+        session = await runFullInitFlow(projectDir!, sourceDir!);
+
+        await session.waitForExit(INSTALL_TIMEOUT_MS);
+
+        const fullOutput = session.getFullOutput();
+
+        // Verify the output lists skills that were copied
+        expect(fullOutput).toContain("Skills copied to:");
+        expect(fullOutput).toContain(".claude/skills");
+      });
+    });
   });
 
   describe("scratch flow", () => {
@@ -417,7 +483,7 @@ describe("init wizard", () => {
 
       const confirmOutput = session.getFullOutput();
       expect(confirmOutput).toContain("Install mode:");
-      expect(confirmOutput).toContain("Local");
+      expect(confirmOutput).toContain("Plugin");
     });
 
     it("should display install scope on the confirm step", async () => {
@@ -651,29 +717,6 @@ describe("init wizard", () => {
       await wizardSession.waitForText("technologies", WIZARD_LOAD_TIMEOUT_MS);
     }
 
-    it("should toggle Plugin mode badge when P key is pressed", async () => {
-      await createProjectAndSource();
-      session = spawnInitWizard(projectDir!, sourceDir!);
-
-      await session.waitForText("Choose a stack", WIZARD_LOAD_TIMEOUT_MS);
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // Verify "Plugin mode" badge is present in wizard layout
-      const outputBefore = session.getFullOutput();
-      expect(outputBefore).toContain("Plugin mode");
-
-      // Press P to toggle install mode from "local" (default) to "plugin"
-      session.write("P");
-      await delay(KEYSTROKE_DELAY_MS);
-
-      // The badge text "Plugin mode" is always rendered in the layout;
-      // the toggle changes internal state (color changes with NO_COLOR are invisible).
-      // Verify wizard is still functional after toggle.
-      const outputAfter = session.getFullOutput();
-      expect(outputAfter).toContain("Plugin mode");
-      expect(outputAfter).toContain("Choose a stack");
-    });
-
     it("should toggle Global badge when G key is pressed", async () => {
       await createProjectAndSource();
       session = spawnInitWizard(projectDir!, sourceDir!);
@@ -736,7 +779,6 @@ describe("init wizard", () => {
       const helpScreen = session.getScreen();
       expect(helpScreen).toContain("Navigation");
       expect(helpScreen).toContain("Global Toggles");
-      expect(helpScreen).toContain("Toggle plugin/local install mode");
 
       // Press ESC to close help modal
       session.escape();

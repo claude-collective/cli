@@ -705,26 +705,6 @@ describe("Wizard integration", () => {
     });
   });
 
-  describe("mode selection", () => {
-    it("should toggle install mode via keyboard shortcut", async () => {
-      const onComplete = vi.fn();
-      const onCancel = vi.fn();
-
-      const { stdin, lastFrame, unmount } = render(
-        <Wizard matrix={mockMatrix} onComplete={onComplete} onCancel={onCancel} />,
-      );
-      cleanup = unmount;
-
-      await delay(RENDER_DELAY_MS);
-
-      // Toggle install mode with 'p' keyboard shortcut (global handler)
-      await stdin.write("p");
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      expect(lastFrame()).toContain("Plugin mode");
-    });
-  });
-
   describe("alternative stack selection", () => {
     it("should allow selecting second stack", async () => {
       const onComplete = vi.fn();
@@ -807,7 +787,7 @@ describe("Wizard integration", () => {
 
       expect(result.selectedStackId).toBe("react-fullstack");
       expect(result.cancelled).toBe(false);
-      expect(result.installMode).toBe("local");
+      expect(result.installMode).toBe("plugin");
     });
 
     it("should include preselected skills in result", async () => {

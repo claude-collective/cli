@@ -294,34 +294,9 @@ describe("edit wizard", () => {
       const output = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
       // The build step footer shows these hotkey indicators
       expect(output).toContain("Labels");
-      expect(output).toContain("Plugin mode");
       expect(output).toContain("Help");
     });
 
-    it("should toggle install mode with P key", async () => {
-      tempDir = await createTempDir();
-      const projectDir = await createEditableProject(tempDir, {
-        installMode: "local",
-      });
-
-      session = new TerminalSession(["edit"], projectDir, {
-        rows: 40,
-        cols: 120,
-      });
-
-      await session.waitForText("Customize your Web stack", WIZARD_LOAD_TIMEOUT_MS);
-      // The footer should initially show "Plugin mode" (toggle indicator)
-      const outputBefore = await session.waitForStableRender(WIZARD_LOAD_TIMEOUT_MS);
-      expect(outputBefore).toContain("Plugin mode");
-
-      // Press P to toggle install mode from local to plugin
-      session.write("p");
-      await delay(STEP_TRANSITION_DELAY_MS);
-
-      // The screen should still show the build step
-      const screenAfter = session.getScreen();
-      expect(screenAfter).toContain("Customize your Web stack");
-    });
   });
 
   describe("confirm step and completion", () => {
