@@ -202,7 +202,7 @@ describe("local-installer", () => {
         path.join(configDir, STANDARD_FILES.CONFIG_TS),
         generateConfigSource({
           name: "existing-project",
-          agents: ["existing-agent" as AgentName],
+          agents: [{ name: "existing-agent" as AgentName, scope: "project" as const }],
           skills: [],
           author: "@existing",
         }),
@@ -278,7 +278,7 @@ describe("local-installer", () => {
       );
       mockGenerateConfig.mockReturnValueOnce({
         name: "agents-inc",
-        agents: ["web-developer"],
+        agents: [{ name: "web-developer", scope: "project" }],
         skills: [{ id: "meta-test-skill", scope: "project", source: "agents-inc" }],
       });
 
@@ -391,7 +391,7 @@ describe("local-installer", () => {
       // generateProjectConfigFromSkills hardcodes preloaded: false (the bug)
       mockGenerateConfig.mockReturnValueOnce({
         name: "agents-inc",
-        agents: ["web-developer"],
+        agents: [{ name: "web-developer", scope: "project" }],
         skills: [{ id: "web-framework-react", scope: "project", source: "local" }],
         stack: {
           "web-developer": {

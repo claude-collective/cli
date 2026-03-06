@@ -13,7 +13,7 @@ import type {
 } from "../../types";
 import type { InstallMode } from "./installation";
 import { deriveInstallMode } from "./installation";
-import type { SkillConfig } from "../../types/config";
+import type { AgentScopeConfig, SkillConfig } from "../../types/config";
 import type { WizardResultV2 } from "../../components/wizard/wizard";
 import { type CopiedSkill, copySkillsToLocalFlattened, deleteLocalSkill } from "../skills";
 import { type MergeResult, mergeWithExistingConfig } from "../configuration";
@@ -23,7 +23,7 @@ import { defaultStacks } from "../configuration/default-stacks";
 import { resolveAgents, buildSkillRefsFromConfig } from "../resolver";
 import { createLiquidEngine } from "../compiler";
 import { generateProjectConfigFromSkills, buildStackProperty } from "../configuration";
-import { generateConfigSource } from "../configuration/config-writer";
+import { generateConfigSource, type ConfigSourceOptions } from "../configuration/config-writer";
 import { generateConfigTypesSource } from "../configuration/config-types-writer";
 import { ensureDir, writeFile } from "../../utils/fs";
 import { verbose } from "../../utils/logger";
@@ -32,6 +32,7 @@ import {
   CLAUDE_DIR,
   CLAUDE_SRC_DIR,
   DEFAULT_PLUGIN_NAME,
+  GLOBAL_INSTALL_ROOT,
   LOCAL_SKILLS_PATH,
   PROJECT_ROOT,
   STANDARD_FILES,
@@ -90,10 +91,14 @@ type InstallPaths = {
   configPath: string;
 };
 
-function resolveInstallPaths(projectDir: string): InstallPaths {
+function resolveInstallPaths(
+  projectDir: string,
+  scope: "project" | "global" = "project",
+): InstallPaths {
+  const baseDir = scope === "global" ? GLOBAL_INSTALL_ROOT : projectDir;
   return {
-    skillsDir: path.join(projectDir, LOCAL_SKILLS_PATH),
-    agentsDir: path.join(projectDir, CLAUDE_DIR, "agents"),
+    skillsDir: path.join(baseDir, LOCAL_SKILLS_PATH),
+    agentsDir: path.join(baseDir, CLAUDE_DIR, "agents"),
     configPath: path.join(projectDir, CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
   };
 }
@@ -105,19 +110,19 @@ async function prepareDirectories(paths: InstallPaths): Promise<void> {
 }
 
 async function deleteAndCopySkills(
-  wizardResult: WizardResultV2,
+  skills: SkillConfig[],
   sourceResult: SourceLoadResult,
   projectDir: string,
   skillsDir: string,
 ): Promise<CopiedSkill[]> {
-  for (const skill of wizardResult.skills) {
+  for (const skill of skills) {
     if (skill.source && skill.source !== "local") {
       verbose(`Using alternate source '${skill.source}' for ${skill.id}`);
       await deleteLocalSkill(projectDir, skill.id);
     }
   }
 
-  const skillIds = wizardResult.skills.map((s) => s.id);
+  const skillIds = skills.map((s) => s.id);
   return copySkillsToLocalFlattened(skillIds, skillsDir, sourceResult.matrix, sourceResult);
 }
 
@@ -125,19 +130,16 @@ function buildLocalSkillsMap(
   copiedSkills: CopiedSkill[],
   matrix: MergedSkillsMatrix,
 ): Partial<Record<SkillId, LocalResolvedSkill>> {
-  const localSkillsForResolution: Partial<Record<SkillId, LocalResolvedSkill>> = {};
-  for (const copiedSkill of copiedSkills) {
-    const skill = matrix.skills[copiedSkill.skillId];
-    if (skill) {
-      localSkillsForResolution[copiedSkill.skillId] = {
-        id: copiedSkill.skillId,
-        description: skill.description || "",
-        path: copiedSkill.destPath,
+  return Object.fromEntries(
+    copiedSkills
+      .filter((cs) => matrix.skills[cs.skillId])
+      .map((cs) => [cs.skillId, {
+        id: cs.skillId,
+        description: matrix.skills[cs.skillId]!.description || "",
+        path: cs.destPath,
         content: "", // Content not needed for skill references
-      };
-    }
-  }
-  return localSkillsForResolution;
+      }]),
+  ) as Partial<Record<SkillId, LocalResolvedSkill>>;
 }
 
 async function loadMergedAgents(sourcePath: string): Promise<Record<AgentName, AgentDefinition>> {
@@ -173,10 +175,17 @@ async function buildLocalConfig(
   let localConfig: ProjectConfig;
 
   // Pass user's agent selection and skill configs to config generator
-  const agentOptions: { selectedAgents?: AgentName[]; skillConfigs: SkillConfig[] } = {
+  const agentOptions: {
+    selectedAgents?: AgentName[];
+    skillConfigs: SkillConfig[];
+    agentConfigs?: AgentScopeConfig[];
+  } = {
     skillConfigs: wizardResult.skills,
     ...(wizardResult.selectedAgents.length > 0 && {
       selectedAgents: wizardResult.selectedAgents,
+    }),
+    ...(wizardResult.agentConfigs.length > 0 && {
+      agentConfigs: wizardResult.agentConfigs,
     }),
   };
 
@@ -213,16 +222,17 @@ async function buildLocalConfig(
       localConfig.description = loadedStack.description;
       // Only add stack agents that the user selected (or all if no explicit selection)
       const stackAgentIds = typedKeys<AgentName>(loadedStack.agents);
+      const existingAgentNames = new Set(localConfig.agents.map((a) => a.name));
       for (const agentId of stackAgentIds) {
         if (
-          !localConfig.agents.includes(agentId) &&
+          !existingAgentNames.has(agentId) &&
           (wizardResult.selectedAgents.length === 0 ||
             wizardResult.selectedAgents.includes(agentId))
         ) {
-          localConfig.agents.push(agentId);
+          localConfig.agents.push({ name: agentId, scope: "project" });
         }
       }
-      localConfig.agents.sort();
+      localConfig.agents.sort((a, b) => a.name.localeCompare(b.name));
     } else {
       throw new Error(
         `Stack '${wizardResult.selectedStackId}' not found in config/stacks.ts. ` +
@@ -240,7 +250,7 @@ async function buildLocalConfig(
 
   verbose(
     `buildLocalConfig result: stack=${localConfig.stack ? Object.keys(localConfig.stack).length + " agents" : "UNDEFINED"}, ` +
-      `agents=[${localConfig.agents.join(", ")}], skills=${localConfig.skills.length}`,
+      `agents=[${localConfig.agents.map((a) => a.name).join(", ")}], skills=${localConfig.skills.length}`,
   );
 
   return { config: localConfig, loadedStack };
@@ -291,8 +301,12 @@ export async function buildAndMergeConfig(
   return result;
 }
 
-export async function writeConfigFile(config: ProjectConfig, configPath: string): Promise<void> {
-  const source = generateConfigSource(config);
+export async function writeConfigFile(
+  config: ProjectConfig,
+  configPath: string,
+  options?: ConfigSourceOptions,
+): Promise<void> {
+  const source = generateConfigSource(config, options);
   await writeFile(configPath, source);
 }
 
@@ -300,17 +314,50 @@ function buildCompileAgents(
   config: ProjectConfig,
   agents: Record<AgentName, AgentDefinition>,
 ): Record<AgentName, CompileAgentConfig> {
+  // D7 cross-scope safety net: build set of global skill IDs so global agents only see global skills
+  const globalSkillIds = new Set(
+    config.skills.filter((s) => s.scope === "global").map((s) => s.id),
+  );
+
   const compileAgents: Record<AgentName, CompileAgentConfig> = {} as Record<
     AgentName,
     CompileAgentConfig
   >;
-  for (const agentId of config.agents) {
-    if (agents[agentId]) {
-      const agentStack = config.stack?.[agentId];
-      compileAgents[agentId] = agentStack ? { skills: buildSkillRefsFromConfig(agentStack) } : {};
+  for (const agentConfig of config.agents) {
+    if (agents[agentConfig.name]) {
+      const agentStack = config.stack?.[agentConfig.name];
+      if (agentStack) {
+        const refs = buildSkillRefsFromConfig(agentStack);
+        // Global agents only see global skills (cross-scope safety net)
+        const filteredRefs = agentConfig.scope === "global"
+          ? refs.filter((ref) => globalSkillIds.has(ref.id))
+          : refs;
+        compileAgents[agentConfig.name] = { skills: filteredRefs };
+      } else {
+        compileAgents[agentConfig.name] = {};
+      }
     }
   }
   return compileAgents;
+}
+
+function buildAgentScopeMap(config: ProjectConfig): Map<AgentName, "project" | "global"> {
+  const map = new Map<AgentName, "project" | "global">();
+  for (const agent of config.agents) {
+    map.set(agent.name, agent.scope);
+  }
+  return map;
+}
+
+async function writeConfigTypes(
+  configPath: string,
+  matrix: MergedSkillsMatrix,
+  agents: Record<AgentName, AgentDefinition>,
+): Promise<void> {
+  const typesPath = path.join(path.dirname(configPath), STANDARD_FILES.CONFIG_TYPES_TS);
+  const customAgentNames = typedKeys(agents).filter((name) => agents[name]?.custom === true);
+  const source = generateConfigTypesSource(matrix, typedKeys(agents), customAgentNames);
+  await writeFile(typesPath, source);
 }
 
 async function compileAndWriteAgents(
@@ -321,6 +368,7 @@ async function compileAndWriteAgents(
   projectDir: string,
   agentsDir: string,
   installMode?: InstallMode,
+  agentScopeMap?: Map<AgentName, "project" | "global">,
 ): Promise<AgentName[]> {
   const engine = await createLiquidEngine(projectDir);
   const resolvedAgents = await resolveAgents(
@@ -329,6 +377,8 @@ async function compileAndWriteAgents(
     compileConfig,
     sourceResult.sourcePath,
   );
+
+  const globalAgentsDir = path.join(GLOBAL_INSTALL_ROOT, CLAUDE_DIR, "agents");
 
   const compiledAgentNames: AgentName[] = [];
   for (const [name, agent] of typedEntries<AgentName, AgentConfig>(resolvedAgents)) {
@@ -339,7 +389,14 @@ async function compileAndWriteAgents(
       engine,
       installMode,
     );
-    await writeFile(path.join(agentsDir, `${name}.md`), output);
+
+    // Route agent output by scope: global agents go to GLOBAL_INSTALL_ROOT, project agents to projectDir
+    const scope = agentScopeMap?.get(name) ?? "project";
+    const targetDir = scope === "global" ? globalAgentsDir : agentsDir;
+    if (scope === "global") {
+      await ensureDir(targetDir);
+    }
+    await writeFile(path.join(targetDir, `${name}.md`), output);
     compiledAgentNames.push(name);
   }
 
@@ -400,15 +457,7 @@ export async function installPluginConfig(
 
   await writeConfigFile(finalConfig, paths.configPath);
 
-  // Write config-types.ts for editor type safety
-  const configTypesPath = path.join(path.dirname(paths.configPath), STANDARD_FILES.CONFIG_TYPES_TS);
-  const customAgentNames = typedKeys(agents).filter((name) => agents[name]?.custom === true);
-  const configTypesSource = generateConfigTypesSource(
-    sourceResult.matrix,
-    typedKeys(agents),
-    customAgentNames,
-  );
-  await writeFile(configTypesPath, configTypesSource);
+  await writeConfigTypes(paths.configPath, sourceResult.matrix, agents);
 
   const compileAgentsConfig = buildCompileAgents(finalConfig, agents);
   const compileConfig: CompileConfig = {
@@ -433,6 +482,7 @@ export async function installPluginConfig(
     projectDir,
     paths.agentsDir,
     deriveInstallMode(finalConfig.skills),
+    buildAgentScopeMap(finalConfig),
   );
 
   return {
@@ -472,35 +522,37 @@ export async function installPluginConfig(
 export async function installLocal(options: LocalInstallOptions): Promise<LocalInstallResult> {
   const { wizardResult, sourceResult, projectDir, sourceFlag } = options;
 
-  const paths = resolveInstallPaths(projectDir);
-  await prepareDirectories(paths);
+  const projectPaths = resolveInstallPaths(projectDir, "project");
+  const globalPaths = resolveInstallPaths(projectDir, "global");
 
-  const copiedSkills = await deleteAndCopySkills(
-    wizardResult,
-    sourceResult,
-    projectDir,
-    paths.skillsDir,
-  );
+  // Split skills by scope for path routing
+  const projectSkills = wizardResult.skills.filter((s) => s.scope !== "global");
+  const globalSkills = wizardResult.skills.filter((s) => s.scope === "global");
+
+  // Prepare directories for each scope that has skills
+  await prepareDirectories(projectPaths);
+  if (globalSkills.length > 0) {
+    await ensureDir(globalPaths.skillsDir);
+  }
+
+  // Copy skills to their scope-appropriate directories
+  const projectCopied = projectSkills.length > 0
+    ? await deleteAndCopySkills(projectSkills, sourceResult, projectDir, projectPaths.skillsDir)
+    : [];
+  const globalCopied = globalSkills.length > 0
+    ? await deleteAndCopySkills(globalSkills, sourceResult, projectDir, globalPaths.skillsDir)
+    : [];
+  const copiedSkills = [...projectCopied, ...globalCopied];
+
   const localSkillsForResolution = buildLocalSkillsMap(copiedSkills, sourceResult.matrix);
 
   const agents = await loadMergedAgents(sourceResult.sourcePath);
   const mergeResult = await buildAndMergeConfig(wizardResult, sourceResult, projectDir, sourceFlag);
   const finalConfig = mergeResult.config;
 
-  await writeConfigFile(finalConfig, paths.configPath);
+  await writeConfigFile(finalConfig, projectPaths.configPath);
 
-  // Write config-types.ts for editor type safety
-  const configTypesPathLocal = path.join(
-    path.dirname(paths.configPath),
-    STANDARD_FILES.CONFIG_TYPES_TS,
-  );
-  const customAgentNamesLocal = typedKeys(agents).filter((name) => agents[name]?.custom === true);
-  const configTypesSourceLocal = generateConfigTypesSource(
-    sourceResult.matrix,
-    typedKeys(agents),
-    customAgentNamesLocal,
-  );
-  await writeFile(configTypesPathLocal, configTypesSourceLocal);
+  await writeConfigTypes(projectPaths.configPath, sourceResult.matrix, agents);
 
   const compileAgentsConfig = buildCompileAgents(finalConfig, agents);
   const compileConfig: CompileConfig = {
@@ -514,18 +566,19 @@ export async function installLocal(options: LocalInstallOptions): Promise<LocalI
     localSkillsForResolution,
     sourceResult,
     projectDir,
-    paths.agentsDir,
+    projectPaths.agentsDir,
     deriveInstallMode(finalConfig.skills),
+    buildAgentScopeMap(finalConfig),
   );
 
   return {
     copiedSkills,
     config: finalConfig,
-    configPath: paths.configPath,
+    configPath: projectPaths.configPath,
     compiledAgents: compiledAgentNames,
     wasMerged: mergeResult.merged,
     mergedConfigPath: mergeResult.existingConfigPath,
-    skillsDir: paths.skillsDir,
-    agentsDir: paths.agentsDir,
+    skillsDir: projectPaths.skillsDir,
+    agentsDir: projectPaths.agentsDir,
   };
 }

@@ -290,7 +290,7 @@ describe("convertStackToCompileConfig", () => {
     const config: ProjectConfig = {
       name: "Test Stack",
       description: "A test stack",
-      agents: ["web-developer", "api-developer"],
+      agents: [{ name: "web-developer", scope: "project" }, { name: "api-developer", scope: "project" }],
       skills: [],
     };
 
@@ -322,7 +322,7 @@ describe("convertStackToCompileConfig", () => {
   it("when agent has no description field, should default to empty string", () => {
     const config: ProjectConfig = {
       name: "No Description",
-      agents: ["test-agent" as AgentName],
+      agents: [{ name: "test-agent" as AgentName, scope: "project" as const }],
       skills: [],
     };
 

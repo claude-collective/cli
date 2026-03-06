@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import os from "os";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
-import { createTempDir, cleanupTempDir } from "../__tests__/helpers";
+import { createTempDir, cleanupTempDir, buildProjectConfig, buildSkillConfigs, buildAgentConfigs } from "../__tests__/helpers";
 import { CLAUDE_DIR, CLAUDE_SRC_DIR, PLUGINS_SUBDIR, STANDARD_FILES } from "../../consts";
 
 // Mock logger (suppress verbose/warn output during tests)
@@ -18,17 +18,10 @@ function tsConfigContent(config: Record<string, unknown>): string {
   return `export default ${JSON.stringify(config)};`;
 }
 
-const LOCAL_CONFIG = {
+const LOCAL_CONFIG = buildProjectConfig({
   name: "my-project",
-  agents: ["web-developer"],
   skills: [],
-};
-
-const LOCAL_CONFIG_NO_MODE = {
-  name: "my-project",
-  agents: ["web-developer"],
-  skills: [],
-};
+});
 
 async function createLocalProject(
   projectDir: string,
@@ -40,11 +33,10 @@ async function createLocalProject(
   await writeFile(path.join(configDir, STANDARD_FILES.CONFIG_TS), tsConfigContent(configContent));
 }
 
-const PLUGIN_CONFIG = {
+const PLUGIN_CONFIG = buildProjectConfig({
   name: "my-project",
-  agents: ["web-developer"],
-  skills: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
-};
+  skills: buildSkillConfigs(["web-framework-react"], { source: "agents-inc" }),
+});
 
 async function createPluginProject(projectDir: string): Promise<void> {
   const configDir = path.join(projectDir, CLAUDE_SRC_DIR);
@@ -79,7 +71,7 @@ describe("installation", () => {
     });
 
     it("defaults to local mode when installMode is not set", async () => {
-      await createLocalProject(tempDir, { configContent: LOCAL_CONFIG_NO_MODE });
+      await createLocalProject(tempDir, { configContent: LOCAL_CONFIG });
 
       const result = await detectInstallation(tempDir);
 

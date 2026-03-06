@@ -203,7 +203,7 @@ export function convertStackToCompileConfig(stackId: string, stack: ProjectConfi
     name: stack.name,
     description: stack.description || "",
     stack: stackId,
-    agents: Object.fromEntries(stack.agents.map((id) => [id, {}])) as Record<
+    agents: Object.fromEntries(stack.agents.map((a) => [a.name, {}])) as Record<
       AgentName,
       CompileAgentConfig
     >,

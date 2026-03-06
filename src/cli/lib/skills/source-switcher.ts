@@ -1,8 +1,8 @@
 import path from "path";
 
-import { remove } from "../../utils/fs";
+import { copy, ensureDir, remove } from "../../utils/fs";
 import { verbose, warn } from "../../utils/logger";
-import { LOCAL_SKILLS_PATH } from "../../consts";
+import { GLOBAL_INSTALL_ROOT, LOCAL_SKILLS_PATH } from "../../consts";
 import { isValidSkillId } from "../schemas";
 import type { SkillId } from "../../types";
 
@@ -59,4 +59,49 @@ export async function deleteLocalSkill(projectDir: string, skillId: SkillId): Pr
   }
 
   verbose(`Deleted local skill '${skillId}'`);
+}
+
+/**
+ * Migrate a local skill's files between project and global directories.
+ * Used when a skill's scope changes during edit (e.g., [P] → [G] or [G] → [P]).
+ *
+ * Copies the skill directory to the new location, then removes the old one.
+ * No-op if the source directory doesn't exist (skill may be plugin-mode).
+ */
+export async function migrateLocalSkillScope(
+  skillId: SkillId,
+  fromScope: "project" | "global",
+  projectDir: string,
+): Promise<void> {
+  if (!validateSkillId(skillId)) {
+    warn(`Invalid skill ID for scope migration: '${skillId}'`);
+    return;
+  }
+
+  const fromBaseDir = fromScope === "global" ? GLOBAL_INSTALL_ROOT : projectDir;
+  const toBaseDir = fromScope === "global" ? projectDir : GLOBAL_INSTALL_ROOT;
+
+  const fromPath = path.resolve(path.join(fromBaseDir, LOCAL_SKILLS_PATH, skillId));
+  const toPath = path.resolve(path.join(toBaseDir, LOCAL_SKILLS_PATH, skillId));
+
+  const fromSkillsDir = path.resolve(path.join(fromBaseDir, LOCAL_SKILLS_PATH));
+  const toSkillsDir = path.resolve(path.join(toBaseDir, LOCAL_SKILLS_PATH));
+
+  if (!validatePathBoundary(fromPath, fromSkillsDir)) {
+    warn(`Skill ID '${skillId}' resolves outside the source skills directory.`);
+    return;
+  }
+  if (!validatePathBoundary(toPath, toSkillsDir)) {
+    warn(`Skill ID '${skillId}' resolves outside the destination skills directory.`);
+    return;
+  }
+
+  try {
+    await ensureDir(toSkillsDir);
+    await copy(fromPath, toPath);
+    await remove(fromPath);
+    verbose(`Migrated skill '${skillId}' from ${fromScope} to ${fromScope === "global" ? "project" : "global"}`);
+  } catch {
+    warn(`Could not migrate skill '${skillId}' — source directory may not exist`);
+  }
 }

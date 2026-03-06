@@ -179,7 +179,7 @@ describe("plugin-info", () => {
       mockedLoadProjectConfig.mockResolvedValue({
         config: {
           name: "my-local-project",
-          agents: ["web-developer"],
+          agents: [{ name: "web-developer", scope: "project" }],
           skills: [],
         },
         configPath,
@@ -213,7 +213,7 @@ describe("plugin-info", () => {
       mockedLoadProjectConfig.mockResolvedValue({
         config: {
           name: "my-plugin",
-          agents: ["web-developer"],
+          agents: [{ name: "web-developer", scope: "project" }],
           skills: [{ id: "web-framework-react", scope: "project", source: "agents-inc" }],
         },
         configPath: path.join("/project", CLAUDE_SRC_DIR, STANDARD_FILES.CONFIG_TS),
