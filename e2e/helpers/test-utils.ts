@@ -272,12 +272,13 @@ export async function createEditableProject(
 
   // Skills must be SkillConfig[] objects (not bare strings) to pass Zod validation
   const skillConfigs = skills.map((id) => ({ id, scope: "project" as const, source: "local" }));
+  const agentConfigs = agents.map((name) => ({ name, scope: "project" as const }));
 
   const configContent = `export default ${JSON.stringify(
     {
       name: "test-edit-project",
       skills: skillConfigs,
-      agents,
+      agents: agentConfigs,
       domains,
     },
     null,
@@ -372,11 +373,13 @@ export type SkillAssignment = SkillId | { id: SkillId; preloaded: boolean };
 
 export type StackAgentConfig = Partial<Record<Category, SkillAssignment>>;
 
+export type AgentScopeConfig = { name: AgentName; scope: "project" | "global" };
+
 export interface ProjectConfig {
   version?: "1";
   name: string;
   description?: string;
-  agents: AgentName[];
+  agents: AgentScopeConfig[];
   skills: SkillConfig[];
   author?: string;
   stack?: Partial<Record<AgentName, StackAgentConfig>>;
@@ -395,7 +398,7 @@ export interface ProjectConfig {
 
 export default {
   name: "test-custom-skill-project",
-  agents: ["web-developer"],
+  agents: [{ name: "web-developer", scope: "project" }],
   skills: [{ id: "web-custom-e2e-widget", scope: "project", source: "local" }],
   domains: ["web"],
   stack: {

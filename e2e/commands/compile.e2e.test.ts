@@ -488,10 +488,7 @@ describe("compile command", () => {
   });
 
   describe("global installation fallback", () => {
-    // BUG: compile detects global installation via detectInstallation() but then calls
-    // discoverAllSkills() with process.cwd() (the project dir) instead of installation.projectDir
-    // (the global home). Skills are at globalHome/.claude/skills/ but compile looks at cwd/.claude/skills/.
-    it.fails("should use global installation paths when no project config exists", async () => {
+    it("should use global installation paths when no project config exists", async () => {
       tempDir = await createTempDir();
 
       // Create a "global home" directory with .claude-src/config.ts and .claude/skills/
@@ -504,7 +501,7 @@ describe("compile command", () => {
           {
             name: "global-test",
             skills: [{ id: "web-testing-e2e-global", scope: "project", source: "local" }],
-            agents: ["web-developer"],
+            agents: [{ name: "web-developer", scope: "project" }],
           },
           null,
           2,
