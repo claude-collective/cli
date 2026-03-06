@@ -25,7 +25,7 @@ export const DomainSelection: React.FC<DomainSelectionProps> = ({ matrix }) => {
     const matrixDomains = unique(
       typedEntries(matrix.categories)
         .map(([, cat]) => cat?.domain)
-        .filter((d): d is Domain => d != null && d !== "shared"),
+        .filter((d): d is Domain => d != null),
     );
 
     const ordered = orderDomains(matrixDomains);

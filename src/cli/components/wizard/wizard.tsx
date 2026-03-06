@@ -12,7 +12,6 @@ import { StepSources } from "./step-sources.js";
 import { StepSettings } from "./step-settings.js";
 import { StepAgents } from "./step-agents.js";
 import { resolveAlias, validateSelection } from "../../lib/matrix/index.js";
-import type { InstallMode, InstallScope } from "../../lib/installation/index.js";
 import type {
   AgentName,
   Domain,
@@ -20,20 +19,18 @@ import type {
   MergedSkillsMatrix,
   SkillId,
 } from "../../types/index.js";
+import type { SkillConfig } from "../../types/config.js";
 import { getStackName } from "./utils.js";
 import { warn, type StartupMessage } from "../../utils/logger.js";
 import { useWizardInitialization } from "../hooks/use-wizard-initialization.js";
 import { useBuildStepProps } from "../hooks/use-build-step-props.js";
 
 export type WizardResultV2 = {
-  selectedSkills: SkillId[];
+  skills: SkillConfig[];
   selectedAgents: AgentName[];
   selectedStackId: string | null;
   domainSelections: DomainSelections;
   selectedDomains: Domain[];
-  sourceSelections: Partial<Record<SkillId, string>>;
-  installMode: InstallMode;
-  installScope: InstallScope;
   cancelled: boolean;
   validation: {
     valid: boolean;
@@ -50,11 +47,10 @@ type WizardProps = {
   marketplaceLabel?: string;
   logo?: string;
   initialStep?: WizardStep;
-  initialInstallMode?: InstallMode;
-  initialInstallScope?: InstallScope;
   initialDomains?: Domain[];
   initialAgents?: AgentName[];
   installedSkillIds?: SkillId[];
+  installedSkillConfigs?: SkillConfig[];
   projectDir?: string;
   startupMessages?: StartupMessage[];
 };
@@ -70,11 +66,10 @@ export const Wizard: React.FC<WizardProps> = ({
   marketplaceLabel,
   logo,
   initialStep,
-  initialInstallMode,
-  initialInstallScope,
   initialDomains,
   initialAgents,
   installedSkillIds,
+  installedSkillConfigs,
   projectDir,
   startupMessages,
 }) => {
@@ -90,11 +85,10 @@ export const Wizard: React.FC<WizardProps> = ({
   useWizardInitialization({
     matrix,
     initialStep,
-    initialInstallMode,
-    initialInstallScope,
     initialDomains,
     initialAgents,
     installedSkillIds,
+    installedSkillConfigs,
   });
 
   const buildStepProps = useBuildStepProps({ store, matrix, installedSkillIds });
@@ -142,13 +136,17 @@ export const Wizard: React.FC<WizardProps> = ({
       return;
     }
 
-    if ((input === "s" || input === "S") && store.step === "sources") {
-      store.toggleSettings();
+    if ((input === "s" || input === "S") && store.step === "build") {
+      const focused = store.focusedSkillId;
+      if (focused) {
+        store.toggleSkillScope(focused);
+      }
       return;
     }
 
-    if (input === "g" || input === "G") {
-      store.toggleInstallScope();
+    if ((input === "s" || input === "S") && store.step === "sources") {
+      store.toggleSettings();
+      return;
     }
   });
 
@@ -181,17 +179,19 @@ export const Wizard: React.FC<WizardProps> = ({
       }
     }
 
+    const skillConfigs: SkillConfig[] = allSkills.map((id) => {
+      const existing = store.skillConfigs.find((sc) => sc.id === id);
+      return existing ?? { id, scope: "project" as const, source: "local" };
+    });
+
     const validation = validateSelection(allSkills, matrix);
 
     const result: WizardResultV2 = {
-      selectedSkills: allSkills,
+      skills: skillConfigs,
       selectedAgents: store.selectedAgents,
       selectedStackId: store.selectedStackId,
       domainSelections: store.domainSelections,
       selectedDomains: store.selectedDomains,
-      sourceSelections: store.sourceSelections,
-      installMode: store.deriveInstallMode(),
-      installScope: store.installScope,
       cancelled: false,
       validation,
     };
@@ -252,10 +252,7 @@ export const Wizard: React.FC<WizardProps> = ({
             technologyCount={selectedSkills.length}
             skillCount={selectedSkills.length}
             agentCount={store.selectedAgents.length}
-            installMode={store.deriveInstallMode()}
-            installScope={store.installScope}
-            sourceSelections={store.sourceSelections}
-            selectedSkills={selectedSkills}
+            skillConfigs={store.skillConfigs}
             onBack={store.goBack}
           />
         );

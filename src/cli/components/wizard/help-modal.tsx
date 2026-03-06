@@ -20,17 +20,15 @@ const GLOBAL_KEYS: HelpSection = {
 };
 
 const GLOBAL_TOGGLES: HelpSection = {
-  title: "Global Toggles",
-  keys: [
-    { key: "G", description: "Toggle project/global install scope" },
-    { key: "?", description: "Toggle this help" },
-  ],
+  title: "Toggles",
+  keys: [{ key: "?", description: "Toggle this help" }],
 };
 
 const BUILD_KEYS: HelpSection = {
   title: "Build Step",
   keys: [
     { key: "D", description: "Toggle compatibility labels" },
+    { key: "S", description: "Toggle skill scope (project/global)" },
     { key: "A", description: "Accept stack defaults (stack path only)" },
     { key: "h/j/k/l", description: "Vim-style navigation" },
   ],

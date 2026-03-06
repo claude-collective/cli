@@ -6,6 +6,7 @@ import type {
   SkillId,
   CategorySelections,
 } from "../../types/index.js";
+import type { SkillConfig } from "../../types/config.js";
 import { getAvailableSkills, resolveAlias } from "../matrix/index.js";
 import type {
   CategoryRow,
@@ -107,6 +108,7 @@ export function buildCategoriesForDomain(
   matrix: MergedSkillsMatrix,
   selections: CategorySelections,
   installedSkillIds?: SkillId[],
+  skillConfigs?: SkillConfig[],
 ): CategoryRow[] {
   const frameworkSource = selections;
   const frameworkSelected = isFrameworkSelected(frameworkSource);
@@ -141,6 +143,7 @@ export function buildCategoriesForDomain(
       selected: skill.selected,
       local: matrix.skills[skill.id]?.local,
       installed: installedSkillIds?.includes(skill.id) || false,
+      scope: skillConfigs?.find((sc) => sc.id === skill.id)?.scope,
     }));
 
     return {

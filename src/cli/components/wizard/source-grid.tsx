@@ -71,7 +71,7 @@ const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean }> = ({
     if (isFocused) {
       return option.selected ? CLI_COLORS.PRIMARY : CLI_COLORS.UNFOCUSED;
     }
-    return CLI_COLORS.NEUTRAL;
+    return option.selected ? CLI_COLORS.PRIMARY : CLI_COLORS.NEUTRAL;
   };
 
   const textColor = option.selected ? CLI_COLORS.PRIMARY : CLI_COLORS.NEUTRAL;
@@ -82,7 +82,7 @@ const SourceTag: React.FC<{ option: SourceOption; isFocused: boolean }> = ({
       marginRight={1}
       borderColor={getBorderColor()}
       borderStyle="single"
-      borderDimColor={!isFocused}
+      borderDimColor={!isFocused && !option.selected}
     >
       <Text color={textColor} bold={isBold} dimColor={false}>
         {" "}

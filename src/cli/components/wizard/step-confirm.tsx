@@ -1,8 +1,8 @@
 import { Box, Text, useInput } from "ink";
 import React from "react";
 import { CLI_COLORS } from "../../consts.js";
-import type { InstallMode, InstallScope } from "../../lib/installation/index.js";
-import type { Domain, DomainSelections, SkillId } from "../../types/index.js";
+import type { SkillConfig } from "../../types/config.js";
+import type { Domain, DomainSelections } from "../../types/index.js";
 import { getDomainDisplayName } from "./utils.js";
 import { ViewTitle } from "./view-title.js";
 
@@ -14,24 +14,15 @@ type StepConfirmProps = {
   technologyCount?: number;
   skillCount?: number;
   agentCount?: number;
-  installMode?: InstallMode;
-  installScope?: InstallScope;
-  sourceSelections?: Partial<Record<SkillId, string>>;
-  selectedSkills?: SkillId[];
+  skillConfigs?: SkillConfig[];
   onBack?: () => void;
 };
 
-const getInstallModeLabel = (
-  installMode: InstallMode,
-  selectedSkills?: SkillId[],
-  sourceSelections?: Partial<Record<SkillId, string>>,
-): string => {
-  if (!selectedSkills?.length || !sourceSelections) {
-    return installMode === "plugin" ? "Plugin" : "Local (editable copies)";
-  }
+const getInstallModeLabel = (skillConfigs: SkillConfig[]): string => {
+  if (skillConfigs.length === 0) return "Local (editable copies)";
 
-  const localCount = selectedSkills.filter((id) => sourceSelections[id] === "local").length;
-  const pluginCount = selectedSkills.length - localCount;
+  const localCount = skillConfigs.filter((s) => s.source === "local").length;
+  const pluginCount = skillConfigs.length - localCount;
 
   if (localCount === 0) return "Plugin";
   if (pluginCount === 0) return "Local (editable copies)";
@@ -46,10 +37,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
   technologyCount,
   skillCount,
   agentCount,
-  installMode,
-  installScope,
-  sourceSelections,
-  selectedSkills,
+  skillConfigs,
   onBack,
 }) => {
   useInput((_input, key) => {
@@ -103,17 +91,21 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
             <Text dimColor>Agents:</Text> <Text bold>{agentCount}</Text>
           </Text>
         )}
-        {installMode && (
-          <Text>
-            <Text dimColor>Install mode:</Text>{" "}
-            <Text bold>{getInstallModeLabel(installMode, selectedSkills, sourceSelections)}</Text>
-          </Text>
-        )}
-        {installScope && (
-          <Text>
-            <Text dimColor>Install scope:</Text>{" "}
-            <Text bold>{installScope === "global" ? "Global" : "Project"}</Text>
-          </Text>
+        {skillConfigs && skillConfigs.length > 0 && (
+          <>
+            <Text>
+              <Text dimColor>Install mode:</Text>{" "}
+              <Text bold>{getInstallModeLabel(skillConfigs)}</Text>
+            </Text>
+            <Text>
+              <Text dimColor>Scope:</Text>{" "}
+              <Text bold>
+                {skillConfigs.filter((s) => s.scope === "project").length} project
+                {skillConfigs.some((s) => s.scope === "global") &&
+                  `, ${skillConfigs.filter((s) => s.scope === "global").length} global`}
+              </Text>
+            </Text>
+          </>
         )}
       </Box>
 

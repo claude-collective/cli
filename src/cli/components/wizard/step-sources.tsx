@@ -1,8 +1,8 @@
 import { Box, Text, useInput } from "ink";
 import React, { useCallback, useState } from "react";
 import { CLI_COLORS, DEFAULT_BRANDING } from "../../consts.js";
-import { resolveAllSources } from "../../lib/configuration/index.js";
 import { FEATURE_FLAGS } from "../../lib/feature-flags.js";
+import { resolveAllSources } from "../../lib/configuration/index.js";
 import { searchExtraSources } from "../../lib/loading/multi-source-loader.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import type {

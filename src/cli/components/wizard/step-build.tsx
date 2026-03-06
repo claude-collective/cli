@@ -1,5 +1,5 @@
 import { Box, Text, useInput } from "ink";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { CLI_COLORS } from "../../consts.js";
 import { validateBuildStep } from "../../lib/wizard/index.js";
 import type {
@@ -11,6 +11,7 @@ import type {
 } from "../../types/index.js";
 import { useFrameworkFiltering } from "../hooks/use-framework-filtering.js";
 import { useMeasuredHeight } from "../hooks/use-measured-height.js";
+import { useWizardStore } from "../../stores/wizard-store.js";
 import { CategoryGrid } from "./category-grid.js";
 import { getDomainDisplayName, orderDomains } from "./utils.js";
 import { ViewTitle } from "./view-title.js";
@@ -62,6 +63,12 @@ export const StepBuild: React.FC<StepBuildProps> = ({
 }) => {
   const [validationError, setValidationError] = useState<string | undefined>(undefined);
   const { ref: gridRef, measuredHeight: gridHeight } = useMeasuredHeight();
+  const skillConfigs = useWizardStore((s) => s.skillConfigs);
+
+  const handleFocusedSkillChange = useCallback(
+    (id: SkillId | null) => useWizardStore.getState().setFocusedSkillId(id),
+    [],
+  );
 
   const orderedDomains = useMemo(() => orderDomains(selectedDomains), [selectedDomains]);
 
@@ -71,6 +78,7 @@ export const StepBuild: React.FC<StepBuildProps> = ({
     matrix,
     selections,
     installedSkillIds,
+    skillConfigs,
   });
 
   useInput((_input, key) => {
@@ -124,6 +132,7 @@ export const StepBuild: React.FC<StepBuildProps> = ({
           showLabels={showLabels}
           onToggle={onToggle}
           onToggleLabels={onToggleLabels}
+          onFocusedSkillChange={handleFocusedSkillChange}
         />
       </Box>
 

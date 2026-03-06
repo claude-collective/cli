@@ -2,6 +2,7 @@ import { Box, Static, Text } from "ink";
 import React, { Fragment } from "react";
 import { CLI_COLORS, DEFAULT_PLUGIN_NAME } from "../../consts.js";
 import type { StartupMessage } from "../../utils/logger.js";
+import { FEATURE_FLAGS } from "../../lib/feature-flags.js";
 import { useWizardStore } from "../../stores/wizard-store.js";
 import { useTerminalDimensions } from "../hooks/use-terminal-dimensions.js";
 import { HelpModal } from "./help-modal.js";
@@ -142,14 +143,14 @@ export const WizardLayout: React.FC<WizardLayoutProps> = ({
                 isActive={store.showLabels}
               />
               <DefinitionItem
-                label="Global"
-                values={["G"]}
-                isActive={store.installScope === "global"}
+                label="Scope"
+                values={["S"]}
+                isVisible={store.step === "build"}
               />
               <DefinitionItem
                 label="Settings"
                 values={["S"]}
-                isVisible={store.step === "sources"}
+                isVisible={store.step === "sources" && FEATURE_FLAGS.SOURCE_SEARCH}
                 isActive={store.showSettings}
               />
               <DefinitionItem label="Help" values={["?"]} />

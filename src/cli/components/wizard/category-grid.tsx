@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
 
 import { Box, Text } from "ink";
 
@@ -18,6 +18,7 @@ export type CategoryOption = {
   selected: boolean;
   local?: boolean;
   installed?: boolean;
+  scope?: "project" | "global";
 };
 
 export type CategoryRow = {
@@ -41,6 +42,8 @@ export type CategoryGridProps = {
   defaultFocusedCol?: number;
   /** Optional callback fired whenever the focused position changes */
   onFocusChange?: (row: number, col: number) => void;
+  /** Optional callback fired with the resolved SkillId of the focused cell */
+  onFocusedSkillChange?: (skillId: SkillId | null) => void;
 };
 
 const SYMBOL_REQUIRED = "*";
@@ -115,6 +118,7 @@ const SkillTag: React.FC<SkillTagProps> = ({ option, isFocused, isLocked, showLa
           {" "}
           {option.label}{" "}
         </Text>
+        {option.scope === "global" && <Text color={CLI_COLORS.WARNING}>G </Text>}
         {compatibilityLabel && <Text dimColor>{compatibilityLabel} </Text>}
       </>
     </Box>
@@ -187,6 +191,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
   defaultFocusedRow = 0,
   defaultFocusedCol = 0,
   onFocusChange,
+  onFocusedSkillChange,
 }) => {
   const processedCategories = useMemo(
     () => categories.map((category) => ({ ...category, sortedOptions: category.options })),
@@ -216,6 +221,15 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
     [processedCategories, categories],
   );
 
+  const handleFocusChange = useCallback(
+    (row: number, col: number) => {
+      onFocusChange?.(row, col);
+      const skill = processedCategories[row]?.sortedOptions[col];
+      onFocusedSkillChange?.(skill?.id ?? null);
+    },
+    [onFocusChange, processedCategories, onFocusedSkillChange],
+  );
+
   const { focusedRow, focusedCol, setFocused, moveFocus } = useFocusedListItem(
     processedCategories.length,
     getColCount,
@@ -223,11 +237,18 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
       wrap: true,
       isRowLocked,
       findValidCol,
-      onChange: onFocusChange,
+      onChange: handleFocusChange,
       initialRow: defaultFocusedRow,
       initialCol: defaultFocusedCol,
     },
   );
+
+  const mountedRef = useRef(false);
+  if (!mountedRef.current) {
+    mountedRef.current = true;
+    const skill = processedCategories[defaultFocusedRow]?.sortedOptions[defaultFocusedCol];
+    onFocusedSkillChange?.(skill?.id ?? null);
+  }
 
   useCategoryGridInput({
     processedCategories,
