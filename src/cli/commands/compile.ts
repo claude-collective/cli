@@ -9,7 +9,7 @@ import { resolveSource, loadProjectConfigFromDir } from "../lib/configuration";
 import { directoryExists, ensureDir, glob, readFile, fileExists } from "../utils/fs";
 import { recompileAgents } from "../lib/agents";
 import { parseFrontmatter } from "../lib/loading";
-import { CLI_BIN_NAME, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../consts";
+import { CLI_BIN_NAME, GLOBAL_INSTALL_ROOT, LOCAL_SKILLS_PATH, STANDARD_FILES } from "../consts";
 import { EXIT_CODES } from "../lib/exit-codes";
 import {
   ERROR_MESSAGES,
@@ -181,11 +181,23 @@ export default class Compile extends BaseCommand {
     const pluginSkillCount = typedKeys<SkillId>(pluginSkills).length;
     verbose(`  Found ${pluginSkillCount} skills from installed plugins`);
 
+    // Load global local skills (skip if projectDir is already the home directory to avoid double-loading)
+    const isGlobalProject = projectDir === GLOBAL_INSTALL_ROOT;
+    const globalLocalSkillsDir = path.join(GLOBAL_INSTALL_ROOT, LOCAL_SKILLS_PATH);
+    const globalLocalSkills = isGlobalProject
+      ? {}
+      : await loadSkillsFromDir(globalLocalSkillsDir, LOCAL_SKILLS_PATH);
+    const globalLocalSkillCount = typedKeys<SkillId>(globalLocalSkills).length;
+    if (globalLocalSkillCount > 0) {
+      verbose(`  Found ${globalLocalSkillCount} global local skills from ~/.claude/skills/`);
+    }
+
     const localSkills = await discoverLocalProjectSkills(projectDir);
     const localSkillCount = typedKeys<SkillId>(localSkills).length;
     verbose(`  Found ${localSkillCount} local skills from .claude/skills/`);
 
-    const allSkills = mergeSkills(pluginSkills, localSkills);
+    // Global skills loaded first, project skills second — project wins on conflict (later sources override)
+    const allSkills = mergeSkills(pluginSkills, globalLocalSkills, localSkills);
     const totalSkillCount = typedKeys<SkillId>(allSkills).length;
 
     if (totalSkillCount === 0) {
@@ -196,12 +208,13 @@ export default class Compile extends BaseCommand {
       );
     }
 
-    if (localSkillCount > 0 && pluginSkillCount > 0) {
+    const localTotalCount = localSkillCount + globalLocalSkillCount;
+    if (localTotalCount > 0 && pluginSkillCount > 0) {
       this.log(
-        `Discovered ${totalSkillCount} skills (${pluginSkillCount} from plugins, ${localSkillCount} local)`,
+        `Discovered ${totalSkillCount} skills (${pluginSkillCount} from plugins, ${localTotalCount} local)`,
       );
-    } else if (localSkillCount > 0) {
-      this.log(`Discovered ${localSkillCount} local skills`);
+    } else if (localTotalCount > 0) {
+      this.log(`Discovered ${localTotalCount} local skills`);
     } else {
       this.log(`Discovered ${pluginSkillCount} skills from plugins`);
     }

@@ -116,9 +116,9 @@ async function checkAgentsCompiled(
   const missingAgents: string[] = [];
 
   for (const agent of agents) {
-    const agentPath = path.join(agentsDir, `${agent}.md`);
+    const agentPath = path.join(agentsDir, `${agent.name}.md`);
     if (!(await fileExists(agentPath))) {
-      missingAgents.push(agent);
+      missingAgents.push(agent.name);
     }
   }
 
@@ -147,13 +147,13 @@ async function checkNoOrphans(config: ProjectConfig, projectDir: string): Promis
   }
 
   const mdFiles = await glob("*.md", agentsDir);
-  const configAgents = new Set(config.agents ?? []);
+  const configAgentNames = new Set((config.agents ?? []).map((a) => a.name));
 
   const orphanedFiles: string[] = [];
   for (const file of mdFiles) {
     const agentName = file.replace(/\.md$/, "");
     // Boundary cast: filename from filesystem compared against typed config
-    if (!configAgents.has(agentName as AgentName)) {
+    if (!configAgentNames.has(agentName as AgentName)) {
       orphanedFiles.push(agentName);
     }
   }

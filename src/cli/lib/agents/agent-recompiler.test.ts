@@ -67,7 +67,7 @@ describe("agent-recompiler", () => {
       const configContent = `export default ${JSON.stringify({
         name: "test-plugin",
         description: "Test plugin",
-        agents: ["web-pm"],
+        agents: [{ name: "web-pm", scope: "project" }],
       })};`;
       const configDir = path.join(testDirs.projectDir, ".claude-src");
       await mkdir(configDir, { recursive: true });

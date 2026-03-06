@@ -47,9 +47,10 @@ function collectConfiguredSources(config: ProjectSourceConfig | null): string[] 
 
 function collectConfiguredAgents(config: ProjectSourceConfig | null): string[] {
   if (!config) return [];
-  // Generated config.ts includes agents[] (preserved by schema .passthrough())
+  // Boundary cast: config loaded via .passthrough() schema, agents preserved as AgentScopeConfig[]
   const agents = (config as Record<string, unknown>).agents;
-  return Array.isArray(agents) ? agents : [];
+  if (!Array.isArray(agents)) return [];
+  return agents.map((a: { name: string }) => a.name);
 }
 
 async function detectUninstallTarget(projectDir: string): Promise<UninstallTarget> {

@@ -33,6 +33,7 @@ import {
   CLI_BIN_NAME,
   CLI_COLORS,
   DEFAULT_BRANDING,
+  GLOBAL_INSTALL_ROOT,
 } from "../consts.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
@@ -44,6 +45,7 @@ import {
   type StartupMessage,
 } from "../utils/logger.js";
 import { SUCCESS_MESSAGES, STATUS_MESSAGES } from "../utils/messages.js";
+import { ensureBlankGlobalConfig } from "../lib/configuration/config-writer.js";
 
 type DashboardOption = {
   label: string;
@@ -310,44 +312,51 @@ export default class Init extends BaseCommand {
     }
 
     // No project config exists: check if a global installation exists
-    if (!individualPluginsExist && !existingInstallation) {
-      const globalInstallation = await detectGlobalInstallation();
-      if (globalInstallation) {
-        const globalConfigDir = path.join(os.homedir(), CLAUDE_SRC_DIR);
+    const globalInstallation = await detectGlobalInstallation();
+    if (globalInstallation) {
+      const globalConfigDir = path.join(os.homedir(), CLAUDE_SRC_DIR);
 
-        // Non-interactive: skip prompt and fall through to wizard
-        if (process.stdin.isTTY) {
-          let globalChoice: GlobalConfigChoice | null = null;
+      // Non-interactive: skip prompt and fall through to wizard
+      if (process.stdin.isTTY) {
+        let globalChoice: GlobalConfigChoice | null = null;
 
-          const { waitUntilExit: waitForPrompt } = render(
-            <GlobalConfigPrompt
-              globalConfigDir={globalConfigDir}
-              onSelect={(choice) => {
-                globalChoice = choice;
-              }}
-              onCancel={() => {
-                globalChoice = null;
-              }}
-            />,
-          );
+        const { waitUntilExit: waitForPrompt } = render(
+          <GlobalConfigPrompt
+            globalConfigDir={globalConfigDir}
+            onSelect={(choice) => {
+              globalChoice = choice;
+            }}
+            onCancel={() => {
+              globalChoice = null;
+            }}
+          />,
+        );
 
-          await waitForPrompt();
+        await waitForPrompt();
 
-          if (globalChoice === "edit-global") {
-            const selectedCommand = await showDashboard(os.homedir(), (msg) => this.log(msg));
-            if (selectedCommand) {
-              await this.config.runCommand(selectedCommand);
-            }
-            return;
+        if (globalChoice === "edit-global") {
+          const selectedCommand = await showDashboard(os.homedir(), (msg) => this.log(msg));
+          if (selectedCommand) {
+            await this.config.runCommand(selectedCommand);
           }
-
-          // User cancelled (Esc)
-          if (globalChoice === null) {
-            return;
-          }
-
-          // "create-project" falls through to wizard below
+          return;
         }
+
+        // User cancelled (Esc)
+        if (globalChoice === null) {
+          return;
+        }
+
+        // "create-project" falls through to wizard below
+      }
+    }
+
+    // Auto-create blank global config on first init from a project directory.
+    // This ensures the project config can always import from global.
+    if (projectDir !== GLOBAL_INSTALL_ROOT) {
+      const created = await ensureBlankGlobalConfig();
+      if (created) {
+        this.log("Created blank global config at ~/" + CLAUDE_SRC_DIR);
       }
     }
 

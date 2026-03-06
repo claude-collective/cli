@@ -63,8 +63,9 @@ async function resolveAgentNames(params: ResolveAgentNamesParams): Promise<Agent
   }
 
   if (projectConfig?.agents) {
-    verbose(`Using agents from config: ${projectConfig.agents.join(", ")}`);
-    return projectConfig.agents;
+    const agentNames = projectConfig.agents.map((a) => a.name);
+    verbose(`Using agents from config: ${agentNames.join(", ")}`);
+    return agentNames;
   }
 
   if (outputDir) {

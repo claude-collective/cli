@@ -1,11 +1,14 @@
+import os from "os";
+import path from "path";
+
 import { Flags } from "@oclif/core";
 import { render } from "ink";
-import os from "os";
 
 import { BaseCommand } from "../base-command.js";
 import { Wizard, type WizardResultV2 } from "../components/wizard/wizard.js";
-import { ASCII_LOGO, CLI_BIN_NAME, SOURCE_DISPLAY_NAMES } from "../consts.js";
+import { ASCII_LOGO, CLI_BIN_NAME, CLAUDE_SRC_DIR, GLOBAL_INSTALL_ROOT, SOURCE_DISPLAY_NAMES, STANDARD_FILES } from "../consts.js";
 import { getAgentDefinitions, recompileAgents } from "../lib/agents/index.js";
+import { splitConfigByScope } from "../lib/configuration/config-generator.js";
 import { loadProjectConfig } from "../lib/configuration/index.js";
 import { EXIT_CODES } from "../lib/exit-codes.js";
 import {
@@ -18,7 +21,7 @@ import {
 } from "../lib/installation/index.js";
 import { getMarketplaceLabel, loadSkillsMatrixFromSource } from "../lib/loading/index.js";
 import { discoverAllPluginSkills } from "../lib/plugins/index.js";
-import { deleteLocalSkill } from "../lib/skills/index.js";
+import { deleteLocalSkill, migrateLocalSkillScope } from "../lib/skills/index.js";
 import type { SkillId } from "../types/index.js";
 import { getErrorMessage } from "../utils/errors.js";
 import { claudePluginInstall, claudePluginUninstall } from "../utils/exec.js";
@@ -129,6 +132,20 @@ export default class Edit extends BaseCommand {
     let wizardResult: WizardResultV2 | null = null;
     const marketplaceLabel = getMarketplaceLabel(sourceResult);
 
+    // D9: In project context, existing global items are read-only (locked).
+    // When editing from ~/ (global context), nothing is locked.
+    const isGlobalDir = projectDir === GLOBAL_INSTALL_ROOT;
+    const lockedSkillIds = isGlobalDir
+      ? undefined
+      : projectConfig?.config?.skills
+          ?.filter(s => s.scope === "global")
+          .map(s => s.id);
+    const lockedAgentNames = isGlobalDir
+      ? undefined
+      : projectConfig?.config?.agents
+          ?.filter(a => a.scope === "global")
+          .map(a => a.name);
+
     const { waitUntilExit } = render(
       <Wizard
         matrix={sourceResult.matrix}
@@ -140,6 +157,8 @@ export default class Edit extends BaseCommand {
         initialAgents={projectConfig?.config?.selectedAgents}
         installedSkillIds={currentSkillIds}
         installedSkillConfigs={projectConfig?.config?.skills}
+        lockedSkillIds={lockedSkillIds}
+        lockedAgentNames={lockedAgentNames}
         projectDir={projectDir}
         startupMessages={startupMessages}
         onComplete={(result) => {
@@ -171,6 +190,7 @@ export default class Edit extends BaseCommand {
     const removedSkills = currentSkillIds.filter((id) => !newSkillIds.includes(id));
 
     const sourceChanges = new Map<SkillId, { from: string; to: string }>();
+    const scopeChanges = new Map<SkillId, { from: "project" | "global"; to: "project" | "global" }>();
     if (projectConfig?.config?.skills) {
       for (const newSkill of result.skills) {
         const oldSkill = projectConfig.config.skills.find(s => s.id === newSkill.id);
@@ -180,13 +200,20 @@ export default class Edit extends BaseCommand {
             to: newSkill.source,
           });
         }
+        if (oldSkill && oldSkill.scope !== newSkill.scope) {
+          scopeChanges.set(newSkill.id, {
+            from: oldSkill.scope,
+            to: newSkill.scope,
+          });
+        }
       }
     }
 
     const hasSourceChanges = sourceChanges.size > 0;
+    const hasScopeChanges = scopeChanges.size > 0;
     const hasSkillChanges = addedSkills.length > 0 || removedSkills.length > 0;
 
-    if (!hasSkillChanges && !hasSourceChanges) {
+    if (!hasSkillChanges && !hasSourceChanges && !hasScopeChanges) {
       this.log(INFO_MESSAGES.NO_CHANGES_MADE);
       this.log("Plugin unchanged\n");
       return;
@@ -204,6 +231,11 @@ export default class Edit extends BaseCommand {
     for (const [skillId, change] of sourceChanges) {
       const fromLabel = formatSourceDisplayName(change.from);
       const toLabel = formatSourceDisplayName(change.to);
+      this.log(`  ~ ${skillId} (${fromLabel} \u2192 ${toLabel})`);
+    }
+    for (const [skillId, change] of scopeChanges) {
+      const fromLabel = change.from === "global" ? "[G]" : "[P]";
+      const toLabel = change.to === "global" ? "[G]" : "[P]";
       this.log(`  ~ ${skillId} (${fromLabel} \u2192 ${toLabel})`);
     }
     this.log("");
@@ -242,6 +274,25 @@ export default class Edit extends BaseCommand {
       ...migrationPlan.toLocal.map(m => m.id),
       ...migrationPlan.toPlugin.map(m => m.id),
     ]);
+
+    // Handle scope migrations (P→G or G→P) for local-mode skills
+    for (const [skillId, change] of scopeChanges) {
+      const skillConfig = result.skills.find(s => s.id === skillId);
+      if (skillConfig?.source === "local") {
+        await migrateLocalSkillScope(skillId, change.from, projectDir);
+      } else if (sourceResult.marketplace && skillConfig) {
+        // Plugin-mode scope change: uninstall from old scope, install to new scope
+        const oldPluginScope = change.from === "global" ? "user" : "project";
+        const newPluginScope = change.to === "global" ? "user" : "project";
+        try {
+          await claudePluginUninstall(skillId, oldPluginScope, projectDir);
+          const pluginRef = `${skillId}@${sourceResult.marketplace}`;
+          await claudePluginInstall(pluginRef, newPluginScope, projectDir);
+        } catch (error) {
+          this.warn(`Failed to migrate plugin scope for ${skillId}: ${getErrorMessage(error)}`);
+        }
+      }
+    }
 
     // Handle remaining non-migration source changes (e.g., marketplace A -> marketplace B)
     for (const [skillId, change] of sourceChanges) {
@@ -282,7 +333,8 @@ export default class Edit extends BaseCommand {
       }
     }
 
-    // Persist wizard result to config.ts
+    // Persist wizard result to config.ts (split by scope when in project context)
+    const isGlobalContext = projectDir === GLOBAL_INSTALL_ROOT;
     try {
       const mergeResult = await buildAndMergeConfig(
         result,
@@ -291,8 +343,30 @@ export default class Edit extends BaseCommand {
         flags.source,
       );
 
-      await writeConfigFile(mergeResult.config, installation.configPath);
-      verbose(`Updated config at ${installation.configPath}`);
+      if (isGlobalContext) {
+        // Editing from ~/ — write directly to global config (no import preamble)
+        await writeConfigFile(mergeResult.config, installation.configPath);
+        verbose(`Updated global config at ${installation.configPath}`);
+      } else {
+        // Editing from project — split by scope and write to both locations
+        const { global: globalConfig, project: projectSplitConfig } =
+          splitConfigByScope(mergeResult.config);
+
+        // Write global config to ~/.claude-src/config.ts
+        const globalConfigPath = path.join(
+          GLOBAL_INSTALL_ROOT,
+          CLAUDE_SRC_DIR,
+          STANDARD_FILES.CONFIG_TS,
+        );
+        await writeConfigFile(globalConfig, globalConfigPath);
+        verbose(`Updated global config at ${globalConfigPath}`);
+
+        // Write project config with import from global
+        await writeConfigFile(projectSplitConfig, installation.configPath, {
+          isProjectConfig: true,
+        });
+        verbose(`Updated project config at ${installation.configPath}`);
+      }
     } catch (error) {
       this.warn(`Could not update config: ${getErrorMessage(error)}`);
     }
@@ -346,6 +420,9 @@ export default class Edit extends BaseCommand {
     const summaryParts = [`${addedSkills.length} added`, `${removedSkills.length} removed`];
     if (hasSourceChanges) {
       summaryParts.push(`${sourceChanges.size} source${sourceChanges.size > 1 ? "s" : ""} changed`);
+    }
+    if (hasScopeChanges) {
+      summaryParts.push(`${scopeChanges.size} scope${scopeChanges.size > 1 ? "s" : ""} changed`);
     }
     this.log(`\n\u2713 Plugin updated! (${summaryParts.join(", ")})\n`);
   }
