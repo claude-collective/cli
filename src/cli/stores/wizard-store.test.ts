@@ -1225,6 +1225,72 @@ describe("WizardStore", () => {
     });
   });
 
+  describe("agentConfigs and scope management", () => {
+    it("should have empty agentConfigs initially", () => {
+      const { agentConfigs } = useWizardStore.getState();
+      expect(agentConfigs).toEqual([]);
+    });
+
+    it("should sync agentConfigs when toggleAgent is called", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+
+      const { agentConfigs } = useWizardStore.getState();
+      expect(agentConfigs).toEqual([{ name: "web-developer", scope: "project" }]);
+    });
+
+    it("should remove from agentConfigs when agent is toggled off", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+      store.toggleAgent("web-developer");
+
+      const { agentConfigs } = useWizardStore.getState();
+      expect(agentConfigs).toEqual([]);
+    });
+
+    it("should toggle agent scope between project and global", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+      store.toggleAgentScope("web-developer");
+
+      const { agentConfigs } = useWizardStore.getState();
+      expect(agentConfigs).toEqual([{ name: "web-developer", scope: "global" }]);
+
+      store.toggleAgentScope("web-developer");
+      expect(useWizardStore.getState().agentConfigs).toEqual([{ name: "web-developer", scope: "project" }]);
+    });
+
+    it("should set and clear focusedAgentId", () => {
+      const store = useWizardStore.getState();
+      store.setFocusedAgentId("web-developer");
+
+      expect(useWizardStore.getState().focusedAgentId).toBe("web-developer");
+
+      store.setFocusedAgentId(null);
+      expect(useWizardStore.getState().focusedAgentId).toBeNull();
+    });
+
+    it("should not toggle locked agents", () => {
+      useWizardStore.setState({ lockedAgentNames: ["web-developer"] as AgentName[] });
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+
+      const { selectedAgents, agentConfigs } = useWizardStore.getState();
+      expect(selectedAgents).toEqual([]);
+      expect(agentConfigs).toEqual([]);
+    });
+
+    it("should not toggle scope of locked agents", () => {
+      const store = useWizardStore.getState();
+      store.toggleAgent("web-developer");
+      useWizardStore.setState({ lockedAgentNames: ["web-developer"] as AgentName[] });
+
+      store.toggleAgentScope("web-developer");
+      const { agentConfigs } = useWizardStore.getState();
+      expect(agentConfigs).toEqual([{ name: "web-developer", scope: "project" }]);
+    });
+  });
+
   describe("preselectAgentsFromDomains", () => {
     it("should preselect web-related agents when web domain is selected", () => {
       const store = useWizardStore.getState();

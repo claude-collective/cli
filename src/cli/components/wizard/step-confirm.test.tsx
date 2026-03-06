@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StepConfirm } from "./step-confirm";
 import { useWizardStore } from "../../stores/wizard-store";
 import { ENTER, ESCAPE, RENDER_DELAY_MS, delay } from "../../lib/__tests__/test-constants";
+import { buildSkillConfigs } from "../../lib/__tests__/helpers";
 
 describe("StepConfirm component", () => {
   let cleanup: (() => void) | undefined;
@@ -86,10 +87,7 @@ describe("StepConfirm component", () => {
           stackName="nextjs-fullstack"
           technologyCount={12}
           skillCount={12}
-          skillConfigs={[
-            { id: "web-framework-react", scope: "project", source: "agents-inc" },
-            { id: "web-styling-scss-modules", scope: "project", source: "agents-inc" },
-          ]}
+          skillConfigs={buildSkillConfigs(["web-framework-react", "web-styling-scss-modules"], { source: "agents-inc" })}
           onBack={onBack}
         />,
       );
@@ -110,10 +108,7 @@ describe("StepConfirm component", () => {
           stackName="nextjs-fullstack"
           technologyCount={12}
           skillCount={12}
-          skillConfigs={[
-            { id: "web-framework-react", scope: "project", source: "local" },
-            { id: "web-styling-scss-modules", scope: "project", source: "local" },
-          ]}
+          skillConfigs={buildSkillConfigs(["web-framework-react", "web-styling-scss-modules"])}
           onBack={onBack}
         />,
       );
@@ -330,10 +325,7 @@ describe("StepConfirm component", () => {
       const { lastFrame, unmount } = render(
         <StepConfirm
           onComplete={onComplete}
-          skillConfigs={[
-            { id: "web-framework-react", scope: "project", source: "agents-inc" },
-            { id: "web-styling-scss-modules", scope: "project", source: "agents-inc" },
-          ]}
+          skillConfigs={buildSkillConfigs(["web-framework-react", "web-styling-scss-modules"], { source: "agents-inc" })}
         />,
       );
       cleanup = unmount;
@@ -349,10 +341,7 @@ describe("StepConfirm component", () => {
       const { lastFrame, unmount } = render(
         <StepConfirm
           onComplete={onComplete}
-          skillConfigs={[
-            { id: "web-framework-react", scope: "project", source: "local" },
-            { id: "web-styling-scss-modules", scope: "project", source: "local" },
-          ]}
+          skillConfigs={buildSkillConfigs(["web-framework-react", "web-styling-scss-modules"])}
         />,
       );
       cleanup = unmount;
@@ -369,9 +358,9 @@ describe("StepConfirm component", () => {
         <StepConfirm
           onComplete={onComplete}
           skillConfigs={[
-            { id: "web-framework-react", scope: "project", source: "local" },
-            { id: "web-styling-scss-modules", scope: "project", source: "agents-inc" },
-            { id: "web-state-zustand", scope: "project", source: "local" },
+            ...buildSkillConfigs(["web-framework-react"]),
+            ...buildSkillConfigs(["web-styling-scss-modules"], { source: "agents-inc" }),
+            ...buildSkillConfigs(["web-state-zustand"]),
           ]}
         />,
       );

@@ -215,6 +215,11 @@ export const StepAgents: React.FC<StepAgentsProps> = ({ matrix }) => {
     }
   });
 
+  // Sync focusedAgentId so the wizard-level S key handler can toggle agent scope
+  React.useEffect(() => {
+    store.setFocusedAgentId(focusedId === "continue" ? null : focusedId);
+  }, [focusedId, store]);
+
   const selectedCount = store.selectedAgents.length;
   const continueLabel =
     selectedCount > 0 ? `Continue with ${selectedCount} agent(s)` : "Continue without agents";
@@ -243,6 +248,10 @@ export const StepAgents: React.FC<StepAgentsProps> = ({ matrix }) => {
         const isSelected = store.selectedAgents.includes(row.agent.id);
         const checkbox = isSelected ? "[\u2713]" : "[ ]";
         const pointer = isFocused ? UI_SYMBOLS.CURRENT : " ";
+        const agentConfig = store.agentConfigs.find((ac) => ac.name === row.agent.id);
+        const scopeBadge = isSelected && agentConfig
+          ? agentConfig.scope === "global" ? " [G]" : " [P]"
+          : "";
         return (
           <Box key={row.agent.id} flexShrink={0}>
             <Text>
@@ -254,6 +263,11 @@ export const StepAgents: React.FC<StepAgentsProps> = ({ matrix }) => {
                 {" "}
                 {checkbox} {row.agent.label}
               </Text>
+              {scopeBadge && (
+                <Text color={agentConfig?.scope === "global" ? CLI_COLORS.WARNING : CLI_COLORS.INFO}>
+                  {scopeBadge}
+                </Text>
+              )}
               <Text dimColor> - {row.agent.description}</Text>
             </Text>
           </Box>

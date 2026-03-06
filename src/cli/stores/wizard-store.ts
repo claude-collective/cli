@@ -8,7 +8,7 @@ import {
 } from "../consts.js";
 import type { InstallMode } from "../lib/installation/index.js";
 import { deriveInstallMode as sharedDeriveInstallMode } from "../lib/installation/installation.js";
-import type { SkillConfig } from "../types/config.js";
+import type { AgentScopeConfig, SkillConfig } from "../types/config.js";
 import { resolveAlias } from "../lib/matrix/index.js";
 import { getSkillDisplayLabel } from "../lib/wizard/build-step-logic.js";
 import type {
@@ -196,8 +196,15 @@ export type WizardState = {
   enabledSources: Record<string, boolean>;
 
   selectedAgents: AgentName[];
+  agentConfigs: AgentScopeConfig[];
+  focusedAgentId: AgentName | null;
 
   boundSkills: BoundSkill[];
+
+  /** Skill IDs that cannot be toggled or removed (D9: existing global items in project context) */
+  lockedSkillIds: SkillId[];
+  /** Agent names that cannot be toggled or removed (D9: existing global agents in project context) */
+  lockedAgentNames: AgentName[];
 
   history: WizardStep[];
 
@@ -380,9 +387,23 @@ export type WizardState = {
    * Toggle an agent on or off in the selectedAgents list.
    * @param agent - Agent name to toggle
    *
-   * Side effects: adds or removes from `selectedAgents`
+   * Side effects: adds or removes from `selectedAgents`, syncs `agentConfigs`
    */
   toggleAgent: (agent: AgentName) => void;
+  /**
+   * Toggle the scope of a specific agent between "project" and "global".
+   * @param agentName - Agent to toggle scope for
+   *
+   * Side effects: updates `agentConfigs` entry for the agent
+   */
+  toggleAgentScope: (agentName: AgentName) => void;
+  /**
+   * Set the currently focused agent ID in the agents step (for S hotkey).
+   * @param id - Agent name to focus, or null to clear
+   *
+   * Side effects: sets `focusedAgentId`
+   */
+  setFocusedAgentId: (id: AgentName | null) => void;
   /**
    * Preselect agents based on selected domains from the first wizard step.
    * Matches domains against DOMAIN_AGENTS mapping.
@@ -472,7 +493,11 @@ const createInitialState = () => ({
   showHelp: false,
   enabledSources: {} as Record<string, boolean>,
   selectedAgents: [] as AgentName[],
+  agentConfigs: [] as AgentScopeConfig[],
+  focusedAgentId: null as AgentName | null,
   boundSkills: [] as BoundSkill[],
+  lockedSkillIds: [] as SkillId[],
+  lockedAgentNames: [] as AgentName[],
   history: [] as WizardStep[],
 });
 
@@ -638,6 +663,9 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   toggleTechnology: (domain, category, technology, exclusive) =>
     set((state) => {
+      // D9: locked skills cannot be toggled
+      if (state.lockedSkillIds.includes(technology)) return state;
+
       const currentSelections = state.domainSelections[domain]?.[category] || [];
       const isSelected = currentSelections.includes(technology);
 
@@ -703,11 +731,15 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   toggleSkillScope: (skillId) =>
-    set((state) => ({
-      skillConfigs: state.skillConfigs.map((sc) =>
-        sc.id === skillId ? { ...sc, scope: sc.scope === "project" ? "global" : "project" } : sc,
-      ),
-    })),
+    set((state) => {
+      // D9: locked skills cannot have their scope toggled
+      if (state.lockedSkillIds.includes(skillId)) return state;
+      return {
+        skillConfigs: state.skillConfigs.map((sc) =>
+          sc.id === skillId ? { ...sc, scope: sc.scope === "project" ? "global" : "project" } : sc,
+        ),
+      };
+    }),
 
   setSkillSource: (skillId, source) =>
     set((state) => ({
@@ -772,13 +804,39 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   toggleAgent: (agent) =>
     set((state) => {
+      // D9: locked agents cannot be toggled
+      if (state.lockedAgentNames.includes(agent)) return state;
+
       const isSelected = state.selectedAgents.includes(agent);
+      if (isSelected) {
+        return {
+          selectedAgents: state.selectedAgents.filter((a) => a !== agent),
+          agentConfigs: state.agentConfigs.filter((ac) => ac.name !== agent),
+        };
+      }
       return {
-        selectedAgents: isSelected
-          ? state.selectedAgents.filter((a) => a !== agent)
-          : [...state.selectedAgents, agent],
+        selectedAgents: [...state.selectedAgents, agent],
+        agentConfigs: [
+          ...state.agentConfigs,
+          { name: agent, scope: "project" as const },
+        ],
       };
     }),
+
+  toggleAgentScope: (agentName) =>
+    set((state) => {
+      // D9: locked agents cannot have their scope toggled
+      if (state.lockedAgentNames.includes(agentName)) return state;
+      return {
+        agentConfigs: state.agentConfigs.map((ac) =>
+          ac.name === agentName
+            ? { ...ac, scope: ac.scope === "project" ? ("global" as const) : ("project" as const) }
+            : ac,
+        ),
+      };
+    }),
+
+  setFocusedAgentId: (id) => set({ focusedAgentId: id }),
 
   preselectAgentsFromDomains: () =>
     set(() => {
@@ -789,7 +847,11 @@ export const useWizardStore = create<WizardState>((set, get) => ({
           agents.push(...domainAgents);
         }
       }
-      return { selectedAgents: agents.sort() };
+      const sorted = agents.sort();
+      return {
+        selectedAgents: sorted,
+        agentConfigs: sorted.map((name) => ({ name, scope: "project" as const })),
+      };
     }),
 
   reset: () => set(createInitialState()),

@@ -1,7 +1,7 @@
 import { Box, Text, useInput } from "ink";
 import React from "react";
 import { CLI_COLORS } from "../../consts.js";
-import type { SkillConfig } from "../../types/config.js";
+import type { AgentScopeConfig, SkillConfig } from "../../types/config.js";
 import type { Domain, DomainSelections } from "../../types/index.js";
 import { getDomainDisplayName } from "./utils.js";
 import { ViewTitle } from "./view-title.js";
@@ -15,6 +15,7 @@ type StepConfirmProps = {
   skillCount?: number;
   agentCount?: number;
   skillConfigs?: SkillConfig[];
+  agentConfigs?: AgentScopeConfig[];
   onBack?: () => void;
 };
 
@@ -38,6 +39,7 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
   skillCount,
   agentCount,
   skillConfigs,
+  agentConfigs,
   onBack,
 }) => {
   useInput((_input, key) => {
@@ -89,6 +91,17 @@ export const StepConfirm: React.FC<StepConfirmProps> = ({
         {agentCount !== undefined && (
           <Text>
             <Text dimColor>Agents:</Text> <Text bold>{agentCount}</Text>
+            {agentConfigs && agentConfigs.length > 0 && (
+              <Text>
+                {" "}
+                <Text dimColor>
+                  ({agentConfigs.filter((a) => a.scope === "project").length} project
+                  {agentConfigs.some((a) => a.scope === "global") &&
+                    `, ${agentConfigs.filter((a) => a.scope === "global").length} global`}
+                  )
+                </Text>
+              </Text>
+            )}
           </Text>
         )}
         {skillConfigs && skillConfigs.length > 0 && (

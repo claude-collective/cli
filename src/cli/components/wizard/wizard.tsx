@@ -19,7 +19,7 @@ import type {
   MergedSkillsMatrix,
   SkillId,
 } from "../../types/index.js";
-import type { SkillConfig } from "../../types/config.js";
+import type { AgentScopeConfig, SkillConfig } from "../../types/config.js";
 import { getStackName } from "./utils.js";
 import { warn, type StartupMessage } from "../../utils/logger.js";
 import { useWizardInitialization } from "../hooks/use-wizard-initialization.js";
@@ -28,6 +28,7 @@ import { useBuildStepProps } from "../hooks/use-build-step-props.js";
 export type WizardResultV2 = {
   skills: SkillConfig[];
   selectedAgents: AgentName[];
+  agentConfigs: AgentScopeConfig[];
   selectedStackId: string | null;
   domainSelections: DomainSelections;
   selectedDomains: Domain[];
@@ -51,6 +52,8 @@ type WizardProps = {
   initialAgents?: AgentName[];
   installedSkillIds?: SkillId[];
   installedSkillConfigs?: SkillConfig[];
+  lockedSkillIds?: SkillId[];
+  lockedAgentNames?: AgentName[];
   projectDir?: string;
   startupMessages?: StartupMessage[];
 };
@@ -70,6 +73,8 @@ export const Wizard: React.FC<WizardProps> = ({
   initialAgents,
   installedSkillIds,
   installedSkillConfigs,
+  lockedSkillIds,
+  lockedAgentNames,
   projectDir,
   startupMessages,
 }) => {
@@ -89,6 +94,8 @@ export const Wizard: React.FC<WizardProps> = ({
     initialAgents,
     installedSkillIds,
     installedSkillConfigs,
+    lockedSkillIds,
+    lockedAgentNames,
   });
 
   const buildStepProps = useBuildStepProps({ store, matrix, installedSkillIds });
@@ -144,6 +151,14 @@ export const Wizard: React.FC<WizardProps> = ({
       return;
     }
 
+    if ((input === "s" || input === "S") && store.step === "agents") {
+      const focused = store.focusedAgentId;
+      if (focused) {
+        store.toggleAgentScope(focused);
+      }
+      return;
+    }
+
     if ((input === "s" || input === "S") && store.step === "sources") {
       store.toggleSettings();
       return;
@@ -189,6 +204,7 @@ export const Wizard: React.FC<WizardProps> = ({
     const result: WizardResultV2 = {
       skills: skillConfigs,
       selectedAgents: store.selectedAgents,
+      agentConfigs: store.agentConfigs,
       selectedStackId: store.selectedStackId,
       domainSelections: store.domainSelections,
       selectedDomains: store.selectedDomains,
@@ -253,6 +269,7 @@ export const Wizard: React.FC<WizardProps> = ({
             skillCount={selectedSkills.length}
             agentCount={store.selectedAgents.length}
             skillConfigs={store.skillConfigs}
+            agentConfigs={store.agentConfigs}
             onBack={store.goBack}
           />
         );

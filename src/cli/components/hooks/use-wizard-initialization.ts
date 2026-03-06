@@ -10,6 +10,8 @@ type UseWizardInitializationOptions = {
   initialAgents?: AgentName[];
   installedSkillIds?: SkillId[];
   installedSkillConfigs?: SkillConfig[];
+  lockedSkillIds?: SkillId[];
+  lockedAgentNames?: AgentName[];
 };
 
 /**
@@ -23,6 +25,8 @@ export function useWizardInitialization({
   initialAgents,
   installedSkillIds,
   installedSkillConfigs,
+  lockedSkillIds,
+  lockedAgentNames,
 }: UseWizardInitializationOptions): void {
   const initialized = useRef(false);
 
@@ -45,6 +49,13 @@ export function useWizardInitialization({
     // Restore saved agents from config, overriding the default empty array
     if (initialAgents?.length) {
       useWizardStore.setState({ selectedAgents: initialAgents });
+    }
+    // Set locked IDs (D9: global items read-only in project context)
+    if (lockedSkillIds?.length || lockedAgentNames?.length) {
+      useWizardStore.setState({
+        ...(lockedSkillIds?.length && { lockedSkillIds }),
+        ...(lockedAgentNames?.length && { lockedAgentNames }),
+      });
     }
   }
 }
